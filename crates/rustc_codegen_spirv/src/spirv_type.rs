@@ -342,9 +342,8 @@ impl SpirvType<'_> {
             | Self::AccelerationStructureKhr
             | Self::RayQueryKhr
             | Self::Sampler
-            | Self::SampledImage { .. } => Size::from_bytes(4),
-
-            Self::InterfaceBlock { inner_type } => cx.lookup_type(inner_type).sizeof(cx)?,
+            | Self::SampledImage { .. }
+            | Self::InterfaceBlock { .. } => Size::from_bytes(4),
         };
         Some(result)
     }
@@ -372,9 +371,8 @@ impl SpirvType<'_> {
             | Self::AccelerationStructureKhr
             | Self::RayQueryKhr
             | Self::Sampler
-            | Self::SampledImage { .. } => Align::from_bytes(4).unwrap(),
-
-            Self::InterfaceBlock { inner_type } => cx.lookup_type(inner_type).alignof(cx),
+            | Self::SampledImage { .. }
+            | Self::InterfaceBlock { .. } => Align::from_bytes(4).unwrap(),
         }
     }
 
