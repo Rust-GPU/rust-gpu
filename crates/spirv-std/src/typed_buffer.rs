@@ -74,7 +74,7 @@ impl<T> Deref for TypedBuffer<[T]> {
                 "%result = OpCompositeConstruct typeof*{result_slot} %inner_ptr %inner_len",
                 "OpStore {result_slot} %result",
                 buffer = in(reg) self,
-                result_slot = in(reg) &mut result_slot,
+                result_slot = in(reg) result_slot.as_mut_ptr(),
             }
             result_slot.assume_init()
         }
@@ -94,7 +94,7 @@ impl<T> DerefMut for TypedBuffer<[T]> {
                 "%result = OpCompositeConstruct typeof*{result_slot} %inner_ptr %inner_len",
                 "OpStore {result_slot} %result",
                 buffer = in(reg) self,
-                result_slot = in(reg) &mut result_slot,
+                result_slot = in(reg) result_slot.as_mut_ptr(),
             }
             result_slot.assume_init()
         }

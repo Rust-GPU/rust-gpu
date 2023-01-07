@@ -500,8 +500,8 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                     // perfectly, in every way that could potentially affect ABI.
                     if self.fields.offset(i) == Size::ZERO
                         && field.size == self.size
-                        && field.align == self.align
-                        && field.backend_repr == self.backend_repr
+                        && field.align.abi == self.align.abi
+                        && field.backend_repr.eq_up_to_validity(&self.backend_repr)
                     {
                         return field.spirv_type(span, cx);
                     }
