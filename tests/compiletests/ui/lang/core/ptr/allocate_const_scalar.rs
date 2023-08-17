@@ -9,9 +9,9 @@ use spirv_std::spirv;
 
 use core::ptr::Unique;
 
-const POINTER: Unique<[u8; 4]> = Unique::<[u8; 4]>::dangling();
+const POINTER: Unique<()> = Unique::<()>::dangling();
 
 #[spirv(fragment)]
-pub fn main(output: &mut Unique<[u8; 4]>) {
+pub fn main(output: &mut Unique<()>) {
     *output = POINTER;
 }

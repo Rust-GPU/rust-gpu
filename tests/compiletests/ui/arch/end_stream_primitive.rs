@@ -1,5 +1,5 @@
 // build-pass
-// compile-flags: -C target-feature=+GeometryStreams
+// compile-flags: -C target-feature=+Int64,+GeometryStreams
 
 use spirv_std::spirv;
 

@@ -1,7 +1,7 @@
 // Test whether float constant casts need optimization
 
 // build-pass
-// compile-flags: -C llvm-args=--disassemble-globals
+// compile-flags: -C target-feature=+Float64 -C llvm-args=--disassemble-globals
 // normalize-stderr-test "OpCapability VulkanMemoryModel\n" -> ""
 // normalize-stderr-test "OpSource .*\n" -> ""
 // normalize-stderr-test "OpExtension .SPV_KHR_vulkan_memory_model.\n" -> ""

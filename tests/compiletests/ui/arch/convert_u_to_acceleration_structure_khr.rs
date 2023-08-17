@@ -1,5 +1,5 @@
 // build-pass
-// compile-flags: -Ctarget-feature=+RayTracingKHR,+ext:SPV_KHR_ray_tracing
+// compile-flags: -Ctarget-feature=+Int64,+RayTracingKHR,+ext:SPV_KHR_ray_tracing
 
 use spirv_std::spirv;
 

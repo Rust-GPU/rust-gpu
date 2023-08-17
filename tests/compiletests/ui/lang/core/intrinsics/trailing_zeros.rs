@@ -1,4 +1,5 @@
 // build-pass
+// compile-flags: -C target-feature=+Int8,+Int16,+Int64
 
 use spirv_std::spirv;
 
