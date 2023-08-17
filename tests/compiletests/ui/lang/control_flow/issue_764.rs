@@ -5,7 +5,7 @@ use spirv_std::glam;
 use spirv_std::glam::{Mat3, Vec3, Vec4};
 use spirv_std::spirv;
 
-fn index_to_transform(index: usize, raw_data: &[u8]) -> Transform2D {
+fn index_to_transform(index: usize, raw_data: &[u32]) -> Transform2D {
     Transform2D {
         own_transform: Mat3::IDENTITY,
         parent_offset: 0,
@@ -21,11 +21,11 @@ struct Transform2D {
 }
 
 trait GivesFinalTransform {
-    fn get_final_transform(&self, raw_data: &[u8]) -> Mat3;
+    fn get_final_transform(&self, raw_data: &[u32]) -> Mat3;
 }
 
 impl GivesFinalTransform for (i32, Transform2D) {
-    fn get_final_transform(&self, raw_data: &[u8]) -> Mat3 {
+    fn get_final_transform(&self, raw_data: &[u32]) -> Mat3 {
         if self.1.parent_offset == 0 {
             self.1.own_transform
         } else {
@@ -44,7 +44,7 @@ impl GivesFinalTransform for (i32, Transform2D) {
 #[spirv(compute(threads(64)))]
 pub fn main_cs(
     #[spirv(global_invocation_id)] id: UVec3,
-    #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] raw_data: &mut [u8],
+    #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] raw_data: &mut [u32],
     #[spirv(position)] output_position: &mut Vec4,
 ) {
     let index = id.x as usize;

@@ -5,7 +5,7 @@
 // the default Rust ABI adjustments, that we now override through query hooks)
 
 // build-pass
-// compile-flags: -C llvm-args=--disassemble-entry=main
+// compile-flags: -C target-feature=+Int8,+Int64 -C llvm-args=--disassemble-entry=main
 
 use spirv_std::spirv;
 

@@ -11,8 +11,17 @@ pub fn main(
     output: &mut glam::Vec4,
 ) {
     let t1 = image1.fetch_with(glam::IVec2::new(0, 0), sample_with::sample_index(1));
-    let t2 = image2.sample_with(*sampler, glam::Vec2::new(0.5, 0.5), sample_with::bias(1.0));
-    let t3 = image2.sample_with(*sampler, glam::Vec2::new(0.5, 0.5), sample_with::lod(2.0));
+    // FIXME(eddyb) get `f32` to be automatically inferred instead of the `f64` default.
+    let t2 = image2.sample_with(
+        *sampler,
+        glam::Vec2::new(0.5, 0.5),
+        sample_with::bias(1.0f32),
+    );
+    let t3 = image2.sample_with(
+        *sampler,
+        glam::Vec2::new(0.5, 0.5),
+        sample_with::lod(2.0f32),
+    );
     let t4 = image2.sample_with(
         *sampler,
         glam::Vec2::new(0.5, 0.5),

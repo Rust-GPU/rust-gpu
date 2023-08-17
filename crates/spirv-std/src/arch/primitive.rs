@@ -47,6 +47,7 @@ pub unsafe fn end_primitive() {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpEmitStreamVertex")]
 #[inline]
+// FIXME(eddyb) why does this require `i64` instead of `i32`?
 pub unsafe fn emit_stream_vertex<const STREAM: i64>() {
     unsafe {
         asm! {
@@ -69,6 +70,7 @@ pub unsafe fn emit_stream_vertex<const STREAM: i64>() {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpEndStreamPrimitive")]
 #[inline]
+// FIXME(eddyb) why does this require `i64` instead of `i32`?
 pub unsafe fn end_stream_primitive<const STREAM: i64>() {
     unsafe {
         asm! {
