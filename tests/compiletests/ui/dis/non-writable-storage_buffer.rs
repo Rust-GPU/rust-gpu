@@ -13,7 +13,7 @@
 // normalize-stderr-test "ui/dis/" -> "$$DIR/"
 
 // FIXME(eddyb) this should use revisions to track both the `vulkan1.2` output
-// and the pre-`vulkan1.2` output, but per-revisions `{only,ignore}-*` directives
+// and the pre-`vulkan1.2` output, but per-revision `{only,ignore}-*` directives
 // are not supported in `compiletest-rs`.
 // ignore-vulkan1.2
 // ignore-vulkan1.3
