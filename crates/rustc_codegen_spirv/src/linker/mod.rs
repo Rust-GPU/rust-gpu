@@ -481,16 +481,6 @@ pub fn link(
         simple_passes::remove_non_uniform_decorations(sess, &mut output)?;
     }
 
-    {
-        let _timer = sess.timer("link_remove_unused_type_capabilities");
-        simple_passes::remove_unused_type_capabilities(&mut output);
-    }
-
-    {
-        let _timer = sess.timer("link_type_capability_check");
-        simple_passes::check_type_capabilities(sess, &output)?;
-    }
-
     // NOTE(eddyb) SPIR-T pipeline is entirely limited to this block.
     {
         let (spv_words, module_or_err, lower_from_spv_timer) =
@@ -563,8 +553,14 @@ pub fn link(
                 module,
                 &opts.spirt_passes,
                 |name, _module| before_pass(name),
-                after_pass,
+                &mut after_pass,
             );
+        }
+
+        {
+            let timer = before_pass("spirt_passes::validate");
+            spirt_passes::validate::validate(module);
+            after_pass("validate", module, timer);
         }
 
         {
@@ -632,6 +628,11 @@ pub fn link(
             peephole_opts::vector_ops(output.header.as_mut().unwrap(), &types, func);
             peephole_opts::bool_fusion(output.header.as_mut().unwrap(), &types, func);
         }
+    }
+
+    {
+        let _timer = sess.timer("link_remove_unused_type_capabilities");
+        simple_passes::remove_unused_type_capabilities(&mut output);
     }
 
     {

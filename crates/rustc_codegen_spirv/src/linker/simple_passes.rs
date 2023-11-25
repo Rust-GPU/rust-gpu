@@ -293,74 +293,14 @@ pub fn check_fragment_insts(sess: &Session, module: &Module) -> super::Result<()
     }
 }
 
-/// Check that types requiring specific capabilities have those capabilities declared.
-///
-/// This function validates that if a module uses types like u8/i8 (requiring Int8),
-/// u16/i16 (requiring Int16), etc., the corresponding capabilities are declared.
-pub fn check_type_capabilities(sess: &Session, module: &Module) -> super::Result<()> {
-    use rspirv::spirv::Capability;
-
-    // Collect declared capabilities
-    let declared_capabilities: FxHashSet<Capability> = module
-        .capabilities
-        .iter()
-        .map(|inst| inst.operands[0].unwrap_capability())
-        .collect();
-
-    let mut missing_caps = vec![];
-
-    for inst in &module.types_global_values {
-        let (prefix, width, maybe_required_cap) = match inst.class.opcode {
-            Op::TypeInt => {
-                let width = inst.operands[0].unwrap_literal_bit32();
-                let signed = inst.operands[1].unwrap_literal_bit32() != 0;
-
-                (
-                    if signed { "i" } else { "u" },
-                    width,
-                    capability_for_int_width(width),
-                )
-            }
-            Op::TypeFloat => {
-                let width = inst.operands[0].unwrap_literal_bit32();
-
-                ("f", width, capability_for_float_width(width))
-            }
-            _ => continue,
-        };
-
-        match maybe_required_cap {
-            Err(UnsupportedType) => {
-                sess.dcx()
-                    .err(format!("`{prefix}{width}` unsupported in SPIR-V"));
-            }
-            Ok(Some(required_cap)) if !declared_capabilities.contains(&required_cap) => {
-                missing_caps.push(format!(
-                    "`{prefix}{width}` type used without `OpCapability {required_cap:?}`"
-                ));
-            }
-            Ok(_) => {}
-        }
-    }
-
-    if !missing_caps.is_empty() {
-        let mut err = sess
-            .dcx()
-            .struct_err("missing required capabilities for types");
-        for msg in missing_caps {
-            err.note(msg);
-        }
-        Err(err.emit())
-    } else {
-        Ok(())
-    }
-}
-
 /// Remove type-related capabilities that are not required by any types in the module.
 ///
 /// This function specifically targets Int8, Int16, Int64, Float16, and Float64 capabilities,
 /// removing them if no types in the module require them. All other capabilities are preserved.
 /// This is part of the fix for issue #300 where constant casts were creating unnecessary types.
+//
+// FIXME(eddyb) move this to a SPIR-T pass (potentially even using sets of used
+// exts/caps that validation itself can collect while traversing the module).
 pub fn remove_unused_type_capabilities(module: &mut Module) {
     use rspirv::spirv::Capability;
 
