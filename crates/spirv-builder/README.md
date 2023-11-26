@@ -2,9 +2,9 @@
 <!-- markdownlint-disable-file MD033 -->
 # `spirv-builder`
 
-![Rust version](https://img.shields.io/badge/rust-nightly--2023--05--27-purple.svg)
+<!-- FIXME(eddyb) this should maybe be moved to `spirv-builder` docs? -->
 
-This crate gives you `SpirvBuilder`, a tool to build shaders using [rust-gpu][rustgpu].
+This crate provides `SpirvBuilder`, a tool to build shaders using [rust-gpu][rustgpu].
 
 It takes care of pulling in the `SPIR-V` backend for Rust, `rustc_codegen_spirv`, and invoking a nested build using appropriate compiler options, some of which may be set using the `SpirvBuilder` API.
 
