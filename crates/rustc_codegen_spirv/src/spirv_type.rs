@@ -167,7 +167,7 @@ impl SpirvType<'_> {
                         result,
                         index as u32,
                         Decoration::Offset,
-                        [Operand::LiteralInt32(offset.bytes() as u32)]
+                        [Operand::LiteralBit32(offset.bytes() as u32)]
                             .iter()
                             .cloned(),
                     );
@@ -193,7 +193,7 @@ impl SpirvType<'_> {
                 emit.decorate(
                     result,
                     Decoration::ArrayStride,
-                    iter::once(Operand::LiteralInt32(element_size as u32)),
+                    iter::once(Operand::LiteralBit32(element_size as u32)),
                 );
                 result
             }
@@ -209,7 +209,7 @@ impl SpirvType<'_> {
                 emit.decorate(
                     result,
                     Decoration::ArrayStride,
-                    iter::once(Operand::LiteralInt32(element_size as u32)),
+                    iter::once(Operand::LiteralBit32(element_size as u32)),
                 );
                 result
             }
@@ -269,7 +269,7 @@ impl SpirvType<'_> {
                     result,
                     0,
                     Decoration::Offset,
-                    [Operand::LiteralInt32(0)].iter().cloned(),
+                    [Operand::LiteralBit32(0)].iter().cloned(),
                 );
                 result
             }
