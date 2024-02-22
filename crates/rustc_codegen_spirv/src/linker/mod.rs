@@ -88,7 +88,10 @@ fn id(header: &mut ModuleHeader) -> Word {
     result
 }
 
-fn apply_rewrite_rules(rewrite_rules: &FxHashMap<Word, Word>, blocks: &mut [Block]) {
+fn apply_rewrite_rules<'a>(
+    rewrite_rules: &FxHashMap<Word, Word>,
+    blocks: impl IntoIterator<Item = &'a mut Block>,
+) {
     let apply = |inst: &mut Instruction| {
         if let Some(ref mut id) = &mut inst.result_id {
             if let Some(&rewrite) = rewrite_rules.get(id) {
