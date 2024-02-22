@@ -7,9 +7,10 @@
 //! *references* a rooted thing is also rooted, not the other way around - but that's the basic
 //! concept.
 
-use rspirv::dr::{Function, Instruction, Module, Operand};
+use rspirv::dr::{Block, Function, Instruction, Module, Operand};
 use rspirv::spirv::{Decoration, LinkageType, Op, StorageClass, Word};
-use rustc_data_structures::fx::FxIndexSet;
+use rustc_data_structures::fx::{FxIndexMap, FxIndexSet};
+use std::hash::Hash;
 
 pub fn dce(module: &mut Module) {
     let mut rooted = collect_roots(module);
@@ -137,11 +138,11 @@ fn kill_unrooted(module: &mut Module, rooted: &FxIndexSet<Word>) {
     }
 }
 
-pub fn dce_phi(func: &mut Function) {
+pub fn dce_phi(blocks: &mut FxIndexMap<impl Eq + Hash, &mut Block>) {
     let mut used = FxIndexSet::default();
     loop {
         let mut changed = false;
-        for inst in func.all_inst_iter() {
+        for inst in blocks.values().flat_map(|block| &block.instructions) {
             if inst.class.opcode != Op::Phi || used.contains(&inst.result_id.unwrap()) {
                 for op in &inst.operands {
                     if let Some(id) = op.id_ref_any() {
@@ -154,7 +155,7 @@ pub fn dce_phi(func: &mut Function) {
             break;
         }
     }
-    for block in &mut func.blocks {
+    for block in blocks.values_mut() {
         block
             .instructions
             .retain(|inst| inst.class.opcode != Op::Phi || used.contains(&inst.result_id.unwrap()));
