@@ -15,7 +15,7 @@ use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_errors::ErrorGuaranteed;
 use rustc_session::Session;
 use smallvec::SmallVec;
-use std::mem::{self, take};
+use std::mem;
 
 type FunctionMap = FxHashMap<Word, Function>;
 
@@ -658,15 +658,13 @@ impl Inliner<'_, '_> {
         if let Some(call_result_type) = call_result_type {
             // Generate the storage space for the return value: Do this *after* the split above,
             // because if block_idx=0, inserting a variable here shifts call_index.
-            insert_opvariables(
-                &mut caller.blocks[0],
-                [Instruction::new(
-                    Op::Variable,
-                    Some(self.ptr_ty(call_result_type)),
-                    Some(return_variable.unwrap()),
-                    vec![Operand::StorageClass(StorageClass::Function)],
-                )],
+            let ret_var_inst = Instruction::new(
+                Op::Variable,
+                Some(self.ptr_ty(call_result_type)),
+                Some(return_variable.unwrap()),
+                vec![Operand::StorageClass(StorageClass::Function)],
             );
+            self.insert_opvariables(&mut caller.blocks[0], [ret_var_inst]);
         }
 
         // Insert non-entry inlined callee blocks just after the pre-call block.
@@ -712,52 +710,115 @@ impl Inliner<'_, '_> {
         // Fuse the inlined callee entry block into the pre-call block.
         // This is okay because it's illegal to branch to the first BB in a function.
         {
+            // NOTE(eddyb) `OpExtInst`s have a result ID, even if unused, and
+            // it has to be unique, so this allocates new IDs as-needed.
+            let instantiate_debuginfo = |this: &mut Self, inst: &Instruction| {
+                let mut inst = inst.clone();
+                if let Some(id) = &mut inst.result_id {
+                    *id = this.id();
+                }
+                inst
+            };
+
+            let custom_inst_to_inst = |this: &mut Self, inst: CustomInst<_>| {
+                Instruction::new(
+                    Op::ExtInst,
+                    Some(this.op_type_void_id),
+                    Some(this.id()),
+                    [
+                        Operand::IdRef(this.custom_ext_inst_set_import),
+                        Operand::LiteralExtInstInteger(inst.op() as u32),
+                    ]
+                    .into_iter()
+                    .chain(inst.into_operands())
+                    .collect(),
+                )
+            };
+
             // Return the subsequence of `insts` made from `OpVariable`s, and any
             // debuginfo instructions (which may apply to them), while removing
             // *only* `OpVariable`s from `insts` (and keeping debuginfo in both).
             let mut steal_vars = |insts: &mut Vec<Instruction>| {
-                let mut vars_and_debuginfo = vec![];
-                insts.retain_mut(|inst| {
-                    let is_debuginfo = match inst.class.opcode {
-                        Op::Line | Op::NoLine => true,
-                        Op::ExtInst => {
-                            inst.operands[0].unwrap_id_ref() == self.custom_ext_inst_set_import
-                                && CustomOp::decode_from_ext_inst(inst).is_debuginfo()
+                // HACK(eddyb) this duplicates some code from `get_inlined_blocks`,
+                // but that will be removed once the inliner is refactored to be
+                // inside-out instead of outside-in (already finished in a branch).
+                let mut enclosing_inlined_frames = SmallVec::<[_; 8]>::new();
+                let mut current_debug_src_loc_inst = None;
+                let mut vars_and_debuginfo_range = 0..0;
+                while vars_and_debuginfo_range.end < insts.len() {
+                    let inst = &insts[vars_and_debuginfo_range.end];
+                    match inst.class.opcode {
+                        Op::Line => current_debug_src_loc_inst = Some(inst),
+                        Op::NoLine => current_debug_src_loc_inst = None,
+                        Op::ExtInst
+                            if inst.operands[0].unwrap_id_ref()
+                                == self.custom_ext_inst_set_import =>
+                        {
+                            match CustomOp::decode_from_ext_inst(inst) {
+                                CustomOp::SetDebugSrcLoc => current_debug_src_loc_inst = Some(inst),
+                                CustomOp::ClearDebugSrcLoc => current_debug_src_loc_inst = None,
+                                CustomOp::PushInlinedCallFrame => {
+                                    enclosing_inlined_frames
+                                        .push((current_debug_src_loc_inst.take(), inst));
+                                }
+                                CustomOp::PopInlinedCallFrame => {
+                                    if let Some((callsite_debug_src_loc_inst, _)) =
+                                        enclosing_inlined_frames.pop()
+                                    {
+                                        current_debug_src_loc_inst = callsite_debug_src_loc_inst;
+                                    }
+                                }
+                                CustomOp::Abort => break,
+                            }
                         }
-                        _ => false,
-                    };
-                    if is_debuginfo {
-                        // NOTE(eddyb) `OpExtInst`s have a result ID,
-                        // even if unused, and it has to be unique.
-                        let mut inst = inst.clone();
-                        if let Some(id) = &mut inst.result_id {
-                            *id = self.id();
-                        }
-                        vars_and_debuginfo.push(inst);
-                        true
-                    } else if inst.class.opcode == Op::Variable {
-                        // HACK(eddyb) we're removing this `Instruction` from
-                        // `inst`, so it doesn't really matter what we use here.
-                        vars_and_debuginfo.push(mem::replace(
-                            inst,
-                            Instruction::new(Op::Nop, None, None, vec![]),
-                        ));
-                        false
-                    } else {
-                        true
+                        Op::Variable => {}
+                        _ => break,
                     }
-                });
-                vars_and_debuginfo
+                    vars_and_debuginfo_range.end += 1;
+                }
+
+                // `vars_and_debuginfo_range.end` indicates where `OpVariable`s
+                // end and other instructions start (module debuginfo), but to
+                // split the block in two, both sides of the "cut" need "repair":
+                // - the variables are missing "inlined call frames" pops, that
+                //   may happen later in the block, and have to be synthesized
+                // - the non-variables are missing "inlined call frames" pushes,
+                //   that must be recreated to avoid ending up with dangling pops
+                //
+                // FIXME(eddyb) this only collects to avoid borrow conflicts,
+                // between e.g. `enclosing_inlined_frames` and mutating `insts`,
+                // but also between different uses of `self`.
+                let all_pops_after_vars: SmallVec<[_; 8]> = enclosing_inlined_frames
+                    .iter()
+                    .map(|_| custom_inst_to_inst(self, CustomInst::PopInlinedCallFrame))
+                    .collect();
+                let all_repushes_before_non_vars: SmallVec<[_; 8]> =
+                    (enclosing_inlined_frames.into_iter().flat_map(
+                        |(callsite_debug_src_loc_inst, push_inlined_call_frame_inst)| {
+                            (callsite_debug_src_loc_inst.into_iter())
+                                .chain([push_inlined_call_frame_inst])
+                        },
+                    ))
+                    .chain(current_debug_src_loc_inst)
+                    .map(|inst| instantiate_debuginfo(self, inst))
+                    .collect();
+
+                let vars_and_debuginfo =
+                    insts.splice(vars_and_debuginfo_range, all_repushes_before_non_vars);
+                let repaired_vars_and_debuginfo = vars_and_debuginfo.chain(all_pops_after_vars);
+
+                // FIXME(eddyb) collecting shouldn't be necessary but this is
+                // nested in a closure, and `splice` borrows the original `Vec`.
+                repaired_vars_and_debuginfo.collect::<SmallVec<[_; 8]>>()
             };
 
             let [mut inlined_callee_entry_block]: [_; 1] =
                 inlined_callee_blocks.try_into().unwrap();
 
             // Move the `OpVariable`s of the callee to the caller.
-            insert_opvariables(
-                &mut caller.blocks[0],
-                steal_vars(&mut inlined_callee_entry_block.instructions),
-            );
+            let callee_vars_and_debuginfo =
+                steal_vars(&mut inlined_callee_entry_block.instructions);
+            self.insert_opvariables(&mut caller.blocks[0], callee_vars_and_debuginfo);
 
             caller.blocks[pre_call_block_idx]
                 .instructions
@@ -990,15 +1051,52 @@ impl Inliner<'_, '_> {
             caller_restore_debuginfo_after_call,
         )
     }
-}
 
-fn insert_opvariables(block: &mut Block, insts: impl IntoIterator<Item = Instruction>) {
-    let first_non_variable = block
-        .instructions
-        .iter()
-        .position(|inst| inst.class.opcode != Op::Variable);
-    let i = first_non_variable.unwrap_or(block.instructions.len());
-    block.instructions.splice(i..i, insts);
+    fn insert_opvariables(&self, block: &mut Block, insts: impl IntoIterator<Item = Instruction>) {
+        // HACK(eddyb) this isn't as efficient as it could be in theory, but it's
+        // very important to make sure sure to never insert new instructions in
+        // the middle of debuginfo (as it would be affected by it).
+        let mut inlined_frames_depth = 0usize;
+        let mut outermost_has_debug_src_loc = false;
+        let mut last_debugless_var_insertion_point_candidate = None;
+        for (i, inst) in block.instructions.iter().enumerate() {
+            last_debugless_var_insertion_point_candidate =
+                (inlined_frames_depth == 0 && !outermost_has_debug_src_loc).then_some(i);
+
+            let changed_has_debug_src_loc = match inst.class.opcode {
+                Op::Line => true,
+                Op::NoLine => false,
+                Op::ExtInst
+                    if inst.operands[0].unwrap_id_ref() == self.custom_ext_inst_set_import =>
+                {
+                    match CustomOp::decode_from_ext_inst(inst) {
+                        CustomOp::SetDebugSrcLoc => true,
+                        CustomOp::ClearDebugSrcLoc => false,
+                        CustomOp::PushInlinedCallFrame => {
+                            inlined_frames_depth += 1;
+                            continue;
+                        }
+                        CustomOp::PopInlinedCallFrame => {
+                            inlined_frames_depth = inlined_frames_depth.saturating_sub(1);
+                            continue;
+                        }
+                        CustomOp::Abort => break,
+                    }
+                }
+                Op::Variable => continue,
+                _ => break,
+            };
+
+            if inlined_frames_depth == 0 {
+                outermost_has_debug_src_loc = changed_has_debug_src_loc;
+            }
+        }
+
+        // HACK(eddyb) fallback to inserting at the start, which should be correct.
+        // FIXME(eddyb) some level of debuginfo repair could prevent needing this.
+        let i = last_debugless_var_insertion_point_candidate.unwrap_or(0);
+        block.instructions.splice(i..i, insts);
+    }
 }
 
 fn fuse_trivial_branches(function: &mut Function) {
@@ -1033,7 +1131,7 @@ fn fuse_trivial_branches(function: &mut Function) {
         };
         let pred_insts = &function.blocks[pred].instructions;
         if pred_insts.last().unwrap().class.opcode == Op::Branch {
-            let mut dest_insts = take(&mut function.blocks[dest_block].instructions);
+            let mut dest_insts = mem::take(&mut function.blocks[dest_block].instructions);
             let pred_insts = &mut function.blocks[pred].instructions;
             pred_insts.pop(); // pop the branch
             pred_insts.append(&mut dest_insts);
