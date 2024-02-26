@@ -58,6 +58,8 @@ pub struct Options {
     // NOTE(eddyb) these are debugging options that used to be env vars
     // (for more information see `docs/src/codegen-args.md`).
     pub dump_post_merge: Option<PathBuf>,
+    pub dump_pre_inline: Option<PathBuf>,
+    pub dump_post_inline: Option<PathBuf>,
     pub dump_post_split: Option<PathBuf>,
     pub dump_spirt_passes: Option<PathBuf>,
     pub spirt_strip_custom_debuginfo_from_dumps: bool,
@@ -402,6 +404,10 @@ pub fn link(
         duplicates::remove_duplicate_debuginfo(&mut output);
     }
 
+    if let Some(dir) = &opts.dump_pre_inline {
+        dump_spv_and_spirt(&output, dir.join(disambiguated_crate_name_for_dumps));
+    }
+
     {
         let _timer = sess.timer("link_inline");
         inline::inline(sess, &mut output)?;
@@ -410,6 +416,11 @@ pub fn link(
     if opts.dce {
         let _timer = sess.timer("link_dce-after-inlining");
         dce::dce(&mut output);
+    }
+
+    // HACK(eddyb) this has to be after DCE, to not break SPIR-T w/ dead decorations.
+    if let Some(dir) = &opts.dump_post_inline {
+        dump_spv_and_spirt(&output, dir.join(disambiguated_crate_name_for_dumps));
     }
 
     {
