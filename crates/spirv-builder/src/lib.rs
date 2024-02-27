@@ -805,6 +805,10 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         profile,
     ]);
 
+    if let Ok(extra_cargoflags) = tracked_env_var_get("RUSTGPU_CARGOFLAGS") {
+        cargo.args(extra_cargoflags.split_whitespace());
+    }
+
     // FIXME(eddyb) consider moving `target-specs` into `rustc_codegen_spirv_types`.
     // FIXME(eddyb) consider the `RUST_TARGET_PATH` env var alternative.
     cargo
