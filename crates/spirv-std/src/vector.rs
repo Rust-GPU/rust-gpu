@@ -71,7 +71,7 @@ unsafe impl Vector<i32, 3> for glam::IVec3 {}
 unsafe impl Vector<i32, 4> for glam::IVec4 {}
 
 /// Trait that implements slicing of a vector into a scalar or vector of lower dimensions, by
-/// ignoring the higter dimensions
+/// ignoring the higher dimensions
 pub trait VectorTruncateInto<T> {
     /// Slices the vector into a lower dimensional type by ignoring the higher components
     fn truncate_into(self) -> T;
