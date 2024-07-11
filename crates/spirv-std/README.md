@@ -1,12 +1,12 @@
 # `spirv-std`
 
-Core functions, traits, and more that make up a “standard library” for SPIR-V for use in [rust-gpu](https://github.com/EmbarkStudios/rust-gpu#readme).
+Core functions, traits, and more that make up a “standard library” for SPIR-V for use in [rust-gpu](https://github.com/rust-gpu/rust-gpu#readme).
 
 This crate gives a `rust-gpu` shader access to the required `#![spirv(..)]` attribute, as well as povide all kinds of APIs that allows a shader to access GPU resources such as textures and buffers. Optionally, through the use of the `"glam"` feature, it includes some boilerplate trait implementations to make `glam` vector types compatible with these APIs.
 
 ## Example
 
-![Sky shader](https://github.com/EmbarkStudios/rust-gpu/raw/b12a2f3f6a54bc841d05a9224bc577909d519228/docs/assets/sky.jpg)
+![Sky shader](https://github.com/rust-gpu/rust-gpu/raw/b12a2f3f6a54bc841d05a9224bc577909d519228/docs/assets/sky.jpg)
 
 Here is a small excerpt to see what a shader would look like. See [source][source] for full details of the shader that generates above image.
 
@@ -44,5 +44,5 @@ Experiment with rust-gpu shaders in-browser at [SHADERed][shadered].
 
 [migration]: https://github.com/EmbarkStudios/rust-gpu/blob/097ba40bedd74eeaa296e719ef7e41f2d3d76c23/docs/src/migration-to-register-tool.md
 [source]: https://github.com/EmbarkStudios/rust-gpu/blob/69cb69d28f1e64420ee31ade5e7dffb7c5621e89/examples/shaders/sky-shader/src/lib.rs
-[gpu-guide]: https://embarkstudios.github.io/rust-gpu/book/
+[gpu-guide]: https://rust-gpu.github.io/rust-gpu/book/
 [shadered]: https://shadered.org/shaders?language=rust&sort=hot

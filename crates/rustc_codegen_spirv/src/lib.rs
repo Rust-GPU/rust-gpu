@@ -10,11 +10,11 @@
 //! - [`spirv-tools`]
 //! - [`spirv-tools-sys`]
 //!
-//! [gpu-dev-guide]: https://embarkstudios.github.io/rust-gpu/book
-//! [`spirv-builder`]: https://embarkstudios.github.io/rust-gpu/api/spirv_builder
-//! [`spirv-std`]: https://embarkstudios.github.io/rust-gpu/api/spirv_std
-//! [`spirv-tools`]: https://embarkstudios.github.io/rust-gpu/api/spirv_tools
-//! [`spirv-tools-sys`]: https://embarkstudios.github.io/rust-gpu/api/spirv_tools_sys
+//! [gpu-dev-guide]: https://rust-gpu.github.io/rust-gpu/book
+//! [`spirv-builder`]: https://rust-gpu.github.io/rust-gpu/api/spirv_builder
+//! [`spirv-std`]: https://rust-gpu.github.io/rust-gpu/api/spirv_std
+//! [`spirv-tools`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools
+//! [`spirv-tools-sys`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools_sys
 #![feature(rustc_private)]
 #![feature(array_methods)]
 #![feature(assert_matches)]
@@ -498,7 +498,7 @@ impl Drop for DumpModuleOnPanic<'_, '_, '_> {
 pub fn __rustc_codegen_backend() -> Box<dyn CodegenBackend> {
     // Tweak rustc's default ICE panic hook, to direct people to `rust-gpu`.
     rustc_driver::install_ice_hook(
-        "https://github.com/EmbarkStudios/rust-gpu/issues/new",
+        "https://github.com/rust-gpu/rust-gpu/issues/new",
         |handler| {
             handler.note_without_error(concat!(
                 "`rust-gpu` version `",

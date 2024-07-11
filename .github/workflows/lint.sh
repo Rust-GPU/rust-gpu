@@ -59,7 +59,7 @@ if (
     echo ' ("codegen args" should be used instead of environment variables)'
     echo
     echo 'For more details on "codegen args", see: docs/src/codegen-args.md'
-    echo ' (and/or https://github.com/EmbarkStudios/rust-gpu/pull/959)'
+    echo ' (and/or https://github.com/rust-gpu/rust-gpu/pull/959)'
     echo
     exit 1
 fi

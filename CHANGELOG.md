@@ -100,7 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   support in the form of `--spirt-passes=qptr`, a way to turn off "Storage Class inference",
   and reporting for SPIR-T diagnostics - to test `qptr` fully, you can use:  
   `RUSTGPU_CODEGEN_ARGS="--no-infer-storage-classes --spirt-passes=qptr"`  
-  (see also [the SPIR-T `qptr` PR](https://github.com/EmbarkStudios/spirt/pull/24) for more details about the `qptr` experiment)
+  (see also [the SPIR-T `qptr` PR](https://github.com/rust-gpu/spirt/pull/24) for more details about the `qptr` experiment)
 - [PR#1039](https://github.com/EmbarkStudios/rust-gpu/pull/1039) added new experimental `sample_with` to `Image` API to set additional image operands
 - [PR#1031](https://github.com/EmbarkStudios/rust-gpu/pull/1031) added `Components` generic parameter to `Image` type, allowing images to return lower dimensional vectors and even scalars from the sampling API
 
@@ -130,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [PR#998](https://github.com/EmbarkStudios/rust-gpu/pull/998) added `extra_arg()` SpirvBuilder API to be able to set codegen args otherwise not supported by the API (for example, to set `--spirv-passes`)
 
 ### Changed 🛠
-- [PR#999](https://github.com/EmbarkStudios/rust-gpu/pull/999) made the [`SPIR-🇹` shader IR framework](https://github.com/EmbarkStudios/spirt) the default (you can opt out via `RUSTGPU_CODEGEN_ARGS=--no-spirt`)
+- [PR#999](https://github.com/EmbarkStudios/rust-gpu/pull/999) made the [`SPIR-🇹` shader IR framework](https://github.com/rust-gpu/spirt) the default (you can opt out via `RUSTGPU_CODEGEN_ARGS=--no-spirt`)
 - [PR#992](https://github.com/EmbarkStudios/rust-gpu/pull/992) renamed `rust-toolchain` to `rust-toolchain.toml`
 - [PR#991](https://github.com/EmbarkStudios/rust-gpu/pull/991) updated toolchain to `nightly-2023-01-21`
 - [PR#990](https://github.com/EmbarkStudios/rust-gpu/pull/990) removed return type inference from `Image` API and made `glam` usage mandatory
@@ -153,7 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `RUSTGPU_RUSTFLAGS="..."` for shader `RUSTFLAGS="..."`
   - `RUSTGPU_CODEGEN_ARGS="..."` for shader "codegen args" (i.e. `RUSTFLAGS=-Cllvm-args="..."`)  
     (check out [the "codegen args" docs](docs/src/codegen-args.md), or run with `RUSTGPU_CODEGEN_ARGS=--help` to see the full list of options)
-- [PR#940](https://github.com/EmbarkStudios/rust-gpu/pull/940) integrated the experimental [`SPIR-🇹` shader IR framework](https://github.com/EmbarkStudios/spirt) into the linker  
+- [PR#940](https://github.com/EmbarkStudios/rust-gpu/pull/940) integrated the experimental [`SPIR-🇹` shader IR framework](https://github.com/rust-gpu/spirt) into the linker  
   (opt-in via `RUSTGPU_CODEGEN_ARGS=--spirt`, see also [the `--spirt` docs](docs/src/codegen-args.md#--spirt), for more details)
 
 ### Changed 🛠️

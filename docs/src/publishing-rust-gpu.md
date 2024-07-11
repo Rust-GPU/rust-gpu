@@ -1,7 +1,7 @@
 # Publishing rust-gpu on crates.io
 
 This is a task list for the maintainers of rust-gpu to remember to do when publishing a new version
-of rust-gpu (probably not useful for contributors without access to embark's crates.io account 😋)
+of rust-gpu (probably not useful for contributors without access our crates.io account 😋)
 
 The published crates and their relative locations are:
 1. `spirv-std-types` (`crates/spirv-std/shared`)
@@ -25,6 +25,6 @@ These are the steps:
 5. Tag `main` with the version: `git tag v0.4.0`
 6. Push the tag: `git push origin v0.4.0`
 7. Publish the crates: `cd [crate] && cargo publish` in the order of the list above (make sure
-   `.cargo/credentials` is set to embark's token). The crates.io index might take some seconds to update
+   `.cargo/credentials` is set to the project's token). The crates.io index might take some seconds to update
    causing an error if the crates are published in quick succession. Wait a couple of seconds and try
    again 🙂.
