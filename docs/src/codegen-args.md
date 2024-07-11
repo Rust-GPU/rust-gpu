@@ -148,7 +148,7 @@ to allow testing alternatives to it (such as SPIR-T `qptr` passes).
 
 Note that this will produce illegal SPIR-V by default, and you need e.g.
 `--spirt-passes=qptr` in order to regain legal "Storage Class" assignments  
-(see [SPIR-T `qptr` PR](https://github.com/rust-gpu/spirt/pull/24) for more information on `qptr` in general)
+(see [SPIR-T `qptr` PR](https://github.com/EmbarkStudios/spirt/pull/24) for more information on `qptr` in general)
 
 ### `--no-structurize`
 

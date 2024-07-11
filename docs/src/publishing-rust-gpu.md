@@ -1,7 +1,7 @@
 # Publishing rust-gpu on crates.io
 
 This is a task list for the maintainers of rust-gpu to remember to do when publishing a new version
-of rust-gpu (probably not useful for contributors without access our crates.io account 😋)
+of rust-gpu (probably not useful for contributors without access to our crates.io account 😋)
 
 The published crates and their relative locations are:
 1. `spirv-std-types` (`crates/spirv-std/shared`)

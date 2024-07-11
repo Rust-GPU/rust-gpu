@@ -91,10 +91,10 @@ Examples of what would require an RFC:
 
 ## Licensing
 
-This project licensed under a dual MIT OR Apache-2.0 license, allowing licensees to chose either at their option.
+This project is licensed under a dual MIT OR Apache-2.0 license, allowing licensees to chose either at their option.
 
 ## Code of Conduct
 
 Please note that our project has a [Contributor Code of Conduct](CODE_OF_CONDUCT.md) to
-ensure it is a welcoming places for everyone to contribute. By participating in this
+ensure it is a welcoming place for everyone to contribute. By participating in this
 project, you agree to abide by these terms.
