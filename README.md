@@ -13,6 +13,7 @@
 **Rust as a first-class language and ecosystem for GPU graphics & compute shaders**
 
 [![Build status](https://github.com/rust-gpu/rust-gpu/actions/workflows/ci.yaml/badge.svg)](https://github.com/rust-gpu/rust-gpu/actions/workflows/ci.yaml)
+[![Documentation](https://img.shields.io/badge/docs-API-blue)](https://rust-gpu.github.io/rust-gpu/api/rustc_codegen_spirv)
 
 </div>
 
@@ -92,7 +93,6 @@ The scope of this overall project is quite broad, but is in multiple stages
   - This is the same mechanism that [rustc_codegen_cranelift](https://github.com/bjorn3/rustc_codegen_cranelift) and [rustc_codegen_gcc](https://github.com/antoyo/rustc_codegen_gcc) use.
   - Currently only [SPIR-V] support is planned, [Vulkan](<https://en.wikipedia.org/wiki/Vulkan_(API)>)'s open compiler target
   - Possible a future version could support [DXIL](https://github.com/microsoft/DirectXShaderCompiler/blob/master/docs/DXIL.rst) (the target for DirectX) or [WGSL](https://github.com/gpuweb/gpuweb/tree/main/wgsl) (the WebGPU shading language that's bijective with SPIR-V)
-- Focus on Vulkan compute shaders first, then after Vulkan graphics shaders
 - [Cargo](https://github.com/rust-lang/cargo/) and [crates.io](https://crates.io) support to develop and publish SPIR-V crates
 
 ## Process

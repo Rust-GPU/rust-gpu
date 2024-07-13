@@ -33,53 +33,7 @@ If you're ready to contribute, start by looking at our open issues tagged as [`h
 
 You can comment on the issue to let others know you're interested in working on it or to ask questions.
 
-### Major Change Process
-
-Most bug fixes can be implemented directly by opening a PR, however for larger design decisions and major changes to the compiler's architecture, this repository uses a two stage "Major Change Proposal" and "Request For Comments" process. If you're unsure about what's required for a specific change you should always start with [**opening an issue**][open-issue].
-
 [open-issue]: https://github.com/rust-gpu/rust-gpu/issues/new
-
-#### Definitions
-
-##### **Major Change Proposal (MCP)**
-
-A proposal to make a significant internal changes or small public facing changes to the compiler. An MCP is opened as an issue on `rust-gpu` the repository. An MCP typically only requires one member's approval. Though if the change is significantly big enough it may require the full team's sign off or require an RFC.
-
-An MCP should generally be a short (1-2 paragraphs) high level overview of the change you would want to make, the motivation behind the change, and potential solutions. There is a [major change issue template][mcp-template] you can use for convenience.
-
-[mcp-template]: https://github.com/rust-lang/rust/issues/new?labels=mcp%3A%20proposed&template=mcp.md
-
-Examples of what would require an MCP:
-
-- Changing the compiler architecture.
-- Adding support for an existing Rust language or feature.
-- Small additions (e.g. new methods) to `spirv-std` types.
-- Proposing an RFC.
-
-Examples of what would **not** require an MCP:
-
-- Updating documentation
-- Fixing existing bugs
-- Performance improvements
-
-##### **Request For Comments (RFC)**
-
-A proposal to make significant public facing changes to the compiler or standard library. RFCs are opened as pull requests to the `rust-gpu` repository. RFCs require full sign off by the team, before being approved or implemented. Check out the [RFC `000-template.md` document][rfc-template] for details on the structure.
-
-[rfc-template]: https://github.com/rust-gpu/rust-gpu/blob/main/rfcs/000-template.md
-
-Examples of what would require an RFC:
-
-- Major additions to `spirv-std`, such as new APIs, or breaking changes to existing ones.
-
-#### Life-cycle
-
-1. You file a [major change proposal][mcp-template] outlining the changes and the motivation for it.
-2. A member of the team will review the proposal and tag it with the appropriate label.
-   2.1. `mcp: accepted` means that the MCP has been accepted and is ready for a pull request implementing it.
-   2.2. `mcp: rfc needed` means that the MCP has been accepted as something the team would like but needs a full RFC before the implementation.
-   2.3 Closing an issue means that the MCP has rejected.
-3. If the proposal has been accepted then the implementation can begin.
 
 ### Pull Request Process
 
