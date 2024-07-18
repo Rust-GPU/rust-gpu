@@ -160,13 +160,13 @@ Disables CFG structurization. Probably results in invalid modules.
 Note: as of `rust-gpu 0.8.0`, `SPIR-🇹` is always being used and cannot be disabled
 (to reduce the cost of maintenance, testing and further feature development).
 
-Enables using the experimental [`SPIR-🇹` shader IR framework](https://github.com/EmbarkStudios/spirt) in the linker - more specifically, this:
+Enables using the experimental [`SPIR-🇹` shader IR framework](https://github.com/rust-gpu/spirt) in the linker - more specifically, this:
 - adds a `SPIR-V -> SPIR-🇹 -> SPIR-V` roundtrip  
   (future `SPIR-🇹` passes would go in the middle of this, and eventually codegen might not produce `SPIR-V` at all)
 - replaces the existing structurizer with `SPIR-🇹` structurization (which is more robust and can e.g. handle `OpPhi`s)
 - runs some existing `SPIR-V` legalization/optimization passes (`mem2reg`) *before* inlining, instead of *only after* (as the `OpPhi`s they would produce are no longer an issue for structurization)
 
-For more information, also see [the `SPIR-🇹` repository](https://github.com/EmbarkStudios/spirt).
+For more information, also see [the `SPIR-🇹` repository](https://github.com/rust-gpu/spirt).
 
 ### `--no-spirt` <sub>_(0.6.0 and 0.7.0)_</sup>
 
@@ -178,7 +178,7 @@ Note: if you were using `--no-spirt` to work around [`naga` issue #1977](https:/
 you may be able to `cargo update -p naga` to update to a fixed `naga` version  
 (`0.11.1` for `wgpu 0.15`, `0.12.1` for `wgpu 0.16`, and any later versions).
 
-Disables the [`SPIR-🇹` shader IR framework](https://github.com/EmbarkStudios/spirt) in the linker.
+Disables the [`SPIR-🇹` shader IR framework](https://github.com/rust-gpu/spirt) in the linker.
 
 ### `--spirt-passes PASSES`
 

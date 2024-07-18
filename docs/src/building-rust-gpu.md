@@ -4,7 +4,7 @@
 1. Clone the repository.
 
     ```shell
-    git clone --recurse-submodules https://github.com/EmbarkStudios/rust-gpu
+    git clone --recurse-submodules https://github.com/rust-gpu/rust-gpu
     ```
 
 1. **optional** Install [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools#downloads) and add it to your `PATH`. You can skip this step if you just want to run examples with the defaults. See [Using installed SPIRV-Tools](#using-installed-spirv-tools) if you decide to go with this option.
@@ -39,10 +39,10 @@ cargo run \
 
 You should see `warning: use-installed-tools feature on, skipping compilation of C++ code` during the compilation, but otherwise the build will function just the same as if you compiled the C++ code, with the exception that it will fail if you don't have SPIRV-Tools installed correctly.
 
-[spirv-builder]: https://embarkstudios.github.io/rust-gpu/api/spirv_builder/index.html
-[examples]: https://github.com/EmbarkStudios/rust-gpu/tree/main/examples
-[examples/runners]: https://github.com/EmbarkStudios/rust-gpu/tree/main/examples/runners
-[examples/runners/ash]: https://github.com/EmbarkStudios/rust-gpu/tree/main/examples/runners/ash
-[examples/runners/cpu]: https://github.com/EmbarkStudios/rust-gpu/tree/main/examples/runners/cpu
-[examples/runners/wgpu]: https://github.com/EmbarkStudios/rust-gpu/tree/main/examples/runners/wgpu
-[examples/shaders]: https://github.com/EmbarkStudios/rust-gpu/tree/main/examples/shaders
+[spirv-builder]: https://rust-gpu.github.io/rust-gpu/api/spirv_builder/index.html
+[examples]: https://github.com/rust-gpu/rust-gpu/tree/main/examples
+[examples/runners]: https://github.com/rust-gpu/rust-gpu/tree/main/examples/runners
+[examples/runners/ash]: https://github.com/rust-gpu/rust-gpu/tree/main/examples/runners/ash
+[examples/runners/cpu]: https://github.com/rust-gpu/rust-gpu/tree/main/examples/runners/cpu
+[examples/runners/wgpu]: https://github.com/rust-gpu/rust-gpu/tree/main/examples/runners/wgpu
+[examples/shaders]: https://github.com/rust-gpu/rust-gpu/tree/main/examples/shaders

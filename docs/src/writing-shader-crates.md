@@ -4,7 +4,7 @@ This is section is going to walk you through writing a shader in Rust and
 setting up your shader crate.
 
 Be aware that this project is in a very early phase, please [file an
-issue](https://github.com/EmbarkStudios/rust-gpu/issues) if there's something
+issue](https://github.com/rust-gpu/rust-gpu/issues) if there's something
 not working or unclear.
 
 ## Online
@@ -65,7 +65,7 @@ Substituting `shader_crate` with a relative path to your shader crate. The value
 `"spirv-unknown-vulkan1.1"`.
 
 The `SpirvBuilder` struct has numerous configuration options available, see
-[documentation](https://embarkstudios.github.io/rust-gpu/api/spirv_builder/struct.SpirvBuilder.html).
+[documentation](https://rust-gpu.github.io/rust-gpu/api/spirv_builder/struct.SpirvBuilder.html).
 
 #### `main.rs`
 The following will directly include the shader module binary into your application.
@@ -142,7 +142,7 @@ cargo build
 Now you should have `<project_name>.spv` SPIR-V file in `target/debug` that you
 can give to a renderer.
 
-[`rust-toolchain.toml`]: https://github.com/EmbarkStudios/rust-gpu/blob/main/rust-toolchain.toml
+[`rust-toolchain.toml`]: https://github.com/rust-gpu/rust-gpu/blob/main/rust-toolchain.toml
 
 ## Writing your first shader
 

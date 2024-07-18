@@ -33,7 +33,7 @@ As `spirv-builder` relies on `rustc_codegen_spirv` being built for it (by Cargo,
 
 **The current Rust toolchain version is: `nightly-2023-05-27`.**
 
-Rust toolchain version history across [rust-gpu releases](https://github.com/EmbarkStudios/rust-gpu/releases) (since `0.4`):
+Rust toolchain version history across [rust-gpu releases](https://github.com/rust-gpu/rust-gpu/releases) (since `0.4`):
 
 |`spirv-builder`<br>version|Rust toolchain<br>version|
 |:-:|:-:|
@@ -52,4 +52,4 @@ Notably, the error will also show what the `rust-toolchain.toml` file *should* c
 
 If you want to experiment with _different, **unsupported**_, Rust toolchain versions, this check can be omitted by defining the environment variable `RUSTGPU_SKIP_TOOLCHAIN_CHECK`. Keep in mind that, as `rustc_codegen_spirv` is *heavily* dependent on `rustc`'s internal APIs, diverging too much from the supported toolchain version will quickly result in compile errors (or worse, e.g. spurious errors and/or incorrect behavior, when compiling shaders with it).
 
-[rustgpu]: https://github.com/EmbarkStudios/rust-gpu/
+[rustgpu]: https://github.com/rust-gpu/rust-gpu/
