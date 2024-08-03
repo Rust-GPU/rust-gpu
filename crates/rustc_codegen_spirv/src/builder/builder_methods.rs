@@ -339,7 +339,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let exit_bb = self.append_sibling_block("memset_exit");
 
         let count = self.udiv(size_bytes, size_elem_const);
-        let index = self.alloca(count.ty, zero_align);
+        let index = self.alloca(self.lookup_type(count.ty).sizeof(self).unwrap(), zero_align);
         self.store(zero, index, zero_align);
         self.br(header_bb);
 
@@ -919,6 +919,45 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             s1
         }
     }
+
+    // HACK(eddyb) helper shared by `typed_alloca` and `alloca`.
+    fn declare_func_local_var(
+        &mut self,
+        ty: <Self as BackendTypes>::Type,
+        _align: Align,
+    ) -> SpirvValue {
+        let ptr_ty = self.type_ptr_to(ty);
+
+        // "All OpVariable instructions in a function must be the first instructions in the first block."
+        let mut builder = self.emit();
+        builder.select_block(Some(0)).unwrap();
+        let index = {
+            let block = &builder.module_ref().functions[builder.selected_function().unwrap()]
+                .blocks[builder.selected_block().unwrap()];
+            block
+                .instructions
+                .iter()
+                .enumerate()
+                .find_map(|(index, inst)| {
+                    if inst.class.opcode != Op::Variable {
+                        Some(InsertPoint::FromBegin(index))
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or(InsertPoint::End)
+        };
+        // TODO: rspirv doesn't have insert_variable function
+        let result_id = builder.id();
+        let inst = Instruction::new(
+            Op::Variable,
+            Some(ptr_ty),
+            Some(result_id),
+            vec![Operand::StorageClass(StorageClass::Function)],
+        );
+        builder.insert_into_block(index, inst).unwrap();
+        result_id.with_type(ptr_ty)
+    }
 }
 
 impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
@@ -1418,43 +1457,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     // HACK(eddyb) new method patched into `pqp_cg_ssa` (see `build.rs`).
     #[cfg(not(rustc_codegen_spirv_disable_pqp_cg_ssa))]
     fn typed_alloca(&mut self, ty: Self::Type, align: Align) -> Self::Value {
-        self.alloca(ty, align)
+        self.declare_func_local_var(ty, align)
     }
-    fn alloca(&mut self, ty: Self::Type, _align: Align) -> Self::Value {
-        let ptr_ty = self.type_ptr_to(ty);
-        // "All OpVariable instructions in a function must be the first instructions in the first block."
-        let mut builder = self.emit();
-        builder.select_block(Some(0)).unwrap();
-        let index = {
-            let block = &builder.module_ref().functions[builder.selected_function().unwrap()]
-                .blocks[builder.selected_block().unwrap()];
-            block
-                .instructions
-                .iter()
-                .enumerate()
-                .find_map(|(index, inst)| {
-                    if inst.class.opcode != Op::Variable {
-                        Some(InsertPoint::FromBegin(index))
-                    } else {
-                        None
-                    }
-                })
-                .unwrap_or(InsertPoint::End)
-        };
-        // TODO: rspirv doesn't have insert_variable function
-        let result_id = builder.id();
-        let inst = Instruction::new(
-            Op::Variable,
-            Some(ptr_ty),
-            Some(result_id),
-            vec![Operand::StorageClass(StorageClass::Function)],
-        );
-        builder.insert_into_block(index, inst).unwrap();
-        result_id.with_type(ptr_ty)
+    fn alloca(&mut self, size: Size, align: Align) -> Self::Value {
+        self.declare_func_local_var(self.type_array(self.type_i8(), size.bytes()), align)
     }
 
-    fn byte_array_alloca(&mut self, _len: Self::Value, _align: Align) -> Self::Value {
-        self.fatal("array alloca not supported yet")
+    fn dynamic_alloca(&mut self, _len: Self::Value, _align: Align) -> Self::Value {
+        self.fatal("dynamic alloca not supported yet")
     }
 
     fn load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
