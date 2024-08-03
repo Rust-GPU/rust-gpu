@@ -71,7 +71,7 @@ pub struct CodegenCx<'tcx> {
     pub panic_entry_points: RefCell<FxHashSet<DefId>>,
 
     /// `core::fmt::Arguments::new_{v1,const}` instances (for Rust 2021 panics).
-    pub fmt_args_new_fn_ids: RefCell<FxHashSet<Word>>,
+    pub fmt_args_new_fn_ids: RefCell<FxHashMap<Word, (usize, usize)>>,
 
     /// `core::fmt::rt::Argument::new_*::<T>` instances (for panics' `format_args!`),
     /// with their `T` type (i.e. of the value being formatted), and formatting

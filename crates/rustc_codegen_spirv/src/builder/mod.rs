@@ -42,7 +42,6 @@ pub struct Builder<'a, 'tcx> {
     cx: &'a CodegenCx<'tcx>,
     cursor: BuilderCursor,
     current_fn: <Self as BackendTypes>::Function,
-    basic_block: <Self as BackendTypes>::BasicBlock,
     current_span: Option<Span>,
 }
 

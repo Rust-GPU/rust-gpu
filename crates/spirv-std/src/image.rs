@@ -1039,6 +1039,8 @@ impl<
 /// `SampledImage<Image!(...)>`.
 #[spirv(sampled_image)]
 #[derive(Copy, Clone)]
+// HACK(eddyb) false positive due to `rustc` not understanding e.g. entry-points.
+#[allow(dead_code)]
 pub struct SampledImage<I> {
     _image: I,
 }
