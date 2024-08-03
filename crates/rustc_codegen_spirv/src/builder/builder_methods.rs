@@ -977,7 +977,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             cx,
             cursor,
             current_fn,
-            basic_block: llbb,
             current_span: Default::default(),
         }
     }
@@ -987,7 +986,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     }
 
     fn llbb(&self) -> Self::BasicBlock {
-        self.basic_block
+        // FIXME(eddyb) `llbb` should be removed from `rustc_codegen_ssa::traits`.
+        unreachable!("dead code within `rustc_codegen_ssa`")
     }
 
     fn set_span(&mut self, span: Span) {
@@ -2797,7 +2797,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 ///
                 /// E.g. for `format_args!("{a} {b:x}")` they'll be:
                 /// * `&a` with `typeof a` and ' ',
-                ///  *`&b` with `typeof b` and 'x'
+                /// * `&b` with `typeof b` and 'x'
                 ref_arg_ids_with_ty_and_spec: SmallVec<[(Word, Ty<'tcx>, char); 2]>,
             }
             struct FormatArgsNotRecognized(String);
@@ -2810,24 +2810,23 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     SpirvConst::Scalar(x) => Some(u32::try_from(x).ok()? as usize),
                     _ => None,
                 };
-                let const_slice_as_elem_ids = |slice_ptr_and_len_ids: &[Word]| {
-                    if let [ptr_id, len_id] = slice_ptr_and_len_ids[..] {
-                        if let SpirvConst::PtrTo { pointee } =
-                            self.builder.lookup_const_by_id(ptr_id)?
+                let const_slice_as_elem_ids = |ptr_id: Word, len: usize| {
+                    if let SpirvConst::PtrTo { pointee } =
+                        self.builder.lookup_const_by_id(ptr_id)?
+                    {
+                        if let SpirvConst::Composite(elems) =
+                            self.builder.lookup_const_by_id(pointee)?
                         {
-                            if let SpirvConst::Composite(elems) =
-                                self.builder.lookup_const_by_id(pointee)?
-                            {
-                                if elems.len() == const_u32_as_usize(len_id)? {
-                                    return Some(elems);
-                                }
+                            if elems.len() == len {
+                                return Some(elems);
                             }
                         }
                     }
                     None
                 };
-                let const_str_as_utf8 = |str_ptr_and_len_ids: &[Word]| {
-                    let piece_str_bytes = const_slice_as_elem_ids(str_ptr_and_len_ids)?
+                let const_str_as_utf8 = |&[str_ptr_id, str_len_id]: &[Word; 2]| {
+                    let str_len = const_u32_as_usize(str_len_id)?;
+                    let piece_str_bytes = const_slice_as_elem_ids(str_ptr_id, str_len)?
                         .iter()
                         .map(|&id| u8::try_from(const_u32_as_usize(id)?).ok())
                         .collect::<Option<Vec<u8>>>()?;
@@ -3001,42 +3000,36 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         "fmt::Arguments::new call: ran out of instructions".into(),
                     )
                 })?;
-                let ((pieces_slice_ptr_id, pieces_len_id), (rt_args_slice_ptr_id, rt_args_count)) =
+                let ((pieces_slice_ptr_id, pieces_len), (rt_args_slice_ptr_id, rt_args_count)) =
                     match fmt_args_new_call_insts[..] {
                         [
                             Inst::Call(call_ret_id, callee_id, ref call_args),
                             Inst::Store(st_dst_id, st_val_id),
                             Inst::Load(ld_val_id, ld_src_id),
-                        ] if self.fmt_args_new_fn_ids.borrow().contains(&callee_id)
-                            && call_ret_id == st_val_id
+                        ] if call_ret_id == st_val_id
                             && st_dst_id == ld_src_id
                             && ld_val_id == format_args_id =>
                         {
                             require_local_var(st_dst_id, "fmt::Arguments::new destination")?;
 
+                            let Some(&(pieces_len, rt_args_count)) =
+                                self.fmt_args_new_fn_ids.borrow().get(&callee_id)
+                            else {
+                                return Err(FormatArgsNotRecognized(
+                                    "fmt::Arguments::new callee not registered".into(),
+                                ));
+                            };
+
                             match call_args[..] {
                                 // `<core::fmt::Arguments>::new_v1`
-                                [
-                                    pieces_slice_ptr_id,
-                                    pieces_len_id,
-                                    rt_args_slice_ptr_id,
-                                    rt_args_len_id,
-                                ] => (
-                                    (pieces_slice_ptr_id, pieces_len_id),
-                                    (
-                                        Some(rt_args_slice_ptr_id),
-                                        const_u32_as_usize(rt_args_len_id).ok_or_else(|| {
-                                            FormatArgsNotRecognized(
-                                                "fmt::Arguments::new: args.len() not constant"
-                                                    .into(),
-                                            )
-                                        })?,
-                                    ),
+                                [pieces_slice_ptr_id, rt_args_slice_ptr_id] => (
+                                    (pieces_slice_ptr_id, pieces_len),
+                                    (Some(rt_args_slice_ptr_id), rt_args_count),
                                 ),
 
                                 // `<core::fmt::Arguments>::new_const`
-                                [pieces_slice_ptr_id, pieces_len_id] => {
-                                    ((pieces_slice_ptr_id, pieces_len_id), (None, 0))
+                                [pieces_slice_ptr_id] if rt_args_count == 0 => {
+                                    ((pieces_slice_ptr_id, pieces_len), (None, rt_args_count))
                                 }
 
                                 _ => {
@@ -3068,21 +3061,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 // arguments (from e.g. new `assert!`s being added to `core`),
                 // we have to confirm their many instructions for removal.
                 if rt_args_count > 0 {
-                    let rt_args_slice_ptr_id = rt_args_slice_ptr_id.unwrap();
-                    let rt_args_array_ptr_id = match try_rev_take(1).ok_or_else(|| {
-                        FormatArgsNotRecognized(
-                            "&[fmt::rt::Argument] bitcast: ran out of instructions".into(),
-                        )
-                    })?[..]
-                    {
-                        [Inst::Bitcast(out_id, in_id)] if out_id == rt_args_slice_ptr_id => in_id,
-                        _ => {
-                            return Err(FormatArgsNotRecognized(
-                                "&[fmt::rt::Argument] bitcast".into(),
-                            ));
-                        }
-                    };
-                    require_local_var(rt_args_array_ptr_id, "[fmt::rt::Argument; N]")?;
+                    let rt_args_array_ptr_id = rt_args_slice_ptr_id.unwrap();
 
                     // Each runtime argument has 4 instructions to call one of
                     // the `fmt::rt::Argument::new_*` functions (and temporarily
@@ -3162,13 +3141,15 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     _ => pieces_slice_ptr_id,
                 };
                 decoded_format_args.const_pieces =
-                    const_slice_as_elem_ids(&[pieces_slice_ptr_id, pieces_len_id]).and_then(
+                    const_slice_as_elem_ids(pieces_slice_ptr_id, pieces_len).and_then(
                         |piece_ids| {
                             piece_ids
                                 .iter()
                                 .map(|&piece_id| {
                                     match self.builder.lookup_const_by_id(piece_id)? {
-                                        SpirvConst::Composite(piece) => const_str_as_utf8(piece),
+                                        SpirvConst::Composite(piece) => {
+                                            const_str_as_utf8(piece.try_into().ok()?)
+                                        }
                                         _ => None,
                                     }
                                 })
@@ -3198,7 +3179,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                 .map(|s| Cow::Owned(s.replace('%', "%%")))
                                 .interleave(ref_arg_ids_with_ty_and_spec.iter().map(
                                     |&(ref_id, ty, spec)| {
-                                        use rustc_target::abi::{Integer::*, Primitive::*};
+                                        use rustc_target::abi::{
+                                            Float::*, Integer::*, Primitive::*,
+                                        };
 
                                         let layout = self.layout_of(ty);
 
@@ -3212,7 +3195,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                             (' ' | '?', Some(Int(I32, false))) => "%u",
                                             ('x', Some(Int(I32, false))) => "%x",
                                             (' ' | '?', Some(Int(I32, true))) => "%i",
-                                            (' ' | '?', Some(F32)) => "%f",
+                                            (' ' | '?', Some(Float(F32))) => "%f",
 
                                             _ => "",
                                         };

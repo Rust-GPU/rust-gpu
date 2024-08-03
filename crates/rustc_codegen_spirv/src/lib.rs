@@ -3,7 +3,6 @@
 #![allow(internal_features)]
 #![allow(rustc::diagnostic_outside_of_impl)]
 #![allow(rustc::untranslatable_diagnostic)]
-#![cfg_attr(bootstrap, feature(associated_type_bounds))]
 #![feature(box_patterns)]
 #![feature(if_let_guard)]
 #![feature(let_chains)]
@@ -33,7 +32,6 @@
 #![feature(assert_matches)]
 #![feature(result_flattening)]
 #![feature(lint_reasons)]
-#![feature(lazy_cell)]
 // crate-specific exceptions:
 #![allow(
     unsafe_code,                // rustc_codegen_ssa requires unsafe functions in traits to be impl'd
@@ -235,6 +233,9 @@ impl ThinBufferMethods for SpirvThinBuffer {
     fn data(&self) -> &[u8] {
         spirv_tools::binary::from_binary(&self.0)
     }
+    fn thin_link_data(&self) -> &[u8] {
+        &[]
+    }
 }
 
 #[derive(Clone)]
@@ -414,7 +415,10 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         })
     }
 
-    fn prepare_thin(module: ModuleCodegen<Self::Module>) -> (String, Self::ThinBuffer) {
+    fn prepare_thin(
+        module: ModuleCodegen<Self::Module>,
+        _want_summary: bool,
+    ) -> (String, Self::ThinBuffer) {
         (module.name, SpirvThinBuffer(module.module_llvm))
     }
 
