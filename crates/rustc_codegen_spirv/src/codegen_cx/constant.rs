@@ -11,7 +11,7 @@ use rustc_middle::bug;
 use rustc_middle::mir::interpret::{alloc_range, ConstAllocation, GlobalAlloc, Scalar};
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_span::{Span, DUMMY_SP};
-use rustc_target::abi::{self, AddressSpace, HasDataLayout, Integer, Primitive, Size};
+use rustc_target::abi::{self, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
 
 impl<'tcx> CodegenCx<'tcx> {
     pub fn def_constant(&self, ty: Word, val: SpirvConst<'_, 'tcx>) -> SpirvValue {
@@ -398,8 +398,8 @@ impl<'tcx> CodegenCx<'tcx> {
                 let size = ty_concrete.sizeof(self).unwrap();
                 let primitive = match ty_concrete {
                     SpirvType::Bool => Primitive::Int(Integer::fit_unsigned(0), false),
-                    SpirvType::Integer(int_size, int_signedness) => {
-                        let integer = match int_size {
+                    SpirvType::Integer(int_size, int_signedness) => Primitive::Int(
+                        match int_size {
                             8 => Integer::I8,
                             16 => Integer::I16,
                             32 => Integer::I32,
@@ -410,18 +410,20 @@ impl<'tcx> CodegenCx<'tcx> {
                                     .dcx()
                                     .fatal(format!("invalid size for integer: {other}"));
                             }
-                        };
-                        Primitive::Int(integer, int_signedness)
-                    }
-                    SpirvType::Float(float_size) => match float_size {
-                        32 => Primitive::F32,
-                        64 => Primitive::F64,
+                        },
+                        int_signedness,
+                    ),
+                    SpirvType::Float(float_size) => Primitive::Float(match float_size {
+                        16 => Float::F16,
+                        32 => Float::F32,
+                        64 => Float::F64,
+                        128 => Float::F128,
                         other => {
                             self.tcx
                                 .dcx()
                                 .fatal(format!("invalid size for float: {other}"));
                         }
-                    },
+                    }),
                     SpirvType::Pointer { .. } => Primitive::Pointer(AddressSpace::DATA),
                     unsupported_spirv_type => bug!(
                         "invalid spirv type internal to create_alloc_const2: {:?}",

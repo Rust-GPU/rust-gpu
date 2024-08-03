@@ -23,7 +23,7 @@ use crate::custom_decorations::{CustomDecoration, SrcLocDecoration, ZombieDecora
 use crate::custom_insts;
 use either::Either;
 use rspirv::binary::{Assemble, Consumer};
-use rspirv::dr::{Block, Instruction, Loader, Module, ModuleHeader, Operand};
+use rspirv::dr::{Block, Loader, Module, ModuleHeader, Operand};
 use rspirv::spirv::{Op, StorageClass, Word};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
@@ -87,33 +87,22 @@ fn id(header: &mut ModuleHeader) -> Word {
 }
 
 fn apply_rewrite_rules(rewrite_rules: &FxHashMap<Word, Word>, blocks: &mut [Block]) {
-    let apply = |inst: &mut Instruction| {
-        if let Some(ref mut id) = &mut inst.result_id {
-            if let Some(&rewrite) = rewrite_rules.get(id) {
-                *id = rewrite;
-            }
-        }
-
-        if let Some(ref mut id) = &mut inst.result_type {
-            if let Some(&rewrite) = rewrite_rules.get(id) {
-                *id = rewrite;
-            }
-        }
-
-        inst.operands.iter_mut().for_each(|op| {
-            if let Some(id) = op.id_ref_any_mut() {
-                if let Some(&rewrite) = rewrite_rules.get(id) {
-                    *id = rewrite;
-                }
-            }
+    let all_ids_mut = blocks
+        .iter_mut()
+        .flat_map(|b| b.label.iter_mut().chain(b.instructions.iter_mut()))
+        .flat_map(|inst| {
+            inst.result_id
+                .iter_mut()
+                .chain(inst.result_type.iter_mut())
+                .chain(
+                    inst.operands
+                        .iter_mut()
+                        .filter_map(|op| op.id_ref_any_mut()),
+                )
         });
-    };
-    for block in blocks {
-        for inst in &mut block.label {
-            apply(inst);
-        }
-        for inst in &mut block.instructions {
-            apply(inst);
+    for id in all_ids_mut {
+        if let Some(&rewrite) = rewrite_rules.get(id) {
+            *id = rewrite;
         }
     }
 }
