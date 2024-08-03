@@ -8,12 +8,14 @@ use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
 use rustc_index::Idx;
+use rustc_middle::mir::interpret::ErrorHandled;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
-use rustc_middle::ty::GenericArgsRef;
 use rustc_middle::ty::{
-    self, Const, CoroutineArgs, FloatTy, IntTy, ParamEnv, PolyFnSig, Ty, TyCtxt, TyKind, UintTy,
+    self, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, ParamEnv, PolyFnSig, Ty,
+    TyCtxt, TyKind, UintTy,
 };
+use rustc_middle::ty::{GenericArgsRef, ScalarInt};
 use rustc_middle::{bug, span_bug};
 use rustc_span::def_id::DefId;
 use rustc_span::DUMMY_SP;
@@ -26,8 +28,6 @@ use rustc_target::spec::abi::Abi as SpecAbi;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::fmt;
-
-use num_traits::cast::FromPrimitive;
 
 pub(crate) fn provide(providers: &mut Providers) {
     // This is a lil weird: so, we obviously don't support C ABIs at all. However, libcore does declare some extern
@@ -501,13 +501,12 @@ fn trans_scalar<'tcx>(
     }
 
     match scalar.primitive() {
-        Primitive::Int(width, signedness) => {
-            SpirvType::Integer(width.size().bits() as u32, signedness).def(span, cx)
+        Primitive::Int(int_kind, signedness) => {
+            SpirvType::Integer(int_kind.size().bits() as u32, signedness).def(span, cx)
         }
-        Primitive::F16 => SpirvType::Float(16).def(span, cx),
-        Primitive::F32 => SpirvType::Float(32).def(span, cx),
-        Primitive::F64 => SpirvType::Float(64).def(span, cx),
-        Primitive::F128 => SpirvType::Float(128).def(span, cx),
+        Primitive::Float(float_kind) => {
+            SpirvType::Float(float_kind.size().bits() as u32).def(span, cx)
+        }
         Primitive::Pointer(_) => {
             let pointee_ty = dig_scalar_pointee(cx, ty, offset);
             // Pointers can be recursive. So, record what we're currently translating, and if we're already translating
@@ -862,41 +861,51 @@ fn trans_intrinsic_type<'tcx>(
             // let image_format: spirv::ImageFormat =
             //     type_from_variant_discriminant(cx, args.const_at(6));
 
-            trait FromU128Const: Sized {
-                fn from_u128_const(n: u128) -> Option<Self>;
+            trait FromScalarInt: Sized {
+                fn from_scalar_int(n: ScalarInt) -> Option<Self>;
             }
 
-            impl FromU128Const for u32 {
-                fn from_u128_const(n: u128) -> Option<Self> {
-                    u32::from_u128(n)
+            impl FromScalarInt for u32 {
+                fn from_scalar_int(n: ScalarInt) -> Option<Self> {
+                    n.try_to_u32().ok()
                 }
             }
 
-            impl FromU128Const for Dim {
-                fn from_u128_const(n: u128) -> Option<Self> {
-                    Dim::from_u32(u32::from_u128(n)?)
+            impl FromScalarInt for Dim {
+                fn from_scalar_int(n: ScalarInt) -> Option<Self> {
+                    Dim::from_u32(u32::from_scalar_int(n)?)
                 }
             }
 
-            impl FromU128Const for ImageFormat {
-                fn from_u128_const(n: u128) -> Option<Self> {
-                    ImageFormat::from_u32(u32::from_u128(n)?)
+            impl FromScalarInt for ImageFormat {
+                fn from_scalar_int(n: ScalarInt) -> Option<Self> {
+                    ImageFormat::from_u32(u32::from_scalar_int(n)?)
                 }
             }
 
-            fn const_int_value<'tcx, P: FromU128Const>(
+            fn const_int_value<'tcx, P: FromScalarInt>(
                 cx: &CodegenCx<'tcx>,
                 const_: Const<'tcx>,
             ) -> Result<P, ErrorGuaranteed> {
-                assert!(const_.ty().is_integral());
-                let value = const_.eval_bits(cx.tcx, ParamEnv::reveal_all());
-                match P::from_u128_const(value) {
-                    Some(v) => Ok(v),
-                    None => Err(cx
-                        .tcx
-                        .dcx()
-                        .err(format!("Invalid value for Image const generic: {value}"))),
-                }
+                const_
+                    .eval(cx.tcx, ParamEnv::reveal_all(), DUMMY_SP)
+                    .map_err(|e| match e {
+                        ErrorHandled::Reported(reported_error_info, _) => {
+                            Some(reported_error_info.into())
+                        }
+                        ErrorHandled::TooGeneric(_) => None,
+                    })
+                    .and_then(|(const_ty, const_val)| {
+                        assert!(const_ty.is_integral());
+                        P::from_scalar_int(const_val.try_to_scalar_int().ok_or(None)?).ok_or(None)
+                    })
+                    .map_err(|already_reported| {
+                        already_reported.unwrap_or_else(|| {
+                            cx.tcx
+                                .dcx()
+                                .err(format!("invalid value for Image const generic: {const_}"))
+                        })
+                    })
             }
 
             let dim = const_int_value(cx, args.const_at(1))?;

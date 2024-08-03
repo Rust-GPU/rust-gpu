@@ -198,6 +198,8 @@ pub enum CommittedIntersection {
 #[spirv(ray_query)]
 // HACK(eddyb) avoids "transparent newtype of `_anti_zst_padding`" misinterpretation.
 #[repr(C)]
+// HACK(eddyb) false positive due to `rustc` not understanding e.g. `ray_query!`.
+#[allow(dead_code)]
 pub struct RayQuery {
     // HACK(eddyb) avoids the layout becoming ZST (and being elided in one way
     // or another, before `#[spirv(ray_query)]` can special-case it).

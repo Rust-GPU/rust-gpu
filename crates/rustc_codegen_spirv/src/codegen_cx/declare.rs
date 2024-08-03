@@ -193,14 +193,26 @@ impl<'tcx> CodegenCx<'tcx> {
 
         // HACK(eddyb) there is no good way to identify these definitions
         // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
-        match &demangled_symbol_name[..] {
-            "core::panicking::panic_nounwind_fmt" => {
-                self.panic_entry_points.borrow_mut().insert(def_id);
-            }
-            "<core::fmt::Arguments>::new_v1" | "<core::fmt::Arguments>::new_const" => {
-                self.fmt_args_new_fn_ids.borrow_mut().insert(fn_id);
-            }
-            _ => {}
+        if demangled_symbol_name == "core::panicking::panic_nounwind_fmt" {
+            self.panic_entry_points.borrow_mut().insert(def_id);
+        }
+        if let Some(pieces_len) = demangled_symbol_name
+            .strip_prefix("<core::fmt::Arguments>::new_const::<")
+            .and_then(|s| s.strip_suffix(">"))
+        {
+            self.fmt_args_new_fn_ids
+                .borrow_mut()
+                .insert(fn_id, (pieces_len.parse().unwrap(), 0));
+        }
+        if let Some(generics) = demangled_symbol_name
+            .strip_prefix("<core::fmt::Arguments>::new_v1::<")
+            .and_then(|s| s.strip_suffix(">"))
+        {
+            let (pieces_len, rt_args_len) = generics.split_once(", ").unwrap();
+            self.fmt_args_new_fn_ids.borrow_mut().insert(
+                fn_id,
+                (pieces_len.parse().unwrap(), rt_args_len.parse().unwrap()),
+            );
         }
 
         // HACK(eddyb) there is no good way to identify these definitions
