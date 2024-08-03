@@ -82,11 +82,7 @@ impl<'tcx> CodegenCx<'tcx> {
                     .span_err(span, format!("cannot declare {name} as an entry point"));
                 return;
             };
-            let body = self
-                .tcx
-                .hir()
-                .body(self.tcx.hir().body_owned_by(fn_local_def_id));
-            body.params
+            self.tcx.hir().body_owned_by(fn_local_def_id).params
         };
         for (arg_abi, hir_param) in fn_abi.args.iter().zip(hir_params) {
             match arg_abi.mode {
