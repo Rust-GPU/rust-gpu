@@ -190,13 +190,14 @@ impl<'tcx> CodegenCx<'tcx> {
 
         // HACK(eddyb) there is no good way to identify these definitions
         // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
-        if [
-            "<core::fmt::Arguments>::new_v1",
-            "<core::fmt::Arguments>::new_const",
-        ]
-        .contains(&&demangled_symbol_name[..])
-        {
-            self.fmt_args_new_fn_ids.borrow_mut().insert(fn_id);
+        match &demangled_symbol_name[..] {
+            "core::panicking::panic_nounwind_fmt" => {
+                self.panic_entry_points.borrow_mut().insert(def_id);
+            }
+            "<core::fmt::Arguments>::new_v1" | "<core::fmt::Arguments>::new_const" => {
+                self.fmt_args_new_fn_ids.borrow_mut().insert(fn_id);
+            }
+            _ => {}
         }
 
         // HACK(eddyb) there is no good way to identify these definitions
