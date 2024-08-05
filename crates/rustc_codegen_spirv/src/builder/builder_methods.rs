@@ -2818,22 +2818,34 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         kind: SpirvValueKind::Def(b_id),
                         ..
                     },
-                    // NOTE(fee1-dead): the standard `panic` takes in a `Location` due to `track_caller`.
-                    // but for `panic_nounwind` it does not, therefore we only look at the first two arguments.
-                ] = args[..2]
+                    ref other_args @ ..,
+                ] = args[..]
                 {
-                    if let Some(const_msg) = const_str_as_utf8(&[a_id, b_id]) {
-                        decoded_format_args.const_pieces = Some([const_msg].into_iter().collect());
-                        return Ok(decoded_format_args);
+                    // Optional `&'static panic::Location<'static>`.
+                    if other_args.len() <= 1 {
+                        if let Some(const_msg) = const_str_as_utf8(&[a_id, b_id]) {
+                            decoded_format_args.const_pieces =
+                                Some([const_msg].into_iter().collect());
+                            return Ok(decoded_format_args);
+                        }
                     }
                 }
 
-                let format_args_id = match args {
-                    &[
+                let format_args_id = match *args {
+                    // HACK(eddyb) `panic_nounwind_fmt` takes an extra argument.
+                    [
                         SpirvValue {
                             kind: SpirvValueKind::Def(format_args_id),
                             ..
                         },
+                        _, // `&'static panic::Location<'static>`
+                    ]
+                    | [
+                        SpirvValue {
+                            kind: SpirvValueKind::Def(format_args_id),
+                            ..
+                        },
+                        _, // `force_no_backtrace: bool`
                         _, // `&'static panic::Location<'static>`
                     ] => format_args_id,
 
