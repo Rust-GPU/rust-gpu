@@ -1,4 +1,5 @@
 // build-fail
+// normalize-stderr-test "\S*/library/core/src/" -> "$$CORE_SRC/"
 
 // FIXME(eddyb) this should work, but `unchecked_add_unsigned` doesn't exist,
 // so range internals use `a.checked_add_unsigned(b).unwrap_unchecked()` instead,
