@@ -6,7 +6,7 @@
 // compile-flags: -C target-feature=+ext:SPV_KHR_non_semantic_info
 // compile-flags: -C llvm-args=--abort-strategy=debug-printf
 // compile-flags: -C llvm-args=--disassemble
-
+//
 // FIXME(eddyb) consider using such replacements also for dealing
 // with `OpLine` changing all the time (esp. in libcore functions).
 //
@@ -15,7 +15,7 @@
 // normalize-stderr-test "OpSource .*\n" -> ""
 // normalize-stderr-test "OpExtension .SPV_KHR_vulkan_memory_model.\n" -> ""
 // normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"
-
+// normalize-stderr-test "\S:\S*/panic_builtin_bounds_check.rs" -> "$$DIR/panic_builtin_bounds_check.rs"
 // FIXME(eddyb) handle this one in the test runner.
 // normalize-stderr-test "\S*/lib/rustlib/" -> "$$SYSROOT/lib/rustlib/"
 
