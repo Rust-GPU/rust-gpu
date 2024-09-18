@@ -145,7 +145,13 @@ impl Runner {
             // in different testing variations (i.e. experimental features), while
             // keeping *most* of the tests unchanged, we make use of "stage IDs",
             // which offer `// only-S` and `// ignore-S` for any stage ID `S`.
-            let stage_id = variation.name;
+            let stage_id = if variation.name == "default" {
+                // Use the environment name as the stage ID.
+                env.to_string()
+            } else {
+                // Include the variation name in the stage ID.
+                format!("{}-{}", env, variation.name)
+            };
 
             let target = format!("{SPIRV_TARGET_PREFIX}{env}");
             let libs = build_deps(&self.deps_target_dir, &self.codegen_backend_path, &target);
@@ -164,7 +170,7 @@ impl Runner {
             flags += variation.extra_flags;
 
             let config = compiletest::Config {
-                stage_id: stage_id.to_string(),
+                stage_id,
                 target_rustcflags: Some(flags),
                 mode: mode.parse().expect("Invalid mode"),
                 target: target_spec_json(&target),
