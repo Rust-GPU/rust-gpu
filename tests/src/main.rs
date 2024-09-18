@@ -145,7 +145,13 @@ impl Runner {
             // in different testing variations (i.e. experimental features), while
             // keeping *most* of the tests unchanged, we make use of "stage IDs",
             // which offer `// only-S` and `// ignore-S` for any stage ID `S`.
-            let stage_id = variation.name;
+            let stage_id = if variation.name == "default" {
+                // Use the environment name as the stage ID.
+                env
+            } else {
+                // Include the variation name in the stage ID.
+                &format!("{}-{}", env, variation.name)
+            };
 
             let target = format!("{SPIRV_TARGET_PREFIX}{env}");
             let libs = build_deps(&self.deps_target_dir, &self.codegen_backend_path, &target);
