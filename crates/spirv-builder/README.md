@@ -31,12 +31,13 @@ const SHADER: &[u8] = include_bytes!(env!("my_shaders.spv"));
 
 As `spirv-builder` relies on `rustc_codegen_spirv` being built for it (by Cargo, as a direct dependency), and due to the special nature of the latter (as a `rustc` codegen backend "plugin"), both end up sharing the requirement for a very specific nightly toolchain version of Rust.
 
-**The current Rust toolchain version is: `nightly-2023-05-27`.**
+**The current Rust toolchain version is: `nightly-2024-04-24`.**
 
 Rust toolchain version history across [rust-gpu releases](https://github.com/rust-gpu/rust-gpu/releases) (since `0.4`):
 
 |`spirv-builder`<br>version|Rust toolchain<br>version|
 |:-:|:-:|
+|`0.10`|`nightly-2024-04-24`|
 |`0.9`|`nightly-2023-05-27`|
 |`0.8`|`nightly-2023-04-15`|
 |`0.7`|`nightly-2023-03-04`|
