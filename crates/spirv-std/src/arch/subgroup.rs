@@ -174,7 +174,7 @@ pub unsafe fn subgroup_memory_barrier_image() {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformElect")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_elect() -> bool {
+pub unsafe fn subgroup_elect() -> bool {
     let mut result = false;
 
     unsafe {
@@ -204,7 +204,7 @@ pub unsafe fn subgroup_non_uniform_elect() -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformAll")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_all(predicate: bool) -> bool {
+pub unsafe fn subgroup_all(predicate: bool) -> bool {
     let mut result = false;
 
     unsafe {
@@ -236,7 +236,7 @@ pub unsafe fn subgroup_non_uniform_all(predicate: bool) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformAny")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_any(predicate: bool) -> bool {
+pub unsafe fn subgroup_any(predicate: bool) -> bool {
     let mut result = false;
 
     unsafe {
@@ -268,7 +268,7 @@ pub unsafe fn subgroup_non_uniform_any(predicate: bool) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformAllEqual")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_all_equal<T: VectorOrScalar>(value: T) -> bool {
+pub unsafe fn subgroup_all_equal<T: VectorOrScalar>(value: T) -> bool {
     let mut result = false;
 
     unsafe {
@@ -306,7 +306,7 @@ pub unsafe fn subgroup_non_uniform_all_equal<T: VectorOrScalar>(value: T) -> boo
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBroadcast")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_broadcast<T: VectorOrScalar>(value: T, id: u32) -> T {
+pub unsafe fn subgroup_broadcast<T: VectorOrScalar>(value: T, id: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -339,7 +339,7 @@ pub unsafe fn subgroup_non_uniform_broadcast<T: VectorOrScalar>(value: T, id: u3
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBroadcastFirst")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_broadcast_first<T: VectorOrScalar>(value: T) -> T {
+pub unsafe fn subgroup_broadcast_first<T: VectorOrScalar>(value: T) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -372,7 +372,7 @@ pub unsafe fn subgroup_non_uniform_broadcast_first<T: VectorOrScalar>(value: T) 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallot")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_ballot(predicate: bool) -> SubgroupMask {
+pub unsafe fn subgroup_ballot(predicate: bool) -> SubgroupMask {
     let mut result = SubgroupMask::default();
 
     unsafe {
@@ -408,7 +408,7 @@ pub unsafe fn subgroup_non_uniform_ballot(predicate: bool) -> SubgroupMask {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformInverseBallot")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_inverse_ballot(subgroup_mask: SubgroupMask) -> bool {
+pub unsafe fn subgroup_inverse_ballot(subgroup_mask: SubgroupMask) -> bool {
     let mut result = false;
 
     unsafe {
@@ -446,10 +446,7 @@ pub unsafe fn subgroup_non_uniform_inverse_ballot(subgroup_mask: SubgroupMask) -
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotBitExtract")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_ballot_bit_extract(
-    subgroup_mask: SubgroupMask,
-    id: u32,
-) -> bool {
+pub unsafe fn subgroup_ballot_bit_extract(subgroup_mask: SubgroupMask, id: u32) -> bool {
     let mut result = false;
 
     unsafe {
@@ -487,9 +484,7 @@ pub unsafe fn subgroup_non_uniform_ballot_bit_extract(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotBitCount")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_ballot_bit_count<const GROUP_OP: u32>(
-    subgroup_mask: SubgroupMask,
-) -> u32 {
+pub unsafe fn subgroup_ballot_bit_count<const GROUP_OP: u32>(subgroup_mask: SubgroupMask) -> u32 {
     let mut result = 0;
 
     unsafe {
@@ -523,7 +518,7 @@ pub unsafe fn subgroup_non_uniform_ballot_bit_count<const GROUP_OP: u32>(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotFindLSB")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_ballot_find_lsb(subgroup_mask: SubgroupMask) -> u32 {
+pub unsafe fn subgroup_ballot_find_lsb(subgroup_mask: SubgroupMask) -> u32 {
     let mut result = 0;
 
     unsafe {
@@ -556,7 +551,7 @@ pub unsafe fn subgroup_non_uniform_ballot_find_lsb(subgroup_mask: SubgroupMask) 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotFindMSB")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_ballot_find_msb(subgroup_mask: SubgroupMask) -> u32 {
+pub unsafe fn subgroup_ballot_find_msb(subgroup_mask: SubgroupMask) -> u32 {
     let mut result = 0;
 
     unsafe {
@@ -591,7 +586,7 @@ pub unsafe fn subgroup_non_uniform_ballot_find_msb(subgroup_mask: SubgroupMask) 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffle")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_shuffle<T: VectorOrScalar>(value: T, id: u32) -> T {
+pub unsafe fn subgroup_shuffle<T: VectorOrScalar>(value: T, id: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -628,7 +623,7 @@ pub unsafe fn subgroup_non_uniform_shuffle<T: VectorOrScalar>(value: T, id: u32)
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleXor")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_shuffle_xor<T: VectorOrScalar>(value: T, mask: u32) -> T {
+pub unsafe fn subgroup_shuffle_xor<T: VectorOrScalar>(value: T, mask: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -665,7 +660,7 @@ pub unsafe fn subgroup_non_uniform_shuffle_xor<T: VectorOrScalar>(value: T, mask
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleUp")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_shuffle_up<T: VectorOrScalar>(value: T, delta: u32) -> T {
+pub unsafe fn subgroup_shuffle_up<T: VectorOrScalar>(value: T, delta: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -702,7 +697,7 @@ pub unsafe fn subgroup_non_uniform_shuffle_up<T: VectorOrScalar>(value: T, delta
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleDown")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_shuffle_down<T: VectorOrScalar>(value: T, delta: u32) -> T {
+pub unsafe fn subgroup_shuffle_down<T: VectorOrScalar>(value: T, delta: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -737,10 +732,7 @@ pub unsafe fn subgroup_non_uniform_shuffle_down<T: VectorOrScalar>(value: T, del
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformIAdd")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_i_add<
-    const GROUP_OP: u32,
-    I: VectorOrScalar<Scalar = impl Integer>,
->(
+pub unsafe fn subgroup_i_add<const GROUP_OP: u32, I: VectorOrScalar<Scalar = impl Integer>>(
     value: I,
 ) -> I {
     let mut result = I::default();
@@ -778,7 +770,7 @@ pub unsafe fn subgroup_non_uniform_i_add<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformIAdd")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_i_add_clustered<
+pub unsafe fn subgroup_i_add_clustered<
     const CLUSTER_SIZE: u32,
     I: VectorOrScalar<Scalar = impl Integer>,
 >(
@@ -819,10 +811,7 @@ pub unsafe fn subgroup_non_uniform_i_add_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformFAdd")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_f_add<
-    const GROUP_OP: u32,
-    F: VectorOrScalar<Scalar = impl Float>,
->(
+pub unsafe fn subgroup_f_add<const GROUP_OP: u32, F: VectorOrScalar<Scalar = impl Float>>(
     value: F,
 ) -> F {
     let mut result = F::default();
@@ -860,7 +849,7 @@ pub unsafe fn subgroup_non_uniform_f_add<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformFAdd")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_f_add_clustered<
+pub unsafe fn subgroup_f_add_clustered<
     const CLUSTER_SIZE: u32,
     F: VectorOrScalar<Scalar = impl Float>,
 >(
@@ -901,10 +890,7 @@ pub unsafe fn subgroup_non_uniform_f_add_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformIMul")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_i_mul<
-    const GROUP_OP: u32,
-    I: VectorOrScalar<Scalar = impl Integer>,
->(
+pub unsafe fn subgroup_i_mul<const GROUP_OP: u32, I: VectorOrScalar<Scalar = impl Integer>>(
     value: I,
 ) -> I {
     let mut result = I::default();
@@ -942,7 +928,7 @@ pub unsafe fn subgroup_non_uniform_i_mul<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformIMul")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_i_mul_clustered<
+pub unsafe fn subgroup_i_mul_clustered<
     const CLUSTER_SIZE: u32,
     I: VectorOrScalar<Scalar = impl Integer>,
 >(
@@ -983,10 +969,7 @@ pub unsafe fn subgroup_non_uniform_i_mul_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformFMul")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_f_mul<
-    const GROUP_OP: u32,
-    F: VectorOrScalar<Scalar = impl Float>,
->(
+pub unsafe fn subgroup_f_mul<const GROUP_OP: u32, F: VectorOrScalar<Scalar = impl Float>>(
     value: F,
 ) -> F {
     let mut result = F::default();
@@ -1024,7 +1007,7 @@ pub unsafe fn subgroup_non_uniform_f_mul<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformFMul")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_f_mul_clustered<
+pub unsafe fn subgroup_f_mul_clustered<
     const CLUSTER_SIZE: u32,
     F: VectorOrScalar<Scalar = impl Float>,
 >(
@@ -1065,7 +1048,7 @@ pub unsafe fn subgroup_non_uniform_f_mul_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformSMin")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_s_min<
+pub unsafe fn subgroup_s_min<
     const GROUP_OP: u32,
     S: VectorOrScalar<Scalar = impl SignedInteger>,
 >(
@@ -1106,7 +1089,7 @@ pub unsafe fn subgroup_non_uniform_s_min<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformSMin")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_s_min_clustered<
+pub unsafe fn subgroup_s_min_clustered<
     const CLUSTER_SIZE: u32,
     S: VectorOrScalar<Scalar = impl SignedInteger>,
 >(
@@ -1147,7 +1130,7 @@ pub unsafe fn subgroup_non_uniform_s_min_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformUMin")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_u_min<
+pub unsafe fn subgroup_u_min<
     const GROUP_OP: u32,
     U: VectorOrScalar<Scalar = impl UnsignedInteger>,
 >(
@@ -1188,7 +1171,7 @@ pub unsafe fn subgroup_non_uniform_u_min<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformUMin")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_u_min_clustered<
+pub unsafe fn subgroup_u_min_clustered<
     const CLUSTER_SIZE: u32,
     U: VectorOrScalar<Scalar = impl UnsignedInteger>,
 >(
@@ -1229,10 +1212,7 @@ pub unsafe fn subgroup_non_uniform_u_min_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformFMin")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_f_min<
-    const GROUP_OP: u32,
-    F: VectorOrScalar<Scalar = impl Float>,
->(
+pub unsafe fn subgroup_f_min<const GROUP_OP: u32, F: VectorOrScalar<Scalar = impl Float>>(
     value: F,
 ) -> F {
     let mut result = F::default();
@@ -1270,7 +1250,7 @@ pub unsafe fn subgroup_non_uniform_f_min<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformFMin")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_f_min_clustered<
+pub unsafe fn subgroup_f_min_clustered<
     const CLUSTER_SIZE: u32,
     F: VectorOrScalar<Scalar = impl Float>,
 >(
@@ -1311,7 +1291,7 @@ pub unsafe fn subgroup_non_uniform_f_min_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformSMax")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_s_max<
+pub unsafe fn subgroup_s_max<
     const GROUP_OP: u32,
     S: VectorOrScalar<Scalar = impl SignedInteger>,
 >(
@@ -1352,7 +1332,7 @@ pub unsafe fn subgroup_non_uniform_s_max<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformSMax")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_s_max_clustered<
+pub unsafe fn subgroup_s_max_clustered<
     const CLUSTER_SIZE: u32,
     S: VectorOrScalar<Scalar = impl SignedInteger>,
 >(
@@ -1393,7 +1373,7 @@ pub unsafe fn subgroup_non_uniform_s_max_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformUMax")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_u_max<
+pub unsafe fn subgroup_u_max<
     const GROUP_OP: u32,
     U: VectorOrScalar<Scalar = impl UnsignedInteger>,
 >(
@@ -1434,7 +1414,7 @@ pub unsafe fn subgroup_non_uniform_u_max<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformUMax")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_u_max_clustered<
+pub unsafe fn subgroup_u_max_clustered<
     const CLUSTER_SIZE: u32,
     U: VectorOrScalar<Scalar = impl UnsignedInteger>,
 >(
@@ -1475,10 +1455,7 @@ pub unsafe fn subgroup_non_uniform_u_max_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformFMax")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_f_max<
-    const GROUP_OP: u32,
-    F: VectorOrScalar<Scalar = impl Float>,
->(
+pub unsafe fn subgroup_f_max<const GROUP_OP: u32, F: VectorOrScalar<Scalar = impl Float>>(
     value: F,
 ) -> F {
     let mut result = F::default();
@@ -1514,7 +1491,7 @@ pub unsafe fn subgroup_non_uniform_f_max<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformFMax")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_f_max_clustered<
+pub unsafe fn subgroup_f_max_clustered<
     const CLUSTER_SIZE: u32,
     F: VectorOrScalar<Scalar = impl Float>,
 >(
@@ -1555,7 +1532,7 @@ pub unsafe fn subgroup_non_uniform_f_max_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBitwiseAnd")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_bitwise_and<
+pub unsafe fn subgroup_bitwise_and<
     const GROUP_OP: u32,
     I: VectorOrScalar<Scalar = impl Integer>,
 >(
@@ -1596,7 +1573,7 @@ pub unsafe fn subgroup_non_uniform_bitwise_and<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBitwiseAnd")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_bitwise_and_clustered<
+pub unsafe fn subgroup_bitwise_and_clustered<
     const CLUSTER_SIZE: u32,
     I: VectorOrScalar<Scalar = impl Integer>,
 >(
@@ -1637,10 +1614,7 @@ pub unsafe fn subgroup_non_uniform_bitwise_and_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBitwiseOr")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_bitwise_or<
-    const GROUP_OP: u32,
-    I: VectorOrScalar<Scalar = impl Integer>,
->(
+pub unsafe fn subgroup_bitwise_or<const GROUP_OP: u32, I: VectorOrScalar<Scalar = impl Integer>>(
     value: I,
 ) -> I {
     let mut result = I::default();
@@ -1678,7 +1652,7 @@ pub unsafe fn subgroup_non_uniform_bitwise_or<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBitwiseOr")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_bitwise_or_clustered<
+pub unsafe fn subgroup_bitwise_or_clustered<
     const CLUSTER_SIZE: u32,
     I: VectorOrScalar<Scalar = impl Integer>,
 >(
@@ -1719,7 +1693,7 @@ pub unsafe fn subgroup_non_uniform_bitwise_or_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBitwiseXor")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_bitwise_xor<
+pub unsafe fn subgroup_bitwise_xor<
     const GROUP_OP: u32,
     I: VectorOrScalar<Scalar = impl Integer>,
 >(
@@ -1760,7 +1734,7 @@ pub unsafe fn subgroup_non_uniform_bitwise_xor<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBitwiseXor")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_bitwise_xor_clustered<
+pub unsafe fn subgroup_bitwise_xor_clustered<
     const CLUSTER_SIZE: u32,
     I: VectorOrScalar<Scalar = impl Integer>,
 >(
@@ -1801,10 +1775,7 @@ pub unsafe fn subgroup_non_uniform_bitwise_xor_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformLogicalAnd")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_logical_and<
-    const GROUP_OP: u32,
-    I: VectorOrScalar<Scalar = bool>,
->(
+pub unsafe fn subgroup_logical_and<const GROUP_OP: u32, I: VectorOrScalar<Scalar = bool>>(
     value: I,
 ) -> I {
     let mut result = I::default();
@@ -1842,7 +1813,7 @@ pub unsafe fn subgroup_non_uniform_logical_and<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformLogicalAnd")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_logical_and_clustered<
+pub unsafe fn subgroup_logical_and_clustered<
     const CLUSTER_SIZE: u32,
     I: VectorOrScalar<Scalar = bool>,
 >(
@@ -1883,10 +1854,7 @@ pub unsafe fn subgroup_non_uniform_logical_and_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformLogicalOr")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_logical_or<
-    const GROUP_OP: u32,
-    I: VectorOrScalar<Scalar = bool>,
->(
+pub unsafe fn subgroup_logical_or<const GROUP_OP: u32, I: VectorOrScalar<Scalar = bool>>(
     value: I,
 ) -> I {
     let mut result = I::default();
@@ -1924,7 +1892,7 @@ pub unsafe fn subgroup_non_uniform_logical_or<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformLogicalOr")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_logical_or_clustered<
+pub unsafe fn subgroup_logical_or_clustered<
     const CLUSTER_SIZE: u32,
     I: VectorOrScalar<Scalar = bool>,
 >(
@@ -1965,10 +1933,7 @@ pub unsafe fn subgroup_non_uniform_logical_or_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformLogicalXor")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_logical_xor<
-    const GROUP_OP: u32,
-    I: VectorOrScalar<Scalar = bool>,
->(
+pub unsafe fn subgroup_logical_xor<const GROUP_OP: u32, I: VectorOrScalar<Scalar = bool>>(
     value: I,
 ) -> I {
     let mut result = I::default();
@@ -2006,7 +1971,7 @@ pub unsafe fn subgroup_non_uniform_logical_xor<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformLogicalXor")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_logical_xor_clustered<
+pub unsafe fn subgroup_logical_xor_clustered<
     const CLUSTER_SIZE: u32,
     I: VectorOrScalar<Scalar = bool>,
 >(
@@ -2051,7 +2016,7 @@ pub unsafe fn subgroup_non_uniform_logical_xor_clustered<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadBroadcast")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_quad_broadcast<T: VectorOrScalar>(value: T, id: u32) -> T {
+pub unsafe fn subgroup_quad_broadcast<T: VectorOrScalar>(value: T, id: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -2130,9 +2095,7 @@ pub enum QuadDirection {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadSwap")]
 #[inline]
-pub unsafe fn subgroup_non_uniform_quad_swap<const DIRECTION: u32, T: VectorOrScalar>(
-    value: T,
-) -> T {
+pub unsafe fn subgroup_quad_swap<const DIRECTION: u32, T: VectorOrScalar>(value: T) -> T {
     let mut result = T::default();
 
     unsafe {
