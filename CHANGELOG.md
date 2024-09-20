@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🚨BREAKING🚨
+- Signed for loops like `for _ in 0..4i32 {}` no longer compile. We recommend switching to unsigned for loops and casting back to signed integers in the meanwhile.
+
 ### Changed 🛠
 - [PR#12](https://github.com/rust-gpu/rust-gpu/pull/12) updated toolchain to `nightly-2024-04-24`
 - [PR#9](https://github.com/Rust-GPU/rust-gpu/pull/9) relaxed `glam` version requirements (`>=0.22, <=0.29`)
