@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/util/wire.rs`."><title>wire.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_automata/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/util/wire.rs`."><title>wire.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -956,23 +956,6 @@
 <a href="#956" id="956">956</a>
 <a href="#957" id="957">957</a>
 <a href="#958" id="958">958</a>
-<a href="#959" id="959">959</a>
-<a href="#960" id="960">960</a>
-<a href="#961" id="961">961</a>
-<a href="#962" id="962">962</a>
-<a href="#963" id="963">963</a>
-<a href="#964" id="964">964</a>
-<a href="#965" id="965">965</a>
-<a href="#966" id="966">966</a>
-<a href="#967" id="967">967</a>
-<a href="#968" id="968">968</a>
-<a href="#969" id="969">969</a>
-<a href="#970" id="970">970</a>
-<a href="#971" id="971">971</a>
-<a href="#972" id="972">972</a>
-<a href="#973" id="973">973</a>
-<a href="#974" id="974">974</a>
-<a href="#975" id="975">975</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
 Types and routines that support the wire format of finite automata.
 
@@ -1002,9 +985,9 @@ the potentially costly work of compiling a finite state machine in an offline
 manner, and then loading it at runtime not only without having to re-compile
 the regex, but even without the code required to do the compilation. This, for
 example, permits one to use a pre-compiled DFA not only in environments without
-Rust&#39;s standard library, but also in environments without a heap.
+Rust's standard library, but also in environments without a heap.
 
-In the code below, whenever we insert some kind of padding, it&#39;s to enforce a
+In the code below, whenever we insert some kind of padding, it's to enforce a
 4-byte alignment, unless otherwise noted. Namely, u32 is the only state ID type
 supported. (In a previous version of this library, DFAs were generic over the
 state ID representation.)
@@ -1013,16 +996,12 @@ Also, serialization generally requires the caller to specify endianness,
 where as deserialization always assumes native endianness (otherwise cheap
 deserialization would be impossible). This implies that serializing a structure
 generally requires serializing both its big-endian and little-endian variants,
-and then loading the correct one based on the target&#39;s endianness.
+and then loading the correct one based on the target's endianness.
 */
 
-</span><span class="kw">use </span>core::{
-    cmp,
-    convert::{TryFrom, TryInto},
-    mem::size_of,
-};
+</span><span class="kw">use </span>core::{cmp, mem::size_of};
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">use </span>alloc::{vec, vec::Vec};
 
 <span class="kw">use </span><span class="kw">crate</span>::util::{
@@ -1080,22 +1059,22 @@ and then loading the correct one based on the target&#39;s endianness.
     ///
     /// In summary, if a new serialization error kind needs to be added, then
     /// it will need careful consideration.
-    </span>what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    </span>what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 }
 
 <span class="kw">impl </span>SerializeError {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>buffer_too_small(what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; SerializeError {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>buffer_too_small(what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; SerializeError {
         SerializeError { what }
     }
 }
 
 <span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>SerializeError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;destination buffer is too small to write {}&quot;</span>, <span class="self">self</span>.what)
+        <span class="macro">write!</span>(f, <span class="string">"destination buffer is too small to write {}"</span>, <span class="self">self</span>.what)
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>SerializeError {}
 
 <span class="doccomment">/// An error that occurs when deserializing an object defined in this crate.
@@ -1103,7 +1082,7 @@ and then loading the correct one based on the target&#39;s endianness.
 /// Serialization, as used in this crate, universally refers to the process
 /// of transforming a structure (like a DFA) into a custom binary format
 /// represented by `&amp;[u8]`. Deserialization, then, refers to the process of
-/// cheaply converting this binary format back to the object&#39;s in-memory
+/// cheaply converting this binary format back to the object's in-memory
 /// representation as defined in this crate. To the extent possible,
 /// deserialization will report this error whenever this process fails.
 ///
@@ -1118,28 +1097,28 @@ and then loading the correct one based on the target&#39;s endianness.
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">enum </span>DeserializeErrorKind {
-    Generic { msg: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str },
-    BufferTooSmall { what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str },
-    InvalidUsize { what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str },
+    Generic { msg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str },
+    BufferTooSmall { what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str },
+    InvalidUsize { what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str },
     VersionMismatch { expected: u32, found: u32 },
     EndianMismatch { expected: u32, found: u32 },
     AlignmentMismatch { alignment: usize, address: usize },
-    LabelMismatch { expected: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str },
-    ArithmeticOverflow { what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str },
-    PatternID { err: PatternIDError, what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str },
-    StateID { err: StateIDError, what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str },
+    LabelMismatch { expected: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str },
+    ArithmeticOverflow { what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str },
+    PatternID { err: PatternIDError, what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str },
+    StateID { err: StateIDError, what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str },
 }
 
 <span class="kw">impl </span>DeserializeError {
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>generic(msg: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; DeserializeError {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>generic(msg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; DeserializeError {
         DeserializeError(DeserializeErrorKind::Generic { msg })
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>buffer_too_small(what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; DeserializeError {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>buffer_too_small(what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; DeserializeError {
         DeserializeError(DeserializeErrorKind::BufferTooSmall { what })
     }
 
-    <span class="kw">fn </span>invalid_usize(what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; DeserializeError {
+    <span class="kw">fn </span>invalid_usize(what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; DeserializeError {
         DeserializeError(DeserializeErrorKind::InvalidUsize { what })
     }
 
@@ -1167,30 +1146,30 @@ and then loading the correct one based on the target&#39;s endianness.
         })
     }
 
-    <span class="kw">fn </span>label_mismatch(expected: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; DeserializeError {
+    <span class="kw">fn </span>label_mismatch(expected: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; DeserializeError {
         DeserializeError(DeserializeErrorKind::LabelMismatch { expected })
     }
 
-    <span class="kw">fn </span>arithmetic_overflow(what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; DeserializeError {
+    <span class="kw">fn </span>arithmetic_overflow(what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; DeserializeError {
         DeserializeError(DeserializeErrorKind::ArithmeticOverflow { what })
     }
 
     <span class="kw">fn </span>pattern_id_error(
         err: PatternIDError,
-        what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+        what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
     ) -&gt; DeserializeError {
         DeserializeError(DeserializeErrorKind::PatternID { err, what })
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>state_id_error(
         err: StateIDError,
-        what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+        what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
     ) -&gt; DeserializeError {
         DeserializeError(DeserializeErrorKind::StateID { err, what })
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>DeserializeError {}
 
 <span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>DeserializeError {
@@ -1198,58 +1177,58 @@ and then loading the correct one based on the target&#39;s endianness.
         <span class="kw">use </span><span class="self">self</span>::DeserializeErrorKind::<span class="kw-2">*</span>;
 
         <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
-            Generic { msg } =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, msg),
+            Generic { msg } =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, msg),
             BufferTooSmall { what } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;buffer is too small to read {}&quot;</span>, what)
+                <span class="macro">write!</span>(f, <span class="string">"buffer is too small to read {}"</span>, what)
             }
             InvalidUsize { what } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;{} is too big to fit in a usize&quot;</span>, what)
+                <span class="macro">write!</span>(f, <span class="string">"{} is too big to fit in a usize"</span>, what)
             }
             VersionMismatch { expected, found } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;unsupported version: \
-                 expected version {} but found version {}&quot;</span>,
+                <span class="string">"unsupported version: \
+                 expected version {} but found version {}"</span>,
                 expected, found,
             ),
             EndianMismatch { expected, found } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;endianness mismatch: expected 0x{:X} but got 0x{:X}. \
+                <span class="string">"endianness mismatch: expected 0x{:X} but got 0x{:X}. \
                  (Are you trying to load an object serialized with a \
-                 different endianness?)&quot;</span>,
+                 different endianness?)"</span>,
                 expected, found,
             ),
             AlignmentMismatch { alignment, address } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;alignment mismatch: slice starts at address \
-                 0x{:X}, which is not aligned to a {} byte boundary&quot;</span>,
+                <span class="string">"alignment mismatch: slice starts at address \
+                 0x{:X}, which is not aligned to a {} byte boundary"</span>,
                 address, alignment,
             ),
             LabelMismatch { expected } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;label mismatch: start of serialized object should \
+                <span class="string">"label mismatch: start of serialized object should \
                  contain a NUL terminated {:?} label, but a different \
-                 label was found&quot;</span>,
+                 label was found"</span>,
                 expected,
             ),
             ArithmeticOverflow { what } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;arithmetic overflow for {}&quot;</span>, what)
+                <span class="macro">write!</span>(f, <span class="string">"arithmetic overflow for {}"</span>, what)
             }
             PatternID { <span class="kw-2">ref </span>err, what } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;failed to read pattern ID for {}: {}&quot;</span>, what, err)
+                <span class="macro">write!</span>(f, <span class="string">"failed to read pattern ID for {}: {}"</span>, what, err)
             }
             StateID { <span class="kw-2">ref </span>err, what } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;failed to read state ID for {}: {}&quot;</span>, what, err)
+                <span class="macro">write!</span>(f, <span class="string">"failed to read state ID for {}: {}"</span>, what, err)
             }
         }
     }
 }
 
 <span class="doccomment">/// Safely converts a `&amp;[u32]` to `&amp;[StateID]` with zero cost.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>u32s_to_state_ids(slice: <span class="kw-2">&amp;</span>[u32]) -&gt; <span class="kw-2">&amp;</span>[StateID] {
     <span class="comment">// SAFETY: This is safe because StateID is defined to have the same memory
     // representation as a u32 (it is repr(transparent)). While not every u32
-    // is a &quot;valid&quot; StateID, callers are not permitted to rely on the validity
+    // is a "valid" StateID, callers are not permitted to rely on the validity
     // of StateIDs for memory safety. It can only lead to logical errors. (This
     // is why StateID::new_unchecked is safe.)
     </span><span class="kw">unsafe </span>{
@@ -1264,7 +1243,7 @@ and then loading the correct one based on the target&#39;s endianness.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>u32s_to_state_ids_mut(slice: <span class="kw-2">&amp;mut </span>[u32]) -&gt; <span class="kw-2">&amp;mut </span>[StateID] {
     <span class="comment">// SAFETY: This is safe because StateID is defined to have the same memory
     // representation as a u32 (it is repr(transparent)). While not every u32
-    // is a &quot;valid&quot; StateID, callers are not permitted to rely on the validity
+    // is a "valid" StateID, callers are not permitted to rely on the validity
     // of StateIDs for memory safety. It can only lead to logical errors. (This
     // is why StateID::new_unchecked is safe.)
     </span><span class="kw">unsafe </span>{
@@ -1276,11 +1255,11 @@ and then loading the correct one based on the target&#39;s endianness.
 }
 
 <span class="doccomment">/// Safely converts a `&amp;[u32]` to `&amp;[PatternID]` with zero cost.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>u32s_to_pattern_ids(slice: <span class="kw-2">&amp;</span>[u32]) -&gt; <span class="kw-2">&amp;</span>[PatternID] {
     <span class="comment">// SAFETY: This is safe because PatternID is defined to have the same
     // memory representation as a u32 (it is repr(transparent)). While not
-    // every u32 is a &quot;valid&quot; PatternID, callers are not permitted to rely
+    // every u32 is a "valid" PatternID, callers are not permitted to rely
     // on the validity of PatternIDs for memory safety. It can only lead to
     // logical errors. (This is why PatternID::new_unchecked is safe.)
     </span><span class="kw">unsafe </span>{
@@ -1340,30 +1319,30 @@ and then loading the correct one based on the target&#39;s endianness.
 /// The requirement for `8` as a maximum here is somewhat arbitrary. In
 /// practice, we never need anything bigger in this crate, and so this function
 /// does some sanity asserts under the assumption of a max alignment of `8`.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>alloc_aligned_buffer&lt;T&gt;(size: usize) -&gt; (Vec&lt;u8&gt;, usize) {
-    <span class="comment">// NOTE: This is a kludge because there&#39;s no easy way to allocate a Vec&lt;u8&gt;
+    <span class="comment">// NOTE: This is a kludge because there's no easy way to allocate a Vec&lt;u8&gt;
     // with an alignment guaranteed to be greater than 1. We could create a
     // Vec&lt;u32&gt;, but this cannot be safely transmuted to a Vec&lt;u8&gt; without
     // concern, since reallocing or dropping the Vec&lt;u8&gt; is UB (different
     // alignment than the initial allocation). We could define a wrapper type
-    // to manage this for us, but it seems like more machinery than it&#39;s worth.
+    // to manage this for us, but it seems like more machinery than it's worth.
     </span><span class="kw">let </span>buf = <span class="macro">vec!</span>[<span class="number">0</span>; size];
     <span class="kw">let </span>align = core::mem::align_of::&lt;T&gt;();
     <span class="kw">let </span>address = buf.as_ptr().as_usize();
     <span class="kw">if </span>address % align == <span class="number">0 </span>{
         <span class="kw">return </span>(buf, <span class="number">0</span>);
     }
-    <span class="comment">// Let&#39;s try this again. We have to create a totally new alloc with
-    // the maximum amount of bytes we might need. We can&#39;t just extend our
-    // pre-existing &#39;buf&#39; because that might create a new alloc with a
+    <span class="comment">// Let's try this again. We have to create a totally new alloc with
+    // the maximum amount of bytes we might need. We can't just extend our
+    // pre-existing 'buf' because that might create a new alloc with a
     // different alignment.
     </span><span class="kw">let </span>extra = align - <span class="number">1</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>buf = <span class="macro">vec!</span>[<span class="number">0</span>; size + extra];
     <span class="kw">let </span>address = buf.as_ptr().as_usize();
-    <span class="comment">// The code below handles the case where &#39;address&#39; is aligned to T, so if
-    // we got lucky and &#39;address&#39; is now aligned to T (when it previously
-    // wasn&#39;t), then we&#39;re done.
+    <span class="comment">// The code below handles the case where 'address' is aligned to T, so if
+    // we got lucky and 'address' is now aligned to T (when it previously
+    // wasn't), then we're done.
     </span><span class="kw">if </span>address % align == <span class="number">0 </span>{
         buf.truncate(size);
         <span class="kw">return </span>(buf, <span class="number">0</span>);
@@ -1371,10 +1350,10 @@ and then loading the correct one based on the target&#39;s endianness.
     <span class="kw">let </span>padding = ((address &amp; !(align - <span class="number">1</span>)).checked_add(align).unwrap())
         .checked_sub(address)
         .unwrap();
-    <span class="macro">assert!</span>(padding &lt;= <span class="number">7</span>, <span class="string">&quot;padding of {} is bigger than 7&quot;</span>, padding);
+    <span class="macro">assert!</span>(padding &lt;= <span class="number">7</span>, <span class="string">"padding of {} is bigger than 7"</span>, padding);
     <span class="macro">assert!</span>(
         padding &lt;= extra,
-        <span class="string">&quot;padding of {} is bigger than extra {} bytes&quot;</span>,
+        <span class="string">"padding of {} is bigger than extra {} bytes"</span>,
         padding,
         extra
     );
@@ -1383,7 +1362,7 @@ and then loading the correct one based on the target&#39;s endianness.
     <span class="macro">assert_eq!</span>(
         <span class="number">0</span>,
         buf[padding..].as_ptr().as_usize() % align,
-        <span class="string">&quot;expected end of initial padding to be aligned to {}&quot;</span>,
+        <span class="string">"expected end of initial padding to be aligned to {}"</span>,
         align,
     );
     (buf, padding)
@@ -1392,17 +1371,17 @@ and then loading the correct one based on the target&#39;s endianness.
 <span class="doccomment">/// Reads a NUL terminated label starting at the beginning of the given slice.
 ///
 /// If a NUL terminated label could not be found, then an error is returned.
-/// Similarly, if a label is found but doesn&#39;t match the expected label, then
+/// Similarly, if a label is found but doesn't match the expected label, then
 /// an error is returned.
 ///
 /// Upon success, the total number of bytes read (including padding bytes) is
 /// returned.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_label(
     slice: <span class="kw-2">&amp;</span>[u8],
-    expected_label: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    expected_label: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
     <span class="comment">// Set an upper bound on how many bytes we scan for a NUL. Since no label
-    // in this crate is longer than 256 bytes, if we can&#39;t find one within that
+    // in this crate is longer than 256 bytes, if we can't find one within that
     // range, then we have corrupted data.
     </span><span class="kw">let </span>first_nul =
         slice[..cmp::min(slice.len(), <span class="number">256</span>)].iter().position(|<span class="kw-2">&amp;</span>b| b == <span class="number">0</span>);
@@ -1410,15 +1389,15 @@ and then loading the correct one based on the target&#39;s endianness.
         <span class="prelude-val">Some</span>(first_nul) =&gt; first_nul,
         <span class="prelude-val">None </span>=&gt; {
             <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
-                <span class="string">&quot;could not find NUL terminated label \
-                 at start of serialized object&quot;</span>,
+                <span class="string">"could not find NUL terminated label \
+                 at start of serialized object"</span>,
             ));
         }
     };
     <span class="kw">let </span>len = first_nul + padding_len(first_nul);
     <span class="kw">if </span>slice.len() &lt; len {
         <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::generic(
-            <span class="string">&quot;could not find properly sized label at start of serialized object&quot;
+            <span class="string">"could not find properly sized label at start of serialized object"
         </span>));
     }
     <span class="kw">if </span>expected_label.as_bytes() != <span class="kw-2">&amp;</span>slice[..first_nul] {
@@ -1442,7 +1421,7 @@ and then loading the correct one based on the target&#39;s endianness.
 ) -&gt; <span class="prelude-ty">Result</span>&lt;usize, SerializeError&gt; {
     <span class="kw">let </span>nwrite = write_label_len(label);
     <span class="kw">if </span>dst.len() &lt; nwrite {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">&quot;label&quot;</span>));
+        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">"label"</span>));
     }
     dst[..label.len()].copy_from_slice(label.as_bytes());
     <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..(nwrite - label.len()) {
@@ -1458,10 +1437,10 @@ and then loading the correct one based on the target&#39;s endianness.
 /// for a label during deserialization can be done in small bounded space.)
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_label_len(label: <span class="kw-2">&amp;</span>str) -&gt; usize {
     <span class="kw">if </span>label.len() &gt; <span class="number">255 </span>{
-        <span class="macro">panic!</span>(<span class="string">&quot;label must not be longer than 255 bytes&quot;</span>);
+        <span class="macro">panic!</span>(<span class="string">"label must not be longer than 255 bytes"</span>);
     }
     <span class="kw">if </span>label.as_bytes().iter().position(|<span class="kw-2">&amp;</span>b| b == <span class="number">0</span>).is_some() {
-        <span class="macro">panic!</span>(<span class="string">&quot;label must not contain NUL bytes&quot;</span>);
+        <span class="macro">panic!</span>(<span class="string">"label must not contain NUL bytes"</span>);
     }
     <span class="kw">let </span>label_len = label.len() + <span class="number">1</span>; <span class="comment">// +1 for the NUL terminator
     </span>label_len + padding_len(label_len)
@@ -1476,7 +1455,7 @@ and then loading the correct one based on the target&#39;s endianness.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_endianness_check(
     slice: <span class="kw-2">&amp;</span>[u8],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
-    <span class="kw">let </span>(n, nr) = try_read_u32(slice, <span class="string">&quot;endianness check&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>(n, nr) = try_read_u32(slice, <span class="string">"endianness check"</span>)<span class="question-mark">?</span>;
     <span class="macro">assert_eq!</span>(nr, write_endianness_check_len());
     <span class="kw">if </span>n != <span class="number">0xFEFF </span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::endian_mismatch(<span class="number">0xFEFF</span>, n));
@@ -1496,7 +1475,7 @@ and then loading the correct one based on the target&#39;s endianness.
 ) -&gt; <span class="prelude-ty">Result</span>&lt;usize, SerializeError&gt; {
     <span class="kw">let </span>nwrite = write_endianness_check_len();
     <span class="kw">if </span>dst.len() &lt; nwrite {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">&quot;endianness check&quot;</span>));
+        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">"endianness check"</span>));
     }
     E::write_u32(<span class="number">0xFEFF</span>, dst);
     <span class="prelude-val">Ok</span>(nwrite)
@@ -1509,18 +1488,18 @@ and then loading the correct one based on the target&#39;s endianness.
 
 <span class="doccomment">/// Reads a version number from the beginning of the given slice and confirms
 /// that is matches the expected version number given. If the slice is too
-/// small or if the version numbers aren&#39;t equivalent, this returns an error.
+/// small or if the version numbers aren't equivalent, this returns an error.
 ///
 /// Upon success, the total number of bytes read is returned.
 ///
 /// N.B. Currently, we require that the version number is exactly equivalent.
 /// In the future, if we bump the version number without a semver bump, then
-/// we&#39;ll need to relax this a bit and support older versions.
+/// we'll need to relax this a bit and support older versions.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_version(
     slice: <span class="kw-2">&amp;</span>[u8],
     expected_version: u32,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
-    <span class="kw">let </span>(n, nr) = try_read_u32(slice, <span class="string">&quot;version&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">let </span>(n, nr) = try_read_u32(slice, <span class="string">"version"</span>)<span class="question-mark">?</span>;
     <span class="macro">assert_eq!</span>(nr, write_version_len());
     <span class="kw">if </span>n != expected_version {
         <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::version_mismatch(expected_version, n));
@@ -1541,7 +1520,7 @@ and then loading the correct one based on the target&#39;s endianness.
 ) -&gt; <span class="prelude-ty">Result</span>&lt;usize, SerializeError&gt; {
     <span class="kw">let </span>nwrite = write_version_len();
     <span class="kw">if </span>dst.len() &lt; nwrite {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">&quot;version number&quot;</span>));
+        <span class="kw">return </span><span class="prelude-val">Err</span>(SerializeError::buffer_too_small(<span class="string">"version number"</span>));
     }
     E::write_u32(version, dst);
     <span class="prelude-val">Ok</span>(nwrite)
@@ -1559,7 +1538,7 @@ and then loading the correct one based on the target&#39;s endianness.
 /// Upon success, this also returns the number of bytes read.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_pattern_id(
     slice: <span class="kw-2">&amp;</span>[u8],
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(PatternID, usize), DeserializeError&gt; {
     <span class="kw">let </span>bytes: [u8; PatternID::SIZE] =
         slice[..PatternID::SIZE].try_into().unwrap();
@@ -1599,7 +1578,7 @@ and then loading the correct one based on the target&#39;s endianness.
 /// Upon success, this also returns the number of bytes read.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_state_id(
     slice: <span class="kw-2">&amp;</span>[u8],
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(StateID, usize), DeserializeError&gt; {
     <span class="kw">if </span>slice.len() &lt; StateID::SIZE {
         <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::buffer_too_small(what));
@@ -1614,7 +1593,7 @@ and then loading the correct one based on the target&#39;s endianness.
 /// Upon success, this also returns the number of bytes read.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_state_id(
     slice: <span class="kw-2">&amp;</span>[u8],
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(StateID, usize), DeserializeError&gt; {
     <span class="kw">let </span>bytes: [u8; StateID::SIZE] =
         slice[..StateID::SIZE].try_into().unwrap();
@@ -1657,7 +1636,7 @@ and then loading the correct one based on the target&#39;s endianness.
 /// Upon success, this also returns the number of bytes read.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u16_as_usize(
     slice: <span class="kw-2">&amp;</span>[u8],
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(usize, usize), DeserializeError&gt; {
     try_read_u16(slice, what).and_then(|(n, nr)| {
         usize::try_from(n)
@@ -1676,7 +1655,7 @@ and then loading the correct one based on the target&#39;s endianness.
 /// Upon success, this also returns the number of bytes read.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u32_as_usize(
     slice: <span class="kw-2">&amp;</span>[u8],
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(usize, usize), DeserializeError&gt; {
     try_read_u32(slice, what).and_then(|(n, nr)| {
         usize::try_from(n)
@@ -1694,7 +1673,7 @@ and then loading the correct one based on the target&#39;s endianness.
 /// Upon success, this also returns the number of bytes read.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u16(
     slice: <span class="kw-2">&amp;</span>[u8],
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(u16, usize), DeserializeError&gt; {
     check_slice_len(slice, size_of::&lt;u16&gt;(), what)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>((read_u16(slice), size_of::&lt;u16&gt;()))
@@ -1709,7 +1688,7 @@ and then loading the correct one based on the target&#39;s endianness.
 /// Upon success, this also returns the number of bytes read.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u32(
     slice: <span class="kw-2">&amp;</span>[u8],
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(u32, usize), DeserializeError&gt; {
     check_slice_len(slice, size_of::&lt;u32&gt;(), what)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>((read_u32(slice), size_of::&lt;u32&gt;()))
@@ -1724,7 +1703,7 @@ and then loading the correct one based on the target&#39;s endianness.
 /// Upon success, this also returns the number of bytes read.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_read_u128(
     slice: <span class="kw-2">&amp;</span>[u8],
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(u128, usize), DeserializeError&gt; {
     check_slice_len(slice, size_of::&lt;u128&gt;(), what)<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>((read_u128(slice), size_of::&lt;u128&gt;()))
@@ -1735,7 +1714,7 @@ and then loading the correct one based on the target&#39;s endianness.
 ///
 /// Marked as inline to speed up sparse searching which decodes integers from
 /// its automaton at search time.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_u16(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; u16 {
     <span class="kw">let </span>bytes: [u8; <span class="number">2</span>] = slice[..size_of::&lt;u16&gt;()].try_into().unwrap();
     u16::from_ne_bytes(bytes)
@@ -1746,7 +1725,7 @@ and then loading the correct one based on the target&#39;s endianness.
 ///
 /// Marked as inline to speed up sparse searching which decodes integers from
 /// its automaton at search time.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>read_u32(slice: <span class="kw-2">&amp;</span>[u8]) -&gt; u32 {
     <span class="kw">let </span>bytes: [u8; <span class="number">4</span>] = slice[..size_of::&lt;u32&gt;()].try_into().unwrap();
     u32::from_ne_bytes(bytes)
@@ -1759,13 +1738,13 @@ and then loading the correct one based on the target&#39;s endianness.
     u128::from_ne_bytes(bytes)
 }
 
-<span class="doccomment">/// Checks that the given slice has some minimal length. If it&#39;s smaller than
-/// the bound given, then a &quot;buffer too small&quot; error is returned with `what`
+<span class="doccomment">/// Checks that the given slice has some minimal length. If it's smaller than
+/// the bound given, then a "buffer too small" error is returned with `what`
 /// describing what the buffer represents.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>check_slice_len&lt;T&gt;(
     slice: <span class="kw-2">&amp;</span>[T],
     at_least_len: usize,
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), DeserializeError&gt; {
     <span class="kw">if </span>slice.len() &lt; at_least_len {
         <span class="kw">return </span><span class="prelude-val">Err</span>(DeserializeError::buffer_too_small(what));
@@ -1774,13 +1753,13 @@ and then loading the correct one based on the target&#39;s endianness.
 }
 
 <span class="doccomment">/// Multiply the given numbers, and on overflow, return an error that includes
-/// &#39;what&#39; in the error message.
+/// 'what' in the error message.
 ///
 /// This is useful when doing arithmetic with untrusted data.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>mul(
     a: usize,
     b: usize,
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
     <span class="kw">match </span>a.checked_mul(b) {
         <span class="prelude-val">Some</span>(c) =&gt; <span class="prelude-val">Ok</span>(c),
@@ -1789,13 +1768,13 @@ and then loading the correct one based on the target&#39;s endianness.
 }
 
 <span class="doccomment">/// Add the given numbers, and on overflow, return an error that includes
-/// &#39;what&#39; in the error message.
+/// 'what' in the error message.
 ///
 /// This is useful when doing arithmetic with untrusted data.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>add(
     a: usize,
     b: usize,
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
     <span class="kw">match </span>a.checked_add(b) {
         <span class="prelude-val">Some</span>(c) =&gt; <span class="prelude-val">Ok</span>(c),
@@ -1804,13 +1783,13 @@ and then loading the correct one based on the target&#39;s endianness.
 }
 
 <span class="doccomment">/// Shift `a` left by `b`, and on overflow, return an error that includes
-/// &#39;what&#39; in the error message.
+/// 'what' in the error message.
 ///
 /// This is useful when doing arithmetic with untrusted data.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>shl(
     a: usize,
     b: usize,
-    what: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    what: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;usize, DeserializeError&gt; {
     <span class="kw">let </span>amount = u32::try_from(b)
         .map_err(|<span class="kw">_</span>| DeserializeError::arithmetic_overflow(what))<span class="question-mark">?</span>;
@@ -1842,11 +1821,6 @@ and then loading the correct one based on the target&#39;s endianness.
     /// this panics.
     </span><span class="kw">fn </span>write_u32(n: u32, dst: <span class="kw-2">&amp;mut </span>[u8]);
 
-    <span class="doccomment">/// Writes a u64 to the given destination buffer in a particular
-    /// endianness. If the destination buffer has a length smaller than 8, then
-    /// this panics.
-    </span><span class="kw">fn </span>write_u64(n: u64, dst: <span class="kw-2">&amp;mut </span>[u8]);
-
     <span class="doccomment">/// Writes a u128 to the given destination buffer in a particular
     /// endianness. If the destination buffer has a length smaller than 16,
     /// then this panics.
@@ -1858,9 +1832,9 @@ and then loading the correct one based on the target&#39;s endianness.
 <span class="doccomment">/// Big endian writing.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>BE {}
 
-<span class="attr">#[cfg(target_endian = <span class="string">&quot;little&quot;</span>)]
+<span class="attr">#[cfg(target_endian = <span class="string">"little"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>NE = LE;
-<span class="attr">#[cfg(target_endian = <span class="string">&quot;big&quot;</span>)]
+<span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>NE = BE;
 
 <span class="kw">impl </span>Endian <span class="kw">for </span>LE {
@@ -1870,10 +1844,6 @@ and then loading the correct one based on the target&#39;s endianness.
 
     <span class="kw">fn </span>write_u32(n: u32, dst: <span class="kw-2">&amp;mut </span>[u8]) {
         dst[..<span class="number">4</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_le_bytes());
-    }
-
-    <span class="kw">fn </span>write_u64(n: u64, dst: <span class="kw-2">&amp;mut </span>[u8]) {
-        dst[..<span class="number">8</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_le_bytes());
     }
 
     <span class="kw">fn </span>write_u128(n: u128, dst: <span class="kw-2">&amp;mut </span>[u8]) {
@@ -1890,16 +1860,12 @@ and then loading the correct one based on the target&#39;s endianness.
         dst[..<span class="number">4</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_be_bytes());
     }
 
-    <span class="kw">fn </span>write_u64(n: u64, dst: <span class="kw-2">&amp;mut </span>[u8]) {
-        dst[..<span class="number">8</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_be_bytes());
-    }
-
     <span class="kw">fn </span>write_u128(n: u128, dst: <span class="kw-2">&amp;mut </span>[u8]) {
         dst[..<span class="number">16</span>].copy_from_slice(<span class="kw-2">&amp;</span>n.to_be_bytes());
     }
 }
 
-<span class="attr">#[cfg(all(test, feature = <span class="string">&quot;alloc&quot;</span>))]
+<span class="attr">#[cfg(all(test, feature = <span class="string">"alloc"</span>))]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -1907,11 +1873,11 @@ and then loading the correct one based on the target&#39;s endianness.
     </span><span class="kw">fn </span>labels() {
         <span class="kw">let </span><span class="kw-2">mut </span>buf = [<span class="number">0</span>; <span class="number">1024</span>];
 
-        <span class="kw">let </span>nwrite = write_label(<span class="string">&quot;fooba&quot;</span>, <span class="kw-2">&amp;mut </span>buf).unwrap();
+        <span class="kw">let </span>nwrite = write_label(<span class="string">"fooba"</span>, <span class="kw-2">&amp;mut </span>buf).unwrap();
         <span class="macro">assert_eq!</span>(nwrite, <span class="number">8</span>);
-        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>buf[..nwrite], <span class="string">b&quot;fooba\x00\x00\x00&quot;</span>);
+        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>buf[..nwrite], <span class="string">b"fooba\x00\x00\x00"</span>);
 
-        <span class="kw">let </span>nread = read_label(<span class="kw-2">&amp;</span>buf, <span class="string">&quot;fooba&quot;</span>).unwrap();
+        <span class="kw">let </span>nread = read_label(<span class="kw-2">&amp;</span>buf, <span class="string">"fooba"</span>).unwrap();
         <span class="macro">assert_eq!</span>(nread, <span class="number">8</span>);
     }
 
@@ -1919,20 +1885,20 @@ and then loading the correct one based on the target&#39;s endianness.
     #[should_panic]
     </span><span class="kw">fn </span>bad_label_interior_nul() {
         <span class="comment">// interior NULs are not allowed
-        </span>write_label(<span class="string">&quot;foo\x00bar&quot;</span>, <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
+        </span>write_label(<span class="string">"foo\x00bar"</span>, <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>bad_label_almost_too_long() {
         <span class="comment">// ok
-        </span>write_label(<span class="kw-2">&amp;</span><span class="string">&quot;z&quot;</span>.repeat(<span class="number">255</span>), <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
+        </span>write_label(<span class="kw-2">&amp;</span><span class="string">"z"</span>.repeat(<span class="number">255</span>), <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
     }
 
     <span class="attr">#[test]
     #[should_panic]
     </span><span class="kw">fn </span>bad_label_too_long() {
         <span class="comment">// labels longer than 255 bytes are banned
-        </span>write_label(<span class="kw-2">&amp;</span><span class="string">&quot;z&quot;</span>.repeat(<span class="number">256</span>), <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
+        </span>write_label(<span class="kw-2">&amp;</span><span class="string">"z"</span>.repeat(<span class="number">256</span>), <span class="kw-2">&amp;mut </span>[<span class="number">0</span>; <span class="number">1024</span>]).unwrap();
     }
 
     <span class="attr">#[test]

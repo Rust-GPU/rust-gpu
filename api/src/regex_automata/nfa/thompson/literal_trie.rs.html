@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/nfa/thompson/literal_trie.rs`."><title>literal_trie.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../regex_automata/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/nfa/thompson/literal_trie.rs`."><title>literal_trie.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -537,7 +537,7 @@
 
 <span class="doccomment">/// A trie that preserves leftmost-first match semantics.
 ///
-/// This is a purpose-built data structure for optimizing &#39;lit1|lit2|..|litN&#39;
+/// This is a purpose-built data structure for optimizing 'lit1|lit2|..|litN'
 /// patterns. It can *only* handle alternations of literals, which makes it
 /// somewhat restricted in its scope, but literal alternations are fairly
 /// common.
@@ -546,48 +546,48 @@
 /// literals look more like a DFA than an NFA via epsilon removal.
 ///
 /// More precisely, the main issue is in how alternations are compiled into
-/// a Thompson NFA. Namely, each alternation gets a single NFA &quot;union&quot; state
+/// a Thompson NFA. Namely, each alternation gets a single NFA "union" state
 /// with an epsilon transition for every branch of the alternation pointing to
 /// an NFA state corresponding to the start of that branch. The main problem
 /// with this representation is the cost of computing an epsilon closure. Once
-/// you hit the alternation&#39;s start state, it acts as a sort of &quot;clog&quot; that
+/// you hit the alternation's start state, it acts as a sort of "clog" that
 /// requires you to traverse all of the epsilon transitions to compute the full
 /// closure.
 ///
 /// While fixing such clogs in the general case is pretty tricky without going
 /// to a DFA (or perhaps a Glushkov NFA, but that comes with other problems).
 /// But at least in the case of an alternation of literals, we can convert
-/// that to a prefix trie without too much cost. In theory, that&#39;s all you
+/// that to a prefix trie without too much cost. In theory, that's all you
 /// really need to do: build the trie and then compile it to a Thompson NFA.
-/// For example, if you have the pattern &#39;bar|baz|foo&#39;, then using a trie, it
-/// is transformed to something like &#39;b(a(r|z))|f&#39;. This reduces the clog by
-/// reducing the number of epsilon transitions out of the alternation&#39;s start
+/// For example, if you have the pattern 'bar|baz|foo', then using a trie, it
+/// is transformed to something like 'b(a(r|z))|f'. This reduces the clog by
+/// reducing the number of epsilon transitions out of the alternation's start
 /// state from 3 to 2 (it actually gets down to 1 when you use a sparse state,
-/// which we do below). It&#39;s a small effect here, but when your alternation is
+/// which we do below). It's a small effect here, but when your alternation is
 /// huge, the savings is also huge.
 ///
 /// And that is... essentially what a LiteralTrie does. But there is one
-/// hiccup. Consider a regex like &#39;sam|samwise&#39;. How does a prefix trie compile
-/// that when leftmost-first semantics are used? If &#39;sam|samwise&#39; was the
-/// entire regex, then you could just drop the &#39;samwise&#39; branch entirely since
-/// it is impossible to match (&#39;sam&#39; will always take priority, and since it
-/// is a prefix of &#39;samwise&#39;, &#39;samwise&#39; will never match). But what about the
-/// regex &#39;\b(sam|samwise)\b&#39;? In that case, you can&#39;t remove &#39;samwise&#39; because
-/// it might match when &#39;sam&#39; doesn&#39;t fall on a word boundary.
+/// hiccup. Consider a regex like 'sam|samwise'. How does a prefix trie compile
+/// that when leftmost-first semantics are used? If 'sam|samwise' was the
+/// entire regex, then you could just drop the 'samwise' branch entirely since
+/// it is impossible to match ('sam' will always take priority, and since it
+/// is a prefix of 'samwise', 'samwise' will never match). But what about the
+/// regex '\b(sam|samwise)\b'? In that case, you can't remove 'samwise' because
+/// it might match when 'sam' doesn't fall on a word boundary.
 ///
-/// The main idea is that &#39;sam|samwise&#39; can be translated to &#39;sam(?:|wise)&#39;,
+/// The main idea is that 'sam|samwise' can be translated to 'sam(?:|wise)',
 /// which is a precisely equivalent regex that also gets rid of the clog.
 ///
-/// Another example is &#39;zapper|z|zap&#39;. That gets translated to
-/// &#39;z(?:apper||ap)&#39;.
+/// Another example is 'zapper|z|zap'. That gets translated to
+/// 'z(?:apper||ap)'.
 ///
-/// We accomplish this by giving each state in the trie multiple &quot;chunks&quot; of
+/// We accomplish this by giving each state in the trie multiple "chunks" of
 /// transitions. Each chunk barrier represents a match. The idea is that once
 /// you know a match occurs, none of the transitions after the match can be
 /// re-ordered and mixed in with the transitions before the match. Otherwise,
 /// the match semantics could be changed.
 ///
-/// See the &#39;State&#39; data type for a bit more detail.
+/// See the 'State' data type for a bit more detail.
 ///
 /// Future work:
 ///
@@ -683,18 +683,18 @@
         <span class="comment">// Compilation proceeds via depth-first traversal of the trie.
         //
         // This is overall pretty brutal. The recursive version of this is
-        // deliciously simple. (See &#39;compile_to_hir&#39; below for what it might
+        // deliciously simple. (See 'compile_to_hir' below for what it might
         // look like.) But recursion on a trie means your call stack grows
         // in accordance with the longest literal, which just does not seem
         // appropriate. So we push the call stack to the heap. But as a result,
         // the trie traversal becomes pretty brutal because we essentially
         // have to encode the state of a double for-loop into an explicit call
-        // frame. If someone can simplify this without using recursion, that&#39;d
+        // frame. If someone can simplify this without using recursion, that'd
         // be great.
 
-        // &#39;end&#39; is our match state for this trie, but represented in the the
+        // 'end' is our match state for this trie, but represented in the the
         // NFA. Any time we see a match in the trie, we insert a transition
-        // from the current state we&#39;re in to &#39;end&#39;.
+        // from the current state we're in to 'end'.
         </span><span class="kw">let </span>end = builder.add_empty()<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>stack = <span class="macro">vec!</span>[];
         <span class="kw">let </span><span class="kw-2">mut </span>f = Frame::new(<span class="kw-2">&amp;</span><span class="self">self</span>.states[StateID::ZERO]);
@@ -723,7 +723,7 @@
             }
             <span class="comment">// At this point, we have visited all transitions in f.chunk, so
             // add it as a sparse NFA state. Unless the chunk was empty, in
-            // which case, we don&#39;t do anything.
+            // which case, we don't do anything.
             </span><span class="kw">if </span>!f.sparse.is_empty() {
                 <span class="kw">let </span>chunk_id = <span class="kw">if </span>f.sparse.len() == <span class="number">1 </span>{
                     builder.add_range(f.sparse.pop().unwrap())<span class="question-mark">?
@@ -735,7 +735,7 @@
             }
             <span class="comment">// Now we need to look to see if there are other chunks to visit.
             </span><span class="kw">if let </span><span class="prelude-val">Some</span>(chunk) = f.chunks.next() {
-                <span class="comment">// If we&#39;re here, it means we&#39;re on the second (or greater)
+                <span class="comment">// If we're here, it means we're on the second (or greater)
                 // chunk, which implies there is a match at this point. So
                 // connect this state to the final end state.
                 </span>f.union.push(end);
@@ -745,8 +745,8 @@
             }
             <span class="comment">// Now that we are out of chunks, we have completely visited
             // this state. So turn our union of chunks into an NFA union
-            // state, and add that union state to the parent state&#39;s current
-            // sparse state. (If there is no parent, we&#39;re done.)
+            // state, and add that union state to the parent state's current
+            // sparse state. (If there is no parent, we're done.)
             </span><span class="kw">let </span>start = builder.add_union(f.union)<span class="question-mark">?</span>;
             <span class="kw">match </span>stack.pop() {
                 <span class="prelude-val">None </span>=&gt; {
@@ -755,7 +755,7 @@
                 <span class="prelude-val">Some</span>(<span class="kw-2">mut </span>parent) =&gt; {
                     <span class="comment">// OK because the only way a frame gets pushed on to the
                     // stack (aside from the root) is when a transition has
-                    // been added to &#39;sparse&#39;.
+                    // been added to 'sparse'.
                     </span>parent.sparse.last_mut().unwrap().next = start;
                     f = parent;
                 }
@@ -765,7 +765,7 @@
 
     <span class="doccomment">/// Converts this trie to an equivalent HIR expression.
     ///
-    /// We don&#39;t actually use this, but it&#39;s useful for tests. In particular,
+    /// We don't actually use this, but it's useful for tests. In particular,
     /// it provides a (somewhat) human readable representation of the trie
     /// itself.
     </span><span class="attr">#[cfg(test)]
@@ -773,9 +773,9 @@
         <span class="self">self</span>.compile_state_to_hir(StateID::ZERO)
     }
 
-    <span class="doccomment">/// The recursive implementation of &#39;to_hir&#39;.
+    <span class="doccomment">/// The recursive implementation of 'to_hir'.
     ///
-    /// Notice how simple this is compared to &#39;compile&#39; above. &#39;compile&#39; could
+    /// Notice how simple this is compared to 'compile' above. 'compile' could
     /// be similarly simple, but we opt to not use recursion in order to avoid
     /// overflowing the stack in the case of a longer literal.
     </span><span class="attr">#[cfg(test)]
@@ -805,11 +805,11 @@
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>LiteralTrie {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;LiteralTrie(&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"LiteralTrie("</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>(sid, state) <span class="kw">in </span><span class="self">self</span>.states.iter().with_state_ids() {
-            <span class="macro">writeln!</span>(f, <span class="string">&quot;{:06?}: {:?}&quot;</span>, sid.as_usize(), state)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(f, <span class="string">"{:06?}: {:?}"</span>, sid.as_usize(), state)<span class="question-mark">?</span>;
         }
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;)&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">")"</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -819,22 +819,22 @@
 ///
 /// Each frame is tied to the traversal of a single trie state. The frame is
 /// dropped once the entire state (and all of its children) have been visited.
-/// The &quot;output&quot; of compiling a state is the &#39;union&#39; vector, which is turn
+/// The "output" of compiling a state is the 'union' vector, which is turn
 /// converted to a NFA union state. Each branch of the union corresponds to a
 /// chunk in the trie state.
 ///
-/// &#39;sparse&#39; corresponds to the set of transitions for a particular chunk in a
-/// trie state. It is ultimately converted to an NFA sparse state. The &#39;sparse&#39;
+/// 'sparse' corresponds to the set of transitions for a particular chunk in a
+/// trie state. It is ultimately converted to an NFA sparse state. The 'sparse'
 /// field, after being converted to a sparse NFA state, is reused for any
 /// subsequent chunks in the trie state, if any exist.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">struct </span>Frame&lt;<span class="lifetime">&#39;a</span>&gt; {
+</span><span class="kw">struct </span>Frame&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// The remaining chunks to visit for a trie state.
-    </span>chunks: StateChunksIter&lt;<span class="lifetime">&#39;a</span>&gt;,
-    <span class="doccomment">/// The transitions of the current chunk that we&#39;re iterating over. Since
+    </span>chunks: StateChunksIter&lt;<span class="lifetime">'a</span>&gt;,
+    <span class="doccomment">/// The transitions of the current chunk that we're iterating over. Since
     /// every trie state has at least one chunk, every frame is initialized
-    /// with the first chunk&#39;s transitions ready to be consumed.
-    </span>transitions: core::slice::Iter&lt;<span class="lifetime">&#39;a</span>, Transition&gt;,
+    /// with the first chunk's transitions ready to be consumed.
+    </span>transitions: core::slice::Iter&lt;<span class="lifetime">'a</span>, Transition&gt;,
     <span class="doccomment">/// The NFA state IDs pointing to the start of each chunk compiled by
     /// this trie state. This ultimately gets converted to an NFA union once
     /// the entire trie state (and all of its children) have been compiled.
@@ -843,15 +843,15 @@
     </span><span class="kw">union</span>: Vec&lt;StateID&gt;,
     <span class="doccomment">/// The actual NFA transitions for a single chunk in a trie state. This
     /// gets converted to an NFA sparse state, and its corresponding NFA state
-    /// ID should get added to &#39;union&#39;.
+    /// ID should get added to 'union'.
     </span>sparse: Vec&lt;thompson::Transition&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Frame&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Frame&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Create a new stack frame for trie traversal. This initializes the
-    /// &#39;transitions&#39; iterator to the transitions for the first chunk, with the
-    /// &#39;chunks&#39; iterator being every chunk after the first one.
-    </span><span class="kw">fn </span>new(state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>State) -&gt; Frame&lt;<span class="lifetime">&#39;a</span>&gt; {
+    /// 'transitions' iterator to the transitions for the first chunk, with the
+    /// 'chunks' iterator being every chunk after the first one.
+    </span><span class="kw">fn </span>new(state: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>State) -&gt; Frame&lt;<span class="lifetime">'a</span>&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>chunks = state.chunks();
         <span class="comment">// every state has at least 1 chunk
         </span><span class="kw">let </span>chunk = chunks.next().unwrap();
@@ -862,15 +862,15 @@
 
 <span class="doccomment">/// A state in a trie.
 ///
-/// This uses a sparse representation. Since we don&#39;t use literal tries
+/// This uses a sparse representation. Since we don't use literal tries
 /// for searching, and ultimately (and compilation requires visiting every
 /// transition anyway), we use a sparse representation for transitions. This
-/// means we save on memory, at the expense of &#39;LiteralTrie::add&#39; being perhaps
+/// means we save on memory, at the expense of 'LiteralTrie::add' being perhaps
 /// a bit slower.
 ///
-/// While &#39;transitions&#39; is pretty standard as far as tries goes, the &#39;chunks&#39;
-/// piece here is more unusual. In effect, &#39;chunks&#39; defines a partitioning
-/// of &#39;transitions&#39;, where each chunk corresponds to a distinct set of
+/// While 'transitions' is pretty standard as far as tries goes, the 'chunks'
+/// piece here is more unusual. In effect, 'chunks' defines a partitioning
+/// of 'transitions', where each chunk corresponds to a distinct set of
 /// transitions. The key invariant is that a transition in one chunk cannot
 /// be moved to another chunk. This is the secret sauce that preserve
 /// leftmost-first match semantics.
@@ -878,15 +878,15 @@
 /// A new chunk is added whenever we mark a state as a match state. Once a
 /// new chunk is added, the old active chunk is frozen and is never mutated
 /// again. The new chunk becomes the active chunk, which is defined as
-/// &#39;&amp;transitions[chunks.last().map_or(0, |c| c.1)..]&#39;. Thus, a state where
-/// &#39;chunks&#39; is empty actually contains one chunk. Thus, every state contains
+/// '&amp;transitions[chunks.last().map_or(0, |c| c.1)..]'. Thus, a state where
+/// 'chunks' is empty actually contains one chunk. Thus, every state contains
 /// at least one (possibly empty) chunk.
 ///
-/// A &quot;leaf&quot; state is a state that has no outgoing transitions (so
-/// &#39;transitions&#39; is empty). Note that there is no way for a leaf state to be a
-/// non-matching state. (Although while building the trie, within &#39;add&#39;, a leaf
+/// A "leaf" state is a state that has no outgoing transitions (so
+/// 'transitions' is empty). Note that there is no way for a leaf state to be a
+/// non-matching state. (Although while building the trie, within 'add', a leaf
 /// state may exist while not containing any matches. But this invariant is
-/// only broken within &#39;add&#39;. Once &#39;add&#39; returns, the invariant is upheld.)
+/// only broken within 'add'. Once 'add' returns, the invariant is upheld.)
 </span><span class="attr">#[derive(Clone, Default)]
 </span><span class="kw">struct </span>State {
     transitions: Vec&lt;Transition&gt;,
@@ -897,12 +897,12 @@
     <span class="doccomment">/// Mark this state as a match state and freeze the active chunk such that
     /// it can not be further mutated.
     </span><span class="kw">fn </span>add_match(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="comment">// This is not strictly necessary, but there&#39;s no point in recording
+        <span class="comment">// This is not strictly necessary, but there's no point in recording
         // another match by adding another chunk if the state has no
         // transitions. Note though that we only skip this if we already know
-        // this is a match state, which is only true if &#39;chunks&#39; is not empty.
-        // Basically, if we didn&#39;t do this, nothing semantically would change,
-        // but we&#39;d end up pushing another chunk and potentially triggering an
+        // this is a match state, which is only true if 'chunks' is not empty.
+        // Basically, if we didn't do this, nothing semantically would change,
+        // but we'd end up pushing another chunk and potentially triggering an
         // alloc.
         </span><span class="kw">if </span><span class="self">self</span>.transitions.is_empty() &amp;&amp; !<span class="self">self</span>.chunks.is_empty() {
             <span class="kw">return</span>;
@@ -922,7 +922,7 @@
     /// active chunk) in this state. Since the active chunk is included, the
     /// iterator is guaranteed to always yield at least one chunk (although the
     /// chunk may be empty).
-    </span><span class="kw">fn </span>chunks(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StateChunksIter&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">fn </span>chunks(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StateChunksIter&lt;<span class="lifetime">'_</span>&gt; {
         StateChunksIter {
             transitions: <span class="kw-2">&amp;*</span><span class="self">self</span>.transitions,
             chunks: <span class="self">self</span>.chunks.iter(),
@@ -936,7 +936,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.transitions[start..]
     }
 
-    <span class="doccomment">/// Returns the index into &#39;transitions&#39; where the active chunk starts.
+    <span class="doccomment">/// Returns the index into 'transitions' where the active chunk starts.
     </span><span class="kw">fn </span>active_chunk_start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.chunks.last().map_or(<span class="number">0</span>, |<span class="kw-2">&amp;</span>(<span class="kw">_</span>, end)| end)
     }
@@ -944,20 +944,20 @@
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>State {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="kw">let </span><span class="kw-2">mut </span>spacing = <span class="string">&quot; &quot;</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>spacing = <span class="string">" "</span>;
         <span class="kw">for </span>(i, chunk) <span class="kw">in </span><span class="self">self</span>.chunks().enumerate() {
             <span class="kw">if </span>i &gt; <span class="number">0 </span>{
-                <span class="macro">write!</span>(f, <span class="string">&quot;{}MATCH&quot;</span>, spacing)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"{}MATCH"</span>, spacing)<span class="question-mark">?</span>;
             }
-            spacing = <span class="string">&quot;&quot;</span>;
+            spacing = <span class="string">""</span>;
             <span class="kw">for </span>(j, t) <span class="kw">in </span>chunk.iter().enumerate() {
-                spacing = <span class="string">&quot; &quot;</span>;
+                spacing = <span class="string">" "</span>;
                 <span class="kw">if </span>j == <span class="number">0 </span>&amp;&amp; i &gt; <span class="number">0 </span>{
-                    <span class="macro">write!</span>(f, <span class="string">&quot; &quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">" "</span>)<span class="question-mark">?</span>;
                 } <span class="kw">else if </span>j &gt; <span class="number">0 </span>{
-                    <span class="macro">write!</span>(f, <span class="string">&quot;, &quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">", "</span>)<span class="question-mark">?</span>;
                 }
-                <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, t)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, t)<span class="question-mark">?</span>;
             }
         }
         <span class="prelude-val">Ok</span>(())
@@ -969,16 +969,16 @@
 /// This iterator is created by `State::chunks`. We name this iterator so that
 /// we can include it in the `Frame` type for non-recursive trie traversal.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">struct </span>StateChunksIter&lt;<span class="lifetime">&#39;a</span>&gt; {
-    transitions: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Transition],
-    chunks: core::slice::Iter&lt;<span class="lifetime">&#39;a</span>, (usize, usize)&gt;,
-    active: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Transition]&gt;,
+</span><span class="kw">struct </span>StateChunksIter&lt;<span class="lifetime">'a</span>&gt; {
+    transitions: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[Transition],
+    chunks: core::slice::Iter&lt;<span class="lifetime">'a</span>, (usize, usize)&gt;,
+    active: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[Transition]&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>StateChunksIter&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Transition];
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Iterator <span class="kw">for </span>StateChunksIter&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[Transition];
 
-    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Transition]&gt; {
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[Transition]&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>(start, end)) = <span class="self">self</span>.chunks.next() {
             <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.transitions[start..end]);
         }
@@ -1000,7 +1000,7 @@
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;{:?} =&gt; {}&quot;</span>,
+            <span class="string">"{:?} =&gt; {}"</span>,
             <span class="kw">crate</span>::util::escape::DebugByte(<span class="self">self</span>.byte),
             <span class="self">self</span>.next.as_usize()
         )
@@ -1017,17 +1017,17 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>zap() {
         <span class="kw">let </span><span class="kw-2">mut </span>trie = LiteralTrie::forward();
-        trie.add(<span class="string">b&quot;zapper&quot;</span>).unwrap();
-        trie.add(<span class="string">b&quot;z&quot;</span>).unwrap();
-        trie.add(<span class="string">b&quot;zap&quot;</span>).unwrap();
+        trie.add(<span class="string">b"zapper"</span>).unwrap();
+        trie.add(<span class="string">b"z"</span>).unwrap();
+        trie.add(<span class="string">b"zap"</span>).unwrap();
 
         <span class="kw">let </span>got = trie.compile_to_hir();
         <span class="kw">let </span>expected = Hir::concat(<span class="macro">vec!</span>[
-            Hir::literal(B(<span class="string">&quot;z&quot;</span>)),
+            Hir::literal(B(<span class="string">"z"</span>)),
             Hir::alternation(<span class="macro">vec!</span>[
-                Hir::literal(B(<span class="string">&quot;apper&quot;</span>)),
+                Hir::literal(B(<span class="string">"apper"</span>)),
                 Hir::empty(),
-                Hir::literal(B(<span class="string">&quot;ap&quot;</span>)),
+                Hir::literal(B(<span class="string">"ap"</span>)),
             ]),
         ]);
         <span class="macro">assert_eq!</span>(expected, got);
@@ -1036,19 +1036,19 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>maker() {
         <span class="kw">let </span><span class="kw-2">mut </span>trie = LiteralTrie::forward();
-        trie.add(<span class="string">b&quot;make&quot;</span>).unwrap();
-        trie.add(<span class="string">b&quot;maple&quot;</span>).unwrap();
-        trie.add(<span class="string">b&quot;maker&quot;</span>).unwrap();
+        trie.add(<span class="string">b"make"</span>).unwrap();
+        trie.add(<span class="string">b"maple"</span>).unwrap();
+        trie.add(<span class="string">b"maker"</span>).unwrap();
 
         <span class="kw">let </span>got = trie.compile_to_hir();
         <span class="kw">let </span>expected = Hir::concat(<span class="macro">vec!</span>[
-            Hir::literal(B(<span class="string">&quot;ma&quot;</span>)),
+            Hir::literal(B(<span class="string">"ma"</span>)),
             Hir::alternation(<span class="macro">vec!</span>[
                 Hir::concat(<span class="macro">vec!</span>[
-                    Hir::literal(B(<span class="string">&quot;ke&quot;</span>)),
-                    Hir::alternation(<span class="macro">vec!</span>[Hir::empty(), Hir::literal(B(<span class="string">&quot;r&quot;</span>))]),
+                    Hir::literal(B(<span class="string">"ke"</span>)),
+                    Hir::alternation(<span class="macro">vec!</span>[Hir::empty(), Hir::literal(B(<span class="string">"r"</span>))]),
                 ]),
-                Hir::literal(B(<span class="string">&quot;ple&quot;</span>)),
+                Hir::literal(B(<span class="string">"ple"</span>)),
             ]),
         ]);
         <span class="macro">assert_eq!</span>(expected, got);

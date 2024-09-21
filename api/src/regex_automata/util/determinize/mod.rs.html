@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/util/determinize/mod.rs`."><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../regex_automata/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/util/determinize/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -691,27 +691,27 @@ corresponds to the things that are in common between these implementations.
 There are three broad things that our implementations of determinization have
 in common, as defined by this module:
 
-* The classification of start states. That is, whether we&#39;re dealing with
+* The classification of start states. That is, whether we're dealing with
 word boundaries, line boundaries, etc., is all the same. This also includes
 the look-behind assertions that are satisfied by each starting state
 classification.
 * The representation of DFA states as sets of NFA states, including
 convenience types for building these DFA states that are amenable to reusing
 allocations.
-* Routines for the &quot;classical&quot; parts of determinization: computing the
+* Routines for the "classical" parts of determinization: computing the
 epsilon closure, tracking match states (with corresponding pattern IDs, since
 we support multi-pattern finite automata) and, of course, computing the
 transition function between states for units of input.
 
 I did consider a couple of alternatives to this particular form of code reuse:
 
-1. Don&#39;t do any code reuse. The problem here is that we *really* want both
+1. Don't do any code reuse. The problem here is that we *really* want both
 forms of determinization to do exactly identical things when it comes to
 their handling of NFA states. While our tests generally ensure this, the code
 is tricky and large enough where not reusing code is a pretty big bummer.
 
 2. Implement all of determinization once and make it generic over fully
-compiled DFAs and lazily compiled DFAs. While I didn&#39;t actually try this
+compiled DFAs and lazily compiled DFAs. While I didn't actually try this
 approach, my instinct is that it would be more complex than is needed here.
 And the interface required would be pretty hairy. Instead, I think splitting
 it into logical sub-components works better.
@@ -755,8 +755,8 @@ it into logical sub-components works better.
 /// the `StateBuilderNFA` returned since they are impossible to visit.
 ///
 /// `sparses` is used as scratch space for NFA traversal. Other than their
-/// capacity requirements (detailed above), there are no requirements on what&#39;s
-/// contained within them (if anything). Similarly, what&#39;s inside of them once
+/// capacity requirements (detailed above), there are no requirements on what's
+/// contained within them (if anything). Similarly, what's inside of them once
 /// this routine returns is unspecified.
 ///
 /// `stack` must have length 0. It is used as scratch space for depth first
@@ -786,7 +786,7 @@ it into logical sub-components works better.
     // conditional logic for dealing with the exceptionally annoying CRLF-aware
     // line anchors.
     </span><span class="kw">let </span>rev = nfa.is_reverse();
-    <span class="comment">// The look-around matcher that our NFA is configured with. We don&#39;t
+    <span class="comment">// The look-around matcher that our NFA is configured with. We don't
     // actually use it to match look-around assertions, but we do need its
     // configuration for constructing states consistent with how it matches.
     </span><span class="kw">let </span>lookm = nfa.look_matcher();
@@ -796,7 +796,7 @@ it into logical sub-components works better.
     //
     // Doing this state shuffling is technically not necessary unless some
     // kind of look-around is used in the DFA. Some ad hoc experiments
-    // suggested that avoiding this didn&#39;t lead to much of an improvement,
+    // suggested that avoiding this didn't lead to much of an improvement,
     // but perhaps more rigorous experimentation should be done. And in
     // particular, avoiding this check requires some light refactoring of
     // the code below.
@@ -805,22 +805,22 @@ it into logical sub-components works better.
     });
 
     <span class="comment">// Compute look-ahead assertions originating from the current state. Based
-    // on the input unit we&#39;re transitioning over, some additional set of
-    // assertions may be true. Thus, we re-compute this state&#39;s epsilon closure
+    // on the input unit we're transitioning over, some additional set of
+    // assertions may be true. Thus, we re-compute this state's epsilon closure
     // (but only if necessary). Notably, when we build a DFA state initially,
-    // we don&#39;t enable any look-ahead assertions because we don&#39;t know whether
-    // they&#39;re true or not at that point.
+    // we don't enable any look-ahead assertions because we don't know whether
+    // they're true or not at that point.
     </span><span class="kw">if </span>!state.look_need().is_empty() {
         <span class="comment">// Add look-ahead assertions that are now true based on the current
         // input unit.
         </span><span class="kw">let </span><span class="kw-2">mut </span>look_have = state.look_have().clone();
         <span class="kw">match </span>unit.as_u8() {
-            <span class="prelude-val">Some</span>(<span class="string">b&#39;\r&#39;</span>) =&gt; {
+            <span class="prelude-val">Some</span>(<span class="string">b'\r'</span>) =&gt; {
                 <span class="kw">if </span>!rev || !state.is_half_crlf() {
                     look_have = look_have.insert(Look::EndCRLF);
                 }
             }
-            <span class="prelude-val">Some</span>(<span class="string">b&#39;\n&#39;</span>) =&gt; {
+            <span class="prelude-val">Some</span>(<span class="string">b'\n'</span>) =&gt; {
                 <span class="kw">if </span>rev || !state.is_half_crlf() {
                     look_have = look_have.insert(Look::EndCRLF);
                 }
@@ -837,8 +837,8 @@ it into logical sub-components works better.
             look_have = look_have.insert(Look::EndLF);
         }
         <span class="kw">if </span>state.is_half_crlf()
-            &amp;&amp; ((rev &amp;&amp; !unit.is_byte(<span class="string">b&#39;\r&#39;</span>))
-                || (!rev &amp;&amp; !unit.is_byte(<span class="string">b&#39;\n&#39;</span>)))
+            &amp;&amp; ((rev &amp;&amp; !unit.is_byte(<span class="string">b'\r'</span>))
+                || (!rev &amp;&amp; !unit.is_byte(<span class="string">b'\n'</span>)))
         {
             look_have = look_have.insert(Look::StartCRLF);
         }
@@ -866,8 +866,8 @@ it into logical sub-components works better.
         }
         <span class="comment">// If we have new assertions satisfied that are among the set of
         // assertions that exist in this state (that is, just because we added
-        // an EndLF assertion above doesn&#39;t mean there is an EndLF conditional
-        // epsilon transition in this state), then we re-compute this state&#39;s
+        // an EndLF assertion above doesn't mean there is an EndLF conditional
+        // epsilon transition in this state), then we re-compute this state's
         // epsilon closure using the updated set of assertions.
         //
         // Note that since our DFA states omit unconditional epsilon
@@ -902,7 +902,7 @@ it into logical sub-components works better.
     </span><span class="kw">if </span>nfa.look_set_any().contains_anchor_line()
         &amp;&amp; unit.is_byte(lookm.get_line_terminator())
     {
-        <span class="comment">// Why only handle StartLF here and not Start? That&#39;s because Start
+        <span class="comment">// Why only handle StartLF here and not Start? That's because Start
         // can only impact the starting state, which is special cased in
         // start state handling.
         </span>builder.set_look_have(|have| have.insert(Look::StartLF));
@@ -914,7 +914,7 @@ it into logical sub-components works better.
     // further complicated by the fact that reverse a regex means changing a ^
     // to a $ and vice versa.)
     </span><span class="kw">if </span>nfa.look_set_any().contains_anchor_crlf()
-        &amp;&amp; ((rev &amp;&amp; unit.is_byte(<span class="string">b&#39;\r&#39;</span>)) || (!rev &amp;&amp; unit.is_byte(<span class="string">b&#39;\n&#39;</span>)))
+        &amp;&amp; ((rev &amp;&amp; unit.is_byte(<span class="string">b'\r'</span>)) || (!rev &amp;&amp; unit.is_byte(<span class="string">b'\n'</span>)))
     {
         builder.set_look_have(|have| have.insert(Look::StartCRLF));
     }
@@ -940,17 +940,17 @@ it into logical sub-components works better.
                 // delay all matches by one byte and also what therefore
                 // guarantees that starting states cannot be match states.
                 //
-                // If we didn&#39;t delay matches by one byte, then whether
+                // If we didn't delay matches by one byte, then whether
                 // a DFA is a matching state or not would be determined
                 // by whether one of its own constituent NFA states
                 // was a match state. (And that would be done in
-                // &#39;add_nfa_states&#39;.)
+                // 'add_nfa_states'.)
                 //
-                // Also, &#39;add_match_pattern_id&#39; requires that callers never
+                // Also, 'add_match_pattern_id' requires that callers never
                 // pass duplicative pattern IDs. We do in fact uphold that
-                // guarantee here, but it&#39;s subtle. In particular, a Thompson
+                // guarantee here, but it's subtle. In particular, a Thompson
                 // NFA guarantees that each pattern has exactly one match
-                // state. Moreover, since we&#39;re iterating over the NFA state
+                // state. Moreover, since we're iterating over the NFA state
                 // IDs in a set, we are guarateed not to have any duplicative
                 // match states. Thus, it is impossible to add the same pattern
                 // ID more than once.
@@ -958,7 +958,7 @@ it into logical sub-components works better.
                 // N.B. We delay matches by 1 byte as a way to hack 1-byte
                 // look-around into DFA searches. This lets us support ^, $
                 // and ASCII-only \b. The delay is also why we need a special
-                // &quot;end-of-input&quot; (EOI) sentinel and why we need to follow the
+                // "end-of-input" (EOI) sentinel and why we need to follow the
                 // EOI sentinel at the end of every search. This final EOI
                 // transition is necessary to report matches found at the end
                 // of a haystack.
@@ -1002,16 +1002,16 @@ it into logical sub-components works better.
             }
         }
     }
-    <span class="comment">// We only set the word byte if there&#39;s a word boundary look-around
-    // anywhere in this regex. Otherwise, there&#39;s no point in bloating the
-    // number of states if we don&#39;t have one.
+    <span class="comment">// We only set the word byte if there's a word boundary look-around
+    // anywhere in this regex. Otherwise, there's no point in bloating the
+    // number of states if we don't have one.
     //
     // We also only set it when the state has a non-zero number of NFA states.
     // Otherwise, we could wind up with states that *should* be DEAD states
     // but are otherwise distinct from DEAD states because of this look-behind
-    // assertion being set. While this can&#39;t technically impact correctness *in
+    // assertion being set. While this can't technically impact correctness *in
     // theory*, it can create pathological DFAs that consume input until EOI or
-    // a quit byte is seen. Consuming until EOI isn&#39;t a correctness problem,
+    // a quit byte is seen. Consuming until EOI isn't a correctness problem,
     // but a (serious) perf problem. Hitting a quit byte, however, could be a
     // correctness problem since it could cause search routines to report an
     // error instead of a detected match once the quit state is entered. (The
@@ -1024,7 +1024,7 @@ it into logical sub-components works better.
             builder.set_is_from_word();
         }
         <span class="kw">if </span>nfa.look_set_any().contains_anchor_crlf()
-            &amp;&amp; ((rev &amp;&amp; unit.is_byte(<span class="string">b&#39;\n&#39;</span>)) || (!rev &amp;&amp; unit.is_byte(<span class="string">b&#39;\r&#39;</span>)))
+            &amp;&amp; ((rev &amp;&amp; unit.is_byte(<span class="string">b'\n'</span>)) || (!rev &amp;&amp; unit.is_byte(<span class="string">b'\r'</span>)))
         {
             builder.set_is_half_crlf();
         }
@@ -1056,8 +1056,8 @@ it into logical sub-components works better.
     set: <span class="kw-2">&amp;mut </span>SparseSet,
 ) {
     <span class="macro">assert!</span>(stack.is_empty());
-    <span class="comment">// If this isn&#39;t an epsilon state, then the epsilon closure is always just
-    // itself, so there&#39;s no need to spin up the machinery below to handle it.
+    <span class="comment">// If this isn't an epsilon state, then the epsilon closure is always just
+    // itself, so there's no need to spin up the machinery below to handle it.
     </span><span class="kw">if </span>!nfa.state(start_nfa_id).is_epsilon() {
         set.insert(start_nfa_id);
         <span class="kw">return</span>;
@@ -1070,7 +1070,7 @@ it into logical sub-components works better.
         // that state and mush on. We only use the stack when an NFA state
         // introduces multiple new states to visit.
         </span><span class="kw">loop </span>{
-            <span class="comment">// Insert this NFA state, and if it&#39;s already in the set and thus
+            <span class="comment">// Insert this NFA state, and if it's already in the set and thus
             // already visited, then we can move on to the next one.
             </span><span class="kw">if </span>!set.insert(id) {
                 <span class="kw">break</span>;
@@ -1149,23 +1149,23 @@ it into logical sub-components works better.
             }
             thompson::State::Union { .. }
             | thompson::State::BinaryUnion { .. } =&gt; {
-                <span class="comment">// Pure epsilon transitions don&#39;t need to be tracked as part
+                <span class="comment">// Pure epsilon transitions don't need to be tracked as part
                 // of the DFA state. Tracking them is actually superfluous;
-                // they won&#39;t cause any harm other than making determinization
+                // they won't cause any harm other than making determinization
                 // slower.
                 //
-                // Why aren&#39;t these needed? Well, in an NFA, epsilon
+                // Why aren't these needed? Well, in an NFA, epsilon
                 // transitions are really just jumping points to other states.
                 // So once you hit an epsilon transition, the same set of
                 // resulting states always appears. Therefore, putting them in
-                // a DFA&#39;s set of ordered NFA states is strictly redundant.
+                // a DFA's set of ordered NFA states is strictly redundant.
                 //
                 // Look-around states are also epsilon transitions, but
                 // they are *conditional*. So their presence could be
                 // discriminatory, and thus, they are tracked above.
                 //
                 // But wait... why are epsilon states in our `set` in the first
-                // place? Why not just leave them out? They&#39;re in our `set`
+                // place? Why not just leave them out? They're in our `set`
                 // because it was generated by computing an epsilon closure,
                 // and we want to keep track of all states we visited to avoid
                 // re-visiting them. In exchange, we have to do this second
@@ -1176,7 +1176,7 @@ it into logical sub-components works better.
                 // will actually be used to construct the next DFA state.
                 //
                 // Note that this optimization requires that we re-compute the
-                // epsilon closure to account for look-ahead in &#39;next&#39; *only
+                // epsilon closure to account for look-ahead in 'next' *only
                 // when necessary*. Namely, only when the set of look-around
                 // assertions changes and only when those changes are within
                 // the set of assertions that are needed in order to step
@@ -1206,7 +1206,7 @@ it into logical sub-components works better.
                 //
                 // The problem here is that one of the DFA start states is
                 // going to consist of the NFA states [2, 3] by computing the
-                // epsilon closure of state 4. State 4 isn&#39;t included because
+                // epsilon closure of state 4. State 4 isn't included because
                 // we previously were not keeping track of union states. But
                 // only a subset of transitions out of this state will be able
                 // to follow WordAscii, and in those cases, the epsilon closure
@@ -1214,46 +1214,46 @@ it into logical sub-components works better.
                 // closure from [2, 3] is different than computing the epsilon
                 // closure from [4]. In the former case, assuming the WordAscii
                 // assertion is satisfied, you get: [2, 3, 6]. In the latter
-                // case, you get: [2, 6, 3]. Notice that &#39;6&#39; is the match state
-                // and appears AFTER &#39;3&#39; in the former case. This leads to a
-                // preferential but incorrect match of &#39;%&#39; before returning
+                // case, you get: [2, 6, 3]. Notice that '6' is the match state
+                // and appears AFTER '3' in the former case. This leads to a
+                // preferential but incorrect match of '%' before returning
                 // a match. In the latter case, the match is preferred over
-                // continuing to accept the &#39;%&#39;.
+                // continuing to accept the '%'.
                 //
                 // It almost feels like we might be able to fix the NFA states
                 // to avoid this, or to at least only keep track of union
                 // states where this actually matters, since in the vast
-                // majority of cases, this doesn&#39;t matter.
+                // majority of cases, this doesn't matter.
                 //
                 // Another alternative would be to define a new HIR property
-                // called &quot;assertion is repeated anywhere&quot; and compute it
+                // called "assertion is repeated anywhere" and compute it
                 // inductively over the entire pattern. If it happens anywhere,
                 // which is probably pretty rare, then we record union states.
-                // Otherwise we don&#39;t.
+                // Otherwise we don't.
                 </span>builder.add_nfa_state_id(nfa_id);
             }
             <span class="comment">// Capture states we definitely do not need to record, since they
             // are unconditional epsilon transitions with no branching.
             </span>thompson::State::Capture { .. } =&gt; {}
-            <span class="comment">// It&#39;s not totally clear whether we need to record fail states or
+            <span class="comment">// It's not totally clear whether we need to record fail states or
             // not, but we do so out of an abundance of caution. Since they are
-            // quite rare in practice, there isn&#39;t much cost to recording them.
+            // quite rare in practice, there isn't much cost to recording them.
             </span>thompson::State::Fail =&gt; {
                 builder.add_nfa_state_id(nfa_id);
             }
             thompson::State::Match { .. } =&gt; {
-                <span class="comment">// Normally, the NFA match state doesn&#39;t actually need to
+                <span class="comment">// Normally, the NFA match state doesn't actually need to
                 // be inside the DFA state. But since we delay matches by
                 // one byte, the matching DFA state corresponds to states
-                // that transition from the one we&#39;re building here. And
+                // that transition from the one we're building here. And
                 // the way we detect those cases is by looking for an NFA
-                // match state. See &#39;next&#39; for how this is handled.
+                // match state. See 'next' for how this is handled.
                 </span>builder.add_nfa_state_id(nfa_id);
             }
         }
     }
     <span class="comment">// If we know this state contains no look-around assertions, then
-    // there&#39;s no reason to track which look-around assertions were
+    // there's no reason to track which look-around assertions were
     // satisfied when this state was created.
     </span><span class="kw">if </span>builder.look_need().is_empty() {
         builder.set_look_have(|<span class="kw">_</span>| LookSet::empty());
@@ -1313,7 +1313,7 @@ it into logical sub-components works better.
                     builder.set_look_have(|have| have.insert(Look::StartCRLF));
                 }
             }
-            <span class="kw">if </span>lookset.contains_anchor_line() &amp;&amp; lineterm == <span class="string">b&#39;\n&#39; </span>{
+            <span class="kw">if </span>lookset.contains_anchor_line() &amp;&amp; lineterm == <span class="string">b'\n' </span>{
                 builder.set_look_have(|have| have.insert(Look::StartLF));
             }
             <span class="kw">if </span>lookset.contains_word() {
@@ -1331,7 +1331,7 @@ it into logical sub-components works better.
                     builder.set_is_half_crlf();
                 }
             }
-            <span class="kw">if </span>lookset.contains_anchor_line() &amp;&amp; lineterm == <span class="string">b&#39;\r&#39; </span>{
+            <span class="kw">if </span>lookset.contains_anchor_line() &amp;&amp; lineterm == <span class="string">b'\r' </span>{
                 builder.set_look_have(|have| have.insert(Look::StartLF));
             }
             <span class="kw">if </span>lookset.contains_word() {

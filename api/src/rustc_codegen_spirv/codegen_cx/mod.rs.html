@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/mod.rs`."><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -902,6 +902,72 @@
 <a href="#902" id="902">902</a>
 <a href="#903" id="903">903</a>
 <a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>constant;
 <span class="kw">mod </span>declare;
 <span class="kw">mod </span>entry;
@@ -914,6 +980,7 @@
 <span class="kw">use </span><span class="kw">crate</span>::symbols::Symbols;
 <span class="kw">use </span><span class="kw">crate</span>::target::SpirvTarget;
 
+<span class="kw">use </span>itertools::Itertools <span class="kw">as _</span>;
 <span class="kw">use </span>rspirv::dr::{Module, Operand};
 <span class="kw">use </span>rspirv::spirv::{Decoration, LinkageType, Op, Word};
 <span class="kw">use </span>rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
@@ -922,6 +989,7 @@
     AsmMethods, BackendTypes, DebugInfoMethods, GlobalAsmOperandRef, MiscMethods,
 };
 <span class="kw">use </span>rustc_data_structures::fx::{FxHashMap, FxHashSet};
+<span class="kw">use </span>rustc_hir::def_id::DefId;
 <span class="kw">use </span>rustc_middle::mir;
 <span class="kw">use </span>rustc_middle::mir::mono::CodegenUnit;
 <span class="kw">use </span>rustc_middle::ty::layout::{HasParamEnv, HasTyCtxt};
@@ -931,7 +999,7 @@
 <span class="kw">use </span>rustc_span::{SourceFile, Span, DUMMY_SP};
 <span class="kw">use </span>rustc_target::abi::call::{FnAbi, PassMode};
 <span class="kw">use </span>rustc_target::abi::{AddressSpace, HasDataLayout, TargetDataLayout};
-<span class="kw">use </span>rustc_target::spec::{HasTargetSpec, Target};
+<span class="kw">use </span>rustc_target::spec::{HasTargetSpec, Target, TargetTriple};
 <span class="kw">use </span>std::cell::RefCell;
 <span class="kw">use </span>std::collections::BTreeSet;
 <span class="kw">use </span>std::iter::once;
@@ -939,58 +1007,125 @@
 <span class="kw">use </span>std::rc::Rc;
 <span class="kw">use </span>std::str::FromStr;
 
-<span class="kw">pub struct </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">pub </span>tcx: TyCtxt&lt;<span class="lifetime">&#39;tcx</span>&gt;,
-    <span class="kw">pub </span>codegen_unit: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>CodegenUnit&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+<span class="kw">pub struct </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">pub </span>tcx: TyCtxt&lt;<span class="lifetime">'tcx</span>&gt;,
+    <span class="kw">pub </span>codegen_unit: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>CodegenUnit&lt;<span class="lifetime">'tcx</span>&gt;,
     <span class="doccomment">/// Spir-v module builder
-    </span><span class="kw">pub </span>builder: BuilderSpirv&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+    </span><span class="kw">pub </span>builder: BuilderSpirv&lt;<span class="lifetime">'tcx</span>&gt;,
     <span class="doccomment">/// Map from MIR function to spir-v function ID
-    </span><span class="kw">pub </span>instances: RefCell&lt;FxHashMap&lt;Instance&lt;<span class="lifetime">&#39;tcx</span>&gt;, SpirvValue&gt;&gt;,
+    </span><span class="kw">pub </span>instances: RefCell&lt;FxHashMap&lt;Instance&lt;<span class="lifetime">'tcx</span>&gt;, SpirvValue&gt;&gt;,
     <span class="doccomment">/// Map from function ID to parameter list
     </span><span class="kw">pub </span>function_parameter_values: RefCell&lt;FxHashMap&lt;Word, Vec&lt;SpirvValue&gt;&gt;&gt;,
-    <span class="kw">pub </span>type_cache: TypeCache&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+    <span class="kw">pub </span>type_cache: TypeCache&lt;<span class="lifetime">'tcx</span>&gt;,
     <span class="doccomment">/// Cache generated vtables
-    </span><span class="kw">pub </span>vtables: RefCell&lt;FxHashMap&lt;(Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;, <span class="prelude-ty">Option</span>&lt;PolyExistentialTraitRef&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt;), SpirvValue&gt;&gt;,
+    </span><span class="kw">pub </span>vtables: RefCell&lt;FxHashMap&lt;(Ty&lt;<span class="lifetime">'tcx</span>&gt;, <span class="prelude-ty">Option</span>&lt;PolyExistentialTraitRef&lt;<span class="lifetime">'tcx</span>&gt;&gt;), SpirvValue&gt;&gt;,
     <span class="kw">pub </span>ext_inst: RefCell&lt;ExtInst&gt;,
     <span class="doccomment">/// Invalid SPIR-V IDs that should be stripped from the final binary,
     /// each with its own reason and span that should be used for reporting
     /// (in the event that the value is actually needed)
     </span>zombie_decorations:
-        RefCell&lt;FxHashMap&lt;Word, (ZombieDecoration&lt;<span class="lifetime">&#39;tcx</span>&gt;, <span class="prelude-ty">Option</span>&lt;SrcLocDecoration&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt;)&gt;&gt;,
+        RefCell&lt;FxHashMap&lt;Word, (ZombieDecoration&lt;<span class="lifetime">'tcx</span>&gt;, <span class="prelude-ty">Option</span>&lt;SrcLocDecoration&lt;<span class="lifetime">'tcx</span>&gt;&gt;)&gt;&gt;,
     <span class="doccomment">/// Cache of all the builtin symbols we need
     </span><span class="kw">pub </span>sym: Rc&lt;Symbols&gt;,
     <span class="kw">pub </span>instruction_table: InstructionTable,
-    <span class="kw">pub </span>libm_intrinsics: RefCell&lt;FxHashMap&lt;Word, <span class="kw">super</span>::builder::libm_intrinsics::LibmIntrinsic&gt;&gt;,
+
+    <span class="comment">// FIXME(eddyb) should the maps exist at all, now that the `DefId` is known
+    // at `call` time, and presumably its high-level details can be looked up?
+    </span><span class="kw">pub </span>libm_intrinsics: RefCell&lt;FxHashMap&lt;DefId, <span class="kw">super</span>::builder::libm_intrinsics::LibmIntrinsic&gt;&gt;,
 
     <span class="doccomment">/// All `panic!(...)`s and builtin panics (from MIR `Assert`s) call into one
-    /// of these lang items, which we always replace with an &quot;abort&quot;.
-    </span><span class="kw">pub </span>panic_entry_point_ids: RefCell&lt;FxHashSet&lt;Word&gt;&gt;,
+    /// of these lang items, which we always replace with an "abort".
+    </span><span class="kw">pub </span>panic_entry_points: RefCell&lt;FxHashSet&lt;DefId&gt;&gt;,
 
     <span class="doccomment">/// `core::fmt::Arguments::new_{v1,const}` instances (for Rust 2021 panics).
     </span><span class="kw">pub </span>fmt_args_new_fn_ids: RefCell&lt;FxHashSet&lt;Word&gt;&gt;,
 
-    <span class="doccomment">/// `core::fmt::rt::Argument::new_*::&lt;T&gt;` instances (for panics&#39; `format_args!`),
+    <span class="doccomment">/// `core::fmt::rt::Argument::new_*::&lt;T&gt;` instances (for panics' `format_args!`),
     /// with their `T` type (i.e. of the value being formatted), and formatting
-    /// &quot;specifier&quot; as a `char` (&#39; &#39; for `Display`, `x` for `LowerHex`, etc.)
-    </span><span class="kw">pub </span>fmt_rt_arg_new_fn_ids_to_ty_and_spec: RefCell&lt;FxHashMap&lt;Word, (Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;, char)&gt;&gt;,
+    /// "specifier" as a `char` (' ' for `Display`, `x` for `LowerHex`, etc.)
+    </span><span class="kw">pub </span>fmt_rt_arg_new_fn_ids_to_ty_and_spec: RefCell&lt;FxHashMap&lt;Word, (Ty&lt;<span class="lifetime">'tcx</span>&gt;, char)&gt;&gt;,
 
-    <span class="doccomment">/// Intrinsic for loading a &lt;T&gt; from a &amp;[u32]. The PassMode is the mode of the &lt;T&gt;.
-    </span><span class="kw">pub </span>buffer_load_intrinsic_fn_id: RefCell&lt;FxHashMap&lt;Word, <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>PassMode&gt;&gt;,
-    <span class="doccomment">/// Intrinsic for storing a &lt;T&gt; into a &amp;[u32]. The PassMode is the mode of the &lt;T&gt;.
-    </span><span class="kw">pub </span>buffer_store_intrinsic_fn_id: RefCell&lt;FxHashMap&lt;Word, <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>PassMode&gt;&gt;,
+    <span class="doccomment">/// Intrinsic for loading a `&lt;T&gt;` from a `&amp;[u32]`. The `PassMode` is the mode of the `&lt;T&gt;`.
+    </span><span class="kw">pub </span>buffer_load_intrinsics: RefCell&lt;FxHashMap&lt;DefId, <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>PassMode&gt;&gt;,
+    <span class="doccomment">/// Intrinsic for storing a `&lt;T&gt;` into a `&amp;[u32]`. The `PassMode` is the mode of the `&lt;T&gt;`.
+    </span><span class="kw">pub </span>buffer_store_intrinsics: RefCell&lt;FxHashMap&lt;DefId, <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>PassMode&gt;&gt;,
 
-    <span class="doccomment">/// Some runtimes (e.g. intel-compute-runtime) disallow atomics on i8 and i16, even though it&#39;s allowed by the spec.
+    <span class="doccomment">/// Some runtimes (e.g. intel-compute-runtime) disallow atomics on i8 and i16, even though it's allowed by the spec.
     /// This enables/disables them.
     </span><span class="kw">pub </span>i8_i16_atomics_allowed: bool,
 
     <span class="kw">pub </span>codegen_args: CodegenArgs,
-
-    <span class="doccomment">/// Information about the SPIR-V target.
-    </span><span class="kw">pub </span>target: SpirvTarget,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">pub fn </span>new(tcx: TyCtxt&lt;<span class="lifetime">&#39;tcx</span>&gt;, codegen_unit: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>CodegenUnit&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">pub fn </span>new(tcx: TyCtxt&lt;<span class="lifetime">'tcx</span>&gt;, codegen_unit: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>CodegenUnit&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; <span class="self">Self </span>{
+        <span class="comment">// Validate the target spec, as the backend doesn't control `--target`.
+        </span><span class="kw">let </span>target_triple = tcx.sess.opts.target_triple.triple();
+        <span class="kw">let </span>target: SpirvTarget = target_triple.parse().unwrap_or_else(|<span class="kw">_</span>| {
+            <span class="kw">let </span>qualifier = <span class="kw">if </span>!target_triple.starts_with(<span class="string">"spirv-"</span>) {
+                <span class="string">"non-SPIR-V "
+            </span>} <span class="kw">else </span>{
+                <span class="string">""
+            </span>};
+            tcx.dcx().fatal(<span class="macro">format!</span>(
+                <span class="string">"{qualifier}target `{target_triple}` not supported by `rustc_codegen_spirv`"</span>,
+            ))
+        });
+        <span class="kw">let </span>target_spec_mismatched_jsons = {
+            <span class="kw">use </span>rustc_target::json::ToJson;
+
+            <span class="comment">// HACK(eddyb) this loads the same `serde_json` used by `rustc_target`.
+            </span><span class="kw">extern crate </span>serde_json;
+
+            <span class="kw">let </span>expected = <span class="kw-2">&amp;</span>target.rustc_target();
+            <span class="kw">let </span>found = <span class="kw-2">&amp;</span>tcx.sess.target;
+            <span class="kw">match </span><span class="kw-2">&amp;</span>tcx.sess.opts.target_triple {
+                <span class="comment">// HACK(eddyb) if `--target=path/to/target/spec.json` was used,
+                // `tcx.sess.target.to_json()` could still differ from it, and
+                // ideally `spirv-builder` can be forced to pass an exact match.
+                //
+                // FIXME(eddyb) consider the `RUST_TARGET_PATH` env var alternative.
+                </span>TargetTriple::TargetTriple(<span class="kw">_</span>) =&gt; {
+                    <span class="comment">// FIXME(eddyb) this case should be impossible as upstream
+                    // `rustc` doesn't support `spirv-*` targets!
+                    </span>(expected != found).then(|| [expected, found].map(|spec| spec.to_json()))
+                }
+                TargetTriple::TargetJson { contents, .. } =&gt; {
+                    <span class="kw">let </span>expected = expected.to_json();
+                    <span class="kw">let </span>found = serde_json::from_str(contents).unwrap();
+                    (expected != found).then_some([expected, found])
+                }
+            }
+        };
+        <span class="kw">if let </span><span class="prelude-val">Some</span>([expected, found]) = target_spec_mismatched_jsons {
+            <span class="kw">let </span>diff_keys = [<span class="kw-2">&amp;</span>expected, <span class="kw-2">&amp;</span>found]
+                .into_iter()
+                .flat_map(|json| json.as_object().into_iter().flat_map(|obj| obj.keys()))
+                .unique()
+                .filter(|k| expected.get(k) != found.get(k));
+
+            tcx.dcx()
+                .struct_fatal(<span class="macro">format!</span>(<span class="string">"mismatched `{target_triple}` target spec"</span>))
+                .with_note(<span class="macro">format!</span>(
+                    <span class="string">"expected (built into `rustc_codegen_spirv`):\n{expected:#}"
+                </span>))
+                .with_note(<span class="kw">match </span><span class="kw-2">&amp;</span>tcx.sess.opts.target_triple {
+                    TargetTriple::TargetJson {
+                        path_for_rustdoc,
+                        contents,
+                        ..
+                    } <span class="kw">if </span>!path_for_rustdoc.as_os_str().is_empty() =&gt; {
+                        <span class="macro">format!</span>(<span class="string">"found (`{}`):\n{contents}"</span>, path_for_rustdoc.display())
+                    }
+                    <span class="kw">_ </span>=&gt; <span class="macro">format!</span>(<span class="string">"found:\n{found:#}"</span>),
+                })
+                .with_help(<span class="macro">format!</span>(
+                    <span class="string">"mismatched properties: {}"</span>,
+                    diff_keys.map(|k| <span class="macro">format!</span>(<span class="string">"{k:?}"</span>)).join(<span class="string">", "</span>)
+                ))
+                .emit();
+        }
+
         <span class="kw">let </span>sym = Symbols::get();
 
         <span class="kw">let </span><span class="kw-2">mut </span>feature_names = tcx
@@ -1002,7 +1137,7 @@
 
         <span class="comment">// target_features is a HashSet, not a Vec, so we need to sort to have deterministic
         // compilation - otherwise, the order of capabilities in binaries depends on the iteration
-        // order of the hashset. Sort by the string, since that&#39;s easy.
+        // order of the hashset. Sort by the string, since that's easy.
         </span>feature_names.sort_unstable();
 
         <span class="kw">let </span>features = feature_names
@@ -1010,12 +1145,11 @@
             .map(|s| s.parse())
             .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, String&gt;&gt;()
             .unwrap_or_else(|error| {
-                tcx.sess.err(error);
+                tcx.dcx().err(error);
                 Vec::new()
             });
 
         <span class="kw">let </span>codegen_args = CodegenArgs::from_session(tcx.sess);
-        <span class="kw">let </span>target = tcx.sess.target.llvm_target.parse().unwrap();
 
         <span class="self">Self </span>{
             tcx,
@@ -1027,22 +1161,21 @@
             vtables: Default::default(),
             ext_inst: Default::default(),
             zombie_decorations: Default::default(),
-            target,
             sym,
             instruction_table: InstructionTable::new(),
             libm_intrinsics: Default::default(),
-            panic_entry_point_ids: Default::default(),
+            panic_entry_points: Default::default(),
             fmt_args_new_fn_ids: Default::default(),
             fmt_rt_arg_new_fn_ids_to_ty_and_spec: Default::default(),
-            buffer_load_intrinsic_fn_id: Default::default(),
-            buffer_store_intrinsic_fn_id: Default::default(),
+            buffer_load_intrinsics: Default::default(),
+            buffer_store_intrinsics: Default::default(),
             i8_i16_atomics_allowed: <span class="bool-val">false</span>,
             codegen_args,
         }
     }
 
     <span class="doccomment">/// See comment on `BuilderCursor`
-    </span><span class="kw">pub fn </span>emit_global(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::cell::RefMut&lt;<span class="lifetime">&#39;_</span>, rspirv::dr::Builder&gt; {
+    </span><span class="kw">pub fn </span>emit_global(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; std::cell::RefMut&lt;<span class="lifetime">'_</span>, rspirv::dr::Builder&gt; {
         <span class="self">self</span>.builder.builder(BuilderCursor {
             function: <span class="prelude-val">None</span>,
             block: <span class="prelude-val">None</span>,
@@ -1053,16 +1186,16 @@
     </span><span class="kw">pub fn </span>emit_with_cursor(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cursor: BuilderCursor,
-    ) -&gt; std::cell::RefMut&lt;<span class="lifetime">&#39;_</span>, rspirv::dr::Builder&gt; {
+    ) -&gt; std::cell::RefMut&lt;<span class="lifetime">'_</span>, rspirv::dr::Builder&gt; {
         <span class="self">self</span>.builder.builder(cursor)
     }
 
     <span class="attr">#[track_caller]
-    </span><span class="kw">pub fn </span>lookup_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Word) -&gt; SpirvType&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+    </span><span class="kw">pub fn </span>lookup_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Word) -&gt; SpirvType&lt;<span class="lifetime">'tcx</span>&gt; {
         <span class="self">self</span>.type_cache.lookup(ty)
     }
 
-    <span class="kw">pub fn </span>debug_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Word) -&gt; SpirvTypePrinter&lt;<span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;tcx</span>&gt; {
+    <span class="kw">pub fn </span>debug_type(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Word) -&gt; SpirvTypePrinter&lt;<span class="lifetime">'_</span>, <span class="lifetime">'tcx</span>&gt; {
         <span class="self">self</span>.lookup_type(ty).debug(ty, <span class="self">self</span>)
     }
 
@@ -1076,10 +1209,10 @@
 
     <span class="doccomment">/// Zombie system:
     ///
-    /// If something unrepresentable is encountered, we don&#39;t want to fail
-    /// the compilation. Instead, we emit something bogus (usually it&#39;s fairly
+    /// If something unrepresentable is encountered, we don't want to fail
+    /// the compilation. Instead, we emit something bogus (usually it's fairly
     /// faithful, though, e.g. `u128` emits `OpTypeInt 128 0`), and then mark the
-    /// resulting ID as a &quot;zombie&quot;. We continue compiling the rest of the crate,
+    /// resulting ID as a "zombie". We continue compiling the rest of the crate,
     /// then, at the very end, anything that transitively references a zombie value
     /// is stripped from the binary.
     ///
@@ -1090,7 +1223,7 @@
             (
                 ZombieDecoration {
                     <span class="comment">// FIXME(eddyb) this could take advantage of `Cow` and use
-                    // either `&amp;&#39;static str` or `String`, on a case-by-case basis.
+                    // either `&amp;'static str` or `String`, on a case-by-case basis.
                     </span>reason: reason.to_string().into(),
                 },
                 SrcLocDecoration::from_rustc_span(span, <span class="kw-2">&amp;</span><span class="self">self</span>.builder),
@@ -1133,7 +1266,6 @@
 }
 
 <span class="kw">pub struct </span>CodegenArgs {
-    <span class="kw">pub </span>module_output_type: ModuleOutputType,
     <span class="kw">pub </span>disassemble: bool,
     <span class="kw">pub </span>disassemble_fn: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>disassemble_entry: <span class="prelude-ty">Option</span>&lt;String&gt;,
@@ -1158,7 +1290,7 @@
 
     <span class="doccomment">/// All options pertinent to `rustc_codegen_spirv::linker` specifically.
     </span><span class="comment">//
-    // FIXME(eddyb) should these be handled as `-C linker-args=&quot;...&quot;` instead?
+    // FIXME(eddyb) should these be handled as `-C linker-args="..."` instead?
     </span><span class="kw">pub </span>linker_opts: <span class="kw">crate</span>::linker::Options,
 
     <span class="comment">// NOTE(eddyb) these are debugging options that used to be env vars
@@ -1173,7 +1305,9 @@
     <span class="kw">pub fn </span>from_session(sess: <span class="kw-2">&amp;</span>Session) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>CodegenArgs::parse(<span class="kw-2">&amp;</span>sess.opts.cg.llvm_args) {
             <span class="prelude-val">Ok</span>(ok) =&gt; ok,
-            <span class="prelude-val">Err</span>(err) =&gt; sess.fatal(<span class="macro">format!</span>(<span class="string">&quot;Unable to parse llvm-args: {err}&quot;</span>)),
+            <span class="prelude-val">Err</span>(err) =&gt; sess
+                .dcx()
+                .fatal(<span class="macro">format!</span>(<span class="string">"Unable to parse llvm-args: {err}"</span>)),
         }
     }
 
@@ -1181,170 +1315,170 @@
     </span><span class="kw">pub fn </span>parse(args: <span class="kw-2">&amp;</span>[String]) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, rustc_session::getopts::Fail&gt; {
         <span class="kw">use </span>rustc_session::getopts;
 
-        <span class="comment">// FIXME(eddyb) figure out what casing (&quot;Foo bar&quot; vs &quot;foo bar&quot;) to use
+        <span class="comment">// FIXME(eddyb) figure out what casing ("Foo bar" vs "foo bar") to use
         // for the descriptions, `rustc` seems a bit inconsistent itself on this.
 
         </span><span class="kw">let </span><span class="kw-2">mut </span>opts = getopts::Options::new();
-        opts.optflag(<span class="string">&quot;h&quot;</span>, <span class="string">&quot;help&quot;</span>, <span class="string">&quot;Display this message&quot;</span>);
+        opts.optflag(<span class="string">"h"</span>, <span class="string">"help"</span>, <span class="string">"Display this message"</span>);
         opts.optopt(
-            <span class="string">&quot;&quot;</span>,
-            <span class="string">&quot;module-output&quot;</span>,
-            <span class="string">&quot;single output or multiple output&quot;</span>,
-            <span class="string">&quot;[single|multiple]&quot;</span>,
+            <span class="string">""</span>,
+            <span class="string">"module-output"</span>,
+            <span class="string">"single output or multiple output"</span>,
+            <span class="string">"[single|multiple]"</span>,
         );
-        opts.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;disassemble&quot;</span>, <span class="string">&quot;print module to stderr&quot;</span>);
-        opts.optopt(<span class="string">&quot;&quot;</span>, <span class="string">&quot;disassemble-fn&quot;</span>, <span class="string">&quot;print function to stderr&quot;</span>, <span class="string">&quot;NAME&quot;</span>);
+        opts.optflag(<span class="string">""</span>, <span class="string">"disassemble"</span>, <span class="string">"print module to stderr"</span>);
+        opts.optopt(<span class="string">""</span>, <span class="string">"disassemble-fn"</span>, <span class="string">"print function to stderr"</span>, <span class="string">"NAME"</span>);
         opts.optopt(
-            <span class="string">&quot;&quot;</span>,
-            <span class="string">&quot;disassemble-entry&quot;</span>,
-            <span class="string">&quot;print entry point to stderr&quot;</span>,
-            <span class="string">&quot;NAME&quot;</span>,
+            <span class="string">""</span>,
+            <span class="string">"disassemble-entry"</span>,
+            <span class="string">"print entry point to stderr"</span>,
+            <span class="string">"NAME"</span>,
         );
-        opts.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;disassemble-globals&quot;</span>, <span class="string">&quot;print globals to stderr&quot;</span>);
+        opts.optflag(<span class="string">""</span>, <span class="string">"disassemble-globals"</span>, <span class="string">"print globals to stderr"</span>);
 
-        opts.optopt(<span class="string">&quot;&quot;</span>, <span class="string">&quot;spirv-metadata&quot;</span>, <span class="string">&quot;how much metadata to include&quot;</span>, <span class="string">&quot;&quot;</span>);
+        opts.optopt(<span class="string">""</span>, <span class="string">"spirv-metadata"</span>, <span class="string">"how much metadata to include"</span>, <span class="string">""</span>);
 
-        <span class="comment">// FIXME(eddyb) clean up this `no-` &quot;negation prefix&quot; situation.
+        <span class="comment">// FIXME(eddyb) clean up this `no-` "negation prefix" situation.
         </span>opts.optflag(
-            <span class="string">&quot;&quot;</span>,
-            <span class="string">&quot;no-spirv-val&quot;</span>,
-            <span class="string">&quot;disables running spirv-val on the final output&quot;</span>,
+            <span class="string">""</span>,
+            <span class="string">"no-spirv-val"</span>,
+            <span class="string">"disables running spirv-val on the final output"</span>,
         );
 
-        opts.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;relax-struct-store&quot;</span>, <span class="string">&quot;Allow store from one struct type to a different type with compatible layout and members.&quot;</span>);
-        opts.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;relax-logical-pointer&quot;</span>, <span class="string">&quot;Allow allocating an object of a pointer type and returning a pointer value from a function in logical addressing mode&quot;</span>);
-        opts.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;relax-block-layout&quot;</span>, <span class="string">&quot;Enable VK_KHR_relaxed_block_layout when checking standard uniform, storage buffer, and push constant layouts. This is the default when targeting Vulkan 1.1 or later.&quot;</span>);
-        opts.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;uniform-buffer-standard-layout&quot;</span>, <span class="string">&quot;Enable VK_KHR_uniform_buffer_standard_layout when checking standard uniform buffer layouts.&quot;</span>);
-        opts.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;scalar-block-layout&quot;</span>, <span class="string">&quot;Enable VK_EXT_scalar_block_layout when checking standard uniform, storage buffer, and push constant layouts. Scalar layout rules are more permissive than relaxed block layout so in effect this will override the --relax-block-layout option.&quot;</span>);
-        opts.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;skip-block-layout&quot;</span>, <span class="string">&quot;Skip checking standard uniform/storage buffer layout. Overrides any --relax-block-layout or --scalar-block-layout option.&quot;</span>);
+        opts.optflag(<span class="string">""</span>, <span class="string">"relax-struct-store"</span>, <span class="string">"Allow store from one struct type to a different type with compatible layout and members."</span>);
+        opts.optflag(<span class="string">""</span>, <span class="string">"relax-logical-pointer"</span>, <span class="string">"Allow allocating an object of a pointer type and returning a pointer value from a function in logical addressing mode"</span>);
+        opts.optflag(<span class="string">""</span>, <span class="string">"relax-block-layout"</span>, <span class="string">"Enable VK_KHR_relaxed_block_layout when checking standard uniform, storage buffer, and push constant layouts. This is the default when targeting Vulkan 1.1 or later."</span>);
+        opts.optflag(<span class="string">""</span>, <span class="string">"uniform-buffer-standard-layout"</span>, <span class="string">"Enable VK_KHR_uniform_buffer_standard_layout when checking standard uniform buffer layouts."</span>);
+        opts.optflag(<span class="string">""</span>, <span class="string">"scalar-block-layout"</span>, <span class="string">"Enable VK_EXT_scalar_block_layout when checking standard uniform, storage buffer, and push constant layouts. Scalar layout rules are more permissive than relaxed block layout so in effect this will override the --relax-block-layout option."</span>);
+        opts.optflag(<span class="string">""</span>, <span class="string">"skip-block-layout"</span>, <span class="string">"Skip checking standard uniform/storage buffer layout. Overrides any --relax-block-layout or --scalar-block-layout option."</span>);
 
-        <span class="comment">// FIXME(eddyb) clean up this `no-` &quot;negation prefix&quot; situation.
+        <span class="comment">// FIXME(eddyb) clean up this `no-` "negation prefix" situation.
         </span>opts.optflag(
-            <span class="string">&quot;&quot;</span>,
-            <span class="string">&quot;no-spirv-opt&quot;</span>,
-            <span class="string">&quot;disables running spirv-opt on the final output&quot;</span>,
+            <span class="string">""</span>,
+            <span class="string">"no-spirv-opt"</span>,
+            <span class="string">"disables running spirv-opt on the final output"</span>,
         );
 
         opts.optflag(
-            <span class="string">&quot;&quot;</span>,
-            <span class="string">&quot;preserve-bindings&quot;</span>,
-            <span class="string">&quot;Preserve unused descriptor bindings. Useful for reflection.&quot;</span>,
+            <span class="string">""</span>,
+            <span class="string">"preserve-bindings"</span>,
+            <span class="string">"Preserve unused descriptor bindings. Useful for reflection."</span>,
         );
 
         <span class="comment">// Linker options.
-        // FIXME(eddyb) should these be handled as `-C linker-args=&quot;...&quot;` instead?
+        // FIXME(eddyb) should these be handled as `-C linker-args="..."` instead?
         </span>{
-            <span class="comment">// FIXME(eddyb) clean up this `no-` &quot;negation prefix&quot; situation.
-            </span>opts.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;no-dce&quot;</span>, <span class="string">&quot;disables running dead code elimination&quot;</span>);
+            <span class="comment">// FIXME(eddyb) clean up this `no-` "negation prefix" situation.
+            </span>opts.optflag(<span class="string">""</span>, <span class="string">"no-dce"</span>, <span class="string">"disables running dead code elimination"</span>);
             opts.optflag(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;no-compact-ids&quot;</span>,
-                <span class="string">&quot;disables compaction of SPIR-V IDs at the end of linking&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"no-compact-ids"</span>,
+                <span class="string">"disables compaction of SPIR-V IDs at the end of linking"</span>,
             );
             opts.optflag(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;no-early-report-zombies&quot;</span>,
-                <span class="string">&quot;delays reporting zombies (to allow more legalization)&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"no-early-report-zombies"</span>,
+                <span class="string">"delays reporting zombies (to allow more legalization)"</span>,
             );
             opts.optflag(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;no-infer-storage-classes&quot;</span>,
-                <span class="string">&quot;disables SPIR-V Storage Class inference&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"no-infer-storage-classes"</span>,
+                <span class="string">"disables SPIR-V Storage Class inference"</span>,
             );
-            opts.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;no-structurize&quot;</span>, <span class="string">&quot;disables CFG structurization&quot;</span>);
+            opts.optflag(<span class="string">""</span>, <span class="string">"no-structurize"</span>, <span class="string">"disables CFG structurization"</span>);
 
             opts.optmulti(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;spirt-passes&quot;</span>,
-                <span class="string">&quot;enable additional SPIR-T passes (comma-separated)&quot;</span>,
-                <span class="string">&quot;PASSES&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"spirt-passes"</span>,
+                <span class="string">"enable additional SPIR-T passes (comma-separated)"</span>,
+                <span class="string">"PASSES"</span>,
             );
             opts.optopt(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;abort-strategy&quot;</span>,
-                <span class="string">&quot;select a non-default abort (i.e. panic) strategy - see `spirv-builder` docs&quot;</span>,
-                <span class="string">&quot;STRATEGY&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"abort-strategy"</span>,
+                <span class="string">"select a non-default abort (i.e. panic) strategy - see `spirv-builder` docs"</span>,
+                <span class="string">"STRATEGY"</span>,
             );
 
             <span class="comment">// NOTE(eddyb) these are debugging options that used to be env vars
             // (for more information see `docs/src/codegen-args.md`).
             </span>opts.optopt(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;dump-post-merge&quot;</span>,
-                <span class="string">&quot;dump the merged module immediately after merging, to a file in DIR&quot;</span>,
-                <span class="string">&quot;DIR&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"dump-post-merge"</span>,
+                <span class="string">"dump the merged module immediately after merging, to a file in DIR"</span>,
+                <span class="string">"DIR"</span>,
             );
             opts.optopt(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;dump-post-split&quot;</span>,
-                <span class="string">&quot;dump modules immediately after multimodule splitting, to files in DIR&quot;</span>,
-                <span class="string">&quot;DIR&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"dump-post-split"</span>,
+                <span class="string">"dump modules immediately after multimodule splitting, to files in DIR"</span>,
+                <span class="string">"DIR"</span>,
             );
             opts.optopt(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;dump-spirt-passes&quot;</span>,
-                <span class="string">&quot;dump the SPIR-T module across passes, to a (pair of) file(s) in DIR&quot;</span>,
-                <span class="string">&quot;DIR&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"dump-spirt-passes"</span>,
+                <span class="string">"dump the SPIR-T module across passes, to a (pair of) file(s) in DIR"</span>,
+                <span class="string">"DIR"</span>,
             );
             opts.optflag(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;spirt-strip-custom-debuginfo-from-dumps&quot;</span>,
-                <span class="string">&quot;strip custom debuginfo instructions when dumping SPIR-T&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"spirt-strip-custom-debuginfo-from-dumps"</span>,
+                <span class="string">"strip custom debuginfo instructions when dumping SPIR-T"</span>,
             );
             opts.optflag(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;spirt-keep-debug-sources-in-dumps&quot;</span>,
-                <span class="string">&quot;keep file contents debuginfo when dumping SPIR-T&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"spirt-keep-debug-sources-in-dumps"</span>,
+                <span class="string">"keep file contents debuginfo when dumping SPIR-T"</span>,
             );
             opts.optflag(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;specializer-debug&quot;</span>,
-                <span class="string">&quot;enable debug logging for the specializer&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"specializer-debug"</span>,
+                <span class="string">"enable debug logging for the specializer"</span>,
             );
             opts.optopt(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;specializer-dump-instances&quot;</span>,
-                <span class="string">&quot;dump all instances inferred by the specializer, to FILE&quot;</span>,
-                <span class="string">&quot;FILE&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"specializer-dump-instances"</span>,
+                <span class="string">"dump all instances inferred by the specializer, to FILE"</span>,
+                <span class="string">"FILE"</span>,
             );
-            opts.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;print-all-zombie&quot;</span>, <span class="string">&quot;prints all removed zombies&quot;</span>);
+            opts.optflag(<span class="string">""</span>, <span class="string">"print-all-zombie"</span>, <span class="string">"prints all removed zombies"</span>);
             opts.optflag(
-                <span class="string">&quot;&quot;</span>,
-                <span class="string">&quot;print-zombie&quot;</span>,
-                <span class="string">&quot;prints everything removed (even transitively) due to zombies&quot;</span>,
+                <span class="string">""</span>,
+                <span class="string">"print-zombie"</span>,
+                <span class="string">"prints everything removed (even transitively) due to zombies"</span>,
             );
         }
 
         <span class="comment">// NOTE(eddyb) these are debugging options that used to be env vars
         // (for more information see `docs/src/codegen-args.md`).
         </span>opts.optopt(
-            <span class="string">&quot;&quot;</span>,
-            <span class="string">&quot;dump-mir&quot;</span>,
-            <span class="string">&quot;dump every MIR body codegen sees, to files in DIR&quot;</span>,
-            <span class="string">&quot;DIR&quot;</span>,
+            <span class="string">""</span>,
+            <span class="string">"dump-mir"</span>,
+            <span class="string">"dump every MIR body codegen sees, to files in DIR"</span>,
+            <span class="string">"DIR"</span>,
         );
         opts.optopt(
-            <span class="string">&quot;&quot;</span>,
-            <span class="string">&quot;dump-module-on-panic&quot;</span>,
-            <span class="string">&quot;if codegen panics, dump the (partially) emitted module, to FILE&quot;</span>,
-            <span class="string">&quot;FILE&quot;</span>,
+            <span class="string">""</span>,
+            <span class="string">"dump-module-on-panic"</span>,
+            <span class="string">"if codegen panics, dump the (partially) emitted module, to FILE"</span>,
+            <span class="string">"FILE"</span>,
         );
         opts.optopt(
-            <span class="string">&quot;&quot;</span>,
-            <span class="string">&quot;dump-pre-link&quot;</span>,
-            <span class="string">&quot;dump all input modules to the linker, to files in DIR&quot;</span>,
-            <span class="string">&quot;DIR&quot;</span>,
+            <span class="string">""</span>,
+            <span class="string">"dump-pre-link"</span>,
+            <span class="string">"dump all input modules to the linker, to files in DIR"</span>,
+            <span class="string">"DIR"</span>,
         );
         opts.optopt(
-            <span class="string">&quot;&quot;</span>,
-            <span class="string">&quot;dump-post-link&quot;</span>,
-            <span class="string">&quot;dump all output modules from the linker, to files in DIR&quot;</span>,
-            <span class="string">&quot;DIR&quot;</span>,
+            <span class="string">""</span>,
+            <span class="string">"dump-post-link"</span>,
+            <span class="string">"dump all output modules from the linker, to files in DIR"</span>,
+            <span class="string">"DIR"</span>,
         );
 
         <span class="kw">let </span>matches = opts.parse(args)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>help_flag_positions: BTreeSet&lt;<span class="kw">_</span>&gt; = [<span class="string">&quot;h&quot;</span>, <span class="string">&quot;help&quot;</span>]
+        <span class="kw">let </span>help_flag_positions: BTreeSet&lt;<span class="kw">_</span>&gt; = [<span class="string">"h"</span>, <span class="string">"help"</span>]
             .iter()
             .flat_map(|<span class="kw-2">&amp;</span>name| matches.opt_positions(name))
             .collect();
@@ -1352,7 +1486,7 @@
             <span class="comment">// HACK(eddyb) this tries to be a bit nicer to end-users, when they
             // use `spirv-builder` (and so the `RUSTGPU_CODEGEN_ARGS` env var,
             // to set codegen args), as mentioning `-Cllvm-args` is suboptimal.
-            </span><span class="kw">let </span>spirv_builder_env_var = <span class="string">&quot;RUSTGPU_CODEGEN_ARGS&quot;</span>;
+            </span><span class="kw">let </span>spirv_builder_env_var = <span class="string">"RUSTGPU_CODEGEN_ARGS"</span>;
             <span class="kw">let </span>help_flag_comes_from_spirv_builder_env_var = std::env::var(spirv_builder_env_var)
                 .ok()
                 .and_then(|args_from_env| {
@@ -1364,7 +1498,7 @@
                     <span class="comment">// HACK(eddyb) this may be a bit inefficient but we want to
                     // make sure that *at least one* of the `-h`/`--help` flags
                     // came from the `spirv-builder`-supported env var *and*
-                    // that the env var&#39;s contents are fully contained in the
+                    // that the env var's contents are fully contained in the
                     // `-C llvm-args` this `rustc` invocation is seeing.
                     </span>args.windows(args_from_env.len())
                         .enumerate()
@@ -1377,48 +1511,46 @@
             <span class="kw">let </span>codegen_args_lhs = <span class="kw">if </span>help_flag_comes_from_spirv_builder_env_var {
                 spirv_builder_env_var
             } <span class="kw">else </span>{
-                <span class="string">&quot;rustc -Cllvm-args&quot;
+                <span class="string">"rustc -Cllvm-args"
             </span>};
             <span class="macro">println!</span>(
-                <span class="string">&quot;{}&quot;</span>,
+                <span class="string">"{}"</span>,
                 opts.usage(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                    <span class="string">&quot;Usage: {codegen_args_lhs}=\&quot;...\&quot; with `...` from:&quot;
+                    <span class="string">"Usage: {codegen_args_lhs}=\"...\" with `...` from:"
                 </span>))
             );
             <span class="comment">// HACK(eddyb) this avoids `Cargo` continuing after the message is printed.
             </span>std::process::exit(<span class="number">1</span>);
         }
 
-        <span class="kw">let </span>module_output_type =
-            matches.opt_get_default(<span class="string">&quot;module-output&quot;</span>, ModuleOutputType::Single)<span class="question-mark">?</span>;
-        <span class="kw">let </span>disassemble = matches.opt_present(<span class="string">&quot;disassemble&quot;</span>);
-        <span class="kw">let </span>disassemble_fn = matches.opt_str(<span class="string">&quot;disassemble-fn&quot;</span>);
-        <span class="kw">let </span>disassemble_entry = matches.opt_str(<span class="string">&quot;disassemble-entry&quot;</span>);
-        <span class="kw">let </span>disassemble_globals = matches.opt_present(<span class="string">&quot;disassemble-globals&quot;</span>);
+        <span class="kw">let </span>disassemble = matches.opt_present(<span class="string">"disassemble"</span>);
+        <span class="kw">let </span>disassemble_fn = matches.opt_str(<span class="string">"disassemble-fn"</span>);
+        <span class="kw">let </span>disassemble_entry = matches.opt_str(<span class="string">"disassemble-entry"</span>);
+        <span class="kw">let </span>disassemble_globals = matches.opt_present(<span class="string">"disassemble-globals"</span>);
 
-        <span class="kw">let </span>spirv_metadata = matches.opt_str(<span class="string">&quot;spirv-metadata&quot;</span>);
+        <span class="kw">let </span>spirv_metadata = matches.opt_str(<span class="string">"spirv-metadata"</span>);
 
-        <span class="comment">// FIXME(eddyb) clean up this `no-` &quot;negation prefix&quot; situation.
-        </span><span class="kw">let </span>run_spirv_val = !matches.opt_present(<span class="string">&quot;no-spirv-val&quot;</span>);
+        <span class="comment">// FIXME(eddyb) clean up this `no-` "negation prefix" situation.
+        </span><span class="kw">let </span>run_spirv_val = !matches.opt_present(<span class="string">"no-spirv-val"</span>);
 
-        <span class="kw">let </span>relax_struct_store = matches.opt_present(<span class="string">&quot;relax-struct-store&quot;</span>);
-        <span class="kw">let </span>relax_logical_pointer = matches.opt_present(<span class="string">&quot;relax-logical-pointer&quot;</span>);
-        <span class="kw">let </span>relax_block_layout = matches.opt_present(<span class="string">&quot;relax-block-layout&quot;</span>);
-        <span class="kw">let </span>uniform_buffer_standard_layout = matches.opt_present(<span class="string">&quot;uniform-buffer-standard-layout&quot;</span>);
-        <span class="kw">let </span>scalar_block_layout = matches.opt_present(<span class="string">&quot;scalar-block-layout&quot;</span>);
-        <span class="kw">let </span>skip_block_layout = matches.opt_present(<span class="string">&quot;skip-block-layout&quot;</span>);
+        <span class="kw">let </span>relax_struct_store = matches.opt_present(<span class="string">"relax-struct-store"</span>);
+        <span class="kw">let </span>relax_logical_pointer = matches.opt_present(<span class="string">"relax-logical-pointer"</span>);
+        <span class="kw">let </span>relax_block_layout = matches.opt_present(<span class="string">"relax-block-layout"</span>);
+        <span class="kw">let </span>uniform_buffer_standard_layout = matches.opt_present(<span class="string">"uniform-buffer-standard-layout"</span>);
+        <span class="kw">let </span>scalar_block_layout = matches.opt_present(<span class="string">"scalar-block-layout"</span>);
+        <span class="kw">let </span>skip_block_layout = matches.opt_present(<span class="string">"skip-block-layout"</span>);
 
-        <span class="comment">// FIXME(eddyb) clean up this `no-` &quot;negation prefix&quot; situation.
-        </span><span class="kw">let </span>run_spirv_opt = !matches.opt_present(<span class="string">&quot;no-spirv-opt&quot;</span>);
+        <span class="comment">// FIXME(eddyb) clean up this `no-` "negation prefix" situation.
+        </span><span class="kw">let </span>run_spirv_opt = !matches.opt_present(<span class="string">"no-spirv-opt"</span>);
 
-        <span class="kw">let </span>preserve_bindings = matches.opt_present(<span class="string">&quot;preserve-bindings&quot;</span>);
+        <span class="kw">let </span>preserve_bindings = matches.opt_present(<span class="string">"preserve-bindings"</span>);
 
         <span class="kw">let </span>relax_block_layout = <span class="kw">if </span>relax_block_layout { <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) } <span class="kw">else </span>{ <span class="prelude-val">None </span>};
 
         <span class="kw">let </span>spirv_metadata = <span class="kw">match </span>spirv_metadata.as_deref() {
             <span class="prelude-val">None </span>=&gt; SpirvMetadata::None,
-            <span class="prelude-val">Some</span>(<span class="string">&quot;full&quot;</span>) =&gt; SpirvMetadata::Full,
-            <span class="prelude-val">Some</span>(<span class="string">&quot;name-variables&quot;</span>) =&gt; SpirvMetadata::NameVariables,
+            <span class="prelude-val">Some</span>(<span class="string">"full"</span>) =&gt; SpirvMetadata::Full,
+            <span class="prelude-val">Some</span>(<span class="string">"name-variables"</span>) =&gt; SpirvMetadata::NameVariables,
             <span class="prelude-val">Some</span>(v) =&gt; {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(rustc_session::getopts::Fail::UnrecognizedOption(
                     v.to_string(),
@@ -1436,45 +1568,44 @@
                 path
             })
         };
-        <span class="comment">// FIXME(eddyb) should these be handled as `-C linker-args=&quot;...&quot;` instead?
+        <span class="comment">// FIXME(eddyb) should these be handled as `-C linker-args="..."` instead?
         </span><span class="kw">let </span>linker_opts = <span class="kw">crate</span>::linker::Options {
-            <span class="comment">// FIXME(eddyb) clean up this `no-` &quot;negation prefix&quot; situation.
-            </span>dce: !matches.opt_present(<span class="string">&quot;no-dce&quot;</span>),
-            compact_ids: !matches.opt_present(<span class="string">&quot;no-compact-ids&quot;</span>),
-            early_report_zombies: !matches.opt_present(<span class="string">&quot;no-early-report-zombies&quot;</span>),
-            infer_storage_classes: !matches.opt_present(<span class="string">&quot;no-infer-storage-classes&quot;</span>),
-            structurize: !matches.opt_present(<span class="string">&quot;no-structurize&quot;</span>),
+            <span class="comment">// FIXME(eddyb) clean up this `no-` "negation prefix" situation.
+            </span>dce: !matches.opt_present(<span class="string">"no-dce"</span>),
+            compact_ids: !matches.opt_present(<span class="string">"no-compact-ids"</span>),
+            early_report_zombies: !matches.opt_present(<span class="string">"no-early-report-zombies"</span>),
+            infer_storage_classes: !matches.opt_present(<span class="string">"no-infer-storage-classes"</span>),
+            structurize: !matches.opt_present(<span class="string">"no-structurize"</span>),
             spirt_passes: matches
-                .opt_strs(<span class="string">&quot;spirt-passes&quot;</span>)
+                .opt_strs(<span class="string">"spirt-passes"</span>)
                 .iter()
-                .flat_map(|s| s.split(<span class="string">&#39;,&#39;</span>))
+                .flat_map(|s| s.split(<span class="string">','</span>))
                 .map(|s| s.to_string())
                 .collect(),
 
-            abort_strategy: matches.opt_str(<span class="string">&quot;abort-strategy&quot;</span>),
+            abort_strategy: matches.opt_str(<span class="string">"abort-strategy"</span>),
+            module_output_type: matches.opt_get_default(<span class="string">"module-output"</span>, Default::default())<span class="question-mark">?</span>,
 
             <span class="comment">// FIXME(eddyb) deduplicate between `CodegenArgs` and `linker::Options`.
-            </span>emit_multiple_modules: module_output_type == ModuleOutputType::Multiple,
-            spirv_metadata,
+            </span>spirv_metadata,
             keep_link_exports: <span class="bool-val">false</span>,
 
             <span class="comment">// NOTE(eddyb) these are debugging options that used to be env vars
             // (for more information see `docs/src/codegen-args.md`).
-            </span>dump_post_merge: matches_opt_dump_dir_path(<span class="string">&quot;dump-post-merge&quot;</span>),
-            dump_post_split: matches_opt_dump_dir_path(<span class="string">&quot;dump-post-split&quot;</span>),
-            dump_spirt_passes: matches_opt_dump_dir_path(<span class="string">&quot;dump-spirt-passes&quot;</span>),
+            </span>dump_post_merge: matches_opt_dump_dir_path(<span class="string">"dump-post-merge"</span>),
+            dump_post_split: matches_opt_dump_dir_path(<span class="string">"dump-post-split"</span>),
+            dump_spirt_passes: matches_opt_dump_dir_path(<span class="string">"dump-spirt-passes"</span>),
             spirt_strip_custom_debuginfo_from_dumps: matches
-                .opt_present(<span class="string">&quot;spirt-strip-custom-debuginfo-from-dumps&quot;</span>),
+                .opt_present(<span class="string">"spirt-strip-custom-debuginfo-from-dumps"</span>),
             spirt_keep_debug_sources_in_dumps: matches
-                .opt_present(<span class="string">&quot;spirt-keep-debug-sources-in-dumps&quot;</span>),
-            specializer_debug: matches.opt_present(<span class="string">&quot;specializer-debug&quot;</span>),
-            specializer_dump_instances: matches_opt_path(<span class="string">&quot;specializer-dump-instances&quot;</span>),
-            print_all_zombie: matches.opt_present(<span class="string">&quot;print-all-zombie&quot;</span>),
-            print_zombie: matches.opt_present(<span class="string">&quot;print-zombie&quot;</span>),
+                .opt_present(<span class="string">"spirt-keep-debug-sources-in-dumps"</span>),
+            specializer_debug: matches.opt_present(<span class="string">"specializer-debug"</span>),
+            specializer_dump_instances: matches_opt_path(<span class="string">"specializer-dump-instances"</span>),
+            print_all_zombie: matches.opt_present(<span class="string">"print-all-zombie"</span>),
+            print_zombie: matches.opt_present(<span class="string">"print-zombie"</span>),
         };
 
         <span class="prelude-val">Ok</span>(<span class="self">Self </span>{
-            module_output_type,
             disassemble,
             disassemble_fn,
             disassemble_entry,
@@ -1499,10 +1630,10 @@
 
             <span class="comment">// NOTE(eddyb) these are debugging options that used to be env vars
             // (for more information see `docs/src/codegen-args.md`).
-            </span>dump_mir: matches_opt_dump_dir_path(<span class="string">&quot;dump-mir&quot;</span>),
-            dump_module_on_panic: matches_opt_path(<span class="string">&quot;dump-module-on-panic&quot;</span>),
-            dump_pre_link: matches_opt_dump_dir_path(<span class="string">&quot;dump-pre-link&quot;</span>),
-            dump_post_link: matches_opt_dump_dir_path(<span class="string">&quot;dump-post-link&quot;</span>),
+            </span>dump_mir: matches_opt_dump_dir_path(<span class="string">"dump-mir"</span>),
+            dump_module_on_panic: matches_opt_path(<span class="string">"dump-module-on-panic"</span>),
+            dump_pre_link: matches_opt_dump_dir_path(<span class="string">"dump-pre-link"</span>),
+            dump_post_link: matches_opt_dump_dir_path(<span class="string">"dump-post-link"</span>),
         })
     }
 
@@ -1532,7 +1663,7 @@
         <span class="kw">use </span>rspirv::binary::Disassemble;
 
         <span class="kw">if </span><span class="self">self</span>.disassemble {
-            <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, module.disassemble());
+            <span class="macro">eprintln!</span>(<span class="string">"{}"</span>, module.disassemble());
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(func) = <span class="kw-2">&amp;</span><span class="self">self</span>.disassemble_fn {
@@ -1545,7 +1676,7 @@
                 })
                 .unwrap_or_else(|| {
                     <span class="macro">panic!</span>(
-                        <span class="string">&quot;no function with the name `{}` found in:\n{}\n&quot;</span>,
+                        <span class="string">"no function with the name `{}` found in:\n{}\n"</span>,
                         func,
                         module.disassemble()
                     )
@@ -1560,7 +1691,7 @@
                 .clone();
             <span class="comment">// Compact to make IDs more stable
             </span>compact_ids(<span class="kw-2">&amp;mut </span>func);
-            <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, func.disassemble());
+            <span class="macro">eprintln!</span>(<span class="string">"{}"</span>, func.disassemble());
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(entry) = <span class="kw-2">&amp;</span><span class="self">self</span>.disassemble_entry {
@@ -1571,7 +1702,7 @@
                 .find(|inst| inst.operands[<span class="number">2</span>].unwrap_literal_string() == entry)
                 .unwrap_or_else(|| {
                     <span class="macro">panic!</span>(
-                        <span class="string">&quot;no entry point with the name `{}` found in:\n{}\n&quot;</span>,
+                        <span class="string">"no entry point with the name `{}` found in:\n{}\n"</span>,
                         entry,
                         module.disassemble()
                     )
@@ -1586,12 +1717,12 @@
                 .clone();
             <span class="comment">// Compact to make IDs more stable
             </span>compact_ids(<span class="kw-2">&amp;mut </span>func);
-            <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, func.disassemble());
+            <span class="macro">eprintln!</span>(<span class="string">"{}"</span>, func.disassemble());
         }
 
         <span class="kw">if </span><span class="self">self</span>.disassemble_globals {
             <span class="kw">for </span>inst <span class="kw">in </span>module.global_inst_iter() {
-                <span class="comment">// HACK: On Windows, paths are printed like `OpString &quot;D:\\dir\\blah&quot;`.
+                <span class="comment">// HACK: On Windows, paths are printed like `OpString "D:\\dir\\blah"`.
                 // Unfortunately, compiletest will only normalize `D:\dir\blah` to `$DIR/blah` -
                 // one backslash, not two. So, when disassembling for compiletest, check if the
                 // argument to OpString can be parsed as an absolute path, and if it is, replace it
@@ -1602,23 +1733,24 @@
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(file_name) = path.file_name() {
                             <span class="kw">let </span><span class="kw-2">mut </span>inst = inst.clone();
                             inst.operands[<span class="number">0</span>] = Operand::LiteralString(<span class="macro">format!</span>(
-                                <span class="string">&quot;$OPSTRING_FILENAME/{}&quot;</span>,
+                                <span class="string">"$OPSTRING_FILENAME/{}"</span>,
                                 file_name.to_string_lossy(),
                             ));
-                            <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, inst.disassemble());
+                            <span class="macro">eprintln!</span>(<span class="string">"{}"</span>, inst.disassemble());
                             <span class="kw">continue</span>;
                         }
                     }
                 }
-                <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, inst.disassemble());
+                <span class="macro">eprintln!</span>(<span class="string">"{}"</span>, inst.disassemble());
             }
         }
     }
 }
 
-<span class="attr">#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+<span class="attr">#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 </span><span class="kw">pub enum </span>ModuleOutputType {
-    Single,
+    <span class="attr">#[default]
+    </span>Single,
     Multiple,
 }
 
@@ -1626,14 +1758,14 @@
     <span class="kw">type </span><span class="prelude-val">Err </span>= rustc_session::getopts::Fail;
     <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
         <span class="kw">match </span>s {
-            <span class="string">&quot;single&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Single),
-            <span class="string">&quot;multiple&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Multiple),
+            <span class="string">"single" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Single),
+            <span class="string">"multiple" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Multiple),
             v =&gt; <span class="prelude-val">Err</span>(<span class="self">Self</span>::Err::UnrecognizedOption(v.to_string())),
         }
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; BackendTypes <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; BackendTypes <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">type </span>Value = SpirvValue;
     <span class="kw">type </span>Function = SpirvValue;
 
@@ -1648,35 +1780,35 @@
     <span class="kw">type </span>DIVariable = ();
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; HasTyCtxt&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">fn </span>tcx(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TyCtxt&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; HasTyCtxt&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">fn </span>tcx(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TyCtxt&lt;<span class="lifetime">'tcx</span>&gt; {
         <span class="self">self</span>.tcx
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; HasDataLayout <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; HasDataLayout <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">fn </span>data_layout(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>TargetDataLayout {
         <span class="kw-2">&amp;</span><span class="self">self</span>.tcx.data_layout
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; HasTargetSpec <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; HasTargetSpec <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">fn </span>target_spec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Target {
         <span class="kw-2">&amp;</span><span class="self">self</span>.tcx.sess.target
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; HasParamEnv&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">fn </span>param_env(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ParamEnv&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; HasParamEnv&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">fn </span>param_env(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ParamEnv&lt;<span class="lifetime">'tcx</span>&gt; {
         ParamEnv::reveal_all()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; MiscMethods&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; MiscMethods&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="attr">#[allow(clippy::type_complexity)]
     </span><span class="kw">fn </span>vtables(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-    ) -&gt; <span class="kw-2">&amp;</span>RefCell&lt;FxHashMap&lt;(Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;, <span class="prelude-ty">Option</span>&lt;PolyExistentialTraitRef&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt;), <span class="self">Self</span>::Value&gt;&gt; {
+    ) -&gt; <span class="kw-2">&amp;</span>RefCell&lt;FxHashMap&lt;(Ty&lt;<span class="lifetime">'tcx</span>&gt;, <span class="prelude-ty">Option</span>&lt;PolyExistentialTraitRef&lt;<span class="lifetime">'tcx</span>&gt;&gt;), <span class="self">Self</span>::Value&gt;&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.vtables
     }
 
@@ -1684,14 +1816,14 @@
         <span class="self">self</span>.tcx.sess.overflow_checks()
     }
 
-    <span class="kw">fn </span>get_fn(<span class="kw-2">&amp;</span><span class="self">self</span>, instance: Instance&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; <span class="self">Self</span>::Function {
+    <span class="kw">fn </span>get_fn(<span class="kw-2">&amp;</span><span class="self">self</span>, instance: Instance&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; <span class="self">Self</span>::Function {
         <span class="self">self</span>.get_fn_ext(instance)
     }
 
     <span class="comment">// NOTE(eddyb) see the comment on `SpirvValueKind::FnAddr`, this should
-    // be fixed upstream, so we never see any &quot;function pointer&quot; values being
+    // be fixed upstream, so we never see any "function pointer" values being
     // created just to perform direct calls.
-    </span><span class="kw">fn </span>get_fn_addr(<span class="kw-2">&amp;</span><span class="self">self</span>, instance: Instance&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; <span class="self">Self</span>::Value {
+    </span><span class="kw">fn </span>get_fn_addr(<span class="kw-2">&amp;</span><span class="self">self</span>, instance: Instance&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; <span class="self">Self</span>::Value {
         <span class="kw">let </span>function = <span class="self">self</span>.get_fn(instance);
         <span class="kw">let </span>span = <span class="self">self</span>.tcx.def_span(instance.def_id());
 
@@ -1701,7 +1833,7 @@
         .def(span, <span class="self">self</span>);
 
         <span class="comment">// Create these `OpUndef`s up front, instead of on-demand in `SpirvValue::def`,
-        // because `SpirvValue::def` can&#39;t use `cx.emit()`.
+        // because `SpirvValue::def` can't use `cx.emit()`.
         </span><span class="self">self</span>.def_constant(ty, SpirvConst::ZombieUndefForFnAddr);
 
         SpirvValue {
@@ -1720,7 +1852,7 @@
         <span class="self">self</span>.tcx.sess
     }
 
-    <span class="kw">fn </span>codegen_unit(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>CodegenUnit&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+    <span class="kw">fn </span>codegen_unit(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>CodegenUnit&lt;<span class="lifetime">'tcx</span>&gt; {
         <span class="self">self</span>.codegen_unit
     }
 
@@ -1737,11 +1869,11 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; DebugInfoMethods&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; DebugInfoMethods&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">fn </span>create_vtable_debuginfo(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _ty: Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;,
-        _trait_ref: <span class="prelude-ty">Option</span>&lt;PolyExistentialTraitRef&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt;,
+        _ty: Ty&lt;<span class="lifetime">'tcx</span>&gt;,
+        _trait_ref: <span class="prelude-ty">Option</span>&lt;PolyExistentialTraitRef&lt;<span class="lifetime">'tcx</span>&gt;&gt;,
         _vtable: <span class="self">Self</span>::Value,
     ) {
         <span class="comment">// Ignore.
@@ -1749,8 +1881,8 @@
 
     <span class="kw">fn </span>dbg_scope_fn(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw">_</span>: rustc_middle::ty::Instance&lt;<span class="lifetime">&#39;tcx</span>&gt;,
-        <span class="kw">_</span>: <span class="kw-2">&amp;</span>FnAbi&lt;<span class="lifetime">&#39;tcx</span>, Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt;,
+        <span class="kw">_</span>: rustc_middle::ty::Instance&lt;<span class="lifetime">'tcx</span>&gt;,
+        <span class="kw">_</span>: <span class="kw-2">&amp;</span>FnAbi&lt;<span class="lifetime">'tcx</span>, Ty&lt;<span class="lifetime">'tcx</span>&gt;&gt;,
         <span class="kw">_</span>: <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Function&gt;,
     ) -&gt; <span class="self">Self</span>::DIScope {
         <span class="macro">todo!</span>()
@@ -1762,11 +1894,11 @@
 
     <span class="kw">fn </span>create_function_debug_context(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        _instance: Instance&lt;<span class="lifetime">&#39;tcx</span>&gt;,
-        _fn_abi: <span class="kw-2">&amp;</span>FnAbi&lt;<span class="lifetime">&#39;tcx</span>, Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt;,
+        _instance: Instance&lt;<span class="lifetime">'tcx</span>&gt;,
+        _fn_abi: <span class="kw-2">&amp;</span>FnAbi&lt;<span class="lifetime">'tcx</span>, Ty&lt;<span class="lifetime">'tcx</span>&gt;&gt;,
         _llfn: <span class="self">Self</span>::Function,
-        _mir: <span class="kw-2">&amp;</span>mir::Body&lt;<span class="lifetime">&#39;tcx</span>&gt;,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;FunctionDebugContext&lt;<span class="lifetime">&#39;tcx</span>, <span class="self">Self</span>::DIScope, <span class="self">Self</span>::DILocation&gt;&gt; {
+        _mir: <span class="kw-2">&amp;</span>mir::Body&lt;<span class="lifetime">'tcx</span>&gt;,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;FunctionDebugContext&lt;<span class="lifetime">'tcx</span>, <span class="self">Self</span>::DIScope, <span class="self">Self</span>::DILocation&gt;&gt; {
         <span class="comment">// TODO: This is ignored. Do we want to implement this at some point?
         </span><span class="prelude-val">None
     </span>}
@@ -1786,7 +1918,7 @@
     <span class="kw">fn </span>create_dbg_var(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         _variable_name: Symbol,
-        _variable_type: Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+        _variable_type: Ty&lt;<span class="lifetime">'tcx</span>&gt;,
         _scope_metadata: <span class="self">Self</span>::DIScope,
         _variable_kind: VariableKind,
         _span: Span,
@@ -1795,11 +1927,11 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; AsmMethods&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; AsmMethods&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">fn </span>codegen_global_asm(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         _template: <span class="kw-2">&amp;</span>[InlineAsmTemplatePiece],
-        _operands: <span class="kw-2">&amp;</span>[GlobalAsmOperandRef&lt;<span class="lifetime">&#39;tcx</span>&gt;],
+        _operands: <span class="kw-2">&amp;</span>[GlobalAsmOperandRef&lt;<span class="lifetime">'tcx</span>&gt;],
         _options: InlineAsmOptions,
         _line_spans: <span class="kw-2">&amp;</span>[Span],
     ) {

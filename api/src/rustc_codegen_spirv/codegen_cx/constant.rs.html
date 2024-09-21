@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/constant.rs`."><title>constant.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/constant.rs`."><title>constant.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -624,6 +624,23 @@
 <a href="#624" id="624">624</a>
 <a href="#625" id="625">625</a>
 <a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
+<a href="#628" id="628">628</a>
+<a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::CodegenCx;
 <span class="kw">use </span><span class="kw">crate</span>::abi::ConvSpirvType;
 <span class="kw">use </span><span class="kw">crate</span>::builder_spirv::{SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
@@ -636,13 +653,18 @@
 <span class="kw">use </span>rustc_span::{Span, DUMMY_SP};
 <span class="kw">use </span>rustc_target::abi::{<span class="self">self</span>, AddressSpace, HasDataLayout, Integer, Primitive, Size};
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">pub fn </span>def_constant(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Word, val: SpirvConst&lt;<span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;tcx</span>&gt;) -&gt; SpirvValue {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">pub fn </span>def_constant(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Word, val: SpirvConst&lt;<span class="lifetime">'_</span>, <span class="lifetime">'tcx</span>&gt;) -&gt; SpirvValue {
         <span class="self">self</span>.builder.def_constant_cx(ty, val, <span class="self">self</span>)
     }
 
     <span class="kw">pub fn </span>constant_u8(<span class="kw-2">&amp;</span><span class="self">self</span>, span: Span, val: u8) -&gt; SpirvValue {
         <span class="kw">let </span>ty = SpirvType::Integer(<span class="number">8</span>, <span class="bool-val">false</span>).def(span, <span class="self">self</span>);
+        <span class="self">self</span>.def_constant(ty, SpirvConst::U32(val <span class="kw">as </span>u32))
+    }
+
+    <span class="kw">pub fn </span>constant_i8(<span class="kw-2">&amp;</span><span class="self">self</span>, span: Span, val: i8) -&gt; SpirvValue {
+        <span class="kw">let </span>ty = SpirvType::Integer(<span class="number">8</span>, <span class="bool-val">true</span>).def(span, <span class="self">self</span>);
         <span class="self">self</span>.def_constant(ty, SpirvConst::U32(val <span class="kw">as </span>u32))
     }
 
@@ -690,16 +712,16 @@
                 <span class="number">0 </span>| <span class="number">1 </span>=&gt; <span class="self">self</span>.def_constant(ty, SpirvConst::Bool(val != <span class="number">0</span>)),
                 <span class="kw">_ </span>=&gt; <span class="self">self
                     </span>.tcx
-                    .sess
-                    .fatal(<span class="macro">format!</span>(<span class="string">&quot;Invalid constant value for bool: {val}&quot;</span>)),
+                    .dcx()
+                    .fatal(<span class="macro">format!</span>(<span class="string">"Invalid constant value for bool: {val}"</span>)),
             },
             SpirvType::Integer(<span class="number">128</span>, <span class="kw">_</span>) =&gt; {
                 <span class="kw">let </span>result = <span class="self">self</span>.undef(ty);
-                <span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">&quot;u128 constant&quot;</span>);
+                <span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">"u128 constant"</span>);
                 result
             }
-            other =&gt; <span class="self">self</span>.tcx.sess.fatal(<span class="macro">format!</span>(
-                <span class="string">&quot;constant_int invalid on type {}&quot;</span>,
+            other =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="macro">format!</span>(
+                <span class="string">"constant_int invalid on type {}"</span>,
                 other.debug(ty, <span class="self">self</span>)
             )),
         }
@@ -719,8 +741,8 @@
         <span class="kw">match </span><span class="self">self</span>.lookup_type(ty) {
             SpirvType::Float(<span class="number">32</span>) =&gt; <span class="self">self</span>.def_constant(ty, SpirvConst::F32((val <span class="kw">as </span>f32).to_bits())),
             SpirvType::Float(<span class="number">64</span>) =&gt; <span class="self">self</span>.def_constant(ty, SpirvConst::F64(val.to_bits())),
-            other =&gt; <span class="self">self</span>.tcx.sess.fatal(<span class="macro">format!</span>(
-                <span class="string">&quot;constant_float invalid on type {}&quot;</span>,
+            other =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="macro">format!</span>(
+                <span class="string">"constant_float invalid on type {}"</span>,
                 other.debug(ty, <span class="self">self</span>)
             )),
         }
@@ -745,7 +767,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; ConstMethods&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; ConstMethods&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">fn </span>const_null(<span class="kw-2">&amp;</span><span class="self">self</span>, t: <span class="self">Self</span>::Type) -&gt; <span class="self">Self</span>::Value {
         <span class="self">self</span>.constant_null(t)
     }
@@ -771,7 +793,7 @@
                 <span class="kw">if </span>u128::from(i_as_u64) != i {
                     <span class="self">self</span>.zombie_no_span(
                         c.def_cx(<span class="self">self</span>),
-                        <span class="string">&quot;const_uint_big truncated a 128-bit constant to 64 bits&quot;</span>,
+                        <span class="string">"const_uint_big truncated a 128-bit constant to 64 bits"</span>,
                     );
                 }
             }
@@ -781,6 +803,9 @@
     }
     <span class="kw">fn </span>const_bool(<span class="kw-2">&amp;</span><span class="self">self</span>, val: bool) -&gt; <span class="self">Self</span>::Value {
         <span class="self">self</span>.constant_bool(DUMMY_SP, val)
+    }
+    <span class="kw">fn </span>const_i8(<span class="kw-2">&amp;</span><span class="self">self</span>, i: i8) -&gt; <span class="self">Self</span>::Value {
+        <span class="self">self</span>.constant_i8(DUMMY_SP, i)
     }
     <span class="kw">fn </span>const_i16(<span class="kw-2">&amp;</span><span class="self">self</span>, i: i16) -&gt; <span class="self">Self</span>::Value {
         <span class="self">self</span>.constant_i16(DUMMY_SP, i)
@@ -869,7 +894,7 @@
         <span class="kw">match </span>scalar {
             Scalar::Int(int) =&gt; {
                 <span class="macro">assert_eq!</span>(int.size(), layout.primitive().size(<span class="self">self</span>));
-                <span class="kw">let </span>data = int.to_bits(int.size()).unwrap();
+                <span class="kw">let </span>data = int.assert_uint(int.size());
 
                 <span class="kw">match </span>layout.primitive() {
                     Primitive::Int(int_size, int_signedness) =&gt; <span class="kw">match </span><span class="self">self</span>.lookup_type(ty) {
@@ -883,14 +908,18 @@
                             <span class="number">1 </span>=&gt; <span class="self">self</span>.constant_bool(DUMMY_SP, <span class="bool-val">true</span>),
                             <span class="kw">_ </span>=&gt; <span class="self">self
                                 </span>.tcx
-                                .sess
-                                .fatal(<span class="macro">format!</span>(<span class="string">&quot;Invalid constant value for bool: {data}&quot;</span>)),
+                                .dcx()
+                                .fatal(<span class="macro">format!</span>(<span class="string">"Invalid constant value for bool: {data}"</span>)),
                         },
-                        other =&gt; <span class="self">self</span>.tcx.sess.fatal(<span class="macro">format!</span>(
-                            <span class="string">&quot;scalar_to_backend Primitive::Int not supported on type {}&quot;</span>,
+                        other =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="macro">format!</span>(
+                            <span class="string">"scalar_to_backend Primitive::Int not supported on type {}"</span>,
                             other.debug(ty, <span class="self">self</span>)
                         )),
                     },
+                    Primitive::F16 =&gt; <span class="self">self
+                        </span>.tcx
+                        .dcx()
+                        .fatal(<span class="string">"scalar_to_backend Primitive::F16 not supported"</span>),
                     Primitive::F32 =&gt; {
                         <span class="kw">let </span>res = <span class="self">self</span>.constant_f32(DUMMY_SP, f32::from_bits(data <span class="kw">as </span>u32));
                         <span class="macro">assert_eq!</span>(res.ty, ty);
@@ -901,6 +930,10 @@
                         <span class="macro">assert_eq!</span>(res.ty, ty);
                         res
                     }
+                    Primitive::F128 =&gt; <span class="self">self
+                        </span>.tcx
+                        .dcx()
+                        .fatal(<span class="string">"scalar_to_backend Primitive::F128 not supported"</span>),
                     Primitive::Pointer(<span class="kw">_</span>) =&gt; {
                         <span class="kw">if </span>data == <span class="number">0 </span>{
                             <span class="self">self</span>.constant_null(ty)
@@ -908,7 +941,7 @@
                             <span class="kw">let </span>result = <span class="self">self</span>.undef(ty);
                             <span class="self">self</span>.zombie_no_span(
                                 result.def_cx(<span class="self">self</span>),
-                                <span class="string">&quot;pointer has non-null integer address&quot;</span>,
+                                <span class="string">"pointer has non-null integer address"</span>,
                             );
                             result
                         }
@@ -916,13 +949,14 @@
                 }
             }
             Scalar::Ptr(ptr, <span class="kw">_</span>) =&gt; {
-                <span class="kw">let </span>(alloc_id, offset) = ptr.into_parts();
+                <span class="kw">let </span>(prov, offset) = ptr.into_parts();
+                <span class="kw">let </span>alloc_id = prov.alloc_id();
                 <span class="kw">let </span>(base_addr, _base_addr_space) = <span class="kw">match </span><span class="self">self</span>.tcx.global_alloc(alloc_id) {
                     GlobalAlloc::Memory(alloc) =&gt; {
                         <span class="kw">let </span>pointee = <span class="kw">match </span><span class="self">self</span>.lookup_type(ty) {
                             SpirvType::Pointer { pointee } =&gt; pointee,
-                            other =&gt; <span class="self">self</span>.tcx.sess.fatal(<span class="macro">format!</span>(
-                                <span class="string">&quot;GlobalAlloc::Memory type not implemented: {}&quot;</span>,
+                            other =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="macro">format!</span>(
+                                <span class="string">"GlobalAlloc::Memory type not implemented: {}"</span>,
                                 other.debug(ty, <span class="self">self</span>)
                             )),
                         };
@@ -941,8 +975,8 @@
                             .unwrap_memory();
                         <span class="kw">let </span>pointee = <span class="kw">match </span><span class="self">self</span>.lookup_type(ty) {
                             SpirvType::Pointer { pointee } =&gt; pointee,
-                            other =&gt; <span class="self">self</span>.tcx.sess.fatal(<span class="macro">format!</span>(
-                                <span class="string">&quot;GlobalAlloc::VTable type not implemented: {}&quot;</span>,
+                            other =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="macro">format!</span>(
+                                <span class="string">"GlobalAlloc::VTable type not implemented: {}"</span>,
                                 other.debug(ty, <span class="self">self</span>)
                             )),
                         };
@@ -960,8 +994,8 @@
                     base_addr
                 } <span class="kw">else </span>{
                     <span class="self">self</span>.tcx
-                        .sess
-                        .fatal(<span class="string">&quot;Non-zero scalar_to_backend ptr.offset not supported&quot;</span>)
+                        .dcx()
+                        .fatal(<span class="string">"Non-zero scalar_to_backend ptr.offset not supported"</span>)
                     <span class="comment">// let offset = self.constant_u64(ptr.offset.bytes());
                     // self.gep(base_addr, once(offset))
                 </span>};
@@ -970,8 +1004,8 @@
                     value
                 } <span class="kw">else </span>{
                     <span class="self">self</span>.tcx
-                        .sess
-                        .fatal(<span class="string">&quot;Non-pointer-typed scalar_to_backend Scalar::Ptr not supported&quot;</span>);
+                        .dcx()
+                        .fatal(<span class="string">"Non-pointer-typed scalar_to_backend Scalar::Ptr not supported"</span>);
                     <span class="comment">// unsafe { llvm::LLVMConstPtrToInt(llval, llty) }
                 </span>}
             }
@@ -982,7 +1016,7 @@
     // the actual value generation until after a pointer to this value is cast
     // to its final type (e.g. that will be loaded as).
     // FIXME(eddyb) replace this with `qptr` handling of constant data.
-    </span><span class="kw">fn </span>const_data_from_alloc(<span class="kw-2">&amp;</span><span class="self">self</span>, alloc: ConstAllocation&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; <span class="self">Self</span>::Value {
+    </span><span class="kw">fn </span>const_data_from_alloc(<span class="kw-2">&amp;</span><span class="self">self</span>, alloc: ConstAllocation&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; <span class="self">Self</span>::Value {
         <span class="kw">let </span>void_type = SpirvType::Void.def(DUMMY_SP, <span class="self">self</span>);
         <span class="self">self</span>.def_constant(void_type, SpirvConst::ConstDataFromAlloc(alloc))
     }
@@ -1010,7 +1044,7 @@
             <span class="comment">// FIXME(eddyb) implement via `OpSpecConstantOp`.
             // FIXME(eddyb) this zombies the original value without creating a new one.
             </span><span class="kw">let </span>result = val.def_cx(<span class="self">self</span>).with_type(ty);
-            <span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">&quot;const_bitcast&quot;</span>);
+            <span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">"const_bitcast"</span>);
             result
         }
     }
@@ -1021,15 +1055,15 @@
             <span class="comment">// FIXME(eddyb) implement via `OpSpecConstantOp`.
             // FIXME(eddyb) this zombies the original value without creating a new one.
             </span><span class="kw">let </span>result = val;
-            <span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">&quot;const_ptr_byte_offset&quot;</span>);
+            <span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">"const_ptr_byte_offset"</span>);
             result
         }
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="comment">// This function comes from `ty::layout`&#39;s `layout_of_uncached`,
-    // where it&#39;s named `scalar_unit`.
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="comment">// This function comes from `ty::layout`'s `layout_of_uncached`,
+    // where it's named `scalar_unit`.
     </span><span class="kw">pub fn </span>primitive_to_scalar(<span class="kw-2">&amp;</span><span class="self">self</span>, value: Primitive) -&gt; abi::Scalar {
         <span class="kw">let </span>bits = value.size(<span class="self">self</span>.data_layout()).bits();
         <span class="macro">assert!</span>(bits &lt;= <span class="number">128</span>);
@@ -1042,9 +1076,9 @@
         }
     }
 
-    <span class="kw">pub fn </span>create_const_alloc(<span class="kw-2">&amp;</span><span class="self">self</span>, alloc: ConstAllocation&lt;<span class="lifetime">&#39;tcx</span>&gt;, ty: Word) -&gt; SpirvValue {
+    <span class="kw">pub fn </span>create_const_alloc(<span class="kw-2">&amp;</span><span class="self">self</span>, alloc: ConstAllocation&lt;<span class="lifetime">'tcx</span>&gt;, ty: Word) -&gt; SpirvValue {
         <span class="comment">// println!(
-        //     &quot;Creating const alloc of type {} with {} bytes&quot;,
+        //     "Creating const alloc of type {} with {} bytes",
         //     self.debug_type(ty),
         //     alloc.len()
         // );
@@ -1053,27 +1087,27 @@
         <span class="macro">assert_eq!</span>(
             offset.bytes_usize(),
             alloc.inner().len(),
-            <span class="string">&quot;create_const_alloc must consume all bytes of an Allocation&quot;
+            <span class="string">"create_const_alloc must consume all bytes of an Allocation"
         </span>);
-        <span class="comment">// println!(&quot;Done creating alloc of type {}&quot;, self.debug_type(ty));
+        <span class="comment">// println!("Done creating alloc of type {}", self.debug_type(ty));
         </span>result
     }
 
     <span class="kw">fn </span>read_from_const_alloc(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        alloc: ConstAllocation&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+        alloc: ConstAllocation&lt;<span class="lifetime">'tcx</span>&gt;,
         offset: <span class="kw-2">&amp;mut </span>Size,
         ty: Word,
     ) -&gt; SpirvValue {
         <span class="kw">let </span>ty_concrete = <span class="self">self</span>.lookup_type(ty);
         <span class="kw-2">*</span>offset = offset.align_to(ty_concrete.alignof(<span class="self">self</span>));
         <span class="comment">// these print statements are really useful for debugging, so leave them easily available
-        // println!(&quot;const at {}: {}&quot;, offset.bytes(), self.debug_type(ty));
+        // println!("const at {}: {}", offset.bytes(), self.debug_type(ty));
         </span><span class="kw">match </span>ty_concrete {
             SpirvType::Void =&gt; <span class="self">self
                 </span>.tcx
-                .sess
-                .fatal(<span class="string">&quot;cannot create const alloc of type void&quot;</span>),
+                .dcx()
+                .fatal(<span class="string">"cannot create const alloc of type void"</span>),
             SpirvType::Bool
             | SpirvType::Integer(..)
             | SpirvType::Float(<span class="kw">_</span>)
@@ -1090,8 +1124,8 @@
                             <span class="number">128 </span>=&gt; Integer::I128,
                             other =&gt; {
                                 <span class="self">self</span>.tcx
-                                    .sess
-                                    .fatal(<span class="macro">format!</span>(<span class="string">&quot;invalid size for integer: {other}&quot;</span>));
+                                    .dcx()
+                                    .fatal(<span class="macro">format!</span>(<span class="string">"invalid size for integer: {other}"</span>));
                             }
                         };
                         Primitive::Int(integer, int_signedness)
@@ -1101,13 +1135,13 @@
                         <span class="number">64 </span>=&gt; Primitive::F64,
                         other =&gt; {
                             <span class="self">self</span>.tcx
-                                .sess
-                                .fatal(<span class="macro">format!</span>(<span class="string">&quot;invalid size for float: {other}&quot;</span>));
+                                .dcx()
+                                .fatal(<span class="macro">format!</span>(<span class="string">"invalid size for float: {other}"</span>));
                         }
                     },
                     SpirvType::Pointer { .. } =&gt; Primitive::Pointer(AddressSpace::DATA),
                     unsupported_spirv_type =&gt; <span class="macro">bug!</span>(
-                        <span class="string">&quot;invalid spirv type internal to create_alloc_const2: {:?}&quot;</span>,
+                        <span class="string">"invalid spirv type internal to create_alloc_const2: {:?}"</span>,
                         unsupported_spirv_type
                     ),
                 };
@@ -1153,7 +1187,7 @@
                     <span class="macro">assert_eq!</span>(
                         offset.bytes_usize(),
                         alloc.inner().len(),
-                        <span class="string">&quot;create_const_alloc must consume all bytes of an Allocation after an unsized struct&quot;
+                        <span class="string">"create_const_alloc must consume all bytes of an Allocation after an unsized struct"
                     </span>);
                 }
                 <span class="self">self</span>.constant_composite(ty, values.into_iter())
@@ -1169,7 +1203,7 @@
             SpirvType::Vector { element, count } =&gt; {
                 <span class="kw">let </span>total_size = ty_concrete
                     .sizeof(<span class="self">self</span>)
-                    .expect(<span class="string">&quot;create_const_alloc: Vectors must be sized&quot;</span>);
+                    .expect(<span class="string">"create_const_alloc: Vectors must be sized"</span>);
                 <span class="kw">let </span>final_offset = <span class="kw-2">*</span>offset + total_size;
                 <span class="kw">let </span>values = (<span class="number">0</span>..count).map(|<span class="kw">_</span>| {
                     <span class="self">self</span>.read_from_const_alloc(alloc, offset, element)
@@ -1184,7 +1218,7 @@
             SpirvType::Matrix { element, count } =&gt; {
                 <span class="kw">let </span>total_size = ty_concrete
                     .sizeof(<span class="self">self</span>)
-                    .expect(<span class="string">&quot;create_const_alloc: Matrices must be sized&quot;</span>);
+                    .expect(<span class="string">"create_const_alloc: Matrices must be sized"</span>);
                 <span class="kw">let </span>final_offset = <span class="kw-2">*</span>offset + total_size;
                 <span class="kw">let </span>values = (<span class="number">0</span>..count).map(|<span class="kw">_</span>| {
                     <span class="self">self</span>.read_from_const_alloc(alloc, offset, element)
@@ -1217,36 +1251,36 @@
                 *data = *c + asdf-&gt;y[*c];
                 }
                 */
-                // NOTE(eddyb) the above description is a bit outdated, it&#39;s now
+                // NOTE(eddyb) the above description is a bit outdated, it's now
                 // clear `OpTypeRuntimeArray` does not belong in user code, and
                 // is only for dynamically-sized SSBOs and descriptor indexing,
                 // and a general solution looks similar to `union` handling, but
                 // for the length of a fixed-length array.
-                </span><span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">&quot;constant `OpTypeRuntimeArray` value&quot;</span>);
+                </span><span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">"constant `OpTypeRuntimeArray` value"</span>);
                 result
             }
             SpirvType::Function { .. } =&gt; <span class="self">self
                 </span>.tcx
-                .sess
-                .fatal(<span class="string">&quot;TODO: SpirvType::Function not supported yet in create_const_alloc&quot;</span>),
-            SpirvType::Image { .. } =&gt; <span class="self">self</span>.tcx.sess.fatal(<span class="string">&quot;cannot create a constant image value&quot;</span>),
+                .dcx()
+                .fatal(<span class="string">"TODO: SpirvType::Function not supported yet in create_const_alloc"</span>),
+            SpirvType::Image { .. } =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="string">"cannot create a constant image value"</span>),
             SpirvType::Sampler =&gt; <span class="self">self
                 </span>.tcx
-                .sess
-                .fatal(<span class="string">&quot;cannot create a constant sampler value&quot;</span>),
+                .dcx()
+                .fatal(<span class="string">"cannot create a constant sampler value"</span>),
             SpirvType::SampledImage { .. } =&gt; <span class="self">self
                 </span>.tcx
-                .sess
-                .fatal(<span class="string">&quot;cannot create a constant sampled image value&quot;</span>),
+                .dcx()
+                .fatal(<span class="string">"cannot create a constant sampled image value"</span>),
             SpirvType::InterfaceBlock { .. } =&gt; <span class="self">self
                 </span>.tcx
-                .sess
-                .fatal(<span class="string">&quot;cannot create a constant interface block value&quot;</span>),
+                .dcx()
+                .fatal(<span class="string">"cannot create a constant interface block value"</span>),
             SpirvType::AccelerationStructureKhr =&gt; <span class="self">self
                 </span>.tcx
-                .sess
-                .fatal(<span class="string">&quot;cannot create a constant acceleration structure&quot;</span>),
-            SpirvType::RayQueryKhr =&gt; <span class="self">self</span>.tcx.sess.fatal(<span class="string">&quot;cannot create a constant ray query&quot;</span>),
+                .dcx()
+                .fatal(<span class="string">"cannot create a constant acceleration structure"</span>),
+            SpirvType::RayQueryKhr =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="string">"cannot create a constant ray query"</span>),
         }
     }
 }

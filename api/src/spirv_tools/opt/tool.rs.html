@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirv-tools-0.10.0/src/opt/tool.rs`."><title>tool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirv_tools" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../spirv_tools/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirv-tools-0.10.0/src/opt/tool.rs`."><title>tool.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirv_tools" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../spirv_tools/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -213,42 +213,42 @@
         msg_callback: <span class="kw-2">&amp;mut </span>MC,
         options: <span class="prelude-ty">Option</span>&lt;<span class="kw">super</span>::Options&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">crate</span>::binary::Binary, <span class="kw">crate</span>::Error&gt; {
-        <span class="kw">let </span><span class="kw-2">mut </span>cmd = std::process::Command::new(<span class="string">&quot;spirv-opt&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>cmd = std::process::Command::new(<span class="string">"spirv-opt"</span>);
 
-        <span class="comment">// Note here that we don&#39;t do cmd.arg(&quot;--target-env&quot;).arg(self.target_env.to_string());
-        // like with the other tools, because opt is &quot;special&quot; and will fail to parse
-        // command line options correctly if we don&#39;t give join them with the =
-        </span>cmd.arg(<span class="macro">format!</span>(<span class="string">&quot;--target-env={}&quot;</span>, <span class="self">self</span>.target_env));
+        <span class="comment">// Note here that we don't do cmd.arg("--target-env").arg(self.target_env.to_string());
+        // like with the other tools, because opt is "special" and will fail to parse
+        // command line options correctly if we don't give join them with the =
+        </span>cmd.arg(<span class="macro">format!</span>(<span class="string">"--target-env={}"</span>, <span class="self">self</span>.target_env));
 
         cmd.args(
             <span class="self">self</span>.passes
                 .iter()
-                .filter_map(|p| pass_to_string(<span class="kw-2">*</span>p).map(|s| <span class="macro">format!</span>(<span class="string">&quot;--{}&quot;</span>, s))),
+                .filter_map(|p| pass_to_string(<span class="kw-2">*</span>p).map(|s| <span class="macro">format!</span>(<span class="string">"--{}"</span>, s))),
         );
 
         <span class="kw">if </span><span class="self">self</span>.use_perf_passes {
-            cmd.arg(<span class="string">&quot;-O&quot;</span>);
+            cmd.arg(<span class="string">"-O"</span>);
         }
 
         <span class="kw">if </span><span class="self">self</span>.use_size_passes {
-            cmd.arg(<span class="string">&quot;-Os&quot;</span>);
+            cmd.arg(<span class="string">"-Os"</span>);
         }
 
         <span class="kw">if </span><span class="self">self</span>.legalize_hlsl {
-            cmd.arg(<span class="string">&quot;--legalize-hlsl&quot;</span>);
+            cmd.arg(<span class="string">"--legalize-hlsl"</span>);
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(opts) = options {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(max_id_bound) = opts.max_id_bound {
-                cmd.arg(<span class="macro">format!</span>(<span class="string">&quot;--max-id-bound={}&quot;</span>, max_id_bound));
+                cmd.arg(<span class="macro">format!</span>(<span class="string">"--max-id-bound={}"</span>, max_id_bound));
             }
 
             <span class="kw">if </span>opts.preserve_bindings {
-                cmd.arg(<span class="string">&quot;--preserve-bindings&quot;</span>);
+                cmd.arg(<span class="string">"--preserve-bindings"</span>);
             }
 
             <span class="kw">if </span>opts.preserve_spec_constants {
-                cmd.arg(<span class="string">&quot;--preserve-spec-constants&quot;</span>);
+                cmd.arg(<span class="string">"--preserve-spec-constants"</span>);
             }
 
             <span class="kw">if let </span><span class="prelude-val">Some</span>(vopts) = opts.validator_options {
@@ -307,67 +307,67 @@
     </span>}
 }
 
-<span class="kw">fn </span>pass_to_string(pass: <span class="kw">super</span>::Passes) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+<span class="kw">fn </span>pass_to_string(pass: <span class="kw">super</span>::Passes) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
     <span class="attr">#[allow(clippy::enum_glob_use)]
     </span><span class="kw">use </span><span class="kw">super</span>::Passes::<span class="kw-2">*</span>;
 
     <span class="prelude-val">Some</span>(<span class="kw">match </span>pass {
-        AggressiveDCE =&gt; <span class="string">&quot;eliminate-dead-code-aggressive&quot;</span>,
-        AmdExtToKhr =&gt; <span class="string">&quot;amd-ext-to-khr&quot;</span>,
-        BlockMerge =&gt; <span class="string">&quot;merge-blocks&quot;</span>,
-        CFGCleanup =&gt; <span class="string">&quot;cfg-cleanup&quot;</span>,
-        CodeSinking =&gt; <span class="string">&quot;code-sink&quot;</span>,
-        CombineAccessChains =&gt; <span class="string">&quot;combine-access-chains&quot;</span>,
-        CompactIds =&gt; <span class="string">&quot;compact-ids&quot;</span>,
-        ConditionalConstantPropagation =&gt; <span class="string">&quot;ccp&quot;</span>,
-        ConvertRelaxedToHalf =&gt; <span class="string">&quot;convert-relaxed-to-half&quot;</span>,
-        CopyPropagateArrays =&gt; <span class="string">&quot;copy-propagate-arrays&quot;</span>,
-        DeadBranchElim =&gt; <span class="string">&quot;eliminate-dead-branches&quot;</span>,
-        DeadInsertElim =&gt; <span class="string">&quot;eliminate-dead-inserts&quot;</span>,
-        DeadVariableElimination =&gt; <span class="string">&quot;eliminate-dead-variables&quot;</span>,
-        DescriptorScalarReplacement =&gt; <span class="string">&quot;descriptor-scalar-replacement&quot;</span>,
-        EliminateDeadConstant =&gt; <span class="string">&quot;eliminate-dead-const&quot;</span>,
-        EliminateDeadFunctions =&gt; <span class="string">&quot;eliminate-dead-functions&quot;</span>,
-        EliminateDeadMembers =&gt; <span class="string">&quot;eliminate-dead-members&quot;</span>,
-        FixStorageClass =&gt; <span class="string">&quot;fix-storage-class&quot;</span>,
-        FlattenDecoration =&gt; <span class="string">&quot;flatten-decorations&quot;</span>,
-        FoldSpecConstantOpAndComposite =&gt; <span class="string">&quot;fold-spec-const-op-composite&quot;</span>,
-        FreezeSpecConstantValue =&gt; <span class="string">&quot;freeze-spec-const&quot;</span>,
-        GraphicsRobustAccess =&gt; <span class="string">&quot;graphics-robust-access&quot;</span>,
-        IfConversion =&gt; <span class="string">&quot;if-conversion&quot;</span>,
-        InlineExhaustive =&gt; <span class="string">&quot;inline-entry-points-exhaustive&quot;</span>,
-        InlineOpaque =&gt; <span class="string">&quot;inline-entry-points-opaque&quot;</span>,
-        InsertExtractElim =&gt; <span class="string">&quot;eliminate-insert-extract&quot;</span>,
+        AggressiveDCE =&gt; <span class="string">"eliminate-dead-code-aggressive"</span>,
+        AmdExtToKhr =&gt; <span class="string">"amd-ext-to-khr"</span>,
+        BlockMerge =&gt; <span class="string">"merge-blocks"</span>,
+        CFGCleanup =&gt; <span class="string">"cfg-cleanup"</span>,
+        CodeSinking =&gt; <span class="string">"code-sink"</span>,
+        CombineAccessChains =&gt; <span class="string">"combine-access-chains"</span>,
+        CompactIds =&gt; <span class="string">"compact-ids"</span>,
+        ConditionalConstantPropagation =&gt; <span class="string">"ccp"</span>,
+        ConvertRelaxedToHalf =&gt; <span class="string">"convert-relaxed-to-half"</span>,
+        CopyPropagateArrays =&gt; <span class="string">"copy-propagate-arrays"</span>,
+        DeadBranchElim =&gt; <span class="string">"eliminate-dead-branches"</span>,
+        DeadInsertElim =&gt; <span class="string">"eliminate-dead-inserts"</span>,
+        DeadVariableElimination =&gt; <span class="string">"eliminate-dead-variables"</span>,
+        DescriptorScalarReplacement =&gt; <span class="string">"descriptor-scalar-replacement"</span>,
+        EliminateDeadConstant =&gt; <span class="string">"eliminate-dead-const"</span>,
+        EliminateDeadFunctions =&gt; <span class="string">"eliminate-dead-functions"</span>,
+        EliminateDeadMembers =&gt; <span class="string">"eliminate-dead-members"</span>,
+        FixStorageClass =&gt; <span class="string">"fix-storage-class"</span>,
+        FlattenDecoration =&gt; <span class="string">"flatten-decorations"</span>,
+        FoldSpecConstantOpAndComposite =&gt; <span class="string">"fold-spec-const-op-composite"</span>,
+        FreezeSpecConstantValue =&gt; <span class="string">"freeze-spec-const"</span>,
+        GraphicsRobustAccess =&gt; <span class="string">"graphics-robust-access"</span>,
+        IfConversion =&gt; <span class="string">"if-conversion"</span>,
+        InlineExhaustive =&gt; <span class="string">"inline-entry-points-exhaustive"</span>,
+        InlineOpaque =&gt; <span class="string">"inline-entry-points-opaque"</span>,
+        InsertExtractElim =&gt; <span class="string">"eliminate-insert-extract"</span>,
         <span class="comment">// This is only part of the --legalize-hlsl meta pass
         </span>InterpolateFixup | Null =&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
-        LocalAccessChainConvert =&gt; <span class="string">&quot;convert-local-access-chains&quot;</span>,
-        LocalMultiStoreElim =&gt; <span class="string">&quot;eliminate-local-multi-store&quot;</span>,
-        LocalRedundancyElimination =&gt; <span class="string">&quot;local-redundancy-elimination&quot;</span>,
-        LocalSingleBlockLoadStoreElim =&gt; <span class="string">&quot;eliminate-local-single-block&quot;</span>,
-        LocalSingleStoreElim =&gt; <span class="string">&quot;eliminate-local-single-store&quot;</span>,
-        LoopInvariantCodeMotion =&gt; <span class="string">&quot;loop-invariant-code-motion&quot;</span>,
-        LoopPeeling =&gt; <span class="string">&quot;loop-peeling&quot;</span>,
-        LoopUnswitch =&gt; <span class="string">&quot;loop-unswitch&quot;</span>,
-        MergeReturn =&gt; <span class="string">&quot;merge-return&quot;</span>,
-        PrivateToLocal =&gt; <span class="string">&quot;private-to-local&quot;</span>,
-        PropagateLineInfo =&gt; <span class="string">&quot;propagate-line-info&quot;</span>,
-        ReduceLoadSize =&gt; <span class="string">&quot;reduce-load-size&quot;</span>,
-        RedundancyElimination =&gt; <span class="string">&quot;redundancy-elimination&quot;</span>,
-        RedundantLineInfoElim =&gt; <span class="string">&quot;eliminate-redundant-line-info&quot;</span>,
-        RemoveUnusedInterfaceVariables =&gt; <span class="string">&quot;remove-unused-interface-variables&quot;</span>,
-        RelaxFloatOps =&gt; <span class="string">&quot;relax-float-ops&quot;</span>,
-        RemoveDuplicates =&gt; <span class="string">&quot;remove-duplicates&quot;</span>,
-        ReplaceInvalidOpcode =&gt; <span class="string">&quot;replace-invalid-opcode&quot;</span>,
-        Simplification =&gt; <span class="string">&quot;simplify-instructions&quot;</span>,
-        SSARewrite =&gt; <span class="string">&quot;ssa-rewrite&quot;</span>,
-        StrengthReduction =&gt; <span class="string">&quot;strength-reduction&quot;</span>,
-        StripDebugInfo =&gt; <span class="string">&quot;strip-debug&quot;</span>,
-        StripNonSemanticInfo =&gt; <span class="string">&quot;strip-nonsemantic&quot;</span>,
-        UnifyConstant =&gt; <span class="string">&quot;unify-const&quot;</span>,
-        UpgradeMemoryModel =&gt; <span class="string">&quot;upgrade-memory-model&quot;</span>,
-        VectorDCE =&gt; <span class="string">&quot;vector-dce&quot;</span>,
-        Workaround1209 =&gt; <span class="string">&quot;workaround-1209&quot;</span>,
-        WrapOpKill =&gt; <span class="string">&quot;wrap-opkill&quot;</span>,
+        LocalAccessChainConvert =&gt; <span class="string">"convert-local-access-chains"</span>,
+        LocalMultiStoreElim =&gt; <span class="string">"eliminate-local-multi-store"</span>,
+        LocalRedundancyElimination =&gt; <span class="string">"local-redundancy-elimination"</span>,
+        LocalSingleBlockLoadStoreElim =&gt; <span class="string">"eliminate-local-single-block"</span>,
+        LocalSingleStoreElim =&gt; <span class="string">"eliminate-local-single-store"</span>,
+        LoopInvariantCodeMotion =&gt; <span class="string">"loop-invariant-code-motion"</span>,
+        LoopPeeling =&gt; <span class="string">"loop-peeling"</span>,
+        LoopUnswitch =&gt; <span class="string">"loop-unswitch"</span>,
+        MergeReturn =&gt; <span class="string">"merge-return"</span>,
+        PrivateToLocal =&gt; <span class="string">"private-to-local"</span>,
+        PropagateLineInfo =&gt; <span class="string">"propagate-line-info"</span>,
+        ReduceLoadSize =&gt; <span class="string">"reduce-load-size"</span>,
+        RedundancyElimination =&gt; <span class="string">"redundancy-elimination"</span>,
+        RedundantLineInfoElim =&gt; <span class="string">"eliminate-redundant-line-info"</span>,
+        RemoveUnusedInterfaceVariables =&gt; <span class="string">"remove-unused-interface-variables"</span>,
+        RelaxFloatOps =&gt; <span class="string">"relax-float-ops"</span>,
+        RemoveDuplicates =&gt; <span class="string">"remove-duplicates"</span>,
+        ReplaceInvalidOpcode =&gt; <span class="string">"replace-invalid-opcode"</span>,
+        Simplification =&gt; <span class="string">"simplify-instructions"</span>,
+        SSARewrite =&gt; <span class="string">"ssa-rewrite"</span>,
+        StrengthReduction =&gt; <span class="string">"strength-reduction"</span>,
+        StripDebugInfo =&gt; <span class="string">"strip-debug"</span>,
+        StripNonSemanticInfo =&gt; <span class="string">"strip-nonsemantic"</span>,
+        UnifyConstant =&gt; <span class="string">"unify-const"</span>,
+        UpgradeMemoryModel =&gt; <span class="string">"upgrade-memory-model"</span>,
+        VectorDCE =&gt; <span class="string">"vector-dce"</span>,
+        Workaround1209 =&gt; <span class="string">"workaround-1209"</span>,
+        WrapOpKill =&gt; <span class="string">"wrap-opkill"</span>,
     })
 }
 </code></pre></div></section></main></body></html>

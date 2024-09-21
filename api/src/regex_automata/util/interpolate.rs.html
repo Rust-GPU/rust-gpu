@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/util/interpolate.rs`."><title>interpolate.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_automata/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/util/interpolate.rs`."><title>interpolate.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -636,7 +636,7 @@ itself can never fail.
 /// index is invalid, then nothing should be appended.
 ///
 /// `name_to_index` should be a function that maps a capture group name to a
-/// capture group index. If the given name doesn&#39;t exist, then `None` should
+/// capture group index. If the given name doesn't exist, then `None` should
 /// be returned.
 ///
 /// Finally, `dst` is where the final interpolated contents should be written.
@@ -653,14 +653,14 @@ itself can never fail.
 ///
 /// let mut dst = String::new();
 /// interpolate::string(
-///     &quot;foo $bar baz&quot;,
+///     "foo $bar baz",
 ///     |index, dst| {
 ///         if index == 0 {
-///             dst.push_str(&quot;BAR&quot;);
+///             dst.push_str("BAR");
 ///         }
 ///     },
 ///     |name| {
-///         if name == &quot;bar&quot; {
+///         if name == "bar" {
 ///             Some(0)
 ///         } else {
 ///             None
@@ -668,7 +668,7 @@ itself can never fail.
 ///     },
 ///     &amp;mut dst,
 /// );
-/// assert_eq!(&quot;foo BAR baz&quot;, dst);
+/// assert_eq!("foo BAR baz", dst);
 /// ```
 </span><span class="kw">pub fn </span>string(
     <span class="kw-2">mut </span>replacement: <span class="kw-2">&amp;</span>str,
@@ -677,16 +677,16 @@ itself can never fail.
     dst: <span class="kw-2">&amp;mut </span>String,
 ) {
     <span class="kw">while </span>!replacement.is_empty() {
-        <span class="kw">match </span>memchr(<span class="string">b&#39;$&#39;</span>, replacement.as_bytes()) {
+        <span class="kw">match </span>memchr(<span class="string">b'$'</span>, replacement.as_bytes()) {
             <span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
             <span class="prelude-val">Some</span>(i) =&gt; {
                 dst.push_str(<span class="kw-2">&amp;</span>replacement[..i]);
                 replacement = <span class="kw-2">&amp;</span>replacement[i..];
             }
         }
-        <span class="comment">// Handle escaping of &#39;$&#39;.
-        </span><span class="kw">if </span>replacement.as_bytes().get(<span class="number">1</span>).map_or(<span class="bool-val">false</span>, |<span class="kw-2">&amp;</span>b| b == <span class="string">b&#39;$&#39;</span>) {
-            dst.push_str(<span class="string">&quot;$&quot;</span>);
+        <span class="comment">// Handle escaping of '$'.
+        </span><span class="kw">if </span>replacement.as_bytes().get(<span class="number">1</span>).map_or(<span class="bool-val">false</span>, |<span class="kw-2">&amp;</span>b| b == <span class="string">b'$'</span>) {
+            dst.push_str(<span class="string">"$"</span>);
             replacement = <span class="kw-2">&amp;</span>replacement[<span class="number">2</span>..];
             <span class="kw">continue</span>;
         }
@@ -694,7 +694,7 @@ itself can never fail.
         <span class="kw">let </span>cap_ref = <span class="kw">match </span>find_cap_ref(replacement.as_bytes()) {
             <span class="prelude-val">Some</span>(cap_ref) =&gt; cap_ref,
             <span class="prelude-val">None </span>=&gt; {
-                dst.push_str(<span class="string">&quot;$&quot;</span>);
+                dst.push_str(<span class="string">"$"</span>);
                 replacement = <span class="kw-2">&amp;</span>replacement[<span class="number">1</span>..];
                 <span class="kw">continue</span>;
             }
@@ -720,7 +720,7 @@ itself can never fail.
 /// capture group index is invalid, then nothing should be appended.
 ///
 /// `name_to_index` should be a function that maps a capture group name to a
-/// capture group index. If the given name doesn&#39;t exist, then `None` should
+/// capture group index. If the given name doesn't exist, then `None` should
 /// be returned.
 ///
 /// Finally, `dst` is where the final interpolated contents should be written.
@@ -737,14 +737,14 @@ itself can never fail.
 ///
 /// let mut dst = vec![];
 /// interpolate::bytes(
-///     b&quot;foo $bar baz&quot;,
+///     b"foo $bar baz",
 ///     |index, dst| {
 ///         if index == 0 {
-///             dst.extend_from_slice(b&quot;BAR&quot;);
+///             dst.extend_from_slice(b"BAR");
 ///         }
 ///     },
 ///     |name| {
-///         if name == &quot;bar&quot; {
+///         if name == "bar" {
 ///             Some(0)
 ///         } else {
 ///             None
@@ -752,7 +752,7 @@ itself can never fail.
 ///     },
 ///     &amp;mut dst,
 /// );
-/// assert_eq!(&amp;b&quot;foo BAR baz&quot;[..], dst);
+/// assert_eq!(&amp;b"foo BAR baz"[..], dst);
 /// ```
 </span><span class="kw">pub fn </span>bytes(
     <span class="kw-2">mut </span>replacement: <span class="kw-2">&amp;</span>[u8],
@@ -761,16 +761,16 @@ itself can never fail.
     dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;,
 ) {
     <span class="kw">while </span>!replacement.is_empty() {
-        <span class="kw">match </span>memchr(<span class="string">b&#39;$&#39;</span>, replacement) {
+        <span class="kw">match </span>memchr(<span class="string">b'$'</span>, replacement) {
             <span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
             <span class="prelude-val">Some</span>(i) =&gt; {
                 dst.extend_from_slice(<span class="kw-2">&amp;</span>replacement[..i]);
                 replacement = <span class="kw-2">&amp;</span>replacement[i..];
             }
         }
-        <span class="comment">// Handle escaping of &#39;$&#39;.
-        </span><span class="kw">if </span>replacement.get(<span class="number">1</span>).map_or(<span class="bool-val">false</span>, |<span class="kw-2">&amp;</span>b| b == <span class="string">b&#39;$&#39;</span>) {
-            dst.push(<span class="string">b&#39;$&#39;</span>);
+        <span class="comment">// Handle escaping of '$'.
+        </span><span class="kw">if </span>replacement.get(<span class="number">1</span>).map_or(<span class="bool-val">false</span>, |<span class="kw-2">&amp;</span>b| b == <span class="string">b'$'</span>) {
+            dst.push(<span class="string">b'$'</span>);
             replacement = <span class="kw-2">&amp;</span>replacement[<span class="number">2</span>..];
             <span class="kw">continue</span>;
         }
@@ -778,7 +778,7 @@ itself can never fail.
         <span class="kw">let </span>cap_ref = <span class="kw">match </span>find_cap_ref(replacement) {
             <span class="prelude-val">Some</span>(cap_ref) =&gt; cap_ref,
             <span class="prelude-val">None </span>=&gt; {
-                dst.push(<span class="string">b&#39;$&#39;</span>);
+                dst.push(<span class="string">b'$'</span>);
                 replacement = <span class="kw-2">&amp;</span>replacement[<span class="number">1</span>..];
                 <span class="kw">continue</span>;
             }
@@ -802,8 +802,8 @@ itself can never fail.
 /// It is also tagged with the position in the text following the
 /// capture reference.
 </span><span class="attr">#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-</span><span class="kw">struct </span>CaptureRef&lt;<span class="lifetime">&#39;a</span>&gt; {
-    cap: Ref&lt;<span class="lifetime">&#39;a</span>&gt;,
+</span><span class="kw">struct </span>CaptureRef&lt;<span class="lifetime">'a</span>&gt; {
+    cap: Ref&lt;<span class="lifetime">'a</span>&gt;,
     end: usize,
 }
 
@@ -811,19 +811,19 @@ itself can never fail.
 ///
 /// e.g., `$2`, `$foo`, `${foo}`.
 </span><span class="attr">#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-</span><span class="kw">enum </span>Ref&lt;<span class="lifetime">&#39;a</span>&gt; {
-    Named(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str),
+</span><span class="kw">enum </span>Ref&lt;<span class="lifetime">'a</span>&gt; {
+    Named(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str),
     Number(usize),
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt; <span class="kw">for </span>Ref&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn </span>from(x: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str) -&gt; Ref&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt; <span class="kw">for </span>Ref&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">fn </span>from(x: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str) -&gt; Ref&lt;<span class="lifetime">'a</span>&gt; {
         Ref::Named(x)
     }
 }
 
-<span class="kw">impl </span>From&lt;usize&gt; <span class="kw">for </span>Ref&lt;<span class="lifetime">&#39;static</span>&gt; {
-    <span class="kw">fn </span>from(x: usize) -&gt; Ref&lt;<span class="lifetime">&#39;static</span>&gt; {
+<span class="kw">impl </span>From&lt;usize&gt; <span class="kw">for </span>Ref&lt;<span class="lifetime">'static</span>&gt; {
+    <span class="kw">fn </span>from(x: usize) -&gt; Ref&lt;<span class="lifetime">'static</span>&gt; {
         Ref::Number(x)
     }
 }
@@ -833,17 +833,17 @@ itself can never fail.
 ///
 /// If no such valid reference could be found, None is returned.
 ///
-/// Note that this returns a &quot;possible&quot; reference because this routine doesn&#39;t
+/// Note that this returns a "possible" reference because this routine doesn't
 /// know whether the reference is to a valid group or not. If it winds up not
 /// being a valid reference, then it should be replaced with the empty string.
-</span><span class="kw">fn </span>find_cap_ref(replacement: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;CaptureRef&lt;<span class="lifetime">&#39;_</span>&gt;&gt; {
+</span><span class="kw">fn </span>find_cap_ref(replacement: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;CaptureRef&lt;<span class="lifetime">'_</span>&gt;&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
     <span class="kw">let </span>rep: <span class="kw-2">&amp;</span>[u8] = replacement;
-    <span class="kw">if </span>rep.len() &lt;= <span class="number">1 </span>|| rep[<span class="number">0</span>] != <span class="string">b&#39;$&#39; </span>{
+    <span class="kw">if </span>rep.len() &lt;= <span class="number">1 </span>|| rep[<span class="number">0</span>] != <span class="string">b'$' </span>{
         <span class="kw">return </span><span class="prelude-val">None</span>;
     }
     i += <span class="number">1</span>;
-    <span class="kw">if </span>rep[i] == <span class="string">b&#39;{&#39; </span>{
+    <span class="kw">if </span>rep[i] == <span class="string">b'{' </span>{
         <span class="kw">return </span>find_cap_ref_braced(rep, i + <span class="number">1</span>);
     }
     <span class="kw">let </span><span class="kw-2">mut </span>cap_end = i;
@@ -858,7 +858,7 @@ itself can never fail.
     // check via an unchecked conversion or by parsing the number straight from
     // &amp;[u8].
     </span><span class="kw">let </span>cap = core::str::from_utf8(<span class="kw-2">&amp;</span>rep[i..cap_end])
-        .expect(<span class="string">&quot;valid UTF-8 capture name&quot;</span>);
+        .expect(<span class="string">"valid UTF-8 capture name"</span>);
     <span class="prelude-val">Some</span>(CaptureRef {
         cap: <span class="kw">match </span>cap.parse::&lt;usize&gt;() {
             <span class="prelude-val">Ok</span>(i) =&gt; Ref::Number(i),
@@ -871,17 +871,17 @@ itself can never fail.
 <span class="doccomment">/// Looks for a braced reference, e.g., `${foo1}`. This assumes that an opening
 /// brace has been found at `i-1` in `rep`. This then looks for a closing
 /// brace and returns the capture reference within the brace.
-</span><span class="kw">fn </span>find_cap_ref_braced(rep: <span class="kw-2">&amp;</span>[u8], <span class="kw-2">mut </span>i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;CaptureRef&lt;<span class="lifetime">&#39;_</span>&gt;&gt; {
-    <span class="macro">assert_eq!</span>(<span class="string">b&#39;{&#39;</span>, rep[i.checked_sub(<span class="number">1</span>).unwrap()]);
+</span><span class="kw">fn </span>find_cap_ref_braced(rep: <span class="kw-2">&amp;</span>[u8], <span class="kw-2">mut </span>i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;CaptureRef&lt;<span class="lifetime">'_</span>&gt;&gt; {
+    <span class="macro">assert_eq!</span>(<span class="string">b'{'</span>, rep[i.checked_sub(<span class="number">1</span>).unwrap()]);
     <span class="kw">let </span>start = i;
-    <span class="kw">while </span>rep.get(i).map_or(<span class="bool-val">false</span>, |<span class="kw-2">&amp;</span>b| b != <span class="string">b&#39;}&#39;</span>) {
+    <span class="kw">while </span>rep.get(i).map_or(<span class="bool-val">false</span>, |<span class="kw-2">&amp;</span>b| b != <span class="string">b'}'</span>) {
         i += <span class="number">1</span>;
     }
-    <span class="kw">if </span>!rep.get(i).map_or(<span class="bool-val">false</span>, |<span class="kw-2">&amp;</span>b| b == <span class="string">b&#39;}&#39;</span>) {
+    <span class="kw">if </span>!rep.get(i).map_or(<span class="bool-val">false</span>, |<span class="kw-2">&amp;</span>b| b == <span class="string">b'}'</span>) {
         <span class="kw">return </span><span class="prelude-val">None</span>;
     }
-    <span class="comment">// When looking at braced names, we don&#39;t put any restrictions on the name,
-    // so it&#39;s possible it could be invalid UTF-8. But a capture group name
+    <span class="comment">// When looking at braced names, we don't put any restrictions on the name,
+    // so it's possible it could be invalid UTF-8. But a capture group name
     // can never be invalid UTF-8, so if we have invalid UTF-8, then we can
     // safely return None.
     </span><span class="kw">let </span>cap = <span class="kw">match </span>core::str::from_utf8(<span class="kw-2">&amp;</span>rep[start..i]) {
@@ -901,7 +901,7 @@ itself can never fail.
 /// written in non-brace form.
 </span><span class="kw">fn </span>is_valid_cap_letter(b: u8) -&gt; bool {
     <span class="kw">match </span>b {
-        <span class="string">b&#39;0&#39;</span>..=<span class="string">b&#39;9&#39; </span>| <span class="string">b&#39;a&#39;</span>..=<span class="string">b&#39;z&#39; </span>| <span class="string">b&#39;A&#39;</span>..=<span class="string">b&#39;Z&#39; </span>| <span class="string">b&#39;_&#39; </span>=&gt; <span class="bool-val">true</span>,
+        <span class="string">b'0'</span>..=<span class="string">b'9' </span>| <span class="string">b'a'</span>..=<span class="string">b'z' </span>| <span class="string">b'A'</span>..=<span class="string">b'Z' </span>| <span class="string">b'_' </span>=&gt; <span class="bool-val">true</span>,
         <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
     }
 }
@@ -912,7 +912,7 @@ itself can never fail.
 
     <span class="kw">use super</span>::{find_cap_ref, CaptureRef};
 
-    <span class="macro">macro_rules! </span>find {
+    <span class="macro">macro_rules!</span> find {
         (<span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$text</span>:expr) =&gt; {
             <span class="attr">#[test]
             </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() {
@@ -927,44 +927,44 @@ itself can never fail.
         };
     }
 
-    <span class="macro">macro_rules! </span>c {
+    <span class="macro">macro_rules!</span> c {
         (<span class="macro-nonterminal">$name_or_number</span>:expr, <span class="macro-nonterminal">$pos</span>:expr) =&gt; {
             CaptureRef { cap: <span class="macro-nonterminal">$name_or_number</span>.into(), end: <span class="macro-nonterminal">$pos </span>}
         };
     }
 
-    <span class="macro">find!</span>(find_cap_ref1, <span class="string">&quot;$foo&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;foo&quot;</span>, <span class="number">4</span>));
-    <span class="macro">find!</span>(find_cap_ref2, <span class="string">&quot;${foo}&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;foo&quot;</span>, <span class="number">6</span>));
-    <span class="macro">find!</span>(find_cap_ref3, <span class="string">&quot;$0&quot;</span>, <span class="macro">c!</span>(<span class="number">0</span>, <span class="number">2</span>));
-    <span class="macro">find!</span>(find_cap_ref4, <span class="string">&quot;$5&quot;</span>, <span class="macro">c!</span>(<span class="number">5</span>, <span class="number">2</span>));
-    <span class="macro">find!</span>(find_cap_ref5, <span class="string">&quot;$10&quot;</span>, <span class="macro">c!</span>(<span class="number">10</span>, <span class="number">3</span>));
+    <span class="macro">find!</span>(find_cap_ref1, <span class="string">"$foo"</span>, <span class="macro">c!</span>(<span class="string">"foo"</span>, <span class="number">4</span>));
+    <span class="macro">find!</span>(find_cap_ref2, <span class="string">"${foo}"</span>, <span class="macro">c!</span>(<span class="string">"foo"</span>, <span class="number">6</span>));
+    <span class="macro">find!</span>(find_cap_ref3, <span class="string">"$0"</span>, <span class="macro">c!</span>(<span class="number">0</span>, <span class="number">2</span>));
+    <span class="macro">find!</span>(find_cap_ref4, <span class="string">"$5"</span>, <span class="macro">c!</span>(<span class="number">5</span>, <span class="number">2</span>));
+    <span class="macro">find!</span>(find_cap_ref5, <span class="string">"$10"</span>, <span class="macro">c!</span>(<span class="number">10</span>, <span class="number">3</span>));
     <span class="comment">// See https://github.com/rust-lang/regex/pull/585
     // for more on characters following numbers
-    </span><span class="macro">find!</span>(find_cap_ref6, <span class="string">&quot;$42a&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;42a&quot;</span>, <span class="number">4</span>));
-    <span class="macro">find!</span>(find_cap_ref7, <span class="string">&quot;${42}a&quot;</span>, <span class="macro">c!</span>(<span class="number">42</span>, <span class="number">5</span>));
-    <span class="macro">find!</span>(find_cap_ref8, <span class="string">&quot;${42&quot;</span>);
-    <span class="macro">find!</span>(find_cap_ref9, <span class="string">&quot;${42 &quot;</span>);
-    <span class="macro">find!</span>(find_cap_ref10, <span class="string">&quot; $0 &quot;</span>);
-    <span class="macro">find!</span>(find_cap_ref11, <span class="string">&quot;$&quot;</span>);
-    <span class="macro">find!</span>(find_cap_ref12, <span class="string">&quot; &quot;</span>);
-    <span class="macro">find!</span>(find_cap_ref13, <span class="string">&quot;&quot;</span>);
-    <span class="macro">find!</span>(find_cap_ref14, <span class="string">&quot;$1-$2&quot;</span>, <span class="macro">c!</span>(<span class="number">1</span>, <span class="number">2</span>));
-    <span class="macro">find!</span>(find_cap_ref15, <span class="string">&quot;$1_$2&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;1_&quot;</span>, <span class="number">3</span>));
-    <span class="macro">find!</span>(find_cap_ref16, <span class="string">&quot;$x-$y&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;x&quot;</span>, <span class="number">2</span>));
-    <span class="macro">find!</span>(find_cap_ref17, <span class="string">&quot;$x_$y&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;x_&quot;</span>, <span class="number">3</span>));
-    <span class="macro">find!</span>(find_cap_ref18, <span class="string">&quot;${#}&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;#&quot;</span>, <span class="number">4</span>));
-    <span class="macro">find!</span>(find_cap_ref19, <span class="string">&quot;${Z[}&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;Z[&quot;</span>, <span class="number">5</span>));
-    <span class="macro">find!</span>(find_cap_ref20, <span class="string">&quot;${¾}&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;¾&quot;</span>, <span class="number">5</span>));
-    <span class="macro">find!</span>(find_cap_ref21, <span class="string">&quot;${¾a}&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;¾a&quot;</span>, <span class="number">6</span>));
-    <span class="macro">find!</span>(find_cap_ref22, <span class="string">&quot;${a¾}&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;a¾&quot;</span>, <span class="number">6</span>));
-    <span class="macro">find!</span>(find_cap_ref23, <span class="string">&quot;${☃}&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;☃&quot;</span>, <span class="number">6</span>));
-    <span class="macro">find!</span>(find_cap_ref24, <span class="string">&quot;${a☃}&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;a☃&quot;</span>, <span class="number">7</span>));
-    <span class="macro">find!</span>(find_cap_ref25, <span class="string">&quot;${☃a}&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;☃a&quot;</span>, <span class="number">7</span>));
-    <span class="macro">find!</span>(find_cap_ref26, <span class="string">&quot;${名字}&quot;</span>, <span class="macro">c!</span>(<span class="string">&quot;名字&quot;</span>, <span class="number">9</span>));
+    </span><span class="macro">find!</span>(find_cap_ref6, <span class="string">"$42a"</span>, <span class="macro">c!</span>(<span class="string">"42a"</span>, <span class="number">4</span>));
+    <span class="macro">find!</span>(find_cap_ref7, <span class="string">"${42}a"</span>, <span class="macro">c!</span>(<span class="number">42</span>, <span class="number">5</span>));
+    <span class="macro">find!</span>(find_cap_ref8, <span class="string">"${42"</span>);
+    <span class="macro">find!</span>(find_cap_ref9, <span class="string">"${42 "</span>);
+    <span class="macro">find!</span>(find_cap_ref10, <span class="string">" $0 "</span>);
+    <span class="macro">find!</span>(find_cap_ref11, <span class="string">"$"</span>);
+    <span class="macro">find!</span>(find_cap_ref12, <span class="string">" "</span>);
+    <span class="macro">find!</span>(find_cap_ref13, <span class="string">""</span>);
+    <span class="macro">find!</span>(find_cap_ref14, <span class="string">"$1-$2"</span>, <span class="macro">c!</span>(<span class="number">1</span>, <span class="number">2</span>));
+    <span class="macro">find!</span>(find_cap_ref15, <span class="string">"$1_$2"</span>, <span class="macro">c!</span>(<span class="string">"1_"</span>, <span class="number">3</span>));
+    <span class="macro">find!</span>(find_cap_ref16, <span class="string">"$x-$y"</span>, <span class="macro">c!</span>(<span class="string">"x"</span>, <span class="number">2</span>));
+    <span class="macro">find!</span>(find_cap_ref17, <span class="string">"$x_$y"</span>, <span class="macro">c!</span>(<span class="string">"x_"</span>, <span class="number">3</span>));
+    <span class="macro">find!</span>(find_cap_ref18, <span class="string">"${#}"</span>, <span class="macro">c!</span>(<span class="string">"#"</span>, <span class="number">4</span>));
+    <span class="macro">find!</span>(find_cap_ref19, <span class="string">"${Z[}"</span>, <span class="macro">c!</span>(<span class="string">"Z["</span>, <span class="number">5</span>));
+    <span class="macro">find!</span>(find_cap_ref20, <span class="string">"${¾}"</span>, <span class="macro">c!</span>(<span class="string">"¾"</span>, <span class="number">5</span>));
+    <span class="macro">find!</span>(find_cap_ref21, <span class="string">"${¾a}"</span>, <span class="macro">c!</span>(<span class="string">"¾a"</span>, <span class="number">6</span>));
+    <span class="macro">find!</span>(find_cap_ref22, <span class="string">"${a¾}"</span>, <span class="macro">c!</span>(<span class="string">"a¾"</span>, <span class="number">6</span>));
+    <span class="macro">find!</span>(find_cap_ref23, <span class="string">"${☃}"</span>, <span class="macro">c!</span>(<span class="string">"☃"</span>, <span class="number">6</span>));
+    <span class="macro">find!</span>(find_cap_ref24, <span class="string">"${a☃}"</span>, <span class="macro">c!</span>(<span class="string">"a☃"</span>, <span class="number">7</span>));
+    <span class="macro">find!</span>(find_cap_ref25, <span class="string">"${☃a}"</span>, <span class="macro">c!</span>(<span class="string">"☃a"</span>, <span class="number">7</span>));
+    <span class="macro">find!</span>(find_cap_ref26, <span class="string">"${名字}"</span>, <span class="macro">c!</span>(<span class="string">"名字"</span>, <span class="number">9</span>));
 
     <span class="kw">fn </span>interpolate_string(
-        <span class="kw-2">mut </span>name_to_index: Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, usize)&gt;,
-        caps: Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;,
+        <span class="kw-2">mut </span>name_to_index: Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, usize)&gt;,
+        caps: Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;,
         replacement: <span class="kw-2">&amp;</span>str,
     ) -&gt; String {
         name_to_index.sort_by_key(|x| x.<span class="number">0</span>);
@@ -989,8 +989,8 @@ itself can never fail.
     }
 
     <span class="kw">fn </span>interpolate_bytes(
-        <span class="kw-2">mut </span>name_to_index: Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, usize)&gt;,
-        caps: Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;,
+        <span class="kw-2">mut </span>name_to_index: Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, usize)&gt;,
+        caps: Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;,
         replacement: <span class="kw-2">&amp;</span>str,
     ) -&gt; String {
         name_to_index.sort_by_key(|x| x.<span class="number">0</span>);
@@ -1014,19 +1014,19 @@ itself can never fail.
         String::from_utf8(dst).unwrap()
     }
 
-    <span class="macro">macro_rules! </span>interp {
+    <span class="macro">macro_rules!</span> interp {
         (<span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$map</span>:expr, <span class="macro-nonterminal">$caps</span>:expr, <span class="macro-nonterminal">$hay</span>:expr, <span class="macro-nonterminal">$expected</span>:expr $(,)<span class="kw-2">*</span>) =&gt; {
             <span class="attr">#[test]
             </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() {
                 <span class="macro">assert_eq!</span>(
                     <span class="macro-nonterminal">$expected</span>,
                     interpolate_string(<span class="macro-nonterminal">$map</span>, <span class="macro-nonterminal">$caps</span>, <span class="macro-nonterminal">$hay</span>),
-                    <span class="string">&quot;interpolate::string failed&quot;</span>,
+                    <span class="string">"interpolate::string failed"</span>,
                 );
                 <span class="macro">assert_eq!</span>(
                     <span class="macro-nonterminal">$expected</span>,
                     interpolate_bytes(<span class="macro-nonterminal">$map</span>, <span class="macro-nonterminal">$caps</span>, <span class="macro-nonterminal">$hay</span>),
-                    <span class="string">&quot;interpolate::bytes failed&quot;</span>,
+                    <span class="string">"interpolate::bytes failed"</span>,
                 );
             }
         };
@@ -1034,114 +1034,114 @@ itself can never fail.
 
     <span class="macro">interp!</span>(
         interp1,
-        <span class="macro">vec!</span>[(<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test $foo test&quot;</span>,
-        <span class="string">&quot;test xxx test&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">""</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test $foo test"</span>,
+        <span class="string">"test xxx test"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp2,
-        <span class="macro">vec!</span>[(<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test$footest&quot;</span>,
-        <span class="string">&quot;test&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">""</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test$footest"</span>,
+        <span class="string">"test"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp3,
-        <span class="macro">vec!</span>[(<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test${foo}test&quot;</span>,
-        <span class="string">&quot;testxxxtest&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">""</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test${foo}test"</span>,
+        <span class="string">"testxxxtest"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp4,
-        <span class="macro">vec!</span>[(<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test$2test&quot;</span>,
-        <span class="string">&quot;test&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">""</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test$2test"</span>,
+        <span class="string">"test"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp5,
-        <span class="macro">vec!</span>[(<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test${2}test&quot;</span>,
-        <span class="string">&quot;testxxxtest&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">""</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test${2}test"</span>,
+        <span class="string">"testxxxtest"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp6,
-        <span class="macro">vec!</span>[(<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test $$foo test&quot;</span>,
-        <span class="string">&quot;test $foo test&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">""</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test $$foo test"</span>,
+        <span class="string">"test $foo test"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp7,
-        <span class="macro">vec!</span>[(<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test $foo&quot;</span>,
-        <span class="string">&quot;test xxx&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">""</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test $foo"</span>,
+        <span class="string">"test xxx"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp8,
-        <span class="macro">vec!</span>[(<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;$foo test&quot;</span>,
-        <span class="string">&quot;xxx test&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">""</span>, <span class="string">"xxx"</span>],
+        <span class="string">"$foo test"</span>,
+        <span class="string">"xxx test"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp9,
-        <span class="macro">vec!</span>[(<span class="string">&quot;bar&quot;</span>, <span class="number">1</span>), (<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;yyy&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test $bar$foo&quot;</span>,
-        <span class="string">&quot;test yyyxxx&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"bar"</span>, <span class="number">1</span>), (<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">"yyy"</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test $bar$foo"</span>,
+        <span class="string">"test yyyxxx"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp10,
-        <span class="macro">vec!</span>[(<span class="string">&quot;bar&quot;</span>, <span class="number">1</span>), (<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;yyy&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test $ test&quot;</span>,
-        <span class="string">&quot;test $ test&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"bar"</span>, <span class="number">1</span>), (<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">"yyy"</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test $ test"</span>,
+        <span class="string">"test $ test"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp11,
-        <span class="macro">vec!</span>[(<span class="string">&quot;bar&quot;</span>, <span class="number">1</span>), (<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;yyy&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test ${} test&quot;</span>,
-        <span class="string">&quot;test  test&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"bar"</span>, <span class="number">1</span>), (<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">"yyy"</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test ${} test"</span>,
+        <span class="string">"test  test"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp12,
-        <span class="macro">vec!</span>[(<span class="string">&quot;bar&quot;</span>, <span class="number">1</span>), (<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;yyy&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test ${ } test&quot;</span>,
-        <span class="string">&quot;test  test&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"bar"</span>, <span class="number">1</span>), (<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">"yyy"</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test ${ } test"</span>,
+        <span class="string">"test  test"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp13,
-        <span class="macro">vec!</span>[(<span class="string">&quot;bar&quot;</span>, <span class="number">1</span>), (<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;yyy&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test ${a b} test&quot;</span>,
-        <span class="string">&quot;test  test&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"bar"</span>, <span class="number">1</span>), (<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">"yyy"</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test ${a b} test"</span>,
+        <span class="string">"test  test"</span>,
     );
 
     <span class="macro">interp!</span>(
         interp14,
-        <span class="macro">vec!</span>[(<span class="string">&quot;bar&quot;</span>, <span class="number">1</span>), (<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;yyy&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test ${a} test&quot;</span>,
-        <span class="string">&quot;test  test&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"bar"</span>, <span class="number">1</span>), (<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">"yyy"</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test ${a} test"</span>,
+        <span class="string">"test  test"</span>,
     );
 
     <span class="comment">// This is a funny case where a braced reference is never closed, but
@@ -1150,10 +1150,10 @@ itself can never fail.
     // unbraced reference is found.
     </span><span class="macro">interp!</span>(
         interp15,
-        <span class="macro">vec!</span>[(<span class="string">&quot;bar&quot;</span>, <span class="number">1</span>), (<span class="string">&quot;foo&quot;</span>, <span class="number">2</span>)],
-        <span class="macro">vec!</span>[<span class="string">&quot;&quot;</span>, <span class="string">&quot;yyy&quot;</span>, <span class="string">&quot;xxx&quot;</span>],
-        <span class="string">&quot;test ${wat $bar ok&quot;</span>,
-        <span class="string">&quot;test ${wat yyy ok&quot;</span>,
+        <span class="macro">vec!</span>[(<span class="string">"bar"</span>, <span class="number">1</span>), (<span class="string">"foo"</span>, <span class="number">2</span>)],
+        <span class="macro">vec!</span>[<span class="string">""</span>, <span class="string">"yyy"</span>, <span class="string">"xxx"</span>],
+        <span class="string">"test ${wat $bar ok"</span>,
+        <span class="string">"test ${wat yyy ok"</span>,
     );
 }
 </code></pre></div></section></main></body></html>

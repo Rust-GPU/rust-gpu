@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/automaton.rs`."><title>automaton.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../aho_corasick/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/automaton.rs`."><title>automaton.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1627,7 +1627,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     primitives::{StateID, StateIDError},
 };
 
-<span class="doccomment">/// We seal the `Automaton` trait for now. It&#39;s a big trait, and it&#39;s
+<span class="doccomment">/// We seal the `Automaton` trait for now. It's a big trait, and it's
 /// conceivable that I might want to add new required methods, and sealing the
 /// trait permits doing that in a backwards compatible fashion. On other the
 /// hand, if you have a solid use case for implementing the trait yourself,
@@ -1640,7 +1640,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 <span class="kw">impl </span>private::Sealed <span class="kw">for </span><span class="kw">crate</span>::nfa::contiguous::NFA {}
 <span class="kw">impl </span>private::Sealed <span class="kw">for </span><span class="kw">crate</span>::dfa::DFA {}
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: private::Sealed + <span class="question-mark">?</span>Sized&gt; private::Sealed <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: private::Sealed + <span class="question-mark">?</span>Sized&gt; private::Sealed <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>T {}
 
 <span class="doccomment">/// A trait that abstracts over Aho-Corasick automata.
 ///
@@ -1673,7 +1673,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 ///
 /// # Special states
 ///
-/// This trait encodes a notion of &quot;special&quot; states in an automaton. Namely,
+/// This trait encodes a notion of "special" states in an automaton. Namely,
 /// a state is treated as special if it is a dead, match or start state:
 ///
 /// * A dead state is a state that cannot be left once entered. All transitions
@@ -1689,10 +1689,10 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 /// be used to skip ahead and quickly look for candidate matches. Unlike dead
 /// and match states, it is never necessary to explicitly handle start states
 /// for correctness. Indeed, in this crate, implementations of `Automaton`
-/// will only treat start states as &quot;special&quot; when a prefilter is enabled and
+/// will only treat start states as "special" when a prefilter is enabled and
 /// active. Otherwise, treating it as special has no purpose and winds up
 /// slowing down the overall search because it results in ping-ponging between
-/// the main state transition and the &quot;special&quot; state logic.
+/// the main state transition and the "special" state logic.
 ///
 /// Since checking whether a state is special by doing three different
 /// checks would be too expensive inside a fast search loop, the
@@ -1745,8 +1745,8 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 ///     Anchored, Match, MatchError, MatchKind,
 /// };
 ///
-/// // Run an unanchored search for &#39;aut&#39; in &#39;haystack&#39;. Return the first match
-/// // seen according to the automaton&#39;s match semantics. This returns an error
+/// // Run an unanchored search for 'aut' in 'haystack'. Return the first match
+/// // seen according to the automaton's match semantics. This returns an error
 /// // if the given automaton does not support unanchored searches.
 /// fn find&lt;A: Automaton&gt;(
 ///     aut: A,
@@ -1764,7 +1764,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 ///     if aut.is_match(sid) {
 ///         mat = Some(get_match(sid, at));
 ///         // Standard semantics require matches to be reported as soon as
-///         // they&#39;re seen. Otherwise, we continue until we see a dead state
+///         // they're seen. Otherwise, we continue until we see a dead state
 ///         // or the end of the haystack.
 ///         if matches!(aut.match_kind(), MatchKind::Standard) {
 ///             return Ok(mat);
@@ -1790,16 +1790,16 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 /// }
 ///
 /// // Show that it works for standard searches.
-/// let nfa = NFA::new(&amp;[&quot;samwise&quot;, &quot;sam&quot;]).unwrap();
-/// assert_eq!(Some(Match::must(1, 0..3)), find(&amp;nfa, b&quot;samwise&quot;)?);
+/// let nfa = NFA::new(&amp;["samwise", "sam"]).unwrap();
+/// assert_eq!(Some(Match::must(1, 0..3)), find(&amp;nfa, b"samwise")?);
 ///
 /// // But also works when using leftmost-first. Notice how the match result
 /// // has changed!
 /// let nfa = NFA::builder()
 ///     .match_kind(MatchKind::LeftmostFirst)
-///     .build(&amp;[&quot;samwise&quot;, &quot;sam&quot;])
+///     .build(&amp;["samwise", "sam"])
 ///     .unwrap();
-/// assert_eq!(Some(Match::must(0, 0..7)), find(&amp;nfa, b&quot;samwise&quot;)?);
+/// assert_eq!(Some(Match::must(0, 0..7)), find(&amp;nfa, b"samwise")?);
 ///
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
 /// ```
@@ -1849,7 +1849,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
         byte: u8,
     ) -&gt; StateID;
 
-    <span class="doccomment">/// Returns true if the given ID represents a &quot;special&quot; state. A special
+    <span class="doccomment">/// Returns true if the given ID represents a "special" state. A special
     /// state is a dead, match or start state.
     ///
     /// Note that implementations may choose to return false when the given ID
@@ -1862,7 +1862,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 
     <span class="doccomment">/// Returns true if the given ID represents a dead state.
     ///
-    /// A dead state is a type of &quot;sink&quot; in a finite state machine. It
+    /// A dead state is a type of "sink" in a finite state machine. It
     /// corresponds to a state whose transitions all loop back to itself. That
     /// is, once entered, it can never be left. In practice, it serves as a
     /// sentinel indicating that the search should terminate.
@@ -1892,7 +1892,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     /// to try to skip ahead and look for match candidates more quickly than
     /// would otherwise be accomplished by walking the automaton.
     ///
-    /// Implementations of `Automaton` in this crate &quot;unspecialize&quot; start
+    /// Implementations of `Automaton` in this crate "unspecialize" start
     /// states when a prefilter is not active or enabled. In this case, it
     /// is possible for `Automaton::is_special(sid)` to return false while
     /// `Automaton::is_start(sid)` returns true.
@@ -1913,7 +1913,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     /// `index` given.
     ///
     /// Typically, `index` is only ever greater than `0` when implementing an
-    /// overlapping search. Otherwise, it&#39;s likely that your search only cares
+    /// overlapping search. Otherwise, it's likely that your search only cares
     /// about reporting the first pattern ID in a match state.
     ///
     /// This has unspecified behavior if the given ID does not refer to a match
@@ -1961,7 +1961,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     /// for more documentation and examples.
     </span><span class="kw">fn </span>try_find(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Match&gt;, MatchError&gt; {
         try_find_fwd(<span class="kw-2">&amp;</span><span class="self">self</span>, input)
     }
@@ -1974,7 +1974,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     /// for more documentation and examples.
     </span><span class="kw">fn </span>try_find_overlapping(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         state: <span class="kw-2">&amp;mut </span>OverlappingState,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
         try_find_overlapping_fwd(<span class="kw-2">&amp;</span><span class="self">self</span>, input, state)
@@ -1986,10 +1986,10 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     /// See
     /// [`AhoCorasick::try_find_iter`](crate::AhoCorasick::try_find_iter)
     /// for more documentation and examples.
-    </span><span class="kw">fn </span>try_find_iter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-        input: Input&lt;<span class="lifetime">&#39;h</span>&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;FindIter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>, <span class="self">Self</span>&gt;, MatchError&gt;
+    </span><span class="kw">fn </span>try_find_iter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        input: Input&lt;<span class="lifetime">'h</span>&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;FindIter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>, <span class="self">Self</span>&gt;, MatchError&gt;
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
     {
@@ -2002,10 +2002,10 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     /// See
     /// [`AhoCorasick::try_find_overlapping_iter`](crate::AhoCorasick::try_find_overlapping_iter)
     /// for more documentation and examples.
-    </span><span class="kw">fn </span>try_find_overlapping_iter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-        input: Input&lt;<span class="lifetime">&#39;h</span>&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;FindOverlappingIter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>, <span class="self">Self</span>&gt;, MatchError&gt;
+    </span><span class="kw">fn </span>try_find_overlapping_iter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        input: Input&lt;<span class="lifetime">'h</span>&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;FindOverlappingIter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>, <span class="self">Self</span>&gt;, MatchError&gt;
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
     {
@@ -2015,8 +2015,8 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
             ));
         }
         <span class="comment">//  We might consider lifting this restriction. The reason why I added
-        // it was to ban the combination of &quot;anchored search&quot; and &quot;overlapping
-        // iteration.&quot; The match semantics aren&#39;t totally clear in that case.
+        // it was to ban the combination of "anchored search" and "overlapping
+        // iteration." The match semantics aren't totally clear in that case.
         // Should we allow *any* matches that are adjacent to *any* previous
         // match? Or only following the most recent one? Or only matches
         // that start at the beginning of the search? We might also elect to
@@ -2050,8 +2050,8 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
         <span class="macro">assert_eq!</span>(
             replace_with.len(),
             <span class="self">self</span>.patterns_len(),
-            <span class="string">&quot;replace_all requires a replacement for every pattern \
-             in the automaton&quot;
+            <span class="string">"replace_all requires a replacement for every pattern \
+             in the automaton"
         </span>);
         <span class="kw">let </span><span class="kw-2">mut </span>dst = String::with_capacity(haystack.len());
         <span class="self">self</span>.try_replace_all_with(haystack, <span class="kw-2">&amp;mut </span>dst, |mat, <span class="kw">_</span>, dst| {
@@ -2081,8 +2081,8 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
         <span class="macro">assert_eq!</span>(
             replace_with.len(),
             <span class="self">self</span>.patterns_len(),
-            <span class="string">&quot;replace_all requires a replacement for every pattern \
-             in the automaton&quot;
+            <span class="string">"replace_all requires a replacement for every pattern \
+             in the automaton"
         </span>);
         <span class="kw">let </span><span class="kw-2">mut </span>dst = Vec::with_capacity(haystack.len());
         <span class="self">self</span>.try_replace_all_with_bytes(haystack, <span class="kw-2">&amp;mut </span>dst, |mat, <span class="kw">_</span>, dst| {
@@ -2163,11 +2163,11 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     /// See
     /// [`AhoCorasick::try_stream_find_iter`](crate::AhoCorasick::try_stream_find_iter)
     /// for more documentation and examples.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-    </span><span class="kw">fn </span>try_stream_find_iter&lt;<span class="lifetime">&#39;a</span>, R: std::io::Read&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+    </span><span class="kw">fn </span>try_stream_find_iter&lt;<span class="lifetime">'a</span>, R: std::io::Read&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
         rdr: R,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;StreamFindIter&lt;<span class="lifetime">&#39;a</span>, <span class="self">Self</span>, R&gt;, MatchError&gt;
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;StreamFindIter&lt;<span class="lifetime">'a</span>, <span class="self">Self</span>, R&gt;, MatchError&gt;
     <span class="kw">where
         </span><span class="self">Self</span>: Sized,
     {
@@ -2182,7 +2182,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     /// See
     /// [`AhoCorasick::try_stream_replace_all`](crate::AhoCorasick::try_stream_replace_all)
     /// for more documentation and examples.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="kw">fn </span>try_stream_replace_all&lt;R, W, B&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         rdr: R,
@@ -2198,8 +2198,8 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
         <span class="macro">assert_eq!</span>(
             replace_with.len(),
             <span class="self">self</span>.patterns_len(),
-            <span class="string">&quot;streaming replace_all requires a replacement for every pattern \
-             in the automaton&quot;</span>,
+            <span class="string">"streaming replace_all requires a replacement for every pattern \
+             in the automaton"</span>,
         );
         <span class="self">self</span>.try_stream_replace_all_with(rdr, wtr, |mat, <span class="kw">_</span>, wtr| {
             wtr.write_all(replace_with[mat.pattern()].as_ref())
@@ -2212,7 +2212,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     /// See
     /// [`AhoCorasick::try_stream_replace_all_with`](crate::AhoCorasick::try_stream_replace_all_with)
     /// for more documentation and examples.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="kw">fn </span>try_stream_replace_all_with&lt;R, W, F&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         rdr: R,
@@ -2244,9 +2244,9 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     }
 }
 
-<span class="comment">// SAFETY: This just defers to the underlying &#39;AcAutomaton&#39; and thus inherits
+<span class="comment">// SAFETY: This just defers to the underlying 'AcAutomaton' and thus inherits
 // its safety properties.
-</span><span class="kw">unsafe impl</span>&lt;<span class="lifetime">&#39;a</span>, A: Automaton + <span class="question-mark">?</span>Sized&gt; Automaton <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>A {
+</span><span class="kw">unsafe impl</span>&lt;<span class="lifetime">'a</span>, A: Automaton + <span class="question-mark">?</span>Sized&gt; Automaton <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>A {
     <span class="attr">#[inline(always)]
     </span><span class="kw">fn </span>start_state(<span class="kw-2">&amp;</span><span class="self">self</span>, anchored: Anchored) -&gt; <span class="prelude-ty">Result</span>&lt;StateID, MatchError&gt; {
         (<span class="kw-2">**</span><span class="self">self</span>).start_state(anchored)
@@ -2361,8 +2361,8 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 ///     AhoCorasick, Input, Match,
 /// };
 ///
-/// let patterns = &amp;[&quot;append&quot;, &quot;appendage&quot;, &quot;app&quot;];
-/// let haystack = &quot;append the app to the appendage&quot;;
+/// let patterns = &amp;["append", "appendage", "app"];
+/// let haystack = "append the app to the appendage";
 ///
 /// let ac = AhoCorasick::new(patterns).unwrap();
 /// let mut state = OverlappingState::start();
@@ -2444,32 +2444,32 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 /// The type variable `A` refers to the implementation of the [`Automaton`]
 /// trait used to execute the search.
 ///
-/// The lifetime `&#39;a` refers to the lifetime of the [`Automaton`]
+/// The lifetime `'a` refers to the lifetime of the [`Automaton`]
 /// implementation.
 ///
-/// The lifetime `&#39;h` refers to the lifetime of the haystack being searched.
+/// The lifetime `'h` refers to the lifetime of the haystack being searched.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>FindIter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>, A&gt; {
+</span><span class="kw">pub struct </span>FindIter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>, A&gt; {
     <span class="doccomment">/// The automaton used to drive the search.
-    </span>aut: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>A,
+    </span>aut: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>A,
     <span class="doccomment">/// The input parameters to give to each search call.
     ///
     /// The start position of the search is mutated during iteration.
-    </span>input: Input&lt;<span class="lifetime">&#39;h</span>&gt;,
+    </span>input: Input&lt;<span class="lifetime">'h</span>&gt;,
     <span class="doccomment">/// Records the end offset of the most recent match. This is necessary to
     /// handle a corner case for preventing empty matches from overlapping with
     /// the ending bounds of a prior match.
     </span>last_match_end: <span class="prelude-ty">Option</span>&lt;usize&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>, A: Automaton&gt; FindIter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>, A&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>, A: Automaton&gt; FindIter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>, A&gt; {
     <span class="doccomment">/// Creates a new non-overlapping iterator. If the given automaton would
     /// return an error on a search with the given input configuration, then
     /// that error is returned here.
     </span><span class="kw">fn </span>new(
-        aut: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>A,
-        input: Input&lt;<span class="lifetime">&#39;h</span>&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;FindIter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>, A&gt;, MatchError&gt; {
+        aut: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>A,
+        input: Input&lt;<span class="lifetime">'h</span>&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;FindIter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>, A&gt;, MatchError&gt; {
         <span class="comment">// The only way this search can fail is if we cannot retrieve the start
         // state. e.g., Asking for an anchored search when only unanchored
         // searches are supported.
@@ -2487,7 +2487,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
         // ever return an error.
         </span><span class="self">self</span>.aut
             .try_find(<span class="kw-2">&amp;</span><span class="self">self</span>.input)
-            .expect(<span class="string">&quot;already checked that no match error can occur&quot;</span>)
+            .expect(<span class="string">"already checked that no match error can occur"</span>)
     }
 
     <span class="doccomment">/// Handles the special case of an empty match by ensuring that 1) the
@@ -2501,11 +2501,11 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     ///
     /// (2) is not strictly necessary, but makes intuitive sense and matches
     /// the presiding behavior of most general purpose regex engines.
-    /// (Obviously this crate isn&#39;t a regex engine, but we choose to match
-    /// their semantics.) The &quot;intuitive sense&quot; here is that we want to report
-    /// NON-overlapping matches. So for example, given the patterns &#39;a&#39; and
-    /// &#39;&#39; (an empty string) against the haystack &#39;a&#39;, without the special
-    /// handling, you&#39;d get the matches [0, 1) and [1, 1), where the latter
+    /// (Obviously this crate isn't a regex engine, but we choose to match
+    /// their semantics.) The "intuitive sense" here is that we want to report
+    /// NON-overlapping matches. So for example, given the patterns 'a' and
+    /// '' (an empty string) against the haystack 'a', without the special
+    /// handling, you'd get the matches [0, 1) and [1, 1), where the latter
     /// overlaps with the end bounds of the former.
     ///
     /// Note that we mark this cold and forcefully prevent inlining because
@@ -2528,7 +2528,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>, A: Automaton&gt; Iterator <span class="kw">for </span>FindIter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>, A&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>, A: Automaton&gt; Iterator <span class="kw">for </span>FindIter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>, A&gt; {
     <span class="kw">type </span>Item = Match;
 
     <span class="attr">#[inline(always)]
@@ -2554,25 +2554,25 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 /// The type variable `A` refers to the implementation of the [`Automaton`]
 /// trait used to execute the search.
 ///
-/// The lifetime `&#39;a` refers to the lifetime of the [`Automaton`]
+/// The lifetime `'a` refers to the lifetime of the [`Automaton`]
 /// implementation.
 ///
-/// The lifetime `&#39;h` refers to the lifetime of the haystack being searched.
+/// The lifetime `'h` refers to the lifetime of the haystack being searched.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>FindOverlappingIter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>, A&gt; {
-    aut: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>A,
-    input: Input&lt;<span class="lifetime">&#39;h</span>&gt;,
+</span><span class="kw">pub struct </span>FindOverlappingIter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>, A&gt; {
+    aut: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>A,
+    input: Input&lt;<span class="lifetime">'h</span>&gt;,
     state: OverlappingState,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>, A: Automaton&gt; Iterator <span class="kw">for </span>FindOverlappingIter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>, A&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>, A: Automaton&gt; Iterator <span class="kw">for </span>FindOverlappingIter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>, A&gt; {
     <span class="kw">type </span>Item = Match;
 
     <span class="attr">#[inline(always)]
     </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
         <span class="self">self</span>.aut
             .try_find_overlapping(<span class="kw-2">&amp;</span><span class="self">self</span>.input, <span class="kw-2">&amp;mut </span><span class="self">self</span>.state)
-            .expect(<span class="string">&quot;already checked that no match error can occur here&quot;</span>);
+            .expect(<span class="string">"already checked that no match error can occur here"</span>);
         <span class="self">self</span>.state.get_match()
     }
 }
@@ -2592,17 +2592,17 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 /// The type variable `R` refers to the `io::Read` stream that is being read
 /// from.
 ///
-/// The lifetime `&#39;a` refers to the lifetime of the [`Automaton`]
+/// The lifetime `'a` refers to the lifetime of the [`Automaton`]
 /// implementation.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 #[derive(Debug)]
-</span><span class="kw">pub struct </span>StreamFindIter&lt;<span class="lifetime">&#39;a</span>, A, R&gt; {
-    it: StreamChunkIter&lt;<span class="lifetime">&#39;a</span>, A, R&gt;,
+</span><span class="kw">pub struct </span>StreamFindIter&lt;<span class="lifetime">'a</span>, A, R&gt; {
+    it: StreamChunkIter&lt;<span class="lifetime">'a</span>, A, R&gt;,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, A: Automaton, R: std::io::Read&gt; Iterator
-    <span class="kw">for </span>StreamFindIter&lt;<span class="lifetime">&#39;a</span>, A, R&gt;
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, A: Automaton, R: std::io::Read&gt; Iterator
+    <span class="kw">for </span>StreamFindIter&lt;<span class="lifetime">'a</span>, A, R&gt;
 {
     <span class="kw">type </span>Item = std::io::Result&lt;Match&gt;;
 
@@ -2622,8 +2622,8 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 
 <span class="doccomment">/// An iterator that reports matches in a stream.
 ///
-/// (This doesn&#39;t actually implement the `Iterator` trait because it returns
-/// something with a lifetime attached to a buffer it owns, but that&#39;s OK. It
+/// (This doesn't actually implement the `Iterator` trait because it returns
+/// something with a lifetime attached to a buffer it owns, but that's OK. It
 /// still has a `next` method and is iterator-like enough to be fine.)
 ///
 /// This iterator yields elements of type `io::Result&lt;StreamChunk&gt;`, where
@@ -2632,23 +2632,23 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 /// `EOF`.
 ///
 /// The idea here is that each chunk represents either a match or a non-match,
-/// and if you concatenated all of the chunks together, you&#39;d reproduce the
+/// and if you concatenated all of the chunks together, you'd reproduce the
 /// entire contents of the stream, byte-for-byte.
 ///
-/// This chunk machinery is a bit complicated and it isn&#39;t strictly required
+/// This chunk machinery is a bit complicated and it isn't strictly required
 /// for a stream searcher that just reports matches. But we do need something
-/// like this to deal with the &quot;replacement&quot; API, which needs to know which
+/// like this to deal with the "replacement" API, which needs to know which
 /// chunks it can copy and which it needs to replace.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 #[derive(Debug)]
-</span><span class="kw">struct </span>StreamChunkIter&lt;<span class="lifetime">&#39;a</span>, A, R&gt; {
+</span><span class="kw">struct </span>StreamChunkIter&lt;<span class="lifetime">'a</span>, A, R&gt; {
     <span class="doccomment">/// The underlying automaton to do the search.
-    </span>aut: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>A,
+    </span>aut: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>A,
     <span class="doccomment">/// The source of bytes we read from.
     </span>rdr: R,
     <span class="doccomment">/// A roll buffer for managing bytes from `rdr`. Basically, this is used
     /// to handle the case of a match that is split by two different
-    /// calls to `rdr.read()`. This isn&#39;t strictly needed if all we needed to
+    /// calls to `rdr.read()`. This isn't strictly needed if all we needed to
     /// do was report matches, but here we are reporting chunks of non-matches
     /// and matches and in order to do that, we really just cannot treat our
     /// stream as non-overlapping blocks of bytes. We need to permit some
@@ -2660,50 +2660,50 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     </span>sid: StateID,
     <span class="doccomment">/// The absolute position over the entire stream.
     </span>absolute_pos: usize,
-    <span class="doccomment">/// The position we&#39;re currently at within `buf`.
+    <span class="doccomment">/// The position we're currently at within `buf`.
     </span>buffer_pos: usize,
     <span class="doccomment">/// The buffer position of the end of the bytes that we last returned
     /// to the caller. Basically, whenever we find a match, we look to see if
     /// there is a difference between where the match started and the position
-    /// of the last byte we returned to the caller. If there&#39;s a difference,
-    /// then we need to return a &#39;NonMatch&#39; chunk.
+    /// of the last byte we returned to the caller. If there's a difference,
+    /// then we need to return a 'NonMatch' chunk.
     </span>buffer_reported_pos: usize,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, A: Automaton, R: std::io::Read&gt; StreamChunkIter&lt;<span class="lifetime">&#39;a</span>, A, R&gt; {
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, A: Automaton, R: std::io::Read&gt; StreamChunkIter&lt;<span class="lifetime">'a</span>, A, R&gt; {
     <span class="kw">fn </span>new(
-        aut: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>A,
+        aut: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>A,
         rdr: R,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;StreamChunkIter&lt;<span class="lifetime">&#39;a</span>, A, R&gt;, MatchError&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;StreamChunkIter&lt;<span class="lifetime">'a</span>, A, R&gt;, MatchError&gt; {
         <span class="comment">// This restriction is a carry-over from older versions of this crate.
-        // I didn&#39;t have the bandwidth to think through how to handle, say,
+        // I didn't have the bandwidth to think through how to handle, say,
         // leftmost-first or leftmost-longest matching, but... it should be
         // possible? The main problem is that once you see a match state in
-        // leftmost-first semantics, you can&#39;t just stop at that point and
+        // leftmost-first semantics, you can't just stop at that point and
         // report a match. You have to keep going until you either hit a dead
-        // state or EOF. So how do you know when you&#39;ll hit a dead state? Well,
-        // you don&#39;t. With Aho-Corasick, I believe you can put a bound on it
-        // and say, &quot;once a match has been seen, you&#39;ll need to scan forward at
-        // most N bytes&quot; where N=aut.max_pattern_len().
+        // state or EOF. So how do you know when you'll hit a dead state? Well,
+        // you don't. With Aho-Corasick, I believe you can put a bound on it
+        // and say, "once a match has been seen, you'll need to scan forward at
+        // most N bytes" where N=aut.max_pattern_len().
         //
-        // Which is fine, but it does mean that state about whether we&#39;re still
+        // Which is fine, but it does mean that state about whether we're still
         // looking for a dead state or not needs to persist across buffer
-        // refills. Which this code doesn&#39;t really handle. It does preserve
+        // refills. Which this code doesn't really handle. It does preserve
         // *some* state across buffer refills, basically ensuring that a match
         // span is always in memory.
         </span><span class="kw">if </span>!aut.match_kind().is_standard() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(MatchError::unsupported_stream(aut.match_kind()));
         }
         <span class="comment">// This is kind of a cop-out, but empty matches are SUPER annoying.
-        // If we know they can&#39;t happen (which is what we enforce here), then
-        // it makes a lot of logic much simpler. With that said, I&#39;m open to
+        // If we know they can't happen (which is what we enforce here), then
+        // it makes a lot of logic much simpler. With that said, I'm open to
         // supporting this case, but we need to define proper semantics for it
-        // first. It wasn&#39;t totally clear to me what it should do at the time
+        // first. It wasn't totally clear to me what it should do at the time
         // of writing, so I decided to just be conservative.
         //
         // It also seems like a very weird case to support anyway. Why search a
-        // stream if you&#39;re just going to get a match at every position?
+        // stream if you're just going to get a match at every position?
         //
         // ¯\_(ツ)_/¯
         </span><span class="kw">if </span>aut.min_pattern_len() == <span class="number">0 </span>{
@@ -2731,12 +2731,12 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
         // I suspect this code could be made a bit simpler by designing a
         // better buffer abstraction.
         //
-        // But in general, this code is basically write-only. So you&#39;ll need
+        // But in general, this code is basically write-only. So you'll need
         // to go through it step-by-step to grok it. One of the key bits of
-        // complexity is tracking a few different offsets. &#39;buffer_pos&#39; is
-        // where we are in the buffer for search. &#39;buffer_reported_pos&#39; is the
+        // complexity is tracking a few different offsets. 'buffer_pos' is
+        // where we are in the buffer for search. 'buffer_reported_pos' is the
         // position immediately following the last byte in the buffer that
-        // we&#39;ve returned to the caller. And &#39;absolute_pos&#39; is the overall
+        // we've returned to the caller. And 'absolute_pos' is the overall
         // current absolute position of the search in the entire stream, and
         // this is what match spans are reported in terms of.
         </span><span class="kw">loop </span>{
@@ -2769,14 +2769,14 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
                     <span class="prelude-val">Err</span>(err) =&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(err)),
                     <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>) =&gt; {}
                     <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) =&gt; {
-                        <span class="comment">// We&#39;ve hit EOF, but if there are still some
+                        <span class="comment">// We've hit EOF, but if there are still some
                         // unreported bytes remaining, return them now.
                         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(r) = <span class="self">self</span>.get_eof_non_match_chunk() {
                             <span class="self">self</span>.buffer_reported_pos += r.len();
                             <span class="kw">let </span>bytes = <span class="kw-2">&amp;</span><span class="self">self</span>.buf.buffer()[r];
                             <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(StreamChunk::NonMatch { bytes }));
                         }
-                        <span class="comment">// We&#39;ve reported everything!
+                        <span class="comment">// We've reported everything!
                         </span><span class="kw">return </span><span class="prelude-val">None</span>;
                     }
                 }
@@ -2821,7 +2821,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     /// rolling the buffer.
     ///
     /// Note that this only reports bytes up to `buffer.len() -
-    /// min_buffer_len`, as it&#39;s not possible to know whether the bytes
+    /// min_buffer_len`, as it's not possible to know whether the bytes
     /// following that will participate in a match or not.
     </span><span class="kw">fn </span>get_pre_roll_non_match_chunk(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;core::ops::Range&lt;usize&gt;&gt; {
         <span class="kw">let </span>end =
@@ -2845,7 +2845,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 
     <span class="doccomment">/// Return the match at the current position for the current state.
     ///
-    /// This panics if `self.aut.is_match(self.sid)` isn&#39;t true.
+    /// This panics if `self.aut.is_match(self.sid)` isn't true.
     </span><span class="kw">fn </span>get_match(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Match {
         get_match(<span class="self">self</span>.aut, <span class="self">self</span>.sid, <span class="number">0</span>, <span class="self">self</span>.absolute_pos)
     }
@@ -2853,20 +2853,20 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 
 <span class="doccomment">/// A single chunk yielded by the stream chunk iterator.
 ///
-/// The `&#39;r` lifetime refers to the lifetime of the stream chunk iterator.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+/// The `'r` lifetime refers to the lifetime of the stream chunk iterator.
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 #[derive(Debug)]
-</span><span class="kw">enum </span>StreamChunk&lt;<span class="lifetime">&#39;r</span>&gt; {
+</span><span class="kw">enum </span>StreamChunk&lt;<span class="lifetime">'r</span>&gt; {
     <span class="doccomment">/// A chunk that does not contain any matches.
-    </span>NonMatch { bytes: <span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span>[u8] },
+    </span>NonMatch { bytes: <span class="kw-2">&amp;</span><span class="lifetime">'r </span>[u8] },
     <span class="doccomment">/// A chunk that precisely contains a match.
-    </span>Match { bytes: <span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span>[u8], mat: Match },
+    </span>Match { bytes: <span class="kw-2">&amp;</span><span class="lifetime">'r </span>[u8], mat: Match },
 }
 
 <span class="attr">#[inline(never)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>try_find_fwd&lt;A: Automaton + <span class="question-mark">?</span>Sized&gt;(
     aut: <span class="kw-2">&amp;</span>A,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Match&gt;, MatchError&gt; {
     <span class="kw">if </span>input.is_done() {
         <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
@@ -2892,7 +2892,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 <span class="attr">#[inline(always)]
 </span><span class="kw">fn </span>try_find_fwd_imp&lt;A: Automaton + <span class="question-mark">?</span>Sized&gt;(
     aut: <span class="kw-2">&amp;</span>A,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     pre: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Prefilter&gt;,
     anchored: Anchored,
     earliest: bool,
@@ -2916,19 +2916,19 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
         }
     }
     <span class="kw">while </span>at &lt; input.end() {
-        <span class="comment">// I&#39;ve tried unrolling this loop and eliding bounds checks, but no
+        <span class="comment">// I've tried unrolling this loop and eliding bounds checks, but no
         // matter what I did, I could not observe a consistent improvement on
         // any benchmark I could devise. (If someone wants to re-litigate this,
-        // the way to do it is to add an &#39;next_state_unchecked&#39; method to the
-        // &#39;Automaton&#39; trait with a default impl that uses &#39;next_state&#39;. Then
-        // use &#39;aut.next_state_unchecked&#39; here and implement it on DFA using
+        // the way to do it is to add an 'next_state_unchecked' method to the
+        // 'Automaton' trait with a default impl that uses 'next_state'. Then
+        // use 'aut.next_state_unchecked' here and implement it on DFA using
         // unchecked slice index acces.)
         </span>sid = aut.next_state(anchored, sid, input.haystack()[at]);
         <span class="kw">if </span>aut.is_special(sid) {
             <span class="kw">if </span>aut.is_dead(sid) {
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(mat);
             } <span class="kw">else if </span>aut.is_match(sid) {
-                <span class="comment">// We use &#39;at + 1&#39; here because the match state is entered
+                <span class="comment">// We use 'at + 1' here because the match state is entered
                 // at the last byte of the pattern. Since we use half-open
                 // intervals, the end of the range of the match is one past the
                 // last byte.
@@ -2939,7 +2939,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
                 // not following failure transitions while computing the next
                 // state. Instead, if we fail to find the next state, we return
                 // a dead state, which instructs the search to stop. (This
-                // is why &#39;next_state&#39; needs to know whether the search is
+                // is why 'next_state' needs to know whether the search is
                 // anchored or not.) In addition, we have different start
                 // states for anchored and unanchored searches. The latter has
                 // a self-loop where as the former does not.
@@ -2956,26 +2956,26 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
                 //
                 // Now we could tweak the automaton somehow to differentiate
                 // anchored from unanchored match states, but this would make
-                // &#39;aut.is_match&#39; and potentially &#39;aut.is_special&#39; slower. And
+                // 'aut.is_match' and potentially 'aut.is_special' slower. And
                 // also make the automaton itself more complex.
                 //
                 // Instead, we insert a special hack: if the search is
-                // anchored, we simply ignore matches that don&#39;t begin at
+                // anchored, we simply ignore matches that don't begin at
                 // the start of the search. This is not quite ideal, but we
                 // do specialize this function in such a way that unanchored
-                // searches don&#39;t pay for this additional branch. While this
+                // searches don't pay for this additional branch. While this
                 // might cause a search to continue on for more than it
                 // otherwise optimally would, it will be no more than the
                 // longest pattern in the automaton. The reason for this is
-                // that we ensure we don&#39;t follow failure transitions during
+                // that we ensure we don't follow failure transitions during
                 // an anchored search. Combined with using a different anchored
-                // starting state with no self-loop, we guarantee that we&#39;ll
+                // starting state with no self-loop, we guarantee that we'll
                 // at worst move through a number of transitions equal to the
                 // longest pattern.
                 //
                 // Now for DFAs, the whole point of them is to eliminate
-                // failure transitions entirely. So there is no way to say &quot;if
-                // it&#39;s an anchored search don&#39;t follow failure transitions.&quot;
+                // failure transitions entirely. So there is no way to say "if
+                // it's an anchored search don't follow failure transitions."
                 // Instead, we actually have to build two entirely separate
                 // automatons into the transition table. One with failure
                 // transitions built into it and another that is effectively
@@ -2983,7 +2983,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
                 // DFAs still need this check though, because the match states
                 // still carry matches only reachable via a failure transition.
                 // Why? Because removing them seems difficult, although I
-                // haven&#39;t given it a lot of thought.
+                // haven't given it a lot of thought.
                 </span><span class="kw">if </span>!(anchored.is_anchored() &amp;&amp; m.start() &gt; input.start()) {
                     mat = <span class="prelude-val">Some</span>(m);
                     <span class="kw">if </span>earliest {
@@ -2991,11 +2991,11 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
                     }
                 }
             } <span class="kw">else if let </span><span class="prelude-val">Some</span>(pre) = pre {
-                <span class="comment">// If we&#39;re here, we know it&#39;s a special state that is not a
+                <span class="comment">// If we're here, we know it's a special state that is not a
                 // dead or a match state AND that a prefilter is active. Thus,
                 // it must be a start state.
                 </span><span class="macro">debug_assert!</span>(aut.is_start(sid));
-                <span class="comment">// We don&#39;t care about &#39;Candidate::Match&#39; here because if such
+                <span class="comment">// We don't care about 'Candidate::Match' here because if such
                 // a match were possible, it would have been returned above
                 // when we run the prefilter before walking the automaton.
                 </span><span class="kw">let </span>span = Span::from(at..input.end());
@@ -3019,7 +3019,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
                 // But in this case, the automaton makes it impossible to move
                 // back to the start state by construction, and thus, we should
                 // never reach this branch.
-                </span><span class="macro">debug_assert!</span>(<span class="bool-val">false</span>, <span class="string">&quot;unreachable&quot;</span>);
+                </span><span class="macro">debug_assert!</span>(<span class="bool-val">false</span>, <span class="string">"unreachable"</span>);
             }
         }
         at += <span class="number">1</span>;
@@ -3030,7 +3030,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 <span class="attr">#[inline(never)]
 </span><span class="kw">fn </span>try_find_overlapping_fwd&lt;A: Automaton + <span class="question-mark">?</span>Sized&gt;(
     aut: <span class="kw-2">&amp;</span>A,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     state: <span class="kw-2">&amp;mut </span>OverlappingState,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
     state.mat = <span class="prelude-val">None</span>;
@@ -3050,7 +3050,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 <span class="attr">#[inline(always)]
 </span><span class="kw">fn </span>try_find_overlapping_fwd_imp&lt;A: Automaton + <span class="question-mark">?</span>Sized&gt;(
     aut: <span class="kw-2">&amp;</span>A,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     pre: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Prefilter&gt;,
     state: <span class="kw-2">&amp;mut </span>OverlappingState,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
@@ -3059,7 +3059,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
             <span class="kw">let </span>sid = aut.start_state(input.get_anchored())<span class="question-mark">?</span>;
             <span class="comment">// Handle the case where the start state is a match state. That is,
             // the empty string is in our automaton. We report every match we
-            // can here before moving on and updating &#39;state.at&#39; and &#39;state.id&#39;
+            // can here before moving on and updating 'state.at' and 'state.id'
             // to find more matches in other parts of the haystack.
             </span><span class="kw">if </span>aut.is_match(sid) {
                 <span class="kw">let </span>i = state.next_match_index.unwrap_or(<span class="number">0</span>);
@@ -3078,7 +3078,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
         }
         <span class="prelude-val">Some</span>(sid) =&gt; {
             <span class="comment">// If we still have matches left to report in this state then
-            // report them until we&#39;ve exhausted them. Only after that do we
+            // report them until we've exhausted them. Only after that do we
             // advance to the next offset in the haystack.
             </span><span class="kw">if let </span><span class="prelude-val">Some</span>(i) = state.next_match_index {
                 <span class="kw">let </span>len = aut.match_len(sid);
@@ -3087,7 +3087,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
                     state.mat = <span class="prelude-val">Some</span>(get_match(aut, sid, i, state.at + <span class="number">1</span>));
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(());
                 }
-                <span class="comment">// Once we&#39;ve reported all matches at a given position, we need
+                <span class="comment">// Once we've reported all matches at a given position, we need
                 // to advance the search to the next position.
                 </span>state.at += <span class="number">1</span>;
                 state.next_match_index = <span class="prelude-val">None</span>;
@@ -3111,7 +3111,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
                 state.mat = <span class="prelude-val">Some</span>(get_match(aut, sid, <span class="number">0</span>, state.at + <span class="number">1</span>));
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(());
             } <span class="kw">else if let </span><span class="prelude-val">Some</span>(pre) = pre {
-                <span class="comment">// If we&#39;re here, we know it&#39;s a special state that is not a
+                <span class="comment">// If we're here, we know it's a special state that is not a
                 // dead or a match state AND that a prefilter is active. Thus,
                 // it must be a start state.
                 </span><span class="macro">debug_assert!</span>(aut.is_start(sid));
@@ -3132,9 +3132,9 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
                 // state.
                 //
                 // ... except for one special case: in stream searching, we
-                // currently call overlapping search with a &#39;None&#39; prefilter,
+                // currently call overlapping search with a 'None' prefilter,
                 // regardless of whether one exists or not, because stream
-                // searching can&#39;t currently deal with prefilters correctly in
+                // searching can't currently deal with prefilters correctly in
                 // all cases.
             </span>}
         }
@@ -3156,7 +3156,7 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
     Match::new(pid, (at - len)..at)
 }
 
-<span class="doccomment">/// Write a prefix &quot;state&quot; indicator for fmt::Debug impls. It always writes
+<span class="doccomment">/// Write a prefix "state" indicator for fmt::Debug impls. It always writes
 /// exactly two printable bytes to the given formatter.
 ///
 /// Specifically, this tries to succinctly distinguish the different types of
@@ -3164,22 +3164,22 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 /// the possible overlappings of different state types. (The only possible
 /// overlapping is that of match and start states.)
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fmt_state_indicator&lt;A: Automaton&gt;(
-    f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;,
+    f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;,
     aut: A,
     id: StateID,
 ) -&gt; core::fmt::Result {
     <span class="kw">if </span>aut.is_dead(id) {
-        <span class="macro">write!</span>(f, <span class="string">&quot;D &quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(f, <span class="string">"D "</span>)<span class="question-mark">?</span>;
     } <span class="kw">else if </span>aut.is_match(id) {
         <span class="kw">if </span>aut.is_start(id) {
-            <span class="macro">write!</span>(f, <span class="string">&quot;*&gt;&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"*&gt;"</span>)<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
-            <span class="macro">write!</span>(f, <span class="string">&quot;* &quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"* "</span>)<span class="question-mark">?</span>;
         }
     } <span class="kw">else if </span>aut.is_start(id) {
-        <span class="macro">write!</span>(f, <span class="string">&quot; &gt;&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(f, <span class="string">" &gt;"</span>)<span class="question-mark">?</span>;
     } <span class="kw">else </span>{
-        <span class="macro">write!</span>(f, <span class="string">&quot;  &quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(f, <span class="string">"  "</span>)<span class="question-mark">?</span>;
     }
     <span class="prelude-val">Ok</span>(())
 }
@@ -3188,9 +3188,9 @@ permit walking the state transitions of an Aho-Corasick automaton manually.
 /// of all explicitly defined transitions. The iterator yields ranges of
 /// transitions, such that any adjacent transitions mapped to the same
 /// state are combined into a single range.
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>sparse_transitions&lt;<span class="lifetime">&#39;a</span>&gt;(
-    <span class="kw-2">mut </span>it: <span class="kw">impl </span>Iterator&lt;Item = (u8, StateID)&gt; + <span class="lifetime">&#39;a</span>,
-) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (u8, u8, StateID)&gt; + <span class="lifetime">&#39;a </span>{
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>sparse_transitions&lt;<span class="lifetime">'a</span>&gt;(
+    <span class="kw-2">mut </span>it: <span class="kw">impl </span>Iterator&lt;Item = (u8, StateID)&gt; + <span class="lifetime">'a</span>,
+) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (u8, u8, StateID)&gt; + <span class="lifetime">'a </span>{
     <span class="kw">let </span><span class="kw-2">mut </span>cur: <span class="prelude-ty">Option</span>&lt;(u8, u8, StateID)&gt; = <span class="prelude-val">None</span>;
     core::iter::from_fn(<span class="kw">move </span>|| {
         <span class="kw">while let </span><span class="prelude-val">Some</span>((class, next)) = it.next() {

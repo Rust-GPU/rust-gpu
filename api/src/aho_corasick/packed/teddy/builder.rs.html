@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/packed/teddy/builder.rs`."><title>builder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../aho_corasick/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/packed/teddy/builder.rs`."><title>builder.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -778,6 +778,18 @@
 <a href="#778" id="778">778</a>
 <a href="#779" id="779">779</a>
 <a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{
     fmt::Debug,
     panic::{RefUnwindSafe, UnwindSafe},
@@ -797,13 +809,13 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Builder {
     <span class="doccomment">/// When none, this is automatically determined. Otherwise, `false` means
     /// slim Teddy is used (8 buckets) and `true` means fat Teddy is used
-    /// (16 buckets). Fat Teddy requires AVX2, so if that CPU feature isn&#39;t
+    /// (16 buckets). Fat Teddy requires AVX2, so if that CPU feature isn't
     /// available and Fat Teddy was requested, no matcher will be built.
     </span>only_fat: <span class="prelude-ty">Option</span>&lt;bool&gt;,
     <span class="doccomment">/// When none, this is automatically determined. Otherwise, `false` means
     /// that 128-bit vectors will be used (up to SSSE3 instructions) where as
     /// `true` means that 256-bit vectors will be used. As with `fat`, if
-    /// 256-bit vectors are requested and they aren&#39;t available, then a
+    /// 256-bit vectors are requested and they aren't available, then a
     /// searcher will not be built.
     </span>only_256bit: <span class="prelude-ty">Option</span>&lt;bool&gt;,
     <span class="doccomment">/// When true (the default), the number of patterns will be used as a
@@ -832,7 +844,7 @@
     <span class="doccomment">/// Build a matcher for the set of patterns given. If a matcher could not
     /// be built, then `None` is returned.
     ///
-    /// Generally, a matcher isn&#39;t built if the necessary CPU features aren&#39;t
+    /// Generally, a matcher isn't built if the necessary CPU features aren't
     /// available, an unsupported target or if the searcher is believed to be
     /// slower than standard techniques (i.e., if there are too many literals).
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>, patterns: Arc&lt;Patterns&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Searcher&gt; {
@@ -877,25 +889,25 @@
 
     <span class="kw">fn </span>build_imp(<span class="kw-2">&amp;</span><span class="self">self</span>, patterns: Arc&lt;Patterns&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Searcher&gt; {
         <span class="kw">let </span>patlimit = <span class="self">self</span>.heuristic_pattern_limits;
-        <span class="comment">// There&#39;s no particular reason why we limit ourselves to little endian
+        <span class="comment">// There's no particular reason why we limit ourselves to little endian
         // here, but it seems likely that some parts of Teddy as they are
         // currently written (e.g., the uses of `trailing_zeros`) are likely
         // wrong on non-little-endian targets. Such things are likely easy to
         // fix, but at the time of writing (2023/09/18), I actually do not know
-        // how to test this code on a big-endian target. So for now, we&#39;re
+        // how to test this code on a big-endian target. So for now, we're
         // conservative and just bail out.
-        </span><span class="kw">if </span>!<span class="macro">cfg!</span>(target_endian = <span class="string">&quot;little&quot;</span>) {
-            <span class="macro">debug!</span>(<span class="string">&quot;skipping Teddy because target isn&#39;t little endian&quot;</span>);
+        </span><span class="kw">if </span>!<span class="macro">cfg!</span>(target_endian = <span class="string">"little"</span>) {
+            <span class="macro">debug!</span>(<span class="string">"skipping Teddy because target isn't little endian"</span>);
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="comment">// Too many patterns will overwhelm Teddy and likely lead to slow
         // downs, typically in the verification step.
         </span><span class="kw">if </span>patlimit &amp;&amp; patterns.len() &gt; <span class="number">64 </span>{
-            <span class="macro">debug!</span>(<span class="string">&quot;skipping Teddy because of too many patterns&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"skipping Teddy because of too many patterns"</span>);
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
 
-        <span class="attr">#[cfg(all(target_arch = <span class="string">&quot;x86_64&quot;</span>, target_feature = <span class="string">&quot;sse2&quot;</span>))]
+        <span class="attr">#[cfg(all(target_arch = <span class="string">"x86_64"</span>, target_feature = <span class="string">"sse2"</span>))]
         </span>{
             <span class="kw">use </span><span class="self">self</span>::x86_64::{FatAVX2, SlimAVX2, SlimSSSE3};
 
@@ -906,7 +918,7 @@
             <span class="kw">let </span>use_avx2 = <span class="kw">if </span><span class="self">self</span>.only_256bit == <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
                 <span class="kw">if </span>!has_avx2 {
                     <span class="macro">debug!</span>(
-                    <span class="string">&quot;skipping Teddy because avx2 was demanded but unavailable&quot;
+                    <span class="string">"skipping Teddy because avx2 was demanded but unavailable"
                 </span>);
                     <span class="kw">return </span><span class="prelude-val">None</span>;
                 }
@@ -914,14 +926,14 @@
             </span>} <span class="kw">else if </span><span class="self">self</span>.only_256bit == <span class="prelude-val">Some</span>(<span class="bool-val">false</span>) {
                 <span class="kw">if </span>!has_ssse3 {
                     <span class="macro">debug!</span>(
-                    <span class="string">&quot;skipping Teddy because ssse3 was demanded but unavailable&quot;
+                    <span class="string">"skipping Teddy because ssse3 was demanded but unavailable"
                 </span>);
                     <span class="kw">return </span><span class="prelude-val">None</span>;
                 }
                 <span class="bool-val">false
             </span>} <span class="kw">else if </span>!has_ssse3 &amp;&amp; !has_avx2 {
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;skipping Teddy because ssse3 and avx2 are unavailable&quot;
+                    <span class="string">"skipping Teddy because ssse3 and avx2 are unavailable"
                 </span>);
                 <span class="kw">return </span><span class="prelude-val">None</span>;
             } <span class="kw">else </span>{
@@ -932,14 +944,14 @@
                 <span class="prelude-val">Some</span>(<span class="bool-val">false</span>) =&gt; <span class="bool-val">false</span>,
                 <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) <span class="kw">if </span>!use_avx2 =&gt; {
                     <span class="macro">debug!</span>(
-                        <span class="string">&quot;skipping Teddy because fat was demanded, but fat \
-                         Teddy requires avx2 which is unavailable&quot;
+                        <span class="string">"skipping Teddy because fat was demanded, but fat \
+                         Teddy requires avx2 which is unavailable"
                     </span>);
                     <span class="kw">return </span><span class="prelude-val">None</span>;
                 }
                 <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) =&gt; <span class="bool-val">true</span>,
             };
-            <span class="comment">// Just like for aarch64, it&#39;s possible that too many patterns will
+            <span class="comment">// Just like for aarch64, it's possible that too many patterns will
             // overhwelm Teddy. Unlike aarch64 though, we have Fat teddy which
             // helps things scale a bit more by spreading patterns over more
             // buckets.
@@ -950,84 +962,88 @@
             // benchmarks.
             </span><span class="kw">if </span>patlimit &amp;&amp; mask_len == <span class="number">1 </span>&amp;&amp; patterns.len() &gt; <span class="number">16 </span>{
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;skipping Teddy (mask len: 1) because there are \
-                             too many patterns&quot;</span>,
+                    <span class="string">"skipping Teddy (mask len: 1) because there are \
+                             too many patterns"</span>,
                 );
                 <span class="kw">return </span><span class="prelude-val">None</span>;
             }
             <span class="kw">match </span>(mask_len, use_avx2, fat) {
                 (<span class="number">1</span>, <span class="bool-val">false</span>, <span class="kw">_</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 128-bit slim, 1 byte&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 128-bit slim, 1 byte"</span>);
                     SlimSSSE3::&lt;<span class="number">1</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 (<span class="number">1</span>, <span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 256-bit slim, 1 byte&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 256-bit slim, 1 byte"</span>);
                     SlimAVX2::&lt;<span class="number">1</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 (<span class="number">1</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 256-bit fat, 1 byte&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 256-bit fat, 1 byte"</span>);
                     FatAVX2::&lt;<span class="number">1</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 (<span class="number">2</span>, <span class="bool-val">false</span>, <span class="kw">_</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 128-bit slim, 2 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 128-bit slim, 2 bytes"</span>);
                     SlimSSSE3::&lt;<span class="number">2</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 (<span class="number">2</span>, <span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 256-bit slim, 2 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 256-bit slim, 2 bytes"</span>);
                     SlimAVX2::&lt;<span class="number">2</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 (<span class="number">2</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 256-bit fat, 2 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 256-bit fat, 2 bytes"</span>);
                     FatAVX2::&lt;<span class="number">2</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 (<span class="number">3</span>, <span class="bool-val">false</span>, <span class="kw">_</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 128-bit slim, 3 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 128-bit slim, 3 bytes"</span>);
                     SlimSSSE3::&lt;<span class="number">3</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 (<span class="number">3</span>, <span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 256-bit slim, 3 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 256-bit slim, 3 bytes"</span>);
                     SlimAVX2::&lt;<span class="number">3</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 (<span class="number">3</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 256-bit fat, 3 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 256-bit fat, 3 bytes"</span>);
                     FatAVX2::&lt;<span class="number">3</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 (<span class="number">4</span>, <span class="bool-val">false</span>, <span class="kw">_</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 128-bit slim, 4 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 128-bit slim, 4 bytes"</span>);
                     SlimSSSE3::&lt;<span class="number">4</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 (<span class="number">4</span>, <span class="bool-val">true</span>, <span class="bool-val">false</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 256-bit slim, 4 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 256-bit slim, 4 bytes"</span>);
                     SlimAVX2::&lt;<span class="number">4</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 (<span class="number">4</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 256-bit fat, 4 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 256-bit fat, 4 bytes"</span>);
                     FatAVX2::&lt;<span class="number">4</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 <span class="kw">_ </span>=&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;no supported Teddy configuration found&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"no supported Teddy configuration found"</span>);
                     <span class="prelude-val">None
                 </span>}
             }
         }
-        <span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+        <span class="attr">#[cfg(all(
+            target_arch = <span class="string">"aarch64"</span>,
+            target_feature = <span class="string">"neon"</span>,
+            target_endian = <span class="string">"little"
+        </span>))]
         </span>{
             <span class="kw">use </span><span class="self">self</span>::aarch64::SlimNeon;
 
             <span class="kw">let </span>mask_len = core::cmp::min(<span class="number">4</span>, patterns.minimum_len());
             <span class="kw">if </span><span class="self">self</span>.only_256bit == <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;skipping Teddy because 256-bits were demanded \
-                     but unavailable&quot;
+                    <span class="string">"skipping Teddy because 256-bits were demanded \
+                     but unavailable"
                 </span>);
                 <span class="kw">return </span><span class="prelude-val">None</span>;
             }
             <span class="kw">if </span><span class="self">self</span>.only_fat == <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;skipping Teddy because fat was demanded but unavailable&quot;
+                    <span class="string">"skipping Teddy because fat was demanded but unavailable"
                 </span>);
             }
-            <span class="comment">// Since we don&#39;t have Fat teddy in aarch64 (I think we&#39;d want at
+            <span class="comment">// Since we don't have Fat teddy in aarch64 (I think we'd want at
             // least 256-bit vectors for that), we need to be careful not to
             // allow too many patterns as it might overwhelm Teddy. Generally
             // speaking, as the mask length goes up, the more patterns we can
@@ -1042,47 +1058,51 @@
                 <span class="number">1 </span>=&gt; {
                     <span class="kw">if </span>patlimit &amp;&amp; patterns.len() &gt; <span class="number">16 </span>{
                         <span class="macro">debug!</span>(
-                            <span class="string">&quot;skipping Teddy (mask len: 1) because there are \
-                             too many patterns&quot;</span>,
+                            <span class="string">"skipping Teddy (mask len: 1) because there are \
+                             too many patterns"</span>,
                         );
                     }
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 128-bit slim, 1 byte&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 128-bit slim, 1 byte"</span>);
                     SlimNeon::&lt;<span class="number">1</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 <span class="number">2 </span>=&gt; {
                     <span class="kw">if </span>patlimit &amp;&amp; patterns.len() &gt; <span class="number">32 </span>{
                         <span class="macro">debug!</span>(
-                            <span class="string">&quot;skipping Teddy (mask len: 2) because there are \
-                             too many patterns&quot;</span>,
+                            <span class="string">"skipping Teddy (mask len: 2) because there are \
+                             too many patterns"</span>,
                         );
                     }
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 128-bit slim, 2 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 128-bit slim, 2 bytes"</span>);
                     SlimNeon::&lt;<span class="number">2</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 <span class="number">3 </span>=&gt; {
                     <span class="kw">if </span>patlimit &amp;&amp; patterns.len() &gt; <span class="number">48 </span>{
                         <span class="macro">debug!</span>(
-                            <span class="string">&quot;skipping Teddy (mask len: 3) because there are \
-                             too many patterns&quot;</span>,
+                            <span class="string">"skipping Teddy (mask len: 3) because there are \
+                             too many patterns"</span>,
                         );
                     }
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 128-bit slim, 3 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 128-bit slim, 3 bytes"</span>);
                     SlimNeon::&lt;<span class="number">3</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 <span class="number">4 </span>=&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;Teddy choice: 128-bit slim, 4 bytes&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"Teddy choice: 128-bit slim, 4 bytes"</span>);
                     SlimNeon::&lt;<span class="number">4</span>&gt;::new(<span class="kw-2">&amp;</span>patterns)
                 }
                 <span class="kw">_ </span>=&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;no supported Teddy configuration found&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"no supported Teddy configuration found"</span>);
                     <span class="prelude-val">None
                 </span>}
             }
         }
         <span class="attr">#[cfg(not(any(
-            all(target_arch = <span class="string">&quot;x86_64&quot;</span>, target_feature = <span class="string">&quot;sse2&quot;</span>),
-            target_arch = <span class="string">&quot;aarch64&quot;
-        </span>)))]
+            all(target_arch = <span class="string">"x86_64"</span>, target_feature = <span class="string">"sse2"</span>),
+            all(
+                target_arch = <span class="string">"aarch64"</span>,
+                target_feature = <span class="string">"neon"</span>,
+                target_endian = <span class="string">"little"
+            </span>)
+        )))]
         </span>{
             <span class="prelude-val">None
         </span>}
@@ -1128,7 +1148,7 @@
         </span><span class="macro">assert!</span>(haystack[at..].len() &gt;= <span class="self">self</span>.minimum_len);
         <span class="kw">let </span>hayptr = haystack.as_ptr();
         <span class="comment">// SAFETY: Construction of the searcher guarantees that we are able
-        // to run it in the current environment (i.e., we won&#39;t get an AVX2
+        // to run it in the current environment (i.e., we won't get an AVX2
         // searcher on a x86-64 CPU without AVX2 support). Also, the pointers
         // are valid as they are derived directly from a borrowed slice.
         </span><span class="kw">let </span>teddym = <span class="kw">unsafe </span>{
@@ -1137,7 +1157,7 @@
         <span class="kw">let </span>start = teddym.start().as_usize().wrapping_sub(hayptr.as_usize());
         <span class="kw">let </span>end = teddym.end().as_usize().wrapping_sub(hayptr.as_usize());
         <span class="kw">let </span>span = <span class="kw">crate</span>::Span { start, end };
-        <span class="comment">// OK because we won&#39;t permit the construction of a searcher that
+        <span class="comment">// OK because we won't permit the construction of a searcher that
         // could report a pattern ID bigger than what can fit in the crate-wide
         // PatternID type.
         </span><span class="kw">let </span>pid = <span class="kw">crate</span>::PatternID::new_unchecked(teddym.pattern().as_usize());
@@ -1163,7 +1183,7 @@
 <span class="doccomment">/// A trait that provides dynamic dispatch over the different possible Teddy
 /// variants on the same algorithm.
 ///
-/// On `x86_64` for example, it isn&#39;t known until runtime which of 12 possible
+/// On `x86_64` for example, it isn't known until runtime which of 12 possible
 /// variants will be used. One might use one of the four slim 128-bit vector
 /// variants, or one of the four 256-bit vector variants or even one of the
 /// four fat 256-bit vector variants.
@@ -1171,7 +1191,7 @@
 /// Since this choice is generally made when the Teddy searcher is constructed
 /// and this choice is based on the patterns given and what the current CPU
 /// supports, it follows that there must be some kind of indirection at search
-/// time that &quot;selects&quot; the variant chosen at build time.
+/// time that "selects" the variant chosen at build time.
 ///
 /// There are a few different ways to go about this. One approach is to use an
 /// enum. It works fine, but in my experiments, this generally results in worse
@@ -1182,11 +1202,11 @@
 ///
 /// Another approach is to use function pointers and stick each of the possible
 /// variants into a union. This is essentially isomorphic to the dynamic
-/// dispatch approach, but doesn&#39;t require any allocations. Since this crate
-/// requires `alloc`, there&#39;s no real reason (AFAIK) to go down this path. (The
+/// dispatch approach, but doesn't require any allocations. Since this crate
+/// requires `alloc`, there's no real reason (AFAIK) to go down this path. (The
 /// `memchr` crate does this.)
 </span><span class="kw">trait </span>SearcherT:
-    Debug + Send + Sync + UnwindSafe + RefUnwindSafe + <span class="lifetime">&#39;static
+    Debug + Send + Sync + UnwindSafe + RefUnwindSafe + <span class="lifetime">'static
 </span>{
     <span class="doccomment">/// Execute a search on the given haystack (identified by `start` and `end`
     /// raw pointers).
@@ -1206,7 +1226,7 @@
     /// * Both `start` and `end` must be _derived from_ a pointer to the same
     /// object.
     /// * The distance between `start` and `end` must not overflow `isize`.
-    /// * The distance being in bounds must not rely on &quot;wrapping around&quot; the
+    /// * The distance being in bounds must not rely on "wrapping around" the
     /// address space.
     /// * It must be the case that `start &lt;= end`.
     /// * `end - start` must be greater than the minimum length for this
@@ -1219,7 +1239,7 @@
     </span><span class="kw">unsafe fn </span>find(<span class="kw-2">&amp;</span><span class="self">self</span>, start: <span class="kw-2">*const </span>u8, end: <span class="kw-2">*const </span>u8) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt;;
 }
 
-<span class="attr">#[cfg(all(target_arch = <span class="string">&quot;x86_64&quot;</span>, target_feature = <span class="string">&quot;sse2&quot;</span>))]
+<span class="attr">#[cfg(all(target_arch = <span class="string">"x86_64"</span>, target_feature = <span class="string">"sse2"</span>))]
 </span><span class="kw">mod </span>x86_64 {
     <span class="kw">use </span>core::arch::x86_64::{__m128i, __m256i};
 
@@ -1239,10 +1259,10 @@
     }
 
     <span class="comment">// Defines SlimSSSE3 wrapper functions for 1, 2, 3 and 4 bytes.
-    </span><span class="macro">macro_rules! </span>slim_ssse3 {
+    </span><span class="macro">macro_rules!</span> slim_ssse3 {
         (<span class="macro-nonterminal">$len</span>:expr) =&gt; {
             <span class="kw">impl </span>SlimSSSE3&lt;<span class="macro-nonterminal">$len</span>&gt; {
-                <span class="doccomment">/// Creates a new searcher using &quot;slim&quot; Teddy with 128-bit
+                <span class="doccomment">/// Creates a new searcher using "slim" Teddy with 128-bit
                 /// vectors. If SSSE3 is not available in the current
                 /// environment, then this returns `None`.
                 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(
@@ -1254,14 +1274,14 @@
                     <span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ SlimSSSE3::&lt;<span class="macro-nonterminal">$len</span>&gt;::new_unchecked(patterns) })
                 }
 
-                <span class="doccomment">/// Creates a new searcher using &quot;slim&quot; Teddy with 256-bit
+                <span class="doccomment">/// Creates a new searcher using "slim" Teddy with 256-bit
                 /// vectors without checking whether SSSE3 is available or not.
                 ///
                 /// # Safety
                 ///
                 /// Callers must ensure that SSSE3 is available in the current
                 /// environment.
-                </span><span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+                </span><span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
                 </span><span class="kw">unsafe fn </span>new_unchecked(patterns: <span class="kw-2">&amp;</span>Arc&lt;Patterns&gt;) -&gt; Searcher {
                     <span class="kw">let </span>slim128 = generic::Slim::&lt;__m128i, <span class="macro-nonterminal">$len</span>&gt;::new(
                         Arc::clone(patterns),
@@ -1274,7 +1294,7 @@
             }
 
             <span class="kw">impl </span>SearcherT <span class="kw">for </span>SlimSSSE3&lt;<span class="macro-nonterminal">$len</span>&gt; {
-                <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+                <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
                 #[inline]
                 </span><span class="kw">unsafe fn </span>find(
                     <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -1303,10 +1323,10 @@
     }
 
     <span class="comment">// Defines SlimAVX2 wrapper functions for 1, 2, 3 and 4 bytes.
-    </span><span class="macro">macro_rules! </span>slim_avx2 {
+    </span><span class="macro">macro_rules!</span> slim_avx2 {
         (<span class="macro-nonterminal">$len</span>:expr) =&gt; {
             <span class="kw">impl </span>SlimAVX2&lt;<span class="macro-nonterminal">$len</span>&gt; {
-                <span class="doccomment">/// Creates a new searcher using &quot;slim&quot; Teddy with 256-bit
+                <span class="doccomment">/// Creates a new searcher using "slim" Teddy with 256-bit
                 /// vectors. If AVX2 is not available in the current
                 /// environment, then this returns `None`.
                 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(
@@ -1318,14 +1338,14 @@
                     <span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ SlimAVX2::&lt;<span class="macro-nonterminal">$len</span>&gt;::new_unchecked(patterns) })
                 }
 
-                <span class="doccomment">/// Creates a new searcher using &quot;slim&quot; Teddy with 256-bit
+                <span class="doccomment">/// Creates a new searcher using "slim" Teddy with 256-bit
                 /// vectors without checking whether AVX2 is available or not.
                 ///
                 /// # Safety
                 ///
                 /// Callers must ensure that AVX2 is available in the current
                 /// environment.
-                </span><span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+                </span><span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
                 </span><span class="kw">unsafe fn </span>new_unchecked(patterns: <span class="kw-2">&amp;</span>Arc&lt;Patterns&gt;) -&gt; Searcher {
                     <span class="kw">let </span>slim128 = generic::Slim::&lt;__m128i, <span class="macro-nonterminal">$len</span>&gt;::new(
                         Arc::clone(<span class="kw-2">&amp;</span>patterns),
@@ -1342,7 +1362,7 @@
             }
 
             <span class="kw">impl </span>SearcherT <span class="kw">for </span>SlimAVX2&lt;<span class="macro-nonterminal">$len</span>&gt; {
-                <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+                <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
                 #[inline]
                 </span><span class="kw">unsafe fn </span>find(
                     <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -1375,10 +1395,10 @@
     }
 
     <span class="comment">// Defines SlimAVX2 wrapper functions for 1, 2, 3 and 4 bytes.
-    </span><span class="macro">macro_rules! </span>fat_avx2 {
+    </span><span class="macro">macro_rules!</span> fat_avx2 {
         (<span class="macro-nonterminal">$len</span>:expr) =&gt; {
             <span class="kw">impl </span>FatAVX2&lt;<span class="macro-nonterminal">$len</span>&gt; {
-                <span class="doccomment">/// Creates a new searcher using &quot;slim&quot; Teddy with 256-bit
+                <span class="doccomment">/// Creates a new searcher using "slim" Teddy with 256-bit
                 /// vectors. If AVX2 is not available in the current
                 /// environment, then this returns `None`.
                 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(
@@ -1390,14 +1410,14 @@
                     <span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ FatAVX2::&lt;<span class="macro-nonterminal">$len</span>&gt;::new_unchecked(patterns) })
                 }
 
-                <span class="doccomment">/// Creates a new searcher using &quot;slim&quot; Teddy with 256-bit
+                <span class="doccomment">/// Creates a new searcher using "slim" Teddy with 256-bit
                 /// vectors without checking whether AVX2 is available or not.
                 ///
                 /// # Safety
                 ///
                 /// Callers must ensure that AVX2 is available in the current
                 /// environment.
-                </span><span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+                </span><span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
                 </span><span class="kw">unsafe fn </span>new_unchecked(patterns: <span class="kw-2">&amp;</span>Arc&lt;Patterns&gt;) -&gt; Searcher {
                     <span class="kw">let </span>fat256 = generic::Fat::&lt;__m256i, <span class="macro-nonterminal">$len</span>&gt;::new(
                         Arc::clone(<span class="kw-2">&amp;</span>patterns),
@@ -1410,7 +1430,7 @@
             }
 
             <span class="kw">impl </span>SearcherT <span class="kw">for </span>FatAVX2&lt;<span class="macro-nonterminal">$len</span>&gt; {
-                <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+                <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
                 #[inline]
                 </span><span class="kw">unsafe fn </span>find(
                     <span class="kw-2">&amp;</span><span class="self">self</span>,
@@ -1434,23 +1454,23 @@
 
     <span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>is_available_ssse3() -&gt; bool {
-        <span class="attr">#[cfg(not(target_feature = <span class="string">&quot;sse2&quot;</span>))]
+        <span class="attr">#[cfg(not(target_feature = <span class="string">"sse2"</span>))]
         </span>{
             <span class="bool-val">false
         </span>}
-        <span class="attr">#[cfg(target_feature = <span class="string">&quot;sse2&quot;</span>)]
+        <span class="attr">#[cfg(target_feature = <span class="string">"sse2"</span>)]
         </span>{
-            <span class="attr">#[cfg(target_feature = <span class="string">&quot;ssse3&quot;</span>)]
+            <span class="attr">#[cfg(target_feature = <span class="string">"ssse3"</span>)]
             </span>{
                 <span class="bool-val">true
             </span>}
-            <span class="attr">#[cfg(not(target_feature = <span class="string">&quot;ssse3&quot;</span>))]
+            <span class="attr">#[cfg(not(target_feature = <span class="string">"ssse3"</span>))]
             </span>{
-                <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+                <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
                 </span>{
-                    <span class="macro">std::is_x86_feature_detected!</span>(<span class="string">&quot;ssse3&quot;</span>)
+                    <span class="macro">std::is_x86_feature_detected!</span>(<span class="string">"ssse3"</span>)
                 }
-                <span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+                <span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
                 </span>{
                     <span class="bool-val">false
                 </span>}
@@ -1460,23 +1480,23 @@
 
     <span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>is_available_avx2() -&gt; bool {
-        <span class="attr">#[cfg(not(target_feature = <span class="string">&quot;sse2&quot;</span>))]
+        <span class="attr">#[cfg(not(target_feature = <span class="string">"sse2"</span>))]
         </span>{
             <span class="bool-val">false
         </span>}
-        <span class="attr">#[cfg(target_feature = <span class="string">&quot;sse2&quot;</span>)]
+        <span class="attr">#[cfg(target_feature = <span class="string">"sse2"</span>)]
         </span>{
-            <span class="attr">#[cfg(target_feature = <span class="string">&quot;avx2&quot;</span>)]
+            <span class="attr">#[cfg(target_feature = <span class="string">"avx2"</span>)]
             </span>{
                 <span class="bool-val">true
             </span>}
-            <span class="attr">#[cfg(not(target_feature = <span class="string">&quot;avx2&quot;</span>))]
+            <span class="attr">#[cfg(not(target_feature = <span class="string">"avx2"</span>))]
             </span>{
-                <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+                <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
                 </span>{
-                    <span class="macro">std::is_x86_feature_detected!</span>(<span class="string">&quot;avx2&quot;</span>)
+                    <span class="macro">std::is_x86_feature_detected!</span>(<span class="string">"avx2"</span>)
                 }
-                <span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+                <span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
                 </span>{
                     <span class="bool-val">false
                 </span>}
@@ -1485,7 +1505,11 @@
     }
 }
 
-<span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+<span class="attr">#[cfg(all(
+    target_arch = <span class="string">"aarch64"</span>,
+    target_feature = <span class="string">"neon"</span>,
+    target_endian = <span class="string">"little"
+</span>))]
 </span><span class="kw">mod </span>aarch64 {
     <span class="kw">use </span>core::arch::aarch64::uint8x16_t;
 
@@ -1504,10 +1528,10 @@
     }
 
     <span class="comment">// Defines SlimSSSE3 wrapper functions for 1, 2, 3 and 4 bytes.
-    </span><span class="macro">macro_rules! </span>slim_neon {
+    </span><span class="macro">macro_rules!</span> slim_neon {
         (<span class="macro-nonterminal">$len</span>:expr) =&gt; {
             <span class="kw">impl </span>SlimNeon&lt;<span class="macro-nonterminal">$len</span>&gt; {
-                <span class="doccomment">/// Creates a new searcher using &quot;slim&quot; Teddy with 128-bit
+                <span class="doccomment">/// Creates a new searcher using "slim" Teddy with 128-bit
                 /// vectors. If SSSE3 is not available in the current
                 /// environment, then this returns `None`.
                 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(
@@ -1516,14 +1540,14 @@
                     <span class="prelude-val">Some</span>(<span class="kw">unsafe </span>{ SlimNeon::&lt;<span class="macro-nonterminal">$len</span>&gt;::new_unchecked(patterns) })
                 }
 
-                <span class="doccomment">/// Creates a new searcher using &quot;slim&quot; Teddy with 256-bit
+                <span class="doccomment">/// Creates a new searcher using "slim" Teddy with 256-bit
                 /// vectors without checking whether SSSE3 is available or not.
                 ///
                 /// # Safety
                 ///
                 /// Callers must ensure that SSSE3 is available in the current
                 /// environment.
-                </span><span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+                </span><span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
                 </span><span class="kw">unsafe fn </span>new_unchecked(patterns: <span class="kw-2">&amp;</span>Arc&lt;Patterns&gt;) -&gt; Searcher {
                     <span class="kw">let </span>slim128 = generic::Slim::&lt;uint8x16_t, <span class="macro-nonterminal">$len</span>&gt;::new(
                         Arc::clone(patterns),
@@ -1536,7 +1560,7 @@
             }
 
             <span class="kw">impl </span>SearcherT <span class="kw">for </span>SlimNeon&lt;<span class="macro-nonterminal">$len</span>&gt; {
-                <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+                <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
                 #[inline]
                 </span><span class="kw">unsafe fn </span>find(
                     <span class="kw-2">&amp;</span><span class="self">self</span>,

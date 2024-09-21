@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/util/search.rs`."><title>search.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../aho_corasick/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/util/search.rs`."><title>search.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1179,19 +1179,19 @@
 /// [`Input::span`] or [`Input::range`]. The bounds set must be valid, or
 /// else a panic will occur. Bounds are valid if and only if:
 ///
-/// * The bounds represent a valid range into the input&#39;s haystack.
+/// * The bounds represent a valid range into the input's haystack.
 /// * **or** the end bound is a valid ending bound for the haystack *and*
 /// the start bound is exactly one greater than the end bound.
 ///
 /// In the latter case, [`Input::is_done`] will return true and indicates any
 /// search receiving such an input should immediately return with no match.
 ///
-/// Other than representing &quot;search is complete,&quot; the `Input::span` and
+/// Other than representing "search is complete," the `Input::span` and
 /// `Input::range` APIs are never necessary. Instead, callers can slice the
 /// haystack instead, e.g., with `&amp;haystack[start..end]`. With that said, they
 /// can be more convenient than slicing because the match positions reported
 /// when using `Input::span` or `Input::range` are in terms of the original
-/// haystack. If you instead use `&amp;haystack[start..end]`, then you&#39;ll need to
+/// haystack. If you instead use `&amp;haystack[start..end]`, then you'll need to
 /// add `start` to any match position returned in order for it to be a correct
 /// index into `haystack`.
 ///
@@ -1201,7 +1201,7 @@
 /// Additionally, the [`AhoCorasick`](crate::AhoCorasick) search APIs accept
 /// a `Into&lt;Input&gt;`. These two things combined together mean you can provide
 /// things like `&amp;str` and `&amp;[u8]` to search APIs when the defaults are
-/// suitable, but also an `Input` when they&#39;re not. For example:
+/// suitable, but also an `Input` when they're not. For example:
 ///
 /// ```
 /// use aho_corasick::{AhoCorasick, Anchored, Input, Match, StartKind};
@@ -1209,9 +1209,9 @@
 /// // Build a searcher that supports both unanchored and anchored modes.
 /// let ac = AhoCorasick::builder()
 ///     .start_kind(StartKind::Both)
-///     .build(&amp;[&quot;abcd&quot;, &quot;b&quot;])
+///     .build(&amp;["abcd", "b"])
 ///     .unwrap();
-/// let haystack = &quot;abcd&quot;;
+/// let haystack = "abcd";
 ///
 /// // A search using default parameters is unanchored. With standard
 /// // semantics, this finds `b` first.
@@ -1219,8 +1219,8 @@
 ///     Some(Match::must(1, 1..2)),
 ///     ac.find(haystack),
 /// );
-/// // Using the same &#39;find&#39; routine, we can provide an &#39;Input&#39; explicitly
-/// // that is configured to do an anchored search. Since &#39;b&#39; doesn&#39;t start
+/// // Using the same 'find' routine, we can provide an 'Input' explicitly
+/// // that is configured to do an anchored search. Since 'b' doesn't start
 /// // at the beginning of the search, it is not reported as a match.
 /// assert_eq!(
 ///     Some(Match::must(0, 0..4)),
@@ -1228,17 +1228,17 @@
 /// );
 /// ```
 </span><span class="attr">#[derive(Clone)]
-</span><span class="kw">pub struct </span>Input&lt;<span class="lifetime">&#39;h</span>&gt; {
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+</span><span class="kw">pub struct </span>Input&lt;<span class="lifetime">'h</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
     span: Span,
     anchored: Anchored,
     earliest: bool,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
     <span class="doccomment">/// Create a new search configuration for the given haystack.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>new&lt;H: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>H) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>new&lt;H: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>H) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         Input {
             haystack: haystack.as_ref(),
             span: Span { start: <span class="number">0</span>, end: haystack.as_ref().len() },
@@ -1271,23 +1271,23 @@
     /// ```
     /// use aho_corasick::{AhoCorasick, Input, MatchKind};
     ///
-    /// let patterns = &amp;[&quot;b&quot;, &quot;abcd&quot;, &quot;abc&quot;];
-    /// let haystack = &quot;abcd&quot;;
+    /// let patterns = &amp;["b", "abcd", "abc"];
+    /// let haystack = "abcd";
     ///
     /// let ac = AhoCorasick::builder()
     ///     .match_kind(MatchKind::LeftmostFirst)
     ///     .build(patterns)
     ///     .unwrap();
     /// let input = Input::new(haystack).span(0..3);
-    /// let mat = ac.try_find(input)?.expect(&quot;should have a match&quot;);
-    /// // Without the span stopping the search early, &#39;abcd&#39; would be reported
+    /// let mat = ac.try_find(input)?.expect("should have a match");
+    /// // Without the span stopping the search early, 'abcd' would be reported
     /// // because it is the correct leftmost-first match.
-    /// assert_eq!(&quot;abc&quot;, &amp;haystack[mat.span()]);
+    /// assert_eq!("abc", &amp;haystack[mat.span()]);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>span&lt;S: Into&lt;Span&gt;&gt;(<span class="kw-2">mut </span><span class="self">self</span>, span: S) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>span&lt;S: Into&lt;Span&gt;&gt;(<span class="kw-2">mut </span><span class="self">self</span>, span: S) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         <span class="self">self</span>.set_span(span);
         <span class="self">self
     </span>}
@@ -1313,14 +1313,14 @@
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     ///
-    /// let input = Input::new(&quot;foobar&quot;).range(2..=4);
+    /// let input = Input::new("foobar").range(2..=4);
     /// assert_eq!(2..5, input.get_range());
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>range&lt;R: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">mut </span><span class="self">self</span>, range: R) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>range&lt;R: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">mut </span><span class="self">self</span>, range: R) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         <span class="self">self</span>.set_range(range);
         <span class="self">self
     </span>}
@@ -1328,7 +1328,7 @@
     <span class="doccomment">/// Sets the anchor mode of a search.
     ///
     /// When a search is anchored (via [`Anchored::Yes`]), a match must begin
-    /// at the start of a search. When a search is not anchored (that&#39;s
+    /// at the start of a search. When a search is not anchored (that's
     /// [`Anchored::No`]), searchers will look for a match anywhere in the
     /// haystack.
     ///
@@ -1353,7 +1353,7 @@
     /// [`AhoCorasickBuilder::start_kind`](crate::AhoCorasickBuilder::start_kind)
     /// can change this.
     ///
-    /// If you try to execute a search using a `try_` (&quot;fallible&quot;) method with
+    /// If you try to execute a search using a `try_` ("fallible") method with
     /// an unsupported anchor mode, then an error will be returned. For calls
     /// to infallible search methods, a panic will result.
     ///
@@ -1369,50 +1369,50 @@
     ///     AhoCorasick, Anchored, Input, MatchKind, StartKind,
     /// };
     ///
-    /// let patterns = &amp;[&quot;bcd&quot;];
-    /// let haystack = &quot;abcd&quot;;
+    /// let patterns = &amp;["bcd"];
+    /// let haystack = "abcd";
     ///
     /// let ac = AhoCorasick::builder()
     ///     .start_kind(StartKind::Both)
     ///     .build(patterns)
     ///     .unwrap();
     ///
-    /// // Note that &#39;Anchored::No&#39; is the default, so it doesn&#39;t need to
+    /// // Note that 'Anchored::No' is the default, so it doesn't need to
     /// // be explicitly specified here.
     /// let input = Input::new(haystack);
-    /// let mat = ac.try_find(input)?.expect(&quot;should have a match&quot;);
-    /// assert_eq!(&quot;bcd&quot;, &amp;haystack[mat.span()]);
+    /// let mat = ac.try_find(input)?.expect("should have a match");
+    /// assert_eq!("bcd", &amp;haystack[mat.span()]);
     ///
-    /// // While &#39;bcd&#39; occurs in the haystack, it does not begin where our
+    /// // While 'bcd' occurs in the haystack, it does not begin where our
     /// // search begins, so no match is found.
     /// let input = Input::new(haystack).anchored(Anchored::Yes);
     /// assert_eq!(None, ac.try_find(input)?);
     ///
-    /// // However, if we start our search where &#39;bcd&#39; starts, then we will
+    /// // However, if we start our search where 'bcd' starts, then we will
     /// // find a match.
     /// let input = Input::new(haystack).range(1..).anchored(Anchored::Yes);
-    /// let mat = ac.try_find(input)?.expect(&quot;should have a match&quot;);
-    /// assert_eq!(&quot;bcd&quot;, &amp;haystack[mat.span()]);
+    /// let mat = ac.try_find(input)?.expect("should have a match");
+    /// assert_eq!("bcd", &amp;haystack[mat.span()]);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>anchored(<span class="kw-2">mut </span><span class="self">self</span>, mode: Anchored) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>anchored(<span class="kw-2">mut </span><span class="self">self</span>, mode: Anchored) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         <span class="self">self</span>.set_anchored(mode);
         <span class="self">self
     </span>}
 
-    <span class="doccomment">/// Whether to execute an &quot;earliest&quot; search or not.
+    <span class="doccomment">/// Whether to execute an "earliest" search or not.
     ///
-    /// When running a non-overlapping search, an &quot;earliest&quot; search will
+    /// When running a non-overlapping search, an "earliest" search will
     /// return the match location as early as possible. For example, given
     /// the patterns `abc` and `b`, and a haystack of `abc`, a normal
-    /// leftmost-first search will return `abc` as a match. But an &quot;earliest&quot;
+    /// leftmost-first search will return `abc` as a match. But an "earliest"
     /// search will return as soon as it is known that a match occurs, which
     /// happens once `b` is seen.
     ///
-    /// Note that when using [`MatchKind::Standard`], the &quot;earliest&quot; option
-    /// has no effect since standard semantics are already &quot;earliest.&quot; Note
+    /// Note that when using [`MatchKind::Standard`], the "earliest" option
+    /// has no effect since standard semantics are already "earliest." Note
     /// also that this has no effect in overlapping searches, since overlapping
     /// searches also use standard semantics and report all possible matches.
     ///
@@ -1420,14 +1420,14 @@
     ///
     /// # Example
     ///
-    /// This example shows the difference between &quot;earliest&quot; searching and
+    /// This example shows the difference between "earliest" searching and
     /// normal leftmost searching.
     ///
     /// ```
     /// use aho_corasick::{AhoCorasick, Anchored, Input, MatchKind, StartKind};
     ///
-    /// let patterns = &amp;[&quot;abc&quot;, &quot;b&quot;];
-    /// let haystack = &quot;abc&quot;;
+    /// let patterns = &amp;["abc", "b"];
+    /// let haystack = "abc";
     ///
     /// let ac = AhoCorasick::builder()
     ///     .match_kind(MatchKind::LeftmostFirst)
@@ -1436,18 +1436,18 @@
     ///
     /// // The normal leftmost-first match.
     /// let input = Input::new(haystack);
-    /// let mat = ac.try_find(input)?.expect(&quot;should have a match&quot;);
-    /// assert_eq!(&quot;abc&quot;, &amp;haystack[mat.span()]);
+    /// let mat = ac.try_find(input)?.expect("should have a match");
+    /// assert_eq!("abc", &amp;haystack[mat.span()]);
     ///
-    /// // The &quot;earliest&quot; possible match, even if it isn&#39;t leftmost-first.
+    /// // The "earliest" possible match, even if it isn't leftmost-first.
     /// let input = Input::new(haystack).earliest(true);
-    /// let mat = ac.try_find(input)?.expect(&quot;should have a match&quot;);
-    /// assert_eq!(&quot;b&quot;, &amp;haystack[mat.span()]);
+    /// let mat = ac.try_find(input)?.expect("should have a match");
+    /// assert_eq!("b", &amp;haystack[mat.span()]);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>earliest(<span class="kw-2">mut </span><span class="self">self</span>, yes: bool) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>earliest(<span class="kw-2">mut </span><span class="self">self</span>, yes: bool) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         <span class="self">self</span>.set_earliest(yes);
         <span class="self">self
     </span>}
@@ -1471,7 +1471,7 @@
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     /// input.set_span(2..4);
     /// assert_eq!(2..4, input.get_range());
@@ -1482,7 +1482,7 @@
         <span class="macro">assert!</span>(
             span.end &lt;= <span class="self">self</span>.haystack.len()
                 &amp;&amp; span.start &lt;= span.end.wrapping_add(<span class="number">1</span>),
-            <span class="string">&quot;invalid span {:?} for haystack of length {}&quot;</span>,
+            <span class="string">"invalid span {:?} for haystack of length {}"</span>,
             span,
             <span class="self">self</span>.haystack.len(),
         );
@@ -1509,7 +1509,7 @@
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     /// input.set_range(2..=4);
     /// assert_eq!(2..5, input.get_range());
@@ -1518,13 +1518,13 @@
     </span><span class="kw">pub fn </span>set_range&lt;R: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R) {
         <span class="kw">use </span>core::ops::Bound;
 
-        <span class="comment">// It&#39;s a little weird to convert ranges into spans, and then spans
+        <span class="comment">// It's a little weird to convert ranges into spans, and then spans
         // back into ranges when we actually slice the haystack. Because
         // of that process, we always represent everything as a half-open
         // internal. Therefore, handling things like m..=n is a little awkward.
         </span><span class="kw">let </span>start = <span class="kw">match </span>range.start_bound() {
             Bound::Included(<span class="kw-2">&amp;</span>i) =&gt; i,
-            <span class="comment">// Can this case ever happen? Range syntax doesn&#39;t support it...
+            <span class="comment">// Can this case ever happen? Range syntax doesn't support it...
             </span>Bound::Excluded(<span class="kw-2">&amp;</span>i) =&gt; i.checked_add(<span class="number">1</span>).unwrap(),
             Bound::Unbounded =&gt; <span class="number">0</span>,
         };
@@ -1551,7 +1551,7 @@
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     /// input.set_start(5);
     /// assert_eq!(5..6, input.get_range());
@@ -1576,7 +1576,7 @@
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     /// input.set_end(5);
     /// assert_eq!(0..5, input.get_range());
@@ -1596,7 +1596,7 @@
     /// ```
     /// use aho_corasick::{Anchored, Input};
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(Anchored::No, input.get_anchored());
     ///
     /// input.set_anchored(Anchored::Yes);
@@ -1607,7 +1607,7 @@
         <span class="self">self</span>.anchored = mode;
     }
 
-    <span class="doccomment">/// Set whether the search should execute in &quot;earliest&quot; mode or not.
+    <span class="doccomment">/// Set whether the search should execute in "earliest" mode or not.
     ///
     /// This is like [`Input::earliest`], except it mutates the search
     /// configuration in place.
@@ -1617,7 +1617,7 @@
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert!(!input.get_earliest());
     /// input.set_earliest(true);
     /// assert!(input.get_earliest());
@@ -1634,8 +1634,8 @@
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
-    /// assert_eq!(b&quot;foobar&quot;, input.haystack());
+    /// let input = Input::new("foobar");
+    /// assert_eq!(b"foobar", input.haystack());
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>haystack(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
@@ -1651,10 +1651,10 @@
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert_eq!(0, input.start());
     ///
-    /// let input = Input::new(&quot;foobar&quot;).span(2..4);
+    /// let input = Input::new("foobar").span(2..4);
     /// assert_eq!(2, input.start());
     /// ```
     </span><span class="attr">#[inline]
@@ -1671,10 +1671,10 @@
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert_eq!(6, input.end());
     ///
-    /// let input = Input::new(&quot;foobar&quot;).span(2..4);
+    /// let input = Input::new("foobar").span(2..4);
     /// assert_eq!(4, input.end());
     /// ```
     </span><span class="attr">#[inline]
@@ -1692,7 +1692,7 @@
     /// ```
     /// use aho_corasick::{Input, Span};
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert_eq!(Span { start: 0, end: 6 }, input.get_span());
     /// ```
     </span><span class="attr">#[inline]
@@ -1710,7 +1710,7 @@
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     /// ```
     </span><span class="attr">#[inline]
@@ -1727,7 +1727,7 @@
     /// ```
     /// use aho_corasick::{Anchored, Input};
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(Anchored::No, input.get_anchored());
     ///
     /// input.set_anchored(Anchored::Yes);
@@ -1738,14 +1738,14 @@
         <span class="self">self</span>.anchored
     }
 
-    <span class="doccomment">/// Return whether this search should execute in &quot;earliest&quot; mode.
+    <span class="doccomment">/// Return whether this search should execute in "earliest" mode.
     ///
     /// # Example
     ///
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert!(!input.get_earliest());
     /// ```
     </span><span class="attr">#[inline]
@@ -1764,7 +1764,7 @@
     /// ```
     /// use aho_corasick::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert!(!input.is_done());
     /// input.set_start(6);
     /// assert!(!input.is_done());
@@ -1777,23 +1777,23 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; core::fmt::Debug <span class="kw">for </span>Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; core::fmt::Debug <span class="kw">for </span>Input&lt;<span class="lifetime">'h</span>&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="kw">let </span><span class="kw-2">mut </span>fmter = f.debug_struct(<span class="string">&quot;Input&quot;</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>fmter = f.debug_struct(<span class="string">"Input"</span>);
         <span class="kw">match </span>core::str::from_utf8(<span class="self">self</span>.haystack()) {
-            <span class="prelude-val">Ok</span>(nice) =&gt; fmter.field(<span class="string">&quot;haystack&quot;</span>, <span class="kw-2">&amp;</span>nice),
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; fmter.field(<span class="string">&quot;haystack&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.haystack()),
+            <span class="prelude-val">Ok</span>(nice) =&gt; fmter.field(<span class="string">"haystack"</span>, <span class="kw-2">&amp;</span>nice),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; fmter.field(<span class="string">"haystack"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.haystack()),
         }
-        .field(<span class="string">&quot;span&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.span)
-        .field(<span class="string">&quot;anchored&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.anchored)
-        .field(<span class="string">&quot;earliest&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.earliest)
+        .field(<span class="string">"span"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.span)
+        .field(<span class="string">"anchored"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.anchored)
+        .field(<span class="string">"earliest"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.earliest)
         .finish()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>, H: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>H&gt; <span class="kw">for </span>Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>, H: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">'h </span>H&gt; <span class="kw">for </span>Input&lt;<span class="lifetime">'h</span>&gt; {
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>from(haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>H) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">fn </span>from(haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>H) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         Input::new(haystack)
     }
 }
@@ -1855,7 +1855,7 @@
         !<span class="self">self</span>.is_empty() &amp;&amp; <span class="self">self</span>.start &lt;= offset &amp;&amp; offset &lt;= <span class="self">self</span>.end
     }
 
-    <span class="doccomment">/// Returns a new span with `offset` added to this span&#39;s `start` and `end`
+    <span class="doccomment">/// Returns a new span with `offset` added to this span's `start` and `end`
     /// values.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>offset(<span class="kw-2">&amp;</span><span class="self">self</span>, offset: usize) -&gt; Span {
@@ -1865,7 +1865,7 @@
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>Span {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;{}..{}&quot;</span>, <span class="self">self</span>.start, <span class="self">self</span>.end)
+        <span class="macro">write!</span>(f, <span class="string">"{}..{}"</span>, <span class="self">self</span>.start, <span class="self">self</span>.end)
     }
 }
 
@@ -2004,7 +2004,7 @@
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>new&lt;S: Into&lt;Span&gt;&gt;(pattern: PatternID, span: S) -&gt; Match {
         <span class="kw">let </span>span = span.into();
-        <span class="macro">assert!</span>(span.start &lt;= span.end, <span class="string">&quot;invalid match span&quot;</span>);
+        <span class="macro">assert!</span>(span.start &lt;= span.end, <span class="string">"invalid match span"</span>);
         Match { pattern, span }
     }
 
@@ -2097,7 +2097,7 @@
         <span class="self">self</span>.span().len()
     }
 
-    <span class="doccomment">/// Returns a new match with `offset` added to its span&#39;s `start` and `end`
+    <span class="doccomment">/// Returns a new match with `offset` added to its span's `start` and `end`
     /// values.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>offset(<span class="kw-2">&amp;</span><span class="self">self</span>, offset: usize) -&gt; Match {
@@ -2114,7 +2114,7 @@
 <span class="doccomment">/// A knob for controlling the match semantics of an Aho-Corasick automaton.
 ///
 /// There are two generally different ways that Aho-Corasick automatons can
-/// report matches. The first way is the &quot;standard&quot; approach that results from
+/// report matches. The first way is the "standard" approach that results from
 /// implementing most textbook explanations of Aho-Corasick. The second way is
 /// to report only the leftmost non-overlapping matches. The leftmost approach
 /// is in turn split into two different ways of resolving ambiguous matches:
@@ -2152,7 +2152,7 @@
 /// that appears before a pattern `B` is a prefix of `B`, then it is impossible
 /// to ever observe a match of `B`.
 ///
-/// If you&#39;re not sure which match kind to pick, then stick with the standard
+/// If you're not sure which match kind to pick, then stick with the standard
 /// kind, which is the default. In particular, if you need overlapping or
 /// streaming matches, then you _must_ use the standard kind. The leftmost
 /// kinds are useful in specific circumstances. For example, leftmost-first can
@@ -2165,13 +2165,13 @@
 /// Understanding match semantics can be a little tricky, and one easy way
 /// to conceptualize non-overlapping matches from an Aho-Corasick automaton
 /// is to think about them as a simple alternation of literals in a regular
-/// expression. For example, let&#39;s say we wanted to match the strings
+/// expression. For example, let's say we wanted to match the strings
 /// `Sam` and `Samwise`, which would turn into the regex `Sam|Samwise`. It
 /// turns out that regular expression engines have two different ways of
 /// matching this alternation. The first way, leftmost-longest, is commonly
 /// found in POSIX compatible implementations of regular expressions (such as
 /// `grep`). The second way, leftmost-first, is commonly found in backtracking
-/// implementations such as Perl. (Some regex engines, such as RE2 and Rust&#39;s
+/// implementations such as Perl. (Some regex engines, such as RE2 and Rust's
 /// regex engine do not use backtracking, but still implement leftmost-first
 /// semantics in an effort to match the behavior of dominant backtracking
 /// regex engines such as those found in Perl, Ruby, Python, Javascript and
@@ -2186,9 +2186,9 @@
 /// a match of `Samwise` in both POSIX and Perl-like regexes since `Samwise` is
 /// still longest match, but it also appears earlier than `Sam`.
 ///
-/// The &quot;standard&quot; match semantics of Aho-Corasick generally don&#39;t correspond
+/// The "standard" match semantics of Aho-Corasick generally don't correspond
 /// to the match semantics of any large group of regex implementations, so
-/// there&#39;s no direct analogy that can be made here. Standard match semantics
+/// there's no direct analogy that can be made here. Standard match semantics
 /// are generally useful for overlapping matches, or if you just want to see
 /// matches as they are detected.
 ///
@@ -2274,7 +2274,7 @@
 /// This searcher configuration knob works in concert with the search time
 /// configuration [`Input::anchored`]. Namely, if one requests an unsupported
 /// anchored mode, then the search will either panic or return an error,
-/// depending on whether you&#39;re using infallible or fallibe APIs, respectively.
+/// depending on whether you're using infallible or fallibe APIs, respectively.
 ///
 /// `AhoCorasick` by default only supports unanchored searches.
 </span><span class="attr">#[derive(Clone, Copy, Debug, Eq, PartialEq)]

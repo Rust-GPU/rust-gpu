@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bytemuck-1.18.0/src/internal.rs`."><title>internal.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bytemuck" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../bytemuck/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bytemuck-1.18.0/src/internal.rs`."><title>internal.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bytemuck" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../bytemuck/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -395,7 +395,7 @@
 <a href="#395" id="395">395</a>
 <a href="#396" id="396">396</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Internal implementation of casting functions not bound by marker traits
-//! and therefore marked as unsafe. This is used so that we don&#39;t need to
+//! and therefore marked as unsafe. This is used so that we don't need to
 //! duplicate the business logic contained in these functions between the
 //! versions exported in the crate root, `checked`, and `relaxed` modules.
 </span><span class="attr">#![allow(unused_unsafe)]
@@ -405,18 +405,18 @@
 
 <span class="comment">/*
 
-Note(Lokathor): We&#39;ve switched all of the `unwrap` to `match` because there is
+Note(Lokathor): We've switched all of the `unwrap` to `match` because there is
 apparently a bug: https://github.com/rust-lang/rust/issues/68667
-and it doesn&#39;t seem to show up in simple godbolt examples but has been reported
-as having an impact when there&#39;s a cast mixed in with other more complicated
-code around it. Rustc/LLVM ends up missing that the `Err` can&#39;t ever happen for
-particular type combinations, and then it doesn&#39;t fully eliminated the panic
+and it doesn't seem to show up in simple godbolt examples but has been reported
+as having an impact when there's a cast mixed in with other more complicated
+code around it. Rustc/LLVM ends up missing that the `Err` can't ever happen for
+particular type combinations, and then it doesn't fully eliminated the panic
 possibility code branch.
 
 */
 
 </span><span class="doccomment">/// Immediately panics.
-</span><span class="attr">#[cfg(not(target_arch = <span class="string">&quot;spirv&quot;</span>))]
+</span><span class="attr">#[cfg(not(target_arch = <span class="string">"spirv"</span>))]
 #[cold]
 #[inline(never)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>something_went_wrong&lt;D: core::fmt::Display&gt;(
@@ -425,11 +425,11 @@ possibility code branch.
   <span class="comment">// Note(Lokathor): Keeping the panic here makes the panic _formatting_ go
   // here too, which helps assembly readability and also helps keep down
   // the inline pressure.
-  </span><span class="macro">panic!</span>(<span class="string">&quot;{src}&gt;{err}&quot;</span>, src = _src, err = _err);
+  </span><span class="macro">panic!</span>(<span class="string">"{src}&gt;{err}"</span>, src = _src, err = _err);
 }
 
 <span class="doccomment">/// Immediately panics.
-</span><span class="attr">#[cfg(target_arch = <span class="string">&quot;spirv&quot;</span>)]
+</span><span class="attr">#[cfg(target_arch = <span class="string">"spirv"</span>)]
 #[cold]
 #[inline(never)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>something_went_wrong&lt;D&gt;(_src: <span class="kw-2">&amp;</span>str, _err: D) -&gt; ! {
@@ -438,7 +438,7 @@ possibility code branch.
   // The chance that the panicking version of these functions will ever get
   // called on spir-v targets with invalid inputs is small, but giving a
   // simple error message is better than no error message at all.
-  </span><span class="macro">panic!</span>(<span class="string">&quot;Called a panicing helper from bytemuck which paniced&quot;</span>);
+  </span><span class="macro">panic!</span>(<span class="string">"Called a panicing helper from bytemuck which paniced"</span>);
 }
 
 <span class="doccomment">/// Re-interprets `&amp;T` as `&amp;[u8]`.
@@ -474,7 +474,7 @@ possibility code branch.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>from_bytes&lt;T: Copy&gt;(s: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="kw-2">&amp;</span>T {
   <span class="kw">match </span>try_from_bytes(s) {
     <span class="prelude-val">Ok</span>(t) =&gt; t,
-    <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">&quot;from_bytes&quot;</span>, e),
+    <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">"from_bytes"</span>, e),
   }
 }
 
@@ -487,7 +487,7 @@ possibility code branch.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>from_bytes_mut&lt;T: Copy&gt;(s: <span class="kw-2">&amp;mut </span>[u8]) -&gt; <span class="kw-2">&amp;mut </span>T {
   <span class="kw">match </span>try_from_bytes_mut(s) {
     <span class="prelude-val">Ok</span>(t) =&gt; t,
-    <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">&quot;from_bytes_mut&quot;</span>, e),
+    <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">"from_bytes_mut"</span>, e),
   }
 }
 
@@ -514,7 +514,7 @@ possibility code branch.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>pod_read_unaligned&lt;T: Copy&gt;(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; T {
   <span class="kw">match </span>try_pod_read_unaligned(bytes) {
     <span class="prelude-val">Ok</span>(t) =&gt; t,
-    <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">&quot;pod_read_unaligned&quot;</span>, e),
+    <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">"pod_read_unaligned"</span>, e),
   }
 }
 
@@ -524,15 +524,15 @@ possibility code branch.
 /// * If `align` is not a power of two. This includes when `align` is zero.
 </span><span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_aligned_to(ptr: <span class="kw-2">*const </span>(), align: usize) -&gt; bool {
-  <span class="attr">#[cfg(feature = <span class="string">&quot;align_offset&quot;</span>)]
+  <span class="attr">#[cfg(feature = <span class="string">"align_offset"</span>)]
   </span>{
     <span class="comment">// This is in a way better than `ptr as usize % align == 0`,
     // because casting a pointer to an integer has the side effect that it
-    // exposes the pointer&#39;s provenance, which may theoretically inhibit
+    // exposes the pointer's provenance, which may theoretically inhibit
     // some compiler optimizations.
     </span>ptr.align_offset(align) == <span class="number">0
   </span>}
-  <span class="attr">#[cfg(not(feature = <span class="string">&quot;align_offset&quot;</span>))]
+  <span class="attr">#[cfg(not(feature = <span class="string">"align_offset"</span>))]
   </span>{
     ((ptr <span class="kw">as </span>usize) % align) == <span class="number">0
   </span>}
@@ -542,8 +542,8 @@ possibility code branch.
 ///
 /// ## Failure
 ///
-/// * If the slice isn&#39;t aligned for the new type
-/// * If the slice&#39;s length isn’t exactly the size of the new type
+/// * If the slice isn't aligned for the new type
+/// * If the slice's length isn’t exactly the size of the new type
 </span><span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>try_from_bytes&lt;T: Copy&gt;(
   s: <span class="kw-2">&amp;</span>[u8],
@@ -561,8 +561,8 @@ possibility code branch.
 ///
 /// ## Failure
 ///
-/// * If the slice isn&#39;t aligned for the new type
-/// * If the slice&#39;s length isn’t exactly the size of the new type
+/// * If the slice isn't aligned for the new type
+/// * If the slice's length isn’t exactly the size of the new type
 </span><span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>try_from_bytes_mut&lt;T: Copy&gt;(
   s: <span class="kw-2">&amp;mut </span>[u8],
@@ -586,7 +586,7 @@ possibility code branch.
   <span class="kw">if </span>size_of::&lt;A&gt;() == size_of::&lt;B&gt;() {
     <span class="kw">unsafe </span>{ <span class="macro">transmute!</span>(a) }
   } <span class="kw">else </span>{
-    something_went_wrong(<span class="string">&quot;cast&quot;</span>, PodCastError::SizeMismatch)
+    something_went_wrong(<span class="string">"cast"</span>, PodCastError::SizeMismatch)
   }
 }
 
@@ -598,7 +598,7 @@ possibility code branch.
 </span><span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>cast_mut&lt;A: Copy, B: Copy&gt;(a: <span class="kw-2">&amp;mut </span>A) -&gt; <span class="kw-2">&amp;mut </span>B {
   <span class="kw">if </span>size_of::&lt;A&gt;() == size_of::&lt;B&gt;() &amp;&amp; align_of::&lt;A&gt;() &gt;= align_of::&lt;B&gt;() {
-    <span class="comment">// Plz mr compiler, just notice that we can&#39;t ever hit Err in this case.
+    <span class="comment">// Plz mr compiler, just notice that we can't ever hit Err in this case.
     </span><span class="kw">match </span>try_cast_mut(a) {
       <span class="prelude-val">Ok</span>(b) =&gt; b,
       <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
@@ -606,7 +606,7 @@ possibility code branch.
   } <span class="kw">else </span>{
     <span class="kw">match </span>try_cast_mut(a) {
       <span class="prelude-val">Ok</span>(b) =&gt; b,
-      <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">&quot;cast_mut&quot;</span>, e),
+      <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">"cast_mut"</span>, e),
     }
   }
 }
@@ -619,7 +619,7 @@ possibility code branch.
 </span><span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>cast_ref&lt;A: Copy, B: Copy&gt;(a: <span class="kw-2">&amp;</span>A) -&gt; <span class="kw-2">&amp;</span>B {
   <span class="kw">if </span>size_of::&lt;A&gt;() == size_of::&lt;B&gt;() &amp;&amp; align_of::&lt;A&gt;() &gt;= align_of::&lt;B&gt;() {
-    <span class="comment">// Plz mr compiler, just notice that we can&#39;t ever hit Err in this case.
+    <span class="comment">// Plz mr compiler, just notice that we can't ever hit Err in this case.
     </span><span class="kw">match </span>try_cast_ref(a) {
       <span class="prelude-val">Ok</span>(b) =&gt; b,
       <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
@@ -627,7 +627,7 @@ possibility code branch.
   } <span class="kw">else </span>{
     <span class="kw">match </span>try_cast_ref(a) {
       <span class="prelude-val">Ok</span>(b) =&gt; b,
-      <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">&quot;cast_ref&quot;</span>, e),
+      <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">"cast_ref"</span>, e),
     }
   }
 }
@@ -641,7 +641,7 @@ possibility code branch.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>cast_slice&lt;A: Copy, B: Copy&gt;(a: <span class="kw-2">&amp;</span>[A]) -&gt; <span class="kw-2">&amp;</span>[B] {
   <span class="kw">match </span>try_cast_slice(a) {
     <span class="prelude-val">Ok</span>(b) =&gt; b,
-    <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">&quot;cast_slice&quot;</span>, e),
+    <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">"cast_slice"</span>, e),
   }
 }
 
@@ -654,20 +654,20 @@ possibility code branch.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>cast_slice_mut&lt;A: Copy, B: Copy&gt;(a: <span class="kw-2">&amp;mut </span>[A]) -&gt; <span class="kw-2">&amp;mut </span>[B] {
   <span class="kw">match </span>try_cast_slice_mut(a) {
     <span class="prelude-val">Ok</span>(b) =&gt; b,
-    <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">&quot;cast_slice_mut&quot;</span>, e),
+    <span class="prelude-val">Err</span>(e) =&gt; something_went_wrong(<span class="string">"cast_slice_mut"</span>, e),
   }
 }
 
 <span class="doccomment">/// Try to cast `T` into `U`.
 ///
-/// Note that for this particular type of cast, alignment isn&#39;t a factor. The
+/// Note that for this particular type of cast, alignment isn't a factor. The
 /// input value is semantically copied into the function and then returned to a
 /// new memory location which will have whatever the required alignment of the
 /// output type is.
 ///
 /// ## Failure
 ///
-/// * If the types don&#39;t have the same size this fails.
+/// * If the types don't have the same size this fails.
 </span><span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>try_cast&lt;A: Copy, B: Copy&gt;(
   a: A,
@@ -683,8 +683,8 @@ possibility code branch.
 ///
 /// ## Failure
 ///
-/// * If the reference isn&#39;t aligned in the new type
-/// * If the source type and target type aren&#39;t the same size.
+/// * If the reference isn't aligned in the new type
+/// * If the source type and target type aren't the same size.
 </span><span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>try_cast_ref&lt;A: Copy, B: Copy&gt;(
   a: <span class="kw-2">&amp;</span>A,
@@ -730,11 +730,11 @@ possibility code branch.
 /// ## Failure
 ///
 /// * If the target type has a greater alignment requirement and the input slice
-///   isn&#39;t aligned.
+///   isn't aligned.
 /// * If the target element type is a different size from the current element
-///   type, and the output slice wouldn&#39;t be a whole number of elements when
+///   type, and the output slice wouldn't be a whole number of elements when
 ///   accounting for the size change (eg: 3 `u16` values is 1.5 `u32` values, so
-///   that&#39;s a failure).
+///   that's a failure).
 </span><span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>try_cast_slice&lt;A: Copy, B: Copy&gt;(
   a: <span class="kw-2">&amp;</span>[A],

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/spirv_asm.rs`."><title>spirv_asm.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/spirv_asm.rs`."><title>spirv_asm.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1545,6 +1545,24 @@
 <a href="#1545" id="1545">1545</a>
 <a href="#1546" id="1546">1546</a>
 <a href="#1547" id="1547">1547</a>
+<a href="#1548" id="1548">1548</a>
+<a href="#1549" id="1549">1549</a>
+<a href="#1550" id="1550">1550</a>
+<a href="#1551" id="1551">1551</a>
+<a href="#1552" id="1552">1552</a>
+<a href="#1553" id="1553">1553</a>
+<a href="#1554" id="1554">1554</a>
+<a href="#1555" id="1555">1555</a>
+<a href="#1556" id="1556">1556</a>
+<a href="#1557" id="1557">1557</a>
+<a href="#1558" id="1558">1558</a>
+<a href="#1559" id="1559">1559</a>
+<a href="#1560" id="1560">1560</a>
+<a href="#1561" id="1561">1561</a>
+<a href="#1562" id="1562">1562</a>
+<a href="#1563" id="1563">1563</a>
+<a href="#1564" id="1564">1564</a>
+<a href="#1565" id="1565">1565</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Builder;
 <span class="kw">use </span><span class="kw">crate</span>::builder_spirv::{BuilderCursor, SpirvValue};
 <span class="kw">use </span><span class="kw">crate</span>::codegen_cx::CodegenCx;
@@ -1562,10 +1580,9 @@
 <span class="kw">use </span>rustc_middle::{bug, ty::Instance};
 <span class="kw">use </span>rustc_span::{Span, DUMMY_SP};
 <span class="kw">use </span>rustc_target::asm::{InlineAsmRegClass, InlineAsmRegOrRegClass, SpirVInlineAsmRegClass};
-<span class="kw">use </span>std::convert::TryFrom;
 
 <span class="kw">pub struct </span>InstructionTable {
-    table: FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>rspirv::grammar::Instruction&lt;<span class="lifetime">&#39;static</span>&gt;&gt;,
+    table: FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>rspirv::grammar::Instruction&lt;<span class="lifetime">'static</span>&gt;&gt;,
 }
 
 <span class="kw">impl </span>InstructionTable {
@@ -1577,24 +1594,24 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;tcx</span>&gt; AsmBuilderMethods&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>Builder&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; AsmBuilderMethods&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>Builder&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; {
     <span class="comment">/* Example asm and the template it compiles to:
     asm!(
-        &quot;mov {0}, {1}&quot;,
-        &quot;add {0}, {number}&quot;,
+        "mov {0}, {1}",
+        "add {0}, {number}",
         out(reg) o,
         in(reg) i,
         number = const 5,
     );
     [
-    String(&quot;mov &quot;),
+    String("mov "),
     Placeholder { operand_idx: 0, modifier: None, span: src/lib.rs:19:18: 19:21 (#0) },
-    String(&quot;, &quot;),
+    String(", "),
     Placeholder { operand_idx: 1, modifier: None, span: src/lib.rs:19:23: 19:26 (#0) },
-    String(&quot;\n&quot;),
-    String(&quot;add &quot;),
+    String("\n"),
+    String("add "),
     Placeholder { operand_idx: 0, modifier: None, span: src/lib.rs:20:18: 20:21 (#0) },
-    String(&quot;, &quot;),
+    String(", "),
     Placeholder { operand_idx: 2, modifier: None, span: src/lib.rs:20:23: 20:31 (#0) }
     ]
      */
@@ -1602,29 +1619,30 @@
     </span><span class="kw">fn </span>codegen_inline_asm(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         template: <span class="kw-2">&amp;</span>[InlineAsmTemplatePiece],
-        operands: <span class="kw-2">&amp;</span>[InlineAsmOperandRef&lt;<span class="lifetime">&#39;tcx</span>, <span class="self">Self</span>&gt;],
+        operands: <span class="kw-2">&amp;</span>[InlineAsmOperandRef&lt;<span class="lifetime">'tcx</span>, <span class="self">Self</span>&gt;],
         options: InlineAsmOptions,
         _line_spans: <span class="kw-2">&amp;</span>[Span],
-        _instance: Instance&lt;<span class="lifetime">&#39;_</span>&gt;,
-        _dest_catch_funclet: <span class="prelude-ty">Option</span>&lt;(<span class="self">Self</span>::BasicBlock, <span class="self">Self</span>::BasicBlock, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::Funclet&gt;)&gt;,
+        _instance: Instance&lt;<span class="lifetime">'_</span>&gt;,
+        _dest: <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::BasicBlock&gt;,
+        _catch_funclet: <span class="prelude-ty">Option</span>&lt;(<span class="self">Self</span>::BasicBlock, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::Funclet&gt;)&gt;,
     ) {
         <span class="kw">const </span>SUPPORTED_OPTIONS: InlineAsmOptions = InlineAsmOptions::NORETURN;
         <span class="kw">let </span>unsupported_options = options &amp; !SUPPORTED_OPTIONS;
         <span class="kw">if </span>!unsupported_options.is_empty() {
-            <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;asm flags not supported: {unsupported_options:?}&quot;</span>));
+            <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"asm flags not supported: {unsupported_options:?}"</span>));
         }
         <span class="comment">// vec of lines, and each line is vec of tokens
         </span><span class="kw">let </span><span class="kw-2">mut </span>tokens = <span class="macro">vec!</span>[<span class="macro">vec!</span>[]];
         <span class="kw">for </span>piece <span class="kw">in </span>template {
             <span class="kw">match </span>piece {
                 InlineAsmTemplatePiece::String(asm) =&gt; {
-                    <span class="comment">// We cannot use str::lines() here because we don&#39;t want the behavior of &quot;the
-                    // last newline is optional&quot;, we want an empty string for the last line if
+                    <span class="comment">// We cannot use str::lines() here because we don't want the behavior of "the
+                    // last newline is optional", we want an empty string for the last line if
                     // there is no newline terminator.
                     // Lambda copied from std LinesAnyMap
-                    </span><span class="kw">let </span>lines = asm.split(<span class="string">&#39;\n&#39;</span>).map(|line| {
+                    </span><span class="kw">let </span>lines = asm.split(<span class="string">'\n'</span>).map(|line| {
                         <span class="kw">let </span>l = line.len();
-                        <span class="kw">if </span>l &gt; <span class="number">0 </span>&amp;&amp; line.as_bytes()[l - <span class="number">1</span>] == <span class="string">b&#39;\r&#39; </span>{
+                        <span class="kw">if </span>l &gt; <span class="number">0 </span>&amp;&amp; line.as_bytes()[l - <span class="number">1</span>] == <span class="string">b'\r' </span>{
                             <span class="kw-2">&amp;</span>line[<span class="number">0</span>..l - <span class="number">1</span>]
                         } <span class="kw">else </span>{
                             line
@@ -1648,13 +1666,13 @@
                 } =&gt; {
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(modifier) = modifier {
                         <span class="self">self</span>.tcx
-                            .sess
-                            .span_err(span, <span class="macro">format!</span>(<span class="string">&quot;asm modifiers are not supported: {modifier}&quot;</span>));
+                            .dcx()
+                            .span_err(span, <span class="macro">format!</span>(<span class="string">"asm modifiers are not supported: {modifier}"</span>));
                     }
                     <span class="kw">let </span>line = tokens.last_mut().unwrap();
                     <span class="kw">let </span>typeof_kind = line.last().and_then(|prev| <span class="kw">match </span>prev {
-                        Token::Word(<span class="string">&quot;typeof&quot;</span>) =&gt; <span class="prelude-val">Some</span>(TypeofKind::Plain),
-                        Token::Word(<span class="string">&quot;typeof*&quot;</span>) =&gt; <span class="prelude-val">Some</span>(TypeofKind::Dereference),
+                        Token::Word(<span class="string">"typeof"</span>) =&gt; <span class="prelude-val">Some</span>(TypeofKind::Plain),
+                        Token::Word(<span class="string">"typeof*"</span>) =&gt; <span class="prelude-val">Some</span>(TypeofKind::Dereference),
                         <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                     });
                     <span class="kw">match </span>typeof_kind {
@@ -1694,7 +1712,7 @@
 
         <span class="kw">match </span>(options.contains(InlineAsmOptions::NORETURN), asm_block) {
             (<span class="bool-val">true</span>, AsmBlock::Open) =&gt; {
-                <span class="self">self</span>.err(<span class="string">&quot;`noreturn` requires a terminator at the end&quot;</span>);
+                <span class="self">self</span>.err(<span class="string">"`noreturn` requires a terminator at the end"</span>);
             }
             (<span class="bool-val">true</span>, AsmBlock::End(<span class="kw">_</span>)) =&gt; {
                 <span class="comment">// `noreturn` appends an `OpUnreachable` after the asm block.
@@ -1710,13 +1728,13 @@
             (<span class="bool-val">false</span>, AsmBlock::Open) =&gt; (),
             (<span class="bool-val">false</span>, AsmBlock::End(terminator)) =&gt; {
                 <span class="self">self</span>.err(<span class="macro">format!</span>(
-                    <span class="string">&quot;trailing terminator `Op{terminator:?}` requires `options(noreturn)`&quot;
+                    <span class="string">"trailing terminator `Op{terminator:?}` requires `options(noreturn)`"
                 </span>));
             }
         }
         <span class="kw">for </span>(id, num) <span class="kw">in </span>id_map {
             <span class="kw">if </span>!defined_ids.contains(<span class="kw-2">&amp;</span>num) {
-                <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;%{id} is used but not defined&quot;</span>));
+                <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"%{id} is used but not defined"</span>));
             }
         }
     }
@@ -1727,20 +1745,20 @@
     Dereference,
 }
 
-<span class="kw">enum </span>Token&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cx</span>, <span class="lifetime">&#39;tcx</span>&gt; {
-    Word(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str),
+<span class="kw">enum </span>Token&lt;<span class="lifetime">'a</span>, <span class="lifetime">'cx</span>, <span class="lifetime">'tcx</span>&gt; {
+    Word(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str),
     String(String),
-    Placeholder(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>InlineAsmOperandRef&lt;<span class="lifetime">&#39;tcx</span>, Builder&lt;<span class="lifetime">&#39;cx</span>, <span class="lifetime">&#39;tcx</span>&gt;&gt;, Span),
+    Placeholder(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>InlineAsmOperandRef&lt;<span class="lifetime">'tcx</span>, Builder&lt;<span class="lifetime">'cx</span>, <span class="lifetime">'tcx</span>&gt;&gt;, Span),
     Typeof(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>InlineAsmOperandRef&lt;<span class="lifetime">&#39;tcx</span>, Builder&lt;<span class="lifetime">&#39;cx</span>, <span class="lifetime">&#39;tcx</span>&gt;&gt;,
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span>InlineAsmOperandRef&lt;<span class="lifetime">'tcx</span>, Builder&lt;<span class="lifetime">'cx</span>, <span class="lifetime">'tcx</span>&gt;&gt;,
         Span,
         TypeofKind,
     ),
 }
 
-<span class="kw">enum </span>OutRegister&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">enum </span>OutRegister&lt;<span class="lifetime">'tcx</span>&gt; {
     Regular(Word),
-    Place(PlaceRef&lt;<span class="lifetime">&#39;tcx</span>, SpirvValue&gt;),
+    Place(PlaceRef&lt;<span class="lifetime">'tcx</span>, SpirvValue&gt;),
 }
 
 <span class="kw">enum </span>AsmBlock {
@@ -1748,38 +1766,38 @@
     End(Op),
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;cx</span>, <span class="lifetime">&#39;tcx</span>&gt; Builder&lt;<span class="lifetime">&#39;cx</span>, <span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">fn </span>lex_word&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, line: <span class="kw-2">&amp;mut </span>std::str::Chars&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Token&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cx</span>, <span class="lifetime">&#39;tcx</span>&gt;&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'cx</span>, <span class="lifetime">'tcx</span>&gt; Builder&lt;<span class="lifetime">'cx</span>, <span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">fn </span>lex_word&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, line: <span class="kw-2">&amp;mut </span>std::str::Chars&lt;<span class="lifetime">'a</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Token&lt;<span class="lifetime">'a</span>, <span class="lifetime">'cx</span>, <span class="lifetime">'tcx</span>&gt;&gt; {
         <span class="kw">loop </span>{
             <span class="kw">let </span>start = line.as_str();
             <span class="kw">match </span>line.next()<span class="question-mark">? </span>{
                 <span class="comment">// skip over leading whitespace
                 </span>ch <span class="kw">if </span>ch.is_whitespace() =&gt; <span class="kw">continue</span>,
                 <span class="comment">// lex a string
-                </span><span class="string">&#39;&quot;&#39; </span>=&gt; {
+                </span><span class="string">'"' </span>=&gt; {
                     <span class="kw">let </span><span class="kw-2">mut </span>cooked = String::new();
                     <span class="kw">loop </span>{
                         <span class="kw">match </span>line.next() {
                             <span class="prelude-val">None </span>=&gt; {
-                                <span class="self">self</span>.err(<span class="string">&quot;Unterminated string in instruction&quot;</span>);
+                                <span class="self">self</span>.err(<span class="string">"Unterminated string in instruction"</span>);
                                 <span class="kw">return </span><span class="prelude-val">None</span>;
                             }
-                            <span class="prelude-val">Some</span>(<span class="string">&#39;&quot;&#39;</span>) =&gt; <span class="kw">break</span>,
-                            <span class="prelude-val">Some</span>(<span class="string">&#39;\\&#39;</span>) =&gt; {
+                            <span class="prelude-val">Some</span>(<span class="string">'"'</span>) =&gt; <span class="kw">break</span>,
+                            <span class="prelude-val">Some</span>(<span class="string">'\\'</span>) =&gt; {
                                 <span class="kw">let </span>escape = <span class="kw">match </span>line.next() {
                                     <span class="prelude-val">None </span>=&gt; {
-                                        <span class="self">self</span>.err(<span class="string">&quot;Unterminated string in instruction&quot;</span>);
+                                        <span class="self">self</span>.err(<span class="string">"Unterminated string in instruction"</span>);
                                         <span class="kw">return </span><span class="prelude-val">None</span>;
                                     }
-                                    <span class="prelude-val">Some</span>(<span class="string">&#39;n&#39;</span>) =&gt; <span class="string">&#39;\n&#39;</span>,
-                                    <span class="prelude-val">Some</span>(<span class="string">&#39;r&#39;</span>) =&gt; <span class="string">&#39;\r&#39;</span>,
-                                    <span class="prelude-val">Some</span>(<span class="string">&#39;t&#39;</span>) =&gt; <span class="string">&#39;\t&#39;</span>,
-                                    <span class="prelude-val">Some</span>(<span class="string">&#39;0&#39;</span>) =&gt; <span class="string">&#39;\0&#39;</span>,
-                                    <span class="prelude-val">Some</span>(<span class="string">&#39;\\&#39;</span>) =&gt; <span class="string">&#39;\\&#39;</span>,
-                                    <span class="prelude-val">Some</span>(<span class="string">&#39;\&#39;&#39;</span>) =&gt; <span class="string">&#39;\&#39;&#39;</span>,
-                                    <span class="prelude-val">Some</span>(<span class="string">&#39;&quot;&#39;</span>) =&gt; <span class="string">&#39;&quot;&#39;</span>,
+                                    <span class="prelude-val">Some</span>(<span class="string">'n'</span>) =&gt; <span class="string">'\n'</span>,
+                                    <span class="prelude-val">Some</span>(<span class="string">'r'</span>) =&gt; <span class="string">'\r'</span>,
+                                    <span class="prelude-val">Some</span>(<span class="string">'t'</span>) =&gt; <span class="string">'\t'</span>,
+                                    <span class="prelude-val">Some</span>(<span class="string">'0'</span>) =&gt; <span class="string">'\0'</span>,
+                                    <span class="prelude-val">Some</span>(<span class="string">'\\'</span>) =&gt; <span class="string">'\\'</span>,
+                                    <span class="prelude-val">Some</span>(<span class="string">'\''</span>) =&gt; <span class="string">'\''</span>,
+                                    <span class="prelude-val">Some</span>(<span class="string">'"'</span>) =&gt; <span class="string">'"'</span>,
                                     <span class="prelude-val">Some</span>(escape) =&gt; {
-                                        <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;invalid escape &#39;\\{escape}&#39;&quot;</span>));
+                                        <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"invalid escape '\\{escape}'"</span>));
                                         <span class="kw">return </span><span class="prelude-val">None</span>;
                                     }
                                 };
@@ -1828,7 +1846,7 @@
                 SpirvType::Float(inst.operands[<span class="number">0</span>].unwrap_literal_int32()).def(<span class="self">self</span>.span(), <span class="self">self</span>)
             }
             Op::TypeStruct =&gt; {
-                <span class="self">self</span>.err(<span class="string">&quot;OpTypeStruct in asm! is not supported yet&quot;</span>);
+                <span class="self">self</span>.err(<span class="string">"OpTypeStruct in asm! is not supported yet"</span>);
                 <span class="kw">return</span>;
             }
             Op::TypeVector =&gt; SpirvType::Vector {
@@ -1842,7 +1860,7 @@
             }
             .def(<span class="self">self</span>.span(), <span class="self">self</span>),
             Op::TypeArray =&gt; {
-                <span class="self">self</span>.err(<span class="string">&quot;OpTypeArray in asm! is not supported yet&quot;</span>);
+                <span class="self">self</span>.err(<span class="string">"OpTypeArray in asm! is not supported yet"</span>);
                 <span class="kw">return</span>;
             }
             Op::TypeRuntimeArray =&gt; SpirvType::RuntimeArray {
@@ -1852,12 +1870,12 @@
             Op::TypePointer =&gt; {
                 <span class="kw">let </span>storage_class = inst.operands[<span class="number">0</span>].unwrap_storage_class();
                 <span class="kw">if </span>storage_class != StorageClass::Generic {
-                    <span class="self">self</span>.struct_err(<span class="string">&quot;TypePointer in asm! requires `Generic` storage class&quot;</span>)
-                        .note(<span class="macro">format!</span>(
-                            <span class="string">&quot;`{storage_class:?}` storage class was specified&quot;
+                    <span class="self">self</span>.struct_err(<span class="string">"TypePointer in asm! requires `Generic` storage class"</span>)
+                        .with_note(<span class="macro">format!</span>(
+                            <span class="string">"`{storage_class:?}` storage class was specified"
                         </span>))
-                        .help(<span class="macro">format!</span>(
-                            <span class="string">&quot;the storage class will be inferred automatically (e.g. to `{storage_class:?}`)&quot;
+                        .with_help(<span class="macro">format!</span>(
+                            <span class="string">"the storage class will be inferred automatically (e.g. to `{storage_class:?}`)"
                         </span>))
                         .emit();
                 }
@@ -1904,14 +1922,14 @@
 
             op =&gt; {
                 <span class="comment">// NOTE(eddyb) allowing the instruction to be added below avoids
-                // spurious &quot;`noreturn` requires a terminator at the end&quot; errors.
+                // spurious "`noreturn` requires a terminator at the end" errors.
                 </span><span class="kw">if let </span>Op::Return | Op::ReturnValue = op {
                     <span class="self">self</span>.struct_err(<span class="macro">format!</span>(
-                        <span class="string">&quot;using `Op{op:?}` to return from within `asm!` is disallowed&quot;
+                        <span class="string">"using `Op{op:?}` to return from within `asm!` is disallowed"
                     </span>))
-                    .note(
-                        <span class="string">&quot;resuming execution, without falling through the end \
-                        of the `asm!` block, is always undefined behavior&quot;</span>,
+                    .with_note(
+                        <span class="string">"resuming execution, without falling through the end \
+                        of the `asm!` block, is always undefined behavior"</span>,
                     )
                     .emit();
                 }
@@ -1931,7 +1949,7 @@
                     AsmBlock::End(terminator) =&gt; {
                         <span class="kw">if </span>op != Op::Label {
                             <span class="self">self</span>.err(<span class="macro">format!</span>(
-                                <span class="string">&quot;expected `OpLabel` after terminator `Op{terminator:?}`&quot;
+                                <span class="string">"expected `OpLabel` after terminator `Op{terminator:?}`"
                             </span>));
                         }
 
@@ -1953,16 +1971,16 @@
         }
     }
 
-    <span class="kw">fn </span>codegen_asm&lt;<span class="lifetime">&#39;a</span>&gt;(
+    <span class="kw">fn </span>codegen_asm&lt;<span class="lifetime">'a</span>&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        id_map: <span class="kw-2">&amp;mut </span>FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, Word&gt;,
+        id_map: <span class="kw-2">&amp;mut </span>FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, Word&gt;,
         defined_ids: <span class="kw-2">&amp;mut </span>FxHashSet&lt;Word&gt;,
         id_to_type_map: <span class="kw-2">&amp;mut </span>FxHashMap&lt;Word, Word&gt;,
         asm_block: <span class="kw-2">&amp;mut </span>AsmBlock,
-        <span class="kw-2">mut </span>tokens: <span class="kw">impl </span>Iterator&lt;Item = Token&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cx</span>, <span class="lifetime">&#39;tcx</span>&gt;&gt;,
+        <span class="kw-2">mut </span>tokens: <span class="kw">impl </span>Iterator&lt;Item = Token&lt;<span class="lifetime">'a</span>, <span class="lifetime">'cx</span>, <span class="lifetime">'tcx</span>&gt;&gt;,
     ) <span class="kw">where
-        </span><span class="lifetime">&#39;cx</span>: <span class="lifetime">&#39;a</span>,
-        <span class="lifetime">&#39;tcx</span>: <span class="lifetime">&#39;a</span>,
+        </span><span class="lifetime">'cx</span>: <span class="lifetime">'a</span>,
+        <span class="lifetime">'tcx</span>: <span class="lifetime">'a</span>,
     {
         <span class="kw">let </span><span class="kw-2">mut </span>first_token = <span class="kw">match </span>tokens.next() {
             <span class="prelude-val">Some</span>(tok) =&gt; tok,
@@ -1972,22 +1990,22 @@
         // %z = OpAdd %ty %x %y
         </span><span class="kw">let </span>out_register = <span class="kw">if match </span>first_token {
             Token::Placeholder(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
-            Token::Word(id_str) <span class="kw">if </span>id_str.starts_with(<span class="string">&#39;%&#39;</span>) =&gt; <span class="bool-val">true</span>,
+            Token::Word(id_str) <span class="kw">if </span>id_str.starts_with(<span class="string">'%'</span>) =&gt; <span class="bool-val">true</span>,
             Token::Word(<span class="kw">_</span>) | Token::String(<span class="kw">_</span>) | Token::Typeof(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
         } {
             <span class="kw">let </span>result_id = <span class="kw">match </span><span class="self">self</span>.parse_id_out(id_map, defined_ids, first_token) {
                 <span class="prelude-val">Some</span>(result_id) =&gt; result_id,
                 <span class="prelude-val">None </span>=&gt; <span class="kw">return</span>,
             };
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(Token::Word(<span class="string">&quot;=&quot;</span>)) = tokens.next() {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(Token::Word(<span class="string">"="</span>)) = tokens.next() {
             } <span class="kw">else </span>{
-                <span class="self">self</span>.err(<span class="string">&quot;expected equals after result id specifier&quot;</span>);
+                <span class="self">self</span>.err(<span class="string">"expected equals after result id specifier"</span>);
                 <span class="kw">return</span>;
             }
             first_token = <span class="kw">if let </span><span class="prelude-val">Some</span>(tok) = tokens.next() {
                 tok
             } <span class="kw">else </span>{
-                <span class="self">self</span>.err(<span class="string">&quot;expected instruction after equals&quot;</span>);
+                <span class="self">self</span>.err(<span class="string">"expected instruction after equals"</span>);
                 <span class="kw">return</span>;
             };
             <span class="prelude-val">Some</span>(result_id)
@@ -1997,23 +2015,23 @@
         <span class="kw">let </span>inst_name = <span class="kw">match </span>first_token {
             Token::Word(inst_name) =&gt; inst_name,
             Token::String(<span class="kw">_</span>) =&gt; {
-                <span class="self">self</span>.err(<span class="string">&quot;cannot use a string as an instruction&quot;</span>);
+                <span class="self">self</span>.err(<span class="string">"cannot use a string as an instruction"</span>);
                 <span class="kw">return</span>;
             }
             Token::Placeholder(<span class="kw">_</span>, span) | Token::Typeof(<span class="kw">_</span>, span, <span class="kw">_</span>) =&gt; {
                 <span class="self">self</span>.tcx
-                    .sess
-                    .span_err(span, <span class="string">&quot;cannot use a dynamic value as an instruction type&quot;</span>);
+                    .dcx()
+                    .span_err(span, <span class="string">"cannot use a dynamic value as an instruction type"</span>);
                 <span class="kw">return</span>;
             }
         };
         <span class="kw">let </span>inst_class = inst_name
-            .strip_prefix(<span class="string">&quot;Op&quot;</span>)
+            .strip_prefix(<span class="string">"Op"</span>)
             .and_then(|n| <span class="self">self</span>.instruction_table.table.get(n));
         <span class="kw">let </span>inst_class = <span class="kw">if let </span><span class="prelude-val">Some</span>(inst) = inst_class {
             inst
         } <span class="kw">else </span>{
-            <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown spirv instruction {inst_name}&quot;</span>));
+            <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown spirv instruction {inst_name}"</span>));
             <span class="kw">return</span>;
         };
         <span class="kw">let </span>result_id = <span class="kw">match </span>out_register {
@@ -2035,7 +2053,7 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(OutRegister::Place(place)) = out_register {
             <span class="self">self</span>.emit()
                 .store(
-                    place.llval.def(<span class="self">self</span>),
+                    place.val.llval.def(<span class="self">self</span>),
                     result_id.unwrap(),
                     <span class="prelude-val">None</span>,
                     std::iter::empty(),
@@ -2044,15 +2062,15 @@
         }
     }
 
-    <span class="kw">fn </span>parse_operands&lt;<span class="lifetime">&#39;a</span>&gt;(
+    <span class="kw">fn </span>parse_operands&lt;<span class="lifetime">'a</span>&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        id_map: <span class="kw-2">&amp;mut </span>FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, Word&gt;,
+        id_map: <span class="kw-2">&amp;mut </span>FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, Word&gt;,
         id_to_type_map: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, Word&gt;,
-        <span class="kw-2">mut </span>tokens: <span class="kw">impl </span>Iterator&lt;Item = Token&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cx</span>, <span class="lifetime">&#39;tcx</span>&gt;&gt;,
+        <span class="kw-2">mut </span>tokens: <span class="kw">impl </span>Iterator&lt;Item = Token&lt;<span class="lifetime">'a</span>, <span class="lifetime">'cx</span>, <span class="lifetime">'tcx</span>&gt;&gt;,
         instruction: <span class="kw-2">&amp;mut </span>dr::Instruction,
     ) <span class="kw">where
-        </span><span class="lifetime">&#39;cx</span>: <span class="lifetime">&#39;a</span>,
-        <span class="lifetime">&#39;tcx</span>: <span class="lifetime">&#39;a</span>,
+        </span><span class="lifetime">'cx</span>: <span class="lifetime">'a</span>,
+        <span class="lifetime">'tcx</span>: <span class="lifetime">'a</span>,
     {
         <span class="kw">let </span><span class="kw-2">mut </span>saw_id_result = <span class="bool-val">false</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>need_result_type_infer = <span class="bool-val">false</span>;
@@ -2069,7 +2087,7 @@
                 <span class="macro">assert_eq!</span>(quantifier, OperandQuantifier::One);
                 <span class="kw">if </span>instruction.result_id.is_none() {
                     <span class="self">self</span>.err(<span class="macro">format!</span>(
-                        <span class="string">&quot;instruction {} expects a result id&quot;</span>,
+                        <span class="string">"instruction {} expects a result id"</span>,
                         instruction.class.opname
                     ));
                 }
@@ -2080,14 +2098,14 @@
             <span class="kw">if </span>kind == OperandKind::IdResultType {
                 <span class="macro">assert_eq!</span>(quantifier, OperandQuantifier::One);
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(token) = tokens.next() {
-                    <span class="kw">if let </span>Token::Word(<span class="string">&quot;_&quot;</span>) = token {
+                    <span class="kw">if let </span>Token::Word(<span class="string">"_"</span>) = token {
                         need_result_type_infer = <span class="bool-val">true</span>;
                     } <span class="kw">else if let </span><span class="prelude-val">Some</span>(id) = <span class="self">self</span>.parse_id_in(id_map, token) {
                         instruction.result_type = <span class="prelude-val">Some</span>(id);
                     }
                 } <span class="kw">else </span>{
                     <span class="self">self</span>.err(<span class="macro">format!</span>(
-                        <span class="string">&quot;instruction {} expects a result type&quot;</span>,
+                        <span class="string">"instruction {} expects a result type"</span>,
                         instruction.class.opname
                     ));
                 }
@@ -2100,7 +2118,7 @@
                 OperandQuantifier::One =&gt; {
                     <span class="kw">if </span>!<span class="self">self</span>.parse_one_operand(id_map, instruction, kind, <span class="kw-2">&amp;mut </span>tokens) {
                         <span class="self">self</span>.err(<span class="macro">format!</span>(
-                            <span class="string">&quot;expected operand after instruction: {}&quot;</span>,
+                            <span class="string">"expected operand after instruction: {}"</span>,
                             instruction.class.opname
                         ));
                         <span class="kw">return</span>;
@@ -2108,7 +2126,7 @@
                 }
                 OperandQuantifier::ZeroOrOne =&gt; {
                     <span class="kw">let _ </span>= <span class="self">self</span>.parse_one_operand(id_map, instruction, kind, <span class="kw-2">&amp;mut </span>tokens);
-                    <span class="comment">// If this return false, well, it&#39;s optional, do nothing
+                    <span class="comment">// If this return false, well, it's optional, do nothing
                 </span>}
                 OperandQuantifier::ZeroOrMore =&gt; {
                     <span class="kw">while </span><span class="self">self</span>.parse_one_operand(id_map, instruction, kind, <span class="kw-2">&amp;mut </span>tokens) {}
@@ -2124,13 +2142,13 @@
 
         <span class="kw">if </span>!saw_id_result &amp;&amp; instruction.result_id.is_some() {
             <span class="self">self</span>.err(<span class="macro">format!</span>(
-                <span class="string">&quot;instruction {} does not expect a result id&quot;</span>,
+                <span class="string">"instruction {} does not expect a result id"</span>,
                 instruction.class.opname
             ));
         }
         <span class="kw">if </span>tokens.next().is_some() {
-            <span class="self">self</span>.tcx.sess.err(<span class="macro">format!</span>(
-                <span class="string">&quot;too many operands to instruction: {}&quot;</span>,
+            <span class="self">self</span>.tcx.dcx().err(<span class="macro">format!</span>(
+                <span class="string">"too many operands to instruction: {}"</span>,
                 instruction.class.opname
             ));
         }
@@ -2141,7 +2159,7 @@
             <span class="kw">match </span><span class="self">self</span>.infer_result_type(id_to_type_map, instruction) {
                 <span class="prelude-val">Some</span>(result_type) =&gt; instruction.result_type = <span class="prelude-val">Some</span>(result_type),
                 <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(
-                    <span class="string">&quot;instruction {} cannot have its result type inferred&quot;</span>,
+                    <span class="string">"instruction {} cannot have its result type inferred"</span>,
                     instruction.class.opname
                 )),
             }
@@ -2161,10 +2179,10 @@
         <span class="doccomment">/// Recursively match `ty` against `pat`, returning one of:
         /// * `Ok([None])`: `pat` matched but contained no type variables
         /// * `Ok([Some(var)])`: `pat` matched and `var` is the type variable
-        /// * `Err(Mismatch)`: `pat` didn&#39;t match or isn&#39;t supported right now
+        /// * `Err(Mismatch)`: `pat` didn't match or isn't supported right now
         </span><span class="kw">fn </span>match_ty_pat(
-            cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;_</span>&gt;,
-            pat: <span class="kw-2">&amp;</span>TyPat&lt;<span class="lifetime">&#39;_</span>&gt;,
+            cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'_</span>&gt;,
+            pat: <span class="kw-2">&amp;</span>TyPat&lt;<span class="lifetime">'_</span>&gt;,
             ty: Word,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;[<span class="prelude-ty">Option</span>&lt;Word&gt;; <span class="number">1</span>], Unapplicable&gt; {
             <span class="kw">match </span>pat {
@@ -2205,11 +2223,11 @@
 
         <span class="doccomment">/// Construct a type from `pat`, replacing `TyPat::Var(i)` with `ty_vars[i]`.
         /// `leftover_operands` is used for `IndexComposite` patterns, if any exist.
-        /// If the pattern isn&#39;t constraining enough to determine an unique type,
+        /// If the pattern isn't constraining enough to determine an unique type,
         /// `Err(Ambiguous)` is returned instead.
         </span><span class="kw">fn </span>subst_ty_pat(
-            cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;_</span>&gt;,
-            pat: <span class="kw-2">&amp;</span>TyPat&lt;<span class="lifetime">&#39;_</span>&gt;,
+            cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'_</span>&gt;,
+            pat: <span class="kw-2">&amp;</span>TyPat&lt;<span class="lifetime">'_</span>&gt;,
             ty_vars: <span class="kw-2">&amp;</span>[<span class="prelude-ty">Option</span>&lt;Word&gt;],
             leftover_operands: <span class="kw-2">&amp;</span>[dr::Operand],
         ) -&gt; <span class="prelude-ty">Result</span>&lt;Word, Ambiguous&gt; {
@@ -2303,7 +2321,7 @@
                     <span class="kw">match </span><span class="kw-2">*</span>combined_var {
                         <span class="prelude-val">Some</span>(combined_var) =&gt; {
                             <span class="comment">// FIXME(eddyb) this could use some error reporting
-                            // (it&#39;s a type mismatch), although we could also
+                            // (it's a type mismatch), although we could also
                             // just use the first type and let validation take
                             // care of the mismatch
                             </span><span class="kw">if </span>var != combined_var {
@@ -2345,49 +2363,49 @@
             )) =&gt; {}
             <span class="kw">_ </span>=&gt; {
                 <span class="self">self</span>.tcx
-                    .sess
-                    .span_err(span, <span class="macro">format!</span>(<span class="string">&quot;invalid register: {reg}&quot;</span>));
+                    .dcx()
+                    .span_err(span, <span class="macro">format!</span>(<span class="string">"invalid register: {reg}"</span>));
             }
         }
     }
 
-    <span class="kw">fn </span>parse_id_out&lt;<span class="lifetime">&#39;a</span>&gt;(
+    <span class="kw">fn </span>parse_id_out&lt;<span class="lifetime">'a</span>&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        id_map: <span class="kw-2">&amp;mut </span>FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, Word&gt;,
+        id_map: <span class="kw-2">&amp;mut </span>FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, Word&gt;,
         defined_ids: <span class="kw-2">&amp;mut </span>FxHashSet&lt;Word&gt;,
-        token: Token&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cx</span>, <span class="lifetime">&#39;tcx</span>&gt;,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;OutRegister&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt; {
+        token: Token&lt;<span class="lifetime">'a</span>, <span class="lifetime">'cx</span>, <span class="lifetime">'tcx</span>&gt;,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;OutRegister&lt;<span class="lifetime">'tcx</span>&gt;&gt; {
         <span class="kw">match </span>token {
             Token::Word(word) =&gt; {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = word.strip_prefix(<span class="string">&#39;%&#39;</span>) {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = word.strip_prefix(<span class="string">'%'</span>) {
                     <span class="prelude-val">Some</span>(OutRegister::Regular({
                         <span class="kw">let </span>num = <span class="kw-2">*</span>id_map.entry(id).or_insert_with(|| <span class="self">self</span>.emit().id());
                         <span class="kw">if </span>!defined_ids.insert(num) {
-                            <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;%{id} is defined more than once&quot;</span>));
+                            <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"%{id} is defined more than once"</span>));
                         }
                         num
                     }))
                 } <span class="kw">else </span>{
-                    <span class="self">self</span>.err(<span class="string">&quot;expected ID&quot;</span>);
+                    <span class="self">self</span>.err(<span class="string">"expected ID"</span>);
                     <span class="prelude-val">None
                 </span>}
             }
             Token::String(<span class="kw">_</span>) =&gt; {
-                <span class="self">self</span>.err(<span class="string">&quot;expected ID, not string&quot;</span>);
+                <span class="self">self</span>.err(<span class="string">"expected ID, not string"</span>);
                 <span class="prelude-val">None
             </span>}
             Token::Typeof(<span class="kw">_</span>, span, <span class="kw">_</span>) =&gt; {
                 <span class="self">self</span>.tcx
-                    .sess
-                    .span_err(span, <span class="string">&quot;cannot assign to a typeof expression&quot;</span>);
+                    .dcx()
+                    .span_err(span, <span class="string">"cannot assign to a typeof expression"</span>);
                 <span class="prelude-val">None
             </span>}
             Token::Placeholder(hole, span) =&gt; <span class="kw">match </span>hole {
                 InlineAsmOperandRef::In { reg, value: <span class="kw">_ </span>} =&gt; {
                     <span class="self">self</span>.check_reg(span, reg);
                     <span class="self">self</span>.tcx
-                        .sess
-                        .span_err(span, <span class="string">&quot;in register cannot be assigned to&quot;</span>);
+                        .dcx()
+                        .span_err(span, <span class="string">"in register cannot be assigned to"</span>);
                     <span class="prelude-val">None
                 </span>}
                 InlineAsmOperandRef::Out {
@@ -2399,7 +2417,7 @@
                     <span class="kw">match </span>place {
                         <span class="prelude-val">Some</span>(place) =&gt; <span class="prelude-val">Some</span>(OutRegister::Place(<span class="kw-2">*</span>place)),
                         <span class="prelude-val">None </span>=&gt; {
-                            <span class="self">self</span>.tcx.sess.span_err(span, <span class="string">&quot;missing place for register&quot;</span>);
+                            <span class="self">self</span>.tcx.dcx().span_err(span, <span class="string">"missing place for register"</span>);
                             <span class="prelude-val">None
                         </span>}
                     }
@@ -2414,49 +2432,55 @@
                     <span class="kw">match </span>out_place {
                         <span class="prelude-val">Some</span>(out_place) =&gt; <span class="prelude-val">Some</span>(OutRegister::Place(<span class="kw-2">*</span>out_place)),
                         <span class="prelude-val">None </span>=&gt; {
-                            <span class="self">self</span>.tcx.sess.span_err(span, <span class="string">&quot;missing place for register&quot;</span>);
+                            <span class="self">self</span>.tcx.dcx().span_err(span, <span class="string">"missing place for register"</span>);
                             <span class="prelude-val">None
                         </span>}
                     }
                 }
                 InlineAsmOperandRef::Const { string: <span class="kw">_ </span>} =&gt; {
                     <span class="self">self</span>.tcx
-                        .sess
-                        .span_err(span, <span class="string">&quot;cannot write to const asm argument&quot;</span>);
+                        .dcx()
+                        .span_err(span, <span class="string">"cannot write to const asm argument"</span>);
                     <span class="prelude-val">None
                 </span>}
                 InlineAsmOperandRef::SymFn { instance: <span class="kw">_ </span>} =&gt; {
                     <span class="self">self</span>.tcx
-                        .sess
-                        .span_err(span, <span class="string">&quot;cannot write to function asm argument&quot;</span>);
+                        .dcx()
+                        .span_err(span, <span class="string">"cannot write to function asm argument"</span>);
                     <span class="prelude-val">None
                 </span>}
                 InlineAsmOperandRef::SymStatic { def_id: <span class="kw">_ </span>} =&gt; {
                     <span class="self">self</span>.tcx
-                        .sess
-                        .span_err(span, <span class="string">&quot;cannot write to static variable asm argument&quot;</span>);
+                        .dcx()
+                        .span_err(span, <span class="string">"cannot write to static variable asm argument"</span>);
+                    <span class="prelude-val">None
+                </span>}
+                InlineAsmOperandRef::Label { label: <span class="kw">_ </span>} =&gt; {
+                    <span class="self">self</span>.tcx
+                        .dcx()
+                        .span_err(span, <span class="string">"cannot write to label asm argument"</span>);
                     <span class="prelude-val">None
                 </span>}
             },
         }
     }
 
-    <span class="kw">fn </span>parse_id_in&lt;<span class="lifetime">&#39;a</span>&gt;(
+    <span class="kw">fn </span>parse_id_in&lt;<span class="lifetime">'a</span>&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        id_map: <span class="kw-2">&amp;mut </span>FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, Word&gt;,
-        token: Token&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cx</span>, <span class="lifetime">&#39;tcx</span>&gt;,
+        id_map: <span class="kw-2">&amp;mut </span>FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, Word&gt;,
+        token: Token&lt;<span class="lifetime">'a</span>, <span class="lifetime">'cx</span>, <span class="lifetime">'tcx</span>&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;Word&gt; {
         <span class="kw">match </span>token {
             Token::Word(word) =&gt; {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = word.strip_prefix(<span class="string">&#39;%&#39;</span>) {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = word.strip_prefix(<span class="string">'%'</span>) {
                     <span class="prelude-val">Some</span>(<span class="kw-2">*</span>id_map.entry(id).or_insert_with(|| <span class="self">self</span>.emit().id()))
                 } <span class="kw">else </span>{
-                    <span class="self">self</span>.err(<span class="string">&quot;expected ID&quot;</span>);
+                    <span class="self">self</span>.err(<span class="string">"expected ID"</span>);
                     <span class="prelude-val">None
                 </span>}
             }
             Token::String(<span class="kw">_</span>) =&gt; {
-                <span class="self">self</span>.err(<span class="string">&quot;expected ID, not string&quot;</span>);
+                <span class="self">self</span>.err(<span class="string">"expected ID, not string"</span>);
                 <span class="prelude-val">None
             </span>}
             Token::Typeof(hole, span, kind) =&gt; <span class="kw">match </span>hole {
@@ -2468,10 +2492,10 @@
                         TypeofKind::Dereference =&gt; <span class="kw">match </span><span class="self">self</span>.lookup_type(ty) {
                             SpirvType::Pointer { pointee } =&gt; pointee,
                             other =&gt; {
-                                <span class="self">self</span>.tcx.sess.span_err(
+                                <span class="self">self</span>.tcx.dcx().span_err(
                                     span,
                                     <span class="macro">format!</span>(
-                                        <span class="string">&quot;cannot use typeof* on non-pointer type: {}&quot;</span>,
+                                        <span class="string">"cannot use typeof* on non-pointer type: {}"</span>,
                                         other.debug(ty, <span class="self">self</span>)
                                     ),
                                 );
@@ -2487,14 +2511,14 @@
                 } =&gt; {
                     <span class="self">self</span>.check_reg(span, reg);
                     <span class="kw">match </span>place {
-                        <span class="prelude-val">Some</span>(place) =&gt; <span class="kw">match </span><span class="self">self</span>.lookup_type(place.llval.ty) {
+                        <span class="prelude-val">Some</span>(place) =&gt; <span class="kw">match </span><span class="self">self</span>.lookup_type(place.val.llval.ty) {
                             SpirvType::Pointer { pointee } =&gt; <span class="prelude-val">Some</span>(pointee),
                             other =&gt; {
-                                <span class="self">self</span>.tcx.sess.span_err(
+                                <span class="self">self</span>.tcx.dcx().span_err(
                                     span,
                                     <span class="macro">format!</span>(
-                                        <span class="string">&quot;out register type not pointer: {}&quot;</span>,
-                                        other.debug(place.llval.ty, <span class="self">self</span>)
+                                        <span class="string">"out register type not pointer: {}"</span>,
+                                        other.debug(place.val.llval.ty, <span class="self">self</span>)
                                     ),
                                 );
                                 <span class="prelude-val">None
@@ -2502,8 +2526,8 @@
                         },
                         <span class="prelude-val">None </span>=&gt; {
                             <span class="self">self</span>.tcx
-                                .sess
-                                .span_err(span, <span class="string">&quot;missing place for out register typeof&quot;</span>);
+                                .dcx()
+                                .span_err(span, <span class="string">"missing place for out register typeof"</span>);
                             <span class="prelude-val">None
                         </span>}
                     }
@@ -2519,21 +2543,27 @@
                 }
                 InlineAsmOperandRef::Const { string: <span class="kw">_ </span>} =&gt; {
                     <span class="self">self</span>.tcx
-                        .sess
-                        .span_err(span, <span class="string">&quot;cannot take the type of a const asm argument&quot;</span>);
+                        .dcx()
+                        .span_err(span, <span class="string">"cannot take the type of a const asm argument"</span>);
                     <span class="prelude-val">None
                 </span>}
                 InlineAsmOperandRef::SymFn { instance: <span class="kw">_ </span>} =&gt; {
                     <span class="self">self</span>.tcx
-                        .sess
-                        .span_err(span, <span class="string">&quot;cannot take the type of a function asm argument&quot;</span>);
+                        .dcx()
+                        .span_err(span, <span class="string">"cannot take the type of a function asm argument"</span>);
                     <span class="prelude-val">None
                 </span>}
                 InlineAsmOperandRef::SymStatic { def_id: <span class="kw">_ </span>} =&gt; {
-                    <span class="self">self</span>.tcx.sess.span_err(
+                    <span class="self">self</span>.tcx.dcx().span_err(
                         span,
-                        <span class="string">&quot;cannot take the type of a static variable asm argument&quot;</span>,
+                        <span class="string">"cannot take the type of a static variable asm argument"</span>,
                     );
+                    <span class="prelude-val">None
+                </span>}
+                InlineAsmOperandRef::Label { label: <span class="kw">_ </span>} =&gt; {
+                    <span class="self">self</span>.tcx
+                        .dcx()
+                        .span_err(span, <span class="string">"cannot take the type of a label asm argument"</span>);
                     <span class="prelude-val">None
                 </span>}
             },
@@ -2549,8 +2579,8 @@
                 } =&gt; {
                     <span class="self">self</span>.check_reg(span, reg);
                     <span class="self">self</span>.tcx
-                        .sess
-                        .span_err(span, <span class="string">&quot;out register cannot be used as a value&quot;</span>);
+                        .dcx()
+                        .span_err(span, <span class="string">"out register cannot be used as a value"</span>);
                     <span class="prelude-val">None
                 </span>}
                 InlineAsmOperandRef::InOut {
@@ -2564,36 +2594,42 @@
                 }
                 InlineAsmOperandRef::Const { string: <span class="kw">_ </span>} =&gt; {
                     <span class="self">self</span>.tcx
-                        .sess
-                        .span_err(span, <span class="string">&quot;const asm argument not supported yet&quot;</span>);
+                        .dcx()
+                        .span_err(span, <span class="string">"const asm argument not supported yet"</span>);
                     <span class="prelude-val">None
                 </span>}
                 InlineAsmOperandRef::SymFn { instance: <span class="kw">_ </span>} =&gt; {
                     <span class="self">self</span>.tcx
-                        .sess
-                        .span_err(span, <span class="string">&quot;function asm argument not supported yet&quot;</span>);
+                        .dcx()
+                        .span_err(span, <span class="string">"function asm argument not supported yet"</span>);
                     <span class="prelude-val">None
                 </span>}
                 InlineAsmOperandRef::SymStatic { def_id: <span class="kw">_ </span>} =&gt; {
                     <span class="self">self</span>.tcx
-                        .sess
-                        .span_err(span, <span class="string">&quot;static variable asm argument not supported yet&quot;</span>);
+                        .dcx()
+                        .span_err(span, <span class="string">"static variable asm argument not supported yet"</span>);
+                    <span class="prelude-val">None
+                </span>}
+                InlineAsmOperandRef::Label { label: <span class="kw">_ </span>} =&gt; {
+                    <span class="self">self</span>.tcx
+                        .dcx()
+                        .span_err(span, <span class="string">"label asm argument not supported yet"</span>);
                     <span class="prelude-val">None
                 </span>}
             },
         }
     }
 
-    <span class="kw">fn </span>parse_one_operand&lt;<span class="lifetime">&#39;a</span>&gt;(
+    <span class="kw">fn </span>parse_one_operand&lt;<span class="lifetime">'a</span>&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        id_map: <span class="kw-2">&amp;mut </span>FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, Word&gt;,
+        id_map: <span class="kw-2">&amp;mut </span>FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, Word&gt;,
         inst: <span class="kw-2">&amp;mut </span>dr::Instruction,
         kind: OperandKind,
-        tokens: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Iterator&lt;Item = Token&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;cx</span>, <span class="lifetime">&#39;tcx</span>&gt;&gt;,
+        tokens: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Iterator&lt;Item = Token&lt;<span class="lifetime">'a</span>, <span class="lifetime">'cx</span>, <span class="lifetime">'tcx</span>&gt;&gt;,
     ) -&gt; bool
     <span class="kw">where
-        </span><span class="lifetime">&#39;cx</span>: <span class="lifetime">&#39;a</span>,
-        <span class="lifetime">&#39;tcx</span>: <span class="lifetime">&#39;a</span>,
+        </span><span class="lifetime">'cx</span>: <span class="lifetime">'a</span>,
+        <span class="lifetime">'tcx</span>: <span class="lifetime">'a</span>,
     {
         <span class="kw">let </span>token = <span class="kw">match </span>tokens.next() {
             <span class="prelude-val">Some</span>(tok) =&gt; tok,
@@ -2605,7 +2641,7 @@
         };
         <span class="kw">match </span>(kind, word) {
             (OperandKind::IdResultType | OperandKind::IdResult, <span class="kw">_</span>) =&gt; {
-                <span class="macro">bug!</span>(<span class="string">&quot;should be handled by parse_operands&quot;</span>);
+                <span class="macro">bug!</span>(<span class="string">"should be handled by parse_operands"</span>);
             }
             (OperandKind::IdMemorySemantics, <span class="kw">_</span>) =&gt; {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = <span class="self">self</span>.parse_id_in(id_map, token) {
@@ -2625,7 +2661,7 @@
 
             (OperandKind::LiteralInteger, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(v) =&gt; inst.operands.push(dr::Operand::LiteralInt32(v)),
-                <span class="prelude-val">Err</span>(e) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;invalid integer: {e}&quot;</span>)),
+                <span class="prelude-val">Err</span>(e) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"invalid integer: {e}"</span>)),
             },
             (OperandKind::LiteralString, <span class="kw">_</span>) =&gt; {
                 <span class="kw">if let </span>Token::String(value) = token {
@@ -2635,7 +2671,7 @@
             (OperandKind::LiteralContextDependentNumber, <span class="prelude-val">Some</span>(word)) =&gt; {
                 <span class="macro">assert!</span>(<span class="macro">matches!</span>(inst.class.opcode, Op::Constant | Op::SpecConstant));
                 <span class="kw">let </span>ty = inst.result_type.unwrap();
-                <span class="kw">fn </span>parse(ty: SpirvType&lt;<span class="lifetime">&#39;_</span>&gt;, w: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;dr::Operand, String&gt; {
+                <span class="kw">fn </span>parse(ty: SpirvType&lt;<span class="lifetime">'_</span>&gt;, w: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;dr::Operand, String&gt; {
                     <span class="kw">fn </span>fmt(x: <span class="kw">impl </span>ToString) -&gt; String {
                         x.to_string()
                     }
@@ -2670,7 +2706,7 @@
                         SpirvType::Float(<span class="number">64</span>) =&gt; {
                             dr::Operand::LiteralFloat64(w.parse::&lt;f64&gt;().map_err(fmt)<span class="question-mark">?</span>)
                         }
-                        <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">&quot;expected number literal in OpConstant&quot;</span>.to_string()),
+                        <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"expected number literal in OpConstant"</span>.to_string()),
                     })
                 }
                 <span class="kw">match </span>parse(<span class="self">self</span>.lookup_type(ty), word) {
@@ -2680,7 +2716,7 @@
             }
             (OperandKind::LiteralExtInstInteger, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(v) =&gt; inst.operands.push(dr::Operand::LiteralExtInstInteger(v)),
-                <span class="prelude-val">Err</span>(e) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;invalid integer: {e}&quot;</span>)),
+                <span class="prelude-val">Err</span>(e) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"invalid integer: {e}"</span>)),
             },
             (OperandKind::LiteralSpecConstantOpInteger, <span class="prelude-val">Some</span>(word)) =&gt; {
                 <span class="kw">match </span><span class="self">self</span>.instruction_table.table.get(word) {
@@ -2688,11 +2724,11 @@
                         inst.operands
                             .push(dr::Operand::LiteralSpecConstantOpInteger(v.opcode));
                     }
-                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="string">&quot;invalid instruction in OpSpecConstantOp&quot;</span>),
+                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="string">"invalid instruction in OpSpecConstantOp"</span>),
                 }
             }
             (OperandKind::PairLiteralIntegerIdRef, <span class="kw">_</span>) =&gt; {
-                <span class="self">self</span>.err(<span class="string">&quot;PairLiteralIntegerIdRef not supported yet&quot;</span>);
+                <span class="self">self</span>.err(<span class="string">"PairLiteralIntegerIdRef not supported yet"</span>);
             }
             (OperandKind::PairIdRefLiteralInteger, <span class="kw">_</span>) =&gt; {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = <span class="self">self</span>.parse_id_in(id_map, token) {
@@ -2701,26 +2737,26 @@
                         <span class="prelude-val">Some</span>(Token::Word(word)) =&gt; <span class="kw">match </span>word.parse() {
                             <span class="prelude-val">Ok</span>(v) =&gt; inst.operands.push(dr::Operand::LiteralInt32(v)),
                             <span class="prelude-val">Err</span>(e) =&gt; {
-                                <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;invalid integer: {e}&quot;</span>));
+                                <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"invalid integer: {e}"</span>));
                             }
                         },
                         <span class="prelude-val">Some</span>(Token::String(<span class="kw">_</span>)) =&gt; {
-                            <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;expected a literal, not a string for a {kind:?}&quot;</span>));
+                            <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"expected a literal, not a string for a {kind:?}"</span>));
                         }
                         <span class="prelude-val">Some</span>(Token::Placeholder(<span class="kw">_</span>, span)) =&gt; {
-                            <span class="self">self</span>.tcx.sess.span_err(
+                            <span class="self">self</span>.tcx.dcx().span_err(
                                 span,
-                                <span class="macro">format!</span>(<span class="string">&quot;expected a literal, not a dynamic value for a {kind:?}&quot;</span>),
+                                <span class="macro">format!</span>(<span class="string">"expected a literal, not a dynamic value for a {kind:?}"</span>),
                             );
                         }
                         <span class="prelude-val">Some</span>(Token::Typeof(<span class="kw">_</span>, span, <span class="kw">_</span>)) =&gt; {
-                            <span class="self">self</span>.tcx.sess.span_err(
+                            <span class="self">self</span>.tcx.dcx().span_err(
                                 span,
-                                <span class="macro">format!</span>(<span class="string">&quot;expected a literal, not a type for a {kind:?}&quot;</span>),
+                                <span class="macro">format!</span>(<span class="string">"expected a literal, not a type for a {kind:?}"</span>),
                             );
                         }
                         <span class="prelude-val">None </span>=&gt; {
-                            <span class="self">self</span>.err(<span class="string">&quot;expected operand after instruction&quot;</span>);
+                            <span class="self">self</span>.err(<span class="string">"expected operand after instruction"</span>);
                         }
                     }
                 }
@@ -2734,7 +2770,7 @@
                                 inst.operands.push(dr::Operand::IdRef(id));
                             }
                         }
-                        <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="string">&quot;expected operand after instruction&quot;</span>),
+                        <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="string">"expected operand after instruction"</span>),
                     }
                 }
             }
@@ -2742,183 +2778,183 @@
             (OperandKind::ImageOperands, <span class="prelude-val">Some</span>(word)) =&gt; {
                 <span class="kw">match </span>parse_bitflags_operand(IMAGE_OPERANDS, word) {
                     <span class="prelude-val">Some</span>(x) =&gt; inst.operands.push(dr::Operand::ImageOperands(x)),
-                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;Unknown ImageOperands {word}&quot;</span>)),
+                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"Unknown ImageOperands {word}"</span>)),
                 }
             }
             (OperandKind::FPFastMathMode, <span class="prelude-val">Some</span>(word)) =&gt; {
                 <span class="kw">match </span>parse_bitflags_operand(FP_FAST_MATH_MODE, word) {
                     <span class="prelude-val">Some</span>(x) =&gt; inst.operands.push(dr::Operand::FPFastMathMode(x)),
-                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;Unknown FPFastMathMode {word}&quot;</span>)),
+                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"Unknown FPFastMathMode {word}"</span>)),
                 }
             }
             (OperandKind::SelectionControl, <span class="prelude-val">Some</span>(word)) =&gt; {
                 <span class="kw">match </span>parse_bitflags_operand(SELECTION_CONTROL, word) {
                     <span class="prelude-val">Some</span>(x) =&gt; inst.operands.push(dr::Operand::SelectionControl(x)),
-                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;Unknown SelectionControl {word}&quot;</span>)),
+                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"Unknown SelectionControl {word}"</span>)),
                 }
             }
             (OperandKind::LoopControl, <span class="prelude-val">Some</span>(word)) =&gt; {
                 <span class="kw">match </span>parse_bitflags_operand(LOOP_CONTROL, word) {
                     <span class="prelude-val">Some</span>(x) =&gt; inst.operands.push(dr::Operand::LoopControl(x)),
-                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;Unknown LoopControl {word}&quot;</span>)),
+                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"Unknown LoopControl {word}"</span>)),
                 }
             }
             (OperandKind::FunctionControl, <span class="prelude-val">Some</span>(word)) =&gt; {
                 <span class="kw">match </span>parse_bitflags_operand(FUNCTION_CONTROL, word) {
                     <span class="prelude-val">Some</span>(x) =&gt; inst.operands.push(dr::Operand::FunctionControl(x)),
-                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;Unknown FunctionControl {word}&quot;</span>)),
+                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"Unknown FunctionControl {word}"</span>)),
                 }
             }
             (OperandKind::MemorySemantics, <span class="prelude-val">Some</span>(word)) =&gt; {
                 <span class="kw">match </span>parse_bitflags_operand(MEMORY_SEMANTICS, word) {
                     <span class="prelude-val">Some</span>(x) =&gt; inst.operands.push(dr::Operand::MemorySemantics(x)),
-                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;Unknown MemorySemantics {word}&quot;</span>)),
+                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"Unknown MemorySemantics {word}"</span>)),
                 }
             }
             (OperandKind::MemoryAccess, <span class="prelude-val">Some</span>(word)) =&gt; {
                 <span class="kw">match </span>parse_bitflags_operand(MEMORY_ACCESS, word) {
                     <span class="prelude-val">Some</span>(x) =&gt; inst.operands.push(dr::Operand::MemoryAccess(x)),
-                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;Unknown MemoryAccess {word}&quot;</span>)),
+                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"Unknown MemoryAccess {word}"</span>)),
                 }
             }
             (OperandKind::KernelProfilingInfo, <span class="prelude-val">Some</span>(word)) =&gt; {
                 <span class="kw">match </span>parse_bitflags_operand(KERNEL_PROFILING_INFO, word) {
                     <span class="prelude-val">Some</span>(x) =&gt; inst.operands.push(dr::Operand::KernelProfilingInfo(x)),
-                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;Unknown KernelProfilingInfo {word}&quot;</span>)),
+                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"Unknown KernelProfilingInfo {word}"</span>)),
                 }
             }
             (OperandKind::RayFlags, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>parse_bitflags_operand(RAY_FLAGS, word) {
                 <span class="prelude-val">Some</span>(x) =&gt; inst.operands.push(dr::Operand::RayFlags(x)),
-                <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;Unknown RayFlags {word}&quot;</span>)),
+                <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"Unknown RayFlags {word}"</span>)),
             },
             (OperandKind::FragmentShadingRate, <span class="prelude-val">Some</span>(word)) =&gt; {
                 <span class="kw">match </span>parse_bitflags_operand(FRAGMENT_SHADING_RATE, word) {
                     <span class="prelude-val">Some</span>(x) =&gt; inst.operands.push(dr::Operand::FragmentShadingRate(x)),
-                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;Unknown FragmentShadingRate {word}&quot;</span>)),
+                    <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"Unknown FragmentShadingRate {word}"</span>)),
                 }
             }
 
             (OperandKind::SourceLanguage, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::SourceLanguage(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;Unknown SourceLanguage {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"Unknown SourceLanguage {word}"</span>)),
             },
             (OperandKind::ExecutionModel, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::ExecutionModel(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown ExecutionModel {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown ExecutionModel {word}"</span>)),
             },
             (OperandKind::AddressingModel, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::AddressingModel(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown AddressingModel {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown AddressingModel {word}"</span>)),
             },
             (OperandKind::MemoryModel, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::MemoryModel(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown MemoryModel {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown MemoryModel {word}"</span>)),
             },
             (OperandKind::ExecutionMode, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::ExecutionMode(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown ExecutionMode {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown ExecutionMode {word}"</span>)),
             },
             (OperandKind::StorageClass, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::StorageClass(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown StorageClass {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown StorageClass {word}"</span>)),
             },
             (OperandKind::Dim, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::Dim(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown Dim {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown Dim {word}"</span>)),
             },
             (OperandKind::SamplerAddressingMode, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::SamplerAddressingMode(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown SamplerAddressingMode {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown SamplerAddressingMode {word}"</span>)),
             },
             (OperandKind::SamplerFilterMode, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::SamplerFilterMode(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown SamplerFilterMode {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown SamplerFilterMode {word}"</span>)),
             },
             (OperandKind::ImageFormat, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::ImageFormat(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown ImageFormat {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown ImageFormat {word}"</span>)),
             },
             (OperandKind::ImageChannelOrder, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::ImageChannelOrder(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown ImageChannelOrder {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown ImageChannelOrder {word}"</span>)),
             },
             (OperandKind::ImageChannelDataType, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::ImageChannelDataType(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown ImageChannelDataType {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown ImageChannelDataType {word}"</span>)),
             },
             (OperandKind::FPRoundingMode, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::FPRoundingMode(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown FPRoundingMode {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown FPRoundingMode {word}"</span>)),
             },
             (OperandKind::LinkageType, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::LinkageType(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown LinkageType {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown LinkageType {word}"</span>)),
             },
             (OperandKind::AccessQualifier, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::AccessQualifier(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown AccessQualifier {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown AccessQualifier {word}"</span>)),
             },
             (OperandKind::FunctionParameterAttribute, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst
                     .operands
                     .push(dr::Operand::FunctionParameterAttribute(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown FunctionParameterAttribute {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown FunctionParameterAttribute {word}"</span>)),
             },
             (OperandKind::Decoration, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::Decoration(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown Decoration {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown Decoration {word}"</span>)),
             },
             (OperandKind::BuiltIn, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::BuiltIn(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown BuiltIn {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown BuiltIn {word}"</span>)),
             },
             (OperandKind::Scope, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::Scope(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown Scope {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown Scope {word}"</span>)),
             },
             (OperandKind::GroupOperation, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::GroupOperation(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown GroupOperation {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown GroupOperation {word}"</span>)),
             },
             (OperandKind::KernelEnqueueFlags, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::KernelEnqueueFlags(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown KernelEnqueueFlags {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown KernelEnqueueFlags {word}"</span>)),
             },
             (OperandKind::Capability, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::Capability(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown Capability {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown Capability {word}"</span>)),
             },
             (OperandKind::RayQueryIntersection, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::RayQueryIntersection(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown RayQueryIntersection {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown RayQueryIntersection {word}"</span>)),
             },
             (OperandKind::RayQueryCommittedIntersectionType, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst
                     .operands
                     .push(dr::Operand::RayQueryCommittedIntersectionType(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown RayQueryCommittedIntersectionType {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown RayQueryCommittedIntersectionType {word}"</span>)),
             },
             (OperandKind::RayQueryCandidateIntersectionType, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst
                     .operands
                     .push(dr::Operand::RayQueryCandidateIntersectionType(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;unknown RayQueryCandidateIntersectionType {word}&quot;</span>)),
+                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown RayQueryCandidateIntersectionType {word}"</span>)),
             },
             (kind, <span class="prelude-val">None</span>) =&gt; <span class="kw">match </span>token {
                 Token::Word(<span class="kw">_</span>) =&gt; <span class="macro">bug!</span>(),
                 Token::String(<span class="kw">_</span>) =&gt; {
-                    <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">&quot;expected a literal, not a string for a {kind:?}&quot;</span>));
+                    <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"expected a literal, not a string for a {kind:?}"</span>));
                 }
                 Token::Placeholder(<span class="kw">_</span>, span) =&gt; {
-                    <span class="self">self</span>.tcx.sess.span_err(
+                    <span class="self">self</span>.tcx.dcx().span_err(
                         span,
-                        <span class="macro">format!</span>(<span class="string">&quot;expected a literal, not a dynamic value for a {kind:?}&quot;</span>),
+                        <span class="macro">format!</span>(<span class="string">"expected a literal, not a dynamic value for a {kind:?}"</span>),
                     );
                 }
                 Token::Typeof(<span class="kw">_</span>, span, <span class="kw">_</span>) =&gt; {
-                    <span class="self">self</span>.tcx.sess.span_err(
+                    <span class="self">self</span>.tcx.dcx().span_err(
                         span,
-                        <span class="macro">format!</span>(<span class="string">&quot;expected a literal, not a type for a {kind:?}&quot;</span>),
+                        <span class="macro">format!</span>(<span class="string">"expected a literal, not a type for a {kind:?}"</span>),
                     );
                 }
             },
@@ -2928,164 +2964,164 @@
 }
 
 <span class="kw">pub const </span>IMAGE_OPERANDS: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, ImageOperands)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;None&quot;</span>, ImageOperands::NONE),
-    (<span class="string">&quot;Bias&quot;</span>, ImageOperands::BIAS),
-    (<span class="string">&quot;Lod&quot;</span>, ImageOperands::LOD),
-    (<span class="string">&quot;Grad&quot;</span>, ImageOperands::GRAD),
-    (<span class="string">&quot;ConstOffset&quot;</span>, ImageOperands::CONST_OFFSET),
-    (<span class="string">&quot;Offset&quot;</span>, ImageOperands::OFFSET),
-    (<span class="string">&quot;ConstOffsets&quot;</span>, ImageOperands::CONST_OFFSETS),
-    (<span class="string">&quot;Sample&quot;</span>, ImageOperands::SAMPLE),
-    (<span class="string">&quot;MinLod&quot;</span>, ImageOperands::MIN_LOD),
-    (<span class="string">&quot;MakeTexelAvailable&quot;</span>, ImageOperands::MAKE_TEXEL_AVAILABLE),
+    (<span class="string">"None"</span>, ImageOperands::NONE),
+    (<span class="string">"Bias"</span>, ImageOperands::BIAS),
+    (<span class="string">"Lod"</span>, ImageOperands::LOD),
+    (<span class="string">"Grad"</span>, ImageOperands::GRAD),
+    (<span class="string">"ConstOffset"</span>, ImageOperands::CONST_OFFSET),
+    (<span class="string">"Offset"</span>, ImageOperands::OFFSET),
+    (<span class="string">"ConstOffsets"</span>, ImageOperands::CONST_OFFSETS),
+    (<span class="string">"Sample"</span>, ImageOperands::SAMPLE),
+    (<span class="string">"MinLod"</span>, ImageOperands::MIN_LOD),
+    (<span class="string">"MakeTexelAvailable"</span>, ImageOperands::MAKE_TEXEL_AVAILABLE),
     (
-        <span class="string">&quot;MakeTexelAvailableKHR&quot;</span>,
+        <span class="string">"MakeTexelAvailableKHR"</span>,
         ImageOperands::MAKE_TEXEL_AVAILABLE_KHR,
     ),
-    (<span class="string">&quot;MakeTexelVisible&quot;</span>, ImageOperands::MAKE_TEXEL_VISIBLE),
-    (<span class="string">&quot;MakeTexelVisibleKHR&quot;</span>, ImageOperands::MAKE_TEXEL_VISIBLE_KHR),
-    (<span class="string">&quot;NonPrivateTexel&quot;</span>, ImageOperands::NON_PRIVATE_TEXEL),
-    (<span class="string">&quot;NonPrivateTexelKHR&quot;</span>, ImageOperands::NON_PRIVATE_TEXEL_KHR),
-    (<span class="string">&quot;VolatileTexel&quot;</span>, ImageOperands::VOLATILE_TEXEL),
-    (<span class="string">&quot;VolatileTexelKHR&quot;</span>, ImageOperands::VOLATILE_TEXEL_KHR),
-    (<span class="string">&quot;SignExtend&quot;</span>, ImageOperands::SIGN_EXTEND),
-    (<span class="string">&quot;ZeroExtend&quot;</span>, ImageOperands::ZERO_EXTEND),
+    (<span class="string">"MakeTexelVisible"</span>, ImageOperands::MAKE_TEXEL_VISIBLE),
+    (<span class="string">"MakeTexelVisibleKHR"</span>, ImageOperands::MAKE_TEXEL_VISIBLE_KHR),
+    (<span class="string">"NonPrivateTexel"</span>, ImageOperands::NON_PRIVATE_TEXEL),
+    (<span class="string">"NonPrivateTexelKHR"</span>, ImageOperands::NON_PRIVATE_TEXEL_KHR),
+    (<span class="string">"VolatileTexel"</span>, ImageOperands::VOLATILE_TEXEL),
+    (<span class="string">"VolatileTexelKHR"</span>, ImageOperands::VOLATILE_TEXEL_KHR),
+    (<span class="string">"SignExtend"</span>, ImageOperands::SIGN_EXTEND),
+    (<span class="string">"ZeroExtend"</span>, ImageOperands::ZERO_EXTEND),
 ];
 <span class="kw">pub const </span>FP_FAST_MATH_MODE: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, FPFastMathMode)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;None&quot;</span>, FPFastMathMode::NONE),
-    (<span class="string">&quot;NotNan&quot;</span>, FPFastMathMode::NOT_NAN),
-    (<span class="string">&quot;NotInf&quot;</span>, FPFastMathMode::NOT_INF),
-    (<span class="string">&quot;Nsz&quot;</span>, FPFastMathMode::NSZ),
-    (<span class="string">&quot;AllowRecip&quot;</span>, FPFastMathMode::ALLOW_RECIP),
-    (<span class="string">&quot;Fast&quot;</span>, FPFastMathMode::FAST),
+    (<span class="string">"None"</span>, FPFastMathMode::NONE),
+    (<span class="string">"NotNan"</span>, FPFastMathMode::NOT_NAN),
+    (<span class="string">"NotInf"</span>, FPFastMathMode::NOT_INF),
+    (<span class="string">"Nsz"</span>, FPFastMathMode::NSZ),
+    (<span class="string">"AllowRecip"</span>, FPFastMathMode::ALLOW_RECIP),
+    (<span class="string">"Fast"</span>, FPFastMathMode::FAST),
 ];
 <span class="kw">pub const </span>SELECTION_CONTROL: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, SelectionControl)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;None&quot;</span>, SelectionControl::NONE),
-    (<span class="string">&quot;Flatten&quot;</span>, SelectionControl::FLATTEN),
-    (<span class="string">&quot;DontFlatten&quot;</span>, SelectionControl::DONT_FLATTEN),
+    (<span class="string">"None"</span>, SelectionControl::NONE),
+    (<span class="string">"Flatten"</span>, SelectionControl::FLATTEN),
+    (<span class="string">"DontFlatten"</span>, SelectionControl::DONT_FLATTEN),
 ];
 <span class="kw">pub const </span>LOOP_CONTROL: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, LoopControl)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;None&quot;</span>, LoopControl::NONE),
-    (<span class="string">&quot;Unroll&quot;</span>, LoopControl::UNROLL),
-    (<span class="string">&quot;DontUnroll&quot;</span>, LoopControl::DONT_UNROLL),
-    (<span class="string">&quot;DependencyInfinite&quot;</span>, LoopControl::DEPENDENCY_INFINITE),
-    (<span class="string">&quot;DependencyLength&quot;</span>, LoopControl::DEPENDENCY_LENGTH),
-    (<span class="string">&quot;MinIterations&quot;</span>, LoopControl::MIN_ITERATIONS),
-    (<span class="string">&quot;MaxIterations&quot;</span>, LoopControl::MAX_ITERATIONS),
-    (<span class="string">&quot;IterationMultiple&quot;</span>, LoopControl::ITERATION_MULTIPLE),
-    (<span class="string">&quot;PeelCount&quot;</span>, LoopControl::PEEL_COUNT),
-    (<span class="string">&quot;PartialCount&quot;</span>, LoopControl::PARTIAL_COUNT),
+    (<span class="string">"None"</span>, LoopControl::NONE),
+    (<span class="string">"Unroll"</span>, LoopControl::UNROLL),
+    (<span class="string">"DontUnroll"</span>, LoopControl::DONT_UNROLL),
+    (<span class="string">"DependencyInfinite"</span>, LoopControl::DEPENDENCY_INFINITE),
+    (<span class="string">"DependencyLength"</span>, LoopControl::DEPENDENCY_LENGTH),
+    (<span class="string">"MinIterations"</span>, LoopControl::MIN_ITERATIONS),
+    (<span class="string">"MaxIterations"</span>, LoopControl::MAX_ITERATIONS),
+    (<span class="string">"IterationMultiple"</span>, LoopControl::ITERATION_MULTIPLE),
+    (<span class="string">"PeelCount"</span>, LoopControl::PEEL_COUNT),
+    (<span class="string">"PartialCount"</span>, LoopControl::PARTIAL_COUNT),
 ];
 <span class="kw">pub const </span>FUNCTION_CONTROL: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, FunctionControl)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;None&quot;</span>, FunctionControl::NONE),
-    (<span class="string">&quot;Inline&quot;</span>, FunctionControl::INLINE),
-    (<span class="string">&quot;DontInline&quot;</span>, FunctionControl::DONT_INLINE),
-    (<span class="string">&quot;Pure&quot;</span>, FunctionControl::PURE),
-    (<span class="string">&quot;Const&quot;</span>, FunctionControl::CONST),
+    (<span class="string">"None"</span>, FunctionControl::NONE),
+    (<span class="string">"Inline"</span>, FunctionControl::INLINE),
+    (<span class="string">"DontInline"</span>, FunctionControl::DONT_INLINE),
+    (<span class="string">"Pure"</span>, FunctionControl::PURE),
+    (<span class="string">"Const"</span>, FunctionControl::CONST),
 ];
 <span class="kw">pub const </span>MEMORY_SEMANTICS: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, MemorySemantics)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;Relaxed&quot;</span>, MemorySemantics::RELAXED),
-    (<span class="string">&quot;None&quot;</span>, MemorySemantics::NONE),
-    (<span class="string">&quot;Acquire&quot;</span>, MemorySemantics::ACQUIRE),
-    (<span class="string">&quot;Release&quot;</span>, MemorySemantics::RELEASE),
-    (<span class="string">&quot;AcquireRelease&quot;</span>, MemorySemantics::ACQUIRE_RELEASE),
+    (<span class="string">"Relaxed"</span>, MemorySemantics::RELAXED),
+    (<span class="string">"None"</span>, MemorySemantics::NONE),
+    (<span class="string">"Acquire"</span>, MemorySemantics::ACQUIRE),
+    (<span class="string">"Release"</span>, MemorySemantics::RELEASE),
+    (<span class="string">"AcquireRelease"</span>, MemorySemantics::ACQUIRE_RELEASE),
     (
-        <span class="string">&quot;SequentiallyConsistent&quot;</span>,
+        <span class="string">"SequentiallyConsistent"</span>,
         MemorySemantics::SEQUENTIALLY_CONSISTENT,
     ),
-    (<span class="string">&quot;UniformMemory&quot;</span>, MemorySemantics::UNIFORM_MEMORY),
-    (<span class="string">&quot;SubgroupMemory&quot;</span>, MemorySemantics::SUBGROUP_MEMORY),
-    (<span class="string">&quot;WorkgroupMemory&quot;</span>, MemorySemantics::WORKGROUP_MEMORY),
+    (<span class="string">"UniformMemory"</span>, MemorySemantics::UNIFORM_MEMORY),
+    (<span class="string">"SubgroupMemory"</span>, MemorySemantics::SUBGROUP_MEMORY),
+    (<span class="string">"WorkgroupMemory"</span>, MemorySemantics::WORKGROUP_MEMORY),
     (
-        <span class="string">&quot;CrossWorkgroupMemory&quot;</span>,
+        <span class="string">"CrossWorkgroupMemory"</span>,
         MemorySemantics::CROSS_WORKGROUP_MEMORY,
     ),
     (
-        <span class="string">&quot;AtomicCounterMemory&quot;</span>,
+        <span class="string">"AtomicCounterMemory"</span>,
         MemorySemantics::ATOMIC_COUNTER_MEMORY,
     ),
-    (<span class="string">&quot;ImageMemory&quot;</span>, MemorySemantics::IMAGE_MEMORY),
-    (<span class="string">&quot;OutputMemory&quot;</span>, MemorySemantics::OUTPUT_MEMORY),
-    (<span class="string">&quot;OutputMemoryKHR&quot;</span>, MemorySemantics::OUTPUT_MEMORY_KHR),
-    (<span class="string">&quot;MakeAvailable&quot;</span>, MemorySemantics::MAKE_AVAILABLE),
-    (<span class="string">&quot;MakeAvailableKHR&quot;</span>, MemorySemantics::MAKE_AVAILABLE_KHR),
-    (<span class="string">&quot;MakeVisible&quot;</span>, MemorySemantics::MAKE_VISIBLE),
-    (<span class="string">&quot;MakeVisibleKHR&quot;</span>, MemorySemantics::MAKE_VISIBLE_KHR),
-    (<span class="string">&quot;Volatile&quot;</span>, MemorySemantics::VOLATILE),
+    (<span class="string">"ImageMemory"</span>, MemorySemantics::IMAGE_MEMORY),
+    (<span class="string">"OutputMemory"</span>, MemorySemantics::OUTPUT_MEMORY),
+    (<span class="string">"OutputMemoryKHR"</span>, MemorySemantics::OUTPUT_MEMORY_KHR),
+    (<span class="string">"MakeAvailable"</span>, MemorySemantics::MAKE_AVAILABLE),
+    (<span class="string">"MakeAvailableKHR"</span>, MemorySemantics::MAKE_AVAILABLE_KHR),
+    (<span class="string">"MakeVisible"</span>, MemorySemantics::MAKE_VISIBLE),
+    (<span class="string">"MakeVisibleKHR"</span>, MemorySemantics::MAKE_VISIBLE_KHR),
+    (<span class="string">"Volatile"</span>, MemorySemantics::VOLATILE),
 ];
 <span class="kw">pub const </span>MEMORY_ACCESS: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, MemoryAccess)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;None&quot;</span>, MemoryAccess::NONE),
-    (<span class="string">&quot;Volatile&quot;</span>, MemoryAccess::VOLATILE),
-    (<span class="string">&quot;Aligned&quot;</span>, MemoryAccess::ALIGNED),
-    (<span class="string">&quot;Nontemporal&quot;</span>, MemoryAccess::NONTEMPORAL),
-    (<span class="string">&quot;MakePointerAvailable&quot;</span>, MemoryAccess::MAKE_POINTER_AVAILABLE),
+    (<span class="string">"None"</span>, MemoryAccess::NONE),
+    (<span class="string">"Volatile"</span>, MemoryAccess::VOLATILE),
+    (<span class="string">"Aligned"</span>, MemoryAccess::ALIGNED),
+    (<span class="string">"Nontemporal"</span>, MemoryAccess::NONTEMPORAL),
+    (<span class="string">"MakePointerAvailable"</span>, MemoryAccess::MAKE_POINTER_AVAILABLE),
     (
-        <span class="string">&quot;MakePointerAvailableKHR&quot;</span>,
+        <span class="string">"MakePointerAvailableKHR"</span>,
         MemoryAccess::MAKE_POINTER_AVAILABLE_KHR,
     ),
-    (<span class="string">&quot;MakePointerVisible&quot;</span>, MemoryAccess::MAKE_POINTER_VISIBLE),
+    (<span class="string">"MakePointerVisible"</span>, MemoryAccess::MAKE_POINTER_VISIBLE),
     (
-        <span class="string">&quot;MakePointerVisibleKHR&quot;</span>,
+        <span class="string">"MakePointerVisibleKHR"</span>,
         MemoryAccess::MAKE_POINTER_VISIBLE_KHR,
     ),
-    (<span class="string">&quot;NonPrivatePointer&quot;</span>, MemoryAccess::NON_PRIVATE_POINTER),
+    (<span class="string">"NonPrivatePointer"</span>, MemoryAccess::NON_PRIVATE_POINTER),
     (
-        <span class="string">&quot;NonPrivatePointerKHR&quot;</span>,
+        <span class="string">"NonPrivatePointerKHR"</span>,
         MemoryAccess::NON_PRIVATE_POINTER_KHR,
     ),
 ];
 <span class="kw">pub const </span>KERNEL_PROFILING_INFO: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, KernelProfilingInfo)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;None&quot;</span>, KernelProfilingInfo::NONE),
-    (<span class="string">&quot;CmdExecTime&quot;</span>, KernelProfilingInfo::CMD_EXEC_TIME),
+    (<span class="string">"None"</span>, KernelProfilingInfo::NONE),
+    (<span class="string">"CmdExecTime"</span>, KernelProfilingInfo::CMD_EXEC_TIME),
 ];
 <span class="kw">pub const </span>RAY_FLAGS: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, RayFlags)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;NoneKHR&quot;</span>, RayFlags::NONE_KHR),
-    (<span class="string">&quot;OpaqueKHR&quot;</span>, RayFlags::OPAQUE_KHR),
-    (<span class="string">&quot;NoOpaqueKHR&quot;</span>, RayFlags::NO_OPAQUE_KHR),
+    (<span class="string">"NoneKHR"</span>, RayFlags::NONE_KHR),
+    (<span class="string">"OpaqueKHR"</span>, RayFlags::OPAQUE_KHR),
+    (<span class="string">"NoOpaqueKHR"</span>, RayFlags::NO_OPAQUE_KHR),
     (
-        <span class="string">&quot;TerminateOnFirstHitKHR&quot;</span>,
+        <span class="string">"TerminateOnFirstHitKHR"</span>,
         RayFlags::TERMINATE_ON_FIRST_HIT_KHR,
     ),
     (
-        <span class="string">&quot;SkipClosestHitShaderKHR&quot;</span>,
+        <span class="string">"SkipClosestHitShaderKHR"</span>,
         RayFlags::SKIP_CLOSEST_HIT_SHADER_KHR,
     ),
     (
-        <span class="string">&quot;CullBackFacingTrianglesKHR&quot;</span>,
+        <span class="string">"CullBackFacingTrianglesKHR"</span>,
         RayFlags::CULL_BACK_FACING_TRIANGLES_KHR,
     ),
     (
-        <span class="string">&quot;CullFrontFacingTrianglesKHR&quot;</span>,
+        <span class="string">"CullFrontFacingTrianglesKHR"</span>,
         RayFlags::CULL_FRONT_FACING_TRIANGLES_KHR,
     ),
-    (<span class="string">&quot;CullOpaqueKHR&quot;</span>, RayFlags::CULL_OPAQUE_KHR),
-    (<span class="string">&quot;CullNoOpaqueKHR&quot;</span>, RayFlags::CULL_NO_OPAQUE_KHR),
-    (<span class="string">&quot;SkipTrianglesKHR&quot;</span>, RayFlags::SKIP_TRIANGLES_KHR),
-    (<span class="string">&quot;SkipAabBsKHR&quot;</span>, RayFlags::SKIP_AAB_BS_KHR),
+    (<span class="string">"CullOpaqueKHR"</span>, RayFlags::CULL_OPAQUE_KHR),
+    (<span class="string">"CullNoOpaqueKHR"</span>, RayFlags::CULL_NO_OPAQUE_KHR),
+    (<span class="string">"SkipTrianglesKHR"</span>, RayFlags::SKIP_TRIANGLES_KHR),
+    (<span class="string">"SkipAabBsKHR"</span>, RayFlags::SKIP_AAB_BS_KHR),
 ];
 <span class="kw">pub const </span>FRAGMENT_SHADING_RATE: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, FragmentShadingRate)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;VERTICAL2_PIXELS&quot;</span>, FragmentShadingRate::VERTICAL2_PIXELS),
-    (<span class="string">&quot;VERTICAL4_PIXELS&quot;</span>, FragmentShadingRate::VERTICAL4_PIXELS),
+    (<span class="string">"VERTICAL2_PIXELS"</span>, FragmentShadingRate::VERTICAL2_PIXELS),
+    (<span class="string">"VERTICAL4_PIXELS"</span>, FragmentShadingRate::VERTICAL4_PIXELS),
     (
-        <span class="string">&quot;HORIZONTAL2_PIXELS&quot;</span>,
+        <span class="string">"HORIZONTAL2_PIXELS"</span>,
         FragmentShadingRate::HORIZONTAL2_PIXELS,
     ),
     (
-        <span class="string">&quot;HORIZONTAL4_PIXELS&quot;</span>,
+        <span class="string">"HORIZONTAL4_PIXELS"</span>,
         FragmentShadingRate::HORIZONTAL4_PIXELS,
     ),
 ];
 
 <span class="kw">fn </span>parse_bitflags_operand&lt;T: std::ops::BitOr&lt;Output = T&gt; + Copy&gt;(
-    values: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, T)],
+    values: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, T)],
     word: <span class="kw-2">&amp;</span>str,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="prelude-val">None</span>;
-    <span class="lifetime">&#39;outer</span>: <span class="kw">for </span>item <span class="kw">in </span>word.split(<span class="string">&#39;|&#39;</span>) {
+    <span class="lifetime">'outer</span>: <span class="kw">for </span>item <span class="kw">in </span>word.split(<span class="string">'|'</span>) {
         <span class="kw">for </span><span class="kw-2">&amp;</span>(key, value) <span class="kw">in </span>values {
             <span class="kw">if </span>item == key {
                 result = <span class="prelude-val">Some</span>(result.map_or(value, |x| x | value));
-                <span class="kw">continue </span><span class="lifetime">&#39;outer</span>;
+                <span class="kw">continue </span><span class="lifetime">'outer</span>;
             }
         }
         <span class="kw">return </span><span class="prelude-val">None</span>;

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-syntax-0.8.2/src/unicode.rs`."><title>unicode.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../regex_syntax/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-syntax-0.8.4/src/unicode.rs`."><title>unicode.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../regex_syntax/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1046,12 +1046,12 @@
 
 <span class="doccomment">/// An inclusive range of codepoints from a generated file (hence the static
 /// lifetime).
-</span><span class="kw">type </span>Range = <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[(char, char)];
+</span><span class="kw">type </span>Range = <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[(char, char)];
 
 <span class="doccomment">/// An error that occurs when dealing with Unicode.
 ///
-/// We don&#39;t impl the Error trait here because these always get converted
-/// into other public errors. (This error type isn&#39;t exported.)
+/// We don't impl the Error trait here because these always get converted
+/// into other public errors. (This error type isn't exported.)
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub enum </span>Error {
     PropertyNotFound,
@@ -1069,15 +1069,15 @@
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>CaseFoldError(());
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>CaseFoldError {}
 
 <span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>CaseFoldError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;Unicode-aware case folding is not available \
-             (probably because the unicode-case feature is not enabled)&quot;
+            <span class="string">"Unicode-aware case folding is not available \
+             (probably because the unicode-case feature is not enabled)"
         </span>)
     }
 }
@@ -1090,15 +1090,15 @@
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>UnicodeWordError(());
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>UnicodeWordError {}
 
 <span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>UnicodeWordError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;Unicode-aware \\w class is not available \
-             (probably because the unicode-perl feature is not enabled)&quot;
+            <span class="string">"Unicode-aware \\w class is not available \
+             (probably because the unicode-perl feature is not enabled)"
         </span>)
     }
 }
@@ -1118,11 +1118,11 @@
 /// assumption enables this.
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub struct </span>SimpleCaseFolder {
-    <span class="doccomment">/// The simple case fold table. It&#39;s a sorted association list, where the
+    <span class="doccomment">/// The simple case fold table. It's a sorted association list, where the
     /// keys are Unicode scalar values and the values are the corresponding
-    /// equivalence class (not including the key) of the &quot;simple&quot; case folded
+    /// equivalence class (not including the key) of the "simple" case folded
     /// Unicode scalar values.
-    </span>table: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[(char, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[char])],
+    </span>table: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[(char, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[char])],
     <span class="doccomment">/// The last codepoint that was used for a lookup.
     </span>last: <span class="prelude-ty">Option</span>&lt;char&gt;,
     <span class="doccomment">/// The index to the entry in `table` corresponding to the smallest key `k`
@@ -1135,11 +1135,11 @@
     <span class="doccomment">/// Create a new simple case folder, returning an error if the underlying
     /// case folding table is unavailable.
     </span><span class="kw">pub fn </span>new() -&gt; <span class="prelude-ty">Result</span>&lt;SimpleCaseFolder, CaseFoldError&gt; {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;unicode-case&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"unicode-case"</span>))]
         </span>{
             <span class="prelude-val">Err</span>(CaseFoldError(()))
         }
-        <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-case&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"unicode-case"</span>)]
         </span>{
             <span class="prelude-val">Ok</span>(SimpleCaseFolder {
                 table: <span class="kw">crate</span>::unicode_tables::case_folding_simple::CASE_FOLDING_SIMPLE,
@@ -1160,12 +1160,12 @@
     /// This panics when called with a `c` that is less than or equal to the
     /// previous call. In other words, callers need to use this method with
     /// strictly increasing values of `c`.
-    </span><span class="kw">pub fn </span>mapping(<span class="kw-2">&amp;mut </span><span class="self">self</span>, c: char) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[char] {
+    </span><span class="kw">pub fn </span>mapping(<span class="kw-2">&amp;mut </span><span class="self">self</span>, c: char) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[char] {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(last) = <span class="self">self</span>.last {
             <span class="macro">assert!</span>(
                 last &lt; c,
-                <span class="string">&quot;got codepoint U+{:X} which occurs before \
-                 last codepoint U+{:X}&quot;</span>,
+                <span class="string">"got codepoint U+{:X} which occurs before \
+                 last codepoint U+{:X}"</span>,
                 u32::from(c),
                 u32::from(last),
             );
@@ -1190,7 +1190,7 @@
                 // after whatever we thought might be
                 // next. Otherwise, the caller is either
                 // going out of order or we would have
-                // found our next key at &#39;self.next&#39;.
+                // found our next key at 'self.next'.
                 </span><span class="macro">assert!</span>(i &gt; <span class="self">self</span>.next);
                 <span class="self">self</span>.next = i + <span class="number">1</span>;
                 <span class="self">self</span>.table[i].<span class="number">1
@@ -1249,10 +1249,10 @@
 /// In all circumstances, property names and values are normalized and
 /// canonicalized. That is, `GC == gc == GeneralCategory == general_category`.
 ///
-/// The lifetime `&#39;a` refers to the shorter of the lifetimes of property name
+/// The lifetime `'a` refers to the shorter of the lifetimes of property name
 /// and property value.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub enum </span>ClassQuery&lt;<span class="lifetime">&#39;a</span>&gt; {
+</span><span class="kw">pub enum </span>ClassQuery&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Return a class corresponding to a Unicode binary property, named by
     /// a single letter.
     </span>OneLetter(char),
@@ -1261,19 +1261,19 @@
     /// Note that, by special exception (see UTS#18, Section 1.2), both
     /// general category values and script values are permitted here as if
     /// they were a binary property.
-    </span>Binary(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str),
+    </span>Binary(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str),
     <span class="doccomment">/// Return a class corresponding to all codepoints whose property
     /// (identified by `property_name`) corresponds to the given value
     /// (identified by `property_value`).
     </span>ByValue {
         <span class="doccomment">/// A property name.
-        </span>property_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+        </span>property_name: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
         <span class="doccomment">/// A property value.
-        </span>property_value: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str,
+        </span>property_value: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
     },
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ClassQuery&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ClassQuery&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>canonicalize(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CanonicalClassQuery, Error&gt; {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             ClassQuery::OneLetter(c) =&gt; <span class="self">self</span>.canonical_binary(<span class="kw-2">&amp;</span>c.to_string()),
@@ -1287,14 +1287,14 @@
                     <span class="prelude-val">Some</span>(canon_name) =&gt; canon_name,
                 };
                 <span class="prelude-val">Ok</span>(<span class="kw">match </span>canon_name {
-                    <span class="string">&quot;General_Category&quot; </span>=&gt; {
+                    <span class="string">"General_Category" </span>=&gt; {
                         <span class="kw">let </span>canon = <span class="kw">match </span>canonical_gencat(<span class="kw-2">&amp;</span>property_value)<span class="question-mark">? </span>{
                             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::PropertyValueNotFound),
                             <span class="prelude-val">Some</span>(canon) =&gt; canon,
                         };
                         CanonicalClassQuery::GeneralCategory(canon)
                     }
-                    <span class="string">&quot;Script&quot; </span>=&gt; {
+                    <span class="string">"Script" </span>=&gt; {
                         <span class="kw">let </span>canon = <span class="kw">match </span>canonical_script(<span class="kw-2">&amp;</span>property_value)<span class="question-mark">? </span>{
                             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::PropertyValueNotFound),
                             <span class="prelude-val">Some</span>(canon) =&gt; canon,
@@ -1329,23 +1329,23 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;CanonicalClassQuery, Error&gt; {
         <span class="kw">let </span>norm = symbolic_name_normalize(name);
 
-        <span class="comment">// This is a special case where &#39;cf&#39; refers to the &#39;Format&#39; general
-        // category, but where the &#39;cf&#39; abbreviation is also an abbreviation
-        // for the &#39;Case_Folding&#39; property. But we want to treat it as
-        // a general category. (Currently, we don&#39;t even support the
-        // &#39;Case_Folding&#39; property. But if we do in the future, users will be
+        <span class="comment">// This is a special case where 'cf' refers to the 'Format' general
+        // category, but where the 'cf' abbreviation is also an abbreviation
+        // for the 'Case_Folding' property. But we want to treat it as
+        // a general category. (Currently, we don't even support the
+        // 'Case_Folding' property. But if we do in the future, users will be
         // required to spell it out.)
         //
-        // Also &#39;sc&#39; refers to the &#39;Currency_Symbol&#39; general category, but is
-        // also the abbreviation for the &#39;Script&#39; property. So we avoid calling
-        // &#39;canonical_prop&#39; for it too, which would erroneously normalize it
-        // to &#39;Script&#39;.
+        // Also 'sc' refers to the 'Currency_Symbol' general category, but is
+        // also the abbreviation for the 'Script' property. So we avoid calling
+        // 'canonical_prop' for it too, which would erroneously normalize it
+        // to 'Script'.
         //
-        // Another case: &#39;lc&#39; is an abbreviation for the &#39;Cased_Letter&#39;
-        // general category, but is also an abbreviation for the &#39;Lowercase_Mapping&#39;
-        // property. We don&#39;t currently support the latter, so as with &#39;cf&#39;
-        // above, we treat &#39;lc&#39; as &#39;Cased_Letter&#39;.
-        </span><span class="kw">if </span>norm != <span class="string">&quot;cf&quot; </span>&amp;&amp; norm != <span class="string">&quot;sc&quot; </span>&amp;&amp; norm != <span class="string">&quot;lc&quot; </span>{
+        // Another case: 'lc' is an abbreviation for the 'Cased_Letter'
+        // general category, but is also an abbreviation for the 'Lowercase_Mapping'
+        // property. We don't currently support the latter, so as with 'cf'
+        // above, we treat 'lc' as 'Cased_Letter'.
+        </span><span class="kw">if </span>norm != <span class="string">"cf" </span>&amp;&amp; norm != <span class="string">"sc" </span>&amp;&amp; norm != <span class="string">"lc" </span>{
             <span class="kw">if let </span><span class="prelude-val">Some</span>(canon) = canonical_prop(<span class="kw-2">&amp;</span>norm)<span class="question-mark">? </span>{
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(CanonicalClassQuery::Binary(canon));
             }
@@ -1366,11 +1366,11 @@
 </span><span class="attr">#[derive(Debug, Eq, PartialEq)]
 </span><span class="kw">enum </span>CanonicalClassQuery {
     <span class="doccomment">/// The canonical binary property name.
-    </span>Binary(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str),
+    </span>Binary(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str),
     <span class="doccomment">/// The canonical general category name.
-    </span>GeneralCategory(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str),
+    </span>GeneralCategory(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str),
     <span class="doccomment">/// The canonical script name.
-    </span>Script(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str),
+    </span>Script(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str),
     <span class="doccomment">/// An arbitrary association between property and value, both of which
     /// have been canonicalized.
     ///
@@ -1379,39 +1379,39 @@
     /// eponymous variants.
     </span>ByValue {
         <span class="doccomment">/// The canonical property name.
-        </span>property_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+        </span>property_name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
         <span class="doccomment">/// The canonical property value.
-        </span>property_value: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+        </span>property_value: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
     },
 }
 
-<span class="doccomment">/// Looks up a Unicode class given a query. If one doesn&#39;t exist, then
+<span class="doccomment">/// Looks up a Unicode class given a query. If one doesn't exist, then
 /// `None` is returned.
-</span><span class="kw">pub fn </span>class(query: ClassQuery&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+</span><span class="kw">pub fn </span>class(query: ClassQuery&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
     <span class="kw">use </span><span class="self">self</span>::CanonicalClassQuery::<span class="kw-2">*</span>;
 
     <span class="kw">match </span>query.canonicalize()<span class="question-mark">? </span>{
         Binary(name) =&gt; bool_property(name),
         GeneralCategory(name) =&gt; gencat(name),
         Script(name) =&gt; script(name),
-        ByValue { property_name: <span class="string">&quot;Age&quot;</span>, property_value } =&gt; {
+        ByValue { property_name: <span class="string">"Age"</span>, property_value } =&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>class = hir::ClassUnicode::empty();
             <span class="kw">for </span>set <span class="kw">in </span>ages(property_value)<span class="question-mark">? </span>{
                 class.union(<span class="kw-2">&amp;</span>hir_class(set));
             }
             <span class="prelude-val">Ok</span>(class)
         }
-        ByValue { property_name: <span class="string">&quot;Script_Extensions&quot;</span>, property_value } =&gt; {
+        ByValue { property_name: <span class="string">"Script_Extensions"</span>, property_value } =&gt; {
             script_extension(property_value)
         }
         ByValue {
-            property_name: <span class="string">&quot;Grapheme_Cluster_Break&quot;</span>,
+            property_name: <span class="string">"Grapheme_Cluster_Break"</span>,
             property_value,
         } =&gt; gcb(property_value),
-        ByValue { property_name: <span class="string">&quot;Sentence_Break&quot;</span>, property_value } =&gt; {
+        ByValue { property_name: <span class="string">"Sentence_Break"</span>, property_value } =&gt; {
             sb(property_value)
         }
-        ByValue { property_name: <span class="string">&quot;Word_Break&quot;</span>, property_value } =&gt; {
+        ByValue { property_name: <span class="string">"Word_Break"</span>, property_value } =&gt; {
             wb(property_value)
         }
         <span class="kw">_ </span>=&gt; {
@@ -1425,12 +1425,12 @@
 ///
 /// This returns an error if the data is not available for \w.
 </span><span class="kw">pub fn </span>perl_word() -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;unicode-perl&quot;</span>))]
+    <span class="attr">#[cfg(not(feature = <span class="string">"unicode-perl"</span>))]
     </span><span class="kw">fn </span>imp() -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PerlClassNotFound)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-perl&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-perl"</span>)]
     </span><span class="kw">fn </span>imp() -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::perl_word::PERL_WORD;
         <span class="prelude-val">Ok</span>(hir_class(PERL_WORD))
@@ -1443,18 +1443,18 @@
 ///
 /// This returns an error if the data is not available for \s.
 </span><span class="kw">pub fn </span>perl_space() -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
-    <span class="attr">#[cfg(not(any(feature = <span class="string">&quot;unicode-perl&quot;</span>, feature = <span class="string">&quot;unicode-bool&quot;</span>)))]
+    <span class="attr">#[cfg(not(any(feature = <span class="string">"unicode-perl"</span>, feature = <span class="string">"unicode-bool"</span>)))]
     </span><span class="kw">fn </span>imp() -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PerlClassNotFound)
     }
 
-    <span class="attr">#[cfg(all(feature = <span class="string">&quot;unicode-perl&quot;</span>, not(feature = <span class="string">&quot;unicode-bool&quot;</span>)))]
+    <span class="attr">#[cfg(all(feature = <span class="string">"unicode-perl"</span>, not(feature = <span class="string">"unicode-bool"</span>)))]
     </span><span class="kw">fn </span>imp() -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::perl_space::WHITE_SPACE;
         <span class="prelude-val">Ok</span>(hir_class(WHITE_SPACE))
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-bool&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-bool"</span>)]
     </span><span class="kw">fn </span>imp() -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::property_bool::WHITE_SPACE;
         <span class="prelude-val">Ok</span>(hir_class(WHITE_SPACE))
@@ -1467,18 +1467,18 @@
 ///
 /// This returns an error if the data is not available for \d.
 </span><span class="kw">pub fn </span>perl_digit() -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
-    <span class="attr">#[cfg(not(any(feature = <span class="string">&quot;unicode-perl&quot;</span>, feature = <span class="string">&quot;unicode-gencat&quot;</span>)))]
+    <span class="attr">#[cfg(not(any(feature = <span class="string">"unicode-perl"</span>, feature = <span class="string">"unicode-gencat"</span>)))]
     </span><span class="kw">fn </span>imp() -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PerlClassNotFound)
     }
 
-    <span class="attr">#[cfg(all(feature = <span class="string">&quot;unicode-perl&quot;</span>, not(feature = <span class="string">&quot;unicode-gencat&quot;</span>)))]
+    <span class="attr">#[cfg(all(feature = <span class="string">"unicode-perl"</span>, not(feature = <span class="string">"unicode-gencat"</span>)))]
     </span><span class="kw">fn </span>imp() -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::perl_decimal::DECIMAL_NUMBER;
         <span class="prelude-val">Ok</span>(hir_class(DECIMAL_NUMBER))
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-gencat&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-gencat"</span>)]
     </span><span class="kw">fn </span>imp() -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::general_category::DECIMAL_NUMBER;
         <span class="prelude-val">Ok</span>(hir_class(DECIMAL_NUMBER))
@@ -1500,12 +1500,12 @@
 ///
 /// If the `unicode-perl` feature is not enabled, then this returns an error.
 </span><span class="kw">pub fn </span>is_word_character(c: char) -&gt; <span class="prelude-ty">Result</span>&lt;bool, UnicodeWordError&gt; {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;unicode-perl&quot;</span>))]
+    <span class="attr">#[cfg(not(feature = <span class="string">"unicode-perl"</span>))]
     </span><span class="kw">fn </span>imp(<span class="kw">_</span>: char) -&gt; <span class="prelude-ty">Result</span>&lt;bool, UnicodeWordError&gt; {
         <span class="prelude-val">Err</span>(UnicodeWordError(()))
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-perl&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-perl"</span>)]
     </span><span class="kw">fn </span>imp(c: char) -&gt; <span class="prelude-ty">Result</span>&lt;bool, UnicodeWordError&gt; {
         <span class="kw">use crate</span>::{is_word_byte, unicode_tables::perl_word::PERL_WORD};
 
@@ -1535,17 +1535,17 @@
 /// The first element of each tuple is a normalized property value while the
 /// second element of each tuple is the corresponding canonical property
 /// value.
-</span><span class="kw">type </span>PropertyValues = <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str)];
+</span><span class="kw">type </span>PropertyValues = <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str)];
 
 <span class="kw">fn </span>canonical_gencat(
     normalized_value: <span class="kw-2">&amp;</span>str,
-) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;, Error&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;, Error&gt; {
     <span class="prelude-val">Ok</span>(<span class="kw">match </span>normalized_value {
-        <span class="string">&quot;any&quot; </span>=&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;Any&quot;</span>),
-        <span class="string">&quot;assigned&quot; </span>=&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;Assigned&quot;</span>),
-        <span class="string">&quot;ascii&quot; </span>=&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;ASCII&quot;</span>),
+        <span class="string">"any" </span>=&gt; <span class="prelude-val">Some</span>(<span class="string">"Any"</span>),
+        <span class="string">"assigned" </span>=&gt; <span class="prelude-val">Some</span>(<span class="string">"Assigned"</span>),
+        <span class="string">"ascii" </span>=&gt; <span class="prelude-val">Some</span>(<span class="string">"ASCII"</span>),
         <span class="kw">_ </span>=&gt; {
-            <span class="kw">let </span>gencats = property_values(<span class="string">&quot;General_Category&quot;</span>)<span class="question-mark">?</span>.unwrap();
+            <span class="kw">let </span>gencats = property_values(<span class="string">"General_Category"</span>)<span class="question-mark">?</span>.unwrap();
             canonical_value(gencats, normalized_value)
         }
     })
@@ -1553,8 +1553,8 @@
 
 <span class="kw">fn </span>canonical_script(
     normalized_value: <span class="kw-2">&amp;</span>str,
-) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;, Error&gt; {
-    <span class="kw">let </span>scripts = property_values(<span class="string">&quot;Script&quot;</span>)<span class="question-mark">?</span>.unwrap();
+) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;, Error&gt; {
+    <span class="kw">let </span>scripts = property_values(<span class="string">"Script"</span>)<span class="question-mark">?</span>.unwrap();
     <span class="prelude-val">Ok</span>(canonical_value(scripts, normalized_value))
 }
 
@@ -1568,28 +1568,28 @@
 /// If the property names data is not available, then an error is returned.
 </span><span class="kw">fn </span>canonical_prop(
     normalized_name: <span class="kw-2">&amp;</span>str,
-) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;, Error&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;, Error&gt; {
     <span class="attr">#[cfg(not(any(
-        feature = <span class="string">&quot;unicode-age&quot;</span>,
-        feature = <span class="string">&quot;unicode-bool&quot;</span>,
-        feature = <span class="string">&quot;unicode-gencat&quot;</span>,
-        feature = <span class="string">&quot;unicode-perl&quot;</span>,
-        feature = <span class="string">&quot;unicode-script&quot;</span>,
-        feature = <span class="string">&quot;unicode-segment&quot;</span>,
+        feature = <span class="string">"unicode-age"</span>,
+        feature = <span class="string">"unicode-bool"</span>,
+        feature = <span class="string">"unicode-gencat"</span>,
+        feature = <span class="string">"unicode-perl"</span>,
+        feature = <span class="string">"unicode-script"</span>,
+        feature = <span class="string">"unicode-segment"</span>,
     )))]
-    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;, Error&gt; {
+    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PropertyNotFound)
     }
 
     <span class="attr">#[cfg(any(
-        feature = <span class="string">&quot;unicode-age&quot;</span>,
-        feature = <span class="string">&quot;unicode-bool&quot;</span>,
-        feature = <span class="string">&quot;unicode-gencat&quot;</span>,
-        feature = <span class="string">&quot;unicode-perl&quot;</span>,
-        feature = <span class="string">&quot;unicode-script&quot;</span>,
-        feature = <span class="string">&quot;unicode-segment&quot;</span>,
+        feature = <span class="string">"unicode-age"</span>,
+        feature = <span class="string">"unicode-bool"</span>,
+        feature = <span class="string">"unicode-gencat"</span>,
+        feature = <span class="string">"unicode-perl"</span>,
+        feature = <span class="string">"unicode-script"</span>,
+        feature = <span class="string">"unicode-segment"</span>,
     ))]
-    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;, Error&gt; {
+    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::property_names::PROPERTY_NAMES;
 
         <span class="prelude-val">Ok</span>(PROPERTY_NAMES
@@ -1614,7 +1614,7 @@
 </span><span class="kw">fn </span>canonical_value(
     vals: PropertyValues,
     normalized_value: <span class="kw-2">&amp;</span>str,
-) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
     vals.binary_search_by_key(<span class="kw-2">&amp;</span>normalized_value, |<span class="kw-2">&amp;</span>(n, <span class="kw">_</span>)| n)
         .ok()
         .map(|i| vals[i].<span class="number">1</span>)
@@ -1624,29 +1624,29 @@
 ///
 /// If the property values data is not available, then an error is returned.
 </span><span class="kw">fn </span>property_values(
-    canonical_property_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    canonical_property_name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;PropertyValues&gt;, Error&gt; {
     <span class="attr">#[cfg(not(any(
-        feature = <span class="string">&quot;unicode-age&quot;</span>,
-        feature = <span class="string">&quot;unicode-bool&quot;</span>,
-        feature = <span class="string">&quot;unicode-gencat&quot;</span>,
-        feature = <span class="string">&quot;unicode-perl&quot;</span>,
-        feature = <span class="string">&quot;unicode-script&quot;</span>,
-        feature = <span class="string">&quot;unicode-segment&quot;</span>,
+        feature = <span class="string">"unicode-age"</span>,
+        feature = <span class="string">"unicode-bool"</span>,
+        feature = <span class="string">"unicode-gencat"</span>,
+        feature = <span class="string">"unicode-perl"</span>,
+        feature = <span class="string">"unicode-script"</span>,
+        feature = <span class="string">"unicode-segment"</span>,
     )))]
-    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;PropertyValues&gt;, Error&gt; {
+    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;PropertyValues&gt;, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PropertyValueNotFound)
     }
 
     <span class="attr">#[cfg(any(
-        feature = <span class="string">&quot;unicode-age&quot;</span>,
-        feature = <span class="string">&quot;unicode-bool&quot;</span>,
-        feature = <span class="string">&quot;unicode-gencat&quot;</span>,
-        feature = <span class="string">&quot;unicode-perl&quot;</span>,
-        feature = <span class="string">&quot;unicode-script&quot;</span>,
-        feature = <span class="string">&quot;unicode-segment&quot;</span>,
+        feature = <span class="string">"unicode-age"</span>,
+        feature = <span class="string">"unicode-bool"</span>,
+        feature = <span class="string">"unicode-gencat"</span>,
+        feature = <span class="string">"unicode-perl"</span>,
+        feature = <span class="string">"unicode-script"</span>,
+        feature = <span class="string">"unicode-segment"</span>,
     ))]
-    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;PropertyValues&gt;, Error&gt; {
+    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;PropertyValues&gt;, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::property_values::PROPERTY_VALUES;
 
         <span class="prelude-val">Ok</span>(PROPERTY_VALUES
@@ -1662,8 +1662,8 @@
 // instead of figuring out (and maintaining) the right set of features.
 </span><span class="attr">#[allow(dead_code)]
 </span><span class="kw">fn </span>property_set(
-    name_map: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, Range)],
-    canonical: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    name_map: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, Range)],
+    canonical: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;Range&gt; {
     name_map
         .binary_search_by_key(<span class="kw-2">&amp;</span>canonical, |x| x.<span class="number">0</span>)
@@ -1675,47 +1675,47 @@
 /// of codepoints that were added in a particular revision of Unicode. The
 /// iterator yields items in chronological order.
 ///
-/// If the given age value isn&#39;t valid or if the data isn&#39;t available, then an
+/// If the given age value isn't valid or if the data isn't available, then an
 /// error is returned instead.
 </span><span class="kw">fn </span>ages(canonical_age: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>Iterator&lt;Item = Range&gt;, Error&gt; {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;unicode-age&quot;</span>))]
+    <span class="attr">#[cfg(not(feature = <span class="string">"unicode-age"</span>))]
     </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>Iterator&lt;Item = Range&gt;, Error&gt; {
         <span class="kw">use </span>core::option::IntoIter;
         <span class="prelude-val">Err</span>::&lt;IntoIter&lt;Range&gt;, <span class="kw">_</span>&gt;(Error::PropertyNotFound)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-age&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-age"</span>)]
     </span><span class="kw">fn </span>imp(canonical_age: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw">impl </span>Iterator&lt;Item = Range&gt;, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::age;
 
         <span class="kw">const </span>AGES: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, Range)] = <span class="kw-2">&amp;</span>[
-            (<span class="string">&quot;V1_1&quot;</span>, age::V1_1),
-            (<span class="string">&quot;V2_0&quot;</span>, age::V2_0),
-            (<span class="string">&quot;V2_1&quot;</span>, age::V2_1),
-            (<span class="string">&quot;V3_0&quot;</span>, age::V3_0),
-            (<span class="string">&quot;V3_1&quot;</span>, age::V3_1),
-            (<span class="string">&quot;V3_2&quot;</span>, age::V3_2),
-            (<span class="string">&quot;V4_0&quot;</span>, age::V4_0),
-            (<span class="string">&quot;V4_1&quot;</span>, age::V4_1),
-            (<span class="string">&quot;V5_0&quot;</span>, age::V5_0),
-            (<span class="string">&quot;V5_1&quot;</span>, age::V5_1),
-            (<span class="string">&quot;V5_2&quot;</span>, age::V5_2),
-            (<span class="string">&quot;V6_0&quot;</span>, age::V6_0),
-            (<span class="string">&quot;V6_1&quot;</span>, age::V6_1),
-            (<span class="string">&quot;V6_2&quot;</span>, age::V6_2),
-            (<span class="string">&quot;V6_3&quot;</span>, age::V6_3),
-            (<span class="string">&quot;V7_0&quot;</span>, age::V7_0),
-            (<span class="string">&quot;V8_0&quot;</span>, age::V8_0),
-            (<span class="string">&quot;V9_0&quot;</span>, age::V9_0),
-            (<span class="string">&quot;V10_0&quot;</span>, age::V10_0),
-            (<span class="string">&quot;V11_0&quot;</span>, age::V11_0),
-            (<span class="string">&quot;V12_0&quot;</span>, age::V12_0),
-            (<span class="string">&quot;V12_1&quot;</span>, age::V12_1),
-            (<span class="string">&quot;V13_0&quot;</span>, age::V13_0),
-            (<span class="string">&quot;V14_0&quot;</span>, age::V14_0),
-            (<span class="string">&quot;V15_0&quot;</span>, age::V15_0),
+            (<span class="string">"V1_1"</span>, age::V1_1),
+            (<span class="string">"V2_0"</span>, age::V2_0),
+            (<span class="string">"V2_1"</span>, age::V2_1),
+            (<span class="string">"V3_0"</span>, age::V3_0),
+            (<span class="string">"V3_1"</span>, age::V3_1),
+            (<span class="string">"V3_2"</span>, age::V3_2),
+            (<span class="string">"V4_0"</span>, age::V4_0),
+            (<span class="string">"V4_1"</span>, age::V4_1),
+            (<span class="string">"V5_0"</span>, age::V5_0),
+            (<span class="string">"V5_1"</span>, age::V5_1),
+            (<span class="string">"V5_2"</span>, age::V5_2),
+            (<span class="string">"V6_0"</span>, age::V6_0),
+            (<span class="string">"V6_1"</span>, age::V6_1),
+            (<span class="string">"V6_2"</span>, age::V6_2),
+            (<span class="string">"V6_3"</span>, age::V6_3),
+            (<span class="string">"V7_0"</span>, age::V7_0),
+            (<span class="string">"V8_0"</span>, age::V8_0),
+            (<span class="string">"V9_0"</span>, age::V9_0),
+            (<span class="string">"V10_0"</span>, age::V10_0),
+            (<span class="string">"V11_0"</span>, age::V11_0),
+            (<span class="string">"V12_0"</span>, age::V12_0),
+            (<span class="string">"V12_1"</span>, age::V12_1),
+            (<span class="string">"V13_0"</span>, age::V13_0),
+            (<span class="string">"V14_0"</span>, age::V14_0),
+            (<span class="string">"V15_0"</span>, age::V15_0),
         ];
-        <span class="macro">assert_eq!</span>(AGES.len(), age::BY_NAME.len(), <span class="string">&quot;ages are out of sync&quot;</span>);
+        <span class="macro">assert_eq!</span>(AGES.len(), age::BY_NAME.len(), <span class="string">"ages are out of sync"</span>);
 
         <span class="kw">let </span>pos = AGES.iter().position(|<span class="kw-2">&amp;</span>(age, <span class="kw">_</span>)| canonical_age == age);
         <span class="kw">match </span>pos {
@@ -1733,20 +1733,20 @@
 ///
 /// If the given general category could not be found, or if the general
 /// category data is not available, then an error is returned.
-</span><span class="kw">fn </span>gencat(canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;unicode-gencat&quot;</span>))]
-    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+</span><span class="kw">fn </span>gencat(canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(not(feature = <span class="string">"unicode-gencat"</span>))]
+    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PropertyNotFound)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-gencat&quot;</span>)]
-    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-gencat"</span>)]
+    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::general_category::BY_NAME;
         <span class="kw">match </span>name {
-            <span class="string">&quot;ASCII&quot; </span>=&gt; <span class="prelude-val">Ok</span>(hir_class(<span class="kw-2">&amp;</span>[(<span class="string">&#39;\0&#39;</span>, <span class="string">&#39;\x7F&#39;</span>)])),
-            <span class="string">&quot;Any&quot; </span>=&gt; <span class="prelude-val">Ok</span>(hir_class(<span class="kw-2">&amp;</span>[(<span class="string">&#39;\0&#39;</span>, <span class="string">&#39;\u{10FFFF}&#39;</span>)])),
-            <span class="string">&quot;Assigned&quot; </span>=&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>cls = gencat(<span class="string">&quot;Unassigned&quot;</span>)<span class="question-mark">?</span>;
+            <span class="string">"ASCII" </span>=&gt; <span class="prelude-val">Ok</span>(hir_class(<span class="kw-2">&amp;</span>[(<span class="string">'\0'</span>, <span class="string">'\x7F'</span>)])),
+            <span class="string">"Any" </span>=&gt; <span class="prelude-val">Ok</span>(hir_class(<span class="kw-2">&amp;</span>[(<span class="string">'\0'</span>, <span class="string">'\u{10FFFF}'</span>)])),
+            <span class="string">"Assigned" </span>=&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>cls = gencat(<span class="string">"Unassigned"</span>)<span class="question-mark">?</span>;
                 cls.negate();
                 <span class="prelude-val">Ok</span>(cls)
             }
@@ -1757,7 +1757,7 @@
     }
 
     <span class="kw">match </span>canonical_name {
-        <span class="string">&quot;Decimal_Number&quot; </span>=&gt; perl_digit(),
+        <span class="string">"Decimal_Number" </span>=&gt; perl_digit(),
         name =&gt; imp(name),
     }
 }
@@ -1768,14 +1768,14 @@
 ///
 /// If the given script could not be found, or if the script data is not
 /// available, then an error is returned.
-</span><span class="kw">fn </span>script(canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;unicode-script&quot;</span>))]
-    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+</span><span class="kw">fn </span>script(canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(not(feature = <span class="string">"unicode-script"</span>))]
+    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PropertyNotFound)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-script&quot;</span>)]
-    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-script"</span>)]
+    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::script::BY_NAME;
         property_set(BY_NAME, name)
             .map(hir_class)
@@ -1792,15 +1792,15 @@
 /// If the given script extension could not be found, or if the script data is
 /// not available, then an error is returned.
 </span><span class="kw">fn </span>script_extension(
-    canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;unicode-script&quot;</span>))]
-    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(not(feature = <span class="string">"unicode-script"</span>))]
+    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PropertyNotFound)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-script&quot;</span>)]
-    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-script"</span>)]
+    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::script_extension::BY_NAME;
         property_set(BY_NAME, name)
             .map(hir_class)
@@ -1818,15 +1818,15 @@
 /// If the given boolean property could not be found, or if the boolean
 /// property data is not available, then an error is returned.
 </span><span class="kw">fn </span>bool_property(
-    canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;unicode-bool&quot;</span>))]
-    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(not(feature = <span class="string">"unicode-bool"</span>))]
+    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PropertyNotFound)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-bool&quot;</span>)]
-    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-bool"</span>)]
+    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::property_bool::BY_NAME;
         property_set(BY_NAME, name)
             .map(hir_class)
@@ -1834,8 +1834,8 @@
     }
 
     <span class="kw">match </span>canonical_name {
-        <span class="string">&quot;Decimal_Number&quot; </span>=&gt; perl_digit(),
-        <span class="string">&quot;White_Space&quot; </span>=&gt; perl_space(),
+        <span class="string">"Decimal_Number" </span>=&gt; perl_digit(),
+        <span class="string">"White_Space" </span>=&gt; perl_space(),
         name =&gt; imp(name),
     }
 }
@@ -1847,14 +1847,14 @@
 ///
 /// If the given property could not be found, or if the corresponding data is
 /// not available, then an error is returned.
-</span><span class="kw">fn </span>gcb(canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;unicode-segment&quot;</span>))]
-    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+</span><span class="kw">fn </span>gcb(canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(not(feature = <span class="string">"unicode-segment"</span>))]
+    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PropertyNotFound)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-segment&quot;</span>)]
-    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-segment"</span>)]
+    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::grapheme_cluster_break::BY_NAME;
         property_set(BY_NAME, name)
             .map(hir_class)
@@ -1871,14 +1871,14 @@
 ///
 /// If the given property could not be found, or if the corresponding data is
 /// not available, then an error is returned.
-</span><span class="kw">fn </span>wb(canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;unicode-segment&quot;</span>))]
-    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+</span><span class="kw">fn </span>wb(canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(not(feature = <span class="string">"unicode-segment"</span>))]
+    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PropertyNotFound)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-segment&quot;</span>)]
-    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-segment"</span>)]
+    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::word_break::BY_NAME;
         property_set(BY_NAME, name)
             .map(hir_class)
@@ -1895,14 +1895,14 @@
 ///
 /// If the given property could not be found, or if the corresponding data is
 /// not available, then an error is returned.
-</span><span class="kw">fn </span>sb(canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;unicode-segment&quot;</span>))]
-    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+</span><span class="kw">fn </span>sb(canonical_name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(not(feature = <span class="string">"unicode-segment"</span>))]
+    </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="prelude-val">Err</span>(Error::PropertyNotFound)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-segment&quot;</span>)]
-    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-segment"</span>)]
+    </span><span class="kw">fn </span>imp(name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; <span class="prelude-ty">Result</span>&lt;hir::ClassUnicode, Error&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::unicode_tables::sentence_break::BY_NAME;
         property_set(BY_NAME, name)
             .map(hir_class)
@@ -1920,7 +1920,7 @@
     <span class="comment">// This should always succeed because `symbolic_name_normalize_bytes`
     // guarantees that `&amp;tmp[..len]` is always valid UTF-8.
     //
-    // N.B. We could avoid the additional UTF-8 check here, but it&#39;s unlikely
+    // N.B. We could avoid the additional UTF-8 check here, but it's unlikely
     // to be worth skipping the additional safety check. A benchmark must
     // justify it first.
     </span>String::from_utf8(tmp).unwrap()
@@ -1928,7 +1928,7 @@
 
 <span class="doccomment">/// Normalize the given symbolic name in place according to UAX44-LM3.
 ///
-/// A &quot;symbolic name&quot; typically corresponds to property names and property
+/// A "symbolic name" typically corresponds to property names and property
 /// value aliases. Note, though, that it should not be applied to property
 /// string values.
 ///
@@ -1937,17 +1937,17 @@
 ///
 /// See: https://unicode.org/reports/tr44/#UAX44-LM3
 </span><span class="kw">fn </span>symbolic_name_normalize_bytes(slice: <span class="kw-2">&amp;mut </span>[u8]) -&gt; <span class="kw-2">&amp;mut </span>[u8] {
-    <span class="comment">// I couldn&#39;t find a place in the standard that specified that property
+    <span class="comment">// I couldn't find a place in the standard that specified that property
     // names/aliases had a particular structure (unlike character names), but
-    // we assume that it&#39;s ASCII only and drop anything that isn&#39;t ASCII.
+    // we assume that it's ASCII only and drop anything that isn't ASCII.
     </span><span class="kw">let </span><span class="kw-2">mut </span>start = <span class="number">0</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>starts_with_is = <span class="bool-val">false</span>;
     <span class="kw">if </span>slice.len() &gt;= <span class="number">2 </span>{
-        <span class="comment">// Ignore any &quot;is&quot; prefix.
-        </span>starts_with_is = slice[<span class="number">0</span>..<span class="number">2</span>] == <span class="string">b&quot;is&quot;</span>[..]
-            || slice[<span class="number">0</span>..<span class="number">2</span>] == <span class="string">b&quot;IS&quot;</span>[..]
-            || slice[<span class="number">0</span>..<span class="number">2</span>] == <span class="string">b&quot;iS&quot;</span>[..]
-            || slice[<span class="number">0</span>..<span class="number">2</span>] == <span class="string">b&quot;Is&quot;</span>[..];
+        <span class="comment">// Ignore any "is" prefix.
+        </span>starts_with_is = slice[<span class="number">0</span>..<span class="number">2</span>] == <span class="string">b"is"</span>[..]
+            || slice[<span class="number">0</span>..<span class="number">2</span>] == <span class="string">b"IS"</span>[..]
+            || slice[<span class="number">0</span>..<span class="number">2</span>] == <span class="string">b"iS"</span>[..]
+            || slice[<span class="number">0</span>..<span class="number">2</span>] == <span class="string">b"Is"</span>[..];
         <span class="kw">if </span>starts_with_is {
             start = <span class="number">2</span>;
         }
@@ -1958,24 +1958,24 @@
         // UTF-8, we ensure that the slice contains only ASCII bytes. In
         // particular, we drop every non-ASCII byte from the normalized string.
         </span><span class="kw">let </span>b = slice[i];
-        <span class="kw">if </span>b == <span class="string">b&#39; &#39; </span>|| b == <span class="string">b&#39;_&#39; </span>|| b == <span class="string">b&#39;-&#39; </span>{
+        <span class="kw">if </span>b == <span class="string">b' ' </span>|| b == <span class="string">b'_' </span>|| b == <span class="string">b'-' </span>{
             <span class="kw">continue</span>;
-        } <span class="kw">else if </span><span class="string">b&#39;A&#39; </span>&lt;= b &amp;&amp; b &lt;= <span class="string">b&#39;Z&#39; </span>{
-            slice[next_write] = b + (<span class="string">b&#39;a&#39; </span>- <span class="string">b&#39;A&#39;</span>);
+        } <span class="kw">else if </span><span class="string">b'A' </span>&lt;= b &amp;&amp; b &lt;= <span class="string">b'Z' </span>{
+            slice[next_write] = b + (<span class="string">b'a' </span>- <span class="string">b'A'</span>);
             next_write += <span class="number">1</span>;
         } <span class="kw">else if </span>b &lt;= <span class="number">0x7F </span>{
             slice[next_write] = b;
             next_write += <span class="number">1</span>;
         }
     }
-    <span class="comment">// Special case: ISO_Comment has a &#39;isc&#39; abbreviation. Since we generally
-    // ignore &#39;is&#39; prefixes, the &#39;isc&#39; abbreviation gets caught in the cross
-    // fire and ends up creating an alias for &#39;c&#39; to &#39;ISO_Comment&#39;, but it
-    // is actually an alias for the &#39;Other&#39; general category.
-    </span><span class="kw">if </span>starts_with_is &amp;&amp; next_write == <span class="number">1 </span>&amp;&amp; slice[<span class="number">0</span>] == <span class="string">b&#39;c&#39; </span>{
-        slice[<span class="number">0</span>] = <span class="string">b&#39;i&#39;</span>;
-        slice[<span class="number">1</span>] = <span class="string">b&#39;s&#39;</span>;
-        slice[<span class="number">2</span>] = <span class="string">b&#39;c&#39;</span>;
+    <span class="comment">// Special case: ISO_Comment has a 'isc' abbreviation. Since we generally
+    // ignore 'is' prefixes, the 'isc' abbreviation gets caught in the cross
+    // fire and ends up creating an alias for 'c' to 'ISO_Comment', but it
+    // is actually an alias for the 'Other' general category.
+    </span><span class="kw">if </span>starts_with_is &amp;&amp; next_write == <span class="number">1 </span>&amp;&amp; slice[<span class="number">0</span>] == <span class="string">b'c' </span>{
+        slice[<span class="number">0</span>] = <span class="string">b'i'</span>;
+        slice[<span class="number">1</span>] = <span class="string">b's'</span>;
+        slice[<span class="number">2</span>] = <span class="string">b'c'</span>;
         next_write = <span class="number">3</span>;
     }
     <span class="kw-2">&amp;mut </span>slice[..next_write]
@@ -1985,70 +1985,70 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-case&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-case"</span>)]
     </span><span class="kw">fn </span>simple_fold_ok(c: char) -&gt; <span class="kw">impl </span>Iterator&lt;Item = char&gt; {
         SimpleCaseFolder::new().unwrap().mapping(c).iter().copied()
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-case&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"unicode-case"</span>)]
     </span><span class="kw">fn </span>contains_case_map(start: char, end: char) -&gt; bool {
         SimpleCaseFolder::new().unwrap().overlaps(start, end)
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;unicode-case&quot;</span>)]
+    #[cfg(feature = <span class="string">"unicode-case"</span>)]
     </span><span class="kw">fn </span>simple_fold_k() {
-        <span class="kw">let </span>xs: Vec&lt;char&gt; = simple_fold_ok(<span class="string">&#39;k&#39;</span>).collect();
-        <span class="macro">assert_eq!</span>(xs, <span class="macro">alloc::vec!</span>[<span class="string">&#39;K&#39;</span>, <span class="string">&#39;K&#39;</span>]);
+        <span class="kw">let </span>xs: Vec&lt;char&gt; = simple_fold_ok(<span class="string">'k'</span>).collect();
+        <span class="macro">assert_eq!</span>(xs, <span class="macro">alloc::vec!</span>[<span class="string">'K'</span>, <span class="string">'K'</span>]);
 
-        <span class="kw">let </span>xs: Vec&lt;char&gt; = simple_fold_ok(<span class="string">&#39;K&#39;</span>).collect();
-        <span class="macro">assert_eq!</span>(xs, <span class="macro">alloc::vec!</span>[<span class="string">&#39;k&#39;</span>, <span class="string">&#39;K&#39;</span>]);
+        <span class="kw">let </span>xs: Vec&lt;char&gt; = simple_fold_ok(<span class="string">'K'</span>).collect();
+        <span class="macro">assert_eq!</span>(xs, <span class="macro">alloc::vec!</span>[<span class="string">'k'</span>, <span class="string">'K'</span>]);
 
-        <span class="kw">let </span>xs: Vec&lt;char&gt; = simple_fold_ok(<span class="string">&#39;K&#39;</span>).collect();
-        <span class="macro">assert_eq!</span>(xs, <span class="macro">alloc::vec!</span>[<span class="string">&#39;K&#39;</span>, <span class="string">&#39;k&#39;</span>]);
+        <span class="kw">let </span>xs: Vec&lt;char&gt; = simple_fold_ok(<span class="string">'K'</span>).collect();
+        <span class="macro">assert_eq!</span>(xs, <span class="macro">alloc::vec!</span>[<span class="string">'K'</span>, <span class="string">'k'</span>]);
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;unicode-case&quot;</span>)]
+    #[cfg(feature = <span class="string">"unicode-case"</span>)]
     </span><span class="kw">fn </span>simple_fold_a() {
-        <span class="kw">let </span>xs: Vec&lt;char&gt; = simple_fold_ok(<span class="string">&#39;a&#39;</span>).collect();
-        <span class="macro">assert_eq!</span>(xs, <span class="macro">alloc::vec!</span>[<span class="string">&#39;A&#39;</span>]);
+        <span class="kw">let </span>xs: Vec&lt;char&gt; = simple_fold_ok(<span class="string">'a'</span>).collect();
+        <span class="macro">assert_eq!</span>(xs, <span class="macro">alloc::vec!</span>[<span class="string">'A'</span>]);
 
-        <span class="kw">let </span>xs: Vec&lt;char&gt; = simple_fold_ok(<span class="string">&#39;A&#39;</span>).collect();
-        <span class="macro">assert_eq!</span>(xs, <span class="macro">alloc::vec!</span>[<span class="string">&#39;a&#39;</span>]);
+        <span class="kw">let </span>xs: Vec&lt;char&gt; = simple_fold_ok(<span class="string">'A'</span>).collect();
+        <span class="macro">assert_eq!</span>(xs, <span class="macro">alloc::vec!</span>[<span class="string">'a'</span>]);
     }
 
     <span class="attr">#[test]
-    #[cfg(not(feature = <span class="string">&quot;unicode-case&quot;</span>))]
+    #[cfg(not(feature = <span class="string">"unicode-case"</span>))]
     </span><span class="kw">fn </span>simple_fold_disabled() {
         <span class="macro">assert!</span>(SimpleCaseFolder::new().is_err());
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;unicode-case&quot;</span>)]
+    #[cfg(feature = <span class="string">"unicode-case"</span>)]
     </span><span class="kw">fn </span>range_contains() {
-        <span class="macro">assert!</span>(contains_case_map(<span class="string">&#39;A&#39;</span>, <span class="string">&#39;A&#39;</span>));
-        <span class="macro">assert!</span>(contains_case_map(<span class="string">&#39;Z&#39;</span>, <span class="string">&#39;Z&#39;</span>));
-        <span class="macro">assert!</span>(contains_case_map(<span class="string">&#39;A&#39;</span>, <span class="string">&#39;Z&#39;</span>));
-        <span class="macro">assert!</span>(contains_case_map(<span class="string">&#39;@&#39;</span>, <span class="string">&#39;A&#39;</span>));
-        <span class="macro">assert!</span>(contains_case_map(<span class="string">&#39;Z&#39;</span>, <span class="string">&#39;[&#39;</span>));
-        <span class="macro">assert!</span>(contains_case_map(<span class="string">&#39;☃&#39;</span>, <span class="string">&#39;Ⰰ&#39;</span>));
+        <span class="macro">assert!</span>(contains_case_map(<span class="string">'A'</span>, <span class="string">'A'</span>));
+        <span class="macro">assert!</span>(contains_case_map(<span class="string">'Z'</span>, <span class="string">'Z'</span>));
+        <span class="macro">assert!</span>(contains_case_map(<span class="string">'A'</span>, <span class="string">'Z'</span>));
+        <span class="macro">assert!</span>(contains_case_map(<span class="string">'@'</span>, <span class="string">'A'</span>));
+        <span class="macro">assert!</span>(contains_case_map(<span class="string">'Z'</span>, <span class="string">'['</span>));
+        <span class="macro">assert!</span>(contains_case_map(<span class="string">'☃'</span>, <span class="string">'Ⰰ'</span>));
 
-        <span class="macro">assert!</span>(!contains_case_map(<span class="string">&#39;[&#39;</span>, <span class="string">&#39;[&#39;</span>));
-        <span class="macro">assert!</span>(!contains_case_map(<span class="string">&#39;[&#39;</span>, <span class="string">&#39;`&#39;</span>));
+        <span class="macro">assert!</span>(!contains_case_map(<span class="string">'['</span>, <span class="string">'['</span>));
+        <span class="macro">assert!</span>(!contains_case_map(<span class="string">'['</span>, <span class="string">'`'</span>));
 
-        <span class="macro">assert!</span>(!contains_case_map(<span class="string">&#39;☃&#39;</span>, <span class="string">&#39;☃&#39;</span>));
+        <span class="macro">assert!</span>(!contains_case_map(<span class="string">'☃'</span>, <span class="string">'☃'</span>));
     }
 
     <span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;unicode-gencat&quot;</span>)]
+    #[cfg(feature = <span class="string">"unicode-gencat"</span>)]
     </span><span class="kw">fn </span>regression_466() {
         <span class="kw">use super</span>::{CanonicalClassQuery, ClassQuery};
 
-        <span class="kw">let </span>q = ClassQuery::OneLetter(<span class="string">&#39;C&#39;</span>);
+        <span class="kw">let </span>q = ClassQuery::OneLetter(<span class="string">'C'</span>);
         <span class="macro">assert_eq!</span>(
             q.canonicalize().unwrap(),
-            CanonicalClassQuery::GeneralCategory(<span class="string">&quot;Other&quot;</span>)
+            CanonicalClassQuery::GeneralCategory(<span class="string">"Other"</span>)
         );
     }
 
@@ -2056,24 +2056,24 @@
     </span><span class="kw">fn </span>sym_normalize() {
         <span class="kw">let </span>sym_norm = symbolic_name_normalize;
 
-        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">&quot;Line_Break&quot;</span>), <span class="string">&quot;linebreak&quot;</span>);
-        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">&quot;Line-break&quot;</span>), <span class="string">&quot;linebreak&quot;</span>);
-        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">&quot;linebreak&quot;</span>), <span class="string">&quot;linebreak&quot;</span>);
-        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">&quot;BA&quot;</span>), <span class="string">&quot;ba&quot;</span>);
-        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">&quot;ba&quot;</span>), <span class="string">&quot;ba&quot;</span>);
-        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">&quot;Greek&quot;</span>), <span class="string">&quot;greek&quot;</span>);
-        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">&quot;isGreek&quot;</span>), <span class="string">&quot;greek&quot;</span>);
-        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">&quot;IS_Greek&quot;</span>), <span class="string">&quot;greek&quot;</span>);
-        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">&quot;isc&quot;</span>), <span class="string">&quot;isc&quot;</span>);
-        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">&quot;is c&quot;</span>), <span class="string">&quot;isc&quot;</span>);
-        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">&quot;is_c&quot;</span>), <span class="string">&quot;isc&quot;</span>);
+        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">"Line_Break"</span>), <span class="string">"linebreak"</span>);
+        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">"Line-break"</span>), <span class="string">"linebreak"</span>);
+        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">"linebreak"</span>), <span class="string">"linebreak"</span>);
+        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">"BA"</span>), <span class="string">"ba"</span>);
+        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">"ba"</span>), <span class="string">"ba"</span>);
+        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">"Greek"</span>), <span class="string">"greek"</span>);
+        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">"isGreek"</span>), <span class="string">"greek"</span>);
+        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">"IS_Greek"</span>), <span class="string">"greek"</span>);
+        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">"isc"</span>), <span class="string">"isc"</span>);
+        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">"is c"</span>), <span class="string">"isc"</span>);
+        <span class="macro">assert_eq!</span>(sym_norm(<span class="string">"is_c"</span>), <span class="string">"isc"</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>valid_utf8_symbolic() {
-        <span class="kw">let </span><span class="kw-2">mut </span>x = <span class="string">b&quot;abc\xFFxyz&quot;</span>.to_vec();
+        <span class="kw">let </span><span class="kw-2">mut </span>x = <span class="string">b"abc\xFFxyz"</span>.to_vec();
         <span class="kw">let </span>y = symbolic_name_normalize_bytes(<span class="kw-2">&amp;mut </span>x);
-        <span class="macro">assert_eq!</span>(y, <span class="string">b&quot;abcxyz&quot;</span>);
+        <span class="macro">assert_eq!</span>(y, <span class="string">b"abcxyz"</span>);
     }
 }
 </code></pre></div></section></main></body></html>

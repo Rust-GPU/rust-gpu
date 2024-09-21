@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-1.10.3/src/regexset/string.rs`."><title>string.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-1.10.6/src/regexset/string.rs`."><title>string.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -751,9 +751,9 @@
 /// ```
 /// use regex::{Regex, RegexSet};
 ///
-/// let patterns = [&quot;foo&quot;, &quot;bar&quot;];
+/// let patterns = ["foo", "bar"];
 /// // Both patterns will match different ranges of this string.
-/// let hay = &quot;barfoo&quot;;
+/// let hay = "barfoo";
 ///
 /// // Compile a set matching any of our patterns.
 /// let set = RegexSet::new(patterns).unwrap();
@@ -779,7 +779,7 @@
 ///
 /// // Matches arrive in the order the constituent patterns were declared,
 /// // not the order they appear in the haystack.
-/// assert_eq!(vec![&quot;foo&quot;, &quot;bar&quot;], matches);
+/// assert_eq!(vec!["foo", "bar"], matches);
 /// ```
 ///
 /// # Performance
@@ -803,23 +803,23 @@
 /// use regex::RegexSet;
 ///
 /// let set = RegexSet::new(&amp;[
-///     r&quot;[a-z]+@[a-z]+\.(com|org|net)&quot;,
-///     r&quot;[a-z]+\.(com|org|net)&quot;,
+///     r"[a-z]+@[a-z]+\.(com|org|net)",
+///     r"[a-z]+\.(com|org|net)",
 /// ]).unwrap();
 ///
 /// // Ask whether any regexes in the set match.
-/// assert!(set.is_match(&quot;foo@example.com&quot;));
+/// assert!(set.is_match("foo@example.com"));
 ///
 /// // Identify which regexes in the set match.
-/// let matches: Vec&lt;_&gt; = set.matches(&quot;foo@example.com&quot;).into_iter().collect();
+/// let matches: Vec&lt;_&gt; = set.matches("foo@example.com").into_iter().collect();
 /// assert_eq!(vec![0, 1], matches);
 ///
 /// // Try again, but with a haystack that only matches one of the regexes.
-/// let matches: Vec&lt;_&gt; = set.matches(&quot;example.com&quot;).into_iter().collect();
+/// let matches: Vec&lt;_&gt; = set.matches("example.com").into_iter().collect();
 /// assert_eq!(vec![1], matches);
 ///
-/// // Try again, but with a haystack that doesn&#39;t match any regex in the set.
-/// let matches: Vec&lt;_&gt; = set.matches(&quot;example&quot;).into_iter().collect();
+/// // Try again, but with a haystack that doesn't match any regex in the set.
+/// let matches: Vec&lt;_&gt; = set.matches("example").into_iter().collect();
 /// assert!(matches.is_empty());
 /// ```
 ///
@@ -833,7 +833,7 @@
 /// After a match, one could then inspect the capture groups to figure out
 /// which alternates matched. The problem is that it is hard to make this
 /// approach scale when there are many regexes since the overlap between each
-/// alternate isn&#39;t always obvious to reason about.
+/// alternate isn't always obvious to reason about.
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>RegexSet {
     <span class="kw">pub</span>(<span class="kw">crate</span>) meta: meta::Regex,
@@ -854,8 +854,8 @@
     /// ```
     /// use regex::RegexSet;
     ///
-    /// let set = RegexSet::new([r&quot;\w+&quot;, r&quot;\d+&quot;]).unwrap();
-    /// assert!(set.is_match(&quot;foo&quot;));
+    /// let set = RegexSet::new([r"\w+", r"\d+"]).unwrap();
+    /// assert!(set.is_match("foo"));
     /// ```
     </span><span class="kw">pub fn </span>new&lt;I, S&gt;(exprs: I) -&gt; <span class="prelude-ty">Result</span>&lt;RegexSet, Error&gt;
     <span class="kw">where
@@ -869,7 +869,7 @@
     ///
     /// An empty regex never matches anything.
     ///
-    /// This is a convenience function for `RegexSet::new([])`, but doesn&#39;t
+    /// This is a convenience function for `RegexSet::new([])`, but doesn't
     /// require one to specify the type of the input.
     ///
     /// # Example
@@ -880,7 +880,7 @@
     /// let set = RegexSet::empty();
     /// assert!(set.is_empty());
     /// // an empty set matches nothing
-    /// assert!(!set.is_match(&quot;&quot;));
+    /// assert!(!set.is_match(""));
     /// ```
     </span><span class="kw">pub fn </span>empty() -&gt; RegexSet {
         <span class="kw">let </span>empty: [<span class="kw-2">&amp;</span>str; <span class="number">0</span>] = [];
@@ -891,7 +891,7 @@
     /// the haystack given.
     ///
     /// This method should be preferred if you only need to test whether any
-    /// of the regexes in the set should match, but don&#39;t care about *which*
+    /// of the regexes in the set should match, but don't care about *which*
     /// regexes matched. This is because the underlying matching engine will
     /// quit immediately after seeing the first match instead of continuing to
     /// find all matches.
@@ -908,9 +908,9 @@
     /// ```
     /// use regex::RegexSet;
     ///
-    /// let set = RegexSet::new([r&quot;\w+&quot;, r&quot;\d+&quot;]).unwrap();
-    /// assert!(set.is_match(&quot;foo&quot;));
-    /// assert!(!set.is_match(&quot;☃&quot;));
+    /// let set = RegexSet::new([r"\w+", r"\d+"]).unwrap();
+    /// assert!(set.is_match("foo"));
+    /// assert!(!set.is_match("☃"));
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>str) -&gt; bool {
@@ -933,15 +933,15 @@
     /// This example shows the significance of `start`. Namely, consider a
     /// haystack `foobar` and a desire to execute a search starting at offset
     /// `3`. You could search a substring explicitly, but then the look-around
-    /// assertions won&#39;t work correctly. Instead, you can use this method to
+    /// assertions won't work correctly. Instead, you can use this method to
     /// specify the start position of a search.
     ///
     /// ```
     /// use regex::RegexSet;
     ///
-    /// let set = RegexSet::new([r&quot;\bbar\b&quot;, r&quot;(?m)^bar$&quot;]).unwrap();
-    /// let hay = &quot;foobar&quot;;
-    /// // We get a match here, but it&#39;s probably not intended.
+    /// let set = RegexSet::new([r"\bbar\b", r"(?m)^bar$"]).unwrap();
+    /// let hay = "foobar";
+    /// // We get a match here, but it's probably not intended.
     /// assert!(set.is_match(&amp;hay[3..]));
     /// // No match because the  assertions take the context into account.
     /// assert!(!set.is_match_at(hay, 3));
@@ -955,7 +955,7 @@
     ///
     /// The set returned contains the index of each regex that matches in
     /// the given haystack. The index is in correspondence with the order of
-    /// regular expressions given to `RegexSet`&#39;s constructor.
+    /// regular expressions given to `RegexSet`'s constructor.
     ///
     /// The set can also be used to iterate over the matched indices. The order
     /// of iteration is always ascending with respect to the matching indices.
@@ -973,19 +973,19 @@
     /// use regex::RegexSet;
     ///
     /// let set = RegexSet::new([
-    ///     r&quot;\w+&quot;,
-    ///     r&quot;\d+&quot;,
-    ///     r&quot;\pL+&quot;,
-    ///     r&quot;foo&quot;,
-    ///     r&quot;bar&quot;,
-    ///     r&quot;barfoo&quot;,
-    ///     r&quot;foobar&quot;,
+    ///     r"\w+",
+    ///     r"\d+",
+    ///     r"\pL+",
+    ///     r"foo",
+    ///     r"bar",
+    ///     r"barfoo",
+    ///     r"foobar",
     /// ]).unwrap();
-    /// let matches: Vec&lt;_&gt; = set.matches(&quot;foobar&quot;).into_iter().collect();
+    /// let matches: Vec&lt;_&gt; = set.matches("foobar").into_iter().collect();
     /// assert_eq!(matches, vec![0, 2, 3, 4, 6]);
     ///
     /// // You can also test whether a particular regex matched:
-    /// let matches = set.matches(&quot;foobar&quot;);
+    /// let matches = set.matches("foobar");
     /// assert!(!matches.matched(5));
     /// assert!(matches.matched(6));
     /// ```
@@ -998,7 +998,7 @@
     ///
     /// The set returned contains the index of each regex that matches in
     /// the given haystack. The index is in correspondence with the order of
-    /// regular expressions given to `RegexSet`&#39;s constructor.
+    /// regular expressions given to `RegexSet`'s constructor.
     ///
     /// The set can also be used to iterate over the matched indices. The order
     /// of iteration is always ascending with respect to the matching indices.
@@ -1018,9 +1018,9 @@
     /// ```
     /// use regex::RegexSet;
     ///
-    /// let set = RegexSet::new([r&quot;\bbar\b&quot;, r&quot;(?m)^bar$&quot;]).unwrap();
-    /// let hay = &quot;foobar&quot;;
-    /// // We get matches here, but it&#39;s probably not intended.
+    /// let set = RegexSet::new([r"\bbar\b", r"(?m)^bar$"]).unwrap();
+    /// let hay = "foobar";
+    /// // We get matches here, but it's probably not intended.
     /// let matches: Vec&lt;_&gt; = set.matches(&amp;hay[3..]).into_iter().collect();
     /// assert_eq!(matches, vec![0, 1]);
     /// // No matches because the  assertions take the context into account.
@@ -1056,12 +1056,12 @@
         start: usize,
     ) -&gt; bool {
         <span class="comment">// This is pretty dumb. We should try to fix this, but the
-        // regex-automata API doesn&#39;t provide a way to store matches in an
-        // arbitrary &amp;mut [bool]. Thankfully, this API is is doc(hidden) and
+        // regex-automata API doesn't provide a way to store matches in an
+        // arbitrary &amp;mut [bool]. Thankfully, this API is doc(hidden) and
         // thus not public... But regex-capi currently uses it. We should
         // fix regex-capi to use a PatternSet, maybe? Not sure... PatternSet
         // is in regex-automata, not regex. So maybe we should just accept a
-        // &#39;SetMatches&#39;, which is basically just a newtype around PatternSet.
+        // 'SetMatches', which is basically just a newtype around PatternSet.
         </span><span class="kw">let </span><span class="kw-2">mut </span>patset = PatternSet::new(<span class="self">self</span>.meta.pattern_len());
         <span class="kw">let </span><span class="kw-2">mut </span>input = Input::new(haystack);
         input.set_start(start);
@@ -1095,8 +1095,8 @@
     /// use regex::RegexSet;
     ///
     /// assert_eq!(0, RegexSet::empty().len());
-    /// assert_eq!(1, RegexSet::new([r&quot;[0-9]&quot;]).unwrap().len());
-    /// assert_eq!(2, RegexSet::new([r&quot;[0-9]&quot;, r&quot;[a-z]&quot;]).unwrap().len());
+    /// assert_eq!(1, RegexSet::new([r"[0-9]"]).unwrap().len());
+    /// assert_eq!(2, RegexSet::new([r"[0-9]", r"[a-z]"]).unwrap().len());
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
@@ -1111,7 +1111,7 @@
     /// use regex::RegexSet;
     ///
     /// assert!(RegexSet::empty().is_empty());
-    /// assert!(!RegexSet::new([r&quot;[0-9]&quot;]).unwrap().is_empty());
+    /// assert!(!RegexSet::new([r"[0-9]"]).unwrap().is_empty());
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
@@ -1131,20 +1131,20 @@
     /// use regex::RegexSet;
     ///
     /// let set = RegexSet::new(&amp;[
-    ///     r&quot;\w+&quot;,
-    ///     r&quot;\d+&quot;,
-    ///     r&quot;\pL+&quot;,
-    ///     r&quot;foo&quot;,
-    ///     r&quot;bar&quot;,
-    ///     r&quot;barfoo&quot;,
-    ///     r&quot;foobar&quot;,
+    ///     r"\w+",
+    ///     r"\d+",
+    ///     r"\pL+",
+    ///     r"foo",
+    ///     r"bar",
+    ///     r"barfoo",
+    ///     r"foobar",
     /// ]).unwrap();
     /// let matches: Vec&lt;_&gt; = set
-    ///     .matches(&quot;foobar&quot;)
+    ///     .matches("foobar")
     ///     .into_iter()
     ///     .map(|index| &amp;set.patterns()[index])
     ///     .collect();
-    /// assert_eq!(matches, vec![r&quot;\w+&quot;, r&quot;\pL+&quot;, r&quot;foo&quot;, r&quot;bar&quot;, r&quot;foobar&quot;]);
+    /// assert_eq!(matches, vec![r"\w+", r"\pL+", r"foo", r"bar", r"foobar"]);
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>patterns(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[String] {
@@ -1173,10 +1173,10 @@
     /// use regex::RegexSet;
     ///
     /// let set = RegexSet::new(&amp;[
-    ///     r&quot;[a-z]+@[a-z]+\.(com|org|net)&quot;,
-    ///     r&quot;[a-z]+\.(com|org|net)&quot;,
+    ///     r"[a-z]+@[a-z]+\.(com|org|net)",
+    ///     r"[a-z]+\.(com|org|net)",
     /// ]).unwrap();
-    /// let matches = set.matches(&quot;foo@example.com&quot;);
+    /// let matches = set.matches("foo@example.com");
     /// assert!(matches.matched_any());
     /// ```
     </span><span class="attr">#[inline]
@@ -1201,10 +1201,10 @@
     /// use regex::RegexSet;
     ///
     /// let set = RegexSet::new([
-    ///     r&quot;[a-z]+@[a-z]+\.(com|org|net)&quot;,
-    ///     r&quot;[a-z]+\.(com|org|net)&quot;,
+    ///     r"[a-z]+@[a-z]+\.(com|org|net)",
+    ///     r"[a-z]+\.(com|org|net)",
     /// ]).unwrap();
-    /// let matches = set.matches(&quot;example.com&quot;);
+    /// let matches = set.matches("example.com");
     /// assert!(!matches.matched(0));
     /// assert!(matches.matched(1));
     /// ```
@@ -1229,10 +1229,10 @@
     /// use regex::RegexSet;
     ///
     /// let set = RegexSet::new([
-    ///     r&quot;[a-z]+@[a-z]+\.(com|org|net)&quot;,
-    ///     r&quot;[a-z]+\.(com|org|net)&quot;,
+    ///     r"[a-z]+@[a-z]+\.(com|org|net)",
+    ///     r"[a-z]+\.(com|org|net)",
     /// ]).unwrap();
-    /// let matches = set.matches(&quot;example.com&quot;);
+    /// let matches = set.matches("example.com");
     /// // Total number of patterns that matched.
     /// assert_eq!(1, matches.iter().count());
     /// // Total number of patterns in the set.
@@ -1255,12 +1255,12 @@
     /// use regex::RegexSet;
     ///
     /// let set = RegexSet::new([
-    ///     r&quot;[0-9]&quot;,
-    ///     r&quot;[a-z]&quot;,
-    ///     r&quot;[A-Z]&quot;,
-    ///     r&quot;\p{Greek}&quot;,
+    ///     r"[0-9]",
+    ///     r"[a-z]",
+    ///     r"[A-Z]",
+    ///     r"\p{Greek}",
     /// ]).unwrap();
-    /// let hay = &quot;βa1&quot;;
+    /// let hay = "βa1";
     /// let matches: Vec&lt;_&gt; = set.matches(hay).iter().collect();
     /// assert_eq!(matches, vec![0, 1, 3]);
     /// ```
@@ -1272,12 +1272,12 @@
     /// use regex::RegexSet;
     ///
     /// let set = RegexSet::new([
-    ///     r&quot;[0-9]&quot;,
-    ///     r&quot;[a-z]&quot;,
-    ///     r&quot;[A-Z]&quot;,
-    ///     r&quot;\p{Greek}&quot;,
+    ///     r"[0-9]",
+    ///     r"[a-z]",
+    ///     r"[A-Z]",
+    ///     r"\p{Greek}",
     /// ]).unwrap();
-    /// let hay = &quot;βa1&quot;;
+    /// let hay = "βa1";
     /// let mut matches = vec![];
     /// for index in set.matches(hay) {
     ///     matches.push(index);
@@ -1285,7 +1285,7 @@
     /// assert_eq!(matches, vec![0, 1, 3]);
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SetMatchesIter&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SetMatchesIter&lt;<span class="lifetime">'_</span>&gt; {
         SetMatchesIter(<span class="self">self</span>.<span class="number">0</span>.iter())
     }
 }
@@ -1300,8 +1300,8 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>SetMatches {
-    <span class="kw">type </span>IntoIter = SetMatchesIter&lt;<span class="lifetime">&#39;a</span>&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>SetMatches {
+    <span class="kw">type </span>IntoIter = SetMatchesIter&lt;<span class="lifetime">'a</span>&gt;;
     <span class="kw">type </span>Item = usize;
 
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
@@ -1324,12 +1324,12 @@
 /// use regex::RegexSet;
 ///
 /// let set = RegexSet::new([
-///     r&quot;[0-9]&quot;,
-///     r&quot;[a-z]&quot;,
-///     r&quot;[A-Z]&quot;,
-///     r&quot;\p{Greek}&quot;,
+///     r"[0-9]",
+///     r"[a-z]",
+///     r"[A-Z]",
+///     r"\p{Greek}",
 /// ]).unwrap();
-/// let hay = &quot;βa1&quot;;
+/// let hay = "βa1";
 /// let mut matches = vec![];
 /// for index in set.matches(hay) {
 ///     matches.push(index);
@@ -1374,7 +1374,7 @@
 
 <span class="doccomment">/// A borrowed iterator over the set of matches from a regex set.
 ///
-/// The lifetime `&#39;a` refers to the lifetime of the [`SetMatches`] value that
+/// The lifetime `'a` refers to the lifetime of the [`SetMatches`] value that
 /// created this iterator.
 ///
 /// This will always produces matches in ascending order, where the index
@@ -1383,9 +1383,9 @@
 ///
 /// This iterator is created by the [`SetMatches::iter`] method.
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>SetMatchesIter&lt;<span class="lifetime">&#39;a</span>&gt;(PatternSetIter&lt;<span class="lifetime">&#39;a</span>&gt;);
+</span><span class="kw">pub struct </span>SetMatchesIter&lt;<span class="lifetime">'a</span>&gt;(PatternSetIter&lt;<span class="lifetime">'a</span>&gt;);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>SetMatchesIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Iterator <span class="kw">for </span>SetMatchesIter&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">type </span>Item = usize;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -1397,17 +1397,17 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; DoubleEndedIterator <span class="kw">for </span>SetMatchesIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; DoubleEndedIterator <span class="kw">for </span>SetMatchesIter&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>next_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="self">self</span>.<span class="number">0</span>.next_back().map(|pid| pid.as_usize())
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; core::iter::FusedIterator <span class="kw">for </span>SetMatchesIter&lt;<span class="lifetime">&#39;a</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; core::iter::FusedIterator <span class="kw">for </span>SetMatchesIter&lt;<span class="lifetime">'a</span>&gt; {}
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>RegexSet {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;RegexSet({:?})&quot;</span>, <span class="self">self</span>.patterns())
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">"RegexSet({:?})"</span>, <span class="self">self</span>.patterns())
     }
 }
 </code></pre></div></section></main></body></html>

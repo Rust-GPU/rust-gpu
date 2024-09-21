@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/util/pool.rs`."><title>pool.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_automata/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/util/pool.rs`."><title>pool.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1198,15 +1198,15 @@
 <a href="#1198" id="1198">1198</a>
 <a href="#1199" id="1199">1199</a>
 </pre></div><pre class="rust"><code><span class="comment">// This module provides a relatively simple thread-safe pool of reusable
-// objects. For the most part, it&#39;s implemented by a stack represented by a
+// objects. For the most part, it's implemented by a stack represented by a
 // Mutex&lt;Vec&lt;T&gt;&gt;. It has one small trick: because unlocking a mutex is somewhat
 // costly, in the case where a pool is accessed by the first thread that tried
 // to get a value, we bypass the mutex. Here are some benchmarks showing the
 // difference.
 //
-// 2022-10-15: These benchmarks are from the old regex crate and they aren&#39;t
+// 2022-10-15: These benchmarks are from the old regex crate and they aren't
 // easy to reproduce because some rely on older implementations of Pool that
-// are no longer around. I&#39;ve left the results here for posterity, but any
+// are no longer around. I've left the results here for posterity, but any
 // enterprising individual should feel encouraged to re-litigate the way Pool
 // works. I am not at all certain it is the best approach.
 //
@@ -1216,7 +1216,7 @@
 // 4) misc::anchored_literal_long_non_match    19 (20526 MB/s)
 //
 // (1) represents our baseline: the master branch at the time of writing when
-// using the &#39;thread_local&#39; crate to implement the pool below.
+// using the 'thread_local' crate to implement the pool below.
 //
 // (2) represents a naive pool implemented completely via Mutex&lt;Vec&lt;T&gt;&gt;. There
 // is no special trick for bypassing the mutex.
@@ -1232,11 +1232,11 @@
 // Why move off of thread_local? Even though (4) is a hair faster than (1)
 // above, this was not the main goal. The main goal was to move off of
 // thread_local and find a way to *simply* re-capture some of its speed for
-// regex&#39;s specific case. So again, why move off of it? The *primary* reason is
+// regex's specific case. So again, why move off of it? The *primary* reason is
 // because of memory leaks. See https://github.com/rust-lang/regex/issues/362
 // for example. (Why do I want it to be simple? Well, I suppose what I mean is,
-// &quot;use as much safe code as possible to minimize risk and be as sure as I can
-// be that it is correct.&quot;)
+// "use as much safe code as possible to minimize risk and be as sure as I can
+// be that it is correct.")
 //
 // My guess is that the thread_local design is probably not appropriate for
 // regex since its memory usage scales to the number of active threads that
@@ -1250,10 +1250,10 @@
 // its maximal memory usage still scales with the total number of active
 // threads. In contrast, the pool below scales with the total number of threads
 // *simultaneously* using the pool. The hope is that this uses less memory
-// overall. And if it doesn&#39;t, we can hopefully tune it somehow.
+// overall. And if it doesn't, we can hopefully tune it somehow.
 //
 // It seems that these sort of conditions happen frequently
-// in FFI inside of other more &quot;managed&quot; languages. This was
+// in FFI inside of other more "managed" languages. This was
 // mentioned in the issue linked above, and also mentioned here:
 // https://github.com/BurntSushi/rure-go/issues/3. And in particular, users
 // confirm that disabling the use of thread_local resolves the leak.
@@ -1267,10 +1267,10 @@
 // thread owner optimization) in benchmarks. If someone wants to take a crack
 // at building something better, please file an issue. Even if it means a
 // different API. The API exposed by this pool is not the minimal thing that
-// something like a &#39;Regex&#39; actually needs. It could adapt to, for example,
-// an API more like what is found in the &#39;thread_local&#39; crate. However, we do
+// something like a 'Regex' actually needs. It could adapt to, for example,
+// an API more like what is found in the 'thread_local' crate. However, we do
 // really need to support the no-std alloc-only context, or else the regex
-// crate wouldn&#39;t be able to support no-std alloc-only. However, I&#39;m generally
+// crate wouldn't be able to support no-std alloc-only. However, I'm generally
 // okay with making the alloc-only context slower (as it is here), although I
 // do find it unfortunate.
 
@@ -1301,7 +1301,7 @@ being quite expensive.
 /// maximum number of simultaneous uses. This may change in the future.
 ///
 /// A `Pool` is a particularly useful data structure for this crate because
-/// many of the regex engines require a mutable &quot;cache&quot; in order to execute
+/// many of the regex engines require a mutable "cache" in order to execute
 /// a search. Since regexes themselves tend to be global, the problem is then:
 /// how do you get a mutable cache to execute a search? You could:
 ///
@@ -1331,7 +1331,7 @@ being quite expensive.
 /// # Example
 ///
 /// This example shows how to share a single hybrid regex among multiple
-/// threads, while also safely getting exclusive access to a hybrid&#39;s
+/// threads, while also safely getting exclusive access to a hybrid's
 /// [`Cache`](crate::hybrid::regex::Cache) without preventing other searches
 /// from running while your thread uses the `Cache`.
 ///
@@ -1343,12 +1343,12 @@ being quite expensive.
 /// };
 ///
 /// static RE: Lazy&lt;Regex&gt; =
-///     Lazy::new(|| Regex::new(&quot;foo[0-9]+bar&quot;).unwrap());
+///     Lazy::new(|| Regex::new("foo[0-9]+bar").unwrap());
 /// static CACHE: Lazy&lt;Pool&lt;Cache&gt;&gt; =
 ///     Lazy::new(|| Pool::new(|| RE.create_cache()));
 ///
 /// let expected = Some(Match::must(0, 3..14));
-/// assert_eq!(expected, RE.find(&amp;mut CACHE.get(), b&quot;zzzfoo12345barzzz&quot;));
+/// assert_eq!(expected, RE.find(&amp;mut CACHE.get(), b"zzzfoo12345barzzz"));
 /// ```
 </span><span class="kw">pub struct </span>Pool&lt;T, F = <span class="kw">fn</span>() -&gt; T&gt;(alloc::boxed::Box&lt;inner::Pool&lt;T, F&gt;&gt;);
 
@@ -1377,36 +1377,36 @@ being quite expensive.
     /// *not* guaranteed to return the same value received in the first `get`
     /// call.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PoolGuard&lt;<span class="lifetime">&#39;_</span>, T, F&gt; {
+    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PoolGuard&lt;<span class="lifetime">'_</span>, T, F&gt; {
         PoolGuard(<span class="self">self</span>.<span class="number">0</span>.get())
     }
 }
 
 <span class="kw">impl</span>&lt;T: core::fmt::Debug, F&gt; core::fmt::Debug <span class="kw">for </span>Pool&lt;T, F&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        f.debug_tuple(<span class="string">&quot;Pool&quot;</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>).finish()
+        f.debug_tuple(<span class="string">"Pool"</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>).finish()
     }
 }
 
 <span class="doccomment">/// A guard that is returned when a caller requests a value from the pool.
 ///
 /// The purpose of the guard is to use RAII to automatically put the value
-/// back in the pool once it&#39;s dropped.
-</span><span class="kw">pub struct </span>PoolGuard&lt;<span class="lifetime">&#39;a</span>, T: Send, F: Fn() -&gt; T&gt;(inner::PoolGuard&lt;<span class="lifetime">&#39;a</span>, T, F&gt;);
+/// back in the pool once it's dropped.
+</span><span class="kw">pub struct </span>PoolGuard&lt;<span class="lifetime">'a</span>, T: Send, F: Fn() -&gt; T&gt;(inner::PoolGuard&lt;<span class="lifetime">'a</span>, T, F&gt;);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: Send, F: Fn() -&gt; T&gt; PoolGuard&lt;<span class="lifetime">&#39;a</span>, T, F&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: Send, F: Fn() -&gt; T&gt; PoolGuard&lt;<span class="lifetime">'a</span>, T, F&gt; {
     <span class="doccomment">/// Consumes this guard and puts it back into the pool.
     ///
-    /// This circumvents the guard&#39;s `Drop` implementation. This can be useful
+    /// This circumvents the guard's `Drop` implementation. This can be useful
     /// in circumstances where the automatic `Drop` results in poorer codegen,
     /// such as calling non-inlined functions.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>put(this: PoolGuard&lt;<span class="lifetime">&#39;_</span>, T, F&gt;) {
+    </span><span class="kw">pub fn </span>put(this: PoolGuard&lt;<span class="lifetime">'_</span>, T, F&gt;) {
         inner::PoolGuard::put(this.<span class="number">0</span>);
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: Send, F: Fn() -&gt; T&gt; core::ops::Deref <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">&#39;a</span>, T, F&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: Send, F: Fn() -&gt; T&gt; core::ops::Deref <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">'a</span>, T, F&gt; {
     <span class="kw">type </span>Target = T;
 
     <span class="attr">#[inline]
@@ -1415,22 +1415,22 @@ being quite expensive.
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: Send, F: Fn() -&gt; T&gt; core::ops::DerefMut <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">&#39;a</span>, T, F&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: Send, F: Fn() -&gt; T&gt; core::ops::DerefMut <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">'a</span>, T, F&gt; {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>T {
         <span class="self">self</span>.<span class="number">0</span>.value_mut()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: Send + core::fmt::Debug, F: Fn() -&gt; T&gt; core::fmt::Debug
-    <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">&#39;a</span>, T, F&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: Send + core::fmt::Debug, F: Fn() -&gt; T&gt; core::fmt::Debug
+    <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">'a</span>, T, F&gt;
 {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        f.debug_tuple(<span class="string">&quot;PoolGuard&quot;</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>).finish()
+        f.debug_tuple(<span class="string">"PoolGuard"</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>).finish()
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">mod </span>inner {
     <span class="kw">use </span>core::{
         cell::UnsafeCell,
@@ -1464,15 +1464,15 @@ being quite expensive.
     /// called outside of Drop and thus there could be a bug in the internal
     /// implementation that results in trying to put the same guard back into
     /// the same pool multiple times, and *that* could result in UB if we
-    /// didn&#39;t mark the guard as already having been put back in the pool.
+    /// didn't mark the guard as already having been put back in the pool.
     ///
-    /// So this isn&#39;t strictly necessary, but this let&#39;s us define some
-    /// routines as safe (like PoolGuard::put_imp) that we couldn&#39;t otherwise
+    /// So this isn't strictly necessary, but this let's us define some
+    /// routines as safe (like PoolGuard::put_imp) that we couldn't otherwise
     /// do.
     </span><span class="kw">static </span>THREAD_ID_DROPPED: usize = <span class="number">2</span>;
 
     <span class="doccomment">/// The number of stacks we use inside of the pool. These are only used for
-    /// non-owners. That is, these represent the &quot;slow&quot; path.
+    /// non-owners. That is, these represent the "slow" path.
     ///
     /// In the original implementation of this pool, we only used a single
     /// stack. While this might be okay for a couple threads, the prevalence of
@@ -1501,7 +1501,7 @@ being quite expensive.
     /// Keeping it at 8 limits, to an extent, how much unnecessary memory can
     /// be allocated.
     ///
-    /// In an ideal world, we&#39;d be able to have something like this:
+    /// In an ideal world, we'd be able to have something like this:
     ///
     /// * Grow the number of stacks as the number of concurrent callers
     /// increases. I spent a little time trying this, but even just adding an
@@ -1510,7 +1510,7 @@ being quite expensive.
     /// required than just an addition/subtraction, I abandoned this approach.
     /// * The maximum amount of memory used should scale with respect to the
     /// number of concurrent callers and *not* the total number of existing
-    /// threads. This is primarily why the `thread_local` crate isn&#39;t used, as
+    /// threads. This is primarily why the `thread_local` crate isn't used, as
     /// as some environments spin up a lot of threads. This led to multiple
     /// reports of extremely high memory usage (often described as memory
     /// leaks).
@@ -1522,7 +1522,7 @@ being quite expensive.
     /// treated as a stack. The main thing preventing me from exploring this
     /// is the ABA problem. The `crossbeam` crate has tools for dealing with
     /// this sort of problem (via its epoch based memory reclamation strategy),
-    /// but I can&#39;t justify bringing in all of `crossbeam` as a dependency of
+    /// but I can't justify bringing in all of `crossbeam` as a dependency of
     /// `regex` for this.
     ///
     /// See this issue for more context and discussion:
@@ -1534,19 +1534,19 @@ being quite expensive.
         </span><span class="kw">static </span>THREAD_ID: usize = {
             <span class="kw">let </span>next = COUNTER.fetch_add(<span class="number">1</span>, Ordering::Relaxed);
             <span class="comment">// SAFETY: We cannot permit the reuse of thread IDs since reusing a
-            // thread ID might result in more than one thread &quot;owning&quot; a pool,
+            // thread ID might result in more than one thread "owning" a pool,
             // and thus, permit accessing a mutable value from multiple threads
             // simultaneously without synchronization. The intent of this panic
             // is to be a sanity check. It is not expected that the thread ID
             // space will actually be exhausted in practice. Even on a 32-bit
             // system, it would require spawning 2^32 threads (although they
-            // wouldn&#39;t all need to run simultaneously, so it is in theory
+            // wouldn't all need to run simultaneously, so it is in theory
             // possible).
             //
             // This checks that the counter never wraps around, since atomic
             // addition wraps around on overflow.
             </span><span class="kw">if </span>next == <span class="number">0 </span>{
-                <span class="macro">panic!</span>(<span class="string">&quot;regex: thread ID allocation space exhausted&quot;</span>);
+                <span class="macro">panic!</span>(<span class="string">"regex: thread ID allocation space exhausted"</span>);
             }
             next
         };
@@ -1556,7 +1556,7 @@ being quite expensive.
     /// an absolutely critical optimization that tends to have the most impact
     /// in high contention workloads. Without forcing each mutex protected
     /// into its own cache line, high contention exacerbates the performance
-    /// problem by causing &quot;false sharing.&quot; By putting each mutex in its own
+    /// problem by causing "false sharing." By putting each mutex in its own
     /// cache-line, we avoid the false sharing problem and the affects of
     /// contention are greatly reduced.
     </span><span class="attr">#[derive(Debug)]
@@ -1566,7 +1566,7 @@ being quite expensive.
     <span class="doccomment">/// A thread safe pool utilizing std-only features.
     ///
     /// The main difference between this and the simplistic alloc-only pool is
-    /// the use of std::sync::Mutex and an &quot;owner thread&quot; optimization that
+    /// the use of std::sync::Mutex and an "owner thread" optimization that
     /// makes accesses by the owner of a pool faster than all other threads.
     /// This makes the common case of running a regex within a single thread
     /// faster by avoiding mutex unlocking.
@@ -1575,15 +1575,15 @@ being quite expensive.
         /// has requested a T.
         </span>create: F,
         <span class="doccomment">/// Multiple stacks of T values to hand out. These are used when a Pool
-        /// is accessed by a thread that didn&#39;t create it.
+        /// is accessed by a thread that didn't create it.
         ///
         /// Conceptually this is `Mutex&lt;Vec&lt;Box&lt;T&gt;&gt;&gt;`, but sharded out to make
         /// it scale better under high contention work-loads. We index into
         /// this sequence via `thread_id % stacks.len()`.
         </span>stacks: Vec&lt;CacheLine&lt;Mutex&lt;Vec&lt;Box&lt;T&gt;&gt;&gt;&gt;&gt;,
         <span class="doccomment">/// The ID of the thread that owns this pool. The owner is the thread
-        /// that makes the first call to &#39;get&#39;. When the owner calls &#39;get&#39;, it
-        /// gets &#39;owner_val&#39; directly instead of returning a T from &#39;stack&#39;.
+        /// that makes the first call to 'get'. When the owner calls 'get', it
+        /// gets 'owner_val' directly instead of returning a T from 'stack'.
         /// See comments elsewhere for details, but this is intended to be an
         /// optimization for the common case that makes getting a T faster.
         ///
@@ -1605,17 +1605,17 @@ being quite expensive.
     // thus itself not Sync. So what we *really* want is for our Pool&lt;T&gt; to by
     // Sync even when T is not Sync (but is at least Send).
     //
-    // The only non-sync aspect of a Pool is its &#39;owner_val&#39; field, which is
+    // The only non-sync aspect of a Pool is its 'owner_val' field, which is
     // used to implement faster access to a pool value in the common case of
     // a pool being accessed in the same thread in which it was created. The
-    // &#39;stack&#39; field is also shared, but a Mutex&lt;T&gt; where T: Send is already
-    // Sync. So we only need to worry about &#39;owner_val&#39;.
+    // 'stack' field is also shared, but a Mutex&lt;T&gt; where T: Send is already
+    // Sync. So we only need to worry about 'owner_val'.
     //
-    // The key is to guarantee that &#39;owner_val&#39; can only ever be accessed from
+    // The key is to guarantee that 'owner_val' can only ever be accessed from
     // one thread. In our implementation below, we guarantee this by only
-    // returning the &#39;owner_val&#39; when the ID of the current thread matches the
-    // ID of the thread that first called &#39;Pool::get&#39;. Since this can only ever
-    // be one thread, it follows that only one thread can access &#39;owner_val&#39; at
+    // returning the 'owner_val' when the ID of the current thread matches the
+    // ID of the thread that first called 'Pool::get'. Since this can only ever
+    // be one thread, it follows that only one thread can access 'owner_val' at
     // any point in time. Thus, it is safe to declare that Pool&lt;T&gt; is Sync when
     // T is Send.
     //
@@ -1656,20 +1656,20 @@ being quite expensive.
         </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new(create: F) -&gt; Pool&lt;T, F&gt; {
             <span class="comment">// FIXME: Now that we require 1.65+, Mutex::new is available as
             // const... So we can almost mark this function as const. But of
-            // course, we&#39;re creating a Vec of stacks below (we didn&#39;t when I
+            // course, we're creating a Vec of stacks below (we didn't when I
             // originally wrote this code). It seems like the best way to work
             // around this would be to use a `[Stack; MAX_POOL_STACKS]` instead
             // of a `Vec&lt;Stack&gt;`. I refrained from making this change at time
             // of writing (2023/10/08) because I was making a lot of other
             // changes at the same time and wanted to do this more carefully.
             // Namely, because of the cache line optimization, that `[Stack;
-            // MAX_POOL_STACKS]` would be quite big. It&#39;s unclear how bad (if
+            // MAX_POOL_STACKS]` would be quite big. It's unclear how bad (if
             // at all) that would be.
             //
             // Another choice would be to lazily allocate the stacks, but...
-            // I&#39;m not so sure about that. Seems like a fair bit of complexity?
+            // I'm not so sure about that. Seems like a fair bit of complexity?
             //
-            // Maybe there&#39;s a simple solution I&#39;m missing.
+            // Maybe there's a simple solution I'm missing.
             //
             // ... OK, I tried to fix this. First, I did it by putting `stacks`
             // in an `UnsafeCell` and using a `Once` to lazily initialize it.
@@ -1682,22 +1682,22 @@ being quite expensive.
             // type (and leave the non-std version unboxed) and use the same
             // `UnsafeCell` technique to lazily initialize it. This has the
             // downside of the `Once` now needing to get hit in the owner fast
-            // path, but maybe that&#39;s OK? However, I then realized that we can
+            // path, but maybe that's OK? However, I then realized that we can
             // only lazily initialize `stacks`, `owner` and `owner_val`. The
             // `create` function needs to be put somewhere outside of the box.
-            // So now the pool is a `Box`, `Once` and a function. Now we&#39;re
+            // So now the pool is a `Box`, `Once` and a function. Now we're
             // starting to defeat the point of boxing in the first place. So I
             // backed out that change too.
             //
-            // Back to square one. I maybe we just don&#39;t make a pool&#39;s
-            // constructor const and live with it. It&#39;s probably not a huge
+            // Back to square one. I maybe we just don't make a pool's
+            // constructor const and live with it. It's probably not a huge
             // deal.
             </span><span class="kw">let </span><span class="kw-2">mut </span>stacks = Vec::with_capacity(MAX_POOL_STACKS);
             <span class="kw">for _ in </span><span class="number">0</span>..stacks.capacity() {
                 stacks.push(CacheLine(Mutex::new(<span class="macro">vec!</span>[])));
             }
             <span class="kw">let </span>owner = AtomicUsize::new(THREAD_ID_UNOWNED);
-            <span class="kw">let </span>owner_val = UnsafeCell::new(<span class="prelude-val">None</span>); <span class="comment">// init&#39;d on first access
+            <span class="kw">let </span>owner_val = UnsafeCell::new(<span class="prelude-val">None</span>); <span class="comment">// init'd on first access
             </span>Pool { create, stacks, owner, owner_val }
         }
     }
@@ -1706,19 +1706,19 @@ being quite expensive.
         <span class="doccomment">/// Get a value from the pool. This may block if another thread is also
         /// attempting to retrieve a value from the pool.
         </span><span class="attr">#[inline]
-        </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PoolGuard&lt;<span class="lifetime">&#39;_</span>, T, F&gt; {
-            <span class="comment">// Our fast path checks if the caller is the thread that &quot;owns&quot;
+        </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PoolGuard&lt;<span class="lifetime">'_</span>, T, F&gt; {
+            <span class="comment">// Our fast path checks if the caller is the thread that "owns"
             // this pool. Or stated differently, whether it is the first thread
             // that tried to extract a value from the pool. If it is, then we
             // can return a T to the caller without going through a mutex.
             //
             // SAFETY: We must guarantee that only one thread gets access
             // to this value. Since a thread is uniquely identified by the
-            // THREAD_ID thread local, it follows that if the caller&#39;s thread
+            // THREAD_ID thread local, it follows that if the caller's thread
             // ID is equal to the owner, then only one thread may receive this
             // value. This is also why we can get away with what looks like a
-            // racy load and a store. We know that if &#39;owner == caller&#39;, then
-            // only one thread can be here, so we don&#39;t need to worry about any
+            // racy load and a store. We know that if 'owner == caller', then
+            // only one thread can be here, so we don't need to worry about any
             // other thread setting the owner to something else.
             </span><span class="kw">let </span>caller = THREAD_ID.with(|id| <span class="kw-2">*</span>id);
             <span class="kw">let </span>owner = <span class="self">self</span>.owner.load(Ordering::Acquire);
@@ -1732,7 +1732,7 @@ being quite expensive.
             <span class="self">self</span>.get_slow(caller, owner)
         }
 
-        <span class="doccomment">/// This is the &quot;slow&quot; version that goes through a mutex to pop an
+        <span class="doccomment">/// This is the "slow" version that goes through a mutex to pop an
         /// allocated value off a stack to return to the caller. (Or, if the
         /// stack is empty, a new value is created.)
         ///
@@ -1742,7 +1742,7 @@ being quite expensive.
             <span class="kw-2">&amp;</span><span class="self">self</span>,
             caller: usize,
             owner: usize,
-        ) -&gt; PoolGuard&lt;<span class="lifetime">&#39;_</span>, T, F&gt; {
+        ) -&gt; PoolGuard&lt;<span class="lifetime">'_</span>, T, F&gt; {
             <span class="kw">if </span>owner == THREAD_ID_UNOWNED {
                 <span class="comment">// This sentinel means this pool is not yet owned. We try to
                 // atomically set the owner. If we do, then this thread becomes
@@ -1770,10 +1770,10 @@ being quite expensive.
                 }
             }
             <span class="kw">let </span>stack_id = caller % <span class="self">self</span>.stacks.len();
-            <span class="comment">// We try to acquire exclusive access to this thread&#39;s stack, and
+            <span class="comment">// We try to acquire exclusive access to this thread's stack, and
             // if so, grab a value from it if we can. We put this in a loop so
-            // that it&#39;s easy to tweak and experiment with a different number
-            // of tries. In the end, I couldn&#39;t see anything obviously better
+            // that it's easy to tweak and experiment with a different number
+            // of tries. In the end, I couldn't see anything obviously better
             // than one attempt in ad hoc testing.
             </span><span class="kw">for _ in </span><span class="number">0</span>..<span class="number">1 </span>{
                 <span class="kw">let </span><span class="kw-2">mut </span>stack = <span class="kw">match </span><span class="self">self</span>.stacks[stack_id].<span class="number">0</span>.try_lock() {
@@ -1789,31 +1789,31 @@ being quite expensive.
                 <span class="kw">let </span>value = Box::new((<span class="self">self</span>.create)());
                 <span class="kw">return </span><span class="self">self</span>.guard_stack(value);
             }
-            <span class="comment">// We&#39;re only here if we could get access to our stack, so just
+            <span class="comment">// We're only here if we could get access to our stack, so just
             // create a new value. This seems like it could be wasteful, but
-            // waiting for exclusive access to a stack when there&#39;s high
+            // waiting for exclusive access to a stack when there's high
             // contention is brutal for perf.
             </span><span class="self">self</span>.guard_stack_transient(Box::new((<span class="self">self</span>.create)()))
         }
 
-        <span class="doccomment">/// Puts a value back into the pool. Callers don&#39;t need to call this.
-        /// Once the guard that&#39;s returned by &#39;get&#39; is dropped, it is put back
+        <span class="doccomment">/// Puts a value back into the pool. Callers don't need to call this.
+        /// Once the guard that's returned by 'get' is dropped, it is put back
         /// into the pool automatically.
         </span><span class="attr">#[inline]
         </span><span class="kw">fn </span>put_value(<span class="kw-2">&amp;</span><span class="self">self</span>, value: Box&lt;T&gt;) {
             <span class="kw">let </span>caller = THREAD_ID.with(|id| <span class="kw-2">*</span>id);
             <span class="kw">let </span>stack_id = caller % <span class="self">self</span>.stacks.len();
-            <span class="comment">// As with trying to pop a value from this thread&#39;s stack, we
+            <span class="comment">// As with trying to pop a value from this thread's stack, we
             // merely attempt to get access to push this value back on the
-            // stack. If there&#39;s too much contention, we just give up and throw
+            // stack. If there's too much contention, we just give up and throw
             // the value away.
             //
             // Interestingly, in ad hoc benchmarking, it is beneficial to
             // attempt to push the value back more than once, unlike when
-            // popping the value. I don&#39;t have a good theory for why this is.
+            // popping the value. I don't have a good theory for why this is.
             // I guess if we drop too many values then that winds up forcing
             // the pop operation to create new fresh values and thus leads to
-            // less reuse. There&#39;s definitely a balancing act here.
+            // less reuse. There's definitely a balancing act here.
             </span><span class="kw">for _ in </span><span class="number">0</span>..<span class="number">10 </span>{
                 <span class="kw">let </span><span class="kw-2">mut </span>stack = <span class="kw">match </span><span class="self">self</span>.stacks[stack_id].<span class="number">0</span>.try_lock() {
                     <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">continue</span>,
@@ -1826,41 +1826,41 @@ being quite expensive.
 
         <span class="doccomment">/// Create a guard that represents the special owned T.
         </span><span class="attr">#[inline]
-        </span><span class="kw">fn </span>guard_owned(<span class="kw-2">&amp;</span><span class="self">self</span>, caller: usize) -&gt; PoolGuard&lt;<span class="lifetime">&#39;_</span>, T, F&gt; {
+        </span><span class="kw">fn </span>guard_owned(<span class="kw-2">&amp;</span><span class="self">self</span>, caller: usize) -&gt; PoolGuard&lt;<span class="lifetime">'_</span>, T, F&gt; {
             PoolGuard { pool: <span class="self">self</span>, value: <span class="prelude-val">Err</span>(caller), discard: <span class="bool-val">false </span>}
         }
 
-        <span class="doccomment">/// Create a guard that contains a value from the pool&#39;s stack.
+        <span class="doccomment">/// Create a guard that contains a value from the pool's stack.
         </span><span class="attr">#[inline]
-        </span><span class="kw">fn </span>guard_stack(<span class="kw-2">&amp;</span><span class="self">self</span>, value: Box&lt;T&gt;) -&gt; PoolGuard&lt;<span class="lifetime">&#39;_</span>, T, F&gt; {
+        </span><span class="kw">fn </span>guard_stack(<span class="kw-2">&amp;</span><span class="self">self</span>, value: Box&lt;T&gt;) -&gt; PoolGuard&lt;<span class="lifetime">'_</span>, T, F&gt; {
             PoolGuard { pool: <span class="self">self</span>, value: <span class="prelude-val">Ok</span>(value), discard: <span class="bool-val">false </span>}
         }
 
-        <span class="doccomment">/// Create a guard that contains a value from the pool&#39;s stack with an
+        <span class="doccomment">/// Create a guard that contains a value from the pool's stack with an
         /// instruction to throw away the value instead of putting it back
         /// into the pool.
         </span><span class="attr">#[inline]
-        </span><span class="kw">fn </span>guard_stack_transient(<span class="kw-2">&amp;</span><span class="self">self</span>, value: Box&lt;T&gt;) -&gt; PoolGuard&lt;<span class="lifetime">&#39;_</span>, T, F&gt; {
+        </span><span class="kw">fn </span>guard_stack_transient(<span class="kw-2">&amp;</span><span class="self">self</span>, value: Box&lt;T&gt;) -&gt; PoolGuard&lt;<span class="lifetime">'_</span>, T, F&gt; {
             PoolGuard { pool: <span class="self">self</span>, value: <span class="prelude-val">Ok</span>(value), discard: <span class="bool-val">true </span>}
         }
     }
 
     <span class="kw">impl</span>&lt;T: core::fmt::Debug, F&gt; core::fmt::Debug <span class="kw">for </span>Pool&lt;T, F&gt; {
-        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
-            f.debug_struct(<span class="string">&quot;Pool&quot;</span>)
-                .field(<span class="string">&quot;stacks&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.stacks)
-                .field(<span class="string">&quot;owner&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.owner)
-                .field(<span class="string">&quot;owner_val&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.owner_val)
+        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
+            f.debug_struct(<span class="string">"Pool"</span>)
+                .field(<span class="string">"stacks"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.stacks)
+                .field(<span class="string">"owner"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.owner)
+                .field(<span class="string">"owner_val"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.owner_val)
                 .finish()
         }
     }
 
     <span class="doccomment">/// A guard that is returned when a caller requests a value from the pool.
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>PoolGuard&lt;<span class="lifetime">&#39;a</span>, T: Send, F: Fn() -&gt; T&gt; {
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>PoolGuard&lt;<span class="lifetime">'a</span>, T: Send, F: Fn() -&gt; T&gt; {
         <span class="doccomment">/// The pool that this guard is attached to.
-        </span>pool: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Pool&lt;T, F&gt;,
-        <span class="doccomment">/// This is Err when the guard represents the special &quot;owned&quot; value.
-        /// In which case, the value is retrieved from &#39;pool.owner_val&#39;. And
+        </span>pool: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Pool&lt;T, F&gt;,
+        <span class="doccomment">/// This is Err when the guard represents the special "owned" value.
+        /// In which case, the value is retrieved from 'pool.owner_val'. And
         /// in the special case of `Err(THREAD_ID_DROPPED)`, it means the
         /// guard has been put back into the pool and should no longer be used.
         </span>value: <span class="prelude-ty">Result</span>&lt;Box&lt;T&gt;, usize&gt;,
@@ -1872,7 +1872,7 @@ being quite expensive.
         </span>discard: bool,
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: Send, F: Fn() -&gt; T&gt; PoolGuard&lt;<span class="lifetime">&#39;a</span>, T, F&gt; {
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: Send, F: Fn() -&gt; T&gt; PoolGuard&lt;<span class="lifetime">'a</span>, T, F&gt; {
         <span class="doccomment">/// Return the underlying value.
         </span><span class="attr">#[inline]
         </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>T {
@@ -1884,13 +1884,13 @@ being quite expensive.
                 // be one. Thus, we are guaranteed to be providing exclusive
                 // access here which makes this safe.
                 //
-                // Also, since &#39;owner_val&#39; is guaranteed to be initialized
+                // Also, since 'owner_val' is guaranteed to be initialized
                 // before an owned PoolGuard is created, the unchecked unwrap
                 // is safe.
                 </span><span class="prelude-val">Err</span>(id) =&gt; <span class="kw">unsafe </span>{
                     <span class="comment">// This assert is *not* necessary for safety, since we
                     // should never be here if the guard had been put back into
-                    // the pool. This is a sanity check to make sure we didn&#39;t
+                    // the pool. This is a sanity check to make sure we didn't
                     // break an internal invariant.
                     </span><span class="macro">debug_assert_ne!</span>(THREAD_ID_DROPPED, id);
                     (<span class="kw-2">*</span><span class="self">self</span>.pool.owner_val.get()).as_ref().unwrap_unchecked()
@@ -1909,13 +1909,13 @@ being quite expensive.
                 // be one. Thus, we are guaranteed to be providing exclusive
                 // access here which makes this safe.
                 //
-                // Also, since &#39;owner_val&#39; is guaranteed to be initialized
+                // Also, since 'owner_val' is guaranteed to be initialized
                 // before an owned PoolGuard is created, the unwrap_unchecked
                 // is safe.
                 </span><span class="prelude-val">Err</span>(id) =&gt; <span class="kw">unsafe </span>{
                     <span class="comment">// This assert is *not* necessary for safety, since we
                     // should never be here if the guard had been put back into
-                    // the pool. This is a sanity check to make sure we didn&#39;t
+                    // the pool. This is a sanity check to make sure we didn't
                     // break an internal invariant.
                     </span><span class="macro">debug_assert_ne!</span>(THREAD_ID_DROPPED, id);
                     (<span class="kw-2">*</span><span class="self">self</span>.pool.owner_val.get()).as_mut().unwrap_unchecked()
@@ -1925,11 +1925,11 @@ being quite expensive.
 
         <span class="doccomment">/// Consumes this guard and puts it back into the pool.
         </span><span class="attr">#[inline]
-        </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>put(this: PoolGuard&lt;<span class="lifetime">&#39;_</span>, T, F&gt;) {
+        </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>put(this: PoolGuard&lt;<span class="lifetime">'_</span>, T, F&gt;) {
             <span class="comment">// Since this is effectively consuming the guard and putting the
-            // value back into the pool, there&#39;s no reason to run its Drop
-            // impl after doing this. I don&#39;t believe there is a correctness
-            // problem with doing so, but there&#39;s definitely a perf problem
+            // value back into the pool, there's no reason to run its Drop
+            // impl after doing this. I don't believe there is a correctness
+            // problem with doing so, but there's definitely a perf problem
             // by redoing this work. So we avoid it.
             </span><span class="kw">let </span><span class="kw-2">mut </span>this = core::mem::ManuallyDrop::new(this);
             this.put_imp();
@@ -1941,7 +1941,7 @@ being quite expensive.
         </span><span class="kw">fn </span>put_imp(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
             <span class="kw">match </span>core::mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.value, <span class="prelude-val">Err</span>(THREAD_ID_DROPPED)) {
                 <span class="prelude-val">Ok</span>(value) =&gt; {
-                    <span class="comment">// If we were told to discard this value then don&#39;t bother
+                    <span class="comment">// If we were told to discard this value then don't bother
                     // trying to put it back into the pool. This occurs when
                     // the pop operation failed to acquire a lock and we
                     // decided to create a new value in lieu of contending for
@@ -1951,18 +1951,18 @@ being quite expensive.
                     }
                     <span class="self">self</span>.pool.put_value(value);
                 }
-                <span class="comment">// If this guard has a value &quot;owned&quot; by the thread, then
+                <span class="comment">// If this guard has a value "owned" by the thread, then
                 // the Pool guarantees that this is the ONLY such guard.
                 // Therefore, in order to place it back into the pool and make
                 // it available, we need to change the owner back to the owning
-                // thread&#39;s ID. But note that we use the ID that was stored in
+                // thread's ID. But note that we use the ID that was stored in
                 // the guard, since a guard can be moved to another thread and
                 // dropped. (A previous iteration of this code read from the
                 // THREAD_ID thread local, which uses the ID of the current
                 // thread which may not be the ID of the owning thread! This
                 // also avoids the TLS access, which is likely a hair faster.)
                 </span><span class="prelude-val">Err</span>(owner) =&gt; {
-                    <span class="comment">// If we hit this point, it implies &#39;put_imp&#39; has been
+                    <span class="comment">// If we hit this point, it implies 'put_imp' has been
                     // called multiple times for the same guard which in turn
                     // corresponds to a bug in this implementation.
                     </span><span class="macro">assert_ne!</span>(THREAD_ID_DROPPED, owner);
@@ -1972,35 +1972,35 @@ being quite expensive.
         }
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: Send, F: Fn() -&gt; T&gt; Drop <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">&#39;a</span>, T, F&gt; {
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: Send, F: Fn() -&gt; T&gt; Drop <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">'a</span>, T, F&gt; {
         <span class="attr">#[inline]
         </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
             <span class="self">self</span>.put_imp();
         }
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: Send + core::fmt::Debug, F: Fn() -&gt; T&gt; core::fmt::Debug
-        <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">&#39;a</span>, T, F&gt;
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: Send + core::fmt::Debug, F: Fn() -&gt; T&gt; core::fmt::Debug
+        <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">'a</span>, T, F&gt;
     {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-            f.debug_struct(<span class="string">&quot;PoolGuard&quot;</span>)
-                .field(<span class="string">&quot;pool&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.pool)
-                .field(<span class="string">&quot;value&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.value)
+            f.debug_struct(<span class="string">"PoolGuard"</span>)
+                .field(<span class="string">"pool"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.pool)
+                .field(<span class="string">"value"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.value)
                 .finish()
         }
     }
 }
 
-<span class="comment">// FUTURE: We should consider using Mara Bos&#39;s nearly-lock-free version of this
+<span class="comment">// FUTURE: We should consider using Mara Bos's nearly-lock-free version of this
 // here: https://gist.github.com/m-ou-se/5fdcbdf7dcf4585199ce2de697f367a4.
 //
-// One reason why I did things with a &quot;mutex&quot; below is that it isolates the
-// safety concerns to just the Mutex, where as the safety of Mara&#39;s pool is a
+// One reason why I did things with a "mutex" below is that it isolates the
+// safety concerns to just the Mutex, where as the safety of Mara's pool is a
 // bit more sprawling. I also expect this code to not be used that much, and
 // so is unlikely to get as much real world usage with which to test it. That
-// means the &quot;obviously correct&quot; lever is an important one.
+// means the "obviously correct" lever is an important one.
 //
-// The specific reason to use Mara&#39;s pool is that it is likely faster and also
+// The specific reason to use Mara's pool is that it is likely faster and also
 // less likely to hit problems with spin-locks, although it is not completely
 // impervious to them.
 //
@@ -2008,9 +2008,9 @@ being quite expensive.
 // could be done with a lock free linked list. The issue is the ABA problem. It
 // is difficult to avoid, and doing so is complex. BUT, the upshot of that is
 // that if we had a truly lock free pool, then we could also use it above in
-// the &#39;std&#39; pool instead of a Mutex because it should be completely free the
+// the 'std' pool instead of a Mutex because it should be completely free the
 // problems that come from spin-locks.
-</span><span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+</span><span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
 </span><span class="kw">mod </span>inner {
     <span class="kw">use </span>core::{
         cell::UnsafeCell,
@@ -2022,13 +2022,13 @@ being quite expensive.
 
     <span class="doccomment">/// A thread safe pool utilizing alloc-only features.
     ///
-    /// Unlike the std version, it doesn&#39;t seem possible(?) to implement the
-    /// &quot;thread owner&quot; optimization because alloc-only doesn&#39;t have any concept
+    /// Unlike the std version, it doesn't seem possible(?) to implement the
+    /// "thread owner" optimization because alloc-only doesn't have any concept
     /// of threads. So the best we can do is just a normal stack. This will
     /// increase latency in alloc-only environments.
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Pool&lt;T, F&gt; {
         <span class="doccomment">/// A stack of T values to hand out. These are used when a Pool is
-        /// accessed by a thread that didn&#39;t create it.
+        /// accessed by a thread that didn't create it.
         </span>stack: Mutex&lt;Vec&lt;Box&lt;T&gt;&gt;&gt;,
         <span class="doccomment">/// A function to create more T values when stack is empty and a caller
         /// has requested a T.
@@ -2052,7 +2052,7 @@ being quite expensive.
         <span class="doccomment">/// Get a value from the pool. This may block if another thread is also
         /// attempting to retrieve a value from the pool.
         </span><span class="attr">#[inline]
-        </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PoolGuard&lt;<span class="lifetime">&#39;_</span>, T, F&gt; {
+        </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PoolGuard&lt;<span class="lifetime">'_</span>, T, F&gt; {
             <span class="kw">let </span><span class="kw-2">mut </span>stack = <span class="self">self</span>.stack.lock();
             <span class="kw">let </span>value = <span class="kw">match </span>stack.pop() {
                 <span class="prelude-val">None </span>=&gt; Box::new((<span class="self">self</span>.create)()),
@@ -2062,15 +2062,15 @@ being quite expensive.
         }
 
         <span class="attr">#[inline]
-        </span><span class="kw">fn </span>put(<span class="kw-2">&amp;</span><span class="self">self</span>, guard: PoolGuard&lt;<span class="lifetime">&#39;_</span>, T, F&gt;) {
+        </span><span class="kw">fn </span>put(<span class="kw-2">&amp;</span><span class="self">self</span>, guard: PoolGuard&lt;<span class="lifetime">'_</span>, T, F&gt;) {
             <span class="kw">let </span><span class="kw-2">mut </span>guard = core::mem::ManuallyDrop::new(guard);
             <span class="kw">if let </span><span class="prelude-val">Some</span>(value) = guard.value.take() {
                 <span class="self">self</span>.put_value(value);
             }
         }
 
-        <span class="doccomment">/// Puts a value back into the pool. Callers don&#39;t need to call this.
-        /// Once the guard that&#39;s returned by &#39;get&#39; is dropped, it is put back
+        <span class="doccomment">/// Puts a value back into the pool. Callers don't need to call this.
+        /// Once the guard that's returned by 'get' is dropped, it is put back
         /// into the pool automatically.
         </span><span class="attr">#[inline]
         </span><span class="kw">fn </span>put_value(<span class="kw-2">&amp;</span><span class="self">self</span>, value: Box&lt;T&gt;) {
@@ -2080,20 +2080,20 @@ being quite expensive.
     }
 
     <span class="kw">impl</span>&lt;T: core::fmt::Debug, F&gt; core::fmt::Debug <span class="kw">for </span>Pool&lt;T, F&gt; {
-        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
-            f.debug_struct(<span class="string">&quot;Pool&quot;</span>).field(<span class="string">&quot;stack&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.stack).finish()
+        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
+            f.debug_struct(<span class="string">"Pool"</span>).field(<span class="string">"stack"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.stack).finish()
         }
     }
 
     <span class="doccomment">/// A guard that is returned when a caller requests a value from the pool.
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>PoolGuard&lt;<span class="lifetime">&#39;a</span>, T: Send, F: Fn() -&gt; T&gt; {
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>PoolGuard&lt;<span class="lifetime">'a</span>, T: Send, F: Fn() -&gt; T&gt; {
         <span class="doccomment">/// The pool that this guard is attached to.
-        </span>pool: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Pool&lt;T, F&gt;,
+        </span>pool: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Pool&lt;T, F&gt;,
         <span class="doccomment">/// This is None after the guard has been put back into the pool.
         </span>value: <span class="prelude-ty">Option</span>&lt;Box&lt;T&gt;&gt;,
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: Send, F: Fn() -&gt; T&gt; PoolGuard&lt;<span class="lifetime">&#39;a</span>, T, F&gt; {
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: Send, F: Fn() -&gt; T&gt; PoolGuard&lt;<span class="lifetime">'a</span>, T, F&gt; {
         <span class="doccomment">/// Return the underlying value.
         </span><span class="attr">#[inline]
         </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>T {
@@ -2108,11 +2108,11 @@ being quite expensive.
 
         <span class="doccomment">/// Consumes this guard and puts it back into the pool.
         </span><span class="attr">#[inline]
-        </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>put(this: PoolGuard&lt;<span class="lifetime">&#39;_</span>, T, F&gt;) {
+        </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>put(this: PoolGuard&lt;<span class="lifetime">'_</span>, T, F&gt;) {
             <span class="comment">// Since this is effectively consuming the guard and putting the
-            // value back into the pool, there&#39;s no reason to run its Drop
-            // impl after doing this. I don&#39;t believe there is a correctness
-            // problem with doing so, but there&#39;s definitely a perf problem
+            // value back into the pool, there's no reason to run its Drop
+            // impl after doing this. I don't believe there is a correctness
+            // problem with doing so, but there's definitely a perf problem
             // by redoing this work. So we avoid it.
             </span><span class="kw">let </span><span class="kw-2">mut </span>this = core::mem::ManuallyDrop::new(this);
             this.put_imp();
@@ -2128,32 +2128,32 @@ being quite expensive.
         }
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: Send, F: Fn() -&gt; T&gt; Drop <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">&#39;a</span>, T, F&gt; {
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: Send, F: Fn() -&gt; T&gt; Drop <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">'a</span>, T, F&gt; {
         <span class="attr">#[inline]
         </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
             <span class="self">self</span>.put_imp();
         }
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: Send + core::fmt::Debug, F: Fn() -&gt; T&gt; core::fmt::Debug
-        <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">&#39;a</span>, T, F&gt;
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: Send + core::fmt::Debug, F: Fn() -&gt; T&gt; core::fmt::Debug
+        <span class="kw">for </span>PoolGuard&lt;<span class="lifetime">'a</span>, T, F&gt;
     {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-            f.debug_struct(<span class="string">&quot;PoolGuard&quot;</span>)
-                .field(<span class="string">&quot;pool&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.pool)
-                .field(<span class="string">&quot;value&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.value)
+            f.debug_struct(<span class="string">"PoolGuard"</span>)
+                .field(<span class="string">"pool"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.pool)
+                .field(<span class="string">"value"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.value)
                 .finish()
         }
     }
 
     <span class="doccomment">/// A spin-lock based mutex. Yes, I have read spinlocks cosnidered
-    /// harmful[1], and if there&#39;s a reasonable alternative choice, I&#39;ll
+    /// harmful[1], and if there's a reasonable alternative choice, I'll
     /// happily take it.
     ///
     /// I suspect the most likely alternative here is a Treiber stack, but
     /// implementing one correctly in a way that avoids the ABA problem looks
-    /// subtle enough that I&#39;m not sure I want to attempt that. But otherwise,
-    /// we only need a mutex in order to implement our pool, so if there&#39;s
+    /// subtle enough that I'm not sure I want to attempt that. But otherwise,
+    /// we only need a mutex in order to implement our pool, so if there's
     /// something simpler we can use that works for our `Pool` use case, then
     /// that would be great.
     ///
@@ -2184,7 +2184,7 @@ being quite expensive.
         /// `T`. This blocks if some other thread has already locked this
         /// mutex.
         </span><span class="attr">#[inline]
-        </span><span class="kw">fn </span>lock(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MutexGuard&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+        </span><span class="kw">fn </span>lock(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MutexGuard&lt;<span class="lifetime">'_</span>, T&gt; {
             <span class="kw">while </span><span class="self">self
                 </span>.locked
                 .compare_exchange(
@@ -2197,23 +2197,23 @@ being quite expensive.
             {
                 core::hint::spin_loop();
             }
-            <span class="comment">// SAFETY: The only way we&#39;re here is if we successfully set
-            // &#39;locked&#39; to true, which implies we must be the only thread here
-            // and thus have exclusive access to &#39;data&#39;.
+            <span class="comment">// SAFETY: The only way we're here is if we successfully set
+            // 'locked' to true, which implies we must be the only thread here
+            // and thus have exclusive access to 'data'.
             </span><span class="kw">let </span>data = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.data.get() };
             MutexGuard { locked: <span class="kw-2">&amp;</span><span class="self">self</span>.locked, data }
         }
     }
 
-    <span class="doccomment">/// A guard that derefs to &amp;T and &amp;mut T. When it&#39;s dropped, the lock is
+    <span class="doccomment">/// A guard that derefs to &amp;T and &amp;mut T. When it's dropped, the lock is
     /// released.
     </span><span class="attr">#[derive(Debug)]
-    </span><span class="kw">struct </span>MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt; {
-        locked: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>AtomicBool,
-        data: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T,
+    </span><span class="kw">struct </span>MutexGuard&lt;<span class="lifetime">'a</span>, T&gt; {
+        locked: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>AtomicBool,
+        data: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>T,
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; core::ops::Deref <span class="kw">for </span>MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T&gt; core::ops::Deref <span class="kw">for </span>MutexGuard&lt;<span class="lifetime">'a</span>, T&gt; {
         <span class="kw">type </span>Target = T;
 
         <span class="attr">#[inline]
@@ -2222,17 +2222,17 @@ being quite expensive.
         }
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; core::ops::DerefMut <span class="kw">for </span>MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T&gt; core::ops::DerefMut <span class="kw">for </span>MutexGuard&lt;<span class="lifetime">'a</span>, T&gt; {
         <span class="attr">#[inline]
         </span><span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>T {
             <span class="self">self</span>.data
         }
     }
 
-    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; Drop <span class="kw">for </span>MutexGuard&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T&gt; Drop <span class="kw">for </span>MutexGuard&lt;<span class="lifetime">'a</span>, T&gt; {
         <span class="attr">#[inline]
         </span><span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-            <span class="comment">// Drop means &#39;data&#39; is no longer accessible, so we can unlock
+            <span class="comment">// Drop means 'data' is no longer accessible, so we can unlock
             // the mutex.
             </span><span class="self">self</span>.locked.store(<span class="bool-val">false</span>, Ordering::Release);
         }
@@ -2266,34 +2266,34 @@ being quite expensive.
         &gt;();
     }
 
-    <span class="comment">// Tests that Pool implements the &quot;single owner&quot; optimization. That is, the
+    <span class="comment">// Tests that Pool implements the "single owner" optimization. That is, the
     // thread that first accesses the pool gets its own copy, while all other
     // threads get distinct copies.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     #[test]
     </span><span class="kw">fn </span>thread_owner_optimization() {
         <span class="kw">use </span>std::{cell::RefCell, sync::Arc, vec};
 
         <span class="kw">let </span>pool: Arc&lt;Pool&lt;RefCell&lt;Vec&lt;char&gt;&gt;&gt;&gt; =
-            Arc::new(Pool::new(|| RefCell::new(<span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>])));
-        pool.get().borrow_mut().push(<span class="string">&#39;x&#39;</span>);
+            Arc::new(Pool::new(|| RefCell::new(<span class="macro">vec!</span>[<span class="string">'a'</span>])));
+        pool.get().borrow_mut().push(<span class="string">'x'</span>);
 
         <span class="kw">let </span>pool1 = pool.clone();
         <span class="kw">let </span>t1 = std::thread::spawn(<span class="kw">move </span>|| {
             <span class="kw">let </span>guard = pool1.get();
-            guard.borrow_mut().push(<span class="string">&#39;y&#39;</span>);
+            guard.borrow_mut().push(<span class="string">'y'</span>);
         });
 
         <span class="kw">let </span>pool2 = pool.clone();
         <span class="kw">let </span>t2 = std::thread::spawn(<span class="kw">move </span>|| {
             <span class="kw">let </span>guard = pool2.get();
-            guard.borrow_mut().push(<span class="string">&#39;z&#39;</span>);
+            guard.borrow_mut().push(<span class="string">'z'</span>);
         });
 
         t1.join().unwrap();
         t2.join().unwrap();
 
-        <span class="comment">// If we didn&#39;t implement the single owner optimization, then one of
+        <span class="comment">// If we didn't implement the single owner optimization, then one of
         // the threads above is likely to have mutated the [a, x] vec that
         // we stuffed in the pool before spawning the threads. But since
         // neither thread was first to access the pool, and because of the
@@ -2301,99 +2301,99 @@ being quite expensive.
         // the special owned pool value.
         //
         // (Technically this is an implementation detail and not a contract of
-        // Pool&#39;s API.)
-        </span><span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>, <span class="string">&#39;x&#39;</span>], <span class="kw-2">*</span>pool.get().borrow());
+        // Pool's API.)
+        </span><span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[<span class="string">'a'</span>, <span class="string">'x'</span>], <span class="kw-2">*</span>pool.get().borrow());
     }
 
-    <span class="comment">// This tests that if the &quot;owner&quot; of a pool asks for two values, then it
+    <span class="comment">// This tests that if the "owner" of a pool asks for two values, then it
     // gets two distinct values and not the same one. This test failed in the
     // course of developing the pool, which in turn resulted in UB because it
     // permitted getting aliasing &amp;mut borrows to the same place in memory.
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>thread_owner_distinct() {
-        <span class="kw">let </span>pool = Pool::new(|| <span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>]);
+        <span class="kw">let </span>pool = Pool::new(|| <span class="macro">vec!</span>[<span class="string">'a'</span>]);
 
         {
             <span class="kw">let </span><span class="kw-2">mut </span>g1 = pool.get();
             <span class="kw">let </span>v1 = <span class="kw-2">&amp;mut *</span>g1;
             <span class="kw">let </span><span class="kw-2">mut </span>g2 = pool.get();
             <span class="kw">let </span>v2 = <span class="kw-2">&amp;mut *</span>g2;
-            v1.push(<span class="string">&#39;b&#39;</span>);
-            v2.push(<span class="string">&#39;c&#39;</span>);
-            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>, <span class="string">&#39;b&#39;</span>], v1);
-            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>, <span class="string">&#39;c&#39;</span>], v2);
+            v1.push(<span class="string">'b'</span>);
+            v2.push(<span class="string">'c'</span>);
+            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">'a'</span>, <span class="string">'b'</span>], v1);
+            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">'a'</span>, <span class="string">'c'</span>], v2);
         }
-        <span class="comment">// This isn&#39;t technically guaranteed, but we
-        // expect to now get the &quot;owned&quot; value (the first
-        // call to &#39;get()&#39; above) now that it&#39;s back in
+        <span class="comment">// This isn't technically guaranteed, but we
+        // expect to now get the "owned" value (the first
+        // call to 'get()' above) now that it's back in
         // the pool.
-        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>, <span class="string">&#39;b&#39;</span>], <span class="kw-2">&amp;mut *</span>pool.get());
+        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">'a'</span>, <span class="string">'b'</span>], <span class="kw-2">&amp;mut *</span>pool.get());
     }
 
     <span class="comment">// This tests that we can share a guard with another thread, mutate the
     // underlying value and everything works. This failed in the course of
-    // developing a pool since the pool permitted &#39;get()&#39; to return the same
+    // developing a pool since the pool permitted 'get()' to return the same
     // value to the owner thread, even before the previous value was put back
     // into the pool. This in turn resulted in this test producing a data race.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     #[test]
     </span><span class="kw">fn </span>thread_owner_sync() {
-        <span class="kw">let </span>pool = Pool::new(|| <span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>]);
+        <span class="kw">let </span>pool = Pool::new(|| <span class="macro">vec!</span>[<span class="string">'a'</span>]);
         {
             <span class="kw">let </span><span class="kw-2">mut </span>g1 = pool.get();
             <span class="kw">let </span><span class="kw-2">mut </span>g2 = pool.get();
             std::thread::scope(|s| {
                 s.spawn(|| {
-                    g1.push(<span class="string">&#39;b&#39;</span>);
+                    g1.push(<span class="string">'b'</span>);
                 });
                 s.spawn(|| {
-                    g2.push(<span class="string">&#39;c&#39;</span>);
+                    g2.push(<span class="string">'c'</span>);
                 });
             });
 
             <span class="kw">let </span>v1 = <span class="kw-2">&amp;mut *</span>g1;
             <span class="kw">let </span>v2 = <span class="kw-2">&amp;mut *</span>g2;
-            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>, <span class="string">&#39;b&#39;</span>], v1);
-            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>, <span class="string">&#39;c&#39;</span>], v2);
+            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">'a'</span>, <span class="string">'b'</span>], v1);
+            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">'a'</span>, <span class="string">'c'</span>], v2);
         }
 
-        <span class="comment">// This isn&#39;t technically guaranteed, but we
-        // expect to now get the &quot;owned&quot; value (the first
-        // call to &#39;get()&#39; above) now that it&#39;s back in
+        <span class="comment">// This isn't technically guaranteed, but we
+        // expect to now get the "owned" value (the first
+        // call to 'get()' above) now that it's back in
         // the pool.
-        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>, <span class="string">&#39;b&#39;</span>], <span class="kw-2">&amp;mut *</span>pool.get());
+        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="string">'a'</span>, <span class="string">'b'</span>], <span class="kw-2">&amp;mut *</span>pool.get());
     }
 
     <span class="comment">// This tests that if we move a PoolGuard that is owned by the current
-    // thread to another thread and drop it, then the thread owner doesn&#39;t
+    // thread to another thread and drop it, then the thread owner doesn't
     // change. During development of the pool, this test failed because the
     // PoolGuard assumed it was dropped in the same thread from which it was
-    // created, and thus used the current thread&#39;s ID as the owner, which could
+    // created, and thus used the current thread's ID as the owner, which could
     // be different than the actual owner of the pool.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     #[test]
     </span><span class="kw">fn </span>thread_owner_send_drop() {
-        <span class="kw">let </span>pool = Pool::new(|| <span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>]);
+        <span class="kw">let </span>pool = Pool::new(|| <span class="macro">vec!</span>[<span class="string">'a'</span>]);
         <span class="comment">// Establishes this thread as the owner.
         </span>{
-            pool.get().push(<span class="string">&#39;b&#39;</span>);
+            pool.get().push(<span class="string">'b'</span>);
         }
         std::thread::scope(|s| {
             <span class="comment">// Sanity check that we get the same value back.
             // (Not technically guaranteed.)
             </span><span class="kw">let </span><span class="kw-2">mut </span>g = pool.get();
-            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>, <span class="string">&#39;b&#39;</span>], <span class="kw-2">&amp;*</span>g);
+            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="string">'a'</span>, <span class="string">'b'</span>], <span class="kw-2">&amp;*</span>g);
             <span class="comment">// Now push it to another thread and drop it.
             </span>s.spawn(<span class="kw">move </span>|| {
-                g.push(<span class="string">&#39;c&#39;</span>);
+                g.push(<span class="string">'c'</span>);
             })
             .join()
             .unwrap();
         });
-        <span class="comment">// Now check that we&#39;re still the owner. This is not technically
+        <span class="comment">// Now check that we're still the owner. This is not technically
         // guaranteed by the API, but is true in practice given the thread
         // owner optimization.
-        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="string">&#39;a&#39;</span>, <span class="string">&#39;b&#39;</span>, <span class="string">&#39;c&#39;</span>], <span class="kw-2">&amp;*</span>pool.get());
+        </span><span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="string">'a'</span>, <span class="string">'b'</span>, <span class="string">'c'</span>], <span class="kw-2">&amp;*</span>pool.get());
     }
 }
 </code></pre></div></section></main></body></html>

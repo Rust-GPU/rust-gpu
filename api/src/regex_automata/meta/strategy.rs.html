@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/meta/strategy.rs`."><title>strategy.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_automata/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/meta/strategy.rs`."><title>strategy.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1940,19 +1940,19 @@
 <span class="doccomment">/// A trait that represents a single meta strategy. Its main utility is in
 /// providing a way to do dynamic dispatch over a few choices.
 ///
-/// Why dynamic dispatch? I actually don&#39;t have a super compelling reason, and
+/// Why dynamic dispatch? I actually don't have a super compelling reason, and
 /// importantly, I have not benchmarked it with the main alternative: an enum.
 /// I went with dynamic dispatch initially because the regex engine search code
-/// really can&#39;t be inlined into caller code in most cases because it&#39;s just
+/// really can't be inlined into caller code in most cases because it's just
 /// too big. In other words, it is already expected that every regex search
 /// will entail at least the cost of a function call.
 ///
 /// I do wonder whether using enums would result in better codegen overall
-/// though. It&#39;s a worthwhile experiment to try. Probably the most interesting
+/// though. It's a worthwhile experiment to try. Probably the most interesting
 /// benchmark to run in such a case would be one with a high match count. That
 /// is, a benchmark to test the overall latency of a search call.
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">trait </span>Strategy:
-    Debug + Send + Sync + RefUnwindSafe + UnwindSafe + <span class="lifetime">&#39;static
+    Debug + Send + Sync + RefUnwindSafe + UnwindSafe + <span class="lifetime">'static
 </span>{
     <span class="kw">fn </span>group_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>GroupInfo;
 
@@ -1964,27 +1964,27 @@
 
     <span class="kw">fn </span>memory_usage(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize;
 
-    <span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt;;
+    <span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt;;
 
     <span class="kw">fn </span>search_half(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;HalfMatch&gt;;
 
-    <span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool;
+    <span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; bool;
 
     <span class="kw">fn </span>search_slots(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Option</span>&lt;PatternID&gt;;
 
     <span class="kw">fn </span>which_overlapping_matches(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         patset: <span class="kw-2">&amp;mut </span>PatternSet,
     );
 }
@@ -1993,32 +1993,32 @@
     info: <span class="kw-2">&amp;</span>RegexInfo,
     hirs: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Hir],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Arc&lt;<span class="kw">dyn </span>Strategy&gt;, BuildError&gt; {
-    <span class="comment">// At this point, we&#39;re committed to a regex engine of some kind. So pull
+    <span class="comment">// At this point, we're committed to a regex engine of some kind. So pull
     // out a prefilter if we can, which will feed to each of the constituent
     // regex engines.
     </span><span class="kw">let </span>pre = <span class="kw">if </span>info.is_always_anchored_start() {
-        <span class="comment">// PERF: I&#39;m not sure we necessarily want to do this... We may want to
+        <span class="comment">// PERF: I'm not sure we necessarily want to do this... We may want to
         // run a prefilter for quickly rejecting in some cases. The problem
         // is that anchored searches overlap quite a bit with the use case
-        // of &quot;run a regex on every line to extract data.&quot; In that case, the
-        // regex always matches, so running a prefilter doesn&#39;t really help us
+        // of "run a regex on every line to extract data." In that case, the
+        // regex always matches, so running a prefilter doesn't really help us
         // there. The main place where a prefilter helps in an anchored search
         // is if the anchored search is not expected to match frequently. That
         // is, the prefilter gives us a way to possibly reject a haystack very
         // quickly.
         //
         // Maybe we should do use a prefilter, but only for longer haystacks?
-        // Or maybe we should only use a prefilter when we think it&#39;s &quot;fast&quot;?
+        // Or maybe we should only use a prefilter when we think it's "fast"?
         //
         // Interestingly, I think we currently lack the infrastructure for
         // disabling a prefilter based on haystack length. That would probably
-        // need to be a new &#39;Input&#39; option. (Interestingly, an &#39;Input&#39; used to
-        // carry a &#39;Prefilter&#39; with it, but I moved away from that.)
-        </span><span class="macro">debug!</span>(<span class="string">&quot;skipping literal extraction since regex is anchored&quot;</span>);
+        // need to be a new 'Input' option. (Interestingly, an 'Input' used to
+        // carry a 'Prefilter' with it, but I moved away from that.)
+        </span><span class="macro">debug!</span>(<span class="string">"skipping literal extraction since regex is anchored"</span>);
         <span class="prelude-val">None
     </span>} <span class="kw">else if let </span><span class="prelude-val">Some</span>(pre) = info.config().get_prefilter() {
         <span class="macro">debug!</span>(
-            <span class="string">&quot;skipping literal extraction since the caller provided a prefilter&quot;
+            <span class="string">"skipping literal extraction since the caller provided a prefilter"
         </span>);
         <span class="prelude-val">Some</span>(pre.clone())
     } <span class="kw">else if </span>info.config().get_auto_prefilter() {
@@ -2028,8 +2028,8 @@
         // then we can short-circuit and avoid building a regex engine at all.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(pre) = Pre::from_prefixes(info, <span class="kw-2">&amp;</span>prefixes) {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;found that the regex can be broken down to a literal \
-                 search, avoiding the regex engine entirely&quot;</span>,
+                <span class="string">"found that the regex can be broken down to a literal \
+                 search, avoiding the regex engine entirely"</span>,
             );
             <span class="kw">return </span><span class="prelude-val">Ok</span>(pre);
         }
@@ -2047,27 +2047,27 @@
         // extraction, and then I think this case could disappear entirely.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(pre) = Pre::from_alternation_literals(info, hirs) {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;found plain alternation of literals, \
-                 avoiding regex engine entirely and using Aho-Corasick&quot;
+                <span class="string">"found plain alternation of literals, \
+                 avoiding regex engine entirely and using Aho-Corasick"
             </span>);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(pre);
         }
         prefixes.literals().and_then(|strings| {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;creating prefilter from {} literals: {:?}&quot;</span>,
+                <span class="string">"creating prefilter from {} literals: {:?}"</span>,
                 strings.len(),
                 strings,
             );
             Prefilter::new(kind, strings)
         })
     } <span class="kw">else </span>{
-        <span class="macro">debug!</span>(<span class="string">&quot;skipping literal extraction since prefilters were disabled&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">"skipping literal extraction since prefilters were disabled"</span>);
         <span class="prelude-val">None
     </span>};
     <span class="kw">let </span><span class="kw-2">mut </span>core = Core::new(info.clone(), pre.clone(), hirs)<span class="question-mark">?</span>;
     <span class="comment">// Now that we have our core regex engines built, there are a few cases
-    // where we can do a little bit better than just a normal &quot;search forward
-    // and maybe use a prefilter when in a start state.&quot; However, these cases
+    // where we can do a little bit better than just a normal "search forward
+    // and maybe use a prefilter when in a start state." However, these cases
     // may not always work or otherwise build on top of the Core searcher.
     // For example, the reverse anchored optimization seems like it might
     // always work, but only the DFAs support reverse searching and the DFAs
@@ -2077,25 +2077,25 @@
     </span>core = <span class="kw">match </span>ReverseAnchored::new(core) {
         <span class="prelude-val">Err</span>(core) =&gt; core,
         <span class="prelude-val">Ok</span>(ra) =&gt; {
-            <span class="macro">debug!</span>(<span class="string">&quot;using reverse anchored strategy&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"using reverse anchored strategy"</span>);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(Arc::new(ra));
         }
     };
     core = <span class="kw">match </span>ReverseSuffix::new(core, hirs) {
         <span class="prelude-val">Err</span>(core) =&gt; core,
         <span class="prelude-val">Ok</span>(rs) =&gt; {
-            <span class="macro">debug!</span>(<span class="string">&quot;using reverse suffix strategy&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"using reverse suffix strategy"</span>);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(Arc::new(rs));
         }
     };
     core = <span class="kw">match </span>ReverseInner::new(core, hirs) {
         <span class="prelude-val">Err</span>(core) =&gt; core,
         <span class="prelude-val">Ok</span>(ri) =&gt; {
-            <span class="macro">debug!</span>(<span class="string">&quot;using reverse inner strategy&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"using reverse inner strategy"</span>);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(Arc::new(ri));
         }
     };
-    <span class="macro">debug!</span>(<span class="string">&quot;using core strategy&quot;</span>);
+    <span class="macro">debug!</span>(<span class="string">"using core strategy"</span>);
     <span class="prelude-val">Ok</span>(Arc::new(core))
 }
 
@@ -2116,8 +2116,8 @@
     }
 }
 
-<span class="comment">// This is a little weird, but we don&#39;t actually care about the type parameter
-// here because we&#39;re selecting which underlying prefilter to use. So we just
+<span class="comment">// This is a little weird, but we don't actually care about the type parameter
+// here because we're selecting which underlying prefilter to use. So we just
 // define it on an arbitrary type.
 </span><span class="kw">impl </span>Pre&lt;()&gt; {
     <span class="doccomment">/// Given a sequence of prefixes, attempt to return a full `Strategy` using
@@ -2132,8 +2132,8 @@
     /// look-around assertions and so on.
     ///
     /// Note that this ignores `Config::get_auto_prefilter` because if this
-    /// returns something, then it isn&#39;t a prefilter but a matcher itself.
-    /// Therefore, it shouldn&#39;t suffer from the problems typical to prefilters
+    /// returns something, then it isn't a prefilter but a matcher itself.
+    /// Therefore, it shouldn't suffer from the problems typical to prefilters
     /// (such as a high false positive rate).
     </span><span class="kw">fn </span>from_prefixes(
         info: <span class="kw-2">&amp;</span>RegexInfo,
@@ -2148,15 +2148,15 @@
         }
         <span class="comment">// We also require that we have a single regex pattern. Namely,
         // we reuse the prefilter infrastructure to implement search and
-        // prefilters only report spans. Prefilters don&#39;t know about pattern
-        // IDs. The multi-regex case isn&#39;t a lost cause, we might still use
+        // prefilters only report spans. Prefilters don't know about pattern
+        // IDs. The multi-regex case isn't a lost cause, we might still use
         // Aho-Corasick and we might still just use a regular prefilter, but
-        // that&#39;s done below.
+        // that's done below.
         </span><span class="kw">if </span>info.pattern_len() != <span class="number">1 </span>{
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
-        <span class="comment">// We can&#39;t have any capture groups either. The literal engines don&#39;t
-        // know how to deal with things like &#39;(foo)(bar)&#39;. In that case, a
+        <span class="comment">// We can't have any capture groups either. The literal engines don't
+        // know how to deal with things like '(foo)(bar)'. In that case, a
         // prefilter will just be used and then the regex engine will resolve
         // the capture groups.
         </span><span class="kw">if </span>info.props()[<span class="number">0</span>].explicit_captures_len() != <span class="number">0 </span>{
@@ -2164,25 +2164,25 @@
         }
         <span class="comment">// We also require that it has zero look-around assertions. Namely,
         // literal extraction treats look-around assertions as if they match
-        // *every* empty string. But of course, that isn&#39;t true. So for
-        // example, &#39;foo\bquux&#39; never matches anything, but &#39;fooquux&#39; is
+        // *every* empty string. But of course, that isn't true. So for
+        // example, 'foo\bquux' never matches anything, but 'fooquux' is
         // extracted from that as an exact literal. Such cases should just run
-        // the regex engine. &#39;fooquux&#39; will be used as a normal prefilter, and
+        // the regex engine. 'fooquux' will be used as a normal prefilter, and
         // then the regex engine will try to look for an actual match.
         </span><span class="kw">if </span>!info.props()[<span class="number">0</span>].look_set().is_empty() {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="comment">// Finally, currently, our prefilters are all oriented around
-        // leftmost-first match semantics, so don&#39;t try to use them if the
+        // leftmost-first match semantics, so don't try to use them if the
         // caller asked for anything else.
         </span><span class="kw">if </span>kind != MatchKind::LeftmostFirst {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="comment">// The above seems like a lot of requirements to meet, but it applies
-        // to a lot of cases. &#39;foo&#39;, &#39;[abc][123]&#39; and &#39;foo|bar|quux&#39; all meet
+        // to a lot of cases. 'foo', '[abc][123]' and 'foo|bar|quux' all meet
         // the above criteria, for example.
         //
-        // Note that this is effectively a latency optimization. If we didn&#39;t
+        // Note that this is effectively a latency optimization. If we didn't
         // do this, then the extracted literals would still get bundled into
         // a prefilter, and every regex engine capable of running unanchored
         // searches supports prefilters. So this optimization merely sidesteps
@@ -2192,8 +2192,8 @@
         // OK because we know the set is exact and thus finite.
         </span><span class="kw">let </span>prefixes = prefixes.literals().unwrap();
         <span class="macro">debug!</span>(
-            <span class="string">&quot;trying to bypass regex engine by creating \
-             prefilter from {} literals: {:?}&quot;</span>,
+            <span class="string">"trying to bypass regex engine by creating \
+             prefilter from {} literals: {:?}"</span>,
             prefixes.len(),
             prefixes,
         );
@@ -2201,7 +2201,7 @@
             <span class="prelude-val">Some</span>(choice) =&gt; choice,
             <span class="prelude-val">None </span>=&gt; {
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;regex bypass failed because no prefilter could be built&quot;
+                    <span class="string">"regex bypass failed because no prefilter could be built"
                 </span>);
                 <span class="kw">return </span><span class="prelude-val">None</span>;
             }
@@ -2218,12 +2218,12 @@
         <span class="prelude-val">Some</span>(strat)
     }
 
-    <span class="doccomment">/// Attempts to extract an alternation of literals, and if it&#39;s deemed
+    <span class="doccomment">/// Attempts to extract an alternation of literals, and if it's deemed
     /// worth doing, returns an Aho-Corasick prefilter as a strategy.
     ///
-    /// And currently, this only returns something when &#39;hirs.len() == 1&#39;. This
+    /// And currently, this only returns something when 'hirs.len() == 1'. This
     /// could in theory do something if there are multiple HIRs where all of
-    /// them are alternation of literals, but I haven&#39;t had the time to go down
+    /// them are alternation of literals, but I haven't had the time to go down
     /// that path yet.
     </span><span class="kw">fn </span>from_alternation_literals(
         info: <span class="kw-2">&amp;</span>RegexInfo,
@@ -2240,11 +2240,11 @@
 <span class="comment">// This implements Strategy for anything that implements PrefilterI.
 //
 // Note that this must only be used for regexes of length 1. Multi-regexes
-// don&#39;t work here. The prefilter interface only provides the span of a match
+// don't work here. The prefilter interface only provides the span of a match
 // and not the pattern ID. (I did consider making it more expressive, but I
-// couldn&#39;t figure out how to tie everything together elegantly.) Thus, so long
+// couldn't figure out how to tie everything together elegantly.) Thus, so long
 // as the regex only contains one pattern, we can simply assume that a match
-// corresponds to PatternID::ZERO. And indeed, that&#39;s what we do here.
+// corresponds to PatternID::ZERO. And indeed, that's what we do here.
 //
 // In practice, since this impl is used to report matches directly and thus
 // completely bypasses the regex engine, we only wind up using this under the
@@ -2253,21 +2253,21 @@
 // * There must be only one pattern. As explained above.
 // * The literal sequence must be finite and only contain exact literals.
 // * There must not be any look-around assertions. If there are, the literals
-// extracted might be exact, but a match doesn&#39;t necessarily imply an overall
-// match. As a trivial example, &#39;foo\bbar&#39; does not match &#39;foobar&#39;.
+// extracted might be exact, but a match doesn't necessarily imply an overall
+// match. As a trivial example, 'foo\bbar' does not match 'foobar'.
 // * The pattern must not have any explicit capturing groups. If it does, the
-// caller might expect them to be resolved. e.g., &#39;foo(bar)&#39;.
+// caller might expect them to be resolved. e.g., 'foo(bar)'.
 //
 // So when all of those things are true, we use a prefilter directly as a
 // strategy.
 //
-// In the case where the number of patterns is more than 1, we don&#39;t use this
+// In the case where the number of patterns is more than 1, we don't use this
 // but do use a special Aho-Corasick strategy if all of the regexes are just
 // simple literals or alternations of literals. (We also use the Aho-Corasick
 // strategy when len(patterns)==1 if the number of literals is large. In that
 // case, literal extraction gives up and will return an infinite set.)
 </span><span class="kw">impl</span>&lt;P: PrefilterI&gt; Strategy <span class="kw">for </span>Pre&lt;P&gt; {
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>group_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>GroupInfo {
         <span class="kw-2">&amp;</span><span class="self">self</span>.group_info
     }
@@ -2293,8 +2293,8 @@
         <span class="self">self</span>.pre.memory_usage()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
-    </span><span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, _cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+    </span><span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, _cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
         <span class="kw">if </span>input.is_done() {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
@@ -2309,25 +2309,25 @@
             .map(|sp| Match::new(PatternID::ZERO, sp))
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>search_half(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;HalfMatch&gt; {
         <span class="self">self</span>.search(cache, input).map(|m| HalfMatch::new(m.pattern(), m.end()))
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
-    </span><span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+    </span><span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; bool {
         <span class="self">self</span>.search(cache, input).is_some()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>search_slots(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Option</span>&lt;PatternID&gt; {
         <span class="kw">let </span>m = <span class="self">self</span>.search(cache, input)<span class="question-mark">?</span>;
@@ -2340,11 +2340,11 @@
         <span class="prelude-val">Some</span>(m.pattern())
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>which_overlapping_matches(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         patset: <span class="kw-2">&amp;mut </span>PatternSet,
     ) {
         <span class="kw">if </span><span class="self">self</span>.search(cache, input).is_some() {
@@ -2384,7 +2384,7 @@
             .configure(thompson_config.clone())
             .build_many_from_hir(hirs)
             .map_err(BuildError::nfa)<span class="question-mark">?</span>;
-        <span class="comment">// It&#39;s possible for the PikeVM or the BB to fail to build, even though
+        <span class="comment">// It's possible for the PikeVM or the BB to fail to build, even though
         // at this point, we already have a full NFA in hand. They can fail
         // when a Unicode word boundary is used but where Unicode word boundary
         // support is disabled at compile time, thus making it impossible to
@@ -2394,33 +2394,33 @@
         <span class="kw">let </span>backtrack =
             wrappers::BoundedBacktracker::new(<span class="kw-2">&amp;</span>info, pre.clone(), <span class="kw-2">&amp;</span>nfa)<span class="question-mark">?</span>;
         <span class="comment">// The onepass engine can of course fail to build, but we expect it to
-        // fail in many cases because it is an optimization that doesn&#39;t apply
-        // to all regexes. The &#39;OnePass&#39; wrapper encapsulates this failure (and
+        // fail in many cases because it is an optimization that doesn't apply
+        // to all regexes. The 'OnePass' wrapper encapsulates this failure (and
         // logs a message if it occurs).
         </span><span class="kw">let </span>onepass = wrappers::OnePass::new(<span class="kw-2">&amp;</span>info, <span class="kw-2">&amp;</span>nfa);
         <span class="comment">// We try to encapsulate whether a particular regex engine should be
         // used within each respective wrapper, but the DFAs need a reverse NFA
         // to build itself, and we really do not want to build a reverse NFA if
-        // we know we aren&#39;t going to use the lazy DFA. So we do a config check
-        // up front, which is in practice the only way we won&#39;t try to use the
+        // we know we aren't going to use the lazy DFA. So we do a config check
+        // up front, which is in practice the only way we won't try to use the
         // DFA.
         </span><span class="kw">let </span>(nfarev, hybrid, dfa) =
             <span class="kw">if </span>!info.config().get_hybrid() &amp;&amp; !info.config().get_dfa() {
                 (<span class="prelude-val">None</span>, wrappers::Hybrid::none(), wrappers::DFA::none())
             } <span class="kw">else </span>{
-                <span class="comment">// FIXME: Technically, we don&#39;t quite yet KNOW that we need
-                // a reverse NFA. It&#39;s possible for the DFAs below to both
+                <span class="comment">// FIXME: Technically, we don't quite yet KNOW that we need
+                // a reverse NFA. It's possible for the DFAs below to both
                 // fail to build just based on the forward NFA. In which case,
                 // building the reverse NFA was totally wasted work. But...
                 // fixing this requires breaking DFA construction apart into
                 // two pieces: one for the forward part and another for the
                 // reverse part. Quite annoying. Making it worse, when building
-                // both DFAs fails, it&#39;s quite likely that the NFA is large and
+                // both DFAs fails, it's quite likely that the NFA is large and
                 // that it will take quite some time to build the reverse NFA
-                // too. So... it&#39;s really probably worth it to do this!
+                // too. So... it's really probably worth it to do this!
                 </span><span class="kw">let </span>nfarev = thompson::Compiler::new()
-                    <span class="comment">// Currently, reverse NFAs don&#39;t support capturing groups,
-                    // so we MUST disable them. But even if we didn&#39;t have to,
+                    <span class="comment">// Currently, reverse NFAs don't support capturing groups,
+                    // so we MUST disable them. But even if we didn't have to,
                     // we would, because nothing in this crate does anything
                     // useful with capturing groups in reverse. And of course,
                     // the lazy DFA ignores capturing groups in all cases.
@@ -2440,7 +2440,7 @@
                 <span class="kw">let </span>hybrid = <span class="kw">if </span>!info.config().get_hybrid() {
                     wrappers::Hybrid::none()
                 } <span class="kw">else if </span>dfa.is_some() {
-                    <span class="macro">debug!</span>(<span class="string">&quot;skipping lazy DFA because we have a full DFA&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"skipping lazy DFA because we have a full DFA"</span>);
                     wrappers::Hybrid::none()
                 } <span class="kw">else </span>{
                     wrappers::Hybrid::new(<span class="kw-2">&amp;</span>info, pre.clone(), <span class="kw-2">&amp;</span>nfa, <span class="kw-2">&amp;</span>nfarev)
@@ -2460,17 +2460,17 @@
         })
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>try_search_mayfail(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Match&gt;, RetryFailError&gt;&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.dfa.get(input) {
-            <span class="macro">trace!</span>(<span class="string">&quot;using full DFA for search at {:?}&quot;</span>, input.get_span());
+            <span class="macro">trace!</span>(<span class="string">"using full DFA for search at {:?}"</span>, input.get_span());
             <span class="prelude-val">Some</span>(e.try_search(input))
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.hybrid.get(input) {
-            <span class="macro">trace!</span>(<span class="string">&quot;using lazy DFA for search at {:?}&quot;</span>, input.get_span());
+            <span class="macro">trace!</span>(<span class="string">"using lazy DFA for search at {:?}"</span>, input.get_span());
             <span class="prelude-val">Some</span>(e.try_search(<span class="kw-2">&amp;mut </span>cache.hybrid, input))
         } <span class="kw">else </span>{
             <span class="prelude-val">None
@@ -2480,27 +2480,27 @@
     <span class="kw">fn </span>search_nofail(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
         <span class="kw">let </span>caps = <span class="kw-2">&amp;mut </span>cache.capmatches;
         caps.set_pattern(<span class="prelude-val">None</span>);
-        <span class="comment">// We manually inline &#39;try_search_slots_nofail&#39; here because we need to
-        // borrow from &#39;cache.capmatches&#39; in this method, but if we do, then
-        // we can&#39;t pass &#39;cache&#39; wholesale to to &#39;try_slots_no_hybrid&#39;. It&#39;s a
+        <span class="comment">// We manually inline 'try_search_slots_nofail' here because we need to
+        // borrow from 'cache.capmatches' in this method, but if we do, then
+        // we can't pass 'cache' wholesale to to 'try_slots_no_hybrid'. It's a
         // classic example of how the borrow checker inhibits decomposition.
         // There are of course work-arounds (more types and/or interior
-        // mutability), but that&#39;s more annoying than this IMO.
+        // mutability), but that's more annoying than this IMO.
         </span><span class="kw">let </span>pid = <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>e) = <span class="self">self</span>.onepass.get(input) {
-            <span class="macro">trace!</span>(<span class="string">&quot;using OnePass for search at {:?}&quot;</span>, input.get_span());
+            <span class="macro">trace!</span>(<span class="string">"using OnePass for search at {:?}"</span>, input.get_span());
             e.search_slots(<span class="kw-2">&amp;mut </span>cache.onepass, input, caps.slots_mut())
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>e) = <span class="self">self</span>.backtrack.get(input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using BoundedBacktracker for search at {:?}&quot;</span>,
+                <span class="string">"using BoundedBacktracker for search at {:?}"</span>,
                 input.get_span()
             );
             e.search_slots(<span class="kw-2">&amp;mut </span>cache.backtrack, input, caps.slots_mut())
         } <span class="kw">else </span>{
-            <span class="macro">trace!</span>(<span class="string">&quot;using PikeVM for search at {:?}&quot;</span>, input.get_span());
+            <span class="macro">trace!</span>(<span class="string">"using PikeVM for search at {:?}"</span>, input.get_span());
             <span class="kw">let </span>e = <span class="self">self</span>.pikevm.get();
             e.search_slots(<span class="kw-2">&amp;mut </span>cache.pikevm, input, caps.slots_mut())
         };
@@ -2511,7 +2511,7 @@
     <span class="kw">fn </span>search_half_nofail(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;HalfMatch&gt; {
         <span class="comment">// Only the lazy/full DFA returns half-matches, since the DFA requires
         // a reverse scan to find the start position. These fallback regex
@@ -2524,24 +2524,24 @@
     <span class="kw">fn </span>search_slots_nofail(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Option</span>&lt;PatternID&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>e) = <span class="self">self</span>.onepass.get(input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using OnePass for capture search at {:?}&quot;</span>,
+                <span class="string">"using OnePass for capture search at {:?}"</span>,
                 input.get_span()
             );
             e.search_slots(<span class="kw-2">&amp;mut </span>cache.onepass, input, slots)
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>e) = <span class="self">self</span>.backtrack.get(input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using BoundedBacktracker for capture search at {:?}&quot;</span>,
+                <span class="string">"using BoundedBacktracker for capture search at {:?}"</span>,
                 input.get_span()
             );
             e.search_slots(<span class="kw-2">&amp;mut </span>cache.backtrack, input, slots)
         } <span class="kw">else </span>{
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using PikeVM for capture search at {:?}&quot;</span>,
+                <span class="string">"using PikeVM for capture search at {:?}"</span>,
                 input.get_span()
             );
             <span class="kw">let </span>e = <span class="self">self</span>.pikevm.get();
@@ -2549,22 +2549,22 @@
         }
     }
 
-    <span class="kw">fn </span>is_match_nofail(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+    <span class="kw">fn </span>is_match_nofail(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; bool {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>e) = <span class="self">self</span>.onepass.get(input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using OnePass for is-match search at {:?}&quot;</span>,
+                <span class="string">"using OnePass for is-match search at {:?}"</span>,
                 input.get_span()
             );
             e.search_slots(<span class="kw-2">&amp;mut </span>cache.onepass, input, <span class="kw-2">&amp;mut </span>[]).is_some()
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>e) = <span class="self">self</span>.backtrack.get(input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using BoundedBacktracker for is-match search at {:?}&quot;</span>,
+                <span class="string">"using BoundedBacktracker for is-match search at {:?}"</span>,
                 input.get_span()
             );
             e.is_match(<span class="kw-2">&amp;mut </span>cache.backtrack, input)
         } <span class="kw">else </span>{
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using PikeVM for is-match search at {:?}&quot;</span>,
+                <span class="string">"using PikeVM for is-match search at {:?}"</span>,
                 input.get_span()
             );
             <span class="kw">let </span>e = <span class="self">self</span>.pikevm.get();
@@ -2578,12 +2578,12 @@
 }
 
 <span class="kw">impl </span>Strategy <span class="kw">for </span>Core {
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>group_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>GroupInfo {
         <span class="self">self</span>.nfa.group_info()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>create_cache(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cache {
         Cache {
             capmatches: Captures::all(<span class="self">self</span>.group_info().clone()),
@@ -2595,7 +2595,7 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>reset_cache(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache) {
         cache.pikevm.reset(<span class="kw-2">&amp;</span><span class="self">self</span>.pikevm);
         cache.backtrack.reset(<span class="kw-2">&amp;</span><span class="self">self</span>.backtrack);
@@ -2616,25 +2616,25 @@
             + <span class="self">self</span>.dfa.memory_usage()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
-    </span><span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+    </span><span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
         <span class="comment">// We manually inline try_search_mayfail here because letting the
         // compiler do it seems to produce pretty crappy codegen.
         </span><span class="kw">return if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.dfa.get(input) {
-            <span class="macro">trace!</span>(<span class="string">&quot;using full DFA for full search at {:?}&quot;</span>, input.get_span());
+            <span class="macro">trace!</span>(<span class="string">"using full DFA for full search at {:?}"</span>, input.get_span());
             <span class="kw">match </span>e.try_search(input) {
                 <span class="prelude-val">Ok</span>(x) =&gt; x,
                 <span class="prelude-val">Err</span>(_err) =&gt; {
-                    <span class="macro">trace!</span>(<span class="string">&quot;full DFA search failed: {}&quot;</span>, _err);
+                    <span class="macro">trace!</span>(<span class="string">"full DFA search failed: {}"</span>, _err);
                     <span class="self">self</span>.search_nofail(cache, input)
                 }
             }
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.hybrid.get(input) {
-            <span class="macro">trace!</span>(<span class="string">&quot;using lazy DFA for full search at {:?}&quot;</span>, input.get_span());
+            <span class="macro">trace!</span>(<span class="string">"using lazy DFA for full search at {:?}"</span>, input.get_span());
             <span class="kw">match </span>e.try_search(<span class="kw-2">&amp;mut </span>cache.hybrid, input) {
                 <span class="prelude-val">Ok</span>(x) =&gt; x,
                 <span class="prelude-val">Err</span>(_err) =&gt; {
-                    <span class="macro">trace!</span>(<span class="string">&quot;lazy DFA search failed: {}&quot;</span>, _err);
+                    <span class="macro">trace!</span>(<span class="string">"lazy DFA search failed: {}"</span>, _err);
                     <span class="self">self</span>.search_nofail(cache, input)
                 }
             }
@@ -2643,30 +2643,30 @@
         };
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>search_half(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;HalfMatch&gt; {
-        <span class="comment">// The main difference with &#39;search&#39; is that if we&#39;re using a DFA, we
+        <span class="comment">// The main difference with 'search' is that if we're using a DFA, we
         // can use a single forward scan without needing to run the reverse
         // DFA.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.dfa.get(input) {
-            <span class="macro">trace!</span>(<span class="string">&quot;using full DFA for half search at {:?}&quot;</span>, input.get_span());
+            <span class="macro">trace!</span>(<span class="string">"using full DFA for half search at {:?}"</span>, input.get_span());
             <span class="kw">match </span>e.try_search_half_fwd(input) {
                 <span class="prelude-val">Ok</span>(x) =&gt; x,
                 <span class="prelude-val">Err</span>(_err) =&gt; {
-                    <span class="macro">trace!</span>(<span class="string">&quot;full DFA half search failed: {}&quot;</span>, _err);
+                    <span class="macro">trace!</span>(<span class="string">"full DFA half search failed: {}"</span>, _err);
                     <span class="self">self</span>.search_half_nofail(cache, input)
                 }
             }
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.hybrid.get(input) {
-            <span class="macro">trace!</span>(<span class="string">&quot;using lazy DFA for half search at {:?}&quot;</span>, input.get_span());
+            <span class="macro">trace!</span>(<span class="string">"using lazy DFA for half search at {:?}"</span>, input.get_span());
             <span class="kw">match </span>e.try_search_half_fwd(<span class="kw-2">&amp;mut </span>cache.hybrid, input) {
                 <span class="prelude-val">Ok</span>(x) =&gt; x,
                 <span class="prelude-val">Err</span>(_err) =&gt; {
-                    <span class="macro">trace!</span>(<span class="string">&quot;lazy DFA half search failed: {}&quot;</span>, _err);
+                    <span class="macro">trace!</span>(<span class="string">"lazy DFA half search failed: {}"</span>, _err);
                     <span class="self">self</span>.search_half_nofail(cache, input)
                 }
             }
@@ -2675,29 +2675,29 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
-    </span><span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+    </span><span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; bool {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.dfa.get(input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using full DFA for is-match search at {:?}&quot;</span>,
+                <span class="string">"using full DFA for is-match search at {:?}"</span>,
                 input.get_span()
             );
             <span class="kw">match </span>e.try_search_half_fwd(input) {
                 <span class="prelude-val">Ok</span>(x) =&gt; x.is_some(),
                 <span class="prelude-val">Err</span>(_err) =&gt; {
-                    <span class="macro">trace!</span>(<span class="string">&quot;full DFA half search failed: {}&quot;</span>, _err);
+                    <span class="macro">trace!</span>(<span class="string">"full DFA half search failed: {}"</span>, _err);
                     <span class="self">self</span>.is_match_nofail(cache, input)
                 }
             }
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.hybrid.get(input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using lazy DFA for is-match search at {:?}&quot;</span>,
+                <span class="string">"using lazy DFA for is-match search at {:?}"</span>,
                 input.get_span()
             );
             <span class="kw">match </span>e.try_search_half_fwd(<span class="kw-2">&amp;mut </span>cache.hybrid, input) {
                 <span class="prelude-val">Ok</span>(x) =&gt; x.is_some(),
                 <span class="prelude-val">Err</span>(_err) =&gt; {
-                    <span class="macro">trace!</span>(<span class="string">&quot;lazy DFA half search failed: {}&quot;</span>, _err);
+                    <span class="macro">trace!</span>(<span class="string">"lazy DFA half search failed: {}"</span>, _err);
                     <span class="self">self</span>.is_match_nofail(cache, input)
                 }
             }
@@ -2706,37 +2706,37 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>search_slots(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Option</span>&lt;PatternID&gt; {
-        <span class="comment">// Even if the regex has explicit capture groups, if the caller didn&#39;t
-        // provide any explicit slots, then it doesn&#39;t make sense to try and do
+        <span class="comment">// Even if the regex has explicit capture groups, if the caller didn't
+        // provide any explicit slots, then it doesn't make sense to try and do
         // extra work to get offsets for those slots. Ideally the caller should
         // realize this and not call this routine in the first place, but alas,
         // we try to save the caller from themselves if they do.
         </span><span class="kw">if </span>!<span class="self">self</span>.is_capture_search_needed(slots.len()) {
-            <span class="macro">trace!</span>(<span class="string">&quot;asked for slots unnecessarily, trying fast path&quot;</span>);
+            <span class="macro">trace!</span>(<span class="string">"asked for slots unnecessarily, trying fast path"</span>);
             <span class="kw">let </span>m = <span class="self">self</span>.search(cache, input)<span class="question-mark">?</span>;
             copy_match_to_slots(m, slots);
             <span class="kw">return </span><span class="prelude-val">Some</span>(m.pattern());
         }
         <span class="comment">// If the onepass DFA is available for this search (which only happens
-        // when it&#39;s anchored), then skip running a fallible DFA. The onepass
-        // DFA isn&#39;t as fast as a full or lazy DFA, but it is typically quite
-        // a bit faster than the backtracker or the PikeVM. So it isn&#39;t as
+        // when it's anchored), then skip running a fallible DFA. The onepass
+        // DFA isn't as fast as a full or lazy DFA, but it is typically quite
+        // a bit faster than the backtracker or the PikeVM. So it isn't as
         // advantageous to try and do a full/lazy DFA scan first.
         //
-        // We still theorize that it&#39;s better to do a full/lazy DFA scan, even
-        // when it&#39;s anchored, because it&#39;s usually much faster and permits us
-        // to say &quot;no match&quot; much more quickly. This does hurt the case of,
+        // We still theorize that it's better to do a full/lazy DFA scan, even
+        // when it's anchored, because it's usually much faster and permits us
+        // to say "no match" much more quickly. This does hurt the case of,
         // say, parsing each line in a log file into capture groups, because
         // in that case, the line always matches. So the lazy DFA scan is
         // usually just wasted work. But, the lazy DFA is usually quite fast
-        // and doesn&#39;t cost too much here.
+        // and doesn't cost too much here.
         </span><span class="kw">if </span><span class="self">self</span>.onepass.get(<span class="kw-2">&amp;</span>input).is_some() {
             <span class="kw">return </span><span class="self">self</span>.search_slots_nofail(cache, <span class="kw-2">&amp;</span>input, slots);
         }
@@ -2744,20 +2744,20 @@
             <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(m))) =&gt; m,
             <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)) =&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
             <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;fast capture search failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"fast capture search failed: {}"</span>, _err);
                 <span class="kw">return </span><span class="self">self</span>.search_slots_nofail(cache, input, slots);
             }
             <span class="prelude-val">None </span>=&gt; {
                 <span class="kw">return </span><span class="self">self</span>.search_slots_nofail(cache, input, slots);
             }
         };
-        <span class="comment">// At this point, now that we&#39;ve found the bounds of the
+        <span class="comment">// At this point, now that we've found the bounds of the
         // match, we need to re-run something that can resolve
         // capturing groups. But we only need to run on it on the
         // match bounds and not the entire haystack.
         </span><span class="macro">trace!</span>(
-            <span class="string">&quot;match found at {}..{} in capture search, \
-		  	 using another engine to find captures&quot;</span>,
+            <span class="string">"match found at {}..{} in capture search, \
+		  	 using another engine to find captures"</span>,
             m.start(),
             m.end(),
         );
@@ -2767,30 +2767,30 @@
             .anchored(Anchored::Pattern(m.pattern()));
         <span class="prelude-val">Some</span>(
             <span class="self">self</span>.search_slots_nofail(cache, <span class="kw-2">&amp;</span>input, slots)
-                .expect(<span class="string">&quot;should find a match&quot;</span>),
+                .expect(<span class="string">"should find a match"</span>),
         )
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>which_overlapping_matches(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         patset: <span class="kw-2">&amp;mut </span>PatternSet,
     ) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.dfa.get(input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using full DFA for overlapping search at {:?}&quot;</span>,
+                <span class="string">"using full DFA for overlapping search at {:?}"</span>,
                 input.get_span()
             );
             <span class="kw">let </span>_err = <span class="kw">match </span>e.try_which_overlapping_matches(input, patset) {
                 <span class="prelude-val">Ok</span>(()) =&gt; <span class="kw">return</span>,
                 <span class="prelude-val">Err</span>(err) =&gt; err,
             };
-            <span class="macro">trace!</span>(<span class="string">&quot;fast overlapping search failed: {}&quot;</span>, _err);
+            <span class="macro">trace!</span>(<span class="string">"fast overlapping search failed: {}"</span>, _err);
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.hybrid.get(input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using lazy DFA for overlapping search at {:?}&quot;</span>,
+                <span class="string">"using lazy DFA for overlapping search at {:?}"</span>,
                 input.get_span()
             );
             <span class="kw">let </span>_err = <span class="kw">match </span>e.try_which_overlapping_matches(
@@ -2803,10 +2803,10 @@
                 }
                 <span class="prelude-val">Err</span>(err) =&gt; err,
             };
-            <span class="macro">trace!</span>(<span class="string">&quot;fast overlapping search failed: {}&quot;</span>, _err);
+            <span class="macro">trace!</span>(<span class="string">"fast overlapping search failed: {}"</span>, _err);
         }
         <span class="macro">trace!</span>(
-            <span class="string">&quot;using PikeVM for overlapping search at {:?}&quot;</span>,
+            <span class="string">"using PikeVM for overlapping search at {:?}"</span>,
             input.get_span()
         );
         <span class="kw">let </span>e = <span class="self">self</span>.pikevm.get();
@@ -2823,44 +2823,44 @@
     <span class="kw">fn </span>new(core: Core) -&gt; <span class="prelude-ty">Result</span>&lt;ReverseAnchored, Core&gt; {
         <span class="kw">if </span>!core.info.is_always_anchored_end() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse anchored optimization because \
-				 the regex is not always anchored at the end&quot;
+                <span class="string">"skipping reverse anchored optimization because \
+				 the regex is not always anchored at the end"
             </span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
         <span class="comment">// Note that the caller can still request an anchored search even when
-        // the regex isn&#39;t anchored at the start. We detect that case in the
+        // the regex isn't anchored at the start. We detect that case in the
         // search routines below and just fallback to the core engine. This
-        // is fine because both searches are anchored. It&#39;s just a matter of
+        // is fine because both searches are anchored. It's just a matter of
         // picking one. Falling back to the core engine is a little simpler,
-        // since if we used the reverse anchored approach, we&#39;d have to add an
+        // since if we used the reverse anchored approach, we'd have to add an
         // extra check to ensure the match reported starts at the place where
         // the caller requested the search to start.
         </span><span class="kw">if </span>core.info.is_always_anchored_start() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse anchored optimization because \
-				 the regex is also anchored at the start&quot;
+                <span class="string">"skipping reverse anchored optimization because \
+				 the regex is also anchored at the start"
             </span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
         <span class="comment">// Only DFAs can do reverse searches (currently), so we need one of
-        // them in order to do this optimization. It&#39;s possible (although
+        // them in order to do this optimization. It's possible (although
         // pretty unlikely) that we have neither and need to give up.
         </span><span class="kw">if </span>!core.hybrid.is_some() &amp;&amp; !core.dfa.is_some() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse anchored optimization because \
-				 we don&#39;t have a lazy DFA or a full DFA&quot;
+                <span class="string">"skipping reverse anchored optimization because \
+				 we don't have a lazy DFA or a full DFA"
             </span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
         <span class="prelude-val">Ok</span>(ReverseAnchored { core })
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>try_search_half_anchored_rev(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, RetryFailError&gt; {
         <span class="comment">// We of course always want an anchored search. In theory, the
         // underlying regex engines should automatically enable anchored
@@ -2869,41 +2869,41 @@
         </span><span class="kw">let </span>input = input.clone().anchored(Anchored::Yes);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.core.dfa.get(<span class="kw-2">&amp;</span>input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using full DFA for reverse anchored search at {:?}&quot;</span>,
+                <span class="string">"using full DFA for reverse anchored search at {:?}"</span>,
                 input.get_span()
             );
             e.try_search_half_rev(<span class="kw-2">&amp;</span>input)
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.core.hybrid.get(<span class="kw-2">&amp;</span>input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using lazy DFA for reverse anchored search at {:?}&quot;</span>,
+                <span class="string">"using lazy DFA for reverse anchored search at {:?}"</span>,
                 input.get_span()
             );
             e.try_search_half_rev(<span class="kw-2">&amp;mut </span>cache.hybrid, <span class="kw-2">&amp;</span>input)
         } <span class="kw">else </span>{
-            <span class="macro">unreachable!</span>(<span class="string">&quot;ReverseAnchored always has a DFA&quot;</span>)
+            <span class="macro">unreachable!</span>(<span class="string">"ReverseAnchored always has a DFA"</span>)
         }
     }
 }
 
-<span class="comment">// Note that in this impl, we don&#39;t check that &#39;input.end() ==
-// input.haystack().len()&#39;. In particular, when that condition is false, a
+<span class="comment">// Note that in this impl, we don't check that 'input.end() ==
+// input.haystack().len()'. In particular, when that condition is false, a
 // match is always impossible because we know that the regex is always anchored
-// at the end (or else &#39;ReverseAnchored&#39; won&#39;t be built). We don&#39;t check that
-// here because the &#39;Regex&#39; wrapper actually does that for us in all cases.
-// Thus, in this impl, we can actually assume that the end position in &#39;input&#39;
+// at the end (or else 'ReverseAnchored' won't be built). We don't check that
+// here because the 'Regex' wrapper actually does that for us in all cases.
+// Thus, in this impl, we can actually assume that the end position in 'input'
 // is equivalent to the length of the haystack.
 </span><span class="kw">impl </span>Strategy <span class="kw">for </span>ReverseAnchored {
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>group_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>GroupInfo {
         <span class="self">self</span>.core.group_info()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>create_cache(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cache {
         <span class="self">self</span>.core.create_cache()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>reset_cache(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache) {
         <span class="self">self</span>.core.reset_cache(cache);
     }
@@ -2919,14 +2919,14 @@
         <span class="self">self</span>.core.memory_usage()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
-    </span><span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+    </span><span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
             <span class="kw">return </span><span class="self">self</span>.core.search(cache, input);
         }
         <span class="kw">match </span><span class="self">self</span>.try_search_half_anchored_rev(cache, input) {
             <span class="prelude-val">Err</span>(_err) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;fast reverse anchored search failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"fast reverse anchored search failed: {}"</span>, _err);
                 <span class="self">self</span>.core.search_nofail(cache, input)
             }
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">None</span>,
@@ -2936,25 +2936,25 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>search_half(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;HalfMatch&gt; {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
             <span class="kw">return </span><span class="self">self</span>.core.search_half(cache, input);
         }
         <span class="kw">match </span><span class="self">self</span>.try_search_half_anchored_rev(cache, input) {
             <span class="prelude-val">Err</span>(_err) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;fast reverse anchored search failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"fast reverse anchored search failed: {}"</span>, _err);
                 <span class="self">self</span>.core.search_half_nofail(cache, input)
             }
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">None</span>,
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm)) =&gt; {
-                <span class="comment">// Careful here! &#39;try_search_half&#39; is a *forward* search that
+                <span class="comment">// Careful here! 'try_search_half' is a *forward* search that
                 // only cares about the *end* position of a match. But
-                // &#39;hm.offset()&#39; is actually the start of the match. So we
+                // 'hm.offset()' is actually the start of the match. So we
                 // actually just throw that away here and, since we know we
                 // have a match, return the only possible position at which a
                 // match can occur: input.end().
@@ -2963,14 +2963,14 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
-    </span><span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+    </span><span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; bool {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
             <span class="kw">return </span><span class="self">self</span>.core.is_match(cache, input);
         }
         <span class="kw">match </span><span class="self">self</span>.try_search_half_anchored_rev(cache, input) {
             <span class="prelude-val">Err</span>(_err) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;fast reverse anchored search failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"fast reverse anchored search failed: {}"</span>, _err);
                 <span class="self">self</span>.core.is_match_nofail(cache, input)
             }
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="bool-val">false</span>,
@@ -2978,11 +2978,11 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>search_slots(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Option</span>&lt;PatternID&gt; {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
@@ -2990,13 +2990,13 @@
         }
         <span class="kw">match </span><span class="self">self</span>.try_search_half_anchored_rev(cache, input) {
             <span class="prelude-val">Err</span>(_err) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;fast reverse anchored search failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"fast reverse anchored search failed: {}"</span>, _err);
                 <span class="self">self</span>.core.search_slots_nofail(cache, input, slots)
             }
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">None</span>,
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm)) =&gt; {
                 <span class="kw">if </span>!<span class="self">self</span>.core.is_capture_search_needed(slots.len()) {
-                    <span class="macro">trace!</span>(<span class="string">&quot;asked for slots unnecessarily, skipping captures&quot;</span>);
+                    <span class="macro">trace!</span>(<span class="string">"asked for slots unnecessarily, skipping captures"</span>);
                     <span class="kw">let </span>m = Match::new(hm.pattern(), hm.offset()..input.end());
                     copy_match_to_slots(m, slots);
                     <span class="kw">return </span><span class="prelude-val">Some</span>(m.pattern());
@@ -3011,17 +3011,17 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>which_overlapping_matches(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         patset: <span class="kw-2">&amp;mut </span>PatternSet,
     ) {
         <span class="comment">// It seems like this could probably benefit from a reverse anchored
         // optimization, perhaps by doing an overlapping reverse search (which
-        // the DFAs do support). I haven&#39;t given it much thought though, and
-        // I&#39;m currently focus more on the single pattern case.
+        // the DFAs do support). I haven't given it much thought though, and
+        // I'm currently focus more on the single pattern case.
         </span><span class="self">self</span>.core.which_overlapping_matches(cache, input, patset)
     }
 }
@@ -3036,47 +3036,47 @@
     <span class="kw">fn </span>new(core: Core, hirs: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Hir]) -&gt; <span class="prelude-ty">Result</span>&lt;ReverseSuffix, Core&gt; {
         <span class="kw">if </span>!core.info.config().get_auto_prefilter() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse suffix optimization because \
-                 automatic prefilters are disabled&quot;
+                <span class="string">"skipping reverse suffix optimization because \
+                 automatic prefilters are disabled"
             </span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
-        <span class="comment">// Like the reverse inner optimization, we don&#39;t do this for regexes
+        <span class="comment">// Like the reverse inner optimization, we don't do this for regexes
         // that are always anchored. It could lead to scanning too much, but
-        // could say &quot;no match&quot; much more quickly than running the regex
-        // engine if the initial literal scan doesn&#39;t match. With that said,
+        // could say "no match" much more quickly than running the regex
+        // engine if the initial literal scan doesn't match. With that said,
         // the reverse suffix optimization has lower overhead, since it only
         // requires a reverse scan after a literal match to confirm or reject
         // the match. (Although, in the case of confirmation, it then needs to
         // do another forward scan to find the end position.)
         //
         // Note that the caller can still request an anchored search even
-        // when the regex isn&#39;t anchored. We detect that case in the search
+        // when the regex isn't anchored. We detect that case in the search
         // routines below and just fallback to the core engine. Currently this
         // optimization assumes all searches are unanchored, so if we do want
         // to enable this optimization for anchored searches, it will need a
         // little work to support it.
         </span><span class="kw">if </span>core.info.is_always_anchored_start() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse suffix optimization because \
-				 the regex is always anchored at the start&quot;</span>,
+                <span class="string">"skipping reverse suffix optimization because \
+				 the regex is always anchored at the start"</span>,
             );
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
         <span class="comment">// Only DFAs can do reverse searches (currently), so we need one of
-        // them in order to do this optimization. It&#39;s possible (although
+        // them in order to do this optimization. It's possible (although
         // pretty unlikely) that we have neither and need to give up.
         </span><span class="kw">if </span>!core.hybrid.is_some() &amp;&amp; !core.dfa.is_some() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse suffix optimization because \
-				 we don&#39;t have a lazy DFA or a full DFA&quot;
+                <span class="string">"skipping reverse suffix optimization because \
+				 we don't have a lazy DFA or a full DFA"
             </span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
         <span class="kw">if </span>core.pre.as_ref().map_or(<span class="bool-val">false</span>, |p| p.is_fast()) {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse suffix optimization because \
-				 we already have a prefilter that we think is fast&quot;
+                <span class="string">"skipping reverse suffix optimization because \
+				 we already have a prefilter that we think is fast"
             </span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
@@ -3085,15 +3085,15 @@
         <span class="kw">let </span>lcs = <span class="kw">match </span>suffixes.longest_common_suffix() {
             <span class="prelude-val">None </span>=&gt; {
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;skipping reverse suffix optimization because \
-                     a longest common suffix could not be found&quot;</span>,
+                    <span class="string">"skipping reverse suffix optimization because \
+                     a longest common suffix could not be found"</span>,
                 );
                 <span class="kw">return </span><span class="prelude-val">Err</span>(core);
             }
             <span class="prelude-val">Some</span>(lcs) <span class="kw">if </span>lcs.is_empty() =&gt; {
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;skipping reverse suffix optimization because \
-                     the longest common suffix is the empty string&quot;</span>,
+                    <span class="string">"skipping reverse suffix optimization because \
+                     the longest common suffix is the empty string"</span>,
                 );
                 <span class="kw">return </span><span class="prelude-val">Err</span>(core);
             }
@@ -3103,29 +3103,29 @@
             <span class="prelude-val">Some</span>(pre) =&gt; pre,
             <span class="prelude-val">None </span>=&gt; {
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;skipping reverse suffix optimization because \
+                    <span class="string">"skipping reverse suffix optimization because \
                      a prefilter could not be constructed from the \
-                     longest common suffix&quot;</span>,
+                     longest common suffix"</span>,
                 );
                 <span class="kw">return </span><span class="prelude-val">Err</span>(core);
             }
         };
         <span class="kw">if </span>!pre.is_fast() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse suffix optimization because \
+                <span class="string">"skipping reverse suffix optimization because \
 				 while we have a suffix prefilter, it is not \
-				 believed to be &#39;fast&#39;&quot;
+				 believed to be 'fast'"
             </span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
         <span class="prelude-val">Ok</span>(ReverseSuffix { core, pre })
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>try_search_half_start(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, RetryError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>span = input.get_span();
         <span class="kw">let </span><span class="kw-2">mut </span>min_start = <span class="number">0</span>;
@@ -3134,7 +3134,7 @@
                 <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
                 <span class="prelude-val">Some</span>(span) =&gt; span,
             };
-            <span class="macro">trace!</span>(<span class="string">&quot;reverse suffix scan found suffix match at {:?}&quot;</span>, litmatch);
+            <span class="macro">trace!</span>(<span class="string">"reverse suffix scan found suffix match at {:?}"</span>, litmatch);
             <span class="kw">let </span>revinput = input
                 .clone()
                 .anchored(Anchored::Yes)
@@ -3155,70 +3155,70 @@
         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>try_search_half_fwd(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, RetryFailError&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.core.dfa.get(<span class="kw-2">&amp;</span>input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using full DFA for forward reverse suffix search at {:?}&quot;</span>,
+                <span class="string">"using full DFA for forward reverse suffix search at {:?}"</span>,
                 input.get_span()
             );
             e.try_search_half_fwd(<span class="kw-2">&amp;</span>input)
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.core.hybrid.get(<span class="kw-2">&amp;</span>input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using lazy DFA for forward reverse suffix search at {:?}&quot;</span>,
+                <span class="string">"using lazy DFA for forward reverse suffix search at {:?}"</span>,
                 input.get_span()
             );
             e.try_search_half_fwd(<span class="kw-2">&amp;mut </span>cache.hybrid, <span class="kw-2">&amp;</span>input)
         } <span class="kw">else </span>{
-            <span class="macro">unreachable!</span>(<span class="string">&quot;ReverseSuffix always has a DFA&quot;</span>)
+            <span class="macro">unreachable!</span>(<span class="string">"ReverseSuffix always has a DFA"</span>)
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>try_search_half_rev_limited(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         min_start: usize,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, RetryError&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.core.dfa.get(<span class="kw-2">&amp;</span>input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using full DFA for reverse suffix search at {:?}, \
-                 but will be stopped at {} to avoid quadratic behavior&quot;</span>,
+                <span class="string">"using full DFA for reverse suffix search at {:?}, \
+                 but will be stopped at {} to avoid quadratic behavior"</span>,
                 input.get_span(),
                 min_start,
             );
             e.try_search_half_rev_limited(<span class="kw-2">&amp;</span>input, min_start)
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.core.hybrid.get(<span class="kw-2">&amp;</span>input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using lazy DFA for reverse suffix search at {:?}, \
-                 but will be stopped at {} to avoid quadratic behavior&quot;</span>,
+                <span class="string">"using lazy DFA for reverse suffix search at {:?}, \
+                 but will be stopped at {} to avoid quadratic behavior"</span>,
                 input.get_span(),
                 min_start,
             );
             e.try_search_half_rev_limited(<span class="kw-2">&amp;mut </span>cache.hybrid, <span class="kw-2">&amp;</span>input, min_start)
         } <span class="kw">else </span>{
-            <span class="macro">unreachable!</span>(<span class="string">&quot;ReverseSuffix always has a DFA&quot;</span>)
+            <span class="macro">unreachable!</span>(<span class="string">"ReverseSuffix always has a DFA"</span>)
         }
     }
 }
 
 <span class="kw">impl </span>Strategy <span class="kw">for </span>ReverseSuffix {
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>group_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>GroupInfo {
         <span class="self">self</span>.core.group_info()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>create_cache(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cache {
         <span class="self">self</span>.core.create_cache()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>reset_cache(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache) {
         <span class="self">self</span>.core.reset_cache(cache);
     }
@@ -3231,18 +3231,18 @@
         <span class="self">self</span>.core.memory_usage() + <span class="self">self</span>.pre.memory_usage()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
-    </span><span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+    </span><span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
             <span class="kw">return </span><span class="self">self</span>.core.search(cache, input);
         }
         <span class="kw">match </span><span class="self">self</span>.try_search_half_start(cache, input) {
             <span class="prelude-val">Err</span>(RetryError::Quadratic(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse suffix optimization failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse suffix optimization failed: {}"</span>, _err);
                 <span class="self">self</span>.core.search(cache, input)
             }
             <span class="prelude-val">Err</span>(RetryError::Fail(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse suffix reverse fast search failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse suffix reverse fast search failed: {}"</span>, _err);
                 <span class="self">self</span>.core.search_nofail(cache, input)
             }
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">None</span>,
@@ -3254,15 +3254,15 @@
                 <span class="kw">match </span><span class="self">self</span>.try_search_half_fwd(cache, <span class="kw-2">&amp;</span>fwdinput) {
                     <span class="prelude-val">Err</span>(_err) =&gt; {
                         <span class="macro">trace!</span>(
-                            <span class="string">&quot;reverse suffix forward fast search failed: {}&quot;</span>,
+                            <span class="string">"reverse suffix forward fast search failed: {}"</span>,
                             _err
                         );
                         <span class="self">self</span>.core.search_nofail(cache, input)
                     }
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {
                         <span class="macro">unreachable!</span>(
-                            <span class="string">&quot;suffix match plus reverse match implies \
-						     there must be a match&quot;</span>,
+                            <span class="string">"suffix match plus reverse match implies \
+						     there must be a match"</span>,
                         )
                     }
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm_end)) =&gt; <span class="prelude-val">Some</span>(Match::new(
@@ -3274,23 +3274,23 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>search_half(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;HalfMatch&gt; {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
             <span class="kw">return </span><span class="self">self</span>.core.search_half(cache, input);
         }
         <span class="kw">match </span><span class="self">self</span>.try_search_half_start(cache, input) {
             <span class="prelude-val">Err</span>(RetryError::Quadratic(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse suffix half optimization failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse suffix half optimization failed: {}"</span>, _err);
                 <span class="self">self</span>.core.search_half(cache, input)
             }
             <span class="prelude-val">Err</span>(RetryError::Fail(_err)) =&gt; {
                 <span class="macro">trace!</span>(
-                    <span class="string">&quot;reverse suffix reverse fast half search failed: {}&quot;</span>,
+                    <span class="string">"reverse suffix reverse fast half search failed: {}"</span>,
                     _err
                 );
                 <span class="self">self</span>.core.search_half_nofail(cache, input)
@@ -3302,9 +3302,9 @@
                 // corresponding to where the suffix was found. But the suffix
                 // match does not necessarily correspond to the end of the
                 // proper leftmost-first match. Consider /[a-z]+ing/ against
-                // &#39;tingling&#39;. The first suffix match is the first &#39;ing&#39;, and
-                // the /[a-z]+/ matches the &#39;t&#39;. So if we stopped here, then
-                // we&#39;d report &#39;ting&#39; as the match. But &#39;tingling&#39; is the
+                // 'tingling'. The first suffix match is the first 'ing', and
+                // the /[a-z]+/ matches the 't'. So if we stopped here, then
+                // we'd report 'ting' as the match. But 'tingling' is the
                 // correct match because of greediness.
                 </span><span class="kw">let </span>fwdinput = input
                     .clone()
@@ -3313,15 +3313,15 @@
                 <span class="kw">match </span><span class="self">self</span>.try_search_half_fwd(cache, <span class="kw-2">&amp;</span>fwdinput) {
                     <span class="prelude-val">Err</span>(_err) =&gt; {
                         <span class="macro">trace!</span>(
-                            <span class="string">&quot;reverse suffix forward fast search failed: {}&quot;</span>,
+                            <span class="string">"reverse suffix forward fast search failed: {}"</span>,
                             _err
                         );
                         <span class="self">self</span>.core.search_half_nofail(cache, input)
                     }
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; {
                         <span class="macro">unreachable!</span>(
-                            <span class="string">&quot;suffix match plus reverse match implies \
-						     there must be a match&quot;</span>,
+                            <span class="string">"suffix match plus reverse match implies \
+						     there must be a match"</span>,
                         )
                     }
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm_end)) =&gt; <span class="prelude-val">Some</span>(hm_end),
@@ -3330,19 +3330,19 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
-    </span><span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+    </span><span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; bool {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
             <span class="kw">return </span><span class="self">self</span>.core.is_match(cache, input);
         }
         <span class="kw">match </span><span class="self">self</span>.try_search_half_start(cache, input) {
             <span class="prelude-val">Err</span>(RetryError::Quadratic(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse suffix half optimization failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse suffix half optimization failed: {}"</span>, _err);
                 <span class="self">self</span>.core.is_match_nofail(cache, input)
             }
             <span class="prelude-val">Err</span>(RetryError::Fail(_err)) =&gt; {
                 <span class="macro">trace!</span>(
-                    <span class="string">&quot;reverse suffix reverse fast half search failed: {}&quot;</span>,
+                    <span class="string">"reverse suffix reverse fast half search failed: {}"</span>,
                     _err
                 );
                 <span class="self">self</span>.core.is_match_nofail(cache, input)
@@ -3352,18 +3352,18 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>search_slots(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Option</span>&lt;PatternID&gt; {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
             <span class="kw">return </span><span class="self">self</span>.core.search_slots(cache, input, slots);
         }
         <span class="kw">if </span>!<span class="self">self</span>.core.is_capture_search_needed(slots.len()) {
-            <span class="macro">trace!</span>(<span class="string">&quot;asked for slots unnecessarily, trying fast path&quot;</span>);
+            <span class="macro">trace!</span>(<span class="string">"asked for slots unnecessarily, trying fast path"</span>);
             <span class="kw">let </span>m = <span class="self">self</span>.search(cache, input)<span class="question-mark">?</span>;
             copy_match_to_slots(m, slots);
             <span class="kw">return </span><span class="prelude-val">Some</span>(m.pattern());
@@ -3371,14 +3371,14 @@
         <span class="kw">let </span>hm_start = <span class="kw">match </span><span class="self">self</span>.try_search_half_start(cache, input) {
             <span class="prelude-val">Err</span>(RetryError::Quadratic(_err)) =&gt; {
                 <span class="macro">trace!</span>(
-                    <span class="string">&quot;reverse suffix captures optimization failed: {}&quot;</span>,
+                    <span class="string">"reverse suffix captures optimization failed: {}"</span>,
                     _err
                 );
                 <span class="kw">return </span><span class="self">self</span>.core.search_slots(cache, input, slots);
             }
             <span class="prelude-val">Err</span>(RetryError::Fail(_err)) =&gt; {
                 <span class="macro">trace!</span>(
-                    <span class="string">&quot;reverse suffix reverse fast captures search failed: {}&quot;</span>,
+                    <span class="string">"reverse suffix reverse fast captures search failed: {}"</span>,
                     _err
                 );
                 <span class="kw">return </span><span class="self">self</span>.core.search_slots_nofail(cache, input, slots);
@@ -3387,8 +3387,8 @@
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(hm_start)) =&gt; hm_start,
         };
         <span class="macro">trace!</span>(
-            <span class="string">&quot;match found at {}..{} in capture search, \
-		  	 using another engine to find captures&quot;</span>,
+            <span class="string">"match found at {}..{} in capture search, \
+		  	 using another engine to find captures"</span>,
             hm_start.offset(),
             input.end(),
         );
@@ -3400,11 +3400,11 @@
         <span class="self">self</span>.core.search_slots_nofail(cache, <span class="kw-2">&amp;</span>input, slots)
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>which_overlapping_matches(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         patset: <span class="kw-2">&amp;mut </span>PatternSet,
     ) {
         <span class="self">self</span>.core.which_overlapping_matches(cache, input, patset)
@@ -3424,75 +3424,75 @@
     <span class="kw">fn </span>new(core: Core, hirs: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Hir]) -&gt; <span class="prelude-ty">Result</span>&lt;ReverseInner, Core&gt; {
         <span class="kw">if </span>!core.info.config().get_auto_prefilter() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse inner optimization because \
-                 automatic prefilters are disabled&quot;
+                <span class="string">"skipping reverse inner optimization because \
+                 automatic prefilters are disabled"
             </span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
         <span class="comment">// Currently we hard-code the assumption of leftmost-first match
-        // semantics. This isn&#39;t a huge deal because &#39;all&#39; semantics tend to
+        // semantics. This isn't a huge deal because 'all' semantics tend to
         // only be used for forward overlapping searches with multiple regexes,
         // and this optimization only supports a single pattern at the moment.
         </span><span class="kw">if </span>core.info.config().get_match_kind() != MatchKind::LeftmostFirst {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse inner optimization because \
-				 match kind is {:?} but this only supports leftmost-first&quot;</span>,
+                <span class="string">"skipping reverse inner optimization because \
+				 match kind is {:?} but this only supports leftmost-first"</span>,
                 core.info.config().get_match_kind(),
             );
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
-        <span class="comment">// It&#39;s likely that a reverse inner scan has too much overhead for it
+        <span class="comment">// It's likely that a reverse inner scan has too much overhead for it
         // to be worth it when the regex is anchored at the start. It is
         // possible for it to be quite a bit faster if the initial literal
-        // scan fails to detect a match, in which case, we can say &quot;no match&quot;
+        // scan fails to detect a match, in which case, we can say "no match"
         // very quickly. But this could be undesirable, e.g., scanning too far
         // or when the literal scan matches. If it matches, then confirming the
         // match requires a reverse scan followed by a forward scan to confirm
         // or reject, which is a fair bit of work.
         //
         // Note that the caller can still request an anchored search even
-        // when the regex isn&#39;t anchored. We detect that case in the search
+        // when the regex isn't anchored. We detect that case in the search
         // routines below and just fallback to the core engine. Currently this
         // optimization assumes all searches are unanchored, so if we do want
         // to enable this optimization for anchored searches, it will need a
         // little work to support it.
         </span><span class="kw">if </span>core.info.is_always_anchored_start() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse inner optimization because \
-				 the regex is always anchored at the start&quot;</span>,
+                <span class="string">"skipping reverse inner optimization because \
+				 the regex is always anchored at the start"</span>,
             );
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
         <span class="comment">// Only DFAs can do reverse searches (currently), so we need one of
-        // them in order to do this optimization. It&#39;s possible (although
+        // them in order to do this optimization. It's possible (although
         // pretty unlikely) that we have neither and need to give up.
         </span><span class="kw">if </span>!core.hybrid.is_some() &amp;&amp; !core.dfa.is_some() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse inner optimization because \
-				 we don&#39;t have a lazy DFA or a full DFA&quot;
+                <span class="string">"skipping reverse inner optimization because \
+				 we don't have a lazy DFA or a full DFA"
             </span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         }
         <span class="kw">if </span>core.pre.as_ref().map_or(<span class="bool-val">false</span>, |p| p.is_fast()) {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping reverse inner optimization because \
-				 we already have a prefilter that we think is fast&quot;
+                <span class="string">"skipping reverse inner optimization because \
+				 we already have a prefilter that we think is fast"
             </span>);
             <span class="kw">return </span><span class="prelude-val">Err</span>(core);
         } <span class="kw">else if </span>core.pre.is_some() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;core engine has a prefix prefilter, but it is \
+                <span class="string">"core engine has a prefix prefilter, but it is \
                  probably not fast, so continuing with attempt to \
-                 use reverse inner prefilter&quot;
+                 use reverse inner prefilter"
             </span>);
         }
         <span class="kw">let </span>(concat_prefix, preinner) = <span class="kw">match </span>reverse_inner::extract(hirs) {
             <span class="prelude-val">Some</span>(x) =&gt; x,
-            <span class="comment">// N.B. the &#39;extract&#39; function emits debug messages explaining
+            <span class="comment">// N.B. the 'extract' function emits debug messages explaining
             // why we bailed out here.
             </span><span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(core),
         };
-        <span class="macro">debug!</span>(<span class="string">&quot;building reverse NFA for prefix before inner literal&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">"building reverse NFA for prefix before inner literal"</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>lookm = LookMatcher::new();
         lookm.set_line_terminator(core.info.config().get_line_terminator());
         <span class="kw">let </span>thompson_config = thompson::Config::new()
@@ -3509,14 +3509,14 @@
             <span class="prelude-val">Ok</span>(nfarev) =&gt; nfarev,
             <span class="prelude-val">Err</span>(_err) =&gt; {
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;skipping reverse inner optimization because the \
-					 reverse NFA failed to build: {}&quot;</span>,
+                    <span class="string">"skipping reverse inner optimization because the \
+					 reverse NFA failed to build: {}"</span>,
                     _err,
                 );
                 <span class="kw">return </span><span class="prelude-val">Err</span>(core);
             }
         };
-        <span class="macro">debug!</span>(<span class="string">&quot;building reverse DFA for prefix before inner literal&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">"building reverse DFA for prefix before inner literal"</span>);
         <span class="kw">let </span>dfa = <span class="kw">if </span>!core.info.config().get_dfa() {
             wrappers::ReverseDFA::none()
         } <span class="kw">else </span>{
@@ -3526,8 +3526,8 @@
             wrappers::ReverseHybrid::none()
         } <span class="kw">else if </span>dfa.is_some() {
             <span class="macro">debug!</span>(
-                <span class="string">&quot;skipping lazy DFA for reverse inner optimization \
-				 because we have a full DFA&quot;
+                <span class="string">"skipping lazy DFA for reverse inner optimization \
+				 because we have a full DFA"
             </span>);
             wrappers::ReverseHybrid::none()
         } <span class="kw">else </span>{
@@ -3536,11 +3536,11 @@
         <span class="prelude-val">Ok</span>(ReverseInner { core, preinner, nfarev, hybrid, dfa })
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>try_search_full(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Match&gt;, RetryError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>span = input.get_span();
         <span class="kw">let </span><span class="kw-2">mut </span>min_match_start = <span class="number">0</span>;
@@ -3552,15 +3552,15 @@
             };
             <span class="kw">if </span>litmatch.start &lt; min_pre_start {
                 <span class="macro">trace!</span>(
-                    <span class="string">&quot;found inner prefilter match at {:?}, which starts \
+                    <span class="string">"found inner prefilter match at {:?}, which starts \
 					 before the end of the last forward scan at {}, \
-					 quitting to avoid quadratic behavior&quot;</span>,
+					 quitting to avoid quadratic behavior"</span>,
                     litmatch,
                     min_pre_start,
                 );
                 <span class="kw">return </span><span class="prelude-val">Err</span>(RetryError::Quadratic(RetryQuadraticError::new()));
             }
-            <span class="macro">trace!</span>(<span class="string">&quot;reverse inner scan found inner match at {:?}&quot;</span>, litmatch);
+            <span class="macro">trace!</span>(<span class="string">"reverse inner scan found inner match at {:?}"</span>, litmatch);
             <span class="kw">let </span>revinput = input
                 .clone()
                 .anchored(Anchored::Yes)
@@ -3607,48 +3607,48 @@
         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>try_search_half_fwd_stopat(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Result</span>&lt;HalfMatch, usize&gt;, RetryFailError&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.core.dfa.get(<span class="kw-2">&amp;</span>input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using full DFA for forward reverse inner search at {:?}&quot;</span>,
+                <span class="string">"using full DFA for forward reverse inner search at {:?}"</span>,
                 input.get_span()
             );
             e.try_search_half_fwd_stopat(<span class="kw-2">&amp;</span>input)
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.core.hybrid.get(<span class="kw-2">&amp;</span>input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using lazy DFA for forward reverse inner search at {:?}&quot;</span>,
+                <span class="string">"using lazy DFA for forward reverse inner search at {:?}"</span>,
                 input.get_span()
             );
             e.try_search_half_fwd_stopat(<span class="kw-2">&amp;mut </span>cache.hybrid, <span class="kw-2">&amp;</span>input)
         } <span class="kw">else </span>{
-            <span class="macro">unreachable!</span>(<span class="string">&quot;ReverseInner always has a DFA&quot;</span>)
+            <span class="macro">unreachable!</span>(<span class="string">"ReverseInner always has a DFA"</span>)
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>try_search_half_rev_limited(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         min_start: usize,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, RetryError&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.dfa.get(<span class="kw-2">&amp;</span>input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using full DFA for reverse inner search at {:?}, \
-                 but will be stopped at {} to avoid quadratic behavior&quot;</span>,
+                <span class="string">"using full DFA for reverse inner search at {:?}, \
+                 but will be stopped at {} to avoid quadratic behavior"</span>,
                 input.get_span(),
                 min_start,
             );
             e.try_search_half_rev_limited(<span class="kw-2">&amp;</span>input, min_start)
         } <span class="kw">else if let </span><span class="prelude-val">Some</span>(e) = <span class="self">self</span>.hybrid.get(<span class="kw-2">&amp;</span>input) {
             <span class="macro">trace!</span>(
-                <span class="string">&quot;using lazy DFA for reverse inner search at {:?}, \
-                 but will be stopped at {} to avoid quadratic behavior&quot;</span>,
+                <span class="string">"using lazy DFA for reverse inner search at {:?}, \
+                 but will be stopped at {} to avoid quadratic behavior"</span>,
                 input.get_span(),
                 min_start,
             );
@@ -3658,25 +3658,25 @@
                 min_start,
             )
         } <span class="kw">else </span>{
-            <span class="macro">unreachable!</span>(<span class="string">&quot;ReverseInner always has a DFA&quot;</span>)
+            <span class="macro">unreachable!</span>(<span class="string">"ReverseInner always has a DFA"</span>)
         }
     }
 }
 
 <span class="kw">impl </span>Strategy <span class="kw">for </span>ReverseInner {
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>group_info(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>GroupInfo {
         <span class="self">self</span>.core.group_info()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>create_cache(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cache {
         <span class="kw">let </span><span class="kw-2">mut </span>cache = <span class="self">self</span>.core.create_cache();
         cache.revhybrid = <span class="self">self</span>.hybrid.create_cache();
         cache
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>reset_cache(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache) {
         <span class="self">self</span>.core.reset_cache(cache);
         cache.revhybrid.reset(<span class="kw-2">&amp;</span><span class="self">self</span>.hybrid);
@@ -3693,40 +3693,40 @@
             + <span class="self">self</span>.dfa.memory_usage()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
-    </span><span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+    </span><span class="kw">fn </span>search(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Match&gt; {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
             <span class="kw">return </span><span class="self">self</span>.core.search(cache, input);
         }
         <span class="kw">match </span><span class="self">self</span>.try_search_full(cache, input) {
             <span class="prelude-val">Err</span>(RetryError::Quadratic(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse inner optimization failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse inner optimization failed: {}"</span>, _err);
                 <span class="self">self</span>.core.search(cache, input)
             }
             <span class="prelude-val">Err</span>(RetryError::Fail(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse inner fast search failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse inner fast search failed: {}"</span>, _err);
                 <span class="self">self</span>.core.search_nofail(cache, input)
             }
             <span class="prelude-val">Ok</span>(matornot) =&gt; matornot,
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>search_half(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;HalfMatch&gt; {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
             <span class="kw">return </span><span class="self">self</span>.core.search_half(cache, input);
         }
         <span class="kw">match </span><span class="self">self</span>.try_search_full(cache, input) {
             <span class="prelude-val">Err</span>(RetryError::Quadratic(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse inner half optimization failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse inner half optimization failed: {}"</span>, _err);
                 <span class="self">self</span>.core.search_half(cache, input)
             }
             <span class="prelude-val">Err</span>(RetryError::Fail(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse inner fast half search failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse inner fast half search failed: {}"</span>, _err);
                 <span class="self">self</span>.core.search_half_nofail(cache, input)
             }
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="prelude-val">None</span>,
@@ -3734,18 +3734,18 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
-    </span><span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; bool {
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+    </span><span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, cache: <span class="kw-2">&amp;mut </span>Cache, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; bool {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
             <span class="kw">return </span><span class="self">self</span>.core.is_match(cache, input);
         }
         <span class="kw">match </span><span class="self">self</span>.try_search_full(cache, input) {
             <span class="prelude-val">Err</span>(RetryError::Quadratic(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse inner half optimization failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse inner half optimization failed: {}"</span>, _err);
                 <span class="self">self</span>.core.is_match_nofail(cache, input)
             }
             <span class="prelude-val">Err</span>(RetryError::Fail(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse inner fast half search failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse inner fast half search failed: {}"</span>, _err);
                 <span class="self">self</span>.core.is_match_nofail(cache, input)
             }
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="bool-val">false</span>,
@@ -3753,37 +3753,37 @@
         }
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>search_slots(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Option</span>&lt;PatternID&gt; {
         <span class="kw">if </span>input.get_anchored().is_anchored() {
             <span class="kw">return </span><span class="self">self</span>.core.search_slots(cache, input, slots);
         }
         <span class="kw">if </span>!<span class="self">self</span>.core.is_capture_search_needed(slots.len()) {
-            <span class="macro">trace!</span>(<span class="string">&quot;asked for slots unnecessarily, trying fast path&quot;</span>);
+            <span class="macro">trace!</span>(<span class="string">"asked for slots unnecessarily, trying fast path"</span>);
             <span class="kw">let </span>m = <span class="self">self</span>.search(cache, input)<span class="question-mark">?</span>;
             copy_match_to_slots(m, slots);
             <span class="kw">return </span><span class="prelude-val">Some</span>(m.pattern());
         }
         <span class="kw">let </span>m = <span class="kw">match </span><span class="self">self</span>.try_search_full(cache, input) {
             <span class="prelude-val">Err</span>(RetryError::Quadratic(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse inner captures optimization failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse inner captures optimization failed: {}"</span>, _err);
                 <span class="kw">return </span><span class="self">self</span>.core.search_slots(cache, input, slots);
             }
             <span class="prelude-val">Err</span>(RetryError::Fail(_err)) =&gt; {
-                <span class="macro">trace!</span>(<span class="string">&quot;reverse inner fast captures search failed: {}&quot;</span>, _err);
+                <span class="macro">trace!</span>(<span class="string">"reverse inner fast captures search failed: {}"</span>, _err);
                 <span class="kw">return </span><span class="self">self</span>.core.search_slots_nofail(cache, input, slots);
             }
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
             <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(m)) =&gt; m,
         };
         <span class="macro">trace!</span>(
-            <span class="string">&quot;match found at {}..{} in capture search, \
-		  	 using another engine to find captures&quot;</span>,
+            <span class="string">"match found at {}..{} in capture search, \
+		  	 using another engine to find captures"</span>,
             m.start(),
             m.end(),
         );
@@ -3794,11 +3794,11 @@
         <span class="self">self</span>.core.search_slots_nofail(cache, <span class="kw-2">&amp;</span>input, slots)
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>which_overlapping_matches(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         patset: <span class="kw-2">&amp;mut </span>PatternSet,
     ) {
         <span class="self">self</span>.core.which_overlapping_matches(cache, input, patset)
@@ -3813,9 +3813,9 @@
 /// not exist, then no slots are set.
 ///
 /// This is useful when the caller provides slots (or captures), but you use a
-/// regex engine that doesn&#39;t operate on slots (like a lazy DFA). This function
+/// regex engine that doesn't operate on slots (like a lazy DFA). This function
 /// lets you map the match you get back to the slots provided by the caller.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>copy_match_to_slots(m: Match, slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;]) {
     <span class="kw">let </span>slot_start = m.pattern().as_usize() * <span class="number">2</span>;
     <span class="kw">let </span>slot_end = slot_start + <span class="number">1</span>;

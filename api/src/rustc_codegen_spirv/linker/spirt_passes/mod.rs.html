@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/spirt_passes/mod.rs`."><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/spirt_passes/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -670,17 +670,17 @@
 <span class="kw">use </span>std::iter;
 
 <span class="comment">// HACK(eddyb) `spv::spec::Spec` with extra `WellKnown`s (that should be upstreamed).
-</span><span class="macro">macro_rules! </span>def_spv_spec_with_extra_well_known {
+</span><span class="macro">macro_rules!</span> def_spv_spec_with_extra_well_known {
     ($(<span class="macro-nonterminal">$group</span>:ident: <span class="macro-nonterminal">$ty</span>:ty = [$(<span class="macro-nonterminal">$entry</span>:ident),+ $(,)<span class="question-mark">?</span>]),+ $(,)<span class="question-mark">?</span>) =&gt; {
         <span class="kw">struct </span>SpvSpecWithExtras {
-            __base_spec: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>spv::spec::Spec,
+            __base_spec: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>spv::spec::Spec,
 
             well_known: SpvWellKnownWithExtras,
         }
 
         <span class="attr">#[allow(non_snake_case)]
         </span><span class="kw">pub struct </span>SpvWellKnownWithExtras {
-            __base_well_known: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>spv::spec::WellKnown,
+            __base_well_known: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>spv::spec::WellKnown,
 
             $($(<span class="kw">pub </span><span class="macro-nonterminal">$entry</span>: <span class="macro-nonterminal">$ty</span>,)+)+
         }
@@ -702,8 +702,8 @@
         <span class="kw">impl </span>SpvSpecWithExtras {
             <span class="attr">#[inline(always)]
             #[must_use]
-            </span><span class="kw">pub fn </span>get() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>SpvSpecWithExtras {
-                <span class="macro">lazy_static! </span>{
+            </span><span class="kw">pub fn </span>get() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>SpvSpecWithExtras {
+                <span class="macro">lazy_static!</span> {
                     <span class="kw">static </span><span class="kw-2">ref </span>SPEC: SpvSpecWithExtras = {
                         <span class="attr">#[allow(non_camel_case_types)]
                         </span><span class="kw">struct </span>PerWellKnownGroup&lt;$(<span class="macro-nonterminal">$group</span>),+&gt; {
@@ -740,7 +740,7 @@
         }
     };
 }
-<span class="macro">def_spv_spec_with_extra_well_known! </span>{
+<span class="macro">def_spv_spec_with_extra_well_known!</span> {
     opcode: spv::spec::Opcode = [
         OpTypeVoid,
 
@@ -760,18 +760,18 @@
 
 <span class="doccomment">/// Run intra-function passes on all `Func` definitions in the `Module`.
 </span><span class="comment">//
-// FIXME(eddyb) introduce a proper &quot;pass manager&quot;.
+// FIXME(eddyb) introduce a proper "pass manager".
 // FIXME(eddyb) why does this focus on functions, it could just be module passes??
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>run_func_passes&lt;P&gt;(
     module: <span class="kw-2">&amp;mut </span>Module,
     passes: <span class="kw-2">&amp;</span>[<span class="kw">impl </span>AsRef&lt;str&gt;],
-    <span class="comment">// FIXME(eddyb) this is a very poor approximation of a &quot;profiler&quot; abstraction.
-    </span><span class="kw-2">mut </span>before_pass: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, <span class="kw-2">&amp;</span>Module) -&gt; P,
-    <span class="kw-2">mut </span>after_pass: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, <span class="kw-2">&amp;</span>Module, P),
+    <span class="comment">// FIXME(eddyb) this is a very poor approximation of a "profiler" abstraction.
+    </span><span class="kw-2">mut </span>before_pass: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, <span class="kw-2">&amp;</span>Module) -&gt; P,
+    <span class="kw-2">mut </span>after_pass: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, <span class="kw-2">&amp;</span>Module, P),
 ) {
     <span class="kw">let </span>cx = <span class="kw-2">&amp;</span>module.cx();
 
-    <span class="comment">// FIXME(eddyb) reuse this collection work in some kind of &quot;pass manager&quot;.
+    <span class="comment">// FIXME(eddyb) reuse this collection work in some kind of "pass manager".
     </span><span class="kw">let </span>all_funcs = {
         <span class="kw">let </span><span class="kw-2">mut </span>collector = ReachableUseCollector {
             cx,
@@ -794,35 +794,35 @@
         <span class="kw">let </span>name = name.as_ref();
 
         <span class="comment">// HACK(eddyb) not really a function pass.
-        </span><span class="kw">if </span>name == <span class="string">&quot;qptr&quot; </span>{
+        </span><span class="kw">if </span>name == <span class="string">"qptr" </span>{
             <span class="kw">let </span>layout_config = <span class="kw-2">&amp;</span>spirt::qptr::LayoutConfig {
                 abstract_bool_size_align: (<span class="number">1</span>, <span class="number">1</span>),
                 logical_ptr_size_align: (<span class="number">4</span>, <span class="number">4</span>),
                 ..spirt::qptr::LayoutConfig::VULKAN_SCALAR_LAYOUT
             };
 
-            <span class="kw">let </span>profiler = before_pass(<span class="string">&quot;qptr::lower_from_spv_ptrs&quot;</span>, module);
+            <span class="kw">let </span>profiler = before_pass(<span class="string">"qptr::lower_from_spv_ptrs"</span>, module);
             spirt::passes::qptr::lower_from_spv_ptrs(module, layout_config);
-            after_pass(<span class="string">&quot;qptr::lower_from_spv_ptrs&quot;</span>, module, profiler);
+            after_pass(<span class="string">"qptr::lower_from_spv_ptrs"</span>, module, profiler);
 
-            <span class="kw">let </span>profiler = before_pass(<span class="string">&quot;qptr::analyze_uses&quot;</span>, module);
+            <span class="kw">let </span>profiler = before_pass(<span class="string">"qptr::analyze_uses"</span>, module);
             spirt::passes::qptr::analyze_uses(module, layout_config);
-            after_pass(<span class="string">&quot;qptr::analyze_uses&quot;</span>, module, profiler);
+            after_pass(<span class="string">"qptr::analyze_uses"</span>, module, profiler);
 
-            <span class="kw">let </span>profiler = before_pass(<span class="string">&quot;qptr::lift_to_spv_ptrs&quot;</span>, module);
+            <span class="kw">let </span>profiler = before_pass(<span class="string">"qptr::lift_to_spv_ptrs"</span>, module);
             spirt::passes::qptr::lift_to_spv_ptrs(module, layout_config);
-            after_pass(<span class="string">&quot;qptr::lift_to_spv_ptrs&quot;</span>, module, profiler);
+            after_pass(<span class="string">"qptr::lift_to_spv_ptrs"</span>, module, profiler);
 
             <span class="kw">continue</span>;
         }
 
         <span class="kw">let </span>(full_name, pass_fn): (<span class="kw">_</span>, <span class="kw">fn</span>(<span class="kw">_</span>, <span class="kw-2">&amp;mut </span><span class="kw">_</span>)) = <span class="kw">match </span>name {
-            <span class="string">&quot;reduce&quot; </span>=&gt; (<span class="string">&quot;spirt_passes::reduce&quot;</span>, reduce::reduce_in_func),
-            <span class="string">&quot;fuse_selects&quot; </span>=&gt; (
-                <span class="string">&quot;spirt_passes::fuse_selects&quot;</span>,
+            <span class="string">"reduce" </span>=&gt; (<span class="string">"spirt_passes::reduce"</span>, reduce::reduce_in_func),
+            <span class="string">"fuse_selects" </span>=&gt; (
+                <span class="string">"spirt_passes::fuse_selects"</span>,
                 fuse_selects::fuse_selects_in_func,
             ),
-            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;unknown `--spirt-passes={name}`&quot;</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"unknown `--spirt-passes={name}`"</span>),
         };
 
         <span class="kw">let </span>profiler = before_pass(full_name, module);
@@ -839,9 +839,9 @@
 }
 
 <span class="comment">// FIXME(eddyb) this is just copy-pasted from `spirt` and should be reusable.
-</span><span class="kw">struct </span>ReachableUseCollector&lt;<span class="lifetime">&#39;a</span>&gt; {
-    cx: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Context,
-    module: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Module,
+</span><span class="kw">struct </span>ReachableUseCollector&lt;<span class="lifetime">'a</span>&gt; {
+    cx: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Context,
+    module: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Module,
 
     <span class="comment">// FIXME(eddyb) build some automation to avoid ever repeating these.
     </span>seen_types: FxIndexSet&lt;Type&gt;,
@@ -851,7 +851,7 @@
     seen_funcs: FxIndexSet&lt;Func&gt;,
 }
 
-<span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;_</span>&gt; <span class="kw">for </span>ReachableUseCollector&lt;<span class="lifetime">&#39;_</span>&gt; {
+<span class="kw">impl </span>Visitor&lt;<span class="lifetime">'_</span>&gt; <span class="kw">for </span>ReachableUseCollector&lt;<span class="lifetime">'_</span>&gt; {
     <span class="comment">// FIXME(eddyb) build some automation to avoid ever repeating these.
     </span><span class="kw">fn </span>visit_attr_set_use(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _attrs: AttrSet) {}
     <span class="kw">fn </span>visit_type_use(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty: Type) {
@@ -892,11 +892,11 @@
     <span class="kw">use </span>spirt::{func_at::<span class="kw-2">*</span>, visit::<span class="kw-2">*</span>, <span class="kw-2">*</span>};
 
     <span class="kw">impl</span>&lt;
-        <span class="lifetime">&#39;a</span>,
+        <span class="lifetime">'a</span>,
         S,
-        VCR: FnMut(<span class="kw-2">&amp;mut </span>S, FuncAt&lt;<span class="lifetime">&#39;a</span>, ControlRegion&gt;),
-        VCN: FnMut(<span class="kw-2">&amp;mut </span>S, FuncAt&lt;<span class="lifetime">&#39;a</span>, ControlNode&gt;),
-    &gt; Visitor&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>VisitAllControlRegionsAndNodes&lt;S, VCR, VCN&gt;
+        VCR: FnMut(<span class="kw-2">&amp;mut </span>S, FuncAt&lt;<span class="lifetime">'a</span>, ControlRegion&gt;),
+        VCN: FnMut(<span class="kw-2">&amp;mut </span>S, FuncAt&lt;<span class="lifetime">'a</span>, ControlNode&gt;),
+    &gt; Visitor&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>VisitAllControlRegionsAndNodes&lt;S, VCR, VCN&gt;
     {
         <span class="comment">// FIXME(eddyb) this is excessive, maybe different kinds of
         // visitors should exist for module-level and func-level?
@@ -907,16 +907,16 @@
         <span class="kw">fn </span>visit_global_var_use(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: GlobalVar) {}
         <span class="kw">fn </span>visit_func_use(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: Func) {}
 
-        <span class="kw">fn </span>visit_control_region_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_region: FuncAt&lt;<span class="lifetime">&#39;a</span>, ControlRegion&gt;) {
+        <span class="kw">fn </span>visit_control_region_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_region: FuncAt&lt;<span class="lifetime">'a</span>, ControlRegion&gt;) {
             (<span class="self">self</span>.visit_control_region)(<span class="kw-2">&amp;mut </span><span class="self">self</span>.state, func_at_control_region);
             func_at_control_region.inner_visit_with(<span class="self">self</span>);
         }
-        <span class="kw">fn </span>visit_control_node_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_node: FuncAt&lt;<span class="lifetime">&#39;a</span>, ControlNode&gt;) {
+        <span class="kw">fn </span>visit_control_node_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_node: FuncAt&lt;<span class="lifetime">'a</span>, ControlNode&gt;) {
             (<span class="self">self</span>.visit_control_node)(<span class="kw-2">&amp;mut </span><span class="self">self</span>.state, func_at_control_node);
             <span class="comment">// HACK(eddyb) accidentally private `inner_visit_with` method.
-            </span><span class="kw">fn </span>control_node_inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(
-                self_: FuncAt&lt;<span class="lifetime">&#39;a</span>, ControlNode&gt;,
-                visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;,
+            </span><span class="kw">fn </span>control_node_inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(
+                self_: FuncAt&lt;<span class="lifetime">'a</span>, ControlNode&gt;,
+                visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;,
             ) {
                 <span class="kw">let </span>ControlNodeDef { kind, outputs } = self_.def();
 
@@ -1022,7 +1022,7 @@
     <span class="kw">struct </span>Propagator {
         func_body_region: ControlRegion,
 
-        <span class="comment">// FIXME(eddyb) maybe this kind of &quot;parent map&quot; should be provided by SPIR-T?
+        <span class="comment">// FIXME(eddyb) maybe this kind of "parent map" should be provided by SPIR-T?
         </span>loop_body_to_loop: EntityOrientedDenseMap&lt;ControlRegion, ControlNode&gt;,
 
         <span class="comment">// FIXME(eddyb) entity-keyed dense sets might be better for performance,
@@ -1049,7 +1049,7 @@
                 <span class="self">self</span>.queue.push_back(v);
             }
         }
-        <span class="kw">fn </span>propagate_used(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: FuncAt&lt;<span class="lifetime">&#39;_</span>, ()&gt;) {
+        <span class="kw">fn </span>propagate_used(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: FuncAt&lt;<span class="lifetime">'_</span>, ()&gt;) {
             <span class="kw">while let </span><span class="prelude-val">Some</span>(v) = <span class="self">self</span>.queue.pop_front() {
                 <span class="kw">match </span>v {
                     Value::Const(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
@@ -1057,7 +1057,7 @@
                         <span class="kw">let </span>loop_node = <span class="self">self</span>.loop_body_to_loop[region];
                         <span class="kw">let </span>initial_inputs = <span class="kw">match </span><span class="kw-2">&amp;</span>func.at(loop_node).def().kind {
                             ControlNodeKind::Loop { initial_inputs, .. } =&gt; initial_inputs,
-                            <span class="comment">// NOTE(eddyb) only `Loop`s&#39; bodies can have inputs right now.
+                            <span class="comment">// NOTE(eddyb) only `Loop`s' bodies can have inputs right now.
                             </span><span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                         };
                         <span class="self">self</span>.mark_used(initial_inputs[input_idx <span class="kw">as </span>usize]);
@@ -1086,7 +1086,7 @@
         }
     }
 
-    <span class="comment">// HACK(eddyb) it&#39;s simpler to first ensure `loop_body_to_loop` is computed,
+    <span class="comment">// HACK(eddyb) it's simpler to first ensure `loop_body_to_loop` is computed,
     // just to allow the later unordered propagation to always work.
     </span><span class="kw">let </span>propagator = {
         <span class="kw">let </span><span class="kw-2">mut </span>visitor = VisitAllControlRegionsAndNodes {
@@ -1098,7 +1098,7 @@
             },
             visit_control_region: |<span class="kw">_</span>: <span class="kw-2">&amp;mut </span><span class="kw">_</span>, <span class="kw">_</span>| {},
             visit_control_node:
-                |propagator: <span class="kw-2">&amp;mut </span>Propagator, func_at_control_node: FuncAt&lt;<span class="lifetime">&#39;_</span>, ControlNode&gt;| {
+                |propagator: <span class="kw-2">&amp;mut </span>Propagator, func_at_control_node: FuncAt&lt;<span class="lifetime">'_</span>, ControlNode&gt;| {
                     <span class="kw">if let </span>ControlNodeKind::Loop { body, .. } = func_at_control_node.def().kind {
                         propagator
                             .loop_body_to_loop
@@ -1118,7 +1118,7 @@
             state: propagator,
             visit_control_region: |<span class="kw">_</span>: <span class="kw-2">&amp;mut </span><span class="kw">_</span>, <span class="kw">_</span>| {},
             visit_control_node:
-                |propagator: <span class="kw-2">&amp;mut </span>Propagator, func_at_control_node: FuncAt&lt;<span class="lifetime">&#39;_</span>, ControlNode&gt;| {
+                |propagator: <span class="kw-2">&amp;mut </span>Propagator, func_at_control_node: FuncAt&lt;<span class="lifetime">'_</span>, ControlNode&gt;| {
                     all_control_nodes.push(func_at_control_node.position);
 
                     <span class="kw">let </span><span class="kw-2">mut </span>mark_used_and_propagate = |v| {
@@ -1128,7 +1128,7 @@
                     <span class="kw">match </span>func_at_control_node.def().kind {
                         ControlNodeKind::Block { insts } =&gt; {
                             <span class="kw">for </span>func_at_inst <span class="kw">in </span>func_at_control_node.at(insts) {
-                                <span class="comment">// Ignore pure instructions (i.e. they&#39;re only used
+                                <span class="comment">// Ignore pure instructions (i.e. they're only used
                                 // if their output value is used, from somewhere else).
                                 </span><span class="kw">if let </span>DataInstKind::SpvInst(spv_inst) =
                                     <span class="kw-2">&amp;</span>cx[func_at_inst.def().form].kind
@@ -1169,7 +1169,7 @@
     // but would require separate maps for separate `Value` cases.
     </span><span class="kw">let </span><span class="kw-2">mut </span>value_replacements = FxHashMap::default();
 
-    <span class="comment">// Remove anything that didn&#39;t end up marked as used (directly or indirectly).
+    <span class="comment">// Remove anything that didn't end up marked as used (directly or indirectly).
     </span><span class="kw">for </span>control_node <span class="kw">in </span>all_control_nodes {
         <span class="kw">let </span>control_node_def = func_def_body.at(control_node).def();
         <span class="kw">match </span><span class="kw-2">&amp;</span>control_node_def.kind {
@@ -1188,7 +1188,7 @@
                         .contains(<span class="kw-2">&amp;</span>HashableValue(Value::DataInstOutput(func_at_inst.position)))
                     {
                         <span class="comment">// Replace the removed `DataInstDef` itself with `OpNop`,
-                        // removing the ability to use its &quot;name&quot; as a value.
+                        // removing the ability to use its "name" as a value.
                         //
                         // FIXME(eddyb) cache the interned `OpNop`.
                         </span><span class="kw-2">*</span>func_at_inst.def() = DataInstDef {
@@ -1203,7 +1203,7 @@
                     }
                     all_nops = <span class="bool-val">false</span>;
                 }
-                <span class="comment">// HACK(eddyb) because we can&#39;t remove list elements yet, we
+                <span class="comment">// HACK(eddyb) because we can't remove list elements yet, we
                 // instead replace blocks of `OpNop`s with empty ones.
                 </span><span class="kw">if </span>all_nops {
                     func_def_body.at_mut(control_node).def().kind = ControlNodeKind::Block {
@@ -1236,7 +1236,7 @@
                         <span class="kw">continue</span>;
                     }
 
-                    <span class="comment">// Record remappings for any still-used outputs that got &quot;shifted over&quot;.
+                    <span class="comment">// Record remappings for any still-used outputs that got "shifted over".
                     </span><span class="kw">if </span>original_idx != new_idx {
                         <span class="kw">let </span>new_output = Value::ControlNodeOutput {
                             control_node,
@@ -1275,7 +1275,7 @@
                         <span class="kw">continue</span>;
                     }
 
-                    <span class="comment">// Record remappings for any still-used inputs that got &quot;shifted over&quot;.
+                    <span class="comment">// Record remappings for any still-used inputs that got "shifted over".
                     </span><span class="kw">if </span>original_idx != new_idx {
                         <span class="kw">let </span>new_input = Value::ControlRegionInput {
                             region: body,

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/inline.rs`."><title>inline.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/inline.rs`."><title>inline.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1099,8 +1099,8 @@
 </pre></div><pre class="rust"><code><span class="doccomment">//! This algorithm is not intended to be an optimization, it is rather for legalization.
 //! Specifically, spir-v disallows things like a `StorageClass::Function` pointer to a
 //! `StorageClass::Input` pointer. Our frontend definitely allows it, though, this is like taking a
-//! `&amp;Input&lt;T&gt;` in a function! So, we inline all functions that take these &quot;illegal&quot; pointers, then
-//! run mem2reg (see mem2reg.rs) on the result to &quot;unwrap&quot; the Function pointer.
+//! `&amp;Input&lt;T&gt;` in a function! So, we inline all functions that take these "illegal" pointers, then
+//! run mem2reg (see mem2reg.rs) on the result to "unwrap" the Function pointer.
 
 </span><span class="kw">use </span><span class="kw">super</span>::apply_rewrite_rules;
 <span class="kw">use </span><span class="kw">super</span>::ipo::CallGraph;
@@ -1113,7 +1113,6 @@
 <span class="kw">use </span>rustc_errors::ErrorGuaranteed;
 <span class="kw">use </span>rustc_session::Session;
 <span class="kw">use </span>smallvec::SmallVec;
-<span class="kw">use </span>std::convert::TryInto;
 <span class="kw">use </span>std::mem::{<span class="self">self</span>, take};
 
 <span class="kw">type </span>FunctionMap = FxHashMap&lt;Word, Function&gt;;
@@ -1126,7 +1125,7 @@
 }
 
 <span class="kw">pub fn </span>inline(sess: <span class="kw-2">&amp;</span>Session, module: <span class="kw-2">&amp;mut </span>Module) -&gt; <span class="kw">super</span>::Result&lt;()&gt; {
-    <span class="comment">// This algorithm gets real sad if there&#39;s recursion - but, good news, SPIR-V bans recursion
+    <span class="comment">// This algorithm gets real sad if there's recursion - but, good news, SPIR-V bans recursion
     </span>deny_recursion_in_module(sess, module)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>custom_ext_inst_set_import = module
@@ -1139,7 +1138,7 @@
         .map(|inst| inst.result_id.unwrap());
 
     <span class="comment">// HACK(eddyb) compute the set of functions that may `Abort` *transitively*,
-    // which is only needed because of how we inline (sometimes it&#39;s outside-in,
+    // which is only needed because of how we inline (sometimes it's outside-in,
     // aka top-down, instead of always being inside-out, aka bottom-up).
     //
     // (inlining is needed in the first place because our custom `Abort`
@@ -1194,7 +1193,7 @@
         .collect();
     <span class="kw">let </span>legal_globals = LegalGlobal::gather_from_module(module);
 
-    <span class="comment">// Drop all the functions we&#39;ll be inlining. (This also means we won&#39;t waste time processing
+    <span class="comment">// Drop all the functions we'll be inlining. (This also means we won't waste time processing
     // inlines in functions that will get inlined)
     </span><span class="kw">let </span><span class="kw-2">mut </span>dropped_ids = FxHashSet::default();
     <span class="kw">let </span><span class="kw-2">mut </span>inlined_to_legalize_dont_inlines = Vec::new();
@@ -1215,9 +1214,9 @@
     <span class="kw">if </span>!inlined_to_legalize_dont_inlines.is_empty() {
         <span class="kw">let </span>names = get_names(module);
         <span class="kw">for </span>f <span class="kw">in </span>inlined_to_legalize_dont_inlines {
-            sess.warn(<span class="macro">format!</span>(
-                <span class="string">&quot;`#[inline(never)]` function `{}` needs to be inlined \
-                 because it has illegal argument or return types&quot;</span>,
+            sess.dcx().warn(<span class="macro">format!</span>(
+                <span class="string">"`#[inline(never)]` function `{}` needs to be inlined \
+                 because it has illegal argument or return types"</span>,
                 get_name(<span class="kw-2">&amp;</span>names, f)
             ));
         }
@@ -1333,8 +1332,8 @@
                 <span class="kw">let </span>names = get_names(module);
                 <span class="kw">let </span>current_name = get_name(<span class="kw-2">&amp;</span>names, module.functions[current].def_id().unwrap());
                 <span class="kw">let </span>next_name = get_name(<span class="kw-2">&amp;</span>names, module.functions[next].def_id().unwrap());
-                <span class="kw-2">*</span>has_recursion = <span class="prelude-val">Some</span>(sess.err(<span class="macro">format!</span>(
-                    <span class="string">&quot;module has recursion, which is not allowed: `{current_name}` calls `{next_name}`&quot;
+                <span class="kw-2">*</span>has_recursion = <span class="prelude-val">Some</span>(sess.dcx().err(<span class="macro">format!</span>(
+                    <span class="string">"module has recursion, which is not allowed: `{current_name}` calls `{next_name}`"
                 </span>)));
                 <span class="kw">break</span>;
             }
@@ -1356,10 +1355,10 @@
         finished[current] = <span class="bool-val">true</span>;
     }
 
-    <span class="kw">fn </span>calls&lt;<span class="lifetime">&#39;a</span>&gt;(
-        func: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Function,
-        func_to_index: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FxHashMap&lt;Word, usize&gt;,
-    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = usize&gt; + <span class="lifetime">&#39;a </span>{
+    <span class="kw">fn </span>calls&lt;<span class="lifetime">'a</span>&gt;(
+        func: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Function,
+        func_to_index: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>FxHashMap&lt;Word, usize&gt;,
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = usize&gt; + <span class="lifetime">'a </span>{
         func.all_inst_iter()
             .filter(|inst| inst.class.opcode == Op::FunctionCall)
             .map(<span class="kw">move </span>|inst| {
@@ -1375,7 +1374,7 @@
     }
 }
 
-<span class="doccomment">/// Any type/const/global variable, which is &quot;legal&quot; (i.e. can be kept in SPIR-V).
+<span class="doccomment">/// Any type/const/global variable, which is "legal" (i.e. can be kept in SPIR-V).
 ///
 /// For the purposes of the inliner, a legal global cannot:
 /// - refer to any illegal globals
@@ -1457,9 +1456,9 @@
 
 <span class="doccomment">/// Helper type which encapsulates all the information about one specific call.
 </span><span class="attr">#[derive(Copy, Clone)]
-</span><span class="kw">struct </span>CallSite&lt;<span class="lifetime">&#39;a</span>&gt; {
-    caller: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Function,
-    call_inst: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Instruction,
+</span><span class="kw">struct </span>CallSite&lt;<span class="lifetime">'a</span>&gt; {
+    caller: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Function,
+    call_inst: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Instruction,
 }
 
 <span class="kw">fn </span>has_dont_inline(function: <span class="kw-2">&amp;</span>Function) -&gt; bool {
@@ -1481,13 +1480,13 @@
     legal_globals: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, LegalGlobal&gt;,
     functions_that_may_abort: <span class="kw-2">&amp;</span>FxHashSet&lt;Word&gt;,
     callee: <span class="kw-2">&amp;</span>Function,
-    call_site: <span class="prelude-ty">Option</span>&lt;CallSite&lt;<span class="lifetime">&#39;_</span>&gt;&gt;,
+    call_site: <span class="prelude-ty">Option</span>&lt;CallSite&lt;<span class="lifetime">'_</span>&gt;&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, MustInlineToLegalize&gt; {
     <span class="kw">let </span>callee_def = callee.def.as_ref().unwrap();
     <span class="kw">let </span>callee_control = callee_def.operands[<span class="number">0</span>].unwrap_function_control();
 
-    <span class="comment">// HACK(eddyb) this &quot;has a call-site&quot; check ensures entry-points don&#39;t get
-    // accidentally removed as &quot;must inline to legalize&quot; function, but can still
+    <span class="comment">// HACK(eddyb) this "has a call-site" check ensures entry-points don't get
+    // accidentally removed as "must inline to legalize" function, but can still
     // be inlined into other entry-points (if such an unusual situation arises).
     </span><span class="kw">if </span>call_site.is_some() &amp;&amp; functions_that_may_abort.contains(<span class="kw-2">&amp;</span>callee.def_id().unwrap()) {
         <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize);
@@ -1508,8 +1507,8 @@
             <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize);
         }
 
-        <span class="comment">// If the call isn&#39;t passing a legal pointer argument (a &quot;memory object&quot;,
-        // i.e. an `OpVariable` or one of the caller&#39;s `OpFunctionParameters),
+        <span class="comment">// If the call isn't passing a legal pointer argument (a "memory object",
+        // i.e. an `OpVariable` or one of the caller's `OpFunctionParameters),
         // then inlining is required to have a chance at producing legal SPIR-V.
         //
         // FIXME(eddyb) rewriting away the pointer could be another alternative.
@@ -1561,44 +1560,44 @@
 // Renumber IDs
 // Insert blocks
 
-</span><span class="kw">struct </span>Inliner&lt;<span class="lifetime">&#39;m</span>, <span class="lifetime">&#39;map</span>&gt; {
-    <span class="doccomment">/// ID of `OpExtInstImport` for our custom &quot;extended instruction set&quot;
+</span><span class="kw">struct </span>Inliner&lt;<span class="lifetime">'m</span>, <span class="lifetime">'map</span>&gt; {
+    <span class="doccomment">/// ID of `OpExtInstImport` for our custom "extended instruction set"
     /// (see `crate::custom_insts` for more details).
     </span>custom_ext_inst_set_import: Word,
 
     op_type_void_id: Word,
 
-    <span class="doccomment">/// Pre-collected `OpName`s, that can be used to find any function&#39;s name
+    <span class="doccomment">/// Pre-collected `OpName`s, that can be used to find any function's name
     /// during inlining (to be able to generate debuginfo that uses names).
-    </span>id_to_name: FxHashMap&lt;Word, <span class="kw-2">&amp;</span><span class="lifetime">&#39;m </span>str&gt;,
+    </span>id_to_name: FxHashMap&lt;Word, <span class="kw-2">&amp;</span><span class="lifetime">'m </span>str&gt;,
 
     <span class="doccomment">/// `OpString` cache (for deduplicating `OpString`s for the same string).
     </span><span class="comment">//
-    // FIXME(eddyb) currently this doesn&#39;t reuse existing `OpString`s, but since
-    // this is mostly for inlined callee names, it&#39;s expected almost no overlap
+    // FIXME(eddyb) currently this doesn't reuse existing `OpString`s, but since
+    // this is mostly for inlined callee names, it's expected almost no overlap
     // exists between existing `OpString`s and new ones, anyway.
-    </span>cached_op_strings: FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;m </span>str, Word&gt;,
+    </span>cached_op_strings: FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'m </span>str, Word&gt;,
 
-    header: <span class="kw-2">&amp;</span><span class="lifetime">&#39;m </span><span class="kw-2">mut </span>ModuleHeader,
-    debug_string_source: <span class="kw-2">&amp;</span><span class="lifetime">&#39;m </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
-    annotations: <span class="kw-2">&amp;</span><span class="lifetime">&#39;m </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
-    types_global_values: <span class="kw-2">&amp;</span><span class="lifetime">&#39;m </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
+    header: <span class="kw-2">&amp;</span><span class="lifetime">'m </span><span class="kw-2">mut </span>ModuleHeader,
+    debug_string_source: <span class="kw-2">&amp;</span><span class="lifetime">'m </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
+    annotations: <span class="kw-2">&amp;</span><span class="lifetime">'m </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
+    types_global_values: <span class="kw-2">&amp;</span><span class="lifetime">'m </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
 
-    functions: <span class="kw-2">&amp;</span><span class="lifetime">&#39;map </span>FunctionMap,
-    legal_globals: <span class="kw-2">&amp;</span><span class="lifetime">&#39;map </span>FxHashMap&lt;Word, LegalGlobal&gt;,
-    functions_that_may_abort: <span class="kw-2">&amp;</span><span class="lifetime">&#39;map </span>FxHashSet&lt;Word&gt;,
+    functions: <span class="kw-2">&amp;</span><span class="lifetime">'map </span>FunctionMap,
+    legal_globals: <span class="kw-2">&amp;</span><span class="lifetime">'map </span>FxHashMap&lt;Word, LegalGlobal&gt;,
+    functions_that_may_abort: <span class="kw-2">&amp;</span><span class="lifetime">'map </span>FxHashSet&lt;Word&gt;,
     <span class="comment">// rewrite_rules: FxHashMap&lt;Word, Word&gt;,
 </span>}
 
-<span class="kw">impl </span>Inliner&lt;<span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span>&gt; {
+<span class="kw">impl </span>Inliner&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt; {
     <span class="kw">fn </span>id(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Word {
         next_id(<span class="self">self</span>.header)
     }
 
     <span class="doccomment">/// Applies all rewrite rules to the decorations in the header.
     </span><span class="kw">fn </span>apply_rewrite_for_decorations(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rewrite_rules: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, Word&gt;) {
-        <span class="comment">// NOTE(siebencorgie): We don&#39;t care *what* decoration we rewrite atm.
-        // AFAIK there is no case where keeping decorations on inline wouldn&#39;t be valid.
+        <span class="comment">// NOTE(siebencorgie): We don't care *what* decoration we rewrite atm.
+        // AFAIK there is no case where keeping decorations on inline wouldn't be valid.
         </span><span class="kw">for </span>annotation_idx <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.annotations.len() {
             <span class="kw">let </span>inst = <span class="kw-2">&amp;</span><span class="self">self</span>.annotations[annotation_idx];
             <span class="kw">if let </span>[Operand::IdRef(target), ..] = inst.operands[..] {
@@ -1723,9 +1722,10 @@
         </span>};
         <span class="kw">let </span>return_jump = <span class="self">self</span>.id();
         <span class="comment">// Rewrite OpReturns of the callee.
+        </span><span class="attr">#[allow(clippy::needless_borrow)]
         </span><span class="kw">let </span>(<span class="kw-2">mut </span>inlined_callee_blocks, extra_debug_insts_pre_call, extra_debug_insts_post_call) =
-            <span class="self">self</span>.get_inlined_blocks(callee, call_debug_insts, return_variable, return_jump);
-        <span class="comment">// Clone the IDs of the callee, because otherwise they&#39;d be defined multiple times if the
+            <span class="self">self</span>.get_inlined_blocks(<span class="kw-2">&amp;</span>callee, call_debug_insts, return_variable, return_jump);
+        <span class="comment">// Clone the IDs of the callee, because otherwise they'd be defined multiple times if the
         // fn is inlined multiple times.
         </span><span class="self">self</span>.add_clone_id_rules(<span class="kw-2">&amp;mut </span>rewrite_rules, <span class="kw-2">&amp;</span>inlined_callee_blocks);
         apply_rewrite_rules(<span class="kw-2">&amp;</span>rewrite_rules, <span class="kw-2">&amp;mut </span>inlined_callee_blocks);
@@ -1747,7 +1747,7 @@
         <span class="macro">assert!</span>(call.class.opcode == Op::FunctionCall);
 
         <span class="comment">// HACK(eddyb) inject the additional debuginfo instructions generated by
-        // `get_inlined_blocks`, so the inlined call frame &quot;stack&quot; isn&#39;t corrupted.
+        // `get_inlined_blocks`, so the inlined call frame "stack" isn't corrupted.
         </span>caller.blocks[pre_call_block_idx]
             .instructions
             .extend(extra_debug_insts_pre_call);
@@ -1776,7 +1776,7 @@
         );
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(call_result_type) = call_result_type {
-            <span class="comment">// Add the load of the result value after the inlined function. Note there&#39;s guaranteed no
+            <span class="comment">// Add the load of the result value after the inlined function. Note there's guaranteed no
             // OpPhi instructions since we just split this block.
             </span>post_call_block_insts.insert(
                 <span class="number">0</span>,
@@ -1808,7 +1808,7 @@
         }
 
         <span class="comment">// Fuse the inlined callee entry block into the pre-call block.
-        // This is okay because it&#39;s illegal to branch to the first BB in a function.
+        // This is okay because it's illegal to branch to the first BB in a function.
         </span>{
             <span class="comment">// Return the subsequence of `insts` made from `OpVariable`s, and any
             // debuginfo instructions (which may apply to them), while removing
@@ -1834,8 +1834,8 @@
                         vars_and_debuginfo.push(inst);
                         <span class="bool-val">true
                     </span>} <span class="kw">else if </span>inst.class.opcode == Op::Variable {
-                        <span class="comment">// HACK(eddyb) we&#39;re removing this `Instruction` from
-                        // `inst`, so it doesn&#39;t really matter what we use here.
+                        <span class="comment">// HACK(eddyb) we're removing this `Instruction` from
+                        // `inst`, so it doesn't really matter what we use here.
                         </span>vars_and_debuginfo.push(mem::replace(
                             inst,
                             Instruction::new(Op::Nop, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="macro">vec!</span>[]),
@@ -1888,10 +1888,10 @@
 
     <span class="comment">// HACK(eddyb) the second and third return values are additional debuginfo
     // instructions that need to be inserted just before/after the callsite.
-    </span><span class="kw">fn </span>get_inlined_blocks&lt;<span class="lifetime">&#39;a</span>&gt;(
+    </span><span class="kw">fn </span>get_inlined_blocks&lt;<span class="lifetime">'a</span>&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         callee: <span class="kw-2">&amp;</span>Function,
-        call_debug_insts: <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Instruction&gt;,
+        call_debug_insts: <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Instruction&gt;,
         return_variable: <span class="prelude-ty">Option</span>&lt;Word&gt;,
         return_jump: Word,
     ) -&gt; (
@@ -1907,7 +1907,7 @@
 
         <span class="comment">// HACK(eddyb) this is terrible, but we have to deal with it becasue of
         // how this inliner is outside-in, instead of inside-out, meaning that
-        // context builds up &quot;outside&quot; of the callee blocks, inside the caller.
+        // context builds up "outside" of the callee blocks, inside the caller.
         </span><span class="kw">let </span><span class="kw-2">mut </span>enclosing_inlined_frames = SmallVec::&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt;::new();
         <span class="kw">let </span><span class="kw-2">mut </span>current_debug_src_loc_inst = <span class="prelude-val">None</span>;
         <span class="kw">for </span>inst <span class="kw">in </span>call_debug_insts {
@@ -1942,13 +1942,13 @@
         // FIXME(eddyb) this could be more efficient if we only used one pair of
         // `{Push,Pop}InlinedCallFrame` for the whole inlined callee, but there
         // is no way to hint the SPIR-T CFG (re)structurizer that it should keep
-        // the entire callee in one region - a SPIR-T inliner wouldn&#39;t have this
+        // the entire callee in one region - a SPIR-T inliner wouldn't have this
         // issue, as it would require a fully structured callee.
         </span><span class="kw">let </span>callee_name = <span class="self">self
             </span>.id_to_name
             .get(<span class="kw-2">&amp;</span>callee.def_id().unwrap())
             .copied()
-            .unwrap_or(<span class="string">&quot;&quot;</span>);
+            .unwrap_or(<span class="string">""</span>);
         <span class="kw">let </span>callee_name_id = <span class="kw-2">*</span><span class="self">self
             </span>.cached_op_strings
             .entry(callee_name)
@@ -2019,7 +2019,7 @@
         <span class="kw">for </span>block <span class="kw">in </span><span class="kw-2">&amp;mut </span>blocks {
             <span class="kw">let </span><span class="kw-2">mut </span>terminator = block.instructions.pop().unwrap();
 
-            <span class="comment">// HACK(eddyb) strip trailing debuginfo (as it can&#39;t impact terminators).
+            <span class="comment">// HACK(eddyb) strip trailing debuginfo (as it can't impact terminators).
             </span><span class="kw">while let </span><span class="prelude-val">Some</span>(last) = block.instructions.last() {
                 <span class="kw">let </span>can_remove = <span class="kw">match </span>last.class.opcode {
                     Op::Line | Op::NoLine =&gt; <span class="bool-val">true</span>,
@@ -2068,12 +2068,12 @@
             </span><span class="kw">if </span>block.instructions.len() &gt; num_phis {
                 <span class="kw">let </span>(debuginfo_prefix, debuginfo_suffix) = mk_debuginfo_prefix_and_suffix(<span class="bool-val">true</span>);
                 <span class="comment">// Insert the prefix debuginfo instructions after `OpPhi`s,
-                // which sadly can&#39;t be covered by them.
+                // which sadly can't be covered by them.
                 </span>block
                     .instructions
                     .splice(num_phis..num_phis, debuginfo_prefix);
                 <span class="comment">// Insert the suffix debuginfo instructions before the terminator,
-                // which sadly can&#39;t be covered by them.
+                // which sadly can't be covered by them.
                 </span>block.instructions.extend(debuginfo_suffix);
             }
 
@@ -2101,8 +2101,8 @@
 
 <span class="kw">fn </span>fuse_trivial_branches(function: <span class="kw-2">&amp;mut </span>Function) {
     <span class="kw">let </span>all_preds = compute_preds(<span class="kw-2">&amp;</span>function.blocks);
-    <span class="lifetime">&#39;outer</span>: <span class="kw">for </span>(dest_block, <span class="kw-2">mut </span>preds) <span class="kw">in </span>all_preds.iter().enumerate() {
-        <span class="comment">// Don&#39;t fuse branches into blocks with `OpPhi`s.
+    <span class="lifetime">'outer</span>: <span class="kw">for </span>(dest_block, <span class="kw-2">mut </span>preds) <span class="kw">in </span>all_preds.iter().enumerate() {
+        <span class="comment">// Don't fuse branches into blocks with `OpPhi`s.
         </span><span class="kw">let </span>any_phis = function.blocks[dest_block]
             .instructions
             .iter()
@@ -2117,11 +2117,11 @@
             <span class="kw">continue</span>;
         }
 
-        <span class="comment">// if there&#39;s two trivial branches in a row, the middle one might get inlined before the
+        <span class="comment">// if there's two trivial branches in a row, the middle one might get inlined before the
         // last one, so when processing the last one, skip through to the first one.
         </span><span class="kw">let </span>pred = <span class="kw">loop </span>{
             <span class="kw">if </span>preds.len() != <span class="number">1 </span>|| preds[<span class="number">0</span>] == dest_block {
-                <span class="kw">continue </span><span class="lifetime">&#39;outer</span>;
+                <span class="kw">continue </span><span class="lifetime">'outer</span>;
             }
             <span class="kw">let </span>pred = preds[<span class="number">0</span>];
             <span class="kw">if </span>!function.blocks[pred].instructions.is_empty() {
@@ -2167,7 +2167,7 @@
 </span><span class="kw">fn </span>rewrite_phi_sources(original_label_id: Word, blocks: <span class="kw-2">&amp;mut </span>[Block], new_block_idx: usize) {
     <span class="kw">let </span>new_label_id = blocks[new_block_idx].label_id().unwrap();
 
-    <span class="comment">// HACK(eddyb) can&#39;t keep `blocks` borrowed, the loop needs mutable access.
+    <span class="comment">// HACK(eddyb) can't keep `blocks` borrowed, the loop needs mutable access.
     </span><span class="kw">let </span>target_ids: SmallVec&lt;[<span class="kw">_</span>; <span class="number">4</span>]&gt; = outgoing_edges(<span class="kw-2">&amp;</span>blocks[new_block_idx]).collect();
 
     <span class="kw">for </span>target_id <span class="kw">in </span>target_ids {

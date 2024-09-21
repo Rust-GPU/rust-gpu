@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/nfa/thompson/builder.rs`."><title>builder.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../regex_automata/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/nfa/thompson/builder.rs`."><title>builder.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1436,15 +1436,15 @@
     /// states in `alternates`, where matches found via later transitions are
     /// preferred over earlier transitions.
     ///
-    /// This &quot;reverse&quot; state exists for convenience during compilation that
+    /// This "reverse" state exists for convenience during compilation that
     /// permits easy construction of non-greedy combinations of NFA states. At
     /// the end of compilation, Union and UnionReverse states are merged into
     /// one Union type of state, where the latter has its epsilon transitions
     /// reversed to reflect the priority inversion.
     ///
-    /// The &quot;convenience&quot; here arises from the fact that as new states are
+    /// The "convenience" here arises from the fact that as new states are
     /// added to the list of `alternates`, we would like that add operation
-    /// to be amortized constant time. But if we used a `Union`, we&#39;d need to
+    /// to be amortized constant time. But if we used a `Union`, we'd need to
     /// prepend the state, which takes O(n) time. There are other approaches we
     /// could use to solve this, but this seems simple enough.
     </span>UnionReverse { alternates: Vec&lt;StateID&gt; },
@@ -1460,7 +1460,7 @@
     /// omitted.
     ///
     /// `pattern_id` refers to the ID of the pattern itself, which corresponds
-    /// to the pattern&#39;s index (starting at 0).
+    /// to the pattern's index (starting at 0).
     </span>Match { pattern_id: PatternID },
 }
 
@@ -1508,20 +1508,20 @@
 <span class="doccomment">/// An abstraction for building Thompson NFAs by hand.
 ///
 /// A builder is what a [`thompson::Compiler`](crate::nfa::thompson::Compiler)
-/// uses internally to translate a regex&#39;s high-level intermediate
+/// uses internally to translate a regex's high-level intermediate
 /// representation into an [`NFA`].
 ///
 /// The primary function of this builder is to abstract away the internal
 /// representation of an NFA and make it difficult to produce NFAs are that
 /// internally invalid or inconsistent. This builder also provides a way to
-/// add &quot;empty&quot; states (which can be thought of as unconditional epsilon
+/// add "empty" states (which can be thought of as unconditional epsilon
 /// transitions), despite the fact that [`thompson::State`](nfa::State) does
-/// not have any &quot;empty&quot; representation. The advantage of &quot;empty&quot; states is
+/// not have any "empty" representation. The advantage of "empty" states is
 /// that they make the code for constructing a Thompson NFA logically simpler.
 ///
 /// Many of the routines on this builder may panic or return errors. Generally
 /// speaking, panics occur when an invalid sequence of method calls were made,
-/// where as an error occurs if things get too big. (Where &quot;too big&quot; might mean
+/// where as an error occurs if things get too big. (Where "too big" might mean
 /// exhausting identifier space or using up too much heap memory in accordance
 /// with the configured [`size_limit`](Builder::set_size_limit).)
 ///
@@ -1579,7 +1579,7 @@
 ///
 /// The [`Builder::patch`] method creates a transition from one state to the
 /// next. If the `from` state corresponds to a state that supports multiple
-/// outgoing transitions (such as &quot;union&quot;), then this adds the corresponding
+/// outgoing transitions (such as "union"), then this adds the corresponding
 /// transition. Otherwise, it sets the single transition. (This routine panics
 /// if `from` corresponds to a state added by `add_sparse`, since sparse states
 /// need more specialized handling.)
@@ -1601,17 +1601,17 @@
 /// // that we are starting the pattern.
 /// builder.start_pattern()?;
 /// // Since we use the Pike VM below for searching, we need to add capturing
-/// // states. If you&#39;re just going to build a DFA from the NFA, then capturing
+/// // states. If you're just going to build a DFA from the NFA, then capturing
 /// // states do not need to be added.
 /// let start = builder.add_capture_start(StateID::ZERO, 0, None)?;
 /// let range = builder.add_range(Transition {
-///     // We don&#39;t know the state ID of the &#39;next&#39; state yet, so we just fill
-///     // in a dummy &#39;ZERO&#39; value.
-///     start: b&#39;a&#39;, end: b&#39;z&#39;, next: StateID::ZERO,
+///     // We don't know the state ID of the 'next' state yet, so we just fill
+///     // in a dummy 'ZERO' value.
+///     start: b'a', end: b'z', next: StateID::ZERO,
 /// })?;
-/// // This state will point back to &#39;range&#39;, but also enable us to move ahead.
-/// // That is, this implements the &#39;+&#39; repetition operator. We add &#39;range&#39; and
-/// // then &#39;end&#39; below to this alternation.
+/// // This state will point back to 'range', but also enable us to move ahead.
+/// // That is, this implements the '+' repetition operator. We add 'range' and
+/// // then 'end' below to this alternation.
 /// let alt = builder.add_union(vec![])?;
 /// // The final state before the match state, which serves to capture the
 /// // end location of the match.
@@ -1621,8 +1621,8 @@
 /// // Now we fill in the transitions between states.
 /// builder.patch(start, range)?;
 /// builder.patch(range, alt)?;
-/// // If we added &#39;end&#39; before &#39;range&#39;, then we&#39;d implement non-greedy
-/// // matching, i.e., &#39;+?&#39;.
+/// // If we added 'end' before 'range', then we'd implement non-greedy
+/// // matching, i.e., '+?'.
 /// builder.patch(alt, range)?;
 /// builder.patch(alt, end)?;
 /// builder.patch(end, mat)?;
@@ -1630,7 +1630,7 @@
 /// // this particular pattern.
 /// builder.finish_pattern(start)?;
 /// // Finally, when we build the NFA, we provide the anchored and unanchored
-/// // starting state IDs. Since we didn&#39;t bother with an unanchored prefix
+/// // starting state IDs. Since we didn't bother with an unanchored prefix
 /// // here, we only support anchored searching. Thus, both starting states are
 /// // the same.
 /// let nfa = builder.build(start, start)?;
@@ -1641,14 +1641,14 @@
 /// let mut cache = re.create_cache();
 /// let mut caps = re.create_captures();
 /// let expected = Some(Match::must(0, 0..3));
-/// re.captures(&amp;mut cache, &quot;foo0&quot;, &amp;mut caps);
+/// re.captures(&amp;mut cache, "foo0", &amp;mut caps);
 /// assert_eq!(expected, caps.get_match());
 ///
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
 /// ```
 </span><span class="attr">#[derive(Clone, Debug, Default)]
 </span><span class="kw">pub struct </span>Builder {
-    <span class="doccomment">/// The ID of the pattern that we&#39;re currently building.
+    <span class="doccomment">/// The ID of the pattern that we're currently building.
     ///
     /// Callers are required to set (and unset) this by calling
     /// {start,finish}_pattern. Otherwise, most methods will panic.
@@ -1656,7 +1656,7 @@
     <span class="doccomment">/// A sequence of intermediate NFA states. Once a state is added to this
     /// sequence, it is assigned a state ID equivalent to its index. Once a
     /// state is added, it is still expected to be mutated, e.g., to set its
-    /// transition to a state that didn&#39;t exist at the time it was added.
+    /// transition to a state that didn't exist at the time it was added.
     </span>states: Vec&lt;State&gt;,
     <span class="doccomment">/// The starting states for each individual pattern. Starting at any
     /// of these states will result in only an anchored search for the
@@ -1674,9 +1674,9 @@
     /// The first capture group for each pattern is always unnamed and is thus
     /// always None.
     </span>captures: Vec&lt;Vec&lt;<span class="prelude-ty">Option</span>&lt;Arc&lt;str&gt;&gt;&gt;&gt;,
-    <span class="doccomment">/// The combined memory used by each of the &#39;State&#39;s in &#39;states&#39;. This
+    <span class="doccomment">/// The combined memory used by each of the 'State's in 'states'. This
     /// only includes heap usage by each state, and not the size of the state
-    /// itself. In other words, this tracks heap memory used that isn&#39;t
+    /// itself. In other words, this tracks heap memory used that isn't
     /// captured via `size_of::&lt;State&gt;() * states.len()`.
     </span>memory_states: usize,
     <span class="doccomment">/// Whether this NFA only matches UTF-8 and whether regex engines using
@@ -1742,17 +1742,17 @@
     /// before `build`, otherwise this panics.
     ///
     /// This may panic for other invalid uses of a builder. For example, if
-    /// a &quot;start capture&quot; state was added without a corresponding &quot;end capture&quot;
+    /// a "start capture" state was added without a corresponding "end capture"
     /// state.
     </span><span class="kw">pub fn </span>build(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         start_anchored: StateID,
         start_unanchored: StateID,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;NFA, BuildError&gt; {
-        <span class="macro">assert!</span>(<span class="self">self</span>.pattern_id.is_none(), <span class="string">&quot;must call &#39;finish_pattern&#39; first&quot;</span>);
+        <span class="macro">assert!</span>(<span class="self">self</span>.pattern_id.is_none(), <span class="string">"must call 'finish_pattern' first"</span>);
         <span class="macro">debug!</span>(
-            <span class="string">&quot;intermediate NFA compilation via builder is complete, \
-             intermediate NFA size: {} states, {} bytes on heap&quot;</span>,
+            <span class="string">"intermediate NFA compilation via builder is complete, \
+             intermediate NFA size: {} states, {} bytes on heap"</span>,
             <span class="self">self</span>.states.len(),
             <span class="self">self</span>.memory_usage(),
         );
@@ -1764,10 +1764,10 @@
         <span class="comment">// A set of compiler internal state IDs that correspond to states
         // that are exclusively epsilon transitions, i.e., goto instructions,
         // combined with the state that they point to. This is used to
-        // record said states while transforming the compiler&#39;s internal NFA
+        // record said states while transforming the compiler's internal NFA
         // representation to the external form.
         </span><span class="kw">let </span><span class="kw-2">mut </span>empties = <span class="macro">vec!</span>[];
-        <span class="comment">// A map used to re-map state IDs when translating this builder&#39;s
+        <span class="comment">// A map used to re-map state IDs when translating this builder's
         // internal NFA state representation to the final NFA representation.
         </span><span class="kw">let </span><span class="kw-2">mut </span>remap = <span class="macro">vec!</span>[];
         remap.resize(<span class="self">self</span>.states.len(), StateID::ZERO);
@@ -1782,8 +1782,8 @@
         </span><span class="kw">for </span>(sid, state) <span class="kw">in </span><span class="self">self</span>.states.iter().with_state_ids() {
             <span class="kw">match </span><span class="kw-2">*</span>state {
                 State::Empty { next } =&gt; {
-                    <span class="comment">// Since we&#39;re removing empty states, we need to handle
-                    // them later since we don&#39;t yet know which new state this
+                    <span class="comment">// Since we're removing empty states, we need to handle
+                    // them later since we don't yet know which new state this
                     // empty state will be mapped to.
                     </span>empties.push((sid, next));
                 }
@@ -1808,14 +1808,14 @@
                     remap[sid] = nfa.add(nfa::State::Look { look, next });
                 }
                 State::CaptureStart { pattern_id, group_index, next } =&gt; {
-                    <span class="comment">// We can&#39;t remove this empty state because of the side
+                    <span class="comment">// We can't remove this empty state because of the side
                     // effect of capturing an offset for this capture slot.
                     </span><span class="kw">let </span>slot = nfa
                         .group_info()
                         .slot(pattern_id, group_index.as_usize())
-                        .expect(<span class="string">&quot;invalid capture index&quot;</span>);
+                        .expect(<span class="string">"invalid capture index"</span>);
                     <span class="kw">let </span>slot =
-                        SmallIndex::new(slot).expect(<span class="string">&quot;a small enough slot&quot;</span>);
+                        SmallIndex::new(slot).expect(<span class="string">"a small enough slot"</span>);
                     remap[sid] = nfa.add(nfa::State::Capture {
                         next,
                         pattern_id,
@@ -1824,7 +1824,7 @@
                     });
                 }
                 State::CaptureEnd { pattern_id, group_index, next } =&gt; {
-                    <span class="comment">// We can&#39;t remove this empty state because of the side
+                    <span class="comment">// We can't remove this empty state because of the side
                     // effect of capturing an offset for this capture slot.
                     // Also, this always succeeds because we check that all
                     // slot indices are valid for all capture indices when they
@@ -1832,11 +1832,11 @@
                     </span><span class="kw">let </span>slot = nfa
                         .group_info()
                         .slot(pattern_id, group_index.as_usize())
-                        .expect(<span class="string">&quot;invalid capture index&quot;</span>)
+                        .expect(<span class="string">"invalid capture index"</span>)
                         .checked_add(<span class="number">1</span>)
                         .unwrap();
                     <span class="kw">let </span>slot =
-                        SmallIndex::new(slot).expect(<span class="string">&quot;a small enough slot&quot;</span>);
+                        SmallIndex::new(slot).expect(<span class="string">"a small enough slot"</span>);
                     remap[sid] = nfa.add(nfa::State::Capture {
                         next,
                         pattern_id,
@@ -1891,9 +1891,9 @@
         // follow each of them and remap the empty state IDs to their non-empty
         // state IDs.
         //
-        // We also keep track of which states we&#39;ve already mapped. This helps
+        // We also keep track of which states we've already mapped. This helps
         // avoid quadratic behavior in a long chain of empty states. For
-        // example, in &#39;a{0}{50000}&#39;.
+        // example, in 'a{0}{50000}'.
         </span><span class="kw">let </span><span class="kw-2">mut </span>remapped = <span class="macro">vec!</span>[<span class="bool-val">false</span>; <span class="self">self</span>.states.len()];
         <span class="kw">for </span><span class="kw-2">&amp;</span>(empty_id, empty_next) <span class="kw">in </span>empties.iter() {
             <span class="kw">if </span>remapped[empty_id] {
@@ -1911,12 +1911,12 @@
             remap[empty_id] = remap[new_next];
             remapped[empty_id] = <span class="bool-val">true</span>;
 
-            <span class="comment">// Now that we&#39;ve remapped the main &#39;empty_id&#39; above, we re-follow
+            <span class="comment">// Now that we've remapped the main 'empty_id' above, we re-follow
             // the chain from above and remap every empty state we found along
             // the way to our ultimate non-empty target. We are careful to set
-            // &#39;remapped&#39; to true for each such state. We thus will not need
+            // 'remapped' to true for each such state. We thus will not need
             // to re-compute this chain for any subsequent empty states in
-            // &#39;empties&#39; that are part of this chain.
+            // 'empties' that are part of this chain.
             </span><span class="kw">let </span><span class="kw-2">mut </span>next2 = empty_next;
             <span class="kw">while let </span><span class="prelude-val">Some</span>(next) = <span class="self">self</span>.states[next2].goto() {
                 remap[next2] = remap[new_next];
@@ -1928,9 +1928,9 @@
         </span>nfa.remap(<span class="kw-2">&amp;</span>remap);
         <span class="kw">let </span>final_nfa = nfa.into_nfa();
         <span class="macro">debug!</span>(
-            <span class="string">&quot;NFA compilation via builder complete, \
+            <span class="string">"NFA compilation via builder complete, \
              final NFA size: {} states, {} bytes on heap, \
-             has empty? {:?}, utf8? {:?}&quot;</span>,
+             has empty? {:?}, utf8? {:?}"</span>,
             final_nfa.states().len(),
             final_nfa.memory_usage(),
             final_nfa.has_empty(),
@@ -1957,13 +1957,13 @@
     /// If this is called while assembling another pattern (i.e., before
     /// `finish_pattern` is called), then this panics.
     </span><span class="kw">pub fn </span>start_pattern(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;PatternID, BuildError&gt; {
-        <span class="macro">assert!</span>(<span class="self">self</span>.pattern_id.is_none(), <span class="string">&quot;must call &#39;finish_pattern&#39; first&quot;</span>);
+        <span class="macro">assert!</span>(<span class="self">self</span>.pattern_id.is_none(), <span class="string">"must call 'finish_pattern' first"</span>);
 
         <span class="kw">let </span>proposed = <span class="self">self</span>.start_pattern.len();
         <span class="kw">let </span>pid = PatternID::new(proposed)
             .map_err(|<span class="kw">_</span>| BuildError::too_many_patterns(proposed))<span class="question-mark">?</span>;
         <span class="self">self</span>.pattern_id = <span class="prelude-val">Some</span>(pid);
-        <span class="comment">// This gets filled in when &#39;finish_pattern&#39; is called.
+        <span class="comment">// This gets filled in when 'finish_pattern' is called.
         </span><span class="self">self</span>.start_pattern.push(StateID::ZERO);
         <span class="prelude-val">Ok</span>(pid)
     }
@@ -2001,10 +2001,10 @@
     ///
     /// # Panics
     ///
-    /// If this doesn&#39;t occur after a `start_pattern` call and before the
+    /// If this doesn't occur after a `start_pattern` call and before the
     /// corresponding `finish_pattern` call, then this panics.
     </span><span class="kw">pub fn </span>current_pattern_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PatternID {
-        <span class="self">self</span>.pattern_id.expect(<span class="string">&quot;must call &#39;start_pattern&#39; first&quot;</span>)
+        <span class="self">self</span>.pattern_id.expect(<span class="string">"must call 'start_pattern' first"</span>)
     }
 
     <span class="doccomment">/// Returns the number of patterns added to this builder so far.
@@ -2015,11 +2015,11 @@
         <span class="self">self</span>.start_pattern.len()
     }
 
-    <span class="doccomment">/// Add an &quot;empty&quot; NFA state.
+    <span class="doccomment">/// Add an "empty" NFA state.
     ///
-    /// An &quot;empty&quot; NFA state is a state with a single unconditional epsilon
+    /// An "empty" NFA state is a state with a single unconditional epsilon
     /// transition to another NFA state. Such empty states are removed before
-    /// building the final [`NFA`] (which has no such &quot;empty&quot; states), but they
+    /// building the final [`NFA`] (which has no such "empty" states), but they
     /// can be quite useful in the construction process of an NFA.
     ///
     /// # Errors
@@ -2030,17 +2030,17 @@
         <span class="self">self</span>.add(State::Empty { next: StateID::ZERO })
     }
 
-    <span class="doccomment">/// Add a &quot;union&quot; NFA state.
+    <span class="doccomment">/// Add a "union" NFA state.
     ///
-    /// A &quot;union&quot; NFA state that contains zero or more unconditional epsilon
+    /// A "union" NFA state that contains zero or more unconditional epsilon
     /// transitions to other NFA states. The order of these transitions
     /// reflects a priority order where earlier transitions are preferred over
     /// later transitions.
     ///
     /// Callers may provide an empty set of alternates to this method call, and
-    /// then later add transitions via `patch`. At final build time, a &quot;union&quot;
-    /// state with no alternates is converted to a &quot;fail&quot; state, and a &quot;union&quot;
-    /// state with exactly one alternate is treated as if it were an &quot;empty&quot;
+    /// then later add transitions via `patch`. At final build time, a "union"
+    /// state with no alternates is converted to a "fail" state, and a "union"
+    /// state with exactly one alternate is treated as if it were an "empty"
     /// state.
     ///
     /// # Errors
@@ -2054,9 +2054,9 @@
         <span class="self">self</span>.add(State::Union { alternates })
     }
 
-    <span class="doccomment">/// Add a &quot;reverse union&quot; NFA state.
+    <span class="doccomment">/// Add a "reverse union" NFA state.
     ///
-    /// A &quot;reverse union&quot; NFA state contains zero or more unconditional epsilon
+    /// A "reverse union" NFA state contains zero or more unconditional epsilon
     /// transitions to other NFA states. The order of these transitions
     /// reflects a priority order where later transitions are preferred
     /// over earlier transitions. This is an inverted priority order when
@@ -2064,10 +2064,10 @@
     /// non-greedy repetition operators.
     ///
     /// Callers may provide an empty set of alternates to this method call, and
-    /// then later add transitions via `patch`. At final build time, a &quot;reverse
-    /// union&quot; state with no alternates is converted to a &quot;fail&quot; state, and a
-    /// &quot;reverse union&quot; state with exactly one alternate is treated as if it
-    /// were an &quot;empty&quot; state.
+    /// then later add transitions via `patch`. At final build time, a "reverse
+    /// union" state with no alternates is converted to a "fail" state, and a
+    /// "reverse union" state with exactly one alternate is treated as if it
+    /// were an "empty" state.
     ///
     /// # Errors
     ///
@@ -2080,9 +2080,9 @@
         <span class="self">self</span>.add(State::UnionReverse { alternates })
     }
 
-    <span class="doccomment">/// Add a &quot;range&quot; NFA state.
+    <span class="doccomment">/// Add a "range" NFA state.
     ///
-    /// A &quot;range&quot; NFA state is a state with one outgoing transition to another
+    /// A "range" NFA state is a state with one outgoing transition to another
     /// state, where that transition may only be followed if the current input
     /// byte falls between a range of bytes given.
     ///
@@ -2097,20 +2097,20 @@
         <span class="self">self</span>.add(State::ByteRange { trans })
     }
 
-    <span class="doccomment">/// Add a &quot;sparse&quot; NFA state.
+    <span class="doccomment">/// Add a "sparse" NFA state.
     ///
-    /// A &quot;sparse&quot; NFA state contains zero or more outgoing transitions, where
+    /// A "sparse" NFA state contains zero or more outgoing transitions, where
     /// the transition to be followed (if any) is chosen based on whether the
     /// current input byte falls in the range of one such transition. The
     /// transitions given *must* be non-overlapping and in ascending order. (A
-    /// &quot;sparse&quot; state with no transitions is equivalent to a &quot;fail&quot; state.)
+    /// "sparse" state with no transitions is equivalent to a "fail" state.)
     ///
-    /// A &quot;sparse&quot; state is like adding a &quot;union&quot; state and pointing it at a
-    /// bunch of &quot;range&quot; states, except that the different alternates have
+    /// A "sparse" state is like adding a "union" state and pointing it at a
+    /// bunch of "range" states, except that the different alternates have
     /// equal priority.
     ///
-    /// Note that a &quot;sparse&quot; state is the only state that cannot be patched.
-    /// This is because a &quot;sparse&quot; state has many transitions, each of which
+    /// Note that a "sparse" state is the only state that cannot be patched.
+    /// This is because a "sparse" state has many transitions, each of which
     /// may point to a different NFA state. Moreover, adding more such
     /// transitions requires more than just an NFA state ID to point to. It
     /// also requires a byte range. The `patch` routine does not support the
@@ -2134,13 +2134,13 @@
         <span class="self">self</span>.add(State::Sparse { transitions })
     }
 
-    <span class="doccomment">/// Add a &quot;look&quot; NFA state.
+    <span class="doccomment">/// Add a "look" NFA state.
     ///
-    /// A &quot;look&quot; NFA state corresponds to a state with exactly one
+    /// A "look" NFA state corresponds to a state with exactly one
     /// *conditional* epsilon transition to another NFA state. Namely, it
     /// represents one of a small set of simplistic look-around operators.
     ///
-    /// Callers may provide a &quot;dummy&quot; state ID (typically [`StateID::ZERO`]),
+    /// Callers may provide a "dummy" state ID (typically [`StateID::ZERO`]),
     /// and then change it later with [`patch`](Builder::patch).
     ///
     /// # Errors
@@ -2155,11 +2155,11 @@
         <span class="self">self</span>.add(State::Look { look, next })
     }
 
-    <span class="doccomment">/// Add a &quot;start capture&quot; NFA state.
+    <span class="doccomment">/// Add a "start capture" NFA state.
     ///
-    /// A &quot;start capture&quot; NFA state corresponds to a state with exactly one
+    /// A "start capture" NFA state corresponds to a state with exactly one
     /// outgoing unconditional epsilon transition to another state. Unlike
-    /// &quot;empty&quot; states, a &quot;start capture&quot; state also carries with it an
+    /// "empty" states, a "start capture" state also carries with it an
     /// instruction for saving the current position of input to a particular
     /// location in memory. NFA simulations, like the Pike VM, may use this
     /// information to report the match locations of capturing groups in a
@@ -2168,12 +2168,12 @@
     /// If the corresponding capturing group has a name, then callers should
     /// include it here.
     ///
-    /// Callers may provide a &quot;dummy&quot; state ID (typically [`StateID::ZERO`]),
+    /// Callers may provide a "dummy" state ID (typically [`StateID::ZERO`]),
     /// and then change it later with [`patch`](Builder::patch).
     ///
     /// Note that unlike `start_pattern`/`finish_pattern`, capturing start and
-    /// end states may be interleaved. Indeed, it is typical for many &quot;start
-    /// capture&quot; NFA states to appear before the first &quot;end capture&quot; state.
+    /// end states may be interleaved. Indeed, it is typical for many "start
+    /// capture" NFA states to appear before the first "end capture" state.
     ///
     /// # Errors
     ///
@@ -2201,16 +2201,16 @@
     ///     util::primitives::StateID,
     /// };
     ///
-    /// let name = Some(std::sync::Arc::from(&quot;foo&quot;));
+    /// let name = Some(std::sync::Arc::from("foo"));
     /// let mut builder = Builder::new();
     /// builder.start_pattern()?;
     /// // 0th capture group should always be unnamed.
     /// let start = builder.add_capture_start(StateID::ZERO, 0, None)?;
     /// // OK
     /// builder.add_capture_start(StateID::ZERO, 1, name.clone())?;
-    /// // This is not OK, but &#39;add_capture_start&#39; still succeeds. We don&#39;t
-    /// // get an error until we call &#39;build&#39; below. Without this call, the
-    /// // call to &#39;build&#39; below would succeed.
+    /// // This is not OK, but 'add_capture_start' still succeeds. We don't
+    /// // get an error until we call 'build' below. Without this call, the
+    /// // call to 'build' below would succeed.
     /// builder.add_capture_start(StateID::ZERO, 2, name.clone())?;
     /// // Finish our pattern so we can try to build the NFA.
     /// builder.finish_pattern(start)?;
@@ -2235,13 +2235,13 @@
     ///     Span,
     /// };
     ///
-    /// // Hand-compile the patterns &#39;(?P&lt;foo&gt;[a-z])&#39; and &#39;(?P&lt;foo&gt;[A-Z])&#39;.
+    /// // Hand-compile the patterns '(?P&lt;foo&gt;[a-z])' and '(?P&lt;foo&gt;[A-Z])'.
     /// let mut builder = Builder::new();
     /// // We compile them to support an unanchored search, which requires
-    /// // adding an implicit &#39;(?s-u:.)*?&#39; prefix before adding either pattern.
+    /// // adding an implicit '(?s-u:.)*?' prefix before adding either pattern.
     /// let unanchored_prefix = builder.add_union_reverse(vec![])?;
     /// let any = builder.add_range(Transition {
-    ///     start: b&#39;\x00&#39;, end: b&#39;\xFF&#39;, next: StateID::ZERO,
+    ///     start: b'\x00', end: b'\xFF', next: StateID::ZERO,
     /// })?;
     /// builder.patch(unanchored_prefix, any)?;
     /// builder.patch(any, unanchored_prefix)?;
@@ -2250,15 +2250,15 @@
     /// let alt = builder.add_union(vec![])?;
     /// builder.patch(unanchored_prefix, alt)?;
     ///
-    /// // Compile &#39;(?P&lt;foo&gt;[a-z]+)&#39;.
+    /// // Compile '(?P&lt;foo&gt;[a-z]+)'.
     /// builder.start_pattern()?;
     /// let start0 = builder.add_capture_start(StateID::ZERO, 0, None)?;
     /// // N.B. 0th capture group must always be unnamed.
     /// let foo_start0 = builder.add_capture_start(
-    ///     StateID::ZERO, 1, Some(Arc::from(&quot;foo&quot;)),
+    ///     StateID::ZERO, 1, Some(Arc::from("foo")),
     /// )?;
     /// let lowercase = builder.add_range(Transition {
-    ///     start: b&#39;a&#39;, end: b&#39;z&#39;, next: StateID::ZERO,
+    ///     start: b'a', end: b'z', next: StateID::ZERO,
     /// })?;
     /// let foo_end0 = builder.add_capture_end(StateID::ZERO, 1)?;
     /// let end0 = builder.add_capture_end(StateID::ZERO, 0)?;
@@ -2270,15 +2270,15 @@
     /// builder.patch(end0, match0)?;
     /// builder.finish_pattern(start0)?;
     ///
-    /// // Compile &#39;(?P&lt;foo&gt;[A-Z]+)&#39;.
+    /// // Compile '(?P&lt;foo&gt;[A-Z]+)'.
     /// builder.start_pattern()?;
     /// let start1 = builder.add_capture_start(StateID::ZERO, 0, None)?;
     /// // N.B. 0th capture group must always be unnamed.
     /// let foo_start1 = builder.add_capture_start(
-    ///     StateID::ZERO, 1, Some(Arc::from(&quot;foo&quot;)),
+    ///     StateID::ZERO, 1, Some(Arc::from("foo")),
     /// )?;
     /// let uppercase = builder.add_range(Transition {
-    ///     start: b&#39;A&#39;, end: b&#39;Z&#39;, next: StateID::ZERO,
+    ///     start: b'A', end: b'Z', next: StateID::ZERO,
     /// })?;
     /// let foo_end1 = builder.add_capture_end(StateID::ZERO, 1)?;
     /// let end1 = builder.add_capture_end(StateID::ZERO, 0)?;
@@ -2299,29 +2299,29 @@
     /// // unanchored starting state (the unanchored prefix).
     /// let nfa = builder.build(alt, unanchored_prefix)?;
     ///
-    /// // Now build a Pike VM from our NFA and access the &#39;foo&#39; capture
+    /// // Now build a Pike VM from our NFA and access the 'foo' capture
     /// // group regardless of which pattern matched, since it is defined
     /// // for both patterns.
     /// let vm = PikeVM::new_from_nfa(nfa)?;
     /// let mut cache = vm.create_cache();
     /// let caps: Vec&lt;Captures&gt; =
-    ///     vm.captures_iter(&amp;mut cache, &quot;0123aAaAA&quot;).collect();
+    ///     vm.captures_iter(&amp;mut cache, "0123aAaAA").collect();
     /// assert_eq!(5, caps.len());
     ///
     /// assert_eq!(Some(PatternID::must(0)), caps[0].pattern());
-    /// assert_eq!(Some(Span::from(4..5)), caps[0].get_group_by_name(&quot;foo&quot;));
+    /// assert_eq!(Some(Span::from(4..5)), caps[0].get_group_by_name("foo"));
     ///
     /// assert_eq!(Some(PatternID::must(1)), caps[1].pattern());
-    /// assert_eq!(Some(Span::from(5..6)), caps[1].get_group_by_name(&quot;foo&quot;));
+    /// assert_eq!(Some(Span::from(5..6)), caps[1].get_group_by_name("foo"));
     ///
     /// assert_eq!(Some(PatternID::must(0)), caps[2].pattern());
-    /// assert_eq!(Some(Span::from(6..7)), caps[2].get_group_by_name(&quot;foo&quot;));
+    /// assert_eq!(Some(Span::from(6..7)), caps[2].get_group_by_name("foo"));
     ///
     /// assert_eq!(Some(PatternID::must(1)), caps[3].pattern());
-    /// assert_eq!(Some(Span::from(7..8)), caps[3].get_group_by_name(&quot;foo&quot;));
+    /// assert_eq!(Some(Span::from(7..8)), caps[3].get_group_by_name("foo"));
     ///
     /// assert_eq!(Some(PatternID::must(1)), caps[4].pattern());
-    /// assert_eq!(Some(Span::from(8..9)), caps[4].get_group_by_name(&quot;foo&quot;));
+    /// assert_eq!(Some(Span::from(8..9)), caps[4].get_group_by_name("foo"));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -2344,16 +2344,16 @@
                 <span class="self">self</span>.captures.push(<span class="macro">vec!</span>[]);
             }
         }
-        <span class="comment">// In the case where &#39;group_index &lt; self.captures[pid].len()&#39;, it means
+        <span class="comment">// In the case where 'group_index &lt; self.captures[pid].len()', it means
         // that we are adding a duplicate capture group. This is somewhat
         // weird, but permissible because the capture group itself can be
-        // repeated in the syntax. For example, &#39;([a-z]){4}&#39; will produce 4
+        // repeated in the syntax. For example, '([a-z]){4}' will produce 4
         // capture groups. In practice, only the last will be set at search
-        // time when a match occurs. For duplicates, we don&#39;t need to push
+        // time when a match occurs. For duplicates, we don't need to push
         // anything other than a CaptureStart NFA state.
         </span><span class="kw">if </span>group_index.as_usize() &gt;= <span class="self">self</span>.captures[pid].len() {
             <span class="comment">// For discontiguous indices, push placeholders for earlier capture
-            // groups that weren&#39;t explicitly added.
+            // groups that weren't explicitly added.
             </span><span class="kw">for _ in </span><span class="number">0</span>..(group_index.as_usize() - <span class="self">self</span>.captures[pid].len()) {
                 <span class="self">self</span>.captures[pid].push(<span class="prelude-val">None</span>);
             }
@@ -2362,21 +2362,21 @@
         <span class="self">self</span>.add(State::CaptureStart { pattern_id: pid, group_index, next })
     }
 
-    <span class="doccomment">/// Add a &quot;end capture&quot; NFA state.
+    <span class="doccomment">/// Add a "end capture" NFA state.
     ///
-    /// A &quot;end capture&quot; NFA state corresponds to a state with exactly one
+    /// A "end capture" NFA state corresponds to a state with exactly one
     /// outgoing unconditional epsilon transition to another state. Unlike
-    /// &quot;empty&quot; states, a &quot;end capture&quot; state also carries with it an
+    /// "empty" states, a "end capture" state also carries with it an
     /// instruction for saving the current position of input to a particular
     /// location in memory. NFA simulations, like the Pike VM, may use this
     /// information to report the match locations of capturing groups in a
     ///
-    /// Callers may provide a &quot;dummy&quot; state ID (typically [`StateID::ZERO`]),
+    /// Callers may provide a "dummy" state ID (typically [`StateID::ZERO`]),
     /// and then change it later with [`patch`](Builder::patch).
     ///
     /// Note that unlike `start_pattern`/`finish_pattern`, capturing start and
-    /// end states may be interleaved. Indeed, it is typical for many &quot;start
-    /// capture&quot; NFA states to appear before the first &quot;end capture&quot; state.
+    /// end states may be interleaved. Indeed, it is typical for many "start
+    /// capture" NFA states to appear before the first "end capture" state.
     ///
     /// # Errors
     ///
@@ -2407,12 +2407,12 @@
         <span class="self">self</span>.add(State::CaptureEnd { pattern_id: pid, group_index, next })
     }
 
-    <span class="doccomment">/// Adds a &quot;fail&quot; NFA state.
+    <span class="doccomment">/// Adds a "fail" NFA state.
     ///
-    /// A &quot;fail&quot; state is simply a state that has no outgoing transitions. It
+    /// A "fail" state is simply a state that has no outgoing transitions. It
     /// acts as a way to cause a search to stop without reporting a match.
     /// For example, one way to represent an NFA with zero patterns is with a
-    /// single &quot;fail&quot; state.
+    /// single "fail" state.
     ///
     /// # Errors
     ///
@@ -2422,9 +2422,9 @@
         <span class="self">self</span>.add(State::Fail)
     }
 
-    <span class="doccomment">/// Adds a &quot;match&quot; NFA state.
+    <span class="doccomment">/// Adds a "match" NFA state.
     ///
-    /// A &quot;match&quot; state has no outgoing transitions (just like a &quot;fail&quot;
+    /// A "match" state has no outgoing transitions (just like a "fail"
     /// state), but it has special significance in that if a search enters
     /// this state, then a match has been found. The match state that is added
     /// automatically has the current pattern ID associated with it. This is
@@ -2445,7 +2445,7 @@
         <span class="prelude-val">Ok</span>(sid)
     }
 
-    <span class="doccomment">/// The common implementation of &quot;add a state.&quot; It handles the common
+    <span class="doccomment">/// The common implementation of "add a state." It handles the common
     /// error cases of state ID exhausting (by owning state ID allocation) and
     /// whether the size limit has been exceeded.
     </span><span class="kw">fn </span>add(<span class="kw-2">&amp;mut </span><span class="self">self</span>, state: State) -&gt; <span class="prelude-ty">Result</span>&lt;StateID, BuildError&gt; {
@@ -2459,9 +2459,9 @@
 
     <span class="doccomment">/// Add a transition from one state to another.
     ///
-    /// This routine is called &quot;patch&quot; since it is very common to add the
-    /// states you want, typically with &quot;dummy&quot; state ID transitions, and then
-    /// &quot;patch&quot; in the real state IDs later. This is because you don&#39;t always
+    /// This routine is called "patch" since it is very common to add the
+    /// states you want, typically with "dummy" state ID transitions, and then
+    /// "patch" in the real state IDs later. This is because you don't always
     /// know all of the necessary state IDs to add because they might not
     /// exist yet.
     ///
@@ -2469,11 +2469,11 @@
     ///
     /// This may error if patching leads to an increase in heap usage beyond
     /// the configured size limit. Heap usage only grows when patching adds a
-    /// new transition (as in the case of a &quot;union&quot; state).
+    /// new transition (as in the case of a "union" state).
     ///
     /// # Panics
     ///
-    /// This panics if `from` corresponds to a &quot;sparse&quot; state. When &quot;sparse&quot;
+    /// This panics if `from` corresponds to a "sparse" state. When "sparse"
     /// states are added, there is no way to patch them after-the-fact. (If you
     /// have a use case where this would be helpful, please file an issue. It
     /// will likely require a new API.)
@@ -2491,7 +2491,7 @@
                 trans.next = to;
             }
             State::Sparse { .. } =&gt; {
-                <span class="macro">panic!</span>(<span class="string">&quot;cannot patch from a sparse NFA state&quot;</span>)
+                <span class="macro">panic!</span>(<span class="string">"cannot patch from a sparse NFA state"</span>)
             }
             State::Look { <span class="kw-2">ref mut </span>next, .. } =&gt; {
                 <span class="kw-2">*</span>next = to;
@@ -2531,20 +2531,20 @@
     /// Property (1) is not checked. Instead, this requires the caller to
     /// promise that it is true. Property (2) corresponds to the behavior of
     /// regex engines using the NFA created by this builder. Namely, there
-    /// is no way in the NFA&#39;s graph itself to say that empty matches found
+    /// is no way in the NFA's graph itself to say that empty matches found
     /// by, for example, the regex `a*` will fall on valid UTF-8 boundaries.
     /// Instead, this option is used to communicate the UTF-8 semantic to regex
     /// engines that will typically implement it as a post-processing step by
-    /// filtering out empty matches that don&#39;t fall on UTF-8 boundaries.
+    /// filtering out empty matches that don't fall on UTF-8 boundaries.
     ///
-    /// If you&#39;re building an NFA from an HIR (and not using a
+    /// If you're building an NFA from an HIR (and not using a
     /// [`thompson::Compiler`](crate::nfa::thompson::Compiler)), then you can
     /// use the [`syntax::Config::utf8`](crate::util::syntax::Config::utf8)
     /// option to guarantee that if the HIR detects a non-empty match, then it
     /// is guaranteed to be valid UTF-8.
     ///
     /// Note that property (2) does *not* specify the behavior of executing
-    /// a search on a haystack that is not valid UTF-8. Therefore, if you&#39;re
+    /// a search on a haystack that is not valid UTF-8. Therefore, if you're
     /// *not* running this NFA on strings that are guaranteed to be valid
     /// UTF-8, you almost certainly do not want to enable this option.
     /// Similarly, if you are running the NFA on strings that *are* guaranteed
@@ -2559,7 +2559,7 @@
 
     <span class="doccomment">/// Returns whether UTF-8 mode is enabled for this builder.
     ///
-    /// See [`Builder::set_utf8`] for more details about what &quot;UTF-8 mode&quot; is.
+    /// See [`Builder::set_utf8`] for more details about what "UTF-8 mode" is.
     </span><span class="kw">pub fn </span>get_utf8(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.utf8
     }
@@ -2579,7 +2579,7 @@
 
     <span class="doccomment">/// Returns whether reverse mode is enabled for this builder.
     ///
-    /// See [`Builder::set_reverse`] for more details about what &quot;reverse mode&quot;
+    /// See [`Builder::set_reverse`] for more details about what "reverse mode"
     /// is.
     </span><span class="kw">pub fn </span>get_reverse(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.reverse
@@ -2606,7 +2606,7 @@
     <span class="doccomment">/// Set the size limit on this builder.
     ///
     /// Setting the size limit will also check whether the NFA built so far
-    /// fits within the given size limit. If it doesn&#39;t, then an error is
+    /// fits within the given size limit. If it doesn't, then an error is
     /// returned.
     ///
     /// By default, there is no configured size limit.
@@ -2651,12 +2651,12 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="comment">// This asserts that a builder state doesn&#39;t have its size changed. It is
+    <span class="comment">// This asserts that a builder state doesn't have its size changed. It is
     // *really* easy to accidentally increase the size, and thus potentially
     // dramatically increase the memory usage of NFA builder.
     //
-    // This assert doesn&#39;t mean we absolutely cannot increase the size of a
-    // builder state. We can. It&#39;s just here to make sure we do it knowingly
+    // This assert doesn't mean we absolutely cannot increase the size of a
+    // builder state. We can. It's just here to make sure we do it knowingly
     // and intentionally.
     //
     // A builder state is unfortunately a little bigger than an NFA state,
@@ -2666,9 +2666,9 @@
     // is built.
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>state_has_small_size() {
-        <span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+        <span class="attr">#[cfg(target_pointer_width = <span class="string">"64"</span>)]
         </span><span class="macro">assert_eq!</span>(<span class="number">32</span>, core::mem::size_of::&lt;State&gt;());
-        <span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+        <span class="attr">#[cfg(target_pointer_width = <span class="string">"32"</span>)]
         </span><span class="macro">assert_eq!</span>(<span class="number">16</span>, core::mem::size_of::&lt;State&gt;());
     }
 }

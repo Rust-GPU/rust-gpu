@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirt-0.3.0/src/spv/lower.rs`."><title>lower.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../spirt/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirt-0.3.0/src/spv/lower.rs`."><title>lower.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../spirt/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1575,17 +1575,17 @@
 <span class="kw">impl </span>IdDef {
     <span class="kw">fn </span>descr(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>Context) -&gt; String {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            <span class="comment">// FIXME(eddyb) print these with some kind of &quot;maximum depth&quot;,
+            <span class="comment">// FIXME(eddyb) print these with some kind of "maximum depth",
             // instead of just describing the kind of definition.
-            </span>IdDef::Type(<span class="kw">_</span>) =&gt; <span class="string">&quot;a type&quot;</span>.into(),
-            IdDef::Const(<span class="kw">_</span>) =&gt; <span class="string">&quot;a constant&quot;</span>.into(),
+            </span>IdDef::Type(<span class="kw">_</span>) =&gt; <span class="string">"a type"</span>.into(),
+            IdDef::Const(<span class="kw">_</span>) =&gt; <span class="string">"a constant"</span>.into(),
 
-            IdDef::Func(<span class="kw">_</span>) =&gt; <span class="string">&quot;a function&quot;</span>.into(),
+            IdDef::Func(<span class="kw">_</span>) =&gt; <span class="string">"a function"</span>.into(),
 
             IdDef::SpvExtInstImport(name) =&gt; {
-                <span class="macro">format!</span>(<span class="string">&quot;`OpExtInstImport {:?}`&quot;</span>, <span class="kw-2">&amp;</span>cx[name])
+                <span class="macro">format!</span>(<span class="string">"`OpExtInstImport {:?}`"</span>, <span class="kw-2">&amp;</span>cx[name])
             }
-            IdDef::SpvDebugString(s) =&gt; <span class="macro">format!</span>(<span class="string">&quot;`OpString {:?}`&quot;</span>, <span class="kw-2">&amp;</span>cx[s]),
+            IdDef::SpvDebugString(s) =&gt; <span class="macro">format!</span>(<span class="string">"`OpString {:?}`"</span>, <span class="kw-2">&amp;</span>cx[s]),
         }
     }
 }
@@ -1626,13 +1626,13 @@
 
 <span class="comment">// FIXME(eddyb) stop abusing `io::Error` for error reporting.
 </span><span class="kw">fn </span>invalid(reason: <span class="kw-2">&amp;</span>str) -&gt; io::Error {
-    io::Error::new(io::ErrorKind::InvalidData, <span class="macro">format!</span>(<span class="string">&quot;malformed SPIR-V ({reason})&quot;</span>))
+    io::Error::new(io::ErrorKind::InvalidData, <span class="macro">format!</span>(<span class="string">"malformed SPIR-V ({reason})"</span>))
 }
 
 <span class="comment">// FIXME(eddyb) provide more information about any normalization that happened:
 // * stats about deduplication that occured through interning
 // * sets of unused global vars and functions (and types+consts only they use)
-// FIXME(eddyb) consider introducing a &quot;deferred error&quot; system, where `spv::lower`
+// FIXME(eddyb) consider introducing a "deferred error" system, where `spv::lower`
 // (and more directproducers) can keep around errors in the SPIR-T IR, and still
 // have the opportunity of silencing them e.g. by removing dead code.
 </span><span class="kw">impl </span>Module {
@@ -1668,7 +1668,7 @@
 
             <span class="kw">if </span>(version_reserved_lo, version_reserved_hi) != (<span class="number">0</span>, <span class="number">0</span>) {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                    <span class="string">&quot;version 0x{version:08x} is not in expected (0.major.minor.0) form&quot;
+                    <span class="string">"version 0x{version:08x} is not in expected (0.major.minor.0) form"
                 </span>)));
             }
 
@@ -1677,7 +1677,7 @@
 
             <span class="kw">if </span>reserved_inst_schema != <span class="number">0 </span>{
                 <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                    <span class="string">&quot;unknown instruction schema {reserved_inst_schema} - only 0 is supported&quot;
+                    <span class="string">"unknown instruction schema {reserved_inst_schema} - only 0 is supported"
                 </span>)));
             }
 
@@ -1716,7 +1716,7 @@
             DebugModuleProcessed,
             Decoration,
 
-            <span class="comment">// NOTE(eddyb) not its own section, but only a &quot;checkpoint&quot;, forcing
+            <span class="comment">// NOTE(eddyb) not its own section, but only a "checkpoint", forcing
             // instructions following `OpLine`/`OpNoLine` into later sections.
             </span>DebugLine,
 
@@ -1739,9 +1739,9 @@
         <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>inst) = spv_insts.next().transpose()<span class="question-mark">? </span>{
             <span class="kw">let </span>opcode = inst.opcode;
 
-            <span class="kw">let </span>invalid = |msg: <span class="kw-2">&amp;</span>str| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;in {}: {}&quot;</span>, opcode.name(), msg));
+            <span class="kw">let </span>invalid = |msg: <span class="kw-2">&amp;</span>str| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"in {}: {}"</span>, opcode.name(), msg));
 
-            <span class="comment">// Handle line debuginfo early, as it doesn&#39;t have its own section,
+            <span class="comment">// Handle line debuginfo early, as it doesn't have its own section,
             // but rather can go almost anywhere among globals and functions.
             </span><span class="kw">if </span>[wk.OpLine, wk.OpNoLine].contains(<span class="kw-2">&amp;</span>opcode) {
                 <span class="macro">assert!</span>(inst.result_type_id.is_none() &amp;&amp; inst.result_id.is_none());
@@ -1757,7 +1757,7 @@
                                 <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>IdDef::SpvDebugString(s)) =&gt; s,
                                 <span class="kw">_ </span>=&gt; {
                                     <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                                        <span class="string">&quot;%{file_path_id} is not an OpString&quot;
+                                        <span class="string">"%{file_path_id} is not an OpString"
                                     </span>)));
                                 }
                             };
@@ -1770,7 +1770,7 @@
                     <span class="prelude-val">None
                 </span>};
 
-                <span class="comment">// Advance to `Seq::DebugLine` if we&#39;re not there yet, forcing
+                <span class="comment">// Advance to `Seq::DebugLine` if we're not there yet, forcing
                 // any following instructions to not be in earlier sections.
                 </span>seq = seq.max(<span class="prelude-val">Some</span>(Seq::DebugLine));
                 <span class="kw">continue</span>;
@@ -1793,7 +1793,7 @@
                 inst.result_id.and_then(|id| pending_attrs.remove(<span class="kw-2">&amp;</span>id)).unwrap_or_default();
 
             <span class="kw">if let </span><span class="prelude-val">Some</span>((file_path, line, col)) = current_debug_line {
-                <span class="comment">// FIXME(eddyb) use `get_or_insert_default` once that&#39;s stabilized.
+                <span class="comment">// FIXME(eddyb) use `get_or_insert_default` once that's stabilized.
                 </span>attrs.attrs.insert(Attr::SpvDebugLine {
                     file_path: <span class="kw">crate</span>::OrdAssertEq(file_path),
                     line,
@@ -1816,17 +1816,17 @@
             <span class="kw">let </span><span class="kw-2">mut </span>attrs = cx.intern(attrs);
 
             <span class="comment">// FIXME(eddyb) move this kind of lookup into methods on some sort
-            // of &quot;lowering context&quot; type.
+            // of "lowering context" type.
             </span><span class="kw">let </span>result_type = inst
                 .result_type_id
                 .map(|type_id| <span class="kw">match </span>id_defs.get(<span class="kw-2">&amp;</span>type_id) {
                     <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>IdDef::Type(ty)) =&gt; <span class="prelude-val">Ok</span>(ty),
                     <span class="prelude-val">Some</span>(id_def) =&gt; <span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                        <span class="string">&quot;result type %{} should be a type, not a {}&quot;</span>,
+                        <span class="string">"result type %{} should be a type, not a {}"</span>,
                         type_id,
                         id_def.descr(<span class="kw-2">&amp;</span>cx)
                     ))),
-                    <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;result type %{type_id} not defined&quot;</span>))),
+                    <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"result type %{type_id} not defined"</span>))),
                 })
                 .transpose()<span class="question-mark">?</span>;
 
@@ -1856,7 +1856,7 @@
                         &amp;&amp; inst.ids.is_empty()
                 );
                 <span class="kw">let </span>ext = spv::extract_literal_string(<span class="kw-2">&amp;</span>inst.imms)
-                    .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{} in {:?}&quot;</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
+                    .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{} in {:?}"</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
 
                 <span class="kw">match </span><span class="kw-2">&amp;mut </span>module.dialect {
                     <span class="kw">crate</span>::ModuleDialect::Spv(dialect) =&gt; {
@@ -1869,7 +1869,7 @@
                 <span class="macro">assert!</span>(inst.result_type_id.is_none() &amp;&amp; inst.ids.is_empty());
                 <span class="kw">let </span>id = inst.result_id.unwrap();
                 <span class="kw">let </span>name = spv::extract_literal_string(<span class="kw-2">&amp;</span>inst.imms)
-                    .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{} in {:?}&quot;</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
+                    .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{} in {:?}"</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
 
                 id_defs.insert(id, IdDef::SpvExtInstImport(cx.intern(name)));
 
@@ -1885,7 +1885,7 @@
                 };
 
                 <span class="kw">if </span>has_memory_model {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;duplicate OpMemoryModel&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"duplicate OpMemoryModel"</span>));
                 }
                 has_memory_model = <span class="bool-val">true</span>;
 
@@ -1901,7 +1901,7 @@
                 <span class="macro">assert!</span>(inst.result_type_id.is_none() &amp;&amp; inst.ids.is_empty());
                 <span class="kw">let </span>id = inst.result_id.unwrap();
                 <span class="kw">let </span>s = spv::extract_literal_string(<span class="kw-2">&amp;</span>inst.imms)
-                    .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{} in {:?}&quot;</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
+                    .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{} in {:?}"</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
 
                 id_defs.insert(id, IdDef::SpvDebugString(cx.intern(s)));
 
@@ -1931,7 +1931,7 @@
                             <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>IdDef::SpvDebugString(s)) =&gt; s,
                             <span class="kw">_ </span>=&gt; {
                                 <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                                    <span class="string">&quot;%{file_path_id} is not an OpString&quot;
+                                    <span class="string">"%{file_path_id} is not an OpString"
                                 </span>)));
                             }
                         };
@@ -1939,7 +1939,7 @@
                             String::new()
                         } <span class="kw">else </span>{
                             spv::extract_literal_string(contents)
-                                .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{} in {:?}&quot;</span>, e, e.as_bytes())))<span class="question-mark">?
+                                .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{} in {:?}"</span>, e, e.as_bytes())))<span class="question-mark">?
                         </span>};
 
                         <span class="comment">// Absorb all following `OpSourceContinued` into `contents`.
@@ -1955,7 +1955,7 @@
                                     &amp;&amp; cont_inst.ids.is_empty()
                             );
                             <span class="kw">let </span>cont_contents = spv::extract_literal_string(<span class="kw-2">&amp;</span>cont_inst.imms)
-                                .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{} in {:?}&quot;</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
+                                .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{} in {:?}"</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
                             contents += <span class="kw-2">&amp;</span>cont_contents;
                         }
 
@@ -1969,7 +1969,7 @@
                 // for organizatory purposes, see `Seq` for the in-module order.
                 </span>Seq::DebugStringAndSource
             } <span class="kw">else if </span>opcode == wk.OpSourceContinued {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;must follow OpSource&quot;</span>));
+                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"must follow OpSource"</span>));
             } <span class="kw">else if </span>opcode == wk.OpSourceExtension {
                 <span class="macro">assert!</span>(
                     inst.result_type_id.is_none()
@@ -1977,7 +1977,7 @@
                         &amp;&amp; inst.ids.is_empty()
                 );
                 <span class="kw">let </span>ext = spv::extract_literal_string(<span class="kw-2">&amp;</span>inst.imms)
-                    .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{} in {:?}&quot;</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
+                    .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{} in {:?}"</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
 
                 <span class="kw">match </span><span class="kw-2">&amp;mut </span>module.debug_info {
                     <span class="kw">crate</span>::ModuleDebugInfo::Spv(debug_info) =&gt; {
@@ -1995,7 +1995,7 @@
                         &amp;&amp; inst.ids.is_empty()
                 );
                 <span class="kw">let </span>proc = spv::extract_literal_string(<span class="kw-2">&amp;</span>inst.imms)
-                    .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{} in {:?}&quot;</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
+                    .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{} in {:?}"</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
 
                 <span class="kw">match </span><span class="kw-2">&amp;mut </span>module.debug_info {
                     <span class="kw">crate</span>::ModuleDebugInfo::Spv(debug_info) =&gt; {
@@ -2033,7 +2033,7 @@
 
                 <span class="kw">let </span>target_id = inst.ids[<span class="number">0</span>];
                 <span class="kw">if </span>inst.ids.len() &gt; <span class="number">1 </span>{
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;unsupported decoration with ID&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"unsupported decoration with ID"</span>));
                 }
 
                 <span class="kw">match </span>inst.imms[..] {
@@ -2048,7 +2048,7 @@
                         &amp;&amp; [wk.Import, wk.Export].contains(<span class="kw-2">&amp;</span>linkage_type) =&gt;
                     {
                         <span class="kw">let </span>name = spv::extract_literal_string(name)
-                            .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{} in {:?}&quot;</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
+                            .map_err(|e| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{} in {:?}"</span>, e, e.as_bytes())))<span class="question-mark">?</span>;
                         <span class="kw">let </span>name = cx.intern(name);
 
                         <span class="kw">if </span>linkage_type == wk.Import {
@@ -2077,7 +2077,7 @@
             } <span class="kw">else if </span>[wk.OpDecorationGroup, wk.OpGroupDecorate, wk.OpGroupMemberDecorate]
                 .contains(<span class="kw-2">&amp;</span>opcode)
             {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;unsupported decoration groups (officially deprecated)&quot;</span>));
+                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"unsupported decoration groups (officially deprecated)"</span>));
             } <span class="kw">else if </span>opcode == wk.OpTypeForwardPointer {
                 <span class="macro">assert!</span>(inst.result_type_id.is_none() &amp;&amp; inst.result_id.is_none());
                 <span class="kw">let </span>(id, sc) = <span class="kw">match </span>(<span class="kw-2">&amp;</span>inst.imms[..], <span class="kw-2">&amp;</span>inst.ids[..]) {
@@ -2086,8 +2086,8 @@
                 };
 
                 <span class="comment">// HACK(eddyb) this is not a proper implementation - one would
-                // require fixpoint (aka &quot;μ&quot; aka &quot;mu&quot;) types - but for now this
-                // serves as a first approximation for a &quot;deferred error&quot;.
+                // require fixpoint (aka "μ" aka "mu") types - but for now this
+                // serves as a first approximation for a "deferred error".
                 </span><span class="kw">let </span>ty = cx.intern(TypeDef {
                     attrs: mem::take(<span class="kw-2">&amp;mut </span>attrs),
                     ctor: TypeCtor::SpvInst(spv::Inst { opcode, imms: [sc].into_iter().collect() }),
@@ -2106,11 +2106,11 @@
                         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>IdDef::Type(ty)) =&gt; <span class="prelude-val">Ok</span>(TypeCtorArg::Type(ty)),
                         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>IdDef::Const(ct)) =&gt; <span class="prelude-val">Ok</span>(TypeCtorArg::Const(ct)),
                         <span class="prelude-val">Some</span>(id_def) =&gt; <span class="prelude-val">Err</span>(id_def.descr(<span class="kw-2">&amp;</span>cx)),
-                        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;a forward reference to %{id}&quot;</span>)),
+                        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"a forward reference to %{id}"</span>)),
                     })
                     .map(|result| {
                         result.map_err(|descr| {
-                            invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;unsupported use of {descr} in a type&quot;</span>))
+                            invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"unsupported use of {descr} in a type"</span>))
                         })
                     })
                     .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
@@ -2131,11 +2131,11 @@
                     .map(|<span class="kw-2">&amp;</span>id| <span class="kw">match </span>id_defs.get(<span class="kw-2">&amp;</span>id) {
                         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>IdDef::Const(ct)) =&gt; <span class="prelude-val">Ok</span>(ct),
                         <span class="prelude-val">Some</span>(id_def) =&gt; <span class="prelude-val">Err</span>(id_def.descr(<span class="kw-2">&amp;</span>cx)),
-                        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;a forward reference to %{id}&quot;</span>)),
+                        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"a forward reference to %{id}"</span>)),
                     })
                     .map(|result| {
                         result.map_err(|descr| {
-                            invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;unsupported use of {descr} in a constant&quot;</span>))
+                            invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"unsupported use of {descr} in a constant"</span>))
                         })
                     })
                     .collect::&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt;&gt;()<span class="question-mark">?</span>;
@@ -2160,7 +2160,7 @@
                 <span class="kw">let </span>type_of_ptr_to_global_var = result_type.unwrap();
 
                 <span class="kw">if </span>inst.imms[<span class="number">0</span>] == storage_class_function_imm {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;`Function` storage class outside function&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"`Function` storage class outside function"</span>));
                 }
 
                 <span class="kw">let </span>storage_class = <span class="kw">match </span>inst.imms[..] {
@@ -2180,12 +2180,12 @@
                     .map(|id| <span class="kw">match </span>id_defs.get(<span class="kw-2">&amp;</span>id) {
                         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>IdDef::Const(ct)) =&gt; <span class="prelude-val">Ok</span>(ct),
                         <span class="prelude-val">Some</span>(id_def) =&gt; <span class="prelude-val">Err</span>(id_def.descr(<span class="kw-2">&amp;</span>cx)),
-                        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;a forward reference to %{id}&quot;</span>)),
+                        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"a forward reference to %{id}"</span>)),
                     })
                     .transpose()
                     .map_err(|descr| {
                         invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                            <span class="string">&quot;unsupported use of {descr} as the initializer of a global variable&quot;
+                            <span class="string">"unsupported use of {descr} as the initializer of a global variable"
                         </span>))
                     })<span class="question-mark">?</span>;
 
@@ -2193,7 +2193,7 @@
                     <span class="prelude-val">Some</span>(import @ Import::LinkName(name)) =&gt; {
                         <span class="kw">if </span>initializer.is_some() {
                             <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                                <span class="string">&quot;global variable with initializer decorated as `Import` of {:?}&quot;</span>,
+                                <span class="string">"global variable with initializer decorated as `Import` of {:?}"</span>,
                                 <span class="kw-2">&amp;</span>cx[name]
                             )));
                         }
@@ -2223,11 +2223,11 @@
                 Seq::TypeConstOrGlobalVar
             } <span class="kw">else if </span>opcode == wk.OpFunction {
                 <span class="kw">if </span>current_func_body.is_some() {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;nested OpFunction while still in a function&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"nested OpFunction while still in a function"</span>));
                 }
 
                 <span class="kw">let </span>func_id = inst.result_id.unwrap();
-                <span class="comment">// FIXME(eddyb) hide this from SPIR-T, it&#39;s the function return
+                <span class="comment">// FIXME(eddyb) hide this from SPIR-T, it's the function return
                 // type, *not* the function type, which is in `func_type`.
                 </span><span class="kw">let </span>func_ret_type = result_type.unwrap();
 
@@ -2256,7 +2256,7 @@
                         <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                     }
                     .ok_or_else(|| {
-                        invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;function type %{func_type_id} not an `OpTypeFunction`&quot;</span>))
+                        invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"function type %{func_type_id} not an `OpTypeFunction`"</span>))
                     })<span class="question-mark">?</span>;
 
                 <span class="kw">if </span>func_ret_type != func_type_ret_type {
@@ -2266,12 +2266,12 @@
                         <span class="kw-2">&amp;</span>print::Plan::for_root(
                             <span class="kw-2">&amp;</span>cx,
                             <span class="kw-2">&amp;</span>Diag::err([
-                                <span class="macro">format!</span>(<span class="string">&quot;in %{}, &quot;</span>, func_id).into(),
-                                <span class="string">&quot;return type differs between `OpFunction` (&quot;</span>.into(),
+                                <span class="macro">format!</span>(<span class="string">"in %{}, "</span>, func_id).into(),
+                                <span class="string">"return type differs between `OpFunction` ("</span>.into(),
                                 func_ret_type.into(),
-                                <span class="string">&quot;) and `OpTypeFunction` (&quot;</span>.into(),
+                                <span class="string">") and `OpTypeFunction` ("</span>.into(),
                                 func_type_ret_type.into(),
-                                <span class="string">&quot;)&quot;</span>.into(),
+                                <span class="string">")"</span>.into(),
                             ])
                             .message,
                         )
@@ -2324,7 +2324,7 @@
 
                 <span class="kw">let </span>func_body = current_func_body
                     .take()
-                    .ok_or_else(|| invalid(<span class="string">&quot;nested OpFunction while still in a function&quot;</span>))<span class="question-mark">?</span>;
+                    .ok_or_else(|| invalid(<span class="string">"nested OpFunction while still in a function"</span>))<span class="question-mark">?</span>;
 
                 pending_func_bodies.push(func_body);
 
@@ -2332,7 +2332,7 @@
             } <span class="kw">else </span>{
                 <span class="kw">let </span>func_body = current_func_body
                     .as_mut()
-                    .ok_or_else(|| invalid(<span class="string">&quot;expected only inside a function&quot;</span>))<span class="question-mark">?</span>;
+                    .ok_or_else(|| invalid(<span class="string">"expected only inside a function"</span>))<span class="question-mark">?</span>;
                 <span class="macro">assert_eq!</span>(seq, <span class="prelude-val">Some</span>(Seq::Function));
 
                 func_body.insts.push(IntraFuncInst {
@@ -2349,31 +2349,31 @@
             <span class="kw">if let </span><span class="prelude-val">Some</span>(prev_seq) = seq {
                 <span class="kw">if </span>prev_seq &gt; next_seq {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                        <span class="string">&quot;out of order: {next_seq:?} instructions must precede {prev_seq:?} instructions&quot;
+                        <span class="string">"out of order: {next_seq:?} instructions must precede {prev_seq:?} instructions"
                     </span>)));
                 }
             }
             seq = <span class="prelude-val">Some</span>(next_seq);
 
             <span class="kw">if </span>attrs != Default::default() {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;unused decorations / line debuginfo&quot;</span>));
+                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"unused decorations / line debuginfo"</span>));
             }
         }
 
         <span class="kw">if </span>!has_memory_model {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;missing OpMemoryModel&quot;</span>));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"missing OpMemoryModel"</span>));
         }
 
         <span class="kw">if </span>!pending_attrs.is_empty() {
             <span class="kw">let </span>ids = pending_attrs.keys().collect::&lt;BTreeSet&lt;<span class="kw">_</span>&gt;&gt;();
-            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;decorated IDs never defined: {ids:?}&quot;</span>)));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"decorated IDs never defined: {ids:?}"</span>)));
         }
 
         <span class="kw">if </span>current_func_body.is_some() {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;OpFunction without matching OpFunctionEnd&quot;</span>));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"OpFunction without matching OpFunctionEnd"</span>));
         }
 
-        <span class="comment">// HACK(eddyb) `OpNop` is useful for defining `DataInst`s before they&#39;re
+        <span class="comment">// HACK(eddyb) `OpNop` is useful for defining `DataInst`s before they're
         // actually lowered (to be able to refer to their outputs `Value`s).
         </span><span class="kw">let </span><span class="kw-2">mut </span>cached_op_nop_form = <span class="prelude-val">None</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>get_op_nop_form = || {
@@ -2479,7 +2479,7 @@
                                 block_details.phi_count = phi_idx.checked_add(<span class="number">1</span>).unwrap();
 
                                 <span class="macro">assert!</span>(imms.is_empty());
-                                <span class="comment">// FIXME(eddyb) use `array_chunks` when that&#39;s stable.
+                                <span class="comment">// FIXME(eddyb) use `array_chunks` when that's stable.
                                 </span><span class="kw">for </span>value_and_source_block_id <span class="kw">in </span>raw_inst.ids.chunks(<span class="number">2</span>) {
                                     <span class="kw">let </span><span class="kw-2">&amp;</span>[value_id, source_block_id]: <span class="kw-2">&amp;</span>[<span class="kw">_</span>; <span class="number">2</span>] =
                                         value_and_source_block_id.try_into().unwrap();
@@ -2499,7 +2499,7 @@
                                     input_idx: phi_idx,
                                 })
                             } <span class="kw">else </span>{
-                                <span class="comment">// HACK(eddyb) can&#39;t get a `DataInst` without
+                                <span class="comment">// HACK(eddyb) can't get a `DataInst` without
                                 // defining it (as a dummy) first.
                                 </span><span class="kw">let </span>inst = func_def_body.data_insts.define(
                                     <span class="kw-2">&amp;</span>cx,
@@ -2525,7 +2525,7 @@
                 <span class="kw">match </span><span class="kw-2">&amp;mut </span>func_decl.def {
                     DeclDef::Imported(Import::LinkName(name)) =&gt; {
                         <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                            <span class="string">&quot;non-empty function %{} decorated as `Import` of {:?}&quot;</span>,
+                            <span class="string">"non-empty function %{} decorated as `Import` of {:?}"</span>,
                             func_id, <span class="kw-2">&amp;</span>cx[<span class="kw-2">*</span>name]
                         )));
                     }
@@ -2538,8 +2538,8 @@
                         <span class="comment">// FIXME(remove) embed IDs in errors by moving them to the
                         // `let invalid = |...| ...;` closure that wraps insts.
                         </span><span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                            <span class="string">&quot;function %{func_id} lacks any blocks, \
-                             but isn&#39;t an import either&quot;
+                            <span class="string">"function %{func_id} lacks any blocks, \
+                             but isn't an import either"
                         </span>)));
                     }
                 }
@@ -2560,7 +2560,7 @@
                     <span class="kw-2">ref </span>ids,
                 } = <span class="kw-2">*</span>raw_inst;
 
-                <span class="kw">let </span>invalid = |msg: <span class="kw-2">&amp;</span>str| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;in {}: {}&quot;</span>, opcode.name(), msg));
+                <span class="kw">let </span>invalid = |msg: <span class="kw-2">&amp;</span>str| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"in {}: {}"</span>, opcode.name(), msg));
 
                 <span class="comment">// FIXME(eddyb) find a more compact name and/or make this a method.
                 // FIXME(eddyb) this returns `LocalIdDef` even for global values.
@@ -2568,18 +2568,18 @@
                     |id| <span class="kw">match </span>id_defs.get(<span class="kw-2">&amp;</span>id) {
                         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>IdDef::Const(ct)) =&gt; <span class="prelude-val">Ok</span>(LocalIdDef::Value(Value::Const(ct))),
                         <span class="prelude-val">Some</span>(id_def @ IdDef::Type(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                            <span class="string">&quot;unsupported use of {} as an operand for \
-                             an instruction in a function&quot;</span>,
+                            <span class="string">"unsupported use of {} as an operand for \
+                             an instruction in a function"</span>,
                             id_def.descr(<span class="kw-2">&amp;</span>cx),
                         ))),
                         <span class="prelude-val">Some</span>(id_def @ IdDef::Func(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                            <span class="string">&quot;unsupported use of {} outside `OpFunctionCall`&quot;</span>,
+                            <span class="string">"unsupported use of {} outside `OpFunctionCall`"</span>,
                             id_def.descr(<span class="kw-2">&amp;</span>cx),
                         ))),
                         <span class="prelude-val">Some</span>(id_def @ IdDef::SpvDebugString(s)) =&gt; {
                             <span class="kw">if </span>opcode == wk.OpExtInst {
                                 <span class="comment">// HACK(eddyb) intern `OpString`s as `Const`s on
-                                // the fly, as it&#39;s a less likely usage than the
+                                // the fly, as it's a less likely usage than the
                                 // `OpLine` one.
                                 </span><span class="kw">let </span>ty = cx.intern(TypeDef {
                                     attrs: AttrSet::default(),
@@ -2595,27 +2595,27 @@
                                 <span class="prelude-val">Ok</span>(LocalIdDef::Value(Value::Const(ct)))
                             } <span class="kw">else </span>{
                                 <span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                                    <span class="string">&quot;unsupported use of {} outside `OpSource`, \
-                                     `OpLine`, or `OpExtInst`&quot;</span>,
+                                    <span class="string">"unsupported use of {} outside `OpSource`, \
+                                     `OpLine`, or `OpExtInst`"</span>,
                                     id_def.descr(<span class="kw-2">&amp;</span>cx),
                                 )))
                             }
                         }
                         <span class="prelude-val">Some</span>(id_def @ IdDef::SpvExtInstImport(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                            <span class="string">&quot;unsupported use of {} outside `OpExtInst`&quot;</span>,
+                            <span class="string">"unsupported use of {} outside `OpExtInst`"</span>,
                             id_def.descr(<span class="kw-2">&amp;</span>cx),
                         ))),
                         <span class="prelude-val">None </span>=&gt; local_id_defs
                             .get(<span class="kw-2">&amp;</span>id)
                             .copied()
-                            .ok_or_else(|| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;undefined ID %{id}&quot;</span>,))),
+                            .ok_or_else(|| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"undefined ID %{id}"</span>,))),
                     };
 
                 <span class="kw">if </span>opcode == wk.OpFunctionParameter {
                     <span class="kw">if </span>current_block_control_region_and_details.is_some() {
                         <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
-                            <span class="string">&quot;out of order: `OpFunctionParameter`s should come \
-                             before the function&#39;s blocks&quot;</span>,
+                            <span class="string">"out of order: `OpFunctionParameter`s should come \
+                             before the function's blocks"</span>,
                         ));
                     }
 
@@ -2639,7 +2639,7 @@
 
                 <span class="kw">if </span>opcode == wk.OpLabel {
                     <span class="kw">if </span>is_last_in_block {
-                        <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;block lacks terminator instruction&quot;</span>));
+                        <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"block lacks terminator instruction"</span>));
                     }
 
                     <span class="comment">// A `ControlRegion` (using an empty `Block` `ControlNode`
@@ -2657,7 +2657,7 @@
                 }
                 <span class="kw">let </span>(current_block_control_region, current_block_details) =
                     current_block_control_region_and_details.ok_or_else(|| {
-                        invalid(<span class="string">&quot;out of order: not expected before the function&#39;s blocks&quot;</span>)
+                        invalid(<span class="string">"out of order: not expected before the function's blocks"</span>)
                     })<span class="question-mark">?</span>;
                 <span class="kw">let </span>current_block_control_region_def =
                     <span class="kw-2">&amp;mut </span>func_def_body.control_regions[current_block_control_region];
@@ -2667,15 +2667,15 @@
                         || [wk.OpPhi, wk.OpSelectionMerge, wk.OpLoopMerge].contains(<span class="kw-2">&amp;</span>opcode)
                     {
                         <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
-                            <span class="string">&quot;non-control-flow instruction cannot be used \
-                             as the terminator instruction of a block&quot;</span>,
+                            <span class="string">"non-control-flow instruction cannot be used \
+                             as the terminator instruction of a block"</span>,
                         ));
                     }
 
                     <span class="kw">let </span><span class="kw-2">mut </span>target_inputs = FxIndexMap::default();
                     <span class="kw">let </span>descr_phi_case = |phi_key: <span class="kw-2">&amp;</span>PhiKey| {
                         <span class="macro">format!</span>(
-                            <span class="string">&quot;`OpPhi` (#{} in %{})&#39;s case for source block %{}&quot;</span>,
+                            <span class="string">"`OpPhi` (#{} in %{})'s case for source block %{}"</span>,
                             phi_key.target_phi_idx,
                             phi_key.target_block_id,
                             phi_key.source_block_id,
@@ -2685,7 +2685,7 @@
                         <span class="kw">match </span>lookup_global_or_local_id_for_data_or_control_inst_input(id)<span class="question-mark">? </span>{
                             LocalIdDef::Value(v) =&gt; <span class="prelude-val">Ok</span>(v),
                             LocalIdDef::BlockLabel { .. } =&gt; <span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                                <span class="string">&quot;unsupported use of block label as the value for {}&quot;</span>,
+                                <span class="string">"unsupported use of block label as the value for {}"</span>,
                                 descr_phi_case(phi_key)
                             ))),
                         }
@@ -2715,12 +2715,12 @@
 
                             <span class="kw">match </span>phi_value_ids[..] {
                                 [] =&gt; <span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                                    <span class="string">&quot;{} is missing&quot;</span>,
+                                    <span class="string">"{} is missing"</span>,
                                     descr_phi_case(<span class="kw-2">&amp;</span>phi_key)
                                 ))),
                                 [id] =&gt; phi_value_id_to_value(<span class="kw-2">&amp;</span>phi_key, id),
                                 [..] =&gt; <span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                                    <span class="string">&quot;{} is duplicated&quot;</span>,
+                                    <span class="string">"{} is duplicated"</span>,
                                     descr_phi_case(<span class="kw-2">&amp;</span>phi_key)
                                 ))),
                             }
@@ -2730,8 +2730,8 @@
                         <span class="prelude-val">Ok</span>(())
                     };
 
-                    <span class="comment">// Split the operands into value inputs (e.g. a branch&#39;s
-                    // condition or an `OpSwitch`&#39;s selector) and target blocks.
+                    <span class="comment">// Split the operands into value inputs (e.g. a branch's
+                    // condition or an `OpSwitch`'s selector) and target blocks.
                     </span><span class="kw">let </span><span class="kw-2">mut </span>inputs = SmallVec::new();
                     <span class="kw">let </span><span class="kw-2">mut </span>targets = SmallVec::new();
                     <span class="kw">for </span><span class="kw-2">&amp;</span>id <span class="kw">in </span>ids {
@@ -2739,8 +2739,8 @@
                             LocalIdDef::Value(v) =&gt; {
                                 <span class="kw">if </span>!targets.is_empty() {
                                     <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
-                                        <span class="string">&quot;out of order: value operand \
-                                         after target label ID&quot;</span>,
+                                        <span class="string">"out of order: value operand \
+                                         after target label ID"</span>,
                                     ));
                                 }
                                 inputs.push(v);
@@ -2773,7 +2773,7 @@
                             raw_inst.without_ids.clone(),
                         ))
                     } <span class="kw">else </span>{
-                        <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;unsupported control-flow instruction&quot;</span>));
+                        <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"unsupported control-flow instruction"</span>));
                     };
 
                     func_def_body
@@ -2788,8 +2788,8 @@
                 } <span class="kw">else if </span>opcode == wk.OpPhi {
                     <span class="kw">if </span>!current_block_control_region_def.children.is_empty() {
                         <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
-                            <span class="string">&quot;out of order: `OpPhi`s should come before \
-                             the rest of the block&#39;s instructions&quot;</span>,
+                            <span class="string">"out of order: `OpPhi`s should come before \
+                             the rest of the block's instructions"</span>,
                         ));
                     }
 
@@ -2804,15 +2804,15 @@
 
                     <span class="kw">if </span>!is_second_to_last_in_block {
                         <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(
-                            <span class="string">&quot;out of order: a merge instruction should be the last \
-                             instruction before the block&#39;s terminator&quot;</span>,
+                            <span class="string">"out of order: a merge instruction should be the last \
+                             instruction before the block's terminator"</span>,
                         ));
                     }
 
                     <span class="comment">// HACK(eddyb) merges are ignored - this may be lossy,
                     // especially wrt the `SelectionControl` and `LoopControl`
-                    // operands, but it&#39;s not obvious how they should map to
-                    // some &quot;structured regions&quot; replacement for the CFG.
+                    // operands, but it's not obvious how they should map to
+                    // some "structured regions" replacement for the CFG.
                 </span>} <span class="kw">else </span>{
                     <span class="kw">let </span><span class="kw-2">mut </span>ids = <span class="kw-2">&amp;</span>ids[..];
                     <span class="kw">let </span>kind = <span class="kw">if </span>opcode == wk.OpFunctionCall {
@@ -2827,7 +2827,7 @@
                             .transpose()
                             .map_err(|descr| {
                                 invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                                    <span class="string">&quot;unsupported use of {descr} as the `OpFunctionCall` callee&quot;
+                                    <span class="string">"unsupported use of {descr} as the `OpFunctionCall` callee"
                                 </span>))
                             })<span class="question-mark">?</span>;
 
@@ -2856,12 +2856,12 @@
                         <span class="kw">let </span>ext_set = <span class="kw">match </span>id_defs.get(<span class="kw-2">&amp;</span>ext_set_id) {
                             <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>IdDef::SpvExtInstImport(name)) =&gt; <span class="prelude-val">Ok</span>(name),
                             <span class="prelude-val">Some</span>(id_def) =&gt; <span class="prelude-val">Err</span>(id_def.descr(<span class="kw-2">&amp;</span>cx)),
-                            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;unknown ID %{ext_set_id}&quot;</span>)),
+                            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"unknown ID %{ext_set_id}"</span>)),
                         }
                         .map_err(|descr| {
                             invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                                <span class="string">&quot;unsupported use of {descr} as the `OpExtInst` \
-                                 extended instruction set ID&quot;
+                                <span class="string">"unsupported use of {descr} as the `OpExtInst` \
+                                 extended instruction set ID"
                             </span>))
                         })<span class="question-mark">?</span>;
 
@@ -2878,8 +2878,8 @@
                                 .map(|<span class="kw">_</span>| {
                                     result_type.ok_or_else(|| {
                                         invalid(
-                                            <span class="string">&quot;expected value-producing instruction, \
-                                             with a result type&quot;</span>,
+                                            <span class="string">"expected value-producing instruction, \
+                                             with a result type"</span>,
                                         )
                                     })
                                 })
@@ -2892,8 +2892,8 @@
                                 </span>{
                                     LocalIdDef::Value(v) =&gt; <span class="prelude-val">Ok</span>(v),
                                     LocalIdDef::BlockLabel { .. } =&gt; <span class="prelude-val">Err</span>(invalid(
-                                        <span class="string">&quot;unsupported use of block label as a value, \
-                                         in non-terminator instruction&quot;</span>,
+                                        <span class="string">"unsupported use of block label as a value, \
+                                         in non-terminator instruction"</span>,
                                     )),
                                 }
                             })
@@ -2953,8 +2953,8 @@
                     <span class="comment">// FIXME(remove) embed IDs in errors by moving them to the
                     // `let invalid = |...| ...;` closure that wraps insts.
                     </span><span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                        <span class="string">&quot;in %{}, param count differs between `OpTypeFunction` ({}) \
-                         and `OpFunctionParameter`s ({})&quot;</span>,
+                        <span class="string">"in %{}, param count differs between `OpTypeFunction` ({}) \
+                         and `OpFunctionParameter`s ({})"</span>,
                         func_id,
                         func_decl.params.len(),
                         params.len(),
@@ -2972,13 +2972,13 @@
                             <span class="kw-2">&amp;</span>print::Plan::for_root(
                                 <span class="kw-2">&amp;</span>cx,
                                 <span class="kw-2">&amp;</span>Diag::err([
-                                    <span class="macro">format!</span>(<span class="string">&quot;in %{}, &quot;</span>, func_id).into(),
-                                    <span class="macro">format!</span>(<span class="string">&quot;param #{i}&#39;s type differs between `OpTypeFunction` (&quot;</span>)
+                                    <span class="macro">format!</span>(<span class="string">"in %{}, "</span>, func_id).into(),
+                                    <span class="macro">format!</span>(<span class="string">"param #{i}'s type differs between `OpTypeFunction` ("</span>)
                                         .into(),
                                     func_decl_param.ty.into(),
-                                    <span class="string">&quot;) and `OpFunctionParameter` (&quot;</span>.into(),
+                                    <span class="string">") and `OpFunctionParameter` ("</span>.into(),
                                     param.ty.into(),
-                                    <span class="string">&quot;)&quot;</span>.into(),
+                                    <span class="string">")"</span>.into(),
                                 ])
                                 .message,
                             )
@@ -2992,15 +2992,15 @@
             <span class="kw">if </span>!phi_to_values.is_empty() {
                 <span class="kw">let </span><span class="kw-2">mut </span>edges = phi_to_values
                     .keys()
-                    .map(|key| <span class="macro">format!</span>(<span class="string">&quot;%{} -&gt; %{}&quot;</span>, key.source_block_id, key.target_block_id))
+                    .map(|key| <span class="macro">format!</span>(<span class="string">"%{} -&gt; %{}"</span>, key.source_block_id, key.target_block_id))
                     .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
                 edges.dedup();
                 <span class="comment">// FIXME(remove) embed IDs in errors by moving them to the
                 // `let invalid = |...| ...;` closure that wraps insts.
                 </span><span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                    <span class="string">&quot;in %{}, `OpPhi`s refer to non-existent edges: {}&quot;</span>,
+                    <span class="string">"in %{}, `OpPhi`s refer to non-existent edges: {}"</span>,
                     func_id,
-                    edges.join(<span class="string">&quot;, &quot;</span>)
+                    edges.join(<span class="string">", "</span>)
                 )));
             }
 
@@ -3010,7 +3010,7 @@
                     <span class="comment">// FIXME(remove) embed IDs in errors by moving them to the
                     // `let invalid = |...| ...;` closure that wraps insts.
                     </span><span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                        <span class="string">&quot;in %{func_id}, the entry block contains `OpPhi`s&quot;
+                        <span class="string">"in %{func_id}, the entry block contains `OpPhi`s"
                     </span>)));
                 }
             }
@@ -3028,11 +3028,11 @@
                         },
                         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>IdDef::Func(func)) =&gt; <span class="prelude-val">Ok</span>(Exportee::Func(func)),
                         <span class="prelude-val">Some</span>(id_def) =&gt; <span class="prelude-val">Err</span>(id_def.descr(<span class="kw-2">&amp;</span>cx)),
-                        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;unknown ID %{target_id}&quot;</span>)),
+                        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"unknown ID %{target_id}"</span>)),
                     }
                     .map_err(|descr| {
                         invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                            <span class="string">&quot;unsupported use of {descr} as the `LinkageAttributes` target&quot;
+                            <span class="string">"unsupported use of {descr} as the `LinkageAttributes` target"
                         </span>))
                     })<span class="question-mark">?</span>;
 
@@ -3047,11 +3047,11 @@
                     <span class="kw">let </span>func = <span class="kw">match </span>id_defs.get(<span class="kw-2">&amp;</span>func_id) {
                         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>IdDef::Func(func)) =&gt; <span class="prelude-val">Ok</span>(func),
                         <span class="prelude-val">Some</span>(id_def) =&gt; <span class="prelude-val">Err</span>(id_def.descr(<span class="kw-2">&amp;</span>cx)),
-                        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;unknown ID %{func_id}&quot;</span>)),
+                        <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"unknown ID %{func_id}"</span>)),
                     }
                     .map_err(|descr| {
                         invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                            <span class="string">&quot;unsupported use of {descr} as the `OpEntryPoint` target&quot;
+                            <span class="string">"unsupported use of {descr} as the `OpEntryPoint` target"
                         </span>))
                     })<span class="question-mark">?</span>;
                     <span class="kw">let </span>interface_global_vars = interface_ids
@@ -3062,12 +3062,12 @@
                                 <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(id_def.descr(<span class="kw-2">&amp;</span>cx)),
                             },
                             <span class="prelude-val">Some</span>(id_def) =&gt; <span class="prelude-val">Err</span>(id_def.descr(<span class="kw-2">&amp;</span>cx)),
-                            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;unknown ID %{id}&quot;</span>)),
+                            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"unknown ID %{id}"</span>)),
                         })
                         .map(|result| {
                             result.map_err(|descr| {
                                 invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                                    <span class="string">&quot;unsupported use of {descr} as an `OpEntryPoint` interface variable&quot;
+                                    <span class="string">"unsupported use of {descr} as an `OpEntryPoint` interface variable"
                                 </span>))
                             })
                         })

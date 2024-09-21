@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirt-0.3.0/src/spv/read.rs`."><title>read.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../spirt/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirt-0.3.0/src/spv/read.rs`."><title>read.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../spirt/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -405,23 +405,23 @@
     }
 }
 
-<span class="comment">// FIXME(eddyb) keep a `&amp;&#39;static spec::Spec` if that can even speed up anything.
-</span><span class="kw">struct </span>InstParser&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="comment">// FIXME(eddyb) keep a `&amp;'static spec::Spec` if that can even speed up anything.
+</span><span class="kw">struct </span>InstParser&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// IDs defined so far in the module.
-    </span>known_ids: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FxHashMap&lt;spv::Id, KnownIdDef&gt;,
+    </span>known_ids: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>FxHashMap&lt;spv::Id, KnownIdDef&gt;,
 
     <span class="doccomment">/// Input words of an instruction.
-    </span>words: iter::Copied&lt;slice::Iter&lt;<span class="lifetime">&#39;a</span>, u32&gt;&gt;,
+    </span>words: iter::Copied&lt;slice::Iter&lt;<span class="lifetime">'a</span>, u32&gt;&gt;,
 
     <span class="doccomment">/// Output instruction, being parsed.
     </span>inst: spv::InstWithIds,
 }
 
 <span class="kw">enum </span>InstParseError {
-    <span class="doccomment">/// Ran out of words while parsing an instruction&#39;s operands.
+    <span class="doccomment">/// Ran out of words while parsing an instruction's operands.
     </span>NotEnoughWords,
 
-    <span class="doccomment">/// Extra words were left over, after parsing an instruction&#39;s operands.
+    <span class="doccomment">/// Extra words were left over, after parsing an instruction's operands.
     </span>TooManyWords,
 
     <span class="doccomment">/// An illegal ID of `0`.
@@ -443,11 +443,11 @@
 
 <span class="kw">impl </span>InstParseError {
     <span class="comment">// FIXME(eddyb) improve messages and add more contextual information.
-    </span><span class="kw">fn </span>message(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;<span class="lifetime">&#39;static</span>, str&gt; {
+    </span><span class="kw">fn </span>message(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cow&lt;<span class="lifetime">'static</span>, str&gt; {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            <span class="self">Self</span>::NotEnoughWords =&gt; <span class="string">&quot;truncated instruction&quot;</span>.into(),
-            <span class="self">Self</span>::TooManyWords =&gt; <span class="string">&quot;overlong instruction&quot;</span>.into(),
-            <span class="self">Self</span>::IdZero =&gt; <span class="string">&quot;ID %0 is illegal&quot;</span>.into(),
+            <span class="self">Self</span>::NotEnoughWords =&gt; <span class="string">"truncated instruction"</span>.into(),
+            <span class="self">Self</span>::TooManyWords =&gt; <span class="string">"overlong instruction"</span>.into(),
+            <span class="self">Self</span>::IdZero =&gt; <span class="string">"ID %0 is illegal"</span>.into(),
             <span class="comment">// FIXME(eddyb) deduplicate this with `spv::write`.
             </span><span class="self">Self</span>::UnsupportedEnumerand(kind, word) =&gt; {
                 <span class="kw">let </span>(name, def) = kind.name_and_def();
@@ -456,28 +456,28 @@
                         <span class="kw">let </span>unsupported = spec::BitIdx::of_all_set_bits(word)
                             .filter(|<span class="kw-2">&amp;</span>bit_idx| bits.get(bit_idx).is_none())
                             .fold(<span class="number">0u32</span>, |x, i| x | (<span class="number">1 </span>&lt;&lt; i.<span class="number">0</span>));
-                        <span class="macro">format!</span>(<span class="string">&quot;unsupported {name} bit-pattern 0x{unsupported:08x}&quot;</span>).into()
+                        <span class="macro">format!</span>(<span class="string">"unsupported {name} bit-pattern 0x{unsupported:08x}"</span>).into()
                     }
 
                     spec::OperandKindDef::ValueEnum { .. } =&gt; {
-                        <span class="macro">format!</span>(<span class="string">&quot;unsupported {name} value {word}&quot;</span>).into()
+                        <span class="macro">format!</span>(<span class="string">"unsupported {name} value {word}"</span>).into()
                     }
 
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 }
             }
             <span class="self">Self</span>::UnknownResultTypeId(id) =&gt; {
-                <span class="macro">format!</span>(<span class="string">&quot;ID %{id} used as result type before definition&quot;</span>).into()
+                <span class="macro">format!</span>(<span class="string">"ID %{id} used as result type before definition"</span>).into()
             }
-            <span class="self">Self</span>::MissingContextSensitiveLiteralType =&gt; <span class="string">&quot;missing type for literal&quot;</span>.into(),
+            <span class="self">Self</span>::MissingContextSensitiveLiteralType =&gt; <span class="string">"missing type for literal"</span>.into(),
             <span class="self">Self</span>::UnsupportedContextSensitiveLiteralType { type_opcode } =&gt; {
-                <span class="macro">format!</span>(<span class="string">&quot;{} is not a supported literal type&quot;</span>, type_opcode.name()).into()
+                <span class="macro">format!</span>(<span class="string">"{} is not a supported literal type"</span>, type_opcode.name()).into()
             }
         }
     }
 }
 
-<span class="kw">impl </span>InstParser&lt;<span class="lifetime">&#39;_</span>&gt; {
+<span class="kw">impl </span>InstParser&lt;<span class="lifetime">'_</span>&gt; {
     <span class="kw">fn </span>is_exhausted(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="comment">// FIXME(eddyb) use `self.words.is_empty()` when that is stabilized.
         </span><span class="self">self</span>.words.len() == <span class="number">0
@@ -620,11 +620,11 @@
     </span><span class="comment">// FIXME(eddyb) add a `spec::Header` or `spv::Header` struct with named fields.
     </span><span class="kw">pub </span>header: [u32; spec::HEADER_LEN],
 
-    <span class="doccomment">/// The entire module&#39;s bytes, representing &quot;native endian&quot; SPIR-V words.
+    <span class="doccomment">/// The entire module's bytes, representing "native endian" SPIR-V words.
     </span><span class="comment">// FIXME(eddyb) could this be allocated as `Vec&lt;u32&gt;` in the first place?
     </span>word_bytes: Vec&lt;u8&gt;,
 
-    <span class="doccomment">/// Next (instructions&#39;) word position in the module.
+    <span class="doccomment">/// Next (instructions') word position in the module.
     </span>next_word: usize,
 
     <span class="doccomment">/// IDs defined so far in the module.
@@ -633,7 +633,7 @@
 
 <span class="comment">// FIXME(eddyb) stop abusing `io::Error` for error reporting.
 </span><span class="kw">fn </span>invalid(reason: <span class="kw-2">&amp;</span>str) -&gt; io::Error {
-    io::Error::new(io::ErrorKind::InvalidData, <span class="macro">format!</span>(<span class="string">&quot;malformed SPIR-V ({reason})&quot;</span>))
+    io::Error::new(io::ErrorKind::InvalidData, <span class="macro">format!</span>(<span class="string">"malformed SPIR-V ({reason})"</span>))
 }
 
 <span class="kw">impl </span>ModuleParser {
@@ -646,14 +646,14 @@
         <span class="kw">let </span>spv_spec = spec::Spec::get();
 
         <span class="kw">if </span>spv_bytes.len() % <span class="number">4 </span>!= <span class="number">0 </span>{
-            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;not a multiple of 4 bytes&quot;</span>));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"not a multiple of 4 bytes"</span>));
         }
         <span class="comment">// May need to mutate the bytes (to normalize endianness) later below.
         </span><span class="kw">let </span><span class="kw-2">mut </span>spv_bytes = spv_bytes;
         <span class="kw">let </span>spv_words = bytemuck::cast_slice_mut::&lt;u8, u32&gt;(<span class="kw-2">&amp;mut </span>spv_bytes);
 
         <span class="kw">if </span>spv_words.len() &lt; spec::HEADER_LEN {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;truncated header&quot;</span>));
+            <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"truncated header"</span>));
         }
 
         <span class="comment">// Check the magic, and swap endianness of all words if we have to.
@@ -666,7 +666,7 @@
                     <span class="kw-2">*</span>word = word.swap_bytes();
                 }
             } <span class="kw">else </span>{
-                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">&quot;incorrect magic number&quot;</span>));
+                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="string">"incorrect magic number"</span>));
             }
         }
 
@@ -693,13 +693,13 @@
 
         <span class="kw">let </span>(opcode, inst_name, def) = <span class="kw">match </span>spec::Opcode::try_from_u16_with_name_and_def(opcode) {
             <span class="prelude-val">Some</span>(opcode_name_and_def) =&gt; opcode_name_and_def,
-            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;unsupported opcode {opcode}&quot;</span>)))),
+            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"unsupported opcode {opcode}"</span>)))),
         };
 
-        <span class="kw">let </span>invalid = |msg: <span class="kw-2">&amp;</span>str| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;in {inst_name}: {msg}&quot;</span>));
+        <span class="kw">let </span>invalid = |msg: <span class="kw-2">&amp;</span>str| invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"in {inst_name}: {msg}"</span>));
 
         <span class="kw">if </span>words.len() &lt; inst_len {
-            <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(invalid(<span class="string">&quot;truncated instruction&quot;</span>)));
+            <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(invalid(<span class="string">"truncated instruction"</span>)));
         }
 
         <span class="kw">let </span>parser = InstParser {
@@ -724,7 +724,7 @@
                 KnownIdDef::TypeInt(<span class="kw">match </span>inst.imms[<span class="number">0</span>] {
                     spv::Imm::Short(kind, n) =&gt; {
                         <span class="macro">assert_eq!</span>(kind, wk.LiteralInteger);
-                        n.try_into().ok().ok_or_else(|| invalid(<span class="string">&quot;Width cannot be 0&quot;</span>))<span class="question-mark">?
+                        n.try_into().ok().ok_or_else(|| invalid(<span class="string">"Width cannot be 0"</span>))<span class="question-mark">?
                     </span>}
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 })
@@ -732,7 +732,7 @@
                 KnownIdDef::TypeFloat(<span class="kw">match </span>inst.imms[<span class="number">0</span>] {
                     spv::Imm::Short(kind, n) =&gt; {
                         <span class="macro">assert_eq!</span>(kind, wk.LiteralInteger);
-                        n.try_into().ok().ok_or_else(|| invalid(<span class="string">&quot;Width cannot be 0&quot;</span>))<span class="question-mark">?
+                        n.try_into().ok().ok_or_else(|| invalid(<span class="string">"Width cannot be 0"</span>))<span class="question-mark">?
                     </span>}
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 })
@@ -742,7 +742,7 @@
 
             <span class="kw">let </span>old = <span class="self">self</span>.known_ids.insert(id, known_id_def);
             <span class="kw">if </span>old.is_some() {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;ID %{id} is a result of multiple instructions&quot;</span>)));
+                <span class="kw">return </span><span class="prelude-val">Err</span>(invalid(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"ID %{id} is a result of multiple instructions"</span>)));
             }
 
             <span class="prelude-val">Ok</span>(())

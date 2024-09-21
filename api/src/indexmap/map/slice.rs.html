@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.1.0/src/map/slice.rs`."><title>slice.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../indexmap/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.5.0/src/map/slice.rs`."><title>slice.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../indexmap/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -537,7 +537,6 @@
 <a href="#537" id="537">537</a>
 <a href="#538" id="538">538</a>
 <a href="#539" id="539">539</a>
-<a href="#540" id="540">540</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{
     Bucket, Entries, IndexMap, IntoIter, IntoKeys, IntoValues, Iter, IterMut, Keys, Values,
     ValuesMut,
@@ -551,13 +550,13 @@
 <span class="kw">use </span>core::hash::{Hash, Hasher};
 <span class="kw">use </span>core::ops::{<span class="self">self</span>, Bound, Index, IndexMut, RangeBounds};
 
-<span class="doccomment">/// A dynamically-sized slice of key-value pairs in an `IndexMap`.
+<span class="doccomment">/// A dynamically-sized slice of key-value pairs in an [`IndexMap`].
 ///
 /// This supports indexed operations much like a `[(K, V)]` slice,
 /// but not any hashed operations on the map keys.
 ///
-/// Unlike `IndexMap`, `Slice` does consider the order for `PartialEq`
-/// and `Eq`, and it also implements `PartialOrd`, `Ord`, and `Hash`.
+/// Unlike `IndexMap`, `Slice` does consider the order for [`PartialEq`]
+/// and [`Eq`], and it also implements [`PartialOrd`], [`Ord`], and [`Hash`].
 </span><span class="attr">#[repr(transparent)]
 </span><span class="kw">pub struct </span>Slice&lt;K, V&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) entries: [Bucket&lt;K, V&gt;],
@@ -590,12 +589,12 @@
     }
 
     <span class="doccomment">/// Returns an empty slice.
-    </span><span class="kw">pub const fn </span>new&lt;<span class="lifetime">&#39;a</span>&gt;() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">Self </span>{
+    </span><span class="kw">pub const fn </span>new&lt;<span class="lifetime">'a</span>&gt;() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self </span>{
         <span class="self">Self</span>::from_slice(<span class="kw-2">&amp;</span>[])
     }
 
     <span class="doccomment">/// Returns an empty mutable slice.
-    </span><span class="kw">pub fn </span>new_mut&lt;<span class="lifetime">&#39;a</span>&gt;() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>new_mut&lt;<span class="lifetime">'a</span>&gt;() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="self">Self </span>{
         <span class="self">Self</span>::from_mut_slice(<span class="kw-2">&amp;mut </span>[])
     }
 
@@ -718,17 +717,17 @@
     }
 
     <span class="doccomment">/// Return an iterator over the key-value pairs of the map slice.
-    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">'_</span>, K, V&gt; {
         Iter::new(<span class="kw-2">&amp;</span><span class="self">self</span>.entries)
     }
 
     <span class="doccomment">/// Return an iterator over the key-value pairs of the map slice.
-    </span><span class="kw">pub fn </span>iter_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; IterMut&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+    </span><span class="kw">pub fn </span>iter_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; IterMut&lt;<span class="lifetime">'_</span>, K, V&gt; {
         IterMut::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.entries)
     }
 
     <span class="doccomment">/// Return an iterator over the keys of the map slice.
-    </span><span class="kw">pub fn </span>keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Keys&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+    </span><span class="kw">pub fn </span>keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Keys&lt;<span class="lifetime">'_</span>, K, V&gt; {
         Keys::new(<span class="kw-2">&amp;</span><span class="self">self</span>.entries)
     }
 
@@ -738,12 +737,12 @@
     }
 
     <span class="doccomment">/// Return an iterator over the values of the map slice.
-    </span><span class="kw">pub fn </span>values(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Values&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+    </span><span class="kw">pub fn </span>values(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Values&lt;<span class="lifetime">'_</span>, K, V&gt; {
         Values::new(<span class="kw-2">&amp;</span><span class="self">self</span>.entries)
     }
 
     <span class="doccomment">/// Return an iterator over mutable references to the the values of the map slice.
-    </span><span class="kw">pub fn </span>values_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; ValuesMut&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
+    </span><span class="kw">pub fn </span>values_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; ValuesMut&lt;<span class="lifetime">'_</span>, K, V&gt; {
         ValuesMut::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.entries)
     }
 
@@ -774,9 +773,9 @@
     ///
     /// Computes in **O(log(n))** time.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>binary_search_by&lt;<span class="lifetime">&#39;a</span>, F&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Result</span>&lt;usize, usize&gt;
+    </span><span class="kw">pub fn </span>binary_search_by&lt;<span class="lifetime">'a</span>, F&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Result</span>&lt;usize, usize&gt;
     <span class="kw">where
-        </span>F: FnMut(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V) -&gt; Ordering,
+        </span>F: FnMut(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>V) -&gt; Ordering,
     {
         <span class="self">self</span>.entries.binary_search_by(<span class="kw">move </span>|a| f(<span class="kw-2">&amp;</span>a.key, <span class="kw-2">&amp;</span>a.value))
     }
@@ -788,9 +787,9 @@
     ///
     /// Computes in **O(log(n))** time.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>binary_search_by_key&lt;<span class="lifetime">&#39;a</span>, B, F&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, b: <span class="kw-2">&amp;</span>B, <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Result</span>&lt;usize, usize&gt;
+    </span><span class="kw">pub fn </span>binary_search_by_key&lt;<span class="lifetime">'a</span>, B, F&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, b: <span class="kw-2">&amp;</span>B, <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Result</span>&lt;usize, usize&gt;
     <span class="kw">where
-        </span>F: FnMut(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V) -&gt; B,
+        </span>F: FnMut(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>V) -&gt; B,
         B: Ord,
     {
         <span class="self">self</span>.binary_search_by(|k, v| f(k, v).cmp(b))
@@ -812,18 +811,18 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Slice&lt;K, V&gt; {
-    <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">&#39;a</span>, K, V&gt;;
-    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>V);
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>Slice&lt;K, V&gt; {
+    <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">'a</span>, K, V&gt;;
+    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">'a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>V);
 
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
         <span class="self">self</span>.iter()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Slice&lt;K, V&gt; {
-    <span class="kw">type </span>IntoIter = IterMut&lt;<span class="lifetime">&#39;a</span>, K, V&gt;;
-    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V);
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Slice&lt;K, V&gt; {
+    <span class="kw">type </span>IntoIter = IterMut&lt;<span class="lifetime">'a</span>, K, V&gt;;
+    <span class="kw">type </span>Item = (<span class="kw-2">&amp;</span><span class="lifetime">'a </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V);
 
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
         <span class="self">self</span>.iter_mut()
@@ -839,13 +838,13 @@
     }
 }
 
-<span class="kw">impl</span>&lt;K, V&gt; Default <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span>Slice&lt;K, V&gt; {
+<span class="kw">impl</span>&lt;K, V&gt; Default <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'_ </span>Slice&lt;K, V&gt; {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         Slice::from_slice(<span class="kw-2">&amp;</span>[])
     }
 }
 
-<span class="kw">impl</span>&lt;K, V&gt; Default <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw-2">mut </span>Slice&lt;K, V&gt; {
+<span class="kw">impl</span>&lt;K, V&gt; Default <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'_ </span><span class="kw-2">mut </span>Slice&lt;K, V&gt; {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         Slice::from_mut_slice(<span class="kw-2">&amp;mut </span>[])
     }
@@ -870,7 +869,7 @@
 }
 
 <span class="kw">impl</span>&lt;K: fmt::Debug, V: fmt::Debug&gt; fmt::Debug <span class="kw">for </span>Slice&lt;K, V&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         f.debug_list().entries(<span class="self">self</span>).finish()
     }
 }
@@ -919,10 +918,10 @@
     }
 }
 
-<span class="comment">// We can&#39;t have `impl&lt;I: RangeBounds&lt;usize&gt;&gt; Index&lt;I&gt;` because that conflicts
+<span class="comment">// We can't have `impl&lt;I: RangeBounds&lt;usize&gt;&gt; Index&lt;I&gt;` because that conflicts
 // both upstream with `Index&lt;usize&gt;` and downstream with `Index&lt;&amp;Q&gt;`.
 // Instead, we repeat the implementations for all the core range types.
-</span><span class="macro">macro_rules! </span>impl_index {
+</span><span class="macro">macro_rules!</span> impl_index {
     ($(<span class="macro-nonterminal">$range</span>:ty),<span class="kw-2">*</span>) =&gt; {$(
         <span class="kw">impl</span>&lt;K, V, S&gt; Index&lt;<span class="macro-nonterminal">$range</span>&gt; <span class="kw">for </span>IndexMap&lt;K, V, S&gt; {
             <span class="kw">type </span>Output = Slice&lt;K, V&gt;;
@@ -966,7 +965,6 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span>alloc::vec::Vec;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>slice_index() {

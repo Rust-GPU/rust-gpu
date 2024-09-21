@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/abi.rs`."><title>abi.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/abi.rs`."><title>abi.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -983,7 +983,13 @@
 <a href="#983" id="983">983</a>
 <a href="#984" id="984">984</a>
 <a href="#985" id="985">985</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! This file is responsible for translation from rustc tys (`TyAndLayout`) to spir-v types. It&#39;s
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! This file is responsible for translation from rustc tys (`TyAndLayout`) to spir-v types. It's
 //! surprisingly difficult.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::attr::{AggregatedSpirvAttributes, IntrinsicType};
@@ -997,8 +1003,7 @@
 <span class="kw">use </span>rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
 <span class="kw">use </span>rustc_middle::ty::GenericArgsRef;
 <span class="kw">use </span>rustc_middle::ty::{
-    <span class="self">self</span>, Const, FloatTy, GeneratorArgs, IntTy, ParamEnv, PolyFnSig, Ty, TyCtxt, TyKind,
-    TypeAndMut, UintTy,
+    <span class="self">self</span>, Const, CoroutineArgs, FloatTy, IntTy, ParamEnv, PolyFnSig, Ty, TyCtxt, TyKind, UintTy,
 };
 <span class="kw">use </span>rustc_middle::{bug, span_bug};
 <span class="kw">use </span>rustc_span::def_id::DefId;
@@ -1016,17 +1021,17 @@
 <span class="kw">use </span>num_traits::cast::FromPrimitive;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>provide(providers: <span class="kw-2">&amp;mut </span>Providers) {
-    <span class="comment">// This is a lil weird: so, we obviously don&#39;t support C ABIs at all. However, libcore does declare some extern
+    <span class="comment">// This is a lil weird: so, we obviously don't support C ABIs at all. However, libcore does declare some extern
     // C functions:
     // https://github.com/rust-lang/rust/blob/5fae56971d8487088c0099c82c0a5ce1638b5f62/library/core/src/slice/cmp.rs#L119
     // However, those functions will be implemented by compiler-builtins:
     // https://github.com/rust-lang/rust/blob/5fae56971d8487088c0099c82c0a5ce1638b5f62/library/core/src/lib.rs#L23-L27
-    // This theoretically then should be fine to leave as C, but, there&#39;s no backend hook for
+    // This theoretically then should be fine to leave as C, but, there's no backend hook for
     // `FnAbi::adjust_for_cabi`, causing it to panic:
     // https://github.com/rust-lang/rust/blob/5fae56971d8487088c0099c82c0a5ce1638b5f62/compiler/rustc_target/src/abi/call/mod.rs#L603
-    // So, treat any `extern &quot;C&quot;` functions as `extern &quot;unadjusted&quot;`, to be able to compile libcore with arch=spirv.
+    // So, treat any `extern "C"` functions as `extern "unadjusted"`, to be able to compile libcore with arch=spirv.
     </span>providers.fn_sig = |tcx, def_id| {
-        <span class="comment">// We can&#39;t capture the old fn_sig and just call that, because fn_sig is a `fn`, not a `Fn`, i.e. it can&#39;t
+        <span class="comment">// We can't capture the old fn_sig and just call that, because fn_sig is a `fn`, not a `Fn`, i.e. it can't
         // capture variables. Fortunately, the defaults are exposed (thanks rustdoc), so use that instead.
         </span><span class="kw">let </span>result = (rustc_interface::DEFAULT_QUERY_PROVIDERS.fn_sig)(tcx, def_id);
         result.map_bound(|outer| {
@@ -1043,12 +1048,15 @@
     // use features like `PassMode::Cast`, that are incompatible with SPIR-V.
     // By hooking the queries computing `FnAbi`s, we can recompute the `FnAbi`
     // from the return/args layouts, to e.g. prefer using `PassMode::Direct`.
-    </span><span class="kw">fn </span>readjust_fn_abi&lt;<span class="lifetime">&#39;tcx</span>&gt;(
-        tcx: TyCtxt&lt;<span class="lifetime">&#39;tcx</span>&gt;,
-        fn_abi: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>FnAbi&lt;<span class="lifetime">&#39;tcx</span>, Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt;,
-    ) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>FnAbi&lt;<span class="lifetime">&#39;tcx</span>, Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt; {
-        <span class="kw">let </span>readjust_arg_abi = |arg: <span class="kw-2">&amp;</span>ArgAbi&lt;<span class="lifetime">&#39;tcx</span>, Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt;| {
+    </span><span class="kw">fn </span>readjust_fn_abi&lt;<span class="lifetime">'tcx</span>&gt;(
+        tcx: TyCtxt&lt;<span class="lifetime">'tcx</span>&gt;,
+        fn_abi: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>FnAbi&lt;<span class="lifetime">'tcx</span>, Ty&lt;<span class="lifetime">'tcx</span>&gt;&gt;,
+    ) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>FnAbi&lt;<span class="lifetime">'tcx</span>, Ty&lt;<span class="lifetime">'tcx</span>&gt;&gt; {
+        <span class="kw">let </span>readjust_arg_abi = |arg: <span class="kw-2">&amp;</span>ArgAbi&lt;<span class="lifetime">'tcx</span>, Ty&lt;<span class="lifetime">'tcx</span>&gt;&gt;| {
             <span class="kw">let </span><span class="kw-2">mut </span>arg = ArgAbi::new(<span class="kw-2">&amp;</span>tcx, arg.layout, |<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>| ArgAttributes::new());
+            <span class="comment">// FIXME: this is bad! https://github.com/rust-lang/rust/issues/115666
+            // &lt;https://github.com/rust-lang/rust/commit/eaaa03faf77b157907894a4207d8378ecaec7b45&gt;
+            </span>arg.make_direct_deprecated();
 
             <span class="comment">// Avoid pointlessly passing ZSTs, just like the official Rust ABI.
             </span><span class="kw">if </span>arg.layout.is_zst() {
@@ -1062,7 +1070,7 @@
             ret: readjust_arg_abi(<span class="kw-2">&amp;</span>fn_abi.ret),
 
             <span class="comment">// FIXME(eddyb) validate some of these, and report errors - however,
-            // we can&#39;t just emit errors from here, since we have no `Span`, so
+            // we can't just emit errors from here, since we have no `Span`, so
             // we should have instead a check on MIR for e.g. C variadic calls.
             </span>c_variadic: fn_abi.c_variadic,
             fixed_count: fn_abi.fixed_count,
@@ -1081,7 +1089,9 @@
 
     <span class="comment">// FIXME(eddyb) remove this by deriving `Clone` for `LayoutS` upstream.
     // FIXME(eddyb) the `S` suffix is a naming antipattern, rename upstream.
-    </span><span class="kw">fn </span>clone_layout(layout: <span class="kw-2">&amp;</span>LayoutS) -&gt; LayoutS {
+    </span><span class="kw">fn </span>clone_layout&lt;FieldIdx: Idx, VariantIdx: Idx&gt;(
+        layout: <span class="kw-2">&amp;</span>LayoutS&lt;FieldIdx, VariantIdx&gt;,
+    ) -&gt; LayoutS&lt;FieldIdx, VariantIdx&gt; {
         <span class="kw">let </span>LayoutS {
             <span class="kw-2">ref </span>fields,
             <span class="kw-2">ref </span>variants,
@@ -1161,26 +1171,26 @@
 
 <span class="doccomment">/// If a struct contains a pointer to itself, even indirectly, then doing a naiive recursive walk
 /// of the fields will result in an infinite loop. Because pointers are the only thing that are
-/// allowed to be recursive, keep track of what pointers we&#39;ve translated, or are currently in the
+/// allowed to be recursive, keep track of what pointers we've translated, or are currently in the
 /// progress of translating, and break the recursion that way. This struct manages that state
 /// tracking.
 </span><span class="attr">#[derive(Default)]
-</span><span class="kw">pub struct </span>RecursivePointeeCache&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    map: RefCell&lt;FxHashMap&lt;PointeeTy&lt;<span class="lifetime">&#39;tcx</span>&gt;, PointeeDefState&gt;&gt;,
+</span><span class="kw">pub struct </span>RecursivePointeeCache&lt;<span class="lifetime">'tcx</span>&gt; {
+    map: RefCell&lt;FxHashMap&lt;PointeeTy&lt;<span class="lifetime">'tcx</span>&gt;, PointeeDefState&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; RecursivePointeeCache&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">fn </span>begin(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;, span: Span, pointee: PointeeTy&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Word&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; RecursivePointeeCache&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">fn </span>begin(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;, span: Span, pointee: PointeeTy&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Word&gt; {
         <span class="kw">match </span><span class="self">self</span>.map.borrow_mut().entry(pointee) {
-            <span class="comment">// State: This is the first time we&#39;ve seen this type. Record that we&#39;re beginning to translate this type,
+            <span class="comment">// State: This is the first time we've seen this type. Record that we're beginning to translate this type,
             // and start doing the translation.
             </span>Entry::Vacant(entry) =&gt; {
                 entry.insert(PointeeDefState::Defining);
                 <span class="prelude-val">None
             </span>}
             Entry::Occupied(<span class="kw-2">mut </span>entry) =&gt; <span class="kw">match </span><span class="kw-2">*</span>entry.get() {
-                <span class="comment">// State: This is the second time we&#39;ve seen this type, and we&#39;re already translating this type. If we
-                // were to try to translate the type now, we&#39;d get a stack overflow, due to continually recursing. So,
+                <span class="comment">// State: This is the second time we've seen this type, and we're already translating this type. If we
+                // were to try to translate the type now, we'd get a stack overflow, due to continually recursing. So,
                 // emit an OpTypeForwardPointer, and use that ID. (This is the juicy part of this algorithm)
                 </span>PointeeDefState::Defining =&gt; {
                     <span class="kw">let </span>new_id = cx.emit_global().id();
@@ -1193,12 +1203,12 @@
                     cx.zombie_with_span(
                         new_id,
                         span,
-                        <span class="string">&quot;cannot create self-referential types, even through pointers&quot;</span>,
+                        <span class="string">"cannot create self-referential types, even through pointers"</span>,
                     );
                     <span class="prelude-val">Some</span>(new_id)
                 }
-                <span class="comment">// State: This is the third or more time we&#39;ve seen this type, and we&#39;ve already emitted an
-                // OpTypeForwardPointer. Just use the ID we&#39;ve already emitted. (Alternatively, we already defined this
+                <span class="comment">// State: This is the third or more time we've seen this type, and we've already emitted an
+                // OpTypeForwardPointer. Just use the ID we've already emitted. (Alternatively, we already defined this
                 // type, so just use that.)
                 </span>PointeeDefState::DefiningWithForward(id) | PointeeDefState::Defined(id) =&gt; <span class="prelude-val">Some</span>(id),
             },
@@ -1207,15 +1217,15 @@
 
     <span class="kw">fn </span>end(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+        cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
         span: Span,
-        pointee: PointeeTy&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+        pointee: PointeeTy&lt;<span class="lifetime">'tcx</span>&gt;,
         pointee_spv: Word,
     ) -&gt; Word {
         <span class="kw">match </span><span class="self">self</span>.map.borrow_mut().entry(pointee) {
             <span class="comment">// We should have hit begin() on this type already, which always inserts an entry.
             </span>Entry::Vacant(<span class="kw">_</span>) =&gt; {
-                <span class="macro">span_bug!</span>(span, <span class="string">&quot;RecursivePointeeCache::end should always have entry&quot;</span>)
+                <span class="macro">span_bug!</span>(span, <span class="string">"RecursivePointeeCache::end should always have entry"</span>)
             }
             Entry::Occupied(<span class="kw-2">mut </span>entry) =&gt; <span class="kw">match </span><span class="kw-2">*</span>entry.get() {
                 <span class="comment">// State: There have been no recursive references to this type while defining it, and so no
@@ -1238,7 +1248,7 @@
                     .def_with_id(cx, span, id)
                 }
                 PointeeDefState::Defined(<span class="kw">_</span>) =&gt; {
-                    <span class="macro">span_bug!</span>(span, <span class="string">&quot;RecursivePointeeCache::end defined pointer twice&quot;</span>)
+                    <span class="macro">span_bug!</span>(span, <span class="string">"RecursivePointeeCache::end defined pointer twice"</span>)
                 }
             },
         }
@@ -1246,16 +1256,16 @@
 }
 
 <span class="attr">#[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
-</span><span class="kw">enum </span>PointeeTy&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    Ty(TyAndLayout&lt;<span class="lifetime">&#39;tcx</span>&gt;),
-    Fn(PolyFnSig&lt;<span class="lifetime">&#39;tcx</span>&gt;),
+</span><span class="kw">enum </span>PointeeTy&lt;<span class="lifetime">'tcx</span>&gt; {
+    Ty(TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;),
+    Fn(PolyFnSig&lt;<span class="lifetime">'tcx</span>&gt;),
 }
 
-<span class="kw">impl </span>fmt::Display <span class="kw">for </span>PointeeTy&lt;<span class="lifetime">&#39;_</span>&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>PointeeTy&lt;<span class="lifetime">'_</span>&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="self">self </span>{
-            PointeeTy::Ty(ty) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, ty.ty),
-            PointeeTy::Fn(ty) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{ty}&quot;</span>),
+            PointeeTy::Ty(ty) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, ty.ty),
+            PointeeTy::Fn(ty) =&gt; <span class="macro">write!</span>(f, <span class="string">"{ty}"</span>),
         }
     }
 }
@@ -1268,12 +1278,12 @@
 
 <span class="doccomment">/// Various type-like things can be converted to a spirv type - normal types, function types, etc. - and this trait
 /// provides a uniform way of translating them.
-</span><span class="kw">pub trait </span>ConvSpirvType&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">fn </span>spirv_type(<span class="kw-2">&amp;</span><span class="self">self</span>, span: Span, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; Word;
+</span><span class="kw">pub trait </span>ConvSpirvType&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">fn </span>spirv_type(<span class="kw-2">&amp;</span><span class="self">self</span>, span: Span, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; Word;
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; ConvSpirvType&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>PointeeTy&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">fn </span>spirv_type(<span class="kw-2">&amp;</span><span class="self">self</span>, span: Span, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; Word {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; ConvSpirvType&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>PointeeTy&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">fn </span>spirv_type(<span class="kw-2">&amp;</span><span class="self">self</span>, span: Span, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; Word {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             PointeeTy::Ty(ty) =&gt; ty.spirv_type(span, cx),
             PointeeTy::Fn(ty) =&gt; cx
@@ -1283,8 +1293,8 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; ConvSpirvType&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>FnAbi&lt;<span class="lifetime">&#39;tcx</span>, Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt; {
-    <span class="kw">fn </span>spirv_type(<span class="kw-2">&amp;</span><span class="self">self</span>, span: Span, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; Word {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; ConvSpirvType&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>FnAbi&lt;<span class="lifetime">'tcx</span>, Ty&lt;<span class="lifetime">'tcx</span>&gt;&gt; {
+    <span class="kw">fn </span>spirv_type(<span class="kw-2">&amp;</span><span class="self">self</span>, span: Span, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; Word {
         <span class="comment">// FIXME(eddyb) use `AccumulateVec`s just like `rustc` itself does.
         </span><span class="kw">let </span><span class="kw-2">mut </span>argument_types = Vec::new();
 
@@ -1293,7 +1303,7 @@
             PassMode::Direct(<span class="kw">_</span>) | PassMode::Pair(..) =&gt; <span class="self">self</span>.ret.layout.spirv_type(span, cx),
             PassMode::Cast { .. } | PassMode::Indirect { .. } =&gt; <span class="macro">span_bug!</span>(
                 span,
-                <span class="string">&quot;query hooks should&#39;ve made this `PassMode` impossible: {:#?}&quot;</span>,
+                <span class="string">"query hooks should've made this `PassMode` impossible: {:#?}"</span>,
                 <span class="self">self</span>.ret
             ),
         };
@@ -1309,7 +1319,7 @@
                 }
                 PassMode::Cast { .. } | PassMode::Indirect { .. } =&gt; <span class="macro">span_bug!</span>(
                     span,
-                    <span class="string">&quot;query hooks should&#39;ve made this `PassMode` impossible: {:#?}&quot;</span>,
+                    <span class="string">"query hooks should've made this `PassMode` impossible: {:#?}"</span>,
                     arg
                 ),
             };
@@ -1324,8 +1334,8 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; ConvSpirvType&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>TyAndLayout&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">fn </span>spirv_type(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>span: Span, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; Word {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; ConvSpirvType&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">fn </span>spirv_type(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>span: Span, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; Word {
         <span class="kw">if let </span>TyKind::Adt(adt, args) = <span class="kw-2">*</span><span class="self">self</span>.ty.kind() {
             <span class="kw">if </span>span == DUMMY_SP {
                 span = cx.tcx.def_span(adt.did());
@@ -1344,7 +1354,7 @@
 
         <span class="comment">// Note: ty.layout is orthogonal to ty.ty, e.g. `ManuallyDrop&lt;Result&lt;isize, isize&gt;&gt;` has abi
         // `ScalarPair`.
-        // There&#39;s a few layers that we go through here. First we inspect layout.abi, then if relevant, layout.fields, etc.
+        // There's a few layers that we go through here. First we inspect layout.abi, then if relevant, layout.fields, etc.
         </span><span class="kw">match </span><span class="self">self</span>.abi {
             Abi::Uninhabited =&gt; SpirvType::Adt {
                 def_id: def_id_for_spirv_type_adt(<span class="kw-2">*</span><span class="self">self</span>),
@@ -1357,18 +1367,18 @@
             .def_with_name(cx, span, TyLayoutNameKey::from(<span class="kw-2">*</span><span class="self">self</span>)),
             Abi::Scalar(scalar) =&gt; trans_scalar(cx, span, <span class="kw-2">*</span><span class="self">self</span>, scalar, Size::ZERO),
             Abi::ScalarPair(a, b) =&gt; {
-                <span class="comment">// NOTE(eddyb) unlike `Abi::Scalar`&#39;s simpler newtype-unpacking
+                <span class="comment">// NOTE(eddyb) unlike `Abi::Scalar`'s simpler newtype-unpacking
                 // behavior, `Abi::ScalarPair` can be composed in two ways:
                 // * two `Abi::Scalar` fields (and any number of ZST fields),
                 //   gets handled the same as a `struct { a, b }`, further below
                 // * an `Abi::ScalarPair` field (and any number of ZST fields),
                 //   which requires more work to allow taking a reference to
                 //   that field, and there are two potential approaches:
-                //   1. wrapping that field&#39;s SPIR-V type in a single-field
+                //   1. wrapping that field's SPIR-V type in a single-field
                 //      `OpTypeStruct` - this has the disadvantage that GEPs
                 //      would have to inject an extra `0` field index, and other
                 //      field-related operations would also need additional work
-                //   2. reusing that field&#39;s SPIR-V type, instead of defining
+                //   2. reusing that field's SPIR-V type, instead of defining
                 //      a new one, offering the `(a, b)` shape `rustc_codegen_ssa`
                 //      expects, while letting noop pointercasts access the sole
                 //      `Abi::ScalarPair` field - this is the approach taken here
@@ -1391,7 +1401,7 @@
                     }
                 }
 
-                <span class="comment">// Note: We can&#39;t use auto_struct_layout here because the spirv types here might be undefined due to
+                <span class="comment">// Note: We can't use auto_struct_layout here because the spirv types here might be undefined due to
                 // recursive pointer types.
                 </span><span class="kw">let </span>a_offset = Size::ZERO;
                 <span class="kw">let </span>b_offset = a.primitive().size(cx).align_to(b.primitive().align(cx).abi);
@@ -1439,19 +1449,19 @@
     }
 }
 
-<span class="doccomment">/// Only pub for `LayoutTypeMethods::scalar_pair_element_backend_type`. Think about what you&#39;re
+<span class="doccomment">/// Only pub for `LayoutTypeMethods::scalar_pair_element_backend_type`. Think about what you're
 /// doing before calling this.
-</span><span class="kw">pub fn </span>scalar_pair_element_backend_type&lt;<span class="lifetime">&#39;tcx</span>&gt;(
-    cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+</span><span class="kw">pub fn </span>scalar_pair_element_backend_type&lt;<span class="lifetime">'tcx</span>&gt;(
+    cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
     span: Span,
-    ty: TyAndLayout&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+    ty: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;,
     index: usize,
 ) -&gt; Word {
     <span class="kw">let </span>[a, b] = <span class="kw">match </span>ty.layout.abi() {
         Abi::ScalarPair(a, b) =&gt; [a, b],
         other =&gt; <span class="macro">span_bug!</span>(
             span,
-            <span class="string">&quot;scalar_pair_element_backend_type invalid abi: {:?}&quot;</span>,
+            <span class="string">"scalar_pair_element_backend_type invalid abi: {:?}"</span>,
             other
         ),
     };
@@ -1463,17 +1473,17 @@
     trans_scalar(cx, span, ty, [a, b][index], offset)
 }
 
-<span class="doccomment">/// A &quot;scalar&quot; is a basic building block: bools, ints, floats, pointers. (i.e. not something complex like a struct)
-/// A &quot;scalar pair&quot; is a bit of a strange concept: if there is a `fn f(x: (u32, u32))`, then what&#39;s preferred for
+<span class="doccomment">/// A "scalar" is a basic building block: bools, ints, floats, pointers. (i.e. not something complex like a struct)
+/// A "scalar pair" is a bit of a strange concept: if there is a `fn f(x: (u32, u32))`, then what's preferred for
 /// performance is to compile that ABI to `f(x_1: u32, x_2: u32)`, i.e. splitting out the pair into their own arguments,
-/// and pretending that they&#39;re one unit. So, there&#39;s quite a bit of special handling around these scalar pairs to enable
+/// and pretending that they're one unit. So, there's quite a bit of special handling around these scalar pairs to enable
 /// scenarios like that.
-/// I say it&#39;s &quot;preferred&quot;, but spirv doesn&#39;t really care - only CPU ABIs really care here. However, following rustc&#39;s
-/// lead and doing what they want makes things go smoothly, so we&#39;ll implement it here too.
-</span><span class="kw">fn </span>trans_scalar&lt;<span class="lifetime">&#39;tcx</span>&gt;(
-    cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+/// I say it's "preferred", but spirv doesn't really care - only CPU ABIs really care here. However, following rustc's
+/// lead and doing what they want makes things go smoothly, so we'll implement it here too.
+</span><span class="kw">fn </span>trans_scalar&lt;<span class="lifetime">'tcx</span>&gt;(
+    cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
     span: Span,
-    ty: TyAndLayout&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+    ty: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;,
     scalar: Scalar,
     offset: Size,
 ) -&gt; Word {
@@ -1485,11 +1495,13 @@
         Primitive::Int(width, signedness) =&gt; {
             SpirvType::Integer(width.size().bits() <span class="kw">as </span>u32, signedness).def(span, cx)
         }
+        Primitive::F16 =&gt; SpirvType::Float(<span class="number">16</span>).def(span, cx),
         Primitive::F32 =&gt; SpirvType::Float(<span class="number">32</span>).def(span, cx),
         Primitive::F64 =&gt; SpirvType::Float(<span class="number">64</span>).def(span, cx),
+        Primitive::F128 =&gt; SpirvType::Float(<span class="number">128</span>).def(span, cx),
         Primitive::Pointer(<span class="kw">_</span>) =&gt; {
             <span class="kw">let </span>pointee_ty = dig_scalar_pointee(cx, ty, offset);
-            <span class="comment">// Pointers can be recursive. So, record what we&#39;re currently translating, and if we&#39;re already translating
+            <span class="comment">// Pointers can be recursive. So, record what we're currently translating, and if we're already translating
             // the same type, emit an OpTypeForwardPointer and use that ID.
             </span><span class="kw">if let </span><span class="prelude-val">Some</span>(predefined_result) = cx
                 .type_cache
@@ -1508,28 +1520,28 @@
 }
 
 <span class="comment">// This is a really weird function, strap in...
-// So, rustc_codegen_ssa is designed around scalar pointers being opaque, you shouldn&#39;t know the type behind the
-// pointer. Unfortunately, that&#39;s impossible for us, we need to know the underlying pointee type for various reasons. In
-// some cases, this is pretty easy - if it&#39;s a TyKind::Ref, then the pointee will be the pointee of the ref (with
-// handling for wide pointers, etc.). Unfortunately, there&#39;s some pretty advanced processing going on in cx.layout_of:
+// So, rustc_codegen_ssa is designed around scalar pointers being opaque, you shouldn't know the type behind the
+// pointer. Unfortunately, that's impossible for us, we need to know the underlying pointee type for various reasons. In
+// some cases, this is pretty easy - if it's a TyKind::Ref, then the pointee will be the pointee of the ref (with
+// handling for wide pointers, etc.). Unfortunately, there's some pretty advanced processing going on in cx.layout_of:
 // for example, `ManuallyDrop&lt;Result&lt;ptr, ptr&gt;&gt;` has abi `ScalarPair`. This means that to figure out the pointee type,
 // we have to replicate the logic of cx.layout_of. Part of that is digging into types that are aggregates: for example,
-// ManuallyDrop&lt;T&gt; has a single field of type T. We &quot;dig into&quot; that field, and recurse, trying to find a base case that
+// ManuallyDrop&lt;T&gt; has a single field of type T. We "dig into" that field, and recurse, trying to find a base case that
 // we can handle, like TyKind::Ref.
-// If the above didn&#39;t make sense, please poke Ashley, it&#39;s probably easier to explain via conversation.
-</span><span class="kw">fn </span>dig_scalar_pointee&lt;<span class="lifetime">&#39;tcx</span>&gt;(
-    cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;,
-    layout: TyAndLayout&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+// If the above didn't make sense, please poke Ashley, it's probably easier to explain via conversation.
+</span><span class="kw">fn </span>dig_scalar_pointee&lt;<span class="lifetime">'tcx</span>&gt;(
+    cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
+    layout: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;,
     offset: Size,
-) -&gt; PointeeTy&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+) -&gt; PointeeTy&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">if let </span>FieldsShape::Primitive = layout.fields {
         <span class="macro">assert_eq!</span>(offset, Size::ZERO);
         <span class="kw">let </span>pointee = <span class="kw">match </span><span class="kw-2">*</span>layout.ty.kind() {
-            TyKind::Ref(<span class="kw">_</span>, pointee_ty, <span class="kw">_</span>) | TyKind::RawPtr(TypeAndMut { ty: pointee_ty, .. }) =&gt; {
+            TyKind::Ref(<span class="kw">_</span>, pointee_ty, <span class="kw">_</span>) | TyKind::RawPtr(pointee_ty, <span class="kw">_</span>) =&gt; {
                 PointeeTy::Ty(cx.layout_of(pointee_ty))
             }
             TyKind::FnPtr(sig) =&gt; PointeeTy::Fn(sig),
-            <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(<span class="string">&quot;Pointer is not `&amp;T`, `*T` or `fn` pointer: {:#?}&quot;</span>, layout),
+            <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(<span class="string">"Pointer is not `&amp;T`, `*T` or `fn` pointer: {:#?}"</span>, layout),
         };
         <span class="kw">return </span>pointee;
     }
@@ -1560,9 +1572,9 @@
             <span class="kw">let </span>new_pointee = dig_scalar_pointee(cx, field, offset - field_offset);
             <span class="kw">match </span>pointee {
                 <span class="prelude-val">Some</span>(old_pointee) <span class="kw">if </span>old_pointee != new_pointee =&gt; {
-                    cx.tcx.sess.fatal(<span class="macro">format!</span>(
-                        <span class="string">&quot;dig_scalar_pointee: unsupported Pointer with different \
-                         pointee types ({old_pointee:?} vs {new_pointee:?}) at offset {offset:?} in {layout:#?}&quot;
+                    cx.tcx.dcx().fatal(<span class="macro">format!</span>(
+                        <span class="string">"dig_scalar_pointee: unsupported Pointer with different \
+                         pointee types ({old_pointee:?} vs {new_pointee:?}) at offset {offset:?} in {layout:#?}"
                     </span>));
                 }
                 <span class="kw">_ </span>=&gt; pointee = <span class="prelude-val">Some</span>(new_pointee),
@@ -1571,7 +1583,7 @@
     }
     pointee.unwrap_or_else(|| {
         <span class="macro">bug!</span>(
-            <span class="string">&quot;field containing Pointer scalar at offset {:?} not found in {:#?}&quot;</span>,
+            <span class="string">"field containing Pointer scalar at offset {:?} not found in {:#?}"</span>,
             offset,
             layout
         )
@@ -1579,9 +1591,9 @@
 }
 
 <span class="comment">// FIXME(eddyb) all `ty: TyAndLayout` variables should be `layout: TyAndLayout`,
-// the type is really more &quot;Layout with Ty&quot; (`.ty` field + `Deref`s to `Layout`).
-</span><span class="kw">fn </span>trans_aggregate&lt;<span class="lifetime">&#39;tcx</span>&gt;(cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;, span: Span, ty: TyAndLayout&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; Word {
-    <span class="kw">fn </span>create_zst&lt;<span class="lifetime">&#39;tcx</span>&gt;(cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;, span: Span, ty: TyAndLayout&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; Word {
+// the type is really more "Layout with Ty" (`.ty` field + `Deref`s to `Layout`).
+</span><span class="kw">fn </span>trans_aggregate&lt;<span class="lifetime">'tcx</span>&gt;(cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;, span: Span, ty: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; Word {
+    <span class="kw">fn </span>create_zst&lt;<span class="lifetime">'tcx</span>&gt;(cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;, span: Span, ty: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; Word {
         SpirvType::Adt {
             def_id: def_id_for_spirv_type_adt(ty),
             size: <span class="prelude-val">Some</span>(Size::ZERO),
@@ -1595,17 +1607,17 @@
     <span class="kw">match </span>ty.fields {
         FieldsShape::Primitive =&gt; <span class="macro">span_bug!</span>(
             span,
-            <span class="string">&quot;trans_aggregate called for FieldsShape::Primitive layout {:#?}&quot;</span>,
+            <span class="string">"trans_aggregate called for FieldsShape::Primitive layout {:#?}"</span>,
             ty
         ),
         FieldsShape::Union(<span class="kw">_</span>) =&gt; {
-            <span class="macro">assert!</span>(!ty.is_unsized(), <span class="string">&quot;{ty:#?}&quot;</span>);
+            <span class="macro">assert!</span>(!ty.is_unsized(), <span class="string">"{ty:#?}"</span>);
 
             <span class="comment">// Represent the `union` with its largest case, which should work
             // for at least `MaybeUninit&lt;T&gt;` (which is between `T` and `()`),
             // but also potentially some other ones as well.
             // NOTE(eddyb) even if long-term this may become a byte array, that
-            // only works for &quot;data types&quot; and not &quot;opaque handles&quot; (images etc.).
+            // only works for "data types" and not "opaque handles" (images etc.).
             </span><span class="kw">let </span>largest_case = (<span class="number">0</span>..ty.fields.count())
                 .map(|i| ty.field(cx, i))
                 .max_by_key(|case| case.size);
@@ -1621,7 +1633,7 @@
         FieldsShape::Array { stride, count } =&gt; {
             <span class="kw">let </span>element_type = ty.field(cx, <span class="number">0</span>).spirv_type(span, cx);
             <span class="kw">if </span>ty.is_unsized() {
-                <span class="comment">// There&#39;s a potential for this array to be sized, but the element to be unsized, e.g. `[[u8]; 5]`.
+                <span class="comment">// There's a potential for this array to be sized, but the element to be unsized, e.g. `[[u8]; 5]`.
                 // However, I think rust disallows all these cases, so assert this here.
                 </span><span class="macro">assert_eq!</span>(count, <span class="number">0</span>);
                 SpirvType::RuntimeArray {
@@ -1629,14 +1641,14 @@
                 }
                 .def(span, cx)
             } <span class="kw">else if </span>count == <span class="number">0 </span>{
-                <span class="comment">// spir-v doesn&#39;t support zero-sized arrays
+                <span class="comment">// spir-v doesn't support zero-sized arrays
                 </span>create_zst(cx, span, ty)
             } <span class="kw">else </span>{
                 <span class="kw">let </span>count_const = cx.constant_u32(span, count <span class="kw">as </span>u32);
                 <span class="kw">let </span>element_spv = cx.lookup_type(element_type);
                 <span class="kw">let </span>stride_spv = element_spv
                     .sizeof(cx)
-                    .expect(<span class="string">&quot;Unexpected unsized type in sized FieldsShape::Array&quot;</span>)
+                    .expect(<span class="string">"Unexpected unsized type in sized FieldsShape::Array"</span>)
                     .align_to(element_spv.alignof(cx));
                 <span class="macro">assert_eq!</span>(stride_spv, stride);
                 SpirvType::Array {
@@ -1655,7 +1667,7 @@
 
 <span class="comment">// returns (field_offsets, size, align)
 </span><span class="kw">pub fn </span>auto_struct_layout(
-    cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;_</span>&gt;,
+    cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'_</span>&gt;,
     field_types: <span class="kw-2">&amp;</span>[Word],
 ) -&gt; (Vec&lt;Size&gt;, <span class="prelude-ty">Option</span>&lt;Size&gt;, Align) {
     <span class="comment">// FIXME(eddyb) use `AccumulateVec`s just like `rustc` itself does.
@@ -1667,7 +1679,7 @@
         <span class="kw">let </span>field_size = spirv_type.sizeof(cx);
         <span class="kw">let </span>field_align = spirv_type.alignof(cx);
         <span class="kw">let </span>this_offset = offset
-            .expect(<span class="string">&quot;Unsized values can only be the last field in a struct&quot;</span>)
+            .expect(<span class="string">"Unsized values can only be the last field in a struct"</span>)
             .align_to(field_align);
 
         field_offsets.push(this_offset);
@@ -1680,7 +1692,7 @@
 }
 
 <span class="comment">// see struct_llfields in librustc_codegen_llvm for implementation hints
-</span><span class="kw">fn </span>trans_struct&lt;<span class="lifetime">&#39;tcx</span>&gt;(cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;, span: Span, ty: TyAndLayout&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; Word {
+</span><span class="kw">fn </span>trans_struct&lt;<span class="lifetime">'tcx</span>&gt;(cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;, span: Span, ty: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; Word {
     <span class="kw">let </span>size = <span class="kw">if </span>ty.is_unsized() { <span class="prelude-val">None </span>} <span class="kw">else </span>{ <span class="prelude-val">Some</span>(ty.size) };
     <span class="kw">let </span>align = ty.align.abi;
     <span class="comment">// FIXME(eddyb) use `AccumulateVec`s just like `rustc` itself does.
@@ -1698,17 +1710,17 @@
                 field_names.push(field.name);
             } <span class="kw">else </span>{
                 <span class="comment">// FIXME(eddyb) this looks like something that should exist in rustc.
-                </span>field_names.push(Symbol::intern(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{i}&quot;</span>)));
+                </span>field_names.push(Symbol::intern(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{i}"</span>)));
             }
         } <span class="kw">else </span>{
             <span class="kw">if let </span>TyKind::Adt(<span class="kw">_</span>, <span class="kw">_</span>) = ty.ty.kind() {
             } <span class="kw">else </span>{
-                <span class="macro">span_bug!</span>(span, <span class="string">&quot;Variants::Multiple not TyKind::Adt&quot;</span>);
+                <span class="macro">span_bug!</span>(span, <span class="string">"Variants::Multiple not TyKind::Adt"</span>);
             }
             <span class="kw">if </span>i == <span class="number">0 </span>{
                 field_names.push(cx.sym.discriminant);
             } <span class="kw">else </span>{
-                cx.tcx.sess.fatal(<span class="string">&quot;Variants::Multiple has multiple fields&quot;</span>)
+                cx.tcx.dcx().fatal(<span class="string">"Variants::Multiple has multiple fields"</span>)
             }
         };
     }
@@ -1726,10 +1738,10 @@
 <span class="doccomment">/// Grab a `DefId` from the type if possible to avoid too much deduplication,
 /// which could result in one SPIR-V `OpType*` having many names
 /// (not in itself an issue, but it makes error reporting harder).
-</span><span class="kw">fn </span>def_id_for_spirv_type_adt(layout: TyAndLayout&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;DefId&gt; {
+</span><span class="kw">fn </span>def_id_for_spirv_type_adt(layout: TyAndLayout&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;DefId&gt; {
     <span class="kw">match </span><span class="kw-2">*</span>layout.ty.kind() {
         TyKind::Adt(def, <span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(def.did()),
-        TyKind::Foreign(def_id) | TyKind::Closure(def_id, <span class="kw">_</span>) | TyKind::Generator(def_id, ..) =&gt; {
+        TyKind::Foreign(def_id) | TyKind::Closure(def_id, <span class="kw">_</span>) | TyKind::Coroutine(def_id, ..) =&gt; {
             <span class="prelude-val">Some</span>(def_id)
         }
         <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
@@ -1739,13 +1751,13 @@
 <span class="doccomment">/// Minimal and cheaply comparable/hashable subset of the information contained
 /// in `TyLayout` that can be used to generate a name (assuming a nominal type).
 </span><span class="attr">#[derive(Copy, Clone, PartialEq, Eq, Hash)]
-</span><span class="kw">pub struct </span>TyLayoutNameKey&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    ty: Ty&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+</span><span class="kw">pub struct </span>TyLayoutNameKey&lt;<span class="lifetime">'tcx</span>&gt; {
+    ty: Ty&lt;<span class="lifetime">'tcx</span>&gt;,
     variant: <span class="prelude-ty">Option</span>&lt;VariantIdx&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; From&lt;TyAndLayout&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt; <span class="kw">for </span>TyLayoutNameKey&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">fn </span>from(layout: TyAndLayout&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; From&lt;TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;&gt; <span class="kw">for </span>TyLayoutNameKey&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">fn </span>from(layout: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; <span class="self">Self </span>{
         TyLayoutNameKey {
             ty: layout.ty,
             variant: <span class="kw">match </span>layout.variants {
@@ -1756,26 +1768,26 @@
     }
 }
 
-<span class="kw">impl </span>fmt::Display <span class="kw">for </span>TyLayoutNameKey&lt;<span class="lifetime">&#39;_</span>&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.ty)<span class="question-mark">?</span>;
+<span class="kw">impl </span>fmt::Display <span class="kw">for </span>TyLayoutNameKey&lt;<span class="lifetime">'_</span>&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.ty)<span class="question-mark">?</span>;
         <span class="kw">if let </span>(TyKind::Adt(def, <span class="kw">_</span>), <span class="prelude-val">Some</span>(index)) = (<span class="self">self</span>.ty.kind(), <span class="self">self</span>.variant) {
             <span class="kw">if </span>def.is_enum() &amp;&amp; !def.variants().is_empty() {
-                <span class="macro">write!</span>(f, <span class="string">&quot;::{}&quot;</span>, def.variants()[index].name)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"::{}"</span>, def.variants()[index].name)<span class="question-mark">?</span>;
             }
         }
-        <span class="kw">if let </span>(TyKind::Generator(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>), <span class="prelude-val">Some</span>(index)) = (<span class="self">self</span>.ty.kind(), <span class="self">self</span>.variant) {
-            <span class="macro">write!</span>(f, <span class="string">&quot;::{}&quot;</span>, GeneratorArgs::variant_name(index))<span class="question-mark">?</span>;
+        <span class="kw">if let </span>(TyKind::Coroutine(<span class="kw">_</span>, <span class="kw">_</span>), <span class="prelude-val">Some</span>(index)) = (<span class="self">self</span>.ty.kind(), <span class="self">self</span>.variant) {
+            <span class="macro">write!</span>(f, <span class="string">"::{}"</span>, CoroutineArgs::variant_name(index))<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="kw">fn </span>trans_intrinsic_type&lt;<span class="lifetime">&#39;tcx</span>&gt;(
-    cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+<span class="kw">fn </span>trans_intrinsic_type&lt;<span class="lifetime">'tcx</span>&gt;(
+    cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
     span: Span,
-    ty: TyAndLayout&lt;<span class="lifetime">&#39;tcx</span>&gt;,
-    args: GenericArgsRef&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+    ty: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;,
+    args: GenericArgsRef&lt;<span class="lifetime">'tcx</span>&gt;,
     intrinsic_type_attr: IntrinsicType,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;Word, ErrorGuaranteed&gt; {
     <span class="kw">match </span>intrinsic_type_attr {
@@ -1784,13 +1796,13 @@
             </span><span class="kw">if </span>ty.size != Size::from_bytes(<span class="number">4</span>) {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(cx
                     .tcx
-                    .sess
-                    .err(<span class="string">&quot;#[spirv(generic_image)] type must have size 4&quot;</span>));
+                    .dcx()
+                    .err(<span class="string">"#[spirv(generic_image)] type must have size 4"</span>));
             }
 
-            <span class="comment">// fn type_from_variant_discriminant&lt;&#39;tcx, P: FromPrimitive&gt;(
-            //     cx: &amp;CodegenCx&lt;&#39;tcx&gt;,
-            //     const_: Const&lt;&#39;tcx&gt;,
+            <span class="comment">// fn type_from_variant_discriminant&lt;'tcx, P: FromPrimitive&gt;(
+            //     cx: &amp;CodegenCx&lt;'tcx&gt;,
+            //     const_: Const&lt;'tcx&gt;,
             // ) -&gt; P {
             //     let adt_def = const_.ty.ty_adt_def().unwrap();
             //     assert!(adt_def.is_enum());
@@ -1828,8 +1840,8 @@
                 <span class="kw">_ </span>=&gt; {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(cx
                         .tcx
-                        .sess
-                        .span_err(span, <span class="string">&quot;Invalid sampled type to `Image`.&quot;</span>));
+                        .dcx()
+                        .span_err(span, <span class="string">"Invalid sampled type to `Image`."</span>));
                 }
             };
 
@@ -1841,9 +1853,9 @@
             // let image_format: spirv::ImageFormat =
             //     type_from_variant_discriminant(cx, args.const_at(6));
 
-            </span><span class="kw">fn </span>const_int_value&lt;<span class="lifetime">&#39;tcx</span>, P: FromPrimitive&gt;(
-                cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;,
-                const_: Const&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+            </span><span class="kw">fn </span>const_int_value&lt;<span class="lifetime">'tcx</span>, P: FromPrimitive&gt;(
+                cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
+                const_: Const&lt;<span class="lifetime">'tcx</span>&gt;,
             ) -&gt; <span class="prelude-ty">Result</span>&lt;P, ErrorGuaranteed&gt; {
                 <span class="macro">assert!</span>(const_.ty().is_integral());
                 <span class="kw">let </span>value = const_.eval_bits(cx.tcx, ParamEnv::reveal_all());
@@ -1851,8 +1863,8 @@
                     <span class="prelude-val">Some</span>(v) =&gt; <span class="prelude-val">Ok</span>(v),
                     <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(cx
                         .tcx
-                        .sess
-                        .err(<span class="macro">format!</span>(<span class="string">&quot;Invalid value for Image const generic: {value}&quot;</span>))),
+                        .dcx()
+                        .err(<span class="macro">format!</span>(<span class="string">"Invalid value for Image const generic: {value}"</span>))),
                 }
             }
 
@@ -1877,7 +1889,7 @@
         IntrinsicType::Sampler =&gt; {
             <span class="comment">// see SpirvType::sizeof
             </span><span class="kw">if </span>ty.size != Size::from_bytes(<span class="number">4</span>) {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(cx.tcx.sess.err(<span class="string">&quot;#[spirv(sampler)] type must have size 4&quot;</span>));
+                <span class="kw">return </span><span class="prelude-val">Err</span>(cx.tcx.dcx().err(<span class="string">"#[spirv(sampler)] type must have size 4"</span>));
             }
             <span class="prelude-val">Ok</span>(SpirvType::Sampler.def(span, cx))
         }
@@ -1890,8 +1902,8 @@
             </span><span class="kw">if </span>ty.size != Size::from_bytes(<span class="number">4</span>) {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(cx
                     .tcx
-                    .sess
-                    .err(<span class="string">&quot;#[spirv(sampled_image)] type must have size 4&quot;</span>));
+                    .dcx()
+                    .err(<span class="string">"#[spirv(sampled_image)] type must have size 4"</span>));
             }
 
             <span class="comment">// We use a generic to indicate the underlying image type of the sampled image.
@@ -1903,16 +1915,16 @@
             } <span class="kw">else </span>{
                 <span class="prelude-val">Err</span>(cx
                     .tcx
-                    .sess
-                    .err(<span class="string">&quot;#[spirv(sampled_image)] type must have a generic image type&quot;</span>))
+                    .dcx()
+                    .err(<span class="string">"#[spirv(sampled_image)] type must have a generic image type"</span>))
             }
         }
         IntrinsicType::RuntimeArray =&gt; {
             <span class="kw">if </span>ty.size != Size::from_bytes(<span class="number">4</span>) {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(cx
                     .tcx
-                    .sess
-                    .err(<span class="string">&quot;#[spirv(runtime_array)] type must have size 4&quot;</span>));
+                    .dcx()
+                    .err(<span class="string">"#[spirv(runtime_array)] type must have size 4"</span>));
             }
 
             <span class="comment">// We use a generic to indicate the underlying element type.
@@ -1923,14 +1935,14 @@
             } <span class="kw">else </span>{
                 <span class="prelude-val">Err</span>(cx
                     .tcx
-                    .sess
-                    .err(<span class="string">&quot;#[spirv(runtime_array)] type must have a generic element type&quot;</span>))
+                    .dcx()
+                    .err(<span class="string">"#[spirv(runtime_array)] type must have a generic element type"</span>))
             }
         }
         IntrinsicType::Matrix =&gt; {
             <span class="kw">let </span>span = def_id_for_spirv_type_adt(ty)
                 .map(|did| cx.tcx.def_span(did))
-                .expect(<span class="string">&quot;#[spirv(matrix)] must be added to a type which has DefId&quot;</span>);
+                .expect(<span class="string">"#[spirv(matrix)] must be added to a type which has DefId"</span>);
 
             <span class="kw">let </span>field_types = (<span class="number">0</span>..ty.fields.count())
                 .map(|i| ty.field(cx, i).spirv_type(span, cx))
@@ -1938,14 +1950,14 @@
             <span class="kw">if </span>field_types.len() &lt; <span class="number">2 </span>{
                 <span class="kw">return </span><span class="prelude-val">Err</span>(cx
                     .tcx
-                    .sess
-                    .span_err(span, <span class="string">&quot;#[spirv(matrix)] type must have at least two fields&quot;</span>));
+                    .dcx()
+                    .span_err(span, <span class="string">"#[spirv(matrix)] type must have at least two fields"</span>));
             }
             <span class="kw">let </span>elem_type = field_types[<span class="number">0</span>];
             <span class="kw">if </span>!field_types.iter().all(|<span class="kw-2">&amp;</span>ty| ty == elem_type) {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(cx.tcx.sess.span_err(
+                <span class="kw">return </span><span class="prelude-val">Err</span>(cx.tcx.dcx().span_err(
                     span,
-                    <span class="string">&quot;#[spirv(matrix)] type fields must all be the same type&quot;</span>,
+                    <span class="string">"#[spirv(matrix)] type fields must all be the same type"</span>,
                 ));
             }
             <span class="kw">match </span>cx.lookup_type(elem_type) {
@@ -1953,9 +1965,9 @@
                 ty =&gt; {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(cx
                         .tcx
-                        .sess
-                        .struct_span_err(span, <span class="string">&quot;#[spirv(matrix)] type fields must all be vectors&quot;</span>)
-                        .note(<span class="macro">format!</span>(<span class="string">&quot;field type is {}&quot;</span>, ty.debug(elem_type, cx)))
+                        .dcx()
+                        .struct_span_err(span, <span class="string">"#[spirv(matrix)] type fields must all be vectors"</span>)
+                        .with_note(<span class="macro">format!</span>(<span class="string">"field type is {}"</span>, ty.debug(elem_type, cx)))
                         .emit());
                 }
             }

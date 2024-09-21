@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/util/determinize/state.rs`."><title>state.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../regex_automata/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/util/determinize/state.rs`."><title>state.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -910,21 +910,21 @@ This module defines a DFA state representation and builders for constructing
 DFA states.
 
 This representation is specifically for use in implementations of NFA-to-DFA
-conversion via powerset construction. (Also called &quot;determinization&quot; in this
+conversion via powerset construction. (Also called "determinization" in this
 crate.)
 
-The term &quot;DFA state&quot; is somewhat overloaded in this crate. In some cases, it
+The term "DFA state" is somewhat overloaded in this crate. In some cases, it
 refers to the set of transitions over an alphabet for a particular state. In
 other cases, it refers to a set of NFA states. The former is really about the
-final representation of a state in a DFA&#39;s transition table, where as the
+final representation of a state in a DFA's transition table, where as the
 latter---what this module is focused on---is closer to an intermediate form
 that is used to help eventually build the transition table.
 
 This module exports four types. All four types represent the same idea: an
 ordered set of NFA states. This ordered set represents the epsilon closure of a
-particular NFA state, where the &quot;epsilon closure&quot; is the set of NFA states that
+particular NFA state, where the "epsilon closure" is the set of NFA states that
 can be transitioned to without consuming any input. i.e., Follow all of the NFA
-state&#39;s epsilon transitions. In addition, this implementation of DFA states
+state's epsilon transitions. In addition, this implementation of DFA states
 cares about two other things: the ordered set of pattern IDs corresponding
 to the patterns that match if the state is a match state, and the set of
 look-behind assertions that were true when the state was created.
@@ -937,8 +937,8 @@ previously constructed states. Namely, powerset construction, in practice,
 requires one to keep a cache of previously created DFA states. Otherwise,
 the number of DFA states created in memory balloons to an impractically
 large number. For this reason, equivalent states should endeavor to have an
-equivalent byte-level representation. (In general, &quot;equivalency&quot; here means,
-&quot;equivalent assertions, pattern IDs and NFA state IDs.&quot; We do not require that
+equivalent byte-level representation. (In general, "equivalency" here means,
+"equivalent assertions, pattern IDs and NFA state IDs." We do not require that
 full DFA minimization be implemented here. This form of equivalency is only
 surface deep and is more-or-less a practical necessity.)
 
@@ -963,8 +963,8 @@ more satisfied assertions and zero or more NFA state IDs. A `StateBuilderNFA`
 can only be used for adding NFA state IDs and recording some assertions.
 
 The expected flow here is to use the above builders to construct a candidate
-DFA state to check if it already exists. If it does, then there&#39;s no need to
-freeze it into a `State`. It it doesn&#39;t exist, then `StateBuilderNFA::to_state`
+DFA state to check if it already exists. If it does, then there's no need to
+freeze it into a `State`. If it doesn't exist, then `StateBuilderNFA::to_state`
 can be called to freeze the builder into an immutable `State`. In either
 case, `clear` should be called on the builder to turn it back into a
 `StateBuilderEmpty` that reuses the underlying memory.
@@ -976,24 +976,24 @@ binary representation for the state. (The format is documented on the `Repr`
 type below.) If we just used one type for everything, it would be possible for
 callers to use an incorrect interleaving of calls and thus result in a corrupt
 representation. I chose to use more type machinery to make this impossible to
-do because 1) determinization is itself pretty complex and it wouldn&#39;t be too
-hard to foul this up and 2) there isn&#39;t too much machinery involved and it&#39;s
+do because 1) determinization is itself pretty complex and it wouldn't be too
+hard to foul this up and 2) there isn't too much machinery involved and it's
 well contained.
 
-As an optimization, sometimes states won&#39;t have certain things set. For
+As an optimization, sometimes states won't have certain things set. For
 example, if the underlying NFA has no word boundary assertions, then there is
-no reason to set a state&#39;s look-behind assertion as to whether it was generated
+no reason to set a state's look-behind assertion as to whether it was generated
 from a word byte or not. Similarly, if a state has no NFA states corresponding
 to look-around assertions, then there is no reason to set `look_have` to a
 non-empty set. Finally, callers usually omit unconditional epsilon transitions
-when adding NFA state IDs since they aren&#39;t discriminatory.
+when adding NFA state IDs since they aren't discriminatory.
 
 Finally, the binary representation used by these states is, thankfully, not
 serialized anywhere. So any kind of change can be made with reckless abandon,
 as long as everything in this module agrees.
 */
 
-</span><span class="kw">use </span>core::{convert::TryFrom, mem};
+</span><span class="kw">use </span>core::mem;
 
 <span class="kw">use </span>alloc::{sync::Arc, vec::Vec};
 
@@ -1028,7 +1028,7 @@ as long as everything in this module agrees.
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>State {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        f.debug_tuple(<span class="string">&quot;State&quot;</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.repr()).finish()
+        f.debug_tuple(<span class="string">"State"</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.repr()).finish()
     }
 }
 
@@ -1083,14 +1083,14 @@ as long as everything in this module agrees.
         <span class="self">self</span>.<span class="number">0</span>.len()
     }
 
-    <span class="kw">fn </span>repr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Repr&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">fn </span>repr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Repr&lt;<span class="lifetime">'_</span>&gt; {
         Repr(<span class="kw-2">&amp;*</span><span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
 <span class="doccomment">/// A state builder that represents an empty state.
 ///
-/// This is a useful &quot;initial condition&quot; for state construction. It has no
+/// This is a useful "initial condition" for state construction. It has no
 /// NFA state IDs, no assertions set and no pattern IDs. No allocations are
 /// made when new() is called. Its main use is for being converted into a
 /// builder that can capture assertions and pattern IDs.
@@ -1126,7 +1126,7 @@ as long as everything in this module agrees.
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>StateBuilderMatches {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        f.debug_tuple(<span class="string">&quot;StateBuilderMatches&quot;</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.repr()).finish()
+        f.debug_tuple(<span class="string">"StateBuilderMatches"</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.repr()).finish()
     }
 }
 
@@ -1160,11 +1160,11 @@ as long as everything in this module agrees.
         <span class="self">self</span>.repr_vec().add_match_pattern_id(pid)
     }
 
-    <span class="kw">fn </span>repr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Repr&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">fn </span>repr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Repr&lt;<span class="lifetime">'_</span>&gt; {
         Repr(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>)
     }
 
-    <span class="kw">fn </span>repr_vec(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; ReprVec&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">fn </span>repr_vec(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; ReprVec&lt;<span class="lifetime">'_</span>&gt; {
         ReprVec(<span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0</span>)
     }
 }
@@ -1175,7 +1175,7 @@ as long as everything in this module agrees.
 /// `State` if necessary.
 ///
 /// When dont with building a state (regardless of whether it got kept or not),
-/// it&#39;s usually a good idea to call `clear` to get an empty builder back so
+/// it's usually a good idea to call `clear` to get an empty builder back so
 /// that it can be reused to build the next state.
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>StateBuilderNFA {
@@ -1185,7 +1185,7 @@ as long as everything in this module agrees.
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>StateBuilderNFA {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        f.debug_tuple(<span class="string">&quot;StateBuilderNFA&quot;</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.repr()).finish()
+        f.debug_tuple(<span class="string">"StateBuilderNFA"</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.repr()).finish()
     }
 }
 
@@ -1228,11 +1228,11 @@ as long as everything in this module agrees.
         <span class="kw-2">&amp;</span><span class="self">self</span>.repr
     }
 
-    <span class="kw">fn </span>repr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Repr&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">fn </span>repr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Repr&lt;<span class="lifetime">'_</span>&gt; {
         Repr(<span class="kw-2">&amp;</span><span class="self">self</span>.repr)
     }
 
-    <span class="kw">fn </span>repr_vec(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; ReprVec&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="kw">fn </span>repr_vec(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; ReprVec&lt;<span class="lifetime">'_</span>&gt; {
         ReprVec(<span class="kw-2">&amp;mut </span><span class="self">self</span>.repr)
     }
 }
@@ -1252,7 +1252,7 @@ as long as everything in this module agrees.
 /// if the state has pattern IDs explicitly written to it. (This is a flag that
 /// is not meant to be set by determinization, but rather, is used as part of
 /// an internal space-saving optimization.) Bit 2 is set to 1 if the state was
-/// generated by a transition over a &quot;word&quot; byte. (Callers may not always set
+/// generated by a transition over a "word" byte. (Callers may not always set
 /// this. For example, if the NFA has no word boundary assertion, then needing
 /// to track whether a state came from a word byte or not is superfluous and
 /// wasteful.) Bit 3 is set to 1 if the state was generated by a transition
@@ -1266,17 +1266,17 @@ as long as everything in this module agrees.
 /// `next` in the parent module.)
 ///
 /// Bytes 5..9 correspond to the set of look-around assertions (including both
-/// look-behind and look-ahead) that appear somewhere in this state&#39;s set of
-/// NFA state IDs. This is used to determine whether this state&#39;s epsilon
+/// look-behind and look-ahead) that appear somewhere in this state's set of
+/// NFA state IDs. This is used to determine whether this state's epsilon
 /// closure should be re-computed when computing the transition function.
-/// Namely, look-around assertions are &quot;just&quot; conditional epsilon transitions,
+/// Namely, look-around assertions are "just" conditional epsilon transitions,
 /// so if there are new assertions available when computing the transition
 /// function, we should only re-compute the epsilon closure if those new
 /// assertions are relevant to this particular state.
 ///
 /// Bytes 9..13 correspond to a 32-bit native-endian encoded integer
 /// corresponding to the number of patterns encoded in this state. If the state
-/// is not a match state (byte 0 bit 0 is 0) or if it&#39;s only pattern ID is
+/// is not a match state (byte 0 bit 0 is 0) or if it's only pattern ID is
 /// PatternID::ZERO, then no integer is encoded at this position. Instead, byte
 /// offset 3 is the position at which the first NFA state ID is encoded.
 ///
@@ -1290,9 +1290,9 @@ as long as everything in this module agrees.
 /// previous NFA state ID.
 ///
 /// [1] - https://developers.google.com/protocol-buffers/docs/encoding#varints
-</span><span class="kw">struct </span>Repr&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]);
+</span><span class="kw">struct </span>Repr&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Repr&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Repr&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Returns true if and only if this is a match state.
     ///
     /// If callers have added pattern IDs to this state, then callers MUST set
@@ -1310,7 +1310,7 @@ as long as everything in this module agrees.
     /// This is an internal-only flag that permits the representation to save
     /// space in the common case of an NFA with one pattern in it. In that
     /// case, a match state can only ever have exactly one pattern ID:
-    /// PatternID::ZERO. So there&#39;s no need to represent it.
+    /// PatternID::ZERO. So there's no need to represent it.
     </span><span class="kw">fn </span>has_pattern_ids(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.<span class="number">0</span>[<span class="number">0</span>] &amp; (<span class="number">1 </span>&lt;&lt; <span class="number">1</span>) &gt; <span class="number">0
     </span>}
@@ -1321,7 +1321,7 @@ as long as everything in this module agrees.
     /// (whether the current state came from a word byte or not) and look-ahead
     /// (whether the transition byte is a word byte or not).
     ///
-    /// Since states with this set are distinct from states that don&#39;t have
+    /// Since states with this set are distinct from states that don't have
     /// this set (even if they are otherwise equivalent), callers should not
     /// set this assertion unless the underlying NFA has at least one word
     /// boundary assertion somewhere. Otherwise, a superfluous number of states
@@ -1341,7 +1341,7 @@ as long as everything in this module agrees.
     <span class="doccomment">/// The set of look-behind assertions that were true in the transition that
     /// created this state.
     ///
-    /// Generally, this should be empty if &#39;look_need&#39; is empty, since there is
+    /// Generally, this should be empty if 'look_need' is empty, since there is
     /// no reason to track which look-behind assertions are true if the state
     /// has no conditional epsilon transitions.
     ///
@@ -1353,7 +1353,7 @@ as long as everything in this module agrees.
     }
 
     <span class="doccomment">/// The set of look-around (both behind and ahead) assertions that appear
-    /// at least once in this state&#39;s set of NFA states.
+    /// at least once in this state's set of NFA states.
     ///
     /// This is used to determine whether the epsilon closure needs to be
     /// re-computed when computing the transition function. Namely, if the
@@ -1408,7 +1408,7 @@ as long as everything in this module agrees.
             <span class="kw">return</span>;
         }
         <span class="comment">// As an optimization for a very common case, when this is a match
-        // state for an NFA with only one pattern, we don&#39;t actually write the
+        // state for an NFA with only one pattern, we don't actually write the
         // pattern ID to the state representation. Instead, we know it must
         // be there since it is the only possible choice.
         </span><span class="kw">if </span>!<span class="self">self</span>.has_pattern_ids() {
@@ -1442,7 +1442,7 @@ as long as everything in this module agrees.
         }
     }
 
-    <span class="doccomment">/// Returns the offset into this state&#39;s representation where the pattern
+    <span class="doccomment">/// Returns the offset into this state's representation where the pattern
     /// IDs end and the NFA state IDs begin.
     </span><span class="kw">fn </span>pattern_offset_end(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="kw">let </span>encoded = <span class="self">self</span>.encoded_pattern_len();
@@ -1457,7 +1457,7 @@ as long as everything in this module agrees.
     <span class="doccomment">/// Returns the total number of *encoded* pattern IDs in this state.
     ///
     /// This may return 0 even when this is a match state, since the pattern
-    /// ID `PatternID::ZERO` is not encoded when it&#39;s the only pattern ID in
+    /// ID `PatternID::ZERO` is not encoded when it's the only pattern ID in
     /// the match state (the overwhelming common case).
     </span><span class="kw">fn </span>encoded_pattern_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="kw">if </span>!<span class="self">self</span>.has_pattern_ids() {
@@ -1469,18 +1469,18 @@ as long as everything in this module agrees.
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; core::fmt::Debug <span class="kw">for </span>Repr&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; core::fmt::Debug <span class="kw">for </span>Repr&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
         <span class="kw">let </span><span class="kw-2">mut </span>nfa_ids = <span class="macro">alloc::vec!</span>[];
         <span class="self">self</span>.iter_nfa_state_ids(|sid| nfa_ids.push(sid));
-        f.debug_struct(<span class="string">&quot;Repr&quot;</span>)
-            .field(<span class="string">&quot;is_match&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.is_match())
-            .field(<span class="string">&quot;is_from_word&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.is_from_word())
-            .field(<span class="string">&quot;is_half_crlf&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.is_half_crlf())
-            .field(<span class="string">&quot;look_have&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.look_have())
-            .field(<span class="string">&quot;look_need&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.look_need())
-            .field(<span class="string">&quot;match_pattern_ids&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.match_pattern_ids())
-            .field(<span class="string">&quot;nfa_state_ids&quot;</span>, <span class="kw-2">&amp;</span>nfa_ids)
+        f.debug_struct(<span class="string">"Repr"</span>)
+            .field(<span class="string">"is_match"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.is_match())
+            .field(<span class="string">"is_from_word"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.is_from_word())
+            .field(<span class="string">"is_half_crlf"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.is_half_crlf())
+            .field(<span class="string">"look_have"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.look_have())
+            .field(<span class="string">"look_need"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.look_need())
+            .field(<span class="string">"match_pattern_ids"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.match_pattern_ids())
+            .field(<span class="string">"nfa_state_ids"</span>, <span class="kw-2">&amp;</span>nfa_ids)
             .finish()
     }
 }
@@ -1491,10 +1491,10 @@ as long as everything in this module agrees.
 ///
 /// Note that not all possible combinations of methods may be called. This is
 /// precisely what the various StateBuilder types encapsulate: they only
-/// permit valid combinations via Rust&#39;s linear typing.
-</span><span class="kw">struct </span>ReprVec&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Vec&lt;u8&gt;);
+/// permit valid combinations via Rust's linear typing.
+</span><span class="kw">struct </span>ReprVec&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Vec&lt;u8&gt;);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ReprVec&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ReprVec&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Set this state as a match state.
     ///
     /// This should not be exposed explicitly outside of this module. It is
@@ -1537,7 +1537,7 @@ as long as everything in this module agrees.
     }
 
     <span class="doccomment">/// The set of look-around (both behind and ahead) assertions that appear
-    /// at least once in this state&#39;s set of NFA states.
+    /// at least once in this state's set of NFA states.
     </span><span class="kw">fn </span>look_need(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; LookSet {
         <span class="self">self</span>.repr().look_need()
     }
@@ -1549,7 +1549,7 @@ as long as everything in this module agrees.
     }
 
     <span class="doccomment">/// Mutate the set of look-around (both behind and ahead) assertions that
-    /// appear at least once in this state&#39;s set of NFA states.
+    /// appear at least once in this state's set of NFA states.
     </span><span class="kw">fn </span>set_look_need(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>set: <span class="kw">impl </span>FnMut(LookSet) -&gt; LookSet) {
         set(<span class="self">self</span>.look_need()).write_repr(<span class="kw-2">&amp;mut </span><span class="self">self</span>.<span class="number">0</span>[<span class="number">5</span>..]);
     }
@@ -1565,24 +1565,24 @@ as long as everything in this module agrees.
         <span class="comment">// As a (somewhat small) space saving optimization, in the case where
         // a matching state has exactly one pattern ID, PatternID::ZERO, we do
         // not write either the pattern ID or the number of patterns encoded.
-        // Instead, all we do is set the &#39;is_match&#39; bit on this state. Overall,
+        // Instead, all we do is set the 'is_match' bit on this state. Overall,
         // this saves 8 bytes per match state for the overwhelming majority of
         // match states.
         //
         // In order to know whether pattern IDs need to be explicitly read or
-        // not, we use another internal-only bit, &#39;has_pattern_ids&#39;, to
+        // not, we use another internal-only bit, 'has_pattern_ids', to
         // indicate whether they have been explicitly written or not.
         </span><span class="kw">if </span>!<span class="self">self</span>.repr().has_pattern_ids() {
             <span class="kw">if </span>pid == PatternID::ZERO {
                 <span class="self">self</span>.set_is_match();
                 <span class="kw">return</span>;
             }
-            <span class="comment">// Make room for &#39;close_match_pattern_ids&#39; to write the total
+            <span class="comment">// Make room for 'close_match_pattern_ids' to write the total
             // number of pattern IDs written.
             </span><span class="self">self</span>.<span class="number">0</span>.extend(core::iter::repeat(<span class="number">0</span>).take(PatternID::SIZE));
             <span class="self">self</span>.set_has_pattern_ids();
-            <span class="comment">// If this was already a match state, then the only way that&#39;s
-            // possible when the state doesn&#39;t have pattern IDs is if
+            <span class="comment">// If this was already a match state, then the only way that's
+            // possible when the state doesn't have pattern IDs is if
             // PatternID::ZERO was added by the caller previously. In this
             // case, we are now adding a non-ZERO pattern ID after it, in
             // which case, we want to make sure to represent ZERO explicitly
@@ -1590,7 +1590,7 @@ as long as everything in this module agrees.
             </span><span class="kw">if </span><span class="self">self</span>.repr().is_match() {
                 write_u32(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0</span>)
             } <span class="kw">else </span>{
-                <span class="comment">// Otherwise, just make sure the &#39;is_match&#39; bit is set.
+                <span class="comment">// Otherwise, just make sure the 'is_match' bit is set.
                 </span><span class="self">self</span>.set_is_match();
             }
         }
@@ -1599,14 +1599,14 @@ as long as everything in this module agrees.
 
     <span class="doccomment">/// Indicate that no more pattern IDs will be added to this state.
     ///
-    /// Once this is called, callers must not call it or &#39;add_match_pattern_id&#39;
+    /// Once this is called, callers must not call it or 'add_match_pattern_id'
     /// again.
     ///
     /// This should not be exposed explicitly outside of this module. It
     /// should be called only when converting a StateBuilderMatches into a
     /// StateBuilderNFA.
     </span><span class="kw">fn </span>close_match_pattern_ids(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="comment">// If we never wrote any pattern IDs, then there&#39;s nothing to do here.
+        <span class="comment">// If we never wrote any pattern IDs, then there's nothing to do here.
         </span><span class="kw">if </span>!<span class="self">self</span>.repr().has_pattern_ids() {
             <span class="kw">return</span>;
         }
@@ -1622,7 +1622,7 @@ as long as everything in this module agrees.
     }
 
     <span class="doccomment">/// Add an NFA state ID to this state. The order in which NFA states are
-    /// added matters. It is the caller&#39;s responsibility to ensure that
+    /// added matters. It is the caller's responsibility to ensure that
     /// duplicate NFA state IDs are not added.
     </span><span class="kw">fn </span>add_nfa_state_id(<span class="kw-2">&amp;mut </span><span class="self">self</span>, prev: <span class="kw-2">&amp;mut </span>StateID, sid: StateID) {
         <span class="kw">let </span>delta = sid.as_i32() - prev.as_i32();
@@ -1630,8 +1630,8 @@ as long as everything in this module agrees.
         <span class="kw-2">*</span>prev = sid;
     }
 
-    <span class="doccomment">/// Return a read-only view of this state&#39;s representation.
-    </span><span class="kw">fn </span>repr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Repr&lt;<span class="lifetime">&#39;_</span>&gt; {
+    <span class="doccomment">/// Return a read-only view of this state's representation.
+    </span><span class="kw">fn </span>repr(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Repr&lt;<span class="lifetime">'_</span>&gt; {
         Repr(<span class="self">self</span>.<span class="number">0</span>.as_slice())
     }
 }
@@ -1680,7 +1680,7 @@ as long as everything in this module agrees.
 /// https://developers.google.com/protocol-buffers/docs/encoding#varints
 </span><span class="kw">fn </span>read_varu32(data: <span class="kw-2">&amp;</span>[u8]) -&gt; (u32, usize) {
     <span class="comment">// N.B. We can assume correctness here since we know that all varuints are
-    // written with write_varu32. Hence, the &#39;as&#39; uses and unchecked arithmetic
+    // written with write_varu32. Hence, the 'as' uses and unchecked arithmetic
     // is all okay.
     </span><span class="kw">let </span><span class="kw-2">mut </span>n: u32 = <span class="number">0</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>shift: u32 = <span class="number">0</span>;
@@ -1712,7 +1712,7 @@ as long as everything in this module agrees.
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="attr">#[cfg(not(miri))]
-    </span><span class="macro">quickcheck! </span>{
+    </span><span class="macro">quickcheck!</span> {
         <span class="kw">fn </span>prop_state_read_write_nfa_state_ids(sids: Vec&lt;StateID&gt;) -&gt; bool {
             <span class="comment">// Builders states do not permit duplicate IDs.
             </span><span class="kw">let </span>sids = dedup_state_ids(sids);
@@ -1768,7 +1768,7 @@ as long as everything in this module agrees.
         }
     }
 
-    <span class="macro">quickcheck! </span>{
+    <span class="macro">quickcheck!</span> {
         <span class="kw">fn </span>prop_read_write_varu32(n: u32) -&gt; bool {
             <span class="kw">let </span><span class="kw-2">mut </span>buf = <span class="macro">vec!</span>[];
             write_varu32(<span class="kw-2">&amp;mut </span>buf, n);

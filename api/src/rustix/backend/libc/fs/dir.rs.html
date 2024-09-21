@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.30/src/backend/libc/fs/dir.rs`."><title>dir.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.37/src/backend/libc/fs/dir.rs`."><title>dir.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../../rustix/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -421,41 +421,41 @@
 <a href="#421" id="421">421</a>
 <a href="#422" id="422">422</a>
 <a href="#423" id="423">423</a>
-</pre></div><pre class="rust"><code><span class="attr">#[cfg(not(any(solarish, target_os = <span class="string">&quot;haiku&quot;</span>, target_os = <span class="string">&quot;nto&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>)))]
+</pre></div><pre class="rust"><code><span class="attr">#[cfg(not(any(solarish, target_os = <span class="string">"haiku"</span>, target_os = <span class="string">"nto"</span>, target_os = <span class="string">"vita"</span>)))]
 </span><span class="kw">use </span><span class="kw">super</span>::types::FileType;
 <span class="kw">use </span><span class="kw">crate</span>::backend::c;
 <span class="kw">use </span><span class="kw">crate</span>::backend::conv::owned_fd;
 <span class="kw">use </span><span class="kw">crate</span>::fd::{AsFd, BorrowedFd, OwnedFd};
 <span class="kw">use </span><span class="kw">crate</span>::ffi::{CStr, CString};
 <span class="kw">use </span><span class="kw">crate</span>::fs::{fcntl_getfl, openat, Mode, OFlags};
-<span class="attr">#[cfg(not(target_os = <span class="string">&quot;vita&quot;</span>))]
+<span class="attr">#[cfg(not(target_os = <span class="string">"vita"</span>))]
 </span><span class="kw">use </span><span class="kw">crate</span>::fs::{fstat, Stat};
 <span class="attr">#[cfg(not(any(
     solarish,
-    target_os = <span class="string">&quot;haiku&quot;</span>,
-    target_os = <span class="string">&quot;netbsd&quot;</span>,
-    target_os = <span class="string">&quot;nto&quot;</span>,
-    target_os = <span class="string">&quot;redox&quot;</span>,
-    target_os = <span class="string">&quot;vita&quot;</span>,
-    target_os = <span class="string">&quot;wasi&quot;</span>,
+    target_os = <span class="string">"haiku"</span>,
+    target_os = <span class="string">"netbsd"</span>,
+    target_os = <span class="string">"nto"</span>,
+    target_os = <span class="string">"redox"</span>,
+    target_os = <span class="string">"vita"</span>,
+    target_os = <span class="string">"wasi"</span>,
 )))]
 </span><span class="kw">use </span><span class="kw">crate</span>::fs::{fstatfs, StatFs};
 <span class="attr">#[cfg(not(any(
     solarish,
-    target_os = <span class="string">&quot;haiku&quot;</span>,
-    target_os = <span class="string">&quot;redox&quot;</span>,
-    target_os = <span class="string">&quot;vita&quot;</span>,
-    target_os = <span class="string">&quot;wasi&quot;
+    target_os = <span class="string">"haiku"</span>,
+    target_os = <span class="string">"redox"</span>,
+    target_os = <span class="string">"vita"</span>,
+    target_os = <span class="string">"wasi"
 </span>)))]
 </span><span class="kw">use </span><span class="kw">crate</span>::fs::{fstatvfs, StatVfs};
 <span class="kw">use </span><span class="kw">crate</span>::io;
-<span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;fuchsia&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>)))]
-#[cfg(feature = <span class="string">&quot;process&quot;</span>)]
+<span class="attr">#[cfg(not(any(target_os = <span class="string">"fuchsia"</span>, target_os = <span class="string">"vita"</span>, target_os = <span class="string">"wasi"</span>)))]
+#[cfg(feature = <span class="string">"process"</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::process::fchdir;
 <span class="kw">use </span>alloc::borrow::ToOwned;
-<span class="attr">#[cfg(not(any(linux_like, target_os = <span class="string">&quot;hurd&quot;</span>)))]
+<span class="attr">#[cfg(not(any(linux_like, target_os = <span class="string">"hurd"</span>)))]
 </span><span class="kw">use </span>c::readdir <span class="kw">as </span>libc_readdir;
-<span class="attr">#[cfg(any(linux_like, target_os = <span class="string">&quot;hurd&quot;</span>))]
+<span class="attr">#[cfg(any(linux_like, target_os = <span class="string">"hurd"</span>))]
 </span><span class="kw">use </span>c::readdir64 <span class="kw">as </span>libc_readdir;
 <span class="kw">use </span>core::fmt;
 <span class="kw">use </span>core::ptr::NonNull;
@@ -506,20 +506,20 @@
 
     <span class="attr">#[inline]
     #[allow(unused_mut)]
-    </span><span class="kw">fn </span>_read_from(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;<span class="self">Self</span>&gt; {
+    </span><span class="kw">fn </span>_read_from(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;<span class="self">Self</span>&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>any_errors = <span class="bool-val">false</span>;
 
-        <span class="comment">// Given an arbitrary `OwnedFd`, it&#39;s impossible to know whether the
-        // user holds a `dup`&#39;d copy which could continue to modify the
+        <span class="comment">// Given an arbitrary `OwnedFd`, it's impossible to know whether the
+        // user holds a `dup`'d copy which could continue to modify the
         // file description state, which would cause Undefined Behavior after
         // our call to `fdopendir`. To prevent this, we obtain an independent
         // `OwnedFd`.
         </span><span class="kw">let </span>flags = fcntl_getfl(fd)<span class="question-mark">?</span>;
-        <span class="kw">let </span>fd_for_dir = <span class="kw">match </span>openat(fd, <span class="macro">cstr!</span>(<span class="string">&quot;.&quot;</span>), flags | OFlags::CLOEXEC, Mode::empty()) {
+        <span class="kw">let </span>fd_for_dir = <span class="kw">match </span>openat(fd, <span class="macro">cstr!</span>(<span class="string">"."</span>), flags | OFlags::CLOEXEC, Mode::empty()) {
             <span class="prelude-val">Ok</span>(fd) =&gt; fd,
-            <span class="attr">#[cfg(not(target_os = <span class="string">&quot;wasi&quot;</span>))]
+            <span class="attr">#[cfg(not(target_os = <span class="string">"wasi"</span>))]
             </span><span class="prelude-val">Err</span>(io::Errno::NOENT) =&gt; {
-                <span class="comment">// If &quot;.&quot; doesn&#39;t exist, it means the directory was removed.
+                <span class="comment">// If "." doesn't exist, it means the directory was removed.
                 // We treat that as iterating through a directory with no
                 // entries.
                 </span>any_errors = <span class="bool-val">true</span>;
@@ -554,7 +554,7 @@
 
     <span class="doccomment">/// `readdir(self)`, where `None` means the end of the directory.
     </span><span class="kw">pub fn </span>read(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;io::Result&lt;DirEntry&gt;&gt; {
-        <span class="comment">// If we&#39;ve seen errors, don&#39;t continue to try to read anyting further.
+        <span class="comment">// If we've seen errors, don't continue to try to read anything further.
         </span><span class="kw">if </span><span class="self">self</span>.any_errors {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
@@ -576,22 +576,22 @@
             </span><span class="kw">unsafe </span>{
                 <span class="kw">let </span>dirent = <span class="kw-2">&amp;*</span>dirent_ptr;
 
-                <span class="comment">// We have our own copy of OpenBSD&#39;s dirent; check that the
-                // layout minimally matches libc&#39;s.
-                </span><span class="attr">#[cfg(target_os = <span class="string">&quot;openbsd&quot;</span>)]
+                <span class="comment">// We have our own copy of OpenBSD's dirent; check that the
+                // layout minimally matches libc's.
+                </span><span class="attr">#[cfg(target_os = <span class="string">"openbsd"</span>)]
                 </span>check_dirent_layout(dirent);
 
                 <span class="kw">let </span>result = DirEntry {
                     <span class="attr">#[cfg(not(any(
                         solarish,
-                        target_os = <span class="string">&quot;aix&quot;</span>,
-                        target_os = <span class="string">&quot;haiku&quot;</span>,
-                        target_os = <span class="string">&quot;nto&quot;</span>,
-                        target_os = <span class="string">&quot;vita&quot;
+                        target_os = <span class="string">"aix"</span>,
+                        target_os = <span class="string">"haiku"</span>,
+                        target_os = <span class="string">"nto"</span>,
+                        target_os = <span class="string">"vita"
                     </span>)))]
                     </span>d_type: dirent.d_type,
 
-                    <span class="attr">#[cfg(not(any(freebsdlike, netbsdlike, target_os = <span class="string">&quot;vita&quot;</span>)))]
+                    <span class="attr">#[cfg(not(any(freebsdlike, netbsdlike, target_os = <span class="string">"vita"</span>)))]
                     </span>d_ino: dirent.d_ino,
 
                     <span class="attr">#[cfg(any(freebsdlike, netbsdlike))]
@@ -606,7 +606,7 @@
     }
 
     <span class="doccomment">/// `fstat(self)`
-    </span><span class="attr">#[cfg(not(target_os = <span class="string">&quot;vita&quot;</span>))]
+    </span><span class="attr">#[cfg(not(target_os = <span class="string">"vita"</span>))]
     #[inline]
     </span><span class="kw">pub fn </span>stat(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; io::Result&lt;Stat&gt; {
         fstat(<span class="kw">unsafe </span>{ BorrowedFd::borrow_raw(c::dirfd(<span class="self">self</span>.libc_dir.as_ptr())) })
@@ -615,12 +615,12 @@
     <span class="doccomment">/// `fstatfs(self)`
     </span><span class="attr">#[cfg(not(any(
         solarish,
-        target_os = <span class="string">&quot;haiku&quot;</span>,
-        target_os = <span class="string">&quot;netbsd&quot;</span>,
-        target_os = <span class="string">&quot;nto&quot;</span>,
-        target_os = <span class="string">&quot;redox&quot;</span>,
-        target_os = <span class="string">&quot;vita&quot;</span>,
-        target_os = <span class="string">&quot;wasi&quot;</span>,
+        target_os = <span class="string">"haiku"</span>,
+        target_os = <span class="string">"netbsd"</span>,
+        target_os = <span class="string">"nto"</span>,
+        target_os = <span class="string">"redox"</span>,
+        target_os = <span class="string">"vita"</span>,
+        target_os = <span class="string">"wasi"</span>,
     )))]
     #[inline]
     </span><span class="kw">pub fn </span>statfs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; io::Result&lt;StatFs&gt; {
@@ -630,10 +630,10 @@
     <span class="doccomment">/// `fstatvfs(self)`
     </span><span class="attr">#[cfg(not(any(
         solarish,
-        target_os = <span class="string">&quot;haiku&quot;</span>,
-        target_os = <span class="string">&quot;redox&quot;</span>,
-        target_os = <span class="string">&quot;vita&quot;</span>,
-        target_os = <span class="string">&quot;wasi&quot;
+        target_os = <span class="string">"haiku"</span>,
+        target_os = <span class="string">"redox"</span>,
+        target_os = <span class="string">"vita"</span>,
+        target_os = <span class="string">"wasi"
     </span>)))]
     #[inline]
     </span><span class="kw">pub fn </span>statvfs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; io::Result&lt;StatVfs&gt; {
@@ -641,9 +641,9 @@
     }
 
     <span class="doccomment">/// `fchdir(self)`
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;process&quot;</span>)]
-    #[cfg(not(any(target_os = <span class="string">&quot;fuchsia&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>)))]
-    #[cfg_attr(doc_cfg, doc(cfg(feature = <span class="string">&quot;process&quot;</span>)))]
+    </span><span class="attr">#[cfg(feature = <span class="string">"process"</span>)]
+    #[cfg(not(any(target_os = <span class="string">"fuchsia"</span>, target_os = <span class="string">"vita"</span>, target_os = <span class="string">"wasi"</span>)))]
+    #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"process"</span>)))]
     #[inline]
     </span><span class="kw">pub fn </span>chdir(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; io::Result&lt;()&gt; {
         fchdir(<span class="kw">unsafe </span>{ BorrowedFd::borrow_raw(c::dirfd(<span class="self">self</span>.libc_dir.as_ptr())) })
@@ -652,7 +652,7 @@
 
 <span class="doccomment">/// `Dir` implements `Send` but not `Sync`, because we use `readdir` which is
 /// not guaranteed to be thread-safe. Users can wrap this in a `Mutex` if they
-/// need `Sync`, which is effectively what&#39;d need to do to implement `Sync`
+/// need `Sync`, which is effectively what'd need to do to implement `Sync`
 /// ourselves.
 </span><span class="kw">unsafe impl </span>Send <span class="kw">for </span>Dir {}
 
@@ -673,10 +673,10 @@
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Dir {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">let </span><span class="kw-2">mut </span>s = f.debug_struct(<span class="string">&quot;Dir&quot;</span>);
-        <span class="attr">#[cfg(not(target_os = <span class="string">&quot;vita&quot;</span>))]
-        </span>s.field(<span class="string">&quot;fd&quot;</span>, <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>c::dirfd(<span class="self">self</span>.libc_dir.as_ptr()) });
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="kw">let </span><span class="kw-2">mut </span>s = f.debug_struct(<span class="string">"Dir"</span>);
+        <span class="attr">#[cfg(not(target_os = <span class="string">"vita"</span>))]
+        </span>s.field(<span class="string">"fd"</span>, <span class="kw">unsafe </span>{ <span class="kw-2">&amp;</span>c::dirfd(<span class="self">self</span>.libc_dir.as_ptr()) });
         s.finish()
     }
 }
@@ -686,14 +686,14 @@
 </span><span class="kw">pub struct </span>DirEntry {
     <span class="attr">#[cfg(not(any(
         solarish,
-        target_os = <span class="string">&quot;aix&quot;</span>,
-        target_os = <span class="string">&quot;haiku&quot;</span>,
-        target_os = <span class="string">&quot;nto&quot;</span>,
-        target_os = <span class="string">&quot;vita&quot;
+        target_os = <span class="string">"aix"</span>,
+        target_os = <span class="string">"haiku"</span>,
+        target_os = <span class="string">"nto"</span>,
+        target_os = <span class="string">"vita"
     </span>)))]
     </span>d_type: u8,
 
-    <span class="attr">#[cfg(not(any(freebsdlike, netbsdlike, target_os = <span class="string">&quot;vita&quot;</span>)))]
+    <span class="attr">#[cfg(not(any(freebsdlike, netbsdlike, target_os = <span class="string">"vita"</span>)))]
     </span>d_ino: c::ino_t,
 
     <span class="attr">#[cfg(any(freebsdlike, netbsdlike))]
@@ -712,10 +712,10 @@
     <span class="doccomment">/// Returns the type of this directory entry.
     </span><span class="attr">#[cfg(not(any(
         solarish,
-        target_os = <span class="string">&quot;aix&quot;</span>,
-        target_os = <span class="string">&quot;haiku&quot;</span>,
-        target_os = <span class="string">&quot;nto&quot;</span>,
-        target_os = <span class="string">&quot;vita&quot;
+        target_os = <span class="string">"aix"</span>,
+        target_os = <span class="string">"haiku"</span>,
+        target_os = <span class="string">"nto"</span>,
+        target_os = <span class="string">"vita"
     </span>)))]
     #[inline]
     </span><span class="kw">pub fn </span>file_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FileType {
@@ -723,7 +723,7 @@
     }
 
     <span class="doccomment">/// Return the inode number of this directory entry.
-    </span><span class="attr">#[cfg(not(any(freebsdlike, netbsdlike, target_os = <span class="string">&quot;vita&quot;</span>)))]
+    </span><span class="attr">#[cfg(not(any(freebsdlike, netbsdlike, target_os = <span class="string">"vita"</span>)))]
     #[inline]
     </span><span class="kw">pub fn </span>ino(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
         <span class="self">self</span>.d_ino <span class="kw">as </span>u64
@@ -738,9 +738,9 @@
     }
 }
 
-<span class="doccomment">/// libc&#39;s OpenBSD `dirent` has a private field so we can&#39;t construct it
+<span class="doccomment">/// libc's OpenBSD `dirent` has a private field so we can't construct it
 /// directly, so we declare it ourselves to make all fields accessible.
-</span><span class="attr">#[cfg(target_os = <span class="string">&quot;openbsd&quot;</span>)]
+</span><span class="attr">#[cfg(target_os = <span class="string">"openbsd"</span>)]
 #[repr(C)]
 #[derive(Debug)]
 </span><span class="kw">struct </span>libc_dirent {
@@ -753,9 +753,9 @@
     d_name: [c::c_char; <span class="number">256</span>],
 }
 
-<span class="doccomment">/// We have our own copy of OpenBSD&#39;s dirent; check that the layout
-/// minimally matches libc&#39;s.
-</span><span class="attr">#[cfg(target_os = <span class="string">&quot;openbsd&quot;</span>)]
+<span class="doccomment">/// We have our own copy of OpenBSD's dirent; check that the layout
+/// minimally matches libc's.
+</span><span class="attr">#[cfg(target_os = <span class="string">"openbsd"</span>)]
 </span><span class="kw">fn </span>check_dirent_layout(dirent: <span class="kw-2">&amp;</span>c::dirent) {
     <span class="kw">use </span><span class="kw">crate</span>::utils::as_ptr;
 
@@ -817,7 +817,7 @@
 
     <span class="kw">let </span>file_fd = <span class="kw">crate</span>::fs::openat(
         <span class="kw-2">&amp;</span>fd,
-        tmp.path().join(<span class="string">&quot;test.txt&quot;</span>),
+        tmp.path().join(<span class="string">"test.txt"</span>),
         <span class="kw">crate</span>::fs::OFlags::WRONLY | <span class="kw">crate</span>::fs::OFlags::CREATE,
         <span class="kw">crate</span>::fs::Mode::RWXU,
     )

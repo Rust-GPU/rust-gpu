@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirv-tools-0.10.0/src/cmd.rs`."><title>cmd.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirv_tools" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../spirv_tools/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirv-tools-0.10.0/src/cmd.rs`."><title>cmd.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirv_tools" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../spirv_tools/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -216,10 +216,10 @@
 <span class="kw">use </span>std::process::{Command, Stdio};
 
 <span class="kw">pub enum </span>CmdError {
-    <span class="doccomment">/// The binary failed to spawn, probably because it&#39;s not installed
+    <span class="doccomment">/// The binary failed to spawn, probably because it's not installed
     /// or not in PATH
     </span>BinaryNotFound(std::io::Error),
-    <span class="doccomment">/// An I/O error occurred accessing the process&#39; pipes
+    <span class="doccomment">/// An I/O error occurred accessing the process' pipes
     </span>Io(std::io::Error),
     <span class="doccomment">/// The binary ran, but returned a non-zero exit code and (hopefully)
     /// diagnostics
@@ -237,12 +237,12 @@
         <span class="kw">match </span>ce {
             CmdError::BinaryNotFound(err) =&gt; <span class="self">Self </span>{
                 inner: SpirvResult::Unsupported,
-                diagnostic: <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;failed to spawn executable: {err}&quot;</span>).into()),
+                diagnostic: <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"failed to spawn executable: {err}"</span>).into()),
             },
             CmdError::Io(err) =&gt; <span class="self">Self </span>{
                 inner: SpirvResult::EndOfStream,
                 diagnostic: <span class="prelude-val">Some</span>(
-                    <span class="macro">format!</span>(<span class="string">&quot;i/o error occurred communicating with executable: {err}&quot;</span>).into(),
+                    <span class="macro">format!</span>(<span class="string">"i/o error occurred communicating with executable: {err}"</span>).into(),
                 ),
             },
             CmdError::ToolErrors {
@@ -254,14 +254,14 @@
                 </span><span class="kw">let </span>diagnostic = messages.into_iter().last().map_or_else(
                     || {
                         <span class="kw">crate</span>::error::Diagnostic::from(<span class="macro">format!</span>(
-                            <span class="string">&quot;tool exited with code `{exit_code}` and no output&quot;
+                            <span class="string">"tool exited with code `{exit_code}` and no output"
                         </span>))
                     },
                     <span class="kw">crate</span>::error::Diagnostic::from,
                 );
 
                 <span class="self">Self </span>{
-                    <span class="comment">// this isn&#39;t really correct, but the spirv binaries don&#39;t
+                    <span class="comment">// this isn't really correct, but the spirv binaries don't
                     // provide the error code in any meaningful way, either by the
                     // status code of the binary, or in diagnostic output
                     </span>inner: SpirvResult::InternalError,
@@ -281,9 +281,9 @@
 
 <span class="attr">#[derive(PartialEq, Eq, Copy, Clone)]
 </span><span class="kw">pub enum </span>Output {
-    <span class="doccomment">/// Doesn&#39;t try to read stdout for tool output (other than diagnostics)
+    <span class="doccomment">/// Doesn't try to read stdout for tool output (other than diagnostics)
     </span>Ignore,
-    <span class="doccomment">/// Attempts to retrieve the tool&#39;s output from stdout
+    <span class="doccomment">/// Attempts to retrieve the tool's output from stdout
     </span>Retrieve,
 }
 
@@ -298,14 +298,14 @@
     </span><span class="kw">let </span>temp_dir = tempfile::tempdir().map_err(CmdError::Io)<span class="question-mark">?</span>;
 
     <span class="comment">// Output
-    </span><span class="kw">let </span>output_path = temp_dir.path().join(<span class="string">&quot;output&quot;</span>);
+    </span><span class="kw">let </span>output_path = temp_dir.path().join(<span class="string">"output"</span>);
     <span class="kw">if </span>retrieve_output == Output::Retrieve {
-        cmd.arg(<span class="string">&quot;-o&quot;</span>).arg(<span class="kw-2">&amp;</span>output_path);
+        cmd.arg(<span class="string">"-o"</span>).arg(<span class="kw-2">&amp;</span>output_path);
     }
 
     <span class="comment">// Input
     </span><span class="kw">if let </span><span class="prelude-val">Some</span>(input) = input {
-        <span class="kw">let </span>input_path = temp_dir.path().join(<span class="string">&quot;input&quot;</span>);
+        <span class="kw">let </span>input_path = temp_dir.path().join(<span class="string">"input"</span>);
         std::fs::write(<span class="kw-2">&amp;</span>input_path, input).map_err(CmdError::Io)<span class="question-mark">?</span>;
 
         cmd.arg(<span class="kw-2">&amp;</span>input_path);
@@ -322,12 +322,12 @@
         </span><span class="kw">let </span>message = {
             <span class="kw">use </span>std::os::unix::process::ExitStatusExt;
             <span class="macro">format!</span>(
-                <span class="string">&quot;process terminated by signal: {}&quot;</span>,
+                <span class="string">"process terminated by signal: {}"</span>,
                 output.status.signal().unwrap_or(<span class="number">666</span>)
             )
         };
         <span class="attr">#[cfg(not(unix))]
-        </span><span class="kw">let </span>message = <span class="string">&quot;process ended in an unknown state&quot;</span>.to_owned();
+        </span><span class="kw">let </span>message = <span class="string">"process ended in an unknown state"</span>.to_owned();
 
         <span class="kw">return </span><span class="prelude-val">Err</span>(CmdError::ToolErrors {
             exit_code: -<span class="number">1</span>,
@@ -347,12 +347,12 @@
                         messages.push(msg);
                     } <span class="kw">else if let </span><span class="prelude-val">Some</span>(msg) = messages.last_mut() {
                         <span class="kw">if </span>!msg.notes.is_empty() {
-                            msg.notes.push(<span class="string">&#39;\n&#39;</span>);
+                            msg.notes.push(<span class="string">'\n'</span>);
                         }
 
                         msg.notes.push_str(line);
                     } <span class="kw">else </span>{
-                        <span class="comment">// We somewhow got a message that didn&#39;t conform to how
+                        <span class="comment">// We somewhow got a message that didn't conform to how
                         // messages are supposed to look, as the first one
                         </span>messages.push(Message {
                             level: MessageLevel::Error,
@@ -369,7 +369,7 @@
                 messages
             }
             <span class="prelude-val">Err</span>(err) =&gt; <span class="macro">vec!</span>[Message::fatal(<span class="macro">format!</span>(
-                <span class="string">&quot;unable to read stderr ({err}) but process exited with code {code}&quot;</span>,
+                <span class="string">"unable to read stderr ({err}) but process exited with code {code}"</span>,
             ))],
         };
 
@@ -380,15 +380,15 @@
     }
 
     <span class="kw">fn </span>split(haystack: <span class="kw-2">&amp;</span>[u8], needle: u8) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>[u8]&gt; {
-        <span class="kw">struct </span>Split&lt;<span class="lifetime">&#39;a</span>&gt; {
-            haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8],
+        <span class="kw">struct </span>Split&lt;<span class="lifetime">'a</span>&gt; {
+            haystack: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8],
             needle: u8,
         }
 
-        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>Split&lt;<span class="lifetime">&#39;a</span>&gt; {
-            <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8];
+        <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Iterator <span class="kw">for </span>Split&lt;<span class="lifetime">'a</span>&gt; {
+            <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8];
 
-            <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]&gt; {
+            <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]&gt; {
                 <span class="kw">if </span><span class="self">self</span>.haystack.is_empty() {
                     <span class="kw">return </span><span class="prelude-val">None</span>;
                 }
@@ -413,7 +413,7 @@
     // diagnostic messages, we need to be careful
     </span><span class="kw">let </span><span class="kw-2">mut </span>messages = Vec::new();
 
-    <span class="kw">for </span>line <span class="kw">in </span>split(<span class="kw-2">&amp;</span>output.stdout, <span class="string">b&#39;\n&#39;</span>) {
+    <span class="kw">for </span>line <span class="kw">in </span>split(<span class="kw-2">&amp;</span>output.stdout, <span class="string">b'\n'</span>) {
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(s) = std::str::from_utf8(line) {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(msg) = <span class="kw">crate</span>::error::Message::parse(s) {
                 messages.push(msg);

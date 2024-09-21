@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/nfa/noncontiguous.rs`."><title>noncontiguous.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../aho_corasick/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/nfa/noncontiguous.rs`."><title>noncontiguous.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1794,7 +1794,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
 /// this type directly. Using an `NFA` directly is typically only necessary
 /// when one needs access to the [`Automaton`] trait implementation.
 ///
-/// This NFA represents the &quot;core&quot; implementation of Aho-Corasick in this
+/// This NFA represents the "core" implementation of Aho-Corasick in this
 /// crate. Namely, constructing this NFA involving building a trie and then
 /// filling in the failure transitions between states, similar to what is
 /// described in any standard textbook description of Aho-Corasick.
@@ -1827,8 +1827,8 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
 ///     Input, Match,
 /// };
 ///
-/// let patterns = &amp;[&quot;b&quot;, &quot;abc&quot;, &quot;abcd&quot;];
-/// let haystack = &quot;abcd&quot;;
+/// let patterns = &amp;["b", "abc", "abcd"];
+/// let haystack = "abcd";
 ///
 /// let nfa = NFA::new(patterns).unwrap();
 /// assert_eq!(
@@ -1849,7 +1849,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     ///
     /// The first state is always the fail state, which is used only as a
     /// sentinel. Namely, in the final NFA, no transition into the fail state
-    /// exists. (Well, they do, but they aren&#39;t followed. Instead, the state&#39;s
+    /// exists. (Well, they do, but they aren't followed. Instead, the state's
     /// failure transition is followed.)
     ///
     /// The second state (index 1) is always the dead state. Dead states are
@@ -1860,7 +1860,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     /// the dead state.
     ///
     /// The third state (index 2) is generally intended to be the starting or
-    /// &quot;root&quot; state.
+    /// "root" state.
     </span>states: Vec&lt;State&gt;,
     <span class="doccomment">/// Transitions stored in a sparse representation via a linked list.
     ///
@@ -1873,7 +1873,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     ///
     /// Note that this contains a complete set of all transitions in this NFA,
     /// including states that have a dense representation for transitions.
-    /// (Adding dense transitions for a state doesn&#39;t remove its sparse
+    /// (Adding dense transitions for a state doesn't remove its sparse
     /// transitions, since deleting transitions from this particular sparse
     /// representation would be fairly expensive.)
     </span>sparse: Vec&lt;Transition&gt;,
@@ -1903,8 +1903,8 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     <span class="doccomment">/// A prefilter for quickly skipping to candidate matches, if pertinent.
     </span>prefilter: <span class="prelude-ty">Option</span>&lt;Prefilter&gt;,
     <span class="doccomment">/// A set of equivalence classes in terms of bytes. We compute this while
-    /// building the NFA, but don&#39;t use it in the NFA&#39;s states. Instead, we
-    /// use this for building the DFA. We store it on the NFA since it&#39;s easy
+    /// building the NFA, but don't use it in the NFA's states. Instead, we
+    /// use this for building the DFA. We store it on the NFA since it's easy
     /// to compute while visiting the patterns.
     </span>byte_classes: ByteClasses,
     <span class="doccomment">/// The length, in bytes, of the shortest pattern in this automaton. This
@@ -1915,7 +1915,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     /// information is useful for keeping correct buffer sizes when searching
     /// on streams.
     </span>max_pattern_len: usize,
-    <span class="doccomment">/// The information required to deduce which states are &quot;special&quot; in this
+    <span class="doccomment">/// The information required to deduce which states are "special" in this
     /// NFA.
     ///
     /// Since the DEAD and FAIL states are always the first two states and
@@ -1967,16 +1967,16 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     ///
     /// We put DEAD before FAIL so that DEAD is always 0. We repeat this
     /// decision across the other Aho-Corasicm automata, so that DEAD
-    /// states there are always 0 too. It&#39;s not that we need all of the
+    /// states there are always 0 too. It's not that we need all of the
     /// implementations to agree, but rather, the contiguous NFA and the DFA
-    /// use a sort of &quot;premultiplied&quot; state identifier where the only state
+    /// use a sort of "premultiplied" state identifier where the only state
     /// whose ID is always known and constant is the first state. Subsequent
     /// state IDs depend on how much space has already been used in the
     /// transition table.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEAD: StateID = StateID::new_unchecked(<span class="number">0</span>);
     <span class="doccomment">/// The FAIL state mostly just corresponds to the ID of any transition on a
-    /// state that isn&#39;t explicitly defined. When one transitions into the FAIL
-    /// state, one must follow the previous state&#39;s failure transition before
+    /// state that isn't explicitly defined. When one transitions into the FAIL
+    /// state, one must follow the previous state's failure transition before
     /// doing the next state lookup. In this way, FAIL is more of a sentinel
     /// than a state that one actually transitions into. In particular, it is
     /// never exposed in the `Automaton` interface.
@@ -1985,7 +1985,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     <span class="doccomment">/// Returns the equivalence classes of bytes found while constructing
     /// this NFA.
     ///
-    /// Note that the NFA doesn&#39;t actually make use of these equivalence
+    /// Note that the NFA doesn't actually make use of these equivalence
     /// classes. Instead, these are useful for building the DFA when desired.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>byte_classes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>ByteClasses {
         <span class="kw-2">&amp;</span><span class="self">self</span>.byte_classes
@@ -2005,7 +2005,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         <span class="kw-2">&amp;</span><span class="self">self</span>.states
     }
 
-    <span class="doccomment">/// Returns the underlying &quot;special&quot; state information for this NFA.
+    <span class="doccomment">/// Returns the underlying "special" state information for this NFA.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>special(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Special {
         <span class="kw-2">&amp;</span><span class="self">self</span>.special
     }
@@ -2043,7 +2043,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>iter_trans(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         sid: StateID,
-    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Transition&gt; + <span class="lifetime">&#39;_ </span>{
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Transition&gt; + <span class="lifetime">'_ </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>link = <span class="self">self</span>.states[sid].sparse;
         core::iter::from_fn(<span class="kw">move </span>|| {
             <span class="kw">if </span>link == StateID::ZERO {
@@ -2059,7 +2059,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>iter_matches(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         sid: StateID,
-    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = PatternID&gt; + <span class="lifetime">&#39;_ </span>{
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = PatternID&gt; + <span class="lifetime">'_ </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>link = <span class="self">self</span>.states[sid].matches;
         core::iter::from_fn(<span class="kw">move </span>|| {
             <span class="kw">if </span>link == StateID::ZERO {
@@ -2110,7 +2110,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         //
         // This has *massive* benefit when executing searches because the
         // unanchored starting state is by far the hottest state and is
-        // frequently visited. Moreover, the &#39;for&#39; loop below that works
+        // frequently visited. Moreover, the 'for' loop below that works
         // decently on an actually sparse state is disastrous on a state that
         // is nearly or completely dense.
         </span><span class="kw">if </span>s.dense == StateID::ZERO {
@@ -2166,7 +2166,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         <span class="comment">// We handled the only cases where the beginning of the transition
         // chain needs to change. At this point, we now know that there is
         // at least one entry in the transition chain and the byte for that
-        // transition is less than the byte for the transition we&#39;re adding.
+        // transition is less than the byte for the transition we're adding.
         </span><span class="kw">let </span>(<span class="kw-2">mut </span>link_prev, <span class="kw-2">mut </span>link_next) = (head, <span class="self">self</span>.sparse[head].link);
         <span class="kw">while </span>link_next != StateID::ZERO &amp;&amp; byte &gt; <span class="self">self</span>.sparse[link_next].byte
         {
@@ -2202,12 +2202,12 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         <span class="macro">assert_eq!</span>(
             StateID::ZERO,
             <span class="self">self</span>.states[prev].dense,
-            <span class="string">&quot;state must not be dense yet&quot;
+            <span class="string">"state must not be dense yet"
         </span>);
         <span class="macro">assert_eq!</span>(
             StateID::ZERO,
             <span class="self">self</span>.states[prev].sparse,
-            <span class="string">&quot;state must have zero transitions&quot;
+            <span class="string">"state must have zero transitions"
         </span>);
         <span class="kw">let </span><span class="kw-2">mut </span>prev_link = StateID::ZERO;
         <span class="kw">for </span>byte <span class="kw">in </span><span class="number">0</span>..=<span class="number">255 </span>{
@@ -2247,7 +2247,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
 
     <span class="doccomment">/// Copy matches from the `src` state to the `dst` state. This is useful
     /// when a match state can be reached via a failure transition. In which
-    /// case, you&#39;ll want to copy the matches (if any) from the state reached
+    /// case, you'll want to copy the matches (if any) from the state reached
     /// by the failure transition to the original state you were at.
     </span><span class="kw">fn </span>copy_matches(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
@@ -2284,8 +2284,8 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="doccomment">/// Create a new entry in `NFA::trans`, if there&#39;s room, and return that
-    /// entry&#39;s ID. If there&#39;s no room, then an error is returned.
+    <span class="doccomment">/// Create a new entry in `NFA::trans`, if there's room, and return that
+    /// entry's ID. If there's no room, then an error is returned.
     </span><span class="kw">fn </span>alloc_transition(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;StateID, BuildError&gt; {
         <span class="kw">let </span>id = StateID::new(<span class="self">self</span>.sparse.len()).map_err(|e| {
             BuildError::state_id_overflow(StateID::MAX.as_u64(), e.attempted())
@@ -2294,8 +2294,8 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         <span class="prelude-val">Ok</span>(id)
     }
 
-    <span class="doccomment">/// Create a new entry in `NFA::matches`, if there&#39;s room, and return that
-    /// entry&#39;s ID. If there&#39;s no room, then an error is returned.
+    <span class="doccomment">/// Create a new entry in `NFA::matches`, if there's room, and return that
+    /// entry's ID. If there's no room, then an error is returned.
     </span><span class="kw">fn </span>alloc_match(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;StateID, BuildError&gt; {
         <span class="kw">let </span>id = StateID::new(<span class="self">self</span>.matches.len()).map_err(|e| {
             BuildError::state_id_overflow(StateID::MAX.as_u64(), e.attempted())
@@ -2304,7 +2304,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         <span class="prelude-val">Ok</span>(id)
     }
 
-    <span class="doccomment">/// Create a new set of `N` transitions in this NFA&#39;s dense transition
+    <span class="doccomment">/// Create a new set of `N` transitions in this NFA's dense transition
     /// table. The ID return corresponds to the index at which the `N`
     /// transitions begin. So `id+0` is the first transition and `id+(N-1)` is
     /// the last.
@@ -2314,7 +2314,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         <span class="kw">let </span>id = StateID::new(<span class="self">self</span>.dense.len()).map_err(|e| {
             BuildError::state_id_overflow(StateID::MAX.as_u64(), e.attempted())
         })<span class="question-mark">?</span>;
-        <span class="comment">// We use FAIL because it&#39;s the correct default. If a state doesn&#39;t
+        <span class="comment">// We use FAIL because it's the correct default. If a state doesn't
         // have a transition defined for every possible byte value, then the
         // transition function should return NFA::FAIL.
         </span><span class="self">self</span>.dense.extend(
@@ -2329,10 +2329,10 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     /// state). If the ID would overflow `StateID`, then this returns an error.
     </span><span class="kw">fn </span>alloc_state(<span class="kw-2">&amp;mut </span><span class="self">self</span>, depth: usize) -&gt; <span class="prelude-ty">Result</span>&lt;StateID, BuildError&gt; {
         <span class="comment">// This is OK because we error when building the trie if we see a
-        // pattern whose length cannot fit into a &#39;SmallIndex&#39;, and the longest
+        // pattern whose length cannot fit into a 'SmallIndex', and the longest
         // possible depth corresponds to the length of the longest pattern.
         </span><span class="kw">let </span>depth = SmallIndex::new(depth)
-            .expect(<span class="string">&quot;patterns longer than SmallIndex::MAX are not allowed&quot;</span>);
+            .expect(<span class="string">"patterns longer than SmallIndex::MAX are not allowed"</span>);
         <span class="kw">let </span>id = StateID::new(<span class="self">self</span>.states.len()).map_err(|e| {
             BuildError::state_id_overflow(StateID::MAX.as_u64(), e.attempted())
         })<span class="question-mark">?</span>;
@@ -2347,7 +2347,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     }
 }
 
-<span class="comment">// SAFETY: &#39;start_state&#39; always returns a valid state ID, &#39;next_state&#39; always
+<span class="comment">// SAFETY: 'start_state' always returns a valid state ID, 'next_state' always
 // returns a valid state ID given a valid state ID. We otherwise claim that
 // all other methods are correct as well.
 </span><span class="kw">unsafe impl </span>Automaton <span class="kw">for </span>NFA {
@@ -2399,10 +2399,10 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
 
     <span class="attr">#[inline(always)]
     </span><span class="kw">fn </span>is_match(<span class="kw-2">&amp;</span><span class="self">self</span>, sid: StateID) -&gt; bool {
-        <span class="comment">// N.B. This returns true when sid==NFA::FAIL but that&#39;s okay because
+        <span class="comment">// N.B. This returns true when sid==NFA::FAIL but that's okay because
         // NFA::FAIL is not actually a valid state ID from the perspective of
-        // the Automaton trait. Namely, it is never returned by &#39;start_state&#39;
-        // or by &#39;next_state&#39;. So we don&#39;t need to care about it here.
+        // the Automaton trait. Namely, it is never returned by 'start_state'
+        // or by 'next_state'. So we don't need to care about it here.
         </span>!<span class="self">self</span>.is_dead(sid) &amp;&amp; sid &lt;= <span class="self">self</span>.special.max_match_id
     }
 
@@ -2557,7 +2557,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;Transition(byte: {:X?}, next: {:?}, link: {:?})&quot;</span>,
+            <span class="string">"Transition(byte: {:X?}, next: {:?}, link: {:?})"</span>,
             <span class="self">self</span>.byte,
             <span class="self">self</span>.next().as_usize(),
             <span class="self">self</span>.link().as_usize()
@@ -2588,7 +2588,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;Match(pid: {:?}, link: {:?})&quot;</span>,
+            <span class="string">"Match(pid: {:?}, link: {:?})"</span>,
             <span class="self">self</span>.pattern().as_usize(),
             <span class="self">self</span>.link().as_usize()
         )
@@ -2634,10 +2634,10 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         </span>I: IntoIterator&lt;Item = P&gt;,
         P: AsRef&lt;[u8]&gt;,
     {
-        <span class="macro">debug!</span>(<span class="string">&quot;building non-contiguous NFA&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">"building non-contiguous NFA"</span>);
         <span class="kw">let </span>nfa = Compiler::new(<span class="self">self</span>)<span class="question-mark">?</span>.compile(patterns)<span class="question-mark">?</span>;
         <span class="macro">debug!</span>(
-            <span class="string">&quot;non-contiguous NFA built, &lt;states: {:?}, size: {:?}&gt;&quot;</span>,
+            <span class="string">"non-contiguous NFA built, &lt;states: {:?}, size: {:?}&gt;"</span>,
             nfa.states.len(),
             nfa.memory_usage()
         );
@@ -2691,15 +2691,15 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
 /// formulation described in textbooks, with some tweaks to support leftmost
 /// searching.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">struct </span>Compiler&lt;<span class="lifetime">&#39;a</span>&gt; {
-    builder: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Builder,
+</span><span class="kw">struct </span>Compiler&lt;<span class="lifetime">'a</span>&gt; {
+    builder: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Builder,
     prefilter: prefilter::Builder,
     nfa: NFA,
     byteset: ByteClassSet,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Compiler&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn </span>new(builder: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Builder) -&gt; <span class="prelude-ty">Result</span>&lt;Compiler&lt;<span class="lifetime">&#39;a</span>&gt;, BuildError&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Compiler&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">fn </span>new(builder: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Builder) -&gt; <span class="prelude-ty">Result</span>&lt;Compiler&lt;<span class="lifetime">'a</span>&gt;, BuildError&gt; {
         <span class="kw">let </span>prefilter = prefilter::Builder::new(builder.match_kind)
             .ascii_case_insensitive(builder.ascii_case_insensitive);
         <span class="prelude-val">Ok</span>(Compiler {
@@ -2733,7 +2733,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         <span class="self">self</span>.nfa.matches.push(Match::default());
         <span class="comment">// Add a dummy dense transition so that no states can have dense==0
         // represent a valid pointer to dense transitions. This permits
-        // dense==0 to be a sentinel indicating &quot;no dense transitions.&quot;
+        // dense==0 to be a sentinel indicating "no dense transitions."
         </span><span class="self">self</span>.nfa.dense.push(NFA::DEAD);
         <span class="comment">// the dead state, only used for leftmost and fixed to id==0
         </span><span class="self">self</span>.nfa.alloc_state(<span class="number">0</span>)<span class="question-mark">?</span>;
@@ -2757,7 +2757,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         <span class="self">self</span>.nfa.states.shrink_to_fit();
         <span class="comment">// Turn our set of bytes into equivalent classes. This NFA
         // implementation uses byte classes only for states that use a dense
-        // representation of transitions. (And that&#39;s why this comes before
+        // representation of transitions. (And that's why this comes before
         // `self.densify()`, as the byte classes need to be set first.)
         </span><span class="self">self</span>.nfa.byte_classes = <span class="self">self</span>.byteset.byte_classes();
         <span class="comment">// Add transitions (and maybe matches) to the anchored starting state.
@@ -2770,13 +2770,13 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         // as self-transitions. This keeps the start state active at all times.
         </span><span class="self">self</span>.add_unanchored_start_state_loop();
         <span class="comment">// Make some (possibly zero) states use a dense representation for
-        // transitions. It&#39;s important to do this right after the states
+        // transitions. It's important to do this right after the states
         // and non-failure transitions are solidified. That way, subsequent
         // accesses (particularly `fill_failure_transitions`) will benefit from
         // the faster transition lookup in densified states.
         </span><span class="self">self</span>.densify()<span class="question-mark">?</span>;
         <span class="comment">// The meat of the Aho-Corasick algorithm: compute and write failure
-        // transitions. i.e., the state to move to when a transition isn&#39;t
+        // transitions. i.e., the state to move to when a transition isn't
         // defined in the current state. These are epsilon transitions and thus
         // make this formulation an NFA.
         </span><span class="self">self</span>.fill_failure_transitions()<span class="question-mark">?</span>;
@@ -2785,7 +2785,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         </span><span class="self">self</span>.close_start_state_loop_for_leftmost();
         <span class="comment">// Shuffle states so that we have DEAD, FAIL, MATCH, ..., START, START,
         // NON-MATCH, ... This permits us to very quickly query the type of
-        // the state we&#39;re currently in during a search.
+        // the state we're currently in during a search.
         </span><span class="self">self</span>.shuffle();
         <span class="self">self</span>.nfa.prefilter = <span class="self">self</span>.prefilter.build();
         <span class="comment">// Store the maximum ID of all *relevant* special states. Start states
@@ -2799,7 +2799,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
             <span class="comment">// Why the anchored starting state? Because we always put it
             // after the unanchored starting state and it is therefore the
             // maximum. Why put unanchored followed by anchored? No particular
-            // reason, but that&#39;s how the states are logically organized in the
+            // reason, but that's how the states are logically organized in the
             // Thompson NFA implementation found in regex-automata. ¯\_(ツ)_/¯
             </span><span class="self">self</span>.nfa.special.start_anchored_id
         } <span class="kw">else </span>{
@@ -2821,7 +2821,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         </span>I: IntoIterator&lt;Item = P&gt;,
         P: AsRef&lt;[u8]&gt;,
     {
-        <span class="lifetime">&#39;PATTERNS</span>: <span class="kw">for </span>(i, pat) <span class="kw">in </span>patterns.into_iter().enumerate() {
+        <span class="lifetime">'PATTERNS</span>: <span class="kw">for </span>(i, pat) <span class="kw">in </span>patterns.into_iter().enumerate() {
             <span class="kw">let </span>pid = PatternID::new(i).map_err(|e| {
                 BuildError::pattern_id_overflow(
                     PatternID::MAX.as_u64(),
@@ -2838,12 +2838,12 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
             <span class="macro">assert_eq!</span>(
                 i,
                 <span class="self">self</span>.nfa.pattern_lens.len(),
-                <span class="string">&quot;expected number of patterns to match pattern ID&quot;
+                <span class="string">"expected number of patterns to match pattern ID"
             </span>);
             <span class="self">self</span>.nfa.pattern_lens.push(patlen);
             <span class="comment">// We add the pattern to the prefilter here because the pattern
             // ID in the prefilter is determined with respect to the patterns
-            // added to the prefilter. That is, it isn&#39;t the ID we have here,
+            // added to the prefilter. That is, it isn't the ID we have here,
             // but the one determined by its own accounting of patterns.
             // To ensure they line up, we add every pattern we see to the
             // prefilter, even if some patterns ultimately are impossible to
@@ -2852,7 +2852,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
             // Another way of doing this would be to expose an API in the
             // prefilter to permit setting your own pattern IDs. Or to just use
             // our own map and go between them. But this case is sufficiently
-            // rare that we don&#39;t bother and just make sure they&#39;re in sync.
+            // rare that we don't bother and just make sure they're in sync.
             </span><span class="kw">if </span><span class="self">self</span>.builder.prefilter {
                 <span class="self">self</span>.prefilter.add(pat);
             }
@@ -2872,10 +2872,10 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
                 <span class="kw">if </span><span class="self">self</span>.builder.match_kind.is_leftmost_first() &amp;&amp; saw_match {
                     <span class="comment">// Skip to the next pattern immediately. This avoids
                     // incorrectly adding a match after this loop terminates.
-                    </span><span class="kw">continue </span><span class="lifetime">&#39;PATTERNS</span>;
+                    </span><span class="kw">continue </span><span class="lifetime">'PATTERNS</span>;
                 }
 
-                <span class="comment">// Add this byte to our equivalence classes. These don&#39;t
+                <span class="comment">// Add this byte to our equivalence classes. These don't
                 // get used while building the trie, but other Aho-Corasick
                 // implementations may use them.
                 </span><span class="self">self</span>.byteset.set_range(b, b);
@@ -2913,7 +2913,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
 
     <span class="doccomment">/// This routine creates failure transitions according to the standard
     /// textbook formulation of the Aho-Corasick algorithm, with a couple small
-    /// tweaks to support &quot;leftmost&quot; semantics.
+    /// tweaks to support "leftmost" semantics.
     ///
     /// Building failure transitions is the most interesting part of building
     /// the Aho-Corasick automaton, because they are what allow searches to
@@ -2924,8 +2924,8 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     /// current state for the current input byte. If there is no other proper
     /// suffix, then the failure transition points back to the starting state.
     ///
-    /// For example, let&#39;s say we built an Aho-Corasick automaton with the
-    /// following patterns: &#39;abcd&#39; and &#39;cef&#39;. The trie looks like this:
+    /// For example, let's say we built an Aho-Corasick automaton with the
+    /// following patterns: 'abcd' and 'cef'. The trie looks like this:
     ///
     /// ```ignore
     ///          a - S1 - b - S2 - c - S3 - d - S4*
@@ -2935,18 +2935,18 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     ///
     /// At this point, it should be fairly straight-forward to see how this
     /// trie can be used in a simplistic way. At any given position in the
-    /// text we&#39;re searching (called the &quot;subject&quot; string), all we need to do
+    /// text we're searching (called the "subject" string), all we need to do
     /// is follow the transitions in the trie by consuming one transition for
     /// each byte in the subject string. If we reach a match state, then we can
     /// report that location as a match.
     ///
-    /// The trick comes when searching a subject string like &#39;abcef&#39;. We&#39;ll
+    /// The trick comes when searching a subject string like 'abcef'. We'll
     /// initially follow the transition from S0 to S1 and wind up in S3 after
-    /// observng the &#39;c&#39; byte. At this point, the next byte is &#39;e&#39; but state
-    /// S3 has no transition for &#39;e&#39;, so the search fails. We then would need
-    /// to restart the search at the next position in &#39;abcef&#39;, which
-    /// corresponds to &#39;b&#39;. The match would fail, but the next search starting
-    /// at &#39;c&#39; would finally succeed. The problem with this approach is that
+    /// observng the 'c' byte. At this point, the next byte is 'e' but state
+    /// S3 has no transition for 'e', so the search fails. We then would need
+    /// to restart the search at the next position in 'abcef', which
+    /// corresponds to 'b'. The match would fail, but the next search starting
+    /// at 'c' would finally succeed. The problem with this approach is that
     /// we wind up searching the subject string potentially many times. In
     /// effect, this makes the algorithm have worst case `O(n * m)` complexity,
     /// where `n ~ len(subject)` and `m ~ len(all patterns)`. We would instead
@@ -2955,8 +2955,8 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     /// This is where failure transitions come in. Instead of dying at S3 in
     /// the first search, the automaton can instruct the search to move to
     /// another part of the automaton that corresponds to a suffix of what
-    /// we&#39;ve seen so far. Recall that we&#39;ve seen &#39;abc&#39; in the subject string,
-    /// and the automaton does indeed have a non-empty suffix, &#39;c&#39;, that could
+    /// we've seen so far. Recall that we've seen 'abc' in the subject string,
+    /// and the automaton does indeed have a non-empty suffix, 'c', that could
     /// potentially lead to another match. Thus, the actual Aho-Corasick
     /// automaton for our patterns in this case looks like this:
     ///
@@ -2970,15 +2970,15 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     ///
     /// That is, we have a failure transition from S3 to S5, which is followed
     /// exactly in cases when we are in state S3 but see any byte other than
-    /// &#39;d&#39; (that is, we&#39;ve &quot;failed&quot; to find a match in this portion of our
-    /// trie). We know we can transition back to S5 because we&#39;ve already seen
-    /// a &#39;c&#39; byte, so we don&#39;t need to re-scan it. We can then pick back up
+    /// 'd' (that is, we've "failed" to find a match in this portion of our
+    /// trie). We know we can transition back to S5 because we've already seen
+    /// a 'c' byte, so we don't need to re-scan it. We can then pick back up
     /// with the search starting at S5 and complete our match.
     ///
     /// Adding failure transitions to a trie is fairly simple, but subtle. The
     /// key issue is that you might have multiple failure transition that you
     /// need to follow. For example, look at the trie for the patterns
-    /// &#39;abcd&#39;, &#39;b&#39;, &#39;bcd&#39; and &#39;cd&#39;:
+    /// 'abcd', 'b', 'bcd' and 'cd':
     ///
     /// ```ignore
     ///          - a - S1 - b - S2* - c - S3 - d - S4*
@@ -3009,12 +3009,12 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     /// assumptions, we already know that there is a failure transition from
     /// S2 (the previous state) to S5. So we follow that transition and check
     /// whether the transition connecting S2 to S3 is defined. Indeed, it is,
-    /// as there is a transition from S5 to S6 for the byte &#39;c&#39;. If no such
+    /// as there is a transition from S5 to S6 for the byte 'c'. If no such
     /// transition existed, we could keep following the failure transitions
     /// until we reach the start state, which is the failure transition for
     /// every state that has no corresponding proper suffix.
     ///
-    /// We don&#39;t actually use recursion to implement this, but instead, use a
+    /// We don't actually use recursion to implement this, but instead, use a
     /// breadth first search of the automaton. Our base case is the start
     /// state, whose failure transition is just a transition to itself.
     ///
@@ -3028,7 +3028,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     ///
     /// N.B. I came up with this algorithm on my own, and after scouring all of
     /// the other AC implementations I know of (Perl, Snort, many on GitHub).
-    /// I couldn&#39;t find any that implement leftmost semantics like this.
+    /// I couldn't find any that implement leftmost semantics like this.
     /// Perl of course needs leftmost-first semantics, but they implement it
     /// with a seeming hack at *search* time instead of encoding it into the
     /// automaton. There are also a couple Java libraries that support leftmost
@@ -3048,7 +3048,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
             prev_link = <span class="prelude-val">Some</span>(link);
             <span class="kw">let </span>t = <span class="self">self</span>.nfa.sparse[link];
 
-            <span class="comment">// Skip anything we&#39;ve seen before and any self-transitions on the
+            <span class="comment">// Skip anything we've seen before and any self-transitions on the
             // start state.
             </span><span class="kw">if </span>start_uid == t.next() || seen.contains(t.next) {
                 <span class="kw">continue</span>;
@@ -3076,10 +3076,10 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
                 <span class="kw">if </span>seen.contains(t.next) {
                     <span class="comment">// The only way to visit a duplicate state in a transition
                     // list is when ASCII case insensitivity is enabled. In
-                    // this case, we want to skip it since it&#39;s redundant work.
+                    // this case, we want to skip it since it's redundant work.
                     // But it would also end up duplicating matches, which
                     // results in reporting duplicate matches in some cases.
-                    // See the &#39;acasei010&#39; regression test.
+                    // See the 'acasei010' regression test.
                     </span><span class="kw">continue</span>;
                 }
                 queue.push_back(t.next);
@@ -3089,7 +3089,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
                 // we see a match all subsequent states should have no failure
                 // transitions because failure transitions always imply looking
                 // for a match that is a suffix of what has been seen so far
-                // (where &quot;seen so far&quot; corresponds to the string formed by
+                // (where "seen so far" corresponds to the string formed by
                 // following the transitions from the start state to the
                 // current state). Under leftmost semantics, we specifically do
                 // not want to allow this to happen because we always want to
@@ -3126,7 +3126,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
             // non-empty non-start match state needs to report empty matches
             // in addition to its own. For the non-overlapping case, such
             // states only report the first match, which is never empty since
-            // it isn&#39;t a start state.
+            // it isn't a start state.
             </span><span class="kw">if </span>!is_leftmost {
                 <span class="self">self</span>.nfa
                     .copy_matches(<span class="self">self</span>.nfa.special.start_unanchored_id, id)<span class="question-mark">?</span>;
@@ -3140,7 +3140,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     ///   DEAD, FAIL, MATCH..., START, START, NON-MATCH...
     ///
     /// The idea here is that if we know how special states are laid out in our
-    /// transition table, then we can determine what &quot;kind&quot; of state we&#39;re in
+    /// transition table, then we can determine what "kind" of state we're in
     /// just by comparing our current state ID with a particular value. In this
     /// way, we avoid doing extra memory lookups.
     ///
@@ -3153,7 +3153,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     ///
     ///   DEAD, FAIL, START, START, MATCH... NON-MATCH...
     ///
-    /// Then it&#39;s just a simple matter of swapping the two START states with
+    /// Then it's just a simple matter of swapping the two START states with
     /// the last two MATCH states.
     ///
     /// (This is the same technique used for fully compiled DFAs in
@@ -3165,7 +3165,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         <span class="macro">assert_eq!</span>(
             <span class="number">3</span>,
             old_start_aid.as_usize(),
-            <span class="string">&quot;anchored start state should be at index 3&quot;
+            <span class="string">"anchored start state should be at index 3"
         </span>);
         <span class="comment">// We implement shuffling by a sequence of pairwise swaps of states.
         // Since we have a number of things referencing states via their
@@ -3188,19 +3188,19 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
             }
             remapper.swap(<span class="kw-2">&amp;mut </span><span class="self">self</span>.nfa, sid, next_avail);
             <span class="comment">// The key invariant here is that only non-match states exist
-            // between &#39;next_avail&#39; and &#39;sid&#39; (with them being potentially
-            // equivalent). Thus, incrementing &#39;next_avail&#39; by 1 is guaranteed
-            // to land on the leftmost non-match state. (Unless &#39;next_avail&#39;
-            // and &#39;sid&#39; are equivalent, in which case, a swap will occur but
+            // between 'next_avail' and 'sid' (with them being potentially
+            // equivalent). Thus, incrementing 'next_avail' by 1 is guaranteed
+            // to land on the leftmost non-match state. (Unless 'next_avail'
+            // and 'sid' are equivalent, in which case, a swap will occur but
             // it is a no-op.)
             </span>next_avail = StateID::new(next_avail.one_more()).unwrap();
         }
-        <span class="comment">// Now we&#39;d like to move the start states to immediately following the
+        <span class="comment">// Now we'd like to move the start states to immediately following the
         // match states. (The start states may themselves be match states, but
-        // we&#39;ll handle that later.) We arrange the states this way so that we
-        // don&#39;t necessarily need to check whether a state is a start state or
+        // we'll handle that later.) We arrange the states this way so that we
+        // don't necessarily need to check whether a state is a start state or
         // not before checking whether a state is a match state. For example,
-        // we&#39;d like to be able to write this as our state machine loop:
+        // we'd like to be able to write this as our state machine loop:
         //
         //   sid = start()
         //   for byte in haystack:
@@ -3212,14 +3212,14 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         //         # found match
         //
         // The important context here is that we might not want to look for
-        // start states at all. Namely, if a searcher doesn&#39;t have a prefilter,
-        // then there is no reason to care about whether we&#39;re in a start state
+        // start states at all. Namely, if a searcher doesn't have a prefilter,
+        // then there is no reason to care about whether we're in a start state
         // or not. And indeed, if we did check for it, this very hot loop would
         // ping pong between the special state handling and the main state
         // transition logic. This in turn stalls the CPU by killing branch
         // prediction.
         //
-        // So essentially, we really want to be able to &quot;forget&quot; that start
+        // So essentially, we really want to be able to "forget" that start
         // states even exist and this is why we put them at the end.
         </span><span class="kw">let </span>new_start_aid =
             StateID::new(next_avail.as_usize().checked_sub(<span class="number">1</span>).unwrap())
@@ -3254,19 +3254,19 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
     /// This tends to best balance between memory usage and performance. In
     /// particular, the *vast majority* of all states in a typical Aho-Corasick
     /// automaton have only 1 transition and are usually farther from the start
-    /// state and thus don&#39;t get densified.
+    /// state and thus don't get densified.
     ///
-    /// Note that this doesn&#39;t remove the sparse representation of transitions
+    /// Note that this doesn't remove the sparse representation of transitions
     /// for states that are densified. It could be done, but actually removing
-    /// entries from `NFA::sparse` is likely more expensive than it&#39;s worth.
+    /// entries from `NFA::sparse` is likely more expensive than it's worth.
     </span><span class="kw">fn </span>densify(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), BuildError&gt; {
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.nfa.states.len() {
             <span class="kw">let </span>sid = StateID::new(i).unwrap();
-            <span class="comment">// Don&#39;t bother densifying states that are only used as sentinels.
+            <span class="comment">// Don't bother densifying states that are only used as sentinels.
             </span><span class="kw">if </span>sid == NFA::DEAD || sid == NFA::FAIL {
                 <span class="kw">continue</span>;
             }
-            <span class="comment">// Only densify states that are &quot;close enough&quot; to the start state.
+            <span class="comment">// Only densify states that are "close enough" to the start state.
             </span><span class="kw">if </span><span class="self">self</span>.nfa.states[sid].depth.as_usize()
                 &gt;= <span class="self">self</span>.builder.dense_depth
             {
@@ -3303,10 +3303,10 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
 
     <span class="doccomment">/// Initializes the unanchored start state by making it dense. This is
     /// achieved by explicitly setting every transition to the FAIL state.
-    /// This isn&#39;t necessary for correctness, since any missing transition is
+    /// This isn't necessary for correctness, since any missing transition is
     /// automatically assumed to be mapped to the FAIL state. We do this to
     /// make the unanchored starting state dense, and thus in turn make
-    /// transition lookups on it faster. (Which is worth doing because it&#39;s
+    /// transition lookups on it faster. (Which is worth doing because it's
     /// the most active state.)
     </span><span class="kw">fn </span>init_unanchored_start_state(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), BuildError&gt; {
         <span class="kw">let </span>start_uid = <span class="self">self</span>.nfa.special.start_unanchored_id;
@@ -3342,7 +3342,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
         // then the search should stop.
         //
         // N.B. This assumes that the loop on the unanchored starting state
-        // hasn&#39;t been created yet.
+        // hasn't been created yet.
         </span><span class="self">self</span>.nfa.states[start_aid].fail = NFA::DEAD;
         <span class="prelude-val">Ok</span>(())
     }
@@ -3411,7 +3411,7 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
 <span class="doccomment">/// A set of state identifiers used to avoid revisiting the same state multiple
 /// times when filling in failure transitions.
 ///
-/// This set has an &quot;inert&quot; and an &quot;active&quot; mode. When inert, the set never
+/// This set has an "inert" and an "active" mode. When inert, the set never
 /// stores anything and always returns `false` for every member test. This is
 /// useful to avoid the performance and memory overhead of maintaining this
 /// set when it is not needed.
@@ -3451,24 +3451,24 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
 }
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>NFA {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
         <span class="kw">use crate</span>::{
             automaton::{fmt_state_indicator, sparse_transitions},
             util::debug::DebugByte,
         };
 
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;noncontiguous::NFA(&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"noncontiguous::NFA("</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>(sid, state) <span class="kw">in </span><span class="self">self</span>.states.iter().with_state_ids() {
-            <span class="comment">// The FAIL state doesn&#39;t actually have space for a state allocated
+            <span class="comment">// The FAIL state doesn't actually have space for a state allocated
             // for it, so we have to treat it as a special case.
             </span><span class="kw">if </span>sid == NFA::FAIL {
-                <span class="macro">writeln!</span>(f, <span class="string">&quot;F {:06}:&quot;</span>, sid.as_usize())<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(f, <span class="string">"F {:06}:"</span>, sid.as_usize())<span class="question-mark">?</span>;
                 <span class="kw">continue</span>;
             }
             fmt_state_indicator(f, <span class="self">self</span>, sid)<span class="question-mark">?</span>;
             <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;{:06}({:06}): &quot;</span>,
+                <span class="string">"{:06}({:06}): "</span>,
                 sid.as_usize(),
                 state.fail.as_usize()
             )<span class="question-mark">?</span>;
@@ -3479,19 +3479,19 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
             .enumerate();
             <span class="kw">for </span>(i, (start, end, sid)) <span class="kw">in </span>it {
                 <span class="kw">if </span>i &gt; <span class="number">0 </span>{
-                    <span class="macro">write!</span>(f, <span class="string">&quot;, &quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">", "</span>)<span class="question-mark">?</span>;
                 }
                 <span class="kw">if </span>start == end {
                     <span class="macro">write!</span>(
                         f,
-                        <span class="string">&quot;{:?} =&gt; {:?}&quot;</span>,
+                        <span class="string">"{:?} =&gt; {:?}"</span>,
                         DebugByte(start),
                         sid.as_usize()
                     )<span class="question-mark">?</span>;
                 } <span class="kw">else </span>{
                     <span class="macro">write!</span>(
                         f,
-                        <span class="string">&quot;{:?}-{:?} =&gt; {:?}&quot;</span>,
+                        <span class="string">"{:?}-{:?} =&gt; {:?}"</span>,
                         DebugByte(start),
                         DebugByte(end),
                         sid.as_usize()
@@ -3499,26 +3499,26 @@ only necessary when one needs access to the [`Automaton`] trait implementation.
                 }
             }
 
-            <span class="macro">write!</span>(f, <span class="string">&quot;\n&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"\n"</span>)<span class="question-mark">?</span>;
             <span class="kw">if </span><span class="self">self</span>.is_match(sid) {
-                <span class="macro">write!</span>(f, <span class="string">&quot;         matches: &quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"         matches: "</span>)<span class="question-mark">?</span>;
                 <span class="kw">for </span>(i, pid) <span class="kw">in </span><span class="self">self</span>.iter_matches(sid).enumerate() {
                     <span class="kw">if </span>i &gt; <span class="number">0 </span>{
-                        <span class="macro">write!</span>(f, <span class="string">&quot;, &quot;</span>)<span class="question-mark">?</span>;
+                        <span class="macro">write!</span>(f, <span class="string">", "</span>)<span class="question-mark">?</span>;
                     }
-                    <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, pid.as_usize())<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">"{}"</span>, pid.as_usize())<span class="question-mark">?</span>;
                 }
-                <span class="macro">write!</span>(f, <span class="string">&quot;\n&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"\n"</span>)<span class="question-mark">?</span>;
             }
         }
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;match kind: {:?}&quot;</span>, <span class="self">self</span>.match_kind)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;prefilter: {:?}&quot;</span>, <span class="self">self</span>.prefilter.is_some())<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;state length: {:?}&quot;</span>, <span class="self">self</span>.states.len())<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;pattern length: {:?}&quot;</span>, <span class="self">self</span>.patterns_len())<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;shortest pattern length: {:?}&quot;</span>, <span class="self">self</span>.min_pattern_len)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;longest pattern length: {:?}&quot;</span>, <span class="self">self</span>.max_pattern_len)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;memory usage: {:?}&quot;</span>, <span class="self">self</span>.memory_usage())<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;)&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"match kind: {:?}"</span>, <span class="self">self</span>.match_kind)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"prefilter: {:?}"</span>, <span class="self">self</span>.prefilter.is_some())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"state length: {:?}"</span>, <span class="self">self</span>.states.len())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"pattern length: {:?}"</span>, <span class="self">self</span>.patterns_len())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"shortest pattern length: {:?}"</span>, <span class="self">self</span>.min_pattern_len)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"longest pattern length: {:?}"</span>, <span class="self">self</span>.max_pattern_len)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"memory usage: {:?}"</span>, <span class="self">self</span>.memory_usage())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">")"</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }

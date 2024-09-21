@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/hybrid/dfa.rs`."><title>dfa.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_automata/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/hybrid/dfa.rs`."><title>dfa.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -4450,16 +4450,16 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     },
 };
 
-<span class="doccomment">/// The minimum number of states that a lazy DFA&#39;s cache size must support.
+<span class="doccomment">/// The minimum number of states that a lazy DFA's cache size must support.
 ///
 /// This is checked at time of construction to ensure that at least some small
-/// number of states can fit in the given capacity allotment. If we can&#39;t fit
-/// at least this number of states, then the thinking is that it&#39;s pretty
+/// number of states can fit in the given capacity allotment. If we can't fit
+/// at least this number of states, then the thinking is that it's pretty
 /// senseless to use the lazy DFA. More to the point, parts of the code do
 /// assume that the cache can fit at least some small number of states.
 </span><span class="kw">const </span>MIN_STATES: usize = SENTINEL_STATES + <span class="number">2</span>;
 
-<span class="doccomment">/// The number of &quot;sentinel&quot; states that get added to every lazy DFA.
+<span class="doccomment">/// The number of "sentinel" states that get added to every lazy DFA.
 ///
 /// These are special states indicating status conditions of a search: unknown,
 /// dead and quit. These states in particular also use zero NFA states, so
@@ -4467,7 +4467,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 /// minimum memory needed for a lazy DFA cache.
 </span><span class="kw">const </span>SENTINEL_STATES: usize = <span class="number">3</span>;
 
-<span class="doccomment">/// A hybrid NFA/DFA (also called a &quot;lazy DFA&quot;) for regex searching.
+<span class="doccomment">/// A hybrid NFA/DFA (also called a "lazy DFA") for regex searching.
 ///
 /// A lazy DFA is a DFA that builds itself at search time. It otherwise has
 /// very similar characteristics as a [`dense::DFA`](crate::dfa::dense::DFA).
@@ -4479,7 +4479,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 /// a search, a lazy DFA will build itself depending on whether it has already
 /// computed the next transition or not. If it has, then it looks a lot like
 /// a `dense::DFA` internally: it does a very fast table based access to find
-/// the next transition. Otherwise, if the state hasn&#39;t been computed, then it
+/// the next transition. Otherwise, if the state hasn't been computed, then it
 /// does determinization _for that specific transition_ to compute the next DFA
 /// state.
 ///
@@ -4492,7 +4492,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 ///
 /// The main downsides of a lazy DFA are:
 ///
-/// 1. It requires mutable &quot;cache&quot; space during search. This is where the
+/// 1. It requires mutable "cache" space during search. This is where the
 /// transition table, among other things, is stored.
 /// 2. In pathological cases (e.g., if the cache is too small), it will run
 /// out of room and either require a bigger cache capacity or will repeatedly
@@ -4523,12 +4523,12 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 /// ```
 /// use regex_automata::{hybrid::dfa::DFA, HalfMatch, Input};
 ///
-/// let dfa = DFA::new(&quot;foo[0-9]+&quot;)?;
+/// let dfa = DFA::new("foo[0-9]+")?;
 /// let mut cache = dfa.create_cache();
 ///
 /// let expected = Some(HalfMatch::must(0, 8));
 /// assert_eq!(expected, dfa.try_search_fwd(
-///     &amp;mut cache, &amp;Input::new(&quot;foo12345&quot;))?,
+///     &amp;mut cache, &amp;Input::new("foo12345"))?,
 /// );
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
 /// ```
@@ -4555,17 +4555,17 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// ```
     /// use regex_automata::{hybrid::dfa::DFA, HalfMatch, Input};
     ///
-    /// let dfa = DFA::new(&quot;foo[0-9]+bar&quot;)?;
+    /// let dfa = DFA::new("foo[0-9]+bar")?;
     /// let mut cache = dfa.create_cache();
     ///
     /// let expected = HalfMatch::must(0, 11);
     /// assert_eq!(
     ///     Some(expected),
-    ///     dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(&quot;foo12345bar&quot;))?,
+    ///     dfa.try_search_fwd(&amp;mut cache, &amp;Input::new("foo12345bar"))?,
     /// );
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>new(pattern: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;DFA, BuildError&gt; {
         DFA::builder().build(pattern)
     }
@@ -4581,17 +4581,17 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// ```
     /// use regex_automata::{hybrid::dfa::DFA, HalfMatch, Input};
     ///
-    /// let dfa = DFA::new_many(&amp;[&quot;[0-9]+&quot;, &quot;[a-z]+&quot;])?;
+    /// let dfa = DFA::new_many(&amp;["[0-9]+", "[a-z]+"])?;
     /// let mut cache = dfa.create_cache();
     ///
     /// let expected = HalfMatch::must(1, 3);
     /// assert_eq!(
     ///     Some(expected),
-    ///     dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(&quot;foo12345bar&quot;))?,
+    ///     dfa.try_search_fwd(&amp;mut cache, &amp;Input::new("foo12345bar"))?,
     /// );
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>new_many&lt;P: AsRef&lt;str&gt;&gt;(patterns: <span class="kw-2">&amp;</span>[P]) -&gt; <span class="prelude-ty">Result</span>&lt;DFA, BuildError&gt; {
         DFA::builder().build_many(patterns)
     }
@@ -4608,10 +4608,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let expected = HalfMatch::must(0, 0);
     /// assert_eq!(Some(expected), dfa.try_search_fwd(
-    ///     &amp;mut cache, &amp;Input::new(&quot;&quot;))?,
+    ///     &amp;mut cache, &amp;Input::new(""))?,
     /// );
     /// assert_eq!(Some(expected), dfa.try_search_fwd(
-    ///     &amp;mut cache, &amp;Input::new(&quot;foo&quot;))?,
+    ///     &amp;mut cache, &amp;Input::new("foo"))?,
     /// );
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -4630,8 +4630,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// let dfa = DFA::never_match()?;
     /// let mut cache = dfa.create_cache();
     ///
-    /// assert_eq!(None, dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(&quot;&quot;))?);
-    /// assert_eq!(None, dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(&quot;foo&quot;))?);
+    /// assert_eq!(None, dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(""))?);
+    /// assert_eq!(None, dfa.try_search_fwd(&amp;mut cache, &amp;Input::new("foo"))?);
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="kw">pub fn </span>never_match() -&gt; <span class="prelude-ty">Result</span>&lt;DFA, BuildError&gt; {
@@ -4655,20 +4655,20 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let re = DFA::builder()
     ///     .configure(DFA::config().unicode_word_boundary(true))
-    ///     .build(r&quot;\b\w+\b&quot;)?;
+    ///     .build(r"\b\w+\b")?;
     /// let mut cache = re.create_cache();
     ///
     /// // Since our haystack is all ASCII, the DFA search sees then and knows
     /// // it is legal to interpret Unicode word boundaries as ASCII word
     /// // boundaries.
-    /// let input = Input::new(&quot;!!foo!!&quot;);
+    /// let input = Input::new("!!foo!!");
     /// let expected = HalfMatch::must(0, 5);
     /// assert_eq!(Some(expected), re.try_search_fwd(&amp;mut cache, &amp;input)?);
     ///
     /// // But if our haystack contains non-ASCII, then the search will fail
     /// // with an error.
-    /// let input = Input::new(&quot;!!βββ!!&quot;);
-    /// let expected = MatchError::quit(b&#39;\xCE&#39;, 2);
+    /// let input = Input::new("!!βββ!!");
+    /// let expected = MatchError::quit(b'\xCE', 2);
     /// assert_eq!(Err(expected), re.try_search_fwd(&amp;mut cache, &amp;input));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -4693,10 +4693,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let re = DFA::builder()
     ///     .syntax(syntax::Config::new().utf8(false))
-    ///     .build(r&quot;foo(?-u:[^b])ar.*&quot;)?;
+    ///     .build(r"foo(?-u:[^b])ar.*")?;
     /// let mut cache = re.create_cache();
     ///
-    /// let input = Input::new(b&quot;\xFEfoo\xFFarzz\xE2\x98\xFF\n&quot;);
+    /// let input = Input::new(b"\xFEfoo\xFFarzz\xE2\x98\xFF\n");
     /// let expected = Some(HalfMatch::must(0, 9));
     /// let got = re.try_search_fwd(&amp;mut cache, &amp;input)?;
     /// assert_eq!(expected, got);
@@ -4723,8 +4723,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// A cache reset permits reusing memory already allocated in this cache
     /// with a different lazy DFA.
     ///
-    /// Resetting a cache sets its &quot;clear count&quot; to 0. This is relevant if the
-    /// lazy DFA has been configured to &quot;give up&quot; after it has cleared the
+    /// Resetting a cache sets its "clear count" to 0. This is relevant if the
+    /// lazy DFA has been configured to "give up" after it has cleared the
     /// cache a certain number of times.
     ///
     /// Any lazy state ID generated by the cache prior to resetting it is
@@ -4738,25 +4738,25 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::{hybrid::dfa::DFA, HalfMatch, Input};
     ///
-    /// let dfa1 = DFA::new(r&quot;\w&quot;)?;
-    /// let dfa2 = DFA::new(r&quot;\W&quot;)?;
+    /// let dfa1 = DFA::new(r"\w")?;
+    /// let dfa2 = DFA::new(r"\W")?;
     ///
     /// let mut cache = dfa1.create_cache();
     /// assert_eq!(
     ///     Some(HalfMatch::must(0, 2)),
-    ///     dfa1.try_search_fwd(&amp;mut cache, &amp;Input::new(&quot;Δ&quot;))?,
+    ///     dfa1.try_search_fwd(&amp;mut cache, &amp;Input::new("Δ"))?,
     /// );
     ///
-    /// // Using &#39;cache&#39; with dfa2 is not allowed. It may result in panics or
+    /// // Using 'cache' with dfa2 is not allowed. It may result in panics or
     /// // incorrect results. In order to re-purpose the cache, we must reset
-    /// // it with the DFA we&#39;d like to use it with.
+    /// // it with the DFA we'd like to use it with.
     /// //
-    /// // Similarly, after this reset, using the cache with &#39;dfa1&#39; is also not
+    /// // Similarly, after this reset, using the cache with 'dfa1' is also not
     /// // allowed.
     /// dfa2.reset_cache(&amp;mut cache);
     /// assert_eq!(
     ///     Some(HalfMatch::must(0, 3)),
-    ///     dfa2.try_search_fwd(&amp;mut cache, &amp;Input::new(&quot;☃&quot;))?,
+    ///     dfa2.try_search_fwd(&amp;mut cache, &amp;Input::new("☃"))?,
     /// );
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -4796,7 +4796,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// ```
     /// use regex_automata::hybrid::dfa::DFA;
     ///
-    /// let dfa = DFA::new_many(&amp;[&quot;[0-9]+&quot;, &quot;[a-z]+&quot;, &quot;[A-Z]+&quot;])?;
+    /// let dfa = DFA::new_many(&amp;["[0-9]+", "[a-z]+", "[A-Z]+"])?;
     /// assert_eq!(dfa.pattern_len(), 3);
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -4810,7 +4810,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// multiple distinct bytes are grouped into the same equivalence class
     /// if it is impossible for them to discriminate between a match and a
     /// non-match. This has the effect of reducing the overall alphabet size
-    /// and in turn potentially substantially reducing the size of the DFA&#39;s
+    /// and in turn potentially substantially reducing the size of the DFA's
     /// transition table.
     ///
     /// The downside of using equivalence classes like this is that every state
@@ -4821,7 +4821,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         <span class="kw-2">&amp;</span><span class="self">self</span>.classes
     }
 
-    <span class="doccomment">/// Returns this lazy DFA&#39;s configuration.
+    <span class="doccomment">/// Returns this lazy DFA's configuration.
     </span><span class="kw">pub fn </span>get_config(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Config {
         <span class="kw-2">&amp;</span><span class="self">self</span>.config
     }
@@ -4844,7 +4844,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 
     <span class="doccomment">/// Returns the total stride for every state in this lazy DFA. This
     /// corresponds to the total number of transitions used by each state in
-    /// this DFA&#39;s transition table.
+    /// this DFA's transition table.
     </span><span class="kw">fn </span>stride(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.stride2()
     }
@@ -4856,9 +4856,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// include the size of the `Cache` used.
     ///
     /// This also does not include any heap memory used by the NFA inside of
-    /// this hybrid NFA/DFA. This is because the NFA&#39;s ownership is shared, and
+    /// this hybrid NFA/DFA. This is because the NFA's ownership is shared, and
     /// thus not owned by this hybrid NFA/DFA. More practically, several regex
-    /// engines in this crate embed an NFA, and reporting the NFA&#39;s memory
+    /// engines in this crate embed an NFA, and reporting the NFA's memory
     /// usage in all of them would likely result in reporting higher heap
     /// memory than is actually used.
     </span><span class="kw">pub fn </span>memory_usage(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
@@ -4866,7 +4866,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         // NFA has shared ownership, so reporting its memory as part of the
         // hybrid DFA is likely to lead to double-counting the NFA memory
         // somehow. In particular, this DFA does not really own an NFA, so
-        // including it in the DFA&#39;s memory usage doesn&#39;t seem semantically
+        // including it in the DFA's memory usage doesn't seem semantically
         // correct.
         </span><span class="number">0
     </span>}
@@ -4887,11 +4887,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// This routine errors if the search could not complete. This can occur
     /// in a number of circumstances:
     ///
-    /// * The configuration of the lazy DFA may permit it to &quot;quit&quot; the search.
+    /// * The configuration of the lazy DFA may permit it to "quit" the search.
     /// For example, setting quit bytes or enabling heuristic support for
     /// Unicode word boundaries. The default configuration does not enable any
     /// option that could result in the lazy DFA quitting.
-    /// * The configuration of the lazy DFA may also permit it to &quot;give up&quot;
+    /// * The configuration of the lazy DFA may also permit it to "give up"
     /// on a search if it makes ineffective use of its transition table
     /// cache. The default configuration does not enable this by default,
     /// although it is typically a good idea to.
@@ -4908,21 +4908,21 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// ```
     /// use regex_automata::{hybrid::dfa::DFA, HalfMatch, Input};
     ///
-    /// let dfa = DFA::new(&quot;foo[0-9]+&quot;)?;
+    /// let dfa = DFA::new("foo[0-9]+")?;
     /// let mut cache = dfa.create_cache();
     /// let expected = HalfMatch::must(0, 8);
     /// assert_eq!(Some(expected), dfa.try_search_fwd(
-    ///     &amp;mut cache, &amp;Input::new(&quot;foo12345&quot;))?,
+    ///     &amp;mut cache, &amp;Input::new("foo12345"))?,
     /// );
     ///
     /// // Even though a match is found after reading the first byte (`a`),
     /// // the leftmost first match semantics demand that we find the earliest
     /// // match that prefers earlier parts of the pattern over later parts.
-    /// let dfa = DFA::new(&quot;abc|a&quot;)?;
+    /// let dfa = DFA::new("abc|a")?;
     /// let mut cache = dfa.create_cache();
     /// let expected = HalfMatch::must(0, 3);
     /// assert_eq!(Some(expected), dfa.try_search_fwd(
-    ///     &amp;mut cache, &amp;Input::new(&quot;abc&quot;))?,
+    ///     &amp;mut cache, &amp;Input::new("abc"))?,
     /// );
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -4941,9 +4941,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let dfa = DFA::builder()
     ///     .configure(DFA::config().starts_for_each_pattern(true))
-    ///     .build_many(&amp;[&quot;[a-z0-9]{6}&quot;, &quot;[a-z][a-z0-9]{5}&quot;])?;
+    ///     .build_many(&amp;["[a-z0-9]{6}", "[a-z][a-z0-9]{5}"])?;
     /// let mut cache = dfa.create_cache();
-    /// let haystack = &quot;foo123&quot;;
+    /// let haystack = "foo123";
     ///
     /// // Since we are using the default leftmost-first match and both
     /// // patterns match at the same starting position, only the first pattern
@@ -4975,11 +4975,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// // N.B. We disable Unicode here so that we use a simple ASCII word
     /// // boundary. Alternatively, we could enable heuristic support for
     /// // Unicode word boundaries since our haystack is pure ASCII.
-    /// let dfa = DFA::new(r&quot;(?-u)\b[0-9]{3}\b&quot;)?;
+    /// let dfa = DFA::new(r"(?-u)\b[0-9]{3}\b")?;
     /// let mut cache = dfa.create_cache();
-    /// let haystack = &quot;foo123bar&quot;;
+    /// let haystack = "foo123bar";
     ///
-    /// // Since we sub-slice the haystack, the search doesn&#39;t know about the
+    /// // Since we sub-slice the haystack, the search doesn't know about the
     /// // larger context and assumes that `123` is surrounded by word
     /// // boundaries. And of course, the match position is reported relative
     /// // to the sub-slice as well, which means we get `3` instead of `6`.
@@ -5007,7 +5007,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     </span><span class="kw">pub fn </span>try_search_fwd(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, MatchError&gt; {
         <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
         <span class="kw">let </span>hm = <span class="kw">match </span>search::find_fwd(<span class="self">self</span>, cache, input)<span class="question-mark">? </span>{
@@ -5044,11 +5044,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// This routine errors if the search could not complete. This can occur
     /// in a number of circumstances:
     ///
-    /// * The configuration of the lazy DFA may permit it to &quot;quit&quot; the search.
+    /// * The configuration of the lazy DFA may permit it to "quit" the search.
     /// For example, setting quit bytes or enabling heuristic support for
     /// Unicode word boundaries. The default configuration does not enable any
     /// option that could result in the lazy DFA quitting.
-    /// * The configuration of the lazy DFA may also permit it to &quot;give up&quot;
+    /// * The configuration of the lazy DFA may also permit it to "give up"
     /// on a search if it makes ineffective use of its transition table
     /// cache. The default configuration does not enable this by default,
     /// although it is typically a good idea to.
@@ -5063,7 +5063,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// This routine is principally useful when used in
     /// conjunction with the
     /// [`nfa::thompson::Config::reverse`](crate::nfa::thompson::Config::reverse)
-    /// configuration. In general, it&#39;s unlikely to be correct to use both
+    /// configuration. In general, it's unlikely to be correct to use both
     /// `try_search_fwd` and `try_search_rev` with the same DFA since any
     /// particular DFA will only support searching in one direction with
     /// respect to the pattern.
@@ -5077,12 +5077,12 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let dfa = DFA::builder()
     ///     .thompson(thompson::Config::new().reverse(true))
-    ///     .build(&quot;foo[0-9]+&quot;)?;
+    ///     .build("foo[0-9]+")?;
     /// let mut cache = dfa.create_cache();
     /// let expected = HalfMatch::must(0, 0);
     /// assert_eq!(
     ///     Some(expected),
-    ///     dfa.try_search_rev(&amp;mut cache, &amp;Input::new(&quot;foo12345&quot;))?,
+    ///     dfa.try_search_rev(&amp;mut cache, &amp;Input::new("foo12345"))?,
     /// );
     ///
     /// // Even though a match is found after reading the last byte (`c`),
@@ -5090,11 +5090,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// // match that prefers earlier parts of the pattern over latter parts.
     /// let dfa = DFA::builder()
     ///     .thompson(thompson::Config::new().reverse(true))
-    ///     .build(&quot;abc|c&quot;)?;
+    ///     .build("abc|c")?;
     /// let mut cache = dfa.create_cache();
     /// let expected = HalfMatch::must(0, 0);
     /// assert_eq!(Some(expected), dfa.try_search_rev(
-    ///     &amp;mut cache, &amp;Input::new(&quot;abc&quot;))?,
+    ///     &amp;mut cache, &amp;Input::new("abc"))?,
     /// );
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -5119,11 +5119,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let dfa = DFA::builder()
     ///     .thompson(thompson::Config::new().reverse(true))
-    ///     .build(r&quot;&quot;)?;
+    ///     .build(r"")?;
     /// let mut cache = dfa.create_cache();
     ///
     /// // Run the reverse DFA to collect all matches.
-    /// let mut input = Input::new(&quot;☃&quot;);
+    /// let mut input = Input::new("☃");
     /// let mut matches = vec![];
     /// loop {
     ///     match dfa.try_search_rev(&amp;mut cache, &amp;input)? {
@@ -5155,7 +5155,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     ///
-    /// Now let&#39;s look at the same example, but with UTF-8 mode on the
+    /// Now let's look at the same example, but with UTF-8 mode on the
     /// underlying NFA disabled:
     ///
     /// ```
@@ -5167,11 +5167,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let dfa = DFA::builder()
     ///     .thompson(thompson::Config::new().reverse(true).utf8(false))
-    ///     .build(r&quot;&quot;)?;
+    ///     .build(r"")?;
     /// let mut cache = dfa.create_cache();
     ///
     /// // Run the reverse DFA to collect all matches.
-    /// let mut input = Input::new(&quot;☃&quot;);
+    /// let mut input = Input::new("☃");
     /// let mut matches = vec![];
     /// loop {
     ///     match dfa.try_search_rev(&amp;mut cache, &amp;input)? {
@@ -5208,7 +5208,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     </span><span class="kw">pub fn </span>try_search_rev(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, MatchError&gt; {
         <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
         <span class="kw">let </span>hm = <span class="kw">match </span>search::find_rev(<span class="self">self</span>, cache, input)<span class="question-mark">? </span>{
@@ -5227,7 +5227,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// This routine is principally only useful when searching for multiple
     /// patterns on inputs where multiple patterns may match the same regions
-    /// of text. In particular, callers must preserve the automaton&#39;s search
+    /// of text. In particular, callers must preserve the automaton's search
     /// state from prior calls so that the implementation knows where the last
     /// match occurred.
     ///
@@ -5247,11 +5247,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// This routine errors if the search could not complete. This can occur
     /// in a number of circumstances:
     ///
-    /// * The configuration of the lazy DFA may permit it to &quot;quit&quot; the search.
+    /// * The configuration of the lazy DFA may permit it to "quit" the search.
     /// For example, setting quit bytes or enabling heuristic support for
     /// Unicode word boundaries. The default configuration does not enable any
     /// option that could result in the lazy DFA quitting.
-    /// * The configuration of the lazy DFA may also permit it to &quot;give up&quot;
+    /// * The configuration of the lazy DFA may also permit it to "give up"
     /// on a search if it makes ineffective use of its transition table
     /// cache. The default configuration does not enable this by default,
     /// although it is typically a good idea to.
@@ -5285,10 +5285,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let dfa = DFA::builder()
     ///     .configure(DFA::config().match_kind(MatchKind::All))
-    ///     .build_many(&amp;[r&quot;\w+$&quot;, r&quot;\S+$&quot;])?;
+    ///     .build_many(&amp;[r"\w+$", r"\S+$"])?;
     /// let mut cache = dfa.create_cache();
     ///
-    /// let haystack = &quot;@foo&quot;;
+    /// let haystack = "@foo";
     /// let mut state = OverlappingState::start();
     ///
     /// let expected = Some(HalfMatch::must(1, 4));
@@ -5314,7 +5314,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     </span><span class="kw">pub fn </span>try_search_overlapping_fwd(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         state: <span class="kw-2">&amp;mut </span>OverlappingState,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
         <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
@@ -5352,11 +5352,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// This routine errors if the search could not complete. This can occur
     /// in a number of circumstances:
     ///
-    /// * The configuration of the lazy DFA may permit it to &quot;quit&quot; the search.
+    /// * The configuration of the lazy DFA may permit it to "quit" the search.
     /// For example, setting quit bytes or enabling heuristic support for
     /// Unicode word boundaries. The default configuration does not enable any
     /// option that could result in the lazy DFA quitting.
-    /// * The configuration of the lazy DFA may also permit it to &quot;give up&quot;
+    /// * The configuration of the lazy DFA may also permit it to "give up"
     /// on a search if it makes ineffective use of its transition table
     /// cache. The default configuration does not enable this by default,
     /// although it is typically a good idea to.
@@ -5386,11 +5386,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// let dfa = DFA::builder()
     ///     .configure(DFA::config().match_kind(MatchKind::All))
     ///     .thompson(thompson::Config::new().reverse(true))
-    ///     .build_many(&amp;[r&quot;&quot;, r&quot;☃&quot;])?;
+    ///     .build_many(&amp;[r"", r"☃"])?;
     /// let mut cache = dfa.create_cache();
     ///
     /// // Run the reverse DFA to collect all matches.
-    /// let input = Input::new(&quot;☃&quot;);
+    /// let input = Input::new("☃");
     /// let mut state = OverlappingState::start();
     /// let mut matches = vec![];
     /// loop {
@@ -5412,7 +5412,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     ///
-    /// Now let&#39;s look at the same example, but with UTF-8 mode on the
+    /// Now let's look at the same example, but with UTF-8 mode on the
     /// underlying NFA disabled:
     ///
     /// ```
@@ -5425,11 +5425,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// let dfa = DFA::builder()
     ///     .configure(DFA::config().match_kind(MatchKind::All))
     ///     .thompson(thompson::Config::new().reverse(true).utf8(false))
-    ///     .build_many(&amp;[r&quot;&quot;, r&quot;☃&quot;])?;
+    ///     .build_many(&amp;[r"", r"☃"])?;
     /// let mut cache = dfa.create_cache();
     ///
     /// // Run the reverse DFA to collect all matches.
-    /// let input = Input::new(&quot;☃&quot;);
+    /// let input = Input::new("☃");
     /// let mut state = OverlappingState::start();
     /// let mut matches = vec![];
     /// loop {
@@ -5458,7 +5458,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     </span><span class="kw">pub fn </span>try_search_overlapping_rev(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         state: <span class="kw-2">&amp;mut </span>OverlappingState,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
         <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
@@ -5486,7 +5486,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// This search routine *does not* clear the pattern set. This gives some
     /// flexibility to the caller (e.g., running multiple searches with the
-    /// same pattern set), but does make the API bug-prone if you&#39;re reusing
+    /// same pattern set), but does make the API bug-prone if you're reusing
     /// the same pattern set for multiple searches but intended them to be
     /// independent.
     ///
@@ -5499,11 +5499,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// This routine errors if the search could not complete. This can occur
     /// in a number of circumstances:
     ///
-    /// * The configuration of the lazy DFA may permit it to &quot;quit&quot; the search.
+    /// * The configuration of the lazy DFA may permit it to "quit" the search.
     /// For example, setting quit bytes or enabling heuristic support for
     /// Unicode word boundaries. The default configuration does not enable any
     /// option that could result in the lazy DFA quitting.
-    /// * The configuration of the lazy DFA may also permit it to &quot;give up&quot;
+    /// * The configuration of the lazy DFA may also permit it to "give up"
     /// on a search if it makes ineffective use of its transition table
     /// cache. The default configuration does not enable this by default,
     /// although it is typically a good idea to.
@@ -5526,14 +5526,14 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// };
     ///
     /// let patterns = &amp;[
-    ///     r&quot;\w+&quot;, r&quot;\d+&quot;, r&quot;\pL+&quot;, r&quot;foo&quot;, r&quot;bar&quot;, r&quot;barfoo&quot;, r&quot;foobar&quot;,
+    ///     r"\w+", r"\d+", r"\pL+", r"foo", r"bar", r"barfoo", r"foobar",
     /// ];
     /// let dfa = DFA::builder()
     ///     .configure(DFA::config().match_kind(MatchKind::All))
     ///     .build_many(patterns)?;
     /// let mut cache = dfa.create_cache();
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// let mut patset = PatternSet::new(dfa.pattern_len());
     /// dfa.try_which_overlapping_matches(&amp;mut cache, &amp;input, &amp;mut patset)?;
     /// let expected = vec![0, 2, 3, 4, 6];
@@ -5546,7 +5546,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     </span><span class="kw">pub fn </span>try_which_overlapping_matches(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         patset: <span class="kw-2">&amp;mut </span>PatternSet,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>state = OverlappingState::start();
@@ -5555,7 +5555,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
             state.get_match()
         } {
             <span class="kw">let _ </span>= patset.try_insert(m.pattern());
-            <span class="comment">// There&#39;s nothing left to find, so we can stop. Or the caller
+            <span class="comment">// There's nothing left to find, so we can stop. Or the caller
             // asked us to.
             </span><span class="kw">if </span>patset.is_full() || input.get_earliest() {
                 <span class="kw">break</span>;
@@ -5572,7 +5572,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// The given cache is used to either reuse pre-computed state
     /// transitions, or to store this newly computed transition for future
     /// reuse. Thus, this routine guarantees that it will never return a state
-    /// ID that has an &quot;unknown&quot; tag.
+    /// ID that has an "unknown" tag.
     ///
     /// # State identifier validity
     ///
@@ -5609,9 +5609,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// ```
     /// use regex_automata::{hybrid::dfa::DFA, Input};
     ///
-    /// let dfa = DFA::new(r&quot;[a-z]+r&quot;)?;
+    /// let dfa = DFA::new(r"[a-z]+r")?;
     /// let mut cache = dfa.create_cache();
-    /// let haystack = &quot;bar&quot;.as_bytes();
+    /// let haystack = "bar".as_bytes();
     ///
     /// // The start state is determined by inspecting the position and the
     /// // initial bytes of the haystack.
@@ -5623,7 +5623,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///     sid = dfa.next_state(&amp;mut cache, sid, b)?;
     /// }
     /// // Matches are always delayed by 1 byte, so we must explicitly walk the
-    /// // special &quot;EOI&quot; transition at the end of the search.
+    /// // special "EOI" transition at the end of the search.
     /// sid = dfa.next_eoi_state(&amp;mut cache, sid)?;
     /// assert!(sid.is_match());
     ///
@@ -5659,10 +5659,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// Since this routine does not compute states on the fly, it does not
     /// modify the cache and thus cannot return an error. Consequently, `cache`
     /// does not need to be mutable and it is possible for this routine to
-    /// return a state ID corresponding to the special &quot;unknown&quot; state. In
-    /// this case, it is the caller&#39;s responsibility to use the prior state
+    /// return a state ID corresponding to the special "unknown" state. In
+    /// this case, it is the caller's responsibility to use the prior state
     /// ID and `input` with `next_state` in order to force the computation of
-    /// the unknown transition. Otherwise, trying to use the &quot;unknown&quot; state
+    /// the unknown transition. Otherwise, trying to use the "unknown" state
     /// ID will just result in transitioning back to itself, and thus never
     /// terminating. (This is technically a special exemption to the state ID
     /// validity rules, but is permissible since this routine is guarateed to
@@ -5709,9 +5709,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// ```
     /// use regex_automata::{hybrid::dfa::DFA, Input};
     ///
-    /// let dfa = DFA::new(r&quot;[a-z]+r&quot;)?;
+    /// let dfa = DFA::new(r"[a-z]+r")?;
     /// let mut cache = dfa.create_cache();
-    /// let haystack = &quot;bar&quot;.as_bytes();
+    /// let haystack = "bar".as_bytes();
     ///
     /// // The start state is determined by inspecting the position and the
     /// // initial bytes of the haystack.
@@ -5740,8 +5740,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///             }
     ///         }
     ///         // We must ensure that we never proceed to the next iteration
-    ///         // with an unknown state ID. If we don&#39;t account for this
-    ///         // case, then search isn&#39;t guaranteed to terminate since all
+    ///         // with an unknown state ID. If we don't account for this
+    ///         // case, then search isn't guaranteed to terminate since all
     ///         // transitions on unknown states loop back to itself.
     ///         if sid.is_unknown() {
     ///             sid = dfa.next_state(
@@ -5751,7 +5751,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///     }
     /// }
     /// // Matches are always delayed by 1 byte, so we must explicitly walk the
-    /// // special &quot;EOI&quot; transition at the end of the search.
+    /// // special "EOI" transition at the end of the search.
     /// sid = dfa.next_eoi_state(&amp;mut cache, sid)?;
     /// assert!(sid.is_match());
     ///
@@ -5783,10 +5783,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// Since this routine does not compute states on the fly, it does not
     /// modify the cache and thus cannot return an error. Consequently, `cache`
     /// does not need to be mutable and it is possible for this routine to
-    /// return a state ID corresponding to the special &quot;unknown&quot; state. In
-    /// this case, it is the caller&#39;s responsibility to use the prior state
+    /// return a state ID corresponding to the special "unknown" state. In
+    /// this case, it is the caller's responsibility to use the prior state
     /// ID and `input` with `next_state` in order to force the computation of
-    /// the unknown transition. Otherwise, trying to use the &quot;unknown&quot; state
+    /// the unknown transition. Otherwise, trying to use the "unknown" state
     /// ID will just result in transitioning back to itself, and thus never
     /// terminating. (This is technically a special exemption to the state ID
     /// validity rules, but is permissible since this routine is guarateed to
@@ -5848,7 +5848,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// The given cache is used to either reuse pre-computed state
     /// transitions, or to store this newly computed transition for future
     /// reuse. Thus, this routine guarantees that it will never return a state
-    /// ID that has an &quot;unknown&quot; tag.
+    /// ID that has an "unknown" tag.
     ///
     /// This routine must be called at the end of every search in a correct
     /// implementation of search. Namely, lazy DFAs in this crate delay matches
@@ -5898,9 +5898,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// ```
     /// use regex_automata::{hybrid::dfa::DFA, Input};
     ///
-    /// let dfa = DFA::new(r&quot;[a-z]+r&quot;)?;
+    /// let dfa = DFA::new(r"[a-z]+r")?;
     /// let mut cache = dfa.create_cache();
-    /// let haystack = &quot;bar&quot;.as_bytes();
+    /// let haystack = "bar".as_bytes();
     ///
     /// // The start state is determined by inspecting the position and the
     /// // initial bytes of the haystack.
@@ -5912,7 +5912,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///     sid = dfa.next_state(&amp;mut cache, sid, b)?;
     /// }
     /// // Matches are always delayed by 1 byte, so we must explicitly walk
-    /// // the special &quot;EOI&quot; transition at the end of the search. Without this
+    /// // the special "EOI" transition at the end of the search. Without this
     /// // final transition, the assert below will fail since the DFA will not
     /// // have entered a match state yet!
     /// sid = dfa.next_eoi_state(&amp;mut cache, sid)?;
@@ -5945,7 +5945,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// * The [`Anchored`] mode of the search. Unanchored, anchored and
     /// anchored searches for a specific [`PatternID`] all use different start
     /// states.
-    /// * Whether a &quot;look-behind&quot; byte exists. For example, the `^` anchor
+    /// * Whether a "look-behind" byte exists. For example, the `^` anchor
     /// matches if and only if there is no look-behind byte.
     /// * The specific value of that look-behind byte. For example, a `(?m:^)`
     /// assertion only matches when there is either no look-behind byte, or
@@ -5964,11 +5964,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// # Errors
     ///
     /// This may return a [`StartError`] if the search needs to give up when
-    /// determining the start state (for example, if it sees a &quot;quit&quot; byte
+    /// determining the start state (for example, if it sees a "quit" byte
     /// or if the cache has become inefficient). This can also return an
     /// error if the given configuration contains an unsupported [`Anchored`]
     /// configuration.
-    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">pub fn </span>start_state(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
@@ -6004,14 +6004,14 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// # Errors
     ///
     /// This may return a [`MatchError`] if the search needs to give up when
-    /// determining the start state (for example, if it sees a &quot;quit&quot; byte or
+    /// determining the start state (for example, if it sees a "quit" byte or
     /// if the cache has become inefficient). This can also return an error if
     /// the given `Input` contains an unsupported [`Anchored`] configuration.
-    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">pub fn </span>start_state_forward(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;LazyStateID, MatchError&gt; {
         <span class="kw">let </span>config = start::Config::from_input_forward(input);
         <span class="self">self</span>.start_state(cache, <span class="kw-2">&amp;</span>config).map_err(|err| <span class="kw">match </span>err {
@@ -6020,7 +6020,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
                 <span class="kw">let </span>offset = input
                     .start()
                     .checked_sub(<span class="number">1</span>)
-                    .expect(<span class="string">&quot;no quit in start without look-behind&quot;</span>);
+                    .expect(<span class="string">"no quit in start without look-behind"</span>);
                 MatchError::quit(byte, offset)
             }
             StartError::UnsupportedAnchored { mode } =&gt; {
@@ -6041,14 +6041,14 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// # Errors
     ///
     /// This may return a [`MatchError`] if the search needs to give up when
-    /// determining the start state (for example, if it sees a &quot;quit&quot; byte or
+    /// determining the start state (for example, if it sees a "quit" byte or
     /// if the cache has become inefficient). This can also return an error if
     /// the given `Input` contains an unsupported [`Anchored`] configuration.
-    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">pub fn </span>start_state_reverse(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;LazyStateID, MatchError&gt; {
         <span class="kw">let </span>config = start::Config::from_input_reverse(input);
         <span class="self">self</span>.start_state(cache, <span class="kw-2">&amp;</span>config).map_err(|err| <span class="kw">match </span>err {
@@ -6104,10 +6104,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// let dfa = DFA::builder()
     ///     .configure(DFA::config().match_kind(MatchKind::All))
     ///     .build_many(&amp;[
-    ///         r&quot;\w+&quot;, r&quot;[a-z]+&quot;, r&quot;[A-Z]+&quot;, r&quot;\S+&quot;,
+    ///         r"\w+", r"[a-z]+", r"[A-Z]+", r"\S+",
     ///     ])?;
     /// let mut cache = dfa.create_cache();
-    /// let haystack = &quot;@bar&quot;.as_bytes();
+    /// let haystack = "@bar".as_bytes();
     ///
     /// // The start state is determined by inspecting the position and the
     /// // initial bytes of the haystack.
@@ -6179,7 +6179,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 <span class="doccomment">/// A cache represents a partially computed DFA.
 ///
 /// A cache is the key component that differentiates a classical DFA and a
-/// hybrid NFA/DFA (also called a &quot;lazy DFA&quot;). Where a classical DFA builds a
+/// hybrid NFA/DFA (also called a "lazy DFA"). Where a classical DFA builds a
 /// complete transition table that can handle all possible inputs, a hybrid
 /// NFA/DFA starts with an empty transition table and builds only the parts
 /// required during search. The parts that are built are stored in a cache. For
@@ -6193,28 +6193,28 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 /// or incorrect results.
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>Cache {
-    <span class="comment">// N.B. If you&#39;re looking to understand how determinization works, it
+    <span class="comment">// N.B. If you're looking to understand how determinization works, it
     // is probably simpler to first grok src/dfa/determinize.rs, since that
-    // doesn&#39;t have the &quot;laziness&quot; component.
+    // doesn't have the "laziness" component.
     </span><span class="doccomment">/// The transition table.
     ///
     /// Given a `current` LazyStateID and an `input` byte, the next state can
     /// be computed via `trans[untagged(current) + equiv_class(input)]`. Notice
-    /// that no multiplication is used. That&#39;s because state identifiers are
-    /// &quot;premultiplied.&quot;
+    /// that no multiplication is used. That's because state identifiers are
+    /// "premultiplied."
     ///
-    /// Note that the next state may be the &quot;unknown&quot; state. In this case, the
+    /// Note that the next state may be the "unknown" state. In this case, the
     /// next state is not known and determinization for `current` on `input`
     /// must be performed.
     </span>trans: Vec&lt;LazyStateID&gt;,
     <span class="doccomment">/// The starting states for this DFA.
     ///
-    /// These are computed lazily. Initially, these are all set to &quot;unknown&quot;
+    /// These are computed lazily. Initially, these are all set to "unknown"
     /// lazy state IDs.
     ///
-    /// When &#39;starts_for_each_pattern&#39; is disabled (the default), then the size
+    /// When 'starts_for_each_pattern' is disabled (the default), then the size
     /// of this is constrained to the possible starting configurations based
-    /// on the search parameters. (At time of writing, that&#39;s 4.) However,
+    /// on the search parameters. (At time of writing, that's 4.) However,
     /// when starting states for each pattern is enabled, then there are N
     /// additional groups of starting states, where each group reflects the
     /// different possible configurations and N is the number of patterns.
@@ -6231,7 +6231,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// whether we allocate a new `State` or not.
     ///
     /// The higher level idea here is that we do just enough determinization
-    /// for a state to check whether we&#39;ve already computed it. If we have,
+    /// for a state to check whether we've already computed it. If we have,
     /// then we can save a little (albeit not much) work. The real savings is
     /// in memory usage. If we never checked for trivially duplicate states,
     /// then our memory usage would explode to unreasonable levels.
@@ -6254,7 +6254,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// state corresponding to the state ID is what we preserve across cache
     /// clearings.
     </span>state_saver: StateSaver,
-    <span class="doccomment">/// The memory usage, in bytes, used by &#39;states&#39; and &#39;states_to_id&#39;. We
+    <span class="doccomment">/// The memory usage, in bytes, used by 'states' and 'states_to_id'. We
     /// track this as new states are added since states use a variable amount
     /// of heap. Tracking this as we add states makes it possible to compute
     /// the total amount of memory used by the determinizer in constant time.
@@ -6305,9 +6305,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
             bytes_searched: <span class="number">0</span>,
             progress: <span class="prelude-val">None</span>,
         };
-        <span class="macro">debug!</span>(<span class="string">&quot;pre-init lazy DFA cache size: {}&quot;</span>, cache.memory_usage());
+        <span class="macro">debug!</span>(<span class="string">"pre-init lazy DFA cache size: {}"</span>, cache.memory_usage());
         Lazy { dfa, cache: <span class="kw-2">&amp;mut </span>cache }.init_cache();
-        <span class="macro">debug!</span>(<span class="string">&quot;post-init lazy DFA cache size: {}&quot;</span>, cache.memory_usage());
+        <span class="macro">debug!</span>(<span class="string">"post-init lazy DFA cache size: {}"</span>, cache.memory_usage());
         cache
     }
 
@@ -6317,8 +6317,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// A cache reset permits reusing memory already allocated in this cache
     /// with a different lazy DFA.
     ///
-    /// Resetting a cache sets its &quot;clear count&quot; to 0. This is relevant if the
-    /// lazy DFA has been configured to &quot;give up&quot; after it has cleared the
+    /// Resetting a cache sets its "clear count" to 0. This is relevant if the
+    /// lazy DFA has been configured to "give up" after it has cleared the
     /// cache a certain number of times.
     ///
     /// Any lazy state ID generated by the cache prior to resetting it is
@@ -6332,25 +6332,25 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::{hybrid::dfa::DFA, HalfMatch, Input};
     ///
-    /// let dfa1 = DFA::new(r&quot;\w&quot;)?;
-    /// let dfa2 = DFA::new(r&quot;\W&quot;)?;
+    /// let dfa1 = DFA::new(r"\w")?;
+    /// let dfa2 = DFA::new(r"\W")?;
     ///
     /// let mut cache = dfa1.create_cache();
     /// assert_eq!(
     ///     Some(HalfMatch::must(0, 2)),
-    ///     dfa1.try_search_fwd(&amp;mut cache, &amp;Input::new(&quot;Δ&quot;))?,
+    ///     dfa1.try_search_fwd(&amp;mut cache, &amp;Input::new("Δ"))?,
     /// );
     ///
-    /// // Using &#39;cache&#39; with dfa2 is not allowed. It may result in panics or
+    /// // Using 'cache' with dfa2 is not allowed. It may result in panics or
     /// // incorrect results. In order to re-purpose the cache, we must reset
-    /// // it with the DFA we&#39;d like to use it with.
+    /// // it with the DFA we'd like to use it with.
     /// //
-    /// // Similarly, after this reset, using the cache with &#39;dfa1&#39; is also not
+    /// // Similarly, after this reset, using the cache with 'dfa1' is also not
     /// // allowed.
     /// cache.reset(&amp;dfa2);
     /// assert_eq!(
     ///     Some(HalfMatch::must(0, 3)),
-    ///     dfa2.try_search_fwd(&amp;mut cache, &amp;Input::new(&quot;☃&quot;))?,
+    ///     dfa2.try_search_fwd(&amp;mut cache, &amp;Input::new("☃"))?,
     /// );
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -6370,7 +6370,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// [`Config::minimum_bytes_per_state`] configuration knob to work.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>search_start(<span class="kw-2">&amp;mut </span><span class="self">self</span>, at: usize) {
-        <span class="comment">// If a previous search wasn&#39;t marked as finished, then finish it
+        <span class="comment">// If a previous search wasn't marked as finished, then finish it
         // now automatically.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(p) = <span class="self">self</span>.progress.take() {
             <span class="self">self</span>.bytes_searched += p.len();
@@ -6390,7 +6390,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>search_update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, at: usize) {
         <span class="kw">let </span>p =
-            <span class="self">self</span>.progress.as_mut().expect(<span class="string">&quot;no in-progress search to update&quot;</span>);
+            <span class="self">self</span>.progress.as_mut().expect(<span class="string">"no in-progress search to update"</span>);
         p.at = at;
     }
 
@@ -6402,7 +6402,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>search_finish(<span class="kw-2">&amp;mut </span><span class="self">self</span>, at: usize) {
         <span class="kw">let </span><span class="kw-2">mut </span>p =
-            <span class="self">self</span>.progress.take().expect(<span class="string">&quot;no in-progress search to finish&quot;</span>);
+            <span class="self">self</span>.progress.take().expect(<span class="string">"no in-progress search to finish"</span>);
         p.at = at;
         <span class="self">self</span>.bytes_searched += p.len();
     }
@@ -6415,7 +6415,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// [`Config::minimum_bytes_per_state`] knob to help determine whether it
     /// should quit searching.
     ///
-    /// This always returns `0` if search progress isn&#39;t being tracked. Note
+    /// This always returns `0` if search progress isn't being tracked. Note
     /// that the lazy DFA search routines in this crate always track search
     /// progress.
     </span><span class="kw">pub fn </span>search_total_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
@@ -6441,17 +6441,17 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         <span class="kw">const </span>STATE_SIZE: usize = size_of::&lt;State&gt;();
 
         <span class="comment">// NOTE: If you make changes to the below, then
-        // &#39;minimum_cache_capacity&#39; should be updated correspondingly.
+        // 'minimum_cache_capacity' should be updated correspondingly.
 
         </span><span class="self">self</span>.trans.len() * ID_SIZE
         + <span class="self">self</span>.starts.len() * ID_SIZE
         + <span class="self">self</span>.states.len() * STATE_SIZE
-        <span class="comment">// Maps likely use more memory than this, but it&#39;s probably close.
+        <span class="comment">// Maps likely use more memory than this, but it's probably close.
         </span>+ <span class="self">self</span>.states_to_id.len() * (STATE_SIZE + ID_SIZE)
         + <span class="self">self</span>.sparses.memory_usage()
         + <span class="self">self</span>.stack.capacity() * ID_SIZE
         + <span class="self">self</span>.scratch_state_builder.capacity()
-        <span class="comment">// Heap memory used by &#39;State&#39; in both &#39;states&#39; and &#39;states_to_id&#39;.
+        <span class="comment">// Heap memory used by 'State' in both 'states' and 'states_to_id'.
         </span>+ <span class="self">self</span>.memory_usage_state
     }
 }
@@ -6483,55 +6483,55 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 }
 
 <span class="doccomment">/// A map from states to state identifiers. When using std, we use a standard
-/// hashmap, since it&#39;s a bit faster for this use case. (Other maps, like
-/// one&#39;s based on FNV, have not yet been benchmarked.)
+/// hashmap, since it's a bit faster for this use case. (Other maps, like
+/// one's based on FNV, have not yet been benchmarked.)
 ///
-/// The main purpose of this map is to reuse states where possible. This won&#39;t
+/// The main purpose of this map is to reuse states where possible. This won't
 /// fully minimize the DFA, but it works well in a lot of cases.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">type </span>StateMap = std::collections::HashMap&lt;State, LazyStateID&gt;;
-<span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+<span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
 </span><span class="kw">type </span>StateMap = alloc::collections::BTreeMap&lt;State, LazyStateID&gt;;
 
 <span class="doccomment">/// A type that groups methods that require the base NFA/DFA and writable
 /// access to the cache.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">struct </span>Lazy&lt;<span class="lifetime">&#39;i</span>, <span class="lifetime">&#39;c</span>&gt; {
-    dfa: <span class="kw-2">&amp;</span><span class="lifetime">&#39;i </span>DFA,
-    cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;c </span><span class="kw-2">mut </span>Cache,
+</span><span class="kw">struct </span>Lazy&lt;<span class="lifetime">'i</span>, <span class="lifetime">'c</span>&gt; {
+    dfa: <span class="kw-2">&amp;</span><span class="lifetime">'i </span>DFA,
+    cache: <span class="kw-2">&amp;</span><span class="lifetime">'c </span><span class="kw-2">mut </span>Cache,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;i</span>, <span class="lifetime">&#39;c</span>&gt; Lazy&lt;<span class="lifetime">&#39;i</span>, <span class="lifetime">&#39;c</span>&gt; {
-    <span class="doccomment">/// Creates a new &#39;Lazy&#39; wrapper for a DFA and its corresponding cache.
-    </span><span class="kw">fn </span>new(dfa: <span class="kw-2">&amp;</span><span class="lifetime">&#39;i </span>DFA, cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;c </span><span class="kw-2">mut </span>Cache) -&gt; Lazy&lt;<span class="lifetime">&#39;i</span>, <span class="lifetime">&#39;c</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'i</span>, <span class="lifetime">'c</span>&gt; Lazy&lt;<span class="lifetime">'i</span>, <span class="lifetime">'c</span>&gt; {
+    <span class="doccomment">/// Creates a new 'Lazy' wrapper for a DFA and its corresponding cache.
+    </span><span class="kw">fn </span>new(dfa: <span class="kw-2">&amp;</span><span class="lifetime">'i </span>DFA, cache: <span class="kw-2">&amp;</span><span class="lifetime">'c </span><span class="kw-2">mut </span>Cache) -&gt; Lazy&lt;<span class="lifetime">'i</span>, <span class="lifetime">'c</span>&gt; {
         Lazy { dfa, cache }
     }
 
     <span class="doccomment">/// Return an immutable view by downgrading a writable cache to a read-only
     /// cache.
-    </span><span class="kw">fn </span>as_ref&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>) -&gt; LazyRef&lt;<span class="lifetime">&#39;i</span>, <span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">fn </span>as_ref&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>) -&gt; LazyRef&lt;<span class="lifetime">'i</span>, <span class="lifetime">'a</span>&gt; {
         LazyRef::new(<span class="self">self</span>.dfa, <span class="self">self</span>.cache)
     }
 
-    <span class="doccomment">/// This is marked as &#39;inline(never)&#39; to avoid bloating methods on &#39;DFA&#39;
-    /// like &#39;next_state&#39; and &#39;next_eoi_state&#39; that are called in critical
+    <span class="doccomment">/// This is marked as 'inline(never)' to avoid bloating methods on 'DFA'
+    /// like 'next_state' and 'next_eoi_state' that are called in critical
     /// areas. The idea is to let the optimizer focus on the other areas of
     /// those methods as the hot path.
     ///
-    /// Here&#39;s an example that justifies &#39;inline(never)&#39;
+    /// Here's an example that justifies 'inline(never)'
     ///
     /// ```ignore
     /// regex-cli find match hybrid \
     ///   --cache-capacity 100000000 \
-    ///   -p &#39;\pL{100}&#39;
+    ///   -p '\pL{100}'
     ///   all-codepoints-utf8-100x
     /// ```
     ///
-    /// Where &#39;all-codepoints-utf8-100x&#39; is the UTF-8 encoding of every
+    /// Where 'all-codepoints-utf8-100x' is the UTF-8 encoding of every
     /// codepoint, in sequence, repeated 100 times.
     ///
-    /// With &#39;inline(never)&#39; hyperfine reports 1.1s per run. With
-    /// &#39;inline(always)&#39;, hyperfine reports 1.23s. So that&#39;s a 10% improvement.
+    /// With 'inline(never)' hyperfine reports 1.1s per run. With
+    /// 'inline(always)', hyperfine reports 1.23s. So that's a 10% improvement.
     </span><span class="attr">#[cold]
     #[inline(never)]
     </span><span class="kw">fn </span>cache_next_state(
@@ -6558,7 +6558,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         <span class="kw">if </span>save_state {
             current = <span class="self">self</span>.saved_state_id();
         }
-        <span class="comment">// This is the payoff. The next time &#39;next_state&#39; is called with this
+        <span class="comment">// This is the payoff. The next time 'next_state' is called with this
         // state and alphabet unit, it will find this transition and avoid
         // having to re-determinize this transition.
         </span><span class="self">self</span>.set_transition(current, unit, next);
@@ -6568,7 +6568,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     <span class="doccomment">/// Compute and cache the starting state for the given pattern ID (if
     /// present) and the starting configuration.
     ///
-    /// This panics if a pattern ID is given and the DFA isn&#39;t configured to
+    /// This panics if a pattern ID is given and the DFA isn't configured to
     /// build anchored start states for each pattern.
     ///
     /// This will never return an unknown lazy state ID.
@@ -6668,7 +6668,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>cached_id) =
             <span class="self">self</span>.cache.states_to_id.get(builder.as_bytes())
         {
-            <span class="comment">// Since we have a cached state, put the constructed state&#39;s
+            <span class="comment">// Since we have a cached state, put the constructed state's
             // memory back into our scratch space, so that it can be reused.
             </span><span class="self">self</span>.put_state_builder(builder);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(cached_id);
@@ -6696,7 +6696,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         <span class="kw">if </span>!<span class="self">self</span>.as_ref().state_fits_in_cache(<span class="kw-2">&amp;</span>state) {
             <span class="self">self</span>.try_clear_cache()<span class="question-mark">?</span>;
         }
-        <span class="comment">// It&#39;s important for this to come second, since the above may clear
+        <span class="comment">// It's important for this to come second, since the above may clear
         // the cache. If we clear the cache after ID generation, then the ID
         // is likely bunk since it would have been generated based on a larger
         // transition table.
@@ -6713,8 +6713,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         // transitions. Technically, this is harmless, since sentinel states
         // have all of their transitions set to loop back to themselves. But
         // when creating sentinel states before the quit sentinel state,
-        // this will try to call &#39;set_transition&#39; on a state ID that doesn&#39;t
-        // actually exist yet, which isn&#39;t allowed. So we just skip doing so
+        // this will try to call 'set_transition' on a state ID that doesn't
+        // actually exist yet, which isn't allowed. So we just skip doing so
         // entirely.
         </span><span class="kw">if </span>!<span class="self">self</span>.dfa.quitset.is_empty() &amp;&amp; !<span class="self">self</span>.as_ref().is_sentinel(id) {
             <span class="kw">let </span>quit_id = <span class="self">self</span>.as_ref().quit_id();
@@ -6751,11 +6751,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// If clearing the cache exceeds the minimum number of required cache
     /// clearings, then this will return a cache error. In this case,
-    /// callers should bubble this up as the cache can&#39;t be used until it is
+    /// callers should bubble this up as the cache can't be used until it is
     /// reset. Implementations of search should convert this error into a
     /// [`MatchError::gave_up`].
     ///
-    /// If &#39;self.state_saver&#39; is set to save a state, then this state is
+    /// If 'self.state_saver' is set to save a state, then this state is
     /// persisted through cache clearing. Otherwise, the cache is returned to
     /// its state after initialization with two exceptions: its clear count
     /// is incremented and some of its memory likely has additional capacity.
@@ -6771,27 +6771,27 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
                     <span class="kw">let </span>len = <span class="self">self</span>.cache.search_total_len();
                     <span class="kw">let </span>min_bytes =
                         min_bytes_per.saturating_mul(<span class="self">self</span>.cache.states.len());
-                    <span class="comment">// If we&#39;ve searched 0 bytes then probably something has
-                    // gone wrong and the lazy DFA search implementation isn&#39;t
+                    <span class="comment">// If we've searched 0 bytes then probably something has
+                    // gone wrong and the lazy DFA search implementation isn't
                     // correctly updating the search progress state.
                     </span><span class="kw">if </span>len == <span class="number">0 </span>{
                         <span class="macro">trace!</span>(
-                            <span class="string">&quot;number of bytes searched is 0, but \
+                            <span class="string">"number of bytes searched is 0, but \
                              a minimum bytes per state searched ({}) is \
                              enabled, maybe Cache::search_update \
-                             is not being used?&quot;</span>,
+                             is not being used?"</span>,
                             min_bytes_per,
                         );
                     }
                     <span class="kw">if </span>len &lt; min_bytes {
                         <span class="macro">trace!</span>(
-                            <span class="string">&quot;lazy DFA cache has been cleared {} times, \
+                            <span class="string">"lazy DFA cache has been cleared {} times, \
                              which exceeds the limit of {}, \
                              AND its bytes searched per state is less \
                              than the configured minimum of {}, \
                              therefore lazy DFA is giving up \
                              (bytes searched since cache clear = {}, \
-                              number of states = {})&quot;</span>,
+                              number of states = {})"</span>,
                             <span class="self">self</span>.cache.clear_count,
                             min_count,
                             min_bytes_per,
@@ -6801,13 +6801,13 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
                         <span class="kw">return </span><span class="prelude-val">Err</span>(CacheError::bad_efficiency());
                     } <span class="kw">else </span>{
                         <span class="macro">trace!</span>(
-                            <span class="string">&quot;lazy DFA cache has been cleared {} times, \
+                            <span class="string">"lazy DFA cache has been cleared {} times, \
                              which exceeds the limit of {}, \
                              AND its bytes searched per state is greater \
                              than the configured minimum of {}, \
                              therefore lazy DFA is continuing! \
                              (bytes searched since cache clear = {}, \
-                              number of states = {})&quot;</span>,
+                              number of states = {})"</span>,
                             <span class="self">self</span>.cache.clear_count,
                             min_count,
                             min_bytes_per,
@@ -6817,10 +6817,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
                     }
                 } <span class="kw">else </span>{
                     <span class="macro">trace!</span>(
-                        <span class="string">&quot;lazy DFA cache has been cleared {} times, \
+                        <span class="string">"lazy DFA cache has been cleared {} times, \
                          which exceeds the limit of {}, \
                          since there is no configured bytes per state \
-                         minimum, lazy DFA is giving up&quot;</span>,
+                         minimum, lazy DFA is giving up"</span>,
                         <span class="self">self</span>.cache.clear_count,
                         min_count,
                     );
@@ -6852,7 +6852,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 
     <span class="doccomment">/// Clear the cache used by this lazy DFA.
     ///
-    /// If &#39;self.state_saver&#39; is set to save a state, then this state is
+    /// If 'self.state_saver' is set to save a state, then this state is
     /// persisted through cache clearing. Otherwise, the cache is returned to
     /// its state after initialization with two exceptions: its clear count
     /// is incremented and some of its memory likely has additional capacity.
@@ -6872,32 +6872,32 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
             progress.start = progress.at;
         }
         <span class="macro">trace!</span>(
-            <span class="string">&quot;lazy DFA cache has been cleared (count: {})&quot;</span>,
+            <span class="string">"lazy DFA cache has been cleared (count: {})"</span>,
             <span class="self">self</span>.cache.clear_count
         );
         <span class="self">self</span>.init_cache();
         <span class="comment">// If the state we want to save is one of the sentinel
-        // (unknown/dead/quit) states, then &#39;init_cache&#39; adds those back, and
-        // their identifier values remains invariant. So there&#39;s no need to add
+        // (unknown/dead/quit) states, then 'init_cache' adds those back, and
+        // their identifier values remains invariant. So there's no need to add
         // it again. (And indeed, doing so would be incorrect!)
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>((old_id, state)) = <span class="self">self</span>.cache.state_saver.take_to_save() {
             <span class="comment">// If the state is one of the special sentinel states, then it is
             // automatically added by cache initialization and its ID always
             // remains the same. With that said, this should never occur since
             // the sentinel states are all loop states back to themselves. So
-            // we should never be in a position where we&#39;re attempting to save
+            // we should never be in a position where we're attempting to save
             // a sentinel state since we never compute transitions out of a
             // sentinel state.
             </span><span class="macro">assert!</span>(
                 !<span class="self">self</span>.as_ref().is_sentinel(old_id),
-                <span class="string">&quot;cannot save sentinel state&quot;
+                <span class="string">"cannot save sentinel state"
             </span>);
             <span class="kw">let </span>new_id = <span class="self">self
                 </span>.add_state(state, |id| {
                     <span class="kw">if </span>old_id.is_start() {
-                        <span class="comment">// We don&#39;t need to consult the
-                        // &#39;specialize_start_states&#39; config knob here, because
-                        // if it&#39;s disabled, old_id.is_start() will never
+                        <span class="comment">// We don't need to consult the
+                        // 'specialize_start_states' config knob here, because
+                        // if it's disabled, old_id.is_start() will never
                         // return true.
                         </span>id.to_start()
                     } <span class="kw">else </span>{
@@ -6906,8 +6906,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
                 })
                 <span class="comment">// The unwrap here is OK because lazy DFA creation ensures that
                 // we have room in the cache to add MIN_STATES states. Since
-                // &#39;init_cache&#39; above adds 3, this adds a 4th.
-                </span>.expect(<span class="string">&quot;adding one state after cache clear must work&quot;</span>);
+                // 'init_cache' above adds 3, this adds a 4th.
+                </span>.expect(<span class="string">"adding one state after cache clear must work"</span>);
             <span class="self">self</span>.cache.state_saver = StateSaver::Saved(new_id);
         }
     }
@@ -6942,9 +6942,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         // valid state IDs without needing explicit conditionals to special
         // case these sentinel states.
         //
-        // All three of these states are &quot;dead&quot; states. That is, all of
+        // All three of these states are "dead" states. That is, all of
         // them transition only to themselves. So once you enter one of
-        // these states, it&#39;s impossible to leave them. Thus, any correct
+        // these states, it's impossible to leave them. Thus, any correct
         // search routine must explicitly check for these state types. (Sans
         // `unknown`, since that is only used internally to represent missing
         // states.)
@@ -6961,15 +6961,15 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         <span class="self">self</span>.set_all_transitions(dead_id, dead_id);
         <span class="self">self</span>.set_all_transitions(quit_id, quit_id);
         <span class="comment">// All of these states are technically equivalent from the FSM
-        // perspective, so putting all three of them in the cache isn&#39;t
+        // perspective, so putting all three of them in the cache isn't
         // possible. (They are distinct merely because we use their
         // identifiers as sentinels to mean something, as indicated by the
-        // names.) Moreover, we wouldn&#39;t want to do that. Unknown and quit
+        // names.) Moreover, we wouldn't want to do that. Unknown and quit
         // states are special in that they are artificial constructions
         // this implementation. But dead states are a natural part of
         // determinization. When you reach a point in the NFA where you cannot
         // go anywhere else, a dead state will naturally arise and we MUST
-        // reuse the canonical dead state that we&#39;ve created here. Why? Because
+        // reuse the canonical dead state that we've created here. Why? Because
         // it is the state ID that tells the search routine whether a state is
         // dead or not, and thus, whether to stop the search. Having a bunch of
         // distinct dead states would be quite wasteful!
@@ -6980,7 +6980,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// persists through a cache clearing.
     ///
     /// While the state may persist, the ID may not. In order to discover the
-    /// new state ID, one must call &#39;saved_state_id&#39; after a cache clearing.
+    /// new state ID, one must call 'saved_state_id' after a cache clearing.
     </span><span class="kw">fn </span>save_state(<span class="kw-2">&amp;mut </span><span class="self">self</span>, id: LazyStateID) {
         <span class="kw">let </span>state = <span class="self">self</span>.as_ref().get_cached_state(id).clone();
         <span class="self">self</span>.cache.state_saver = StateSaver::ToSave { id, state };
@@ -6995,19 +6995,19 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         <span class="self">self</span>.cache
             .state_saver
             .take_saved()
-            .expect(<span class="string">&quot;state saver does not have saved state ID&quot;</span>)
+            .expect(<span class="string">"state saver does not have saved state ID"</span>)
     }
 
-    <span class="doccomment">/// Set all transitions on the state &#39;from&#39; to &#39;to&#39;.
+    <span class="doccomment">/// Set all transitions on the state 'from' to 'to'.
     </span><span class="kw">fn </span>set_all_transitions(<span class="kw-2">&amp;mut </span><span class="self">self</span>, from: LazyStateID, to: LazyStateID) {
         <span class="kw">for </span>unit <span class="kw">in </span><span class="self">self</span>.dfa.classes.representatives(..) {
             <span class="self">self</span>.set_transition(from, unit, to);
         }
     }
 
-    <span class="doccomment">/// Set the transition on &#39;from&#39; for &#39;unit&#39; to &#39;to&#39;.
+    <span class="doccomment">/// Set the transition on 'from' for 'unit' to 'to'.
     ///
-    /// This panics if either &#39;from&#39; or &#39;to&#39; is invalid.
+    /// This panics if either 'from' or 'to' is invalid.
     ///
     /// All unit values are OK.
     </span><span class="kw">fn </span>set_transition(
@@ -7016,8 +7016,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         unit: alphabet::Unit,
         to: LazyStateID,
     ) {
-        <span class="macro">assert!</span>(<span class="self">self</span>.as_ref().is_valid(from), <span class="string">&quot;invalid &#39;from&#39; id: {:?}&quot;</span>, from);
-        <span class="macro">assert!</span>(<span class="self">self</span>.as_ref().is_valid(to), <span class="string">&quot;invalid &#39;to&#39; id: {:?}&quot;</span>, to);
+        <span class="macro">assert!</span>(<span class="self">self</span>.as_ref().is_valid(from), <span class="string">"invalid 'from' id: {:?}"</span>, from);
+        <span class="macro">assert!</span>(<span class="self">self</span>.as_ref().is_valid(to), <span class="string">"invalid 'to' id: {:?}"</span>, to);
         <span class="kw">let </span>offset =
             from.as_usize_untagged() + <span class="self">self</span>.dfa.classes.get_by_unit(unit);
         <span class="self">self</span>.cache.trans[offset] = to;
@@ -7026,8 +7026,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     <span class="doccomment">/// Set the start ID for the given pattern ID (if given) and starting
     /// configuration to the ID given.
     ///
-    /// This panics if &#39;id&#39; is not valid or if a pattern ID is given and
-    /// &#39;starts_for_each_pattern&#39; is not enabled.
+    /// This panics if 'id' is not valid or if a pattern ID is given and
+    /// 'starts_for_each_pattern' is not enabled.
     </span><span class="kw">fn </span>set_start_state(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         anchored: Anchored,
@@ -7042,8 +7042,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
             Anchored::Pattern(pid) =&gt; {
                 <span class="macro">assert!</span>(
                     <span class="self">self</span>.dfa.get_config().get_starts_for_each_pattern(),
-                    <span class="string">&quot;attempted to search for a specific pattern \
-                     without enabling starts_for_each_pattern&quot;</span>,
+                    <span class="string">"attempted to search for a specific pattern \
+                     without enabling starts_for_each_pattern"</span>,
                 );
                 <span class="kw">let </span>pid = pid.as_usize();
                 (<span class="number">2 </span>* Start::len()) + (Start::len() * pid) + start_index
@@ -7056,8 +7056,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// capacity. This helps avoid allocs in cases where a state is built that
     /// turns out to already be cached.
     ///
-    /// Callers must put the state builder back with &#39;put_state_builder&#39;,
-    /// otherwise the allocation reuse won&#39;t work.
+    /// Callers must put the state builder back with 'put_state_builder',
+    /// otherwise the allocation reuse won't work.
     </span><span class="kw">fn </span>get_state_builder(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; StateBuilderEmpty {
         core::mem::replace(
             <span class="kw-2">&amp;mut </span><span class="self">self</span>.cache.scratch_state_builder,
@@ -7067,7 +7067,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 
     <span class="doccomment">/// Puts the given state builder back into this DFA for reuse.
     ///
-    /// Note that building a &#39;State&#39; from a builder always creates a new alloc,
+    /// Note that building a 'State' from a builder always creates a new alloc,
     /// so callers should always put the builder back.
     </span><span class="kw">fn </span>put_state_builder(<span class="kw-2">&amp;mut </span><span class="self">self</span>, builder: StateBuilderNFA) {
         <span class="kw">let _ </span>= core::mem::replace(
@@ -7080,14 +7080,14 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 <span class="doccomment">/// A type that groups methods that require the base NFA/DFA and read-only
 /// access to the cache.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">struct </span>LazyRef&lt;<span class="lifetime">&#39;i</span>, <span class="lifetime">&#39;c</span>&gt; {
-    dfa: <span class="kw-2">&amp;</span><span class="lifetime">&#39;i </span>DFA,
-    cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;c </span>Cache,
+</span><span class="kw">struct </span>LazyRef&lt;<span class="lifetime">'i</span>, <span class="lifetime">'c</span>&gt; {
+    dfa: <span class="kw-2">&amp;</span><span class="lifetime">'i </span>DFA,
+    cache: <span class="kw-2">&amp;</span><span class="lifetime">'c </span>Cache,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;i</span>, <span class="lifetime">&#39;c</span>&gt; LazyRef&lt;<span class="lifetime">&#39;i</span>, <span class="lifetime">&#39;c</span>&gt; {
-    <span class="doccomment">/// Creates a new &#39;Lazy&#39; wrapper for a DFA and its corresponding cache.
-    </span><span class="kw">fn </span>new(dfa: <span class="kw-2">&amp;</span><span class="lifetime">&#39;i </span>DFA, cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;c </span>Cache) -&gt; LazyRef&lt;<span class="lifetime">&#39;i</span>, <span class="lifetime">&#39;c</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'i</span>, <span class="lifetime">'c</span>&gt; LazyRef&lt;<span class="lifetime">'i</span>, <span class="lifetime">'c</span>&gt; {
+    <span class="doccomment">/// Creates a new 'Lazy' wrapper for a DFA and its corresponding cache.
+    </span><span class="kw">fn </span>new(dfa: <span class="kw-2">&amp;</span><span class="lifetime">'i </span>DFA, cache: <span class="kw-2">&amp;</span><span class="lifetime">'c </span>Cache) -&gt; LazyRef&lt;<span class="lifetime">'i</span>, <span class="lifetime">'c</span>&gt; {
         LazyRef { dfa, cache }
     }
 
@@ -7095,7 +7095,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// If the start state has not yet been computed, then this returns an
     /// unknown lazy state ID.
-    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>get_cached_start_id(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         anchored: Anchored,
@@ -7128,7 +7128,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         <span class="kw-2">&amp;</span><span class="self">self</span>.cache.states[index]
     }
 
-    <span class="doccomment">/// Returns true if and only if the given ID corresponds to a &quot;sentinel&quot;
+    <span class="doccomment">/// Returns true if and only if the given ID corresponds to a "sentinel"
     /// state.
     ///
     /// A sentinel state is a state that signifies a special condition of
@@ -7168,7 +7168,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     <span class="doccomment">/// Returns true if and only if the given ID is valid.
     ///
     /// An ID is valid if it is both a valid index into the transition table
-    /// and is a multiple of the DFA&#39;s stride.
+    /// and is a multiple of the DFA's stride.
     </span><span class="kw">fn </span>is_valid(<span class="kw-2">&amp;</span><span class="self">self</span>, id: LazyStateID) -&gt; bool {
         <span class="kw">let </span>id = id.as_usize_untagged();
         id &lt; <span class="self">self</span>.cache.trans.len() &amp;&amp; id % <span class="self">self</span>.dfa.stride() == <span class="number">0
@@ -7179,7 +7179,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         <span class="kw">let </span>needed = <span class="self">self</span>.cache.memory_usage()
             + <span class="self">self</span>.memory_usage_for_one_more_state(state.memory_usage());
         <span class="macro">trace!</span>(
-            <span class="string">&quot;lazy DFA cache capacity check: {:?} ?&lt;=? {:?}&quot;</span>,
+            <span class="string">"lazy DFA cache capacity check: {:?} ?&lt;=? {:?}"</span>,
             needed,
             <span class="self">self</span>.dfa.cache_capacity
         );
@@ -7222,8 +7222,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// sentinel states) are preserved after clearing the cache.
     </span><span class="prelude-val">None</span>,
     <span class="doccomment">/// An ID of a state (and the state itself) that should be preserved after
-    /// the lazy DFA&#39;s cache has been cleared. After clearing, the updated ID
-    /// is stored in &#39;Saved&#39; since it may have changed.
+    /// the lazy DFA's cache has been cleared. After clearing, the updated ID
+    /// is stored in 'Saved' since it may have changed.
     </span>ToSave { id: LazyStateID, state: State },
     <span class="doccomment">/// An ID that of a state that has been persisted through a lazy DFA
     /// cache clearing. The ID recorded here corresponds to an ID that was
@@ -7248,9 +7248,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     }
 
     <span class="doccomment">/// Replace this state saver with an empty saver, and if this saver is a
-    /// saved state (or a request to save a state), return that state&#39;s ID.
+    /// saved state (or a request to save a state), return that state's ID.
     ///
-    /// The idea here is that a request to save a state isn&#39;t necessarily
+    /// The idea here is that a request to save a state isn't necessarily
     /// honored because it might not be needed. e.g., Some higher level code
     /// might request a state to be saved on the off chance that the cache gets
     /// cleared when a new state is added at a lower level. But if that new
@@ -7274,16 +7274,16 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 /// with [`Builder::configure`].
 ///
 /// The default configuration guarantees that a search will never return a
-/// &quot;gave up&quot; or &quot;quit&quot; error, although it is possible for a search to fail
-/// if [`Config::starts_for_each_pattern`] wasn&#39;t enabled (which it is not by
+/// "gave up" or "quit" error, although it is possible for a search to fail
+/// if [`Config::starts_for_each_pattern`] wasn't enabled (which it is not by
 /// default) and an [`Anchored::Pattern`] mode is requested via [`Input`].
 </span><span class="attr">#[derive(Clone, Debug, Default)]
 </span><span class="kw">pub struct </span>Config {
     <span class="comment">// As with other configuration types in this crate, we put all our knobs
-    // in options so that we can distinguish between &quot;default&quot; and &quot;not set.&quot;
+    // in options so that we can distinguish between "default" and "not set."
     // This makes it possible to easily combine multiple configurations
     // without default values overwriting explicitly specified values. See the
-    // &#39;overwrite&#39; method.
+    // 'overwrite' method.
     //
     // For docs on the fields below, see the corresponding method setters.
     </span>match_kind: <span class="prelude-ty">Option</span>&lt;MatchKind&gt;,
@@ -7318,7 +7318,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// Typically, `All` is used when one wants to execute an overlapping
     /// search and `LeftmostFirst` otherwise. In particular, it rarely makes
-    /// sense to use `All` with the various &quot;leftmost&quot; find routines, since the
+    /// sense to use `All` with the various "leftmost" find routines, since the
     /// leftmost routines depend on the `LeftmostFirst` automata construction
     /// strategy. Specifically, `LeftmostFirst` adds dead states to the
     /// lazy DFA as a way to terminate the search and report a match.
@@ -7339,9 +7339,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let dfa = DFA::builder()
     ///     .configure(DFA::config().match_kind(MatchKind::All))
-    ///     .build_many(&amp;[r&quot;\w+$&quot;, r&quot;\S+$&quot;])?;
+    ///     .build_many(&amp;[r"\w+$", r"\S+$"])?;
     /// let mut cache = dfa.create_cache();
-    /// let haystack = &quot;@foo&quot;;
+    /// let haystack = "@foo";
     /// let mut state = OverlappingState::start();
     ///
     /// let expected = Some(HalfMatch::must(1, 4));
@@ -7373,7 +7373,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// Note that if you need the starting position then
     /// [`hybrid::regex::Regex`](crate::hybrid::regex::Regex) will handle this
-    /// for you, so it&#39;s usually not necessary to do this yourself.
+    /// for you, so it's usually not necessary to do this yourself.
     ///
     /// ```
     /// use regex_automata::{
@@ -7382,8 +7382,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///     Anchored, HalfMatch, Input, MatchKind,
     /// };
     ///
-    /// let input = Input::new(&quot;123foobar456&quot;);
-    /// let pattern = r&quot;[a-z]+r&quot;;
+    /// let input = Input::new("123foobar456");
+    /// let pattern = r"[a-z]+r";
     ///
     /// let dfa_fwd = DFA::new(pattern)?;
     /// let dfa_rev = DFA::builder()
@@ -7396,9 +7396,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// let expected_fwd = HalfMatch::must(0, 9);
     /// let expected_rev = HalfMatch::must(0, 3);
     /// let got_fwd = dfa_fwd.try_search_fwd(&amp;mut cache_fwd, &amp;input)?.unwrap();
-    /// // Here we don&#39;t specify the pattern to search for since there&#39;s only
-    /// // one pattern and we&#39;re doing a leftmost search. But if this were an
-    /// // overlapping search, you&#39;d need to specify the pattern that matched
+    /// // Here we don't specify the pattern to search for since there's only
+    /// // one pattern and we're doing a leftmost search. But if this were an
+    /// // overlapping search, you'd need to specify the pattern that matched
     /// // in the forward direction. (Otherwise, you might wind up finding the
     /// // starting position of a match of some other pattern.) That in turn
     /// // requires building the reverse automaton with starts_for_each_pattern
@@ -7427,7 +7427,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// the match.
     ///
     /// Be warned that setting a prefilter does not guarantee that the search
-    /// will be faster. While it&#39;s usually a good bet, if the prefilter
+    /// will be faster. While it's usually a good bet, if the prefilter
     /// produces a lot of false positive candidates (i.e., positions matched
     /// by the prefilter but not by the regex), then the overall result can
     /// be slower than if you had just executed the regex engine without any
@@ -7451,12 +7451,12 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///     Input, HalfMatch, MatchKind,
     /// };
     ///
-    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;[&quot;foo&quot;, &quot;bar&quot;]);
+    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;["foo", "bar"]);
     /// let re = DFA::builder()
     ///     .configure(DFA::config().prefilter(pre))
-    ///     .build(r&quot;(foo|bar)[a-z]+&quot;)?;
+    ///     .build(r"(foo|bar)[a-z]+")?;
     /// let mut cache = re.create_cache();
-    /// let input = Input::new(&quot;foo1 barfox bar&quot;);
+    /// let input = Input::new("foo1 barfox bar");
     /// assert_eq!(
     ///     Some(HalfMatch::must(0, 11)),
     ///     re.try_search_fwd(&amp;mut cache, &amp;input)?,
@@ -7475,12 +7475,12 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///     Input, HalfMatch, MatchKind,
     /// };
     ///
-    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;[&quot;foo&quot;, &quot;car&quot;]);
+    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;["foo", "car"]);
     /// let re = DFA::builder()
     ///     .configure(DFA::config().prefilter(pre))
-    ///     .build(r&quot;(foo|bar)[a-z]+&quot;)?;
+    ///     .build(r"(foo|bar)[a-z]+")?;
     /// let mut cache = re.create_cache();
-    /// let input = Input::new(&quot;foo1 barfox bar&quot;);
+    /// let input = Input::new("foo1 barfox bar");
     /// assert_eq!(
     ///     // No match reported even though there clearly is one!
     ///     None,
@@ -7509,11 +7509,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// The main downside of this option is that it can potentially increase
     /// the size of the DFA and/or increase the time it takes to build the
     /// DFA at search time. However, since this is configuration for a lazy
-    /// DFA, these states aren&#39;t actually built unless they&#39;re used. Enabling
-    /// this isn&#39;t necessarily free, however, as it may result in higher cache
+    /// DFA, these states aren't actually built unless they're used. Enabling
+    /// this isn't necessarily free, however, as it may result in higher cache
     /// usage.
     ///
-    /// There are a few reasons one might want to enable this (it&#39;s disabled
+    /// There are a few reasons one might want to enable this (it's disabled
     /// by default):
     ///
     /// 1. When looking for the start of an overlapping match (using a reverse
@@ -7543,15 +7543,15 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let dfa = DFA::builder()
     ///     .configure(DFA::config().starts_for_each_pattern(true))
-    ///     .build_many(&amp;[r&quot;[a-z0-9]{6}&quot;, r&quot;[a-z][a-z0-9]{5}&quot;])?;
+    ///     .build_many(&amp;[r"[a-z0-9]{6}", r"[a-z][a-z0-9]{5}"])?;
     /// let mut cache = dfa.create_cache();
-    /// let haystack = &quot;bar foo123&quot;;
+    /// let haystack = "bar foo123";
     ///
-    /// // Here&#39;s a normal unanchored search that looks for any pattern.
+    /// // Here's a normal unanchored search that looks for any pattern.
     /// let expected = HalfMatch::must(0, 10);
     /// let input = Input::new(haystack);
     /// assert_eq!(Some(expected), dfa.try_search_fwd(&amp;mut cache, &amp;input)?);
-    /// // We can also do a normal anchored search for any pattern. Since it&#39;s
+    /// // We can also do a normal anchored search for any pattern. Since it's
     /// // an anchored search, we position the start of the search where we
     /// // know the match will begin.
     /// let expected = HalfMatch::must(0, 10);
@@ -7573,7 +7573,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         <span class="self">self
     </span>}
 
-    <span class="doccomment">/// Whether to attempt to shrink the size of the lazy DFA&#39;s alphabet or
+    <span class="doccomment">/// Whether to attempt to shrink the size of the lazy DFA's alphabet or
     /// not.
     ///
     /// This option is enabled by default and should never be disabled unless
@@ -7656,12 +7656,12 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let dfa = DFA::builder()
     ///     .configure(DFA::config().unicode_word_boundary(true))
-    ///     .build(r&quot;\b[0-9]+\b&quot;)?;
+    ///     .build(r"\b[0-9]+\b")?;
     /// let mut cache = dfa.create_cache();
     ///
     /// // The match occurs before the search ever observes the snowman
     /// // character, so no error occurs.
-    /// let haystack = &quot;foo 123  ☃&quot;;
+    /// let haystack = "foo 123  ☃";
     /// let expected = Some(HalfMatch::must(0, 7));
     /// let got = dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(haystack))?;
     /// assert_eq!(expected, got);
@@ -7671,7 +7671,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// // routines read one byte past the end of the search to account for
     /// // look-around, and indeed, this is required here to determine whether
     /// // the trailing \b matches.
-    /// let haystack = &quot;foo 123 ☃&quot;;
+    /// let haystack = "foo 123 ☃";
     /// let expected = MatchError::quit(0xE2, 8);
     /// let got = dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(haystack));
     /// assert_eq!(Err(expected), got);
@@ -7679,13 +7679,13 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// // Another example is executing a search where the span of the haystack
     /// // we specify is all ASCII, but there is non-ASCII just before it. This
     /// // correctly also reports an error.
-    /// let input = Input::new(&quot;β123&quot;).range(2..);
+    /// let input = Input::new("β123").range(2..);
     /// let expected = MatchError::quit(0xB2, 1);
     /// let got = dfa.try_search_fwd(&amp;mut cache, &amp;input);
     /// assert_eq!(Err(expected), got);
     ///
     /// // And similarly for the trailing word boundary.
-    /// let input = Input::new(&quot;123β&quot;).range(..3);
+    /// let input = Input::new("123β").range(..3);
     /// let expected = MatchError::quit(0xCE, 3);
     /// let got = dfa.try_search_fwd(&amp;mut cache, &amp;input);
     /// assert_eq!(Err(expected), got);
@@ -7694,14 +7694,14 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// ```
     </span><span class="kw">pub fn </span>unicode_word_boundary(<span class="kw-2">mut </span><span class="self">self</span>, yes: bool) -&gt; Config {
         <span class="comment">// We have a separate option for this instead of just setting the
-        // appropriate quit bytes here because we don&#39;t want to set quit bytes
+        // appropriate quit bytes here because we don't want to set quit bytes
         // for every regex. We only want to set them when the regex contains a
         // Unicode word boundary.
         </span><span class="self">self</span>.unicode_word_boundary = <span class="prelude-val">Some</span>(yes);
         <span class="self">self
     </span>}
 
-    <span class="doccomment">/// Add a &quot;quit&quot; byte to the lazy DFA.
+    <span class="doccomment">/// Add a "quit" byte to the lazy DFA.
     ///
     /// When a quit byte is seen during search time, then search will return a
     /// [`MatchError::quit`] error indicating the offset at which the search
@@ -7750,15 +7750,15 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// use regex_automata::{hybrid::dfa::DFA, MatchError, Input};
     ///
     /// let dfa = DFA::builder()
-    ///     .configure(DFA::config().quit(b&#39;\n&#39;, true))
-    ///     .build(r&quot;foo\p{any}+bar&quot;)?;
+    ///     .configure(DFA::config().quit(b'\n', true))
+    ///     .build(r"foo\p{any}+bar")?;
     /// let mut cache = dfa.create_cache();
     ///
-    /// let haystack = &quot;foo\nbar&quot;;
-    /// // Normally this would produce a match, since \p{any} contains &#39;\n&#39;.
+    /// let haystack = "foo\nbar";
+    /// // Normally this would produce a match, since \p{any} contains '\n'.
     /// // But since we instructed the automaton to enter a quit state if a
-    /// // &#39;\n&#39; is observed, this produces a match error instead.
-    /// let expected = MatchError::quit(b&#39;\n&#39;, 3);
+    /// // '\n' is observed, this produces a match error instead.
+    /// let expected = MatchError::quit(b'\n', 3);
     /// let got = dfa.try_search_fwd(
     ///     &amp;mut cache,
     ///     &amp;Input::new(haystack),
@@ -7770,8 +7770,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     </span><span class="kw">pub fn </span>quit(<span class="kw-2">mut </span><span class="self">self</span>, byte: u8, yes: bool) -&gt; Config {
         <span class="kw">if </span><span class="self">self</span>.get_unicode_word_boundary() &amp;&amp; !byte.is_ascii() &amp;&amp; !yes {
             <span class="macro">panic!</span>(
-                <span class="string">&quot;cannot set non-ASCII byte to be non-quit when \
-                 Unicode word boundaries are enabled&quot;
+                <span class="string">"cannot set non-ASCII byte to be non-quit when \
+                 Unicode word boundaries are enabled"
             </span>);
         }
         <span class="kw">if </span><span class="self">self</span>.quitset.is_none() {
@@ -7789,10 +7789,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// When start states are specialized, an implementor of a search routine
     /// using a lazy DFA can tell when the search has entered a starting state.
-    /// When start states aren&#39;t specialized, then it is impossible to know
+    /// When start states aren't specialized, then it is impossible to know
     /// whether the search has entered a start state.
     ///
-    /// Ideally, this option wouldn&#39;t need to exist and we could always
+    /// Ideally, this option wouldn't need to exist and we could always
     /// specialize start states. The problem is that start states can be quite
     /// active. This in turn means that an efficient search routine is likely
     /// to ping-pong between a heavily optimized hot loop that handles most
@@ -7812,14 +7812,14 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// enabled (or disabled) if [`Config::prefilter`] is set. Namely, unless
     /// `specialize_start_states` has already been set, [`Config::prefilter`]
     /// will automatically enable or disable it based on whether a prefilter
-    /// is present or not, respectively. This is done because a prefilter&#39;s
+    /// is present or not, respectively. This is done because a prefilter's
     /// effectiveness is rooted in being executed whenever the DFA is in a
-    /// start state, and that&#39;s only possible to do when they are specialized.
+    /// start state, and that's only possible to do when they are specialized.
     ///
     /// Note that it is plausibly reasonable to _disable_ this option
     /// explicitly while _enabling_ a prefilter. In that case, a prefilter
     /// will still be run at the beginning of a search, but never again. This
-    /// in theory could strike a good balance if you&#39;re in a situation where a
+    /// in theory could strike a good balance if you're in a situation where a
     /// prefilter is likely to produce many false positive candidates.
     ///
     /// # Example
@@ -7832,12 +7832,12 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// let dfa = DFA::builder()
     ///     .configure(DFA::config().specialize_start_states(true))
-    ///     .build(r&quot;[a-z]+&quot;)?;
+    ///     .build(r"[a-z]+")?;
     /// let mut cache = dfa.create_cache();
     ///
-    /// let haystack = &quot;123 foobar 4567&quot;.as_bytes();
+    /// let haystack = "123 foobar 4567".as_bytes();
     /// let sid = dfa.start_state_forward(&amp;mut cache, &amp;Input::new(haystack))?;
-    /// // The ID returned by &#39;start_state_forward&#39; will always be tagged as
+    /// // The ID returned by 'start_state_forward' will always be tagged as
     /// // a start state when start state specialization is enabled.
     /// assert!(sid.is_tagged());
     /// assert!(sid.is_start());
@@ -7852,10 +7852,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// ```
     /// use regex_automata::{hybrid::dfa::DFA, MatchError, Input};
     ///
-    /// let dfa = DFA::new(r&quot;[a-z]+&quot;)?;
+    /// let dfa = DFA::new(r"[a-z]+")?;
     /// let mut cache = dfa.create_cache();
     ///
-    /// let haystack = &quot;123 foobar 4567&quot;.as_bytes();
+    /// let haystack = "123 foobar 4567".as_bytes();
     /// let sid = dfa.start_state_forward(&amp;mut cache, &amp;Input::new(haystack))?;
     /// // Start states are not tagged in the default configuration!
     /// assert!(!sid.is_tagged());
@@ -7874,21 +7874,21 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// either stop the search and return an error or clear the cache and
     /// continue the search.
     ///
-    /// The default cache capacity is some &quot;reasonable&quot; number that will
+    /// The default cache capacity is some "reasonable" number that will
     /// accommodate most regular expressions. You may find that if you need
     /// to build a large DFA then it may be necessary to increase the cache
     /// capacity.
     ///
-    /// Note that while building a lazy DFA will do a &quot;minimum&quot; check to ensure
+    /// Note that while building a lazy DFA will do a "minimum" check to ensure
     /// the capacity is big enough, this is more or less about correctness.
-    /// If the cache is bigger than the minimum but still &quot;too small,&quot; then the
+    /// If the cache is bigger than the minimum but still "too small," then the
     /// lazy DFA could wind up spending a lot of time clearing the cache and
     /// recomputing transitions, thus negating the performance benefits of a
     /// lazy DFA. Thus, setting the cache capacity is mostly an experimental
     /// endeavor. For most common patterns, however, the default should be
     /// sufficient.
     ///
-    /// For more details on how the lazy DFA&#39;s cache is used, see the
+    /// For more details on how the lazy DFA's cache is used, see the
     /// documentation for [`Cache`].
     ///
     /// # Example
@@ -7902,7 +7902,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::{hybrid::dfa::DFA, HalfMatch, Input};
     ///
-    /// let pattern = r&quot;\p{L}{1000}&quot;;
+    /// let pattern = r"\p{L}{1000}";
     ///
     /// // The default cache capacity is likely too small to deal with regexes
     /// // that are very large. Large repetitions of large Unicode character
@@ -7914,7 +7914,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///     .build(pattern)?;
     /// let mut cache = dfa.create_cache();
     ///
-    /// let haystack = &quot;ͰͲͶͿΆΈΉΊΌΎΏΑΒΓΔΕΖΗΘΙ&quot;.repeat(50);
+    /// let haystack = "ͰͲͶͿΆΈΉΊΌΎΏΑΒΓΔΕΖΗΘΙ".repeat(50);
     /// let expected = Some(HalfMatch::must(0, 2000));
     /// let got = dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(&amp;haystack))?;
     /// assert_eq!(expected, got);
@@ -7934,10 +7934,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// In general, this option is typically not a good idea. In particular,
     /// while a minimum cache capacity does permit the lazy DFA to function
-    /// where it otherwise couldn&#39;t, it&#39;s plausible that it may not function
-    /// well if it&#39;s constantly running out of room. In that case, the speed
+    /// where it otherwise couldn't, it's plausible that it may not function
+    /// well if it's constantly running out of room. In that case, the speed
     /// advantages of the lazy DFA may be negated. On the other hand, the
-    /// &quot;minimum&quot; cache capacity computed may not be completely accurate and
+    /// "minimum" cache capacity computed may not be completely accurate and
     /// could actually be bigger than what is really necessary. Therefore, it
     /// is plausible that using the minimum cache capacity could still result
     /// in very good performance.
@@ -7948,7 +7948,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// This example shows what happens if the configured cache capacity is
     /// too small. In such cases, one could override the capacity explicitly.
-    /// An alternative, demonstrated here, let&#39;s us force construction to use
+    /// An alternative, demonstrated here, let's us force construction to use
     /// the minimum cache capacity if the configured capacity is otherwise
     /// too small.
     ///
@@ -7956,7 +7956,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::{hybrid::dfa::DFA, HalfMatch, Input};
     ///
-    /// let pattern = r&quot;\p{L}{1000}&quot;;
+    /// let pattern = r"\p{L}{1000}";
     ///
     /// // The default cache capacity is likely too small to deal with regexes
     /// // that are very large. Large repetitions of large Unicode character
@@ -7969,7 +7969,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///     .build(pattern)?;
     /// let mut cache = dfa.create_cache();
     ///
-    /// let haystack = &quot;ͰͲͶͿΆΈΉΊΌΎΏΑΒΓΔΕΖΗΘΙ&quot;.repeat(50);
+    /// let haystack = "ͰͲͶͿΆΈΉΊΌΎΏΑΒΓΔΕΖΗΘΙ".repeat(50);
     /// let expected = Some(HalfMatch::must(0, 2000));
     /// let got = dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(&amp;haystack))?;
     /// assert_eq!(expected, got);
@@ -7984,21 +7984,21 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     <span class="doccomment">/// Configure a lazy DFA search to quit after a certain number of cache
     /// clearings.
     ///
-    /// When a minimum is set, then a lazy DFA search will *possibly* &quot;give
-    /// up&quot; after the minimum number of cache clearings has occurred. This is
+    /// When a minimum is set, then a lazy DFA search will *possibly* "give
+    /// up" after the minimum number of cache clearings has occurred. This is
     /// typically useful in scenarios where callers want to detect whether the
-    /// lazy DFA search is &quot;efficient&quot; or not. If the cache is cleared too many
+    /// lazy DFA search is "efficient" or not. If the cache is cleared too many
     /// times, this is a good indicator that it is not efficient, and thus, the
     /// caller may wish to use some other regex engine.
     ///
     /// Note that the number of times a cache is cleared is a property of
     /// the cache itself. Thus, if a cache is used in a subsequent search
     /// with a similarly configured lazy DFA, then it could cause the
-    /// search to &quot;give up&quot; if the cache needed to be cleared, depending
+    /// search to "give up" if the cache needed to be cleared, depending
     /// on its internal count and configured minimum. The cache clear
     /// count can only be reset to `0` via [`DFA::reset_cache`] (or
     /// [`Regex::reset_cache`](crate::hybrid::regex::Regex::reset_cache) if
-    /// you&#39;re using the `Regex` API).
+    /// you're using the `Regex` API).
     ///
     /// By default, no minimum is configured. Thus, a lazy DFA search will
     /// never give up due to cache clearings. If you do set this option, you
@@ -8024,11 +8024,11 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// // repetition). But we specifically choose to create a class with an
     /// // ASCII letter and a non-ASCII letter so that we can check that no new
     /// // states are created once the cache is full. Namely, if we fill up the
-    /// // cache on a haystack of &#39;a&#39;s, then in order to match one &#39;β&#39;, a new
-    /// // state will need to be created since a &#39;β&#39; is encoded with multiple
-    /// // bytes. Since there&#39;s no room for this state, the search should quit
+    /// // cache on a haystack of 'a's, then in order to match one 'β', a new
+    /// // state will need to be created since a 'β' is encoded with multiple
+    /// // bytes. Since there's no room for this state, the search should quit
     /// // at the very first position.
-    /// let pattern = r&quot;[aβ]{100}&quot;;
+    /// let pattern = r"[aβ]{100}";
     /// let dfa = DFA::builder()
     ///     .configure(
     ///         // Configure it so that we have the minimum cache capacity
@@ -8042,7 +8042,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// let mut cache = dfa.create_cache();
     ///
     /// // Our search will give up before reaching the end!
-    /// let haystack = &quot;a&quot;.repeat(101).into_bytes();
+    /// let haystack = "a".repeat(101).into_bytes();
     /// let result = dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(&amp;haystack));
     /// assert!(matches!(
     ///     *result.unwrap_err().kind(),
@@ -8052,7 +8052,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// // Now that we know the cache is full, if we search a haystack that we
     /// // know will require creating at least one new state, it should not
     /// // be able to make much progress.
-    /// let haystack = &quot;β&quot;.repeat(101).into_bytes();
+    /// let haystack = "β".repeat(101).into_bytes();
     /// let result = dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(&amp;haystack));
     /// assert!(matches!(
     ///     *result.unwrap_err().kind(),
@@ -8062,7 +8062,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// // If we reset the cache, then we should be able to create more states
     /// // and make more progress with searching for betas.
     /// cache.reset(&amp;dfa);
-    /// let haystack = &quot;β&quot;.repeat(101).into_bytes();
+    /// let haystack = "β".repeat(101).into_bytes();
     /// let result = dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(&amp;haystack));
     /// assert!(matches!(
     ///     *result.unwrap_err().kind(),
@@ -8071,7 +8071,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// // ... switching back to ASCII still makes progress since it just needs
     /// // to set transitions on existing states!
-    /// let haystack = &quot;a&quot;.repeat(101).into_bytes();
+    /// let haystack = "a".repeat(101).into_bytes();
     /// let result = dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(&amp;haystack));
     /// assert!(matches!(
     ///     *result.unwrap_err().kind(),
@@ -8092,7 +8092,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// compiled per byte of haystack searched. For example, if the efficiency
     /// is 2, then it means the lazy DFA is creating a new DFA state after
     /// searching approximately 2 bytes in a haystack. Generally speaking, 2
-    /// is quite bad and it&#39;s likely that even a slower regex engine like the
+    /// is quite bad and it's likely that even a slower regex engine like the
     /// [`PikeVM`](crate::nfa::thompson::pikevm::PikeVM) would be faster.
     ///
     /// This has no effect if [`Config::minimum_cache_clear_count`] is not set.
@@ -8105,16 +8105,16 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     /// then one should probably also set this knob as well. The reason is
     /// that the absolute number of times the cache is cleared is generally
     /// not a great predictor of efficiency. For example, if a new DFA state
-    /// is created for every 1,000 bytes searched, then it wouldn&#39;t be hard
+    /// is created for every 1,000 bytes searched, then it wouldn't be hard
     /// for the cache to get cleared more than `N` times and then cause the
     /// lazy DFA to quit. But a new DFA state every 1,000 bytes is likely quite
-    /// good from a performance perspective, and it&#39;s likely that the lazy
+    /// good from a performance perspective, and it's likely that the lazy
     /// DFA should continue searching, even if it requires clearing the cache
     /// occasionally.
     ///
-    /// Finally, note that if you&#39;re implementing your own lazy DFA search
+    /// Finally, note that if you're implementing your own lazy DFA search
     /// routine and also want this efficiency check to work correctly, then
-    /// you&#39;ll need to use the following routines to record search progress:
+    /// you'll need to use the following routines to record search progress:
     ///
     /// * Call [`Cache::search_start`] at the beginning of every search.
     /// * Call [`Cache::search_update`] whenever [`DFA::next_state`] is
@@ -8168,9 +8168,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     }
 
     <span class="doccomment">/// Returns whether this configuration will instruct the lazy DFA to
-    /// &quot;specialize&quot; start states. When enabled, the lazy DFA will tag start
+    /// "specialize" start states. When enabled, the lazy DFA will tag start
     /// states so that search routines using the lazy DFA can detect when
-    /// it&#39;s in a start state and do some kind of optimization (like run a
+    /// it's in a start state and do some kind of optimization (like run a
     /// prefilter).
     </span><span class="kw">pub fn </span>get_specialize_start_states(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.specialize_start_states.unwrap_or(<span class="bool-val">false</span>)
@@ -8197,7 +8197,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     <span class="doccomment">/// Returns, if set, the minimum number of bytes per state that need to be
     /// processed in order for the lazy DFA to keep going. If the minimum falls
     /// below this number (and the cache has been cleared a minimum number of
-    /// times), then the lazy DFA will return a &quot;gave up&quot; error.
+    /// times), then the lazy DFA will return a "gave up" error.
     </span><span class="kw">pub fn </span>get_minimum_bytes_per_state(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="self">self</span>.minimum_bytes_per_state.unwrap_or(<span class="prelude-val">None</span>)
     }
@@ -8244,14 +8244,14 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
             </span>ByteClasses::singletons()
         } <span class="kw">else </span>{
             <span class="kw">let </span><span class="kw-2">mut </span>set = nfa.byte_class_set().clone();
-            <span class="comment">// It is important to distinguish any &quot;quit&quot; bytes from all other
+            <span class="comment">// It is important to distinguish any "quit" bytes from all other
             // bytes. Otherwise, a non-quit byte may end up in the same class
-            // as a quit byte, and thus cause the DFA stop when it shouldn&#39;t.
+            // as a quit byte, and thus cause the DFA stop when it shouldn't.
             //
             // Test case:
             //
             //   regex-cli find match hybrid --unicode-word-boundary \
-            //     -p &#39;^#&#39; -p &#39;\b10\.55\.182\.100\b&#39; -y @conn.json.1000x.log
+            //     -p '^#' -p '\b10\.55\.182\.100\b' -y @conn.json.1000x.log
             </span><span class="kw">if </span>!quit.is_empty() {
                 set.add_set(<span class="kw-2">&amp;</span>quit);
             }
@@ -8262,8 +8262,8 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     <span class="doccomment">/// Return the quit set for this configuration and the given NFA.
     ///
     /// This may return an error if the NFA is incompatible with this
-    /// configuration&#39;s quit set. For example, if the NFA has a Unicode word
-    /// boundary and the quit set doesn&#39;t include non-ASCII bytes.
+    /// configuration's quit set. For example, if the NFA has a Unicode word
+    /// boundary and the quit set doesn't include non-ASCII bytes.
     </span><span class="kw">fn </span>quit_set_from_nfa(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         nfa: <span class="kw-2">&amp;</span>thompson::NFA,
@@ -8275,10 +8275,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
                     quit.add(b);
                 }
             } <span class="kw">else </span>{
-                <span class="comment">// If heuristic support for Unicode word boundaries wasn&#39;t
+                <span class="comment">// If heuristic support for Unicode word boundaries wasn't
                 // enabled, then we can still check if our quit set is correct.
                 // If the caller set their quit bytes in a way that causes the
-                // DFA to quit on at least all non-ASCII bytes, then that&#39;s all
+                // DFA to quit on at least all non-ASCII bytes, then that's all
                 // we need for heuristic support to work.
                 </span><span class="kw">if </span>!quit.contains_range(<span class="number">0x80</span>, <span class="number">0xFF</span>) {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(
@@ -8292,7 +8292,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 
     <span class="doccomment">/// Overwrite the default configuration such that the options in `o` are
     /// always used. If an option in `o` is not set, then the corresponding
-    /// option in `self` is used. If it&#39;s not set in `self` either, then it
+    /// option in `self` is used. If it's not set in `self` either, then it
     /// remains not set.
     </span><span class="kw">fn </span>overwrite(<span class="kw-2">&amp;</span><span class="self">self</span>, o: Config) -&gt; Config {
         Config {
@@ -8378,10 +8378,10 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 ///     .configure(DFA::config().cache_capacity(5_000))
 ///     .thompson(thompson::Config::new().utf8(false))
 ///     .syntax(syntax::Config::new().unicode(false).utf8(false))
-///     .build(r&quot;foo[^b]ar.*&quot;)?;
+///     .build(r"foo[^b]ar.*")?;
 /// let mut cache = dfa.create_cache();
 ///
-/// let haystack = b&quot;\xFEfoo\xFFar\xE2\x98\xFF\n&quot;;
+/// let haystack = b"\xFEfoo\xFFar\xE2\x98\xFF\n";
 /// let expected = Some(HalfMatch::must(0, 10));
 /// let got = dfa.try_search_fwd(&amp;mut cache, &amp;Input::new(haystack))?;
 /// assert_eq!(expected, got);
@@ -8391,7 +8391,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>Builder {
     config: Config,
-    <span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span>thompson: thompson::Compiler,
 }
 
@@ -8400,7 +8400,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     </span><span class="kw">pub fn </span>new() -&gt; Builder {
         Builder {
             config: Config::default(),
-            <span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+            <span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
             </span>thompson: thompson::Compiler::new(),
         }
     }
@@ -8409,7 +8409,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// If there was a problem parsing or compiling the pattern, then an error
     /// is returned.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>, pattern: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;DFA, BuildError&gt; {
         <span class="self">self</span>.build_many(<span class="kw-2">&amp;</span>[pattern])
     }
@@ -8418,7 +8418,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// When matches are returned, the pattern ID corresponds to the index of
     /// the pattern in the slice given.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>build_many&lt;P: AsRef&lt;str&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         patterns: <span class="kw-2">&amp;</span>[P],
@@ -8456,12 +8456,12 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///     HalfMatch, Input,
     /// };
     ///
-    /// let haystack = &quot;foo123bar&quot;;
+    /// let haystack = "foo123bar";
     ///
     /// // This shows how to set non-default options for building an NFA.
     /// let nfa = thompson::Compiler::new()
     ///     .configure(thompson::Config::new().shrink(true))
-    ///     .build(r&quot;[0-9]+&quot;)?;
+    ///     .build(r"[0-9]+")?;
     /// let dfa = DFA::builder().build_from_nfa(nfa)?;
     /// let mut cache = dfa.create_cache();
     /// let expected = Some(HalfMatch::must(0, 6));
@@ -8477,7 +8477,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         <span class="kw">let </span>quitset = <span class="self">self</span>.config.quit_set_from_nfa(<span class="kw-2">&amp;</span>nfa)<span class="question-mark">?</span>;
         <span class="kw">let </span>classes = <span class="self">self</span>.config.byte_classes_from_nfa(<span class="kw-2">&amp;</span>nfa, <span class="kw-2">&amp;</span>quitset);
         <span class="comment">// Check that we can fit at least a few states into our cache,
-        // otherwise it&#39;s pretty senseless to use the lazy DFA. This does have
+        // otherwise it's pretty senseless to use the lazy DFA. This does have
         // a possible failure mode though. This assumes the maximum size of a
         // state in powerset space (so, the total number of NFA states), which
         // may never actually materialize, and could be quite a bit larger
@@ -8498,9 +8498,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
             // and mush on.
             </span><span class="kw">if </span><span class="self">self</span>.config.get_skip_cache_capacity_check() {
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;given capacity ({}) is too small, \
+                    <span class="string">"given capacity ({}) is too small, \
                      since skip_cache_capacity_check is enabled, \
-                     setting cache capacity to minimum ({})&quot;</span>,
+                     setting cache capacity to minimum ({})"</span>,
                     cache_capacity, min_cache,
                 );
                 cache_capacity = min_cache;
@@ -8545,7 +8545,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// These settings only apply when constructing a lazy DFA directly from a
     /// pattern.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>syntax(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         config: <span class="kw">crate</span>::util::syntax::Config,
@@ -8563,7 +8563,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     ///
     /// These settings only apply when constructing a DFA directly from a
     /// pattern.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>thompson(<span class="kw-2">&amp;mut </span><span class="self">self</span>, config: thompson::Config) -&gt; <span class="kw-2">&amp;mut </span>Builder {
         <span class="self">self</span>.thompson.configure(config);
         <span class="self">self
@@ -8619,9 +8619,9 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     <span class="doccomment">/// This is set to true when a reverse overlapping search has entered its
     /// EOI transitions.
     ///
-    /// This isn&#39;t used in a forward search because it knows to stop once the
+    /// This isn't used in a forward search because it knows to stop once the
     /// position exceeds the end of the search range. In a reverse search,
-    /// since we use unsigned offsets, we don&#39;t &quot;know&quot; once we&#39;ve gone past
+    /// since we use unsigned offsets, we don't "know" once we've gone past
     /// `0`. So the only way to detect it is with this extra flag. The reverse
     /// overlapping search knows to terminate specifically after it has
     /// reported all matches after following the EOI transition.
@@ -8656,20 +8656,20 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 ///
 /// This is *not* always correct to call. It should only be called when the
 /// underlying NFA has UTF-8 mode enabled *and* it can produce zero-width
-/// matches. Calling this when both of those things aren&#39;t true might result
+/// matches. Calling this when both of those things aren't true might result
 /// in legitimate matches getting skipped.
 </span><span class="attr">#[cold]
 #[inline(never)]
 </span><span class="kw">fn </span>skip_empty_utf8_splits_overlapping&lt;F&gt;(
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     state: <span class="kw-2">&amp;mut </span>OverlappingState,
     <span class="kw-2">mut </span>search: F,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt;
 <span class="kw">where
-    </span>F: FnMut(<span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;, <span class="kw-2">&amp;mut </span>OverlappingState) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt;,
+    </span>F: FnMut(<span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;, <span class="kw-2">&amp;mut </span>OverlappingState) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt;,
 {
     <span class="comment">// Note that this routine works for forwards and reverse searches
-    // even though there&#39;s no code here to handle those cases. That&#39;s
+    // even though there's no code here to handle those cases. That's
     // because overlapping searches drive themselves to completion via
     // `OverlappingState`. So all we have to do is push it until no matches are
     // found.
@@ -8697,7 +8697,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 <span class="doccomment">/// Based on the minimum number of states required for a useful lazy DFA cache,
 /// this returns the minimum lazy state ID that must be representable.
 ///
-/// It&#39;s not likely for this to have any impact 32-bit systems (or higher), but
+/// It's not likely for this to have any impact 32-bit systems (or higher), but
 /// on 16-bit systems, the lazy state ID space is quite constrained and thus
 /// may be insufficient if our MIN_STATES value is (for some reason) too high.
 </span><span class="kw">fn </span>minimum_lazy_state_id(
@@ -8711,7 +8711,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 <span class="doccomment">/// Based on the minimum number of states required for a useful lazy DFA cache,
 /// this returns a heuristic minimum number of bytes of heap space required.
 ///
-/// This is a &quot;heuristic&quot; because the minimum it returns is likely bigger than
+/// This is a "heuristic" because the minimum it returns is likely bigger than
 /// the true minimum. Namely, it assumes that each powerset NFA/DFA state uses
 /// the maximum number of NFA states (all of them). This is likely bigger
 /// than what is required in practice. Computing the true minimum effectively
@@ -8720,18 +8720,18 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
 ///
 /// One of the issues with this approach IMO is that it requires that this
 /// be in sync with the calculation above for computing how much heap memory
-/// the DFA cache uses. If we get it wrong, it&#39;s possible for example for the
+/// the DFA cache uses. If we get it wrong, it's possible for example for the
 /// minimum to be smaller than the computed heap memory, and thus, it may be
-/// the case that we can&#39;t add the required minimum number of states. That in
+/// the case that we can't add the required minimum number of states. That in
 /// turn will make lazy DFA panic because we assume that we can add at least a
 /// minimum number of states.
 ///
 /// Another approach would be to always allow the minimum number of states to
 /// be added to the lazy DFA cache, even if it exceeds the configured cache
-/// limit. This does mean that the limit isn&#39;t really a limit in all cases,
+/// limit. This does mean that the limit isn't really a limit in all cases,
 /// which is unfortunate. But it does at least guarantee that the lazy DFA can
 /// always make progress, even if it is slow. (This approach is very similar to
-/// enabling the &#39;skip_cache_capacity_check&#39; config knob, except it wouldn&#39;t
+/// enabling the 'skip_cache_capacity_check' config knob, except it wouldn't
 /// rely on cache size calculation. Instead, it would just always permit a
 /// minimum number of states to be added.)
 </span><span class="kw">fn </span>minimum_cache_capacity(
@@ -8758,16 +8758,16 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     // loop where we try to add a 5th state, which gets rejected, which clears
     // the cache, which adds back a saved state (4th total state) which then
     // tries to add the 5th state again.
-    </span><span class="macro">assert!</span>(MIN_STATES &gt;= <span class="number">5</span>, <span class="string">&quot;minimum number of states has to be at least 5&quot;</span>);
+    </span><span class="macro">assert!</span>(MIN_STATES &gt;= <span class="number">5</span>, <span class="string">"minimum number of states has to be at least 5"</span>);
     <span class="comment">// The minimum number of non-sentinel states. We consider this separately
     // because sentinel states are much smaller in that they contain no NFA
-    // states. Given our aggressive calculation here, it&#39;s worth being more
+    // states. Given our aggressive calculation here, it's worth being more
     // precise with the number of states we need.
     </span><span class="kw">let </span>non_sentinel = MIN_STATES.checked_sub(SENTINEL_STATES).unwrap();
 
     <span class="comment">// Every `State` has 5 bytes for flags, 4 bytes (max) for the number of
     // patterns, followed by 32-bit encodings of patterns and then delta
-    // varint encodings of NFA state IDs. We use the worst case (which isn&#39;t
+    // varint encodings of NFA state IDs. We use the worst case (which isn't
     // technically possible) of 5 bytes for each NFA state ID.
     //
     // HOWEVER, three of the states needed by a lazy DFA are just the sentinel
@@ -8777,7 +8777,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     <span class="kw">let </span>max_state_size = <span class="number">5 </span>+ <span class="number">4 </span>+ (nfa.pattern_len() * <span class="number">4</span>) + (states_len * <span class="number">5</span>);
     <span class="kw">let </span>states = (SENTINEL_STATES * (STATE_SIZE + dead_state_size))
         + (non_sentinel * (STATE_SIZE + max_state_size));
-    <span class="comment">// NOTE: We don&#39;t double count heap memory used by State for this map since
+    <span class="comment">// NOTE: We don't double count heap memory used by State for this map since
     // we use reference counting to avoid doubling memory usage. (This tends to
     // be where most memory is allocated in the cache.)
     </span><span class="kw">let </span>states_to_sid = (MIN_STATES * STATE_SIZE) + (MIN_STATES * ID_SIZE);
@@ -8793,7 +8793,7 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
         + scratch_state_builder
 }
 
-<span class="attr">#[cfg(all(test, feature = <span class="string">&quot;syntax&quot;</span>))]
+<span class="attr">#[cfg(all(test, feature = <span class="string">"syntax"</span>))]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -8802,33 +8802,33 @@ This module also contains a [`hybrid::dfa::Builder`](Builder) and a
     //
     // I wrote this test when I discovered a bug in how heuristic word
     // boundaries were handled. Namely, that the starting state selection
-    // didn&#39;t consider the DFA&#39;s quit byte set when looking at the byte
+    // didn't consider the DFA's quit byte set when looking at the byte
     // immediately before the start of the search (or immediately after the
     // end of the search in the case of a reverse search). As a result, it was
-    // possible for &#39;\bfoo\b&#39; to match &#39;β123&#39; because the trailing \xB2 byte
-    // in the &#39;β&#39; codepoint would be treated as a non-word character. But of
+    // possible for '\bfoo\b' to match 'β123' because the trailing \xB2 byte
+    // in the 'β' codepoint would be treated as a non-word character. But of
     // course, this search should trigger the DFA to quit, since there is a
     // non-ASCII byte in consideration.
     //
-    // Thus, I fixed &#39;start_state_{forward,reverse}&#39; to check the quit byte set
-    // if it wasn&#39;t empty. The forward case is tested in the doc test for the
+    // Thus, I fixed 'start_state_{forward,reverse}' to check the quit byte set
+    // if it wasn't empty. The forward case is tested in the doc test for the
     // Config::unicode_word_boundary API. We test the reverse case here, which
-    // is sufficiently niche that it doesn&#39;t really belong in a doc test.
+    // is sufficiently niche that it doesn't really belong in a doc test.
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>heuristic_unicode_reverse() {
         <span class="kw">let </span>dfa = DFA::builder()
             .configure(DFA::config().unicode_word_boundary(<span class="bool-val">true</span>))
             .thompson(thompson::Config::new().reverse(<span class="bool-val">true</span>))
-            .build(<span class="string">r&quot;\b[0-9]+\b&quot;</span>)
+            .build(<span class="string">r"\b[0-9]+\b"</span>)
             .unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>cache = dfa.create_cache();
 
-        <span class="kw">let </span>input = Input::new(<span class="string">&quot;β123&quot;</span>).range(<span class="number">2</span>..);
+        <span class="kw">let </span>input = Input::new(<span class="string">"β123"</span>).range(<span class="number">2</span>..);
         <span class="kw">let </span>expected = MatchError::quit(<span class="number">0xB2</span>, <span class="number">1</span>);
         <span class="kw">let </span>got = dfa.try_search_rev(<span class="kw-2">&amp;mut </span>cache, <span class="kw-2">&amp;</span>input);
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Err</span>(expected), got);
 
-        <span class="kw">let </span>input = Input::new(<span class="string">&quot;123β&quot;</span>).range(..<span class="number">3</span>);
+        <span class="kw">let </span>input = Input::new(<span class="string">"123β"</span>).range(..<span class="number">3</span>);
         <span class="kw">let </span>expected = MatchError::quit(<span class="number">0xCE</span>, <span class="number">3</span>);
         <span class="kw">let </span>got = dfa.try_search_rev(<span class="kw-2">&amp;mut </span>cache, <span class="kw-2">&amp;</span>input);
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Err</span>(expected), got);

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/simple_passes.rs`."><title>simple_passes.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/simple_passes.rs`."><title>simple_passes.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -262,6 +262,7 @@
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{get_name, get_names, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>rspirv::dr::{Block, Function, Module};
 <span class="kw">use </span>rspirv::spirv::{ExecutionModel, Op, Word};
@@ -290,7 +291,7 @@
 
 <span class="doccomment">/// spir-v requires basic blocks to be ordered so that if A dominates B, A appears before B (except
 /// in the case of backedges). Reverse post-order is a good ordering that satisfies this condition
-/// (with an &quot;already visited set&quot; that blocks going deeper, which solves both the fact that it&#39;s a
+/// (with an "already visited set" that blocks going deeper, which solves both the fact that it's a
 /// DAG, not a tree, as well as backedges).
 </span><span class="kw">pub fn </span>block_ordering_pass(func: <span class="kw-2">&amp;mut </span>Function) {
     <span class="kw">if </span>func.blocks.len() &lt; <span class="number">2 </span>{
@@ -342,11 +343,11 @@
             .unwrap();
         func.blocks.push(old_blocks.remove(index));
     }
-    <span class="comment">// Note: if old_blocks isn&#39;t empty here, that means there were unreachable blocks that were deleted.
+    <span class="comment">// Note: if old_blocks isn't empty here, that means there were unreachable blocks that were deleted.
     </span><span class="macro">assert_eq!</span>(func.blocks[<span class="number">0</span>].label_id().unwrap(), entry_label);
 }
 
-<span class="kw">pub fn </span>outgoing_edges(block: <span class="kw-2">&amp;</span>Block) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Word&gt; + <span class="lifetime">&#39;_ </span>{
+<span class="kw">pub fn </span>outgoing_edges(block: <span class="kw-2">&amp;</span>Block) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Word&gt; + <span class="lifetime">'_ </span>{
     <span class="kw">let </span>terminator = block.instructions.last().unwrap();
     <span class="comment">// https://www.khronos.org/registry/spir-v/specs/unified1/SPIRV.html#Termination
     </span><span class="kw">let </span>operand_indices = <span class="kw">match </span>terminator.class.opcode {
@@ -359,7 +360,7 @@
         | Op::Unreachable
         | Op::IgnoreIntersectionKHR
         | Op::TerminateRayKHR =&gt; (<span class="number">0</span>..<span class="number">0</span>).step_by(<span class="number">1</span>),
-        <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Invalid block terminator: {terminator:?}&quot;</span>),
+        <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Invalid block terminator: {terminator:?}"</span>),
     };
     operand_indices.map(<span class="kw">move </span>|i| terminator.operands[i].unwrap_id_ref())
 }
@@ -392,7 +393,7 @@
 </span>}
 
 <span class="kw">pub fn </span>sort_globals(module: <span class="kw-2">&amp;mut </span>Module) {
-    <span class="comment">// Function declarations come before definitions. TODO: Figure out if it&#39;s even possible to
+    <span class="comment">// Function declarations come before definitions. TODO: Figure out if it's even possible to
     // have a function declaration without a body in a fully linked module?
     </span>module.functions.sort_by_key(|f| !f.blocks.is_empty());
 }
@@ -455,12 +456,12 @@
         <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
     };
 
-    <span class="kw">fn </span>visit&lt;<span class="lifetime">&#39;m</span>&gt;(
+    <span class="kw">fn </span>visit&lt;<span class="lifetime">'m</span>&gt;(
         sess: <span class="kw-2">&amp;</span>Session,
-        module: <span class="kw-2">&amp;</span><span class="lifetime">&#39;m </span>Module,
+        module: <span class="kw-2">&amp;</span><span class="lifetime">'m </span>Module,
         visited: <span class="kw-2">&amp;mut </span>Vec&lt;bool&gt;,
         stack: <span class="kw-2">&amp;mut </span>Vec&lt;Word&gt;,
-        names: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Option</span>&lt;FxHashMap&lt;Word, <span class="kw-2">&amp;</span><span class="lifetime">&#39;m </span>str&gt;&gt;,
+        names: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Option</span>&lt;FxHashMap&lt;Word, <span class="kw-2">&amp;</span><span class="lifetime">'m </span>str&gt;&gt;,
         index: usize,
         func_id_to_idx: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, usize&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -504,17 +505,18 @@
 
                 <span class="kw">let </span>names = names.get_or_insert_with(|| get_names(module));
                 <span class="kw">let </span>stack = stack.iter().rev().map(|<span class="kw-2">&amp;</span>s| get_name(names, s).into_owned());
-                <span class="kw">let </span>note = once(<span class="string">&quot;Stack:&quot;</span>.to_string())
+                <span class="kw">let </span>note = once(<span class="string">"Stack:"</span>.to_string())
                     .chain(stack)
                     .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                    .join(<span class="string">&quot;\n&quot;</span>);
+                    .join(<span class="string">"\n"</span>);
                 any_err = <span class="prelude-val">Some</span>(
-                    sess.struct_err(<span class="macro">format!</span>(
-                        <span class="string">&quot;{} cannot be used outside a fragment shader&quot;</span>,
-                        inst.class.opname
-                    ))
-                    .note(note)
-                    .emit(),
+                    sess.dcx()
+                        .struct_err(<span class="macro">format!</span>(
+                            <span class="string">"{} cannot be used outside a fragment shader"</span>,
+                            inst.class.opname
+                        ))
+                        .with_note(note)
+                        .emit(),
                 );
             }
         }

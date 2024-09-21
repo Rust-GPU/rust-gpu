@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/attr.rs`."><title>attr.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/attr.rs`."><title>attr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -645,7 +645,7 @@
 
 <span class="kw">struct </span>MultipleAttrs {
     prev_span: Span,
-    category: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    category: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 }
 
 <span class="kw">impl </span>AggregatedSpirvAttributes {
@@ -653,16 +653,16 @@
     ///
     /// Any errors for malformed/duplicate attributes will have been reported
     /// prior to codegen, by the `attr` check pass.
-    </span><span class="kw">pub fn </span>parse&lt;<span class="lifetime">&#39;tcx</span>&gt;(cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;, attrs: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>[Attribute]) -&gt; <span class="self">Self </span>{
+    </span><span class="kw">pub fn </span>parse&lt;<span class="lifetime">'tcx</span>&gt;(cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;, attrs: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>[Attribute]) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>aggregated_attrs = <span class="self">Self</span>::default();
 
-        <span class="comment">// NOTE(eddyb) `delay_span_bug` ensures that if attribute checking fails
+        <span class="comment">// NOTE(eddyb) `span_delayed_bug` ensures that if attribute checking fails
         // to see an attribute error, it will cause an ICE instead.
         </span><span class="kw">for </span>parse_attr_result <span class="kw">in </span><span class="kw">crate</span>::symbols::parse_attrs_for_checking(<span class="kw-2">&amp;</span>cx.sym, attrs) {
             <span class="kw">let </span>(span, parsed_attr) = <span class="kw">match </span>parse_attr_result {
                 <span class="prelude-val">Ok</span>(span_and_parsed_attr) =&gt; span_and_parsed_attr,
                 <span class="prelude-val">Err</span>((span, msg)) =&gt; {
-                    cx.tcx.sess.delay_span_bug(span, msg);
+                    cx.tcx.dcx().span_delayed_bug(span, msg);
                     <span class="kw">continue</span>;
                 }
             };
@@ -673,8 +673,8 @@
                     category,
                 }) =&gt; {
                     cx.tcx
-                        .sess
-                        .delay_span_bug(span, <span class="macro">format!</span>(<span class="string">&quot;multiple {category} attributes&quot;</span>));
+                        .dcx()
+                        .span_delayed_bug(span, <span class="macro">format!</span>(<span class="string">"multiple {category} attributes"</span>));
                 }
             }
         }
@@ -687,7 +687,7 @@
             slot: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Option</span>&lt;Spanned&lt;T&gt;&gt;,
             value: T,
             span: Span,
-            category: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+            category: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
         ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MultipleAttrs&gt; {
             <span class="kw">match </span>slot {
                 <span class="prelude-val">Some</span>(prev) =&gt; <span class="prelude-val">Err</span>(MultipleAttrs {
@@ -704,53 +704,53 @@
         <span class="kw">use </span>SpirvAttribute::<span class="kw-2">*</span>;
         <span class="kw">match </span>attr {
             IntrinsicType(value) =&gt; {
-                try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.intrinsic_type, value, span, <span class="string">&quot;intrinsic type&quot;</span>)
+                try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.intrinsic_type, value, span, <span class="string">"intrinsic type"</span>)
             }
-            Block =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.block, (), span, <span class="string">&quot;#[spirv(block)]&quot;</span>),
-            Entry(value) =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.entry, value, span, <span class="string">&quot;entry-point&quot;</span>),
+            Block =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.block, (), span, <span class="string">"#[spirv(block)]"</span>),
+            Entry(value) =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.entry, value, span, <span class="string">"entry-point"</span>),
             StorageClass(value) =&gt; {
-                try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.storage_class, value, span, <span class="string">&quot;storage class&quot;</span>)
+                try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.storage_class, value, span, <span class="string">"storage class"</span>)
             }
-            Builtin(value) =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.builtin, value, span, <span class="string">&quot;builtin&quot;</span>),
+            Builtin(value) =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.builtin, value, span, <span class="string">"builtin"</span>),
             DescriptorSet(value) =&gt; try_insert(
                 <span class="kw-2">&amp;mut </span><span class="self">self</span>.descriptor_set,
                 value,
                 span,
-                <span class="string">&quot;#[spirv(descriptor_set)]&quot;</span>,
+                <span class="string">"#[spirv(descriptor_set)]"</span>,
             ),
-            Binding(value) =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.binding, value, span, <span class="string">&quot;#[spirv(binding)]&quot;</span>),
-            Flat =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.flat, (), span, <span class="string">&quot;#[spirv(flat)]&quot;</span>),
-            Invariant =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.invariant, (), span, <span class="string">&quot;#[spirv(invariant)]&quot;</span>),
+            Binding(value) =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.binding, value, span, <span class="string">"#[spirv(binding)]"</span>),
+            Flat =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.flat, (), span, <span class="string">"#[spirv(flat)]"</span>),
+            Invariant =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.invariant, (), span, <span class="string">"#[spirv(invariant)]"</span>),
             InputAttachmentIndex(value) =&gt; try_insert(
                 <span class="kw-2">&amp;mut </span><span class="self">self</span>.input_attachment_index,
                 value,
                 span,
-                <span class="string">&quot;#[spirv(attachment_index)]&quot;</span>,
+                <span class="string">"#[spirv(attachment_index)]"</span>,
             ),
             SpecConstant(value) =&gt; try_insert(
                 <span class="kw-2">&amp;mut </span><span class="self">self</span>.spec_constant,
                 value,
                 span,
-                <span class="string">&quot;#[spirv(spec_constant)]&quot;</span>,
+                <span class="string">"#[spirv(spec_constant)]"</span>,
             ),
             BufferLoadIntrinsic =&gt; try_insert(
                 <span class="kw-2">&amp;mut </span><span class="self">self</span>.buffer_load_intrinsic,
                 (),
                 span,
-                <span class="string">&quot;#[spirv(buffer_load_intrinsic)]&quot;</span>,
+                <span class="string">"#[spirv(buffer_load_intrinsic)]"</span>,
             ),
             BufferStoreIntrinsic =&gt; try_insert(
                 <span class="kw-2">&amp;mut </span><span class="self">self</span>.buffer_store_intrinsic,
                 (),
                 span,
-                <span class="string">&quot;#[spirv(buffer_store_intrinsic)]&quot;</span>,
+                <span class="string">"#[spirv(buffer_store_intrinsic)]"</span>,
             ),
         }
     }
 }
 
 <span class="comment">// FIXME(eddyb) make this reusable from somewhere in `rustc`.
-</span><span class="kw">fn </span>target_from_impl_item(tcx: TyCtxt&lt;<span class="lifetime">&#39;_</span>&gt;, impl_item: <span class="kw-2">&amp;</span>hir::ImplItem&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Target {
+</span><span class="kw">fn </span>target_from_impl_item(tcx: TyCtxt&lt;<span class="lifetime">'_</span>&gt;, impl_item: <span class="kw-2">&amp;</span>hir::ImplItem&lt;<span class="lifetime">'_</span>&gt;) -&gt; Target {
     <span class="kw">match </span>impl_item.kind {
         hir::ImplItemKind::Const(..) =&gt; Target::AssocConst,
         hir::ImplItemKind::Fn(..) =&gt; {
@@ -758,7 +758,7 @@
             <span class="kw">let </span>containing_item = tcx.hir().expect_item(parent_owner_id.def_id);
             <span class="kw">let </span>containing_impl_is_for_trait = <span class="kw">match </span><span class="kw-2">&amp;</span>containing_item.kind {
                 hir::ItemKind::Impl(hir::Impl { of_trait, .. }) =&gt; of_trait.is_some(),
-                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;parent of an ImplItem must be an Impl&quot;</span>),
+                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">"parent of an ImplItem must be an Impl"</span>),
             };
             <span class="kw">if </span>containing_impl_is_for_trait {
                 Target::Method(MethodKind::Trait { body: <span class="bool-val">true </span>})
@@ -770,12 +770,12 @@
     }
 }
 
-<span class="kw">struct </span>CheckSpirvAttrVisitor&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    tcx: TyCtxt&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+<span class="kw">struct </span>CheckSpirvAttrVisitor&lt;<span class="lifetime">'tcx</span>&gt; {
+    tcx: TyCtxt&lt;<span class="lifetime">'tcx</span>&gt;,
     sym: Rc&lt;Symbols&gt;,
 }
 
-<span class="kw">impl </span>CheckSpirvAttrVisitor&lt;<span class="lifetime">&#39;_</span>&gt; {
+<span class="kw">impl </span>CheckSpirvAttrVisitor&lt;<span class="lifetime">'_</span>&gt; {
     <span class="kw">fn </span>check_spirv_attributes(<span class="kw-2">&amp;</span><span class="self">self</span>, hir_id: HirId, target: Target) {
         <span class="kw">let </span><span class="kw-2">mut </span>aggregated_attrs = AggregatedSpirvAttributes::default();
 
@@ -786,7 +786,7 @@
             <span class="kw">let </span>(span, parsed_attr) = <span class="kw">match </span>parse_attr_result {
                 <span class="prelude-val">Ok</span>(span_and_parsed_attr) =&gt; span_and_parsed_attr,
                 <span class="prelude-val">Err</span>((span, msg)) =&gt; {
-                    <span class="self">self</span>.tcx.sess.span_err(span, msg);
+                    <span class="self">self</span>.tcx.dcx().span_err(span, msg);
                     <span class="kw">continue</span>;
                 }
             };
@@ -802,18 +802,18 @@
                         </span><span class="prelude-val">Ok</span>(())
                     }
 
-                    <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Expected(<span class="string">&quot;struct&quot;</span>)),
+                    <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Expected(<span class="string">"struct"</span>)),
                 },
 
                 SpirvAttribute::Entry(<span class="kw">_</span>) =&gt; <span class="kw">match </span>target {
                     Target::Fn
                     | Target::Method(MethodKind::Trait { body: <span class="bool-val">true </span>} | MethodKind::Inherent) =&gt; {
                         <span class="comment">// FIXME(eddyb) further check entry-point attribute validity,
-                        // e.g. signature, shouldn&#39;t have `#[inline]` or generics, etc.
+                        // e.g. signature, shouldn't have `#[inline]` or generics, etc.
                         </span><span class="prelude-val">Ok</span>(())
                     }
 
-                    <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Expected(<span class="string">&quot;function&quot;</span>)),
+                    <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Expected(<span class="string">"function"</span>)),
                 },
 
                 SpirvAttribute::StorageClass(<span class="kw">_</span>)
@@ -825,15 +825,15 @@
                 | SpirvAttribute::InputAttachmentIndex(<span class="kw">_</span>)
                 | SpirvAttribute::SpecConstant(<span class="kw">_</span>) =&gt; <span class="kw">match </span>target {
                     Target::Param =&gt; {
-                        <span class="kw">let </span>parent_hir_id = <span class="self">self</span>.tcx.hir().parent_id(hir_id);
+                        <span class="kw">let </span>parent_hir_id = <span class="self">self</span>.tcx.parent_hir_id(hir_id);
                         <span class="kw">let </span>parent_is_entry_point =
                             parse_attrs(<span class="self">self</span>.tcx.hir().attrs(parent_hir_id))
                                 .filter_map(|r| r.ok())
                                 .any(|(<span class="kw">_</span>, attr)| <span class="macro">matches!</span>(attr, SpirvAttribute::Entry(<span class="kw">_</span>)));
                         <span class="kw">if </span>!parent_is_entry_point {
-                            <span class="self">self</span>.tcx.sess.span_err(
+                            <span class="self">self</span>.tcx.dcx().span_err(
                                 span,
-                                <span class="string">&quot;attribute is only valid on a parameter of an entry-point function&quot;</span>,
+                                <span class="string">"attribute is only valid on a parameter of an entry-point function"</span>,
                             );
                         } <span class="kw">else </span>{
                             <span class="comment">// FIXME(eddyb) should we just remove all 5 of these storage class
@@ -841,22 +841,22 @@
                             </span><span class="kw">if let </span>SpirvAttribute::StorageClass(storage_class) = parsed_attr {
                                 <span class="kw">let </span>valid = <span class="kw">match </span>storage_class {
                                     StorageClass::Input | StorageClass::Output =&gt; {
-                                        <span class="prelude-val">Err</span>(<span class="string">&quot;is the default and should not be explicitly specified&quot;</span>)
+                                        <span class="prelude-val">Err</span>(<span class="string">"is the default and should not be explicitly specified"</span>)
                                     }
 
                                     StorageClass::Private
                                     | StorageClass::Function
                                     | StorageClass::Generic =&gt; {
-                                        <span class="prelude-val">Err</span>(<span class="string">&quot;can not be used as part of an entry&#39;s interface&quot;</span>)
+                                        <span class="prelude-val">Err</span>(<span class="string">"can not be used as part of an entry's interface"</span>)
                                     }
 
                                     <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(()),
                                 };
 
                                 <span class="kw">if let </span><span class="prelude-val">Err</span>(msg) = valid {
-                                    <span class="self">self</span>.tcx.sess.span_err(
+                                    <span class="self">self</span>.tcx.dcx().span_err(
                                         span,
-                                        <span class="macro">format!</span>(<span class="string">&quot;`{storage_class:?}` storage class {msg}&quot;</span>),
+                                        <span class="macro">format!</span>(<span class="string">"`{storage_class:?}` storage class {msg}"</span>),
                                     );
                                 }
                             }
@@ -864,21 +864,21 @@
                         <span class="prelude-val">Ok</span>(())
                     }
 
-                    <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Expected(<span class="string">&quot;function parameter&quot;</span>)),
+                    <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Expected(<span class="string">"function parameter"</span>)),
                 },
                 SpirvAttribute::BufferLoadIntrinsic | SpirvAttribute::BufferStoreIntrinsic =&gt; {
                     <span class="kw">match </span>target {
                         Target::Fn =&gt; <span class="prelude-val">Ok</span>(()),
-                        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Expected(<span class="string">&quot;function&quot;</span>)),
+                        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Expected(<span class="string">"function"</span>)),
                     }
                 }
             };
             <span class="kw">match </span>valid_target {
                 <span class="prelude-val">Err</span>(Expected(expected_target)) =&gt; {
-                    <span class="self">self</span>.tcx.sess.span_err(
+                    <span class="self">self</span>.tcx.dcx().span_err(
                         span,
                         <span class="macro">format!</span>(
-                            <span class="string">&quot;attribute is only valid on a {expected_target}, not on a {target}&quot;
+                            <span class="string">"attribute is only valid on a {expected_target}, not on a {target}"
                         </span>),
                     );
                 }
@@ -889,12 +889,12 @@
                         category,
                     }) =&gt; {
                         <span class="self">self</span>.tcx
-                            .sess
+                            .dcx()
                             .struct_span_err(
                                 span,
-                                <span class="macro">format!</span>(<span class="string">&quot;only one {category} attribute is allowed on a {target}&quot;</span>),
+                                <span class="macro">format!</span>(<span class="string">"only one {category} attribute is allowed on a {target}"</span>),
                             )
-                            .span_note(prev_span, <span class="macro">format!</span>(<span class="string">&quot;previous {category} attribute&quot;</span>))
+                            .with_span_note(prev_span, <span class="macro">format!</span>(<span class="string">"previous {category} attribute"</span>))
                             .emit();
                     }
                 },
@@ -905,71 +905,71 @@
         // so we can perform further checks, emit warnings, etc.
 
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(block_attr) = aggregated_attrs.block {
-            <span class="self">self</span>.tcx.sess.span_warn(
+            <span class="self">self</span>.tcx.dcx().span_warn(
                 block_attr.span,
-                <span class="string">&quot;#[spirv(block)] is no longer needed and should be removed&quot;</span>,
+                <span class="string">"#[spirv(block)] is no longer needed and should be removed"</span>,
             );
         }
     }
 }
 
 <span class="comment">// FIXME(eddyb) DRY this somehow and make it reusable from somewhere in `rustc`.
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; Visitor&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>CheckSpirvAttrVisitor&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; Visitor&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CheckSpirvAttrVisitor&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">type </span>NestedFilter = nested_filter::OnlyBodies;
 
     <span class="kw">fn </span>nested_visit_map(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="self">Self</span>::Map {
         <span class="self">self</span>.tcx.hir()
     }
 
-    <span class="kw">fn </span>visit_item(<span class="kw-2">&amp;mut </span><span class="self">self</span>, item: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>hir::Item&lt;<span class="lifetime">&#39;tcx</span>&gt;) {
+    <span class="kw">fn </span>visit_item(<span class="kw-2">&amp;mut </span><span class="self">self</span>, item: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::Item&lt;<span class="lifetime">'tcx</span>&gt;) {
         <span class="kw">let </span>target = Target::from_item(item);
         <span class="self">self</span>.check_spirv_attributes(item.hir_id(), target);
         intravisit::walk_item(<span class="self">self</span>, item);
     }
 
-    <span class="kw">fn </span>visit_generic_param(<span class="kw-2">&amp;mut </span><span class="self">self</span>, generic_param: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>hir::GenericParam&lt;<span class="lifetime">&#39;tcx</span>&gt;) {
+    <span class="kw">fn </span>visit_generic_param(<span class="kw-2">&amp;mut </span><span class="self">self</span>, generic_param: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::GenericParam&lt;<span class="lifetime">'tcx</span>&gt;) {
         <span class="kw">let </span>target = Target::from_generic_param(generic_param);
         <span class="self">self</span>.check_spirv_attributes(generic_param.hir_id, target);
         intravisit::walk_generic_param(<span class="self">self</span>, generic_param);
     }
 
-    <span class="kw">fn </span>visit_trait_item(<span class="kw-2">&amp;mut </span><span class="self">self</span>, trait_item: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>hir::TraitItem&lt;<span class="lifetime">&#39;tcx</span>&gt;) {
+    <span class="kw">fn </span>visit_trait_item(<span class="kw-2">&amp;mut </span><span class="self">self</span>, trait_item: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::TraitItem&lt;<span class="lifetime">'tcx</span>&gt;) {
         <span class="kw">let </span>target = Target::from_trait_item(trait_item);
         <span class="self">self</span>.check_spirv_attributes(trait_item.hir_id(), target);
         intravisit::walk_trait_item(<span class="self">self</span>, trait_item);
     }
 
-    <span class="kw">fn </span>visit_field_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>hir::FieldDef&lt;<span class="lifetime">&#39;tcx</span>&gt;) {
+    <span class="kw">fn </span>visit_field_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, field: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::FieldDef&lt;<span class="lifetime">'tcx</span>&gt;) {
         <span class="self">self</span>.check_spirv_attributes(field.hir_id, Target::Field);
         intravisit::walk_field_def(<span class="self">self</span>, field);
     }
 
-    <span class="kw">fn </span>visit_arm(<span class="kw-2">&amp;mut </span><span class="self">self</span>, arm: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>hir::Arm&lt;<span class="lifetime">&#39;tcx</span>&gt;) {
+    <span class="kw">fn </span>visit_arm(<span class="kw-2">&amp;mut </span><span class="self">self</span>, arm: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::Arm&lt;<span class="lifetime">'tcx</span>&gt;) {
         <span class="self">self</span>.check_spirv_attributes(arm.hir_id, Target::Arm);
         intravisit::walk_arm(<span class="self">self</span>, arm);
     }
 
-    <span class="kw">fn </span>visit_foreign_item(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f_item: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>hir::ForeignItem&lt;<span class="lifetime">&#39;tcx</span>&gt;) {
+    <span class="kw">fn </span>visit_foreign_item(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f_item: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::ForeignItem&lt;<span class="lifetime">'tcx</span>&gt;) {
         <span class="kw">let </span>target = Target::from_foreign_item(f_item);
         <span class="self">self</span>.check_spirv_attributes(f_item.hir_id(), target);
         intravisit::walk_foreign_item(<span class="self">self</span>, f_item);
     }
 
-    <span class="kw">fn </span>visit_impl_item(<span class="kw-2">&amp;mut </span><span class="self">self</span>, impl_item: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>hir::ImplItem&lt;<span class="lifetime">&#39;tcx</span>&gt;) {
+    <span class="kw">fn </span>visit_impl_item(<span class="kw-2">&amp;mut </span><span class="self">self</span>, impl_item: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::ImplItem&lt;<span class="lifetime">'tcx</span>&gt;) {
         <span class="kw">let </span>target = target_from_impl_item(<span class="self">self</span>.tcx, impl_item);
         <span class="self">self</span>.check_spirv_attributes(impl_item.hir_id(), target);
         intravisit::walk_impl_item(<span class="self">self</span>, impl_item);
     }
 
-    <span class="kw">fn </span>visit_stmt(<span class="kw-2">&amp;mut </span><span class="self">self</span>, stmt: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>hir::Stmt&lt;<span class="lifetime">&#39;tcx</span>&gt;) {
+    <span class="kw">fn </span>visit_stmt(<span class="kw-2">&amp;mut </span><span class="self">self</span>, stmt: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::Stmt&lt;<span class="lifetime">'tcx</span>&gt;) {
         <span class="comment">// When checking statements ignore expressions, they will be checked later.
-        </span><span class="kw">if let </span>hir::StmtKind::Local(l) = stmt.kind {
+        </span><span class="kw">if let </span>hir::StmtKind::Let(l) = stmt.kind {
             <span class="self">self</span>.check_spirv_attributes(l.hir_id, Target::Statement);
         }
         intravisit::walk_stmt(<span class="self">self</span>, stmt);
     }
 
-    <span class="kw">fn </span>visit_expr(<span class="kw-2">&amp;mut </span><span class="self">self</span>, expr: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>hir::Expr&lt;<span class="lifetime">&#39;tcx</span>&gt;) {
+    <span class="kw">fn </span>visit_expr(<span class="kw-2">&amp;mut </span><span class="self">self</span>, expr: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::Expr&lt;<span class="lifetime">'tcx</span>&gt;) {
         <span class="kw">let </span>target = <span class="kw">match </span>expr.kind {
             hir::ExprKind::Closure { .. } =&gt; Target::Closure,
             <span class="kw">_ </span>=&gt; Target::Expression,
@@ -979,12 +979,12 @@
         intravisit::walk_expr(<span class="self">self</span>, expr);
     }
 
-    <span class="kw">fn </span>visit_variant(<span class="kw-2">&amp;mut </span><span class="self">self</span>, variant: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>hir::Variant&lt;<span class="lifetime">&#39;tcx</span>&gt;) {
+    <span class="kw">fn </span>visit_variant(<span class="kw-2">&amp;mut </span><span class="self">self</span>, variant: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::Variant&lt;<span class="lifetime">'tcx</span>&gt;) {
         <span class="self">self</span>.check_spirv_attributes(variant.hir_id, Target::Variant);
         intravisit::walk_variant(<span class="self">self</span>, variant);
     }
 
-    <span class="kw">fn </span>visit_param(<span class="kw-2">&amp;mut </span><span class="self">self</span>, param: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>hir::Param&lt;<span class="lifetime">&#39;tcx</span>&gt;) {
+    <span class="kw">fn </span>visit_param(<span class="kw-2">&amp;mut </span><span class="self">self</span>, param: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>hir::Param&lt;<span class="lifetime">'tcx</span>&gt;) {
         <span class="self">self</span>.check_spirv_attributes(param.hir_id, Target::Param);
 
         intravisit::walk_param(<span class="self">self</span>, param);
@@ -992,7 +992,7 @@
 }
 
 <span class="comment">// FIXME(eddyb) DRY this somehow and make it reusable from somewhere in `rustc`.
-</span><span class="kw">fn </span>check_mod_attrs(tcx: TyCtxt&lt;<span class="lifetime">&#39;_</span>&gt;, module_def_id: LocalModDefId) {
+</span><span class="kw">fn </span>check_mod_attrs(tcx: TyCtxt&lt;<span class="lifetime">'_</span>&gt;, module_def_id: LocalModDefId) {
     <span class="kw">let </span>check_spirv_attr_visitor = <span class="kw-2">&amp;mut </span>CheckSpirvAttrVisitor {
         tcx,
         sym: Symbols::get(),

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/util/utf8.rs`."><title>utf8.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_automata/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/util/utf8.rs`."><title>utf8.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -206,27 +206,27 @@ incremental decoder.
 ///
 /// This was copied from regex-syntax so that we can use it to determine the
 /// starting DFA state while searching without depending on regex-syntax. The
-/// definition is never going to change, so there&#39;s no maintenance/bit-rot
+/// definition is never going to change, so there's no maintenance/bit-rot
 /// hazard here.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_word_byte(b: u8) -&gt; bool {
     <span class="kw">const fn </span>mkwordset() -&gt; [bool; <span class="number">256</span>] {
         <span class="comment">// FIXME: Use as_usize() once const functions in traits are stable.
         </span><span class="kw">let </span><span class="kw-2">mut </span>set = [<span class="bool-val">false</span>; <span class="number">256</span>];
-        set[<span class="string">b&#39;_&#39; </span><span class="kw">as </span>usize] = <span class="bool-val">true</span>;
+        set[<span class="string">b'_' </span><span class="kw">as </span>usize] = <span class="bool-val">true</span>;
 
-        <span class="kw">let </span><span class="kw-2">mut </span>byte = <span class="string">b&#39;0&#39;</span>;
-        <span class="kw">while </span>byte &lt;= <span class="string">b&#39;9&#39; </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>byte = <span class="string">b'0'</span>;
+        <span class="kw">while </span>byte &lt;= <span class="string">b'9' </span>{
             set[byte <span class="kw">as </span>usize] = <span class="bool-val">true</span>;
             byte += <span class="number">1</span>;
         }
-        byte = <span class="string">b&#39;A&#39;</span>;
-        <span class="kw">while </span>byte &lt;= <span class="string">b&#39;Z&#39; </span>{
+        byte = <span class="string">b'A'</span>;
+        <span class="kw">while </span>byte &lt;= <span class="string">b'Z' </span>{
             set[byte <span class="kw">as </span>usize] = <span class="bool-val">true</span>;
             byte += <span class="number">1</span>;
         }
-        byte = <span class="string">b&#39;a&#39;</span>;
-        <span class="kw">while </span>byte &lt;= <span class="string">b&#39;z&#39; </span>{
+        byte = <span class="string">b'a'</span>;
+        <span class="kw">while </span>byte &lt;= <span class="string">b'z' </span>{
             set[byte <span class="kw">as </span>usize] = <span class="bool-val">true</span>;
             byte += <span class="number">1</span>;
         }
@@ -245,10 +245,10 @@ incremental decoder.
 ///
 /// This never panics.
 ///
-/// *WARNING*: This is not designed for performance. If you&#39;re looking for a
+/// *WARNING*: This is not designed for performance. If you're looking for a
 /// fast UTF-8 decoder, this is not it. If you feel like you need one in this
 /// crate, then please file an issue and discuss your use case.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>decode(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;char, u8&gt;&gt; {
     <span class="kw">if </span>bytes.is_empty() {
         <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -271,7 +271,7 @@ incremental decoder.
 /// slice, then the last byte is returned instead.
 ///
 /// This returns `None` if and only if `bytes` is empty.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>decode_last(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;char, u8&gt;&gt; {
     <span class="kw">if </span>bytes.is_empty() {
         <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -293,7 +293,7 @@ incremental decoder.
 ///
 /// If the given byte is not a valid UTF-8 leading byte, then this returns
 /// `None`.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>len(byte: u8) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
     <span class="kw">if </span>byte &lt;= <span class="number">0x7F </span>{
         <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="number">1</span>);
@@ -315,11 +315,11 @@ incremental decoder.
 ///
 /// If `bytes` is not valid UTF-8, then the behavior of this routine is
 /// unspecified.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_boundary(bytes: <span class="kw-2">&amp;</span>[u8], i: usize) -&gt; bool {
     <span class="kw">match </span>bytes.get(i) {
         <span class="comment">// The position at the end of the bytes always represents an empty
-        // string, which is a valid boundary. But anything after that doesn&#39;t
+        // string, which is a valid boundary. But anything after that doesn't
         // make much sense to call valid a boundary.
         </span><span class="prelude-val">None </span>=&gt; i == bytes.len(),
         <span class="comment">// Other than ASCII (where the most significant bit is never set),
@@ -335,7 +335,7 @@ incremental decoder.
 <span class="doccomment">/// Returns true if and only if the given byte is either a valid leading UTF-8
 /// byte, or is otherwise an invalid byte that can never appear anywhere in a
 /// valid UTF-8 sequence.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>is_leading_or_invalid_byte(b: u8) -&gt; bool {
     <span class="comment">// In the ASCII case, the most significant bit is never set. The leading
     // byte of a 2/3/4-byte sequence always has the top two most significant
@@ -376,15 +376,15 @@ incremental decoder.
 /// simply requiring that our next search begin at the beginning of codepoint.
 /// But we ended up changing that technique to always advance by 1 byte and
 /// then filter out matches that split a codepoint after-the-fact. Thus, we no
-/// longer use this method. But I&#39;ve kept it around in case we want to switch
-/// back to this approach. Its guarantees are a little subtle, so I&#39;d prefer
+/// longer use this method. But I've kept it around in case we want to switch
+/// back to this approach. Its guarantees are a little subtle, so I'd prefer
 /// not to rebuild it from whole cloth.
 pub(crate) fn next(text: &amp;[u8], i: usize) -&gt; usize {
     let b = match text.get(i) {
         None =&gt; return i.checked_add(1).unwrap(),
         Some(&amp;b) =&gt; b,
     };
-    // For cases where we see an invalid UTF-8 byte, there isn&#39;t much we can do
+    // For cases where we see an invalid UTF-8 byte, there isn't much we can do
     // other than just start at the next byte.
     let inc = len(b).unwrap_or(1);
     i.checked_add(inc).unwrap()

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/custom_insts.rs`."><title>custom_insts.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/custom_insts.rs`."><title>custom_insts.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -237,29 +237,29 @@
 <span class="kw">use </span>rspirv::spirv::Op;
 <span class="kw">use </span>smallvec::SmallVec;
 
-<span class="doccomment">/// Prefix for `CUSTOM_EXT_INST_SET` (`OpExtInstImport` &quot;instruction set&quot; name),
+<span class="doccomment">/// Prefix for `CUSTOM_EXT_INST_SET` (`OpExtInstImport` "instruction set" name),
 /// without any of the disambiguating suffixes added for specific revisions.
 ///
 /// This **should not** be changed (if possible), to ensure version mismatches
 /// can be detected (i.e. starting with this prefix, but the full name differs).
 ///
-/// See `CUSTOM_EXT_INST_SET`&#39;s docs for further constraints on the full name.
-</span><span class="kw">pub const </span>CUSTOM_EXT_INST_SET_PREFIX: <span class="kw-2">&amp;</span>str = <span class="macro">concat!</span>(<span class="string">&quot;Rust.&quot;</span>, <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_NAME&quot;</span>), <span class="string">&quot;.&quot;</span>);
+/// See `CUSTOM_EXT_INST_SET`'s docs for further constraints on the full name.
+</span><span class="kw">pub const </span>CUSTOM_EXT_INST_SET_PREFIX: <span class="kw-2">&amp;</span>str = <span class="macro">concat!</span>(<span class="string">"Rust."</span>, <span class="macro">env!</span>(<span class="string">"CARGO_PKG_NAME"</span>), <span class="string">"."</span>);
 
-<span class="macro">macro_rules! </span>join_cargo_pkg_version_major_minor_patch {
+<span class="macro">macro_rules!</span> join_cargo_pkg_version_major_minor_patch {
     (<span class="macro-nonterminal">$sep</span>:literal) =&gt; {
         <span class="macro">concat!</span>(
-            <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION_MAJOR&quot;</span>),
+            <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION_MAJOR"</span>),
             <span class="macro-nonterminal">$sep</span>,
-            <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION_MINOR&quot;</span>),
+            <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION_MINOR"</span>),
             <span class="macro-nonterminal">$sep</span>,
-            <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION_PATCH&quot;</span>),
+            <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION_PATCH"</span>),
         )
     };
 }
 
-<span class="macro">lazy_static! </span>{
-    <span class="doccomment">/// `OpExtInstImport` &quot;instruction set&quot; name for all Rust-GPU instructions.
+<span class="macro">lazy_static!</span> {
+    <span class="doccomment">/// `OpExtInstImport` "instruction set" name for all Rust-GPU instructions.
     ///
     /// These considerations are relevant to the specific choice of name:
     /// * does *not* start with `NonSemantic.`, as:
@@ -282,8 +282,8 @@
             <span class="kw">let </span>(lo, hi) = hasher.finalize();
             (lo <span class="kw">as </span>u128) | ((hi <span class="kw">as </span>u128) &lt;&lt; <span class="number">64</span>)
         };
-        <span class="kw">let </span>version = <span class="macro">join_cargo_pkg_version_major_minor_patch!</span>(<span class="string">&quot;_&quot;</span>);
-        <span class="macro">format!</span>(<span class="string">&quot;{CUSTOM_EXT_INST_SET_PREFIX}{version}.{schema_hash:x}&quot;</span>)
+        <span class="kw">let </span>version = <span class="macro">join_cargo_pkg_version_major_minor_patch!</span>(<span class="string">"_"</span>);
+        <span class="macro">format!</span>(<span class="string">"{CUSTOM_EXT_INST_SET_PREFIX}{version}.{schema_hash:x}"</span>)
     };
 }
 
@@ -292,10 +292,10 @@
     cx.register_custom_ext_inst_set(
         <span class="kw-2">&amp;</span>CUSTOM_EXT_INST_SET,
         ExtInstSetDesc {
-            <span class="comment">// HACK(eddyb) this is the most compact form I&#39;ve found, that isn&#39;t
-            // outright lossy by omitting &quot;Rust vs Rust-GPU&quot; or the version.
+            <span class="comment">// HACK(eddyb) this is the most compact form I've found, that isn't
+            // outright lossy by omitting "Rust vs Rust-GPU" or the version.
             </span>short_alias: <span class="prelude-val">Some</span>(
-                <span class="macro">concat!</span>(<span class="string">&quot;Rust-GPU &quot;</span>, <span class="macro">join_cargo_pkg_version_major_minor_patch!</span>(<span class="string">&quot;.&quot;</span>)).into(),
+                <span class="macro">concat!</span>(<span class="string">"Rust-GPU "</span>, <span class="macro">join_cargo_pkg_version_major_minor_patch!</span>(<span class="string">"."</span>)).into(),
             ),
             instructions: SCHEMA
                 .iter()
@@ -307,14 +307,14 @@
                             operand_names: operand_names
                                 .iter()
                                 .map(|name| {
-                                    name.strip_prefix(<span class="string">&quot;..&quot;</span>)
+                                    name.strip_prefix(<span class="string">".."</span>)
                                         .unwrap_or(name)
-                                        .replace(<span class="string">&#39;_&#39;</span>, <span class="string">&quot; &quot;</span>)
+                                        .replace(<span class="string">'_'</span>, <span class="string">" "</span>)
                                         .into()
                                 })
                                 .collect(),
-                            is_debuginfo: name.contains(<span class="string">&quot;Debug&quot;</span>)
-                                || name.contains(<span class="string">&quot;InlinedCallFrame&quot;</span>),
+                            is_debuginfo: name.contains(<span class="string">"Debug"</span>)
+                                || name.contains(<span class="string">"InlinedCallFrame"</span>),
                         },
                     )
                 })
@@ -323,7 +323,7 @@
     );
 }
 
-<span class="macro">macro_rules! </span>def_custom_insts {
+<span class="macro">macro_rules!</span> def_custom_insts {
     ($(<span class="macro-nonterminal">$num</span>:literal =&gt; <span class="macro-nonterminal">$name</span>:ident $({ $(<span class="macro-nonterminal">$field</span>:ident),+ $(, ..<span class="macro-nonterminal">$variadic_field</span>:ident)<span class="question-mark">? </span>$(,)<span class="question-mark">? </span>})<span class="question-mark">?</span>),+ $(,)<span class="question-mark">?</span>) =&gt; {
         <span class="kw">const </span>SCHEMA: <span class="kw-2">&amp;</span>[(u32, <span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str])] = <span class="kw-2">&amp;</span>[
             $((<span class="macro-nonterminal">$num</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$name</span>), <span class="kw-2">&amp;</span>[$($(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$field</span>),)+ $(<span class="macro">stringify!</span>(..<span class="macro-nonterminal">$variadic_field</span>),)<span class="question-mark">?</span>)<span class="question-mark">?</span>])),+
@@ -337,7 +337,7 @@
             <span class="kw">pub fn </span>decode(i: u32) -&gt; <span class="self">Self </span>{
                 <span class="kw">match </span>i {
                     $(<span class="macro-nonterminal">$num </span>=&gt; <span class="self">Self</span>::<span class="macro-nonterminal">$name</span>,)+
-                    <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;{i} is not a valid custom instruction number&quot;</span>),
+                    <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">"{i} is not a valid custom instruction number"</span>),
                 }
             }
 
@@ -353,7 +353,7 @@
                             $(<span class="macro-nonterminal">$field</span>: <span class="macro-nonterminal">$field</span>.clone(),)+
                             $(<span class="macro-nonterminal">$variadic_field</span>: <span class="macro-nonterminal">$variadic_field</span>.iter().cloned().collect())<span class="question-mark">?
                         </span>})<span class="question-mark">?</span>,
-                        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;{self:?} does not have the right number of operands&quot;</span>),
+                        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">"{self:?} does not have the right number of operands"</span>),
                     }),+
                 }
             }
@@ -371,7 +371,7 @@
                 }
             }
 
-            <span class="comment">// HACK(eddyb) this should return an iterator, but that&#39;s too much effort.
+            <span class="comment">// HACK(eddyb) this should return an iterator, but that's too much effort.
             </span><span class="kw">pub fn </span>into_operands(<span class="self">self</span>) -&gt; SmallVec&lt;[T; <span class="number">8</span>]&gt; {
                 <span class="kw">match </span><span class="self">self </span>{
                     $(<span class="self">Self</span>::<span class="macro-nonterminal">$name </span>$({ $(<span class="macro-nonterminal">$field</span>,)+ $(<span class="macro-nonterminal">$variadic_field</span>)<span class="question-mark">? </span>})<span class="question-mark">? </span>=&gt; {
@@ -391,14 +391,14 @@
 
 <span class="comment">// NOTE(eddyb) several of these are similar to `NonSemantic.Shader.DebugInfo.100`
 // instructions, but simpler (to aid implementation, for now).
-</span><span class="macro">def_custom_insts! </span>{
+</span><span class="macro">def_custom_insts!</span> {
     <span class="comment">// Like `DebugLine` (from `NonSemantic.Shader.DebugInfo.100`) or `OpLine`.
     </span><span class="number">0 </span>=&gt; SetDebugSrcLoc { file, line_start, line_end, col_start, col_end },
     <span class="comment">// Like `DebugNoLine` (from `NonSemantic.Shader.DebugInfo.100`) or `OpNoLine`.
     </span><span class="number">1 </span>=&gt; ClearDebugSrcLoc,
 
     <span class="comment">// Similar to `DebugInlinedAt` (from `NonSemantic.Shader.DebugInfo.100`),
-    // but simpler: there are no &quot;scope objects&quot;, the location of the inlined
+    // but simpler: there are no "scope objects", the location of the inlined
     // callsite is given by other debuginfo (`SetDebugSrcLoc`/`OpLine`) active
     // before this instruction, and only the name of the callee is recorded.
     </span><span class="number">2 </span>=&gt; PushInlinedCallFrame { callee_name },
@@ -407,14 +407,14 @@
     </span><span class="number">3 </span>=&gt; PopInlinedCallFrame,
 
     <span class="comment">// [Semantic] Similar to some proposed `OpAbort`, but without any ability to
-    // indicate abnormal termination (so it&#39;s closer to `OpTerminateInvocation`,
-    // which we could theoretically use, but that&#39;s limited to fragment shaders).
+    // indicate abnormal termination (so it's closer to `OpTerminateInvocation`,
+    // which we could theoretically use, but that's limited to fragment shaders).
     //
     // Lowering takes advantage of inlining happening before CFG structurization
     // (by forcing inlining of `Abort`s all the way up to entry-points, as to be
     // able to turn the `Abort`s into regular `OpReturn`s, from an entry-point),
-    // but if/when inlining works on structured SPIR-T instead, it&#39;s not much
-    // harder to make any call to a &quot;may (transitively) abort&quot; function branch on
+    // but if/when inlining works on structured SPIR-T instead, it's not much
+    // harder to make any call to a "may (transitively) abort" function branch on
     // an additional returned `bool`, instead (i.e. a form of emulated unwinding).
     //
     // As this is a custom terminator, it must only appear before `OpUnreachable`,
@@ -427,8 +427,8 @@
     // panics specially (e.g. by appending to a custom buffer, or using some
     // specific color in a fragment shader, to indicate a panic happened).
     // NOTE(eddyb) `message_debug_printf` operands form a complete `debugPrintf`
-    // invocation (format string followed by inputs) for the &quot;message&quot;, while
-    // `kind` only distinguishes broad categories like `&quot;abort&quot;` vs `&quot;panic&quot;`.
+    // invocation (format string followed by inputs) for the "message", while
+    // `kind` only distinguishes broad categories like `"abort"` vs `"panic"`.
     </span><span class="number">4 </span>=&gt; Abort { kind, ..message_debug_printf },
 }
 

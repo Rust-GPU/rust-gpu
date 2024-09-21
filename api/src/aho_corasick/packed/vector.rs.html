@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/packed/vector.rs`."><title>vector.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../aho_corasick/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/packed/vector.rs`."><title>vector.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1750,10 +1750,15 @@
 <a href="#1750" id="1750">1750</a>
 <a href="#1751" id="1751">1751</a>
 <a href="#1752" id="1752">1752</a>
+<a href="#1753" id="1753">1753</a>
+<a href="#1754" id="1754">1754</a>
+<a href="#1755" id="1755">1755</a>
+<a href="#1756" id="1756">1756</a>
+<a href="#1757" id="1757">1757</a>
 </pre></div><pre class="rust"><code><span class="comment">// NOTE: The descriptions for each of the vector methods on the traits below
 // are pretty inscrutable. For this reason, there are tests for every method
-// on for every trait impl below. If you&#39;re confused about what an op does,
-// consult its test. (They probably should be doc tests, but I couldn&#39;t figure
+// on for every trait impl below. If you're confused about what an op does,
+// consult its test. (They probably should be doc tests, but I couldn't figure
 // out how to write them in a non-annoying way.)
 
 </span><span class="kw">use </span>core::{
@@ -1765,7 +1770,7 @@
 ///
 /// The trait is highly constrained to low level vector operations needed for
 /// the specific algorithms used in this crate. In general, it was invented
-/// mostly to be generic over x86&#39;s __m128i and __m256i types. At time of
+/// mostly to be generic over x86's __m128i and __m256i types. At time of
 /// writing, it also supports wasm and aarch64 128-bit vector types as well.
 ///
 /// # Safety
@@ -1825,7 +1830,7 @@
     /// the current CPU.
     </span><span class="kw">unsafe fn </span>cmpeq(<span class="self">self</span>, vector2: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
 
-    <span class="doccomment">/// Perform a bitwise &#39;and&#39; of this vector and the one given and return
+    <span class="doccomment">/// Perform a bitwise 'and' of this vector and the one given and return
     /// the result.
     ///
     /// # Safety
@@ -1834,13 +1839,14 @@
     /// the current CPU.
     </span><span class="kw">unsafe fn </span>and(<span class="self">self</span>, vector2: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
 
-    <span class="doccomment">/// Perform a bitwise &#39;or&#39; of this vector and the one given and return
+    <span class="doccomment">/// Perform a bitwise 'or' of this vector and the one given and return
     /// the result.
     ///
     /// # Safety
     ///
     /// Callers must ensure that this is okay to call in the current target for
     /// the current CPU.
+    </span><span class="attr">#[allow(dead_code)] </span><span class="comment">// unused, but useful enough to keep around?
     </span><span class="kw">unsafe fn </span>or(<span class="self">self</span>, vector2: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
 
     <span class="doccomment">/// Shift each 8-bit lane in this vector to the right by the number of
@@ -1940,7 +1946,7 @@
     ///
     /// Conceptually it would be nice if we could have a
     /// `unpack64(self) -&gt; [u64; BITS / 64]` method, but defining that is
-    /// tricky given Rust&#39;s [current support for const generics][support].
+    /// tricky given Rust's [current support for const generics][support].
     /// And even if we could, it would be tricky to write generic code over
     /// it. (Not impossible. We could introduce another layer that requires
     /// `AsRef&lt;[u64]&gt;` or something.)
@@ -1971,13 +1977,13 @@
 ///
 /// Currently we only implement this for AVX on x86_64. It would be nice to
 /// implement this for SSE on x86_64 and NEON on aarch64, with the latter two
-/// only reading 8 bytes at a time. It&#39;s not clear how well it would work, but
+/// only reading 8 bytes at a time. It's not clear how well it would work, but
 /// there are some tricky things to figure out in terms of implementation. The
 /// `half_shift_in_{one,two,three}_bytes` methods in particular are probably
 /// the trickiest of the bunch. For AVX2, these are implemented by taking
 /// advantage of the fact that `_mm256_alignr_epi8` operates on each 128-bit
 /// half instead of the full 256-bit vector. (Where as `_mm_alignr_epi8`
-/// operates on the full 128-bit vector and not on each 64-bit half.) I didn&#39;t
+/// operates on the full 128-bit vector and not on each 64-bit half.) I didn't
 /// do a careful survey of NEON to see if it could easily support these
 /// operations.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>FatVector: Vector {
@@ -2068,7 +2074,7 @@
     ) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;;
 }
 
-<span class="attr">#[cfg(all(target_arch = <span class="string">&quot;x86_64&quot;</span>, target_feature = <span class="string">&quot;sse2&quot;</span>))]
+<span class="attr">#[cfg(all(target_arch = <span class="string">"x86_64"</span>, target_feature = <span class="string">"sse2"</span>))]
 </span><span class="kw">mod </span>x86_64_ssse3 {
     <span class="kw">use </span>core::arch::x86_64::<span class="kw-2">*</span>;
 
@@ -2147,7 +2153,7 @@
             <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(usize, u64) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;,
         ) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
             <span class="comment">// We could just use _mm_extract_epi64 here, but that requires
-            // SSE 4.1. It isn&#39;t necessarily a problem to just require SSE 4.1,
+            // SSE 4.1. It isn't necessarily a problem to just require SSE 4.1,
             // but everything else works with SSSE3 so we stick to that subset.
             </span><span class="kw">let </span>lanes: [u64; <span class="number">2</span>] = core::mem::transmute(<span class="self">self</span>);
             <span class="kw">if let </span><span class="prelude-val">Some</span>(t) = f(<span class="number">0</span>, lanes[<span class="number">0</span>]) {
@@ -2161,7 +2167,7 @@
     }
 }
 
-<span class="attr">#[cfg(all(target_arch = <span class="string">&quot;x86_64&quot;</span>, target_feature = <span class="string">&quot;sse2&quot;</span>))]
+<span class="attr">#[cfg(all(target_arch = <span class="string">"x86_64"</span>, target_feature = <span class="string">"sse2"</span>))]
 </span><span class="kw">mod </span>x86_64_avx2 {
     <span class="kw">use </span>core::arch::x86_64::<span class="kw-2">*</span>;
 
@@ -2215,7 +2221,7 @@
             <span class="comment">// Credit goes to jneem for figuring this out:
             // https://github.com/jneem/teddy/blob/9ab5e899ad6ef6911aecd3cf1033f1abe6e1f66c/src/x86/teddy_simd.rs#L145-L184
             //
-            // TL;DR avx2&#39;s PALIGNR instruction is actually just two 128-bit
+            // TL;DR avx2's PALIGNR instruction is actually just two 128-bit
             // PALIGNR instructions, which is not what we want, so we need to
             // do some extra shuffling.
             </span><span class="kw">let </span>v = _mm256_permute2x128_si256(vector2, <span class="self">self</span>, <span class="number">0x21</span>);
@@ -2227,7 +2233,7 @@
             <span class="comment">// Credit goes to jneem for figuring this out:
             // https://github.com/jneem/teddy/blob/9ab5e899ad6ef6911aecd3cf1033f1abe6e1f66c/src/x86/teddy_simd.rs#L145-L184
             //
-            // TL;DR avx2&#39;s PALIGNR instruction is actually just two 128-bit
+            // TL;DR avx2's PALIGNR instruction is actually just two 128-bit
             // PALIGNR instructions, which is not what we want, so we need to
             // do some extra shuffling.
             </span><span class="kw">let </span>v = _mm256_permute2x128_si256(vector2, <span class="self">self</span>, <span class="number">0x21</span>);
@@ -2239,7 +2245,7 @@
             <span class="comment">// Credit goes to jneem for figuring this out:
             // https://github.com/jneem/teddy/blob/9ab5e899ad6ef6911aecd3cf1033f1abe6e1f66c/src/x86/teddy_simd.rs#L145-L184
             //
-            // TL;DR avx2&#39;s PALIGNR instruction is actually just two 128-bit
+            // TL;DR avx2's PALIGNR instruction is actually just two 128-bit
             // PALIGNR instructions, which is not what we want, so we need to
             // do some extra shuffling.
             </span><span class="kw">let </span>v = _mm256_permute2x128_si256(vector2, <span class="self">self</span>, <span class="number">0x21</span>);
@@ -2258,8 +2264,8 @@
         ) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
             <span class="comment">// NOTE: At one point in the past, I used transmute to this to
             // get a [u64; 4], but it turned out to lead to worse codegen IIRC.
-            // I&#39;ve tried it more recently, and it looks like that&#39;s no longer
-            // the case. But since there&#39;s no difference, we stick with the
+            // I've tried it more recently, and it looks like that's no longer
+            // the case. But since there's no difference, we stick with the
             // slightly more complicated but transmute-free version.
             </span><span class="kw">let </span>lane = _mm256_extract_epi64(<span class="self">self</span>, <span class="number">0</span>).to_bits();
             <span class="kw">if let </span><span class="prelude-val">Some</span>(t) = f(<span class="number">0</span>, lane) {
@@ -2347,7 +2353,11 @@
     }
 }
 
-<span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+<span class="attr">#[cfg(all(
+    target_arch = <span class="string">"aarch64"</span>,
+    target_feature = <span class="string">"neon"</span>,
+    target_endian = <span class="string">"little"
+</span>))]
 </span><span class="kw">mod </span>aarch64_neon {
     <span class="kw">use </span>core::arch::aarch64::<span class="kw-2">*</span>;
 
@@ -2370,7 +2380,7 @@
         <span class="attr">#[inline(always)]
         </span><span class="kw">unsafe fn </span>is_zero(<span class="self">self</span>) -&gt; bool {
             <span class="comment">// Could also use vmaxvq_u8.
-            // ... I tried that and couldn&#39;t observe any meaningful difference
+            // ... I tried that and couldn't observe any meaningful difference
             // in benchmarks.
             </span><span class="kw">let </span>maxes = vreinterpretq_u64_u8(vpmaxq_u8(<span class="self">self</span>, <span class="self">self</span>));
             vgetq_lane_u64(maxes, <span class="number">0</span>) == <span class="number">0
@@ -2436,7 +2446,7 @@
     }
 }
 
-<span class="attr">#[cfg(all(test, target_arch = <span class="string">&quot;x86_64&quot;</span>, target_feature = <span class="string">&quot;sse2&quot;</span>))]
+<span class="attr">#[cfg(all(test, target_arch = <span class="string">"x86_64"</span>, target_feature = <span class="string">"sse2"</span>))]
 </span><span class="kw">mod </span>tests_x86_64_ssse3 {
     <span class="kw">use </span>core::arch::x86_64::<span class="kw-2">*</span>;
 
@@ -2445,15 +2455,15 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">fn </span>is_runnable() -&gt; bool {
-        <span class="macro">std::is_x86_feature_detected!</span>(<span class="string">&quot;ssse3&quot;</span>)
+        <span class="macro">std::is_x86_feature_detected!</span>(<span class="string">"ssse3"</span>)
     }
 
-    <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+    <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
     </span><span class="kw">unsafe fn </span>load(lanes: [u8; <span class="number">16</span>]) -&gt; __m128i {
         __m128i::load_unaligned(<span class="kw-2">&amp;</span>lanes <span class="kw">as </span><span class="kw-2">*const </span>u8)
     }
 
-    <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+    <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
     </span><span class="kw">unsafe fn </span>unload(v: __m128i) -&gt; [u8; <span class="number">16</span>] {
         [
             _mm_extract_epi8(v, <span class="number">0</span>).to_bits().low_u8(),
@@ -2477,7 +2487,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_splat() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = __m128i::splat(<span class="number">0xAF</span>);
             <span class="macro">assert_eq!</span>(
@@ -2496,7 +2506,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_is_zero() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = load([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
             <span class="macro">assert!</span>(!v.is_zero());
@@ -2511,7 +2521,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_cmpeq() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">1</span>]);
@@ -2530,7 +2540,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_and() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0b1001</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
@@ -2549,7 +2559,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_or() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0b1001</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
@@ -2568,7 +2578,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_8bit_lane_right() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = load([
                 <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0b1011</span>, <span class="number">0b0101</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
@@ -2586,7 +2596,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_in_one_byte() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>]);
@@ -2606,7 +2616,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_in_two_bytes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>]);
@@ -2626,7 +2636,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_in_three_bytes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>]);
@@ -2646,7 +2656,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shuffle_bytes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>]);
@@ -2665,7 +2675,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_for_each_64bit_lane() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;ssse3&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"ssse3"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = load([
                 <span class="number">0x01</span>, <span class="number">0x02</span>, <span class="number">0x03</span>, <span class="number">0x04</span>, <span class="number">0x05</span>, <span class="number">0x06</span>, <span class="number">0x07</span>, <span class="number">0x08</span>, <span class="number">0x09</span>, <span class="number">0x0A</span>,
@@ -2685,7 +2695,7 @@
     }
 }
 
-<span class="attr">#[cfg(all(test, target_arch = <span class="string">&quot;x86_64&quot;</span>, target_feature = <span class="string">&quot;sse2&quot;</span>))]
+<span class="attr">#[cfg(all(test, target_arch = <span class="string">"x86_64"</span>, target_feature = <span class="string">"sse2"</span>))]
 </span><span class="kw">mod </span>tests_x86_64_avx2 {
     <span class="kw">use </span>core::arch::x86_64::<span class="kw-2">*</span>;
 
@@ -2694,20 +2704,20 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">fn </span>is_runnable() -&gt; bool {
-        <span class="macro">std::is_x86_feature_detected!</span>(<span class="string">&quot;avx2&quot;</span>)
+        <span class="macro">std::is_x86_feature_detected!</span>(<span class="string">"avx2"</span>)
     }
 
-    <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+    <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
     </span><span class="kw">unsafe fn </span>load(lanes: [u8; <span class="number">32</span>]) -&gt; __m256i {
         __m256i::load_unaligned(<span class="kw-2">&amp;</span>lanes <span class="kw">as </span><span class="kw-2">*const </span>u8)
     }
 
-    <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+    <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
     </span><span class="kw">unsafe fn </span>load_half(lanes: [u8; <span class="number">16</span>]) -&gt; __m256i {
         __m256i::load_half_unaligned(<span class="kw-2">&amp;</span>lanes <span class="kw">as </span><span class="kw-2">*const </span>u8)
     }
 
-    <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+    <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
     </span><span class="kw">unsafe fn </span>unload(v: __m256i) -&gt; [u8; <span class="number">32</span>] {
         [
             _mm256_extract_epi8(v, <span class="number">0</span>).to_bits().low_u8(),
@@ -2747,7 +2757,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_splat() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = __m256i::splat(<span class="number">0xAF</span>);
             <span class="macro">assert_eq!</span>(
@@ -2768,7 +2778,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_is_zero() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = load([
                 <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
@@ -2789,7 +2799,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_cmpeq() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load([
                 <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>, <span class="number">17</span>, <span class="number">18</span>,
@@ -2815,7 +2825,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_and() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load([
                 <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0b1001</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
@@ -2841,7 +2851,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_or() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load([
                 <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0b1001</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
@@ -2867,7 +2877,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_8bit_lane_right() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = load([
                 <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0b1011</span>, <span class="number">0b0101</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
@@ -2889,7 +2899,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_in_one_byte() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load([
                 <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>, <span class="number">17</span>, <span class="number">18</span>,
@@ -2917,7 +2927,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_in_two_bytes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load([
                 <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>, <span class="number">17</span>, <span class="number">18</span>,
@@ -2945,7 +2955,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_in_three_bytes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load([
                 <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>, <span class="number">17</span>, <span class="number">18</span>,
@@ -2973,7 +2983,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shuffle_bytes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load([
                 <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>, <span class="number">17</span>, <span class="number">18</span>,
@@ -3000,7 +3010,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_for_each_64bit_lane() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = load([
                 <span class="number">0x01</span>, <span class="number">0x02</span>, <span class="number">0x03</span>, <span class="number">0x04</span>, <span class="number">0x05</span>, <span class="number">0x06</span>, <span class="number">0x07</span>, <span class="number">0x08</span>, <span class="number">0x09</span>, <span class="number">0x0A</span>,
@@ -3031,7 +3041,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fat_vector_half_shift_in_one_byte() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load_half([
                 <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>,
@@ -3055,7 +3065,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fat_vector_half_shift_in_two_bytes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load_half([
                 <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>,
@@ -3079,7 +3089,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fat_vector_half_shift_in_three_bytes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load_half([
                 <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>,
@@ -3103,7 +3113,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fat_vector_swap_halves() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = load([
                 <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>, <span class="number">17</span>, <span class="number">18</span>,
@@ -3126,7 +3136,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fat_vector_interleave_low_8bit_lanes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load([
                 <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>, <span class="number">17</span>, <span class="number">18</span>,
@@ -3154,7 +3164,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fat_vector_interleave_high_8bit_lanes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load([
                 <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>, <span class="number">17</span>, <span class="number">18</span>,
@@ -3182,7 +3192,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fat_vector_for_each_low_64bit_lane() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;avx2&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"avx2"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 = load([
                 <span class="number">0x01</span>, <span class="number">0x02</span>, <span class="number">0x03</span>, <span class="number">0x04</span>, <span class="number">0x05</span>, <span class="number">0x06</span>, <span class="number">0x07</span>, <span class="number">0x08</span>, <span class="number">0x09</span>, <span class="number">0x0A</span>,
@@ -3218,18 +3228,18 @@
     }
 }
 
-<span class="attr">#[cfg(all(test, target_arch = <span class="string">&quot;aarch64&quot;</span>, target_feature = <span class="string">&quot;neon&quot;</span>))]
+<span class="attr">#[cfg(all(test, target_arch = <span class="string">"aarch64"</span>, target_feature = <span class="string">"neon"</span>))]
 </span><span class="kw">mod </span>tests_aarch64_neon {
     <span class="kw">use </span>core::arch::aarch64::<span class="kw-2">*</span>;
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+    <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
     </span><span class="kw">unsafe fn </span>load(lanes: [u8; <span class="number">16</span>]) -&gt; uint8x16_t {
         uint8x16_t::load_unaligned(<span class="kw-2">&amp;</span>lanes <span class="kw">as </span><span class="kw-2">*const </span>u8)
     }
 
-    <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+    <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
     </span><span class="kw">unsafe fn </span>unload(v: uint8x16_t) -&gt; [u8; <span class="number">16</span>] {
         [
             vgetq_lane_u8(v, <span class="number">0</span>),
@@ -3251,15 +3261,15 @@
         ]
     }
 
-    <span class="comment">// Example functions. These don&#39;t test the Vector traits, but rather,
+    <span class="comment">// Example functions. These don't test the Vector traits, but rather,
     // specific NEON instructions. They are basically little experiments I
     // wrote to figure out what an instruction does since their descriptions
     // are so dense. I decided to keep the experiments around as example tests
-    // in case there&#39; useful.
+    // in case there' useful.
 
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>example_vmaxvq_u8_non_zero() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>example() {
             <span class="kw">let </span>v = load([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
             <span class="macro">assert_eq!</span>(vmaxvq_u8(v), <span class="number">1</span>);
@@ -3269,7 +3279,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>example_vmaxvq_u8_zero() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>example() {
             <span class="kw">let </span>v = load([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
             <span class="macro">assert_eq!</span>(vmaxvq_u8(v), <span class="number">0</span>);
@@ -3279,7 +3289,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>example_vpmaxq_u8_non_zero() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>example() {
             <span class="kw">let </span>v = load([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
             <span class="kw">let </span>r = vpmaxq_u8(v, v);
@@ -3293,7 +3303,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>example_vpmaxq_u8_self() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>example() {
             <span class="kw">let </span>v =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>]);
@@ -3308,7 +3318,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>example_vpmaxq_u8_other() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>example() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>]);
@@ -3328,7 +3338,7 @@
 
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>vector_splat() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = uint8x16_t::splat(<span class="number">0xAF</span>);
             <span class="macro">assert_eq!</span>(
@@ -3344,7 +3354,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_is_zero() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = load([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
             <span class="macro">assert!</span>(!v.is_zero());
@@ -3356,7 +3366,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_cmpeq() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">1</span>]);
@@ -3372,7 +3382,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_and() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0b1001</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
@@ -3388,7 +3398,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_or() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0b1001</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);
@@ -3404,7 +3414,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_8bit_lane_right() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = load([
                 <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0b1011</span>, <span class="number">0b0101</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
@@ -3419,7 +3429,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_in_one_byte() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>]);
@@ -3436,7 +3446,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_in_two_bytes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>]);
@@ -3453,7 +3463,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shift_in_three_bytes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>]);
@@ -3470,7 +3480,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_shuffle_bytes() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v1 =
                 load([<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>]);
@@ -3486,7 +3496,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>vector_for_each_64bit_lane() {
-        <span class="attr">#[target_feature(enable = <span class="string">&quot;neon&quot;</span>)]
+        <span class="attr">#[target_feature(enable = <span class="string">"neon"</span>)]
         </span><span class="kw">unsafe fn </span>test() {
             <span class="kw">let </span>v = load([
                 <span class="number">0x01</span>, <span class="number">0x02</span>, <span class="number">0x03</span>, <span class="number">0x04</span>, <span class="number">0x05</span>, <span class="number">0x06</span>, <span class="number">0x07</span>, <span class="number">0x08</span>, <span class="number">0x09</span>, <span class="number">0x0A</span>,

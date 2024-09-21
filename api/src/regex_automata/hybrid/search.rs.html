@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/hybrid/search.rs`."><title>search.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_automata/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/hybrid/search.rs`."><title>search.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -815,7 +815,7 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>find_fwd(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, MatchError&gt; {
     <span class="kw">if </span>input.is_done() {
         <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
@@ -825,11 +825,11 @@
     </span>} <span class="kw">else </span>{
         dfa.get_config().get_prefilter()
     };
-    <span class="comment">// So what we do here is specialize four different versions of &#39;find_fwd&#39;:
-    // one for each of the combinations for &#39;has prefilter&#39; and &#39;is earliest
-    // search&#39;. The reason for doing this is that both of these things require
+    <span class="comment">// So what we do here is specialize four different versions of 'find_fwd':
+    // one for each of the combinations for 'has prefilter' and 'is earliest
+    // search'. The reason for doing this is that both of these things require
     // branches and special handling in some code that can be very hot,
-    // and shaving off as much as we can when we don&#39;t need it tends to be
+    // and shaving off as much as we can when we don't need it tends to be
     // beneficial in ad hoc benchmarks. To see these differences, you often
     // need a query with a high match count. In other words, specializing these
     // four routines *tends* to help latency more than throughput.
@@ -848,15 +848,15 @@
     }
 }
 
-<span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+<span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>find_fwd_imp(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
-    pre: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span>Prefilter&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
+    pre: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'_ </span>Prefilter&gt;,
     earliest: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, MatchError&gt; {
-    <span class="comment">// See &#39;prefilter_restart&#39; docs for explanation.
+    <span class="comment">// See 'prefilter_restart' docs for explanation.
     </span><span class="kw">let </span>universal_start = dfa.get_nfa().look_set_prefix_any().is_empty();
     <span class="kw">let </span><span class="kw-2">mut </span>mat = <span class="prelude-val">None</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>sid = init_fwd(dfa, cache, input)<span class="question-mark">?</span>;
@@ -864,7 +864,7 @@
     <span class="comment">// This could just be a closure, but then I think it would be unsound
     // because it would need to be safe to invoke. This way, the lack of safety
     // is clearer in the code below.
-    </span><span class="macro">macro_rules! </span>next_unchecked {
+    </span><span class="macro">macro_rules!</span> next_unchecked {
         (<span class="macro-nonterminal">$sid</span>:expr, <span class="macro-nonterminal">$at</span>:expr) =&gt; {{
             <span class="kw">let </span>byte = <span class="kw-2">*</span>input.haystack().get_unchecked(<span class="macro-nonterminal">$at</span>);
             dfa.next_state_untagged_unchecked(cache, <span class="macro-nonterminal">$sid</span>, byte)
@@ -892,34 +892,34 @@
                 .map_err(|<span class="kw">_</span>| gave_up(at))<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
             <span class="comment">// SAFETY: There are two safety invariants we need to uphold
-            // here in the loops below: that &#39;sid&#39; and &#39;prev_sid&#39; are valid
-            // state IDs for this DFA, and that &#39;at&#39; is a valid index into
-            // &#39;haystack&#39;. For the former, we rely on the invariant that
+            // here in the loops below: that 'sid' and 'prev_sid' are valid
+            // state IDs for this DFA, and that 'at' is a valid index into
+            // 'haystack'. For the former, we rely on the invariant that
             // next_state* and start_state_forward always returns a valid state
             // ID (given a valid state ID in the former case), and that we are
-            // only at this place in the code if &#39;sid&#39; is untagged. Moreover,
+            // only at this place in the code if 'sid' is untagged. Moreover,
             // every call to next_state_untagged_unchecked below is guarded by
             // a check that sid is untagged. For the latter safety invariant,
-            // we always guard unchecked access with a check that &#39;at&#39; is less
-            // than &#39;end&#39;, where &#39;end &lt;= haystack.len()&#39;. In the unrolled loop
-            // below, we ensure that &#39;at&#39; is always in bounds.
+            // we always guard unchecked access with a check that 'at' is less
+            // than 'end', where 'end &lt;= haystack.len()'. In the unrolled loop
+            // below, we ensure that 'at' is always in bounds.
             //
             // PERF: For justification of omitting bounds checks, it gives us a
             // ~10% bump in search time. This was used for a benchmark:
             //
-            //     regex-cli find half hybrid -p &#39;(?m)^.+$&#39; -UBb bigfile
+            //     regex-cli find half hybrid -p '(?m)^.+$' -UBb bigfile
             //
             // PERF: For justification for the loop unrolling, we use a few
             // different tests:
             //
-            //     regex-cli find half hybrid -p &#39;\w{50}&#39; -UBb bigfile
-            //     regex-cli find half hybrid -p &#39;(?m)^.+$&#39; -UBb bigfile
-            //     regex-cli find half hybrid -p &#39;ZQZQZQZQ&#39; -UBb bigfile
+            //     regex-cli find half hybrid -p '\w{50}' -UBb bigfile
+            //     regex-cli find half hybrid -p '(?m)^.+$' -UBb bigfile
+            //     regex-cli find half hybrid -p 'ZQZQZQZQ' -UBb bigfile
             //
             // And there are three different configurations:
             //
-            //     nounroll: this entire &#39;else&#39; block vanishes and we just
-            //               always use &#39;dfa.next_state(..)&#39;.
+            //     nounroll: this entire 'else' block vanishes and we just
+            //               always use 'dfa.next_state(..)'.
             //      unroll1: just the outer loop below
             //      unroll2: just the inner loop below
             //      unroll3: both the outer and inner loops below
@@ -927,28 +927,28 @@
             // This results in a matrix of timings for each of the above
             // regexes with each of the above unrolling configurations:
             //
-            //              &#39;\w{50}&#39;   &#39;(?m)^.+$&#39;   &#39;ZQZQZQZQ&#39;
+            //              '\w{50}'   '(?m)^.+$'   'ZQZQZQZQ'
             //   nounroll   1.51s      2.34s        1.51s
             //    unroll1   1.53s      2.32s        1.56s
             //    unroll2   2.22s      1.50s        0.61s
             //    unroll3   1.67s      1.45s        0.61s
             //
-            // Ideally we&#39;d be able to find a configuration that yields the
+            // Ideally we'd be able to find a configuration that yields the
             // best time for all regexes, but alas we settle for unroll3 that
-            // gives us *almost* the best for &#39;\w{50}&#39; and the best for the
+            // gives us *almost* the best for '\w{50}' and the best for the
             // other two regexes.
             //
             // So what exactly is going on here? The first unrolling (grouping
             // together runs of untagged transitions) specifically targets
             // our choice of representation. The second unrolling (grouping
             // together runs of self-transitions) specifically targets a common
-            // DFA topology. Let&#39;s dig in a little bit by looking at our
+            // DFA topology. Let's dig in a little bit by looking at our
             // regexes:
             //
-            // &#39;\w{50}&#39;: This regex spends a lot of time outside of the DFA&#39;s
-            // start state matching some part of the &#39;\w&#39; repetition. This
-            // means that it&#39;s a bit of a worst case for loop unrolling that
-            // targets self-transitions since the self-transitions in &#39;\w{50}&#39;
+            // '\w{50}': This regex spends a lot of time outside of the DFA's
+            // start state matching some part of the '\w' repetition. This
+            // means that it's a bit of a worst case for loop unrolling that
+            // targets self-transitions since the self-transitions in '\w{50}'
             // are not particularly active for this haystack. However, the
             // first unrolling (grouping together untagged transitions)
             // does apply quite well here since very few transitions hit
@@ -957,14 +957,14 @@
             // typically want to do if you have a prefilter), then this regex
             // actually slows way down because it is constantly ping-ponging
             // out of the unrolled loop and into the handling of a tagged start
-            // state below. But when start states aren&#39;t tagged, the unrolled
-            // loop stays hot. (This is why it&#39;s imperative that start state
-            // tagging be disabled when there isn&#39;t a prefilter!)
+            // state below. But when start states aren't tagged, the unrolled
+            // loop stays hot. (This is why it's imperative that start state
+            // tagging be disabled when there isn't a prefilter!)
             //
-            // &#39;(?m)^.+$&#39;: There are two important aspects of this regex: 1)
+            // '(?m)^.+$': There are two important aspects of this regex: 1)
             // on this haystack, its match count is very high, much higher
             // than the other two regex and 2) it spends the vast majority
-            // of its time matching &#39;.+&#39;. Since Unicode mode is disabled,
+            // of its time matching '.+'. Since Unicode mode is disabled,
             // this corresponds to repeatedly following self transitions for
             // the vast majority of the input. This does benefit from the
             // untagged unrolling since most of the transitions will be to
@@ -975,23 +975,23 @@
             // are both slower than unroll2+unroll3, where the latter has a
             // loop unrolling that specifically targets self-transitions.
             //
-            // &#39;ZQZQZQZQ&#39;: This one is very similar to &#39;(?m)^.+$&#39; because it
+            // 'ZQZQZQZQ': This one is very similar to '(?m)^.+$' because it
             // spends the vast majority of its time in self-transitions for
             // the (implicit) unanchored prefix. The main difference with
-            // &#39;(?m)^.+$&#39; is that it has a much lower match count. So there
-            // isn&#39;t much time spent in the overhead of reporting matches. This
+            // '(?m)^.+$' is that it has a much lower match count. So there
+            // isn't much time spent in the overhead of reporting matches. This
             // is the primary explainer in the perf difference here. We include
             // this regex and the former to make sure we have comparison points
             // with high and low match counts.
             //
-            // NOTE: I used &#39;OpenSubtitles2018.raw.sample.en&#39; for &#39;bigfile&#39;.
+            // NOTE: I used 'OpenSubtitles2018.raw.sample.en' for 'bigfile'.
             //
-            // NOTE: In a follow-up, it turns out that the &quot;inner&quot; loop
+            // NOTE: In a follow-up, it turns out that the "inner" loop
             // mentioned above was a pretty big pessimization in some other
             // cases. Namely, it resulted in too much ping-ponging into and out
             // of the loop, which resulted in nearly ~2x regressions in search
             // time when compared to the originally lazy DFA in the regex crate.
-            // So I&#39;ve removed the second loop unrolling that targets the
+            // So I've removed the second loop unrolling that targets the
             // self-transition case.
             </span><span class="kw">let </span><span class="kw-2">mut </span>prev_sid = sid;
             <span class="kw">while </span>at &lt; input.end() {
@@ -1023,7 +1023,7 @@
             }
             <span class="comment">// If we quit out of the code above with an unknown state ID at
             // any point, then we need to re-compute that transition using
-            // &#39;next_state&#39;, which will do NFA powerset construction for us.
+            // 'next_state', which will do NFA powerset construction for us.
             </span><span class="kw">if </span>sid.is_unknown() {
                 cache.search_update(at);
                 sid = dfa
@@ -1041,7 +1041,7 @@
                             <span class="kw">return </span><span class="prelude-val">Ok</span>(mat);
                         }
                         <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>span) =&gt; {
-                            <span class="comment">// We want to skip any update to &#39;at&#39; below
+                            <span class="comment">// We want to skip any update to 'at' below
                             // at the end of this iteration and just
                             // jump immediately back to the next state
                             // transition at the leading position of the
@@ -1066,9 +1066,9 @@
                 <span class="kw">let </span>pattern = dfa.match_pattern(cache, sid, <span class="number">0</span>);
                 <span class="comment">// Since slice ranges are inclusive at the beginning and
                 // exclusive at the end, and since forward searches report
-                // the end, we can return &#39;at&#39; as-is. This only works because
+                // the end, we can return 'at' as-is. This only works because
                 // matches are delayed by 1 byte. So by the time we observe a
-                // match, &#39;at&#39; has already been set to 1 byte past the actual
+                // match, 'at' has already been set to 1 byte past the actual
                 // match location, which is precisely the exclusive ending
                 // bound of the match.
                 </span>mat = <span class="prelude-val">Some</span>(HalfMatch::new(pattern, at));
@@ -1084,7 +1084,7 @@
                 <span class="kw">return </span><span class="prelude-val">Err</span>(MatchError::quit(input.haystack()[at], at));
             } <span class="kw">else </span>{
                 <span class="macro">debug_assert!</span>(sid.is_unknown());
-                <span class="macro">unreachable!</span>(<span class="string">&quot;sid being unknown is a bug&quot;</span>);
+                <span class="macro">unreachable!</span>(<span class="string">"sid being unknown is a bug"</span>);
             }
         }
         at += <span class="number">1</span>;
@@ -1098,7 +1098,7 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>find_rev(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, MatchError&gt; {
     <span class="kw">if </span>input.is_done() {
         <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
@@ -1110,19 +1110,19 @@
     }
 }
 
-<span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+<span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>find_rev_imp(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     earliest: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, MatchError&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>mat = <span class="prelude-val">None</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>sid = init_rev(dfa, cache, input)<span class="question-mark">?</span>;
-    <span class="comment">// In reverse search, the loop below can&#39;t handle the case of searching an
+    <span class="comment">// In reverse search, the loop below can't handle the case of searching an
     // empty slice. Ideally we could write something congruent to the forward
-    // search, i.e., &#39;while at &gt;= start&#39;, but &#39;start&#39; might be 0. Since we use
-    // an unsigned offset, &#39;at &gt;= 0&#39; is trivially always true. We could avoid
+    // search, i.e., 'while at &gt;= start', but 'start' might be 0. Since we use
+    // an unsigned offset, 'at &gt;= 0' is trivially always true. We could avoid
     // this extra case handling by using a signed offset, but Rust makes it
     // annoying to do. So... We just handle the empty case separately.
     </span><span class="kw">if </span>input.start() == input.end() {
@@ -1131,7 +1131,7 @@
     }
 
     <span class="kw">let </span><span class="kw-2">mut </span>at = input.end() - <span class="number">1</span>;
-    <span class="macro">macro_rules! </span>next_unchecked {
+    <span class="macro">macro_rules!</span> next_unchecked {
         (<span class="macro-nonterminal">$sid</span>:expr, <span class="macro-nonterminal">$at</span>:expr) =&gt; {{
             <span class="kw">let </span>byte = <span class="kw-2">*</span>input.haystack().get_unchecked(<span class="macro-nonterminal">$at</span>);
             dfa.next_state_untagged_unchecked(cache, <span class="macro-nonterminal">$sid</span>, byte)
@@ -1145,9 +1145,9 @@
                 .next_state(cache, sid, input.haystack()[at])
                 .map_err(|<span class="kw">_</span>| gave_up(at))<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
-            <span class="comment">// SAFETY: See comments in &#39;find_fwd&#39; for a safety argument.
+            <span class="comment">// SAFETY: See comments in 'find_fwd' for a safety argument.
             //
-            // PERF: The comments in &#39;find_fwd&#39; also provide a justification
+            // PERF: The comments in 'find_fwd' also provide a justification
             // from a performance perspective as to 1) why we elide bounds
             // checks and 2) why we do a specialized version of unrolling
             // below. The reverse search does have a slightly different
@@ -1155,10 +1155,10 @@
             // anchored and on shorter haystacks. However, this still makes a
             // difference. Take this command for example:
             //
-            //     regex-cli find match hybrid -p &#39;(?m)^.+$&#39; -UBb bigfile
+            //     regex-cli find match hybrid -p '(?m)^.+$' -UBb bigfile
             //
-            // (Notice that we use &#39;find hybrid regex&#39;, not &#39;find hybrid dfa&#39;
-            // like in the justification for the forward direction. The &#39;regex&#39;
+            // (Notice that we use 'find hybrid regex', not 'find hybrid dfa'
+            // like in the justification for the forward direction. The 'regex'
             // sub-command will find start-of-match and thus run the reverse
             // direction.)
             //
@@ -1166,7 +1166,7 @@
             // But with the unrolling below, we get down to 2.55s. If we keep
             // the unrolling but add in bounds checks, then we get 2.86s.
             //
-            // NOTE: I used &#39;OpenSubtitles2018.raw.sample.en&#39; for &#39;bigfile&#39;.
+            // NOTE: I used 'OpenSubtitles2018.raw.sample.en' for 'bigfile'.
             </span><span class="kw">let </span><span class="kw-2">mut </span>prev_sid = sid;
             <span class="kw">while </span>at &gt;= input.start() {
                 prev_sid = <span class="kw">unsafe </span>{ <span class="macro">next_unchecked!</span>(sid, at) };
@@ -1199,7 +1199,7 @@
             }
             <span class="comment">// If we quit out of the code above with an unknown state ID at
             // any point, then we need to re-compute that transition using
-            // &#39;next_state&#39;, which will do NFA powerset construction for us.
+            // 'next_state', which will do NFA powerset construction for us.
             </span><span class="kw">if </span>sid.is_unknown() {
                 cache.search_update(at);
                 sid = dfa
@@ -1228,7 +1228,7 @@
                 <span class="kw">return </span><span class="prelude-val">Err</span>(MatchError::quit(input.haystack()[at], at));
             } <span class="kw">else </span>{
                 <span class="macro">debug_assert!</span>(sid.is_unknown());
-                <span class="macro">unreachable!</span>(<span class="string">&quot;sid being unknown is a bug&quot;</span>);
+                <span class="macro">unreachable!</span>(<span class="string">"sid being unknown is a bug"</span>);
             }
         }
         <span class="kw">if </span>at == input.start() {
@@ -1245,7 +1245,7 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>find_overlapping_fwd(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     state: <span class="kw-2">&amp;mut </span>OverlappingState,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
     state.mat = <span class="prelude-val">None</span>;
@@ -1264,15 +1264,15 @@
     }
 }
 
-<span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+<span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>find_overlapping_fwd_imp(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
-    pre: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span>Prefilter&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
+    pre: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'_ </span>Prefilter&gt;,
     state: <span class="kw-2">&amp;mut </span>OverlappingState,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
-    <span class="comment">// See &#39;prefilter_restart&#39; docs for explanation.
+    <span class="comment">// See 'prefilter_restart' docs for explanation.
     </span><span class="kw">let </span>universal_start = dfa.get_nfa().look_set_prefix_any().is_empty();
     <span class="kw">let </span><span class="kw-2">mut </span>sid = <span class="kw">match </span>state.id {
         <span class="prelude-val">None </span>=&gt; {
@@ -1289,7 +1289,7 @@
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(());
                 }
             }
-            <span class="comment">// Once we&#39;ve reported all matches at a given position, we need to
+            <span class="comment">// Once we've reported all matches at a given position, we need to
             // advance the search to the next position.
             </span>state.at += <span class="number">1</span>;
             <span class="kw">if </span>state.at &gt; input.end() {
@@ -1299,7 +1299,7 @@
         }
     };
 
-    <span class="comment">// NOTE: We don&#39;t optimize the crap out of this routine primarily because
+    <span class="comment">// NOTE: We don't optimize the crap out of this routine primarily because
     // it seems like most overlapping searches will have higher match counts,
     // and thus, throughput is perhaps not as important. But if you have a use
     // case for something faster, feel free to file an issue.
@@ -1345,7 +1345,7 @@
                 ));
             } <span class="kw">else </span>{
                 <span class="macro">debug_assert!</span>(sid.is_unknown());
-                <span class="macro">unreachable!</span>(<span class="string">&quot;sid being unknown is a bug&quot;</span>);
+                <span class="macro">unreachable!</span>(<span class="string">"sid being unknown is a bug"</span>);
             }
         }
         state.at += <span class="number">1</span>;
@@ -1355,10 +1355,10 @@
     <span class="kw">let </span>result = eoi_fwd(dfa, cache, input, <span class="kw-2">&amp;mut </span>sid, <span class="kw-2">&amp;mut </span>state.mat);
     state.id = <span class="prelude-val">Some</span>(sid);
     <span class="kw">if </span>state.mat.is_some() {
-        <span class="comment">// &#39;1&#39; is always correct here since if we get to this point, this
-        // always corresponds to the first (index &#39;0&#39;) match discovered at
+        <span class="comment">// '1' is always correct here since if we get to this point, this
+        // always corresponds to the first (index '0') match discovered at
         // this position. So the next match to report at this position (if
-        // it exists) is at index &#39;1&#39;.
+        // it exists) is at index '1'.
         </span>state.next_match_index = <span class="prelude-val">Some</span>(<span class="number">1</span>);
     }
     cache.search_finish(input.end());
@@ -1369,7 +1369,7 @@
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>find_overlapping_rev(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     state: <span class="kw-2">&amp;mut </span>OverlappingState,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
     state.mat = <span class="prelude-val">None</span>;
@@ -1397,19 +1397,19 @@
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(());
                 }
             }
-            <span class="comment">// Once we&#39;ve reported all matches at a given position, we need
-            // to advance the search to the next position. However, if we&#39;ve
-            // already followed the EOI transition, then we know we&#39;re done
+            <span class="comment">// Once we've reported all matches at a given position, we need
+            // to advance the search to the next position. However, if we've
+            // already followed the EOI transition, then we know we're done
             // with the search and there cannot be any more matches to report.
             </span><span class="kw">if </span>state.rev_eoi {
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(());
             } <span class="kw">else if </span>state.at == input.start() {
                 <span class="comment">// At this point, we should follow the EOI transition. This
                 // will cause us the skip the main loop below and fall through
-                // to the final &#39;eoi_rev&#39; transition.
+                // to the final 'eoi_rev' transition.
                 </span>state.rev_eoi = <span class="bool-val">true</span>;
             } <span class="kw">else </span>{
-                <span class="comment">// We haven&#39;t hit the end of the search yet, so move on.
+                <span class="comment">// We haven't hit the end of the search yet, so move on.
                 </span>state.at -= <span class="number">1</span>;
             }
             sid
@@ -1441,7 +1441,7 @@
                 ));
             } <span class="kw">else </span>{
                 <span class="macro">debug_assert!</span>(sid.is_unknown());
-                <span class="macro">unreachable!</span>(<span class="string">&quot;sid being unknown is a bug&quot;</span>);
+                <span class="macro">unreachable!</span>(<span class="string">"sid being unknown is a bug"</span>);
             }
         }
         <span class="kw">if </span>state.at == input.start() {
@@ -1455,21 +1455,21 @@
     state.rev_eoi = <span class="bool-val">true</span>;
     state.id = <span class="prelude-val">Some</span>(sid);
     <span class="kw">if </span>state.mat.is_some() {
-        <span class="comment">// &#39;1&#39; is always correct here since if we get to this point, this
-        // always corresponds to the first (index &#39;0&#39;) match discovered at
+        <span class="comment">// '1' is always correct here since if we get to this point, this
+        // always corresponds to the first (index '0') match discovered at
         // this position. So the next match to report at this position (if
-        // it exists) is at index &#39;1&#39;.
+        // it exists) is at index '1'.
         </span>state.next_match_index = <span class="prelude-val">Some</span>(<span class="number">1</span>);
     }
     cache.search_finish(input.start());
     result
 }
 
-<span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+<span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>init_fwd(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;LazyStateID, MatchError&gt; {
     <span class="kw">let </span>sid = dfa.start_state_forward(cache, input)<span class="question-mark">?</span>;
     <span class="comment">// Start states can never be match states, since all matches are delayed
@@ -1478,11 +1478,11 @@
     <span class="prelude-val">Ok</span>(sid)
 }
 
-<span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+<span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>init_rev(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;LazyStateID, MatchError&gt; {
     <span class="kw">let </span>sid = dfa.start_state_reverse(cache, input)<span class="question-mark">?</span>;
     <span class="comment">// Start states can never be match states, since all matches are delayed
@@ -1491,11 +1491,11 @@
     <span class="prelude-val">Ok</span>(sid)
 }
 
-<span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+<span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>eoi_fwd(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     sid: <span class="kw-2">&amp;mut </span>LazyStateID,
     mat: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Option</span>&lt;HalfMatch&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
@@ -1519,7 +1519,7 @@
                 <span class="kw">let </span>pattern = dfa.match_pattern(cache, <span class="kw-2">*</span>sid, <span class="number">0</span>);
                 <span class="kw-2">*</span>mat = <span class="prelude-val">Some</span>(HalfMatch::new(pattern, input.haystack().len()));
             }
-            <span class="comment">// N.B. We don&#39;t have to check &#39;is_quit&#39; here because the EOI
+            <span class="comment">// N.B. We don't have to check 'is_quit' here because the EOI
             // transition can never lead to a quit state.
             </span><span class="macro">debug_assert!</span>(!sid.is_quit());
         }
@@ -1527,11 +1527,11 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+<span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>eoi_rev(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     sid: <span class="kw-2">&amp;mut </span>LazyStateID,
     mat: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Option</span>&lt;HalfMatch&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
@@ -1554,7 +1554,7 @@
             <span class="kw">let </span>pattern = dfa.match_pattern(cache, <span class="kw-2">*</span>sid, <span class="number">0</span>);
             <span class="kw-2">*</span>mat = <span class="prelude-val">Some</span>(HalfMatch::new(pattern, <span class="number">0</span>));
         }
-        <span class="comment">// N.B. We don&#39;t have to check &#39;is_quit&#39; here because the EOI
+        <span class="comment">// N.B. We don't have to check 'is_quit' here because the EOI
         // transition can never lead to a quit state.
         </span><span class="macro">debug_assert!</span>(!sid.is_quit());
     }
@@ -1574,22 +1574,22 @@
 /// does not have a universal start state because the start state depends on
 /// whether the byte immediately before the start position is a word byte or
 /// not. However, `foo\b` does have a universal start state because the word
-/// boundary does not appear in the pattern&#39;s prefix.
+/// boundary does not appear in the pattern's prefix.
 ///
-/// So... most cases don&#39;t need this, but when a pattern doesn&#39;t have a
+/// So... most cases don't need this, but when a pattern doesn't have a
 /// universal start state, then after a prefilter candidate has been found, the
 /// current state *must* be re-litigated as if computing the start state at the
 /// beginning of the search because it might change. That is, not all start
 /// states are created equal.
 ///
-/// Why avoid it? Because while it&#39;s not super expensive, it isn&#39;t a trivial
+/// Why avoid it? Because while it's not super expensive, it isn't a trivial
 /// operation to compute the start state. It is much better to avoid it and
 /// just state in the current state if you know it to be correct.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>prefilter_restart(
     dfa: <span class="kw-2">&amp;</span>DFA,
     cache: <span class="kw-2">&amp;mut </span>Cache,
-    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+    input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     at: usize,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;LazyStateID, MatchError&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>input = input.clone();
@@ -1597,8 +1597,8 @@
     init_fwd(dfa, cache, <span class="kw-2">&amp;</span>input)
 }
 
-<span class="doccomment">/// A convenience routine for constructing a &quot;gave up&quot; match error.
-</span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+<span class="doccomment">/// A convenience routine for constructing a "gave up" match error.
+</span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 </span><span class="kw">fn </span>gave_up(offset: usize) -&gt; MatchError {
     MatchError::gave_up(offset)
 }

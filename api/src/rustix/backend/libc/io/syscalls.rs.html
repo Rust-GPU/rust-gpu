@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.30/src/backend/libc/io/syscalls.rs`."><title>syscalls.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../../rustix/index.html"><img class="rust-logo" src="../../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.37/src/backend/libc/io/syscalls.rs`."><title>syscalls.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../../" data-static-root-path="../../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../src-files.js"></script><script defer src="../../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../../rustix/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -338,19 +338,27 @@
 <a href="#338" id="338">338</a>
 <a href="#339" id="339">339</a>
 <a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! libc syscalls supporting `rustix::io`.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::backend::c;
-<span class="attr">#[cfg(not(target_os = <span class="string">&quot;wasi&quot;</span>))]
+<span class="attr">#[cfg(not(target_os = <span class="string">"wasi"</span>))]
 </span><span class="kw">use </span><span class="kw">crate</span>::backend::conv::ret_discarded_fd;
 <span class="kw">use </span><span class="kw">crate</span>::backend::conv::{borrowed_fd, ret, ret_c_int, ret_owned_fd, ret_usize};
 <span class="kw">use </span><span class="kw">crate</span>::fd::{AsFd, BorrowedFd, OwnedFd, RawFd};
 <span class="attr">#[cfg(not(any(
-    target_os = <span class="string">&quot;aix&quot;</span>,
-    target_os = <span class="string">&quot;espidf&quot;</span>,
-    target_os = <span class="string">&quot;nto&quot;</span>,
-    target_os = <span class="string">&quot;vita&quot;</span>,
-    target_os = <span class="string">&quot;wasi&quot;
+    target_os = <span class="string">"aix"</span>,
+    target_os = <span class="string">"espidf"</span>,
+    target_os = <span class="string">"nto"</span>,
+    target_os = <span class="string">"vita"</span>,
+    target_os = <span class="string">"wasi"
 </span>)))]
 </span><span class="kw">use </span><span class="kw">crate</span>::io::DupFlags;
 <span class="attr">#[cfg(linux_kernel)]
@@ -358,19 +366,19 @@
 <span class="kw">use </span><span class="kw">crate</span>::io::{<span class="self">self</span>, FdFlags};
 <span class="kw">use </span><span class="kw">crate</span>::ioctl::{IoctlOutput, RawOpcode};
 <span class="kw">use </span>core::cmp::min;
-<span class="attr">#[cfg(all(feature = <span class="string">&quot;fs&quot;</span>, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(feature = <span class="string">"fs"</span>, feature = <span class="string">"net"</span>))]
 </span><span class="kw">use </span>libc_errno::errno;
-<span class="attr">#[cfg(not(target_os = <span class="string">&quot;espidf&quot;</span>))]
+<span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"horizon"</span>)))]
 </span><span class="kw">use </span>{
     <span class="kw">crate</span>::backend::MAX_IOV,
     <span class="kw">crate</span>::io::{IoSlice, IoSliceMut},
 };
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>read(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, buf: <span class="kw-2">*mut </span>u8, len: usize) -&gt; io::Result&lt;usize&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>read(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, buf: <span class="kw-2">*mut </span>u8, len: usize) -&gt; io::Result&lt;usize&gt; {
     ret_usize(c::read(borrowed_fd(fd), buf.cast(), min(len, READ_LIMIT)))
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; io::Result&lt;usize&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; io::Result&lt;usize&gt; {
     <span class="kw">unsafe </span>{
         ret_usize(c::write(
             borrowed_fd(fd),
@@ -381,38 +389,38 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>pread(
-    fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;,
     buf: <span class="kw-2">*mut </span>u8,
     len: usize,
     offset: u64,
 ) -&gt; io::Result&lt;usize&gt; {
     <span class="kw">let </span>len = min(len, READ_LIMIT);
 
-    <span class="comment">// Silently cast; we&#39;ll get `EINVAL` if the value is negative.
+    <span class="comment">// Silently cast; we'll get `EINVAL` if the value is negative.
     </span><span class="kw">let </span>offset = offset <span class="kw">as </span>i64;
 
-    <span class="comment">// ESP-IDF and Vita don&#39;t support 64-bit offsets.
-    </span><span class="attr">#[cfg(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>))]
+    <span class="comment">// ESP-IDF and Vita don't support 64-bit offsets.
+    </span><span class="attr">#[cfg(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"vita"</span>))]
     </span><span class="kw">let </span>offset: i32 = offset.try_into().map_err(|<span class="kw">_</span>| io::Errno::OVERFLOW)<span class="question-mark">?</span>;
 
     ret_usize(c::pread(borrowed_fd(fd), buf.cast(), len, offset))
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pwrite(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, buf: <span class="kw-2">&amp;</span>[u8], offset: u64) -&gt; io::Result&lt;usize&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pwrite(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, buf: <span class="kw-2">&amp;</span>[u8], offset: u64) -&gt; io::Result&lt;usize&gt; {
     <span class="kw">let </span>len = min(buf.len(), READ_LIMIT);
 
-    <span class="comment">// Silently cast; we&#39;ll get `EINVAL` if the value is negative.
+    <span class="comment">// Silently cast; we'll get `EINVAL` if the value is negative.
     </span><span class="kw">let </span>offset = offset <span class="kw">as </span>i64;
 
-    <span class="comment">// ESP-IDF and Vita don&#39;t support 64-bit offsets.
-    </span><span class="attr">#[cfg(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>))]
+    <span class="comment">// ESP-IDF and Vita don't support 64-bit offsets.
+    </span><span class="attr">#[cfg(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"vita"</span>))]
     </span><span class="kw">let </span>offset: i32 = offset.try_into().map_err(|<span class="kw">_</span>| io::Errno::OVERFLOW)<span class="question-mark">?</span>;
 
     <span class="kw">unsafe </span>{ ret_usize(c::pwrite(borrowed_fd(fd), buf.as_ptr().cast(), len, offset)) }
 }
 
-<span class="attr">#[cfg(not(target_os = <span class="string">&quot;espidf&quot;</span>))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>readv(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, bufs: <span class="kw-2">&amp;mut </span>[IoSliceMut&lt;<span class="lifetime">&#39;_</span>&gt;]) -&gt; io::Result&lt;usize&gt; {
+<span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"horizon"</span>)))]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>readv(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, bufs: <span class="kw-2">&amp;mut </span>[IoSliceMut&lt;<span class="lifetime">'_</span>&gt;]) -&gt; io::Result&lt;usize&gt; {
     <span class="kw">unsafe </span>{
         ret_usize(c::readv(
             borrowed_fd(fd),
@@ -422,8 +430,8 @@
     }
 }
 
-<span class="attr">#[cfg(not(target_os = <span class="string">&quot;espidf&quot;</span>))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>writev(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, bufs: <span class="kw-2">&amp;</span>[IoSlice&lt;<span class="lifetime">&#39;_</span>&gt;]) -&gt; io::Result&lt;usize&gt; {
+<span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"horizon"</span>)))]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>writev(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, bufs: <span class="kw-2">&amp;</span>[IoSlice&lt;<span class="lifetime">'_</span>&gt;]) -&gt; io::Result&lt;usize&gt; {
     <span class="kw">unsafe </span>{
         ret_usize(c::writev(
             borrowed_fd(fd),
@@ -434,19 +442,20 @@
 }
 
 <span class="attr">#[cfg(not(any(
-    target_os = <span class="string">&quot;espidf&quot;</span>,
-    target_os = <span class="string">&quot;haiku&quot;</span>,
-    target_os = <span class="string">&quot;nto&quot;</span>,
-    target_os = <span class="string">&quot;redox&quot;</span>,
-    target_os = <span class="string">&quot;solaris&quot;</span>,
-    target_os = <span class="string">&quot;vita&quot;
+    target_os = <span class="string">"espidf"</span>,
+    target_os = <span class="string">"haiku"</span>,
+    target_os = <span class="string">"horizon"</span>,
+    target_os = <span class="string">"nto"</span>,
+    target_os = <span class="string">"redox"</span>,
+    target_os = <span class="string">"solaris"</span>,
+    target_os = <span class="string">"vita"
 </span>)))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>preadv(
-    fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
-    bufs: <span class="kw-2">&amp;mut </span>[IoSliceMut&lt;<span class="lifetime">&#39;_</span>&gt;],
+    fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;,
+    bufs: <span class="kw-2">&amp;mut </span>[IoSliceMut&lt;<span class="lifetime">'_</span>&gt;],
     offset: u64,
 ) -&gt; io::Result&lt;usize&gt; {
-    <span class="comment">// Silently cast; we&#39;ll get `EINVAL` if the value is negative.
+    <span class="comment">// Silently cast; we'll get `EINVAL` if the value is negative.
     </span><span class="kw">let </span>offset = offset <span class="kw">as </span>i64;
     <span class="kw">unsafe </span>{
         ret_usize(c::preadv(
@@ -459,15 +468,16 @@
 }
 
 <span class="attr">#[cfg(not(any(
-    target_os = <span class="string">&quot;espidf&quot;</span>,
-    target_os = <span class="string">&quot;haiku&quot;</span>,
-    target_os = <span class="string">&quot;nto&quot;</span>,
-    target_os = <span class="string">&quot;redox&quot;</span>,
-    target_os = <span class="string">&quot;solaris&quot;</span>,
-    target_os = <span class="string">&quot;vita&quot;
+    target_os = <span class="string">"espidf"</span>,
+    target_os = <span class="string">"haiku"</span>,
+    target_os = <span class="string">"nto"</span>,
+    target_os = <span class="string">"horizon"</span>,
+    target_os = <span class="string">"redox"</span>,
+    target_os = <span class="string">"solaris"</span>,
+    target_os = <span class="string">"vita"
 </span>)))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pwritev(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, bufs: <span class="kw-2">&amp;</span>[IoSlice&lt;<span class="lifetime">&#39;_</span>&gt;], offset: u64) -&gt; io::Result&lt;usize&gt; {
-    <span class="comment">// Silently cast; we&#39;ll get `EINVAL` if the value is negative.
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pwritev(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, bufs: <span class="kw-2">&amp;</span>[IoSlice&lt;<span class="lifetime">'_</span>&gt;], offset: u64) -&gt; io::Result&lt;usize&gt; {
+    <span class="comment">// Silently cast; we'll get `EINVAL` if the value is negative.
     </span><span class="kw">let </span>offset = offset <span class="kw">as </span>i64;
     <span class="kw">unsafe </span>{
         ret_usize(c::pwritev(
@@ -481,12 +491,12 @@
 
 <span class="attr">#[cfg(linux_kernel)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>preadv2(
-    fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
-    bufs: <span class="kw-2">&amp;mut </span>[IoSliceMut&lt;<span class="lifetime">&#39;_</span>&gt;],
+    fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;,
+    bufs: <span class="kw-2">&amp;mut </span>[IoSliceMut&lt;<span class="lifetime">'_</span>&gt;],
     offset: u64,
     flags: ReadWriteFlags,
 ) -&gt; io::Result&lt;usize&gt; {
-    <span class="comment">// Silently cast; we&#39;ll get `EINVAL` if the value is negative.
+    <span class="comment">// Silently cast; we'll get `EINVAL` if the value is negative.
     </span><span class="kw">let </span>offset = offset <span class="kw">as </span>i64;
     <span class="kw">unsafe </span>{
         ret_usize(c::preadv2(
@@ -501,12 +511,12 @@
 
 <span class="attr">#[cfg(linux_kernel)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pwritev2(
-    fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
-    bufs: <span class="kw-2">&amp;</span>[IoSlice&lt;<span class="lifetime">&#39;_</span>&gt;],
+    fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;,
+    bufs: <span class="kw-2">&amp;</span>[IoSlice&lt;<span class="lifetime">'_</span>&gt;],
     offset: u64,
     flags: ReadWriteFlags,
 ) -&gt; io::Result&lt;usize&gt; {
-    <span class="comment">// Silently cast; we&#39;ll get `EINVAL` if the value is negative.
+    <span class="comment">// Silently cast; we'll get `EINVAL` if the value is negative.
     </span><span class="kw">let </span>offset = offset <span class="kw">as </span>i64;
     <span class="kw">unsafe </span>{
         ret_usize(c::pwritev2(
@@ -519,7 +529,7 @@
     }
 }
 
-<span class="comment">// These functions are derived from Rust&#39;s library/std/src/sys/unix/fd.rs at
+<span class="comment">// These functions are derived from Rust's library/std/src/sys/unix/fd.rs at
 // revision 326ef470a8b379a180d6dc4bbef08990698a737a.
 
 // The maximum read limit on most POSIX-like systems is `SSIZE_MAX`, with the
@@ -530,18 +540,23 @@
 // intentionally showing odd behavior by rejecting any read with a size larger
 // than or equal to `INT_MAX`. To handle both of these the read size is capped
 // on both platforms.
-</span><span class="attr">#[cfg(target_os = <span class="string">&quot;macos&quot;</span>)]
+</span><span class="attr">#[cfg(target_os = <span class="string">"macos"</span>)]
 </span><span class="kw">const </span>READ_LIMIT: usize = c::c_int::MAX <span class="kw">as </span>usize - <span class="number">1</span>;
-<span class="attr">#[cfg(not(target_os = <span class="string">&quot;macos&quot;</span>))]
+<span class="attr">#[cfg(not(target_os = <span class="string">"macos"</span>))]
 </span><span class="kw">const </span>READ_LIMIT: usize = c::ssize_t::MAX <span class="kw">as </span>usize;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>close(raw_fd: RawFd) {
     <span class="kw">let _ </span>= c::close(raw_fd <span class="kw">as </span>c::c_int);
 }
 
+<span class="attr">#[cfg(feature = <span class="string">"try_close"</span>)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>try_close(raw_fd: RawFd) -&gt; io::Result&lt;()&gt; {
+    ret(c::close(raw_fd <span class="kw">as </span>c::c_int))
+}
+
 <span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>ioctl(
-    fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;,
     request: RawOpcode,
     arg: <span class="kw-2">*mut </span>c::c_void,
 ) -&gt; io::Result&lt;IoctlOutput&gt; {
@@ -550,16 +565,16 @@
 
 <span class="attr">#[inline]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>ioctl_readonly(
-    fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+    fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;,
     request: RawOpcode,
     arg: <span class="kw-2">*mut </span>c::c_void,
 ) -&gt; io::Result&lt;IoctlOutput&gt; {
     ioctl(fd, request, arg)
 }
 
-<span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;redox&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>)))]
-#[cfg(all(feature = <span class="string">&quot;fs&quot;</span>, feature = <span class="string">&quot;net&quot;</span>))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_read_write(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;(bool, bool)&gt; {
+<span class="attr">#[cfg(not(any(target_os = <span class="string">"redox"</span>, target_os = <span class="string">"wasi"</span>)))]
+#[cfg(all(feature = <span class="string">"fs"</span>, feature = <span class="string">"net"</span>))]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_read_write(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;(bool, bool)&gt; {
     <span class="kw">use </span>core::mem::MaybeUninit;
 
     <span class="kw">let </span>(<span class="kw-2">mut </span>read, <span class="kw-2">mut </span>write) = <span class="kw">crate</span>::fs::fd::_is_file_read_write(fd)<span class="question-mark">?</span>;
@@ -605,56 +620,57 @@
     <span class="prelude-val">Ok</span>((read, write))
 }
 
-<span class="attr">#[cfg(target_os = <span class="string">&quot;wasi&quot;</span>)]
-#[cfg(all(feature = <span class="string">&quot;fs&quot;</span>, feature = <span class="string">&quot;net&quot;</span>))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_read_write(_fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;(bool, bool)&gt; {
-    <span class="macro">todo!</span>(<span class="string">&quot;Implement is_read_write for WASI in terms of fd_fdstat_get&quot;</span>);
+<span class="attr">#[cfg(target_os = <span class="string">"wasi"</span>)]
+#[cfg(all(feature = <span class="string">"fs"</span>, feature = <span class="string">"net"</span>))]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_read_write(_fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;(bool, bool)&gt; {
+    <span class="macro">todo!</span>(<span class="string">"Implement is_read_write for WASI in terms of fd_fdstat_get"</span>);
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_getfd(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;FdFlags&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_getfd(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;FdFlags&gt; {
     <span class="kw">let </span>flags = <span class="kw">unsafe </span>{ ret_c_int(c::fcntl(borrowed_fd(fd), c::F_GETFD))<span class="question-mark">? </span>};
     <span class="prelude-val">Ok</span>(FdFlags::from_bits_retain(<span class="macro">bitcast!</span>(flags)))
 }
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_setfd(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, flags: FdFlags) -&gt; io::Result&lt;()&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_setfd(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, flags: FdFlags) -&gt; io::Result&lt;()&gt; {
     <span class="kw">unsafe </span>{ ret(c::fcntl(borrowed_fd(fd), c::F_SETFD, flags.bits())) }
 }
 
-<span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>)))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_dupfd_cloexec(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, min: RawFd) -&gt; io::Result&lt;OwnedFd&gt; {
+<span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"wasi"</span>)))]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_dupfd_cloexec(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, min: RawFd) -&gt; io::Result&lt;OwnedFd&gt; {
     <span class="kw">unsafe </span>{ ret_owned_fd(c::fcntl(borrowed_fd(fd), c::F_DUPFD_CLOEXEC, min)) }
 }
 
-<span class="attr">#[cfg(target_os = <span class="string">&quot;espidf&quot;</span>)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_dupfd(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, min: RawFd) -&gt; io::Result&lt;OwnedFd&gt; {
+<span class="attr">#[cfg(target_os = <span class="string">"espidf"</span>)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fcntl_dupfd(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, min: RawFd) -&gt; io::Result&lt;OwnedFd&gt; {
     <span class="kw">unsafe </span>{ ret_owned_fd(c::fcntl(borrowed_fd(fd), c::F_DUPFD, min)) }
 }
 
-<span class="attr">#[cfg(not(target_os = <span class="string">&quot;wasi&quot;</span>))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dup(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; io::Result&lt;OwnedFd&gt; {
+<span class="attr">#[cfg(not(target_os = <span class="string">"wasi"</span>))]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dup(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;) -&gt; io::Result&lt;OwnedFd&gt; {
     <span class="kw">unsafe </span>{ ret_owned_fd(c::dup(borrowed_fd(fd))) }
 }
 
 <span class="attr">#[allow(clippy::needless_pass_by_ref_mut)]
-#[cfg(not(target_os = <span class="string">&quot;wasi&quot;</span>))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dup2(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, new: <span class="kw-2">&amp;mut </span>OwnedFd) -&gt; io::Result&lt;()&gt; {
+#[cfg(not(target_os = <span class="string">"wasi"</span>))]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dup2(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, new: <span class="kw-2">&amp;mut </span>OwnedFd) -&gt; io::Result&lt;()&gt; {
     <span class="kw">unsafe </span>{ ret_discarded_fd(c::dup2(borrowed_fd(fd), borrowed_fd(new.as_fd()))) }
 }
 
 <span class="attr">#[allow(clippy::needless_pass_by_ref_mut)]
 #[cfg(not(any(
     apple,
-    target_os = <span class="string">&quot;aix&quot;</span>,
-    target_os = <span class="string">&quot;android&quot;</span>,
-    target_os = <span class="string">&quot;dragonfly&quot;</span>,
-    target_os = <span class="string">&quot;espidf&quot;</span>,
-    target_os = <span class="string">&quot;haiku&quot;</span>,
-    target_os = <span class="string">&quot;nto&quot;</span>,
-    target_os = <span class="string">&quot;redox&quot;</span>,
-    target_os = <span class="string">&quot;vita&quot;</span>,
-    target_os = <span class="string">&quot;wasi&quot;</span>,
+    target_os = <span class="string">"aix"</span>,
+    target_os = <span class="string">"android"</span>,
+    target_os = <span class="string">"dragonfly"</span>,
+    target_os = <span class="string">"espidf"</span>,
+    target_os = <span class="string">"haiku"</span>,
+    target_os = <span class="string">"horizon"</span>,
+    target_os = <span class="string">"nto"</span>,
+    target_os = <span class="string">"redox"</span>,
+    target_os = <span class="string">"vita"</span>,
+    target_os = <span class="string">"wasi"</span>,
 )))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dup3(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, new: <span class="kw-2">&amp;mut </span>OwnedFd, flags: DupFlags) -&gt; io::Result&lt;()&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dup3(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, new: <span class="kw-2">&amp;mut </span>OwnedFd, flags: DupFlags) -&gt; io::Result&lt;()&gt; {
     <span class="kw">unsafe </span>{
         ret_discarded_fd(c::dup3(
             borrowed_fd(fd),
@@ -666,16 +682,16 @@
 
 <span class="attr">#[cfg(any(
     apple,
-    target_os = <span class="string">&quot;android&quot;</span>,
-    target_os = <span class="string">&quot;dragonfly&quot;</span>,
-    target_os = <span class="string">&quot;haiku&quot;</span>,
-    target_os = <span class="string">&quot;redox&quot;</span>,
+    target_os = <span class="string">"android"</span>,
+    target_os = <span class="string">"dragonfly"</span>,
+    target_os = <span class="string">"haiku"</span>,
+    target_os = <span class="string">"redox"</span>,
 ))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dup3(fd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, new: <span class="kw-2">&amp;mut </span>OwnedFd, _flags: DupFlags) -&gt; io::Result&lt;()&gt; {
-    <span class="comment">// Android 5.0 has `dup3`, but libc doesn&#39;t have bindings. Emulate it
-    // using `dup2`. We don&#39;t need to worry about the difference between
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>dup3(fd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, new: <span class="kw-2">&amp;mut </span>OwnedFd, _flags: DupFlags) -&gt; io::Result&lt;()&gt; {
+    <span class="comment">// Android 5.0 has `dup3`, but libc doesn't have bindings. Emulate it
+    // using `dup2`. We don't need to worry about the difference between
     // `dup2` and `dup3` when the file descriptors are equal because we
-    // have an `&amp;mut OwnedFd` which means `fd` doesn&#39;t alias it.
+    // have an `&amp;mut OwnedFd` which means `fd` doesn't alias it.
     </span>dup2(fd, new)
 }
 </code></pre></div></section></main></body></html>

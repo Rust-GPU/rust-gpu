@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/util/captures.rs`."><title>captures.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_automata/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/util/captures.rs`."><title>captures.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2557,11 +2557,11 @@ explicit capturing group at index `1`).
 
 Not all regex engines can report match offsets for capturing groups. Indeed,
 to a first approximation, regex engines that can report capturing group offsets
-tend to be quite a bit slower than regex engines that can&#39;t. This is because
-tracking capturing groups at search time usually requires more &quot;power&quot; that
+tend to be quite a bit slower than regex engines that can't. This is because
+tracking capturing groups at search time usually requires more "power" that
 in turn adds overhead.
 
-Other regex implementations might call capturing groups &quot;submatches.&quot;
+Other regex implementations might call capturing groups "submatches."
 
 # Overview
 
@@ -2570,12 +2570,12 @@ The main types in this module are:
 * [`Captures`] records the capturing group offsets found during a search. It
 provides convenience routines for looking up capturing group offsets by either
 index or name.
-* [`GroupInfo`] records the mapping between capturing groups and &quot;slots,&quot;
+* [`GroupInfo`] records the mapping between capturing groups and "slots,"
 where the latter are how capturing groups are recorded during a regex search.
 This also keeps a mapping from capturing group name to index, and capture
 group index to name. A `GroupInfo` is used by `Captures` internally to
-provide a convenient API. It is unlikely that you&#39;ll use a `GroupInfo`
-directly, but for example, if you&#39;ve compiled an Thompson NFA, then you can use
+provide a convenient API. It is unlikely that you'll use a `GroupInfo`
+directly, but for example, if you've compiled an Thompson NFA, then you can use
 [`thompson::NFA::group_info`](crate::nfa::thompson::NFA::group_info) to get its
 underlying `GroupInfo`.
 */
@@ -2593,7 +2593,7 @@ underlying `GroupInfo`.
 <span class="doccomment">/// The span offsets of capturing groups after a match has been found.
 ///
 /// This type represents the output of regex engines that can report the
-/// offsets at which capturing groups matches or &quot;submatches&quot; occur. For
+/// offsets at which capturing groups matches or "submatches" occur. For
 /// example, the [`PikeVM`](crate::nfa::thompson::pikevm::PikeVM). When a match
 /// occurs, it will at minimum contain the [`PatternID`] of the pattern that
 /// matched. Depending upon how it was constructed, it may also contain the
@@ -2618,7 +2618,7 @@ underlying `GroupInfo`.
 /// * [`Captures::empty`]: Will only store the pattern ID that matched. No
 /// match offsets are available at all.
 ///
-/// If you aren&#39;t sure which to choose, then pick the first one. The first one
+/// If you aren't sure which to choose, then pick the first one. The first one
 /// is what convenience routines like,
 /// [`PikeVM::create_captures`](crate::nfa::thompson::pikevm::PikeVM::create_captures),
 /// will use automatically.
@@ -2631,7 +2631,7 @@ underlying `GroupInfo`.
 ///
 /// It is worth pointing out that this type is not coupled to any one specific
 /// regex engine. Instead, its coupling is with [`GroupInfo`], which is the
-/// thing that is responsible for mapping capturing groups to &quot;slot&quot; offsets.
+/// thing that is responsible for mapping capturing groups to "slot" offsets.
 /// Slot offsets are indices into a single sequence of memory at which matching
 /// haystack offsets for the corresponding group are written by regex engines.
 ///
@@ -2643,10 +2643,10 @@ underlying `GroupInfo`.
 /// ```
 /// use regex_automata::{nfa::thompson::pikevm::PikeVM, Span};
 ///
-/// let re = PikeVM::new(r&quot;^([0-9]{4})-([0-9]{2})-([0-9]{2})$&quot;)?;
+/// let re = PikeVM::new(r"^([0-9]{4})-([0-9]{2})-([0-9]{2})$")?;
 /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
 ///
-/// re.captures(&amp;mut cache, &quot;2010-03-14&quot;, &amp;mut caps);
+/// re.captures(&amp;mut cache, "2010-03-14", &amp;mut caps);
 /// assert!(caps.is_match());
 /// assert_eq!(Some(Span::from(0..4)), caps.get_group(1));
 /// assert_eq!(Some(Span::from(5..7)), caps.get_group(2));
@@ -2663,21 +2663,21 @@ underlying `GroupInfo`.
 /// ```
 /// use regex_automata::{nfa::thompson::pikevm::PikeVM, Span};
 ///
-/// let re = PikeVM::new(r&quot;^(?P&lt;y&gt;[0-9]{4})-(?P&lt;m&gt;[0-9]{2})-(?P&lt;d&gt;[0-9]{2})$&quot;)?;
+/// let re = PikeVM::new(r"^(?P&lt;y&gt;[0-9]{4})-(?P&lt;m&gt;[0-9]{2})-(?P&lt;d&gt;[0-9]{2})$")?;
 /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
 ///
-/// re.captures(&amp;mut cache, &quot;2010-03-14&quot;, &amp;mut caps);
+/// re.captures(&amp;mut cache, "2010-03-14", &amp;mut caps);
 /// assert!(caps.is_match());
-/// assert_eq!(Some(Span::from(0..4)), caps.get_group_by_name(&quot;y&quot;));
-/// assert_eq!(Some(Span::from(5..7)), caps.get_group_by_name(&quot;m&quot;));
-/// assert_eq!(Some(Span::from(8..10)), caps.get_group_by_name(&quot;d&quot;));
+/// assert_eq!(Some(Span::from(0..4)), caps.get_group_by_name("y"));
+/// assert_eq!(Some(Span::from(5..7)), caps.get_group_by_name("m"));
+/// assert_eq!(Some(Span::from(8..10)), caps.get_group_by_name("d"));
 ///
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
 /// ```
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>Captures {
     <span class="doccomment">/// The group info that these capture groups are coupled to. This is what
-    /// gives the &quot;convenience&quot; of the `Captures` API. Namely, it provides the
+    /// gives the "convenience" of the `Captures` API. Namely, it provides the
     /// slot mapping and the name|--&gt;index mapping for capture lookups by name.
     </span>group_info: GroupInfo,
     <span class="doccomment">/// The ID of the pattern that matched. Regex engines must set this to
@@ -2689,9 +2689,9 @@ underlying `GroupInfo`.
     /// `max(groups(pattern) for pattern in regex) * 2`, but instead, we use
     /// `sum(groups(pattern) for pattern in regex) * 2`. Why?
     ///
-    /// Well, the former could be used in theory, because we don&#39;t generally
+    /// Well, the former could be used in theory, because we don't generally
     /// have any overlapping APIs that involve capturing groups. Therefore,
-    /// there&#39;s technically never any need to have slots set for multiple
+    /// there's technically never any need to have slots set for multiple
     /// patterns. However, this might change some day, in which case, we would
     /// need to have slots available.
     ///
@@ -2700,7 +2700,7 @@ underlying `GroupInfo`.
     /// patterns may be written to before knowing which pattern has matched.
     /// Therefore, the regex engines themselves, in order to support multiple
     /// patterns correctly, must have all slots available. If `Captures`
-    /// doesn&#39;t have all slots available, then regex engines can&#39;t write
+    /// doesn't have all slots available, then regex engines can't write
     /// directly into the caller provided `Captures` and must instead write
     /// into some other storage and then copy the slots involved in the match
     /// at the end of the search.
@@ -2709,7 +2709,7 @@ underlying `GroupInfo`.
     /// of least resistance is to just require allocating all possible slots
     /// instead of the conceptual minimum. Another way to justify this is that
     /// the most common case is a single pattern, in which case, there is no
-    /// inefficiency here since the &#39;max&#39; and &#39;sum&#39; calculations above are
+    /// inefficiency here since the 'max' and 'sum' calculations above are
     /// equivalent in that case.
     ///
     /// N.B. The mapping from group index to slot is maintained by `GroupInfo`
@@ -2745,18 +2745,18 @@ underlying `GroupInfo`.
     /// };
     ///
     /// let re = PikeVM::new(
-    ///     r&quot;^(?:(?P&lt;lower&gt;[a-z]+)|(?P&lt;upper&gt;[A-Z]+))(?P&lt;digits&gt;[0-9]+)$&quot;,
+    ///     r"^(?:(?P&lt;lower&gt;[a-z]+)|(?P&lt;upper&gt;[A-Z]+))(?P&lt;digits&gt;[0-9]+)$",
     /// )?;
     /// let mut cache = re.create_cache();
     /// let mut caps = Captures::all(re.get_nfa().group_info().clone());
     ///
-    /// re.captures(&amp;mut cache, &quot;ABC123&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "ABC123", &amp;mut caps);
     /// assert!(caps.is_match());
     /// assert_eq!(Some(Match::must(0, 0..6)), caps.get_match());
-    /// // The &#39;lower&#39; group didn&#39;t match, so it won&#39;t have any offsets.
-    /// assert_eq!(None, caps.get_group_by_name(&quot;lower&quot;));
-    /// assert_eq!(Some(Span::from(0..3)), caps.get_group_by_name(&quot;upper&quot;));
-    /// assert_eq!(Some(Span::from(3..6)), caps.get_group_by_name(&quot;digits&quot;));
+    /// // The 'lower' group didn't match, so it won't have any offsets.
+    /// assert_eq!(None, caps.get_group_by_name("lower"));
+    /// assert_eq!(Some(Span::from(0..3)), caps.get_group_by_name("upper"));
+    /// assert_eq!(Some(Span::from(3..6)), caps.get_group_by_name("digits"));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -2786,18 +2786,18 @@ underlying `GroupInfo`.
     /// };
     ///
     /// let re = PikeVM::new(
-    ///     r&quot;^(?:(?P&lt;lower&gt;[a-z]+)|(?P&lt;upper&gt;[A-Z]+))(?P&lt;digits&gt;[0-9]+)$&quot;,
+    ///     r"^(?:(?P&lt;lower&gt;[a-z]+)|(?P&lt;upper&gt;[A-Z]+))(?P&lt;digits&gt;[0-9]+)$",
     /// )?;
     /// let mut cache = re.create_cache();
     /// let mut caps = Captures::matches(re.get_nfa().group_info().clone());
     ///
-    /// re.captures(&amp;mut cache, &quot;ABC123&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "ABC123", &amp;mut caps);
     /// assert!(caps.is_match());
     /// assert_eq!(Some(Match::must(0, 0..6)), caps.get_match());
-    /// // We didn&#39;t ask for capturing group offsets, so they aren&#39;t available.
-    /// assert_eq!(None, caps.get_group_by_name(&quot;lower&quot;));
-    /// assert_eq!(None, caps.get_group_by_name(&quot;upper&quot;));
-    /// assert_eq!(None, caps.get_group_by_name(&quot;digits&quot;));
+    /// // We didn't ask for capturing group offsets, so they aren't available.
+    /// assert_eq!(None, caps.get_group_by_name("lower"));
+    /// assert_eq!(None, caps.get_group_by_name("upper"));
+    /// assert_eq!(None, caps.get_group_by_name("digits"));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -2828,20 +2828,20 @@ underlying `GroupInfo`.
     ///     PatternID,
     /// };
     ///
-    /// let re = PikeVM::new_many(&amp;[r&quot;[a-z]+&quot;, r&quot;[A-Z]+&quot;])?;
+    /// let re = PikeVM::new_many(&amp;[r"[a-z]+", r"[A-Z]+"])?;
     /// let mut cache = re.create_cache();
     /// let mut caps = Captures::empty(re.get_nfa().group_info().clone());
     ///
-    /// re.captures(&amp;mut cache, &quot;aABCz&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "aABCz", &amp;mut caps);
     /// assert!(caps.is_match());
     /// assert_eq!(Some(PatternID::must(0)), caps.pattern());
-    /// // We didn&#39;t ask for any offsets, so they aren&#39;t available.
+    /// // We didn't ask for any offsets, so they aren't available.
     /// assert_eq!(None, caps.get_match());
     ///
-    /// re.captures(&amp;mut cache, &amp;&quot;aABCz&quot;[1..], &amp;mut caps);
+    /// re.captures(&amp;mut cache, &amp;"aABCz"[1..], &amp;mut caps);
     /// assert!(caps.is_match());
     /// assert_eq!(Some(PatternID::must(1)), caps.pattern());
-    /// // We didn&#39;t ask for any offsets, so they aren&#39;t available.
+    /// // We didn't ask for any offsets, so they aren't available.
     /// assert_eq!(None, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2866,11 +2866,11 @@ underlying `GroupInfo`.
     ///     util::captures::Captures,
     /// };
     ///
-    /// let re = PikeVM::new(r&quot;[a-z]+&quot;)?;
+    /// let re = PikeVM::new(r"[a-z]+")?;
     /// let mut cache = re.create_cache();
     /// let mut caps = Captures::empty(re.get_nfa().group_info().clone());
     ///
-    /// re.captures(&amp;mut cache, &quot;aABCz&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "aABCz", &amp;mut caps);
     /// assert!(caps.is_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2901,11 +2901,11 @@ underlying `GroupInfo`.
     ///     PatternID,
     /// };
     ///
-    /// let re = PikeVM::new_many(&amp;[r&quot;[a-z]+&quot;, r&quot;[A-Z]+&quot;])?;
+    /// let re = PikeVM::new_many(&amp;[r"[a-z]+", r"[A-Z]+"])?;
     /// let mut cache = re.create_cache();
     /// let mut caps = Captures::empty(re.get_nfa().group_info().clone());
     ///
-    /// re.captures(&amp;mut cache, &quot;ABC&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "ABC", &amp;mut caps);
     /// assert_eq!(Some(PatternID::must(1)), caps.pattern());
     /// // Recall that offsets are only available when using a non-empty
     /// // Captures value. So even though a match occurred, this returns None!
@@ -2934,10 +2934,10 @@ underlying `GroupInfo`.
     /// ```
     /// use regex_automata::{nfa::thompson::pikevm::PikeVM, Match};
     ///
-    /// let re = PikeVM::new_many(&amp;[r&quot;[a-z]+&quot;, r&quot;[A-Z]+&quot;])?;
+    /// let re = PikeVM::new_many(&amp;[r"[a-z]+", r"[A-Z]+"])?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;ABC&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "ABC", &amp;mut caps);
     /// assert_eq!(Some(Match::must(1, 0..3)), caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2952,7 +2952,7 @@ underlying `GroupInfo`.
     /// group participated in that match.
     ///
     /// This returns `None` if `index` is invalid. `index` is valid if and only
-    /// if it&#39;s less than [`Captures::group_len`] for the matching pattern.
+    /// if it's less than [`Captures::group_len`] for the matching pattern.
     ///
     /// This always returns `None` when `Captures` was created with
     /// [`Captures::empty`], even if a match was found. This also always
@@ -2966,11 +2966,11 @@ underlying `GroupInfo`.
     ///
     /// By convention, the 0th capture group will always return the same
     /// span as the span returned by `get_match`. This is because the 0th
-    /// capture group always corresponds to the entirety of the pattern&#39;s
+    /// capture group always corresponds to the entirety of the pattern's
     /// match. (It is similarly always unnamed because it is implicit.) This
-    /// isn&#39;t necessarily true of all regex engines. For example, one can
+    /// isn't necessarily true of all regex engines. For example, one can
     /// hand-compile a [`thompson::NFA`](crate::nfa::thompson::NFA) via a
-    /// [`thompson::Builder`](crate::nfa::thompson::Builder), which isn&#39;t
+    /// [`thompson::Builder`](crate::nfa::thompson::Builder), which isn't
     /// technically forced to make the 0th capturing group always correspond to
     /// the entire match.
     ///
@@ -2983,17 +2983,17 @@ underlying `GroupInfo`.
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::{nfa::thompson::pikevm::PikeVM, Span, Match};
     ///
-    /// let re = PikeVM::new(r&quot;^(?P&lt;first&gt;\pL+)\s+(?P&lt;last&gt;\pL+)$&quot;)?;
+    /// let re = PikeVM::new(r"^(?P&lt;first&gt;\pL+)\s+(?P&lt;last&gt;\pL+)$")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;Bruce Springsteen&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "Bruce Springsteen", &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 0..17)), caps.get_match());
     /// assert_eq!(Some(Span::from(0..5)), caps.get_group(1));
     /// assert_eq!(Some(Span::from(6..17)), caps.get_group(2));
     /// // Looking for a non-existent capturing group will return None:
     /// assert_eq!(None, caps.get_group(3));
     /// # // literals are too big for 32-bit usize: #1039
-    /// # #[cfg(target_pointer_width = &quot;64&quot;)]
+    /// # #[cfg(target_pointer_width = "64")]
     /// assert_eq!(None, caps.get_group(9944060567225171988));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -3001,7 +3001,7 @@ underlying `GroupInfo`.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>get_group(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; <span class="prelude-ty">Option</span>&lt;Span&gt; {
         <span class="kw">let </span>pid = <span class="self">self</span>.pattern()<span class="question-mark">?</span>;
-        <span class="comment">// There&#39;s a little bit of work needed to map captures to slots in the
+        <span class="comment">// There's a little bit of work needed to map captures to slots in the
         // fully general case. But in the overwhelming common case of a single
         // pattern, we can just do some simple arithmetic.
         </span><span class="kw">let </span>(slot_start, slot_end) = <span class="kw">if </span><span class="self">self</span>.group_info().pattern_len() == <span class="number">1 </span>{
@@ -3040,15 +3040,15 @@ underlying `GroupInfo`.
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::{nfa::thompson::pikevm::PikeVM, Span, Match};
     ///
-    /// let re = PikeVM::new(r&quot;^(?P&lt;first&gt;\pL+)\s+(?P&lt;last&gt;\pL+)$&quot;)?;
+    /// let re = PikeVM::new(r"^(?P&lt;first&gt;\pL+)\s+(?P&lt;last&gt;\pL+)$")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;Bruce Springsteen&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "Bruce Springsteen", &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 0..17)), caps.get_match());
-    /// assert_eq!(Some(Span::from(0..5)), caps.get_group_by_name(&quot;first&quot;));
-    /// assert_eq!(Some(Span::from(6..17)), caps.get_group_by_name(&quot;last&quot;));
+    /// assert_eq!(Some(Span::from(0..5)), caps.get_group_by_name("first"));
+    /// assert_eq!(Some(Span::from(6..17)), caps.get_group_by_name("last"));
     /// // Looking for a non-existent capturing group will return None:
-    /// assert_eq!(None, caps.get_group_by_name(&quot;middle&quot;));
+    /// assert_eq!(None, caps.get_group_by_name("middle"));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -3077,11 +3077,11 @@ underlying `GroupInfo`.
     ///
     /// let re = PikeVM::new(
     ///     // Matches first/last names, with an optional middle name.
-    ///     r&quot;^(?P&lt;first&gt;\pL+)\s+(?:(?P&lt;middle&gt;\pL+)\s+)?(?P&lt;last&gt;\pL+)$&quot;,
+    ///     r"^(?P&lt;first&gt;\pL+)\s+(?:(?P&lt;middle&gt;\pL+)\s+)?(?P&lt;last&gt;\pL+)$",
     /// )?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;Harry James Potter&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "Harry James Potter", &amp;mut caps);
     /// assert!(caps.is_match());
     /// let groups: Vec&lt;Option&lt;Span&gt;&gt; = caps.iter().collect();
     /// assert_eq!(groups, vec![
@@ -3105,11 +3105,11 @@ underlying `GroupInfo`.
     ///
     /// let re = PikeVM::new(
     ///     // Matches first/last names, with an optional middle name.
-    ///     r&quot;^(?P&lt;first&gt;\pL+)\s+(?:(?P&lt;middle&gt;\pL+)\s+)?(?P&lt;last&gt;\pL+)$&quot;,
+    ///     r"^(?P&lt;first&gt;\pL+)\s+(?:(?P&lt;middle&gt;\pL+)\s+)?(?P&lt;last&gt;\pL+)$",
     /// )?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;Harry Potter&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "Harry Potter", &amp;mut caps);
     /// assert!(caps.is_match());
     /// let groups: Vec&lt;Option&lt;Span&gt;&gt; = caps.iter().collect();
     /// assert_eq!(groups, vec![
@@ -3121,7 +3121,7 @@ underlying `GroupInfo`.
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CapturesPatternIter&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CapturesPatternIter&lt;<span class="lifetime">'_</span>&gt; {
         <span class="kw">let </span>names = <span class="self">self
             </span>.pattern()
             .map_or(GroupInfoPatternNames::empty().enumerate(), |pid| {
@@ -3137,7 +3137,7 @@ underlying `GroupInfo`.
     ///
     /// This always returns the same number of elements yielded by
     /// [`Captures::iter`]. That is, the number includes capturing groups even
-    /// if they don&#39;t participate in the match.
+    /// if they don't participate in the match.
     ///
     /// # Example
     ///
@@ -3151,11 +3151,11 @@ underlying `GroupInfo`.
     ///
     /// let re = PikeVM::new(
     ///     // Matches first/last names, with an optional middle name.
-    ///     r&quot;^(?P&lt;first&gt;\pL+)\s+(?:(?P&lt;middle&gt;\pL+)\s+)?(?P&lt;last&gt;\pL+)$&quot;,
+    ///     r"^(?P&lt;first&gt;\pL+)\s+(?:(?P&lt;middle&gt;\pL+)\s+)?(?P&lt;last&gt;\pL+)$",
     /// )?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;Harry Potter&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "Harry Potter", &amp;mut caps);
     /// assert_eq!(4, caps.group_len());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -3176,7 +3176,7 @@ underlying `GroupInfo`.
     /// stores the actual match information. So where as `Captures` only gives
     /// you access to the current match, `GroupInfo` lets you query any
     /// information about all capturing groups, even ones for patterns that
-    /// weren&#39;t involved in a match.
+    /// weren't involved in a match.
     ///
     /// Note that a `GroupInfo` uses reference counting internally, so it may
     /// be cloned cheaply.
@@ -3184,35 +3184,35 @@ underlying `GroupInfo`.
     /// # Example
     ///
     /// This example shows how to get all capturing group names from the
-    /// underlying `GroupInfo`. Notice that we don&#39;t even need to run a
+    /// underlying `GroupInfo`. Notice that we don't even need to run a
     /// search.
     ///
     /// ```
     /// use regex_automata::{nfa::thompson::pikevm::PikeVM, PatternID};
     ///
     /// let re = PikeVM::new_many(&amp;[
-    ///     r&quot;(?P&lt;foo&gt;a)&quot;,
-    ///     r&quot;(a)(b)&quot;,
-    ///     r&quot;ab&quot;,
-    ///     r&quot;(?P&lt;bar&gt;a)(?P&lt;quux&gt;a)&quot;,
-    ///     r&quot;(?P&lt;foo&gt;z)&quot;,
+    ///     r"(?P&lt;foo&gt;a)",
+    ///     r"(a)(b)",
+    ///     r"ab",
+    ///     r"(?P&lt;bar&gt;a)(?P&lt;quux&gt;a)",
+    ///     r"(?P&lt;foo&gt;z)",
     /// ])?;
     /// let caps = re.create_captures();
     ///
     /// let expected = vec![
     ///     (PatternID::must(0), 0, None),
-    ///     (PatternID::must(0), 1, Some(&quot;foo&quot;)),
+    ///     (PatternID::must(0), 1, Some("foo")),
     ///     (PatternID::must(1), 0, None),
     ///     (PatternID::must(1), 1, None),
     ///     (PatternID::must(1), 2, None),
     ///     (PatternID::must(2), 0, None),
     ///     (PatternID::must(3), 0, None),
-    ///     (PatternID::must(3), 1, Some(&quot;bar&quot;)),
-    ///     (PatternID::must(3), 2, Some(&quot;quux&quot;)),
+    ///     (PatternID::must(3), 1, Some("bar")),
+    ///     (PatternID::must(3), 2, Some("quux")),
     ///     (PatternID::must(4), 0, None),
-    ///     (PatternID::must(4), 1, Some(&quot;foo&quot;)),
+    ///     (PatternID::must(4), 1, Some("foo")),
     /// ];
-    /// // We could also just use &#39;re.get_nfa().group_info()&#39;.
+    /// // We could also just use 're.get_nfa().group_info()'.
     /// let got: Vec&lt;(PatternID, usize, Option&lt;&amp;str&gt;)&gt; =
     ///     caps.group_info().all_names().collect();
     /// assert_eq!(expected, got);
@@ -3239,25 +3239,25 @@ underlying `GroupInfo`.
     /// use regex_automata::{nfa::thompson::pikevm::PikeVM, PatternID};
     ///
     /// let re = PikeVM::new_many(&amp;[
-    ///     r&quot;(?&lt;day&gt;[0-9]{2})-(?&lt;month&gt;[0-9]{2})-(?&lt;year&gt;[0-9]{4})&quot;,
-    ///     r&quot;(?&lt;year&gt;[0-9]{4})-(?&lt;month&gt;[0-9]{2})-(?&lt;day&gt;[0-9]{2})&quot;,
+    ///     r"(?&lt;day&gt;[0-9]{2})-(?&lt;month&gt;[0-9]{2})-(?&lt;year&gt;[0-9]{4})",
+    ///     r"(?&lt;year&gt;[0-9]{4})-(?&lt;month&gt;[0-9]{2})-(?&lt;day&gt;[0-9]{2})",
     /// ])?;
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     ///
-    /// let replacement = &quot;year=$year, month=$month, day=$day&quot;;
+    /// let replacement = "year=$year, month=$month, day=$day";
     ///
     /// // This matches the first pattern.
-    /// let hay = &quot;On 14-03-2010, I became a Tenneessee lamb.&quot;;
+    /// let hay = "On 14-03-2010, I became a Tenneessee lamb.";
     /// re.captures(&amp;mut cache, hay, &amp;mut caps);
     /// let result = caps.interpolate_string(hay, replacement);
-    /// assert_eq!(&quot;year=2010, month=03, day=14&quot;, result);
+    /// assert_eq!("year=2010, month=03, day=14", result);
     ///
     /// // And this matches the second pattern.
-    /// let hay = &quot;On 2010-03-14, I became a Tenneessee lamb.&quot;;
+    /// let hay = "On 2010-03-14, I became a Tenneessee lamb.";
     /// re.captures(&amp;mut cache, hay, &amp;mut caps);
     /// let result = caps.interpolate_string(hay, replacement);
-    /// assert_eq!(&quot;year=2010, month=03, day=14&quot;, result);
+    /// assert_eq!("year=2010, month=03, day=14", result);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -3287,27 +3287,27 @@ underlying `GroupInfo`.
     /// use regex_automata::{nfa::thompson::pikevm::PikeVM, PatternID};
     ///
     /// let re = PikeVM::new_many(&amp;[
-    ///     r&quot;(?&lt;day&gt;[0-9]{2})-(?&lt;month&gt;[0-9]{2})-(?&lt;year&gt;[0-9]{4})&quot;,
-    ///     r&quot;(?&lt;year&gt;[0-9]{4})-(?&lt;month&gt;[0-9]{2})-(?&lt;day&gt;[0-9]{2})&quot;,
+    ///     r"(?&lt;day&gt;[0-9]{2})-(?&lt;month&gt;[0-9]{2})-(?&lt;year&gt;[0-9]{4})",
+    ///     r"(?&lt;year&gt;[0-9]{4})-(?&lt;month&gt;[0-9]{2})-(?&lt;day&gt;[0-9]{2})",
     /// ])?;
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     ///
-    /// let replacement = &quot;year=$year, month=$month, day=$day&quot;;
+    /// let replacement = "year=$year, month=$month, day=$day";
     ///
     /// // This matches the first pattern.
-    /// let hay = &quot;On 14-03-2010, I became a Tenneessee lamb.&quot;;
+    /// let hay = "On 14-03-2010, I became a Tenneessee lamb.";
     /// re.captures(&amp;mut cache, hay, &amp;mut caps);
     /// let mut dst = String::new();
     /// caps.interpolate_string_into(hay, replacement, &amp;mut dst);
-    /// assert_eq!(&quot;year=2010, month=03, day=14&quot;, dst);
+    /// assert_eq!("year=2010, month=03, day=14", dst);
     ///
     /// // And this matches the second pattern.
-    /// let hay = &quot;On 2010-03-14, I became a Tenneessee lamb.&quot;;
+    /// let hay = "On 2010-03-14, I became a Tenneessee lamb.";
     /// re.captures(&amp;mut cache, hay, &amp;mut caps);
     /// let mut dst = String::new();
     /// caps.interpolate_string_into(hay, replacement, &amp;mut dst);
-    /// assert_eq!(&quot;year=2010, month=03, day=14&quot;, dst);
+    /// assert_eq!("year=2010, month=03, day=14", dst);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -3347,25 +3347,25 @@ underlying `GroupInfo`.
     /// use regex_automata::{nfa::thompson::pikevm::PikeVM, PatternID};
     ///
     /// let re = PikeVM::new_many(&amp;[
-    ///     r&quot;(?&lt;day&gt;[0-9]{2})-(?&lt;month&gt;[0-9]{2})-(?&lt;year&gt;[0-9]{4})&quot;,
-    ///     r&quot;(?&lt;year&gt;[0-9]{4})-(?&lt;month&gt;[0-9]{2})-(?&lt;day&gt;[0-9]{2})&quot;,
+    ///     r"(?&lt;day&gt;[0-9]{2})-(?&lt;month&gt;[0-9]{2})-(?&lt;year&gt;[0-9]{4})",
+    ///     r"(?&lt;year&gt;[0-9]{4})-(?&lt;month&gt;[0-9]{2})-(?&lt;day&gt;[0-9]{2})",
     /// ])?;
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     ///
-    /// let replacement = b&quot;year=$year, month=$month, day=$day&quot;;
+    /// let replacement = b"year=$year, month=$month, day=$day";
     ///
     /// // This matches the first pattern.
-    /// let hay = b&quot;On 14-03-2010, I became a Tenneessee lamb.&quot;;
+    /// let hay = b"On 14-03-2010, I became a Tenneessee lamb.";
     /// re.captures(&amp;mut cache, hay, &amp;mut caps);
     /// let result = caps.interpolate_bytes(hay, replacement);
-    /// assert_eq!(&amp;b&quot;year=2010, month=03, day=14&quot;[..], result);
+    /// assert_eq!(&amp;b"year=2010, month=03, day=14"[..], result);
     ///
     /// // And this matches the second pattern.
-    /// let hay = b&quot;On 2010-03-14, I became a Tenneessee lamb.&quot;;
+    /// let hay = b"On 2010-03-14, I became a Tenneessee lamb.";
     /// re.captures(&amp;mut cache, hay, &amp;mut caps);
     /// let result = caps.interpolate_bytes(hay, replacement);
-    /// assert_eq!(&amp;b&quot;year=2010, month=03, day=14&quot;[..], result);
+    /// assert_eq!(&amp;b"year=2010, month=03, day=14"[..], result);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -3395,27 +3395,27 @@ underlying `GroupInfo`.
     /// use regex_automata::{nfa::thompson::pikevm::PikeVM, PatternID};
     ///
     /// let re = PikeVM::new_many(&amp;[
-    ///     r&quot;(?&lt;day&gt;[0-9]{2})-(?&lt;month&gt;[0-9]{2})-(?&lt;year&gt;[0-9]{4})&quot;,
-    ///     r&quot;(?&lt;year&gt;[0-9]{4})-(?&lt;month&gt;[0-9]{2})-(?&lt;day&gt;[0-9]{2})&quot;,
+    ///     r"(?&lt;day&gt;[0-9]{2})-(?&lt;month&gt;[0-9]{2})-(?&lt;year&gt;[0-9]{4})",
+    ///     r"(?&lt;year&gt;[0-9]{4})-(?&lt;month&gt;[0-9]{2})-(?&lt;day&gt;[0-9]{2})",
     /// ])?;
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     ///
-    /// let replacement = b&quot;year=$year, month=$month, day=$day&quot;;
+    /// let replacement = b"year=$year, month=$month, day=$day";
     ///
     /// // This matches the first pattern.
-    /// let hay = b&quot;On 14-03-2010, I became a Tenneessee lamb.&quot;;
+    /// let hay = b"On 14-03-2010, I became a Tenneessee lamb.";
     /// re.captures(&amp;mut cache, hay, &amp;mut caps);
     /// let mut dst = vec![];
     /// caps.interpolate_bytes_into(hay, replacement, &amp;mut dst);
-    /// assert_eq!(&amp;b&quot;year=2010, month=03, day=14&quot;[..], dst);
+    /// assert_eq!(&amp;b"year=2010, month=03, day=14"[..], dst);
     ///
     /// // And this matches the second pattern.
-    /// let hay = b&quot;On 2010-03-14, I became a Tenneessee lamb.&quot;;
+    /// let hay = b"On 2010-03-14, I became a Tenneessee lamb.";
     /// re.captures(&amp;mut cache, hay, &amp;mut caps);
     /// let mut dst = vec![];
     /// caps.interpolate_bytes_into(hay, replacement, &amp;mut dst);
-    /// assert_eq!(&amp;b&quot;year=2010, month=03, day=14&quot;[..], dst);
+    /// assert_eq!(&amp;b"year=2010, month=03, day=14"[..], dst);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -3462,34 +3462,34 @@ underlying `GroupInfo`.
     /// ```
     /// use regex_automata::nfa::thompson::pikevm::PikeVM;
     ///
-    /// let re = PikeVM::new(r&quot;([0-9]{4})-([0-9]{2})-([0-9]{2})&quot;)?;
+    /// let re = PikeVM::new(r"([0-9]{4})-([0-9]{2})-([0-9]{2})")?;
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     ///
-    /// let hay = &quot;On 2010-03-14, I became a Tenneessee lamb.&quot;;
+    /// let hay = "On 2010-03-14, I became a Tenneessee lamb.";
     /// re.captures(&amp;mut cache, hay, &amp;mut caps);
     /// assert!(caps.is_match());
     /// let (full, [year, month, day]) = caps.extract(hay);
-    /// assert_eq!(&quot;2010-03-14&quot;, full);
-    /// assert_eq!(&quot;2010&quot;, year);
-    /// assert_eq!(&quot;03&quot;, month);
-    /// assert_eq!(&quot;14&quot;, day);
+    /// assert_eq!("2010-03-14", full);
+    /// assert_eq!("2010", year);
+    /// assert_eq!("03", month);
+    /// assert_eq!("14", day);
     ///
     /// // We can also ask for fewer than all capture groups.
     /// let (full, [year]) = caps.extract(hay);
-    /// assert_eq!(&quot;2010-03-14&quot;, full);
-    /// assert_eq!(&quot;2010&quot;, year);
+    /// assert_eq!("2010-03-14", full);
+    /// assert_eq!("2010", year);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="kw">pub fn </span>extract&lt;<span class="lifetime">&#39;h</span>, <span class="kw">const </span>N: usize&gt;(
+    </span><span class="kw">pub fn </span>extract&lt;<span class="lifetime">'h</span>, <span class="kw">const </span>N: usize&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>str,
-    ) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>str, [<span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>str; N]) {
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>str,
+    ) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'h </span>str, [<span class="kw-2">&amp;</span><span class="lifetime">'h </span>str; N]) {
         <span class="kw">let </span><span class="kw-2">mut </span>matched = <span class="self">self</span>.iter().flatten();
-        <span class="kw">let </span>whole_match = <span class="kw-2">&amp;</span>haystack[matched.next().expect(<span class="string">&quot;a match&quot;</span>)];
+        <span class="kw">let </span>whole_match = <span class="kw-2">&amp;</span>haystack[matched.next().expect(<span class="string">"a match"</span>)];
         <span class="kw">let </span>group_matches = [<span class="number">0</span>; N].map(|<span class="kw">_</span>| {
-            <span class="kw">let </span>sp = matched.next().expect(<span class="string">&quot;too few matching groups&quot;</span>);
+            <span class="kw">let </span>sp = matched.next().expect(<span class="string">"too few matching groups"</span>);
             <span class="kw-2">&amp;</span>haystack[sp]
         });
         (whole_match, group_matches)
@@ -3518,41 +3518,41 @@ underlying `GroupInfo`.
     /// ```
     /// use regex_automata::nfa::thompson::pikevm::PikeVM;
     ///
-    /// let re = PikeVM::new(r&quot;([0-9]{4})-([0-9]{2})-([0-9]{2})&quot;)?;
+    /// let re = PikeVM::new(r"([0-9]{4})-([0-9]{2})-([0-9]{2})")?;
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     ///
-    /// let hay = b&quot;On 2010-03-14, I became a Tenneessee lamb.&quot;;
+    /// let hay = b"On 2010-03-14, I became a Tenneessee lamb.";
     /// re.captures(&amp;mut cache, hay, &amp;mut caps);
     /// assert!(caps.is_match());
     /// let (full, [year, month, day]) = caps.extract_bytes(hay);
-    /// assert_eq!(b&quot;2010-03-14&quot;, full);
-    /// assert_eq!(b&quot;2010&quot;, year);
-    /// assert_eq!(b&quot;03&quot;, month);
-    /// assert_eq!(b&quot;14&quot;, day);
+    /// assert_eq!(b"2010-03-14", full);
+    /// assert_eq!(b"2010", year);
+    /// assert_eq!(b"03", month);
+    /// assert_eq!(b"14", day);
     ///
     /// // We can also ask for fewer than all capture groups.
     /// let (full, [year]) = caps.extract_bytes(hay);
-    /// assert_eq!(b&quot;2010-03-14&quot;, full);
-    /// assert_eq!(b&quot;2010&quot;, year);
+    /// assert_eq!(b"2010-03-14", full);
+    /// assert_eq!(b"2010", year);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="kw">pub fn </span>extract_bytes&lt;<span class="lifetime">&#39;h</span>, <span class="kw">const </span>N: usize&gt;(
+    </span><span class="kw">pub fn </span>extract_bytes&lt;<span class="lifetime">'h</span>, <span class="kw">const </span>N: usize&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    ) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8], [<span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8]; N]) {
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    ) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8], [<span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8]; N]) {
         <span class="kw">let </span><span class="kw-2">mut </span>matched = <span class="self">self</span>.iter().flatten();
-        <span class="kw">let </span>whole_match = <span class="kw-2">&amp;</span>haystack[matched.next().expect(<span class="string">&quot;a match&quot;</span>)];
+        <span class="kw">let </span>whole_match = <span class="kw-2">&amp;</span>haystack[matched.next().expect(<span class="string">"a match"</span>)];
         <span class="kw">let </span>group_matches = [<span class="number">0</span>; N].map(|<span class="kw">_</span>| {
-            <span class="kw">let </span>sp = matched.next().expect(<span class="string">&quot;too few matching groups&quot;</span>);
+            <span class="kw">let </span>sp = matched.next().expect(<span class="string">"too few matching groups"</span>);
             <span class="kw-2">&amp;</span>haystack[sp]
         });
         (whole_match, group_matches)
     }
 }
 
-<span class="doccomment">/// Lower level &quot;slot&quot; oriented APIs. One does not typically need to use these
+<span class="doccomment">/// Lower level "slot" oriented APIs. One does not typically need to use these
 /// when executing a search. They are instead mostly intended for folks that
 /// are writing their own regex engine while reusing this `Captures` type.
 </span><span class="kw">impl </span>Captures {
@@ -3565,13 +3565,13 @@ underlying `GroupInfo`.
     /// It is not usually necessary to call this routine. Namely, a `Captures`
     /// value only provides high level access to the capturing groups of the
     /// pattern that matched, and only low level access to individual slots.
-    /// Thus, even if slots corresponding to groups that aren&#39;t associated
-    /// with the matching pattern are set, then it won&#39;t impact the higher
+    /// Thus, even if slots corresponding to groups that aren't associated
+    /// with the matching pattern are set, then it won't impact the higher
     /// level APIs. Namely, higher level APIs like [`Captures::get_group`] will
     /// return `None` if no pattern ID is present, even if there are spans set
     /// in the underlying slots.
     ///
-    /// Thus, to &quot;clear&quot; a `Captures` value of a match, it is usually only
+    /// Thus, to "clear" a `Captures` value of a match, it is usually only
     /// necessary to call [`Captures::set_pattern`] with `None`.
     ///
     /// # Example
@@ -3582,10 +3582,10 @@ underlying `GroupInfo`.
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::nfa::thompson::pikevm::PikeVM;
     ///
-    /// let re = PikeVM::new(r&quot;^(?P&lt;first&gt;\pL+)\s+(?P&lt;last&gt;\pL+)$&quot;)?;
+    /// let re = PikeVM::new(r"^(?P&lt;first&gt;\pL+)\s+(?P&lt;last&gt;\pL+)$")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;Bruce Springsteen&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "Bruce Springsteen", &amp;mut caps);
     /// assert!(caps.is_match());
     /// let slots: Vec&lt;Option&lt;usize&gt;&gt; =
     ///     caps.slots().iter().map(|s| s.map(|x| x.get())).collect();
@@ -3642,10 +3642,10 @@ underlying `GroupInfo`.
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::nfa::thompson::pikevm::PikeVM;
     ///
-    /// let re = PikeVM::new(r&quot;^(?P&lt;first&gt;\pL+)\s+(?P&lt;last&gt;\pL+)$&quot;)?;
+    /// let re = PikeVM::new(r"^(?P&lt;first&gt;\pL+)\s+(?P&lt;last&gt;\pL+)$")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;Bruce Springsteen&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "Bruce Springsteen", &amp;mut caps);
     /// assert!(caps.is_match());
     /// assert!(caps.pattern().is_some());
     /// let slots: Vec&lt;Option&lt;usize&gt;&gt; =
@@ -3688,7 +3688,7 @@ underlying `GroupInfo`.
     /// Every matching capturing group generally corresponds to two slots: one
     /// slot for the starting position and another for the ending position.
     /// Typically, either both are present or neither are. (The weasel word
-    /// &quot;typically&quot; is used here because it really depends on the regex engine
+    /// "typically" is used here because it really depends on the regex engine
     /// implementation. Every sensible regex engine likely adheres to this
     /// invariant, and every regex engine in this crate is sensible.)
     ///
@@ -3711,12 +3711,12 @@ underlying `GroupInfo`.
     /// };
     ///
     /// let re = PikeVM::new_many(&amp;[
-    ///     r&quot;[a-z]+&quot;,
-    ///     r&quot;[0-9]+&quot;,
+    ///     r"[a-z]+",
+    ///     r"[0-9]+",
     /// ])?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;123&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "123", &amp;mut caps);
     /// assert_eq!(Some(PatternID::must(1)), caps.pattern());
     /// // Note that the only guarantee we have here is that slots 2 and 3
     /// // are set to correct values. The contents of the first two slots are
@@ -3751,10 +3751,10 @@ underlying `GroupInfo`.
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>Captures {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="kw">let </span><span class="kw-2">mut </span>dstruct = f.debug_struct(<span class="string">&quot;Captures&quot;</span>);
-        dstruct.field(<span class="string">&quot;pid&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.pid);
+        <span class="kw">let </span><span class="kw-2">mut </span>dstruct = f.debug_struct(<span class="string">"Captures"</span>);
+        dstruct.field(<span class="string">"pid"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.pid);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pid) = <span class="self">self</span>.pid {
-            dstruct.field(<span class="string">&quot;spans&quot;</span>, <span class="kw-2">&amp;</span>CapturesDebugMap { pid, caps: <span class="self">self </span>});
+            dstruct.field(<span class="string">"spans"</span>, <span class="kw-2">&amp;</span>CapturesDebugMap { pid, caps: <span class="self">self </span>});
         }
         dstruct.finish()
     }
@@ -3762,20 +3762,20 @@ underlying `GroupInfo`.
 
 <span class="doccomment">/// A little helper type to provide a nice map-like debug representation for
 /// our capturing group spans.
-</span><span class="kw">struct </span>CapturesDebugMap&lt;<span class="lifetime">&#39;a</span>&gt; {
+</span><span class="kw">struct </span>CapturesDebugMap&lt;<span class="lifetime">'a</span>&gt; {
     pid: PatternID,
-    caps: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Captures,
+    caps: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Captures,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; core::fmt::Debug <span class="kw">for </span>CapturesDebugMap&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; core::fmt::Debug <span class="kw">for </span>CapturesDebugMap&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="kw">struct </span>Key&lt;<span class="lifetime">&#39;a</span>&gt;(usize, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;);
+        <span class="kw">struct </span>Key&lt;<span class="lifetime">'a</span>&gt;(usize, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt;);
 
-        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; core::fmt::Debug <span class="kw">for </span>Key&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; core::fmt::Debug <span class="kw">for </span>Key&lt;<span class="lifetime">'a</span>&gt; {
             <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-                <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = <span class="self">self</span>.<span class="number">1 </span>{
-                    <span class="macro">write!</span>(f, <span class="string">&quot;/{:?}&quot;</span>, name)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">"/{:?}"</span>, name)<span class="question-mark">?</span>;
                 }
                 <span class="prelude-val">Ok</span>(())
             }
@@ -3800,15 +3800,15 @@ underlying `GroupInfo`.
 /// match. See the [`Captures::iter`] method documentation for more details
 /// and examples.
 ///
-/// The lifetime parameter `&#39;a` refers to the lifetime of the underlying
+/// The lifetime parameter `'a` refers to the lifetime of the underlying
 /// `Captures` value.
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>CapturesPatternIter&lt;<span class="lifetime">&#39;a</span>&gt; {
-    caps: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Captures,
-    names: core::iter::Enumerate&lt;GroupInfoPatternNames&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+</span><span class="kw">pub struct </span>CapturesPatternIter&lt;<span class="lifetime">'a</span>&gt; {
+    caps: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Captures,
+    names: core::iter::Enumerate&lt;GroupInfoPatternNames&lt;<span class="lifetime">'a</span>&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>CapturesPatternIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Iterator <span class="kw">for </span>CapturesPatternIter&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">type </span>Item = <span class="prelude-ty">Option</span>&lt;Span&gt;;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Option</span>&lt;Span&gt;&gt; {
@@ -3825,8 +3825,8 @@ underlying `GroupInfo`.
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ExactSizeIterator <span class="kw">for </span>CapturesPatternIter&lt;<span class="lifetime">&#39;a</span>&gt; {}
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; core::iter::FusedIterator <span class="kw">for </span>CapturesPatternIter&lt;<span class="lifetime">&#39;a</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ExactSizeIterator <span class="kw">for </span>CapturesPatternIter&lt;<span class="lifetime">'a</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; core::iter::FusedIterator <span class="kw">for </span>CapturesPatternIter&lt;<span class="lifetime">'a</span>&gt; {}
 
 <span class="doccomment">/// Represents information about capturing groups in a compiled regex.
 ///
@@ -3850,12 +3850,12 @@ underlying `GroupInfo`.
 ///
 /// One of the main responsibilities of a `GroupInfo` is to build a mapping
 /// from `(PatternID, u32)` (where the `u32` is a capture index) to something
-/// called a &quot;slot.&quot; As mentioned above, a slot refers to one half of a
+/// called a "slot." As mentioned above, a slot refers to one half of a
 /// capturing group. Both combined provide the start and end offsets of
 /// a capturing group that participated in a match.
 ///
 /// **The mapping between group indices and slots is an API guarantee.** That
-/// is, the mapping won&#39;t change within a semver compatible release.
+/// is, the mapping won't change within a semver compatible release.
 ///
 /// Slots exist primarily because this is a convenient mechanism by which
 /// regex engines report group offsets at search time. For example, the
@@ -3871,11 +3871,11 @@ underlying `GroupInfo`.
 /// capturing groups and slots is a little complex. However, in the case of a
 /// single pattern, the mapping can be described very simply: for all capture
 /// group indices `i`, its corresponding slots are at `i * 2` and `i * 2 + 1`.
-/// Notice that the pattern ID isn&#39;t involved at all here, because it only
+/// Notice that the pattern ID isn't involved at all here, because it only
 /// applies to a single-pattern regex, it is therefore always `0`.
 ///
 /// In the multi-pattern case, the mapping is a bit more complicated. To talk
-/// about it, we must define what we mean by &quot;implicit&quot; vs &quot;explicit&quot;
+/// about it, we must define what we mean by "implicit" vs "explicit"
 /// capturing groups:
 ///
 /// * An **implicit** capturing group refers to the capturing group that is
@@ -3927,10 +3927,10 @@ underlying `GroupInfo`.
 /// use regex_automata::util::{captures::GroupInfo, primitives::PatternID};
 ///
 /// let info = GroupInfo::new(vec![
-///     vec![None, Some(&quot;foo&quot;)],
+///     vec![None, Some("foo")],
 ///     vec![None],
-///     vec![None, None, None, Some(&quot;bar&quot;), None],
-///     vec![None, None, Some(&quot;foo&quot;)],
+///     vec![None, None, None, Some("bar"), None],
+///     vec![None, None, Some("foo")],
 /// ])?;
 /// // The number of patterns being tracked.
 /// assert_eq!(4, info.pattern_len());
@@ -3946,11 +3946,11 @@ underlying `GroupInfo`.
 ///
 /// // We can map a group index for a particular pattern to its name, if
 /// // one exists.
-/// assert_eq!(Some(&quot;foo&quot;), info.to_name(PatternID::must(3), 2));
+/// assert_eq!(Some("foo"), info.to_name(PatternID::must(3), 2));
 /// assert_eq!(None, info.to_name(PatternID::must(2), 4));
 /// // Or map a name to its group index.
-/// assert_eq!(Some(1), info.to_index(PatternID::must(0), &quot;foo&quot;));
-/// assert_eq!(Some(2), info.to_index(PatternID::must(3), &quot;foo&quot;));
+/// assert_eq!(Some(1), info.to_index(PatternID::must(0), "foo"));
+/// assert_eq!(Some(2), info.to_index(PatternID::must(3), "foo"));
 ///
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
 /// ```
@@ -3965,19 +3965,19 @@ underlying `GroupInfo`.
 /// use regex_automata::util::{captures::GroupInfo, primitives::PatternID};
 ///
 /// let info = GroupInfo::new(vec![
-///     vec![None, Some(&quot;foo&quot;)],
+///     vec![None, Some("foo")],
 ///     vec![None],
-///     vec![None, None, None, Some(&quot;bar&quot;), None],
-///     vec![None, None, Some(&quot;foo&quot;)],
+///     vec![None, None, None, Some("bar"), None],
+///     vec![None, None, Some("foo")],
 /// ])?;
 ///
-/// // We first show the slots for each pattern&#39;s implicit group.
+/// // We first show the slots for each pattern's implicit group.
 /// assert_eq!(Some((0, 1)), info.slots(PatternID::must(0), 0));
 /// assert_eq!(Some((2, 3)), info.slots(PatternID::must(1), 0));
 /// assert_eq!(Some((4, 5)), info.slots(PatternID::must(2), 0));
 /// assert_eq!(Some((6, 7)), info.slots(PatternID::must(3), 0));
 ///
-/// // And now we show the slots for each pattern&#39;s explicit group.
+/// // And now we show the slots for each pattern's explicit group.
 /// assert_eq!(Some((8, 9)), info.slots(PatternID::must(0), 1));
 /// assert_eq!(Some((10, 11)), info.slots(PatternID::must(2), 1));
 /// assert_eq!(Some((12, 13)), info.slots(PatternID::must(2), 2));
@@ -3988,7 +3988,7 @@ underlying `GroupInfo`.
 ///
 /// // Asking for the slots for an invalid pattern ID or even for an invalid
 /// // group index for a specific pattern will return None. So for example,
-/// // you&#39;re guaranteed to not get the slots for a different pattern than the
+/// // you're guaranteed to not get the slots for a different pattern than the
 /// // one requested.
 /// assert_eq!(None, info.slots(PatternID::must(5), 0));
 /// assert_eq!(None, info.slots(PatternID::must(1), 1));
@@ -4002,7 +4002,7 @@ underlying `GroupInfo`.
     <span class="doccomment">/// Creates a new group info from a sequence of patterns, where each
     /// sequence of patterns yields a sequence of possible group names. The
     /// index of each pattern in the sequence corresponds to its `PatternID`,
-    /// and the index of each group in each pattern&#39;s sequence corresponds to
+    /// and the index of each group in each pattern's sequence corresponds to
     /// its corresponding group index.
     ///
     /// While this constructor is very generic and therefore perhaps hard to
@@ -4016,7 +4016,7 @@ underlying `GroupInfo`.
     /// It is legal to pass an empty iterator to this constructor. It will
     /// return an empty group info with zero slots. An empty group info is
     /// useful for cases where you have no patterns or for cases where slots
-    /// aren&#39;t being used at all (e.g., for most DFAs in this crate).
+    /// aren't being used at all (e.g., for most DFAs in this crate).
     ///
     /// # Errors
     ///
@@ -4045,10 +4045,10 @@ underlying `GroupInfo`.
     /// use regex_automata::util::captures::GroupInfo;
     ///
     /// let info = GroupInfo::new(vec![
-    ///     vec![None, Some(&quot;foo&quot;)],
+    ///     vec![None, Some("foo")],
     ///     vec![None],
-    ///     vec![None, None, None, Some(&quot;bar&quot;), None],
-    ///     vec![None, None, Some(&quot;foo&quot;)],
+    ///     vec![None, None, None, Some("bar"), None],
+    ///     vec![None, None, Some("foo")],
     /// ])?;
     /// // The number of patterns being tracked.
     /// assert_eq!(4, info.pattern_len());
@@ -4085,7 +4085,7 @@ underlying `GroupInfo`.
     /// // Either the group info is empty, or all patterns must have at least
     /// // one capturing group.
     /// assert!(GroupInfo::new(vec![
-    ///     vec![None, Some(&quot;a&quot;)], // ok
+    ///     vec![None, Some("a")], // ok
     ///     vec![None], // ok
     ///     vec![], // not ok
     /// ]).is_err());
@@ -4096,16 +4096,16 @@ underlying `GroupInfo`.
     /// // anonymous group. i.e., One that is not named. By convention, this
     /// // group corresponds to the overall match of a regex. Every other group
     /// // in a pattern is explicit and optional.
-    /// assert!(GroupInfo::new(vec![vec![Some(&quot;foo&quot;)]]).is_err());
+    /// assert!(GroupInfo::new(vec![vec![Some("foo")]]).is_err());
     ///
     /// // There must not be duplicate group names within the same pattern.
     /// assert!(GroupInfo::new(vec![
-    ///     vec![None, Some(&quot;foo&quot;), Some(&quot;foo&quot;)],
+    ///     vec![None, Some("foo"), Some("foo")],
     /// ]).is_err());
     /// // But duplicate names across distinct patterns is OK.
     /// assert!(GroupInfo::new(vec![
-    ///     vec![None, Some(&quot;foo&quot;)],
-    ///     vec![None, Some(&quot;foo&quot;)],
+    ///     vec![None, Some("foo")],
+    ///     vec![None, Some("foo")],
     /// ]).is_ok());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -4127,7 +4127,7 @@ underlying `GroupInfo`.
             memory_extra: <span class="number">0</span>,
         };
         <span class="kw">for </span>(pattern_index, groups) <span class="kw">in </span>pattern_groups.into_iter().enumerate() {
-            <span class="comment">// If we can&#39;t convert the pattern index to an ID, then the caller
+            <span class="comment">// If we can't convert the pattern index to an ID, then the caller
             // tried to build capture info for too many patterns.
             </span><span class="kw">let </span>pid = PatternID::new(pattern_index)
                 .map_err(GroupInfoError::too_many_patterns)<span class="question-mark">?</span>;
@@ -4144,8 +4144,8 @@ underlying `GroupInfo`.
             <span class="comment">// Now iterate over the rest, which correspond to all of the
             // (conventionally) explicit capture groups in a regex pattern.
             </span><span class="kw">for </span>(group_index, maybe_name) <span class="kw">in </span>groups_iter {
-                <span class="comment">// Just like for patterns, if the group index can&#39;t be
-                // converted to a &quot;small&quot; index, then the caller has given too
+                <span class="comment">// Just like for patterns, if the group index can't be
+                // converted to a "small" index, then the caller has given too
                 // many groups for a particular pattern.
                 </span><span class="kw">let </span>group = SmallIndex::new(group_index).map_err(|<span class="kw">_</span>| {
                     GroupInfoError::too_many_groups(pid, group_index)
@@ -4180,7 +4180,7 @@ underlying `GroupInfo`.
     /// ```
     </span><span class="kw">pub fn </span>empty() -&gt; GroupInfo {
         GroupInfo::new(core::iter::empty::&lt;[<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;; <span class="number">0</span>]&gt;())
-            .expect(<span class="string">&quot;empty group info is always valid&quot;</span>)
+            .expect(<span class="string">"empty group info is always valid"</span>)
     }
 
     <span class="doccomment">/// Return the capture group index corresponding to the given name in the
@@ -4191,7 +4191,7 @@ underlying `GroupInfo`.
     ///
     /// This also returns `None` for all inputs if these captures are empty
     /// (e.g., built from an empty [`GroupInfo`]). To check whether captures
-    /// are are present for a specific pattern, use [`GroupInfo::group_len`].
+    /// are present for a specific pattern, use [`GroupInfo::group_len`].
     ///
     /// # Example
     ///
@@ -4209,20 +4209,20 @@ underlying `GroupInfo`.
     /// let (pid0, pid1) = (PatternID::must(0), PatternID::must(1));
     ///
     /// let nfa = NFA::new_many(&amp;[
-    ///     r&quot;a(?P&lt;quux&gt;\w+)z(?P&lt;foo&gt;\s+)&quot;,
-    ///     r&quot;a(?P&lt;foo&gt;\d+)z&quot;,
+    ///     r"a(?P&lt;quux&gt;\w+)z(?P&lt;foo&gt;\s+)",
+    ///     r"a(?P&lt;foo&gt;\d+)z",
     /// ])?;
     /// let groups = nfa.group_info();
-    /// assert_eq!(Some(2), groups.to_index(pid0, &quot;foo&quot;));
+    /// assert_eq!(Some(2), groups.to_index(pid0, "foo"));
     /// // Recall that capture index 0 is always unnamed and refers to the
     /// // entire pattern. So the first capturing group present in the pattern
     /// // itself always starts at index 1.
-    /// assert_eq!(Some(1), groups.to_index(pid1, &quot;foo&quot;));
+    /// assert_eq!(Some(1), groups.to_index(pid1, "foo"));
     ///
     /// // And if a name does not exist for a particular pattern, None is
     /// // returned.
-    /// assert!(groups.to_index(pid0, &quot;quux&quot;).is_some());
-    /// assert!(groups.to_index(pid1, &quot;quux&quot;).is_none());
+    /// assert!(groups.to_index(pid0, "quux").is_some());
+    /// assert!(groups.to_index(pid1, "quux").is_none());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -4243,7 +4243,7 @@ underlying `GroupInfo`.
     ///
     /// This also returns `None` for all inputs if these captures are empty
     /// (e.g., built from an empty [`GroupInfo`]). To check whether captures
-    /// are are present for a specific pattern, use [`GroupInfo::group_len`].
+    /// are present for a specific pattern, use [`GroupInfo::group_len`].
     ///
     /// # Example
     ///
@@ -4257,19 +4257,19 @@ underlying `GroupInfo`.
     /// let (pid0, pid1) = (PatternID::must(0), PatternID::must(1));
     ///
     /// let nfa = NFA::new_many(&amp;[
-    ///     r&quot;a(?P&lt;foo&gt;\w+)z(\s+)x(\d+)&quot;,
-    ///     r&quot;a(\d+)z(?P&lt;foo&gt;\s+)&quot;,
+    ///     r"a(?P&lt;foo&gt;\w+)z(\s+)x(\d+)",
+    ///     r"a(\d+)z(?P&lt;foo&gt;\s+)",
     /// ])?;
     /// let groups = nfa.group_info();
     /// assert_eq!(None, groups.to_name(pid0, 0));
-    /// assert_eq!(Some(&quot;foo&quot;), groups.to_name(pid0, 1));
+    /// assert_eq!(Some("foo"), groups.to_name(pid0, 1));
     /// assert_eq!(None, groups.to_name(pid0, 2));
     /// assert_eq!(None, groups.to_name(pid0, 3));
     ///
     /// assert_eq!(None, groups.to_name(pid1, 0));
     /// assert_eq!(None, groups.to_name(pid1, 1));
-    /// assert_eq!(Some(&quot;foo&quot;), groups.to_name(pid1, 2));
-    /// // &#39;3&#39; is not a valid capture index for the second pattern.
+    /// assert_eq!(Some("foo"), groups.to_name(pid1, 2));
+    /// // '3' is not a valid capture index for the second pattern.
     /// assert_eq!(None, groups.to_name(pid1, 3));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -4298,10 +4298,10 @@ underlying `GroupInfo`.
     /// ```
     /// use regex_automata::{nfa::thompson::NFA, PatternID};
     ///
-    /// let nfa = NFA::new(r&quot;(a)(?P&lt;foo&gt;b)(c)(d)(?P&lt;bar&gt;e)&quot;)?;
+    /// let nfa = NFA::new(r"(a)(?P&lt;foo&gt;b)(c)(d)(?P&lt;bar&gt;e)")?;
     /// // The first is the implicit group that is always unnammed. The next
     /// // 5 groups are the explicit groups found in the concrete syntax above.
-    /// let expected = vec![None, None, Some(&quot;foo&quot;), None, None, Some(&quot;bar&quot;)];
+    /// let expected = vec![None, None, Some("foo"), None, None, Some("bar")];
     /// let got: Vec&lt;Option&lt;&amp;str&gt;&gt; =
     ///     nfa.group_info().pattern_names(PatternID::ZERO).collect();
     /// assert_eq!(expected, got);
@@ -4313,7 +4313,7 @@ underlying `GroupInfo`.
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>pattern_names(<span class="kw-2">&amp;</span><span class="self">self</span>, pid: PatternID) -&gt; GroupInfoPatternNames&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub fn </span>pattern_names(<span class="kw-2">&amp;</span><span class="self">self</span>, pid: PatternID) -&gt; GroupInfoPatternNames&lt;<span class="lifetime">'_</span>&gt; {
         GroupInfoPatternNames {
             it: <span class="self">self
                 </span>.<span class="number">0
@@ -4325,8 +4325,8 @@ underlying `GroupInfo`.
     }
 
     <span class="doccomment">/// Return an iterator of all capture groups for all patterns supported by
-    /// this `GroupInfo`. Each item yielded is a triple of the group&#39;s pattern
-    /// ID, index in the pattern and the group&#39;s name, if present.
+    /// this `GroupInfo`. Each item yielded is a triple of the group's pattern
+    /// ID, index in the pattern and the group's name, if present.
     ///
     /// # Example
     ///
@@ -4337,13 +4337,13 @@ underlying `GroupInfo`.
     /// use regex_automata::{nfa::thompson::NFA, PatternID};
     ///
     /// let nfa = NFA::new_many(&amp;[
-    ///     r&quot;(?P&lt;foo&gt;a)&quot;,
-    ///     r&quot;a&quot;,
-    ///     r&quot;(a)&quot;,
+    ///     r"(?P&lt;foo&gt;a)",
+    ///     r"a",
+    ///     r"(a)",
     /// ])?;
     /// let expected = vec![
     ///     (PatternID::must(0), 0, None),
-    ///     (PatternID::must(0), 1, Some(&quot;foo&quot;)),
+    ///     (PatternID::must(0), 1, Some("foo")),
     ///     (PatternID::must(1), 0, None),
     ///     (PatternID::must(2), 0, None),
     ///     (PatternID::must(2), 1, None),
@@ -4355,8 +4355,8 @@ underlying `GroupInfo`.
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     ///
-    /// Unlike other capturing group related routines, this routine doesn&#39;t
-    /// panic even if captures aren&#39;t enabled on this NFA:
+    /// Unlike other capturing group related routines, this routine doesn't
+    /// panic even if captures aren't enabled on this NFA:
     ///
     /// ```
     /// use regex_automata::nfa::thompson::{NFA, WhichCaptures};
@@ -4364,17 +4364,17 @@ underlying `GroupInfo`.
     /// let nfa = NFA::compiler()
     ///     .configure(NFA::config().which_captures(WhichCaptures::None))
     ///     .build_many(&amp;[
-    ///         r&quot;(?P&lt;foo&gt;a)&quot;,
-    ///         r&quot;a&quot;,
-    ///         r&quot;(a)&quot;,
+    ///         r"(?P&lt;foo&gt;a)",
+    ///         r"a",
+    ///         r"(a)",
     ///     ])?;
-    /// // When captures aren&#39;t enabled, there&#39;s nothing to return.
+    /// // When captures aren't enabled, there's nothing to return.
     /// assert_eq!(0, nfa.group_info().all_names().count());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>all_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; GroupInfoAllNames&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub fn </span>all_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; GroupInfoAllNames&lt;<span class="lifetime">'_</span>&gt; {
         GroupInfoAllNames {
             group_info: <span class="self">self</span>,
             pids: PatternID::iter(<span class="self">self</span>.pattern_len()),
@@ -4401,7 +4401,7 @@ underlying `GroupInfo`.
     /// ```
     /// use regex_automata::{nfa::thompson::NFA, PatternID};
     ///
-    /// let nfa = NFA::new_many(&amp;[&quot;a&quot;, &quot;b&quot;])?;
+    /// let nfa = NFA::new_many(&amp;["a", "b"])?;
     /// assert_ne!(
     ///     nfa.group_info().slots(PatternID::must(0), 0),
     ///     nfa.group_info().slots(PatternID::must(1), 0),
@@ -4419,7 +4419,7 @@ underlying `GroupInfo`.
         pid: PatternID,
         group_index: usize,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, usize)&gt; {
-        <span class="comment">// Since &#39;slot&#39; only even returns valid starting slots, we know that
+        <span class="comment">// Since 'slot' only even returns valid starting slots, we know that
         // there must also be an end slot and that end slot is always one more
         // than the start slot.
         </span><span class="self">self</span>.slot(pid, group_index).map(|start| (start, start + <span class="number">1</span>))
@@ -4440,7 +4440,7 @@ underlying `GroupInfo`.
     /// ```
     /// use regex_automata::{nfa::thompson::NFA, PatternID};
     ///
-    /// let nfa = NFA::new_many(&amp;[&quot;a&quot;, &quot;b&quot;])?;
+    /// let nfa = NFA::new_many(&amp;["a", "b"])?;
     /// assert_ne!(
     ///     nfa.group_info().slot(PatternID::must(0), 0),
     ///     nfa.group_info().slot(PatternID::must(1), 0),
@@ -4453,14 +4453,14 @@ underlying `GroupInfo`.
         <span class="kw">if </span>group_index &gt;= <span class="self">self</span>.group_len(pid) {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
-        <span class="comment">// At this point, we know that &#39;pid&#39; refers to a real pattern and that
-        // &#39;group_index&#39; refers to a real group. We therefore also know that
+        <span class="comment">// At this point, we know that 'pid' refers to a real pattern and that
+        // 'group_index' refers to a real group. We therefore also know that
         // the pattern and group can be combined to return a correct slot.
-        // That&#39;s why we don&#39;t need to use checked arithmetic below.
+        // That's why we don't need to use checked arithmetic below.
         </span><span class="kw">if </span>group_index == <span class="number">0 </span>{
             <span class="prelude-val">Some</span>(pid.as_usize() * <span class="number">2</span>)
         } <span class="kw">else </span>{
-            <span class="comment">// As above, we don&#39;t need to check that our slot is less than the
+            <span class="comment">// As above, we don't need to check that our slot is less than the
             // end of our range since we already know the group index is a
             // valid index for the given pattern.
             </span><span class="kw">let </span>(start, <span class="kw">_</span>) = <span class="self">self</span>.<span class="number">0</span>.slot_ranges[pid];
@@ -4481,7 +4481,7 @@ underlying `GroupInfo`.
     /// ```
     /// use regex_automata::nfa::thompson::NFA;
     ///
-    /// let nfa = NFA::new_many(&amp;[&quot;[0-9]+&quot;, &quot;[a-z]+&quot;, &quot;[A-Z]+&quot;])?;
+    /// let nfa = NFA::new_many(&amp;["[0-9]+", "[a-z]+", "[A-Z]+"])?;
     /// assert_eq!(3, nfa.group_info().pattern_len());
     ///
     /// let nfa = NFA::never_match();
@@ -4509,24 +4509,24 @@ underlying `GroupInfo`.
     /// ```
     /// use regex_automata::{nfa::thompson::{NFA, WhichCaptures}, PatternID};
     ///
-    /// let nfa = NFA::new(r&quot;(a)(b)(c)&quot;)?;
-    /// // There are 3 explicit groups in the pattern&#39;s concrete syntax and
+    /// let nfa = NFA::new(r"(a)(b)(c)")?;
+    /// // There are 3 explicit groups in the pattern's concrete syntax and
     /// // 1 unnamed and implicit group spanning the entire pattern.
     /// assert_eq!(4, nfa.group_info().group_len(PatternID::ZERO));
     ///
-    /// let nfa = NFA::new(r&quot;abc&quot;)?;
+    /// let nfa = NFA::new(r"abc")?;
     /// // There is just the unnamed implicit group.
     /// assert_eq!(1, nfa.group_info().group_len(PatternID::ZERO));
     ///
     /// let nfa = NFA::compiler()
     ///     .configure(NFA::config().which_captures(WhichCaptures::None))
-    ///     .build(r&quot;abc&quot;)?;
+    ///     .build(r"abc")?;
     /// // We disabled capturing groups, so there are none.
     /// assert_eq!(0, nfa.group_info().group_len(PatternID::ZERO));
     ///
     /// let nfa = NFA::compiler()
     ///     .configure(NFA::config().which_captures(WhichCaptures::None))
-    ///     .build(r&quot;(a)(b)(c)&quot;)?;
+    ///     .build(r"(a)(b)(c)")?;
     /// // We disabled capturing groups, so there are none, even if there are
     /// // explicit groups in the concrete syntax.
     /// assert_eq!(0, nfa.group_info().group_len(PatternID::ZERO));
@@ -4551,29 +4551,29 @@ underlying `GroupInfo`.
     /// ```
     /// use regex_automata::{nfa::thompson::{NFA, WhichCaptures}, PatternID};
     ///
-    /// let nfa = NFA::new(r&quot;(a)(b)(c)&quot;)?;
-    /// // There are 3 explicit groups in the pattern&#39;s concrete syntax and
+    /// let nfa = NFA::new(r"(a)(b)(c)")?;
+    /// // There are 3 explicit groups in the pattern's concrete syntax and
     /// // 1 unnamed and implicit group spanning the entire pattern.
     /// assert_eq!(4, nfa.group_info().all_group_len());
     ///
-    /// let nfa = NFA::new(r&quot;abc&quot;)?;
+    /// let nfa = NFA::new(r"abc")?;
     /// // There is just the unnamed implicit group.
     /// assert_eq!(1, nfa.group_info().all_group_len());
     ///
-    /// let nfa = NFA::new_many(&amp;[&quot;(a)&quot;, &quot;b&quot;, &quot;(c)&quot;])?;
+    /// let nfa = NFA::new_many(&amp;["(a)", "b", "(c)"])?;
     /// // Each pattern has one implicit groups, and two
     /// // patterns have one explicit group each.
     /// assert_eq!(5, nfa.group_info().all_group_len());
     ///
     /// let nfa = NFA::compiler()
     ///     .configure(NFA::config().which_captures(WhichCaptures::None))
-    ///     .build(r&quot;abc&quot;)?;
+    ///     .build(r"abc")?;
     /// // We disabled capturing groups, so there are none.
     /// assert_eq!(0, nfa.group_info().all_group_len());
     ///
     /// let nfa = NFA::compiler()
     ///     .configure(NFA::config().which_captures(WhichCaptures::None))
-    ///     .build(r&quot;(a)(b)(c)&quot;)?;
+    ///     .build(r"(a)(b)(c)")?;
     /// // We disabled capturing groups, so there are none, even if there are
     /// // explicit groups in the concrete syntax.
     /// assert_eq!(0, nfa.group_info().group_len(PatternID::ZERO));
@@ -4601,10 +4601,10 @@ underlying `GroupInfo`.
     ///
     /// // There are 11 total groups here.
     /// let info = GroupInfo::new(vec![
-    ///     vec![None, Some(&quot;foo&quot;)],
+    ///     vec![None, Some("foo")],
     ///     vec![None],
-    ///     vec![None, None, None, Some(&quot;bar&quot;), None],
-    ///     vec![None, None, Some(&quot;foo&quot;)],
+    ///     vec![None, None, None, Some("bar"), None],
+    ///     vec![None, None, Some("foo")],
     /// ])?;
     /// // 2 slots per group gives us 11*2=22 slots.
     /// assert_eq!(22, info.slot_len());
@@ -4618,7 +4618,7 @@ underlying `GroupInfo`.
 
     <span class="doccomment">/// Returns the total number of slots for implicit capturing groups.
     ///
-    /// This is like [`GroupInfo::slot_len`], except it doesn&#39;t include the
+    /// This is like [`GroupInfo::slot_len`], except it doesn't include the
     /// explicit slots for each pattern. Since there are always exactly 2
     /// implicit slots for each pattern, the number of implicit slots is always
     /// equal to twice the number of patterns.
@@ -4632,7 +4632,7 @@ underlying `GroupInfo`.
     /// use regex_automata::util::captures::GroupInfo;
     ///
     /// // There are 11 total groups here.
-    /// let info = GroupInfo::new(vec![vec![None, Some(&quot;foo&quot;), Some(&quot;bar&quot;)]])?;
+    /// let info = GroupInfo::new(vec![vec![None, Some("foo"), Some("bar")]])?;
     /// // 2 slots per group gives us 11*2=22 slots.
     /// assert_eq!(6, info.slot_len());
     /// // 2 implicit slots per pattern gives us 2 implicit slots since there
@@ -4650,7 +4650,7 @@ underlying `GroupInfo`.
 
     <span class="doccomment">/// Returns the total number of slots for explicit capturing groups.
     ///
-    /// This is like [`GroupInfo::slot_len`], except it doesn&#39;t include the
+    /// This is like [`GroupInfo::slot_len`], except it doesn't include the
     /// implicit slots for each pattern. (There are always 2 implicit slots for
     /// each pattern.)
     ///
@@ -4668,7 +4668,7 @@ underlying `GroupInfo`.
     /// use regex_automata::util::captures::GroupInfo;
     ///
     /// // There are 11 total groups here.
-    /// let info = GroupInfo::new(vec![vec![None, Some(&quot;foo&quot;), Some(&quot;bar&quot;)]])?;
+    /// let info = GroupInfo::new(vec![vec![None, Some("foo"), Some("bar")]])?;
     /// // 2 slots per group gives us 11*2=22 slots.
     /// assert_eq!(6, info.slot_len());
     /// // 2 implicit slots per pattern gives us 2 implicit slots since there
@@ -4709,13 +4709,13 @@ underlying `GroupInfo`.
 /// Perhaps a more memory efficient representation would be
 /// HashMap&lt;(PatternID, Arc&lt;str&gt;), usize&gt;, but this makes it difficult to look
 /// up a capture index by name without producing a `Arc&lt;str&gt;`, which requires
-/// an allocation. To fix this, I think we&#39;d need to define our own unsized
-/// type or something? Anyway, I didn&#39;t give this much thought since it
-/// probably doesn&#39;t matter much in the grand scheme of things. But it did
+/// an allocation. To fix this, I think we'd need to define our own unsized
+/// type or something? Anyway, I didn't give this much thought since it
+/// probably doesn't matter much in the grand scheme of things. But it did
 /// stand out to me as mildly wasteful.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">type </span>CaptureNameMap = std::collections::HashMap&lt;Arc&lt;str&gt;, SmallIndex&gt;;
-<span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+<span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
 </span><span class="kw">type </span>CaptureNameMap = alloc::collections::BTreeMap&lt;Arc&lt;str&gt;, SmallIndex&gt;;
 
 <span class="doccomment">/// The inner guts of `GroupInfo`. This type only exists so that it can
@@ -4745,7 +4745,7 @@ underlying `GroupInfo`.
         // Note that since the slots for the 0th group for every pattern appear
         // before any slots for the nth group (where n &gt; 0) in any pattern, we
         // will have to fix up the slot ranges once we know how many patterns
-        // we&#39;ve added capture groups for.
+        // we've added capture groups for.
         </span><span class="kw">let </span>slot_start = <span class="self">self</span>.small_slot_len();
         <span class="self">self</span>.slot_ranges.push((slot_start, slot_start));
         <span class="self">self</span>.name_to_index.push(CaptureNameMap::new());
@@ -4770,9 +4770,9 @@ underlying `GroupInfo`.
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), GroupInfoError&gt; {
         <span class="comment">// We also need to check that the slot index generated for
         // this group is also valid. Although, this is a little weird
-        // because we offset these indices below, at which point, we&#39;ll
+        // because we offset these indices below, at which point, we'll
         // have to recheck them. Gosh this is annoying. Note that
-        // the &#39;+2&#39; below is OK because &#39;end&#39; is guaranteed to be less
+        // the '+2' below is OK because 'end' is guaranteed to be less
         // than isize::MAX.
         </span><span class="kw">let </span>end = <span class="kw-2">&amp;mut </span><span class="self">self</span>.slot_ranges[pid].<span class="number">1</span>;
         <span class="kw-2">*</span>end = SmallIndex::new(end.as_usize() + <span class="number">2</span>).map_err(|<span class="kw">_</span>| {
@@ -4789,8 +4789,8 @@ underlying `GroupInfo`.
             <span class="comment">// Adds the memory used by the Arc&lt;str&gt; in both maps.
             </span><span class="self">self</span>.memory_extra +=
                 <span class="number">2 </span>* (len + core::mem::size_of::&lt;<span class="prelude-ty">Option</span>&lt;Arc&lt;str&gt;&gt;&gt;());
-            <span class="comment">// And also the value entry for the &#39;name_to_index&#39; map.
-            // This is probably an underestimate for &#39;name_to_index&#39; since
+            <span class="comment">// And also the value entry for the 'name_to_index' map.
+            // This is probably an underestimate for 'name_to_index' since
             // hashmaps/btrees likely have some non-zero overhead, but we
             // assume here that they have zero overhead.
             </span><span class="self">self</span>.memory_extra += core::mem::size_of::&lt;SmallIndex&gt;();
@@ -4802,14 +4802,14 @@ underlying `GroupInfo`.
         // is in line with the number of groups added so far for this
         // pattern.
         </span><span class="macro">assert_eq!</span>(group.one_more(), <span class="self">self</span>.group_len(pid));
-        <span class="comment">// And is also in line with the &#39;index_to_name&#39; map.
+        <span class="comment">// And is also in line with the 'index_to_name' map.
         </span><span class="macro">assert_eq!</span>(group.one_more(), <span class="self">self</span>.index_to_name[pid].len());
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// This corrects the slot ranges to account for the slots corresponding
     /// to the zeroth group of each pattern. That is, every slot range is
-    /// offset by &#39;pattern_len() * 2&#39;, since each pattern uses two slots to
+    /// offset by 'pattern_len() * 2', since each pattern uses two slots to
     /// represent the zeroth group.
     </span><span class="kw">fn </span>fixup_slot_ranges(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), GroupInfoError&gt; {
         <span class="kw">use </span><span class="kw">crate</span>::util::primitives::IteratorIndexExt;
@@ -4845,7 +4845,7 @@ underlying `GroupInfo`.
     }
 
     <span class="doccomment">/// Return the total number of capturing groups for the given pattern. If
-    /// the given pattern isn&#39;t valid for this capture slot info, then 0 is
+    /// the given pattern isn't valid for this capture slot info, then 0 is
     /// returned.
     </span><span class="kw">fn </span>group_len(<span class="kw-2">&amp;</span><span class="self">self</span>, pid: PatternID) -&gt; usize {
         <span class="kw">let </span>(start, end) = <span class="kw">match </span><span class="self">self</span>.slot_ranges.get(pid.as_usize()) {
@@ -4860,13 +4860,13 @@ underlying `GroupInfo`.
     }
 
     <span class="doccomment">/// Return the total number of slots in this capture slot info as a
-    /// &quot;small index.&quot;
+    /// "small index."
     </span><span class="kw">fn </span>small_slot_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SmallIndex {
         <span class="comment">// Since slots are allocated in order of pattern (starting at 0) and
         // then in order of capture group, it follows that the number of slots
         // is the end of the range of slots for the last pattern. This is
         // true even when the last pattern has no capturing groups, since
-        // &#39;slot_ranges&#39; will still represent it explicitly with an empty
+        // 'slot_ranges' will still represent it explicitly with an empty
         // range.
         </span><span class="self">self</span>.slot_ranges.last().map_or(SmallIndex::ZERO, |<span class="kw-2">&amp;</span>(<span class="kw">_</span>, end)| end)
     }
@@ -4885,7 +4885,7 @@ underlying `GroupInfo`.
 
 <span class="doccomment">/// The kind of error that occurs when building a `GroupInfo` fails.
 ///
-/// We keep this un-exported because it&#39;s not clear how useful it is to
+/// We keep this un-exported because it's not clear how useful it is to
 /// export it.
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">enum </span>GroupInfoErrorKind {
@@ -4919,7 +4919,7 @@ underlying `GroupInfo`.
     <span class="doccomment">/// An error that occurs when duplicate capture group names for the same
     /// pattern are added.
     ///
-    /// NOTE: At time of writing, this error can never occur if you&#39;re using
+    /// NOTE: At time of writing, this error can never occur if you're using
     /// regex-syntax, since the parser itself will reject patterns with
     /// duplicate capture group names. This error can only occur when the
     /// builder is used to hand construct NFAs.
@@ -4962,9 +4962,9 @@ underlying `GroupInfo`.
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>GroupInfoError {
-    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">&#39;static</span>)&gt; {
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">'static</span>)&gt; {
         <span class="kw">match </span><span class="self">self</span>.kind {
             GroupInfoErrorKind::TooManyPatterns { .. }
             | GroupInfoErrorKind::TooManyGroups { .. }
@@ -4976,38 +4976,38 @@ underlying `GroupInfo`.
 }
 
 <span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>GroupInfoError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
         <span class="kw">use </span><span class="self">self</span>::GroupInfoErrorKind::<span class="kw-2">*</span>;
 
         <span class="kw">match </span><span class="self">self</span>.kind {
             TooManyPatterns { <span class="kw-2">ref </span>err } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;too many patterns to build capture info: {}&quot;</span>, err)
+                <span class="macro">write!</span>(f, <span class="string">"too many patterns to build capture info: {}"</span>, err)
             }
             TooManyGroups { pattern, minimum } =&gt; {
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;too many capture groups (at least {}) were \
-                     found for pattern {}&quot;</span>,
+                    <span class="string">"too many capture groups (at least {}) were \
+                     found for pattern {}"</span>,
                     minimum,
                     pattern.as_usize()
                 )
             }
             MissingGroups { pattern } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;no capturing groups found for pattern {} \
+                <span class="string">"no capturing groups found for pattern {} \
                  (either all patterns have zero groups or all patterns have \
-                  at least one group)&quot;</span>,
+                  at least one group)"</span>,
                 pattern.as_usize(),
             ),
             FirstMustBeUnnamed { pattern } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;first capture group (at index 0) for pattern {} has a name \
-                 (it must be unnamed)&quot;</span>,
+                <span class="string">"first capture group (at index 0) for pattern {} has a name \
+                 (it must be unnamed)"</span>,
                 pattern.as_usize(),
             ),
             Duplicate { pattern, <span class="kw-2">ref </span>name } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;duplicate capture group name &#39;{}&#39; found for pattern {}&quot;</span>,
+                <span class="string">"duplicate capture group name '{}' found for pattern {}"</span>,
                 name,
                 pattern.as_usize(),
             ),
@@ -5019,23 +5019,23 @@ underlying `GroupInfo`.
 ///
 /// This iterator is created by [`GroupInfo::pattern_names`].
 ///
-/// The lifetime parameter `&#39;a` refers to the lifetime of the `GroupInfo`
+/// The lifetime parameter `'a` refers to the lifetime of the `GroupInfo`
 /// from which this iterator was created.
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>GroupInfoPatternNames&lt;<span class="lifetime">&#39;a</span>&gt; {
-    it: core::slice::Iter&lt;<span class="lifetime">&#39;a</span>, <span class="prelude-ty">Option</span>&lt;Arc&lt;str&gt;&gt;&gt;,
+</span><span class="kw">pub struct </span>GroupInfoPatternNames&lt;<span class="lifetime">'a</span>&gt; {
+    it: core::slice::Iter&lt;<span class="lifetime">'a</span>, <span class="prelude-ty">Option</span>&lt;Arc&lt;str&gt;&gt;&gt;,
 }
 
-<span class="kw">impl </span>GroupInfoPatternNames&lt;<span class="lifetime">&#39;static</span>&gt; {
-    <span class="kw">fn </span>empty() -&gt; GroupInfoPatternNames&lt;<span class="lifetime">&#39;static</span>&gt; {
+<span class="kw">impl </span>GroupInfoPatternNames&lt;<span class="lifetime">'static</span>&gt; {
+    <span class="kw">fn </span>empty() -&gt; GroupInfoPatternNames&lt;<span class="lifetime">'static</span>&gt; {
         GroupInfoPatternNames { it: [].iter() }
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>GroupInfoPatternNames&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">type </span>Item = <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Iterator <span class="kw">for </span>GroupInfoPatternNames&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">type </span>Item = <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt;;
 
-    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;&gt; {
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt;&gt; {
         <span class="self">self</span>.it.next().map(|x| x.as_deref())
     }
 
@@ -5048,31 +5048,31 @@ underlying `GroupInfo`.
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ExactSizeIterator <span class="kw">for </span>GroupInfoPatternNames&lt;<span class="lifetime">&#39;a</span>&gt; {}
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; core::iter::FusedIterator <span class="kw">for </span>GroupInfoPatternNames&lt;<span class="lifetime">&#39;a</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ExactSizeIterator <span class="kw">for </span>GroupInfoPatternNames&lt;<span class="lifetime">'a</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; core::iter::FusedIterator <span class="kw">for </span>GroupInfoPatternNames&lt;<span class="lifetime">'a</span>&gt; {}
 
 <span class="doccomment">/// An iterator over capturing groups and their names for a `GroupInfo`.
 ///
 /// This iterator is created by [`GroupInfo::all_names`].
 ///
-/// The lifetime parameter `&#39;a` refers to the lifetime of the `GroupInfo`
+/// The lifetime parameter `'a` refers to the lifetime of the `GroupInfo`
 /// from which this iterator was created.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>GroupInfoAllNames&lt;<span class="lifetime">&#39;a</span>&gt; {
-    group_info: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>GroupInfo,
+</span><span class="kw">pub struct </span>GroupInfoAllNames&lt;<span class="lifetime">'a</span>&gt; {
+    group_info: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>GroupInfo,
     pids: PatternIDIter,
     current_pid: <span class="prelude-ty">Option</span>&lt;PatternID&gt;,
-    names: <span class="prelude-ty">Option</span>&lt;core::iter::Enumerate&lt;GroupInfoPatternNames&lt;<span class="lifetime">&#39;a</span>&gt;&gt;&gt;,
+    names: <span class="prelude-ty">Option</span>&lt;core::iter::Enumerate&lt;GroupInfoPatternNames&lt;<span class="lifetime">'a</span>&gt;&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>GroupInfoAllNames&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">type </span>Item = (PatternID, usize, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;);
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Iterator <span class="kw">for </span>GroupInfoAllNames&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">type </span>Item = (PatternID, usize, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt;);
 
-    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(PatternID, usize, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;)&gt; {
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(PatternID, usize, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt;)&gt; {
         <span class="comment">// If the group info has no captures, then we never have anything
         // to yield. We need to consider this case explicitly (at time of
-        // writing) because &#39;pattern_capture_names&#39; will panic if captures
-        // aren&#39;t enabled.
+        // writing) because 'pattern_capture_names' will panic if captures
+        // aren't enabled.
         </span><span class="kw">if </span><span class="self">self</span>.group_info.<span class="number">0</span>.index_to_name.is_empty() {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }

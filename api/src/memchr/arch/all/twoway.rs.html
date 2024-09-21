@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memchr-2.7.1/src/arch/all/twoway.rs`."><title>twoway.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../memchr/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memchr-2.7.4/src/arch/all/twoway.rs`."><title>twoway.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../memchr/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -885,7 +885,7 @@ Two-Way makes for a nice general purpose substring search algorithm because of
 its time and space complexity properties. It also performs well in practice.
 Namely, with `m = len(needle)` and `n = len(haystack)`, Two-Way takes `O(m)`
 time to create a finder, `O(1)` space and `O(n)` search time. In other words,
-the preprocessing step is quick, doesn&#39;t require any heap memory and the worst
+the preprocessing step is quick, doesn't require any heap memory and the worst
 case search time is guaranteed to be linear in the haystack regardless of the
 size of the needle.
 
@@ -924,27 +924,27 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
 /// `n ~ len(needle)` and `m ~ len(haystack)`.
 ///
 /// The implementation here roughly matches that which was developed by
-/// Crochemore and Perrin in their 1991 paper &quot;Two-way string-matching.&quot; The
+/// Crochemore and Perrin in their 1991 paper "Two-way string-matching." The
 /// changes in this implementation are 1) the use of zero-based indices, 2) a
-/// heuristic skip table based on the last byte (borrowed from Rust&#39;s standard
+/// heuristic skip table based on the last byte (borrowed from Rust's standard
 /// library) and 3) the addition of heuristics for a fast skip loop. For (3),
-/// callers can pass any kind of prefilter they want, but usually it&#39;s one
+/// callers can pass any kind of prefilter they want, but usually it's one
 /// based on a heuristic that uses an approximate background frequency of bytes
 /// to choose rare bytes to quickly look for candidate match positions. Note
 /// though that currently, this prefilter functionality is not exposed directly
 /// in the public API. (File an issue if you want it and provide a use case
 /// please.)
 ///
-/// The heuristic for fast skipping is automatically shut off if it&#39;s
+/// The heuristic for fast skipping is automatically shut off if it's
 /// detected to be ineffective at search time. Generally, this only occurs in
 /// pathological cases. But this is generally necessary in order to preserve
 /// a `O(n + m)` time bound.
 ///
-/// The code below is fairly complex and not obviously correct at all. It&#39;s
+/// The code below is fairly complex and not obviously correct at all. It's
 /// likely necessary to read the Two-Way paper cited above in order to fully
 /// grok this code. The essence of it is:
 ///
-/// 1. Do something to detect a &quot;critical&quot; position in the needle.
+/// 1. Do something to detect a "critical" position in the needle.
 /// 2. For the current position in the haystack, look if `needle[critical..]`
 /// matches at that position.
 /// 3. If so, look if `needle[..critical]` matches.
@@ -962,23 +962,23 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
     /// When used as a prefilter, if the last byte at the current candidate
     /// position is NOT in this set, then we can skip that entire candidate
     /// position (the length of the needle). This is essentially the shift
-    /// trick found in Boyer-Moore, but only applied to bytes that don&#39;t appear
+    /// trick found in Boyer-Moore, but only applied to bytes that don't appear
     /// in the needle.
     ///
-    /// N.B. This trick was inspired by something similar in std&#39;s
+    /// N.B. This trick was inspired by something similar in std's
     /// implementation of Two-Way.
     </span>byteset: ApproximateByteSet,
     <span class="doccomment">/// A critical position in needle. Specifically, this position corresponds
     /// to beginning of either the minimal or maximal suffix in needle. (N.B.
-    /// See SuffixType below for why &quot;minimal&quot; isn&#39;t quite the correct word
+    /// See SuffixType below for why "minimal" isn't quite the correct word
     /// here.)
     ///
     /// This is the position at which every search begins. Namely, search
     /// starts by scanning text to the right of this position, and only if
-    /// there&#39;s a match does the text to the left of this position get scanned.
+    /// there's a match does the text to the left of this position get scanned.
     </span>critical_pos: usize,
     <span class="doccomment">/// The amount we shift by in the Two-Way search algorithm. This
-    /// corresponds to the &quot;small period&quot; and &quot;large period&quot; cases.
+    /// corresponds to the "small period" and "large period" cases.
     </span>shift: Shift,
 }
 
@@ -1019,7 +1019,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
     /// accelerating searches.
     ///
     /// Currently this is not exposed in the public API because, at the time
-    /// of writing, I didn&#39;t want to spend time thinking about how to expose
+    /// of writing, I didn't want to spend time thinking about how to expose
     /// the prefilter infrastructure (if at all). If you have a compelling use
     /// case for exposing this routine, please create an issue. Do *not* open
     /// a PR that just exposes `Pre` and friends. Exporting this routine will
@@ -1027,7 +1027,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
     </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>find_with_prefilter(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        pre: <span class="prelude-ty">Option</span>&lt;Pre&lt;<span class="lifetime">&#39;_</span>&gt;&gt;,
+        pre: <span class="prelude-ty">Option</span>&lt;Pre&lt;<span class="lifetime">'_</span>&gt;&gt;,
         haystack: <span class="kw-2">&amp;</span>[u8],
         needle: <span class="kw-2">&amp;</span>[u8],
     ) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -1050,7 +1050,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
     </span><span class="attr">#[inline(always)]
     </span><span class="kw">fn </span>find_small_imp(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw-2">mut </span>pre: <span class="prelude-ty">Option</span>&lt;Pre&lt;<span class="lifetime">&#39;_</span>&gt;&gt;,
+        <span class="kw-2">mut </span>pre: <span class="prelude-ty">Option</span>&lt;Pre&lt;<span class="lifetime">'_</span>&gt;&gt;,
         haystack: <span class="kw-2">&amp;</span>[u8],
         needle: <span class="kw-2">&amp;</span>[u8],
         period: usize,
@@ -1102,7 +1102,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
     <span class="attr">#[inline(always)]
     </span><span class="kw">fn </span>find_large_imp(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw-2">mut </span>pre: <span class="prelude-ty">Option</span>&lt;Pre&lt;<span class="lifetime">&#39;_</span>&gt;&gt;,
+        <span class="kw-2">mut </span>pre: <span class="prelude-ty">Option</span>&lt;Pre&lt;<span class="lifetime">'_</span>&gt;&gt;,
         haystack: <span class="kw-2">&amp;</span>[u8],
         needle: <span class="kw-2">&amp;</span>[u8],
         shift: usize,
@@ -1112,7 +1112,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(pos),
             <span class="prelude-val">Some</span>(last_byte) =&gt; last_byte,
         };
-        <span class="lifetime">&#39;outer</span>: <span class="kw">while </span>pos + needle.len() &lt;= haystack.len() {
+        <span class="lifetime">'outer</span>: <span class="kw">while </span>pos + needle.len() &lt;= haystack.len() {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(pre) = pre.as_mut() {
                 <span class="kw">if </span>pre.is_effective() {
                     pos += pre.find(<span class="kw-2">&amp;</span>haystack[pos..])<span class="question-mark">?</span>;
@@ -1136,7 +1136,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
                 <span class="kw">for </span>j <span class="kw">in </span>(<span class="number">0</span>..<span class="self">self</span>.<span class="number">0</span>.critical_pos).rev() {
                     <span class="kw">if </span>needle[j] != haystack[pos + j] {
                         pos += shift;
-                        <span class="kw">continue </span><span class="lifetime">&#39;outer</span>;
+                        <span class="kw">continue </span><span class="lifetime">'outer</span>;
                     }
                 }
                 <span class="kw">return </span><span class="prelude-val">Some</span>(pos);
@@ -1176,9 +1176,9 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
     /// including at `haystack.len()`.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>rfind(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], needle: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
-        <span class="comment">// For the reverse case, we don&#39;t use a prefilter. It&#39;s plausible that
-        // perhaps we should, but it&#39;s a lot of additional code to do it, and
-        // it&#39;s not clear that it&#39;s actually worth it. If you have a really
+        <span class="comment">// For the reverse case, we don't use a prefilter. It's plausible that
+        // perhaps we should, but it's a lot of additional code to do it, and
+        // it's not clear that it's actually worth it. If you have a really
         // compelling use case for this, please file an issue.
         </span><span class="kw">match </span><span class="self">self</span>.<span class="number">0</span>.shift {
             Shift::Small { period } =&gt; {
@@ -1271,11 +1271,11 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
     </span>}
 }
 
-<span class="doccomment">/// A representation of the amount we&#39;re allowed to shift by during Two-Way
+<span class="doccomment">/// A representation of the amount we're allowed to shift by during Two-Way
 /// search.
 ///
 /// When computing a critical factorization of the needle, we find the position
-/// of the critical factorization by finding the needle&#39;s maximal (or minimal)
+/// of the critical factorization by finding the needle's maximal (or minimal)
 /// suffix, along with the period of that suffix. It turns out that the period
 /// of that suffix is a lower bound on the period of the needle itself.
 ///
@@ -1288,7 +1288,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
 ///
 /// This case is important because the search algorithm for when the
 /// periods are equivalent is slightly different than the search algorithm
-/// for when the periods are not equivalent. In particular, when they aren&#39;t
+/// for when the periods are not equivalent. In particular, when they aren't
 /// equivalent, we know that the period of the needle is no less than half its
 /// length. In this case, we shift by an amount less than or equal to the
 /// period of the needle (determined by the maximum length of the components
@@ -1300,7 +1300,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
 /// N.B. If we could find a way to compute the exact period in all cases,
 /// then we could collapse this case analysis and simplify the algorithm. The
 /// Two-Way paper suggests this is possible, but more reading is required to
-/// grok why the authors didn&#39;t pursue that path.
+/// grok why the authors didn't pursue that path.
 </span><span class="attr">#[derive(Clone, Copy, Debug)]
 </span><span class="kw">enum </span>Shift {
     Small { period: usize },
@@ -1379,13 +1379,13 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
         // its period.
         </span><span class="kw">let </span><span class="kw-2">mut </span>suffix = Suffix { pos: <span class="number">0</span>, period: <span class="number">1 </span>};
         <span class="comment">// The start of a suffix in `needle` that we are considering as a
-        // more maximal (or minimal) suffix than what&#39;s in `suffix`.
+        // more maximal (or minimal) suffix than what's in `suffix`.
         </span><span class="kw">let </span><span class="kw-2">mut </span>candidate_start = <span class="number">1</span>;
-        <span class="comment">// The current offset of our suffixes that we&#39;re comparing.
+        <span class="comment">// The current offset of our suffixes that we're comparing.
         //
         // When the characters at this offset are the same, then we mush on
         // to the next position since no decision is possible. When the
-        // candidate&#39;s character is greater (or lesser) than the corresponding
+        // candidate's character is greater (or lesser) than the corresponding
         // character than our current maximal (or minimal) suffix, then the
         // current suffix is changed over to the candidate and we restart our
         // search. Otherwise, the candidate suffix is no good and we restart
@@ -1467,10 +1467,10 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
 </span><span class="kw">enum </span>SuffixKind {
     <span class="doccomment">/// Extract the smallest lexicographic suffix from a string.
     ///
-    /// Technically, this doesn&#39;t actually pick the smallest lexicographic
+    /// Technically, this doesn't actually pick the smallest lexicographic
     /// suffix. e.g., Given the choice between `a` and `aa`, this will choose
     /// the latter over the former, even though `a &lt; aa`. The reasoning for
-    /// this isn&#39;t clear from the paper, but it still smells like a minimal
+    /// this isn't clear from the paper, but it still smells like a minimal
     /// suffix.
     </span>Minimal,
     <span class="doccomment">/// Extract the largest lexicographic suffix from a string.
@@ -1520,7 +1520,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
 
 <span class="doccomment">/// A bitset used to track whether a particular byte exists in a needle or not.
 ///
-/// Namely, bit &#39;i&#39; is set if and only if byte%64==i for any byte in the
+/// Namely, bit 'i' is set if and only if byte%64==i for any byte in the
 /// needle. If a particular byte in the haystack is NOT in this set, then one
 /// can conclude that it is also not in the needle, and thus, one can advance
 /// in the haystack by needle.len() bytes.
@@ -1608,7 +1608,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>suffix_forward() {
-        <span class="macro">macro_rules! </span>assert_suffix_min {
+        <span class="macro">macro_rules!</span> assert_suffix_min {
             (<span class="macro-nonterminal">$given</span>:expr, <span class="macro-nonterminal">$expected</span>:expr, <span class="macro-nonterminal">$period</span>:expr) =&gt; {
                 <span class="kw">let </span>(got_suffix, got_period) =
                     get_suffix_forward(<span class="macro-nonterminal">$given</span>.as_bytes(), SuffixKind::Minimal);
@@ -1617,7 +1617,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
             };
         }
 
-        <span class="macro">macro_rules! </span>assert_suffix_max {
+        <span class="macro">macro_rules!</span> assert_suffix_max {
             (<span class="macro-nonterminal">$given</span>:expr, <span class="macro-nonterminal">$expected</span>:expr, <span class="macro-nonterminal">$period</span>:expr) =&gt; {
                 <span class="kw">let </span>(got_suffix, got_period) =
                     get_suffix_forward(<span class="macro-nonterminal">$given</span>.as_bytes(), SuffixKind::Maximal);
@@ -1626,46 +1626,46 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
             };
         }
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">1</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"a"</span>, <span class="string">"a"</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"a"</span>, <span class="string">"a"</span>, <span class="number">1</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;ab&quot;</span>, <span class="string">&quot;ab&quot;</span>, <span class="number">2</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;ab&quot;</span>, <span class="string">&quot;b&quot;</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"ab"</span>, <span class="string">"ab"</span>, <span class="number">2</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"ab"</span>, <span class="string">"b"</span>, <span class="number">1</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;ba&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">1</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;ba&quot;</span>, <span class="string">&quot;ba&quot;</span>, <span class="number">2</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"ba"</span>, <span class="string">"a"</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"ba"</span>, <span class="string">"ba"</span>, <span class="number">2</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;abc&quot;</span>, <span class="string">&quot;abc&quot;</span>, <span class="number">3</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;abc&quot;</span>, <span class="string">&quot;c&quot;</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"abc"</span>, <span class="string">"abc"</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"abc"</span>, <span class="string">"c"</span>, <span class="number">1</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;acb&quot;</span>, <span class="string">&quot;acb&quot;</span>, <span class="number">3</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;acb&quot;</span>, <span class="string">&quot;cb&quot;</span>, <span class="number">2</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"acb"</span>, <span class="string">"acb"</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"acb"</span>, <span class="string">"cb"</span>, <span class="number">2</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;cba&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">1</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;cba&quot;</span>, <span class="string">&quot;cba&quot;</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"cba"</span>, <span class="string">"a"</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"cba"</span>, <span class="string">"cba"</span>, <span class="number">3</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;abcabc&quot;</span>, <span class="string">&quot;abcabc&quot;</span>, <span class="number">3</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;abcabc&quot;</span>, <span class="string">&quot;cabc&quot;</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"abcabc"</span>, <span class="string">"abcabc"</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"abcabc"</span>, <span class="string">"cabc"</span>, <span class="number">3</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;abcabcabc&quot;</span>, <span class="string">&quot;abcabcabc&quot;</span>, <span class="number">3</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;abcabcabc&quot;</span>, <span class="string">&quot;cabcabc&quot;</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"abcabcabc"</span>, <span class="string">"abcabcabc"</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"abcabcabc"</span>, <span class="string">"cabcabc"</span>, <span class="number">3</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;abczz&quot;</span>, <span class="string">&quot;abczz&quot;</span>, <span class="number">5</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;abczz&quot;</span>, <span class="string">&quot;zz&quot;</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"abczz"</span>, <span class="string">"abczz"</span>, <span class="number">5</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"abczz"</span>, <span class="string">"zz"</span>, <span class="number">1</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;zzabc&quot;</span>, <span class="string">&quot;abc&quot;</span>, <span class="number">3</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;zzabc&quot;</span>, <span class="string">&quot;zzabc&quot;</span>, <span class="number">5</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"zzabc"</span>, <span class="string">"abc"</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"zzabc"</span>, <span class="string">"zzabc"</span>, <span class="number">5</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;aaa&quot;</span>, <span class="string">&quot;aaa&quot;</span>, <span class="number">1</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;aaa&quot;</span>, <span class="string">&quot;aaa&quot;</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"aaa"</span>, <span class="string">"aaa"</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"aaa"</span>, <span class="string">"aaa"</span>, <span class="number">1</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;foobar&quot;</span>, <span class="string">&quot;ar&quot;</span>, <span class="number">2</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;foobar&quot;</span>, <span class="string">&quot;r&quot;</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"foobar"</span>, <span class="string">"ar"</span>, <span class="number">2</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"foobar"</span>, <span class="string">"r"</span>, <span class="number">1</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>suffix_reverse() {
-        <span class="macro">macro_rules! </span>assert_suffix_min {
+        <span class="macro">macro_rules!</span> assert_suffix_min {
             (<span class="macro-nonterminal">$given</span>:expr, <span class="macro-nonterminal">$expected</span>:expr, <span class="macro-nonterminal">$period</span>:expr) =&gt; {
                 <span class="kw">let </span>(got_suffix, got_period) =
                     get_suffix_reverse(<span class="macro-nonterminal">$given</span>.as_bytes(), SuffixKind::Minimal);
@@ -1674,7 +1674,7 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
             };
         }
 
-        <span class="macro">macro_rules! </span>assert_suffix_max {
+        <span class="macro">macro_rules!</span> assert_suffix_max {
             (<span class="macro-nonterminal">$given</span>:expr, <span class="macro-nonterminal">$expected</span>:expr, <span class="macro-nonterminal">$period</span>:expr) =&gt; {
                 <span class="kw">let </span>(got_suffix, got_period) =
                     get_suffix_reverse(<span class="macro-nonterminal">$given</span>.as_bytes(), SuffixKind::Maximal);
@@ -1683,42 +1683,42 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
             };
         }
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">1</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"a"</span>, <span class="string">"a"</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"a"</span>, <span class="string">"a"</span>, <span class="number">1</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;ab&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">1</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;ab&quot;</span>, <span class="string">&quot;ab&quot;</span>, <span class="number">2</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"ab"</span>, <span class="string">"a"</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"ab"</span>, <span class="string">"ab"</span>, <span class="number">2</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;ba&quot;</span>, <span class="string">&quot;ba&quot;</span>, <span class="number">2</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;ba&quot;</span>, <span class="string">&quot;b&quot;</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"ba"</span>, <span class="string">"ba"</span>, <span class="number">2</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"ba"</span>, <span class="string">"b"</span>, <span class="number">1</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;abc&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">1</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;abc&quot;</span>, <span class="string">&quot;abc&quot;</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"abc"</span>, <span class="string">"a"</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"abc"</span>, <span class="string">"abc"</span>, <span class="number">3</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;acb&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">1</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;acb&quot;</span>, <span class="string">&quot;ac&quot;</span>, <span class="number">2</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"acb"</span>, <span class="string">"a"</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"acb"</span>, <span class="string">"ac"</span>, <span class="number">2</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;cba&quot;</span>, <span class="string">&quot;cba&quot;</span>, <span class="number">3</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;cba&quot;</span>, <span class="string">&quot;c&quot;</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"cba"</span>, <span class="string">"cba"</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"cba"</span>, <span class="string">"c"</span>, <span class="number">1</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;abcabc&quot;</span>, <span class="string">&quot;abca&quot;</span>, <span class="number">3</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;abcabc&quot;</span>, <span class="string">&quot;abcabc&quot;</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"abcabc"</span>, <span class="string">"abca"</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"abcabc"</span>, <span class="string">"abcabc"</span>, <span class="number">3</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;abcabcabc&quot;</span>, <span class="string">&quot;abcabca&quot;</span>, <span class="number">3</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;abcabcabc&quot;</span>, <span class="string">&quot;abcabcabc&quot;</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"abcabcabc"</span>, <span class="string">"abcabca"</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"abcabcabc"</span>, <span class="string">"abcabcabc"</span>, <span class="number">3</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;abczz&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="number">1</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;abczz&quot;</span>, <span class="string">&quot;abczz&quot;</span>, <span class="number">5</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"abczz"</span>, <span class="string">"a"</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"abczz"</span>, <span class="string">"abczz"</span>, <span class="number">5</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;zzabc&quot;</span>, <span class="string">&quot;zza&quot;</span>, <span class="number">3</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;zzabc&quot;</span>, <span class="string">&quot;zz&quot;</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"zzabc"</span>, <span class="string">"zza"</span>, <span class="number">3</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"zzabc"</span>, <span class="string">"zz"</span>, <span class="number">1</span>);
 
-        <span class="macro">assert_suffix_min!</span>(<span class="string">&quot;aaa&quot;</span>, <span class="string">&quot;aaa&quot;</span>, <span class="number">1</span>);
-        <span class="macro">assert_suffix_max!</span>(<span class="string">&quot;aaa&quot;</span>, <span class="string">&quot;aaa&quot;</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_min!</span>(<span class="string">"aaa"</span>, <span class="string">"aaa"</span>, <span class="number">1</span>);
+        <span class="macro">assert_suffix_max!</span>(<span class="string">"aaa"</span>, <span class="string">"aaa"</span>, <span class="number">1</span>);
     }
 
     <span class="attr">#[cfg(not(miri))]
-    </span><span class="macro">quickcheck::quickcheck! </span>{
+    </span><span class="macro">quickcheck::quickcheck!</span> {
         <span class="kw">fn </span>qc_suffix_forward_maximal(bytes: Vec&lt;u8&gt;) -&gt; bool {
             <span class="kw">if </span>bytes.is_empty() {
                 <span class="kw">return </span><span class="bool-val">true</span>;
@@ -1741,14 +1741,14 @@ Two-Way can be found in the `memmem` implementations in at least [GNU libc] and
     }
 
     <span class="comment">// This is a regression test caught by quickcheck that exercised a bug in
-    // the reverse small period handling. The bug was that we were using &#39;if j
-    // == shift&#39; to determine if a match occurred, but the correct guard is &#39;if
-    // j &gt;= shift&#39;, which matches the corresponding guard in the forward impl.
+    // the reverse small period handling. The bug was that we were using 'if j
+    // == shift' to determine if a match occurred, but the correct guard is 'if
+    // j &gt;= shift', which matches the corresponding guard in the forward impl.
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>regression_rev_small_period() {
         <span class="kw">let </span>rfind = |h, n| FinderRev::new(n).rfind(h, n);
-        <span class="kw">let </span>haystack = <span class="string">&quot;ababaz&quot;</span>;
-        <span class="kw">let </span>needle = <span class="string">&quot;abab&quot;</span>;
+        <span class="kw">let </span>haystack = <span class="string">"ababaz"</span>;
+        <span class="kw">let </span>needle = <span class="string">"abab"</span>;
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">0</span>), rfind(haystack.as_bytes(), needle.as_bytes()));
     }
 }

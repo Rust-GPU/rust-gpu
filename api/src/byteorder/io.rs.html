@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/byteorder-1.5.0/src/io.rs`."><title>io.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="byteorder" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../byteorder/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/byteorder-1.5.0/src/io.rs`."><title>io.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="byteorder" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../byteorder/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2536,7 +2536,7 @@
     /// assert_eq!([f32::consts::PI, 1.0], dst);
     /// ```
     </span><span class="attr">#[inline]
-    #[deprecated(since = <span class="string">&quot;1.2.0&quot;</span>, note = <span class="string">&quot;please use `read_f32_into` instead&quot;</span>)]
+    #[deprecated(since = <span class="string">"1.2.0"</span>, note = <span class="string">"please use `read_f32_into` instead"</span>)]
     </span><span class="kw">fn </span>read_f32_into_unchecked&lt;T: ByteOrder&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         dst: <span class="kw-2">&amp;mut </span>[f32],
@@ -2627,7 +2627,7 @@
     /// assert_eq!([f64::consts::PI, 1.0], dst);
     /// ```
     </span><span class="attr">#[inline]
-    #[deprecated(since = <span class="string">&quot;1.2.0&quot;</span>, note = <span class="string">&quot;please use `read_f64_into` instead&quot;</span>)]
+    #[deprecated(since = <span class="string">"1.2.0"</span>, note = <span class="string">"please use `read_f64_into` instead"</span>)]
     </span><span class="kw">fn </span>read_f64_into_unchecked&lt;T: ByteOrder&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         dst: <span class="kw-2">&amp;mut </span>[f64],
@@ -2684,7 +2684,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_u8(2).unwrap();
     /// wtr.write_u8(5).unwrap();
-    /// assert_eq!(wtr, b&quot;\x02\x05&quot;);
+    /// assert_eq!(wtr, b"\x02\x05");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_u8(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: u8) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2712,7 +2712,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_i8(2).unwrap();
     /// wtr.write_i8(-5).unwrap();
-    /// assert_eq!(wtr, b&quot;\x02\xfb&quot;);
+    /// assert_eq!(wtr, b"\x02\xfb");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_i8(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: i8) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2737,7 +2737,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_u16::&lt;BigEndian&gt;(517).unwrap();
     /// wtr.write_u16::&lt;BigEndian&gt;(768).unwrap();
-    /// assert_eq!(wtr, b&quot;\x02\x05\x03\x00&quot;);
+    /// assert_eq!(wtr, b"\x02\x05\x03\x00");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_u16&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: u16) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2764,7 +2764,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_i16::&lt;BigEndian&gt;(193).unwrap();
     /// wtr.write_i16::&lt;BigEndian&gt;(-132).unwrap();
-    /// assert_eq!(wtr, b&quot;\x00\xc1\xff\x7c&quot;);
+    /// assert_eq!(wtr, b"\x00\xc1\xff\x7c");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_i16&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: i16) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2791,7 +2791,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_u24::&lt;BigEndian&gt;(267).unwrap();
     /// wtr.write_u24::&lt;BigEndian&gt;(120111).unwrap();
-    /// assert_eq!(wtr, b&quot;\x00\x01\x0b\x01\xd5\x2f&quot;);
+    /// assert_eq!(wtr, b"\x00\x01\x0b\x01\xd5\x2f");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_u24&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: u32) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2818,7 +2818,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_i24::&lt;BigEndian&gt;(-34253).unwrap();
     /// wtr.write_i24::&lt;BigEndian&gt;(120111).unwrap();
-    /// assert_eq!(wtr, b&quot;\xff\x7a\x33\x01\xd5\x2f&quot;);
+    /// assert_eq!(wtr, b"\xff\x7a\x33\x01\xd5\x2f");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_i24&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: i32) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2845,7 +2845,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_u32::&lt;BigEndian&gt;(267).unwrap();
     /// wtr.write_u32::&lt;BigEndian&gt;(1205419366).unwrap();
-    /// assert_eq!(wtr, b&quot;\x00\x00\x01\x0b\x47\xd9\x3d\x66&quot;);
+    /// assert_eq!(wtr, b"\x00\x00\x01\x0b\x47\xd9\x3d\x66");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_u32&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: u32) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2872,7 +2872,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_i32::&lt;BigEndian&gt;(-34253).unwrap();
     /// wtr.write_i32::&lt;BigEndian&gt;(1205419366).unwrap();
-    /// assert_eq!(wtr, b&quot;\xff\xff\x7a\x33\x47\xd9\x3d\x66&quot;);
+    /// assert_eq!(wtr, b"\xff\xff\x7a\x33\x47\xd9\x3d\x66");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_i32&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: i32) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2899,7 +2899,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_u48::&lt;BigEndian&gt;(52360336390828).unwrap();
     /// wtr.write_u48::&lt;BigEndian&gt;(541).unwrap();
-    /// assert_eq!(wtr, b&quot;\x2f\x9f\x17\x40\x3a\xac\x00\x00\x00\x00\x02\x1d&quot;);
+    /// assert_eq!(wtr, b"\x2f\x9f\x17\x40\x3a\xac\x00\x00\x00\x00\x02\x1d");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_u48&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: u64) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2926,7 +2926,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_i48::&lt;BigEndian&gt;(-108363435763825).unwrap();
     /// wtr.write_i48::&lt;BigEndian&gt;(77).unwrap();
-    /// assert_eq!(wtr, b&quot;\x9d\x71\xab\xe7\x97\x8f\x00\x00\x00\x00\x00\x4d&quot;);
+    /// assert_eq!(wtr, b"\x9d\x71\xab\xe7\x97\x8f\x00\x00\x00\x00\x00\x4d");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_i48&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: i64) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2953,7 +2953,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_u64::&lt;BigEndian&gt;(918733457491587).unwrap();
     /// wtr.write_u64::&lt;BigEndian&gt;(143).unwrap();
-    /// assert_eq!(wtr, b&quot;\x00\x03\x43\x95\x4d\x60\x86\x83\x00\x00\x00\x00\x00\x00\x00\x8f&quot;);
+    /// assert_eq!(wtr, b"\x00\x03\x43\x95\x4d\x60\x86\x83\x00\x00\x00\x00\x00\x00\x00\x8f");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_u64&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: u64) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -2980,7 +2980,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_i64::&lt;BigEndian&gt;(i64::min_value()).unwrap();
     /// wtr.write_i64::&lt;BigEndian&gt;(i64::max_value()).unwrap();
-    /// assert_eq!(wtr, b&quot;\x80\x00\x00\x00\x00\x00\x00\x00\x7f\xff\xff\xff\xff\xff\xff\xff&quot;);
+    /// assert_eq!(wtr, b"\x80\x00\x00\x00\x00\x00\x00\x00\x7f\xff\xff\xff\xff\xff\xff\xff");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_i64&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: i64) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -3028,7 +3028,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_uint::&lt;BigEndian&gt;(312550384361, 5).unwrap();
     /// wtr.write_uint::&lt;BigEndian&gt;(43, 5).unwrap();
-    /// assert_eq!(wtr, b&quot;\x48\xc5\x74\x62\xe9\x00\x00\x00\x00\x2b&quot;);
+    /// assert_eq!(wtr, b"\x48\xc5\x74\x62\xe9\x00\x00\x00\x00\x2b");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_uint&lt;T: ByteOrder&gt;(
@@ -3064,7 +3064,7 @@
     /// let mut wtr = Vec::new();
     /// wtr.write_int::&lt;BigEndian&gt;(-3548172039376767, 7).unwrap();
     /// wtr.write_int::&lt;BigEndian&gt;(43, 7).unwrap();
-    /// assert_eq!(wtr, b&quot;\xf3\x64\xf4\xd1\xfd\xb0\x81\x00\x00\x00\x00\x00\x00\x2b&quot;);
+    /// assert_eq!(wtr, b"\xf3\x64\xf4\xd1\xfd\xb0\x81\x00\x00\x00\x00\x00\x00\x2b");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_int&lt;T: ByteOrder&gt;(
@@ -3127,7 +3127,7 @@
     ///
     /// let mut wtr = Vec::new();
     /// wtr.write_f32::&lt;BigEndian&gt;(f32::consts::PI).unwrap();
-    /// assert_eq!(wtr, b&quot;\x40\x49\x0f\xdb&quot;);
+    /// assert_eq!(wtr, b"\x40\x49\x0f\xdb");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_f32&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: f32) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -3156,7 +3156,7 @@
     ///
     /// let mut wtr = Vec::new();
     /// wtr.write_f64::&lt;BigEndian&gt;(f64::consts::PI).unwrap();
-    /// assert_eq!(wtr, b&quot;\x40\x09\x21\xfb\x54\x44\x2d\x18&quot;);
+    /// assert_eq!(wtr, b"\x40\x09\x21\xfb\x54\x44\x2d\x18");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_f64&lt;T: ByteOrder&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, n: f64) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -3174,7 +3174,7 @@
 /// representation.
 ///
 /// This function is wildly unsafe because it permits arbitrary modification of
-/// the binary representation of any `Copy` type. Use with care. It&#39;s intended
+/// the binary representation of any `Copy` type. Use with care. It's intended
 /// to be called only where `T` is a numeric type.
 </span><span class="kw">unsafe fn </span>slice_to_u8_mut&lt;T: Copy&gt;(slice: <span class="kw-2">&amp;mut </span>[T]) -&gt; <span class="kw-2">&amp;mut </span>[u8] {
     <span class="kw">use </span>std::mem::size_of;

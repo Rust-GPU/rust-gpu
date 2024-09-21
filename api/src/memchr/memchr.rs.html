@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memchr-2.7.1/src/memchr.rs`."><title>memchr.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../memchr/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memchr-2.7.4/src/memchr.rs`."><title>memchr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../memchr/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -923,8 +923,8 @@
 /// ```
 /// use memchr::memchr;
 ///
-/// let haystack = b&quot;the quick brown fox&quot;;
-/// assert_eq!(memchr(b&#39;k&#39;, haystack), Some(8));
+/// let haystack = b"the quick brown fox";
+/// assert_eq!(memchr(b'k', haystack), Some(8));
 /// ```
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>memchr(needle: u8, haystack: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -955,8 +955,8 @@
 /// ```
 /// use memchr::memrchr;
 ///
-/// let haystack = b&quot;the quick brown fox&quot;;
-/// assert_eq!(memrchr(b&#39;o&#39;, haystack), Some(17));
+/// let haystack = b"the quick brown fox";
+/// assert_eq!(memrchr(b'o', haystack), Some(17));
 /// ```
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>memrchr(needle: u8, haystack: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -988,8 +988,8 @@
 /// ```
 /// use memchr::memchr2;
 ///
-/// let haystack = b&quot;the quick brown fox&quot;;
-/// assert_eq!(memchr2(b&#39;k&#39;, b&#39;q&#39;, haystack), Some(4));
+/// let haystack = b"the quick brown fox";
+/// assert_eq!(memchr2(b'k', b'q', haystack), Some(4));
 /// ```
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>memchr2(needle1: u8, needle2: u8, haystack: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -1021,8 +1021,8 @@
 /// ```
 /// use memchr::memrchr2;
 ///
-/// let haystack = b&quot;the quick brown fox&quot;;
-/// assert_eq!(memrchr2(b&#39;k&#39;, b&#39;o&#39;, haystack), Some(17));
+/// let haystack = b"the quick brown fox";
+/// assert_eq!(memrchr2(b'k', b'o', haystack), Some(17));
 /// ```
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>memrchr2(needle1: u8, needle2: u8, haystack: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -1054,8 +1054,8 @@
 /// ```
 /// use memchr::memchr3;
 ///
-/// let haystack = b&quot;the quick brown fox&quot;;
-/// assert_eq!(memchr3(b&#39;k&#39;, b&#39;q&#39;, b&#39;u&#39;, haystack), Some(4));
+/// let haystack = b"the quick brown fox";
+/// assert_eq!(memchr3(b'k', b'q', b'u', haystack), Some(4));
 /// ```
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>memchr3(
@@ -1092,8 +1092,8 @@
 /// ```
 /// use memchr::memrchr3;
 ///
-/// let haystack = b&quot;the quick brown fox&quot;;
-/// assert_eq!(memrchr3(b&#39;k&#39;, b&#39;o&#39;, b&#39;n&#39;, haystack), Some(17));
+/// let haystack = b"the quick brown fox";
+/// assert_eq!(memrchr3(b'k', b'o', b'n', haystack), Some(17));
 /// ```
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>memrchr3(
@@ -1116,14 +1116,14 @@
 /// The iterator returned implements `DoubleEndedIterator`. This means it
 /// can also be used to find occurrences in reverse order.
 </span><span class="attr">#[inline]
-</span><span class="kw">pub fn </span>memchr_iter&lt;<span class="lifetime">&#39;h</span>&gt;(needle: u8, haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8]) -&gt; Memchr&lt;<span class="lifetime">&#39;h</span>&gt; {
+</span><span class="kw">pub fn </span>memchr_iter&lt;<span class="lifetime">'h</span>&gt;(needle: u8, haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8]) -&gt; Memchr&lt;<span class="lifetime">'h</span>&gt; {
     Memchr::new(needle, haystack)
 }
 
 <span class="doccomment">/// Returns an iterator over all occurrences of the needle in a haystack, in
 /// reverse.
 </span><span class="attr">#[inline]
-</span><span class="kw">pub fn </span>memrchr_iter(needle: u8, haystack: <span class="kw-2">&amp;</span>[u8]) -&gt; Rev&lt;Memchr&lt;<span class="lifetime">&#39;_</span>&gt;&gt; {
+</span><span class="kw">pub fn </span>memrchr_iter(needle: u8, haystack: <span class="kw-2">&amp;</span>[u8]) -&gt; Rev&lt;Memchr&lt;<span class="lifetime">'_</span>&gt;&gt; {
     Memchr::new(needle, haystack).rev()
 }
 
@@ -1132,11 +1132,11 @@
 /// The iterator returned implements `DoubleEndedIterator`. This means it
 /// can also be used to find occurrences in reverse order.
 </span><span class="attr">#[inline]
-</span><span class="kw">pub fn </span>memchr2_iter&lt;<span class="lifetime">&#39;h</span>&gt;(
+</span><span class="kw">pub fn </span>memchr2_iter&lt;<span class="lifetime">'h</span>&gt;(
     needle1: u8,
     needle2: u8,
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-) -&gt; Memchr2&lt;<span class="lifetime">&#39;h</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+) -&gt; Memchr2&lt;<span class="lifetime">'h</span>&gt; {
     Memchr2::new(needle1, needle2, haystack)
 }
 
@@ -1147,7 +1147,7 @@
     needle1: u8,
     needle2: u8,
     haystack: <span class="kw-2">&amp;</span>[u8],
-) -&gt; Rev&lt;Memchr2&lt;<span class="lifetime">&#39;_</span>&gt;&gt; {
+) -&gt; Rev&lt;Memchr2&lt;<span class="lifetime">'_</span>&gt;&gt; {
     Memchr2::new(needle1, needle2, haystack).rev()
 }
 
@@ -1156,12 +1156,12 @@
 /// The iterator returned implements `DoubleEndedIterator`. This means it
 /// can also be used to find occurrences in reverse order.
 </span><span class="attr">#[inline]
-</span><span class="kw">pub fn </span>memchr3_iter&lt;<span class="lifetime">&#39;h</span>&gt;(
+</span><span class="kw">pub fn </span>memchr3_iter&lt;<span class="lifetime">'h</span>&gt;(
     needle1: u8,
     needle2: u8,
     needle3: u8,
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-) -&gt; Memchr3&lt;<span class="lifetime">&#39;h</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+) -&gt; Memchr3&lt;<span class="lifetime">'h</span>&gt; {
     Memchr3::new(needle1, needle2, needle3, haystack)
 }
 
@@ -1173,7 +1173,7 @@
     needle2: u8,
     needle3: u8,
     haystack: <span class="kw-2">&amp;</span>[u8],
-) -&gt; Rev&lt;Memchr3&lt;<span class="lifetime">&#39;_</span>&gt;&gt; {
+) -&gt; Rev&lt;Memchr3&lt;<span class="lifetime">'_</span>&gt;&gt; {
     Memchr3::new(needle1, needle2, needle3, haystack).rev()
 }
 
@@ -1185,22 +1185,22 @@
 /// This iterator is created by the [`memchr_iter`] or `[memrchr_iter`]
 /// functions. It can also be created with the [`Memchr::new`] method.
 ///
-/// The lifetime parameter `&#39;h` refers to the lifetime of the haystack being
+/// The lifetime parameter `'h` refers to the lifetime of the haystack being
 /// searched.
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>Memchr&lt;<span class="lifetime">&#39;h</span>&gt; {
+</span><span class="kw">pub struct </span>Memchr&lt;<span class="lifetime">'h</span>&gt; {
     needle1: u8,
-    it: <span class="kw">crate</span>::arch::generic::memchr::Iter&lt;<span class="lifetime">&#39;h</span>&gt;,
+    it: <span class="kw">crate</span>::arch::generic::memchr::Iter&lt;<span class="lifetime">'h</span>&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; Memchr&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; Memchr&lt;<span class="lifetime">'h</span>&gt; {
     <span class="doccomment">/// Returns an iterator over all occurrences of the needle byte in the
     /// given haystack.
     ///
     /// The iterator returned implements `DoubleEndedIterator`. This means it
     /// can also be used to find occurrences in reverse order.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>new(needle1: u8, haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8]) -&gt; Memchr&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>new(needle1: u8, haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8]) -&gt; Memchr&lt;<span class="lifetime">'h</span>&gt; {
         Memchr {
             needle1,
             it: <span class="kw">crate</span>::arch::generic::memchr::Iter::new(haystack),
@@ -1208,7 +1208,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; Iterator <span class="kw">for </span>Memchr&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; Iterator <span class="kw">for </span>Memchr&lt;<span class="lifetime">'h</span>&gt; {
     <span class="kw">type </span>Item = usize;
 
     <span class="attr">#[inline]
@@ -1241,7 +1241,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; DoubleEndedIterator <span class="kw">for </span>Memchr&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; DoubleEndedIterator <span class="kw">for </span>Memchr&lt;<span class="lifetime">'h</span>&gt; {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>next_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="comment">// SAFETY: All of our implementations of memchr ensure that any
@@ -1251,7 +1251,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>Memchr&lt;<span class="lifetime">&#39;h</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>Memchr&lt;<span class="lifetime">'h</span>&gt; {}
 
 <span class="doccomment">/// An iterator over all occurrences of two possible bytes in a haystack.
 ///
@@ -1261,23 +1261,23 @@
 /// This iterator is created by the [`memchr2_iter`] or `[memrchr2_iter`]
 /// functions. It can also be created with the [`Memchr2::new`] method.
 ///
-/// The lifetime parameter `&#39;h` refers to the lifetime of the haystack being
+/// The lifetime parameter `'h` refers to the lifetime of the haystack being
 /// searched.
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>Memchr2&lt;<span class="lifetime">&#39;h</span>&gt; {
+</span><span class="kw">pub struct </span>Memchr2&lt;<span class="lifetime">'h</span>&gt; {
     needle1: u8,
     needle2: u8,
-    it: <span class="kw">crate</span>::arch::generic::memchr::Iter&lt;<span class="lifetime">&#39;h</span>&gt;,
+    it: <span class="kw">crate</span>::arch::generic::memchr::Iter&lt;<span class="lifetime">'h</span>&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; Memchr2&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; Memchr2&lt;<span class="lifetime">'h</span>&gt; {
     <span class="doccomment">/// Returns an iterator over all occurrences of the needle bytes in the
     /// given haystack.
     ///
     /// The iterator returned implements `DoubleEndedIterator`. This means it
     /// can also be used to find occurrences in reverse order.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>new(needle1: u8, needle2: u8, haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8]) -&gt; Memchr2&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>new(needle1: u8, needle2: u8, haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8]) -&gt; Memchr2&lt;<span class="lifetime">'h</span>&gt; {
         Memchr2 {
             needle1,
             needle2,
@@ -1286,7 +1286,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; Iterator <span class="kw">for </span>Memchr2&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; Iterator <span class="kw">for </span>Memchr2&lt;<span class="lifetime">'h</span>&gt; {
     <span class="kw">type </span>Item = usize;
 
     <span class="attr">#[inline]
@@ -1305,7 +1305,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; DoubleEndedIterator <span class="kw">for </span>Memchr2&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; DoubleEndedIterator <span class="kw">for </span>Memchr2&lt;<span class="lifetime">'h</span>&gt; {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>next_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="comment">// SAFETY: All of our implementations of memchr ensure that any
@@ -1319,7 +1319,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>Memchr2&lt;<span class="lifetime">&#39;h</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>Memchr2&lt;<span class="lifetime">'h</span>&gt; {}
 
 <span class="doccomment">/// An iterator over all occurrences of three possible bytes in a haystack.
 ///
@@ -1329,17 +1329,17 @@
 /// This iterator is created by the [`memchr2_iter`] or `[memrchr2_iter`]
 /// functions. It can also be created with the [`Memchr3::new`] method.
 ///
-/// The lifetime parameter `&#39;h` refers to the lifetime of the haystack being
+/// The lifetime parameter `'h` refers to the lifetime of the haystack being
 /// searched.
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>Memchr3&lt;<span class="lifetime">&#39;h</span>&gt; {
+</span><span class="kw">pub struct </span>Memchr3&lt;<span class="lifetime">'h</span>&gt; {
     needle1: u8,
     needle2: u8,
     needle3: u8,
-    it: <span class="kw">crate</span>::arch::generic::memchr::Iter&lt;<span class="lifetime">&#39;h</span>&gt;,
+    it: <span class="kw">crate</span>::arch::generic::memchr::Iter&lt;<span class="lifetime">'h</span>&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; Memchr3&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; Memchr3&lt;<span class="lifetime">'h</span>&gt; {
     <span class="doccomment">/// Returns an iterator over all occurrences of the needle bytes in the
     /// given haystack.
     ///
@@ -1350,8 +1350,8 @@
         needle1: u8,
         needle2: u8,
         needle3: u8,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    ) -&gt; Memchr3&lt;<span class="lifetime">&#39;h</span>&gt; {
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    ) -&gt; Memchr3&lt;<span class="lifetime">'h</span>&gt; {
         Memchr3 {
             needle1,
             needle2,
@@ -1361,7 +1361,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; Iterator <span class="kw">for </span>Memchr3&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; Iterator <span class="kw">for </span>Memchr3&lt;<span class="lifetime">'h</span>&gt; {
     <span class="kw">type </span>Item = usize;
 
     <span class="attr">#[inline]
@@ -1382,7 +1382,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; DoubleEndedIterator <span class="kw">for </span>Memchr3&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; DoubleEndedIterator <span class="kw">for </span>Memchr3&lt;<span class="lifetime">'h</span>&gt; {
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>next_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="comment">// SAFETY: All of our implementations of memchr ensure that any
@@ -1396,7 +1396,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>Memchr3&lt;<span class="lifetime">&#39;h</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>Memchr3&lt;<span class="lifetime">'h</span>&gt; {}
 
 <span class="doccomment">/// memchr, but using raw pointers to represent the haystack.
 ///
@@ -1409,26 +1409,26 @@
     start: <span class="kw-2">*const </span>u8,
     end: <span class="kw-2">*const </span>u8,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*const </span>u8&gt; {
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"x86_64"</span>)]
     </span>{
         <span class="comment">// x86_64 does CPU feature detection at runtime in order to use AVX2
-        // instructions even when the `avx2` feature isn&#39;t enabled at compile
+        // instructions even when the `avx2` feature isn't enabled at compile
         // time. This function also handles using a fallback if neither AVX2
         // nor SSE2 (unusual) are available.
         </span><span class="kw">crate</span>::arch::x86_64::memchr::memchr_raw(needle, start, end)
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+    <span class="attr">#[cfg(all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>))]
     </span>{
         <span class="kw">crate</span>::arch::wasm32::memchr::memchr_raw(needle, start, end)
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"aarch64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::aarch64::memchr::memchr_raw(needle, start, end)
     }
     <span class="attr">#[cfg(not(any(
-        target_arch = <span class="string">&quot;x86_64&quot;</span>,
-        target_arch = <span class="string">&quot;wasm32&quot;</span>,
-        target_arch = <span class="string">&quot;aarch64&quot;
+        target_arch = <span class="string">"x86_64"</span>,
+        all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>),
+        target_arch = <span class="string">"aarch64"
     </span>)))]
     </span>{
         <span class="kw">crate</span>::arch::all::memchr::One::new(needle).find_raw(start, end)
@@ -1446,22 +1446,22 @@
     start: <span class="kw-2">*const </span>u8,
     end: <span class="kw-2">*const </span>u8,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*const </span>u8&gt; {
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"x86_64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::x86_64::memchr::memrchr_raw(needle, start, end)
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+    <span class="attr">#[cfg(all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>))]
     </span>{
         <span class="kw">crate</span>::arch::wasm32::memchr::memrchr_raw(needle, start, end)
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"aarch64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::aarch64::memchr::memrchr_raw(needle, start, end)
     }
     <span class="attr">#[cfg(not(any(
-        target_arch = <span class="string">&quot;x86_64&quot;</span>,
-        target_arch = <span class="string">&quot;wasm32&quot;</span>,
-        target_arch = <span class="string">&quot;aarch64&quot;
+        target_arch = <span class="string">"x86_64"</span>,
+        all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>),
+        target_arch = <span class="string">"aarch64"
     </span>)))]
     </span>{
         <span class="kw">crate</span>::arch::all::memchr::One::new(needle).rfind_raw(start, end)
@@ -1480,22 +1480,22 @@
     start: <span class="kw-2">*const </span>u8,
     end: <span class="kw-2">*const </span>u8,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*const </span>u8&gt; {
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"x86_64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::x86_64::memchr::memchr2_raw(needle1, needle2, start, end)
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+    <span class="attr">#[cfg(all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>))]
     </span>{
         <span class="kw">crate</span>::arch::wasm32::memchr::memchr2_raw(needle1, needle2, start, end)
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"aarch64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::aarch64::memchr::memchr2_raw(needle1, needle2, start, end)
     }
     <span class="attr">#[cfg(not(any(
-        target_arch = <span class="string">&quot;x86_64&quot;</span>,
-        target_arch = <span class="string">&quot;wasm32&quot;</span>,
-        target_arch = <span class="string">&quot;aarch64&quot;
+        target_arch = <span class="string">"x86_64"</span>,
+        all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>),
+        target_arch = <span class="string">"aarch64"
     </span>)))]
     </span>{
         <span class="kw">crate</span>::arch::all::memchr::Two::new(needle1, needle2)
@@ -1515,24 +1515,24 @@
     start: <span class="kw-2">*const </span>u8,
     end: <span class="kw-2">*const </span>u8,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*const </span>u8&gt; {
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"x86_64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::x86_64::memchr::memrchr2_raw(needle1, needle2, start, end)
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+    <span class="attr">#[cfg(all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>))]
     </span>{
         <span class="kw">crate</span>::arch::wasm32::memchr::memrchr2_raw(needle1, needle2, start, end)
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"aarch64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::aarch64::memchr::memrchr2_raw(
             needle1, needle2, start, end,
         )
     }
     <span class="attr">#[cfg(not(any(
-        target_arch = <span class="string">&quot;x86_64&quot;</span>,
-        target_arch = <span class="string">&quot;wasm32&quot;</span>,
-        target_arch = <span class="string">&quot;aarch64&quot;
+        target_arch = <span class="string">"x86_64"</span>,
+        all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>),
+        target_arch = <span class="string">"aarch64"
     </span>)))]
     </span>{
         <span class="kw">crate</span>::arch::all::memchr::Two::new(needle1, needle2)
@@ -1553,28 +1553,28 @@
     start: <span class="kw-2">*const </span>u8,
     end: <span class="kw-2">*const </span>u8,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*const </span>u8&gt; {
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"x86_64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::x86_64::memchr::memchr3_raw(
             needle1, needle2, needle3, start, end,
         )
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+    <span class="attr">#[cfg(all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>))]
     </span>{
         <span class="kw">crate</span>::arch::wasm32::memchr::memchr3_raw(
             needle1, needle2, needle3, start, end,
         )
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"aarch64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::aarch64::memchr::memchr3_raw(
             needle1, needle2, needle3, start, end,
         )
     }
     <span class="attr">#[cfg(not(any(
-        target_arch = <span class="string">&quot;x86_64&quot;</span>,
-        target_arch = <span class="string">&quot;wasm32&quot;</span>,
-        target_arch = <span class="string">&quot;aarch64&quot;
+        target_arch = <span class="string">"x86_64"</span>,
+        all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>),
+        target_arch = <span class="string">"aarch64"
     </span>)))]
     </span>{
         <span class="kw">crate</span>::arch::all::memchr::Three::new(needle1, needle2, needle3)
@@ -1595,28 +1595,28 @@
     start: <span class="kw-2">*const </span>u8,
     end: <span class="kw-2">*const </span>u8,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">*const </span>u8&gt; {
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"x86_64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::x86_64::memchr::memrchr3_raw(
             needle1, needle2, needle3, start, end,
         )
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+    <span class="attr">#[cfg(all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>))]
     </span>{
         <span class="kw">crate</span>::arch::wasm32::memchr::memrchr3_raw(
             needle1, needle2, needle3, start, end,
         )
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"aarch64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::aarch64::memchr::memrchr3_raw(
             needle1, needle2, needle3, start, end,
         )
     }
     <span class="attr">#[cfg(not(any(
-        target_arch = <span class="string">&quot;x86_64&quot;</span>,
-        target_arch = <span class="string">&quot;wasm32&quot;</span>,
-        target_arch = <span class="string">&quot;aarch64&quot;
+        target_arch = <span class="string">"x86_64"</span>,
+        all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>),
+        target_arch = <span class="string">"aarch64"
     </span>)))]
     </span>{
         <span class="kw">crate</span>::arch::all::memchr::Three::new(needle1, needle2, needle3)
@@ -1631,22 +1631,22 @@
 /// Pointers must be valid. See `One::count_raw`.
 </span><span class="attr">#[inline]
 </span><span class="kw">unsafe fn </span>count_raw(needle: u8, start: <span class="kw-2">*const </span>u8, end: <span class="kw-2">*const </span>u8) -&gt; usize {
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"x86_64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::x86_64::memchr::count_raw(needle, start, end)
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+    <span class="attr">#[cfg(all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>))]
     </span>{
         <span class="kw">crate</span>::arch::wasm32::memchr::count_raw(needle, start, end)
     }
-    <span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+    <span class="attr">#[cfg(target_arch = <span class="string">"aarch64"</span>)]
     </span>{
         <span class="kw">crate</span>::arch::aarch64::memchr::count_raw(needle, start, end)
     }
     <span class="attr">#[cfg(not(any(
-        target_arch = <span class="string">&quot;x86_64&quot;</span>,
-        target_arch = <span class="string">&quot;wasm32&quot;</span>,
-        target_arch = <span class="string">&quot;aarch64&quot;
+        target_arch = <span class="string">"x86_64"</span>,
+        all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>),
+        target_arch = <span class="string">"aarch64"
     </span>)))]
     </span>{
         <span class="kw">crate</span>::arch::all::memchr::One::new(needle).count_raw(start, end)
@@ -1790,8 +1790,8 @@
 
     <span class="comment">// Prior to memchr 2.6, the memchr iterators both implemented Send and
     // Sync. But in memchr 2.6, the iterator changed to use raw pointers
-    // internally and I didn&#39;t add explicit Send/Sync impls. This ended up
-    // regressing the API. This test ensures we don&#39;t do that again.
+    // internally and I didn't add explicit Send/Sync impls. This ended up
+    // regressing the API. This test ensures we don't do that again.
     //
     // See: https://github.com/BurntSushi/memchr/issues/133
     </span><span class="attr">#[test]

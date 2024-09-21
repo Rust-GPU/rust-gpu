@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_json-1.0.111/src/error.rs`."><title>error.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="serde_json" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../serde_json/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_json-1.0.128/src/error.rs`."><title>error.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="serde_json" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../serde_json/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -514,6 +514,31 @@
 <a href="#514" id="514">514</a>
 <a href="#515" id="515">515</a>
 <a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! When serializing or deserializing JSON goes wrong.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::io;
@@ -523,9 +548,9 @@
 <span class="kw">use </span>core::result;
 <span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>serde::{de, ser};
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">use </span>std::error;
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">use </span>std::io::ErrorKind;
 
 <span class="doccomment">/// This type represents all possible errors that can occur when serializing or
@@ -637,12 +662,12 @@
     /// use std::io::{self, ErrorKind, Read};
     /// use std::process;
     ///
-    /// struct ReaderThatWillTimeOut&lt;&#39;a&gt;(&amp;&#39;a [u8]);
+    /// struct ReaderThatWillTimeOut&lt;'a&gt;(&amp;'a [u8]);
     ///
-    /// impl&lt;&#39;a&gt; Read for ReaderThatWillTimeOut&lt;&#39;a&gt; {
+    /// impl&lt;'a&gt; Read for ReaderThatWillTimeOut&lt;'a&gt; {
     ///     fn read(&amp;mut self, buf: &amp;mut [u8]) -&gt; io::Result&lt;usize&gt; {
     ///         if self.0.is_empty() {
-    ///             Err(io::Error::new(ErrorKind::TimedOut, &quot;timed out&quot;))
+    ///             Err(io::Error::new(ErrorKind::TimedOut, "timed out"))
     ///         } else {
     ///             self.0.read(buf)
     ///         }
@@ -650,7 +675,7 @@
     /// }
     ///
     /// fn main() {
-    ///     let reader = ReaderThatWillTimeOut(br#&quot; {&quot;k&quot;: &quot;#);
+    ///     let reader = ReaderThatWillTimeOut(br#" {"k": "#);
     ///
     ///     let _: Value = match serde_json::from_reader(reader) {
     ///         Ok(value) =&gt; value,
@@ -660,14 +685,14 @@
     ///
     ///                 # return;
     ///             } else {
-    ///                 eprintln!(&quot;error: {}&quot;, error);
+    ///                 eprintln!("error: {}", error);
     ///                 process::exit(1);
     ///             }
     ///         }
     ///     };
     /// }
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
     </span><span class="kw">pub fn </span>io_error_kind(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;ErrorKind&gt; {
         <span class="kw">if let </span>ErrorCode::Io(io_error) = <span class="kw-2">&amp;</span><span class="self">self</span>.err.code {
             <span class="prelude-val">Some</span>(io_error.kind())
@@ -700,7 +725,7 @@
     </span>Eof,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 #[allow(clippy::fallible_impl_from)]
 </span><span class="kw">impl </span>From&lt;Error&gt; <span class="kw">for </span>io::Error {
     <span class="doccomment">/// Convert a `serde_json::Error` into an `io::Error`.
@@ -768,13 +793,13 @@
     <span class="doccomment">/// EOF while parsing a JSON value.
     </span>EofWhileParsingValue,
 
-    <span class="doccomment">/// Expected this character to be a `&#39;:&#39;`.
+    <span class="doccomment">/// Expected this character to be a `':'`.
     </span>ExpectedColon,
 
-    <span class="doccomment">/// Expected this character to be either a `&#39;,&#39;` or a `&#39;]&#39;`.
+    <span class="doccomment">/// Expected this character to be either a `','` or a `']'`.
     </span>ExpectedListCommaOrEnd,
 
-    <span class="doccomment">/// Expected this character to be either a `&#39;,&#39;` or a `&#39;}&#39;`.
+    <span class="doccomment">/// Expected this character to be either a `','` or a `'}'`.
     </span>ExpectedObjectCommaOrEnd,
 
     <span class="doccomment">/// Expected to parse either a `true`, `false`, or a `null`.
@@ -783,7 +808,7 @@
     <span class="doccomment">/// Expected this character to start a JSON value.
     </span>ExpectedSomeValue,
 
-    <span class="doccomment">/// Expected this character to be a `&quot;`.
+    <span class="doccomment">/// Expected this character to be a `"`.
     </span>ExpectedDoubleQuote,
 
     <span class="doccomment">/// Invalid hex escape code.
@@ -867,44 +892,44 @@
         <span class="kw">match </span><span class="self">self </span>{
             ErrorCode::Message(msg) =&gt; f.write_str(msg),
             ErrorCode::Io(err) =&gt; Display::fmt(err, f),
-            ErrorCode::EofWhileParsingList =&gt; f.write_str(<span class="string">&quot;EOF while parsing a list&quot;</span>),
-            ErrorCode::EofWhileParsingObject =&gt; f.write_str(<span class="string">&quot;EOF while parsing an object&quot;</span>),
-            ErrorCode::EofWhileParsingString =&gt; f.write_str(<span class="string">&quot;EOF while parsing a string&quot;</span>),
-            ErrorCode::EofWhileParsingValue =&gt; f.write_str(<span class="string">&quot;EOF while parsing a value&quot;</span>),
-            ErrorCode::ExpectedColon =&gt; f.write_str(<span class="string">&quot;expected `:`&quot;</span>),
-            ErrorCode::ExpectedListCommaOrEnd =&gt; f.write_str(<span class="string">&quot;expected `,` or `]`&quot;</span>),
-            ErrorCode::ExpectedObjectCommaOrEnd =&gt; f.write_str(<span class="string">&quot;expected `,` or `}`&quot;</span>),
-            ErrorCode::ExpectedSomeIdent =&gt; f.write_str(<span class="string">&quot;expected ident&quot;</span>),
-            ErrorCode::ExpectedSomeValue =&gt; f.write_str(<span class="string">&quot;expected value&quot;</span>),
-            ErrorCode::ExpectedDoubleQuote =&gt; f.write_str(<span class="string">&quot;expected `\&quot;`&quot;</span>),
-            ErrorCode::InvalidEscape =&gt; f.write_str(<span class="string">&quot;invalid escape&quot;</span>),
-            ErrorCode::InvalidNumber =&gt; f.write_str(<span class="string">&quot;invalid number&quot;</span>),
-            ErrorCode::NumberOutOfRange =&gt; f.write_str(<span class="string">&quot;number out of range&quot;</span>),
-            ErrorCode::InvalidUnicodeCodePoint =&gt; f.write_str(<span class="string">&quot;invalid unicode code point&quot;</span>),
+            ErrorCode::EofWhileParsingList =&gt; f.write_str(<span class="string">"EOF while parsing a list"</span>),
+            ErrorCode::EofWhileParsingObject =&gt; f.write_str(<span class="string">"EOF while parsing an object"</span>),
+            ErrorCode::EofWhileParsingString =&gt; f.write_str(<span class="string">"EOF while parsing a string"</span>),
+            ErrorCode::EofWhileParsingValue =&gt; f.write_str(<span class="string">"EOF while parsing a value"</span>),
+            ErrorCode::ExpectedColon =&gt; f.write_str(<span class="string">"expected `:`"</span>),
+            ErrorCode::ExpectedListCommaOrEnd =&gt; f.write_str(<span class="string">"expected `,` or `]`"</span>),
+            ErrorCode::ExpectedObjectCommaOrEnd =&gt; f.write_str(<span class="string">"expected `,` or `}`"</span>),
+            ErrorCode::ExpectedSomeIdent =&gt; f.write_str(<span class="string">"expected ident"</span>),
+            ErrorCode::ExpectedSomeValue =&gt; f.write_str(<span class="string">"expected value"</span>),
+            ErrorCode::ExpectedDoubleQuote =&gt; f.write_str(<span class="string">"expected `\"`"</span>),
+            ErrorCode::InvalidEscape =&gt; f.write_str(<span class="string">"invalid escape"</span>),
+            ErrorCode::InvalidNumber =&gt; f.write_str(<span class="string">"invalid number"</span>),
+            ErrorCode::NumberOutOfRange =&gt; f.write_str(<span class="string">"number out of range"</span>),
+            ErrorCode::InvalidUnicodeCodePoint =&gt; f.write_str(<span class="string">"invalid unicode code point"</span>),
             ErrorCode::ControlCharacterWhileParsingString =&gt; {
-                f.write_str(<span class="string">&quot;control character (\\u0000-\\u001F) found while parsing a string&quot;</span>)
+                f.write_str(<span class="string">"control character (\\u0000-\\u001F) found while parsing a string"</span>)
             }
-            ErrorCode::KeyMustBeAString =&gt; f.write_str(<span class="string">&quot;key must be a string&quot;</span>),
+            ErrorCode::KeyMustBeAString =&gt; f.write_str(<span class="string">"key must be a string"</span>),
             ErrorCode::ExpectedNumericKey =&gt; {
-                f.write_str(<span class="string">&quot;invalid value: expected key to be a number in quotes&quot;</span>)
+                f.write_str(<span class="string">"invalid value: expected key to be a number in quotes"</span>)
             }
             ErrorCode::FloatKeyMustBeFinite =&gt; {
-                f.write_str(<span class="string">&quot;float key must be finite (got NaN or +/-inf)&quot;</span>)
+                f.write_str(<span class="string">"float key must be finite (got NaN or +/-inf)"</span>)
             }
             ErrorCode::LoneLeadingSurrogateInHexEscape =&gt; {
-                f.write_str(<span class="string">&quot;lone leading surrogate in hex escape&quot;</span>)
+                f.write_str(<span class="string">"lone leading surrogate in hex escape"</span>)
             }
-            ErrorCode::TrailingComma =&gt; f.write_str(<span class="string">&quot;trailing comma&quot;</span>),
-            ErrorCode::TrailingCharacters =&gt; f.write_str(<span class="string">&quot;trailing characters&quot;</span>),
-            ErrorCode::UnexpectedEndOfHexEscape =&gt; f.write_str(<span class="string">&quot;unexpected end of hex escape&quot;</span>),
-            ErrorCode::RecursionLimitExceeded =&gt; f.write_str(<span class="string">&quot;recursion limit exceeded&quot;</span>),
+            ErrorCode::TrailingComma =&gt; f.write_str(<span class="string">"trailing comma"</span>),
+            ErrorCode::TrailingCharacters =&gt; f.write_str(<span class="string">"trailing characters"</span>),
+            ErrorCode::UnexpectedEndOfHexEscape =&gt; f.write_str(<span class="string">"unexpected end of hex escape"</span>),
+            ErrorCode::RecursionLimitExceeded =&gt; f.write_str(<span class="string">"recursion limit exceeded"</span>),
         }
     }
 }
 
 <span class="kw">impl </span>serde::de::StdError <span class="kw">for </span>Error {
-    <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-    </span><span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>error::Error + <span class="lifetime">&#39;static</span>)&gt; {
+    <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+    </span><span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>error::Error + <span class="lifetime">'static</span>)&gt; {
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.err.code {
             ErrorCode::Io(err) =&gt; err.source(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
@@ -925,7 +950,7 @@
         } <span class="kw">else </span>{
             <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;{} at line {} column {}&quot;</span>,
+                <span class="string">"{} at line {} column {}"</span>,
                 <span class="self">self</span>.code, <span class="self">self</span>.line, <span class="self">self</span>.column
             )
         }
@@ -938,7 +963,7 @@
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;Error({:?}, line: {}, column: {})&quot;</span>,
+            <span class="string">"Error({:?}, line: {}, column: {})"</span>,
             <span class="self">self</span>.err.code.to_string(),
             <span class="self">self</span>.err.line,
             <span class="self">self</span>.err.column
@@ -954,11 +979,20 @@
 
     <span class="attr">#[cold]
     </span><span class="kw">fn </span>invalid_type(unexp: de::Unexpected, exp: <span class="kw-2">&amp;</span><span class="kw">dyn </span>de::Expected) -&gt; <span class="self">Self </span>{
-        <span class="kw">if let </span>de::Unexpected::Unit = unexp {
-            Error::custom(<span class="macro">format_args!</span>(<span class="string">&quot;invalid type: null, expected {}&quot;</span>, exp))
-        } <span class="kw">else </span>{
-            Error::custom(<span class="macro">format_args!</span>(<span class="string">&quot;invalid type: {}, expected {}&quot;</span>, unexp, exp))
-        }
+        Error::custom(<span class="macro">format_args!</span>(
+            <span class="string">"invalid type: {}, expected {}"</span>,
+            JsonUnexpected(unexp),
+            exp,
+        ))
+    }
+
+    <span class="attr">#[cold]
+    </span><span class="kw">fn </span>invalid_value(unexp: de::Unexpected, exp: <span class="kw-2">&amp;</span><span class="kw">dyn </span>de::Expected) -&gt; <span class="self">Self </span>{
+        Error::custom(<span class="macro">format_args!</span>(
+            <span class="string">"invalid value: {}, expected {}"</span>,
+            JsonUnexpected(unexp),
+            exp,
+        ))
     }
 }
 
@@ -969,7 +1003,23 @@
     }
 }
 
-<span class="comment">// Parse our own error message that looks like &quot;{} at line {} column {}&quot; to work
+<span class="kw">struct </span>JsonUnexpected&lt;<span class="lifetime">'a</span>&gt;(de::Unexpected&lt;<span class="lifetime">'a</span>&gt;);
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Display <span class="kw">for </span>JsonUnexpected&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, formatter: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
+        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
+            de::Unexpected::Unit =&gt; formatter.write_str(<span class="string">"null"</span>),
+            de::Unexpected::Float(value) =&gt; <span class="macro">write!</span>(
+                formatter,
+                <span class="string">"floating point `{}`"</span>,
+                ryu::Buffer::new().format(value),
+            ),
+            unexp =&gt; Display::fmt(<span class="kw-2">&amp;</span>unexp, formatter),
+        }
+    }
+}
+
+<span class="comment">// Parse our own error message that looks like "{} at line {} column {}" to work
 // around erased-serde round-tripping the error through de::Error::custom.
 </span><span class="kw">fn </span>make_error(<span class="kw-2">mut </span>msg: String) -&gt; Error {
     <span class="kw">let </span>(line, column) = parse_line_col(<span class="kw-2">&amp;mut </span>msg).unwrap_or((<span class="number">0</span>, <span class="number">0</span>));
@@ -983,24 +1033,24 @@
 }
 
 <span class="kw">fn </span>parse_line_col(msg: <span class="kw-2">&amp;mut </span>String) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, usize)&gt; {
-    <span class="kw">let </span>start_of_suffix = <span class="kw">match </span>msg.rfind(<span class="string">&quot; at line &quot;</span>) {
+    <span class="kw">let </span>start_of_suffix = <span class="kw">match </span>msg.rfind(<span class="string">" at line "</span>) {
         <span class="prelude-val">Some</span>(index) =&gt; index,
         <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
     };
 
     <span class="comment">// Find start and end of line number.
-    </span><span class="kw">let </span>start_of_line = start_of_suffix + <span class="string">&quot; at line &quot;</span>.len();
+    </span><span class="kw">let </span>start_of_line = start_of_suffix + <span class="string">" at line "</span>.len();
     <span class="kw">let </span><span class="kw-2">mut </span>end_of_line = start_of_line;
     <span class="kw">while </span>starts_with_digit(<span class="kw-2">&amp;</span>msg[end_of_line..]) {
         end_of_line += <span class="number">1</span>;
     }
 
-    <span class="kw">if </span>!msg[end_of_line..].starts_with(<span class="string">&quot; column &quot;</span>) {
+    <span class="kw">if </span>!msg[end_of_line..].starts_with(<span class="string">" column "</span>) {
         <span class="kw">return </span><span class="prelude-val">None</span>;
     }
 
     <span class="comment">// Find start and end of column number.
-    </span><span class="kw">let </span>start_of_column = end_of_line + <span class="string">&quot; column &quot;</span>.len();
+    </span><span class="kw">let </span>start_of_column = end_of_line + <span class="string">" column "</span>.len();
     <span class="kw">let </span><span class="kw-2">mut </span>end_of_column = start_of_column;
     <span class="kw">while </span>starts_with_digit(<span class="kw-2">&amp;</span>msg[end_of_column..]) {
         end_of_column += <span class="number">1</span>;
@@ -1027,7 +1077,7 @@
 <span class="kw">fn </span>starts_with_digit(slice: <span class="kw-2">&amp;</span>str) -&gt; bool {
     <span class="kw">match </span>slice.as_bytes().first() {
         <span class="prelude-val">None </span>=&gt; <span class="bool-val">false</span>,
-        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>byte) =&gt; byte &gt;= <span class="string">b&#39;0&#39; </span>&amp;&amp; byte &lt;= <span class="string">b&#39;9&#39;</span>,
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>byte) =&gt; byte &gt;= <span class="string">b'0' </span>&amp;&amp; byte &lt;= <span class="string">b'9'</span>,
     }
 }
 </code></pre></div></section></main></body></html>

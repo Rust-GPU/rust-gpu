@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/nfa/thompson/backtrack.rs`."><title>backtrack.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../regex_automata/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/nfa/thompson/backtrack.rs`."><title>backtrack.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1913,7 +1913,7 @@ groups.
 This module provides a [`BoundedBacktracker`] that works by simulating an NFA
 using the classical backtracking algorithm with a twist: it avoids redoing
 work that it has done before and thereby avoids worst case exponential time.
-In exchange, it can only be used on &quot;short&quot; haystacks. Its advantage is that
+In exchange, it can only be used on "short" haystacks. Its advantage is that
 is can be faster than the [`PikeVM`](thompson::pikevm::PikeVM) in many cases
 because it does less book-keeping.
 */
@@ -1935,7 +1935,7 @@ because it does less book-keeping.
 ///
 /// This function can be used as the argument to [`Config::visited_capacity`]
 /// in order to guarantee that a backtracking search for the given `input`
-/// won&#39;t return an error when using a [`BoundedBacktracker`] built from the
+/// won't return an error when using a [`BoundedBacktracker`] built from the
 /// given `NFA`.
 ///
 /// This routine exists primarily as a way to test that the bounded backtracker
@@ -1946,7 +1946,7 @@ because it does less book-keeping.
 ///
 /// Be warned that this number could be quite large as it is multiplicative in
 /// the size the given NFA and haystack.
-</span><span class="kw">pub fn </span>min_visited_capacity(nfa: <span class="kw-2">&amp;</span>NFA, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; usize {
+</span><span class="kw">pub fn </span>min_visited_capacity(nfa: <span class="kw-2">&amp;</span>NFA, input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; usize {
     div_ceil(nfa.states().len() * (input.get_span().len() + <span class="number">1</span>), <span class="number">8</span>)
 }
 
@@ -1975,7 +1975,7 @@ because it does less book-keeping.
     /// the match.
     ///
     /// Be warned that setting a prefilter does not guarantee that the search
-    /// will be faster. While it&#39;s usually a good bet, if the prefilter
+    /// will be faster. While it's usually a good bet, if the prefilter
     /// produces a lot of false positive candidates (i.e., positions matched
     /// by the prefilter but not by the regex), then the overall result can
     /// be slower than if you had just executed the regex engine without any
@@ -1992,12 +1992,12 @@ because it does less book-keeping.
     ///     Input, Match, MatchKind,
     /// };
     ///
-    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;[&quot;foo&quot;, &quot;bar&quot;]);
+    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;["foo", "bar"]);
     /// let re = BoundedBacktracker::builder()
     ///     .configure(BoundedBacktracker::config().prefilter(pre))
-    ///     .build(r&quot;(foo|bar)[a-z]+&quot;)?;
+    ///     .build(r"(foo|bar)[a-z]+")?;
     /// let mut cache = re.create_cache();
-    /// let input = Input::new(&quot;foo1 barfox bar&quot;);
+    /// let input = Input::new("foo1 barfox bar");
     /// assert_eq!(
     ///     Some(Match::must(0, 5..11)),
     ///     re.try_find(&amp;mut cache, input)?,
@@ -2016,12 +2016,12 @@ because it does less book-keeping.
     ///     Input, HalfMatch, MatchKind,
     /// };
     ///
-    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;[&quot;foo&quot;, &quot;car&quot;]);
+    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;["foo", "car"]);
     /// let re = BoundedBacktracker::builder()
     ///     .configure(BoundedBacktracker::config().prefilter(pre))
-    ///     .build(r&quot;(foo|bar)[a-z]+&quot;)?;
+    ///     .build(r"(foo|bar)[a-z]+")?;
     /// let mut cache = re.create_cache();
-    /// let input = Input::new(&quot;foo1 barfox bar&quot;);
+    /// let input = Input::new("foo1 barfox bar");
     /// // No match reported even though there clearly is one!
     /// assert_eq!(None, re.try_find(&amp;mut cache, input)?);
     ///
@@ -2066,12 +2066,12 @@ because it does less book-keeping.
     /// // Unicode inflates the size of the underlying NFA quite a bit, and
     /// // thus means that the backtracker can only handle smaller haystacks,
     /// // assuming that the visited capacity remains unchanged.
-    /// let re = BoundedBacktracker::new(r&quot;\w+&quot;)?;
+    /// let re = BoundedBacktracker::new(r"\w+")?;
     /// assert!(re.max_haystack_len() &lt;= 7_000);
     /// // But we can increase the visited capacity to handle bigger haystacks!
     /// let re = BoundedBacktracker::builder()
     ///     .configure(BoundedBacktracker::config().visited_capacity(1&lt;&lt;20))
-    ///     .build(r&quot;\w+&quot;)?;
+    ///     .build(r"\w+")?;
     /// assert!(re.max_haystack_len() &gt;= 25_000);
     /// assert!(re.max_haystack_len() &lt;= 28_000);
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2097,7 +2097,7 @@ because it does less book-keeping.
 
     <span class="doccomment">/// Overwrite the default configuration such that the options in `o` are
     /// always used. If an option in `o` is not set, then the corresponding
-    /// option in `self` is used. If it&#39;s not set in `self` either, then it
+    /// option in `self` is used. If it's not set in `self` either, then it
     /// remains not set.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>overwrite(<span class="kw-2">&amp;</span><span class="self">self</span>, o: Config) -&gt; Config {
         Config {
@@ -2141,10 +2141,10 @@ because it does less book-keeping.
 /// let re = BoundedBacktracker::builder()
 ///     .syntax(syntax::Config::new().utf8(false))
 ///     .thompson(thompson::Config::new().utf8(false))
-///     .build(r&quot;foo(?-u:[^b])ar.*&quot;)?;
+///     .build(r"foo(?-u:[^b])ar.*")?;
 /// let mut cache = re.create_cache();
 ///
-/// let haystack = b&quot;\xFEfoo\xFFarzz\xE2\x98\xFF\n&quot;;
+/// let haystack = b"\xFEfoo\xFFarzz\xE2\x98\xFF\n";
 /// let expected = Some(Ok(Match::must(0, 1..9)));
 /// let got = re.try_find_iter(&amp;mut cache, haystack).next();
 /// assert_eq!(expected, got);
@@ -2156,14 +2156,14 @@ because it does less book-keeping.
 /// // disabling UTF-8 mode on a BoundedBacktracker Config, since that
 /// // only impacts regexes that can produce matches of
 /// // length 0.
-/// assert_eq!(b&quot;foo\xFFarzz&quot;, &amp;haystack[got.unwrap()?.range()]);
+/// assert_eq!(b"foo\xFFarzz", &amp;haystack[got.unwrap()?.range()]);
 ///
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
 /// ```
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>Builder {
     config: Config,
-    <span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span>thompson: thompson::Compiler,
 }
 
@@ -2172,7 +2172,7 @@ because it does less book-keeping.
     </span><span class="kw">pub fn </span>new() -&gt; Builder {
         Builder {
             config: Config::default(),
-            <span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+            <span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
             </span>thompson: thompson::Compiler::new(),
         }
     }
@@ -2181,7 +2181,7 @@ because it does less book-keeping.
     ///
     /// If there was a problem parsing or compiling the pattern, then an error
     /// is returned.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>build(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         pattern: <span class="kw-2">&amp;</span>str,
@@ -2190,7 +2190,7 @@ because it does less book-keeping.
     }
 
     <span class="doccomment">/// Build a `BoundedBacktracker` from the given patterns.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>build_many&lt;P: AsRef&lt;str&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         patterns: <span class="kw-2">&amp;</span>[P],
@@ -2227,7 +2227,7 @@ because it does less book-keeping.
     ///
     /// These settings only apply when constructing a `BoundedBacktracker`
     /// directly from a pattern.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>syntax(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         config: <span class="kw">crate</span>::util::syntax::Config,
@@ -2244,7 +2244,7 @@ because it does less book-keeping.
     ///
     /// These settings only apply when constructing a `BoundedBacktracker`
     /// directly from a pattern.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>thompson(<span class="kw-2">&amp;mut </span><span class="self">self</span>, config: thompson::Config) -&gt; <span class="kw-2">&amp;mut </span>Builder {
         <span class="self">self</span>.thompson.configure(config);
         <span class="self">self
@@ -2257,10 +2257,10 @@ because it does less book-keeping.
 /// This regex engine only implements leftmost-first match semantics and
 /// only supports leftmost searches. It effectively does the same thing as a
 /// [`PikeVM`](thompson::pikevm::PikeVM), but typically does it faster because
-/// it doesn&#39;t have to worry about copying capturing group spans for most NFA
+/// it doesn't have to worry about copying capturing group spans for most NFA
 /// states. Instead, the backtracker can maintain one set of captures (provided
 /// by the caller) and never needs to copy them. In exchange, the backtracker
-/// bounds itself to ensure it doesn&#39;t exhibit worst case exponential time.
+/// bounds itself to ensure it doesn't exhibit worst case exponential time.
 /// This results in the backtracker only being able to handle short haystacks
 /// given reasonable memory usage.
 ///
@@ -2270,7 +2270,7 @@ because it does less book-keeping.
 /// implemented by not visiting any combination of NFA state ID and position
 /// in a haystack more than once. Thus, the total memory required to bound
 /// backtracking is proportional to `haystack.len() * nfa.states().len()`.
-/// This can obviously get quite large, since large haystacks aren&#39;t terribly
+/// This can obviously get quite large, since large haystacks aren't terribly
 /// uncommon. To avoid using exorbitant memory, the capacity is bounded by
 /// a fixed limit set via [`Config::visited_capacity`]. Thus, if the total
 /// capacity required for a particular regex and a haystack exceeds this
@@ -2283,7 +2283,7 @@ because it does less book-keeping.
 /// when running a search on a haystack that is too big.
 ///
 /// If one wants to use the fallible search APIs without handling the
-/// error, the only way to guarantee an error won&#39;t occur from the
+/// error, the only way to guarantee an error won't occur from the
 /// haystack length is to ensure the haystack length does not exceed
 /// [`BoundedBacktracker::max_haystack_len`].
 ///
@@ -2296,10 +2296,10 @@ because it does less book-keeping.
 /// # if cfg!(miri) { return Ok(()); } // miri takes too long
 /// use regex_automata::{nfa::thompson::backtrack::BoundedBacktracker, Match};
 ///
-/// let re = BoundedBacktracker::new(r&quot;\b\w+\b&quot;)?;
+/// let re = BoundedBacktracker::new(r"\b\w+\b")?;
 /// let mut cache = re.create_cache();
 ///
-/// let mut it = re.try_find_iter(&amp;mut cache, &quot;Шерлок Холмс&quot;);
+/// let mut it = re.try_find_iter(&amp;mut cache, "Шерлок Холмс");
 /// assert_eq!(Some(Ok(Match::must(0, 0..12))), it.next());
 /// assert_eq!(Some(Ok(Match::must(0, 13..23))), it.next());
 /// assert_eq!(None, it.next());
@@ -2318,10 +2318,10 @@ because it does less book-keeping.
 /// ```
 /// use regex_automata::{nfa::thompson::backtrack::BoundedBacktracker, Match};
 ///
-/// let re = BoundedBacktracker::new_many(&amp;[&quot;[a-z]+&quot;, &quot;[0-9]+&quot;])?;
+/// let re = BoundedBacktracker::new_many(&amp;["[a-z]+", "[0-9]+"])?;
 /// let mut cache = re.create_cache();
 ///
-/// let mut it = re.try_find_iter(&amp;mut cache, &quot;abc 1 foo 4567 0 quux&quot;);
+/// let mut it = re.try_find_iter(&amp;mut cache, "abc 1 foo 4567 0 quux");
 /// assert_eq!(Some(Ok(Match::must(0, 0..3))), it.next());
 /// assert_eq!(Some(Ok(Match::must(1, 4..5))), it.next());
 /// assert_eq!(Some(Ok(Match::must(0, 6..9))), it.next());
@@ -2352,20 +2352,20 @@ because it does less book-keeping.
     ///     Match,
     /// };
     ///
-    /// let re = BoundedBacktracker::new(&quot;foo[0-9]+bar&quot;)?;
+    /// let re = BoundedBacktracker::new("foo[0-9]+bar")?;
     /// let mut cache = re.create_cache();
     /// assert_eq!(
     ///     Some(Ok(Match::must(0, 3..14))),
-    ///     re.try_find_iter(&amp;mut cache, &quot;zzzfoo12345barzzz&quot;).next(),
+    ///     re.try_find_iter(&amp;mut cache, "zzzfoo12345barzzz").next(),
     /// );
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>new(pattern: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;BoundedBacktracker, BuildError&gt; {
         BoundedBacktracker::builder().build(pattern)
     }
 
-    <span class="doccomment">/// Like `new`, but parses multiple patterns into a single &quot;multi regex.&quot;
+    <span class="doccomment">/// Like `new`, but parses multiple patterns into a single "multi regex."
     /// This similarly uses the default regex configuration.
     ///
     /// # Example
@@ -2376,10 +2376,10 @@ because it does less book-keeping.
     ///     Match,
     /// };
     ///
-    /// let re = BoundedBacktracker::new_many(&amp;[&quot;[a-z]+&quot;, &quot;[0-9]+&quot;])?;
+    /// let re = BoundedBacktracker::new_many(&amp;["[a-z]+", "[0-9]+"])?;
     /// let mut cache = re.create_cache();
     ///
-    /// let mut it = re.try_find_iter(&amp;mut cache, &quot;abc 1 foo 4567 0 quux&quot;);
+    /// let mut it = re.try_find_iter(&amp;mut cache, "abc 1 foo 4567 0 quux");
     /// assert_eq!(Some(Ok(Match::must(0, 0..3))), it.next());
     /// assert_eq!(Some(Ok(Match::must(1, 4..5))), it.next());
     /// assert_eq!(Some(Ok(Match::must(0, 6..9))), it.next());
@@ -2389,7 +2389,7 @@ because it does less book-keeping.
     /// assert_eq!(None, it.next());
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>new_many&lt;P: AsRef&lt;str&gt;&gt;(
         patterns: <span class="kw-2">&amp;</span>[P],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;BoundedBacktracker, BuildError&gt; {
@@ -2409,10 +2409,10 @@ because it does less book-keeping.
     /// use regex_syntax::hir::{Hir, Class, ClassBytes, ClassBytesRange};
     ///
     /// let hir = Hir::class(Class::Bytes(ClassBytes::new(vec![
-    ///     ClassBytesRange::new(b&#39;0&#39;, b&#39;9&#39;),
-    ///     ClassBytesRange::new(b&#39;A&#39;, b&#39;Z&#39;),
-    ///     ClassBytesRange::new(b&#39;_&#39;, b&#39;_&#39;),
-    ///     ClassBytesRange::new(b&#39;a&#39;, b&#39;z&#39;),
+    ///     ClassBytesRange::new(b'0', b'9'),
+    ///     ClassBytesRange::new(b'A', b'Z'),
+    ///     ClassBytesRange::new(b'_', b'_'),
+    ///     ClassBytesRange::new(b'a', b'z'),
     /// ])));
     ///
     /// let config = NFA::config().nfa_size_limit(Some(1_000));
@@ -2421,7 +2421,7 @@ because it does less book-keeping.
     /// let re = BoundedBacktracker::new_from_nfa(nfa)?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     /// let expected = Some(Match::must(0, 3..4));
-    /// re.try_captures(&amp;mut cache, &quot;!@#A#@!&quot;, &amp;mut caps)?;
+    /// re.try_captures(&amp;mut cache, "!@#A#@!", &amp;mut caps)?;
     /// assert_eq!(expected, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2444,8 +2444,8 @@ because it does less book-keeping.
     /// let mut cache = re.create_cache();
     ///
     /// let expected = Some(Ok(Match::must(0, 0..0)));
-    /// assert_eq!(expected, re.try_find_iter(&amp;mut cache, &quot;&quot;).next());
-    /// assert_eq!(expected, re.try_find_iter(&amp;mut cache, &quot;foo&quot;).next());
+    /// assert_eq!(expected, re.try_find_iter(&amp;mut cache, "").next());
+    /// assert_eq!(expected, re.try_find_iter(&amp;mut cache, "foo").next());
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="kw">pub fn </span>always_match() -&gt; <span class="prelude-ty">Result</span>&lt;BoundedBacktracker, BuildError&gt; {
@@ -2463,8 +2463,8 @@ because it does less book-keeping.
     /// let re = BoundedBacktracker::never_match()?;
     /// let mut cache = re.create_cache();
     ///
-    /// assert_eq!(None, re.try_find_iter(&amp;mut cache, &quot;&quot;).next());
-    /// assert_eq!(None, re.try_find_iter(&amp;mut cache, &quot;foo&quot;).next());
+    /// assert_eq!(None, re.try_find_iter(&amp;mut cache, "").next());
+    /// assert_eq!(None, re.try_find_iter(&amp;mut cache, "foo").next());
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="kw">pub fn </span>never_match() -&gt; <span class="prelude-ty">Result</span>&lt;BoundedBacktracker, BuildError&gt; {
@@ -2483,7 +2483,7 @@ because it does less book-keeping.
     /// disabled, zero-width matches that split a codepoint are allowed.
     /// Otherwise they are never reported.
     ///
-    /// In the code below, notice that `&quot;&quot;` is permitted to match positions
+    /// In the code below, notice that `""` is permitted to match positions
     /// that split the encoding of a codepoint.
     ///
     /// ```
@@ -2494,10 +2494,10 @@ because it does less book-keeping.
     ///
     /// let re = BoundedBacktracker::builder()
     ///     .thompson(thompson::Config::new().utf8(false))
-    ///     .build(r&quot;&quot;)?;
+    ///     .build(r"")?;
     /// let mut cache = re.create_cache();
     ///
-    /// let haystack = &quot;a☃z&quot;;
+    /// let haystack = "a☃z";
     /// let mut it = re.try_find_iter(&amp;mut cache, haystack);
     /// assert_eq!(Some(Ok(Match::must(0, 0..0))), it.next());
     /// assert_eq!(Some(Ok(Match::must(0, 1..1))), it.next());
@@ -2535,10 +2535,10 @@ because it does less book-keeping.
     /// let re = BoundedBacktracker::builder()
     ///     .syntax(syntax::Config::new().utf8(false))
     ///     .thompson(thompson::Config::new().utf8(false))
-    ///     .build(r&quot;foo(?-u:[^b])ar.*&quot;)?;
+    ///     .build(r"foo(?-u:[^b])ar.*")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// let haystack = b&quot;\xFEfoo\xFFarzz\xE2\x98\xFF\n&quot;;
+    /// let haystack = b"\xFEfoo\xFFarzz\xE2\x98\xFF\n";
     /// let expected = Some(Match::must(0, 1..9));
     /// re.try_captures(&amp;mut cache, haystack, &amp;mut caps)?;
     /// assert_eq!(expected, caps.get_match());
@@ -2591,25 +2591,25 @@ because it does less book-keeping.
     ///     Match,
     /// };
     ///
-    /// let re1 = BoundedBacktracker::new(r&quot;\w&quot;)?;
-    /// let re2 = BoundedBacktracker::new(r&quot;\W&quot;)?;
+    /// let re1 = BoundedBacktracker::new(r"\w")?;
+    /// let re2 = BoundedBacktracker::new(r"\W")?;
     ///
     /// let mut cache = re1.create_cache();
     /// assert_eq!(
     ///     Some(Ok(Match::must(0, 0..2))),
-    ///     re1.try_find_iter(&amp;mut cache, &quot;Δ&quot;).next(),
+    ///     re1.try_find_iter(&amp;mut cache, "Δ").next(),
     /// );
     ///
-    /// // Using &#39;cache&#39; with re2 is not allowed. It may result in panics or
+    /// // Using 'cache' with re2 is not allowed. It may result in panics or
     /// // incorrect results. In order to re-purpose the cache, we must reset
-    /// // it with the BoundedBacktracker we&#39;d like to use it with.
+    /// // it with the BoundedBacktracker we'd like to use it with.
     /// //
-    /// // Similarly, after this reset, using the cache with &#39;re1&#39; is also not
+    /// // Similarly, after this reset, using the cache with 're1' is also not
     /// // allowed.
     /// cache.reset(&amp;re2);
     /// assert_eq!(
     ///     Some(Ok(Match::must(0, 0..3))),
-    ///     re2.try_find_iter(&amp;mut cache, &quot;☃&quot;).next(),
+    ///     re2.try_find_iter(&amp;mut cache, "☃").next(),
     /// );
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2654,7 +2654,7 @@ because it does less book-keeping.
     /// ```
     /// use regex_automata::nfa::thompson::backtrack::BoundedBacktracker;
     ///
-    /// let re = BoundedBacktracker::new_many(&amp;[&quot;[0-9]+&quot;, &quot;[a-z]+&quot;, &quot;[A-Z]+&quot;])?;
+    /// let re = BoundedBacktracker::new_many(&amp;["[0-9]+", "[a-z]+", "[A-Z]+"])?;
     /// assert_eq!(re.pattern_len(), 3);
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -2677,7 +2677,7 @@ because it does less book-keeping.
     <span class="doccomment">/// Returns the maximum haystack length supported by this backtracker.
     ///
     /// This routine is a function of both [`Config::visited_capacity`] and the
-    /// internal size of the backtracker&#39;s NFA.
+    /// internal size of the backtracker's NFA.
     ///
     /// # Example
     ///
@@ -2693,43 +2693,43 @@ because it does less book-keeping.
     ///     Match, MatchError,
     /// };
     ///
-    /// // If you&#39;re only using ASCII, you get a big budget.
-    /// let re = BoundedBacktracker::new(r&quot;(?-u)\w+&quot;)?;
+    /// // If you're only using ASCII, you get a big budget.
+    /// let re = BoundedBacktracker::new(r"(?-u)\w+")?;
     /// let mut cache = re.create_cache();
     /// assert_eq!(re.max_haystack_len(), 299_592);
     /// // Things work up to the max.
-    /// let mut haystack = &quot;a&quot;.repeat(299_592);
+    /// let mut haystack = "a".repeat(299_592);
     /// let expected = Some(Ok(Match::must(0, 0..299_592)));
     /// assert_eq!(expected, re.try_find_iter(&amp;mut cache, &amp;haystack).next());
-    /// // But you&#39;ll get an error if you provide a haystack that&#39;s too big.
-    /// // Notice that we use the &#39;try_find_iter&#39; routine instead, which
+    /// // But you'll get an error if you provide a haystack that's too big.
+    /// // Notice that we use the 'try_find_iter' routine instead, which
     /// // yields Result&lt;Match, MatchError&gt; instead of Match.
-    /// haystack.push(&#39;a&#39;);
+    /// haystack.push('a');
     /// let expected = Some(Err(MatchError::haystack_too_long(299_593)));
     /// assert_eq!(expected, re.try_find_iter(&amp;mut cache, &amp;haystack).next());
     ///
     /// // Unicode inflates the size of the underlying NFA quite a bit, and
     /// // thus means that the backtracker can only handle smaller haystacks,
     /// // assuming that the visited capacity remains unchanged.
-    /// let re = BoundedBacktracker::new(r&quot;\w+&quot;)?;
+    /// let re = BoundedBacktracker::new(r"\w+")?;
     /// assert!(re.max_haystack_len() &lt;= 7_000);
     /// // But we can increase the visited capacity to handle bigger haystacks!
     /// let re = BoundedBacktracker::builder()
     ///     .configure(BoundedBacktracker::config().visited_capacity(1&lt;&lt;20))
-    ///     .build(r&quot;\w+&quot;)?;
+    ///     .build(r"\w+")?;
     /// assert!(re.max_haystack_len() &gt;= 25_000);
     /// assert!(re.max_haystack_len() &lt;= 28_000);
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>max_haystack_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="comment">// The capacity given in the config is &quot;bytes of heap memory,&quot; but the
-        // capacity we use here is &quot;number of bits.&quot; So convert the capacity in
+        <span class="comment">// The capacity given in the config is "bytes of heap memory," but the
+        // capacity we use here is "number of bits." So convert the capacity in
         // bytes to the capacity in bits.
         </span><span class="kw">let </span>capacity = <span class="number">8 </span>* <span class="self">self</span>.get_config().get_visited_capacity();
         <span class="kw">let </span>blocks = div_ceil(capacity, Visited::BLOCK_SIZE);
         <span class="kw">let </span>real_capacity = blocks.saturating_mul(Visited::BLOCK_SIZE);
-        <span class="comment">// It&#39;s possible for `real_capacity` to be smaller than the number of
+        <span class="comment">// It's possible for `real_capacity` to be smaller than the number of
         // NFA states for particularly large regexes, so we saturate towards
         // zero.
         </span>(real_capacity / <span class="self">self</span>.nfa.states().len()).saturating_sub(<span class="number">1</span>)
@@ -2740,7 +2740,7 @@ because it does less book-keeping.
     <span class="doccomment">/// Returns true if and only if this regex matches the given haystack.
     ///
     /// In the case of a backtracking regex engine, and unlike most other
-    /// regex engines in this crate, short circuiting isn&#39;t practical. However,
+    /// regex engines in this crate, short circuiting isn't practical. However,
     /// this routine may still be faster because it instructs backtracking to
     /// not keep track of any capturing groups.
     ///
@@ -2758,11 +2758,11 @@ because it does less book-keeping.
     /// ```
     /// use regex_automata::nfa::thompson::backtrack::BoundedBacktracker;
     ///
-    /// let re = BoundedBacktracker::new(&quot;foo[0-9]+bar&quot;)?;
+    /// let re = BoundedBacktracker::new("foo[0-9]+bar")?;
     /// let mut cache = re.create_cache();
     ///
-    /// assert!(re.try_is_match(&amp;mut cache, &quot;foo12345bar&quot;)?);
-    /// assert!(!re.try_is_match(&amp;mut cache, &quot;foobar&quot;)?);
+    /// assert!(re.try_is_match(&amp;mut cache, "foo12345bar")?);
+    /// assert!(!re.try_is_match(&amp;mut cache, "foobar")?);
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     ///
@@ -2778,10 +2778,10 @@ because it does less book-keeping.
     ///     Input,
     /// };
     ///
-    /// let re = BoundedBacktracker::new(&quot;a*&quot;)?;
+    /// let re = BoundedBacktracker::new("a*")?;
     /// let mut cache = re.create_cache();
     ///
-    /// assert!(!re.try_is_match(&amp;mut cache, Input::new(&quot;☃&quot;).span(1..2))?);
+    /// assert!(!re.try_is_match(&amp;mut cache, Input::new("☃").span(1..2))?);
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     ///
@@ -2797,14 +2797,14 @@ because it does less book-keeping.
     ///
     /// let re = BoundedBacktracker::builder()
     ///     .thompson(NFA::config().utf8(false))
-    ///     .build(&quot;a*&quot;)?;
+    ///     .build("a*")?;
     /// let mut cache = re.create_cache();
     ///
-    /// assert!(re.try_is_match(&amp;mut cache, Input::new(&quot;☃&quot;).span(1..2))?);
+    /// assert!(re.try_is_match(&amp;mut cache, Input::new("☃").span(1..2))?);
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>try_is_match&lt;<span class="lifetime">&#39;h</span>, I: Into&lt;Input&lt;<span class="lifetime">&#39;h</span>&gt;&gt;&gt;(
+    </span><span class="kw">pub fn </span>try_is_match&lt;<span class="lifetime">'h</span>, I: Into&lt;Input&lt;<span class="lifetime">'h</span>&gt;&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
         input: I,
@@ -2836,15 +2836,15 @@ because it does less book-keeping.
     ///     Match,
     /// };
     ///
-    /// let re = BoundedBacktracker::new(&quot;foo[0-9]+&quot;)?;
+    /// let re = BoundedBacktracker::new("foo[0-9]+")?;
     /// let mut cache = re.create_cache();
     /// let expected = Match::must(0, 0..8);
-    /// assert_eq!(Some(expected), re.try_find(&amp;mut cache, &quot;foo12345&quot;)?);
+    /// assert_eq!(Some(expected), re.try_find(&amp;mut cache, "foo12345")?);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>try_find&lt;<span class="lifetime">&#39;h</span>, I: Into&lt;Input&lt;<span class="lifetime">&#39;h</span>&gt;&gt;&gt;(
+    </span><span class="kw">pub fn </span>try_find&lt;<span class="lifetime">'h</span>, I: Into&lt;Input&lt;<span class="lifetime">'h</span>&gt;&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
         input: I,
@@ -2907,11 +2907,11 @@ because it does less book-keeping.
     /// };
     ///
     /// let re = BoundedBacktracker::new(
-    ///     r&quot;^([0-9]{4})-([0-9]{2})-([0-9]{2})$&quot;,
+    ///     r"^([0-9]{4})-([0-9]{2})-([0-9]{2})$",
     /// )?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.try_captures(&amp;mut cache, &quot;2010-03-14&quot;, &amp;mut caps)?;
+    /// re.try_captures(&amp;mut cache, "2010-03-14", &amp;mut caps)?;
     /// assert!(caps.is_match());
     /// assert_eq!(Some(Span::from(0..4)), caps.get_group(1));
     /// assert_eq!(Some(Span::from(5..7)), caps.get_group(2));
@@ -2920,7 +2920,7 @@ because it does less book-keeping.
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>try_captures&lt;<span class="lifetime">&#39;h</span>, I: Into&lt;Input&lt;<span class="lifetime">&#39;h</span>&gt;&gt;&gt;(
+    </span><span class="kw">pub fn </span>try_captures&lt;<span class="lifetime">'h</span>, I: Into&lt;Input&lt;<span class="lifetime">'h</span>&gt;&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
         input: I,
@@ -2943,10 +2943,10 @@ because it does less book-keeping.
     ///     Match, MatchError,
     /// };
     ///
-    /// let re = BoundedBacktracker::new(&quot;foo[0-9]+&quot;)?;
+    /// let re = BoundedBacktracker::new("foo[0-9]+")?;
     /// let mut cache = re.create_cache();
     ///
-    /// let text = &quot;foo1 foo12 foo123&quot;;
+    /// let text = "foo1 foo12 foo123";
     /// let result: Result&lt;Vec&lt;Match&gt;, MatchError&gt; = re
     ///     .try_find_iter(&amp;mut cache, text)
     ///     .collect();
@@ -2959,11 +2959,11 @@ because it does less book-keeping.
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>try_find_iter&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>, I: Into&lt;Input&lt;<span class="lifetime">&#39;h</span>&gt;&gt;&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span><span class="self">self</span>,
-        cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;c </span><span class="kw-2">mut </span>Cache,
+    </span><span class="kw">pub fn </span>try_find_iter&lt;<span class="lifetime">'r</span>, <span class="lifetime">'c</span>, <span class="lifetime">'h</span>, I: Into&lt;Input&lt;<span class="lifetime">'h</span>&gt;&gt;&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'r </span><span class="self">self</span>,
+        cache: <span class="kw-2">&amp;</span><span class="lifetime">'c </span><span class="kw-2">mut </span>Cache,
         input: I,
-    ) -&gt; TryFindMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; {
+    ) -&gt; TryFindMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; {
         <span class="kw">let </span>caps = Captures::matches(<span class="self">self</span>.get_nfa().group_info().clone());
         <span class="kw">let </span>it = iter::Searcher::new(input.into());
         TryFindMatches { re: <span class="self">self</span>, cache, caps, it }
@@ -2992,15 +2992,15 @@ because it does less book-keeping.
     ///     Span,
     /// };
     ///
-    /// let re = BoundedBacktracker::new(&quot;foo(?P&lt;numbers&gt;[0-9]+)&quot;)?;
+    /// let re = BoundedBacktracker::new("foo(?P&lt;numbers&gt;[0-9]+)")?;
     /// let mut cache = re.create_cache();
     ///
-    /// let text = &quot;foo1 foo12 foo123&quot;;
+    /// let text = "foo1 foo12 foo123";
     /// let mut spans = vec![];
     /// for result in re.try_captures_iter(&amp;mut cache, text) {
     ///     let caps = result?;
-    ///     // The unwrap is OK since &#39;numbers&#39; matches if the pattern matches.
-    ///     spans.push(caps.get_group_by_name(&quot;numbers&quot;).unwrap());
+    ///     // The unwrap is OK since 'numbers' matches if the pattern matches.
+    ///     spans.push(caps.get_group_by_name("numbers").unwrap());
     /// }
     /// assert_eq!(spans, vec![
     ///     Span::from(3..4),
@@ -3010,11 +3010,11 @@ because it does less book-keeping.
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>try_captures_iter&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>, I: Into&lt;Input&lt;<span class="lifetime">&#39;h</span>&gt;&gt;&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span><span class="self">self</span>,
-        cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;c </span><span class="kw-2">mut </span>Cache,
+    </span><span class="kw">pub fn </span>try_captures_iter&lt;<span class="lifetime">'r</span>, <span class="lifetime">'c</span>, <span class="lifetime">'h</span>, I: Into&lt;Input&lt;<span class="lifetime">'h</span>&gt;&gt;&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'r </span><span class="self">self</span>,
+        cache: <span class="kw-2">&amp;</span><span class="lifetime">'c </span><span class="kw-2">mut </span>Cache,
         input: I,
-    ) -&gt; TryCapturesMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; {
+    ) -&gt; TryCapturesMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; {
         <span class="kw">let </span>caps = <span class="self">self</span>.create_captures();
         <span class="kw">let </span>it = iter::Searcher::new(input.into());
         TryCapturesMatches { re: <span class="self">self</span>, cache, caps, it }
@@ -3051,11 +3051,11 @@ because it does less book-keeping.
     /// };
     ///
     /// let re = BoundedBacktracker::new_many(&amp;[
-    ///     &quot;[a-z0-9]{6}&quot;,
-    ///     &quot;[a-z][a-z0-9]{5}&quot;,
+    ///     "[a-z0-9]{6}",
+    ///     "[a-z][a-z0-9]{5}",
     /// ])?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
-    /// let haystack = &quot;foo123&quot;;
+    /// let haystack = "foo123";
     ///
     /// // Since we are using the default leftmost-first match and both
     /// // patterns match at the same starting position, only the first pattern
@@ -3088,11 +3088,11 @@ because it does less book-keeping.
     ///     Match, Input,
     /// };
     ///
-    /// let re = BoundedBacktracker::new(r&quot;\b[0-9]{3}\b&quot;)?;
+    /// let re = BoundedBacktracker::new(r"\b[0-9]{3}\b")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
-    /// let haystack = &quot;foo123bar&quot;;
+    /// let haystack = "foo123bar";
     ///
-    /// // Since we sub-slice the haystack, the search doesn&#39;t know about
+    /// // Since we sub-slice the haystack, the search doesn't know about
     /// // the larger context and assumes that `123` is surrounded by word
     /// // boundaries. And of course, the match position is reported relative
     /// // to the sub-slice as well, which means we get `0..3` instead of
@@ -3117,7 +3117,7 @@ because it does less book-keeping.
     </span><span class="kw">pub fn </span>try_search(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         caps: <span class="kw-2">&amp;mut </span>Captures,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
         caps.set_pattern(<span class="prelude-val">None</span>);
@@ -3134,10 +3134,10 @@ because it does less book-keeping.
     ///
     /// This is like [`BoundedBacktracker::try_search`], but it accepts a raw
     /// slots slice instead of a `Captures` value. This is useful in contexts
-    /// where you don&#39;t want or need to allocate a `Captures`.
+    /// where you don't want or need to allocate a `Captures`.
     ///
     /// It is legal to pass _any_ number of slots to this routine. If the regex
-    /// engine would otherwise write a slot offset that doesn&#39;t fit in the
+    /// engine would otherwise write a slot offset that doesn't fit in the
     /// provided slice, then it is simply skipped. In general though, there are
     /// usually three slice lengths you might want to use:
     ///
@@ -3174,11 +3174,11 @@ because it does less book-keeping.
     /// };
     ///
     /// let re = BoundedBacktracker::new_many(&amp;[
-    ///     r&quot;\pL+&quot;,
-    ///     r&quot;\d+&quot;,
+    ///     r"\pL+",
+    ///     r"\d+",
     /// ])?;
     /// let mut cache = re.create_cache();
-    /// let input = Input::new(&quot;!@#123&quot;);
+    /// let input = Input::new("!@#123");
     ///
     /// // We only care about the overall match offsets here, so we just
     /// // allocate two slots for each pattern. Each slot records the start
@@ -3187,8 +3187,8 @@ because it does less book-keeping.
     /// let pid = re.try_search_slots(&amp;mut cache, &amp;input, &amp;mut slots)?;
     /// assert_eq!(Some(PatternID::must(1)), pid);
     ///
-    /// // The overall match offsets are always at &#39;pid * 2&#39; and &#39;pid * 2 + 1&#39;.
-    /// // See &#39;GroupInfo&#39; for more details on the mapping between groups and
+    /// // The overall match offsets are always at 'pid * 2' and 'pid * 2 + 1'.
+    /// // See 'GroupInfo' for more details on the mapping between groups and
     /// // slot indices.
     /// let slot_start = pid.unwrap().as_usize() * 2;
     /// let slot_end = slot_start + 1;
@@ -3201,7 +3201,7 @@ because it does less book-keeping.
     </span><span class="kw">pub fn </span>try_search_slots(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;PatternID&gt;, MatchError&gt; {
         <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
@@ -3219,27 +3219,27 @@ because it does less book-keeping.
             <span class="kw">let </span><span class="kw-2">mut </span>enough = [<span class="prelude-val">None</span>, <span class="prelude-val">None</span>];
             <span class="kw">let </span>got = <span class="self">self</span>.try_search_slots_imp(cache, input, <span class="kw-2">&amp;mut </span>enough)<span class="question-mark">?</span>;
             <span class="comment">// This is OK because we know `enough_slots` is strictly bigger
-            // than `slots`, otherwise this special case isn&#39;t reached.
+            // than `slots`, otherwise this special case isn't reached.
             </span>slots.copy_from_slice(<span class="kw-2">&amp;</span>enough[..slots.len()]);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(got.map(|hm| hm.pattern()));
         }
         <span class="kw">let </span><span class="kw-2">mut </span>enough = <span class="macro">vec!</span>[<span class="prelude-val">None</span>; min];
         <span class="kw">let </span>got = <span class="self">self</span>.try_search_slots_imp(cache, input, <span class="kw-2">&amp;mut </span>enough)<span class="question-mark">?</span>;
         <span class="comment">// This is OK because we know `enough_slots` is strictly bigger than
-        // `slots`, otherwise this special case isn&#39;t reached.
+        // `slots`, otherwise this special case isn't reached.
         </span>slots.copy_from_slice(<span class="kw-2">&amp;</span>enough[..slots.len()]);
         <span class="prelude-val">Ok</span>(got.map(|hm| hm.pattern()))
     }
 
     <span class="doccomment">/// This is the actual implementation of `try_search_slots_imp` that
-    /// doesn&#39;t account for the special case when 1) the NFA has UTF-8 mode
+    /// doesn't account for the special case when 1) the NFA has UTF-8 mode
     /// enabled, 2) the NFA can match the empty string and 3) the caller has
     /// provided an insufficient number of slots to record match offsets.
     </span><span class="attr">#[inline(never)]
     </span><span class="kw">fn </span>try_search_slots_imp(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, MatchError&gt; {
         <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
@@ -3257,22 +3257,22 @@ because it does less book-keeping.
 
     <span class="doccomment">/// The implementation of standard leftmost backtracking search.
     ///
-    /// Capturing group spans are written to &#39;caps&#39;, but only if requested.
-    /// &#39;caps&#39; can be one of three things: 1) totally empty, in which case, we
+    /// Capturing group spans are written to 'caps', but only if requested.
+    /// 'caps' can be one of three things: 1) totally empty, in which case, we
     /// only report the pattern that matched or 2) only has slots for recording
     /// the overall match offsets for any pattern or 3) has all slots available
     /// for recording the spans of any groups participating in a match.
     </span><span class="kw">fn </span>search_imp(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;HalfMatch&gt;, MatchError&gt; {
         <span class="comment">// Unlike in the PikeVM, we write our capturing group spans directly
-        // into the caller&#39;s captures groups. So we have to make sure we&#39;re
+        // into the caller's captures groups. So we have to make sure we're
         // starting with a blank slate first. In the PikeVM, we avoid this
         // by construction: the spans that are copied to every slot in the
-        // &#39;Captures&#39; value already account for presence/absence. In this
+        // 'Captures' value already account for presence/absence. In this
         // backtracker, we write directly into the caller provided slots, where
         // as in the PikeVM, we write into scratch space first and only copy
         // them to the caller provided slots when a match is found.
@@ -3284,12 +3284,12 @@ because it does less book-keeping.
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
         <span class="kw">let </span>(anchored, start_id) = <span class="kw">match </span>input.get_anchored() {
-            <span class="comment">// Only way we&#39;re unanchored is if both the caller asked for an
+            <span class="comment">// Only way we're unanchored is if both the caller asked for an
             // unanchored search *and* the pattern is itself not anchored.
             </span>Anchored::No =&gt; (
                 <span class="self">self</span>.nfa.is_always_start_anchored(),
                 <span class="comment">// We always use the anchored starting state here, even if
-                // doing an unanchored search. The &quot;unanchored&quot; part of it is
+                // doing an unanchored search. The "unanchored" part of it is
                 // implemented in the loop below, by simply trying the next
                 // byte offset if the previous backtracking exploration failed.
                 </span><span class="self">self</span>.nfa.start_anchored(),
@@ -3329,11 +3329,11 @@ because it does less book-keeping.
     ///
     /// If no match was found, then the caller should increment `at` and try
     /// at the next position.
-    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>backtrack(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         at: usize,
         start_id: StateID,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
@@ -3358,18 +3358,18 @@ because it does less book-keeping.
     // 75 lines below. Yet this file is over 2,000 lines long. What have I
     // done?
 
-    </span><span class="doccomment">/// Execute a &quot;step&quot; in the backtracing algorithm.
+    </span><span class="doccomment">/// Execute a "step" in the backtracing algorithm.
     ///
-    /// A &quot;step&quot; is somewhat of a misnomer, because this routine keeps going
+    /// A "step" is somewhat of a misnomer, because this routine keeps going
     /// until it either runs out of things to try or fins a match. In the
     /// former case, it may have pushed some things on to the backtracking
     /// stack, in which case, those will be tried next as part of the
-    /// &#39;backtrack&#39; routine above.
-    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    /// 'backtrack' routine above.
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>step(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         <span class="kw-2">mut </span>sid: StateID,
         <span class="kw-2">mut </span>at: usize,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
@@ -3383,13 +3383,13 @@ because it does less book-keeping.
                     <span class="comment">// Why do we need this? Unlike other regex engines in this
                     // crate, the backtracker can steam roll ahead in the
                     // haystack outside of the main loop over the bytes in the
-                    // haystack. While &#39;trans.matches()&#39; below handles the case
-                    // of &#39;at&#39; being out of bounds of &#39;input.haystack()&#39;, we
-                    // also need to handle the case of &#39;at&#39; going out of bounds
+                    // haystack. While 'trans.matches()' below handles the case
+                    // of 'at' being out of bounds of 'input.haystack()', we
+                    // also need to handle the case of 'at' going out of bounds
                     // of the span the caller asked to search.
                     //
-                    // We should perhaps make the &#39;trans.matches()&#39; API accept
-                    // an &#39;&amp;Input&#39; instead of a &#39;&amp;[u8]&#39;. Or at least, add a new
+                    // We should perhaps make the 'trans.matches()' API accept
+                    // an '&amp;Input' instead of a '&amp;[u8]'. Or at least, add a new
                     // API that does it.
                     </span><span class="kw">if </span>at &gt;= input.end() {
                         <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -3415,7 +3415,7 @@ because it does less book-keeping.
                     at += <span class="number">1</span>;
                 }
                 State::Look { look, next } =&gt; {
-                    <span class="comment">// OK because we don&#39;t permit building a searcher with a
+                    <span class="comment">// OK because we don't permit building a searcher with a
                     // Unicode word boundary if the requisite Unicode data is
                     // unavailable.
                     </span><span class="kw">if </span>!<span class="self">self</span>.nfa.look_matcher().matches_inline(
@@ -3470,26 +3470,26 @@ because it does less book-keeping.
 ///
 /// The lifetime parameters are as follows:
 ///
-/// * `&#39;r` represents the lifetime of the BoundedBacktracker.
-/// * `&#39;c` represents the lifetime of the BoundedBacktracker&#39;s cache.
-/// * `&#39;h` represents the lifetime of the haystack being searched.
+/// * `'r` represents the lifetime of the BoundedBacktracker.
+/// * `'c` represents the lifetime of the BoundedBacktracker's cache.
+/// * `'h` represents the lifetime of the haystack being searched.
 ///
 /// This iterator can be created with the [`BoundedBacktracker::try_find_iter`]
 /// method.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>TryFindMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; {
-    re: <span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span>BoundedBacktracker,
-    cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;c </span><span class="kw-2">mut </span>Cache,
+</span><span class="kw">pub struct </span>TryFindMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; {
+    re: <span class="kw-2">&amp;</span><span class="lifetime">'r </span>BoundedBacktracker,
+    cache: <span class="kw-2">&amp;</span><span class="lifetime">'c </span><span class="kw-2">mut </span>Cache,
     caps: Captures,
-    it: iter::Searcher&lt;<span class="lifetime">&#39;h</span>&gt;,
+    it: iter::Searcher&lt;<span class="lifetime">'h</span>&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; Iterator <span class="kw">for </span>TryFindMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>, <span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; Iterator <span class="kw">for </span>TryFindMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; {
     <span class="kw">type </span>Item = <span class="prelude-ty">Result</span>&lt;Match, MatchError&gt;;
 
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;Match, MatchError&gt;&gt; {
-        <span class="comment">// Splitting &#39;self&#39; apart seems necessary to appease borrowck.
+        <span class="comment">// Splitting 'self' apart seems necessary to appease borrowck.
         </span><span class="kw">let </span>TryFindMatches { re, <span class="kw-2">ref mut </span>cache, <span class="kw-2">ref mut </span>caps, <span class="kw-2">ref mut </span>it } =
             <span class="kw-2">*</span><span class="self">self</span>;
         it.try_advance(|input| {
@@ -3508,26 +3508,26 @@ because it does less book-keeping.
 ///
 /// The lifetime parameters are as follows:
 ///
-/// * `&#39;r` represents the lifetime of the BoundedBacktracker.
-/// * `&#39;c` represents the lifetime of the BoundedBacktracker&#39;s cache.
-/// * `&#39;h` represents the lifetime of the haystack being searched.
+/// * `'r` represents the lifetime of the BoundedBacktracker.
+/// * `'c` represents the lifetime of the BoundedBacktracker's cache.
+/// * `'h` represents the lifetime of the haystack being searched.
 ///
 /// This iterator can be created with the
 /// [`BoundedBacktracker::try_captures_iter`] method.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>TryCapturesMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; {
-    re: <span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span>BoundedBacktracker,
-    cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;c </span><span class="kw-2">mut </span>Cache,
+</span><span class="kw">pub struct </span>TryCapturesMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; {
+    re: <span class="kw-2">&amp;</span><span class="lifetime">'r </span>BoundedBacktracker,
+    cache: <span class="kw-2">&amp;</span><span class="lifetime">'c </span><span class="kw-2">mut </span>Cache,
     caps: Captures,
-    it: iter::Searcher&lt;<span class="lifetime">&#39;h</span>&gt;,
+    it: iter::Searcher&lt;<span class="lifetime">'h</span>&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; Iterator <span class="kw">for </span>TryCapturesMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>, <span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; Iterator <span class="kw">for </span>TryCapturesMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; {
     <span class="kw">type </span>Item = <span class="prelude-ty">Result</span>&lt;Captures, MatchError&gt;;
 
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;Captures, MatchError&gt;&gt; {
-        <span class="comment">// Splitting &#39;self&#39; apart seems necessary to appease borrowck.
+        <span class="comment">// Splitting 'self' apart seems necessary to appease borrowck.
         </span><span class="kw">let </span>TryCapturesMatches { re, <span class="kw-2">ref mut </span>cache, <span class="kw-2">ref mut </span>caps, <span class="kw-2">ref mut </span>it } =
             <span class="kw-2">*</span><span class="self">self</span>;
         <span class="kw">let _ </span>= it
@@ -3560,13 +3560,13 @@ because it does less book-keeping.
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>Cache {
     <span class="doccomment">/// Stack used on the heap for doing backtracking instead of the
-    /// traditional recursive approach. We don&#39;t want recursion because then
-    /// we&#39;re likely to hit a stack overflow for bigger regexes.
+    /// traditional recursive approach. We don't want recursion because then
+    /// we're likely to hit a stack overflow for bigger regexes.
     </span>stack: Vec&lt;Frame&gt;,
     <span class="doccomment">/// The set of (StateID, HaystackOffset) pairs that have been visited
     /// by the backtracker within a single search. If such a pair has been
     /// visited, then we avoid doing the work for that pair again. This is
-    /// what &quot;bounds&quot; the backtracking and prevents it from having worst case
+    /// what "bounds" the backtracking and prevents it from having worst case
     /// exponential time.
     </span>visited: Visited,
 }
@@ -3603,25 +3603,25 @@ because it does less book-keeping.
     ///     Match,
     /// };
     ///
-    /// let re1 = BoundedBacktracker::new(r&quot;\w&quot;)?;
-    /// let re2 = BoundedBacktracker::new(r&quot;\W&quot;)?;
+    /// let re1 = BoundedBacktracker::new(r"\w")?;
+    /// let re2 = BoundedBacktracker::new(r"\W")?;
     ///
     /// let mut cache = re1.create_cache();
     /// assert_eq!(
     ///     Some(Ok(Match::must(0, 0..2))),
-    ///     re1.try_find_iter(&amp;mut cache, &quot;Δ&quot;).next(),
+    ///     re1.try_find_iter(&amp;mut cache, "Δ").next(),
     /// );
     ///
-    /// // Using &#39;cache&#39; with re2 is not allowed. It may result in panics or
+    /// // Using 'cache' with re2 is not allowed. It may result in panics or
     /// // incorrect results. In order to re-purpose the cache, we must reset
-    /// // it with the BoundedBacktracker we&#39;d like to use it with.
+    /// // it with the BoundedBacktracker we'd like to use it with.
     /// //
-    /// // Similarly, after this reset, using the cache with &#39;re1&#39; is also not
+    /// // Similarly, after this reset, using the cache with 're1' is also not
     /// // allowed.
     /// cache.reset(&amp;re2);
     /// assert_eq!(
     ///     Some(Ok(Match::must(0, 0..3))),
-    ///     re2.try_find_iter(&amp;mut cache, &quot;☃&quot;).next(),
+    ///     re2.try_find_iter(&amp;mut cache, "☃").next(),
     /// );
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -3643,16 +3643,16 @@ because it does less book-keeping.
     /// to ensure we start with a clean slate.
     ///
     /// This also sets the length of the capturing groups used in the current
-    /// search. This permits an optimization where by &#39;SlotTable::for_state&#39;
+    /// search. This permits an optimization where by 'SlotTable::for_state'
     /// only returns the number of slots equivalent to the number of slots
-    /// given in the &#39;Captures&#39; value. This may be less than the total number
+    /// given in the 'Captures' value. This may be less than the total number
     /// of possible slots, e.g., when one only wants to track overall match
     /// offsets. This in turn permits less copying of capturing group spans
     /// in the BoundedBacktracker.
     </span><span class="kw">fn </span>setup_search(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         re: <span class="kw-2">&amp;</span>BoundedBacktracker,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
         <span class="self">self</span>.stack.clear();
         <span class="self">self</span>.visited.setup_search(re, input)<span class="question-mark">?</span>;
@@ -3671,39 +3671,39 @@ because it does less book-keeping.
     /// haystack.
     </span>Step { sid: StateID, at: usize },
     <span class="doccomment">/// Reset the given `slot` to the given `offset` (which might be `None`).
-    /// This effectively gives a &quot;scope&quot; to capturing groups, such that an
+    /// This effectively gives a "scope" to capturing groups, such that an
     /// offset for a particular group only gets returned if the match goes
     /// through that capturing group. If backtracking ends up going down a
     /// different branch that results in a different offset (or perhaps none at
-    /// all), then this &quot;restore capture&quot; frame will cause the offset to get
+    /// all), then this "restore capture" frame will cause the offset to get
     /// reset.
     </span>RestoreCapture { slot: SmallIndex, offset: <span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt; },
 }
 
 <span class="doccomment">/// A bitset that keeps track of whether a particular (StateID, offset) has
 /// been considered during backtracking. If it has already been visited, then
-/// backtracking skips it. This is what gives backtracking its &quot;bound.&quot;
+/// backtracking skips it. This is what gives backtracking its "bound."
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">struct </span>Visited {
     <span class="doccomment">/// The actual underlying bitset. Each element in the bitset corresponds
     /// to a particular (StateID, offset) pair. States correspond to the rows
     /// and the offsets correspond to the columns.
     ///
-    /// If our underlying NFA has N states and the haystack we&#39;re searching
+    /// If our underlying NFA has N states and the haystack we're searching
     /// has M bytes, then we have N*(M+1) entries in our bitset table. The
     /// M+1 occurs because our matches are delayed by one byte (to support
     /// look-around), and so we need to handle the end position itself rather
     /// than stopping just before the end. (If there is no end position, then
-    /// it&#39;s treated as &quot;end-of-input,&quot; which is matched by things like &#39;$&#39;.)
+    /// it's treated as "end-of-input," which is matched by things like '$'.)
     ///
     /// Given BITS=N*(M+1), we wind up with div_ceil(BITS, sizeof(usize))
     /// blocks.
     ///
-    /// We use &#39;usize&#39; to represent our blocks because it makes some of the
-    /// arithmetic in &#39;insert&#39; a bit nicer. For example, if we used &#39;u32&#39; for
-    /// our block, we&#39;d either need to cast u32s to usizes or usizes to u32s.
+    /// We use 'usize' to represent our blocks because it makes some of the
+    /// arithmetic in 'insert' a bit nicer. For example, if we used 'u32' for
+    /// our block, we'd either need to cast u32s to usizes or usizes to u32s.
     </span>bitset: Vec&lt;usize&gt;,
-    <span class="doccomment">/// The stride represents one plus length of the haystack we&#39;re searching
+    <span class="doccomment">/// The stride represents one plus length of the haystack we're searching
     /// (as described above). The stride must be initialized for each search.
     </span>stride: usize,
 }
@@ -3749,10 +3749,10 @@ because it does less book-keeping.
     </span><span class="kw">fn </span>setup_search(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         re: <span class="kw-2">&amp;</span>BoundedBacktracker,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
         <span class="comment">// Our haystack length is only the length of the span of the entire
-        // haystack that we&#39;ll be searching.
+        // haystack that we'll be searching.
         </span><span class="kw">let </span>haylen = input.get_span().len();
         <span class="kw">let </span>err = || MatchError::haystack_too_long(haylen);
         <span class="comment">// Our stride is one more than the length of the input because our main
@@ -3799,17 +3799,17 @@ because it does less book-keeping.
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="comment">// This is a regression test for the maximum haystack length computation.
-    // Previously, it assumed that the total capacity of the backtracker&#39;s
+    // Previously, it assumed that the total capacity of the backtracker's
     // bitset would always be greater than the number of NFA states. But there
     // is of course no guarantee that this is true. This regression test
     // ensures that not only does `max_haystack_len` not panic, but that it
     // should return `0`.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     #[test]
     </span><span class="kw">fn </span>max_haystack_len_overflow() {
         <span class="kw">let </span>re = BoundedBacktracker::builder()
             .configure(BoundedBacktracker::config().visited_capacity(<span class="number">10</span>))
-            .build(<span class="string">r&quot;[0-9A-Za-z]{100}&quot;</span>)
+            .build(<span class="string">r"[0-9A-Za-z]{100}"</span>)
             .unwrap();
         <span class="macro">assert_eq!</span>(<span class="number">0</span>, re.max_haystack_len());
     }

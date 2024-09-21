@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-syntax-0.8.2/src/hir/interval.rs`."><title>interval.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_syntax/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-syntax-0.8.4/src/hir/interval.rs`."><title>interval.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_syntax/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -562,23 +562,6 @@
 <a href="#562" id="562">562</a>
 <a href="#563" id="563">563</a>
 <a href="#564" id="564">564</a>
-<a href="#565" id="565">565</a>
-<a href="#566" id="566">566</a>
-<a href="#567" id="567">567</a>
-<a href="#568" id="568">568</a>
-<a href="#569" id="569">569</a>
-<a href="#570" id="570">570</a>
-<a href="#571" id="571">571</a>
-<a href="#572" id="572">572</a>
-<a href="#573" id="573">573</a>
-<a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
-<a href="#576" id="576">576</a>
-<a href="#577" id="577">577</a>
-<a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{char, cmp, fmt::Debug, slice};
 
 <span class="kw">use </span>alloc::vec::Vec;
@@ -606,7 +589,7 @@
 // character classes (especially of the Unicode variety) can become quite
 // large, and it would be nice to keep regex compilation snappy even in debug
 // builds. (In the past, I have been careless with this area of code and it has
-// caused slow regex compilations in debug mode, so this isn&#39;t entirely
+// caused slow regex compilations in debug mode, so this isn't entirely
 // unwarranted.)
 //
 // Tests on this are relegated to the public API of HIR in src/hir.rs.
@@ -624,8 +607,8 @@
     /// symmetric difference all produce a case folded set.
     ///
     /// Note that when this is true, it *must* be the case that the set is case
-    /// folded. But when it&#39;s false, the set *may* be case folded. In other
-    /// words, we only set this to true when we know it to be case, but we&#39;re
+    /// folded. But when it's false, the set *may* be case folded. In other
+    /// words, we only set this to true when we know it to be case, but we're
     /// okay with it being false if it would otherwise be costly to determine
     /// whether it should be true. This means code cannot assume that a false
     /// value necessarily indicates that the set is not case folded.
@@ -636,8 +619,8 @@
 
 <span class="kw">impl</span>&lt;I: Interval&gt; Eq <span class="kw">for </span>IntervalSet&lt;I&gt; {}
 
-<span class="comment">// We implement PartialEq manually so that we don&#39;t consider the set&#39;s internal
-// &#39;folded&#39; property to be part of its identity. The &#39;folded&#39; property is
+<span class="comment">// We implement PartialEq manually so that we don't consider the set's internal
+// 'folded' property to be part of its identity. The 'folded' property is
 // strictly an optimization.
 </span><span class="kw">impl</span>&lt;I: Interval&gt; PartialEq <span class="kw">for </span>IntervalSet&lt;I&gt; {
     <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>IntervalSet&lt;I&gt;) -&gt; bool {
@@ -666,7 +649,7 @@
         // it preserves canonicalization.
         </span><span class="self">self</span>.ranges.push(interval);
         <span class="self">self</span>.canonicalize();
-        <span class="comment">// We don&#39;t know whether the new interval added here is considered
+        <span class="comment">// We don't know whether the new interval added here is considered
         // case folded, so we conservatively assume that the entire set is
         // no longer case folded if it was previously.
         </span><span class="self">self</span>.folded = <span class="bool-val">false</span>;
@@ -675,7 +658,7 @@
     <span class="doccomment">/// Return an iterator over all intervals in this set.
     ///
     /// The iterator yields intervals in ascending order.
-    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; IntervalSetIter&lt;<span class="lifetime">&#39;_</span>, I&gt; {
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; IntervalSetIter&lt;<span class="lifetime">'_</span>, I&gt; {
         IntervalSetIter(<span class="self">self</span>.ranges.iter())
     }
 
@@ -734,9 +717,9 @@
         }
 
         <span class="comment">// There should be a way to do this in-place with constant memory,
-        // but I couldn&#39;t figure out a simple way to do it. So just append
+        // but I couldn't figure out a simple way to do it. So just append
         // the intersection to the end of this range, and then drain it before
-        // we&#39;re done.
+        // we're done.
         </span><span class="kw">let </span>drain_end = <span class="self">self</span>.ranges.len();
 
         <span class="kw">let </span><span class="kw-2">mut </span>ita = <span class="number">0</span>..drain_end;
@@ -770,7 +753,7 @@
 
         <span class="comment">// This algorithm is (to me) surprisingly complex. A search of the
         // interwebs indicate that this is a potentially interesting problem.
-        // Folks seem to suggest interval or segment trees, but I&#39;d like to
+        // Folks seem to suggest interval or segment trees, but I'd like to
         // avoid the overhead (both runtime and conceptual) of that.
         //
         // The following is basically my Shitty First Draft. Therefore, in
@@ -782,7 +765,7 @@
         // each class.
         </span><span class="kw">let </span>drain_end = <span class="self">self</span>.ranges.len();
         <span class="kw">let </span>(<span class="kw-2">mut </span>a, <span class="kw-2">mut </span>b) = (<span class="number">0</span>, <span class="number">0</span>);
-        <span class="lifetime">&#39;LOOP</span>: <span class="kw">while </span>a &lt; drain_end &amp;&amp; b &lt; other.ranges.len() {
+        <span class="lifetime">'LOOP</span>: <span class="kw">while </span>a &lt; drain_end &amp;&amp; b &lt; other.ranges.len() {
             <span class="comment">// Basically, the easy cases are when neither range overlaps with
             // each other. If the `b` range is less than our current `a`
             // range, then we can skip it and move on.
@@ -790,7 +773,7 @@
                 b += <span class="number">1</span>;
                 <span class="kw">continue</span>;
             }
-            <span class="comment">// ... similarly for the `a` range. If it&#39;s less than the smallest
+            <span class="comment">// ... similarly for the `a` range. If it's less than the smallest
             // `b` range, then we can add it as-is.
             </span><span class="kw">if </span><span class="self">self</span>.ranges[a].upper() &lt; other.ranges[b].lower() {
                 <span class="kw">let </span>range = <span class="self">self</span>.ranges[a];
@@ -804,9 +787,9 @@
             <span class="comment">// This part is tricky and was non-obvious to me without looking
             // at explicit examples (see the tests). The trickiness stems from
             // two things: 1) subtracting a range from another range could
-            // yield two ranges and 2) after subtracting a range, it&#39;s possible
+            // yield two ranges and 2) after subtracting a range, it's possible
             // that future ranges can have an impact. The loop below advances
-            // the `b` ranges until they can&#39;t possible impact the current
+            // the `b` ranges until they can't possible impact the current
             // range.
             //
             // For example, if our `a` range is `a-t` and our next three `b`
@@ -822,7 +805,7 @@
                         <span class="comment">// We lost the entire range, so move on to the next
                         // without adding this one.
                         </span>a += <span class="number">1</span>;
-                        <span class="kw">continue </span><span class="lifetime">&#39;LOOP</span>;
+                        <span class="kw">continue </span><span class="lifetime">'LOOP</span>;
                     }
                     (<span class="prelude-val">Some</span>(range1), <span class="prelude-val">None</span>) | (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(range1)) =&gt; range1,
                     (<span class="prelude-val">Some</span>(range1), <span class="prelude-val">Some</span>(range2)) =&gt; {
@@ -830,11 +813,11 @@
                         range2
                     }
                 };
-                <span class="comment">// It&#39;s possible that the `b` range has more to contribute
+                <span class="comment">// It's possible that the `b` range has more to contribute
                 // here. In particular, if it is greater than the original
                 // range, then it might impact the next `a` range *and* it
                 // has impacted the current `a` range as much as possible,
-                // so we can quit. We don&#39;t bump `b` so that the next `a`
+                // so we can quit. We don't bump `b` so that the next `a`
                 // range can apply it.
                 </span><span class="kw">if </span>other.ranges[b].upper() &gt; old_range.upper() {
                     <span class="kw">break</span>;
@@ -859,7 +842,7 @@
     ///
     /// This computes the symmetric difference of two interval sets. This
     /// removes all elements in this set that are also in the given set,
-    /// but also adds all elements from the given set that aren&#39;t in this
+    /// but also adds all elements from the given set that aren't in this
     /// set. That is, the set will contain all elements in either set,
     /// but will not contain any elements that are in both sets.
     </span><span class="kw">pub fn </span>symmetric_difference(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>IntervalSet&lt;I&gt;) {
@@ -884,9 +867,9 @@
         }
 
         <span class="comment">// There should be a way to do this in-place with constant memory,
-        // but I couldn&#39;t figure out a simple way to do it. So just append
+        // but I couldn't figure out a simple way to do it. So just append
         // the negation to the end of this range, and then drain it before
-        // we&#39;re done.
+        // we're done.
         </span><span class="kw">let </span>drain_end = <span class="self">self</span>.ranges.len();
 
         <span class="comment">// We do checked arithmetic below because of the canonical ordering
@@ -905,10 +888,10 @@
             <span class="self">self</span>.ranges.push(I::create(lower, I::Bound::max_value()));
         }
         <span class="self">self</span>.ranges.drain(..drain_end);
-        <span class="comment">// We don&#39;t need to update whether this set is folded or not, because
+        <span class="comment">// We don't need to update whether this set is folded or not, because
         // it is conservatively preserved through negation. Namely, if a set
         // is not folded, then it is possible that its negation is folded, for
-        // example, [^☃]. But we&#39;re fine with assuming that the set is not
+        // example, [^☃]. But we're fine with assuming that the set is not
         // folded in that case. (`folded` permits false negatives but not false
         // positives.)
         //
@@ -928,12 +911,12 @@
         <span class="self">self</span>.ranges.sort();
         <span class="macro">assert!</span>(!<span class="self">self</span>.ranges.is_empty());
 
-        <span class="comment">// Is there a way to do this in-place with constant memory? I couldn&#39;t
+        <span class="comment">// Is there a way to do this in-place with constant memory? I couldn't
         // figure out a way to do it. So just append the canonicalization to
-        // the end of this range, and then drain it before we&#39;re done.
+        // the end of this range, and then drain it before we're done.
         </span><span class="kw">let </span>drain_end = <span class="self">self</span>.ranges.len();
         <span class="kw">for </span>oldi <span class="kw">in </span><span class="number">0</span>..drain_end {
-            <span class="comment">// If we&#39;ve added at least one new range, then check if we can
+            <span class="comment">// If we've added at least one new range, then check if we can
             // merge this range in the previously added range.
             </span><span class="kw">if </span><span class="self">self</span>.ranges.len() &gt; drain_end {
                 <span class="kw">let </span>(last, rest) = <span class="self">self</span>.ranges.split_last_mut().unwrap();
@@ -964,12 +947,12 @@
 
 <span class="doccomment">/// An iterator over intervals.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>IntervalSetIter&lt;<span class="lifetime">&#39;a</span>, I&gt;(slice::Iter&lt;<span class="lifetime">&#39;a</span>, I&gt;);
+</span><span class="kw">pub struct </span>IntervalSetIter&lt;<span class="lifetime">'a</span>, I&gt;(slice::Iter&lt;<span class="lifetime">'a</span>, I&gt;);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, I&gt; Iterator <span class="kw">for </span>IntervalSetIter&lt;<span class="lifetime">&#39;a</span>, I&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>I;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, I&gt; Iterator <span class="kw">for </span>IntervalSetIter&lt;<span class="lifetime">'a</span>, I&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>I;
 
-    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>I&gt; {
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>I&gt; {
         <span class="self">self</span>.<span class="number">0</span>.next()
     }
 }
@@ -1003,7 +986,7 @@
 
     <span class="doccomment">/// Union the given overlapping range into this range.
     ///
-    /// If the two ranges aren&#39;t contiguous, then this returns `None`.
+    /// If the two ranges aren't contiguous, then this returns `None`.
     </span><span class="kw">fn </span>union(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.is_contiguous(other) {
             <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -1058,23 +1041,6 @@
             }
         }
         ret
-    }
-
-    <span class="doccomment">/// Compute the symmetric difference the given range from this range. This
-    /// returns the union of the two ranges minus its intersection.
-    </span><span class="kw">fn </span>symmetric_difference(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        other: <span class="kw-2">&amp;</span><span class="self">Self</span>,
-    ) -&gt; (<span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt;, <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt;) {
-        <span class="kw">let </span>union = <span class="kw">match </span><span class="self">self</span>.union(other) {
-            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span>(<span class="prelude-val">Some</span>(<span class="self">self</span>.clone()), <span class="prelude-val">Some</span>(other.clone())),
-            <span class="prelude-val">Some</span>(union) =&gt; union,
-        };
-        <span class="kw">let </span>intersection = <span class="kw">match </span><span class="self">self</span>.intersect(other) {
-            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span>(<span class="prelude-val">Some</span>(<span class="self">self</span>.clone()), <span class="prelude-val">Some</span>(other.clone())),
-            <span class="prelude-val">Some</span>(intersection) =&gt; intersection,
-        };
-        union.difference(<span class="kw-2">&amp;</span>intersection)
     }
 
     <span class="doccomment">/// Returns true if and only if the two ranges are contiguous. Two ranges
@@ -1135,10 +1101,10 @@
 
 <span class="kw">impl </span>Bound <span class="kw">for </span>char {
     <span class="kw">fn </span>min_value() -&gt; <span class="self">Self </span>{
-        <span class="string">&#39;\x00&#39;
+        <span class="string">'\x00'
     </span>}
     <span class="kw">fn </span>max_value() -&gt; <span class="self">Self </span>{
-        <span class="string">&#39;\u{10FFFF}&#39;
+        <span class="string">'\u{10FFFF}'
     </span>}
     <span class="kw">fn </span>as_u32(<span class="self">self</span>) -&gt; u32 {
         u32::from(<span class="self">self</span>)
@@ -1146,14 +1112,14 @@
 
     <span class="kw">fn </span>increment(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="string">&#39;\u{D7FF}&#39; </span>=&gt; <span class="string">&#39;\u{E000}&#39;</span>,
+            <span class="string">'\u{D7FF}' </span>=&gt; <span class="string">'\u{E000}'</span>,
             c =&gt; char::from_u32(u32::from(c).checked_add(<span class="number">1</span>).unwrap()).unwrap(),
         }
     }
 
     <span class="kw">fn </span>decrement(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="string">&#39;\u{E000}&#39; </span>=&gt; <span class="string">&#39;\u{D7FF}&#39;</span>,
+            <span class="string">'\u{E000}' </span>=&gt; <span class="string">'\u{D7FF}'</span>,
             c =&gt; char::from_u32(u32::from(c).checked_sub(<span class="number">1</span>).unwrap()).unwrap(),
         }
     }

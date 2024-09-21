@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/elsa-1.10.0/src/sync.rs`."><title>sync.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="elsa" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../elsa/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/elsa-1.10.0/src/sync.rs`."><title>sync.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="elsa" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../elsa/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1217,20 +1217,20 @@
 }
 
 <span class="kw">impl</span>&lt;K: fmt::Debug, V: fmt::Debug&gt; fmt::Debug <span class="kw">for </span>FrozenMap&lt;K, V&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="self">self</span>.map.try_read() {
             <span class="prelude-val">Ok</span>(guard) =&gt; guard.fmt(f),
             <span class="prelude-val">Err</span>(TryLockError::Poisoned(err)) =&gt; {
-                f.debug_tuple(<span class="string">&quot;FrozenMap&quot;</span>).field(&amp;&amp;<span class="kw-2">**</span>err.get_ref()).finish()
+                f.debug_tuple(<span class="string">"FrozenMap"</span>).field(&amp;&amp;<span class="kw-2">**</span>err.get_ref()).finish()
             }
             <span class="prelude-val">Err</span>(TryLockError::WouldBlock) =&gt; {
                 <span class="kw">struct </span>LockedPlaceholder;
                 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>LockedPlaceholder {
-                    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-                        f.write_str(<span class="string">&quot;&lt;locked&gt;&quot;</span>)
+                    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+                        f.write_str(<span class="string">"&lt;locked&gt;"</span>)
                     }
                 }
-                f.debug_tuple(<span class="string">&quot;FrozenMap&quot;</span>)
+                f.debug_tuple(<span class="string">"FrozenMap"</span>)
                     .field(<span class="kw-2">&amp;</span>LockedPlaceholder)
                     .finish()
             }
@@ -1271,7 +1271,7 @@
     ///
     /// Existing values are never overwritten.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Hash`] and [`Eq`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -1281,8 +1281,8 @@
     /// use elsa::sync::FrozenMap;
     ///
     /// let map = FrozenMap::new();
-    /// assert_eq!(map.insert(1, Box::new(&quot;a&quot;)), &amp;&quot;a&quot;);
-    /// assert_eq!(map.insert(1, Box::new(&quot;b&quot;)), &amp;&quot;a&quot;);
+    /// assert_eq!(map.insert(1, Box::new("a")), &amp;"a");
+    /// assert_eq!(map.insert(1, Box::new("b")), &amp;"a");
     /// ```
     </span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, k: K, v: V) -&gt; <span class="kw-2">&amp;</span>V::Target {
         <span class="kw">let </span><span class="kw-2">mut </span>map = <span class="self">self</span>.map.write().unwrap();
@@ -1300,7 +1300,7 @@
     ///
     /// Existing values are never overwritten.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but [`Hash`] and
+    /// The key may be any borrowed form of the map's key type, but [`Hash`] and
     /// [`Eq`] on the borrowed form *must* match those for the key type.
     ///
     /// **Note** that the write lock is held for the duration of this function’s
@@ -1313,8 +1313,8 @@
     /// use elsa::sync::FrozenMap;
     ///
     /// let map = FrozenMap::new();
-    /// assert_eq!(map.insert_with(1, || Box::new(&quot;a&quot;)), &amp;&quot;a&quot;);
-    /// assert_eq!(map.insert_with(1, || unreachable!()), &amp;&quot;a&quot;);
+    /// assert_eq!(map.insert_with(1, || Box::new("a")), &amp;"a");
+    /// assert_eq!(map.insert_with(1, || unreachable!()), &amp;"a");
     /// ```
     </span><span class="kw">pub fn </span>insert_with(<span class="kw-2">&amp;</span><span class="self">self</span>, k: K, f: <span class="kw">impl </span>FnOnce() -&gt; V) -&gt; <span class="kw-2">&amp;</span>V::Target {
         <span class="kw">let </span><span class="kw-2">mut </span>map = <span class="self">self</span>.map.write().unwrap();
@@ -1332,7 +1332,7 @@
     ///
     /// Existing values are never overwritten.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but [`Hash`] and
+    /// The key may be any borrowed form of the map's key type, but [`Hash`] and
     /// [`Eq`] on the borrowed form *must* match those for the key type.
     ///
     /// **Note** that the write lock is held for the duration of this function’s
@@ -1345,8 +1345,8 @@
     /// use elsa::sync::FrozenMap;
     ///
     /// let map = FrozenMap::new();
-    /// assert_eq!(map.insert_with_key(1, |_| Box::new(&quot;a&quot;)), &amp;&quot;a&quot;);
-    /// assert_eq!(map.insert_with_key(1, |_| unreachable!()), &amp;&quot;a&quot;);
+    /// assert_eq!(map.insert_with_key(1, |_| Box::new("a")), &amp;"a");
+    /// assert_eq!(map.insert_with_key(1, |_| unreachable!()), &amp;"a");
     /// ```
     </span><span class="kw">pub fn </span>insert_with_key(<span class="kw-2">&amp;</span><span class="self">self</span>, k: K, f: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span>K) -&gt; V) -&gt; <span class="kw-2">&amp;</span>V::Target {
         <span class="kw">let </span><span class="kw-2">mut </span>map = <span class="self">self</span>.map.write().unwrap();
@@ -1359,7 +1359,7 @@
 
     <span class="doccomment">/// Returns a reference to the value corresponding to the key.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Hash`] and [`Eq`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -1369,8 +1369,8 @@
     /// use elsa::sync::FrozenMap;
     ///
     /// let map = FrozenMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// assert_eq!(map.get(&amp;1), Some(&amp;&quot;a&quot;));
+    /// map.insert(1, Box::new("a"));
+    /// assert_eq!(map.get(&amp;1), Some(&amp;"a"));
     /// assert_eq!(map.get(&amp;2), None);
     /// ```
     </span><span class="kw">pub fn </span>get&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V::Target&gt;
@@ -1385,7 +1385,7 @@
 
     <span class="doccomment">/// Applies a function to the owner of the value corresponding to the key (if any).
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Hash`] and [`Eq`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -1395,8 +1395,8 @@
     /// use elsa::sync::FrozenMap;
     ///
     /// let map = FrozenMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// assert_eq!(map.map_get(&amp;1, Clone::clone), Some(Box::new(&quot;a&quot;)));
+    /// map.insert(1, Box::new("a"));
+    /// assert_eq!(map.map_get(&amp;1, Clone::clone), Some(Box::new("a")));
     /// assert_eq!(map.map_get(&amp;2, Clone::clone), None);
     /// ```
     </span><span class="kw">pub fn </span>map_get&lt;Q: <span class="question-mark">?</span>Sized, T, F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q, f: F) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
@@ -1422,12 +1422,12 @@
     /// use elsa::sync::FrozenMap;
     ///
     /// let map = FrozenMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// map.insert(2, Box::new(&quot;b&quot;));
+    /// map.insert(1, Box::new("a"));
+    /// map.insert(2, Box::new("b"));
     /// let mut tuple_vec = map.into_tuple_vec();
     /// tuple_vec.sort();
     ///
-    /// assert_eq!(tuple_vec, vec![(1, Box::new(&quot;a&quot;)), (2, Box::new(&quot;b&quot;))]);
+    /// assert_eq!(tuple_vec, vec![(1, Box::new("a")), (2, Box::new("b"))]);
     /// ```
     </span><span class="kw">pub fn </span>into_tuple_vec(<span class="self">self</span>) -&gt; Vec&lt;(K, V)&gt; {
         <span class="self">self</span>.map
@@ -1444,7 +1444,7 @@
     ///
     /// let map = FrozenMap::new();
     /// assert_eq!(map.len(), 0);
-    /// map.insert(1, Box::new(&quot;a&quot;));
+    /// map.insert(1, Box::new("a"));
     /// assert_eq!(map.len(), 1);
     /// ```
     </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
@@ -1459,7 +1459,7 @@
     ///
     /// let map = FrozenMap::new();
     /// assert_eq!(map.is_empty(), true);
-    /// map.insert(1, Box::new(&quot;a&quot;));
+    /// map.insert(1, Box::new("a"));
     /// assert_eq!(map.is_empty(), false);
     /// ```
     </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
@@ -1479,7 +1479,7 @@
 <span class="kw">impl</span>&lt;K: Eq + Hash, V: Copy&gt; FrozenMap&lt;K, V&gt; {
     <span class="doccomment">/// Returns a copy of the value corresponding to the key.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Hash`] and [`Eq`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -1509,7 +1509,7 @@
     ///
     /// Existing values are never overwritten.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Hash`] and [`Eq`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -1536,7 +1536,7 @@
     ///
     /// Existing values are never overwritten.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but [`Hash`] and
+    /// The key may be any borrowed form of the map's key type, but [`Hash`] and
     /// [`Eq`] on the borrowed form *must* match those for the key type.
     ///
     /// **Note** that the write lock is held for the duration of this function’s
@@ -1566,7 +1566,7 @@
     ///
     /// Existing values are never overwritten.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but [`Hash`] and
+    /// The key may be any borrowed form of the map's key type, but [`Hash`] and
     /// [`Eq`] on the borrowed form *must* match those for the key type.
     ///
     /// **Note** that the write lock is held for the duration of this function’s
@@ -1594,7 +1594,7 @@
     <span class="doccomment">/// Get mutable access to the underlying [`HashMap`].
     ///
     /// This is safe, as it requires a `&amp;mut self`, ensuring nothing is using
-    /// the &#39;frozen&#39; contents.
+    /// the 'frozen' contents.
     </span><span class="kw">fn </span>as_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>HashMap&lt;K, V&gt; {
         <span class="self">self</span>.map.get_mut().unwrap()
     }
@@ -1623,20 +1623,20 @@
 }
 
 <span class="kw">impl</span>&lt;T: fmt::Debug&gt; fmt::Debug <span class="kw">for </span>FrozenVec&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="self">self</span>.vec.try_read() {
             <span class="prelude-val">Ok</span>(guard) =&gt; guard.fmt(f),
             <span class="prelude-val">Err</span>(TryLockError::Poisoned(err)) =&gt; {
-                f.debug_tuple(<span class="string">&quot;FrozenMap&quot;</span>).field(&amp;&amp;<span class="kw-2">**</span>err.get_ref()).finish()
+                f.debug_tuple(<span class="string">"FrozenMap"</span>).field(&amp;&amp;<span class="kw-2">**</span>err.get_ref()).finish()
             }
             <span class="prelude-val">Err</span>(TryLockError::WouldBlock) =&gt; {
                 <span class="kw">struct </span>LockedPlaceholder;
                 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>LockedPlaceholder {
-                    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-                        f.write_str(<span class="string">&quot;&lt;locked&gt;&quot;</span>)
+                    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+                        f.write_str(<span class="string">"&lt;locked&gt;"</span>)
                     }
                 }
-                f.debug_tuple(<span class="string">&quot;FrozenMap&quot;</span>)
+                f.debug_tuple(<span class="string">"FrozenMap"</span>)
                     .field(<span class="kw-2">&amp;</span>LockedPlaceholder)
                     .finish()
             }
@@ -1687,10 +1687,10 @@
     /// use elsa::sync::FrozenVec;
     ///
     /// let map = FrozenVec::new();
-    /// let idx = map.push_get_index(String::from(&quot;a&quot;));
-    /// assert_eq!(map.get(idx), Some(&quot;a&quot;));
+    /// let idx = map.push_get_index(String::from("a"));
+    /// assert_eq!(map.get(idx), Some("a"));
     /// assert_eq!(idx, 0);
-    /// assert_eq!(map.push_get_index(String::from(&quot;b&quot;)), 1);
+    /// assert_eq!(map.push_get_index(String::from("b")), 1);
     /// ```
     </span><span class="kw">pub fn </span>push_get_index(<span class="kw-2">&amp;</span><span class="self">self</span>, val: T) -&gt; usize {
         <span class="kw">let </span><span class="kw-2">mut </span>vec = <span class="self">self</span>.vec.write().unwrap();
@@ -1705,7 +1705,7 @@
     }
 
     <span class="doccomment">/// Returns an iterator over the vector.
-    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">'_</span>, T&gt; {
         <span class="self">self</span>.into_iter()
     }
 }
@@ -1714,14 +1714,14 @@
 ///
 /// It is safe to push to the vector during iteration
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>Iter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
-    vec: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FrozenVec&lt;T&gt;,
+</span><span class="kw">pub struct </span>Iter&lt;<span class="lifetime">'a</span>, T&gt; {
+    vec: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>FrozenVec&lt;T&gt;,
     idx: usize,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: StableDeref&gt; Iterator <span class="kw">for </span>Iter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T::Target;
-    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T::Target&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: StableDeref&gt; Iterator <span class="kw">for </span>Iter&lt;<span class="lifetime">'a</span>, T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T::Target;
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>T::Target&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(ret) = <span class="self">self</span>.vec.get(<span class="self">self</span>.idx) {
             <span class="self">self</span>.idx += <span class="number">1</span>;
             <span class="prelude-val">Some</span>(ret)
@@ -1731,17 +1731,17 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: StableDeref&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FrozenVec&lt;T&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T::Target;
-    <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">&#39;a</span>, T&gt;;
-    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: StableDeref&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>FrozenVec&lt;T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T::Target;
+    <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">'a</span>, T&gt;;
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">'a</span>, T&gt; {
         Iter { vec: <span class="self">self</span>, idx: <span class="number">0 </span>}
     }
 }
 
 <span class="attr">#[test]
 </span><span class="kw">fn </span>test_iteration() {
-    <span class="kw">let </span>vec = <span class="macro">vec!</span>[<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>, <span class="string">&quot;c&quot;</span>, <span class="string">&quot;d&quot;</span>];
+    <span class="kw">let </span>vec = <span class="macro">vec!</span>[<span class="string">"a"</span>, <span class="string">"b"</span>, <span class="string">"c"</span>, <span class="string">"d"</span>];
     <span class="kw">let </span>frozen: FrozenVec&lt;<span class="kw">_</span>&gt; = vec.clone().into();
 
     <span class="macro">assert_eq!</span>(vec, frozen.iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;());
@@ -1761,11 +1761,11 @@
     /// use elsa::sync::FrozenVec;
     ///
     /// let map = FrozenVec::new();
-    /// map.push(&quot;a&quot;);
-    /// map.push(&quot;b&quot;);
+    /// map.push("a");
+    /// map.push("b");
     /// let tuple_vec = map.into_vec();
     ///
-    /// assert_eq!(tuple_vec, vec![&quot;a&quot;, &quot;b&quot;]);
+    /// assert_eq!(tuple_vec, vec!["a", "b"]);
     /// ```
     </span><span class="kw">pub fn </span>into_vec(<span class="self">self</span>) -&gt; Vec&lt;T&gt; {
         <span class="self">self</span>.vec.into_inner().unwrap()
@@ -1778,7 +1778,7 @@
     <span class="doccomment">/// Get mutable access to the underlying vector.
     ///
     /// This is safe, as it requires a `&amp;mut self`, ensuring nothing is using
-    /// the &#39;frozen&#39; contents.
+    /// the 'frozen' contents.
     </span><span class="kw">fn </span>as_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Vec&lt;T&gt; {
         <span class="self">self</span>.vec.get_mut().unwrap()
     }
@@ -1830,7 +1830,7 @@
 <span class="doccomment">/// This computes the sum of the sizes of buffers prior to a
 /// particular buffer index, aka `4^idx - 1`. The choice of
 /// sequence means that the total buffer size will always be
-/// a sequence of `1`s in binary, since it&#39;s a power of 2 minus one.
+/// a sequence of `1`s in binary, since it's a power of 2 minus one.
 </span><span class="kw">const fn </span>prior_total_buffer_size(idx: usize) -&gt; usize {
     (<span class="number">1 </span>&lt;&lt; (idx * <span class="number">2</span>)) - <span class="number">1
 </span>}
@@ -1840,7 +1840,7 @@
 /// Since the total buffer sizes are always sequences of 1s in binary,
 /// we can just count the number of binary digits in `(i+1)` and
 /// divide by `2` (rounding up).
-/// (That&#39;s what the `(65 - (i + 1).leading_zeros()) &gt;&gt; 1` part does.)
+/// (That's what the `(65 - (i + 1).leading_zeros()) &gt;&gt; 1` part does.)
 /// We use 65 rather than `64` so that the division by `2` rounds
 /// up instead of down. We divide by `2 (&gt;&gt; 1)` because we skip
 /// every other power of `2` since we increase the buffer size by `4`
@@ -1924,7 +1924,7 @@
     // these should never delete any entries
 
     </span><span class="kw">const </span>NOT_ZST: () = <span class="kw">if </span>std::mem::size_of::&lt;T&gt;() == <span class="number">0 </span>{
-        <span class="macro">panic!</span>(<span class="string">&quot;`LockFreeFrozenVec` cannot be used with ZSTs&quot;</span>);
+        <span class="macro">panic!</span>(<span class="string">"`LockFreeFrozenVec` cannot be used with ZSTs"</span>);
     };
 
     <span class="doccomment">/// Pushes an element to the vector, potentially allocating new memory.
@@ -2019,7 +2019,7 @@
                 <span class="comment">// run the function
                 </span>func(buffer_slice, buffer_index);
             } <span class="kw">else </span>{
-                <span class="comment">// no data in this buffer, so we&#39;re done
+                <span class="comment">// no data in this buffer, so we're done
                 </span><span class="kw">break</span>;
             }
         }
@@ -2186,7 +2186,7 @@
 
     </span><span class="doccomment">/// Returns a reference to the value corresponding to the key.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Ord`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -2196,8 +2196,8 @@
     /// use elsa::sync::FrozenBTreeMap;
     ///
     /// let map = FrozenBTreeMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// assert_eq!(map.get(&amp;1), Some(&amp;&quot;a&quot;));
+    /// map.insert(1, Box::new("a"));
+    /// assert_eq!(map.get(&amp;1), Some(&amp;"a"));
     /// assert_eq!(map.get(&amp;2), None);
     /// ```
     </span><span class="kw">pub fn </span>get&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V::Target&gt;
@@ -2218,8 +2218,8 @@
     /// use elsa::sync::FrozenBTreeMap;
     ///
     /// let map = FrozenBTreeMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// assert_eq!(map.get(&amp;1), Some(&amp;&quot;a&quot;));
+    /// map.insert(1, Box::new("a"));
+    /// assert_eq!(map.get(&amp;1), Some(&amp;"a"));
     /// ```
     </span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, k: K, v: V) -&gt; <span class="kw-2">&amp;</span>V::Target {
         <span class="kw">let </span><span class="kw-2">mut </span>map = <span class="self">self</span>.<span class="number">0</span>.write().unwrap();
@@ -2232,7 +2232,7 @@
 
     <span class="doccomment">/// Applies a function to the owner of the value corresponding to the key (if any).
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Ord`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -2242,8 +2242,8 @@
     /// use elsa::sync::FrozenBTreeMap;
     ///
     /// let map = FrozenBTreeMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// assert_eq!(map.map_get(&amp;1, Clone::clone), Some(Box::new(&quot;a&quot;)));
+    /// map.insert(1, Box::new("a"));
+    /// assert_eq!(map.map_get(&amp;1, Clone::clone), Some(Box::new("a")));
     /// assert_eq!(map.map_get(&amp;2, Clone::clone), None);
     /// ```
     </span><span class="kw">pub fn </span>map_get&lt;Q: <span class="question-mark">?</span>Sized, T, F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q, f: F) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
@@ -2269,11 +2269,11 @@
     /// use elsa::sync::FrozenBTreeMap;
     ///
     /// let map = FrozenBTreeMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// map.insert(2, Box::new(&quot;b&quot;));
+    /// map.insert(1, Box::new("a"));
+    /// map.insert(2, Box::new("b"));
     /// let tuple_vec = map.into_tuple_vec();
     ///
-    /// assert_eq!(tuple_vec, vec![(1, Box::new(&quot;a&quot;)), (2, Box::new(&quot;b&quot;))]);
+    /// assert_eq!(tuple_vec, vec![(1, Box::new("a")), (2, Box::new("b"))]);
     /// ```
     </span><span class="kw">pub fn </span>into_tuple_vec(<span class="self">self</span>) -&gt; Vec&lt;(K, V)&gt; {
         <span class="self">self</span>.<span class="number">0</span>.into_inner().unwrap().into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
@@ -2286,7 +2286,7 @@
     ///
     /// let map = FrozenBTreeMap::new();
     /// assert_eq!(map.len(), 0);
-    /// map.insert(1, Box::new(&quot;a&quot;));
+    /// map.insert(1, Box::new("a"));
     /// assert_eq!(map.len(), 1);
     /// ```
     </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
@@ -2301,7 +2301,7 @@
     ///
     /// let map = FrozenBTreeMap::new();
     /// assert_eq!(map.is_empty(), true);
-    /// map.insert(1, Box::new(&quot;a&quot;));
+    /// map.insert(1, Box::new("a"));
     /// assert_eq!(map.is_empty(), false);
     /// ```
     </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
@@ -2330,12 +2330,12 @@
     /// use elsa::sync::FrozenBTreeMap;
     ///
     /// let map = FrozenBTreeMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// assert_eq!(map[&amp;1], &quot;a&quot;);
+    /// map.insert(1, Box::new("a"));
+    /// assert_eq!(map[&amp;1], "a");
     /// ```
     </span><span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, idx: <span class="kw-2">&amp;</span>Q) -&gt; <span class="kw-2">&amp;</span>V::Target {
         <span class="self">self</span>.get(idx)
-            .expect(<span class="string">&quot;attempted to index FrozenBTreeMap with unknown key&quot;</span>)
+            .expect(<span class="string">"attempted to index FrozenBTreeMap with unknown key"</span>)
     }
 }
 

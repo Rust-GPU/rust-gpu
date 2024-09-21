@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/util/search.rs`."><title>search.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_automata/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/util/search.rs`."><title>search.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1994,7 +1994,7 @@
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
 Types and routines that support the search APIs of most regex engines.
 
-This sub-module isn&#39;t exposed directly, but rather, its contents are exported
+This sub-module isn't exposed directly, but rather, its contents are exported
 at the crate root due to the universality of most of the types and routines in
 this module.
 */
@@ -2029,10 +2029,10 @@ this module.
 /// Moreover, for any `H` that implements `AsRef&lt;[u8]&gt;`, there exists a
 /// `From&lt;H&gt; for Input` implementation. This is useful because many of the
 /// search APIs in this crate accept an `Into&lt;Input&gt;`. This means you can
-/// provide string or byte strings to these routines directly, and they&#39;ll
+/// provide string or byte strings to these routines directly, and they'll
 /// automatically get converted into an `Input` for you.
 ///
-/// The lifetime parameter `&#39;h` refers to the lifetime of the haystack.
+/// The lifetime parameter `'h` refers to the lifetime of the haystack.
 ///
 /// # Organization
 ///
@@ -2044,7 +2044,7 @@ this module.
 /// [`Input::set_span`] and [`Input::set_anchored`].
 /// * A getter API that permits retrieving any of the search parameters.
 /// Examples: [`Input::get_span`] and [`Input::get_anchored`].
-/// * A few convenience getter routines that don&#39;t conform to the above naming
+/// * A few convenience getter routines that don't conform to the above naming
 /// pattern due to how common they are. Examples: [`Input::haystack`],
 /// [`Input::start`] and [`Input::end`].
 /// * Miscellaneous predicates and other helper routines that are useful
@@ -2053,7 +2053,7 @@ this module.
 /// A `Input` exposes so much because it is meant to be used by both callers of
 /// regex engines _and_ implementors of regex engines. A constraining factor is
 /// that regex engines should accept a `&amp;Input` as its lowest level API, which
-/// means that implementors should only use the &quot;getter&quot; APIs of a `Input`.
+/// means that implementors should only use the "getter" APIs of a `Input`.
 ///
 /// # Valid bounds and search termination
 ///
@@ -2061,7 +2061,7 @@ this module.
 /// [`Input::span`] or [`Input::range`]. The bounds set must be valid, or
 /// else a panic will occur. Bounds are valid if and only if:
 ///
-/// * The bounds represent a valid range into the input&#39;s haystack.
+/// * The bounds represent a valid range into the input's haystack.
 /// * **or** the end bound is a valid ending bound for the haystack *and*
 /// the start bound is exactly one greater than the start bound.
 ///
@@ -2086,26 +2086,26 @@ this module.
 /// be handled outside of `Input`.)
 ///
 /// Supporting other aspects of an `Input` are optional, but regex engines
-/// should handle aspects they don&#39;t support gracefully. How this is done is
+/// should handle aspects they don't support gracefully. How this is done is
 /// generally up to the regex engine. This crate generally treats unsupported
 /// anchored modes as an error to report for example, but for simplicity, in
 /// the meta regex engine, trying to search with an invalid pattern ID just
 /// results in no match being reported.
 </span><span class="attr">#[derive(Clone)]
-</span><span class="kw">pub struct </span>Input&lt;<span class="lifetime">&#39;h</span>&gt; {
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+</span><span class="kw">pub struct </span>Input&lt;<span class="lifetime">'h</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
     span: Span,
     anchored: Anchored,
     earliest: bool,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
     <span class="doccomment">/// Create a new search configuration for the given haystack.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>new&lt;H: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>H) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>new&lt;H: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>H) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         <span class="comment">// Perform only one call to `haystack.as_ref()` to protect from incorrect
         // implementations that return different values from multiple calls.
-        // This is important because there&#39;s code that relies on `span` not being
+        // This is important because there's code that relies on `span` not being
         // out of bounds with respect to the stored `haystack`.
         </span><span class="kw">let </span>haystack = haystack.as_ref();
         Input {
@@ -2119,7 +2119,7 @@ this module.
     <span class="doccomment">/// Set the span for this search.
     ///
     /// This routine does not panic if the span given is not a valid range for
-    /// this search&#39;s haystack. If this search is run with an invalid range,
+    /// this search's haystack. If this search is run with an invalid range,
     /// then the most likely outcome is that the actual search execution will
     /// panic.
     ///
@@ -2151,21 +2151,21 @@ this module.
     ///     Match, Input,
     /// };
     ///
-    /// // Look for &#39;at&#39;, but as a distinct word.
-    /// let re = PikeVM::new(r&quot;\bat\b&quot;)?;
+    /// // Look for 'at', but as a distinct word.
+    /// let re = PikeVM::new(r"\bat\b")?;
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     ///
-    /// // Our haystack contains &#39;at&#39;, but not as a distinct word.
-    /// let haystack = &quot;batter&quot;;
+    /// // Our haystack contains 'at', but not as a distinct word.
+    /// let haystack = "batter";
     ///
     /// // A standard search finds nothing, as expected.
     /// let input = Input::new(haystack);
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
     /// assert_eq!(None, caps.get_match());
     ///
-    /// // But if we wanted to search starting at position &#39;1&#39;, we might
-    /// // slice the haystack. If we do this, it&#39;s impossible for the \b
+    /// // But if we wanted to search starting at position '1', we might
+    /// // slice the haystack. If we do this, it's impossible for the \b
     /// // anchors to take the surrounding context into account! And thus,
     /// // a match is produced.
     /// let input = Input::new(&amp;haystack[1..3]);
@@ -2173,7 +2173,7 @@ this module.
     /// assert_eq!(Some(Match::must(0, 0..2)), caps.get_match());
     ///
     /// // But if we specify the span of the search instead of slicing the
-    /// // haystack, then the regex engine can &quot;see&quot; outside of the span
+    /// // haystack, then the regex engine can "see" outside of the span
     /// // and resolve the anchors correctly.
     /// let input = Input::new(haystack).span(1..3);
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
@@ -2196,7 +2196,7 @@ this module.
     /// reported a match at position `0`, even though `at` starts at offset
     /// `1` because we sliced the haystack.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>span&lt;S: Into&lt;Span&gt;&gt;(<span class="kw-2">mut </span><span class="self">self</span>, span: S) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>span&lt;S: Into&lt;Span&gt;&gt;(<span class="kw-2">mut </span><span class="self">self</span>, span: S) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         <span class="self">self</span>.set_span(span);
         <span class="self">self
     </span>}
@@ -2204,7 +2204,7 @@ this module.
     <span class="doccomment">/// Like `Input::span`, but accepts any range instead.
     ///
     /// This routine does not panic if the range given is not a valid range for
-    /// this search&#39;s haystack. If this search is run with an invalid range,
+    /// this search's haystack. If this search is run with an invalid range,
     /// then the most likely outcome is that the actual search execution will
     /// panic.
     ///
@@ -2227,23 +2227,23 @@ this module.
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     ///
-    /// let input = Input::new(&quot;foobar&quot;).range(2..=4);
+    /// let input = Input::new("foobar").range(2..=4);
     /// assert_eq!(2..5, input.get_range());
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>range&lt;R: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">mut </span><span class="self">self</span>, range: R) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>range&lt;R: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">mut </span><span class="self">self</span>, range: R) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         <span class="self">self</span>.set_range(range);
         <span class="self">self
     </span>}
 
     <span class="doccomment">/// Sets the anchor mode of a search.
     ///
-    /// When a search is anchored (so that&#39;s [`Anchored::Yes`] or
+    /// When a search is anchored (so that's [`Anchored::Yes`] or
     /// [`Anchored::Pattern`]), a match must begin at the start of a search.
-    /// When a search is not anchored (that&#39;s [`Anchored::No`]), regex engines
+    /// When a search is not anchored (that's [`Anchored::No`]), regex engines
     /// will behave as if the pattern started with a `(?s-u:.)*?`. This prefix
     /// permits a match to appear anywhere.
     ///
@@ -2292,9 +2292,9 @@ this module.
     ///     Anchored, Match, Input,
     /// };
     ///
-    /// let haystack = &quot;aba&quot;;
+    /// let haystack = "aba";
     ///
-    /// let re = PikeVM::new(r&quot;^a&quot;)?;
+    /// let re = PikeVM::new(r"^a")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     /// let input = Input::new(haystack).span(2..3).anchored(Anchored::No);
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
@@ -2302,89 +2302,89 @@ this module.
     /// // which is what ^ requires.
     /// assert_eq!(None, caps.get_match());
     ///
-    /// let re = PikeVM::new(r&quot;a&quot;)?;
+    /// let re = PikeVM::new(r"a")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     /// let input = Input::new(haystack).span(2..3).anchored(Anchored::Yes);
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
     /// // An anchored search can still match anywhere in the haystack, it just
-    /// // must begin at the start of the search which is &#39;2&#39; in this case.
+    /// // must begin at the start of the search which is '2' in this case.
     /// assert_eq!(Some(Match::must(0, 2..3)), caps.get_match());
     ///
-    /// let re = PikeVM::new(r&quot;a&quot;)?;
+    /// let re = PikeVM::new(r"a")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     /// let input = Input::new(haystack).span(1..3).anchored(Anchored::Yes);
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
     /// // No match is found since we start searching at offset 1 which
-    /// // corresponds to &#39;b&#39;. Since there is no &#39;(?s:.)*?&#39; prefix, no match
+    /// // corresponds to 'b'. Since there is no '(?s:.)*?' prefix, no match
     /// // is found.
     /// assert_eq!(None, caps.get_match());
     ///
-    /// let re = PikeVM::new(r&quot;a&quot;)?;
+    /// let re = PikeVM::new(r"a")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     /// let input = Input::new(haystack).span(1..3).anchored(Anchored::No);
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
-    /// // Since anchored=no, an implicit &#39;(?s:.)*?&#39; prefix was added to the
-    /// // pattern. Even though the search starts at &#39;b&#39;, the &#39;match anything&#39;
-    /// // prefix allows the search to match &#39;a&#39;.
+    /// // Since anchored=no, an implicit '(?s:.)*?' prefix was added to the
+    /// // pattern. Even though the search starts at 'b', the 'match anything'
+    /// // prefix allows the search to match 'a'.
     /// let expected = Some(Match::must(0, 2..3));
     /// assert_eq!(expected, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>anchored(<span class="kw-2">mut </span><span class="self">self</span>, mode: Anchored) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>anchored(<span class="kw-2">mut </span><span class="self">self</span>, mode: Anchored) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         <span class="self">self</span>.set_anchored(mode);
         <span class="self">self
     </span>}
 
-    <span class="doccomment">/// Whether to execute an &quot;earliest&quot; search or not.
+    <span class="doccomment">/// Whether to execute an "earliest" search or not.
     ///
-    /// When running a non-overlapping search, an &quot;earliest&quot; search will return
+    /// When running a non-overlapping search, an "earliest" search will return
     /// the match location as early as possible. For example, given a pattern
     /// of `foo[0-9]+` and a haystack of `foo12345`, a normal leftmost search
-    /// will return `foo12345` as a match. But an &quot;earliest&quot; search for regex
-    /// engines that support &quot;earliest&quot; semantics will return `foo1` as a
+    /// will return `foo12345` as a match. But an "earliest" search for regex
+    /// engines that support "earliest" semantics will return `foo1` as a
     /// match, since as soon as the first digit following `foo` is seen, it is
     /// known to have found a match.
     ///
-    /// Note that &quot;earliest&quot; semantics generally depend on the regex engine.
+    /// Note that "earliest" semantics generally depend on the regex engine.
     /// Different regex engines may determine there is a match at different
-    /// points. So there is no guarantee that &quot;earliest&quot; matches will always
-    /// return the same offsets for all regex engines. The &quot;earliest&quot; notion
+    /// points. So there is no guarantee that "earliest" matches will always
+    /// return the same offsets for all regex engines. The "earliest" notion
     /// is really about when the particular regex engine determines there is
     /// a match rather than a consistent semantic unto itself. This is often
-    /// useful for implementing &quot;did a match occur or not&quot; predicates, but
+    /// useful for implementing "did a match occur or not" predicates, but
     /// sometimes the offset is useful as well.
     ///
     /// This is disabled by default.
     ///
     /// # Example
     ///
-    /// This example shows the difference between &quot;earliest&quot; searching and
+    /// This example shows the difference between "earliest" searching and
     /// normal searching.
     ///
     /// ```
     /// use regex_automata::{nfa::thompson::pikevm::PikeVM, Match, Input};
     ///
-    /// let re = PikeVM::new(r&quot;foo[0-9]+&quot;)?;
+    /// let re = PikeVM::new(r"foo[0-9]+")?;
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     ///
     /// // A normal search implements greediness like you expect.
-    /// let input = Input::new(&quot;foo12345&quot;);
+    /// let input = Input::new("foo12345");
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 0..8)), caps.get_match());
     ///
-    /// // When &#39;earliest&#39; is enabled and the regex engine supports
+    /// // When 'earliest' is enabled and the regex engine supports
     /// // it, the search will bail once it knows a match has been
     /// // found.
-    /// let input = Input::new(&quot;foo12345&quot;).earliest(true);
+    /// let input = Input::new("foo12345").earliest(true);
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 0..4)), caps.get_match());
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>earliest(<span class="kw-2">mut </span><span class="self">self</span>, yes: bool) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>earliest(<span class="kw-2">mut </span><span class="self">self</span>, yes: bool) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         <span class="self">self</span>.set_earliest(yes);
         <span class="self">self
     </span>}
@@ -2408,7 +2408,7 @@ this module.
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     /// input.set_span(2..4);
     /// assert_eq!(2..4, input.get_range());
@@ -2419,7 +2419,7 @@ this module.
         <span class="macro">assert!</span>(
             span.end &lt;= <span class="self">self</span>.haystack.len()
                 &amp;&amp; span.start &lt;= span.end.wrapping_add(<span class="number">1</span>),
-            <span class="string">&quot;invalid span {:?} for haystack of length {}&quot;</span>,
+            <span class="string">"invalid span {:?} for haystack of length {}"</span>,
             span,
             <span class="self">self</span>.haystack.len(),
         );
@@ -2432,7 +2432,7 @@ this module.
     /// span in place.
     ///
     /// This routine does not panic if the range given is not a valid range for
-    /// this search&#39;s haystack. If this search is run with an invalid range,
+    /// this search's haystack. If this search is run with an invalid range,
     /// then the most likely outcome is that the actual search execution will
     /// panic.
     ///
@@ -2451,7 +2451,7 @@ this module.
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     /// input.set_range(2..=4);
     /// assert_eq!(2..5, input.get_range());
@@ -2460,13 +2460,13 @@ this module.
     </span><span class="kw">pub fn </span>set_range&lt;R: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R) {
         <span class="kw">use </span>core::ops::Bound;
 
-        <span class="comment">// It&#39;s a little weird to convert ranges into spans, and then spans
+        <span class="comment">// It's a little weird to convert ranges into spans, and then spans
         // back into ranges when we actually slice the haystack. Because
         // of that process, we always represent everything as a half-open
         // internal. Therefore, handling things like m..=n is a little awkward.
         </span><span class="kw">let </span>start = <span class="kw">match </span>range.start_bound() {
             Bound::Included(<span class="kw-2">&amp;</span>i) =&gt; i,
-            <span class="comment">// Can this case ever happen? Range syntax doesn&#39;t support it...
+            <span class="comment">// Can this case ever happen? Range syntax doesn't support it...
             </span>Bound::Excluded(<span class="kw-2">&amp;</span>i) =&gt; i.checked_add(<span class="number">1</span>).unwrap(),
             Bound::Unbounded =&gt; <span class="number">0</span>,
         };
@@ -2494,7 +2494,7 @@ this module.
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     /// input.set_start(5);
     /// assert_eq!(5..6, input.get_range());
@@ -2520,7 +2520,7 @@ this module.
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     /// input.set_end(5);
     /// assert_eq!(0..5, input.get_range());
@@ -2540,7 +2540,7 @@ this module.
     /// ```
     /// use regex_automata::{Anchored, Input, PatternID};
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(Anchored::No, input.get_anchored());
     ///
     /// let pid = PatternID::must(5);
@@ -2552,7 +2552,7 @@ this module.
         <span class="self">self</span>.anchored = mode;
     }
 
-    <span class="doccomment">/// Set whether the search should execute in &quot;earliest&quot; mode or not.
+    <span class="doccomment">/// Set whether the search should execute in "earliest" mode or not.
     ///
     /// This is like [`Input::earliest`], except it mutates the search
     /// configuration in place.
@@ -2562,7 +2562,7 @@ this module.
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert!(!input.get_earliest());
     /// input.set_earliest(true);
     /// assert!(input.get_earliest());
@@ -2579,8 +2579,8 @@ this module.
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
-    /// assert_eq!(b&quot;foobar&quot;, input.haystack());
+    /// let input = Input::new("foobar");
+    /// assert_eq!(b"foobar", input.haystack());
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>haystack(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
@@ -2600,10 +2600,10 @@ this module.
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert_eq!(0, input.start());
     ///
-    /// let input = Input::new(&quot;foobar&quot;).span(2..4);
+    /// let input = Input::new("foobar").span(2..4);
     /// assert_eq!(2, input.start());
     /// ```
     </span><span class="attr">#[inline]
@@ -2616,17 +2616,17 @@ this module.
     /// This is a convenience routine for `search.get_span().end()`.
     ///
     /// This is guaranteed to return an offset that is a valid exclusive end
-    /// bound for this input&#39;s haystack.
+    /// bound for this input's haystack.
     ///
     /// # Example
     ///
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert_eq!(6, input.end());
     ///
-    /// let input = Input::new(&quot;foobar&quot;).span(2..4);
+    /// let input = Input::new("foobar").span(2..4);
     /// assert_eq!(4, input.end());
     /// ```
     </span><span class="attr">#[inline]
@@ -2640,14 +2640,14 @@ this module.
     /// range of the haystack.
     ///
     /// When [`Input::is_done`] is `false`, the span returned is guaranteed
-    /// to correspond to valid bounds for this input&#39;s haystack.
+    /// to correspond to valid bounds for this input's haystack.
     ///
     /// # Example
     ///
     /// ```
     /// use regex_automata::{Input, Span};
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert_eq!(Span { start: 0, end: 6 }, input.get_span());
     /// ```
     </span><span class="attr">#[inline]
@@ -2661,14 +2661,14 @@ this module.
     /// range of the haystack.
     ///
     /// When [`Input::is_done`] is `false`, the range returned is guaranteed
-    /// to correspond to valid bounds for this input&#39;s haystack.
+    /// to correspond to valid bounds for this input's haystack.
     ///
     /// # Example
     ///
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert_eq!(0..6, input.get_range());
     /// ```
     </span><span class="attr">#[inline]
@@ -2685,7 +2685,7 @@ this module.
     /// ```
     /// use regex_automata::{Anchored, Input, PatternID};
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert_eq!(Anchored::No, input.get_anchored());
     ///
     /// let pid = PatternID::must(5);
@@ -2697,14 +2697,14 @@ this module.
         <span class="self">self</span>.anchored
     }
 
-    <span class="doccomment">/// Return whether this search should execute in &quot;earliest&quot; mode.
+    <span class="doccomment">/// Return whether this search should execute in "earliest" mode.
     ///
     /// # Example
     ///
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let input = Input::new(&quot;foobar&quot;);
+    /// let input = Input::new("foobar");
     /// assert!(!input.get_earliest());
     /// ```
     </span><span class="attr">#[inline]
@@ -2723,7 +2723,7 @@ this module.
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let mut input = Input::new(&quot;foobar&quot;);
+    /// let mut input = Input::new("foobar");
     /// assert!(!input.is_done());
     /// input.set_start(6);
     /// assert!(!input.is_done());
@@ -2735,7 +2735,7 @@ this module.
         <span class="self">self</span>.get_span().start &gt; <span class="self">self</span>.get_span().end
     }
 
-    <span class="doccomment">/// Returns true if and only if the given offset in this search&#39;s haystack
+    <span class="doccomment">/// Returns true if and only if the given offset in this search's haystack
     /// falls on a valid UTF-8 encoded codepoint boundary.
     ///
     /// If the haystack is not valid UTF-8, then the behavior of this routine
@@ -2743,13 +2743,13 @@ this module.
     ///
     /// # Example
     ///
-    /// This shows where codepoint boundaries do and don&#39;t exist in valid
+    /// This shows where codepoint boundaries do and don't exist in valid
     /// UTF-8.
     ///
     /// ```
     /// use regex_automata::Input;
     ///
-    /// let input = Input::new(&quot;☃&quot;);
+    /// let input = Input::new("☃");
     /// assert!(input.is_char_boundary(0));
     /// assert!(!input.is_char_boundary(1));
     /// assert!(!input.is_char_boundary(2));
@@ -2762,21 +2762,21 @@ this module.
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; core::fmt::Debug <span class="kw">for </span>Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; core::fmt::Debug <span class="kw">for </span>Input&lt;<span class="lifetime">'h</span>&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
         <span class="kw">use </span><span class="kw">crate</span>::util::escape::DebugHaystack;
 
-        f.debug_struct(<span class="string">&quot;Input&quot;</span>)
-            .field(<span class="string">&quot;haystack&quot;</span>, <span class="kw-2">&amp;</span>DebugHaystack(<span class="self">self</span>.haystack()))
-            .field(<span class="string">&quot;span&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.span)
-            .field(<span class="string">&quot;anchored&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.anchored)
-            .field(<span class="string">&quot;earliest&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.earliest)
+        f.debug_struct(<span class="string">"Input"</span>)
+            .field(<span class="string">"haystack"</span>, <span class="kw-2">&amp;</span>DebugHaystack(<span class="self">self</span>.haystack()))
+            .field(<span class="string">"span"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.span)
+            .field(<span class="string">"anchored"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.anchored)
+            .field(<span class="string">"earliest"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.earliest)
             .finish()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>, H: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>H&gt; <span class="kw">for </span>Input&lt;<span class="lifetime">&#39;h</span>&gt; {
-    <span class="kw">fn </span>from(haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>H) -&gt; Input&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>, H: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt; From&lt;<span class="kw-2">&amp;</span><span class="lifetime">'h </span>H&gt; <span class="kw">for </span>Input&lt;<span class="lifetime">'h</span>&gt; {
+    <span class="kw">fn </span>from(haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>H) -&gt; Input&lt;<span class="lifetime">'h</span>&gt; {
         Input::new(haystack)
     }
 }
@@ -2834,7 +2834,7 @@ this module.
         !<span class="self">self</span>.is_empty() &amp;&amp; <span class="self">self</span>.start &lt;= offset &amp;&amp; offset &lt;= <span class="self">self</span>.end
     }
 
-    <span class="doccomment">/// Returns a new span with `offset` added to this span&#39;s `start` and `end`
+    <span class="doccomment">/// Returns a new span with `offset` added to this span's `start` and `end`
     /// values.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>offset(<span class="kw-2">&amp;</span><span class="self">self</span>, offset: usize) -&gt; Span {
@@ -2844,7 +2844,7 @@ this module.
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>Span {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;{}..{}&quot;</span>, <span class="self">self</span>.start, <span class="self">self</span>.end)
+        <span class="macro">write!</span>(f, <span class="string">"{}..{}"</span>, <span class="self">self</span>.start, <span class="self">self</span>.end)
     }
 }
 
@@ -2901,9 +2901,9 @@ this module.
     }
 }
 
-<span class="doccomment">/// A representation of &quot;half&quot; of a match reported by a DFA.
+<span class="doccomment">/// A representation of "half" of a match reported by a DFA.
 ///
-/// This is called a &quot;half&quot; match because it only includes the end location (or
+/// This is called a "half" match because it only includes the end location (or
 /// start location for a reverse search) of a match. This corresponds to the
 /// information that a single DFA scan can report. Getting the other half of
 /// the match requires a second scan with a reversed DFA.
@@ -3009,7 +3009,7 @@ this module.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>new&lt;S: Into&lt;Span&gt;&gt;(pattern: PatternID, span: S) -&gt; Match {
         <span class="kw">let </span>span: Span = span.into();
-        <span class="macro">assert!</span>(span.start &lt;= span.end, <span class="string">&quot;invalid match span&quot;</span>);
+        <span class="macro">assert!</span>(span.start &lt;= span.end, <span class="string">"invalid match span"</span>);
         Match { pattern, span }
     }
 
@@ -3137,34 +3137,34 @@ this module.
 /// // Test that it is indeed empty.
 /// assert!(set.is_empty());
 /// ```
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 #[derive(Clone, Debug, Eq, PartialEq)]
 </span><span class="kw">pub struct </span>PatternSet {
-    <span class="doccomment">/// The number of patterns set to &#39;true&#39; in this set.
+    <span class="doccomment">/// The number of patterns set to 'true' in this set.
     </span>len: usize,
     <span class="doccomment">/// A map from PatternID to boolean of whether a pattern matches or not.
     ///
-    /// This should probably be a bitset, but it&#39;s probably unlikely to matter
+    /// This should probably be a bitset, but it's probably unlikely to matter
     /// much in practice.
     ///
     /// The main downside of this representation (and similarly for a bitset)
     /// is that iteration scales with the capacity of the set instead of
-    /// the length of the set. This doesn&#39;t seem likely to be a problem in
+    /// the length of the set. This doesn't seem likely to be a problem in
     /// practice.
     ///
-    /// Another alternative is to just use a &#39;SparseSet&#39; for this. It does use
+    /// Another alternative is to just use a 'SparseSet' for this. It does use
     /// more memory (quite a bit more), but that seems fine I think compared
     /// to the memory being used by the regex engine. The real hiccup with
     /// it is that it yields pattern IDs in the order they were inserted.
     /// Which is actually kind of nice, but at the time of writing, pattern
     /// IDs are yielded in ascending order in the regex crate RegexSet API.
-    /// If we did change to &#39;SparseSet&#39;, we could provide an additional
-    /// &#39;iter_match_order&#39; iterator, but keep the ascending order one for
+    /// If we did change to 'SparseSet', we could provide an additional
+    /// 'iter_match_order' iterator, but keep the ascending order one for
     /// compatibility.
     </span>which: alloc::boxed::Box&lt;[bool]&gt;,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">impl </span>PatternSet {
     <span class="doccomment">/// Create a new set of pattern identifiers with the given capacity.
     ///
@@ -3182,7 +3182,7 @@ this module.
     </span><span class="kw">pub fn </span>new(capacity: usize) -&gt; PatternSet {
         <span class="macro">assert!</span>(
             capacity &lt;= PatternID::LIMIT,
-            <span class="string">&quot;pattern set capacity exceeds limit of {}&quot;</span>,
+            <span class="string">"pattern set capacity exceeds limit of {}"</span>,
             PatternID::LIMIT,
         );
         PatternSet {
@@ -3217,7 +3217,7 @@ this module.
     /// store the given pattern ID.
     </span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pid: PatternID) -&gt; bool {
         <span class="self">self</span>.try_insert(pid)
-            .expect(<span class="string">&quot;PatternSet should have sufficient capacity&quot;</span>)
+            .expect(<span class="string">"PatternSet should have sufficient capacity"</span>)
     }
 
     <span class="doccomment">/// Insert the given pattern identifier into this set and return `true` if
@@ -3249,8 +3249,8 @@ this module.
 
     <span class="comment">/*
     // This is currently commented out because it is unused and it is unclear
-    // whether it&#39;s useful or not. What&#39;s the harm in having it? When, if
-    // we ever wanted to change our representation to a &#39;SparseSet&#39;, then
+    // whether it's useful or not. What's the harm in having it? When, if
+    // we ever wanted to change our representation to a 'SparseSet', then
     // supporting this method would be a bit tricky. So in order to keep some
     // API evolution flexibility, we leave it out for now.
 
@@ -3284,7 +3284,7 @@ this module.
     /// This particular property is useful to test because it may allow one to
     /// stop a search earlier than you might otherwise. Namely, if a search is
     /// only reporting which patterns match a haystack and if you know all of
-    /// the patterns match at a given point, then there&#39;s no new information
+    /// the patterns match at a given point, then there's no new information
     /// that can be learned by continuing the search. (Because a pattern set
     /// does not keep track of offset information.)
     </span><span class="kw">pub fn </span>is_full(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
@@ -3311,7 +3311,7 @@ this module.
     ///
     /// The iterator yields pattern identifiers in ascending order, starting
     /// at zero.
-    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PatternSetIter&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PatternSetIter&lt;<span class="lifetime">'_</span>&gt; {
         PatternSetIter { it: <span class="self">self</span>.which.iter().enumerate() }
     }
 }
@@ -3323,23 +3323,23 @@ this module.
 /// of the `PatternSet`.
 ///
 /// This error is created by the [`PatternSet::try_insert`] routine.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 #[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>PatternSetInsertError {
     attempted: PatternID,
     capacity: usize,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>PatternSetInsertError {}
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>PatternSetInsertError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
         <span class="macro">write!</span>(
             f,
-            <span class="string">&quot;failed to insert pattern ID {} into pattern set \
-             with insufficiet capacity of {}&quot;</span>,
+            <span class="string">"failed to insert pattern ID {} into pattern set \
+             with insufficiet capacity of {}"</span>,
             <span class="self">self</span>.attempted.as_usize(),
             <span class="self">self</span>.capacity,
         )
@@ -3348,27 +3348,27 @@ this module.
 
 <span class="doccomment">/// An iterator over all pattern identifiers in a [`PatternSet`].
 ///
-/// The lifetime parameter `&#39;a` refers to the lifetime of the pattern set being
+/// The lifetime parameter `'a` refers to the lifetime of the pattern set being
 /// iterated over.
 ///
 /// This iterator is created by the [`PatternSet::iter`] method.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 #[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>PatternSetIter&lt;<span class="lifetime">&#39;a</span>&gt; {
-    it: core::iter::Enumerate&lt;core::slice::Iter&lt;<span class="lifetime">&#39;a</span>, bool&gt;&gt;,
+</span><span class="kw">pub struct </span>PatternSetIter&lt;<span class="lifetime">'a</span>&gt; {
+    it: core::iter::Enumerate&lt;core::slice::Iter&lt;<span class="lifetime">'a</span>, bool&gt;&gt;,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>PatternSetIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Iterator <span class="kw">for </span>PatternSetIter&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">type </span>Item = PatternID;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;PatternID&gt; {
         <span class="kw">while let </span><span class="prelude-val">Some</span>((index, <span class="kw-2">&amp;</span>yes)) = <span class="self">self</span>.it.next() {
             <span class="kw">if </span>yes {
-                <span class="comment">// Only valid &#39;PatternID&#39; values can be inserted into the set
+                <span class="comment">// Only valid 'PatternID' values can be inserted into the set
                 // and construction of the set panics if the capacity would
-                // permit storing invalid pattern IDs. Thus, &#39;yes&#39; is only true
-                // precisely when &#39;index&#39; corresponds to a valid &#39;PatternID&#39;.
+                // permit storing invalid pattern IDs. Thus, 'yes' is only true
+                // precisely when 'index' corresponds to a valid 'PatternID'.
                 </span><span class="kw">return </span><span class="prelude-val">Some</span>(PatternID::new_unchecked(index));
             }
         }
@@ -3380,15 +3380,15 @@ this module.
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; DoubleEndedIterator <span class="kw">for </span>PatternSetIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; DoubleEndedIterator <span class="kw">for </span>PatternSetIter&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>next_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;PatternID&gt; {
         <span class="kw">while let </span><span class="prelude-val">Some</span>((index, <span class="kw-2">&amp;</span>yes)) = <span class="self">self</span>.it.next_back() {
             <span class="kw">if </span>yes {
-                <span class="comment">// Only valid &#39;PatternID&#39; values can be inserted into the set
+                <span class="comment">// Only valid 'PatternID' values can be inserted into the set
                 // and construction of the set panics if the capacity would
-                // permit storing invalid pattern IDs. Thus, &#39;yes&#39; is only true
-                // precisely when &#39;index&#39; corresponds to a valid &#39;PatternID&#39;.
+                // permit storing invalid pattern IDs. Thus, 'yes' is only true
+                // precisely when 'index' corresponds to a valid 'PatternID'.
                 </span><span class="kw">return </span><span class="prelude-val">Some</span>(PatternID::new_unchecked(index));
             }
         }
@@ -3406,7 +3406,7 @@ this module.
 /// you to do an anchored search for a specific pattern.
 ///
 /// Note that there is no way to run an unanchored search for a specific
-/// pattern. If you need that, you&#39;ll need to build separate regexes for each
+/// pattern. If you need that, you'll need to build separate regexes for each
 /// pattern.
 ///
 /// # Errors
@@ -3423,12 +3423,12 @@ this module.
 /// [`MatchErrorKind::UnsupportedAnchored`] kind. The kind includes the
 /// `Anchored` value given that is unsupported.
 ///
-/// Note that regex engines should report &quot;no match&quot; if, for example, an
+/// Note that regex engines should report "no match" if, for example, an
 /// `Anchored::Pattern` is provided with an invalid pattern ID _but_ where
 /// anchored searches for a specific pattern are supported. This is smooths out
-/// behavior such that it&#39;s possible to guarantee that an error never occurs
+/// behavior such that it's possible to guarantee that an error never occurs
 /// based on how the regex engine is configured. All regex engines in this
-/// crate report &quot;no match&quot; when searching for an invalid pattern ID, but where
+/// crate report "no match" when searching for an invalid pattern ID, but where
 /// searching for a valid pattern ID is otherwise supported.
 ///
 /// # Example
@@ -3447,13 +3447,13 @@ this module.
 /// };
 ///
 /// let re = PikeVM::new_many(&amp;[
-///     r&quot;Mrs. \w+&quot;,
-///     r&quot;Miss \w+&quot;,
-///     r&quot;Mr. \w+&quot;,
-///     r&quot;Ms. \w+&quot;,
+///     r"Mrs. \w+",
+///     r"Miss \w+",
+///     r"Mr. \w+",
+///     r"Ms. \w+",
 /// ])?;
 /// let mut cache = re.create_cache();
-/// let hay = &quot;Hello Mr. Springsteen!&quot;;
+/// let hay = "Hello Mr. Springsteen!";
 ///
 /// // The default is to do an unanchored search.
 /// assert_eq!(Some(Match::must(2, 6..21)), re.find(&amp;mut cache, hay));
@@ -3461,7 +3461,7 @@ this module.
 /// let input = Input::new(hay).anchored(Anchored::No);
 /// assert_eq!(Some(Match::must(2, 6..21)), re.find(&amp;mut cache, hay));
 ///
-/// // Now try an anchored search. Since the match doesn&#39;t start at the
+/// // Now try an anchored search. Since the match doesn't start at the
 /// // beginning of the haystack, no match is found!
 /// let input = Input::new(hay).anchored(Anchored::Yes);
 /// assert_eq!(None, re.find(&amp;mut cache, input));
@@ -3474,7 +3474,7 @@ this module.
 /// assert_eq!(Some(Match::must(2, 6..21)), re.find(&amp;mut cache, input));
 ///
 /// // Now try an anchored search for a specific pattern. We specifically
-/// // choose a pattern that we know doesn&#39;t match to prove that the search
+/// // choose a pattern that we know doesn't match to prove that the search
 /// // only looks for the pattern we provide.
 /// let input = Input::new(hay)
 ///     .anchored(Anchored::Pattern(PatternID::must(1)))
@@ -3557,7 +3557,7 @@ this module.
 /// The default match kind is `LeftmostFirst`, and this corresponds to the
 /// match semantics used by most backtracking engines, such as Perl.
 ///
-/// # Leftmost first or &quot;preference order&quot; match semantics
+/// # Leftmost first or "preference order" match semantics
 ///
 /// Leftmost-first semantics determine which match to report when there are
 /// multiple paths through a regex that match at the same position. The tie is
@@ -3568,8 +3568,8 @@ this module.
 ///
 /// A backtracker will conceptually work by trying `foofoofoo` and failing.
 /// Then it will try `foofoo`, find the match and stop there. Thus, the
-/// leftmost-first match position is `6`. This is called &quot;leftmost-first&quot; or
-/// &quot;preference order&quot; because the order of the branches as written in the
+/// leftmost-first match position is `6`. This is called "leftmost-first" or
+/// "preference order" because the order of the branches as written in the
 /// regex pattern is what determines how to break the tie.
 ///
 /// (Note that leftmost-longest match semantics, which break ties by always
@@ -3586,12 +3586,12 @@ this module.
 /// };
 ///
 /// let re = PikeVM::new_many(&amp;[
-///     r&quot;foofoofoo&quot;,
-///     r&quot;foofoo&quot;,
-///     r&quot;foo&quot;,
+///     r"foofoofoo",
+///     r"foofoo",
+///     r"foo",
 /// ])?;
 /// let mut cache = re.create_cache();
-/// let got: Vec&lt;Match&gt; = re.find_iter(&amp;mut cache, &quot;foofoo&quot;).collect();
+/// let got: Vec&lt;Match&gt; = re.find_iter(&amp;mut cache, "foofoo").collect();
 /// let expected = vec![Match::must(1, 0..6)];
 /// assert_eq!(expected, got);
 ///
@@ -3601,11 +3601,11 @@ this module.
 /// # All matches
 ///
 /// The `All` match semantics report any and all matches, and generally will
-/// attempt to match as much as possible. It doesn&#39;t respect any sort of match
-/// priority at all, so things like non-greedy matching don&#39;t work in this
+/// attempt to match as much as possible. It doesn't respect any sort of match
+/// priority at all, so things like non-greedy matching don't work in this
 /// mode.
 ///
-/// The fact that non-greedy matching doesn&#39;t work generally makes most forms
+/// The fact that non-greedy matching doesn't work generally makes most forms
 /// of unanchored non-overlapping searches have unintuitive behavior. Namely,
 /// unanchored searches behave as if there is a `(?s-u:.)*?` prefix at the
 /// beginning of the pattern, which is specifically non-greedy. Since it will
@@ -3636,11 +3636,11 @@ this module.
 ///
 /// let re = PikeVM::builder()
 ///     .configure(PikeVM::config().match_kind(MatchKind::All))
-///     .build(&quot;foo&quot;)?;
-/// let hay = &quot;first foo second foo wat&quot;;
+///     .build("foo")?;
+/// let hay = "first foo second foo wat";
 /// let mut cache = re.create_cache();
 /// let got: Vec&lt;Match&gt; = re.find_iter(&amp;mut cache, hay).collect();
-/// // Notice that it completely skips the first &#39;foo&#39;!
+/// // Notice that it completely skips the first 'foo'!
 /// let expected = vec![Match::must(0, 17..20)];
 /// assert_eq!(expected, got);
 ///
@@ -3658,16 +3658,16 @@ this module.
 /// };
 ///
 /// let re = DFA::builder()
-///     // If we didn&#39;t set &#39;All&#39; semantics here, then the regex would only
-///     // match &#39;foo&#39; at offset 3 and nothing else. Why? Because the state
-///     // machine implements preference order and knows that the &#39;foofoo&#39; and
-///     // &#39;foofoofoo&#39; branches can never match since &#39;foo&#39; will always match
+///     // If we didn't set 'All' semantics here, then the regex would only
+///     // match 'foo' at offset 3 and nothing else. Why? Because the state
+///     // machine implements preference order and knows that the 'foofoo' and
+///     // 'foofoofoo' branches can never match since 'foo' will always match
 ///     // when they match and take priority.
 ///     .configure(DFA::config().match_kind(MatchKind::All))
-///     .build(r&quot;foo|foofoo|foofoofoo&quot;)?;
+///     .build(r"foo|foofoo|foofoofoo")?;
 /// let mut cache = re.create_cache();
 /// let mut state = OverlappingState::start();
-/// let input = Input::new(&quot;foofoofoo&quot;);
+/// let input = Input::new("foofoofoo");
 /// let mut got = vec![];
 /// loop {
 ///     re.try_search_overlapping_fwd(&amp;mut cache, &amp;input, &amp;mut state)?;
@@ -3698,22 +3698,22 @@ this module.
     <span class="comment">// There is prior art in RE2 that shows that we should be able to add
     // LeftmostLongest too. The tricky part of it is supporting ungreedy
     // repetitions. Instead of treating all NFA states as having equivalent
-    // priority (as in &#39;All&#39;) or treating all NFA states as having distinct
-    // priority based on order (as in &#39;LeftmostFirst&#39;), we instead group NFA
+    // priority (as in 'All') or treating all NFA states as having distinct
+    // priority based on order (as in 'LeftmostFirst'), we instead group NFA
     // states into sets, and treat members of each set as having equivalent
     // priority, but having greater priority than all following members
     // of different sets.
     //
-    // However, it&#39;s not clear whether it&#39;s really worth adding this. After
+    // However, it's not clear whether it's really worth adding this. After
     // all, leftmost-longest can be emulated when using literals by using
     // leftmost-first and sorting the literals by length in descending order.
-    // However, this won&#39;t work for arbitrary regexes. e.g., `\w|\w\w` will
+    // However, this won't work for arbitrary regexes. e.g., `\w|\w\w` will
     // always match `a` in `ab` when using leftmost-first, but leftmost-longest
     // would match `ab`.
 </span>}
 
 <span class="kw">impl </span>MatchKind {
-    <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>continue_past_first_match(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="kw-2">*</span><span class="self">self </span>== MatchKind::All
     }
@@ -3730,24 +3730,24 @@ this module.
 ///
 /// To be very clear, this error type implies that one cannot assume that no
 /// matches occur, since the search stopped before completing. That is, if
-/// you&#39;re looking for information about where a search determined that no
+/// you're looking for information about where a search determined that no
 /// match can occur, then this error type does *not* give you that. (Indeed, at
 /// the time of writing, if you need such a thing, you have to write your own
 /// search routine.)
 ///
 /// Normally, when one searches for something, the response is either an
-/// affirmative &quot;it was found at this location&quot; or a negative &quot;not found at
-/// all.&quot; However, in some cases, a regex engine can be configured to stop its
+/// affirmative "it was found at this location" or a negative "not found at
+/// all." However, in some cases, a regex engine can be configured to stop its
 /// search before concluding whether a match exists or not. When this happens,
 /// it may be important for the caller to know why the regex engine gave up and
-/// where in the input it gave up at. This error type exposes the &#39;why&#39; and the
-/// &#39;where.&#39;
+/// where in the input it gave up at. This error type exposes the 'why' and the
+/// 'where.'
 ///
 /// For example, the DFAs provided by this library generally cannot correctly
 /// implement Unicode word boundaries. Instead, they provide an option to
 /// eagerly support them on ASCII text (since Unicode word boundaries are
 /// equivalent to ASCII word boundaries when searching ASCII text), but will
-/// &quot;give up&quot; if a non-ASCII byte is seen. In such cases, one is usually
+/// "give up" if a non-ASCII byte is seen. In such cases, one is usually
 /// required to either report the failure to the caller (unergonomic) or
 /// otherwise fall back to some other regex engine (ergonomic, but potentially
 /// costly).
@@ -3763,7 +3763,7 @@ this module.
 ///
 /// (Note that DFAs are configured by default to never quit or give up in this
 /// fashion. For example, by default, a DFA will fail to build if the regex
-/// pattern contains a Unicode word boundary. One needs to opt into the &quot;quit&quot;
+/// pattern contains a Unicode word boundary. One needs to opt into the "quit"
 /// behavior via options, like
 /// [`hybrid::dfa::Config::unicode_word_boundary`](crate::hybrid::dfa::Config::unicode_word_boundary).)
 ///
@@ -3774,8 +3774,8 @@ this module.
 /// with a [one-pass DFA](crate::dfa::onepass).
 </span><span class="attr">#[derive(Clone, Debug, Eq, PartialEq)]
 </span><span class="kw">pub struct </span>MatchError(
-    <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)] </span>alloc::boxed::Box&lt;MatchErrorKind&gt;,
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))] </span>MatchErrorKind,
+    <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)] </span>alloc::boxed::Box&lt;MatchErrorKind&gt;,
+    <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))] </span>MatchErrorKind,
 );
 
 <span class="kw">impl </span>MatchError {
@@ -3784,11 +3784,11 @@ this module.
     /// This is a more verbose version of the kind-specific constructors,
     /// e.g., `MatchError::quit`.
     </span><span class="kw">pub fn </span>new(kind: MatchErrorKind) -&gt; MatchError {
-        <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
         </span>{
             MatchError(alloc::boxed::Box::new(kind))
         }
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
         </span>{
             MatchError(kind)
         }
@@ -3799,8 +3799,8 @@ this module.
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
     </span>}
 
-    <span class="doccomment">/// Create a new &quot;quit&quot; error. The given `byte` corresponds to the value
-    /// that tripped a search&#39;s quit condition, and `offset` corresponds to the
+    <span class="doccomment">/// Create a new "quit" error. The given `byte` corresponds to the value
+    /// that tripped a search's quit condition, and `offset` corresponds to the
     /// location in the haystack at which the search quit.
     ///
     /// This is the same as calling `MatchError::new` with a
@@ -3809,7 +3809,7 @@ this module.
         MatchError::new(MatchErrorKind::Quit { byte, offset })
     }
 
-    <span class="doccomment">/// Create a new &quot;gave up&quot; error. The given `offset` corresponds to the
+    <span class="doccomment">/// Create a new "gave up" error. The given `offset` corresponds to the
     /// location in the haystack at which the search gave up.
     ///
     /// This is the same as calling `MatchError::new` with a
@@ -3818,7 +3818,7 @@ this module.
         MatchError::new(MatchErrorKind::GaveUp { offset })
     }
 
-    <span class="doccomment">/// Create a new &quot;haystack too long&quot; error. The given `len` corresponds to
+    <span class="doccomment">/// Create a new "haystack too long" error. The given `len` corresponds to
     /// the length of the haystack that was problematic.
     ///
     /// This is the same as calling `MatchError::new` with a
@@ -3827,7 +3827,7 @@ this module.
         MatchError::new(MatchErrorKind::HaystackTooLong { len })
     }
 
-    <span class="doccomment">/// Create a new &quot;unsupported anchored&quot; error. This occurs when the caller
+    <span class="doccomment">/// Create a new "unsupported anchored" error. This occurs when the caller
     /// requests a search with an anchor mode that is not supported by the
     /// regex engine.
     ///
@@ -3845,10 +3845,10 @@ this module.
 </span><span class="attr">#[non_exhaustive]
 #[derive(Clone, Debug, Eq, PartialEq)]
 </span><span class="kw">pub enum </span>MatchErrorKind {
-    <span class="doccomment">/// The search saw a &quot;quit&quot; byte at which it was instructed to stop
+    <span class="doccomment">/// The search saw a "quit" byte at which it was instructed to stop
     /// searching.
     </span>Quit {
-        <span class="doccomment">/// The &quot;quit&quot; byte that was observed that caused the search to stop.
+        <span class="doccomment">/// The "quit" byte that was observed that caused the search to stop.
         </span>byte: u8,
         <span class="doccomment">/// The offset at which the quit byte was observed.
         </span>offset: usize,
@@ -3887,7 +3887,7 @@ this module.
     },
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>MatchError {}
 
 <span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>MatchError {
@@ -3895,29 +3895,29 @@ this module.
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self</span>.kind() {
             MatchErrorKind::Quit { byte, offset } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;quit search after observing byte {:?} at offset {}&quot;</span>,
+                <span class="string">"quit search after observing byte {:?} at offset {}"</span>,
                 DebugByte(byte),
                 offset,
             ),
             MatchErrorKind::GaveUp { offset } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;gave up searching at offset {}&quot;</span>, offset)
+                <span class="macro">write!</span>(f, <span class="string">"gave up searching at offset {}"</span>, offset)
             }
             MatchErrorKind::HaystackTooLong { len } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;haystack of length {} is too long&quot;</span>, len)
+                <span class="macro">write!</span>(f, <span class="string">"haystack of length {} is too long"</span>, len)
             }
             MatchErrorKind::UnsupportedAnchored { mode: Anchored::Yes } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;anchored searches are not supported or enabled&quot;</span>)
+                <span class="macro">write!</span>(f, <span class="string">"anchored searches are not supported or enabled"</span>)
             }
             MatchErrorKind::UnsupportedAnchored { mode: Anchored::No } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;unanchored searches are not supported or enabled&quot;</span>)
+                <span class="macro">write!</span>(f, <span class="string">"unanchored searches are not supported or enabled"</span>)
             }
             MatchErrorKind::UnsupportedAnchored {
                 mode: Anchored::Pattern(pid),
             } =&gt; {
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;anchored searches for a specific pattern ({}) are \
-                     not supported or enabled&quot;</span>,
+                    <span class="string">"anchored searches for a specific pattern ({}) are \
+                     not supported or enabled"</span>,
                     pid.as_usize(),
                 )
             }
@@ -3929,7 +3929,7 @@ this module.
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="comment">// We test that our &#39;MatchError&#39; type is the size we expect. This isn&#39;t an
+    <span class="comment">// We test that our 'MatchError' type is the size we expect. This isn't an
     // API guarantee, but if the size increases, we really want to make sure we
     // decide to do that intentionally. So this should be a speed bump. And in
     // general, we should not increase the size without a very good reason.
@@ -3937,12 +3937,12 @@ this module.
     // Why? Because low level search APIs return Result&lt;.., MatchError&gt;. When
     // MatchError gets bigger, so to does the Result type.
     //
-    // Now, when &#39;alloc&#39; is enabled, we do box the error, which de-emphasizes
-    // the importance of keeping a small error type. But without &#39;alloc&#39;, we
+    // Now, when 'alloc' is enabled, we do box the error, which de-emphasizes
+    // the importance of keeping a small error type. But without 'alloc', we
     // still want things to be small.
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>match_error_size() {
-        <span class="kw">let </span>expected_size = <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">&quot;alloc&quot;</span>) {
+        <span class="kw">let </span>expected_size = <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">"alloc"</span>) {
             core::mem::size_of::&lt;usize&gt;()
         } <span class="kw">else </span>{
             <span class="number">2 </span>* core::mem::size_of::&lt;usize&gt;()
@@ -3951,14 +3951,14 @@ this module.
     }
 
     <span class="comment">// Same as above, but for the underlying match error kind.
-    </span><span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+    </span><span class="attr">#[cfg(target_pointer_width = <span class="string">"64"</span>)]
     #[test]
     </span><span class="kw">fn </span>match_error_kind_size() {
         <span class="kw">let </span>expected_size = <span class="number">2 </span>* core::mem::size_of::&lt;usize&gt;();
         <span class="macro">assert_eq!</span>(expected_size, core::mem::size_of::&lt;MatchErrorKind&gt;());
     }
 
-    <span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+    <span class="attr">#[cfg(target_pointer_width = <span class="string">"32"</span>)]
     #[test]
     </span><span class="kw">fn </span>match_error_kind_size() {
         <span class="kw">let </span>expected_size = <span class="number">3 </span>* core::mem::size_of::&lt;usize&gt;();

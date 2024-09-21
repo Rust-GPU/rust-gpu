@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirt-0.3.0/src/qptr/analyze.rs`."><title>analyze.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../spirt/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirt-0.3.0/src/qptr/analyze.rs`."><title>analyze.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../spirt/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1286,8 +1286,8 @@
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">struct </span>AnalysisError(Diag);
 
-<span class="kw">struct </span>UsageMerger&lt;<span class="lifetime">&#39;a</span>&gt; {
-    layout_cache: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>LayoutCache&lt;<span class="lifetime">&#39;a</span>&gt;,
+<span class="kw">struct </span>UsageMerger&lt;<span class="lifetime">'a</span>&gt; {
+    layout_cache: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>LayoutCache&lt;<span class="lifetime">'a</span>&gt;,
 }
 
 <span class="doccomment">/// Result type for `UsageMerger` methods - unlike `Result&lt;T, AnalysisError&gt;`,
@@ -1317,7 +1317,7 @@
     }
 }
 
-<span class="kw">impl </span>UsageMerger&lt;<span class="lifetime">&#39;_</span>&gt; {
+<span class="kw">impl </span>UsageMerger&lt;<span class="lifetime">'_</span>&gt; {
     <span class="kw">fn </span>merge(<span class="kw-2">&amp;</span><span class="self">self</span>, a: QPtrUsage, b: QPtrUsage) -&gt; MergeResult&lt;QPtrUsage&gt; {
         <span class="kw">match </span>(a, b) {
             (
@@ -1344,13 +1344,13 @@
             (a, b) =&gt; {
                 MergeResult {
                     <span class="comment">// FIXME(eddyb) there may be a better choice here, but it
-                    // generally doesn&#39;t matter, as this method only has one
+                    // generally doesn't matter, as this method only has one
                     // caller, and it just calls `.into_result()` right away.
                     </span>merged: a.clone(),
                     error: <span class="prelude-val">Some</span>(AnalysisError(Diag::bug([
-                        <span class="string">&quot;merge: &quot;</span>.into(),
+                        <span class="string">"merge: "</span>.into(),
                         a.into(),
-                        <span class="string">&quot; vs &quot;</span>.into(),
+                        <span class="string">" vs "</span>.into(),
                         b.into(),
                     ]))),
                 }
@@ -1359,23 +1359,23 @@
     }
 
     <span class="kw">fn </span>merge_mem(<span class="kw-2">&amp;</span><span class="self">self</span>, a: QPtrMemUsage, b: QPtrMemUsage) -&gt; MergeResult&lt;QPtrMemUsage&gt; {
-        <span class="comment">// NOTE(eddyb) this is possible because it&#39;s currently impossible for
+        <span class="comment">// NOTE(eddyb) this is possible because it's currently impossible for
         // the merged usage to be outside the bounds of *both* `a` and `b`.
         </span><span class="kw">let </span>max_size = <span class="kw">match </span>(a.max_size, b.max_size) {
             (<span class="prelude-val">Some</span>(a), <span class="prelude-val">Some</span>(b)) =&gt; <span class="prelude-val">Some</span>(a.max(b)),
             (<span class="prelude-val">None</span>, <span class="kw">_</span>) | (<span class="kw">_</span>, <span class="prelude-val">None</span>) =&gt; <span class="prelude-val">None</span>,
         };
 
-        <span class="comment">// Ensure that `a` is &quot;larger&quot; than `b`, or at least the same size
-        // (when either they&#39;re identical, or one is a &quot;newtype&quot; of the other),
+        <span class="comment">// Ensure that `a` is "larger" than `b`, or at least the same size
+        // (when either they're identical, or one is a "newtype" of the other),
         // to make it easier to handle all the possible interactions below,
-        // by skipping (or deprioritizing, if supported) the &quot;wrong direction&quot;.
+        // by skipping (or deprioritizing, if supported) the "wrong direction".
         </span><span class="kw">let </span><span class="kw-2">mut </span>sorted = [a, b];
         sorted.sort_by_key(|usage| {
             <span class="attr">#[derive(PartialEq, Eq, PartialOrd, Ord)]
             </span><span class="kw">enum </span>MaxSize&lt;T&gt; {
                 Fixed(T),
-                <span class="comment">// FIXME(eddyb) this probably needs to track &quot;min size&quot;?
+                <span class="comment">// FIXME(eddyb) this probably needs to track "min size"?
                 </span>Dynamic,
             }
             <span class="kw">let </span>max_size = usage.max_size.map_or(MaxSize::Dynamic, MaxSize::Fixed);
@@ -1398,7 +1398,7 @@
                 // (note that, for typed reads/write, arrays do not need to be
                 // *indexed* to work, i.e. they *do not* require `DynOffset`s,
                 // `Offset`s suffice, and for them `DynOffsetBase` is at most
-                // a &quot;run-length&quot;/deduplication optimization over `OffsetBase`).
+                // a "run-length"/deduplication optimization over `OffsetBase`).
                 // NOTE(eddyb) this should still prefer `OpTypeVector` over `DynOffsetBase`!
                 </span>QPtrMemUsageKind::DirectAccess(<span class="kw">_</span>) =&gt; TypeStrictness::Exact,
 
@@ -1414,14 +1414,14 @@
     }
 
     <span class="comment">// FIXME(eddyb) make the name of this clarify the asymmetric effect, something
-    // like &quot;make `a` compatible with `offset =&gt; b`&quot;.
+    // like "make `a` compatible with `offset =&gt; b`".
     </span><span class="kw">fn </span>merge_mem_at(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         a: QPtrMemUsage,
         b_offset_in_a: u32,
         b: QPtrMemUsage,
     ) -&gt; MergeResult&lt;QPtrMemUsage&gt; {
-        <span class="comment">// NOTE(eddyb) this is possible because it&#39;s currently impossible for
+        <span class="comment">// NOTE(eddyb) this is possible because it's currently impossible for
         // the merged usage to be outside the bounds of *both* `a` and `b`.
         </span><span class="kw">let </span>max_size = <span class="kw">match </span>(a.max_size, b.max_size) {
             (<span class="prelude-val">Some</span>(a), <span class="prelude-val">Some</span>(b)) =&gt; <span class="prelude-val">Some</span>(a.max(b.checked_add(b_offset_in_a).unwrap())),
@@ -1431,7 +1431,7 @@
         <span class="comment">// HACK(eddyb) we require biased `a` vs `b` (see `merge_mem` method above).
         </span><span class="macro">assert_eq!</span>(max_size, a.max_size);
 
-        <span class="comment">// Decompose the &quot;smaller&quot; and/or &quot;less strict&quot; side (`b`) first.
+        <span class="comment">// Decompose the "smaller" and/or "less strict" side (`b`) first.
         </span><span class="kw">match </span>b.kind {
             <span class="comment">// `Unused`s are always ignored.
             </span>QPtrMemUsageKind::Unused =&gt; <span class="kw">return </span>MergeResult::ok(a),
@@ -1439,7 +1439,7 @@
             QPtrMemUsageKind::OffsetBase(b_entries)
                 <span class="kw">if </span>{
                     <span class="comment">// HACK(eddyb) this check was added later, after it turned out
-                    // that *deep* flattening of arbitrary offsets in `b` would&#39;ve
+                    // that *deep* flattening of arbitrary offsets in `b` would've
                     // required constant-folding of `qptr.offset` in `qptr::lift`,
                     // to not need all the type nesting levels for `OpAccessChain`.
                     </span>b_offset_in_a == <span class="number">0
@@ -1469,11 +1469,11 @@
                         <span class="comment">// FIXME(eddyb) should this mean `MergeResult` should
                         // use `errors: Vec&lt;AnalysisError&gt;` instead of `Option`?
                         </span><span class="kw">if </span>!all_errors.is_empty() {
-                            all_errors.push(<span class="string">&quot;\n&quot;</span>.into());
+                            all_errors.push(<span class="string">"\n"</span>.into());
                         }
                         <span class="comment">// FIXME(eddyb) this is scuffed because the error might
                         // (or really *should*) already refer to the right offset!
-                        </span>all_errors.push(<span class="macro">format!</span>(<span class="string">&quot;+{b_offset} =&gt; &quot;</span>).into());
+                        </span>all_errors.push(<span class="macro">format!</span>(<span class="string">"+{b_offset} =&gt; "</span>).into());
                         all_errors.extend(e.message);
                     }
                 }
@@ -1482,7 +1482,7 @@
                     <span class="comment">// FIXME(eddyb) should this mean `MergeResult` should
                     // use `errors: Vec&lt;AnalysisError&gt;` instead of `Option`?
                     </span>error: all_errors.map(|AnalysisError(<span class="kw-2">mut </span>e)| {
-                        e.message.insert(<span class="number">0</span>, <span class="string">&quot;merge_mem: conflicts:\n&quot;</span>.into());
+                        e.message.insert(<span class="number">0</span>, <span class="string">"merge_mem: conflicts:\n"</span>.into());
                         AnalysisError(e)
                     }),
                 };
@@ -1525,7 +1525,7 @@
                             // conflict with our own `Block`-annotated wrapper.
                             </span><span class="prelude-val">Ok</span>(TypeLayout::Handle(<span class="kw">_</span>) | TypeLayout::HandleArray(..)) =&gt; {
                                 <span class="prelude-val">Err</span>(AnalysisError(Diag::bug([
-                                    <span class="string">&quot;merge_mem: impossible handle type for QPtrMemUsage&quot;</span>.into(),
+                                    <span class="string">"merge_mem: impossible handle type for QPtrMemUsage"</span>.into(),
                                 ])))
                             }
                             <span class="prelude-val">Ok</span>(TypeLayout::Concrete(concrete)) =&gt; {
@@ -1554,18 +1554,18 @@
                                 <span class="comment">// FIXME(eddyb) this should ideally embed the types in the
                                 // error somehow.
                                 </span>error: <span class="prelude-val">Some</span>(AnalysisError(Diag::bug([
-                                    <span class="string">&quot;merge_mem: type subcomponents incompatible with usage (&quot;
+                                    <span class="string">"merge_mem: type subcomponents incompatible with usage ("
                                         </span>.into(),
                                     QPtrUsage::Memory(a.clone()).into(),
-                                    <span class="string">&quot; vs &quot;</span>.into(),
+                                    <span class="string">" vs "</span>.into(),
                                     QPtrUsage::Memory(b.clone()).into(),
-                                    <span class="string">&quot;)&quot;</span>.into(),
+                                    <span class="string">")"</span>.into(),
                                 ]))),
                             }
                         })
                 };
 
-                <span class="comment">// FIXME(eddyb) if the chosen (maybe-larger) side isn&#39;t strict,
+                <span class="comment">// FIXME(eddyb) if the chosen (maybe-larger) side isn't strict,
                 // it should also be possible to expand it into its components,
                 // with the other (maybe-smaller) side becoming a leaf.
 
@@ -1583,7 +1583,7 @@
                 <span class="kw">let </span>b_offset_in_a_element = b_offset_in_a % a_stride;
 
                 <span class="comment">// Array-like dynamic offsetting needs to always merge any usage that
-                // fits inside the stride, with its &quot;element&quot; usage, no matter how
+                // fits inside the stride, with its "element" usage, no matter how
                 // complex it may be (notably, this is needed for nested arrays).
                 </span><span class="kw">if </span>b.max_size
                     .and_then(|b_max_size| b_max_size.checked_add(b_offset_in_a_element))
@@ -1631,7 +1631,7 @@
                             <span class="comment">// FIXME(eddyb) implement somehow (by adjusting stride?).
                             // NOTE(eddyb) with `b` as an `DynOffsetBase`/`OffsetBase`, it could
                             // also be possible to superimpose its offset patterns onto `a`,
-                            // though that&#39;s easier for `OffsetBase` than `DynOffsetBase`.
+                            // though that's easier for `OffsetBase` than `DynOffsetBase`.
                             // HACK(eddyb) needed due to `a` being moved out of.
                             </span><span class="kw">let </span>a = QPtrMemUsage {
                                 max_size: a.max_size,
@@ -1643,12 +1643,12 @@
                             MergeResult {
                                 merged: a.kind.clone(),
                                 error: <span class="prelude-val">Some</span>(AnalysisError(Diag::bug([
-                                    <span class="macro">format!</span>(<span class="string">&quot;merge_mem: unimplemented non-intra-element merging into stride={a_stride} (&quot;</span>)
+                                    <span class="macro">format!</span>(<span class="string">"merge_mem: unimplemented non-intra-element merging into stride={a_stride} ("</span>)
                                         .into(),
                                     QPtrUsage::Memory(a).into(),
-                                    <span class="string">&quot; vs &quot;</span>.into(),
+                                    <span class="string">" vs "</span>.into(),
                                     QPtrUsage::Memory(b).into(),
-                                    <span class="string">&quot;)&quot;</span>.into(),
+                                    <span class="string">")"</span>.into(),
                                 ]))),
                             }
                         }
@@ -1671,7 +1671,7 @@
                         })
                     });
 
-                <span class="comment">// FIXME(eddyb) this is a bit inefficient but we don&#39;t have
+                <span class="comment">// FIXME(eddyb) this is a bit inefficient but we don't have
                 // cursors, so we have to buffer the `BTreeMap` keys here.
                 </span><span class="kw">let </span>overlapping_offsets: SmallVec&lt;[u32; <span class="number">16</span>]&gt; =
                     overlapping_entries.map(|(<span class="kw-2">&amp;</span>a_sub_offset, <span class="kw">_</span>)| a_sub_offset).collect();
@@ -1683,7 +1683,7 @@
 
                     <span class="comment">// HACK(eddyb) this replicates the condition in which
                     // `merge_mem_at` would fail its similar assert, some of
-                    // the cases denied here might be legal, but they&#39;re rare
+                    // the cases denied here might be legal, but they're rare
                     // enough that we can do this for now.
                     </span><span class="kw">let </span>is_illegal = a_sub_offset != b_offset_in_a &amp;&amp; {
                         <span class="kw">let </span>(a_sub_total_max_size, b_total_max_size) = (
@@ -1714,14 +1714,14 @@
                             },
                             error: <span class="prelude-val">Some</span>(AnalysisError(Diag::bug([
                                 <span class="macro">format!</span>(
-                                    <span class="string">&quot;merge_mem: unsupported straddling overlap \
-                                     at offsets {a_sub_offset} vs {b_offset_in_a} (&quot;
+                                    <span class="string">"merge_mem: unsupported straddling overlap \
+                                     at offsets {a_sub_offset} vs {b_offset_in_a} ("
                                 </span>)
                                 .into(),
                                 QPtrUsage::Memory(a).into(),
-                                <span class="string">&quot; vs &quot;</span>.into(),
+                                <span class="string">" vs "</span>.into(),
                                 QPtrUsage::Memory(b).into(),
-                                <span class="string">&quot;)&quot;</span>.into(),
+                                <span class="string">")"</span>.into(),
                             ]))),
                         };
                     }
@@ -1752,11 +1752,11 @@
                         <span class="comment">// FIXME(eddyb) should this mean `MergeResult` should
                         // use `errors: Vec&lt;AnalysisError&gt;` instead of `Option`?
                         </span><span class="kw">if </span>!all_errors.is_empty() {
-                            all_errors.push(<span class="string">&quot;\n&quot;</span>.into());
+                            all_errors.push(<span class="string">"\n"</span>.into());
                         }
                         <span class="comment">// FIXME(eddyb) this is scuffed because the error might
                         // (or really *should*) already refer to the right offset!
-                        </span>all_errors.push(<span class="macro">format!</span>(<span class="string">&quot;+{a_sub_offset} =&gt; &quot;</span>).into());
+                        </span>all_errors.push(<span class="macro">format!</span>(<span class="string">"+{a_sub_offset} =&gt; "</span>).into());
                         all_errors.extend(e.message);
                     }
                 }
@@ -1766,7 +1766,7 @@
                     <span class="comment">// FIXME(eddyb) should this mean `MergeResult` should
                     // use `errors: Vec&lt;AnalysisError&gt;` instead of `Option`?
                     </span>error: all_errors.map(|AnalysisError(<span class="kw-2">mut </span>e)| {
-                        e.message.insert(<span class="number">0</span>, <span class="string">&quot;merge_mem: conflicts:\n&quot;</span>.into());
+                        e.message.insert(<span class="number">0</span>, <span class="string">"merge_mem: conflicts:\n"</span>.into());
                         AnalysisError(e)
                     }),
                 }
@@ -1794,7 +1794,7 @@
             <span class="kw">return </span><span class="bool-val">true</span>;
         }
 
-        <span class="comment">// &quot;Fast accept&quot; based on type alone (expected as recursion base case).
+        <span class="comment">// "Fast accept" based on type alone (expected as recursion base case).
         </span><span class="kw">if let </span>QPtrMemUsageKind::StrictlyTyped(usage_type)
         | QPtrMemUsageKind::DirectAccess(usage_type) = usage.kind
         {
@@ -1809,7 +1809,7 @@
             </span><span class="kw">let </span>min_usage_offset_range =
                 usage_offset..usage_offset.saturating_add(usage.max_size.unwrap_or(<span class="number">0</span>));
 
-            <span class="comment">// &quot;Fast reject&quot; based on size alone (expected w/ multiple attempts).
+            <span class="comment">// "Fast reject" based on size alone (expected w/ multiple attempts).
             </span><span class="kw">if </span><span class="self">self</span>.mem_layout.dyn_unit_stride.is_none()
                 &amp;&amp; (<span class="self">self</span>.mem_layout.fixed_base.size &lt; min_usage_offset_range.end
                     || usage.max_size.is_none())
@@ -1854,7 +1854,7 @@
                         // offset `0` is that *in all other cases*, every
                         // individual `OffsetBase` requires its own type, to
                         // allow performing offsets *in steps* (even if the
-                        // offsets could easily be constant-folded, they&#39;d
+                        // offsets could easily be constant-folded, they'd
                         // *have to* be constant-folded *before* analysis,
                         // to ensure there is no need for the intermediaries).
                         </span><span class="kw">if </span>combined_offset == <span class="number">0 </span>{
@@ -1882,7 +1882,7 @@
                     .transpose();
 
                 <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.components {
-                    <span class="comment">// Dynamic offsetting into non-arrays is not supported, and it&#39;d
+                    <span class="comment">// Dynamic offsetting into non-arrays is not supported, and it'd
                     // only make sense for legalization (or small-length arrays where
                     // selecting elements based on the index may be a practical choice).
                     </span>Components::Scalar | Components::Fields { .. } =&gt; <span class="bool-val">false</span>,
@@ -1937,16 +1937,16 @@
     Complete(Rc&lt;FuncInferUsageResults&gt;),
 }
 
-<span class="kw">pub struct </span>InferUsage&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">pub struct </span>InferUsage&lt;<span class="lifetime">'a</span>&gt; {
     cx: Rc&lt;Context&gt;,
-    layout_cache: LayoutCache&lt;<span class="lifetime">&#39;a</span>&gt;,
+    layout_cache: LayoutCache&lt;<span class="lifetime">'a</span>&gt;,
 
     global_var_usages: FxIndexMap&lt;GlobalVar, <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;QPtrUsage, AnalysisError&gt;&gt;&gt;,
     func_states: FxIndexMap&lt;Func, FuncInferUsageState&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; InferUsage&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub fn </span>new(cx: Rc&lt;Context&gt;, layout_config: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>LayoutConfig) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; InferUsage&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">pub fn </span>new(cx: Rc&lt;Context&gt;, layout_config: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>LayoutConfig) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             cx: cx.clone(),
             layout_cache: LayoutCache::new(cx, layout_config),
@@ -2115,7 +2115,7 @@
                 <span class="kw">for </span>(param, param_usage) <span class="kw">in </span>func_decl.params.iter().zip(<span class="kw-2">&amp;mut </span>param_usages) {
                     <span class="kw">if </span>is_qptr(param.ty) {
                         <span class="kw-2">*</span>param_usage = <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(AnalysisError(Diag::bug([
-                            <span class="string">&quot;pointer param of imported func&quot;</span>.into(),
+                            <span class="string">"pointer param of imported func"</span>.into(),
                         ]))));
                     }
                 }
@@ -2152,7 +2152,7 @@
                         </span>Value::ControlRegionInput { .. } | Value::ControlNodeOutput { .. } =&gt; {
                             usage_or_err_attrs_to_attach.push((
                                 ptr,
-                                <span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">&quot;unsupported φ&quot;</span>.into()]))),
+                                <span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">"unsupported φ"</span>.into()]))),
                             ));
                             <span class="kw">return</span>;
                         }
@@ -2185,7 +2185,7 @@
                                 usage_or_err_attrs_to_attach.push((
                                     Value::DataInstOutput(data_inst),
                                     <span class="prelude-val">Err</span>(AnalysisError(Diag::bug([
-                                        <span class="string">&quot;unsupported recursive call&quot;</span>.into()
+                                        <span class="string">"unsupported recursive call"</span>.into()
                                     ]))),
                                 ));
                             }
@@ -2211,13 +2211,13 @@
                             output_usage
                                 .unwrap_or_else(|| {
                                     <span class="prelude-val">Err</span>(AnalysisError(Diag::bug([
-                                        <span class="string">&quot;HandleArrayIndex: unknown element&quot;</span>.into(),
+                                        <span class="string">"HandleArrayIndex: unknown element"</span>.into(),
                                     ])))
                                 })
                                 .and_then(|usage| <span class="kw">match </span>usage {
                                     QPtrUsage::Handles(handle) =&gt; <span class="prelude-val">Ok</span>(QPtrUsage::Handles(handle)),
                                     QPtrUsage::Memory(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(AnalysisError(Diag::bug([
-                                        <span class="string">&quot;HandleArrayIndex: cannot be used as Memory&quot;</span>.into(),
+                                        <span class="string">"HandleArrayIndex: cannot be used as Memory"</span>.into(),
                                     ]))),
                                 }),
                         );
@@ -2232,7 +2232,7 @@
                                     <span class="kw">let </span>usage = <span class="kw">match </span>usage {
                                         QPtrUsage::Handles(<span class="kw">_</span>) =&gt; {
                                             <span class="kw">return </span><span class="prelude-val">Err</span>(AnalysisError(Diag::bug([
-                                                <span class="string">&quot;BufferData: cannot be used as Handles&quot;</span>.into(),
+                                                <span class="string">"BufferData: cannot be used as Handles"</span>.into(),
                                             ])));
                                         }
                                         QPtrUsage::Memory(usage) =&gt; usage,
@@ -2284,13 +2284,13 @@
                                     <span class="kw">let </span>usage = <span class="kw">match </span>usage {
                                         QPtrUsage::Handles(<span class="kw">_</span>) =&gt; {
                                             <span class="kw">return </span><span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="macro">format!</span>(
-                                                <span class="string">&quot;Offset({offset}): cannot offset Handles&quot;
+                                                <span class="string">"Offset({offset}): cannot offset Handles"
                                             </span>).into()])));
                                         }
                                         QPtrUsage::Memory(usage) =&gt; usage,
                                     };
                                     <span class="kw">let </span>offset = u32::try_from(offset).ok().ok_or_else(|| {
-                                        AnalysisError(Diag::bug([<span class="macro">format!</span>(<span class="string">&quot;Offset({offset}): negative offset&quot;</span>).into()]))
+                                        AnalysisError(Diag::bug([<span class="macro">format!</span>(<span class="string">"Offset({offset}): negative offset"</span>).into()]))
                                     })<span class="question-mark">?</span>;
 
                                     <span class="comment">// FIXME(eddyb) these should be normalized
@@ -2304,11 +2304,11 @@
                                         max_size: usage
                                             .max_size
                                             .map(|max_size| offset.checked_add(max_size).ok_or_else(|| {
-                                                AnalysisError(Diag::bug([<span class="macro">format!</span>(<span class="string">&quot;Offset({offset}): size overflow ({offset}+{max_size})&quot;</span>).into()]))
+                                                AnalysisError(Diag::bug([<span class="macro">format!</span>(<span class="string">"Offset({offset}): size overflow ({offset}+{max_size})"</span>).into()]))
                                             })).transpose()<span class="question-mark">?</span>,
                                         <span class="comment">// FIXME(eddyb) allocating `Rc&lt;BTreeMap&lt;_, _&gt;&gt;`
                                         // to represent the one-element case, seems
-                                        // quite wasteful when it&#39;s likely consumed.
+                                        // quite wasteful when it's likely consumed.
                                         </span>kind: QPtrMemUsageKind::OffsetBase(Rc::new(
                                             [(offset, usage)].into(),
                                         )),
@@ -2325,19 +2325,19 @@
                                 .and_then(|usage| {
                                     <span class="kw">let </span>usage = <span class="kw">match </span>usage {
                                         QPtrUsage::Handles(<span class="kw">_</span>) =&gt; {
-                                            <span class="kw">return </span><span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">&quot;DynOffset: cannot offset Handles&quot;</span>.into()])));
+                                            <span class="kw">return </span><span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">"DynOffset: cannot offset Handles"</span>.into()])));
                                         }
                                         QPtrUsage::Memory(usage) =&gt; usage,
                                     };
                                     <span class="kw">match </span>usage.max_size {
                                         <span class="prelude-val">None </span>=&gt; {
-                                            <span class="kw">return </span><span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">&quot;DynOffset: unsized element&quot;</span>.into()])));
+                                            <span class="kw">return </span><span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">"DynOffset: unsized element"</span>.into()])));
                                         }
-                                        <span class="comment">// FIXME(eddyb) support this by &quot;folding&quot;
+                                        <span class="comment">// FIXME(eddyb) support this by "folding"
                                         // the usage onto itself (i.e. applying
                                         // `%= stride` on all offsets inside).
                                         </span><span class="prelude-val">Some</span>(max_size) <span class="kw">if </span>max_size &gt; stride.get() =&gt; {
-                                            <span class="kw">return </span><span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">&quot;DynOffset: element max_size exceeds stride&quot;</span>.into()])));
+                                            <span class="kw">return </span><span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">"DynOffset: element max_size exceeds stride"</span>.into()])));
                                         }
                                         <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {}
                                     }
@@ -2350,7 +2350,7 @@
                                                 <span class="kw">if </span>index_bounds.start &lt; <span class="number">0 </span>|| index_bounds.end &lt; <span class="number">0 </span>{
                                                     <span class="kw">return </span><span class="prelude-val">Err</span>(AnalysisError(
                                                         Diag::bug([
-                                                            <span class="string">&quot;DynOffset: potentially negative offset&quot;
+                                                            <span class="string">"DynOffset: potentially negative offset"
                                                                 </span>.into(),
                                                         ])
                                                     ));
@@ -2358,7 +2358,7 @@
                                                 <span class="kw">let </span>index_bounds_end = u32::try_from(index_bounds.end).unwrap();
                                                 index_bounds_end.checked_mul(stride.get()).ok_or_else(|| {
                                                      AnalysisError(Diag::bug([
-                                                        <span class="macro">format!</span>(<span class="string">&quot;DynOffset: size overflow ({index_bounds_end}*{stride})&quot;</span>).into(),
+                                                        <span class="macro">format!</span>(<span class="string">"DynOffset: size overflow ({index_bounds_end}*{stride})"</span>).into(),
                                                     ]))
                                                 })
                                             })
@@ -2373,9 +2373,9 @@
                     }
                     DataInstKind::QPtr(op @ (QPtrOp::Load | QPtrOp::Store)) =&gt; {
                         <span class="kw">let </span>(op_name, access_type) = <span class="kw">match </span>op {
-                            QPtrOp::Load =&gt; (<span class="string">&quot;Load&quot;</span>, data_inst_form_def.output_type.unwrap()),
+                            QPtrOp::Load =&gt; (<span class="string">"Load"</span>, data_inst_form_def.output_type.unwrap()),
                             QPtrOp::Store =&gt; {
-                                (<span class="string">&quot;Store&quot;</span>, func_at_inst.at(data_inst_def.inputs[<span class="number">1</span>]).type_of(<span class="kw-2">&amp;</span>cx))
+                                (<span class="string">"Store"</span>, func_at_inst.at(data_inst_def.inputs[<span class="number">1</span>]).type_of(<span class="kw-2">&amp;</span>cx))
                             }
                             <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                         };
@@ -2391,13 +2391,13 @@
                                     }
                                     TypeLayout::Handle(shapes::Handle::Buffer(..)) =&gt; {
                                         <span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="macro">format!</span>(
-                                            <span class="string">&quot;{op_name}: cannot access whole Buffer&quot;
+                                            <span class="string">"{op_name}: cannot access whole Buffer"
                                         </span>)
                                         .into()])))
                                     }
                                     TypeLayout::HandleArray(..) =&gt; {
                                         <span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="macro">format!</span>(
-                                            <span class="string">&quot;{op_name}: cannot access whole HandleArray&quot;
+                                            <span class="string">"{op_name}: cannot access whole HandleArray"
                                         </span>)
                                         .into()])))
                                     }
@@ -2405,7 +2405,7 @@
                                         <span class="kw">if </span>concrete.mem_layout.dyn_unit_stride.is_some() =&gt;
                                     {
                                         <span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="macro">format!</span>(
-                                            <span class="string">&quot;{op_name}: cannot access unsized type&quot;
+                                            <span class="string">"{op_name}: cannot access unsized type"
                                         </span>)
                                         .into()])))
                                     }
@@ -2444,20 +2444,20 @@
                                                         // since it would conflict with our
                                                         // own `Block`-annotated wrapper.
                                                         </span>shapes::Handle::Buffer(..) =&gt; {
-                                                            <span class="kw">return </span><span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">&quot;ToSpvPtrInput: whole Buffer ambiguous (handle vs buffer data)&quot;</span>.into()])
+                                                            <span class="kw">return </span><span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">"ToSpvPtrInput: whole Buffer ambiguous (handle vs buffer data)"</span>.into()])
                                                             ));
                                                         }
                                                     };
                                                     <span class="prelude-val">Ok</span>(QPtrUsage::Handles(handle))
                                                 }
-                                                <span class="comment">// NOTE(eddyb) because we can&#39;t represent
+                                                <span class="comment">// NOTE(eddyb) because we can't represent
                                                 // the original type, in the same way we
                                                 // use `QPtrMemUsageKind::StrictlyTyped`
-                                                // for non-handles, we can&#39;t guarantee
+                                                // for non-handles, we can't guarantee
                                                 // a generated type that matches the
                                                 // desired `pointee` type.
                                                 </span>TypeLayout::HandleArray(..) =&gt; {
-                                                    <span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">&quot;ToSpvPtrInput: whole handle array unrepresentable&quot;</span>.into()])
+                                                    <span class="prelude-val">Err</span>(AnalysisError(Diag::bug([<span class="string">"ToSpvPtrInput: whole handle array unrepresentable"</span>.into()])
                                                     ))
                                                 }
                                                 TypeLayout::Concrete(concrete) =&gt; {
@@ -2490,7 +2490,7 @@
                         }
 
                         <span class="kw">if </span>has_from_spv_ptr_output_attr {
-                            <span class="comment">// FIXME(eddyb) merge with `FromSpvPtrOutput`&#39;s `pointee`.
+                            <span class="comment">// FIXME(eddyb) merge with `FromSpvPtrOutput`'s `pointee`.
                             </span><span class="kw">if let </span><span class="prelude-val">Some</span>(usage) = output_usage {
                                 usage_or_err_attrs_to_attach
                                     .push((Value::DataInstOutput(data_inst), usage));
@@ -2509,7 +2509,7 @@
 </span><span class="attr">#[derive(Default)]
 </span><span class="kw">struct </span>CollectAllDataInsts(Vec&lt;EntityList&lt;DataInst&gt;&gt;);
 
-<span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;_</span>&gt; <span class="kw">for </span>CollectAllDataInsts {
+<span class="kw">impl </span>Visitor&lt;<span class="lifetime">'_</span>&gt; <span class="kw">for </span>CollectAllDataInsts {
     <span class="comment">// FIXME(eddyb) this is excessive, maybe different kinds of
     // visitors should exist for module-level and func-level?
     </span><span class="kw">fn </span>visit_attr_set_use(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: AttrSet) {}
@@ -2519,7 +2519,7 @@
     <span class="kw">fn </span>visit_global_var_use(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: GlobalVar) {}
     <span class="kw">fn </span>visit_func_use(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: Func) {}
 
-    <span class="kw">fn </span>visit_control_node_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_node: FuncAt&lt;<span class="lifetime">&#39;_</span>, ControlNode&gt;) {
+    <span class="kw">fn </span>visit_control_node_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_node: FuncAt&lt;<span class="lifetime">'_</span>, ControlNode&gt;) {
         <span class="kw">if let </span>ControlNodeKind::Block { insts } = func_at_control_node.def().kind {
             <span class="self">self</span>.<span class="number">0</span>.push(insts);
         }

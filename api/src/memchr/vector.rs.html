@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memchr-2.7.1/src/vector.rs`."><title>vector.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../memchr/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memchr-2.7.4/src/vector.rs`."><title>vector.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../memchr/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -507,16 +507,10 @@
 <a href="#507" id="507">507</a>
 <a href="#508" id="508">508</a>
 <a href="#509" id="509">509</a>
-<a href="#510" id="510">510</a>
-<a href="#511" id="511">511</a>
-<a href="#512" id="512">512</a>
-<a href="#513" id="513">513</a>
-<a href="#514" id="514">514</a>
-<a href="#515" id="515">515</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/// A trait for describing vector operations used by vectorized searchers.
 ///
 /// The trait is highly constrained to low level vector operations needed.
-/// In general, it was invented mostly to be generic over x86&#39;s __m128i and
+/// In general, it was invented mostly to be generic over x86's __m128i and
 /// __m256i types. At time of writing, it also supports wasm and aarch64
 /// 128-bit vector types as well.
 ///
@@ -530,8 +524,6 @@
 /// to ensure they get appropriately inlined. (inline(always) cannot be used
 /// with target_feature.)
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>Vector: Copy + core::fmt::Debug {
-    <span class="doccomment">/// The number of bits in the vector.
-    </span><span class="kw">const </span>BITS: usize;
     <span class="doccomment">/// The number of bytes in the vector. That is, this is the size of the
     /// vector in memory.
     </span><span class="kw">const </span>BYTES: usize;
@@ -583,7 +575,7 @@
 }
 
 <span class="doccomment">/// A trait that abstracts over a vector-to-scalar operation called
-/// &quot;move mask.&quot;
+/// "move mask."
 ///
 /// On x86-64, this is `_mm_movemask_epi8` for SSE2 and `_mm256_movemask_epi8`
 /// for AVX2. It takes a vector of `u8` lanes and returns a scalar where the
@@ -591,7 +583,7 @@
 /// of the vector is set. The simd128 ISA for wasm32 also supports this
 /// exact same operation natively.
 ///
-/// ... But aarch64 doesn&#39;t. So we have to fake it with more instructions and
+/// ... But aarch64 doesn't. So we have to fake it with more instructions and
 /// a slightly different representation. We could do extra work to unify the
 /// representations, but then would require additional costs in the hot path
 /// for `memchr` and `packedpair`. So instead, we abstraction over the specific
@@ -624,12 +616,12 @@
     </span><span class="kw">fn </span>last_offset(<span class="self">self</span>) -&gt; usize;
 }
 
-<span class="doccomment">/// This is a &quot;sensible&quot; movemask implementation where each bit represents
+<span class="doccomment">/// This is a "sensible" movemask implementation where each bit represents
 /// whether the most significant bit is set in each corresponding lane of a
 /// vector. This is used on x86-64 and wasm, but such a mask is more expensive
 /// to get on aarch64 so we use something a little different.
 ///
-/// We call this &quot;sensible&quot; because this is what we get using native sse/avx
+/// We call this "sensible" because this is what we get using native sse/avx
 /// movemask instructions. But neon has no such native equivalent.
 </span><span class="attr">#[derive(Clone, Copy, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>SensibleMoveMask(u32);
@@ -641,11 +633,11 @@
     /// the bytes.
     </span><span class="attr">#[inline(always)]
     </span><span class="kw">fn </span>get_for_offset(<span class="self">self</span>) -&gt; u32 {
-        <span class="attr">#[cfg(target_endian = <span class="string">&quot;big&quot;</span>)]
+        <span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
         </span>{
             <span class="self">self</span>.<span class="number">0</span>.swap_bytes()
         }
-        <span class="attr">#[cfg(target_endian = <span class="string">&quot;little&quot;</span>)]
+        <span class="attr">#[cfg(target_endian = <span class="string">"little"</span>)]
         </span>{
             <span class="self">self</span>.<span class="number">0
         </span>}
@@ -686,7 +678,7 @@
 
     <span class="attr">#[inline(always)]
     </span><span class="kw">fn </span>first_offset(<span class="self">self</span>) -&gt; usize {
-        <span class="comment">// We are dealing with little endian here (and if we aren&#39;t, we swap
+        <span class="comment">// We are dealing with little endian here (and if we aren't, we swap
         // the bytes so we are in practice), where the most significant byte
         // is at a higher address. That means the least significant bit that
         // is set corresponds to the position of our first matching byte.
@@ -697,7 +689,7 @@
 
     <span class="attr">#[inline(always)]
     </span><span class="kw">fn </span>last_offset(<span class="self">self</span>) -&gt; usize {
-        <span class="comment">// We are dealing with little endian here (and if we aren&#39;t, we swap
+        <span class="comment">// We are dealing with little endian here (and if we aren't, we swap
         // the bytes so we are in practice), where the most significant byte is
         // at a higher address. That means the most significant bit that is set
         // corresponds to the position of our last matching byte. The position
@@ -708,14 +700,13 @@
     </span>}
 }
 
-<span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+<span class="attr">#[cfg(target_arch = <span class="string">"x86_64"</span>)]
 </span><span class="kw">mod </span>x86sse2 {
     <span class="kw">use </span>core::arch::x86_64::<span class="kw-2">*</span>;
 
     <span class="kw">use super</span>::{SensibleMoveMask, Vector};
 
     <span class="kw">impl </span>Vector <span class="kw">for </span>__m128i {
-        <span class="kw">const </span>BITS: usize = <span class="number">128</span>;
         <span class="kw">const </span>BYTES: usize = <span class="number">16</span>;
         <span class="kw">const </span>ALIGN: usize = <span class="self">Self</span>::BYTES - <span class="number">1</span>;
 
@@ -758,14 +749,13 @@
     }
 }
 
-<span class="attr">#[cfg(target_arch = <span class="string">&quot;x86_64&quot;</span>)]
+<span class="attr">#[cfg(target_arch = <span class="string">"x86_64"</span>)]
 </span><span class="kw">mod </span>x86avx2 {
     <span class="kw">use </span>core::arch::x86_64::<span class="kw-2">*</span>;
 
     <span class="kw">use super</span>::{SensibleMoveMask, Vector};
 
     <span class="kw">impl </span>Vector <span class="kw">for </span>__m256i {
-        <span class="kw">const </span>BITS: usize = <span class="number">256</span>;
         <span class="kw">const </span>BYTES: usize = <span class="number">32</span>;
         <span class="kw">const </span>ALIGN: usize = <span class="self">Self</span>::BYTES - <span class="number">1</span>;
 
@@ -808,14 +798,13 @@
     }
 }
 
-<span class="attr">#[cfg(target_arch = <span class="string">&quot;aarch64&quot;</span>)]
+<span class="attr">#[cfg(target_arch = <span class="string">"aarch64"</span>)]
 </span><span class="kw">mod </span>aarch64neon {
     <span class="kw">use </span>core::arch::aarch64::<span class="kw-2">*</span>;
 
     <span class="kw">use super</span>::{MoveMask, Vector};
 
     <span class="kw">impl </span>Vector <span class="kw">for </span>uint8x16_t {
-        <span class="kw">const </span>BITS: usize = <span class="number">128</span>;
         <span class="kw">const </span>BYTES: usize = <span class="number">16</span>;
         <span class="kw">const </span>ALIGN: usize = <span class="self">Self</span>::BYTES - <span class="number">1</span>;
 
@@ -828,8 +817,8 @@
 
         <span class="attr">#[inline(always)]
         </span><span class="kw">unsafe fn </span>load_aligned(data: <span class="kw-2">*const </span>u8) -&gt; uint8x16_t {
-            <span class="comment">// I&#39;ve tried `data.cast::&lt;uint8x16_t&gt;().read()` instead, but
-            // couldn&#39;t observe any benchmark differences.
+            <span class="comment">// I've tried `data.cast::&lt;uint8x16_t&gt;().read()` instead, but
+            // couldn't observe any benchmark differences.
             </span><span class="self">Self</span>::load_unaligned(data)
         }
 
@@ -863,11 +852,11 @@
         }
 
         <span class="doccomment">/// This is the only interesting implementation of this routine.
-        /// Basically, instead of doing the &quot;shift right narrow&quot; dance, we use
+        /// Basically, instead of doing the "shift right narrow" dance, we use
         /// adajacent folding max to determine whether there are any non-zero
-        /// bytes in our mask. If there are, *then* we&#39;ll do the &quot;shift right
-        /// narrow&quot; dance. In benchmarks, this does lead to slightly better
-        /// throughput, but the win doesn&#39;t appear huge.
+        /// bytes in our mask. If there are, *then* we'll do the "shift right
+        /// narrow" dance. In benchmarks, this does lead to slightly better
+        /// throughput, but the win doesn't appear huge.
         </span><span class="attr">#[inline(always)]
         </span><span class="kw">unsafe fn </span>movemask_will_have_non_zero(<span class="self">self</span>) -&gt; bool {
             <span class="kw">let </span>low = vreinterpretq_u64_u8(vpmaxq_u8(<span class="self">self</span>, <span class="self">self</span>));
@@ -875,7 +864,7 @@
         </span>}
     }
 
-    <span class="doccomment">/// Neon doesn&#39;t have a `movemask` that works like the one in x86-64, so we
+    <span class="doccomment">/// Neon doesn't have a `movemask` that works like the one in x86-64, so we
     /// wind up using a different method[1]. The different method also produces
     /// a mask, but 4 bits are set in the neon case instead of a single bit set
     /// in the x86-64 case. We do an extra step to zero out 3 of the 4 bits,
@@ -900,11 +889,11 @@
         /// swaps the bytes.
         </span><span class="attr">#[inline(always)]
         </span><span class="kw">fn </span>get_for_offset(<span class="self">self</span>) -&gt; u64 {
-            <span class="attr">#[cfg(target_endian = <span class="string">&quot;big&quot;</span>)]
+            <span class="attr">#[cfg(target_endian = <span class="string">"big"</span>)]
             </span>{
                 <span class="self">self</span>.<span class="number">0</span>.swap_bytes()
             }
-            <span class="attr">#[cfg(target_endian = <span class="string">&quot;little&quot;</span>)]
+            <span class="attr">#[cfg(target_endian = <span class="string">"little"</span>)]
             </span>{
                 <span class="self">self</span>.<span class="number">0
             </span>}
@@ -945,7 +934,7 @@
 
         <span class="attr">#[inline(always)]
         </span><span class="kw">fn </span>first_offset(<span class="self">self</span>) -&gt; usize {
-            <span class="comment">// We are dealing with little endian here (and if we aren&#39;t,
+            <span class="comment">// We are dealing with little endian here (and if we aren't,
             // we swap the bytes so we are in practice), where the most
             // significant byte is at a higher address. That means the least
             // significant bit that is set corresponds to the position of our
@@ -962,9 +951,9 @@
             //
             //   10000000000010000000
             //
-            // And this happens because neon doesn&#39;t have a native `movemask`
+            // And this happens because neon doesn't have a native `movemask`
             // instruction, so we kind of fake it[1]. Thus, we divide the
-            // number of trailing zeros by 4 to get the &quot;real&quot; offset.
+            // number of trailing zeros by 4 to get the "real" offset.
             //
             // [1]: https://community.arm.com/arm-community-blogs/b/infrastructure-solutions-blog/posts/porting-x86-vector-bitmask-optimizations-to-arm-neon
             </span>(<span class="self">self</span>.get_for_offset().trailing_zeros() &gt;&gt; <span class="number">2</span>) <span class="kw">as </span>usize
@@ -979,14 +968,13 @@
     }
 }
 
-<span class="attr">#[cfg(target_arch = <span class="string">&quot;wasm32&quot;</span>)]
+<span class="attr">#[cfg(all(target_arch = <span class="string">"wasm32"</span>, target_feature = <span class="string">"simd128"</span>))]
 </span><span class="kw">mod </span>wasm_simd128 {
     <span class="kw">use </span>core::arch::wasm32::<span class="kw-2">*</span>;
 
     <span class="kw">use super</span>::{SensibleMoveMask, Vector};
 
     <span class="kw">impl </span>Vector <span class="kw">for </span>v128 {
-        <span class="kw">const </span>BITS: usize = <span class="number">128</span>;
         <span class="kw">const </span>BYTES: usize = <span class="number">16</span>;
         <span class="kw">const </span>ALIGN: usize = <span class="self">Self</span>::BYTES - <span class="number">1</span>;
 

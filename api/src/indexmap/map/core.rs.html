@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.1.0/src/map/core.rs`."><title>core.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../indexmap/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.5.0/src/map/core.rs`."><title>core.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../indexmap/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -640,147 +640,31 @@
 <a href="#640" id="640">640</a>
 <a href="#641" id="641">641</a>
 <a href="#642" id="642">642</a>
-<a href="#643" id="643">643</a>
-<a href="#644" id="644">644</a>
-<a href="#645" id="645">645</a>
-<a href="#646" id="646">646</a>
-<a href="#647" id="647">647</a>
-<a href="#648" id="648">648</a>
-<a href="#649" id="649">649</a>
-<a href="#650" id="650">650</a>
-<a href="#651" id="651">651</a>
-<a href="#652" id="652">652</a>
-<a href="#653" id="653">653</a>
-<a href="#654" id="654">654</a>
-<a href="#655" id="655">655</a>
-<a href="#656" id="656">656</a>
-<a href="#657" id="657">657</a>
-<a href="#658" id="658">658</a>
-<a href="#659" id="659">659</a>
-<a href="#660" id="660">660</a>
-<a href="#661" id="661">661</a>
-<a href="#662" id="662">662</a>
-<a href="#663" id="663">663</a>
-<a href="#664" id="664">664</a>
-<a href="#665" id="665">665</a>
-<a href="#666" id="666">666</a>
-<a href="#667" id="667">667</a>
-<a href="#668" id="668">668</a>
-<a href="#669" id="669">669</a>
-<a href="#670" id="670">670</a>
-<a href="#671" id="671">671</a>
-<a href="#672" id="672">672</a>
-<a href="#673" id="673">673</a>
-<a href="#674" id="674">674</a>
-<a href="#675" id="675">675</a>
-<a href="#676" id="676">676</a>
-<a href="#677" id="677">677</a>
-<a href="#678" id="678">678</a>
-<a href="#679" id="679">679</a>
-<a href="#680" id="680">680</a>
-<a href="#681" id="681">681</a>
-<a href="#682" id="682">682</a>
-<a href="#683" id="683">683</a>
-<a href="#684" id="684">684</a>
-<a href="#685" id="685">685</a>
-<a href="#686" id="686">686</a>
-<a href="#687" id="687">687</a>
-<a href="#688" id="688">688</a>
-<a href="#689" id="689">689</a>
-<a href="#690" id="690">690</a>
-<a href="#691" id="691">691</a>
-<a href="#692" id="692">692</a>
-<a href="#693" id="693">693</a>
-<a href="#694" id="694">694</a>
-<a href="#695" id="695">695</a>
-<a href="#696" id="696">696</a>
-<a href="#697" id="697">697</a>
-<a href="#698" id="698">698</a>
-<a href="#699" id="699">699</a>
-<a href="#700" id="700">700</a>
-<a href="#701" id="701">701</a>
-<a href="#702" id="702">702</a>
-<a href="#703" id="703">703</a>
-<a href="#704" id="704">704</a>
-<a href="#705" id="705">705</a>
-<a href="#706" id="706">706</a>
-<a href="#707" id="707">707</a>
-<a href="#708" id="708">708</a>
-<a href="#709" id="709">709</a>
-<a href="#710" id="710">710</a>
-<a href="#711" id="711">711</a>
-<a href="#712" id="712">712</a>
-<a href="#713" id="713">713</a>
-<a href="#714" id="714">714</a>
-<a href="#715" id="715">715</a>
-<a href="#716" id="716">716</a>
-<a href="#717" id="717">717</a>
-<a href="#718" id="718">718</a>
-<a href="#719" id="719">719</a>
-<a href="#720" id="720">720</a>
-<a href="#721" id="721">721</a>
-<a href="#722" id="722">722</a>
-<a href="#723" id="723">723</a>
-<a href="#724" id="724">724</a>
-<a href="#725" id="725">725</a>
-<a href="#726" id="726">726</a>
-<a href="#727" id="727">727</a>
-<a href="#728" id="728">728</a>
-<a href="#729" id="729">729</a>
-<a href="#730" id="730">730</a>
-<a href="#731" id="731">731</a>
-<a href="#732" id="732">732</a>
-<a href="#733" id="733">733</a>
-<a href="#734" id="734">734</a>
-<a href="#735" id="735">735</a>
-<a href="#736" id="736">736</a>
-<a href="#737" id="737">737</a>
-<a href="#738" id="738">738</a>
-<a href="#739" id="739">739</a>
-<a href="#740" id="740">740</a>
-<a href="#741" id="741">741</a>
-<a href="#742" id="742">742</a>
-<a href="#743" id="743">743</a>
-<a href="#744" id="744">744</a>
-<a href="#745" id="745">745</a>
-<a href="#746" id="746">746</a>
-<a href="#747" id="747">747</a>
-<a href="#748" id="748">748</a>
-<a href="#749" id="749">749</a>
-<a href="#750" id="750">750</a>
-<a href="#751" id="751">751</a>
-<a href="#752" id="752">752</a>
-<a href="#753" id="753">753</a>
-<a href="#754" id="754">754</a>
-<a href="#755" id="755">755</a>
-<a href="#756" id="756">756</a>
-<a href="#757" id="757">757</a>
-<a href="#758" id="758">758</a>
-<a href="#759" id="759">759</a>
-<a href="#760" id="760">760</a>
-<a href="#761" id="761">761</a>
-<a href="#762" id="762">762</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! This is the core implementation that doesn&#39;t depend on the hasher at all.
+</pre></div><pre class="rust"><code><span class="doccomment">//! This is the core implementation that doesn't depend on the hasher at all.
 //!
-//! The methods of `IndexMapCore` don&#39;t use any Hash properties of K.
+//! The methods of `IndexMapCore` don't use any Hash properties of K.
 //!
-//! It&#39;s cleaner to separate them out, then the compiler checks that we are not
+//! It's cleaner to separate them out, then the compiler checks that we are not
 //! using Hash at all in these methods.
 //!
 //! However, we should probably not let this show in the public API or docs.
 
-</span><span class="kw">mod </span>raw;
+</span><span class="kw">mod </span>entry;
+<span class="kw">mod </span>raw;
+
+<span class="kw">pub mod </span>raw_entry_v1;
 
 <span class="kw">use </span>hashbrown::raw::RawTable;
 
-<span class="kw">use </span><span class="kw">crate</span>::vec::{Drain, Vec};
+<span class="kw">use </span><span class="kw">crate</span>::vec::{<span class="self">self</span>, Vec};
 <span class="kw">use </span><span class="kw">crate</span>::TryReserveError;
-<span class="kw">use </span>core::fmt;
 <span class="kw">use </span>core::mem;
 <span class="kw">use </span>core::ops::RangeBounds;
 
 <span class="kw">use </span><span class="kw">crate</span>::util::simplify_range;
 <span class="kw">use crate</span>::{Bucket, Entries, Equivalent, HashValue};
+
+<span class="kw">pub use </span>entry::{Entry, IndexedEntry, OccupiedEntry, VacantEntry};
 
 <span class="doccomment">/// Core of the map that does not depend on S
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>IndexMapCore&lt;K, V&gt; {
@@ -791,15 +675,15 @@
 }
 
 <span class="attr">#[inline(always)]
-</span><span class="kw">fn </span>get_hash&lt;K, V&gt;(entries: <span class="kw-2">&amp;</span>[Bucket&lt;K, V&gt;]) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>usize) -&gt; u64 + <span class="lifetime">&#39;_ </span>{
+</span><span class="kw">fn </span>get_hash&lt;K, V&gt;(entries: <span class="kw-2">&amp;</span>[Bucket&lt;K, V&gt;]) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>usize) -&gt; u64 + <span class="lifetime">'_ </span>{
     <span class="kw">move </span>|<span class="kw-2">&amp;</span>i| entries[i].hash.get()
 }
 
 <span class="attr">#[inline]
-</span><span class="kw">fn </span>equivalent&lt;<span class="lifetime">&#39;a</span>, K, V, Q: <span class="question-mark">?</span>Sized + Equivalent&lt;K&gt;&gt;(
-    key: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Q,
-    entries: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Bucket&lt;K, V&gt;],
-) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>usize) -&gt; bool + <span class="lifetime">&#39;a </span>{
+</span><span class="kw">fn </span>equivalent&lt;<span class="lifetime">'a</span>, K, V, Q: <span class="question-mark">?</span>Sized + Equivalent&lt;K&gt;&gt;(
+    key: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Q,
+    entries: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[Bucket&lt;K, V&gt;],
+) -&gt; <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>usize) -&gt; bool + <span class="lifetime">'a </span>{
     <span class="kw">move </span>|<span class="kw-2">&amp;</span>i| Q::equivalent(key, <span class="kw-2">&amp;</span>entries[i].key)
 }
 
@@ -813,7 +697,7 @@
 </span><span class="kw">fn </span>update_index(table: <span class="kw-2">&amp;mut </span>RawTable&lt;usize&gt;, hash: HashValue, old: usize, new: usize) {
     <span class="kw">let </span>index = table
         .get_mut(hash.get(), <span class="kw">move </span>|<span class="kw-2">&amp;</span>i| i == old)
-        .expect(<span class="string">&quot;index not found&quot;</span>);
+        .expect(<span class="string">"index not found"</span>);
     <span class="kw-2">*</span>index = new;
 }
 
@@ -840,15 +724,16 @@
     }
 }
 
-<span class="kw">impl</span>&lt;K, V&gt; fmt::Debug <span class="kw">for </span>IndexMapCore&lt;K, V&gt;
+<span class="attr">#[cfg(feature = <span class="string">"test_debug"</span>)]
+</span><span class="kw">impl</span>&lt;K, V&gt; core::fmt::Debug <span class="kw">for </span>IndexMapCore&lt;K, V&gt;
 <span class="kw">where
-    </span>K: fmt::Debug,
-    V: fmt::Debug,
+    </span>K: core::fmt::Debug,
+    V: core::fmt::Debug,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.debug_struct(<span class="string">&quot;IndexMapCore&quot;</span>)
-            .field(<span class="string">&quot;indices&quot;</span>, <span class="kw-2">&amp;</span>raw::DebugIndices(<span class="kw-2">&amp;</span><span class="self">self</span>.indices))
-            .field(<span class="string">&quot;entries&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.entries)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
+        f.debug_struct(<span class="string">"IndexMapCore"</span>)
+            .field(<span class="string">"indices"</span>, <span class="kw-2">&amp;</span>raw::DebugIndices(<span class="kw-2">&amp;</span><span class="self">self</span>.indices))
+            .field(<span class="string">"entries"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.entries)
             .finish()
     }
 }
@@ -922,7 +807,7 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>drain&lt;R&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R) -&gt; Drain&lt;<span class="lifetime">&#39;_</span>, Bucket&lt;K, V&gt;&gt;
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>drain&lt;R&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R) -&gt; vec::Drain&lt;<span class="lifetime">'_</span>, Bucket&lt;K, V&gt;&gt;
     <span class="kw">where
         </span>R: RangeBounds&lt;usize&gt;,
     {
@@ -931,8 +816,8 @@
         <span class="self">self</span>.entries.drain(range)
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;rayon&quot;</span>)]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>par_drain&lt;R&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R) -&gt; rayon::vec::Drain&lt;<span class="lifetime">&#39;_</span>, Bucket&lt;K, V&gt;&gt;
+    <span class="attr">#[cfg(feature = <span class="string">"rayon"</span>)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>par_drain&lt;R&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R) -&gt; rayon::vec::Drain&lt;<span class="lifetime">'_</span>, Bucket&lt;K, V&gt;&gt;
     <span class="kw">where
         </span>K: Send,
         V: Send,
@@ -952,6 +837,28 @@
         <span class="kw">let </span><span class="kw-2">mut </span>indices = RawTable::with_capacity(entries.len());
         raw::insert_bulk_no_grow(<span class="kw-2">&amp;mut </span>indices, <span class="kw-2">&amp;</span>entries);
         <span class="self">Self </span>{ indices, entries }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>split_splice&lt;R&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R) -&gt; (<span class="self">Self</span>, vec::IntoIter&lt;Bucket&lt;K, V&gt;&gt;)
+    <span class="kw">where
+        </span>R: RangeBounds&lt;usize&gt;,
+    {
+        <span class="kw">let </span>range = simplify_range(range, <span class="self">self</span>.len());
+        <span class="self">self</span>.erase_indices(range.start, <span class="self">self</span>.entries.len());
+        <span class="kw">let </span>entries = <span class="self">self</span>.entries.split_off(range.end);
+        <span class="kw">let </span>drained = <span class="self">self</span>.entries.split_off(range.start);
+
+        <span class="kw">let </span><span class="kw-2">mut </span>indices = RawTable::with_capacity(entries.len());
+        raw::insert_bulk_no_grow(<span class="kw-2">&amp;mut </span>indices, <span class="kw-2">&amp;</span>entries);
+        (<span class="self">Self </span>{ indices, entries }, drained.into_iter())
+    }
+
+    <span class="doccomment">/// Append from another map without checking whether items already exist.
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>append_unchecked(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="kw-2">&amp;mut </span><span class="self">Self</span>) {
+        <span class="self">self</span>.reserve(other.len());
+        raw::insert_bulk_no_grow(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, <span class="kw-2">&amp;</span>other.entries);
+        <span class="self">self</span>.entries.append(<span class="kw-2">&amp;mut </span>other.entries);
+        other.indices.clear();
     }
 
     <span class="doccomment">/// Reserve capacity for `additional` more key-value pairs.
@@ -1046,6 +953,17 @@
         <span class="self">self</span>.entries.push(Bucket { hash, key, value });
     }
 
+    <span class="doccomment">/// Insert a key-value pair in `entries` at a particular index,
+    /// *without* checking whether it already exists.
+    </span><span class="kw">fn </span>insert_entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize, hash: HashValue, key: K, value: V) {
+        <span class="kw">if </span><span class="self">self</span>.entries.len() == <span class="self">self</span>.entries.capacity() {
+            <span class="comment">// Reserve our own capacity synced to the indices,
+            // rather than letting `Vec::insert` just double it.
+            </span><span class="self">self</span>.reserve_entries(<span class="number">1</span>);
+        }
+        <span class="self">self</span>.entries.insert(index, Bucket { hash, key, value });
+    }
+
     <span class="doccomment">/// Return the index in `entries` where an equivalent key can be found
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get_index_of&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: HashValue, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt;
     <span class="kw">where
@@ -1067,6 +985,56 @@
                 (i, <span class="prelude-val">None</span>)
             }
         }
+    }
+
+    <span class="doccomment">/// Same as `insert_full`, except it also replaces the key
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>replace_full(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        hash: HashValue,
+        key: K,
+        value: V,
+    ) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;(K, V)&gt;)
+    <span class="kw">where
+        </span>K: Eq,
+    {
+        <span class="kw">match </span><span class="self">self</span>.find_or_insert(hash, <span class="kw-2">&amp;</span>key) {
+            <span class="prelude-val">Ok</span>(i) =&gt; {
+                <span class="kw">let </span>entry = <span class="kw-2">&amp;mut </span><span class="self">self</span>.entries[i];
+                <span class="kw">let </span>kv = (
+                    mem::replace(<span class="kw-2">&amp;mut </span>entry.key, key),
+                    mem::replace(<span class="kw-2">&amp;mut </span>entry.value, value),
+                );
+                (i, <span class="prelude-val">Some</span>(kv))
+            }
+            <span class="prelude-val">Err</span>(i) =&gt; {
+                <span class="macro">debug_assert_eq!</span>(i, <span class="self">self</span>.entries.len());
+                <span class="self">self</span>.push_entry(hash, key, value);
+                (i, <span class="prelude-val">None</span>)
+            }
+        }
+    }
+
+    <span class="kw">fn </span>insert_unique(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: HashValue, key: K, value: V) -&gt; usize {
+        <span class="kw">let </span>i = <span class="self">self</span>.indices.len();
+        <span class="self">self</span>.indices.insert(hash.get(), i, get_hash(<span class="kw-2">&amp;</span><span class="self">self</span>.entries));
+        <span class="macro">debug_assert_eq!</span>(i, <span class="self">self</span>.entries.len());
+        <span class="self">self</span>.push_entry(hash, key, value);
+        i
+    }
+
+    <span class="kw">fn </span>shift_insert_unique(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize, hash: HashValue, key: K, value: V) {
+        <span class="kw">let </span>end = <span class="self">self</span>.indices.len();
+        <span class="macro">assert!</span>(index &lt;= end);
+        <span class="comment">// Increment others first so we don't have duplicate indices.
+        </span><span class="self">self</span>.increment_indices(index, end);
+        <span class="kw">let </span>entries = <span class="kw-2">&amp;*</span><span class="self">self</span>.entries;
+        <span class="self">self</span>.indices.insert(hash.get(), index, <span class="kw">move </span>|<span class="kw-2">&amp;</span>i| {
+            <span class="comment">// Adjust for the incremented indices to find hashes.
+            </span><span class="macro">debug_assert_ne!</span>(i, index);
+            <span class="kw">let </span>i = <span class="kw">if </span>i &lt; index { i } <span class="kw">else </span>{ i - <span class="number">1 </span>};
+            entries[i].hash.get()
+        });
+        <span class="self">self</span>.insert_entry(index, hash, key, value);
     }
 
     <span class="doccomment">/// Remove an entry by shifting all entries that follow it
@@ -1155,7 +1123,7 @@
     <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>move_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, from: usize, to: usize) {
         <span class="kw">let </span>from_hash = <span class="self">self</span>.entries[from].hash;
         <span class="kw">if </span>from != to {
-            <span class="comment">// Use a sentinel index so other indices don&#39;t collide.
+            <span class="comment">// Use a sentinel index so other indices don't collide.
             </span>update_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, from_hash, from, usize::MAX);
 
             <span class="comment">// Update all other indices and rotate the entry positions.
@@ -1173,12 +1141,12 @@
     }
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>swap_indices(<span class="kw-2">&amp;mut </span><span class="self">self</span>, a: usize, b: usize) {
-        <span class="comment">// If they&#39;re equal and in-bounds, there&#39;s nothing to do.
+        <span class="comment">// If they're equal and in-bounds, there's nothing to do.
         </span><span class="kw">if </span>a == b &amp;&amp; a &lt; <span class="self">self</span>.entries.len() {
             <span class="kw">return</span>;
         }
 
-        <span class="comment">// We&#39;ll get a &quot;nice&quot; bounds-check from indexing `self.entries`,
+        <span class="comment">// We'll get a "nice" bounds-check from indexing `self.entries`,
         // and then we expect to find it in the table as well.
         </span><span class="kw">let </span>[ref_a, ref_b] = <span class="self">self
             </span>.indices
@@ -1186,7 +1154,7 @@
                 [<span class="self">self</span>.entries[a].hash.get(), <span class="self">self</span>.entries[b].hash.get()],
                 <span class="kw">move </span>|i, <span class="kw-2">&amp;</span>x| <span class="kw">if </span>i == <span class="number">0 </span>{ x == a } <span class="kw">else </span>{ x == b },
             )
-            .expect(<span class="string">&quot;indices not found&quot;</span>);
+            .expect(<span class="string">"indices not found"</span>);
 
         mem::swap(ref_a, ref_b);
         <span class="self">self</span>.entries.swap(a, b);
@@ -1307,219 +1275,11 @@
     }
 }
 
-<span class="doccomment">/// Entry for an existing key-value pair or a vacant location to
-/// insert one.
-</span><span class="kw">pub enum </span>Entry&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    <span class="doccomment">/// Existing slot with equivalent key.
-    </span>Occupied(OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, K, V&gt;),
-    <span class="doccomment">/// Vacant slot (no equivalent key in the map).
-    </span>Vacant(VacantEntry&lt;<span class="lifetime">&#39;a</span>, K, V&gt;),
-}
-
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; Entry&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    <span class="doccomment">/// Inserts the given default value in the entry if it is vacant and returns a mutable
-    /// reference to it. Otherwise a mutable reference to an already existent value is returned.
-    ///
-    /// Computes in **O(1)** time (amortized average).
-    </span><span class="kw">pub fn </span>or_insert(<span class="self">self</span>, default: V) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V {
-        <span class="kw">match </span><span class="self">self </span>{
-            Entry::Occupied(entry) =&gt; entry.into_mut(),
-            Entry::Vacant(entry) =&gt; entry.insert(default),
-        }
-    }
-
-    <span class="doccomment">/// Inserts the result of the `call` function in the entry if it is vacant and returns a mutable
-    /// reference to it. Otherwise a mutable reference to an already existent value is returned.
-    ///
-    /// Computes in **O(1)** time (amortized average).
-    </span><span class="kw">pub fn </span>or_insert_with&lt;F&gt;(<span class="self">self</span>, call: F) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V
-    <span class="kw">where
-        </span>F: FnOnce() -&gt; V,
-    {
-        <span class="kw">match </span><span class="self">self </span>{
-            Entry::Occupied(entry) =&gt; entry.into_mut(),
-            Entry::Vacant(entry) =&gt; entry.insert(call()),
-        }
-    }
-
-    <span class="doccomment">/// Inserts the result of the `call` function with a reference to the entry&#39;s key if it is
-    /// vacant, and returns a mutable reference to the new value. Otherwise a mutable reference to
-    /// an already existent value is returned.
-    ///
-    /// Computes in **O(1)** time (amortized average).
-    </span><span class="kw">pub fn </span>or_insert_with_key&lt;F&gt;(<span class="self">self</span>, call: F) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V
-    <span class="kw">where
-        </span>F: FnOnce(<span class="kw-2">&amp;</span>K) -&gt; V,
-    {
-        <span class="kw">match </span><span class="self">self </span>{
-            Entry::Occupied(entry) =&gt; entry.into_mut(),
-            Entry::Vacant(entry) =&gt; {
-                <span class="kw">let </span>value = call(<span class="kw-2">&amp;</span>entry.key);
-                entry.insert(value)
-            }
-        }
-    }
-
-    <span class="doccomment">/// Gets a reference to the entry&#39;s key, either within the map if occupied,
-    /// or else the new key that was used to find the entry.
-    </span><span class="kw">pub fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>K {
-        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            Entry::Occupied(<span class="kw-2">ref </span>entry) =&gt; entry.key(),
-            Entry::Vacant(<span class="kw-2">ref </span>entry) =&gt; entry.key(),
-        }
-    }
-
-    <span class="doccomment">/// Return the index where the key-value pair exists or will be inserted.
-    </span><span class="kw">pub fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            Entry::Occupied(<span class="kw-2">ref </span>entry) =&gt; entry.index(),
-            Entry::Vacant(<span class="kw-2">ref </span>entry) =&gt; entry.index(),
-        }
-    }
-
-    <span class="doccomment">/// Modifies the entry if it is occupied.
-    </span><span class="kw">pub fn </span>and_modify&lt;F&gt;(<span class="self">self</span>, f: F) -&gt; <span class="self">Self
-    </span><span class="kw">where
-        </span>F: FnOnce(<span class="kw-2">&amp;mut </span>V),
-    {
-        <span class="kw">match </span><span class="self">self </span>{
-            Entry::Occupied(<span class="kw-2">mut </span>o) =&gt; {
-                f(o.get_mut());
-                Entry::Occupied(o)
-            }
-            x =&gt; x,
-        }
-    }
-
-    <span class="doccomment">/// Inserts a default-constructed value in the entry if it is vacant and returns a mutable
-    /// reference to it. Otherwise a mutable reference to an already existent value is returned.
-    ///
-    /// Computes in **O(1)** time (amortized average).
-    </span><span class="kw">pub fn </span>or_default(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V
-    <span class="kw">where
-        </span>V: Default,
-    {
-        <span class="kw">match </span><span class="self">self </span>{
-            Entry::Occupied(entry) =&gt; entry.into_mut(),
-            Entry::Vacant(entry) =&gt; entry.insert(V::default()),
-        }
-    }
-}
-
-<span class="kw">impl</span>&lt;K: fmt::Debug, V: fmt::Debug&gt; fmt::Debug <span class="kw">for </span>Entry&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            Entry::Vacant(<span class="kw-2">ref </span>v) =&gt; f.debug_tuple(<span class="macro">stringify!</span>(Entry)).field(v).finish(),
-            Entry::Occupied(<span class="kw-2">ref </span>o) =&gt; f.debug_tuple(<span class="macro">stringify!</span>(Entry)).field(o).finish(),
-        }
-    }
-}
-
-<span class="kw">pub use </span><span class="self">self</span>::raw::OccupiedEntry;
-
-<span class="comment">// Extra methods that don&#39;t threaten the unsafe encapsulation.
-</span><span class="kw">impl</span>&lt;K, V&gt; OccupiedEntry&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
-    <span class="doccomment">/// Sets the value of the entry to `value`, and returns the entry&#39;s old value.
-    </span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: V) -&gt; V {
-        mem::replace(<span class="self">self</span>.get_mut(), value)
-    }
-
-    <span class="doccomment">/// Remove the key, value pair stored in the map for this entry, and return the value.
-    ///
-    /// **NOTE:** This is equivalent to `.swap_remove()`.
-    </span><span class="kw">pub fn </span>remove(<span class="self">self</span>) -&gt; V {
-        <span class="self">self</span>.swap_remove()
-    }
-
-    <span class="doccomment">/// Remove the key, value pair stored in the map for this entry, and return the value.
-    ///
-    /// Like `Vec::swap_remove`, the pair is removed by swapping it with the
-    /// last element of the map and popping it off. **This perturbs
-    /// the position of what used to be the last element!**
-    ///
-    /// Computes in **O(1)** time (average).
-    </span><span class="kw">pub fn </span>swap_remove(<span class="self">self</span>) -&gt; V {
-        <span class="self">self</span>.swap_remove_entry().<span class="number">1
-    </span>}
-
-    <span class="doccomment">/// Remove the key, value pair stored in the map for this entry, and return the value.
-    ///
-    /// Like `Vec::remove`, the pair is removed by shifting all of the
-    /// elements that follow it, preserving their relative order.
-    /// **This perturbs the index of all of those elements!**
-    ///
-    /// Computes in **O(n)** time (average).
-    </span><span class="kw">pub fn </span>shift_remove(<span class="self">self</span>) -&gt; V {
-        <span class="self">self</span>.shift_remove_entry().<span class="number">1
-    </span>}
-
-    <span class="doccomment">/// Remove and return the key, value pair stored in the map for this entry
-    ///
-    /// **NOTE:** This is equivalent to `.swap_remove_entry()`.
-    </span><span class="kw">pub fn </span>remove_entry(<span class="self">self</span>) -&gt; (K, V) {
-        <span class="self">self</span>.swap_remove_entry()
-    }
-}
-
-<span class="kw">impl</span>&lt;K: fmt::Debug, V: fmt::Debug&gt; fmt::Debug <span class="kw">for </span>OccupiedEntry&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.debug_struct(<span class="macro">stringify!</span>(OccupiedEntry))
-            .field(<span class="string">&quot;key&quot;</span>, <span class="self">self</span>.key())
-            .field(<span class="string">&quot;value&quot;</span>, <span class="self">self</span>.get())
-            .finish()
-    }
-}
-
-<span class="doccomment">/// A view into a vacant entry in a `IndexMap`.
-/// It is part of the [`Entry`] enum.
-///
-/// [`Entry`]: enum.Entry.html
-</span><span class="kw">pub struct </span>VacantEntry&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    map: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>IndexMapCore&lt;K, V&gt;,
-    hash: HashValue,
-    key: K,
-}
-
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, K, V&gt; VacantEntry&lt;<span class="lifetime">&#39;a</span>, K, V&gt; {
-    <span class="doccomment">/// Gets a reference to the key that was used to find the entry.
-    </span><span class="kw">pub fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>K {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.key
-    }
-
-    <span class="doccomment">/// Takes ownership of the key, leaving the entry vacant.
-    </span><span class="kw">pub fn </span>into_key(<span class="self">self</span>) -&gt; K {
-        <span class="self">self</span>.key
-    }
-
-    <span class="doccomment">/// Return the index where the key-value pair will be inserted.
-    </span><span class="kw">pub fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.map.indices.len()
-    }
-
-    <span class="doccomment">/// Inserts the entry&#39;s key and the given value into the map, and returns a mutable reference
-    /// to the value.
-    </span><span class="kw">pub fn </span>insert(<span class="self">self</span>, value: V) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>V {
-        <span class="kw">let </span>i = <span class="self">self</span>.index();
-        <span class="kw">let </span><span class="self">Self </span>{ map, hash, key } = <span class="self">self</span>;
-        map.indices.insert(hash.get(), i, get_hash(<span class="kw-2">&amp;</span>map.entries));
-        <span class="macro">debug_assert_eq!</span>(i, map.entries.len());
-        map.push_entry(hash, key, value);
-        <span class="kw-2">&amp;mut </span>map.entries[i].value
-    }
-}
-
-<span class="kw">impl</span>&lt;K: fmt::Debug, V&gt; fmt::Debug <span class="kw">for </span>VacantEntry&lt;<span class="lifetime">&#39;_</span>, K, V&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.debug_tuple(<span class="macro">stringify!</span>(VacantEntry))
-            .field(<span class="self">self</span>.key())
-            .finish()
-    }
-}
-
 <span class="attr">#[test]
 </span><span class="kw">fn </span>assert_send_sync() {
     <span class="kw">fn </span>assert_send_sync&lt;T: Send + Sync&gt;() {}
     assert_send_sync::&lt;IndexMapCore&lt;i32, i32&gt;&gt;();
-    assert_send_sync::&lt;Entry&lt;<span class="lifetime">&#39;_</span>, i32, i32&gt;&gt;();
+    assert_send_sync::&lt;Entry&lt;<span class="lifetime">'_</span>, i32, i32&gt;&gt;();
+    assert_send_sync::&lt;IndexedEntry&lt;<span class="lifetime">'_</span>, i32, i32&gt;&gt;();
 }
 </code></pre></div></section></main></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/duplicates.rs`."><title>duplicates.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/duplicates.rs`."><title>duplicates.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -585,7 +585,7 @@
                 hash_map::Entry::Occupied(entry) =&gt; {
                     <span class="kw">let </span>old_value = rewrite_rules.insert(inst.result_id.unwrap(), <span class="kw-2">*</span>entry.get());
                     <span class="macro">assert!</span>(old_value.is_none());
-                    <span class="comment">// We&#39;re iterating through the vec, so removing items is hard - nop it out.
+                    <span class="comment">// We're iterating through the vec, so removing items is hard - nop it out.
                     </span><span class="kw-2">*</span>inst = Instruction::new(Op::Nop, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="macro">vec!</span>[]);
                 }
             }
@@ -669,7 +669,7 @@
     <span class="kw">let </span><span class="kw-2">mut </span>data = <span class="macro">vec!</span>[inst.class.opcode <span class="kw">as </span>u32];
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = inst.result_type {
-        <span class="comment">// We&#39;re not only deduplicating types here, but constants as well. Those contain result_types, and so we
+        <span class="comment">// We're not only deduplicating types here, but constants as well. Those contain result_types, and so we
         // need to include those here. For example, OpConstant can have the same arg, but different result_type,
         // and it should not be deduplicated (e.g. the constants 1u8 and 1u16).
         </span>data.push(id);
@@ -717,7 +717,7 @@
 
 <span class="kw">fn </span>rewrite_inst_with_rules(inst: <span class="kw-2">&amp;mut </span>Instruction, rules: <span class="kw-2">&amp;</span>FxHashMap&lt;u32, u32&gt;) {
     <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref mut </span>id) = inst.result_type {
-        <span class="comment">// If the rewrite rules contain this ID, replace with the mapped value, otherwise don&#39;t touch it.
+        <span class="comment">// If the rewrite rules contain this ID, replace with the mapped value, otherwise don't touch it.
         </span><span class="kw-2">*</span>id = rules.get(id).copied().unwrap_or(<span class="kw-2">*</span>id);
     }
     <span class="kw">for </span>op <span class="kw">in </span><span class="kw-2">&amp;mut </span>inst.operands {
@@ -728,18 +728,18 @@
 }
 
 <span class="kw">pub fn </span>remove_duplicate_types(module: <span class="kw-2">&amp;mut </span>Module) {
-    <span class="comment">// Keep in mind, this algorithm requires forward type references to not exist - i.e. it&#39;s a valid spir-v module.
+    <span class="comment">// Keep in mind, this algorithm requires forward type references to not exist - i.e. it's a valid spir-v module.
 
     // When a duplicate type is encountered, then this is a map from the deleted ID, to the new, deduplicated ID.
     </span><span class="kw">let </span><span class="kw-2">mut </span>rewrite_rules = FxHashMap::default();
-    <span class="comment">// Instructions are encoded into &quot;keys&quot;: their opcode, followed by arguments, then annotations.
+    <span class="comment">// Instructions are encoded into "keys": their opcode, followed by arguments, then annotations.
     // Importantly, result_id is left out. This means that any instruction that declares the same
     // type, but with different result_id, will result in the same key.
     </span><span class="kw">let </span><span class="kw-2">mut </span>key_to_result_id = FxHashMap::default();
     <span class="comment">// TODO: This is implementing forward pointers incorrectly.
     </span><span class="kw">let </span><span class="kw-2">mut </span>unresolved_forward_pointers = FxHashSet::default();
 
-    <span class="comment">// Collect a map from type ID to an annotation &quot;key blob&quot; (to append to the type key)
+    <span class="comment">// Collect a map from type ID to an annotation "key blob" (to append to the type key)
     </span><span class="kw">let </span>annotations = gather_annotations(<span class="kw-2">&amp;</span>module.annotations);
     <span class="kw">let </span>names = gather_names(<span class="kw-2">&amp;</span>module.debug_names);
 
@@ -757,11 +757,11 @@
         }
         <span class="comment">// This is an important spot: Say that we come upon a duplicated aggregate type (one that references
         // other types). Its arguments may be duplicated themselves, and so building the key directly will fail
-        // to match up with the first type. However, **because forward references are not allowed**, we&#39;re
+        // to match up with the first type. However, **because forward references are not allowed**, we're
         // guaranteed to have already found and deduplicated the argument types! So that means the deduplication
         // translation is already in rewrite_rules, and we merely need to apply the mapping before generating
         // the key.
-        // Nit: Overwriting the instruction isn&#39;t technically necessary, as it will get handled by the final
+        // Nit: Overwriting the instruction isn't technically necessary, as it will get handled by the final
         // all_inst_iter_mut pass below. However, the code is a lil bit cleaner this way I guess.
         </span>rewrite_inst_with_rules(inst, <span class="kw-2">&amp;</span>rewrite_rules);
 
@@ -769,15 +769,15 @@
 
         <span class="kw">match </span>key_to_result_id.entry(key) {
             hash_map::Entry::Vacant(entry) =&gt; {
-                <span class="comment">// This is the first time we&#39;ve seen this key. Insert the key into the map, registering this type as
+                <span class="comment">// This is the first time we've seen this key. Insert the key into the map, registering this type as
                 // something other types can deduplicate to.
                 </span>entry.insert(inst.result_id.unwrap());
             }
             hash_map::Entry::Occupied(entry) =&gt; {
-                <span class="comment">// We&#39;ve already seen this key. We need to do two things:
+                <span class="comment">// We've already seen this key. We need to do two things:
                 // 1) Add a rewrite rule from this type to the type that we saw before.
                 </span><span class="kw">let </span>old_value = rewrite_rules.insert(inst.result_id.unwrap(), <span class="kw-2">*</span>entry.get());
-                <span class="comment">// 2) Erase this instruction. Because we&#39;re iterating over this vec, removing an element is hard, so
+                <span class="comment">// 2) Erase this instruction. Because we're iterating over this vec, removing an element is hard, so
                 // clear it with OpNop, and then remove it in the retain() call below.
                 </span><span class="macro">assert!</span>(old_value.is_none());
                 <span class="kw-2">*</span>inst = Instruction::new(Op::Nop, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="macro">vec!</span>[]);
@@ -828,7 +828,7 @@
 
     <span class="kw">for </span>func <span class="kw">in </span><span class="kw-2">&amp;mut </span>module.functions {
         <span class="kw">for </span>block <span class="kw">in </span><span class="kw-2">&amp;mut </span>func.blocks {
-            <span class="comment">// Ignore the terminator, it&#39;s effectively &quot;outside&quot; debuginfo.
+            <span class="comment">// Ignore the terminator, it's effectively "outside" debuginfo.
             </span><span class="kw">let </span>(<span class="kw">_</span>, insts) = block.instructions.split_last_mut().unwrap();
 
             <span class="comment">// HACK(eddyb) to make random access easier, we first replace unused
@@ -870,7 +870,7 @@
             // this vector (and go from outside-in, to inside-out), which allows
             // *fusing* a pop with a push (of an identical inlined frame), when
             // no interverning instructions prevent it (such instructions will
-            // clear this vector to indicate the pops are &quot;fully committed&quot;).
+            // clear this vector to indicate the pops are "fully committed").
             </span><span class="kw">struct </span>PoppedFrame {
                 frame: Frame,
                 callee_has_semantic_insts: bool,
@@ -889,7 +889,7 @@
                     <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                 };
 
-                <span class="kw">fn </span>inst_eq_key(inst: <span class="kw-2">&amp;</span>Instruction) -&gt; <span class="kw">impl </span>PartialEq + <span class="lifetime">&#39;_ </span>{
+                <span class="kw">fn </span>inst_eq_key(inst: <span class="kw-2">&amp;</span>Instruction) -&gt; <span class="kw">impl </span>PartialEq + <span class="lifetime">'_ </span>{
                     (inst.class.opcode, <span class="kw-2">&amp;</span>inst.operands)
                 }
 
@@ -940,10 +940,10 @@
 
                             insts[pop_inst_idx] = nop();
 
-                            <span class="comment">// Can&#39;t make entering an inlined function a nop,
+                            <span class="comment">// Can't make entering an inlined function a nop,
                             // as it needs to reset callee-side `DbgLocInst`,
                             // but we can replace it in-place and hope later
-                            // it get nop&#39;d out by some real `DbgLocInst`.
+                            // it get nop'd out by some real `DbgLocInst`.
                             </span>insts[inst_idx].operands.splice(
                                 <span class="number">1</span>..,
                                 [Operand::LiteralExtInstInteger(
@@ -971,10 +971,10 @@
                         </span>}
                     }
                     (<span class="kw">_</span>, <span class="prelude-val">Some</span>(CustomOp::PopInlinedCallFrame)) =&gt; {
-                        <span class="comment">// Leaving an inlined function doesn&#39;t use `DbgLocInst`.
+                        <span class="comment">// Leaving an inlined function doesn't use `DbgLocInst`.
                         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(dbg_loc) = dbg.loc.take() {
-                            <span class="comment">// HACK(eddyb) only treat as &quot;definitely unused&quot;
-                            // instructions that are too &quot;recent&quot; to have been
+                            <span class="comment">// HACK(eddyb) only treat as "definitely unused"
+                            // instructions that are too "recent" to have been
                             // used by a `PushInlinedCallFrame` with a still
                             // uncommitted `PopInlinedCallFrame`.
                             </span><span class="kw">let </span>min_safe_inst_idx_to_nop = fusable_freshly_popped_inlined_frames
@@ -1017,10 +1017,10 @@
                     dbg.loc.as_ref().map(|d| d.inst_idx) != <span class="prelude-val">Some</span>(prev_dbg_loc.inst_idx)
                 });
 
-                <span class="comment">// NOTE(eddyb) the iteration order doesn&#39;t matter, as this is
+                <span class="comment">// NOTE(eddyb) the iteration order doesn't matter, as this is
                 // effectively a set of `PopInlinedCallFrame`s which have had
-                // all their other side-effects processed, and didn&#39;t get a
-                // chance to be fused away, so they&#39;re getting committed.
+                // all their other side-effects processed, and didn't get a
+                // chance to be fused away, so they're getting committed.
                 </span><span class="kw">for </span>popped <span class="kw">in </span>fusable_freshly_popped_inlined_frames.drain(..) {
                     <span class="kw">let </span>PoppedFrame {
                         <span class="kw-2">mut </span>frame,
@@ -1028,9 +1028,9 @@
                         pop_inst_idx,
                     } = popped;
 
-                    <span class="comment">// HACK(eddyb) this popped frame&#39;s `call_dbg.loc` may still
+                    <span class="comment">// HACK(eddyb) this popped frame's `call_dbg.loc` may still
                     // be used elsewhere, in which case that use takes precedence,
-                    // and is effectively the new &quot;owner&quot; of the `DbgLocInst`.
+                    // and is effectively the new "owner" of the `DbgLocInst`.
                     </span><span class="kw">let </span>call_dbg_loc_used_elsewhere =
                         frame.call_dbg.loc.as_ref().and_then(|call_dbg_loc| {
                             [dbg.loc.as_mut(), freshly_replaced_dbg_loc.as_mut()]

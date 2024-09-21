@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.1.0/src/set.rs`."><title>set.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../indexmap/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.5.0/src/set.rs`."><title>set.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../indexmap/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1073,22 +1073,241 @@
 <a href="#1073" id="1073">1073</a>
 <a href="#1074" id="1074">1074</a>
 <a href="#1075" id="1075">1075</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! A hash set implemented using `IndexMap`
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
+<a href="#1147" id="1147">1147</a>
+<a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
+<a href="#1152" id="1152">1152</a>
+<a href="#1153" id="1153">1153</a>
+<a href="#1154" id="1154">1154</a>
+<a href="#1155" id="1155">1155</a>
+<a href="#1156" id="1156">1156</a>
+<a href="#1157" id="1157">1157</a>
+<a href="#1158" id="1158">1158</a>
+<a href="#1159" id="1159">1159</a>
+<a href="#1160" id="1160">1160</a>
+<a href="#1161" id="1161">1161</a>
+<a href="#1162" id="1162">1162</a>
+<a href="#1163" id="1163">1163</a>
+<a href="#1164" id="1164">1164</a>
+<a href="#1165" id="1165">1165</a>
+<a href="#1166" id="1166">1166</a>
+<a href="#1167" id="1167">1167</a>
+<a href="#1168" id="1168">1168</a>
+<a href="#1169" id="1169">1169</a>
+<a href="#1170" id="1170">1170</a>
+<a href="#1171" id="1171">1171</a>
+<a href="#1172" id="1172">1172</a>
+<a href="#1173" id="1173">1173</a>
+<a href="#1174" id="1174">1174</a>
+<a href="#1175" id="1175">1175</a>
+<a href="#1176" id="1176">1176</a>
+<a href="#1177" id="1177">1177</a>
+<a href="#1178" id="1178">1178</a>
+<a href="#1179" id="1179">1179</a>
+<a href="#1180" id="1180">1180</a>
+<a href="#1181" id="1181">1181</a>
+<a href="#1182" id="1182">1182</a>
+<a href="#1183" id="1183">1183</a>
+<a href="#1184" id="1184">1184</a>
+<a href="#1185" id="1185">1185</a>
+<a href="#1186" id="1186">1186</a>
+<a href="#1187" id="1187">1187</a>
+<a href="#1188" id="1188">1188</a>
+<a href="#1189" id="1189">1189</a>
+<a href="#1190" id="1190">1190</a>
+<a href="#1191" id="1191">1191</a>
+<a href="#1192" id="1192">1192</a>
+<a href="#1193" id="1193">1193</a>
+<a href="#1194" id="1194">1194</a>
+<a href="#1195" id="1195">1195</a>
+<a href="#1196" id="1196">1196</a>
+<a href="#1197" id="1197">1197</a>
+<a href="#1198" id="1198">1198</a>
+<a href="#1199" id="1199">1199</a>
+<a href="#1200" id="1200">1200</a>
+<a href="#1201" id="1201">1201</a>
+<a href="#1202" id="1202">1202</a>
+<a href="#1203" id="1203">1203</a>
+<a href="#1204" id="1204">1204</a>
+<a href="#1205" id="1205">1205</a>
+<a href="#1206" id="1206">1206</a>
+<a href="#1207" id="1207">1207</a>
+<a href="#1208" id="1208">1208</a>
+<a href="#1209" id="1209">1209</a>
+<a href="#1210" id="1210">1210</a>
+<a href="#1211" id="1211">1211</a>
+<a href="#1212" id="1212">1212</a>
+<a href="#1213" id="1213">1213</a>
+<a href="#1214" id="1214">1214</a>
+<a href="#1215" id="1215">1215</a>
+<a href="#1216" id="1216">1216</a>
+<a href="#1217" id="1217">1217</a>
+<a href="#1218" id="1218">1218</a>
+<a href="#1219" id="1219">1219</a>
+<a href="#1220" id="1220">1220</a>
+<a href="#1221" id="1221">1221</a>
+<a href="#1222" id="1222">1222</a>
+<a href="#1223" id="1223">1223</a>
+<a href="#1224" id="1224">1224</a>
+<a href="#1225" id="1225">1225</a>
+<a href="#1226" id="1226">1226</a>
+<a href="#1227" id="1227">1227</a>
+<a href="#1228" id="1228">1228</a>
+<a href="#1229" id="1229">1229</a>
+<a href="#1230" id="1230">1230</a>
+<a href="#1231" id="1231">1231</a>
+<a href="#1232" id="1232">1232</a>
+<a href="#1233" id="1233">1233</a>
+<a href="#1234" id="1234">1234</a>
+<a href="#1235" id="1235">1235</a>
+<a href="#1236" id="1236">1236</a>
+<a href="#1237" id="1237">1237</a>
+<a href="#1238" id="1238">1238</a>
+<a href="#1239" id="1239">1239</a>
+<a href="#1240" id="1240">1240</a>
+<a href="#1241" id="1241">1241</a>
+<a href="#1242" id="1242">1242</a>
+<a href="#1243" id="1243">1243</a>
+<a href="#1244" id="1244">1244</a>
+<a href="#1245" id="1245">1245</a>
+<a href="#1246" id="1246">1246</a>
+<a href="#1247" id="1247">1247</a>
+<a href="#1248" id="1248">1248</a>
+<a href="#1249" id="1249">1249</a>
+<a href="#1250" id="1250">1250</a>
+<a href="#1251" id="1251">1251</a>
+<a href="#1252" id="1252">1252</a>
+<a href="#1253" id="1253">1253</a>
+<a href="#1254" id="1254">1254</a>
+<a href="#1255" id="1255">1255</a>
+<a href="#1256" id="1256">1256</a>
+<a href="#1257" id="1257">1257</a>
+<a href="#1258" id="1258">1258</a>
+<a href="#1259" id="1259">1259</a>
+<a href="#1260" id="1260">1260</a>
+<a href="#1261" id="1261">1261</a>
+<a href="#1262" id="1262">1262</a>
+<a href="#1263" id="1263">1263</a>
+<a href="#1264" id="1264">1264</a>
+<a href="#1265" id="1265">1265</a>
+<a href="#1266" id="1266">1266</a>
+<a href="#1267" id="1267">1267</a>
+<a href="#1268" id="1268">1268</a>
+<a href="#1269" id="1269">1269</a>
+<a href="#1270" id="1270">1270</a>
+<a href="#1271" id="1271">1271</a>
+<a href="#1272" id="1272">1272</a>
+<a href="#1273" id="1273">1273</a>
+<a href="#1274" id="1274">1274</a>
+<a href="#1275" id="1275">1275</a>
+<a href="#1276" id="1276">1276</a>
+<a href="#1277" id="1277">1277</a>
+<a href="#1278" id="1278">1278</a>
+<a href="#1279" id="1279">1279</a>
+<a href="#1280" id="1280">1280</a>
+<a href="#1281" id="1281">1281</a>
+<a href="#1282" id="1282">1282</a>
+<a href="#1283" id="1283">1283</a>
+<a href="#1284" id="1284">1284</a>
+<a href="#1285" id="1285">1285</a>
+<a href="#1286" id="1286">1286</a>
+<a href="#1287" id="1287">1287</a>
+<a href="#1288" id="1288">1288</a>
+<a href="#1289" id="1289">1289</a>
+<a href="#1290" id="1290">1290</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! A hash set implemented using [`IndexMap`]
 
 </span><span class="kw">mod </span>iter;
+<span class="kw">mod </span>mutable;
 <span class="kw">mod </span>slice;
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests;
 
-<span class="kw">pub use </span><span class="self">self</span>::iter::{Difference, Drain, Intersection, IntoIter, Iter, SymmetricDifference, Union};
+<span class="kw">pub use </span><span class="self">self</span>::iter::{
+    Difference, Drain, Intersection, IntoIter, Iter, Splice, SymmetricDifference, Union,
+};
+<span class="kw">pub use </span><span class="self">self</span>::mutable::MutableValues;
 <span class="kw">pub use </span><span class="self">self</span>::slice::Slice;
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;rayon&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"rayon"</span>)]
 </span><span class="kw">pub use </span><span class="kw">crate</span>::rayon::set <span class="kw">as </span>rayon;
 <span class="kw">use </span><span class="kw">crate</span>::TryReserveError;
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">use </span>std::collections::hash_map::RandomState;
 
 <span class="kw">use </span><span class="kw">crate</span>::util::try_simplify_range;
@@ -1106,8 +1325,9 @@
 <span class="doccomment">/// A hash set where the iteration order of the values is independent of their
 /// hash values.
 ///
-/// The interface is closely compatible with the standard `HashSet`, but also
-/// has additional features.
+/// The interface is closely compatible with the standard
+/// [`HashSet`][std::collections::HashSet],
+/// but also has additional features.
 ///
 /// # Order
 ///
@@ -1118,11 +1338,12 @@
 /// already present.
 ///
 /// All iterators traverse the set *in order*.  Set operation iterators like
-/// `union` produce a concatenated order, as do their matching &quot;bitwise&quot;
+/// [`IndexSet::union`] produce a concatenated order, as do their matching "bitwise"
 /// operators.  See their documentation for specifics.
 ///
 /// The insertion order is preserved, with **notable exceptions** like the
-/// `.remove()` or `.swap_remove()` methods. Methods such as `.sort_by()` of
+/// [`.remove()`][Self::remove] or [`.swap_remove()`][Self::swap_remove] methods.
+/// Methods such as [`.sort_by()`][Self::sort_by] of
 /// course result in a new order, depending on the sorting order.
 ///
 /// # Indices
@@ -1142,18 +1363,18 @@
 /// use indexmap::IndexSet;
 ///
 /// // Collects which letters appear in a sentence.
-/// let letters: IndexSet&lt;_&gt; = &quot;a short treatise on fungi&quot;.chars().collect();
+/// let letters: IndexSet&lt;_&gt; = "a short treatise on fungi".chars().collect();
 ///
-/// assert!(letters.contains(&amp;&#39;s&#39;));
-/// assert!(letters.contains(&amp;&#39;t&#39;));
-/// assert!(letters.contains(&amp;&#39;u&#39;));
-/// assert!(!letters.contains(&amp;&#39;y&#39;));
+/// assert!(letters.contains(&amp;'s'));
+/// assert!(letters.contains(&amp;'t'));
+/// assert!(letters.contains(&amp;'u'));
+/// assert!(!letters.contains(&amp;'y'));
 /// ```
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">pub struct </span>IndexSet&lt;T, S = RandomState&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) map: IndexMap&lt;T, (), S&gt;,
 }
-<span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+<span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
 </span><span class="kw">pub struct </span>IndexSet&lt;T, S&gt; {
     <span class="kw">pub</span>(<span class="kw">crate</span>) map: IndexMap&lt;T, (), S&gt;,
 }
@@ -1204,18 +1425,20 @@
 <span class="kw">where
     </span>T: fmt::Debug,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">if </span><span class="macro">cfg!</span>(not(feature = <span class="string">&quot;test_debug&quot;</span>)) {
-            f.debug_set().entries(<span class="self">self</span>.iter()).finish()
-        } <span class="kw">else </span>{
-            <span class="comment">// Let the inner `IndexMap` print all of its details
-            </span>f.debug_struct(<span class="string">&quot;IndexSet&quot;</span>).field(<span class="string">&quot;map&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.map).finish()
-        }
+    <span class="attr">#[cfg(not(feature = <span class="string">"test_debug"</span>))]
+    </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        f.debug_set().entries(<span class="self">self</span>.iter()).finish()
+    }
+
+    <span class="attr">#[cfg(feature = <span class="string">"test_debug"</span>)]
+    </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="comment">// Let the inner `IndexMap` print all of its details
+        </span>f.debug_struct(<span class="string">"IndexSet"</span>).field(<span class="string">"map"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.map).finish()
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;std&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
 </span><span class="kw">impl</span>&lt;T&gt; IndexSet&lt;T&gt; {
     <span class="doccomment">/// Create a new set. (Does not allocate.)
     </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
@@ -1266,7 +1489,7 @@
         <span class="self">self</span>.map.capacity()
     }
 
-    <span class="doccomment">/// Return a reference to the set&#39;s `BuildHasher`.
+    <span class="doccomment">/// Return a reference to the set's `BuildHasher`.
     </span><span class="kw">pub fn </span>hasher(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>S {
         <span class="self">self</span>.map.hasher()
     }
@@ -1286,7 +1509,7 @@
     }
 
     <span class="doccomment">/// Return an iterator over the values of the set, in their order
-    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">'_</span>, T&gt; {
         Iter::new(<span class="self">self</span>.as_entries())
     }
 
@@ -1299,7 +1522,7 @@
 
     <span class="doccomment">/// Shortens the set, keeping the first `len` elements and dropping the rest.
     ///
-    /// If `len` is greater than the set&#39;s current length, this has no effect.
+    /// If `len` is greater than the set's current length, this has no effect.
     </span><span class="kw">pub fn </span>truncate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, len: usize) {
         <span class="self">self</span>.map.truncate(len);
     }
@@ -1307,7 +1530,7 @@
     <span class="doccomment">/// Clears the `IndexSet` in the given index range, returning those values
     /// as a drain iterator.
     ///
-    /// The range may be any type that implements `RangeBounds&lt;usize&gt;`,
+    /// The range may be any type that implements [`RangeBounds&lt;usize&gt;`],
     /// including all of the `std::ops::Range*` types, or even a tuple pair of
     /// `Bound` start and end values. To drain the set entirely, use `RangeFull`
     /// like `set.drain(..)`.
@@ -1317,7 +1540,7 @@
     ///
     /// ***Panics*** if the starting point is greater than the end point or if
     /// the end point is greater than the length of the set.
-    </span><span class="kw">pub fn </span>drain&lt;R&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R) -&gt; Drain&lt;<span class="lifetime">&#39;_</span>, T&gt;
+    </span><span class="kw">pub fn </span>drain&lt;R&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R) -&gt; Drain&lt;<span class="lifetime">'_</span>, T&gt;
     <span class="kw">where
         </span>R: RangeBounds&lt;usize&gt;,
     {
@@ -1339,13 +1562,7 @@
             map: <span class="self">self</span>.map.split_off(at),
         }
     }
-}
 
-<span class="kw">impl</span>&lt;T, S&gt; IndexSet&lt;T, S&gt;
-<span class="kw">where
-    </span>T: Hash + Eq,
-    S: BuildHasher,
-{
     <span class="doccomment">/// Reserve capacity for `additional` more values.
     ///
     /// Computes in **O(n)** time.
@@ -1397,7 +1614,13 @@
     </span><span class="kw">pub fn </span>shrink_to(<span class="kw-2">&amp;mut </span><span class="self">self</span>, min_capacity: usize) {
         <span class="self">self</span>.map.shrink_to(min_capacity);
     }
+}
 
+<span class="kw">impl</span>&lt;T, S&gt; IndexSet&lt;T, S&gt;
+<span class="kw">where
+    </span>T: Hash + Eq,
+    S: BuildHasher,
+{
     <span class="doccomment">/// Insert the value into the set.
     ///
     /// If an equivalent item already exists in the set, it returns
@@ -1424,89 +1647,134 @@
         (index, existing.is_none())
     }
 
-    <span class="doccomment">/// Return an iterator over the values that are in `self` but not `other`.
+    <span class="doccomment">/// Insert the value into the set at its ordered position among sorted values.
     ///
-    /// Values are produced in the same order that they appear in `self`.
-    </span><span class="kw">pub fn </span>difference&lt;<span class="lifetime">&#39;a</span>, S2&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>IndexSet&lt;T, S2&gt;) -&gt; Difference&lt;<span class="lifetime">&#39;a</span>, T, S2&gt;
+    /// This is equivalent to finding the position with
+    /// [`binary_search`][Self::binary_search], and if needed calling
+    /// [`insert_before`][Self::insert_before] for a new value.
+    ///
+    /// If the sorted item is found in the set, it returns the index of that
+    /// existing item and `false`, without any change. Otherwise, it inserts the
+    /// new item and returns its sorted index and `true`.
+    ///
+    /// If the existing items are **not** already sorted, then the insertion
+    /// index is unspecified (like [`slice::binary_search`]), but the value
+    /// is moved to or inserted at that position regardless.
+    ///
+    /// Computes in **O(n)** time (average). Instead of repeating calls to
+    /// `insert_sorted`, it may be faster to call batched [`insert`][Self::insert]
+    /// or [`extend`][Self::extend] and only call [`sort`][Self::sort] or
+    /// [`sort_unstable`][Self::sort_unstable] once.
+    </span><span class="kw">pub fn </span>insert_sorted(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) -&gt; (usize, bool)
     <span class="kw">where
-        </span>S2: BuildHasher,
+        </span>T: Ord,
     {
-        Difference::new(<span class="self">self</span>, other)
+        <span class="kw">let </span>(index, existing) = <span class="self">self</span>.map.insert_sorted(value, ());
+        (index, existing.is_none())
     }
 
-    <span class="doccomment">/// Return an iterator over the values that are in `self` or `other`,
-    /// but not in both.
+    <span class="doccomment">/// Insert the value into the set before the value at the given index, or at the end.
     ///
-    /// Values from `self` are produced in their original order, followed by
-    /// values from `other` in their original order.
-    </span><span class="kw">pub fn </span>symmetric_difference&lt;<span class="lifetime">&#39;a</span>, S2&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-        other: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>IndexSet&lt;T, S2&gt;,
-    ) -&gt; SymmetricDifference&lt;<span class="lifetime">&#39;a</span>, T, S, S2&gt;
-    <span class="kw">where
-        </span>S2: BuildHasher,
-    {
-        SymmetricDifference::new(<span class="self">self</span>, other)
+    /// If an equivalent item already exists in the set, it returns `false` leaving the
+    /// original value in the set, but moved to the new position. The returned index
+    /// will either be the given index or one less, depending on how the value moved.
+    /// (See [`shift_insert`](Self::shift_insert) for different behavior here.)
+    ///
+    /// Otherwise, it inserts the new value exactly at the given index and returns `true`.
+    ///
+    /// ***Panics*** if `index` is out of bounds.
+    /// Valid indices are `0..=set.len()` (inclusive).
+    ///
+    /// Computes in **O(n)** time (average).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use indexmap::IndexSet;
+    /// let mut set: IndexSet&lt;char&gt; = ('a'..='z').collect();
+    ///
+    /// // The new value '*' goes exactly at the given index.
+    /// assert_eq!(set.get_index_of(&amp;'*'), None);
+    /// assert_eq!(set.insert_before(10, '*'), (10, true));
+    /// assert_eq!(set.get_index_of(&amp;'*'), Some(10));
+    ///
+    /// // Moving the value 'a' up will shift others down, so this moves *before* 10 to index 9.
+    /// assert_eq!(set.insert_before(10, 'a'), (9, false));
+    /// assert_eq!(set.get_index_of(&amp;'a'), Some(9));
+    /// assert_eq!(set.get_index_of(&amp;'*'), Some(10));
+    ///
+    /// // Moving the value 'z' down will shift others up, so this moves to exactly 10.
+    /// assert_eq!(set.insert_before(10, 'z'), (10, false));
+    /// assert_eq!(set.get_index_of(&amp;'z'), Some(10));
+    /// assert_eq!(set.get_index_of(&amp;'*'), Some(11));
+    ///
+    /// // Moving or inserting before the endpoint is also valid.
+    /// assert_eq!(set.len(), 27);
+    /// assert_eq!(set.insert_before(set.len(), '*'), (26, false));
+    /// assert_eq!(set.get_index_of(&amp;'*'), Some(26));
+    /// assert_eq!(set.insert_before(set.len(), '+'), (27, true));
+    /// assert_eq!(set.get_index_of(&amp;'+'), Some(27));
+    /// assert_eq!(set.len(), 28);
+    /// ```
+    </span><span class="kw">pub fn </span>insert_before(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize, value: T) -&gt; (usize, bool) {
+        <span class="kw">let </span>(index, existing) = <span class="self">self</span>.map.insert_before(index, value, ());
+        (index, existing.is_none())
     }
 
-    <span class="doccomment">/// Return an iterator over the values that are in both `self` and `other`.
+    <span class="doccomment">/// Insert the value into the set at the given index.
     ///
-    /// Values are produced in the same order that they appear in `self`.
-    </span><span class="kw">pub fn </span>intersection&lt;<span class="lifetime">&#39;a</span>, S2&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>IndexSet&lt;T, S2&gt;) -&gt; Intersection&lt;<span class="lifetime">&#39;a</span>, T, S2&gt;
-    <span class="kw">where
-        </span>S2: BuildHasher,
-    {
-        Intersection::new(<span class="self">self</span>, other)
-    }
-
-    <span class="doccomment">/// Return an iterator over all values that are in `self` or `other`.
+    /// If an equivalent item already exists in the set, it returns `false` leaving
+    /// the original value in the set, but moved to the given index.
+    /// Note that existing values **cannot** be moved to `index == set.len()`!
+    /// (See [`insert_before`](Self::insert_before) for different behavior here.)
     ///
-    /// Values from `self` are produced in their original order, followed by
-    /// values that are unique to `other` in their original order.
-    </span><span class="kw">pub fn </span>union&lt;<span class="lifetime">&#39;a</span>, S2&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>IndexSet&lt;T, S2&gt;) -&gt; Union&lt;<span class="lifetime">&#39;a</span>, T, S&gt;
-    <span class="kw">where
-        </span>S2: BuildHasher,
-    {
-        Union::new(<span class="self">self</span>, other)
-    }
-
-    <span class="doccomment">/// Return `true` if an equivalent to `value` exists in the set.
+    /// Otherwise, it inserts the new value at the given index and returns `true`.
     ///
-    /// Computes in **O(1)** time (average).
-    </span><span class="kw">pub fn </span>contains&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; bool
-    <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
-    {
-        <span class="self">self</span>.map.contains_key(value)
-    }
-
-    <span class="doccomment">/// Return a reference to the value stored in the set, if it is present,
-    /// else `None`.
+    /// ***Panics*** if `index` is out of bounds.
+    /// Valid indices are `0..set.len()` (exclusive) when moving an existing value, or
+    /// `0..=set.len()` (inclusive) when inserting a new value.
     ///
-    /// Computes in **O(1)** time (average).
-    </span><span class="kw">pub fn </span>get&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>T&gt;
-    <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
-    {
-        <span class="self">self</span>.map.get_key_value(value).map(|(x, <span class="kw-2">&amp;</span>())| x)
-    }
-
-    <span class="doccomment">/// Return item index and value
-    </span><span class="kw">pub fn </span>get_full&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, <span class="kw-2">&amp;</span>T)&gt;
-    <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
-    {
-        <span class="self">self</span>.map.get_full(value).map(|(i, x, <span class="kw-2">&amp;</span>())| (i, x))
-    }
-
-    <span class="doccomment">/// Return item index, if it exists in the set
+    /// Computes in **O(n)** time (average).
     ///
-    /// Computes in **O(1)** time (average).
-    </span><span class="kw">pub fn </span>get_index_of&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt;
-    <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
-    {
-        <span class="self">self</span>.map.get_index_of(value)
+    /// # Examples
+    ///
+    /// ```
+    /// use indexmap::IndexSet;
+    /// let mut set: IndexSet&lt;char&gt; = ('a'..='z').collect();
+    ///
+    /// // The new value '*' goes exactly at the given index.
+    /// assert_eq!(set.get_index_of(&amp;'*'), None);
+    /// assert_eq!(set.shift_insert(10, '*'), true);
+    /// assert_eq!(set.get_index_of(&amp;'*'), Some(10));
+    ///
+    /// // Moving the value 'a' up to 10 will shift others down, including the '*' that was at 10.
+    /// assert_eq!(set.shift_insert(10, 'a'), false);
+    /// assert_eq!(set.get_index_of(&amp;'a'), Some(10));
+    /// assert_eq!(set.get_index_of(&amp;'*'), Some(9));
+    ///
+    /// // Moving the value 'z' down to 9 will shift others up, including the '*' that was at 9.
+    /// assert_eq!(set.shift_insert(9, 'z'), false);
+    /// assert_eq!(set.get_index_of(&amp;'z'), Some(9));
+    /// assert_eq!(set.get_index_of(&amp;'*'), Some(10));
+    ///
+    /// // Existing values can move to len-1 at most, but new values can insert at the endpoint.
+    /// assert_eq!(set.len(), 27);
+    /// assert_eq!(set.shift_insert(set.len() - 1, '*'), false);
+    /// assert_eq!(set.get_index_of(&amp;'*'), Some(26));
+    /// assert_eq!(set.shift_insert(set.len(), '+'), true);
+    /// assert_eq!(set.get_index_of(&amp;'+'), Some(27));
+    /// assert_eq!(set.len(), 28);
+    /// ```
+    ///
+    /// ```should_panic
+    /// use indexmap::IndexSet;
+    /// let mut set: IndexSet&lt;char&gt; = ('a'..='z').collect();
+    ///
+    /// // This is an invalid index for moving an existing value!
+    /// set.shift_insert(set.len(), 'a');
+    /// ```
+    </span><span class="kw">pub fn </span>shift_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize, value: T) -&gt; bool {
+        <span class="self">self</span>.map.shift_insert(index, value, ()).is_none()
     }
 
     <span class="doccomment">/// Adds a value to the set, replacing the existing value, if any, that is
@@ -1524,59 +1792,213 @@
     ///
     /// Computes in **O(1)** time (average).
     </span><span class="kw">pub fn </span>replace_full(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;T&gt;) {
-        <span class="kw">use </span><span class="kw">super</span>::map::Entry::<span class="kw-2">*</span>;
-
-        <span class="kw">match </span><span class="self">self</span>.map.entry(value) {
-            Vacant(e) =&gt; {
-                <span class="kw">let </span>index = e.index();
-                e.insert(());
-                (index, <span class="prelude-val">None</span>)
-            }
-            Occupied(e) =&gt; (e.index(), <span class="prelude-val">Some</span>(e.replace_key())),
+        <span class="kw">let </span>hash = <span class="self">self</span>.map.hash(<span class="kw-2">&amp;</span>value);
+        <span class="kw">match </span><span class="self">self</span>.map.core.replace_full(hash, value, ()) {
+            (i, <span class="prelude-val">Some</span>((replaced, ()))) =&gt; (i, <span class="prelude-val">Some</span>(replaced)),
+            (i, <span class="prelude-val">None</span>) =&gt; (i, <span class="prelude-val">None</span>),
         }
+    }
+
+    <span class="doccomment">/// Return an iterator over the values that are in `self` but not `other`.
+    ///
+    /// Values are produced in the same order that they appear in `self`.
+    </span><span class="kw">pub fn </span>difference&lt;<span class="lifetime">'a</span>, S2&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>IndexSet&lt;T, S2&gt;) -&gt; Difference&lt;<span class="lifetime">'a</span>, T, S2&gt;
+    <span class="kw">where
+        </span>S2: BuildHasher,
+    {
+        Difference::new(<span class="self">self</span>, other)
+    }
+
+    <span class="doccomment">/// Return an iterator over the values that are in `self` or `other`,
+    /// but not in both.
+    ///
+    /// Values from `self` are produced in their original order, followed by
+    /// values from `other` in their original order.
+    </span><span class="kw">pub fn </span>symmetric_difference&lt;<span class="lifetime">'a</span>, S2&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        other: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>IndexSet&lt;T, S2&gt;,
+    ) -&gt; SymmetricDifference&lt;<span class="lifetime">'a</span>, T, S, S2&gt;
+    <span class="kw">where
+        </span>S2: BuildHasher,
+    {
+        SymmetricDifference::new(<span class="self">self</span>, other)
+    }
+
+    <span class="doccomment">/// Return an iterator over the values that are in both `self` and `other`.
+    ///
+    /// Values are produced in the same order that they appear in `self`.
+    </span><span class="kw">pub fn </span>intersection&lt;<span class="lifetime">'a</span>, S2&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>IndexSet&lt;T, S2&gt;) -&gt; Intersection&lt;<span class="lifetime">'a</span>, T, S2&gt;
+    <span class="kw">where
+        </span>S2: BuildHasher,
+    {
+        Intersection::new(<span class="self">self</span>, other)
+    }
+
+    <span class="doccomment">/// Return an iterator over all values that are in `self` or `other`.
+    ///
+    /// Values from `self` are produced in their original order, followed by
+    /// values that are unique to `other` in their original order.
+    </span><span class="kw">pub fn </span>union&lt;<span class="lifetime">'a</span>, S2&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>IndexSet&lt;T, S2&gt;) -&gt; Union&lt;<span class="lifetime">'a</span>, T, S&gt;
+    <span class="kw">where
+        </span>S2: BuildHasher,
+    {
+        Union::new(<span class="self">self</span>, other)
+    }
+
+    <span class="doccomment">/// Creates a splicing iterator that replaces the specified range in the set
+    /// with the given `replace_with` iterator and yields the removed items.
+    /// `replace_with` does not need to be the same length as `range`.
+    ///
+    /// The `range` is removed even if the iterator is not consumed until the
+    /// end. It is unspecified how many elements are removed from the set if the
+    /// `Splice` value is leaked.
+    ///
+    /// The input iterator `replace_with` is only consumed when the `Splice`
+    /// value is dropped. If a value from the iterator matches an existing entry
+    /// in the set (outside of `range`), then the original will be unchanged.
+    /// Otherwise, the new value will be inserted in the replaced `range`.
+    ///
+    /// ***Panics*** if the starting point is greater than the end point or if
+    /// the end point is greater than the length of the set.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use indexmap::IndexSet;
+    ///
+    /// let mut set = IndexSet::from([0, 1, 2, 3, 4]);
+    /// let new = [5, 4, 3, 2, 1];
+    /// let removed: Vec&lt;_&gt; = set.splice(2..4, new).collect();
+    ///
+    /// // 1 and 4 kept their positions, while 5, 3, and 2 were newly inserted.
+    /// assert!(set.into_iter().eq([0, 1, 5, 3, 2, 4]));
+    /// assert_eq!(removed, &amp;[2, 3]);
+    /// ```
+    </span><span class="kw">pub fn </span>splice&lt;R, I&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R, replace_with: I) -&gt; Splice&lt;<span class="lifetime">'_</span>, I::IntoIter, T, S&gt;
+    <span class="kw">where
+        </span>R: RangeBounds&lt;usize&gt;,
+        I: IntoIterator&lt;Item = T&gt;,
+    {
+        Splice::new(<span class="self">self</span>, range, replace_with.into_iter())
+    }
+
+    <span class="doccomment">/// Moves all values from `other` into `self`, leaving `other` empty.
+    ///
+    /// This is equivalent to calling [`insert`][Self::insert] for each value
+    /// from `other` in order, which means that values that already exist
+    /// in `self` are unchanged in their current position.
+    ///
+    /// See also [`union`][Self::union] to iterate the combined values by
+    /// reference, without modifying `self` or `other`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use indexmap::IndexSet;
+    ///
+    /// let mut a = IndexSet::from([3, 2, 1]);
+    /// let mut b = IndexSet::from([3, 4, 5]);
+    /// let old_capacity = b.capacity();
+    ///
+    /// a.append(&amp;mut b);
+    ///
+    /// assert_eq!(a.len(), 5);
+    /// assert_eq!(b.len(), 0);
+    /// assert_eq!(b.capacity(), old_capacity);
+    ///
+    /// assert!(a.iter().eq(&amp;[3, 2, 1, 4, 5]));
+    /// ```
+    </span><span class="kw">pub fn </span>append&lt;S2&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="kw-2">&amp;mut </span>IndexSet&lt;T, S2&gt;) {
+        <span class="self">self</span>.map.append(<span class="kw-2">&amp;mut </span>other.map);
+    }
+}
+
+<span class="kw">impl</span>&lt;T, S&gt; IndexSet&lt;T, S&gt;
+<span class="kw">where
+    </span>S: BuildHasher,
+{
+    <span class="doccomment">/// Return `true` if an equivalent to `value` exists in the set.
+    ///
+    /// Computes in **O(1)** time (average).
+    </span><span class="kw">pub fn </span>contains&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; bool
+    <span class="kw">where
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
+    {
+        <span class="self">self</span>.map.contains_key(value)
+    }
+
+    <span class="doccomment">/// Return a reference to the value stored in the set, if it is present,
+    /// else `None`.
+    ///
+    /// Computes in **O(1)** time (average).
+    </span><span class="kw">pub fn </span>get&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>T&gt;
+    <span class="kw">where
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
+    {
+        <span class="self">self</span>.map.get_key_value(value).map(|(x, <span class="kw-2">&amp;</span>())| x)
+    }
+
+    <span class="doccomment">/// Return item index and value
+    </span><span class="kw">pub fn </span>get_full&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, <span class="kw-2">&amp;</span>T)&gt;
+    <span class="kw">where
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
+    {
+        <span class="self">self</span>.map.get_full(value).map(|(i, x, <span class="kw-2">&amp;</span>())| (i, x))
+    }
+
+    <span class="doccomment">/// Return item index, if it exists in the set
+    ///
+    /// Computes in **O(1)** time (average).
+    </span><span class="kw">pub fn </span>get_index_of&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt;
+    <span class="kw">where
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
+    {
+        <span class="self">self</span>.map.get_index_of(value)
     }
 
     <span class="doccomment">/// Remove the value from the set, and return `true` if it was present.
     ///
-    /// **NOTE:** This is equivalent to `.swap_remove(value)`, if you want
-    /// to preserve the order of the values in the set, use `.shift_remove(value)`.
-    ///
-    /// Computes in **O(1)** time (average).
-    </span><span class="kw">pub fn </span>remove&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; bool
+    /// **NOTE:** This is equivalent to [`.swap_remove(value)`][Self::swap_remove], replacing this
+    /// value's position with the last element, and it is deprecated in favor of calling that
+    /// explicitly. If you need to preserve the relative order of the values in the set, use
+    /// [`.shift_remove(value)`][Self::shift_remove] instead.
+    </span><span class="attr">#[deprecated(note = <span class="string">"`remove` disrupts the set order -- \
+        use `swap_remove` or `shift_remove` for explicit behavior."</span>)]
+    </span><span class="kw">pub fn </span>remove&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; bool
     <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
     {
         <span class="self">self</span>.swap_remove(value)
     }
 
     <span class="doccomment">/// Remove the value from the set, and return `true` if it was present.
     ///
-    /// Like `Vec::swap_remove`, the value is removed by swapping it with the
+    /// Like [`Vec::swap_remove`], the value is removed by swapping it with the
     /// last element of the set and popping it off. **This perturbs
     /// the position of what used to be the last element!**
     ///
     /// Return `false` if `value` was not in the set.
     ///
     /// Computes in **O(1)** time (average).
-    </span><span class="kw">pub fn </span>swap_remove&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; bool
+    </span><span class="kw">pub fn </span>swap_remove&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; bool
     <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
     {
         <span class="self">self</span>.map.swap_remove(value).is_some()
     }
 
     <span class="doccomment">/// Remove the value from the set, and return `true` if it was present.
     ///
-    /// Like `Vec::remove`, the value is removed by shifting all of the
+    /// Like [`Vec::remove`], the value is removed by shifting all of the
     /// elements that follow it, preserving their relative order.
     /// **This perturbs the index of all of those elements!**
     ///
     /// Return `false` if `value` was not in the set.
     ///
     /// Computes in **O(n)** time (average).
-    </span><span class="kw">pub fn </span>shift_remove&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; bool
+    </span><span class="kw">pub fn </span>shift_remove&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; bool
     <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
     {
         <span class="self">self</span>.map.shift_remove(value).is_some()
     }
@@ -1584,14 +2006,15 @@
     <span class="doccomment">/// Removes and returns the value in the set, if any, that is equal to the
     /// given one.
     ///
-    /// **NOTE:** This is equivalent to `.swap_take(value)`, if you need to
-    /// preserve the order of the values in the set, use `.shift_take(value)`
-    /// instead.
-    ///
-    /// Computes in **O(1)** time (average).
-    </span><span class="kw">pub fn </span>take&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
+    /// **NOTE:** This is equivalent to [`.swap_take(value)`][Self::swap_take], replacing this
+    /// value's position with the last element, and it is deprecated in favor of calling that
+    /// explicitly. If you need to preserve the relative order of the values in the set, use
+    /// [`.shift_take(value)`][Self::shift_take] instead.
+    </span><span class="attr">#[deprecated(note = <span class="string">"`take` disrupts the set order -- \
+        use `swap_take` or `shift_take` for explicit behavior."</span>)]
+    </span><span class="kw">pub fn </span>take&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
     <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
     {
         <span class="self">self</span>.swap_take(value)
     }
@@ -1599,16 +2022,16 @@
     <span class="doccomment">/// Removes and returns the value in the set, if any, that is equal to the
     /// given one.
     ///
-    /// Like `Vec::swap_remove`, the value is removed by swapping it with the
+    /// Like [`Vec::swap_remove`], the value is removed by swapping it with the
     /// last element of the set and popping it off. **This perturbs
     /// the position of what used to be the last element!**
     ///
     /// Return `None` if `value` was not in the set.
     ///
     /// Computes in **O(1)** time (average).
-    </span><span class="kw">pub fn </span>swap_take&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
+    </span><span class="kw">pub fn </span>swap_take&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
     <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
     {
         <span class="self">self</span>.map.swap_remove_entry(value).map(|(x, ())| x)
     }
@@ -1616,53 +2039,56 @@
     <span class="doccomment">/// Removes and returns the value in the set, if any, that is equal to the
     /// given one.
     ///
-    /// Like `Vec::remove`, the value is removed by shifting all of the
+    /// Like [`Vec::remove`], the value is removed by shifting all of the
     /// elements that follow it, preserving their relative order.
     /// **This perturbs the index of all of those elements!**
     ///
     /// Return `None` if `value` was not in the set.
     ///
     /// Computes in **O(n)** time (average).
-    </span><span class="kw">pub fn </span>shift_take&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
+    </span><span class="kw">pub fn </span>shift_take&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
     <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
     {
         <span class="self">self</span>.map.shift_remove_entry(value).map(|(x, ())| x)
     }
 
     <span class="doccomment">/// Remove the value from the set return it and the index it had.
     ///
-    /// Like `Vec::swap_remove`, the value is removed by swapping it with the
+    /// Like [`Vec::swap_remove`], the value is removed by swapping it with the
     /// last element of the set and popping it off. **This perturbs
     /// the position of what used to be the last element!**
     ///
     /// Return `None` if `value` was not in the set.
-    </span><span class="kw">pub fn </span>swap_remove_full&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, T)&gt;
+    </span><span class="kw">pub fn </span>swap_remove_full&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, T)&gt;
     <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
     {
         <span class="self">self</span>.map.swap_remove_full(value).map(|(i, x, ())| (i, x))
     }
 
     <span class="doccomment">/// Remove the value from the set return it and the index it had.
     ///
-    /// Like `Vec::remove`, the value is removed by shifting all of the
+    /// Like [`Vec::remove`], the value is removed by shifting all of the
     /// elements that follow it, preserving their relative order.
     /// **This perturbs the index of all of those elements!**
     ///
     /// Return `None` if `value` was not in the set.
-    </span><span class="kw">pub fn </span>shift_remove_full&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, T)&gt;
+    </span><span class="kw">pub fn </span>shift_remove_full&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, T)&gt;
     <span class="kw">where
-        </span>Q: Hash + Equivalent&lt;T&gt;,
+        </span>Q: <span class="question-mark">?</span>Sized + Hash + Equivalent&lt;T&gt;,
     {
         <span class="self">self</span>.map.shift_remove_full(value).map(|(i, x, ())| (i, x))
     }
+}
 
+<span class="kw">impl</span>&lt;T, S&gt; IndexSet&lt;T, S&gt; {
     <span class="doccomment">/// Remove the last value
     ///
     /// This preserves the order of the remaining elements.
     ///
     /// Computes in **O(1)** time (average).
+    </span><span class="attr">#[doc(alias = <span class="string">"pop_last"</span>)] </span><span class="comment">// like `BTreeSet`
     </span><span class="kw">pub fn </span>pop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
         <span class="self">self</span>.map.pop().map(|(x, ())| x)
     }
@@ -1682,6 +2108,10 @@
     }
 
     <span class="doccomment">/// Sort the set’s values by their default ordering.
+    ///
+    /// This is a stable sort -- but equivalent values should not normally coexist in
+    /// a set at all, so [`sort_unstable`][Self::sort_unstable] is preferred
+    /// because it is generally faster and doesn't allocate auxiliary memory.
     ///
     /// See [`sort_by`](Self::sort_by) for details.
     </span><span class="kw">pub fn </span>sort(<span class="kw-2">&amp;mut </span><span class="self">self</span>)
@@ -1714,7 +2144,7 @@
         IntoIter::new(entries)
     }
 
-    <span class="doccomment">/// Sort the set&#39;s values by their default ordering.
+    <span class="doccomment">/// Sort the set's values by their default ordering.
     ///
     /// See [`sort_unstable_by`](Self::sort_unstable_by) for details.
     </span><span class="kw">pub fn </span>sort_unstable(<span class="kw-2">&amp;mut </span><span class="self">self</span>)
@@ -1724,7 +2154,7 @@
         <span class="self">self</span>.map.sort_unstable_keys()
     }
 
-    <span class="doccomment">/// Sort the set&#39;s values in place using the comparison function `cmp`.
+    <span class="doccomment">/// Sort the set's values in place using the comparison function `cmp`.
     ///
     /// Computes in **O(n log n)** time. The sort is unstable.
     </span><span class="kw">pub fn </span>sort_unstable_by&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>cmp: F)
@@ -1784,9 +2214,9 @@
     ///
     /// Computes in **O(log(n))** time.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>binary_search_by&lt;<span class="lifetime">&#39;a</span>, F&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;usize, usize&gt;
+    </span><span class="kw">pub fn </span>binary_search_by&lt;<span class="lifetime">'a</span>, F&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;usize, usize&gt;
     <span class="kw">where
-        </span>F: FnMut(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T) -&gt; Ordering,
+        </span>F: FnMut(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>T) -&gt; Ordering,
     {
         <span class="self">self</span>.as_slice().binary_search_by(f)
     }
@@ -1798,9 +2228,9 @@
     ///
     /// Computes in **O(log(n))** time.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>binary_search_by_key&lt;<span class="lifetime">&#39;a</span>, B, F&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, b: <span class="kw-2">&amp;</span>B, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;usize, usize&gt;
+    </span><span class="kw">pub fn </span>binary_search_by_key&lt;<span class="lifetime">'a</span>, B, F&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, b: <span class="kw-2">&amp;</span>B, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;usize, usize&gt;
     <span class="kw">where
-        </span>F: FnMut(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T) -&gt; B,
+        </span>F: FnMut(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>T) -&gt; B,
         B: Ord,
     {
         <span class="self">self</span>.as_slice().binary_search_by_key(b, f)
@@ -1826,9 +2256,7 @@
     </span><span class="kw">pub fn </span>reverse(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="self">self</span>.map.reverse()
     }
-}
 
-<span class="kw">impl</span>&lt;T, S&gt; IndexSet&lt;T, S&gt; {
     <span class="doccomment">/// Returns a slice of all the values in the set.
     ///
     /// Computes in **O(1)** time.
@@ -1881,7 +2309,7 @@
     ///
     /// Valid indices are *0 &lt;= index &lt; self.len()*
     ///
-    /// Like `Vec::swap_remove`, the value is removed by swapping it with the
+    /// Like [`Vec::swap_remove`], the value is removed by swapping it with the
     /// last element of the set and popping it off. **This perturbs
     /// the position of what used to be the last element!**
     ///
@@ -1894,7 +2322,7 @@
     ///
     /// Valid indices are *0 &lt;= index &lt; self.len()*
     ///
-    /// Like `Vec::remove`, the value is removed by shifting all of the
+    /// Like [`Vec::remove`], the value is removed by shifting all of the
     /// elements that follow it, preserving their relative order.
     /// **This perturbs the index of all of those elements!**
     ///
@@ -1919,12 +2347,14 @@
     <span class="doccomment">/// Swaps the position of two values in the set.
     ///
     /// ***Panics*** if `a` or `b` are out of bounds.
+    ///
+    /// Computes in **O(1)** time (average).
     </span><span class="kw">pub fn </span>swap_indices(<span class="kw-2">&amp;mut </span><span class="self">self</span>, a: usize, b: usize) {
         <span class="self">self</span>.map.swap_indices(a, b)
     }
 }
 
-<span class="doccomment">/// Access `IndexSet` values at indexed positions.
+<span class="doccomment">/// Access [`IndexSet`] values at indexed positions.
 ///
 /// # Examples
 ///
@@ -1932,25 +2362,25 @@
 /// use indexmap::IndexSet;
 ///
 /// let mut set = IndexSet::new();
-/// for word in &quot;Lorem ipsum dolor sit amet&quot;.split_whitespace() {
+/// for word in "Lorem ipsum dolor sit amet".split_whitespace() {
 ///     set.insert(word.to_string());
 /// }
-/// assert_eq!(set[0], &quot;Lorem&quot;);
-/// assert_eq!(set[1], &quot;ipsum&quot;);
+/// assert_eq!(set[0], "Lorem");
+/// assert_eq!(set[1], "ipsum");
 /// set.reverse();
-/// assert_eq!(set[0], &quot;amet&quot;);
-/// assert_eq!(set[1], &quot;sit&quot;);
+/// assert_eq!(set[0], "amet");
+/// assert_eq!(set[1], "sit");
 /// set.sort();
-/// assert_eq!(set[0], &quot;Lorem&quot;);
-/// assert_eq!(set[1], &quot;amet&quot;);
+/// assert_eq!(set[0], "Lorem");
+/// assert_eq!(set[1], "amet");
 /// ```
 ///
 /// ```should_panic
 /// use indexmap::IndexSet;
 ///
 /// let mut set = IndexSet::new();
-/// set.insert(&quot;foo&quot;);
-/// println!(&quot;{:?}&quot;, set[10]); // panics!
+/// set.insert("foo");
+/// println!("{:?}", set[10]); // panics!
 /// ```
 </span><span class="kw">impl</span>&lt;T, S&gt; Index&lt;usize&gt; <span class="kw">for </span>IndexSet&lt;T, S&gt; {
     <span class="kw">type </span>Output = T;
@@ -1960,7 +2390,7 @@
     /// ***Panics*** if `index` is out of bounds.
     </span><span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; <span class="kw-2">&amp;</span>T {
         <span class="self">self</span>.get_index(index)
-            .expect(<span class="string">&quot;IndexSet: index out of bounds&quot;</span>)
+            .expect(<span class="string">"IndexSet: index out of bounds"</span>)
     }
 }
 
@@ -1977,8 +2407,8 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
-#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">&quot;std&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
+#[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"std"</span>)))]
 </span><span class="kw">impl</span>&lt;T, <span class="kw">const </span>N: usize&gt; From&lt;[T; N]&gt; <span class="kw">for </span>IndexSet&lt;T, RandomState&gt;
 <span class="kw">where
     </span>T: Eq + Hash,
@@ -2008,12 +2438,12 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, S&gt; Extend&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T&gt; <span class="kw">for </span>IndexSet&lt;T, S&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T, S&gt; Extend&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>T&gt; <span class="kw">for </span>IndexSet&lt;T, S&gt;
 <span class="kw">where
-    </span>T: Hash + Eq + Copy + <span class="lifetime">&#39;a</span>,
+    </span>T: Hash + Eq + Copy + <span class="lifetime">'a</span>,
     S: BuildHasher,
 {
-    <span class="kw">fn </span>extend&lt;I: IntoIterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, iterable: I) {
+    <span class="kw">fn </span>extend&lt;I: IntoIterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, iterable: I) {
         <span class="kw">let </span>iter = iterable.into_iter().copied();
         <span class="self">self</span>.extend(iter);
     }
@@ -2023,7 +2453,7 @@
 <span class="kw">where
     </span>S: Default,
 {
-    <span class="doccomment">/// Return an empty `IndexSet`
+    <span class="doccomment">/// Return an empty [`IndexSet`]
     </span><span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         IndexSet {
             map: IndexMap::default(),

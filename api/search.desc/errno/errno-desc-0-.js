@@ -1,0 +1,1 @@
+searchState.loadedDescShard("errno", 0, "Cross-platform interface to the <code>errno</code> variable.\nWraps a platform-specific error code.\nReturns the platform-specific value of <code>errno</code>.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nSets the platform-specific value of <code>errno</code>.")

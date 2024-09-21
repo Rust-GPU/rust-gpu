@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirt-0.3.0/src/visit.rs`."><title>visit.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../spirt/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/spirt-0.3.0/src/visit.rs`."><title>visit.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirt" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../spirt/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -584,9 +584,9 @@
     SelectionKind, Type, TypeCtor, TypeCtorArg, TypeDef, Value,
 };
 
-<span class="comment">// FIXME(eddyb) `Sized` bound shouldn&#39;t be needed but removing it requires
-// writing `impl Visitor&lt;&#39;a&gt; + ?Sized` in `fn inner_visit_with` signatures.
-</span><span class="kw">pub trait </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;: Sized {
+<span class="comment">// FIXME(eddyb) `Sized` bound shouldn't be needed but removing it requires
+// writing `impl Visitor&lt;'a&gt; + ?Sized` in `fn inner_visit_with` signatures.
+</span><span class="kw">pub trait </span>Visitor&lt;<span class="lifetime">'a</span>&gt;: Sized {
     <span class="comment">// Context-interned leaves (no default provided).
     // FIXME(eddyb) treat these separately somehow and allow e.g. automatic deep
     // visiting (with a set to avoid repeat visits) if a `Rc&lt;Context&gt;` is provided.
@@ -605,85 +605,85 @@
     <span class="kw">fn </span>visit_import(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _import: <span class="kw-2">&amp;</span>Import) {}
 
     <span class="comment">// Non-leaves (defaulting to calling `.inner_visit_with(self)`).
-    </span><span class="kw">fn </span>visit_module(<span class="kw-2">&amp;mut </span><span class="self">self</span>, module: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Module) {
+    </span><span class="kw">fn </span>visit_module(<span class="kw-2">&amp;mut </span><span class="self">self</span>, module: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Module) {
         module.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_module_dialect(<span class="kw-2">&amp;mut </span><span class="self">self</span>, dialect: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ModuleDialect) {
+    <span class="kw">fn </span>visit_module_dialect(<span class="kw-2">&amp;mut </span><span class="self">self</span>, dialect: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>ModuleDialect) {
         dialect.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_module_debug_info(<span class="kw-2">&amp;mut </span><span class="self">self</span>, debug_info: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ModuleDebugInfo) {
+    <span class="kw">fn </span>visit_module_debug_info(<span class="kw-2">&amp;mut </span><span class="self">self</span>, debug_info: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>ModuleDebugInfo) {
         debug_info.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_attr_set_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, attrs_def: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>AttrSetDef) {
+    <span class="kw">fn </span>visit_attr_set_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, attrs_def: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>AttrSetDef) {
         attrs_def.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_attr(<span class="kw-2">&amp;mut </span><span class="self">self</span>, attr: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Attr) {
+    <span class="kw">fn </span>visit_attr(<span class="kw-2">&amp;mut </span><span class="self">self</span>, attr: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Attr) {
         attr.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_type_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty_def: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>TypeDef) {
+    <span class="kw">fn </span>visit_type_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty_def: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>TypeDef) {
         ty_def.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_const_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ct_def: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ConstDef) {
+    <span class="kw">fn </span>visit_const_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ct_def: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>ConstDef) {
         ct_def.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_global_var_decl(<span class="kw-2">&amp;mut </span><span class="self">self</span>, gv_decl: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>GlobalVarDecl) {
+    <span class="kw">fn </span>visit_global_var_decl(<span class="kw-2">&amp;mut </span><span class="self">self</span>, gv_decl: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>GlobalVarDecl) {
         gv_decl.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_func_decl(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_decl: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FuncDecl) {
+    <span class="kw">fn </span>visit_func_decl(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_decl: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>FuncDecl) {
         func_decl.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_control_region_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_region: FuncAt&lt;<span class="lifetime">&#39;a</span>, ControlRegion&gt;) {
+    <span class="kw">fn </span>visit_control_region_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_region: FuncAt&lt;<span class="lifetime">'a</span>, ControlRegion&gt;) {
         func_at_control_region.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_control_node_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_node: FuncAt&lt;<span class="lifetime">&#39;a</span>, ControlNode&gt;) {
+    <span class="kw">fn </span>visit_control_node_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_node: FuncAt&lt;<span class="lifetime">'a</span>, ControlNode&gt;) {
         func_at_control_node.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_data_inst_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data_inst_def: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>DataInstDef) {
+    <span class="kw">fn </span>visit_data_inst_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data_inst_def: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>DataInstDef) {
         data_inst_def.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_data_inst_form_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data_inst_form_def: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>DataInstFormDef) {
+    <span class="kw">fn </span>visit_data_inst_form_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data_inst_form_def: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>DataInstFormDef) {
         data_inst_form_def.inner_visit_with(<span class="self">self</span>);
     }
-    <span class="kw">fn </span>visit_value_use(<span class="kw-2">&amp;mut </span><span class="self">self</span>, v: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Value) {
+    <span class="kw">fn </span>visit_value_use(<span class="kw-2">&amp;mut </span><span class="self">self</span>, v: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Value) {
         v.inner_visit_with(<span class="self">self</span>);
     }
 }
 
-<span class="doccomment">/// Trait implemented on &quot;visitable&quot; types (shallowly visitable, at least).
+<span class="doccomment">/// Trait implemented on "visitable" types (shallowly visitable, at least).
 ///
 /// That is, an `impl Visit for X` will call the relevant [`Visitor`] method for
 /// `X`, typically named `Visitor::visit_X` or `Visitor::visit_X_use`.
 </span><span class="comment">//
 // FIXME(eddyb) use this more (e.g. in implementing `InnerVisit`).
 </span><span class="kw">pub trait </span>Visit {
-    <span class="kw">fn </span>visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;);
+    <span class="kw">fn </span>visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;);
 }
 
-<span class="macro">macro_rules! </span>impl_visit {
+<span class="macro">macro_rules!</span> impl_visit {
     (
         by_val { $(<span class="macro-nonterminal">$by_val_method</span>:ident(<span class="macro-nonterminal">$by_val_ty</span>:ty)),* $(,)<span class="question-mark">? </span>}
         by_ref { $(<span class="macro-nonterminal">$by_ref_method</span>:ident(<span class="macro-nonterminal">$by_ref_ty</span>:ty)),* $(,)<span class="question-mark">? </span>}
         forward_to_inner_visit { $(<span class="macro-nonterminal">$forward_to_inner_visit_ty</span>:ty),* $(,)<span class="question-mark">? </span>}
     ) =&gt; {
         $(<span class="kw">impl </span>Visit <span class="kw">for </span><span class="macro-nonterminal">$by_val_ty </span>{
-            <span class="kw">fn </span>visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+            <span class="kw">fn </span>visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
                 visitor.<span class="macro-nonterminal">$by_val_method</span>(<span class="kw-2">*</span><span class="self">self</span>);
             }
         })*
         $(<span class="kw">impl </span>Visit <span class="kw">for </span><span class="macro-nonterminal">$by_ref_ty </span>{
-            <span class="kw">fn </span>visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+            <span class="kw">fn </span>visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
                 visitor.<span class="macro-nonterminal">$by_ref_method</span>(<span class="self">self</span>);
             }
         })*
         $(<span class="kw">impl </span>Visit <span class="kw">for </span><span class="macro-nonterminal">$forward_to_inner_visit_ty </span>{
-            <span class="kw">fn </span>visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+            <span class="kw">fn </span>visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
                 <span class="self">self</span>.inner_visit_with(visitor);
             }
         })*
     };
 }
 
-<span class="macro">impl_visit! </span>{
+<span class="macro">impl_visit!</span> {
     by_val {
         visit_attr_set_use(AttrSet),
         visit_type_use(Type),
@@ -708,42 +708,42 @@
         visit_value_use(Value),
     }
     forward_to_inner_visit {
-        <span class="comment">// NOTE(eddyb) the interpolated parts of `Attr::Diagnostics` aren&#39;t visited
-        // by default (as they&#39;re &quot;inert data&quot;), this is only for `print`&#39;s usage.
+        <span class="comment">// NOTE(eddyb) the interpolated parts of `Attr::Diagnostics` aren't visited
+        // by default (as they're "inert data"), this is only for `print`'s usage.
         </span>Vec&lt;DiagMsgPart&gt;,
     }
 }
 
-<span class="doccomment">/// Trait implemented on &quot;deeply visitable&quot; types, to further &quot;explore&quot; a type
-/// by visiting its &quot;interior&quot; (i.e. variants and/or fields).
+<span class="doccomment">/// Trait implemented on "deeply visitable" types, to further "explore" a type
+/// by visiting its "interior" (i.e. variants and/or fields).
 ///
 /// That is, an `impl InnerVisit for X` will call the relevant [`Visitor`] method
 /// for each `X` field, effectively performing a single level of a deep visit.
 /// Also, if `Visitor::visit_X` exists for a given `X`, its default should be to
 /// call `X::inner_visit_with` (i.e. so that visiting is mostly-deep by default).
 </span><span class="kw">pub trait </span>InnerVisit {
-    <span class="comment">// FIXME(eddyb) the naming here isn&#39;t great, can it be improved?
-    </span><span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;);
+    <span class="comment">// FIXME(eddyb) the naming here isn't great, can it be improved?
+    </span><span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;);
 }
 
 <span class="doccomment">/// Dynamic dispatch version of [`InnerVisit`].
 ///
-/// `dyn DynInnerVisit&lt;&#39;a, V&gt;` is possible, unlike `dyn InnerVisit`, because of
+/// `dyn DynInnerVisit&lt;'a, V&gt;` is possible, unlike `dyn InnerVisit`, because of
 /// the `trait`-level type parameter `V`, which replaces the method parameter.
-</span><span class="kw">pub trait </span>DynInnerVisit&lt;<span class="lifetime">&#39;a</span>, V&gt; {
-    <span class="kw">fn </span>dyn_inner_visit_with(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span>V);
+</span><span class="kw">pub trait </span>DynInnerVisit&lt;<span class="lifetime">'a</span>, V&gt; {
+    <span class="kw">fn </span>dyn_inner_visit_with(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span>V);
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: InnerVisit, V: Visitor&lt;<span class="lifetime">&#39;a</span>&gt;&gt; DynInnerVisit&lt;<span class="lifetime">&#39;a</span>, V&gt; <span class="kw">for </span>T {
-    <span class="kw">fn </span>dyn_inner_visit_with(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span>V) {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: InnerVisit, V: Visitor&lt;<span class="lifetime">'a</span>&gt;&gt; DynInnerVisit&lt;<span class="lifetime">'a</span>, V&gt; <span class="kw">for </span>T {
+    <span class="kw">fn </span>dyn_inner_visit_with(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span>V) {
         <span class="self">self</span>.inner_visit_with(visitor);
     }
 }
 
 <span class="comment">// FIXME(eddyb) should the impls be here, or next to definitions? (maybe derived?)
 </span><span class="kw">impl </span>InnerVisit <span class="kw">for </span>Module {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
-        <span class="comment">// FIXME(eddyb) this can&#39;t be exhaustive because of the private `cx` field.
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
+        <span class="comment">// FIXME(eddyb) this can't be exhaustive because of the private `cx` field.
         </span><span class="kw">let </span><span class="self">Self </span>{ dialect, debug_info, global_vars: <span class="kw">_</span>, funcs: <span class="kw">_</span>, exports, .. } = <span class="self">self</span>;
 
         visitor.visit_module_dialect(dialect);
@@ -756,7 +756,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>ModuleDialect {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Spv(dialect) =&gt; visitor.visit_spv_dialect(dialect),
         }
@@ -764,7 +764,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>ModuleDebugInfo {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Spv(debug_info) =&gt; {
                 visitor.visit_spv_module_debug_info(debug_info);
@@ -774,7 +774,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>ExportKey {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::LinkName(<span class="kw">_</span>) =&gt; {}
 
@@ -788,7 +788,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>Exportee {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             <span class="self">Self</span>::GlobalVar(gv) =&gt; visitor.visit_global_var_use(gv),
             <span class="self">Self</span>::Func(func) =&gt; visitor.visit_func_use(func),
@@ -797,7 +797,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>AttrSetDef {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ attrs } = <span class="self">self</span>;
 
         <span class="kw">for </span>attr <span class="kw">in </span>attrs {
@@ -807,7 +807,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>Attr {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">match </span><span class="self">self </span>{
             Attr::Diagnostics(<span class="kw">_</span>)
             | Attr::SpvAnnotation(<span class="kw">_</span>)
@@ -826,10 +826,10 @@
     }
 }
 
-<span class="comment">// NOTE(eddyb) the interpolated parts of `Attr::Diagnostics` aren&#39;t visited
-// by default (as they&#39;re &quot;inert data&quot;), this is only for `print`&#39;s usage.
+<span class="comment">// NOTE(eddyb) the interpolated parts of `Attr::Diagnostics` aren't visited
+// by default (as they're "inert data"), this is only for `print`'s usage.
 </span><span class="kw">impl </span>InnerVisit <span class="kw">for </span>Vec&lt;DiagMsgPart&gt; {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">for </span>part <span class="kw">in </span><span class="self">self </span>{
             <span class="kw">match </span>part {
                 DiagMsgPart::Plain(<span class="kw">_</span>) =&gt; {}
@@ -843,7 +843,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>QPtrUsage {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="kw-2">&amp;</span>QPtrUsage::Handles(qptr::shapes::Handle::Opaque(ty)) =&gt; {
                 visitor.visit_type_use(ty);
@@ -857,14 +857,14 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>QPtrMemUsage {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ max_size: <span class="kw">_</span>, kind } = <span class="self">self</span>;
         kind.inner_visit_with(visitor);
     }
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>QPtrMemUsageKind {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Unused =&gt; {}
             <span class="kw-2">&amp;</span><span class="self">Self</span>::StrictlyTyped(ty) | <span class="kw-2">&amp;</span><span class="self">Self</span>::DirectAccess(ty) =&gt; {
@@ -883,7 +883,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>TypeDef {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ attrs, ctor, ctor_args } = <span class="self">self</span>;
 
         visitor.visit_attr_set_use(<span class="kw-2">*</span>attrs);
@@ -900,7 +900,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>ConstDef {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ attrs, ty, ctor, ctor_args } = <span class="self">self</span>;
 
         visitor.visit_attr_set_use(<span class="kw-2">*</span>attrs);
@@ -916,7 +916,7 @@
 }
 
 <span class="kw">impl</span>&lt;D: InnerVisit&gt; InnerVisit <span class="kw">for </span>DeclDef&lt;D&gt; {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Imported(import) =&gt; visitor.visit_import(import),
             <span class="self">Self</span>::Present(def) =&gt; def.inner_visit_with(visitor),
@@ -925,7 +925,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>GlobalVarDecl {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ attrs, type_of_ptr_to, shape, addr_space, def } = <span class="self">self</span>;
 
         visitor.visit_attr_set_use(<span class="kw-2">*</span>attrs);
@@ -945,7 +945,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>GlobalVarDefBody {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ initializer } = <span class="self">self</span>;
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(initializer) = <span class="kw-2">*</span>initializer {
@@ -955,7 +955,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>FuncDecl {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ attrs, ret_type, params, def } = <span class="self">self</span>;
 
         visitor.visit_attr_set_use(<span class="kw-2">*</span>attrs);
@@ -968,7 +968,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>FuncParam {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ attrs, ty } = <span class="kw-2">*</span><span class="self">self</span>;
 
         visitor.visit_attr_set_use(attrs);
@@ -977,7 +977,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>FuncDefBody {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.unstructured_cfg {
             <span class="prelude-val">None </span>=&gt; visitor.visit_control_region_def(<span class="self">self</span>.at_body()),
             <span class="prelude-val">Some</span>(cfg) =&gt; {
@@ -993,10 +993,10 @@
     }
 }
 
-<span class="comment">// FIXME(eddyb) this can&#39;t implement `InnerVisit` because of the `&amp;&#39;a self`
-// requirement, whereas this has `&#39;a` in `self: FuncAt&lt;&#39;a, ControlRegion&gt;`.
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; FuncAt&lt;<span class="lifetime">&#39;a</span>, ControlRegion&gt; {
-    <span class="kw">pub fn </span>inner_visit_with(<span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+<span class="comment">// FIXME(eddyb) this can't implement `InnerVisit` because of the `&amp;'a self`
+// requirement, whereas this has `'a` in `self: FuncAt&lt;'a, ControlRegion&gt;`.
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; FuncAt&lt;<span class="lifetime">'a</span>, ControlRegion&gt; {
+    <span class="kw">pub fn </span>inner_visit_with(<span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span>ControlRegionDef { inputs, children, outputs } = <span class="self">self</span>.def();
 
         <span class="kw">for </span>input <span class="kw">in </span>inputs {
@@ -1010,7 +1010,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>ControlRegionInputDecl {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ attrs, ty } = <span class="kw-2">*</span><span class="self">self</span>;
 
         visitor.visit_attr_set_use(attrs);
@@ -1018,20 +1018,20 @@
     }
 }
 
-<span class="comment">// FIXME(eddyb) this can&#39;t implement `InnerVisit` because of the `&amp;&#39;a self`
-// requirement, whereas this has `&#39;a` in `self: FuncAt&lt;&#39;a, ...&gt;`.
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; FuncAt&lt;<span class="lifetime">&#39;a</span>, EntityListIter&lt;ControlNode&gt;&gt; {
-    <span class="kw">pub fn </span>inner_visit_with(<span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+<span class="comment">// FIXME(eddyb) this can't implement `InnerVisit` because of the `&amp;'a self`
+// requirement, whereas this has `'a` in `self: FuncAt&lt;'a, ...&gt;`.
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; FuncAt&lt;<span class="lifetime">'a</span>, EntityListIter&lt;ControlNode&gt;&gt; {
+    <span class="kw">pub fn </span>inner_visit_with(<span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">for </span>func_at_control_node <span class="kw">in </span><span class="self">self </span>{
             visitor.visit_control_node_def(func_at_control_node);
         }
     }
 }
 
-<span class="comment">// FIXME(eddyb) this can&#39;t implement `InnerVisit` because of the `&amp;&#39;a self`
-// requirement, whereas this has `&#39;a` in `self: FuncAt&lt;&#39;a, ControlNode&gt;`.
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; FuncAt&lt;<span class="lifetime">&#39;a</span>, ControlNode&gt; {
-    <span class="kw">pub fn </span>inner_visit_with(<span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+<span class="comment">// FIXME(eddyb) this can't implement `InnerVisit` because of the `&amp;'a self`
+// requirement, whereas this has `'a` in `self: FuncAt&lt;'a, ControlNode&gt;`.
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; FuncAt&lt;<span class="lifetime">'a</span>, ControlNode&gt; {
+    <span class="kw">pub fn </span>inner_visit_with(<span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span>ControlNodeDef { kind, outputs } = <span class="self">self</span>.def();
 
         <span class="kw">match </span>kind {
@@ -1065,7 +1065,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>ControlNodeOutputDecl {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ attrs, ty } = <span class="kw-2">*</span><span class="self">self</span>;
 
         visitor.visit_attr_set_use(attrs);
@@ -1074,7 +1074,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>DataInstDef {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ attrs, form, inputs } = <span class="self">self</span>;
 
         visitor.visit_attr_set_use(<span class="kw-2">*</span>attrs);
@@ -1086,7 +1086,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>DataInstFormDef {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ kind, output_type } = <span class="self">self</span>;
 
         <span class="kw">match </span>kind {
@@ -1110,7 +1110,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>cfg::ControlInst {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">let </span><span class="self">Self </span>{ attrs, kind, inputs, targets: <span class="kw">_</span>, target_inputs } = <span class="self">self</span>;
 
         visitor.visit_attr_set_use(<span class="kw-2">*</span>attrs);
@@ -1135,7 +1135,7 @@
 }
 
 <span class="kw">impl </span>InnerVisit <span class="kw">for </span>Value {
-    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">&#39;a</span>&gt;) {
+    <span class="kw">fn </span>inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;) {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             <span class="self">Self</span>::Const(ct) =&gt; visitor.visit_const_use(ct),
             <span class="self">Self</span>::ControlRegionInput { region: <span class="kw">_</span>, input_idx: <span class="kw">_ </span>}

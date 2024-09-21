@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/spirv-std/src/ray_tracing.rs`."><title>ray_tracing.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirv_std" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../spirv_std/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/spirv-std/src/ray_tracing.rs`."><title>ray_tracing.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirv_std" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../spirv_std/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -992,18 +992,18 @@
 <a href="#992" id="992">992</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Ray-tracing data types
 
-</span><span class="comment">// NOTE(eddyb) &quot;&amp;-masking with zero&quot;, likely due to `NONE = 0` in `bitflags!`.
+</span><span class="comment">// NOTE(eddyb) "&amp;-masking with zero", likely due to `NONE = 0` in `bitflags!`.
 </span><span class="attr">#![allow(clippy::bad_bit_mask)]
 
 </span><span class="kw">use </span><span class="kw">crate</span>::vector::Vector;
-<span class="attr">#[cfg(target_arch = <span class="string">&quot;spirv&quot;</span>)]
+<span class="attr">#[cfg(target_arch = <span class="string">"spirv"</span>)]
 </span><span class="kw">use </span>core::arch::asm;
 
 <span class="doccomment">/// An acceleration structure type which is an opaque reference to an
 /// acceleration structure handle as defined in the client API specification.
 </span><span class="attr">#[spirv(acceleration_structure)]
 #[derive(Copy, Clone)]
-</span><span class="comment">// HACK(eddyb) avoids &quot;transparent newtype of `_anti_zst_padding`&quot; misinterpretation.
+</span><span class="comment">// HACK(eddyb) avoids "transparent newtype of `_anti_zst_padding`" misinterpretation.
 </span><span class="attr">#[repr(C)]
 </span><span class="kw">pub struct </span>AccelerationStructure {
     <span class="comment">// HACK(eddyb) avoids the layout becoming ZST (and being elided in one way
@@ -1016,15 +1016,15 @@
     /// # Safety
     /// The 64-bit integer must point to a valid acceleration structure.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpConvertUToAccelerationStructureKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpConvertUToAccelerationStructureKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>from_u64(id: u64) -&gt; AccelerationStructure {
         <span class="comment">// FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
         </span><span class="kw">let </span><span class="kw-2">mut </span>result_slot = core::mem::MaybeUninit::uninit();
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%ret = OpTypeAccelerationStructureKHR&quot;</span>,
-            <span class="string">&quot;%result = OpConvertUToAccelerationStructureKHR %ret {id}&quot;</span>,
-            <span class="string">&quot;OpStore {result_slot} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%ret = OpTypeAccelerationStructureKHR"</span>,
+            <span class="string">"%result = OpConvertUToAccelerationStructureKHR %ret {id}"</span>,
+            <span class="string">"OpStore {result_slot} %result"</span>,
             id = <span class="kw">in</span>(reg) id,
             result_slot = <span class="kw">in</span>(reg) result_slot.as_mut_ptr(),
         }
@@ -1035,16 +1035,16 @@
     /// # Safety
     /// The combination must point to a valid acceleration structure.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpConvertUToAccelerationStructureKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpConvertUToAccelerationStructureKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>from_vec(id: <span class="kw">impl </span>Vector&lt;u32, <span class="number">2</span>&gt;) -&gt; AccelerationStructure {
         <span class="comment">// FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
         </span><span class="kw">let </span><span class="kw-2">mut </span>result_slot = core::mem::MaybeUninit::uninit();
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%ret = OpTypeAccelerationStructureKHR&quot;</span>,
-            <span class="string">&quot;%id = OpLoad _ {id}&quot;</span>,
-            <span class="string">&quot;%result = OpConvertUToAccelerationStructureKHR %ret %id&quot;</span>,
-            <span class="string">&quot;OpStore {result_slot} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%ret = OpTypeAccelerationStructureKHR"</span>,
+            <span class="string">"%id = OpLoad _ {id}"</span>,
+            <span class="string">"%result = OpConvertUToAccelerationStructureKHR %ret %id"</span>,
+            <span class="string">"OpStore {result_slot} %result"</span>,
             id = <span class="kw">in</span>(reg) <span class="kw-2">&amp;</span>id,
             result_slot = <span class="kw">in</span>(reg) result_slot.as_mut_ptr(),
         }
@@ -1079,7 +1079,7 @@
     /// This instruction is a shader call instruction which may invoke shaders with
     /// the `intersection`, `any_hit`, `closest_hit`, and `miss`
     /// execution models.
-    </span><span class="attr">#[doc(alias = <span class="string">&quot;OpTraceRayKHR&quot;</span>)]
+    </span><span class="attr">#[doc(alias = <span class="string">"OpTraceRayKHR"</span>)]
     #[inline]
     #[allow(clippy::too_many_arguments)]
     </span><span class="kw">pub unsafe fn </span>trace_ray&lt;T&gt;(
@@ -1095,11 +1095,11 @@
         ray_tmax: f32,
         payload: <span class="kw-2">&amp;mut </span>T,
     ) {
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%acceleration_structure = OpLoad _ {acceleration_structure}&quot;</span>,
-            <span class="string">&quot;%ray_origin = OpLoad _ {ray_origin}&quot;</span>,
-            <span class="string">&quot;%ray_direction = OpLoad _ {ray_direction}&quot;</span>,
-            <span class="string">&quot;OpTraceRayKHR \
+        <span class="macro">asm!</span> {
+            <span class="string">"%acceleration_structure = OpLoad _ {acceleration_structure}"</span>,
+            <span class="string">"%ray_origin = OpLoad _ {ray_origin}"</span>,
+            <span class="string">"%ray_direction = OpLoad _ {ray_direction}"</span>,
+            <span class="string">"OpTraceRayKHR \
             %acceleration_structure \
             {ray_flags} \
             {cull_mask} \
@@ -1110,7 +1110,7 @@
             {ray_tmin} \
             %ray_direction \
             {ray_tmax} \
-            {payload}&quot;</span>,
+            {payload}"</span>,
             acceleration_structure = <span class="kw">in</span>(reg) <span class="self">self</span>,
             ray_flags = <span class="kw">in</span>(reg) ray_flags.bits(),
             cull_mask = <span class="kw">in</span>(reg) cull_mask,
@@ -1126,7 +1126,7 @@
     }
 }
 
-<span class="macro">bitflags::bitflags! </span>{
+<span class="macro">bitflags::bitflags!</span> {
     <span class="doccomment">/// Flags controlling the properties of an OpTraceRayKHR instruction.
     /// Despite being a mask and allowing multiple bits to be combined, it is
     /// invalid for more than one of these four bits to be set: `OPAQUE`,
@@ -1186,7 +1186,7 @@
 
 <span class="doccomment">/// A ray query type which is an opaque object representing a ray traversal.
 </span><span class="attr">#[spirv(ray_query)]
-</span><span class="comment">// HACK(eddyb) avoids &quot;transparent newtype of `_anti_zst_padding`&quot; misinterpretation.
+</span><span class="comment">// HACK(eddyb) avoids "transparent newtype of `_anti_zst_padding`" misinterpretation.
 </span><span class="attr">#[repr(C)]
 </span><span class="kw">pub struct </span>RayQuery {
     <span class="comment">// HACK(eddyb) avoids the layout becoming ZST (and being elided in one way
@@ -1197,7 +1197,7 @@
 <span class="doccomment">/// Constructs an uninitialized ray query variable. Using the syntax
 /// `let (mut)? &lt;name&gt;`. Where `name` is the name of the ray query variable.
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>ray_query {
+</span><span class="macro">macro_rules!</span> ray_query {
     (<span class="kw">let </span><span class="macro-nonterminal">$name</span>:ident) =&gt; {
         <span class="macro-nonterminal">$</span><span class="macro">crate::ray_query!</span>(@<span class="macro-nonterminal">inner $name</span>)
     };
@@ -1207,10 +1207,10 @@
     (@inner <span class="macro-nonterminal">$name</span>:ident $(, <span class="macro-nonterminal">$</span><span class="kw-2">mut</span>:<span class="macro-nonterminal">tt</span>)<span class="question-mark">?</span>) =&gt; {
         <span class="kw">let </span><span class="macro-nonterminal">$name</span>: <span class="kw-2">&amp;</span>$(<span class="macro-nonterminal">$</span><span class="kw-2">mut</span>)<span class="question-mark">? </span><span class="macro-nonterminal">RayQuery </span>= <span class="kw">unsafe </span>{
             <span class="kw">let </span><span class="macro-nonterminal">$name </span>: <span class="kw-2">*mut </span>RayQuery;
-            <span class="macro">::core::arch::asm! </span>{
-                <span class="string">&quot;%ray_query = OpTypeRayQueryKHR&quot;</span>,
-                <span class="string">&quot;%ray_query_ptr = OpTypePointer Generic %ray_query&quot;</span>,
-                <span class="string">&quot;{name} = OpVariable %ray_query_ptr Function&quot;</span>,
+            <span class="macro">::core::arch::asm!</span> {
+                <span class="string">"%ray_query = OpTypeRayQueryKHR"</span>,
+                <span class="string">"%ray_query_ptr = OpTypePointer Generic %ray_query"</span>,
+                <span class="string">"{name} = OpVariable %ray_query_ptr Function"</span>,
                 name = out(reg) <span class="macro-nonterminal">$name</span>,
             }
 
@@ -1234,7 +1234,7 @@
     /// - `ray_origin`, `ray_tmin`, `ray_direction`, and `ray_tmax` control the
     ///   basic parameters of the ray to be traced.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryInitializeKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryInitializeKHR"</span>)]
     #[inline]
     #[allow(clippy::too_many_arguments)]
     </span><span class="kw">pub unsafe fn </span>initialize(
@@ -1247,11 +1247,11 @@
         ray_direction: <span class="kw">impl </span>Vector&lt;f32, <span class="number">3</span>&gt;,
         ray_tmax: f32,
     ) {
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%acceleration_structure = OpLoad _ {acceleration_structure}&quot;</span>,
-            <span class="string">&quot;%origin = OpLoad _ {ray_origin}&quot;</span>,
-            <span class="string">&quot;%direction = OpLoad _ {ray_direction}&quot;</span>,
-            <span class="string">&quot;OpRayQueryInitializeKHR \
+        <span class="macro">asm!</span> {
+            <span class="string">"%acceleration_structure = OpLoad _ {acceleration_structure}"</span>,
+            <span class="string">"%origin = OpLoad _ {ray_origin}"</span>,
+            <span class="string">"%direction = OpLoad _ {ray_direction}"</span>,
+            <span class="string">"OpRayQueryInitializeKHR \
                 {ray_query} \
                 %acceleration_structure \
                 {ray_flags} \
@@ -1259,7 +1259,7 @@
                 %origin \
                 {ray_tmin} \
                 %direction \
-                {ray_tmax}&quot;</span>,
+                {ray_tmax}"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             acceleration_structure = <span class="kw">in</span>(reg) acceleration_structure,
             ray_flags = <span class="kw">in</span>(reg) ray_flags.bits(),
@@ -1275,15 +1275,15 @@
     /// and `false` when it has completed. A previous call to [`Self::proceed`]
     /// with the same ray query object must not have already returned `false`.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryProceedKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryProceedKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>proceed(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="bool-val">false</span>;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%bool = OpTypeBool&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryProceedKHR %bool {ray_query}&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%bool = OpTypeBool"</span>,
+            <span class="string">"%result = OpRayQueryProceedKHR %bool {ray_query}"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1296,10 +1296,10 @@
     /// execution of [`Self::proceed`] with the same ray query object must have
     /// been true.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryTerminateKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryTerminateKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>terminate(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">asm!</span>(<span class="string">&quot;OpRayQueryTerminateKHR {}&quot;</span>, <span class="kw">in</span>(reg) <span class="self">self</span>)
+        <span class="macro">asm!</span>(<span class="string">"OpRayQueryTerminateKHR {}"</span>, <span class="kw">in</span>(reg) <span class="self">self</span>)
     }
 
     <span class="doccomment">/// Confirms a triangle intersection to be included in the determination
@@ -1310,25 +1310,25 @@
     /// [`Self::get_candidate_intersection_type()`] of
     /// [`CandidateIntersection::Triangle`].
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryConfirmIntersectionKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryConfirmIntersectionKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>confirm_intersection(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-        <span class="macro">asm!</span>(<span class="string">&quot;OpRayQueryConfirmIntersectionKHR {}&quot;</span>, <span class="kw">in</span>(reg) <span class="self">self</span>)
+        <span class="macro">asm!</span>(<span class="string">"OpRayQueryConfirmIntersectionKHR {}"</span>, <span class="kw">in</span>(reg) <span class="self">self</span>)
     }
 
     <span class="doccomment">/// Returns the type of the current candidate intersection.
     ///
     /// [`Self::proceed()`] must have been called on this object, and it must have returned true.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionTypeKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionTypeKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CandidateIntersection {
         <span class="kw">let </span>result: u32;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionTypeKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionTypeKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1342,15 +1342,15 @@
 
     <span class="doccomment">/// Returns the type of the current candidate intersection.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionTypeKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionTypeKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CommittedIntersection {
         <span class="kw">let </span>result: u32;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionTypeKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionTypeKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1363,16 +1363,16 @@
         }
     }
 
-    <span class="doccomment">/// Returns the &quot;Ray Tmin&quot; value used by the ray query.
+    <span class="doccomment">/// Returns the "Ray Tmin" value used by the ray query.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetRayTMinKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetRayTMinKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_ray_t_min(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%f32 = OpTypeFloat 32&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetRayTMinKHR %f32 {ray_query}&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%f32 = OpTypeFloat 32"</span>,
+            <span class="string">"{result} = OpRayQueryGetRayTMinKHR %f32 {ray_query}"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1380,15 +1380,15 @@
         result
     }
 
-    <span class="doccomment">/// Returns the &quot;Ray Flags&quot; value used by the ray query.
+    <span class="doccomment">/// Returns the "Ray Flags" value used by the ray query.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetRayFlagsKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetRayFlagsKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_ray_flags(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RayFlags {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;{result} = OpRayQueryGetRayFlagsKHR typeof{result} {ray_query}&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"{result} = OpRayQueryGetRayFlagsKHR typeof{result} {ray_query}"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1396,22 +1396,22 @@
         RayFlags::from_bits_truncate(result)
     }
 
-    <span class="doccomment">/// Gets the &quot;T&quot; value for the current or previous intersection considered
+    <span class="doccomment">/// Gets the "T" value for the current or previous intersection considered
     /// in a ray query.
     ///
     /// [`Self::proceed()`] must have been called on this object, and it must have returned true.
     /// The current intersection candidate must have a [`Self::get_candidate_intersection_type()`]
     /// of [`CandidateIntersection::Triangle`].
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionTKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionTKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_t(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionTKHR typeof{result} {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionTKHR typeof{result} {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1419,23 +1419,23 @@
         result
     }
 
-    <span class="doccomment">/// Gets the &quot;T&quot; value for the current or previous intersection considered
+    <span class="doccomment">/// Gets the "T" value for the current or previous intersection considered
     /// in a ray query.
     ///
     /// There must be a current committed intersection.
     ///
-    /// TODO: Improve docs. Can&#39;t right now due to
+    /// TODO: Improve docs. Can't right now due to
     /// &lt;https://github.com/KhronosGroup/SPIRV-Registry/issues/128&gt;
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionTKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionTKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_t(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionTKHR typeof{result} {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionTKHR typeof{result} {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1448,15 +1448,15 @@
     ///
     /// [`Self::proceed()`] must have been called on this object, and it must have returned true.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionInstanceCustomIndexKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionInstanceCustomIndexKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_instance_custom_index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionInstanceCustomIndexKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionInstanceCustomIndexKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1469,18 +1469,18 @@
     ///
     /// There must be a current committed intersection.
     ///
-    /// TODO: Improve docs. Can&#39;t right now due to
+    /// TODO: Improve docs. Can't right now due to
     /// &lt;https://github.com/KhronosGroup/SPIRV-Registry/issues/128&gt;
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionInstanceCustomIndexKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionInstanceCustomIndexKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_instance_custom_index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionInstanceCustomIndexKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionInstanceCustomIndexKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1493,15 +1493,15 @@
     ///
     /// [`Self::proceed()`] must have been called on this object, and it must have returned true.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionInstanceIdKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionInstanceIdKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_instance_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionInstanceIdKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionInstanceIdKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1514,18 +1514,18 @@
     ///
     /// There must be a current committed intersection.
     ///
-    /// TODO: Improve docs. Can&#39;t right now due to
+    /// TODO: Improve docs. Can't right now due to
     /// &lt;https://github.com/KhronosGroup/SPIRV-Registry/issues/128&gt;
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionInstanceIdKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionInstanceIdKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_instance_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionInstanceIdKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionInstanceIdKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1538,15 +1538,15 @@
     ///
     /// [`Self::proceed()`] must have been called on this object, and it must have returned true.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_shader_binding_table_record_offset(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1559,18 +1559,18 @@
     ///
     /// There must be a current committed intersection.
     ///
-    /// TODO: Improve docs. Can&#39;t right now due to
+    /// TODO: Improve docs. Can't right now due to
     /// &lt;https://github.com/KhronosGroup/SPIRV-Registry/issues/128&gt;
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_shader_binding_table_record_offset(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1583,15 +1583,15 @@
     ///
     /// [`Self::proceed()`] must have been called on this object, and it must have returned true.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionGeometryIndexKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionGeometryIndexKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_geometry_index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionGeometryIndexKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionGeometryIndexKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1604,18 +1604,18 @@
     ///
     /// There must be a current committed intersection.
     ///
-    /// TODO: Improve docs. Can&#39;t right now due to
+    /// TODO: Improve docs. Can't right now due to
     /// &lt;https://github.com/KhronosGroup/SPIRV-Registry/issues/128&gt;
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionGeometryIndexKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionGeometryIndexKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_geometry_index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionGeometryIndexKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionGeometryIndexKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1628,15 +1628,15 @@
     ///
     /// [`Self::proceed()`] must have been called on this object, and it must have returned true.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionPrimitiveIndexKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionPrimitiveIndexKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_primitive_index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionPrimitiveIndexKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionPrimitiveIndexKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1649,18 +1649,18 @@
     ///
     /// There must be a current committed intersection.
     ///
-    /// TODO: Improve docs. Can&#39;t right now due to
+    /// TODO: Improve docs. Can't right now due to
     /// &lt;https://github.com/KhronosGroup/SPIRV-Registry/issues/128&gt;
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionPrimitiveIndexKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionPrimitiveIndexKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_primitive_index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="kw">let </span>result;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;{result} = OpRayQueryGetIntersectionPrimitiveIndexKHR %u32 {ray_query} %intersection&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"{result} = OpRayQueryGetIntersectionPrimitiveIndexKHR %u32 {ray_query} %intersection"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = out(reg) result,
         }
@@ -1675,16 +1675,16 @@
     /// The current intersection candidate must have a [`Self::get_candidate_intersection_type()`]
     /// of [`CandidateIntersection::Triangle`].
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionBarycentricsKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionBarycentricsKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_barycentrics&lt;V: Vector&lt;f32, <span class="number">2</span>&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; V {
         <span class="kw">let </span><span class="kw-2">mut </span>result = Default::default();
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryGetIntersectionBarycentricsKHR typeof*{result} {ray_query} %intersection&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"%result = OpRayQueryGetIntersectionBarycentricsKHR typeof*{result} {ray_query} %intersection"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1698,19 +1698,19 @@
     /// There must be a current committed intersection. Its
     /// [`Self::get_committed_intersection_type()`] must be [`CommittedIntersection::Triangle`].
     ///
-    /// TODO: Improve docs. Can&#39;t right now due to
+    /// TODO: Improve docs. Can't right now due to
     /// &lt;https://github.com/KhronosGroup/SPIRV-Registry/issues/128&gt;
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionBarycentricsKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionBarycentricsKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_barycentrics&lt;V: Vector&lt;f32, <span class="number">2</span>&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; V {
         <span class="kw">let </span><span class="kw-2">mut </span>result = Default::default();
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryGetIntersectionBarycentricsKHR typeof*{result} {ray_query} %intersection&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"%result = OpRayQueryGetIntersectionBarycentricsKHR typeof*{result} {ray_query} %intersection"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1725,17 +1725,17 @@
     /// The current intersection candidate must have a [`Self::get_candidate_intersection_type()`]
     /// of [`CandidateIntersection::Triangle`].
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionFrontFaceKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionFrontFaceKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_front_face(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="bool-val">false</span>;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%bool = OpTypeBool&quot;</span>,
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryGetIntersectionFrontFaceKHR %bool {ray_query} %intersection&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%bool = OpTypeBool"</span>,
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"%result = OpRayQueryGetIntersectionFrontFaceKHR %bool {ray_query} %intersection"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1749,20 +1749,20 @@
     /// There must be a current committed intersection. Its
     /// [`Self::get_committed_intersection_type()`] must be [`CommittedIntersection::Triangle`].
     ///
-    /// TODO: Improve docs. Can&#39;t right now due to
+    /// TODO: Improve docs. Can't right now due to
     /// &lt;https://github.com/KhronosGroup/SPIRV-Registry/issues/128&gt;
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionFrontFaceKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionFrontFaceKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_front_face(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="bool-val">false</span>;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%bool = OpTypeBool&quot;</span>,
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryGetIntersectionFrontFaceKHR %bool {ray_query} %intersection&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%bool = OpTypeBool"</span>,
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"%result = OpRayQueryGetIntersectionFrontFaceKHR %bool {ray_query} %intersection"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1773,15 +1773,15 @@
     <span class="doccomment">/// Returns whether a candidate intersection considered in a ray query was with
     /// an opaque AABB (Axis Aligned Bounding Box) or not.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionCandidateAABBOpaqueKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionCandidateAABBOpaqueKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_intersection_candidate_aabb_opaque(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="bool-val">false</span>;
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%bool = OpTypeBool&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryGetIntersectionCandidateAABBOpaqueKHR %bool {ray_query}&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%bool = OpTypeBool"</span>,
+            <span class="string">"%result = OpRayQueryGetIntersectionCandidateAABBOpaqueKHR %bool {ray_query}"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1794,16 +1794,16 @@
     ///
     /// [`Self::proceed()`] must have been called on this object, and it must have returned true.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionObjectRayDirectionKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionObjectRayDirectionKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_object_ray_direction&lt;V: Vector&lt;f32, <span class="number">3</span>&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; V {
         <span class="kw">let </span><span class="kw-2">mut </span>result = Default::default();
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryGetIntersectionObjectRayDirectionKHR typeof*{result} {ray_query} %intersection&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"%result = OpRayQueryGetIntersectionObjectRayDirectionKHR typeof*{result} {ray_query} %intersection"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1816,19 +1816,19 @@
     ///
     /// There must be a current committed intersection.
     ///
-    /// TODO: Improve docs. Can&#39;t right now due to
+    /// TODO: Improve docs. Can't right now due to
     /// &lt;https://github.com/KhronosGroup/SPIRV-Registry/issues/128&gt;
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionObjectRayDirectionKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionObjectRayDirectionKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_object_ray_direction&lt;V: Vector&lt;f32, <span class="number">3</span>&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; V {
         <span class="kw">let </span><span class="kw-2">mut </span>result = Default::default();
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryGetIntersectionObjectRayDirectionKHR typeof*{result} {ray_query} %intersection&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"%result = OpRayQueryGetIntersectionObjectRayDirectionKHR typeof*{result} {ray_query} %intersection"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1841,16 +1841,16 @@
     ///
     /// [`Self::proceed()`] must have been called on this object, and it must have returned true.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionObjectRayOriginKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionObjectRayOriginKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_object_ray_origin&lt;V: Vector&lt;f32, <span class="number">3</span>&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; V {
         <span class="kw">let </span><span class="kw-2">mut </span>result = Default::default();
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryGetIntersectionObjectRayOriginKHR typeof*{result} {ray_query} %intersection&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"%result = OpRayQueryGetIntersectionObjectRayOriginKHR typeof*{result} {ray_query} %intersection"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1863,19 +1863,19 @@
     ///
     /// There must be a current committed intersection.
     ///
-    /// TODO: Improve docs. Can&#39;t right now due to
+    /// TODO: Improve docs. Can't right now due to
     /// &lt;https://github.com/KhronosGroup/SPIRV-Registry/issues/128&gt;
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionObjectRayOriginKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionObjectRayOriginKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_object_ray_origin&lt;V: Vector&lt;f32, <span class="number">3</span>&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; V {
         <span class="kw">let </span><span class="kw-2">mut </span>result = Default::default();
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryGetIntersectionObjectRayOriginKHR typeof*{result} {ray_query} %intersection&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"%result = OpRayQueryGetIntersectionObjectRayOriginKHR typeof*{result} {ray_query} %intersection"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1885,15 +1885,15 @@
 
     <span class="doccomment">/// Gets the world-space direction for the ray traced in a ray query.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetWorldRayDirectionKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetWorldRayDirectionKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_world_ray_direction&lt;V: Vector&lt;f32, <span class="number">3</span>&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; V {
         <span class="kw">let </span><span class="kw-2">mut </span>result = Default::default();
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryGetWorldRayDirectionKHR typeof*{result} {ray_query}&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%result = OpRayQueryGetWorldRayDirectionKHR typeof*{result} {ray_query}"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1903,15 +1903,15 @@
 
     <span class="doccomment">/// Gets the world-space origin for the ray traced in a ray query.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetWorldRayOriginKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetWorldRayOriginKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_world_ray_origin&lt;V: Vector&lt;f32, <span class="number">3</span>&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; V {
         <span class="kw">let </span><span class="kw-2">mut </span>result = Default::default();
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%result = OpRayQueryGetWorldRayOriginKHR typeof*{result} {ray_query}&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%result = OpRayQueryGetWorldRayOriginKHR typeof*{result} {ray_query}"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1924,24 +1924,24 @@
     ///
     /// [`Self::proceed()`] must have been called on this object, and it must have returned true.
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionObjectToWorldKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionObjectToWorldKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_candidate_intersection_object_to_world&lt;V: Vector&lt;f32, <span class="number">3</span>&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [V; <span class="number">4</span>] {
         <span class="kw">let </span><span class="kw-2">mut </span>result = Default::default();
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%f32 = OpTypeFloat 32&quot;</span>,
-            <span class="string">&quot;%f32x3 = OpTypeVector %f32 3&quot;</span>,
-            <span class="string">&quot;%f32x3x4 = OpTypeMatrix %f32x3 4&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 0&quot;</span>,
-            <span class="string">&quot;%matrix = OpRayQueryGetIntersectionObjectToWorldKHR %f32x3x4 {ray_query} %intersection&quot;</span>,
-            <span class="string">&quot;%col0 = OpCompositeExtract %f32x3 %matrix 0&quot;</span>,
-            <span class="string">&quot;%col1 = OpCompositeExtract %f32x3 %matrix 1&quot;</span>,
-            <span class="string">&quot;%col2 = OpCompositeExtract %f32x3 %matrix 2&quot;</span>,
-            <span class="string">&quot;%col3 = OpCompositeExtract %f32x3 %matrix 3&quot;</span>,
-            <span class="string">&quot;%result = OpCompositeConstruct typeof*{result} %col0 %col1 %col2 %col3&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%f32 = OpTypeFloat 32"</span>,
+            <span class="string">"%f32x3 = OpTypeVector %f32 3"</span>,
+            <span class="string">"%f32x3x4 = OpTypeMatrix %f32x3 4"</span>,
+            <span class="string">"%intersection = OpConstant %u32 0"</span>,
+            <span class="string">"%matrix = OpRayQueryGetIntersectionObjectToWorldKHR %f32x3x4 {ray_query} %intersection"</span>,
+            <span class="string">"%col0 = OpCompositeExtract %f32x3 %matrix 0"</span>,
+            <span class="string">"%col1 = OpCompositeExtract %f32x3 %matrix 1"</span>,
+            <span class="string">"%col2 = OpCompositeExtract %f32x3 %matrix 2"</span>,
+            <span class="string">"%col3 = OpCompositeExtract %f32x3 %matrix 3"</span>,
+            <span class="string">"%result = OpCompositeConstruct typeof*{result} %col0 %col1 %col2 %col3"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }
@@ -1954,27 +1954,27 @@
     ///
     /// There must be a current committed intersection.
     ///
-    /// TODO: Improve docs. Can&#39;t right now due to
+    /// TODO: Improve docs. Can't right now due to
     /// &lt;https://github.com/KhronosGroup/SPIRV-Registry/issues/128&gt;
     </span><span class="attr">#[spirv_std_macros::gpu_only]
-    #[doc(alias = <span class="string">&quot;OpRayQueryGetIntersectionObjectToWorldKHR&quot;</span>)]
+    #[doc(alias = <span class="string">"OpRayQueryGetIntersectionObjectToWorldKHR"</span>)]
     #[inline]
     </span><span class="kw">pub unsafe fn </span>get_committed_intersection_object_to_world&lt;V: Vector&lt;f32, <span class="number">3</span>&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; [V; <span class="number">4</span>] {
         <span class="kw">let </span><span class="kw-2">mut </span>result = Default::default();
 
-        <span class="macro">asm! </span>{
-            <span class="string">&quot;%u32 = OpTypeInt 32 0&quot;</span>,
-            <span class="string">&quot;%f32 = OpTypeFloat 32&quot;</span>,
-            <span class="string">&quot;%f32x3 = OpTypeVector %f32 3&quot;</span>,
-            <span class="string">&quot;%f32x3x4 = OpTypeMatrix %f32x3 4&quot;</span>,
-            <span class="string">&quot;%intersection = OpConstant %u32 1&quot;</span>,
-            <span class="string">&quot;%matrix = OpRayQueryGetIntersectionObjectToWorldKHR %f32x3x4 {ray_query} %intersection&quot;</span>,
-            <span class="string">&quot;%col0 = OpCompositeExtract %f32x3 %matrix 0&quot;</span>,
-            <span class="string">&quot;%col1 = OpCompositeExtract %f32x3 %matrix 1&quot;</span>,
-            <span class="string">&quot;%col2 = OpCompositeExtract %f32x3 %matrix 2&quot;</span>,
-            <span class="string">&quot;%col3 = OpCompositeExtract %f32x3 %matrix 3&quot;</span>,
-            <span class="string">&quot;%result = OpCompositeConstruct typeof*{result} %col0 %col1 %col2 %col3&quot;</span>,
-            <span class="string">&quot;OpStore {result} %result&quot;</span>,
+        <span class="macro">asm!</span> {
+            <span class="string">"%u32 = OpTypeInt 32 0"</span>,
+            <span class="string">"%f32 = OpTypeFloat 32"</span>,
+            <span class="string">"%f32x3 = OpTypeVector %f32 3"</span>,
+            <span class="string">"%f32x3x4 = OpTypeMatrix %f32x3 4"</span>,
+            <span class="string">"%intersection = OpConstant %u32 1"</span>,
+            <span class="string">"%matrix = OpRayQueryGetIntersectionObjectToWorldKHR %f32x3x4 {ray_query} %intersection"</span>,
+            <span class="string">"%col0 = OpCompositeExtract %f32x3 %matrix 0"</span>,
+            <span class="string">"%col1 = OpCompositeExtract %f32x3 %matrix 1"</span>,
+            <span class="string">"%col2 = OpCompositeExtract %f32x3 %matrix 2"</span>,
+            <span class="string">"%col3 = OpCompositeExtract %f32x3 %matrix 3"</span>,
+            <span class="string">"%result = OpCompositeConstruct typeof*{result} %col0 %col1 %col2 %col3"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
             ray_query = <span class="kw">in</span>(reg) <span class="self">self</span>,
             result = <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
         }

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/packed/pattern.rs`."><title>pattern.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../aho_corasick/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/packed/pattern.rs`."><title>pattern.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -523,7 +523,7 @@
 <span class="comment">// BREADCRUMBS: I think we want to experiment with a different bucket
 // representation. Basically, each bucket is just a Range&lt;usize&gt; to a single
 // contiguous allocation? Maybe length-prefixed patterns or something? The
-// idea is to try to get rid of the pointer chasing in verification. I don&#39;t
+// idea is to try to get rid of the pointer chasing in verification. I don't
 // know that that is the issue, but I suspect it is.
 
 </span><span class="kw">impl </span>Patterns {
@@ -619,7 +619,7 @@
 
     <span class="doccomment">/// Return the pattern with the given identifier. If such a pattern does
     /// not exist, then this panics.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, id: PatternID) -&gt; Pattern&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, id: PatternID) -&gt; Pattern&lt;<span class="lifetime">'_</span>&gt; {
         Pattern(<span class="kw-2">&amp;</span><span class="self">self</span>.by_id[id])
     }
 
@@ -630,7 +630,7 @@
     ///
     /// Callers must ensure that a pattern with the given identifier exists
     /// before using this method.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>get_unchecked(<span class="kw-2">&amp;</span><span class="self">self</span>, id: PatternID) -&gt; Pattern&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>get_unchecked(<span class="kw-2">&amp;</span><span class="self">self</span>, id: PatternID) -&gt; Pattern&lt;<span class="lifetime">'_</span>&gt; {
         Pattern(<span class="self">self</span>.by_id.get_unchecked(id.as_usize()))
     }
 
@@ -652,7 +652,7 @@
     /// the order provided by this iterator, then the result is guaranteed
     /// to satisfy the correct match semantics. (Either leftmost-first or
     /// leftmost-longest.)
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PatternIter&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PatternIter&lt;<span class="lifetime">'_</span>&gt; {
         PatternIter { patterns: <span class="self">self</span>, i: <span class="number">0 </span>}
     }
 }
@@ -662,18 +662,18 @@
 /// The order of the patterns provided by this iterator is consistent with the
 /// match semantics of the originating collection of patterns.
 ///
-/// The lifetime `&#39;p` corresponds to the lifetime of the collection of patterns
+/// The lifetime `'p` corresponds to the lifetime of the collection of patterns
 /// this is iterating over.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>PatternIter&lt;<span class="lifetime">&#39;p</span>&gt; {
-    patterns: <span class="kw-2">&amp;</span><span class="lifetime">&#39;p </span>Patterns,
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>PatternIter&lt;<span class="lifetime">'p</span>&gt; {
+    patterns: <span class="kw-2">&amp;</span><span class="lifetime">'p </span>Patterns,
     i: usize,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;p</span>&gt; Iterator <span class="kw">for </span>PatternIter&lt;<span class="lifetime">&#39;p</span>&gt; {
-    <span class="kw">type </span>Item = (PatternID, Pattern&lt;<span class="lifetime">&#39;p</span>&gt;);
+<span class="kw">impl</span>&lt;<span class="lifetime">'p</span>&gt; Iterator <span class="kw">for </span>PatternIter&lt;<span class="lifetime">'p</span>&gt; {
+    <span class="kw">type </span>Item = (PatternID, Pattern&lt;<span class="lifetime">'p</span>&gt;);
 
-    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(PatternID, Pattern&lt;<span class="lifetime">&#39;p</span>&gt;)&gt; {
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(PatternID, Pattern&lt;<span class="lifetime">'p</span>&gt;)&gt; {
         <span class="kw">if </span><span class="self">self</span>.i &gt;= <span class="self">self</span>.patterns.len() {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
@@ -686,17 +686,17 @@
 
 <span class="doccomment">/// A pattern that is used in packed searching.
 </span><span class="attr">#[derive(Clone)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Pattern&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8]);
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Pattern&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8]);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; fmt::Debug <span class="kw">for </span>Pattern&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.debug_struct(<span class="string">&quot;Pattern&quot;</span>)
-            .field(<span class="string">&quot;lit&quot;</span>, <span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>))
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; fmt::Debug <span class="kw">for </span>Pattern&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">"Pattern"</span>)
+            .field(<span class="string">"lit"</span>, <span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>))
             .finish()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;p</span>&gt; Pattern&lt;<span class="lifetime">&#39;p</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'p</span>&gt; Pattern&lt;<span class="lifetime">'p</span>&gt; {
     <span class="doccomment">/// Returns the length of this pattern, in bytes.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.<span class="number">0</span>.len()
@@ -739,7 +739,7 @@
     /// * Both `start` and `end` must be _derived from_ a pointer to the same
     /// object.
     /// * The distance between `start` and `end` must not overflow `isize`.
-    /// * The distance being in bounds must not rely on &quot;wrapping around&quot; the
+    /// * The distance being in bounds must not rely on "wrapping around" the
     /// address space.
     </span><span class="attr">#[inline(always)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>is_prefix_raw(
@@ -752,7 +752,7 @@
         <span class="kw">if </span>patlen &gt; haylen {
             <span class="kw">return </span><span class="bool-val">false</span>;
         }
-        <span class="comment">// SAFETY: We&#39;ve checked that the haystack has length at least equal
+        <span class="comment">// SAFETY: We've checked that the haystack has length at least equal
         // to this pattern. All other safety concerns are the responsibility
         // of the caller.
         </span>is_equal_raw(start, <span class="self">self</span>.bytes().as_ptr(), patlen)
@@ -767,7 +767,7 @@
 /// # Inlining
 ///
 /// This routine is marked `inline(always)`. If you want to call this function
-/// in a way that is not always inlined, you&#39;ll need to wrap a call to it in
+/// in a way that is not always inlined, you'll need to wrap a call to it in
 /// another function that is marked as `inline(never)` or just `inline`.
 </span><span class="attr">#[inline(always)]
 </span><span class="kw">fn </span>is_prefix(haystack: <span class="kw-2">&amp;</span>[u8], needle: <span class="kw-2">&amp;</span>[u8]) -&gt; bool {
@@ -785,20 +785,20 @@
 /// That is, this returns true if and only if `x.len() == y.len()` and
 /// `x[i] == y[i]` for all `0 &lt;= i &lt; x.len()`.
 ///
-/// Note that this isn&#39;t used. We only use it in tests as a convenient way
+/// Note that this isn't used. We only use it in tests as a convenient way
 /// of testing `is_equal_raw`.
 ///
 /// # Inlining
 ///
 /// This routine is marked `inline(always)`. If you want to call this function
-/// in a way that is not always inlined, you&#39;ll need to wrap a call to it in
+/// in a way that is not always inlined, you'll need to wrap a call to it in
 /// another function that is marked as `inline(never)` or just `inline`.
 ///
 /// # Motivation
 ///
 /// Why not use slice equality instead? Well, slice equality usually results in
-/// a call out to the current platform&#39;s `libc` which might not be inlineable
-/// or have other overhead. This routine isn&#39;t guaranteed to be a win, but it
+/// a call out to the current platform's `libc` which might not be inlineable
+/// or have other overhead. This routine isn't guaranteed to be a win, but it
 /// might be in some cases.
 </span><span class="attr">#[cfg(test)]
 #[inline(always)]
@@ -820,14 +820,14 @@
 /// # Inlining
 ///
 /// This routine is marked `inline(always)`. If you want to call this function
-/// in a way that is not always inlined, you&#39;ll need to wrap a call to it in
+/// in a way that is not always inlined, you'll need to wrap a call to it in
 /// another function that is marked as `inline(never)` or just `inline`.
 ///
 /// # Motivation
 ///
 /// Why not use slice equality instead? Well, slice equality usually results in
-/// a call out to the current platform&#39;s `libc` which might not be inlineable
-/// or have other overhead. This routine isn&#39;t guaranteed to be a win, but it
+/// a call out to the current platform's `libc` which might not be inlineable
+/// or have other overhead. This routine isn't guaranteed to be a win, but it
 /// might be in some cases.
 ///
 /// # Safety
@@ -842,11 +842,11 @@
 /// allocated objects.
 /// * The distance between `x` and `x+n` must not overflow `isize`. Similarly
 /// for `y` and `y+n`.
-/// * The distance being in bounds must not rely on &quot;wrapping around&quot; the
+/// * The distance being in bounds must not rely on "wrapping around" the
 /// address space.
 </span><span class="attr">#[inline(always)]
 </span><span class="kw">unsafe fn </span>is_equal_raw(<span class="kw-2">mut </span>x: <span class="kw-2">*const </span>u8, <span class="kw-2">mut </span>y: <span class="kw-2">*const </span>u8, n: usize) -&gt; bool {
-    <span class="comment">// If we don&#39;t have enough bytes to do 4-byte at a time loads, then
+    <span class="comment">// If we don't have enough bytes to do 4-byte at a time loads, then
     // handle each possible length specially. Note that I used to have a
     // byte-at-a-time loop here and that turned out to be quite a bit slower
     // for the memmem/pathological/defeat-simple-vector-alphabet benchmark.
@@ -871,13 +871,13 @@
     // that this particular version of memcmp is likely to be called with tiny
     // needles. That means that if we do 8 byte loads, then a higher proportion
     // of memcmp calls will use the slower variant above. With that said, this
-    // is a hypothesis and is only loosely supported by benchmarks. There&#39;s
+    // is a hypothesis and is only loosely supported by benchmarks. There's
     // likely some improvement that could be made here. The main thing here
     // though is to optimize for latency, not throughput.
 
     // SAFETY: The caller is responsible for ensuring the pointers we get are
     // valid and readable for at least `n` bytes. We also do unaligned loads,
-    // so there&#39;s no need to ensure we&#39;re aligned. (This is justified by this
+    // so there's no need to ensure we're aligned. (This is justified by this
     // routine being specifically for short strings.)
     </span><span class="kw">let </span>xend = x.add(n.wrapping_sub(<span class="number">4</span>));
     <span class="kw">let </span>yend = y.add(n.wrapping_sub(<span class="number">4</span>));
@@ -901,32 +901,32 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>equals_different_lengths() {
-        <span class="macro">assert!</span>(!is_equal(<span class="string">b&quot;&quot;</span>, <span class="string">b&quot;a&quot;</span>));
-        <span class="macro">assert!</span>(!is_equal(<span class="string">b&quot;a&quot;</span>, <span class="string">b&quot;&quot;</span>));
-        <span class="macro">assert!</span>(!is_equal(<span class="string">b&quot;ab&quot;</span>, <span class="string">b&quot;a&quot;</span>));
-        <span class="macro">assert!</span>(!is_equal(<span class="string">b&quot;a&quot;</span>, <span class="string">b&quot;ab&quot;</span>));
+        <span class="macro">assert!</span>(!is_equal(<span class="string">b""</span>, <span class="string">b"a"</span>));
+        <span class="macro">assert!</span>(!is_equal(<span class="string">b"a"</span>, <span class="string">b""</span>));
+        <span class="macro">assert!</span>(!is_equal(<span class="string">b"ab"</span>, <span class="string">b"a"</span>));
+        <span class="macro">assert!</span>(!is_equal(<span class="string">b"a"</span>, <span class="string">b"ab"</span>));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>equals_mismatch() {
         <span class="kw">let </span>one_mismatch = [
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;a&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;x&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;ab&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;ax&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abc&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abx&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abcd&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abcx&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abcde&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abcdx&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abcdef&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abcdex&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abcdefg&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abcdefx&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abcdefgh&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abcdefgx&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghi&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghx&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghij&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghix&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghijk&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghijx&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghijkl&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghijkx&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghijklm&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghijklx&quot;</span>[..]),
-            (<span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghijklmn&quot;</span>[..], <span class="kw-2">&amp;</span><span class="string">b&quot;abcdefghijklmx&quot;</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"a"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"x"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"ab"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"ax"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abc"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abx"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abcd"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abcx"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abcde"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abcdx"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abcdef"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abcdex"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abcdefg"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abcdefx"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abcdefgh"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abcdefgx"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abcdefghi"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abcdefghx"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abcdefghij"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abcdefghix"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abcdefghijk"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abcdefghijx"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abcdefghijkl"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abcdefghijkx"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abcdefghijklm"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abcdefghijklx"</span>[..]),
+            (<span class="kw-2">&amp;</span><span class="string">b"abcdefghijklmn"</span>[..], <span class="kw-2">&amp;</span><span class="string">b"abcdefghijklmx"</span>[..]),
         ];
         <span class="kw">for </span>(x, y) <span class="kw">in </span>one_mismatch {
-            <span class="macro">assert_eq!</span>(x.len(), y.len(), <span class="string">&quot;lengths should match&quot;</span>);
+            <span class="macro">assert_eq!</span>(x.len(), y.len(), <span class="string">"lengths should match"</span>);
             <span class="macro">assert!</span>(!is_equal(x, y));
             <span class="macro">assert!</span>(!is_equal(y, x));
         }
@@ -934,28 +934,28 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>equals_yes() {
-        <span class="macro">assert!</span>(is_equal(<span class="string">b&quot;&quot;</span>, <span class="string">b&quot;&quot;</span>));
-        <span class="macro">assert!</span>(is_equal(<span class="string">b&quot;a&quot;</span>, <span class="string">b&quot;a&quot;</span>));
-        <span class="macro">assert!</span>(is_equal(<span class="string">b&quot;ab&quot;</span>, <span class="string">b&quot;ab&quot;</span>));
-        <span class="macro">assert!</span>(is_equal(<span class="string">b&quot;abc&quot;</span>, <span class="string">b&quot;abc&quot;</span>));
-        <span class="macro">assert!</span>(is_equal(<span class="string">b&quot;abcd&quot;</span>, <span class="string">b&quot;abcd&quot;</span>));
-        <span class="macro">assert!</span>(is_equal(<span class="string">b&quot;abcde&quot;</span>, <span class="string">b&quot;abcde&quot;</span>));
-        <span class="macro">assert!</span>(is_equal(<span class="string">b&quot;abcdef&quot;</span>, <span class="string">b&quot;abcdef&quot;</span>));
-        <span class="macro">assert!</span>(is_equal(<span class="string">b&quot;abcdefg&quot;</span>, <span class="string">b&quot;abcdefg&quot;</span>));
-        <span class="macro">assert!</span>(is_equal(<span class="string">b&quot;abcdefgh&quot;</span>, <span class="string">b&quot;abcdefgh&quot;</span>));
-        <span class="macro">assert!</span>(is_equal(<span class="string">b&quot;abcdefghi&quot;</span>, <span class="string">b&quot;abcdefghi&quot;</span>));
+        <span class="macro">assert!</span>(is_equal(<span class="string">b""</span>, <span class="string">b""</span>));
+        <span class="macro">assert!</span>(is_equal(<span class="string">b"a"</span>, <span class="string">b"a"</span>));
+        <span class="macro">assert!</span>(is_equal(<span class="string">b"ab"</span>, <span class="string">b"ab"</span>));
+        <span class="macro">assert!</span>(is_equal(<span class="string">b"abc"</span>, <span class="string">b"abc"</span>));
+        <span class="macro">assert!</span>(is_equal(<span class="string">b"abcd"</span>, <span class="string">b"abcd"</span>));
+        <span class="macro">assert!</span>(is_equal(<span class="string">b"abcde"</span>, <span class="string">b"abcde"</span>));
+        <span class="macro">assert!</span>(is_equal(<span class="string">b"abcdef"</span>, <span class="string">b"abcdef"</span>));
+        <span class="macro">assert!</span>(is_equal(<span class="string">b"abcdefg"</span>, <span class="string">b"abcdefg"</span>));
+        <span class="macro">assert!</span>(is_equal(<span class="string">b"abcdefgh"</span>, <span class="string">b"abcdefgh"</span>));
+        <span class="macro">assert!</span>(is_equal(<span class="string">b"abcdefghi"</span>, <span class="string">b"abcdefghi"</span>));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>prefix() {
-        <span class="macro">assert!</span>(is_prefix(<span class="string">b&quot;&quot;</span>, <span class="string">b&quot;&quot;</span>));
-        <span class="macro">assert!</span>(is_prefix(<span class="string">b&quot;a&quot;</span>, <span class="string">b&quot;&quot;</span>));
-        <span class="macro">assert!</span>(is_prefix(<span class="string">b&quot;ab&quot;</span>, <span class="string">b&quot;&quot;</span>));
-        <span class="macro">assert!</span>(is_prefix(<span class="string">b&quot;foo&quot;</span>, <span class="string">b&quot;foo&quot;</span>));
-        <span class="macro">assert!</span>(is_prefix(<span class="string">b&quot;foobar&quot;</span>, <span class="string">b&quot;foo&quot;</span>));
+        <span class="macro">assert!</span>(is_prefix(<span class="string">b""</span>, <span class="string">b""</span>));
+        <span class="macro">assert!</span>(is_prefix(<span class="string">b"a"</span>, <span class="string">b""</span>));
+        <span class="macro">assert!</span>(is_prefix(<span class="string">b"ab"</span>, <span class="string">b""</span>));
+        <span class="macro">assert!</span>(is_prefix(<span class="string">b"foo"</span>, <span class="string">b"foo"</span>));
+        <span class="macro">assert!</span>(is_prefix(<span class="string">b"foobar"</span>, <span class="string">b"foo"</span>));
 
-        <span class="macro">assert!</span>(!is_prefix(<span class="string">b&quot;foo&quot;</span>, <span class="string">b&quot;fob&quot;</span>));
-        <span class="macro">assert!</span>(!is_prefix(<span class="string">b&quot;foobar&quot;</span>, <span class="string">b&quot;fob&quot;</span>));
+        <span class="macro">assert!</span>(!is_prefix(<span class="string">b"foo"</span>, <span class="string">b"fob"</span>));
+        <span class="macro">assert!</span>(!is_prefix(<span class="string">b"foobar"</span>, <span class="string">b"fob"</span>));
     }
 }
 </code></pre></div></section></main></body></html>

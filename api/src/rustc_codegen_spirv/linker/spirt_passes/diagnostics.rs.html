@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/spirt_passes/diagnostics.rs`."><title>diagnostics.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/spirt_passes/diagnostics.rs`."><title>diagnostics.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -703,12 +703,15 @@
 <a href="#703" id="703">703</a>
 <a href="#704" id="704">704</a>
 <a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::custom_decorations::{
     CustomDecoration, SpanRegenerator, SrcLocDecoration, ZombieDecoration,
 };
 <span class="kw">use </span><span class="kw">crate</span>::custom_insts::{<span class="self">self</span>, CustomInst, CustomOp};
 <span class="kw">use </span>rustc_data_structures::fx::FxIndexSet;
-<span class="kw">use </span>rustc_errors::DiagnosticBuilder;
+<span class="kw">use </span>rustc_errors::EmissionGuarantee;
 <span class="kw">use </span>rustc_session::Session;
 <span class="kw">use </span>rustc_span::{Span, DUMMY_SP};
 <span class="kw">use </span>smallvec::SmallVec;
@@ -776,7 +779,7 @@
                 reporter.visit_func_decl(func_decl);
             }
             <span class="comment">// NOTE(eddyb) this is visited last, so that uses of the interface
-            // variables don&#39;t lack relevant context from the function body.
+            // variables don't lack relevant context from the function body.
             </span>export_key.inner_visit_with(<span class="kw-2">&amp;mut </span>reporter);
             reporter.use_stack.pop();
         }
@@ -799,9 +802,9 @@
 }
 
 <span class="kw">impl</span>&lt;D&gt; LazilyDecoded&lt;D&gt; {
-    <span class="kw">fn </span>decode&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>) -&gt; D
+    <span class="kw">fn </span>decode&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>) -&gt; D
     <span class="kw">where
-        </span>D: CustomDecoration&lt;<span class="lifetime">&#39;a</span>&gt;,
+        </span>D: CustomDecoration&lt;<span class="lifetime">'a</span>&gt;,
     {
         D::decode(<span class="kw-2">&amp;</span><span class="self">self</span>.encoded)
     }
@@ -824,10 +827,10 @@
         .take_while(|<span class="kw-2">&amp;</span>byte| byte != <span class="number">0</span>)
         .collect();
 
-    f(str::from_utf8(<span class="kw-2">&amp;</span>bytes).expect(<span class="string">&quot;invalid UTF-8 in string literal&quot;</span>))
+    f(str::from_utf8(<span class="kw-2">&amp;</span>bytes).expect(<span class="string">"invalid UTF-8 in string literal"</span>))
 }
 
-<span class="kw">fn </span>try_decode_custom_decoration&lt;<span class="lifetime">&#39;a</span>, D: CustomDecoration&lt;<span class="lifetime">&#39;a</span>&gt;&gt;(
+<span class="kw">fn </span>try_decode_custom_decoration&lt;<span class="lifetime">'a</span>, D: CustomDecoration&lt;<span class="lifetime">'a</span>&gt;&gt;(
     attrs_def: <span class="kw-2">&amp;</span>AttrSetDef,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;LazilyDecoded&lt;D&gt;&gt; {
     <span class="kw">let </span>wk = <span class="kw-2">&amp;</span><span class="kw">super</span>::SpvSpecWithExtras::get().well_known;
@@ -853,18 +856,18 @@
 }
 
 <span class="comment">// FIXME(eddyb) this looks a lot like `ReachableUseCollector`, maybe some
-// automation should be built around &quot;deep visitors&quot; in general?
-</span><span class="kw">struct </span>DiagnosticReporter&lt;<span class="lifetime">&#39;a</span>&gt; {
-    sess: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Session,
-    linker_options: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw">crate</span>::linker::Options,
+// automation should be built around "deep visitors" in general?
+</span><span class="kw">struct </span>DiagnosticReporter&lt;<span class="lifetime">'a</span>&gt; {
+    sess: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Session,
+    linker_options: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">crate</span>::linker::Options,
 
-    cx: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Context,
+    cx: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Context,
 
-    <span class="doccomment">/// Interned name for our custom &quot;extended instruction set&quot;
+    <span class="doccomment">/// Interned name for our custom "extended instruction set"
     /// (see `crate::custom_insts` for more details).
     </span>custom_ext_inst_set: InternedStr,
 
-    module: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Module,
+    module: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Module,
 
     seen_attrs: FxIndexSet&lt;AttrSet&gt;,
     seen_types: FxIndexSet&lt;Type&gt;,
@@ -872,24 +875,24 @@
     seen_global_vars: FxIndexSet&lt;GlobalVar&gt;,
     seen_funcs: FxIndexSet&lt;Func&gt;,
 
-    use_stack: SmallVec&lt;[UseOrigin&lt;<span class="lifetime">&#39;a</span>&gt;; <span class="number">8</span>]&gt;,
-    span_regen: SpanRegenerator&lt;<span class="lifetime">&#39;a</span>&gt;,
+    use_stack: SmallVec&lt;[UseOrigin&lt;<span class="lifetime">'a</span>&gt;; <span class="number">8</span>]&gt;,
+    span_regen: SpanRegenerator&lt;<span class="lifetime">'a</span>&gt;,
     overall_result: <span class="kw">crate</span>::linker::Result&lt;()&gt;,
     any_spirt_bugs: bool,
 }
 
-<span class="kw">enum </span>UseOrigin&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">enum </span>UseOrigin&lt;<span class="lifetime">'a</span>&gt; {
     Global {
-        kind: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+        kind: <span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
         attrs: AttrSet,
     },
     IntraFunc {
         func_attrs: AttrSet,
-        special_func: <span class="prelude-ty">Option</span>&lt;SpecialFunc&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+        special_func: <span class="prelude-ty">Option</span>&lt;SpecialFunc&lt;<span class="lifetime">'a</span>&gt;&gt;,
 
-        <span class="doccomment">/// Active debug &quot;source location&quot; instruction at the time of the use, if any
+        <span class="doccomment">/// Active debug "source location" instruction at the time of the use, if any
         /// (only `CustomInst::SetDebugSrcLoc` is supported).
-        </span>last_debug_src_loc_inst: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>DataInstDef&gt;,
+        </span>last_debug_src_loc_inst: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>DataInstDef&gt;,
 
         inst_attrs: AttrSet,
         origin: IntraFuncUseOrigin,
@@ -897,11 +900,11 @@
 }
 
 <span class="attr">#[derive(Copy, Clone)]
-</span><span class="kw">enum </span>SpecialFunc&lt;<span class="lifetime">&#39;a</span>&gt; {
+</span><span class="kw">enum </span>SpecialFunc&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// This function is exported from the `Module` (likely an entry-point).
-    </span>Exported(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ExportKey),
+    </span>Exported(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>ExportKey),
 
-    <span class="doccomment">/// This function doesn&#39;t have its own `FuncDecl`, but rather is an inlined
+    <span class="doccomment">/// This function doesn't have its own `FuncDecl`, but rather is an inlined
     /// callee (i.e. instructions sandwiched by `{Push,Pop}InlinedCallFrame`).
     </span>Inlined { callee_name: InternedStr },
 }
@@ -911,7 +914,7 @@
     Other,
 }
 
-<span class="kw">impl </span>SpanRegenerator&lt;<span class="lifetime">&#39;_</span>&gt; {
+<span class="kw">impl </span>SpanRegenerator&lt;<span class="lifetime">'_</span>&gt; {
     <span class="kw">fn </span>spirt_attrs_to_rustc_span(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>Context, attrs: AttrSet) -&gt; <span class="prelude-ty">Option</span>&lt;Span&gt; {
         <span class="kw">let </span>attrs_def = <span class="kw-2">&amp;</span>cx[attrs];
         attrs_def
@@ -933,14 +936,14 @@
             })
             .or_else(|| {
                 <span class="self">self</span>.src_loc_to_rustc(
-                    try_decode_custom_decoration::&lt;SrcLocDecoration&lt;<span class="lifetime">&#39;_</span>&gt;&gt;(attrs_def)<span class="question-mark">?</span>.decode(),
+                    try_decode_custom_decoration::&lt;SrcLocDecoration&lt;<span class="lifetime">'_</span>&gt;&gt;(attrs_def)<span class="question-mark">?</span>.decode(),
                 )
             })
     }
 }
 
-<span class="kw">impl </span>UseOrigin&lt;<span class="lifetime">&#39;_</span>&gt; {
-    <span class="kw">fn </span>to_rustc_span(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>Context, span_regen: <span class="kw-2">&amp;mut </span>SpanRegenerator&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Span&gt; {
+<span class="kw">impl </span>UseOrigin&lt;<span class="lifetime">'_</span>&gt; {
+    <span class="kw">fn </span>to_rustc_span(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>Context, span_regen: <span class="kw-2">&amp;mut </span>SpanRegenerator&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Span&gt; {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             <span class="self">Self</span>::Global { attrs, .. } =&gt; span_regen.spirt_attrs_to_rustc_span(cx, attrs),
             <span class="self">Self</span>::IntraFunc {
@@ -1011,11 +1014,11 @@
         }
     }
 
-    <span class="kw">fn </span>note(
+    <span class="kw">fn </span>note&lt;G: EmissionGuarantee&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cx: <span class="kw-2">&amp;</span>Context,
-        span_regen: <span class="kw-2">&amp;mut </span>SpanRegenerator&lt;<span class="lifetime">&#39;_</span>&gt;,
-        err: <span class="kw-2">&amp;mut </span>DiagnosticBuilder&lt;<span class="lifetime">&#39;_</span>, <span class="kw">impl </span>rustc_errors::EmissionGuarantee&gt;,
+        span_regen: <span class="kw-2">&amp;mut </span>SpanRegenerator&lt;<span class="lifetime">'_</span>&gt;,
+        err: <span class="kw-2">&amp;mut </span>rustc_errors::Diag&lt;<span class="lifetime">'_</span>, G&gt;,
     ) {
         <span class="kw">let </span>wk = <span class="kw-2">&amp;</span><span class="kw">super</span>::SpvSpecWithExtras::get().well_known;
 
@@ -1026,16 +1029,16 @@
                 .find_map(|attr| <span class="kw">match </span>attr {
                     Attr::SpvAnnotation(spv_inst) <span class="kw">if </span>spv_inst.opcode == wk.OpName =&gt; {
                         <span class="prelude-val">Some</span>(decode_spv_lit_str_with(<span class="kw-2">&amp;</span>spv_inst.imms, |name| {
-                            <span class="macro">format!</span>(<span class="string">&quot;`{name}`&quot;</span>)
+                            <span class="macro">format!</span>(<span class="string">"`{name}`"</span>)
                         }))
                     }
                     <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                 })
-                .unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;unnamed {kind}&quot;</span>))
+                .unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">"unnamed {kind}"</span>))
         };
         <span class="kw">let </span>note = <span class="kw">match </span><span class="self">self </span>{
             <span class="kw-2">&amp;</span><span class="self">Self</span>::Global { kind, attrs } =&gt; {
-                <span class="macro">format!</span>(<span class="string">&quot;used by {}&quot;</span>, name_from_attrs(attrs, <span class="kw-2">*</span>kind))
+                <span class="macro">format!</span>(<span class="string">"used by {}"</span>, name_from_attrs(attrs, <span class="kw-2">*</span>kind))
             }
             <span class="self">Self</span>::IntraFunc {
                 func_attrs,
@@ -1047,7 +1050,7 @@
                 <span class="kw">let </span>func_desc = special_func
                     .map(|special_func| <span class="kw">match </span>special_func {
                         SpecialFunc::Exported(<span class="kw-2">&amp;</span>ExportKey::LinkName(name)) =&gt; {
-                            <span class="macro">format!</span>(<span class="string">&quot;function export `{}`&quot;</span>, <span class="kw-2">&amp;</span>cx[name])
+                            <span class="macro">format!</span>(<span class="string">"function export `{}`"</span>, <span class="kw-2">&amp;</span>cx[name])
                         }
                         SpecialFunc::Exported(ExportKey::SpvEntryPoint { imms, .. }) =&gt; {
                             <span class="kw">match </span>imms[..] {
@@ -1057,8 +1060,8 @@
                                         spv::print::operand_from_imms([em]).concat_to_plain_text();
                                     decode_spv_lit_str_with(name_imms, |name| {
                                         <span class="macro">format!</span>(
-                                            <span class="string">&quot;{} entry-point `{name}`&quot;</span>,
-                                            em.strip_prefix(<span class="string">&quot;ExecutionModel.&quot;</span>).unwrap()
+                                            <span class="string">"{} entry-point `{name}`"</span>,
+                                            em.strip_prefix(<span class="string">"ExecutionModel."</span>).unwrap()
                                         )
                                     })
                                 }
@@ -1066,14 +1069,14 @@
                             }
                         }
                         SpecialFunc::Inlined { callee_name } =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>cx[callee_name] {
-                            <span class="string">&quot;&quot; </span>=&gt; <span class="string">&quot;unnamed function&quot;</span>.into(),
-                            callee_name =&gt; <span class="macro">format!</span>(<span class="string">&quot;`{callee_name}`&quot;</span>),
+                            <span class="string">"" </span>=&gt; <span class="string">"unnamed function"</span>.into(),
+                            callee_name =&gt; <span class="macro">format!</span>(<span class="string">"`{callee_name}`"</span>),
                         },
                     })
-                    .unwrap_or_else(|| name_from_attrs(<span class="kw-2">*</span>func_attrs, <span class="string">&quot;function&quot;</span>));
+                    .unwrap_or_else(|| name_from_attrs(<span class="kw-2">*</span>func_attrs, <span class="string">"function"</span>));
                 <span class="kw">match </span>origin {
-                    IntraFuncUseOrigin::CallCallee =&gt; <span class="macro">format!</span>(<span class="string">&quot;called by {func_desc}&quot;</span>),
-                    IntraFuncUseOrigin::Other =&gt; <span class="macro">format!</span>(<span class="string">&quot;used from within {func_desc}&quot;</span>),
+                    IntraFuncUseOrigin::CallCallee =&gt; <span class="macro">format!</span>(<span class="string">"called by {func_desc}"</span>),
+                    IntraFuncUseOrigin::Other =&gt; <span class="macro">format!</span>(<span class="string">"used from within {func_desc}"</span>),
                 }
             }
         };
@@ -1083,13 +1086,13 @@
     }
 }
 
-<span class="kw">impl </span>DiagnosticReporter&lt;<span class="lifetime">&#39;_</span>&gt; {
+<span class="kw">impl </span>DiagnosticReporter&lt;<span class="lifetime">'_</span>&gt; {
     <span class="kw">fn </span>report_from_attrs(<span class="kw-2">&amp;mut </span><span class="self">self</span>, attrs: AttrSet) {
         <span class="kw">if </span>attrs == AttrSet::default() {
             <span class="kw">return</span>;
         }
 
-        <span class="comment">// Split off the last entry in `self.use_stack` if it&#39;s for the definition
+        <span class="comment">// Split off the last entry in `self.use_stack` if it's for the definition
         // that `attrs` come from - this should almost always be the case, except
         // for instructions inside a function body, or visitor bugs.
         </span><span class="kw">let </span>(current_def, use_stack_for_def) = <span class="self">self
@@ -1113,19 +1116,22 @@
 
         <span class="kw">let </span>attrs_def = <span class="kw-2">&amp;</span><span class="self">self</span>.cx[attrs];
         <span class="kw">if </span>!<span class="self">self</span>.linker_options.early_report_zombies {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(zombie) = try_decode_custom_decoration::&lt;ZombieDecoration&lt;<span class="lifetime">&#39;_</span>&gt;&gt;(attrs_def) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(zombie) = try_decode_custom_decoration::&lt;ZombieDecoration&lt;<span class="lifetime">'_</span>&gt;&gt;(attrs_def) {
                 <span class="kw">let </span>ZombieDecoration { reason } = zombie.decode();
                 <span class="kw">let </span>def_span = current_def
                     .and_then(|def| def.to_rustc_span(<span class="self">self</span>.cx, <span class="kw-2">&amp;mut </span><span class="self">self</span>.span_regen))
                     .or_else(|| {
-                        <span class="comment">// If there&#39;s no clear source for the span, try to get
+                        <span class="comment">// If there's no clear source for the span, try to get
                         // it from the same attrs as the zombie, which could
                         // be missing from `use_stack` in some edge cases
                         // (such as zombied function parameters).
                         </span><span class="self">self</span>.span_regen.spirt_attrs_to_rustc_span(<span class="self">self</span>.cx, attrs)
                     })
                     .unwrap_or(DUMMY_SP);
-                <span class="kw">let </span><span class="kw-2">mut </span>err = <span class="self">self</span>.sess.struct_span_err(def_span, reason.to_string());
+                <span class="kw">let </span><span class="kw-2">mut </span>err = <span class="self">self
+                    </span>.sess
+                    .dcx()
+                    .struct_span_err(def_span, reason.to_string());
                 <span class="kw">for </span>use_origin <span class="kw">in </span>use_stack_for_def.iter().rev() {
                     use_origin.note(<span class="self">self</span>.cx, <span class="kw-2">&amp;mut </span><span class="self">self</span>.span_regen, <span class="kw-2">&amp;mut </span>err);
                 }
@@ -1143,22 +1149,22 @@
             <span class="kw">let </span>prefix = <span class="kw">match </span>level {
                 DiagLevel::Bug(location) =&gt; {
                     <span class="kw">let </span>location = location.to_string();
-                    <span class="kw">let </span>location = <span class="kw">match </span>location.rsplit_once(<span class="string">&quot;/src/&quot;</span>) {
+                    <span class="kw">let </span>location = <span class="kw">match </span>location.rsplit_once(<span class="string">"/src/"</span>) {
                         <span class="prelude-val">Some</span>((_path_prefix, intra_src)) =&gt; intra_src,
                         <span class="prelude-val">None </span>=&gt; <span class="kw-2">&amp;</span>location,
                     };
-                    <span class="macro">format!</span>(<span class="string">&quot;SPIR-T BUG [{location}] &quot;</span>)
+                    <span class="macro">format!</span>(<span class="string">"SPIR-T BUG [{location}] "</span>)
                 }
-                DiagLevel::Error | DiagLevel::Warning =&gt; <span class="string">&quot;&quot;</span>.to_string(),
+                DiagLevel::Error | DiagLevel::Warning =&gt; <span class="string">""</span>.to_string(),
             };
             <span class="kw">let </span>(deps, msg) = spirt::print::Plan::for_root(<span class="self">self</span>.cx, message)
                 .pretty_print_deps_and_root_separately();
 
             <span class="kw">let </span>deps = deps.to_string();
             <span class="kw">let </span>suffix = <span class="kw">if </span>!deps.is_empty() {
-                <span class="macro">format!</span>(<span class="string">&quot;\n  where\n    {}&quot;</span>, deps.replace(<span class="string">&#39;\n&#39;</span>, <span class="string">&quot;\n    &quot;</span>))
+                <span class="macro">format!</span>(<span class="string">"\n  where\n    {}"</span>, deps.replace(<span class="string">'\n'</span>, <span class="string">"\n    "</span>))
             } <span class="kw">else </span>{
-                <span class="string">&quot;&quot;</span>.to_string()
+                <span class="string">""</span>.to_string()
             };
 
             <span class="kw">let </span>def_span = current_def
@@ -1168,14 +1174,14 @@
             <span class="kw">let </span>msg = [prefix, msg.to_string(), suffix].concat();
             <span class="kw">match </span>level {
                 DiagLevel::Bug(<span class="kw">_</span>) | DiagLevel::Error =&gt; {
-                    <span class="kw">let </span><span class="kw-2">mut </span>err = <span class="self">self</span>.sess.struct_span_err(def_span, msg);
+                    <span class="kw">let </span><span class="kw-2">mut </span>err = <span class="self">self</span>.sess.dcx().struct_span_err(def_span, msg);
                     <span class="kw">for </span>use_origin <span class="kw">in </span>use_stack_for_def.iter().rev() {
                         use_origin.note(<span class="self">self</span>.cx, <span class="kw-2">&amp;mut </span><span class="self">self</span>.span_regen, <span class="kw-2">&amp;mut </span>err);
                     }
                     <span class="self">self</span>.overall_result = <span class="prelude-val">Err</span>(err.emit());
                 }
                 DiagLevel::Warning =&gt; {
-                    <span class="kw">let </span><span class="kw-2">mut </span>warn = <span class="self">self</span>.sess.struct_span_warn(def_span, msg);
+                    <span class="kw">let </span><span class="kw-2">mut </span>warn = <span class="self">self</span>.sess.dcx().struct_span_warn(def_span, msg);
                     <span class="kw">for </span>use_origin <span class="kw">in </span>use_stack_for_def.iter().rev() {
                         use_origin.note(<span class="self">self</span>.cx, <span class="kw-2">&amp;mut </span><span class="self">self</span>.span_regen, <span class="kw-2">&amp;mut </span>warn);
                     }
@@ -1186,7 +1192,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Visitor&lt;<span class="lifetime">&#39;a</span>&gt; <span class="kw">for </span>DiagnosticReporter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Visitor&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>DiagnosticReporter&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>visit_attr_set_use(<span class="kw-2">&amp;mut </span><span class="self">self</span>, attrs: AttrSet) {
         <span class="comment">// HACK(eddyb) this avoids reporting the same diagnostics more than once.
         </span><span class="kw">if </span><span class="self">self</span>.seen_attrs.insert(attrs) {
@@ -1197,7 +1203,7 @@
         <span class="kw">if </span><span class="self">self</span>.seen_types.insert(ty) {
             <span class="kw">let </span>ty_def = <span class="kw-2">&amp;</span><span class="self">self</span>.cx[ty];
             <span class="self">self</span>.use_stack.push(UseOrigin::Global {
-                kind: <span class="kw-2">&amp;</span><span class="string">&quot;type&quot;</span>,
+                kind: <span class="kw-2">&amp;</span><span class="string">"type"</span>,
                 attrs: ty_def.attrs,
             });
             <span class="self">self</span>.visit_type_def(ty_def);
@@ -1208,13 +1214,13 @@
         <span class="kw">if </span><span class="self">self</span>.seen_consts.insert(ct) {
             <span class="kw">let </span>ct_def = <span class="kw-2">&amp;</span><span class="self">self</span>.cx[ct];
             <span class="kw">match </span>ct_def.ctor {
-                <span class="comment">// HACK(eddyb) don&#39;t push an `UseOrigin` for `GlobalVar` pointers.
+                <span class="comment">// HACK(eddyb) don't push an `UseOrigin` for `GlobalVar` pointers.
                 </span>ConstCtor::PtrToGlobalVar(<span class="kw">_</span>) <span class="kw">if </span>ct_def.attrs == AttrSet::default() =&gt; {
                     <span class="self">self</span>.visit_const_def(ct_def);
                 }
                 <span class="kw">_ </span>=&gt; {
                     <span class="self">self</span>.use_stack.push(UseOrigin::Global {
-                        kind: <span class="kw-2">&amp;</span><span class="string">&quot;constant&quot;</span>,
+                        kind: <span class="kw-2">&amp;</span><span class="string">"constant"</span>,
                         attrs: ct_def.attrs,
                     });
                     <span class="self">self</span>.visit_const_def(ct_def);
@@ -1235,7 +1241,7 @@
             <span class="self">self</span>.use_stack.push(UseOrigin::Global {
                 <span class="comment">// FIXME(eddyb) may be a `&amp;CONST`, or an interface variable,
                 // not necessarily an user variable, so this could be confusing.
-                </span>kind: <span class="kw-2">&amp;</span><span class="string">&quot;global variable&quot;</span>,
+                </span>kind: <span class="kw-2">&amp;</span><span class="string">"global variable"</span>,
                 attrs: gv_decl.attrs,
             });
             <span class="self">self</span>.visit_global_var_decl(gv_decl);
@@ -1257,9 +1263,9 @@
         }
     }
 
-    <span class="kw">fn </span>visit_func_decl(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_decl: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>FuncDecl) {
-        <span class="comment">// Intra-function the `use_stack` can gather extra entries, and there&#39;s
-        // a risk they&#39;d pile up without being popped, so here&#39;s a sanity check.
+    <span class="kw">fn </span>visit_func_decl(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_decl: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>FuncDecl) {
+        <span class="comment">// Intra-function the `use_stack` can gather extra entries, and there's
+        // a risk they'd pile up without being popped, so here's a sanity check.
         </span><span class="kw">let </span>original_use_stack_len = <span class="self">self</span>.use_stack.len();
 
         func_decl.inner_visit_with(<span class="self">self</span>);
@@ -1272,8 +1278,8 @@
                 AttrSet::default().append_diag(
                     <span class="self">self</span>.cx,
                     Diag::bug([<span class="macro">format!</span>(
-                        <span class="string">&quot;{extra} extraneous `use_stack` frame(s) found \
-                         (missing `PopInlinedCallFrame`?)&quot;
+                        <span class="string">"{extra} extraneous `use_stack` frame(s) found \
+                         (missing `PopInlinedCallFrame`?)"
                     </span>)
                     .into()]),
                 ),
@@ -1282,7 +1288,7 @@
         <span class="self">self</span>.use_stack.truncate(original_use_stack_len);
     }
 
-    <span class="kw">fn </span>visit_control_node_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_node: FuncAt&lt;<span class="lifetime">&#39;a</span>, ControlNode&gt;) {
+    <span class="kw">fn </span>visit_control_node_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_node: FuncAt&lt;<span class="lifetime">'a</span>, ControlNode&gt;) {
         <span class="kw">let </span>original_use_stack_len = <span class="self">self</span>.use_stack.len();
 
         func_at_control_node.inner_visit_with(<span class="self">self</span>);
@@ -1309,7 +1315,7 @@
         }
     }
 
-    <span class="kw">fn </span>visit_data_inst_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data_inst_def: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>DataInstDef) {
+    <span class="kw">fn </span>visit_data_inst_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, data_inst_def: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>DataInstDef) {
         <span class="kw">let </span>replace_origin = |this: <span class="kw-2">&amp;mut </span><span class="self">Self</span>, new_origin| <span class="kw">match </span>this.use_stack.last_mut() {
             <span class="prelude-val">Some</span>(UseOrigin::IntraFunc { origin, .. }) =&gt; mem::replace(origin, new_origin),
             <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
@@ -1377,8 +1383,8 @@
                                                     AttrSet::default().append_diag(
                                                         <span class="self">self</span>.cx,
                                                         Diag::bug([
-                                                            <span class="string">&quot;`PopInlinedCallFrame` without an \
-                                                             inlined call frame in `use_stack`&quot;
+                                                            <span class="string">"`PopInlinedCallFrame` without an \
+                                                             inlined call frame in `use_stack`"
                                                                 </span>.into(),
                                                         ]),
                                                     ),

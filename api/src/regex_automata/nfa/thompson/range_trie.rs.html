@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/nfa/thompson/range_trie.rs`."><title>range_trie.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../regex_automata/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/nfa/thompson/range_trie.rs`."><title>range_trie.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1049,15 +1049,11 @@
 <a href="#1049" id="1049">1049</a>
 <a href="#1050" id="1050">1050</a>
 <a href="#1051" id="1051">1051</a>
-<a href="#1052" id="1052">1052</a>
-<a href="#1053" id="1053">1053</a>
-<a href="#1054" id="1054">1054</a>
-<a href="#1055" id="1055">1055</a>
 </pre></div><pre class="rust"><code><span class="comment">/*
-I&#39;ve called the primary data structure in this module a &quot;range trie.&quot; As far
+I've called the primary data structure in this module a "range trie." As far
 as I can tell, there is no prior art on a data structure like this, however,
-it&#39;s likely someone somewhere has built something like it. Searching for
-&quot;range trie&quot; turns up the paper &quot;Range Tries for Scalable Address Lookup,&quot;
+it's likely someone somewhere has built something like it. Searching for
+"range trie" turns up the paper "Range Tries for Scalable Address Lookup,"
 but it does not appear relevant.
 
 The range trie is just like a trie in that it is a special case of a
@@ -1071,11 +1067,11 @@ themselves, except a key part of range trie construction is splitting ranges
 apart to ensure there is at most one transition that can be taken for any
 byte in a given state.
 
-I&#39;ve tried to explain the details of how the range trie works below, so
-for now, we are left with trying to understand what problem we&#39;re trying to
+I've tried to explain the details of how the range trie works below, so
+for now, we are left with trying to understand what problem we're trying to
 solve. Which is itself fairly involved!
 
-At the highest level, here&#39;s what we want to do. We want to convert a
+At the highest level, here's what we want to do. We want to convert a
 sequence of Unicode codepoints into a finite state machine whose transitions
 are over *bytes* and *not* Unicode codepoints. We want this because it makes
 said finite state machines much smaller and much faster to execute. As a
@@ -1093,15 +1089,15 @@ values (0x00 through 0x10FFFF, not including surrogate codepoints):
     [F4-F4][80-8F][80-BF][80-BF]
 
 (These byte ranges are generated via the regex-syntax::utf8 module, which
-was based on Russ Cox&#39;s code in RE2, which was in turn based on Ken
-Thompson&#39;s implementation of the same idea in his Plan9 implementation of
+was based on Russ Cox's code in RE2, which was in turn based on Ken
+Thompson's implementation of the same idea in his Plan9 implementation of
 grep.)
 
 It should be fairly straight-forward to see how one could compile this into
 a DFA. The sequences are sorted and non-overlapping. Essentially, you could
 build a trie from this fairly easy. The problem comes when your initial
-range (in this case, 0x00-0x10FFFF) isn&#39;t so nice. For example, the class
-represented by &#39;\w&#39; contains only a tenth of the codepoints that
+range (in this case, 0x00-0x10FFFF) isn't so nice. For example, the class
+represented by '\w' contains only a tenth of the codepoints that
 0x00-0x10FFFF contains, but if we were to write out the byte based ranges
 as we did above, the list would stretch to 892 entries! This turns into
 quite a large NFA with a few thousand states. Turning this beast into a DFA
@@ -1114,17 +1110,17 @@ and reuse them. This is very cheap to do and one can control precisely how
 much extra memory you want to use for the cache.
 
 Another approach, however, is to reuse an algorithm for constructing a
-*minimal* DFA from a sorted sequence of inputs. I don&#39;t want to go into
+*minimal* DFA from a sorted sequence of inputs. I don't want to go into
 the full details here, but I explain it in more depth in my blog post on
 FSTs[1]. Note that the algorithm was not invented by me, but was published
-in paper by Daciuk et al. in 2000 called &quot;Incremental Construction of
-MinimalAcyclic Finite-State Automata.&quot; Like the suffix cache approach above,
+in paper by Daciuk et al. in 2000 called "Incremental Construction of
+MinimalAcyclic Finite-State Automata." Like the suffix cache approach above,
 it is also possible to control the amount of extra memory one uses, although
-this usually comes with the cost of sacrificing true minimality. (But it&#39;s
+this usually comes with the cost of sacrificing true minimality. (But it's
 typically close enough with a reasonably sized cache of states.)
 
-The catch is that Daciuk&#39;s algorithm only works if you add your keys in
-lexicographic ascending order. In our case, since we&#39;re dealing with ranges,
+The catch is that Daciuk's algorithm only works if you add your keys in
+lexicographic ascending order. In our case, since we're dealing with ranges,
 we also need the additional requirement that ranges are either equivalent
 or do not overlap at all. For example, if one were given the following byte
 ranges:
@@ -1132,9 +1128,9 @@ ranges:
     [BC-BF][80-BF]
     [BC-BF][90-BF]
 
-Then Daciuk&#39;s algorithm would not work, since there is nothing to handle the
+Then Daciuk's algorithm would not work, since there is nothing to handle the
 fact that the ranges overlap. They would need to be split apart. Thankfully,
-Thompson&#39;s algorithm for producing byte ranges for Unicode codepoint ranges
+Thompson's algorithm for producing byte ranges for Unicode codepoint ranges
 meets both of our requirements. (A proof for this eludes me, but it appears
 true.)
 
@@ -1155,11 +1151,11 @@ can overlap, even if they are sorted:
     [80-BF][A0-BF][E0-E0]
     [80-BF][C2-DF]
 
-For example, &#39;[80-BF][80-BF][EE-EF]&#39; and &#39;[80-BF][A0-BF][E0-E0]&#39; have
-overlapping ranges between &#39;[80-BF]&#39; and &#39;[A0-BF]&#39;. Thus, there is no
-simple way to apply Daciuk&#39;s algorithm.
+For example, '[80-BF][80-BF][EE-EF]' and '[80-BF][A0-BF][E0-E0]' have
+overlapping ranges between '[80-BF]' and '[A0-BF]'. Thus, there is no
+simple way to apply Daciuk's algorithm.
 
-And thus, the range trie was born. The range trie&#39;s only purpose is to take
+And thus, the range trie was born. The range trie's only purpose is to take
 sequences of byte ranges like the ones above, collect them into a trie and then
 spit them out in a sorted fashion with no overlapping ranges. For example,
 0x00-0x10FFFF gets translated to:
@@ -1181,14 +1177,14 @@ spit them out in a sorted fashion with no overlapping ranges. For example,
     [80-BF][A0-BF][EE-EF]
     [80-BF][C2-DF]
 
-We&#39;ve thus satisfied our requirements for running Daciuk&#39;s algorithm. All
+We've thus satisfied our requirements for running Daciuk's algorithm. All
 sequences of ranges are sorted, and any corresponding ranges are either
 exactly equivalent or non-overlapping.
 
 In effect, a range trie is building a DFA from a sequence of arbitrary byte
 ranges. But it uses an algorithm custom tailored to its input, so it is not as
 costly as traditional DFA construction. While it is still quite a bit more
-costly than the forward case (which only needs Daciuk&#39;s algorithm), it winds
+costly than the forward case (which only needs Daciuk's algorithm), it winds
 up saving a substantial amount of time if one is doing a full DFA powerset
 construction later by virtue of producing a much much smaller NFA.
 
@@ -1196,7 +1192,7 @@ construction later by virtue of producing a much much smaller NFA.
 [2] - https://www.mitpressjournals.org/doi/pdfplus/10.1162/089120100561601
 */
 
-</span><span class="kw">use </span>core::{cell::RefCell, convert::TryFrom, fmt, mem, ops::RangeInclusive};
+</span><span class="kw">use </span>core::{cell::RefCell, fmt, mem, ops::RangeInclusive};
 
 <span class="kw">use </span>alloc::{format, string::String, vec, vec::Vec};
 
@@ -1316,7 +1312,7 @@ construction later by virtue of producing a much much smaller NFA.
             // here, but at the cost of more stack pushes.
             </span><span class="kw">loop </span>{
                 <span class="kw">let </span>state = <span class="self">self</span>.state(state_id);
-                <span class="comment">// If we&#39;ve visited all transitions in this state, then pop
+                <span class="comment">// If we've visited all transitions in this state, then pop
                 // back to the parent state.
                 </span><span class="kw">if </span>tidx &gt;= state.transitions.len() {
                     ranges.pop();
@@ -1365,7 +1361,7 @@ construction later by virtue of producing a much much smaller NFA.
             // which we are operating. Typically, the result is to remove the
             // transition and replace it with two or more new transitions
             // corresponding to the partitions generated by splitting the
-            // &#39;new&#39; with the ith transition&#39;s range.
+            // 'new' with the ith transition's range.
             </span><span class="kw">let </span><span class="kw-2">mut </span>i = <span class="self">self</span>.state(state_id).find(new);
 
             <span class="comment">// In this case, there is no overlap *and* the new range is greater
@@ -1377,12 +1373,12 @@ construction later by virtue of producing a much much smaller NFA.
             }
 
             <span class="comment">// The need for this loop is a bit subtle, buf basically, after
-            // we&#39;ve handled the partitions from our initial split, it&#39;s
+            // we've handled the partitions from our initial split, it's
             // possible that there will be a partition leftover that overlaps
             // with a subsequent transition. If so, then we have to repeat
             // the split process again with the leftovers and that subsequent
             // transition.
-            </span><span class="lifetime">&#39;OUTER</span>: <span class="kw">loop </span>{
+            </span><span class="lifetime">'OUTER</span>: <span class="kw">loop </span>{
                 <span class="kw">let </span>old = <span class="self">self</span>.state(state_id).transitions[i].clone();
                 <span class="kw">let </span>split = <span class="kw">match </span>Split::new(old.range, new) {
                     <span class="prelude-val">Some</span>(split) =&gt; split,
@@ -1394,7 +1390,7 @@ construction later by virtue of producing a much much smaller NFA.
                 };
                 <span class="kw">let </span>splits = split.as_slice();
                 <span class="comment">// If we only have one partition, then the ranges must be
-                // equivalent. There&#39;s nothing to do here for this state, so
+                // equivalent. There's nothing to do here for this state, so
                 // just move on to the next one.
                 </span><span class="kw">if </span>splits.len() == <span class="number">1 </span>{
                     <span class="comment">// ... but only if we have anything left to do.
@@ -1403,14 +1399,14 @@ construction later by virtue of producing a much much smaller NFA.
                     }
                     <span class="kw">break</span>;
                 }
-                <span class="comment">// At this point, we know that &#39;split&#39; is non-empty and there
+                <span class="comment">// At this point, we know that 'split' is non-empty and there
                 // must be some overlap AND that the two ranges are not
                 // equivalent. Therefore, the existing range MUST be removed
                 // and split up somehow. Instead of actually doing the removal
                 // and then a subsequent insertion---with all the memory
                 // shuffling that entails---we simply overwrite the transition
                 // at position `i` for the first new transition we want to
-                // insert. After that, we&#39;re forced to do expensive inserts.
+                // insert. After that, we're forced to do expensive inserts.
                 </span><span class="kw">let </span><span class="kw-2">mut </span>first = <span class="bool-val">true</span>;
                 <span class="kw">let </span><span class="kw-2">mut </span>add_trans =
                     |trie: <span class="kw-2">&amp;mut </span>RangeTrie, pos, from, range, to| {
@@ -1425,11 +1421,11 @@ construction later by virtue of producing a much much smaller NFA.
                     <span class="kw">match </span>srange {
                         SplitRange::Old(r) =&gt; {
                             <span class="comment">// Deep clone the state pointed to by the ith
-                            // transition. This is always necessary since &#39;old&#39;
-                            // is always coupled with at least a &#39;both&#39;
-                            // partition. We don&#39;t want any new changes made
-                            // via the &#39;both&#39; partition to impact the part of
-                            // the transition that doesn&#39;t overlap with the
+                            // transition. This is always necessary since 'old'
+                            // is always coupled with at least a 'both'
+                            // partition. We don't want any new changes made
+                            // via the 'both' partition to impact the part of
+                            // the transition that doesn't overlap with the
                             // new range.
                             </span><span class="kw">let </span>dup_id = <span class="self">self</span>.duplicate(old.next_id);
                             add_trans(<span class="self">self</span>, i, state_id, r, dup_id);
@@ -1448,7 +1444,7 @@ construction later by virtue of producing a much much smaller NFA.
                                     &amp;&amp; intersects(r, trans[i].range)
                                 {
                                     new = r;
-                                    <span class="kw">continue </span><span class="lifetime">&#39;OUTER</span>;
+                                    <span class="kw">continue </span><span class="lifetime">'OUTER</span>;
                                 }
                             }
 
@@ -1471,7 +1467,7 @@ construction later by virtue of producing a much much smaller NFA.
                     }
                     i += <span class="number">1</span>;
                 }
-                <span class="comment">// If we&#39;ve reached this point, then we know that there are
+                <span class="comment">// If we've reached this point, then we know that there are
                 // no subsequent transitions with any overlap. Therefore, we
                 // can stop processing this range and move on to the next one.
                 </span><span class="kw">break</span>;
@@ -1488,7 +1484,7 @@ construction later by virtue of producing a much much smaller NFA.
                 // only ever used to compile a single sequence of Unicode
                 // scalar values. If we ever got to this point, we would, at
                 // *minimum*, be using 96GB in just the range trie alone.
-                </span><span class="macro">panic!</span>(<span class="string">&quot;too many sequences added to range trie&quot;</span>);
+                </span><span class="macro">panic!</span>(<span class="string">"too many sequences added to range trie"</span>);
             }
         };
         <span class="comment">// If we have some free states available, then use them to avoid
@@ -1502,20 +1498,20 @@ construction later by virtue of producing a much much smaller NFA.
         id
     }
 
-    <span class="doccomment">/// Performs a deep clone of the given state and returns the duplicate&#39;s
+    <span class="doccomment">/// Performs a deep clone of the given state and returns the duplicate's
     /// state ID.
     ///
-    /// A &quot;deep clone&quot; in this context means that the state given along with
+    /// A "deep clone" in this context means that the state given along with
     /// recursively all states that it points to are copied. Once complete,
     /// the given state ID and the returned state ID share nothing.
     ///
     /// This is useful during range trie insertion when a new range overlaps
     /// with an existing range that is bigger than the new one. The part
     /// of the existing range that does *not* overlap with the new one is
-    /// duplicated so that adding the new range to the overlap doesn&#39;t disturb
+    /// duplicated so that adding the new range to the overlap doesn't disturb
     /// the non-overlapping portion.
     ///
-    /// There&#39;s one exception: if old_id is the final state, then it is not
+    /// There's one exception: if old_id is the final state, then it is not
     /// duplicated and the same final state is returned. This is because all
     /// final states in this trie are equivalent.
     </span><span class="kw">fn </span>duplicate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, old_id: StateID) -&gt; StateID {
@@ -1527,14 +1523,14 @@ construction later by virtue of producing a much much smaller NFA.
         stack.clear();
 
         <span class="kw">let </span>new_id = <span class="self">self</span>.add_empty();
-        <span class="comment">// old_id is the state we&#39;re cloning and new_id is the ID of the
+        <span class="comment">// old_id is the state we're cloning and new_id is the ID of the
         // duplicated state for old_id.
         </span>stack.push(NextDupe { old_id, new_id });
         <span class="kw">while let </span><span class="prelude-val">Some</span>(NextDupe { old_id, new_id }) = stack.pop() {
             <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.state(old_id).transitions.len() {
                 <span class="kw">let </span>t = <span class="self">self</span>.state(old_id).transitions[i].clone();
                 <span class="kw">if </span>t.next_id == FINAL {
-                    <span class="comment">// All final states are the same, so there&#39;s no need to
+                    <span class="comment">// All final states are the same, so there's no need to
                     // duplicate it.
                     </span><span class="self">self</span>.add_transition(new_id, t.range, FINAL);
                     <span class="kw">continue</span>;
@@ -1608,7 +1604,7 @@ construction later by virtue of producing a much much smaller NFA.
     /// state.
     ///
     /// The position returned is always in the inclusive range
-    /// [0, transitions.len()]. If &#39;transitions.len()&#39; is returned, then the
+    /// [0, transitions.len()]. If 'transitions.len()' is returned, then the
     /// given range overlaps with no other range in this state *and* is greater
     /// than all of them.
     ///
@@ -1624,10 +1620,10 @@ construction later by virtue of producing a much much smaller NFA.
         /// such that for all `j &gt;= i`, `pred(xs[j]) == true`. If `pred` never
         /// returns true, then `xs.len()` is returned.
         ///
-        /// We roll our own binary search because it doesn&#39;t seem like the
-        /// standard library&#39;s binary search can be used here. Namely, if
+        /// We roll our own binary search because it doesn't seem like the
+        /// standard library's binary search can be used here. Namely, if
         /// there is an overlapping range, then we want to find the first such
-        /// occurrence, but there may be many. Or at least, it&#39;s not quite
+        /// occurrence, but there may be many. Or at least, it's not quite
         /// clear to me how to do it.
         </span><span class="kw">fn </span>binary_search&lt;T, F&gt;(xs: <span class="kw-2">&amp;</span>[T], <span class="kw-2">mut </span>pred: F) -&gt; usize
         <span class="kw">where
@@ -1649,7 +1645,7 @@ construction later by virtue of producing a much much smaller NFA.
         <span class="comment">// Benchmarks suggest that binary search is just a bit faster than
         // straight linear search. Specifically when using the debug tool:
         //
-        //   hyperfine &quot;regex-cli debug thompson -qr --captures none &#39;\w{90} ecurB&#39;&quot;
+        //   hyperfine "regex-cli debug thompson -qr --captures none '\w{90} ecurB'"
         </span>binary_search(<span class="kw-2">&amp;</span><span class="self">self</span>.transitions, |t| range.start &lt;= t.range.end)
     }
 
@@ -1736,10 +1732,10 @@ construction later by virtue of producing a much much smaller NFA.
 }
 
 <span class="doccomment">/// Split represents a partitioning of two ranges into one or more ranges. This
-/// is the secret sauce that makes a range trie work, as it&#39;s what tells us
+/// is the secret sauce that makes a range trie work, as it's what tells us
 /// how to deal with two overlapping but unequal ranges during insertion.
 ///
-/// Essentially, either two ranges overlap or they don&#39;t. If they don&#39;t, then
+/// Essentially, either two ranges overlap or they don't. If they don't, then
 /// handling insertion is easy: just insert the new range into its
 /// lexicographically correct position. Since it does not overlap with anything
 /// else, no other transitions are impacted by the new range.
@@ -1748,7 +1744,7 @@ construction later by virtue of producing a much much smaller NFA.
 /// handle:
 ///
 /// 1. The part where the two ranges actually overlap. i.e., The intersection.
-/// 2. The part of the existing range that is not in the the new range.
+/// 2. The part of the existing range that is not in the new range.
 /// 3. The part of the new range that is not in the old range.
 ///
 /// (1) is guaranteed to always occur since all overlapping ranges have a
@@ -1770,15 +1766,15 @@ construction later by virtue of producing a much much smaller NFA.
 /// Handling the case for the part of a new range that is not in an existing
 /// range is seemingly easy. Just treat it as if it were a non-overlapping
 /// range. The problem here is that if this new non-overlapping range occurs
-/// after both (1) and (2), then it&#39;s possible that it can overlap with the
+/// after both (1) and (2), then it's possible that it can overlap with the
 /// next transition in the current state. If it does, then the whole process
 /// must be repeated!
 ///
 /// # Details of the 3 cases
 ///
 /// The following details the various cases that are implemented in code
-/// below. It&#39;s plausible that the number of cases is not actually minimal,
-/// but it&#39;s important for this code to remain at least somewhat readable.
+/// below. It's plausible that the number of cases is not actually minimal,
+/// but it's important for this code to remain at least somewhat readable.
 ///
 /// Given [a,b] and [x,y], where a &lt;= b, x &lt;= y, b &lt; 256 and y &lt; 256, we define
 /// the follow distinct relationships where at least one must apply. The order
@@ -1896,14 +1892,14 @@ construction later by virtue of producing a much much smaller NFA.
     <span class="doccomment">/// Create a new split with a single partition. This only occurs when two
     /// ranges are equivalent.
     </span><span class="kw">fn </span>parts1(r1: SplitRange) -&gt; Split {
-        <span class="comment">// This value doesn&#39;t matter since it is never accessed.
+        <span class="comment">// This value doesn't matter since it is never accessed.
         </span><span class="kw">let </span>nada = SplitRange::Old(Utf8Range { start: <span class="number">0</span>, end: <span class="number">0 </span>});
         Split { partitions: [r1, nada, nada], len: <span class="number">1 </span>}
     }
 
     <span class="doccomment">/// Create a new split with two partitions.
     </span><span class="kw">fn </span>parts2(r1: SplitRange, r2: SplitRange) -&gt; Split {
-        <span class="comment">// This value doesn&#39;t matter since it is never accessed.
+        <span class="comment">// This value doesn't matter since it is never accessed.
         </span><span class="kw">let </span>nada = SplitRange::Old(Utf8Range { start: <span class="number">0</span>, end: <span class="number">0 </span>});
         Split { partitions: [r1, r2, nada], len: <span class="number">2 </span>}
     }
@@ -1920,41 +1916,41 @@ construction later by virtue of producing a much much smaller NFA.
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>RangeTrie {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">writeln!</span>(f, <span class="string">""</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>(i, state) <span class="kw">in </span><span class="self">self</span>.states.iter().enumerate() {
-            <span class="kw">let </span>status = <span class="kw">if </span>i == FINAL.as_usize() { <span class="string">&#39;*&#39; </span>} <span class="kw">else </span>{ <span class="string">&#39; &#39; </span>};
-            <span class="macro">writeln!</span>(f, <span class="string">&quot;{}{:06}: {:?}&quot;</span>, status, i, state)<span class="question-mark">?</span>;
+            <span class="kw">let </span>status = <span class="kw">if </span>i == FINAL.as_usize() { <span class="string">'*' </span>} <span class="kw">else </span>{ <span class="string">' ' </span>};
+            <span class="macro">writeln!</span>(f, <span class="string">"{}{:06}: {:?}"</span>, status, i, state)<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>State {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">let </span>rs = <span class="self">self
             </span>.transitions
             .iter()
-            .map(|t| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, t))
+            .map(|t| <span class="macro">format!</span>(<span class="string">"{:?}"</span>, t))
             .collect::&lt;Vec&lt;String&gt;&gt;()
-            .join(<span class="string">&quot;, &quot;</span>);
-        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, rs)
+            .join(<span class="string">", "</span>);
+        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, rs)
     }
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Transition {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">if </span><span class="self">self</span>.range.start == <span class="self">self</span>.range.end {
             <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;{:02X} =&gt; {:02X}&quot;</span>,
+                <span class="string">"{:02X} =&gt; {:02X}"</span>,
                 <span class="self">self</span>.range.start,
                 <span class="self">self</span>.next_id.as_usize(),
             )
         } <span class="kw">else </span>{
             <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;{:02X}-{:02X} =&gt; {:02X}&quot;</span>,
+                <span class="string">"{:02X}-{:02X} =&gt; {:02X}"</span>,
                 <span class="self">self</span>.range.start,
                 <span class="self">self</span>.range.end,
                 <span class="self">self</span>.next_id.as_usize(),
@@ -1970,10 +1966,6 @@ construction later by virtue of producing a much much smaller NFA.
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>core::ops::RangeInclusive;
-
-    <span class="kw">use </span>regex_syntax::utf8::Utf8Range;
-
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="kw">fn </span>r(range: RangeInclusive&lt;u8&gt;) -&gt; Utf8Range {

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rspirv-0.11.0+1.5.4/binary/disassemble.rs`."><title>disassemble.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rspirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rspirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rspirv-0.11.0+1.5.4/binary/disassemble.rs`."><title>disassemble.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rspirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rspirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -405,19 +405,19 @@
         <span class="kw">let </span>(major, minor) = <span class="self">self</span>.version();
         <span class="kw">let </span>(vendor, <span class="kw">_</span>) = <span class="self">self</span>.generator();
         <span class="macro">format!</span>(
-            <span class="string">&quot;; SPIR-V\n; Version: {}.{}\n; Generator: {}\n; Bound: {}&quot;</span>,
+            <span class="string">"; SPIR-V\n; Version: {}.{}\n; Generator: {}\n; Bound: {}"</span>,
             major, minor, vendor, <span class="self">self</span>.bound
         )
     }
 }
 
-<span class="macro">include!</span>(<span class="string">&quot;autogen_disas_operand.rs&quot;</span>);
+<span class="macro">include!</span>(<span class="string">"autogen_disas_operand.rs"</span>);
 
 <span class="kw">impl </span>Disassemble <span class="kw">for </span>dr::Operand {
     <span class="kw">fn </span>disassemble(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             dr::Operand::IdMemorySemantics(v) | dr::Operand::IdScope(v) | dr::Operand::IdRef(v) =&gt; {
-                <span class="macro">format!</span>(<span class="string">&quot;%{}&quot;</span>, v)
+                <span class="macro">format!</span>(<span class="string">"%{}"</span>, v)
             }
             dr::Operand::ImageOperands(v) =&gt; v.disassemble(),
             dr::Operand::FPFastMathMode(v) =&gt; v.disassemble(),
@@ -427,7 +427,7 @@
             dr::Operand::MemorySemantics(v) =&gt; v.disassemble(),
             dr::Operand::MemoryAccess(v) =&gt; v.disassemble(),
             dr::Operand::KernelProfilingInfo(v) =&gt; v.disassemble(),
-            <span class="kw">_ </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, <span class="self">self</span>),
+            <span class="kw">_ </span>=&gt; <span class="macro">format!</span>(<span class="string">"{}"</span>, <span class="self">self</span>),
         }
     }
 }
@@ -444,19 +444,19 @@
 
 <span class="kw">impl </span>Disassemble <span class="kw">for </span>dr::Instruction {
     <span class="kw">fn </span>disassemble(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
-        <span class="kw">let </span>space = <span class="kw">if </span>!<span class="self">self</span>.operands.is_empty() { <span class="string">&quot; &quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
+        <span class="kw">let </span>space = <span class="kw">if </span>!<span class="self">self</span>.operands.is_empty() { <span class="string">" " </span>} <span class="kw">else </span>{ <span class="string">"" </span>};
         <span class="macro">format!</span>(
-            <span class="string">&quot;{rid}{opcode}{rtype}{space}{operands}&quot;</span>,
+            <span class="string">"{rid}{opcode}{rtype}{space}{operands}"</span>,
             rid = <span class="self">self
                 </span>.result_id
-                .map_or(String::new(), |w| <span class="macro">format!</span>(<span class="string">&quot;%{} = &quot;</span>, w)),
-            opcode = <span class="macro">format!</span>(<span class="string">&quot;Op{}&quot;</span>, <span class="self">self</span>.class.opname),
+                .map_or(String::new(), |w| <span class="macro">format!</span>(<span class="string">"%{} = "</span>, w)),
+            opcode = <span class="macro">format!</span>(<span class="string">"Op{}"</span>, <span class="self">self</span>.class.opname),
             <span class="comment">// extra space both before and after the reseult type
             </span>rtype = <span class="self">self
                 </span>.result_type
-                .map_or(String::new(), |w| <span class="macro">format!</span>(<span class="string">&quot;  %{}{}&quot;</span>, w, space)),
+                .map_or(String::new(), |w| <span class="macro">format!</span>(<span class="string">"  %{}{}"</span>, w, space)),
             space = space,
-            operands = disas_join(<span class="kw-2">&amp;</span><span class="self">self</span>.operands, <span class="string">&quot; &quot;</span>)
+            operands = disas_join(<span class="kw-2">&amp;</span><span class="self">self</span>.operands, <span class="string">" "</span>)
         )
     }
 }
@@ -468,9 +468,9 @@
             .as_ref()
             .map_or(String::new(), |i| i.disassemble());
         <span class="macro">format!</span>(
-            <span class="string">&quot;{label}\n{insts}&quot;</span>,
+            <span class="string">"{label}\n{insts}"</span>,
             label = label,
-            insts = disas_join(<span class="kw-2">&amp;</span><span class="self">self</span>.instructions, <span class="string">&quot;\n&quot;</span>)
+            insts = disas_join(<span class="kw-2">&amp;</span><span class="self">self</span>.instructions, <span class="string">"\n"</span>)
         )
     }
 }
@@ -481,17 +481,17 @@
         <span class="kw">let </span>end = <span class="self">self</span>.end.as_ref().map_or(String::new(), |i| i.disassemble());
         <span class="kw">if </span><span class="self">self</span>.parameters.is_empty() {
             <span class="macro">format!</span>(
-                <span class="string">&quot;{def}\n{blocks}\n{end}&quot;</span>,
+                <span class="string">"{def}\n{blocks}\n{end}"</span>,
                 def = def,
-                blocks = disas_join(<span class="kw-2">&amp;</span><span class="self">self</span>.blocks, <span class="string">&quot;\n&quot;</span>),
+                blocks = disas_join(<span class="kw-2">&amp;</span><span class="self">self</span>.blocks, <span class="string">"\n"</span>),
                 end = end
             )
         } <span class="kw">else </span>{
             <span class="macro">format!</span>(
-                <span class="string">&quot;{def}\n{params}\n{blocks}\n{end}&quot;</span>,
+                <span class="string">"{def}\n{params}\n{blocks}\n{end}"</span>,
                 def = def,
-                params = disas_join(<span class="kw-2">&amp;</span><span class="self">self</span>.parameters, <span class="string">&quot;\n&quot;</span>),
-                blocks = disas_join(<span class="kw-2">&amp;</span><span class="self">self</span>.blocks, <span class="string">&quot;\n&quot;</span>),
+                params = disas_join(<span class="kw-2">&amp;</span><span class="self">self</span>.parameters, <span class="string">"\n"</span>),
+                blocks = disas_join(<span class="kw-2">&amp;</span><span class="self">self</span>.blocks, <span class="string">"\n"</span>),
                 end = end
             )
         }
@@ -499,7 +499,7 @@
 }
 
 <span class="doccomment">/// Pushes the given value to the given container if the value is not empty.
-</span><span class="macro">macro_rules! </span>push {
+</span><span class="macro">macro_rules!</span> push {
     (<span class="macro-nonterminal">$container</span>: expr, <span class="macro-nonterminal">$val</span>: expr) =&gt; {
         <span class="kw">if </span>!<span class="macro-nonterminal">$val</span>.is_empty() {
             <span class="macro-nonterminal">$container</span>.push(<span class="macro-nonterminal">$val</span>)
@@ -528,18 +528,18 @@
             </span>.global_inst_iter()
             .map(|i| i.disassemble())
             .collect::&lt;Vec&lt;String&gt;&gt;()
-            .join(<span class="string">&quot;\n&quot;</span>);
+            .join(<span class="string">"\n"</span>);
         <span class="macro">push!</span>(<span class="kw-2">&amp;mut </span>text, global_insts);
 
         <span class="comment">// TODO: Code here is essentially duplicated. Ideally we should be able
-        // to call dr::Function and dr::BasicBlock&#39;s disassemble() method here
+        // to call dr::Function and dr::BasicBlock's disassemble() method here
         // but because of the ExtInstSetTracker, we are not able to directly.
         </span><span class="kw">for </span>f <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.functions {
             <span class="macro">push!</span>(
                 <span class="kw-2">&amp;mut </span>text,
                 f.def.as_ref().map_or(String::new(), |i| i.disassemble())
             );
-            <span class="macro">push!</span>(<span class="kw-2">&amp;mut </span>text, disas_join(<span class="kw-2">&amp;</span>f.parameters, <span class="string">&quot;\n&quot;</span>));
+            <span class="macro">push!</span>(<span class="kw-2">&amp;mut </span>text, disas_join(<span class="kw-2">&amp;</span>f.parameters, <span class="string">"\n"</span>));
             <span class="kw">for </span>bb <span class="kw">in </span><span class="kw-2">&amp;</span>f.blocks {
                 <span class="macro">push!</span>(
                     <span class="kw-2">&amp;mut </span>text,
@@ -560,7 +560,7 @@
             );
         }
 
-        text.join(<span class="string">&quot;\n&quot;</span>)
+        text.join(<span class="string">"\n"</span>)
     }
 }
 
@@ -583,15 +583,15 @@
                 operands.push(operand.disassemble())
             }
             <span class="macro">format!</span>(
-                <span class="string">&quot;{rid}{opcode}{rtype} {operands}&quot;</span>,
+                <span class="string">"{rid}{opcode}{rtype} {operands}"</span>,
                 rid = inst
                     .result_id
-                    .map_or(String::new(), |w| <span class="macro">format!</span>(<span class="string">&quot;%{} = &quot;</span>, w)),
-                opcode = <span class="macro">format!</span>(<span class="string">&quot;Op{}&quot;</span>, inst.class.opname),
+                    .map_or(String::new(), |w| <span class="macro">format!</span>(<span class="string">"%{} = "</span>, w)),
+                opcode = <span class="macro">format!</span>(<span class="string">"Op{}"</span>, inst.class.opname),
                 rtype = inst
                     .result_type
-                    .map_or(String::new(), |w| <span class="macro">format!</span>(<span class="string">&quot;  %{} &quot;</span>, w)),
-                operands = operands.join(<span class="string">&quot; &quot;</span>)
+                    .map_or(String::new(), |w| <span class="macro">format!</span>(<span class="string">"  %{} "</span>, w)),
+                operands = operands.join(<span class="string">" "</span>)
             )
         } <span class="kw">else </span>{
             inst.disassemble()
@@ -611,29 +611,29 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_disassemble_operand_function_control() {
         <span class="kw">let </span>o = dr::Operand::FunctionControl(spirv::FunctionControl::NONE);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;None&quot;</span>, o.disassemble());
+        <span class="macro">assert_eq!</span>(<span class="string">"None"</span>, o.disassemble());
         <span class="kw">let </span>o = dr::Operand::FunctionControl(spirv::FunctionControl::INLINE);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;Inline&quot;</span>, o.disassemble());
+        <span class="macro">assert_eq!</span>(<span class="string">"Inline"</span>, o.disassemble());
         <span class="kw">let </span>o = dr::Operand::FunctionControl(
             spirv::FunctionControl::INLINE | spirv::FunctionControl::PURE,
         );
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;Inline|Pure&quot;</span>, o.disassemble());
+        <span class="macro">assert_eq!</span>(<span class="string">"Inline|Pure"</span>, o.disassemble());
         <span class="kw">let </span>o = dr::Operand::FunctionControl(spirv::FunctionControl::all());
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;Inline|DontInline|Pure|Const&quot;</span>, o.disassemble());
+        <span class="macro">assert_eq!</span>(<span class="string">"Inline|DontInline|Pure|Const"</span>, o.disassemble());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_disassemble_operand_memory_semantics() {
         <span class="kw">let </span>o = dr::Operand::MemorySemantics(spirv::MemorySemantics::NONE);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;None&quot;</span>, o.disassemble());
+        <span class="macro">assert_eq!</span>(<span class="string">"None"</span>, o.disassemble());
         <span class="kw">let </span>o = dr::Operand::MemorySemantics(spirv::MemorySemantics::RELAXED);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;None&quot;</span>, o.disassemble());
+        <span class="macro">assert_eq!</span>(<span class="string">"None"</span>, o.disassemble());
         <span class="kw">let </span>o = dr::Operand::MemorySemantics(spirv::MemorySemantics::RELEASE);
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;Release&quot;</span>, o.disassemble());
+        <span class="macro">assert_eq!</span>(<span class="string">"Release"</span>, o.disassemble());
         <span class="kw">let </span>o = dr::Operand::MemorySemantics(
             spirv::MemorySemantics::RELEASE | spirv::MemorySemantics::WORKGROUP_MEMORY,
         );
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;Release|WorkgroupMemory&quot;</span>, o.disassemble());
+        <span class="macro">assert_eq!</span>(<span class="string">"Release|WorkgroupMemory"</span>, o.disassemble());
     }
 
     <span class="attr">#[test]
@@ -641,8 +641,8 @@
         <span class="kw">let </span><span class="kw-2">mut </span>b = dr::Builder::new();
 
         b.capability(spirv::Capability::Shader);
-        b.extension(<span class="string">&quot;awesome-extension&quot;</span>);
-        b.ext_inst_import(<span class="string">&quot;GLSL.std.450&quot;</span>);
+        b.extension(<span class="string">"awesome-extension"</span>);
+        b.ext_inst_import(<span class="string">"GLSL.std.450"</span>);
         b.memory_model(spirv::AddressingModel::Logical, spirv::MemoryModel::Simple);
         b.source(spirv::SourceLanguage::GLSL, <span class="number">450</span>, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>::&lt;String&gt;);
 
@@ -663,25 +663,25 @@
         b.ret().unwrap();
         b.end_function().unwrap();
 
-        b.entry_point(spirv::ExecutionModel::Fragment, f, <span class="string">&quot;main&quot;</span>, <span class="macro">vec!</span>[]);
+        b.entry_point(spirv::ExecutionModel::Fragment, f, <span class="string">"main"</span>, <span class="macro">vec!</span>[]);
         b.execution_mode(f, spirv::ExecutionMode::OriginUpperLeft, <span class="macro">vec!</span>[]);
-        b.name(f, <span class="string">&quot;main&quot;</span>);
+        b.name(f, <span class="string">"main"</span>);
         b.decorate(var, spirv::Decoration::RelaxedPrecision, <span class="macro">vec!</span>[]);
 
         <span class="macro">assert_eq!</span>(
             b.module().disassemble(),
-            <span class="string">&quot;; SPIR-V\n\
+            <span class="string">"; SPIR-V\n\
                     ; Version: 1.5\n\
                     ; Generator: rspirv\n\
                     ; Bound: 8\n\
                     OpCapability Shader\n\
-                    OpExtension \&quot;awesome-extension\&quot;\n\
-                    %1 = OpExtInstImport \&quot;GLSL.std.450\&quot;\n\
+                    OpExtension \"awesome-extension\"\n\
+                    %1 = OpExtInstImport \"GLSL.std.450\"\n\
                     OpMemoryModel Logical Simple\n\
-                    OpEntryPoint Fragment %5 \&quot;main\&quot;\n\
+                    OpEntryPoint Fragment %5 \"main\"\n\
                     OpExecutionMode %5 OriginUpperLeft\n\
                     OpSource GLSL 450\n\
-                    OpName %5 \&quot;main\&quot;\n\
+                    OpName %5 \"main\"\n\
                     OpDecorate %7 RelaxedPrecision\n\
                     %2 = OpTypeVoid\n\
                     %3 = OpTypeFloat 32\n\
@@ -690,7 +690,7 @@
                     %6 = OpLabel\n\
                     %7 = OpVariable  %3  Function\n\
                     OpReturn\n\
-                    OpFunctionEnd&quot;
+                    OpFunctionEnd"
         </span>);
     }
 
@@ -699,7 +699,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>b = dr::Builder::new();
 
         b.capability(spirv::Capability::Shader);
-        <span class="kw">let </span>glsl = b.ext_inst_import(<span class="string">&quot;GLSL.std.450&quot;</span>);
+        <span class="kw">let </span>glsl = b.ext_inst_import(<span class="string">"GLSL.std.450"</span>);
         b.memory_model(spirv::AddressingModel::Logical, spirv::MemoryModel::Simple);
 
         <span class="kw">let </span>void = b.type_void();
@@ -718,12 +718,12 @@
 
         <span class="macro">assert_eq!</span>(
             b.module().disassemble(),
-            <span class="string">&quot;; SPIR-V\n\
+            <span class="string">"; SPIR-V\n\
                     ; Version: 1.5\n\
                     ; Generator: rspirv\n\
                     ; Bound: 9\n\
                     OpCapability Shader\n\
-                    %1 = OpExtInstImport \&quot;GLSL.std.450\&quot;\n\
+                    %1 = OpExtInstImport \"GLSL.std.450\"\n\
                     OpMemoryModel Logical Simple\n\
                     %2 = OpTypeVoid\n\
                     %3 = OpTypeFloat 32\n\
@@ -733,7 +733,7 @@
                     %7 = OpVariable  %3  Function\n\
                     %8 = OpExtInst  %3  %1 FSign %7\n\
                     OpReturn\n\
-                    OpFunctionEnd&quot;
+                    OpFunctionEnd"
         </span>);
     }
 
@@ -741,7 +741,7 @@
     </span><span class="kw">fn </span>test_disassemble_ext_inst_opencl() {
         <span class="kw">let </span><span class="kw-2">mut </span>b = dr::Builder::new();
 
-        <span class="kw">let </span>opencl = b.ext_inst_import(<span class="string">&quot;OpenCL.std&quot;</span>);
+        <span class="kw">let </span>opencl = b.ext_inst_import(<span class="string">"OpenCL.std"</span>);
         b.memory_model(spirv::AddressingModel::Logical, spirv::MemoryModel::OpenCL);
 
         <span class="kw">let </span>void = b.type_void();
@@ -762,11 +762,11 @@
 
         <span class="macro">assert_eq!</span>(
             b.module().disassemble(),
-            <span class="string">&quot;; SPIR-V\n\
+            <span class="string">"; SPIR-V\n\
                     ; Version: 1.5\n\
                     ; Generator: rspirv\n\
                     ; Bound: 9\n\
-                    %1 = OpExtInstImport \&quot;OpenCL.std\&quot;\n\
+                    %1 = OpExtInstImport \"OpenCL.std\"\n\
                     OpMemoryModel Logical OpenCL\n\
                     %2 = OpTypeVoid\n\
                     %3 = OpTypeFloat 32\n\
@@ -776,7 +776,7 @@
                     %7 = OpVariable  %3  Function\n\
                     %8 = OpExtInst  %3  %1 cosh %7\n\
                     OpReturn\n\
-                    OpFunctionEnd&quot;
+                    OpFunctionEnd"
         </span>);
     }
 }

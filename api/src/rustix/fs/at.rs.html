@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.30/src/fs/at.rs`."><title>at.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustix/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.37/src/fs/at.rs`."><title>at.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustix/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -479,40 +479,40 @@
 
 </span><span class="kw">use </span><span class="kw">crate</span>::fd::OwnedFd;
 <span class="kw">use </span><span class="kw">crate</span>::ffi::CStr;
-<span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>)))]
+<span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"vita"</span>)))]
 </span><span class="kw">use </span><span class="kw">crate</span>::fs::Access;
-<span class="attr">#[cfg(not(target_os = <span class="string">&quot;espidf&quot;</span>))]
+<span class="attr">#[cfg(not(target_os = <span class="string">"espidf"</span>))]
 </span><span class="kw">use </span><span class="kw">crate</span>::fs::AtFlags;
 <span class="attr">#[cfg(apple)]
 </span><span class="kw">use </span><span class="kw">crate</span>::fs::CloneFlags;
 <span class="attr">#[cfg(linux_kernel)]
 </span><span class="kw">use </span><span class="kw">crate</span>::fs::RenameFlags;
-<span class="attr">#[cfg(not(target_os = <span class="string">&quot;espidf&quot;</span>))]
+<span class="attr">#[cfg(not(target_os = <span class="string">"espidf"</span>))]
 </span><span class="kw">use </span><span class="kw">crate</span>::fs::Stat;
-<span class="attr">#[cfg(not(any(apple, target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>)))]
+<span class="attr">#[cfg(not(any(apple, target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"vita"</span>, target_os = <span class="string">"wasi"</span>)))]
 </span><span class="kw">use </span><span class="kw">crate</span>::fs::{Dev, FileType};
-<span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>)))]
+<span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"wasi"</span>)))]
 </span><span class="kw">use </span><span class="kw">crate</span>::fs::{Gid, Uid};
 <span class="kw">use </span><span class="kw">crate</span>::fs::{Mode, OFlags};
 <span class="kw">use crate</span>::{backend, io, path};
 <span class="kw">use </span>backend::fd::{AsFd, BorrowedFd};
 <span class="kw">use </span>core::mem::MaybeUninit;
 <span class="kw">use </span>core::slice;
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">use </span>{<span class="kw">crate</span>::ffi::CString, <span class="kw">crate</span>::path::SMALL_PATH_BUFFER_SIZE, alloc::vec::Vec};
-<span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>)))]
+<span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"vita"</span>)))]
 </span><span class="kw">use </span>{<span class="kw">crate</span>::fs::Timestamps, <span class="kw">crate</span>::timespec::Nsecs};
 
 <span class="doccomment">/// `UTIME_NOW` for use with [`utimensat`].
 ///
 /// [`utimensat`]: crate::fs::utimensat
-</span><span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;redox&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>)))]
+</span><span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"redox"</span>, target_os = <span class="string">"vita"</span>)))]
 </span><span class="kw">pub const </span>UTIME_NOW: Nsecs = backend::c::UTIME_NOW <span class="kw">as </span>Nsecs;
 
 <span class="doccomment">/// `UTIME_OMIT` for use with [`utimensat`].
 ///
 /// [`utimensat`]: crate::fs::utimensat
-</span><span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;redox&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>)))]
+</span><span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"redox"</span>, target_os = <span class="string">"vita"</span>)))]
 </span><span class="kw">pub const </span>UTIME_OMIT: Nsecs = backend::c::UTIME_OMIT <span class="kw">as </span>Nsecs;
 
 <span class="doccomment">/// `openat(dirfd, path, oflags, mode)`—Opens a file.
@@ -527,7 +527,7 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/openat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/openat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/openat.2.html
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>openat&lt;P: path::Arg, Fd: AsFd&gt;(
@@ -549,9 +549,9 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/readlinkat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/readlinkat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/readlinkat.2.html
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 #[inline]
 </span><span class="kw">pub fn </span>readlinkat&lt;P: path::Arg, Fd: AsFd, B: Into&lt;Vec&lt;u8&gt;&gt;&gt;(
     dirfd: Fd,
@@ -561,9 +561,9 @@
     path.into_with_c_str(|path| _readlinkat(dirfd.as_fd(), path, reuse.into()))
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 #[allow(unsafe_code)]
-</span><span class="kw">fn </span>_readlinkat(dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;, path: <span class="kw-2">&amp;</span>CStr, <span class="kw-2">mut </span>buffer: Vec&lt;u8&gt;) -&gt; io::Result&lt;CString&gt; {
+</span><span class="kw">fn </span>_readlinkat(dirfd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;, path: <span class="kw-2">&amp;</span>CStr, <span class="kw-2">mut </span>buffer: Vec&lt;u8&gt;) -&gt; io::Result&lt;CString&gt; {
     buffer.clear();
     buffer.reserve(SMALL_PATH_BUFFER_SIZE);
 
@@ -582,18 +582,18 @@
             }
 
             <span class="comment">// SAFETY:
-            // - “readlink places the contents of the symbolic link pathname in
-            //   the buffer buf”
-            // - [POSIX definition 3.271: Pathname]: “A string that is used to
-            //   identify a file.”
+            // - “readlink places the contents of the symbolic link pathname
+            //   in the buffer buf”
+            // - [POSIX definition 3.271: Pathname]: “A string that is used
+            //   to identify a file.”
             // - [POSIX definition 3.375: String]: “A contiguous sequence of
             //   bytes terminated by and including the first null byte.”
             // - “readlink does not append a terminating null byte to buf.”
             //
             // Thus, there will be no NUL bytes in the string.
             //
-            // [POSIX definition 3.271: Pathname]: https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_271
-            // [POSIX definition 3.375: String]: https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_375
+            // [POSIX definition 3.271: Pathname]: https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap03.html#tag_03_271
+            // [POSIX definition 3.375: String]: https://pubs.opengroup.org/onlinepubs/9799919799/basedefs/V1_chap03.html#tag_03_375
             </span><span class="kw">unsafe </span>{
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(CString::from_vec_unchecked(buffer));
             }
@@ -607,20 +607,20 @@
 <span class="doccomment">/// `readlinkat(fd, path)`—Reads the contents of a symlink, without
 /// allocating.
 ///
-/// This is the &quot;raw&quot; version which avoids allocating, but which is
+/// This is the "raw" version which avoids allocating, but which is
 /// significantly trickier to use; most users should use plain [`readlinkat`].
 ///
 /// This version writes bytes into the buffer and returns two slices, one
-/// containing the written bytes, and one containint the remaining
+/// containing the written bytes, and one containing the remaining
 /// uninitialized space. If the number of written bytes is equal to the length
-/// of the buffer, it means the buffer wasn&#39;t big enough to hold the full
+/// of the buffer, it means the buffer wasn't big enough to hold the full
 /// string, and callers should try again with a bigger buffer.
 ///
 /// # References
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/readlinkat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/readlinkat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/readlinkat.2.html
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>readlinkat_raw&lt;P: path::Arg, Fd: AsFd&gt;(
@@ -632,11 +632,11 @@
 }
 
 <span class="attr">#[allow(unsafe_code)]
-</span><span class="kw">fn </span>_readlinkat_raw&lt;<span class="lifetime">&#39;a</span>&gt;(
-    dirfd: BorrowedFd&lt;<span class="lifetime">&#39;_</span>&gt;,
+</span><span class="kw">fn </span>_readlinkat_raw&lt;<span class="lifetime">'a</span>&gt;(
+    dirfd: BorrowedFd&lt;<span class="lifetime">'_</span>&gt;,
     path: <span class="kw-2">&amp;</span>CStr,
-    buf: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[MaybeUninit&lt;u8&gt;],
-) -&gt; io::Result&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[u8], <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>[MaybeUninit&lt;u8&gt;])&gt; {
+    buf: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[MaybeUninit&lt;u8&gt;],
+) -&gt; io::Result&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[u8], <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[MaybeUninit&lt;u8&gt;])&gt; {
     <span class="kw">let </span>n = backend::fs::syscalls::readlinkat(dirfd.as_fd(), path, buf)<span class="question-mark">?</span>;
     <span class="kw">unsafe </span>{
         <span class="prelude-val">Ok</span>((
@@ -652,7 +652,7 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/mkdirat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/mkdirat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/mkdirat.2.html
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>mkdirat&lt;P: path::Arg, Fd: AsFd&gt;(dirfd: Fd, path: P, mode: Mode) -&gt; io::Result&lt;()&gt; {
@@ -666,9 +666,9 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/linkat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/linkat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/linkat.2.html
-</span><span class="attr">#[cfg(not(target_os = <span class="string">&quot;espidf&quot;</span>))]
+</span><span class="attr">#[cfg(not(target_os = <span class="string">"espidf"</span>))]
 #[inline]
 </span><span class="kw">pub fn </span>linkat&lt;P: path::Arg, Q: path::Arg, PFd: AsFd, QFd: AsFd&gt;(
     old_dirfd: PFd,
@@ -700,9 +700,9 @@
 ///  - [Linux]
 ///
 /// [`REMOVEDIR`]: AtFlags::REMOVEDIR
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/unlinkat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/unlinkat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/unlinkat.2.html
-</span><span class="attr">#[cfg(not(target_os = <span class="string">&quot;espidf&quot;</span>))]
+</span><span class="attr">#[cfg(not(target_os = <span class="string">"espidf"</span>))]
 #[inline]
 </span><span class="kw">pub fn </span>unlinkat&lt;P: path::Arg, Fd: AsFd&gt;(dirfd: Fd, path: P, flags: AtFlags) -&gt; io::Result&lt;()&gt; {
     path.into_with_c_str(|path| backend::fs::syscalls::unlinkat(dirfd.as_fd(), path, flags))
@@ -715,7 +715,7 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/renameat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/renameat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/renameat.2.html
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>renameat&lt;P: path::Arg, Q: path::Arg, PFd: AsFd, QFd: AsFd&gt;(
@@ -745,7 +745,7 @@
 /// [Linux]: https://man7.org/linux/man-pages/man2/renameat2.2.html
 </span><span class="attr">#[cfg(linux_kernel)]
 #[inline]
-#[doc(alias = <span class="string">&quot;renameat2&quot;</span>)]
+#[doc(alias = <span class="string">"renameat2"</span>)]
 </span><span class="kw">pub fn </span>renameat_with&lt;P: path::Arg, Q: path::Arg, PFd: AsFd, QFd: AsFd&gt;(
     old_dirfd: PFd,
     old_path: P,
@@ -772,7 +772,7 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/symlinkat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/symlinkat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/symlinkat.2.html
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>symlinkat&lt;P: path::Arg, Q: path::Arg, Fd: AsFd&gt;(
@@ -796,13 +796,13 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/fstatat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/fstatat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/fstatat.2.html
 /// [`Mode::from_raw_mode`]: crate::fs::Mode::from_raw_mode
 /// [`FileType::from_raw_mode`]: crate::fs::FileType::from_raw_mode
-</span><span class="attr">#[cfg(not(target_os = <span class="string">&quot;espidf&quot;</span>))]
+</span><span class="attr">#[cfg(not(target_os = <span class="string">"espidf"</span>))]
 #[inline]
-#[doc(alias = <span class="string">&quot;fstatat&quot;</span>)]
+#[doc(alias = <span class="string">"fstatat"</span>)]
 </span><span class="kw">pub fn </span>statat&lt;P: path::Arg, Fd: AsFd&gt;(dirfd: Fd, path: P, flags: AtFlags) -&gt; io::Result&lt;Stat&gt; {
     path.into_with_c_str(|path| backend::fs::syscalls::statat(dirfd.as_fd(), path, flags))
 }
@@ -811,7 +811,7 @@
 /// directory.
 ///
 /// On Linux before 5.8, this function uses the `faccessat` system call which
-/// doesn&#39;t support any flags. This function emulates support for the
+/// doesn't support any flags. This function emulates support for the
 /// [`AtFlags::EACCESS`] flag by checking whether the uid and gid of the
 /// process match the effective uid and gid, in which case the `EACCESS` flag
 /// can be ignored. In Linux 5.8 and beyond `faccessat2` is used, which
@@ -821,11 +821,11 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/faccessat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/faccessat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/faccessat.2.html
-</span><span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>)))]
+</span><span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"vita"</span>)))]
 #[inline]
-#[doc(alias = <span class="string">&quot;faccessat&quot;</span>)]
+#[doc(alias = <span class="string">"faccessat"</span>)]
 </span><span class="kw">pub fn </span>accessat&lt;P: path::Arg, Fd: AsFd&gt;(
     dirfd: Fd,
     path: P,
@@ -841,9 +841,9 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/utimensat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/utimensat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/utimensat.2.html
-</span><span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>)))]
+</span><span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"vita"</span>)))]
 #[inline]
 </span><span class="kw">pub fn </span>utimensat&lt;P: path::Arg, Fd: AsFd&gt;(
     dirfd: Fd,
@@ -864,11 +864,11 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/fchmodat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/fchmodat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/fchmodat.2.html
-</span><span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>)))]
+</span><span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"wasi"</span>)))]
 #[inline]
-#[doc(alias = <span class="string">&quot;fchmodat&quot;</span>)]
+#[doc(alias = <span class="string">"fchmodat"</span>)]
 </span><span class="kw">pub fn </span>chmodat&lt;P: path::Arg, Fd: AsFd&gt;(
     dirfd: Fd,
     path: P,
@@ -903,9 +903,9 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/mknodat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/mknodat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/mknodat.2.html
-</span><span class="attr">#[cfg(not(any(apple, target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;vita&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>)))]
+</span><span class="attr">#[cfg(not(any(apple, target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"vita"</span>, target_os = <span class="string">"wasi"</span>)))]
 #[inline]
 </span><span class="kw">pub fn </span>mknodat&lt;P: path::Arg, Fd: AsFd&gt;(
     dirfd: Fd,
@@ -926,11 +926,11 @@
 ///  - [POSIX]
 ///  - [Linux]
 ///
-/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9699919799/functions/fchownat.html
+/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/fchownat.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/fchownat.2.html
-</span><span class="attr">#[cfg(not(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>)))]
+</span><span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"wasi"</span>)))]
 #[inline]
-#[doc(alias = <span class="string">&quot;fchownat&quot;</span>)]
+#[doc(alias = <span class="string">"fchownat"</span>)]
 </span><span class="kw">pub fn </span>chownat&lt;P: path::Arg, Fd: AsFd&gt;(
     dirfd: Fd,
     path: P,

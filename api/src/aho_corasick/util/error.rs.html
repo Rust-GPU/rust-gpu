@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/util/error.rs`."><title>error.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../aho_corasick/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/util/error.rs`."><title>error.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -267,7 +267,7 @@
 ///
 /// Build errors occur when some kind of limit has been exceeded, either in the
 /// number of states, the number of patterns of the length of a pattern. These
-/// limits aren&#39;t part of the public API, but they should generally be large
+/// limits aren't part of the public API, but they should generally be large
 /// enough to handle most use cases.
 ///
 /// When the `std` feature is enabled, this implements the `std::error::Error`
@@ -332,33 +332,33 @@
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>BuildError {}
 
 <span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>BuildError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
         <span class="kw">match </span><span class="self">self</span>.kind {
             ErrorKind::StateIDOverflow { max, requested_max } =&gt; {
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;state identifier overflow: failed to create state ID \
-                     from {}, which exceeds the max of {}&quot;</span>,
+                    <span class="string">"state identifier overflow: failed to create state ID \
+                     from {}, which exceeds the max of {}"</span>,
                     requested_max, max,
                 )
             }
             ErrorKind::PatternIDOverflow { max, requested_max } =&gt; {
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;pattern identifier overflow: failed to create pattern ID \
-                     from {}, which exceeds the max of {}&quot;</span>,
+                    <span class="string">"pattern identifier overflow: failed to create pattern ID \
+                     from {}, which exceeds the max of {}"</span>,
                     requested_max, max,
                 )
             }
             ErrorKind::PatternTooLong { pattern, len } =&gt; {
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;pattern {} with length {} exceeds \
-                     the maximum pattern length of {}&quot;</span>,
+                    <span class="string">"pattern {} with length {} exceeds \
+                     the maximum pattern length of {}"</span>,
                     pattern.as_usize(),
                     len,
                     SmallIndex::MAX.as_usize(),
@@ -380,7 +380,7 @@
 /// * Executing a stream or overlapping search on a searcher that was built was
 /// something other than [`MatchKind::Standard`](crate::MatchKind::Standard)
 /// semantics.
-/// * Requested an anchored or an unanchored search on a searcher that doesn&#39;t
+/// * Requested an anchored or an unanchored search on a searcher that doesn't
 /// support unanchored or anchored searches, respectively.
 ///
 /// When the `std` feature is enabled, this implements the `std::error::Error`
@@ -402,8 +402,8 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0
     </span>}
 
-    <span class="doccomment">/// Create a new &quot;invalid anchored search&quot; error. This occurs when the
-    /// caller requests an anchored search but where anchored searches aren&#39;t
+    <span class="doccomment">/// Create a new "invalid anchored search" error. This occurs when the
+    /// caller requests an anchored search but where anchored searches aren't
     /// supported.
     ///
     /// This is the same as calling `MatchError::new` with a
@@ -412,9 +412,9 @@
         MatchError::new(MatchErrorKind::InvalidInputAnchored)
     }
 
-    <span class="doccomment">/// Create a new &quot;invalid unanchored search&quot; error. This occurs when the
+    <span class="doccomment">/// Create a new "invalid unanchored search" error. This occurs when the
     /// caller requests an unanchored search but where unanchored searches
-    /// aren&#39;t supported.
+    /// aren't supported.
     ///
     /// This is the same as calling `MatchError::new` with a
     /// [`MatchErrorKind::InvalidInputUnanchored`] kind.
@@ -422,7 +422,7 @@
         MatchError::new(MatchErrorKind::InvalidInputUnanchored)
     }
 
-    <span class="doccomment">/// Create a new &quot;unsupported stream search&quot; error. This occurs when the
+    <span class="doccomment">/// Create a new "unsupported stream search" error. This occurs when the
     /// caller requests a stream search while using an Aho-Corasick automaton
     /// with a match kind other than [`MatchKind::Standard`].
     ///
@@ -432,7 +432,7 @@
         MatchError::new(MatchErrorKind::UnsupportedStream { got })
     }
 
-    <span class="doccomment">/// Create a new &quot;unsupported overlapping search&quot; error. This occurs when
+    <span class="doccomment">/// Create a new "unsupported overlapping search" error. This occurs when
     /// the caller requests an overlapping search while using an Aho-Corasick
     /// automaton with a match kind other than [`MatchKind::Standard`].
     ///
@@ -442,7 +442,7 @@
         MatchError::new(MatchErrorKind::UnsupportedOverlapping { got })
     }
 
-    <span class="doccomment">/// Create a new &quot;unsupported empty pattern&quot; error. This occurs when the
+    <span class="doccomment">/// Create a new "unsupported empty pattern" error. This occurs when the
     /// caller requests a search for which matching an automaton that contains
     /// an empty pattern string is not supported.
     </span><span class="kw">pub fn </span>unsupported_empty() -&gt; MatchError {
@@ -475,42 +475,42 @@
         <span class="doccomment">/// The match semantics for the automaton that was used.
         </span>got: MatchKind,
     },
-    <span class="doccomment">/// An error indicating that the operation requested doesn&#39;t support
+    <span class="doccomment">/// An error indicating that the operation requested doesn't support
     /// automatons that contain an empty pattern string.
     </span>UnsupportedEmpty,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>MatchError {}
 
 <span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>MatchError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self</span>.kind() {
             MatchErrorKind::InvalidInputAnchored =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;anchored searches are not supported or enabled&quot;</span>)
+                <span class="macro">write!</span>(f, <span class="string">"anchored searches are not supported or enabled"</span>)
             }
             MatchErrorKind::InvalidInputUnanchored =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;unanchored searches are not supported or enabled&quot;</span>)
+                <span class="macro">write!</span>(f, <span class="string">"unanchored searches are not supported or enabled"</span>)
             }
             MatchErrorKind::UnsupportedStream { got } =&gt; {
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;match kind {:?} does not support stream searching&quot;</span>,
+                    <span class="string">"match kind {:?} does not support stream searching"</span>,
                     got,
                 )
             }
             MatchErrorKind::UnsupportedOverlapping { got } =&gt; {
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;match kind {:?} does not support overlapping searches&quot;</span>,
+                    <span class="string">"match kind {:?} does not support overlapping searches"</span>,
                     got,
                 )
             }
             MatchErrorKind::UnsupportedEmpty =&gt; {
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;matching with an empty pattern string is not \
-                     supported for this operation&quot;</span>,
+                    <span class="string">"matching with an empty pattern string is not \
+                     supported for this operation"</span>,
                 )
             }
         }

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/peephole_opts.rs`."><title>peephole_opts.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/peephole_opts.rs`."><title>peephole_opts.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -678,13 +678,13 @@
             <span class="comment">// Start looping from the current instruction, through each instruction in the chain.
             </span><span class="kw">while </span>cur_inst.class.opcode == Op::CompositeInsert {
                 <span class="kw">if </span>cur_inst.operands.len() != <span class="number">3 </span>{
-                    <span class="comment">// If there&#39;s more than one index, skip optimizing this chain.
+                    <span class="comment">// If there's more than one index, skip optimizing this chain.
                     </span><span class="kw">break</span>;
                 }
                 <span class="kw">let </span>value = cur_inst.operands[<span class="number">0</span>].unwrap_id_ref();
                 <span class="kw">let </span>index = cur_inst.operands[<span class="number">2</span>].unwrap_literal_int32() <span class="kw">as </span>usize;
                 <span class="kw">if </span>index &gt;= components.len() {
-                    <span class="comment">// Theoretically shouldn&#39;t happen, as it&#39;s invalid SPIR-V if the index is out
+                    <span class="comment">// Theoretically shouldn't happen, as it's invalid SPIR-V if the index is out
                     // of bounds, but just stop optimizing instead of panicing here.
                     </span><span class="kw">break</span>;
                 }
@@ -722,14 +722,14 @@
     <span class="doccomment">/// The operand to the vectorized operation is a straight-up vector.
     </span>Vector(Word),
     <span class="doccomment">/// The operand to the vectorized operation is a collection of scalars that need to be packed
-    /// together with OpCompositeConstruct before using the vectorized operation.
+    /// together with `OpCompositeConstruct` before using the vectorized operation.
     </span>Scalars(Vec&lt;Word&gt;),
     <span class="doccomment">/// The operand to the vectorized operation is some non-value: for example, the `instruction`
-    /// operand in OpExtInst.
+    /// operand in `OpExtInst`.
     </span>NonValue(Operand),
 }
 
-<span class="doccomment">/// Given an ID ref to a `OpCompositeExtract`, get the vector it&#39;s extracting from, and the field
+<span class="doccomment">/// Given an ID ref to a `OpCompositeExtract`, get the vector it's extracting from, and the field
 /// index.
 </span><span class="kw">fn </span>get_composite_and_index(
     types: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, Instruction&gt;,
@@ -751,9 +751,9 @@
     <span class="kw">let </span>composite_def = defs.get(<span class="kw-2">&amp;</span>composite).or_else(|| types.get(<span class="kw-2">&amp;</span>composite))<span class="question-mark">?</span>;
     <span class="kw">let </span>vector_def = types.get(<span class="kw-2">&amp;</span>composite_def.result_type.unwrap())<span class="question-mark">?</span>;
 
-    <span class="comment">// Make sure it&#39;s a vector and has the width we&#39;re expecting.
+    <span class="comment">// Make sure it's a vector and has the width we're expecting.
     // Width mismatch would be doing something like `vec2(a.x + b.x, a.y + b.y)` where `a` is a
-    // vec4 - if we optimized it to just `a + b`, it&#39;d be incorrect.
+    // vec4 - if we optimized it to just `a + b`, it'd be incorrect.
     </span><span class="kw">if </span>vector_def.class.opcode != Op::TypeVector
         || vector_width != vector_def.operands[<span class="number">1</span>].unwrap_literal_int32()
     {
@@ -801,8 +801,8 @@
                     <span class="kw">return </span><span class="prelude-val">None</span>;
                 }
             };
-        <span class="comment">// If the source composite isn&#39;t all from the same composite, or the index
-        // isn&#39;t the right index, break.
+        <span class="comment">// If the source composite isn't all from the same composite, or the index
+        // isn't the right index, break.
         </span><span class="kw">if </span>composite != composite_zero || expected_index != actual_index <span class="kw">as </span>usize {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
@@ -859,7 +859,7 @@
     vector_width: u32,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;IdentifiedOperand&gt;&gt; {
     <span class="kw">let </span>operation_opcode = results[<span class="number">0</span>].class.opcode;
-    <span class="comment">// Check to make sure they&#39;re all the same opcode, and have the same number of arguments.
+    <span class="comment">// Check to make sure they're all the same opcode, and have the same number of arguments.
     </span><span class="kw">if </span>results.iter().skip(<span class="number">1</span>).any(|r| {
         r.class.opcode != operation_opcode || r.operands.len() != results[<span class="number">0</span>].operands.len()
     }) {
@@ -889,7 +889,7 @@
             <span class="kw">let </span>left = match_vector_or_scalars_operand(types, defs, results, <span class="number">0</span>, vector_width)<span class="question-mark">?</span>;
             <span class="kw">let </span>right = match_vector_or_scalars_operand(types, defs, results, <span class="number">1</span>, vector_width)<span class="question-mark">?</span>;
             <span class="kw">match </span>(left, right) {
-                <span class="comment">// Style choice: If all arguments are scalars, don&#39;t fuse this operation.
+                <span class="comment">// Style choice: If all arguments are scalars, don't fuse this operation.
                 </span>(IdentifiedOperand::Scalars(<span class="kw">_</span>), IdentifiedOperand::Scalars(<span class="kw">_</span>)) =&gt; <span class="prelude-val">None</span>,
                 (left, right) =&gt; <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[left, right]),
             }
@@ -915,7 +915,7 @@
                 .skip(<span class="number">2</span>)
                 .all(|p| <span class="macro">matches!</span>(p, <span class="kw-2">&amp;</span>IdentifiedOperand::Scalars(<span class="kw">_</span>)))
             {
-                <span class="comment">// Style choice: If all arguments are scalars, don&#39;t fuse this operation.
+                <span class="comment">// Style choice: If all arguments are scalars, don't fuse this operation.
                 </span><span class="kw">return </span><span class="prelude-val">None</span>;
             }
             <span class="prelude-val">Some</span>(operands)
@@ -990,7 +990,7 @@
             IdentifiedOperand::Scalars(scalars) =&gt; {
                 <span class="kw">let </span>id = <span class="kw">super</span>::id(header);
                 <span class="comment">// spirv-opt will transform this into an OpConstantComposite if all arguments are
-                // constant, so we don&#39;t have to worry about that.
+                // constant, so we don't have to worry about that.
                 </span>instructions.insert(
                     <span class="kw-2">*</span>instruction_index,
                     Instruction::new(
@@ -1028,8 +1028,8 @@
 /// ```
 /// %r = OpAdd %x %y
 /// ```
-/// (We don&#39;t remove the intermediate instructions, however, in case they&#39;re used elsewhere - we
-/// let spirv-opt remove them if they&#39;re actually dead)
+/// (We don't remove the intermediate instructions, however, in case they're used elsewhere - we
+/// let spirv-opt remove them if they're actually dead)
 </span><span class="kw">pub fn </span>vector_ops(
     header: <span class="kw-2">&amp;mut </span>ModuleHeader,
     types: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, Instruction&gt;,
@@ -1040,7 +1040,7 @@
         .filter_map(|inst| <span class="prelude-val">Some</span>((inst.result_id<span class="question-mark">?</span>, inst.clone())))
         .collect::&lt;FxHashMap&lt;Word, Instruction&gt;&gt;();
     <span class="kw">for </span>block <span class="kw">in </span><span class="kw-2">&amp;mut </span>function.blocks {
-        <span class="comment">// It&#39;d be nice to iterate over &amp;mut block.instructions, but there&#39;s a weird case: if we
+        <span class="comment">// It'd be nice to iterate over &amp;mut block.instructions, but there's a weird case: if we
         // have a vector plus a collection of scalars, we want to pack the collection of scalars
         // into a vector and do a vector+vector op. That means we need to insert an extra
         // OpCompositeConstruct into the block, so, we need to manually keep track of the current
@@ -1161,7 +1161,7 @@
             phis_to_insert.push((<span class="kw-2">*</span>block_of_inst, inst));
             result_id
         }
-        <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(<span class="string">&quot;can_fuse_bool should have prevented this case&quot;</span>),
+        <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(<span class="string">"can_fuse_bool should have prevented this case"</span>),
     }
 }
 
@@ -1169,11 +1169,11 @@
 // %v_int = OpSelect %int %v %const_1 %const_0
 // %v2 = OpINotEqual %bool %v_int %const_0
 // (This is due to rustc/spirv not supporting bools in memory, and needing to convert to u8, but
-// then things get inlined/mem2reg&#39;d)
+// then things get inlined/mem2reg'd)
 //
 // This pass fuses together those two instructions to strip out the intermediate integer variable.
-// The purpose is to make simple code that doesn&#39;t actually do memory-stuff with bools not require
-// the Int8 capability (and so we can&#39;t rely on spirv-opt to do this same pass).
+// The purpose is to make simple code that doesn't actually do memory-stuff with bools not require
+// the Int8 capability (and so we can't rely on spirv-opt to do this same pass).
 //
 // Unfortunately, things get complicated because of phis: the majority of actually useful cases to
 // do this pass need to track pseudo-bool ints through phi instructions.
@@ -1181,12 +1181,12 @@
 // The logic goes like:
 // 1) Figure out what we *can* fuse. This means finding OpINotEqual instructions (converting back
 //    from int-&gt;bool) and tracing the value back recursively through any phis, and making sure each
-//    one terminates in either a loop back around to something we&#39;ve already seen, or an OpSelect
+//    one terminates in either a loop back around to something we've already seen, or an OpSelect
 //    (converting from bool-&gt;int).
 // 2) Do the fusion. Trace back through phis, generating a second bool-typed phi alongside the
 //    original int-typed phi, and when hitting an OpSelect, taking the bool value directly.
-// 3) DCE the dead OpSelects/int-typed OpPhis (done in a later pass). We don&#39;t nuke them here,
-//    since they might be used elsewhere, and don&#39;t want to accidentally leave a dangling
+// 3) DCE the dead OpSelects/int-typed OpPhis (done in a later pass). We don't nuke them here,
+//    since they might be used elsewhere, and don't want to accidentally leave a dangling
 //    reference.
 </span><span class="kw">pub fn </span>bool_fusion(
     header: <span class="kw-2">&amp;mut </span>ModuleHeader,

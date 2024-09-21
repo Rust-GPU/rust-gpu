@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../aho_corasick/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -364,8 +364,8 @@ byte offsets of the match.
 ```
 use aho_corasick::{AhoCorasick, PatternID};
 
-let patterns = &amp;[&quot;apple&quot;, &quot;maple&quot;, &quot;Snapple&quot;];
-let haystack = &quot;Nobody likes maple in their apple flavored Snapple.&quot;;
+let patterns = &amp;["apple", "maple", "Snapple"];
+let haystack = "Nobody likes maple in their apple flavored Snapple.";
 
 let ac = AhoCorasick::new(patterns).unwrap();
 let mut matches = vec![];
@@ -387,8 +387,8 @@ using `AhoCorasickBuilder`:
 ```
 use aho_corasick::{AhoCorasick, PatternID};
 
-let patterns = &amp;[&quot;apple&quot;, &quot;maple&quot;, &quot;snapple&quot;];
-let haystack = &quot;Nobody likes maple in their apple flavored Snapple.&quot;;
+let patterns = &amp;["apple", "maple", "snapple"];
+let haystack = "Nobody likes maple in their apple flavored Snapple.";
 
 let ac = AhoCorasick::builder()
     .ascii_case_insensitive(true)
@@ -411,21 +411,21 @@ This example shows how to execute a search and replace on a stream without
 loading the entire stream into memory first.
 
 ```
-# #[cfg(feature = &quot;std&quot;)] {
+# #[cfg(feature = "std")] {
 use aho_corasick::AhoCorasick;
 
 # fn example() -&gt; Result&lt;(), std::io::Error&gt; {
-let patterns = &amp;[&quot;fox&quot;, &quot;brown&quot;, &quot;quick&quot;];
-let replace_with = &amp;[&quot;sloth&quot;, &quot;grey&quot;, &quot;slow&quot;];
+let patterns = &amp;["fox", "brown", "quick"];
+let replace_with = &amp;["sloth", "grey", "slow"];
 
 // In a real example, these might be `std::fs::File`s instead. All you need to
 // do is supply a pair of `std::io::Read` and `std::io::Write` implementations.
-let rdr = &quot;The quick brown fox.&quot;;
+let rdr = "The quick brown fox.";
 let mut wtr = vec![];
 
 let ac = AhoCorasick::new(patterns).unwrap();
 ac.try_stream_replace_all(rdr.as_bytes(), &amp;mut wtr, replace_with)?;
-assert_eq!(b&quot;The slow grey sloth.&quot;.to_vec(), wtr);
+assert_eq!(b"The slow grey sloth.".to_vec(), wtr);
 # Ok(()) }; example().unwrap()
 # }
 ```
@@ -438,8 +438,8 @@ with another. In many cases, overlapping matches may not be desired, such as
 the case of finding all successive non-overlapping matches like you might with
 a standard regular expression.
 
-Unfortunately the &quot;obvious&quot; way to modify the Aho-Corasick algorithm to do
-this doesn&#39;t always work in the expected way, since it will report matches as
+Unfortunately the "obvious" way to modify the Aho-Corasick algorithm to do
+this doesn't always work in the expected way, since it will report matches as
 soon as they are seen. For example, consider matching the regex `Samwise|Sam`
 against the text `Samwise`. Most regex engines (that are Perl-like, or
 non-POSIX) will report `Samwise` as a match, but the standard Aho-Corasick
@@ -447,34 +447,34 @@ algorithm modified for reporting non-overlapping matches will report `Sam`.
 
 A novel contribution of this library is the ability to change the match
 semantics of Aho-Corasick (without additional search time overhead) such that
-`Samwise` is reported instead. For example, here&#39;s the standard approach:
+`Samwise` is reported instead. For example, here's the standard approach:
 
 ```
 use aho_corasick::AhoCorasick;
 
-let patterns = &amp;[&quot;Samwise&quot;, &quot;Sam&quot;];
-let haystack = &quot;Samwise&quot;;
+let patterns = &amp;["Samwise", "Sam"];
+let haystack = "Samwise";
 
 let ac = AhoCorasick::new(patterns).unwrap();
-let mat = ac.find(haystack).expect(&quot;should have a match&quot;);
-assert_eq!(&quot;Sam&quot;, &amp;haystack[mat.start()..mat.end()]);
+let mat = ac.find(haystack).expect("should have a match");
+assert_eq!("Sam", &amp;haystack[mat.start()..mat.end()]);
 ```
 
-And now here&#39;s the leftmost-first version, which matches how a Perl-like
+And now here's the leftmost-first version, which matches how a Perl-like
 regex will work:
 
 ```
 use aho_corasick::{AhoCorasick, MatchKind};
 
-let patterns = &amp;[&quot;Samwise&quot;, &quot;Sam&quot;];
-let haystack = &quot;Samwise&quot;;
+let patterns = &amp;["Samwise", "Sam"];
+let haystack = "Samwise";
 
 let ac = AhoCorasick::builder()
     .match_kind(MatchKind::LeftmostFirst)
     .build(patterns)
     .unwrap();
-let mat = ac.find(haystack).expect(&quot;should have a match&quot;);
-assert_eq!(&quot;Samwise&quot;, &amp;haystack[mat.start()..mat.end()]);
+let mat = ac.find(haystack).expect("should have a match");
+assert_eq!("Samwise", &amp;haystack[mat.start()..mat.end()]);
 ```
 
 In addition to leftmost-first semantics, this library also supports
@@ -487,7 +487,7 @@ While an Aho-Corasick automaton can perform admirably when compared to more
 naive solutions, it is generally slower than more specialized algorithms that
 are accelerated using vector instructions such as SIMD.
 
-For that reason, this library will internally use a &quot;prefilter&quot; to attempt
+For that reason, this library will internally use a "prefilter" to attempt
 to accelerate searches when possible. Currently, this library has several
 different algorithms it might use depending on the patterns provided. Once the
 number of patterns gets too big, prefilters are no longer used.
@@ -512,7 +512,7 @@ Aho-Corasick automata. Otherwise, the fast vectorized routines are used
 automatically as prefilters for `AhoCorasick` searches whenever possible.
 * The [`automaton`] sub-module provides a lower level finite state
 machine interface that the various Aho-Corasick implementations in
-this crate implement. This sub-module&#39;s main contribution is the
+this crate implement. This sub-module's main contribution is the
 [`Automaton`](automaton::Automaton) trait, which permits manually walking the
 state transitions of an Aho-Corasick automaton.
 * The [`dfa`] and [`nfa`] sub-modules provide DFA and NFA implementations of
@@ -521,7 +521,7 @@ these sub-modules is to get access to a type that implements the `Automaton`
 trait. (The top-level `AhoCorasick` type does not implement the `Automaton`
 trait.)
 
-As mentioned above, if you aren&#39;t sure whether you need these sub-modules,
+As mentioned above, if you aren't sure whether you need these sub-modules,
 you should be able to safely ignore them and just focus on the [`AhoCorasick`]
 type.
 
@@ -541,7 +541,7 @@ this crate can be used without the standard library.
   ~100).
 * **perf-literal** -
   Enables support for literal prefilters that use vectorized routines from
-  external crates. This feature is enabled by default. If you&#39;re only using
+  external crates. This feature is enabled by default. If you're only using
   Aho-Corasick for large numbers of patterns or otherwise can abide lower
   throughput when searching with a small number of patterns, then it is
   reasonable to disable this feature.
@@ -556,13 +556,13 @@ this crate can be used without the standard library.
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 </span><span class="kw">extern crate </span>alloc;
-<span class="attr">#[cfg(any(test, feature = <span class="string">&quot;std&quot;</span>))]
+<span class="attr">#[cfg(any(test, feature = <span class="string">"std"</span>))]
 </span><span class="kw">extern crate </span>std;
 
 <span class="attr">#[cfg(doctest)]
-</span><span class="macro">doc_comment::doctest!</span>(<span class="string">&quot;../README.md&quot;</span>);
+</span><span class="macro">doc_comment::doctest!</span>(<span class="string">"../README.md"</span>);
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">pub use </span><span class="kw">crate</span>::ahocorasick::StreamFindIter;
 <span class="kw">pub use crate</span>::{
     ahocorasick::{
@@ -590,8 +590,8 @@ this crate can be used without the standard library.
 // that this would make fst a public dependency and fst is not at 1.0 yet. I
 // decided to just keep the code in tree, but build it only during tests.
 //
-// TODO: I think I&#39;ve changed my mind again. I&#39;m considering pushing it out
-// into either a separate crate or into &#39;fst&#39; directly as an optional feature.
+// TODO: I think I've changed my mind again. I'm considering pushing it out
+// into either a separate crate or into 'fst' directly as an optional feature.
 // #[cfg(test)]
 // #[allow(dead_code)]
 // mod transducer;
@@ -631,7 +631,7 @@ this crate can be used without the standard library.
 
         assert_all::&lt;automaton::FindIter&lt;DFA&gt;&gt;();
         assert_all::&lt;automaton::FindOverlappingIter&lt;DFA&gt;&gt;();
-        <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
         </span>assert_all::&lt;automaton::StreamFindIter&lt;DFA, std::io::Stdin&gt;&gt;();
         assert_all::&lt;automaton::OverlappingState&gt;();
 

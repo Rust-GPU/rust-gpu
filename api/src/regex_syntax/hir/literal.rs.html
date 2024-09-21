@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-syntax-0.8.2/src/hir/literal.rs`."><title>literal.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_syntax/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-syntax-0.8.4/src/hir/literal.rs`."><title>literal.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_syntax/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -3233,18 +3233,18 @@ the substring search and the regex search.
 Here are some heuristics that might be used to help increase the chances of
 effective literal optimizations:
 
-* Stick to small [`Seq`]s. If you search for too many literals, it&#39;s likely
+* Stick to small [`Seq`]s. If you search for too many literals, it's likely
 to lead to substring search that is only a little faster than a regex search,
 and thus the overhead of using literal optimizations in the first place might
 make things slower overall.
-* The literals in your [`Seq`] shouldn&#39;t be too short. In general, longer is
+* The literals in your [`Seq`] shouldn't be too short. In general, longer is
 better. A sequence corresponding to single bytes that occur frequently in the
-haystack, for example, is probably a bad literal optimization because it&#39;s
+haystack, for example, is probably a bad literal optimization because it's
 likely to produce many false positive candidates. Longer literals are less
 likely to match, and thus probably produce fewer false positives.
-* If it&#39;s possible to estimate the approximate frequency of each byte according
+* If it's possible to estimate the approximate frequency of each byte according
 to some pre-computed background distribution, it is possible to compute a score
-of how &quot;good&quot; a `Seq` is. If a `Seq` isn&#39;t good enough, you might consider
+of how "good" a `Seq` is. If a `Seq` isn't good enough, you might consider
 skipping the literal optimization and just use the regex engine.
 
 (It should be noted that there are always pathological cases that can make
@@ -3253,15 +3253,15 @@ might be a good idea to be conservative, or to even provide a means for
 literal optimizations to be dynamically disabled if they are determined to be
 ineffective according to some measure.)
 
-You&#39;re encouraged to explore the methods on [`Seq`], which permit shrinking
+You're encouraged to explore the methods on [`Seq`], which permit shrinking
 the size of sequences in a preference-order preserving fashion.
 
-Finally, note that it isn&#39;t strictly necessary to use an [`Extractor`]. Namely,
+Finally, note that it isn't strictly necessary to use an [`Extractor`]. Namely,
 an `Extractor` only uses public APIs of the [`Seq`] and [`Literal`] types,
 so it is possible to implement your own extractor. For example, for n-grams
-or &quot;inner&quot; literals (i.e., not prefix or suffix literals). The `Extractor`
+or "inner" literals (i.e., not prefix or suffix literals). The `Extractor`
 is mostly responsible for the case analysis over `Hir` expressions. Much of
-the &quot;trickier&quot; parts are how to combine literal sequences, and that is all
+the "trickier" parts are how to combine literal sequences, and that is all
 implemented on [`Seq`].
 */
 
@@ -3285,10 +3285,10 @@ implemented on [`Seq`].
 ///
 /// The main downside of literal extraction is that it can wind up causing a
 /// search to be slower overall. For example, if there are many matches or if
-/// there are many candidates that don&#39;t ultimately lead to a match, then a
+/// there are many candidates that don't ultimately lead to a match, then a
 /// lot of overhead will be spent in shuffing back-and-forth between substring
 /// search and the regex engine. This is the fundamental reason why literal
-/// optimizations for regex patterns is sometimes considered a &quot;black art.&quot;
+/// optimizations for regex patterns is sometimes considered a "black art."
 ///
 /// # Look-around assertions
 ///
@@ -3317,20 +3317,20 @@ implemented on [`Seq`].
 /// ```
 /// use regex_syntax::{hir::literal::{Extractor, Literal, Seq}, parse};
 ///
-/// let hir = parse(r&quot;(a|b|c)(x|y|z)[A-Z]+foo&quot;)?;
+/// let hir = parse(r"(a|b|c)(x|y|z)[A-Z]+foo")?;
 /// let got = Extractor::new().extract(&amp;hir);
-/// // All literals returned are &quot;inexact&quot; because none of them reach the
+/// // All literals returned are "inexact" because none of them reach the
 /// // match state.
 /// let expected = Seq::from_iter([
-///     Literal::inexact(&quot;ax&quot;),
-///     Literal::inexact(&quot;ay&quot;),
-///     Literal::inexact(&quot;az&quot;),
-///     Literal::inexact(&quot;bx&quot;),
-///     Literal::inexact(&quot;by&quot;),
-///     Literal::inexact(&quot;bz&quot;),
-///     Literal::inexact(&quot;cx&quot;),
-///     Literal::inexact(&quot;cy&quot;),
-///     Literal::inexact(&quot;cz&quot;),
+///     Literal::inexact("ax"),
+///     Literal::inexact("ay"),
+///     Literal::inexact("az"),
+///     Literal::inexact("bx"),
+///     Literal::inexact("by"),
+///     Literal::inexact("bz"),
+///     Literal::inexact("cx"),
+///     Literal::inexact("cy"),
+///     Literal::inexact("cz"),
 /// ]);
 /// assert_eq!(expected, got);
 ///
@@ -3345,13 +3345,13 @@ implemented on [`Seq`].
 ///     parse,
 /// };
 ///
-/// let hir = parse(r&quot;foo|[A-Z]+bar&quot;)?;
+/// let hir = parse(r"foo|[A-Z]+bar")?;
 /// let got = Extractor::new().kind(ExtractKind::Suffix).extract(&amp;hir);
-/// // Since &#39;foo&#39; gets to a match state, it is considered exact. But &#39;bar&#39;
-/// // does not because of the &#39;[A-Z]+&#39;, and thus is marked inexact.
+/// // Since 'foo' gets to a match state, it is considered exact. But 'bar'
+/// // does not because of the '[A-Z]+', and thus is marked inexact.
 /// let expected = Seq::from_iter([
-///     Literal::exact(&quot;foo&quot;),
-///     Literal::inexact(&quot;bar&quot;),
+///     Literal::exact("foo"),
+///     Literal::inexact("bar"),
 /// ]);
 /// assert_eq!(expected, got);
 ///
@@ -3406,7 +3406,7 @@ implemented on [`Seq`].
             Alternation(<span class="kw-2">ref </span>hirs) =&gt; {
                 <span class="comment">// Unlike concat, we always union starting from the beginning,
                 // since the beginning corresponds to the highest preference,
-                // which doesn&#39;t change based on forwards vs reverse.
+                // which doesn't change based on forwards vs reverse.
                 </span><span class="self">self</span>.extract_alternation(hirs.iter())
             }
         }
@@ -3451,15 +3451,15 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::{hir::literal::{Extractor, Seq}, parse};
     ///
-    /// let hir = parse(r&quot;[0-9]&quot;)?;
+    /// let hir = parse(r"[0-9]")?;
     ///
     /// let got = Extractor::new().extract(&amp;hir);
     /// let expected = Seq::new([
-    ///     &quot;0&quot;, &quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;7&quot;, &quot;8&quot;, &quot;9&quot;,
+    ///     "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
     /// ]);
     /// assert_eq!(expected, got);
     ///
-    /// // Now let&#39;s shrink the limit and see how that changes things.
+    /// // Now let's shrink the limit and see how that changes things.
     /// let got = Extractor::new().limit_class(4).extract(&amp;hir);
     /// let expected = Seq::infinite();
     /// assert_eq!(expected, got);
@@ -3488,16 +3488,16 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::{hir::literal::{Extractor, Literal, Seq}, parse};
     ///
-    /// let hir = parse(r&quot;(abc){8}&quot;)?;
+    /// let hir = parse(r"(abc){8}")?;
     ///
     /// let got = Extractor::new().extract(&amp;hir);
-    /// let expected = Seq::new([&quot;abcabcabcabcabcabcabcabc&quot;]);
+    /// let expected = Seq::new(["abcabcabcabcabcabcabcabc"]);
     /// assert_eq!(expected, got);
     ///
-    /// // Now let&#39;s shrink the limit and see how that changes things.
+    /// // Now let's shrink the limit and see how that changes things.
     /// let got = Extractor::new().limit_repeat(4).extract(&amp;hir);
     /// let expected = Seq::from_iter([
-    ///     Literal::inexact(&quot;abcabcabcabc&quot;),
+    ///     Literal::inexact("abcabcabcabc"),
     /// ]);
     /// assert_eq!(expected, got);
     ///
@@ -3525,16 +3525,16 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::{hir::literal::{Extractor, Literal, Seq}, parse};
     ///
-    /// let hir = parse(r&quot;(abc){2}{2}{2}&quot;)?;
+    /// let hir = parse(r"(abc){2}{2}{2}")?;
     ///
     /// let got = Extractor::new().extract(&amp;hir);
-    /// let expected = Seq::new([&quot;abcabcabcabcabcabcabcabc&quot;]);
+    /// let expected = Seq::new(["abcabcabcabcabcabcabcabc"]);
     /// assert_eq!(expected, got);
     ///
-    /// // Now let&#39;s shrink the limit and see how that changes things.
+    /// // Now let's shrink the limit and see how that changes things.
     /// let got = Extractor::new().limit_literal_len(14).extract(&amp;hir);
     /// let expected = Seq::from_iter([
-    ///     Literal::inexact(&quot;abcabcabcabcab&quot;),
+    ///     Literal::inexact("abcabcabcabcab"),
     /// ]);
     /// assert_eq!(expected, got);
     ///
@@ -3556,7 +3556,7 @@ implemented on [`Seq`].
     ///
     /// For example, `[ab]{3}{3}` would yield a sequence of length `512 = 2^9`
     /// despite each of the repetitions being small on their own. This limit
-    /// thus represents a &quot;catch all&quot; for avoiding locally small sequences from
+    /// thus represents a "catch all" for avoiding locally small sequences from
     /// combining into large sequences.
     ///
     /// # Example
@@ -3567,30 +3567,30 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::{hir::literal::{Extractor, Literal, Seq}, parse};
     ///
-    /// let hir = parse(r&quot;[ab]{2}{2}&quot;)?;
+    /// let hir = parse(r"[ab]{2}{2}")?;
     ///
     /// let got = Extractor::new().extract(&amp;hir);
     /// let expected = Seq::new([
-    ///     &quot;aaaa&quot;, &quot;aaab&quot;, &quot;aaba&quot;, &quot;aabb&quot;,
-    ///     &quot;abaa&quot;, &quot;abab&quot;, &quot;abba&quot;, &quot;abbb&quot;,
-    ///     &quot;baaa&quot;, &quot;baab&quot;, &quot;baba&quot;, &quot;babb&quot;,
-    ///     &quot;bbaa&quot;, &quot;bbab&quot;, &quot;bbba&quot;, &quot;bbbb&quot;,
+    ///     "aaaa", "aaab", "aaba", "aabb",
+    ///     "abaa", "abab", "abba", "abbb",
+    ///     "baaa", "baab", "baba", "babb",
+    ///     "bbaa", "bbab", "bbba", "bbbb",
     /// ]);
     /// assert_eq!(expected, got);
     ///
     /// // The default limit is not too big, but big enough to extract all
-    /// // literals from &#39;[ab]{2}{2}&#39;. If we shrink the limit to less than 16,
-    /// // then we&#39;ll get a truncated set. Notice that it returns a sequence of
+    /// // literals from '[ab]{2}{2}'. If we shrink the limit to less than 16,
+    /// // then we'll get a truncated set. Notice that it returns a sequence of
     /// // length 4 even though our limit was 10. This is because the sequence
     /// // is difficult to increase without blowing the limit. Notice also
     /// // that every literal in the sequence is now inexact because they were
     /// // stripped of some suffix.
     /// let got = Extractor::new().limit_total(10).extract(&amp;hir);
     /// let expected = Seq::from_iter([
-    ///     Literal::inexact(&quot;aa&quot;),
-    ///     Literal::inexact(&quot;ab&quot;),
-    ///     Literal::inexact(&quot;ba&quot;),
-    ///     Literal::inexact(&quot;bb&quot;),
+    ///     Literal::inexact("aa"),
+    ///     Literal::inexact("ab"),
+    ///     Literal::inexact("ba"),
+    ///     Literal::inexact("bb"),
     /// ]);
     /// assert_eq!(expected, got);
     ///
@@ -3606,7 +3606,7 @@ implemented on [`Seq`].
     ///
     /// This short circuits once the cross product turns into a sequence
     /// containing only inexact literals.
-    </span><span class="kw">fn </span>extract_concat&lt;<span class="lifetime">&#39;a</span>, I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Hir&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, it: I) -&gt; Seq {
+    </span><span class="kw">fn </span>extract_concat&lt;<span class="lifetime">'a</span>, I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Hir&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, it: I) -&gt; Seq {
         <span class="kw">let </span><span class="kw-2">mut </span>seq = Seq::singleton(<span class="self">self</span>::Literal::exact(<span class="macro">vec!</span>[]));
         <span class="kw">for </span>hir <span class="kw">in </span>it {
             <span class="comment">// If every element in the sequence is inexact, then a cross
@@ -3616,7 +3616,7 @@ implemented on [`Seq`].
             </span><span class="kw">if </span>seq.is_inexact() {
                 <span class="kw">break</span>;
             }
-            <span class="comment">// Note that &#39;cross&#39; also dispatches based on whether we&#39;re
+            <span class="comment">// Note that 'cross' also dispatches based on whether we're
             // extracting prefixes or suffixes.
             </span>seq = <span class="self">self</span>.cross(seq, <span class="kw-2">&amp;mut </span><span class="self">self</span>.extract(hir));
         }
@@ -3626,13 +3626,13 @@ implemented on [`Seq`].
     <span class="doccomment">/// Extract a sequence from the given alternation.
     ///
     /// This short circuits once the union turns into an infinite sequence.
-    </span><span class="kw">fn </span>extract_alternation&lt;<span class="lifetime">&#39;a</span>, I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Hir&gt;&gt;(
+    </span><span class="kw">fn </span>extract_alternation&lt;<span class="lifetime">'a</span>, I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Hir&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         it: I,
     ) -&gt; Seq {
         <span class="kw">let </span><span class="kw-2">mut </span>seq = Seq::empty();
         <span class="kw">for </span>hir <span class="kw">in </span>it {
-            <span class="comment">// Once our &#39;seq&#39; is infinite, every subsequent union
+            <span class="comment">// Once our 'seq' is infinite, every subsequent union
             // operation on it will itself always result in an
             // infinite sequence. Thus, it can never change and we can
             // short-circuit.
@@ -3647,25 +3647,25 @@ implemented on [`Seq`].
     <span class="doccomment">/// Extract a sequence of literals from the given repetition. We do our
     /// best, Some examples:
     ///
-    ///   &#39;a*&#39;    =&gt; [inexact(a), exact(&quot;&quot;)]
-    ///   &#39;a*?&#39;   =&gt; [exact(&quot;&quot;), inexact(a)]
-    ///   &#39;a+&#39;    =&gt; [inexact(a)]
-    ///   &#39;a{3}&#39;  =&gt; [exact(aaa)]
-    ///   &#39;a{3,5} =&gt; [inexact(aaa)]
+    ///   'a*'    =&gt; [inexact(a), exact("")]
+    ///   'a*?'   =&gt; [exact(""), inexact(a)]
+    ///   'a+'    =&gt; [inexact(a)]
+    ///   'a{3}'  =&gt; [exact(aaa)]
+    ///   'a{3,5} =&gt; [inexact(aaa)]
     ///
-    /// The key here really is making sure we get the &#39;inexact&#39; vs &#39;exact&#39;
+    /// The key here really is making sure we get the 'inexact' vs 'exact'
     /// attributes correct on each of the literals we add. For example, the
-    /// fact that &#39;a*&#39; gives us an inexact &#39;a&#39; and an exact empty string means
-    /// that a regex like &#39;ab*c&#39; will result in [inexact(ab), exact(ac)]
+    /// fact that 'a*' gives us an inexact 'a' and an exact empty string means
+    /// that a regex like 'ab*c' will result in [inexact(ab), exact(ac)]
     /// literals being extracted, which might actually be a better prefilter
-    /// than just &#39;a&#39;.
+    /// than just 'a'.
     </span><span class="kw">fn </span>extract_repetition(<span class="kw-2">&amp;</span><span class="self">self</span>, rep: <span class="kw-2">&amp;</span>hir::Repetition) -&gt; Seq {
         <span class="kw">let </span><span class="kw-2">mut </span>subseq = <span class="self">self</span>.extract(<span class="kw-2">&amp;</span>rep.sub);
         <span class="kw">match </span><span class="kw-2">*</span>rep {
             hir::Repetition { min: <span class="number">0</span>, max, greedy, .. } =&gt; {
-                <span class="comment">// When &#39;max=1&#39;, we can retain exactness, since &#39;a?&#39; is
-                // equivalent to &#39;a|&#39;. Similarly below, &#39;a??&#39; is equivalent to
-                // &#39;|a&#39;.
+                <span class="comment">// When 'max=1', we can retain exactness, since 'a?' is
+                // equivalent to 'a|'. Similarly below, 'a??' is equivalent to
+                // '|a'.
                 </span><span class="kw">if </span>max != <span class="prelude-val">Some</span>(<span class="number">1</span>) {
                     subseq.make_inexact();
                 }
@@ -3792,18 +3792,18 @@ implemented on [`Seq`].
         <span class="kw">if </span>seq1.max_union_len(seq2).map_or(<span class="bool-val">false</span>, |len| len &gt; <span class="self">self</span>.limit_total)
         {
             <span class="comment">// We try to trim our literal sequences to see if we can make
-            // room for more literals. The idea is that we&#39;d rather trim down
+            // room for more literals. The idea is that we'd rather trim down
             // literals already in our sequence if it means we can add a few
-            // more and retain a finite sequence. Otherwise, we&#39;ll union with
+            // more and retain a finite sequence. Otherwise, we'll union with
             // an infinite sequence and that infects everything and effectively
             // stops literal extraction in its tracks.
             //
-            // We do we keep 4 bytes here? Well, it&#39;s a bit of an abstraction
+            // We do we keep 4 bytes here? Well, it's a bit of an abstraction
             // leakage. Downstream, the literals may wind up getting fed to
             // the Teddy algorithm, which supports searching literals up to
-            // length 4. So that&#39;s why we pick that number here. Arguably this
+            // length 4. So that's why we pick that number here. Arguably this
             // should be a tuneable parameter, but it seems a little tricky to
-            // describe. And I&#39;m still unsure if this is the right way to go
+            // describe. And I'm still unsure if this is the right way to go
             // about culling literal sequences.
             </span><span class="kw">match </span><span class="self">self</span>.kind {
                 ExtractKind::Prefix =&gt; {
@@ -3857,7 +3857,7 @@ implemented on [`Seq`].
     <span class="doccomment">/// Extracts only suffix literals from a regex.
     ///
     /// Note that the sequence returned by suffix literals currently may
-    /// not correctly represent leftmost-first or &quot;preference&quot; order match
+    /// not correctly represent leftmost-first or "preference" order match
     /// semantics.
     </span>Suffix,
 }
@@ -3897,7 +3897,7 @@ implemented on [`Seq`].
 ///
 /// A `Seq` has a few different logical states to consider:
 ///
-/// * The sequence can represent &quot;any&quot; literal. When this happens, the set does
+/// * The sequence can represent "any" literal. When this happens, the set does
 /// not have a finite size. The purpose of this state is to inhibit callers
 /// from making assumptions about what literals are required in order to match
 /// a particular [`Hir`] expression. Generally speaking, when a set is in this
@@ -3922,24 +3922,24 @@ implemented on [`Seq`].
 /// use regex_syntax::hir::literal::{Literal, Seq};
 ///
 /// let mut seq = Seq::new(&amp;[
-///     &quot;farm&quot;,
-///     &quot;appliance&quot;,
-///     &quot;faraway&quot;,
-///     &quot;apple&quot;,
-///     &quot;fare&quot;,
-///     &quot;gap&quot;,
-///     &quot;applicant&quot;,
-///     &quot;applaud&quot;,
+///     "farm",
+///     "appliance",
+///     "faraway",
+///     "apple",
+///     "fare",
+///     "gap",
+///     "applicant",
+///     "applaud",
 /// ]);
 /// seq.keep_first_bytes(3);
 /// seq.minimize_by_preference();
-/// // Notice that &#39;far&#39; comes before &#39;app&#39;, which matches the order in the
+/// // Notice that 'far' comes before 'app', which matches the order in the
 /// // original sequence. This guarantees that leftmost-first semantics are
 /// // not altered by simplifying the set.
 /// let expected = Seq::from_iter([
-///     Literal::inexact(&quot;far&quot;),
-///     Literal::inexact(&quot;app&quot;),
-///     Literal::exact(&quot;gap&quot;),
+///     Literal::inexact("far"),
+///     Literal::inexact("app"),
+///     Literal::exact("gap"),
 /// ]);
 /// assert_eq!(expected, seq);
 /// ```
@@ -3953,7 +3953,7 @@ implemented on [`Seq`].
     ///
     /// Note that `Some(vec![])` is valid and corresponds to the empty seq of
     /// literals, i.e., a regex that can never match. For example, `[a&amp;&amp;b]`.
-    /// It is distinct from `Some(vec![&quot;&quot;])`, which corresponds to the seq
+    /// It is distinct from `Some(vec![""])`, which corresponds to the seq
     /// containing an empty string, which matches at every position.
     </span>literals: <span class="prelude-ty">Option</span>&lt;Vec&lt;Literal&gt;&gt;,
 }
@@ -3976,7 +3976,7 @@ implemented on [`Seq`].
     /// or suffixes, nor are lower or upper bounds on the length of the literals
     /// in the set known.
     ///
-    /// This is useful to represent constructs in a regex that are &quot;too big&quot;
+    /// This is useful to represent constructs in a regex that are "too big"
     /// to useful represent as a sequence of literals. For example, `[A-Za-z]`.
     /// When sequences get too big, they lose their discriminating nature and
     /// are more likely to produce false positives, which in turn makes them
@@ -4023,7 +4023,7 @@ implemented on [`Seq`].
     ///
     /// Similarly, if the most recently added item of this sequence is
     /// equivalent to the literal given, then it is not added. This reflects
-    /// a `Seq`&#39;s &quot;set like&quot; behavior, and represents a practical trade off.
+    /// a `Seq`'s "set like" behavior, and represents a practical trade off.
     /// Namely, there is never any need to have two adjacent and equivalent
     /// literals in the same sequence, _and_ it is easy to detect in some
     /// cases.
@@ -4090,12 +4090,12 @@ implemented on [`Seq`].
     /// use regex_syntax::hir::literal::{Literal, Seq};
     ///
     /// let mut seq1 = Seq::from_iter([
-    ///     Literal::exact(&quot;foo&quot;),
-    ///     Literal::inexact(&quot;bar&quot;),
+    ///     Literal::exact("foo"),
+    ///     Literal::inexact("bar"),
     /// ]);
     /// let mut seq2 = Seq::from_iter([
-    ///     Literal::inexact(&quot;quux&quot;),
-    ///     Literal::exact(&quot;baz&quot;),
+    ///     Literal::inexact("quux"),
+    ///     Literal::exact("baz"),
     /// ]);
     /// seq1.cross_forward(&amp;mut seq2);
     ///
@@ -4103,9 +4103,9 @@ implemented on [`Seq`].
     /// assert_eq!(Some(0), seq2.len());
     ///
     /// let expected = Seq::from_iter([
-    ///     Literal::inexact(&quot;fooquux&quot;),
-    ///     Literal::exact(&quot;foobaz&quot;),
-    ///     Literal::inexact(&quot;bar&quot;),
+    ///     Literal::inexact("fooquux"),
+    ///     Literal::exact("foobaz"),
+    ///     Literal::inexact("bar"),
     /// ]);
     /// assert_eq!(expected, seq1);
     /// ```
@@ -4117,17 +4117,17 @@ implemented on [`Seq`].
     /// use regex_syntax::hir::literal::{Literal, Seq};
     ///
     /// let mut seq1 = Seq::from_iter([
-    ///     Literal::exact(&quot;foo&quot;),
-    ///     Literal::inexact(&quot;bar&quot;),
+    ///     Literal::exact("foo"),
+    ///     Literal::inexact("bar"),
     /// ]);
     /// let mut seq2 = Seq::infinite();
     /// seq1.cross_forward(&amp;mut seq2);
     ///
-    /// // When seq2 is infinite, cross product doesn&#39;t add anything, but
+    /// // When seq2 is infinite, cross product doesn't add anything, but
     /// // ensures all members of seq1 are inexact.
     /// let expected = Seq::from_iter([
-    ///     Literal::inexact(&quot;foo&quot;),
-    ///     Literal::inexact(&quot;bar&quot;),
+    ///     Literal::inexact("foo"),
+    ///     Literal::inexact("bar"),
     /// ]);
     /// assert_eq!(expected, seq1);
     /// ```
@@ -4141,9 +4141,9 @@ implemented on [`Seq`].
     /// use regex_syntax::hir::literal::{Literal, Seq};
     ///
     /// let mut seq1 = Seq::from_iter([
-    ///     Literal::exact(&quot;foo&quot;),
-    ///     Literal::exact(&quot;&quot;), // inexact provokes same behavior
-    ///     Literal::inexact(&quot;bar&quot;),
+    ///     Literal::exact("foo"),
+    ///     Literal::exact(""), // inexact provokes same behavior
+    ///     Literal::inexact("bar"),
     /// ]);
     /// let mut seq2 = Seq::infinite();
     /// seq1.cross_forward(&amp;mut seq2);
@@ -4159,14 +4159,14 @@ implemented on [`Seq`].
     ///
     /// let mut seq1 = Seq::infinite();
     /// let mut seq2 = Seq::from_iter([
-    ///     Literal::exact(&quot;foo&quot;),
-    ///     Literal::inexact(&quot;bar&quot;),
+    ///     Literal::exact("foo"),
+    ///     Literal::inexact("bar"),
     /// ]);
     /// seq1.cross_forward(&amp;mut seq2);
     ///
     /// // seq1 remains unchanged.
     /// assert!(!seq1.is_finite());
-    /// // Even though the literals in seq2 weren&#39;t used, it was still drained.
+    /// // Even though the literals in seq2 weren't used, it was still drained.
     /// assert_eq!(Some(0), seq2.len());
     /// ```
     </span><span class="attr">#[inline]
@@ -4229,12 +4229,12 @@ implemented on [`Seq`].
     /// use regex_syntax::hir::literal::{Literal, Seq};
     ///
     /// let mut seq1 = Seq::from_iter([
-    ///     Literal::exact(&quot;foo&quot;),
-    ///     Literal::inexact(&quot;bar&quot;),
+    ///     Literal::exact("foo"),
+    ///     Literal::inexact("bar"),
     /// ]);
     /// let mut seq2 = Seq::from_iter([
-    ///     Literal::inexact(&quot;quux&quot;),
-    ///     Literal::exact(&quot;baz&quot;),
+    ///     Literal::inexact("quux"),
+    ///     Literal::exact("baz"),
     /// ]);
     /// seq1.cross_reverse(&amp;mut seq2);
     ///
@@ -4242,9 +4242,9 @@ implemented on [`Seq`].
     /// assert_eq!(Some(0), seq2.len());
     ///
     /// let expected = Seq::from_iter([
-    ///     Literal::inexact(&quot;quuxfoo&quot;),
-    ///     Literal::inexact(&quot;bar&quot;),
-    ///     Literal::exact(&quot;bazfoo&quot;),
+    ///     Literal::inexact("quuxfoo"),
+    ///     Literal::inexact("bar"),
+    ///     Literal::exact("bazfoo"),
     /// ]);
     /// assert_eq!(expected, seq1);
     /// ```
@@ -4256,17 +4256,17 @@ implemented on [`Seq`].
     /// use regex_syntax::hir::literal::{Literal, Seq};
     ///
     /// let mut seq1 = Seq::from_iter([
-    ///     Literal::exact(&quot;foo&quot;),
-    ///     Literal::inexact(&quot;bar&quot;),
+    ///     Literal::exact("foo"),
+    ///     Literal::inexact("bar"),
     /// ]);
     /// let mut seq2 = Seq::infinite();
     /// seq1.cross_reverse(&amp;mut seq2);
     ///
-    /// // When seq2 is infinite, cross product doesn&#39;t add anything, but
+    /// // When seq2 is infinite, cross product doesn't add anything, but
     /// // ensures all members of seq1 are inexact.
     /// let expected = Seq::from_iter([
-    ///     Literal::inexact(&quot;foo&quot;),
-    ///     Literal::inexact(&quot;bar&quot;),
+    ///     Literal::inexact("foo"),
+    ///     Literal::inexact("bar"),
     /// ]);
     /// assert_eq!(expected, seq1);
     /// ```
@@ -4280,9 +4280,9 @@ implemented on [`Seq`].
     /// use regex_syntax::hir::literal::{Literal, Seq};
     ///
     /// let mut seq1 = Seq::from_iter([
-    ///     Literal::exact(&quot;foo&quot;),
-    ///     Literal::exact(&quot;&quot;), // inexact provokes same behavior
-    ///     Literal::inexact(&quot;bar&quot;),
+    ///     Literal::exact("foo"),
+    ///     Literal::exact(""), // inexact provokes same behavior
+    ///     Literal::inexact("bar"),
     /// ]);
     /// let mut seq2 = Seq::infinite();
     /// seq1.cross_reverse(&amp;mut seq2);
@@ -4298,14 +4298,14 @@ implemented on [`Seq`].
     ///
     /// let mut seq1 = Seq::infinite();
     /// let mut seq2 = Seq::from_iter([
-    ///     Literal::exact(&quot;foo&quot;),
-    ///     Literal::inexact(&quot;bar&quot;),
+    ///     Literal::exact("foo"),
+    ///     Literal::inexact("bar"),
     /// ]);
     /// seq1.cross_reverse(&amp;mut seq2);
     ///
     /// // seq1 remains unchanged.
     /// assert!(!seq1.is_finite());
-    /// // Even though the literals in seq2 weren&#39;t used, it was still drained.
+    /// // Even though the literals in seq2 weren't used, it was still drained.
     /// assert_eq!(Some(0), seq2.len());
     /// ```
     </span><span class="attr">#[inline]
@@ -4314,16 +4314,16 @@ implemented on [`Seq`].
             <span class="prelude-val">None </span>=&gt; <span class="kw">return</span>,
             <span class="prelude-val">Some</span>((lits1, lits2)) =&gt; (lits1, lits2),
         };
-        <span class="comment">// We basically proceed as we do in &#39;cross_forward&#39; at this point,
-        // except that the outer loop is now &#39;other&#39; and the inner loop is now
-        // &#39;self&#39;. That&#39;s because &#39;self&#39; corresponds to suffixes and &#39;other&#39;
+        <span class="comment">// We basically proceed as we do in 'cross_forward' at this point,
+        // except that the outer loop is now 'other' and the inner loop is now
+        // 'self'. That's because 'self' corresponds to suffixes and 'other'
         // corresponds to the sequence we want to *prepend* to the suffixes.
         </span><span class="kw">let </span>newcap = lits1.len().saturating_mul(lits2.len());
         <span class="kw">let </span>selflits = mem::replace(lits1, Vec::with_capacity(newcap));
         <span class="kw">for </span>(i, otherlit) <span class="kw">in </span>lits2.drain(..).enumerate() {
             <span class="kw">for </span>selflit <span class="kw">in </span>selflits.iter() {
                 <span class="kw">if </span>!selflit.is_exact() {
-                    <span class="comment">// If the suffix isn&#39;t exact, then we can&#39;t prepend
+                    <span class="comment">// If the suffix isn't exact, then we can't prepend
                     // anything to it. However, we still want to keep it. But
                     // we only want to keep one of them, to avoid duplication.
                     // (The duplication is okay from a correctness perspective,
@@ -4350,15 +4350,15 @@ implemented on [`Seq`].
     <span class="doccomment">/// A helper function the corresponds to the subtle preamble for both
     /// `cross_forward` and `cross_reverse`. In effect, it handles the cases
     /// of infinite sequences for both `self` and `other`, as well as ensuring
-    /// that literals from `other` are drained even if they aren&#39;t used.
-    </span><span class="kw">fn </span>cross_preamble&lt;<span class="lifetime">&#39;a</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span><span class="self">self</span>,
-        other: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Seq,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Vec&lt;Literal&gt;, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Vec&lt;Literal&gt;)&gt; {
+    /// that literals from `other` are drained even if they aren't used.
+    </span><span class="kw">fn </span>cross_preamble&lt;<span class="lifetime">'a</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="self">self</span>,
+        other: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Seq,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Vec&lt;Literal&gt;, <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Vec&lt;Literal&gt;)&gt; {
         <span class="kw">let </span>lits2 = <span class="kw">match </span>other.literals {
             <span class="prelude-val">None </span>=&gt; {
                 <span class="comment">// If our current seq contains the empty string and the seq
-                // we&#39;re adding matches any literal, then it follows that the
+                // we're adding matches any literal, then it follows that the
                 // current seq must now also match any literal.
                 //
                 // Otherwise, we just have to make sure everything in this
@@ -4374,7 +4374,7 @@ implemented on [`Seq`].
         };
         <span class="kw">let </span>lits1 = <span class="kw">match </span><span class="self">self</span>.literals {
             <span class="prelude-val">None </span>=&gt; {
-                <span class="comment">// If we aren&#39;t going to make it to the end of this routine
+                <span class="comment">// If we aren't going to make it to the end of this routine
                 // where lits2 is drained, then we need to do it now.
                 </span>lits2.drain(..);
                 <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -4391,7 +4391,7 @@ implemented on [`Seq`].
     /// the caller to reuse the `other` sequence in another context.
     ///
     /// Some literal deduping may be performed. If any deduping happens,
-    /// any leftmost-first or &quot;preference&quot; order match semantics will be
+    /// any leftmost-first or "preference" order match semantics will be
     /// preserved.
     ///
     /// # Example
@@ -4401,19 +4401,19 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::hir::literal::Seq;
     ///
-    /// let mut seq1 = Seq::new(&amp;[&quot;foo&quot;, &quot;bar&quot;]);
-    /// let mut seq2 = Seq::new(&amp;[&quot;bar&quot;, &quot;quux&quot;, &quot;foo&quot;]);
+    /// let mut seq1 = Seq::new(&amp;["foo", "bar"]);
+    /// let mut seq2 = Seq::new(&amp;["bar", "quux", "foo"]);
     /// seq1.union(&amp;mut seq2);
     ///
     /// // The literals are pulled out of seq2.
     /// assert_eq!(Some(0), seq2.len());
     ///
     /// // Adjacent literals are deduped, but non-adjacent literals may not be.
-    /// assert_eq!(Seq::new(&amp;[&quot;foo&quot;, &quot;bar&quot;, &quot;quux&quot;, &quot;foo&quot;]), seq1);
+    /// assert_eq!(Seq::new(&amp;["foo", "bar", "quux", "foo"]), seq1);
     /// ```
     ///
     /// This example shows that literals are drained from `other` even when
-    /// they aren&#39;t necessarily used.
+    /// they aren't necessarily used.
     ///
     /// ```
     /// use regex_syntax::hir::literal::Seq;
@@ -4422,7 +4422,7 @@ implemented on [`Seq`].
     /// // Infinite sequences have no finite length.
     /// assert_eq!(None, seq1.len());
     ///
-    /// let mut seq2 = Seq::new(&amp;[&quot;bar&quot;, &quot;quux&quot;, &quot;foo&quot;]);
+    /// let mut seq2 = Seq::new(&amp;["bar", "quux", "foo"]);
     /// seq1.union(&amp;mut seq2);
     ///
     /// // seq1 is still infinite and seq2 has been drained.
@@ -4462,7 +4462,7 @@ implemented on [`Seq`].
     /// when this sequence does not contain a zero-length literal.
     ///
     /// Some literal deduping may be performed. If any deduping happens,
-    /// any leftmost-first or &quot;preference&quot; order match semantics will be
+    /// any leftmost-first or "preference" order match semantics will be
     /// preserved.
     ///
     /// # Example
@@ -4472,28 +4472,28 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::hir::literal::Seq;
     ///
-    /// let mut seq1 = Seq::new(&amp;[&quot;a&quot;, &quot;&quot;, &quot;f&quot;, &quot;&quot;]);
-    /// let mut seq2 = Seq::new(&amp;[&quot;foo&quot;]);
+    /// let mut seq1 = Seq::new(&amp;["a", "", "f", ""]);
+    /// let mut seq2 = Seq::new(&amp;["foo"]);
     /// seq1.union_into_empty(&amp;mut seq2);
     ///
     /// // The literals are pulled out of seq2.
     /// assert_eq!(Some(0), seq2.len());
-    /// // &#39;foo&#39; gets spliced into seq1 where the first empty string occurs.
-    /// assert_eq!(Seq::new(&amp;[&quot;a&quot;, &quot;foo&quot;, &quot;f&quot;]), seq1);
+    /// // 'foo' gets spliced into seq1 where the first empty string occurs.
+    /// assert_eq!(Seq::new(&amp;["a", "foo", "f"]), seq1);
     /// ```
     ///
     /// This example shows that literals are drained from `other` even when
-    /// they aren&#39;t necessarily used.
+    /// they aren't necessarily used.
     ///
     /// ```
     /// use regex_syntax::hir::literal::Seq;
     ///
-    /// let mut seq1 = Seq::new(&amp;[&quot;foo&quot;, &quot;bar&quot;]);
-    /// let mut seq2 = Seq::new(&amp;[&quot;bar&quot;, &quot;quux&quot;, &quot;foo&quot;]);
+    /// let mut seq1 = Seq::new(&amp;["foo", "bar"]);
+    /// let mut seq2 = Seq::new(&amp;["bar", "quux", "foo"]);
     /// seq1.union_into_empty(&amp;mut seq2);
     ///
     /// // seq1 has no zero length literals, so no splicing happens.
-    /// assert_eq!(Seq::new(&amp;[&quot;foo&quot;, &quot;bar&quot;]), seq1);
+    /// assert_eq!(Seq::new(&amp;["foo", "bar"]), seq1);
     /// // Even though no splicing happens, seq2 is still drained.
     /// assert_eq!(Some(0), seq2.len());
     /// ```
@@ -4510,7 +4510,7 @@ implemented on [`Seq`].
         };
         <span class="kw">let </span>lits2 = <span class="kw">match </span>lits2 {
             <span class="prelude-val">None </span>=&gt; {
-                <span class="comment">// Note that we are only here if we&#39;ve found an empty literal,
+                <span class="comment">// Note that we are only here if we've found an empty literal,
                 // which implies that an infinite sequence infects this seq and
                 // also turns it into an infinite sequence.
                 </span><span class="self">self</span>.literals = <span class="prelude-val">None</span>;
@@ -4519,9 +4519,9 @@ implemented on [`Seq`].
             <span class="prelude-val">Some</span>(lits) =&gt; lits,
         };
         <span class="comment">// Clearing out the empties needs to come before the splice because
-        // the splice might add more empties that we don&#39;t want to get rid
-        // of. Since we&#39;re splicing into the position of the first empty, the
-        // &#39;first_empty&#39; position computed above is still correct.
+        // the splice might add more empties that we don't want to get rid
+        // of. Since we're splicing into the position of the first empty, the
+        // 'first_empty' position computed above is still correct.
         </span>lits1.retain(|m| !m.is_empty());
         lits1.splice(first_empty..first_empty, lits2);
         <span class="self">self</span>.dedup();
@@ -4544,12 +4544,12 @@ implemented on [`Seq`].
     /// use regex_syntax::hir::literal::{Literal, Seq};
     ///
     /// let mut seq = Seq::from_iter([
-    ///     Literal::exact(&quot;foo&quot;),
-    ///     Literal::inexact(&quot;foo&quot;),
+    ///     Literal::exact("foo"),
+    ///     Literal::inexact("foo"),
     /// ]);
     /// seq.dedup();
     ///
-    /// assert_eq!(Seq::from_iter([Literal::inexact(&quot;foo&quot;)]), seq);
+    /// assert_eq!(Seq::from_iter([Literal::inexact("foo")]), seq);
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>dedup(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
@@ -4583,10 +4583,10 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::hir::literal::Seq;
     ///
-    /// let mut seq = Seq::new(&amp;[&quot;foo&quot;, &quot;quux&quot;, &quot;bar&quot;]);
+    /// let mut seq = Seq::new(&amp;["foo", "quux", "bar"]);
     /// seq.sort();
     ///
-    /// assert_eq!(Seq::new(&amp;[&quot;bar&quot;, &quot;foo&quot;, &quot;quux&quot;]), seq);
+    /// assert_eq!(Seq::new(&amp;["bar", "foo", "quux"]), seq);
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>sort(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
@@ -4606,9 +4606,9 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::hir::literal::Seq;
     ///
-    /// let mut seq = Seq::new(&amp;[&quot;oof&quot;, &quot;rab&quot;]);
+    /// let mut seq = Seq::new(&amp;["oof", "rab"]);
     /// seq.reverse_literals();
-    /// assert_eq!(Seq::new(&amp;[&quot;foo&quot;, &quot;bar&quot;]), seq);
+    /// assert_eq!(Seq::new(&amp;["foo", "bar"]), seq);
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>reverse_literals(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
@@ -4624,7 +4624,7 @@ implemented on [`Seq`].
     ///
     /// While this routine will remove duplicate literals from this seq, it
     /// will also remove literals that can never match in a leftmost-first or
-    /// &quot;preference order&quot; search. Similar to [`Seq::dedup`], if a literal is
+    /// "preference order" search. Similar to [`Seq::dedup`], if a literal is
     /// deduped, then the one that remains is made inexact.
     ///
     /// This is a no-op on seqs that are empty or not finite.
@@ -4637,17 +4637,17 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::hir::literal::{Literal, Seq};
     ///
-    /// // If &#39;sam&#39; comes before &#39;samwise&#39; and a preference order search is
-    /// // executed, then &#39;samwise&#39; can never match.
-    /// let mut seq = Seq::new(&amp;[&quot;sam&quot;, &quot;samwise&quot;]);
+    /// // If 'sam' comes before 'samwise' and a preference order search is
+    /// // executed, then 'samwise' can never match.
+    /// let mut seq = Seq::new(&amp;["sam", "samwise"]);
     /// seq.minimize_by_preference();
-    /// assert_eq!(Seq::from_iter([Literal::inexact(&quot;sam&quot;)]), seq);
+    /// assert_eq!(Seq::from_iter([Literal::inexact("sam")]), seq);
     ///
-    /// // But if they are reversed, then it&#39;s possible for &#39;samwise&#39; to match
+    /// // But if they are reversed, then it's possible for 'samwise' to match
     /// // since it is given higher preference.
-    /// let mut seq = Seq::new(&amp;[&quot;samwise&quot;, &quot;sam&quot;]);
+    /// let mut seq = Seq::new(&amp;["samwise", "sam"]);
     /// seq.minimize_by_preference();
-    /// assert_eq!(Seq::new(&amp;[&quot;samwise&quot;, &quot;sam&quot;]), seq);
+    /// assert_eq!(Seq::new(&amp;["samwise", "sam"]), seq);
     /// ```
     ///
     /// This example shows that if an empty string is in this seq, then
@@ -4658,20 +4658,20 @@ implemented on [`Seq`].
     ///
     /// // An empty string is a prefix of all strings, so it automatically
     /// // inhibits any subsequent strings from matching.
-    /// let mut seq = Seq::new(&amp;[&quot;foo&quot;, &quot;bar&quot;, &quot;&quot;, &quot;quux&quot;, &quot;fox&quot;]);
+    /// let mut seq = Seq::new(&amp;["foo", "bar", "", "quux", "fox"]);
     /// seq.minimize_by_preference();
     /// let expected = Seq::from_iter([
-    ///     Literal::exact(&quot;foo&quot;),
-    ///     Literal::exact(&quot;bar&quot;),
-    ///     Literal::inexact(&quot;&quot;),
+    ///     Literal::exact("foo"),
+    ///     Literal::exact("bar"),
+    ///     Literal::inexact(""),
     /// ]);
     /// assert_eq!(expected, seq);
     ///
-    /// // And of course, if it&#39;s at the beginning, then it makes it impossible
+    /// // And of course, if it's at the beginning, then it makes it impossible
     /// // for anything else to match.
-    /// let mut seq = Seq::new(&amp;[&quot;&quot;, &quot;foo&quot;, &quot;quux&quot;, &quot;fox&quot;]);
+    /// let mut seq = Seq::new(&amp;["", "foo", "quux", "fox"]);
     /// seq.minimize_by_preference();
-    /// assert_eq!(Seq::from_iter([Literal::inexact(&quot;&quot;)]), seq);
+    /// assert_eq!(Seq::from_iter([Literal::inexact("")]), seq);
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>minimize_by_preference(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
@@ -4689,13 +4689,13 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::hir::literal::{Literal, Seq};
     ///
-    /// let mut seq = Seq::new(&amp;[&quot;a&quot;, &quot;foo&quot;, &quot;quux&quot;]);
+    /// let mut seq = Seq::new(&amp;["a", "foo", "quux"]);
     /// seq.keep_first_bytes(2);
     ///
     /// let expected = Seq::from_iter([
-    ///     Literal::exact(&quot;a&quot;),
-    ///     Literal::inexact(&quot;fo&quot;),
-    ///     Literal::inexact(&quot;qu&quot;),
+    ///     Literal::exact("a"),
+    ///     Literal::inexact("fo"),
+    ///     Literal::inexact("qu"),
     /// ]);
     /// assert_eq!(expected, seq);
     /// ```
@@ -4717,13 +4717,13 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::hir::literal::{Literal, Seq};
     ///
-    /// let mut seq = Seq::new(&amp;[&quot;a&quot;, &quot;foo&quot;, &quot;quux&quot;]);
+    /// let mut seq = Seq::new(&amp;["a", "foo", "quux"]);
     /// seq.keep_last_bytes(2);
     ///
     /// let expected = Seq::from_iter([
-    ///     Literal::exact(&quot;a&quot;),
-    ///     Literal::inexact(&quot;oo&quot;),
-    ///     Literal::inexact(&quot;ux&quot;),
+    ///     Literal::exact("a"),
+    ///     Literal::inexact("oo"),
+    ///     Literal::inexact("ux"),
     /// ]);
     /// assert_eq!(expected, seq);
     /// ```
@@ -4825,14 +4825,14 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::hir::literal::Seq;
     ///
-    /// let seq = Seq::new(&amp;[&quot;foo&quot;, &quot;foobar&quot;, &quot;fo&quot;]);
-    /// assert_eq!(Some(&amp;b&quot;fo&quot;[..]), seq.longest_common_prefix());
-    /// let seq = Seq::new(&amp;[&quot;foo&quot;, &quot;foo&quot;]);
-    /// assert_eq!(Some(&amp;b&quot;foo&quot;[..]), seq.longest_common_prefix());
-    /// let seq = Seq::new(&amp;[&quot;foo&quot;, &quot;bar&quot;]);
-    /// assert_eq!(Some(&amp;b&quot;&quot;[..]), seq.longest_common_prefix());
-    /// let seq = Seq::new(&amp;[&quot;&quot;]);
-    /// assert_eq!(Some(&amp;b&quot;&quot;[..]), seq.longest_common_prefix());
+    /// let seq = Seq::new(&amp;["foo", "foobar", "fo"]);
+    /// assert_eq!(Some(&amp;b"fo"[..]), seq.longest_common_prefix());
+    /// let seq = Seq::new(&amp;["foo", "foo"]);
+    /// assert_eq!(Some(&amp;b"foo"[..]), seq.longest_common_prefix());
+    /// let seq = Seq::new(&amp;["foo", "bar"]);
+    /// assert_eq!(Some(&amp;b""[..]), seq.longest_common_prefix());
+    /// let seq = Seq::new(&amp;[""]);
+    /// assert_eq!(Some(&amp;b""[..]), seq.longest_common_prefix());
     ///
     /// let seq = Seq::infinite();
     /// assert_eq!(None, seq.longest_common_prefix());
@@ -4841,7 +4841,7 @@ implemented on [`Seq`].
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>longest_common_prefix(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt; {
-        <span class="comment">// If we match everything or match nothing, then there&#39;s no meaningful
+        <span class="comment">// If we match everything or match nothing, then there's no meaningful
         // longest common prefix.
         </span><span class="kw">let </span>lits = <span class="kw">match </span><span class="self">self</span>.literals {
             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
@@ -4878,14 +4878,14 @@ implemented on [`Seq`].
     /// ```
     /// use regex_syntax::hir::literal::Seq;
     ///
-    /// let seq = Seq::new(&amp;[&quot;oof&quot;, &quot;raboof&quot;, &quot;of&quot;]);
-    /// assert_eq!(Some(&amp;b&quot;of&quot;[..]), seq.longest_common_suffix());
-    /// let seq = Seq::new(&amp;[&quot;foo&quot;, &quot;foo&quot;]);
-    /// assert_eq!(Some(&amp;b&quot;foo&quot;[..]), seq.longest_common_suffix());
-    /// let seq = Seq::new(&amp;[&quot;foo&quot;, &quot;bar&quot;]);
-    /// assert_eq!(Some(&amp;b&quot;&quot;[..]), seq.longest_common_suffix());
-    /// let seq = Seq::new(&amp;[&quot;&quot;]);
-    /// assert_eq!(Some(&amp;b&quot;&quot;[..]), seq.longest_common_suffix());
+    /// let seq = Seq::new(&amp;["oof", "raboof", "of"]);
+    /// assert_eq!(Some(&amp;b"of"[..]), seq.longest_common_suffix());
+    /// let seq = Seq::new(&amp;["foo", "foo"]);
+    /// assert_eq!(Some(&amp;b"foo"[..]), seq.longest_common_suffix());
+    /// let seq = Seq::new(&amp;["foo", "bar"]);
+    /// assert_eq!(Some(&amp;b""[..]), seq.longest_common_suffix());
+    /// let seq = Seq::new(&amp;[""]);
+    /// assert_eq!(Some(&amp;b""[..]), seq.longest_common_suffix());
     ///
     /// let seq = Seq::infinite();
     /// assert_eq!(None, seq.longest_common_suffix());
@@ -4894,7 +4894,7 @@ implemented on [`Seq`].
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>longest_common_suffix(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>[u8]&gt; {
-        <span class="comment">// If we match everything or match nothing, then there&#39;s no meaningful
+        <span class="comment">// If we match everything or match nothing, then there's no meaningful
         // longest common suffix.
         </span><span class="kw">let </span>lits = <span class="kw">match </span><span class="self">self</span>.literals {
             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
@@ -4923,14 +4923,14 @@ implemented on [`Seq`].
     <span class="doccomment">/// Optimizes this seq while treating its literals as prefixes and
     /// respecting the preference order of its literals.
     ///
-    /// The specific way &quot;optimization&quot; works is meant to be an implementation
+    /// The specific way "optimization" works is meant to be an implementation
     /// detail, as it essentially represents a set of heuristics. The goal
     /// that optimization tries to accomplish is to make the literals in this
     /// set reflect inputs that will result in a more effective prefilter.
     /// Principally by reducing the false positive rate of candidates found by
     /// the literals in this sequence. That is, when a match of a literal is
     /// found, we would like it to be a strong predictor of the overall match
-    /// of the regex. If it isn&#39;t, then much time will be spent starting and
+    /// of the regex. If it isn't, then much time will be spent starting and
     /// stopping the prefilter search and attempting to confirm the match only
     /// to have it fail.
     ///
@@ -4967,19 +4967,19 @@ implemented on [`Seq`].
     /// use regex_syntax::hir::literal::{Seq, Literal};
     ///
     /// let mut seq = Seq::new(&amp;[
-    ///     &quot;samantha&quot;,
-    ///     &quot;sam&quot;,
-    ///     &quot;samwise&quot;,
-    ///     &quot;frodo&quot;,
+    ///     "samantha",
+    ///     "sam",
+    ///     "samwise",
+    ///     "frodo",
     /// ]);
     /// seq.optimize_for_prefix_by_preference();
     /// assert_eq!(Seq::from_iter([
-    ///     Literal::exact(&quot;samantha&quot;),
-    ///     // Kept exact even though &#39;samwise&#39; got pruned
+    ///     Literal::exact("samantha"),
+    ///     // Kept exact even though 'samwise' got pruned
     ///     // because optimization assumes literal extraction
     ///     // has finished.
-    ///     Literal::exact(&quot;sam&quot;),
-    ///     Literal::exact(&quot;frodo&quot;),
+    ///     Literal::exact("sam"),
+    ///     Literal::exact("frodo"),
     /// ]), seq);
     /// ```
     ///
@@ -4993,21 +4993,21 @@ implemented on [`Seq`].
     /// use regex_syntax::hir::literal::{Seq, Literal};
     ///
     /// let mut seq = Seq::new(&amp;[
-    ///     &quot;samantha&quot;,
+    ///     "samantha",
     ///     // An empty string matches at every position,
     ///     // thus rendering the prefilter completely
     ///     // ineffective.
-    ///     &quot;&quot;,
-    ///     &quot;sam&quot;,
-    ///     &quot;samwise&quot;,
-    ///     &quot;frodo&quot;,
+    ///     "",
+    ///     "sam",
+    ///     "samwise",
+    ///     "frodo",
     /// ]);
     /// seq.optimize_for_prefix_by_preference();
     /// assert!(!seq.is_finite());
     /// ```
     ///
-    /// Do note that just because there is a `&quot; &quot;` in the sequence, that
-    /// doesn&#39;t mean the sequence will always be made infinite after it is
+    /// Do note that just because there is a `" "` in the sequence, that
+    /// doesn't mean the sequence will always be made infinite after it is
     /// optimized. Namely, if the sequence is considered exact (any match
     /// corresponds to an overall match of the original regex), then any match
     /// is an overall match, and so the false positive rate is always `0`.
@@ -5021,10 +5021,10 @@ implemented on [`Seq`].
     /// use regex_syntax::hir::literal::{Seq, Literal};
     ///
     /// let mut seq = Seq::new(&amp;[
-    ///     &quot;samantha&quot;,
-    ///     &quot; &quot;,
-    ///     &quot;sam&quot;,
-    ///     &quot;frodo&quot;,
+    ///     "samantha",
+    ///     " ",
+    ///     "sam",
+    ///     "frodo",
     /// ]);
     /// seq.optimize_for_prefix_by_preference();
     /// assert!(seq.is_finite());
@@ -5070,7 +5070,7 @@ implemented on [`Seq`].
         }
 
         <span class="comment">// Look for a common prefix (or suffix). If we found one of those and
-        // it&#39;s long enough, then it&#39;s a good bet that it will be our fastest
+        // it's long enough, then it's a good bet that it will be our fastest
         // possible prefilter since single-substring search is so fast.
         </span><span class="kw">let </span>fix = <span class="kw">if </span>prefix {
             <span class="self">self</span>.longest_common_prefix()
@@ -5084,13 +5084,13 @@ implemented on [`Seq`].
             // promote the use of memchr.
             //
             // ... we only do this though if our sequence has more than one
-            // literal. Otherwise, we&#39;d rather just stick with a single literal
+            // literal. Otherwise, we'd rather just stick with a single literal
             // scan. That is, using memchr is probably better than looking
             // for 2 or more literals, but probably not as good as a straight
             // memmem search.
             //
             // ... and also only do this when the prefix is short and probably
-            // not too discriminatory anyway. If it&#39;s longer, then it&#39;s
+            // not too discriminatory anyway. If it's longer, then it's
             // probably quite discriminatory and thus is likely to have a low
             // false positive rate.
             </span><span class="kw">if </span>prefix
@@ -5104,7 +5104,7 @@ implemented on [`Seq`].
                 <span class="kw">return</span>;
             }
             <span class="comment">// We only strip down to the common prefix/suffix if we think
-            // the existing set of literals isn&#39;t great, or if the common
+            // the existing set of literals isn't great, or if the common
             // prefix/suffix is expected to be particularly discriminatory.
             </span><span class="kw">let </span>isfast =
                 <span class="self">self</span>.is_exact() &amp;&amp; <span class="self">self</span>.len().map_or(<span class="bool-val">false</span>, |len| len &lt;= <span class="number">16</span>);
@@ -5113,7 +5113,7 @@ implemented on [`Seq`].
                 <span class="comment">// If we keep exactly the number of bytes equal to the length
                 // of the prefix (or suffix), then by the definition of a
                 // prefix, every literal in the sequence will be equivalent.
-                // Thus, &#39;dedup&#39; will leave us with one literal.
+                // Thus, 'dedup' will leave us with one literal.
                 //
                 // We do it this way to avoid an alloc, but also to make sure
                 // the exactness of literals is kept (or not).
@@ -5129,9 +5129,9 @@ implemented on [`Seq`].
             </span>}
         }
         <span class="comment">// If we have an exact sequence, we *probably* just want to keep it
-        // as-is. But there are some cases where we don&#39;t. So we save a copy of
+        // as-is. But there are some cases where we don't. So we save a copy of
         // the exact sequence now, and then try to do some more optimizations
-        // below. If those don&#39;t work out, we go back to this exact sequence.
+        // below. If those don't work out, we go back to this exact sequence.
         //
         // The specific motivation for this is that we sometimes wind up with
         // an exact sequence with a hefty number of literals. Say, 100. If we
@@ -5143,13 +5143,13 @@ implemented on [`Seq`].
         // sequence (which we do below) and use it as a prefilter that can
         // produce false positive matches.
         //
-        // But if the shrinking below results in a sequence that &quot;sucks,&quot; then
-        // we don&#39;t want to use that because we already have an exact sequence
+        // But if the shrinking below results in a sequence that "sucks," then
+        // we don't want to use that because we already have an exact sequence
         // in hand.
         </span><span class="kw">let </span>exact: <span class="prelude-ty">Option</span>&lt;Seq&gt; =
             <span class="kw">if </span><span class="self">self</span>.is_exact() { <span class="prelude-val">Some</span>(<span class="self">self</span>.clone()) } <span class="kw">else </span>{ <span class="prelude-val">None </span>};
         <span class="comment">// Now we attempt to shorten the sequence. The idea here is that we
-        // don&#39;t want to look for too many literals, but we want to shorten
+        // don't want to look for too many literals, but we want to shorten
         // our sequence enough to improve our odds of using better algorithms
         // downstream (such as Teddy).
         //
@@ -5157,10 +5157,10 @@ implemented on [`Seq`].
         // (in bytes) to keep for all literals and the length of the sequence
         // at which to do it.
         //
-        // So for example, the pair (3, 500) would mean, &quot;if we have more than
+        // So for example, the pair (3, 500) would mean, "if we have more than
         // 500 literals in our sequence, then truncate all of our literals
         // such that they are at most 3 bytes in length and the minimize the
-        // sequence.&quot;
+        // sequence."
         </span><span class="kw">const </span>ATTEMPTS: [(usize, usize); <span class="number">5</span>] =
             [(<span class="number">5</span>, <span class="number">10</span>), (<span class="number">4</span>, <span class="number">10</span>), (<span class="number">3</span>, <span class="number">64</span>), (<span class="number">2</span>, <span class="number">64</span>), (<span class="number">1</span>, <span class="number">10</span>)];
         <span class="kw">for </span>(keep, limit) <span class="kw">in </span>ATTEMPTS {
@@ -5207,15 +5207,15 @@ implemented on [`Seq`].
                 <span class="kw-2">*</span><span class="self">self </span>= exact;
                 <span class="kw">return</span>;
             }
-            <span class="comment">// If our optimized sequence contains a short literal, then it&#39;s
+            <span class="comment">// If our optimized sequence contains a short literal, then it's
             // *probably* not so great. So throw it away and revert to the
             // exact sequence.
             </span><span class="kw">if </span><span class="self">self</span>.min_literal_len().map_or(<span class="bool-val">true</span>, |len| len &lt;= <span class="number">2</span>) {
                 <span class="kw-2">*</span><span class="self">self </span>= exact;
                 <span class="kw">return</span>;
             }
-            <span class="comment">// Finally, if our optimized sequence is &quot;big&quot; (i.e., can&#39;t use
-            // Teddy), then also don&#39;t use it and rely on the exact sequence.
+            <span class="comment">// Finally, if our optimized sequence is "big" (i.e., can't use
+            // Teddy), then also don't use it and rely on the exact sequence.
             </span><span class="kw">if </span><span class="self">self</span>.len().map_or(<span class="bool-val">true</span>, |len| len &gt; <span class="number">64</span>) {
                 <span class="kw-2">*</span><span class="self">self </span>= exact;
                 <span class="kw">return</span>;
@@ -5226,11 +5226,11 @@ implemented on [`Seq`].
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>Seq {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;Seq&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(f, <span class="string">"Seq"</span>)<span class="question-mark">?</span>;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(lits) = <span class="self">self</span>.literals() {
             f.debug_list().entries(lits.iter()).finish()
         } <span class="kw">else </span>{
-            <span class="macro">write!</span>(f, <span class="string">&quot;[∞]&quot;</span>)
+            <span class="macro">write!</span>(f, <span class="string">"[∞]"</span>)
         }
     }
 }
@@ -5253,10 +5253,10 @@ implemented on [`Seq`].
 /// In particular, even if the regex a literal is extracted from is UTF-8, the
 /// literal extracted may not be valid UTF-8. (For example, if an [`Extractor`]
 /// limit resulted in trimming a literal in a way that splits a codepoint.)
-/// * Whether the literal is &quot;exact&quot; or not. An &quot;exact&quot; literal means that it
+/// * Whether the literal is "exact" or not. An "exact" literal means that it
 /// has not been trimmed, and may continue to be extended. If a literal is
-/// &quot;exact&quot; after visiting the entire `Hir` expression, then this implies that
-/// the literal leads to a match state. (Although it doesn&#39;t necessarily imply
+/// "exact" after visiting the entire `Hir` expression, then this implies that
+/// the literal leads to a match state. (Although it doesn't necessarily imply
 /// all occurrences of the literal correspond to a match of the regex, since
 /// literal extraction ignores look-around assertions.)
 </span><span class="attr">#[derive(Clone, Eq, PartialEq, PartialOrd, Ord)]
@@ -5286,7 +5286,7 @@ implemented on [`Seq`].
 
     <span class="doccomment">/// Yields ownership of the bytes inside this literal.
     ///
-    /// Note that this throws away whether the literal is &quot;exact&quot; or not.
+    /// Note that this throws away whether the literal is "exact" or not.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>into_bytes(<span class="self">self</span>) -&gt; Vec&lt;u8&gt; {
         <span class="self">self</span>.bytes
@@ -5388,28 +5388,28 @@ implemented on [`Seq`].
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>Literal {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="kw">let </span>tag = <span class="kw">if </span><span class="self">self</span>.exact { <span class="string">&quot;E&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;I&quot; </span>};
+        <span class="kw">let </span>tag = <span class="kw">if </span><span class="self">self</span>.exact { <span class="string">"E" </span>} <span class="kw">else </span>{ <span class="string">"I" </span>};
         f.debug_tuple(tag)
             .field(<span class="kw-2">&amp;</span><span class="kw">crate</span>::debug::Bytes(<span class="self">self</span>.as_bytes()))
             .finish()
     }
 }
 
-<span class="doccomment">/// A &quot;preference&quot; trie that rejects literals that will never match when
-/// executing a leftmost first or &quot;preference&quot; search.
+<span class="doccomment">/// A "preference" trie that rejects literals that will never match when
+/// executing a leftmost first or "preference" search.
 ///
-/// For example, if &#39;sam&#39; is inserted, then trying to insert &#39;samwise&#39; will be
-/// rejected because &#39;samwise&#39; can never match since &#39;sam&#39; will always take
-/// priority. However, if &#39;samwise&#39; is inserted first, then inserting &#39;sam&#39;
-/// after it is accepted. In this case, either &#39;samwise&#39; or &#39;sam&#39; can match in
-/// a &quot;preference&quot; search.
+/// For example, if 'sam' is inserted, then trying to insert 'samwise' will be
+/// rejected because 'samwise' can never match since 'sam' will always take
+/// priority. However, if 'samwise' is inserted first, then inserting 'sam'
+/// after it is accepted. In this case, either 'samwise' or 'sam' can match in
+/// a "preference" search.
 ///
-/// Note that we only use this trie as a &quot;set.&quot; That is, given a sequence of
+/// Note that we only use this trie as a "set." That is, given a sequence of
 /// literals, we insert each one in order. An `insert` will reject a literal
 /// if a prefix of that literal already exists in the trie. Thus, to rebuild
-/// the &quot;minimal&quot; sequence, we simply only keep literals that were successfully
-/// inserted. (Since we don&#39;t need traversal, one wonders whether we can make
-/// some simplifications here, but I haven&#39;t given it a ton of thought and I&#39;ve
+/// the "minimal" sequence, we simply only keep literals that were successfully
+/// inserted. (Since we don't need traversal, one wonders whether we can make
+/// some simplifications here, but I haven't given it a ton of thought and I've
 /// never seen this show up on a profile. Because of the heuristic limits
 /// imposed on literal extractions, the size of the inputs here is usually
 /// very small.)
@@ -5445,7 +5445,7 @@ implemented on [`Seq`].
     /// When `keep_exact` is true, the exactness of every literal retained is
     /// kept. This is useful when dealing with a fully extracted `Seq` that
     /// only contains exact literals. In that case, we can keep all retained
-    /// literals as exact because we know we&#39;ll never need to match anything
+    /// literals as exact because we know we'll never need to match anything
     /// after them and because any removed literals are guaranteed to never
     /// match.
     </span><span class="kw">fn </span>minimize(literals: <span class="kw-2">&amp;mut </span>Vec&lt;Literal&gt;, keep_exact: bool) {
@@ -5505,7 +5505,7 @@ implemented on [`Seq`].
         <span class="prelude-val">Ok</span>(idx)
     }
 
-    <span class="doccomment">/// Returns the root state ID, and if it doesn&#39;t exist, creates it.
+    <span class="doccomment">/// Returns the root state ID, and if it doesn't exist, creates it.
     </span><span class="kw">fn </span>root(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; usize {
         <span class="kw">if </span>!<span class="self">self</span>.states.is_empty() {
             <span class="number">0
@@ -5523,7 +5523,7 @@ implemented on [`Seq`].
     }
 }
 
-<span class="doccomment">/// Returns the &quot;rank&quot; of the given byte.
+<span class="doccomment">/// Returns the "rank" of the given byte.
 ///
 /// The minimum rank value is `0` and the maximum rank value is `255`.
 ///
@@ -5595,293 +5595,293 @@ implemented on [`Seq`].
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>literal() {
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;a&quot;</span>]), e(<span class="string">&quot;a&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;aaaaa&quot;</span>]), e(<span class="string">&quot;aaaaa&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;A&quot;</span>, <span class="string">&quot;a&quot;</span>]), e(<span class="string">&quot;(?i-u)a&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;AB&quot;</span>, <span class="string">&quot;Ab&quot;</span>, <span class="string">&quot;aB&quot;</span>, <span class="string">&quot;ab&quot;</span>]), e(<span class="string">&quot;(?i-u)ab&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;abC&quot;</span>, <span class="string">&quot;abc&quot;</span>]), e(<span class="string">&quot;ab(?i-u)c&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"a"</span>]), e(<span class="string">"a"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"aaaaa"</span>]), e(<span class="string">"aaaaa"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"A"</span>, <span class="string">"a"</span>]), e(<span class="string">"(?i-u)a"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"AB"</span>, <span class="string">"Ab"</span>, <span class="string">"aB"</span>, <span class="string">"ab"</span>]), e(<span class="string">"(?i-u)ab"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"abC"</span>, <span class="string">"abc"</span>]), e(<span class="string">"ab(?i-u)c"</span>));
 
-        <span class="macro">assert_eq!</span>(exact([<span class="string">b&quot;\xFF&quot;</span>]), e(<span class="string">r&quot;(?-u:\xFF)&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">b"\xFF"</span>]), e(<span class="string">r"(?-u:\xFF)"</span>));
 
-        <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-case&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"unicode-case"</span>)]
         </span>{
-            <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;☃&quot;</span>]), e(<span class="string">&quot;☃&quot;</span>));
-            <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;☃&quot;</span>]), e(<span class="string">&quot;(?i)☃&quot;</span>));
-            <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;☃☃☃☃☃&quot;</span>]), e(<span class="string">&quot;☃☃☃☃☃&quot;</span>));
+            <span class="macro">assert_eq!</span>(exact([<span class="string">"☃"</span>]), e(<span class="string">"☃"</span>));
+            <span class="macro">assert_eq!</span>(exact([<span class="string">"☃"</span>]), e(<span class="string">"(?i)☃"</span>));
+            <span class="macro">assert_eq!</span>(exact([<span class="string">"☃☃☃☃☃"</span>]), e(<span class="string">"☃☃☃☃☃"</span>));
 
-            <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;Δ&quot;</span>]), e(<span class="string">&quot;Δ&quot;</span>));
-            <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;δ&quot;</span>]), e(<span class="string">&quot;δ&quot;</span>));
-            <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;Δ&quot;</span>, <span class="string">&quot;δ&quot;</span>]), e(<span class="string">&quot;(?i)Δ&quot;</span>));
-            <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;Δ&quot;</span>, <span class="string">&quot;δ&quot;</span>]), e(<span class="string">&quot;(?i)δ&quot;</span>));
+            <span class="macro">assert_eq!</span>(exact([<span class="string">"Δ"</span>]), e(<span class="string">"Δ"</span>));
+            <span class="macro">assert_eq!</span>(exact([<span class="string">"δ"</span>]), e(<span class="string">"δ"</span>));
+            <span class="macro">assert_eq!</span>(exact([<span class="string">"Δ"</span>, <span class="string">"δ"</span>]), e(<span class="string">"(?i)Δ"</span>));
+            <span class="macro">assert_eq!</span>(exact([<span class="string">"Δ"</span>, <span class="string">"δ"</span>]), e(<span class="string">"(?i)δ"</span>));
 
-            <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;S&quot;</span>, <span class="string">&quot;s&quot;</span>, <span class="string">&quot;ſ&quot;</span>]), e(<span class="string">&quot;(?i)S&quot;</span>));
-            <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;S&quot;</span>, <span class="string">&quot;s&quot;</span>, <span class="string">&quot;ſ&quot;</span>]), e(<span class="string">&quot;(?i)s&quot;</span>));
-            <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;S&quot;</span>, <span class="string">&quot;s&quot;</span>, <span class="string">&quot;ſ&quot;</span>]), e(<span class="string">&quot;(?i)ſ&quot;</span>));
+            <span class="macro">assert_eq!</span>(exact([<span class="string">"S"</span>, <span class="string">"s"</span>, <span class="string">"ſ"</span>]), e(<span class="string">"(?i)S"</span>));
+            <span class="macro">assert_eq!</span>(exact([<span class="string">"S"</span>, <span class="string">"s"</span>, <span class="string">"ſ"</span>]), e(<span class="string">"(?i)s"</span>));
+            <span class="macro">assert_eq!</span>(exact([<span class="string">"S"</span>, <span class="string">"s"</span>, <span class="string">"ſ"</span>]), e(<span class="string">"(?i)ſ"</span>));
         }
 
-        <span class="kw">let </span>letters = <span class="string">&quot;ͱͳͷΐάέήίΰαβγδεζηθικλμνξοπρςστυφχψωϊϋ&quot;</span>;
+        <span class="kw">let </span>letters = <span class="string">"ͱͳͷΐάέήίΰαβγδεζηθικλμνξοπρςστυφχψωϊϋ"</span>;
         <span class="macro">assert_eq!</span>(exact([letters]), e(letters));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>class() {
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>, <span class="string">&quot;c&quot;</span>]), e(<span class="string">&quot;[abc]&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;a1b&quot;</span>, <span class="string">&quot;a2b&quot;</span>, <span class="string">&quot;a3b&quot;</span>]), e(<span class="string">&quot;a[123]b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;δ&quot;</span>, <span class="string">&quot;ε&quot;</span>]), e(<span class="string">&quot;[εδ]&quot;</span>));
-        <span class="attr">#[cfg(feature = <span class="string">&quot;unicode-case&quot;</span>)]
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"a"</span>, <span class="string">"b"</span>, <span class="string">"c"</span>]), e(<span class="string">"[abc]"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"a1b"</span>, <span class="string">"a2b"</span>, <span class="string">"a3b"</span>]), e(<span class="string">"a[123]b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"δ"</span>, <span class="string">"ε"</span>]), e(<span class="string">"[εδ]"</span>));
+        <span class="attr">#[cfg(feature = <span class="string">"unicode-case"</span>)]
         </span>{
-            <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;Δ&quot;</span>, <span class="string">&quot;Ε&quot;</span>, <span class="string">&quot;δ&quot;</span>, <span class="string">&quot;ε&quot;</span>, <span class="string">&quot;ϵ&quot;</span>]), e(<span class="string">r&quot;(?i)[εδ]&quot;</span>));
+            <span class="macro">assert_eq!</span>(exact([<span class="string">"Δ"</span>, <span class="string">"Ε"</span>, <span class="string">"δ"</span>, <span class="string">"ε"</span>, <span class="string">"ϵ"</span>]), e(<span class="string">r"(?i)[εδ]"</span>));
         }
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>look() {
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;a\Ab&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;a\zb&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;a(?m:^)b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;a(?m:$)b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;a\bb&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;a\Bb&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;a(?-u:\b)b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;a(?-u:\B)b&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"a\Ab"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"a\zb"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"a(?m:^)b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"a(?m:$)b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"a\bb"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"a\Bb"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"a(?-u:\b)b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"a(?-u:\B)b"</span>));
 
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;^ab&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;$ab&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;(?m:^)ab&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;(?m:$)ab&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;\bab&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;\Bab&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;(?-u:\b)ab&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;(?-u:\B)ab&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"^ab"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"$ab"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"(?m:^)ab"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"(?m:$)ab"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"\bab"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"\Bab"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"(?-u:\b)ab"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"(?-u:\B)ab"</span>));
 
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;ab^&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;ab$&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;ab(?m:^)&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;ab(?m:$)&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;ab\b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;ab\B&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;ab(?-u:\b)&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;ab(?-u:\B)&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"ab^"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"ab$"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"ab(?m:^)"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"ab(?m:$)"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"ab\b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"ab\B"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"ab(?-u:\b)"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"ab(?-u:\B)"</span>));
 
-        <span class="kw">let </span>expected = (seq([I(<span class="string">&quot;aZ&quot;</span>), E(<span class="string">&quot;ab&quot;</span>)]), seq([I(<span class="string">&quot;Zb&quot;</span>), E(<span class="string">&quot;ab&quot;</span>)]));
-        <span class="macro">assert_eq!</span>(expected, e(<span class="string">r&quot;^aZ*b&quot;</span>));
+        <span class="kw">let </span>expected = (seq([I(<span class="string">"aZ"</span>), E(<span class="string">"ab"</span>)]), seq([I(<span class="string">"Zb"</span>), E(<span class="string">"ab"</span>)]));
+        <span class="macro">assert_eq!</span>(expected, e(<span class="string">r"^aZ*b"</span>));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>repetition() {
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;a&quot;</span>, <span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;a?&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>, <span class="string">&quot;a&quot;</span>]), e(<span class="string">r&quot;a??&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;a&quot;</span>), E(<span class="string">&quot;&quot;</span>)], [I(<span class="string">&quot;a&quot;</span>), E(<span class="string">&quot;&quot;</span>)]), e(<span class="string">r&quot;a*&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">&quot;&quot;</span>), I(<span class="string">&quot;a&quot;</span>)], [E(<span class="string">&quot;&quot;</span>), I(<span class="string">&quot;a&quot;</span>)]), e(<span class="string">r&quot;a*?&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;a&quot;</span>)], [I(<span class="string">&quot;a&quot;</span>)]), e(<span class="string">r&quot;a+&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;a&quot;</span>)], [I(<span class="string">&quot;a&quot;</span>)]), e(<span class="string">r&quot;(a+)+&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"a"</span>, <span class="string">""</span>]), e(<span class="string">r"a?"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>, <span class="string">"a"</span>]), e(<span class="string">r"a??"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"a"</span>), E(<span class="string">""</span>)], [I(<span class="string">"a"</span>), E(<span class="string">""</span>)]), e(<span class="string">r"a*"</span>));
+        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">""</span>), I(<span class="string">"a"</span>)], [E(<span class="string">""</span>), I(<span class="string">"a"</span>)]), e(<span class="string">r"a*?"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"a"</span>)], [I(<span class="string">"a"</span>)]), e(<span class="string">r"a+"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"a"</span>)], [I(<span class="string">"a"</span>)]), e(<span class="string">r"(a+)+"</span>));
 
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;aZ{0}b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;aZb&quot;</span>, <span class="string">&quot;ab&quot;</span>]), e(<span class="string">r&quot;aZ?b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;ab&quot;</span>, <span class="string">&quot;aZb&quot;</span>]), e(<span class="string">r&quot;aZ??b&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>]), e(<span class="string">r"aZ{0}b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"aZb"</span>, <span class="string">"ab"</span>]), e(<span class="string">r"aZ?b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"ab"</span>, <span class="string">"aZb"</span>]), e(<span class="string">r"aZ??b"</span>));
         <span class="macro">assert_eq!</span>(
-            inexact([I(<span class="string">&quot;aZ&quot;</span>), E(<span class="string">&quot;ab&quot;</span>)], [I(<span class="string">&quot;Zb&quot;</span>), E(<span class="string">&quot;ab&quot;</span>)]),
-            e(<span class="string">r&quot;aZ*b&quot;</span>)
+            inexact([I(<span class="string">"aZ"</span>), E(<span class="string">"ab"</span>)], [I(<span class="string">"Zb"</span>), E(<span class="string">"ab"</span>)]),
+            e(<span class="string">r"aZ*b"</span>)
         );
         <span class="macro">assert_eq!</span>(
-            inexact([E(<span class="string">&quot;ab&quot;</span>), I(<span class="string">&quot;aZ&quot;</span>)], [E(<span class="string">&quot;ab&quot;</span>), I(<span class="string">&quot;Zb&quot;</span>)]),
-            e(<span class="string">r&quot;aZ*?b&quot;</span>)
+            inexact([E(<span class="string">"ab"</span>), I(<span class="string">"aZ"</span>)], [E(<span class="string">"ab"</span>), I(<span class="string">"Zb"</span>)]),
+            e(<span class="string">r"aZ*?b"</span>)
         );
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;aZ&quot;</span>)], [I(<span class="string">&quot;Zb&quot;</span>)]), e(<span class="string">r&quot;aZ+b&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;aZ&quot;</span>)], [I(<span class="string">&quot;Zb&quot;</span>)]), e(<span class="string">r&quot;aZ+?b&quot;</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"aZ"</span>)], [I(<span class="string">"Zb"</span>)]), e(<span class="string">r"aZ+b"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"aZ"</span>)], [I(<span class="string">"Zb"</span>)]), e(<span class="string">r"aZ+?b"</span>));
 
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;aZZb&quot;</span>]), e(<span class="string">r&quot;aZ{2}b&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;aZZ&quot;</span>)], [I(<span class="string">&quot;ZZb&quot;</span>)]), e(<span class="string">r&quot;aZ{2,3}b&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"aZZb"</span>]), e(<span class="string">r"aZ{2}b"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"aZZ"</span>)], [I(<span class="string">"ZZb"</span>)]), e(<span class="string">r"aZ{2,3}b"</span>));
 
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;abc&quot;</span>, <span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;(abc)?&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>, <span class="string">&quot;abc&quot;</span>]), e(<span class="string">r&quot;(abc)??&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"abc"</span>, <span class="string">""</span>]), e(<span class="string">r"(abc)?"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>, <span class="string">"abc"</span>]), e(<span class="string">r"(abc)??"</span>));
 
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;a&quot;</span>), E(<span class="string">&quot;b&quot;</span>)], [I(<span class="string">&quot;ab&quot;</span>), E(<span class="string">&quot;b&quot;</span>)]), e(<span class="string">r&quot;a*b&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">&quot;b&quot;</span>), I(<span class="string">&quot;a&quot;</span>)], [E(<span class="string">&quot;b&quot;</span>), I(<span class="string">&quot;ab&quot;</span>)]), e(<span class="string">r&quot;a*?b&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;ab&quot;</span>)], [I(<span class="string">&quot;b&quot;</span>)]), e(<span class="string">r&quot;ab+&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>)], [I(<span class="string">&quot;b&quot;</span>)]), e(<span class="string">r&quot;a*b+&quot;</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"a"</span>), E(<span class="string">"b"</span>)], [I(<span class="string">"ab"</span>), E(<span class="string">"b"</span>)]), e(<span class="string">r"a*b"</span>));
+        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">"b"</span>), I(<span class="string">"a"</span>)], [E(<span class="string">"b"</span>), I(<span class="string">"ab"</span>)]), e(<span class="string">r"a*?b"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"ab"</span>)], [I(<span class="string">"b"</span>)]), e(<span class="string">r"ab+"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"a"</span>), I(<span class="string">"b"</span>)], [I(<span class="string">"b"</span>)]), e(<span class="string">r"a*b+"</span>));
 
-        <span class="comment">// FIXME: The suffixes for this don&#39;t look quite right to me. I think
+        <span class="comment">// FIXME: The suffixes for this don't look quite right to me. I think
         // the right suffixes would be: [I(ac), I(bc), E(c)]. The main issue I
         // think is that suffixes are computed by iterating over concatenations
         // in reverse, and then [bc, ac, c] ordering is indeed correct from
         // that perspective. We also test a few more equivalent regexes, and
         // we get the same result, so it is consistent at least I suppose.
         //
-        // The reason why this isn&#39;t an issue is that it only messes up
+        // The reason why this isn't an issue is that it only messes up
         // preference order, and currently, suffixes are never used in a
         // context where preference order matters. For prefixes it matters
         // because we sometimes want to use prefilters without confirmation
-        // when all of the literals are exact (and there&#39;s no look-around). But
+        // when all of the literals are exact (and there's no look-around). But
         // we never do that for suffixes. Any time we use suffixes, we always
-        // include a confirmation step. If that ever changes, then it&#39;s likely
+        // include a confirmation step. If that ever changes, then it's likely
         // this bug will need to be fixed, but last time I looked, it appears
         // hard to do so.
         </span><span class="macro">assert_eq!</span>(
-            inexact([I(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>), E(<span class="string">&quot;c&quot;</span>)], [I(<span class="string">&quot;bc&quot;</span>), I(<span class="string">&quot;ac&quot;</span>), E(<span class="string">&quot;c&quot;</span>)]),
-            e(<span class="string">r&quot;a*b*c&quot;</span>)
+            inexact([I(<span class="string">"a"</span>), I(<span class="string">"b"</span>), E(<span class="string">"c"</span>)], [I(<span class="string">"bc"</span>), I(<span class="string">"ac"</span>), E(<span class="string">"c"</span>)]),
+            e(<span class="string">r"a*b*c"</span>)
         );
         <span class="macro">assert_eq!</span>(
-            inexact([I(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>), E(<span class="string">&quot;c&quot;</span>)], [I(<span class="string">&quot;bc&quot;</span>), I(<span class="string">&quot;ac&quot;</span>), E(<span class="string">&quot;c&quot;</span>)]),
-            e(<span class="string">r&quot;(a+)?(b+)?c&quot;</span>)
+            inexact([I(<span class="string">"a"</span>), I(<span class="string">"b"</span>), E(<span class="string">"c"</span>)], [I(<span class="string">"bc"</span>), I(<span class="string">"ac"</span>), E(<span class="string">"c"</span>)]),
+            e(<span class="string">r"(a+)?(b+)?c"</span>)
         );
         <span class="macro">assert_eq!</span>(
-            inexact([I(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>), E(<span class="string">&quot;c&quot;</span>)], [I(<span class="string">&quot;bc&quot;</span>), I(<span class="string">&quot;ac&quot;</span>), E(<span class="string">&quot;c&quot;</span>)]),
-            e(<span class="string">r&quot;(a+|)(b+|)c&quot;</span>)
+            inexact([I(<span class="string">"a"</span>), I(<span class="string">"b"</span>), E(<span class="string">"c"</span>)], [I(<span class="string">"bc"</span>), I(<span class="string">"ac"</span>), E(<span class="string">"c"</span>)]),
+            e(<span class="string">r"(a+|)(b+|)c"</span>)
         );
         <span class="comment">// A few more similarish but not identical regexes. These may have a
         // similar problem as above.
         </span><span class="macro">assert_eq!</span>(
             inexact(
-                [I(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>), I(<span class="string">&quot;c&quot;</span>), E(<span class="string">&quot;&quot;</span>)],
-                [I(<span class="string">&quot;c&quot;</span>), I(<span class="string">&quot;b&quot;</span>), I(<span class="string">&quot;a&quot;</span>), E(<span class="string">&quot;&quot;</span>)]
+                [I(<span class="string">"a"</span>), I(<span class="string">"b"</span>), I(<span class="string">"c"</span>), E(<span class="string">""</span>)],
+                [I(<span class="string">"c"</span>), I(<span class="string">"b"</span>), I(<span class="string">"a"</span>), E(<span class="string">""</span>)]
             ),
-            e(<span class="string">r&quot;a*b*c*&quot;</span>)
+            e(<span class="string">r"a*b*c*"</span>)
         );
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>), I(<span class="string">&quot;c&quot;</span>)], [I(<span class="string">&quot;c&quot;</span>)]), e(<span class="string">r&quot;a*b*c+&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>)], [I(<span class="string">&quot;bc&quot;</span>)]), e(<span class="string">r&quot;a*b+c&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>)], [I(<span class="string">&quot;c&quot;</span>), I(<span class="string">&quot;b&quot;</span>)]), e(<span class="string">r&quot;a*b+c*&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;ab&quot;</span>), E(<span class="string">&quot;a&quot;</span>)], [I(<span class="string">&quot;b&quot;</span>), E(<span class="string">&quot;a&quot;</span>)]), e(<span class="string">r&quot;ab*&quot;</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"a"</span>), I(<span class="string">"b"</span>), I(<span class="string">"c"</span>)], [I(<span class="string">"c"</span>)]), e(<span class="string">r"a*b*c+"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"a"</span>), I(<span class="string">"b"</span>)], [I(<span class="string">"bc"</span>)]), e(<span class="string">r"a*b+c"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"a"</span>), I(<span class="string">"b"</span>)], [I(<span class="string">"c"</span>), I(<span class="string">"b"</span>)]), e(<span class="string">r"a*b+c*"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"ab"</span>), E(<span class="string">"a"</span>)], [I(<span class="string">"b"</span>), E(<span class="string">"a"</span>)]), e(<span class="string">r"ab*"</span>));
         <span class="macro">assert_eq!</span>(
-            inexact([I(<span class="string">&quot;ab&quot;</span>), E(<span class="string">&quot;ac&quot;</span>)], [I(<span class="string">&quot;bc&quot;</span>), E(<span class="string">&quot;ac&quot;</span>)]),
-            e(<span class="string">r&quot;ab*c&quot;</span>)
+            inexact([I(<span class="string">"ab"</span>), E(<span class="string">"ac"</span>)], [I(<span class="string">"bc"</span>), E(<span class="string">"ac"</span>)]),
+            e(<span class="string">r"ab*c"</span>)
         );
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;ab&quot;</span>)], [I(<span class="string">&quot;b&quot;</span>)]), e(<span class="string">r&quot;ab+&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;ab&quot;</span>)], [I(<span class="string">&quot;bc&quot;</span>)]), e(<span class="string">r&quot;ab+c&quot;</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"ab"</span>)], [I(<span class="string">"b"</span>)]), e(<span class="string">r"ab+"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"ab"</span>)], [I(<span class="string">"bc"</span>)]), e(<span class="string">r"ab+c"</span>));
 
         <span class="macro">assert_eq!</span>(
-            inexact([I(<span class="string">&quot;z&quot;</span>), E(<span class="string">&quot;azb&quot;</span>)], [I(<span class="string">&quot;zazb&quot;</span>), E(<span class="string">&quot;azb&quot;</span>)]),
-            e(<span class="string">r&quot;z*azb&quot;</span>)
+            inexact([I(<span class="string">"z"</span>), E(<span class="string">"azb"</span>)], [I(<span class="string">"zazb"</span>), E(<span class="string">"azb"</span>)]),
+            e(<span class="string">r"z*azb"</span>)
         );
 
         <span class="kw">let </span>expected =
-            exact([<span class="string">&quot;aaa&quot;</span>, <span class="string">&quot;aab&quot;</span>, <span class="string">&quot;aba&quot;</span>, <span class="string">&quot;abb&quot;</span>, <span class="string">&quot;baa&quot;</span>, <span class="string">&quot;bab&quot;</span>, <span class="string">&quot;bba&quot;</span>, <span class="string">&quot;bbb&quot;</span>]);
-        <span class="macro">assert_eq!</span>(expected, e(<span class="string">r&quot;[ab]{3}&quot;</span>));
+            exact([<span class="string">"aaa"</span>, <span class="string">"aab"</span>, <span class="string">"aba"</span>, <span class="string">"abb"</span>, <span class="string">"baa"</span>, <span class="string">"bab"</span>, <span class="string">"bba"</span>, <span class="string">"bbb"</span>]);
+        <span class="macro">assert_eq!</span>(expected, e(<span class="string">r"[ab]{3}"</span>));
         <span class="kw">let </span>expected = inexact(
             [
-                I(<span class="string">&quot;aaa&quot;</span>),
-                I(<span class="string">&quot;aab&quot;</span>),
-                I(<span class="string">&quot;aba&quot;</span>),
-                I(<span class="string">&quot;abb&quot;</span>),
-                I(<span class="string">&quot;baa&quot;</span>),
-                I(<span class="string">&quot;bab&quot;</span>),
-                I(<span class="string">&quot;bba&quot;</span>),
-                I(<span class="string">&quot;bbb&quot;</span>),
+                I(<span class="string">"aaa"</span>),
+                I(<span class="string">"aab"</span>),
+                I(<span class="string">"aba"</span>),
+                I(<span class="string">"abb"</span>),
+                I(<span class="string">"baa"</span>),
+                I(<span class="string">"bab"</span>),
+                I(<span class="string">"bba"</span>),
+                I(<span class="string">"bbb"</span>),
             ],
             [
-                I(<span class="string">&quot;aaa&quot;</span>),
-                I(<span class="string">&quot;aab&quot;</span>),
-                I(<span class="string">&quot;aba&quot;</span>),
-                I(<span class="string">&quot;abb&quot;</span>),
-                I(<span class="string">&quot;baa&quot;</span>),
-                I(<span class="string">&quot;bab&quot;</span>),
-                I(<span class="string">&quot;bba&quot;</span>),
-                I(<span class="string">&quot;bbb&quot;</span>),
+                I(<span class="string">"aaa"</span>),
+                I(<span class="string">"aab"</span>),
+                I(<span class="string">"aba"</span>),
+                I(<span class="string">"abb"</span>),
+                I(<span class="string">"baa"</span>),
+                I(<span class="string">"bab"</span>),
+                I(<span class="string">"bba"</span>),
+                I(<span class="string">"bbb"</span>),
             ],
         );
-        <span class="macro">assert_eq!</span>(expected, e(<span class="string">r&quot;[ab]{3,4}&quot;</span>));
+        <span class="macro">assert_eq!</span>(expected, e(<span class="string">r"[ab]{3,4}"</span>));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>concat() {
         <span class="kw">let </span>empty: [<span class="kw-2">&amp;</span>str; <span class="number">0</span>] = [];
 
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;abcxyz&quot;</span>]), e(<span class="string">r&quot;abc()xyz&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;abcxyz&quot;</span>]), e(<span class="string">r&quot;(abc)(xyz)&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;abcmnoxyz&quot;</span>]), e(<span class="string">r&quot;abc()mno()xyz&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact(empty), e(<span class="string">r&quot;abc[a&amp;&amp;b]xyz&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;abcxyz&quot;</span>]), e(<span class="string">r&quot;abc[a&amp;&amp;b]*xyz&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"abcxyz"</span>]), e(<span class="string">r"abc()xyz"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"abcxyz"</span>]), e(<span class="string">r"(abc)(xyz)"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"abcmnoxyz"</span>]), e(<span class="string">r"abc()mno()xyz"</span>));
+        <span class="macro">assert_eq!</span>(exact(empty), e(<span class="string">r"abc[a&amp;&amp;b]xyz"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"abcxyz"</span>]), e(<span class="string">r"abc[a&amp;&amp;b]*xyz"</span>));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>alternation() {
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;abc&quot;</span>, <span class="string">&quot;mno&quot;</span>, <span class="string">&quot;xyz&quot;</span>]), e(<span class="string">r&quot;abc|mno|xyz&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"abc"</span>, <span class="string">"mno"</span>, <span class="string">"xyz"</span>]), e(<span class="string">r"abc|mno|xyz"</span>));
         <span class="macro">assert_eq!</span>(
             inexact(
-                [E(<span class="string">&quot;abc&quot;</span>), I(<span class="string">&quot;mZ&quot;</span>), E(<span class="string">&quot;mo&quot;</span>), E(<span class="string">&quot;xyz&quot;</span>)],
-                [E(<span class="string">&quot;abc&quot;</span>), I(<span class="string">&quot;Zo&quot;</span>), E(<span class="string">&quot;mo&quot;</span>), E(<span class="string">&quot;xyz&quot;</span>)]
+                [E(<span class="string">"abc"</span>), I(<span class="string">"mZ"</span>), E(<span class="string">"mo"</span>), E(<span class="string">"xyz"</span>)],
+                [E(<span class="string">"abc"</span>), I(<span class="string">"Zo"</span>), E(<span class="string">"mo"</span>), E(<span class="string">"xyz"</span>)]
             ),
-            e(<span class="string">r&quot;abc|mZ*o|xyz&quot;</span>)
+            e(<span class="string">r"abc|mZ*o|xyz"</span>)
         );
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;abc&quot;</span>, <span class="string">&quot;xyz&quot;</span>]), e(<span class="string">r&quot;abc|M[a&amp;&amp;b]N|xyz&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;abc&quot;</span>, <span class="string">&quot;MN&quot;</span>, <span class="string">&quot;xyz&quot;</span>]), e(<span class="string">r&quot;abc|M[a&amp;&amp;b]*N|xyz&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"abc"</span>, <span class="string">"xyz"</span>]), e(<span class="string">r"abc|M[a&amp;&amp;b]N|xyz"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"abc"</span>, <span class="string">"MN"</span>, <span class="string">"xyz"</span>]), e(<span class="string">r"abc|M[a&amp;&amp;b]*N|xyz"</span>));
 
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;aaa&quot;</span>, <span class="string">&quot;aaaaa&quot;</span>]), e(<span class="string">r&quot;(?:|aa)aaa&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"aaa"</span>, <span class="string">"aaaaa"</span>]), e(<span class="string">r"(?:|aa)aaa"</span>));
         <span class="macro">assert_eq!</span>(
             inexact(
-                [I(<span class="string">&quot;aaa&quot;</span>), E(<span class="string">&quot;&quot;</span>), I(<span class="string">&quot;aaaaa&quot;</span>), E(<span class="string">&quot;aa&quot;</span>)],
-                [I(<span class="string">&quot;aaa&quot;</span>), E(<span class="string">&quot;&quot;</span>), E(<span class="string">&quot;aa&quot;</span>)]
+                [I(<span class="string">"aaa"</span>), E(<span class="string">""</span>), I(<span class="string">"aaaaa"</span>), E(<span class="string">"aa"</span>)],
+                [I(<span class="string">"aaa"</span>), E(<span class="string">""</span>), E(<span class="string">"aa"</span>)]
             ),
-            e(<span class="string">r&quot;(?:|aa)(?:aaa)*&quot;</span>)
+            e(<span class="string">r"(?:|aa)(?:aaa)*"</span>)
         );
         <span class="macro">assert_eq!</span>(
             inexact(
-                [E(<span class="string">&quot;&quot;</span>), I(<span class="string">&quot;aaa&quot;</span>), E(<span class="string">&quot;aa&quot;</span>), I(<span class="string">&quot;aaaaa&quot;</span>)],
-                [E(<span class="string">&quot;&quot;</span>), I(<span class="string">&quot;aaa&quot;</span>), E(<span class="string">&quot;aa&quot;</span>)]
+                [E(<span class="string">""</span>), I(<span class="string">"aaa"</span>), E(<span class="string">"aa"</span>), I(<span class="string">"aaaaa"</span>)],
+                [E(<span class="string">""</span>), I(<span class="string">"aaa"</span>), E(<span class="string">"aa"</span>)]
             ),
-            e(<span class="string">r&quot;(?:|aa)(?:aaa)*?&quot;</span>)
-        );
-
-        <span class="macro">assert_eq!</span>(
-            inexact([E(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>), E(<span class="string">&quot;&quot;</span>)], [E(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>), E(<span class="string">&quot;&quot;</span>)]),
-            e(<span class="string">r&quot;a|b*&quot;</span>)
-        );
-        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>)], [E(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>)]), e(<span class="string">r&quot;a|b+&quot;</span>));
-
-        <span class="macro">assert_eq!</span>(
-            inexact([I(<span class="string">&quot;a&quot;</span>), E(<span class="string">&quot;b&quot;</span>), E(<span class="string">&quot;c&quot;</span>)], [I(<span class="string">&quot;ab&quot;</span>), E(<span class="string">&quot;b&quot;</span>), E(<span class="string">&quot;c&quot;</span>)]),
-            e(<span class="string">r&quot;a*b|c&quot;</span>)
+            e(<span class="string">r"(?:|aa)(?:aaa)*?"</span>)
         );
 
         <span class="macro">assert_eq!</span>(
-            inexact(
-                [E(<span class="string">&quot;a&quot;</span>), E(<span class="string">&quot;b&quot;</span>), I(<span class="string">&quot;c&quot;</span>), E(<span class="string">&quot;&quot;</span>)],
-                [E(<span class="string">&quot;a&quot;</span>), E(<span class="string">&quot;b&quot;</span>), I(<span class="string">&quot;c&quot;</span>), E(<span class="string">&quot;&quot;</span>)]
-            ),
-            e(<span class="string">r&quot;a|(?:b|c*)&quot;</span>)
+            inexact([E(<span class="string">"a"</span>), I(<span class="string">"b"</span>), E(<span class="string">""</span>)], [E(<span class="string">"a"</span>), I(<span class="string">"b"</span>), E(<span class="string">""</span>)]),
+            e(<span class="string">r"a|b*"</span>)
+        );
+        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">"a"</span>), I(<span class="string">"b"</span>)], [E(<span class="string">"a"</span>), I(<span class="string">"b"</span>)]), e(<span class="string">r"a|b+"</span>));
+
+        <span class="macro">assert_eq!</span>(
+            inexact([I(<span class="string">"a"</span>), E(<span class="string">"b"</span>), E(<span class="string">"c"</span>)], [I(<span class="string">"ab"</span>), E(<span class="string">"b"</span>), E(<span class="string">"c"</span>)]),
+            e(<span class="string">r"a*b|c"</span>)
         );
 
         <span class="macro">assert_eq!</span>(
             inexact(
-                [I(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;b&quot;</span>), E(<span class="string">&quot;c&quot;</span>), I(<span class="string">&quot;a&quot;</span>), I(<span class="string">&quot;ab&quot;</span>), E(<span class="string">&quot;c&quot;</span>)],
-                [I(<span class="string">&quot;ac&quot;</span>), I(<span class="string">&quot;bc&quot;</span>), E(<span class="string">&quot;c&quot;</span>), I(<span class="string">&quot;ac&quot;</span>), I(<span class="string">&quot;abc&quot;</span>), E(<span class="string">&quot;c&quot;</span>)],
+                [E(<span class="string">"a"</span>), E(<span class="string">"b"</span>), I(<span class="string">"c"</span>), E(<span class="string">""</span>)],
+                [E(<span class="string">"a"</span>), E(<span class="string">"b"</span>), I(<span class="string">"c"</span>), E(<span class="string">""</span>)]
             ),
-            e(<span class="string">r&quot;(a|b)*c|(a|ab)*c&quot;</span>)
+            e(<span class="string">r"a|(?:b|c*)"</span>)
         );
 
         <span class="macro">assert_eq!</span>(
-            exact([<span class="string">&quot;abef&quot;</span>, <span class="string">&quot;abgh&quot;</span>, <span class="string">&quot;cdef&quot;</span>, <span class="string">&quot;cdgh&quot;</span>]),
-            e(<span class="string">r&quot;(ab|cd)(ef|gh)&quot;</span>)
+            inexact(
+                [I(<span class="string">"a"</span>), I(<span class="string">"b"</span>), E(<span class="string">"c"</span>), I(<span class="string">"a"</span>), I(<span class="string">"ab"</span>), E(<span class="string">"c"</span>)],
+                [I(<span class="string">"ac"</span>), I(<span class="string">"bc"</span>), E(<span class="string">"c"</span>), I(<span class="string">"ac"</span>), I(<span class="string">"abc"</span>), E(<span class="string">"c"</span>)],
+            ),
+            e(<span class="string">r"(a|b)*c|(a|ab)*c"</span>)
+        );
+
+        <span class="macro">assert_eq!</span>(
+            exact([<span class="string">"abef"</span>, <span class="string">"abgh"</span>, <span class="string">"cdef"</span>, <span class="string">"cdgh"</span>]),
+            e(<span class="string">r"(ab|cd)(ef|gh)"</span>)
         );
         <span class="macro">assert_eq!</span>(
             exact([
-                <span class="string">&quot;abefij&quot;</span>, <span class="string">&quot;abefkl&quot;</span>, <span class="string">&quot;abghij&quot;</span>, <span class="string">&quot;abghkl&quot;</span>, <span class="string">&quot;cdefij&quot;</span>, <span class="string">&quot;cdefkl&quot;</span>,
-                <span class="string">&quot;cdghij&quot;</span>, <span class="string">&quot;cdghkl&quot;</span>,
+                <span class="string">"abefij"</span>, <span class="string">"abefkl"</span>, <span class="string">"abghij"</span>, <span class="string">"abghkl"</span>, <span class="string">"cdefij"</span>, <span class="string">"cdefkl"</span>,
+                <span class="string">"cdghij"</span>, <span class="string">"cdghkl"</span>,
             ]),
-            e(<span class="string">r&quot;(ab|cd)(ef|gh)(ij|kl)&quot;</span>)
+            e(<span class="string">r"(ab|cd)(ef|gh)(ij|kl)"</span>)
         );
 
-        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">&quot;abab&quot;</span>)], [E(<span class="string">&quot;abab&quot;</span>)]), e(<span class="string">r&quot;(ab){2}&quot;</span>));
+        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">"abab"</span>)], [E(<span class="string">"abab"</span>)]), e(<span class="string">r"(ab){2}"</span>));
 
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;abab&quot;</span>)], [I(<span class="string">&quot;abab&quot;</span>)]), e(<span class="string">r&quot;(ab){2,3}&quot;</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"abab"</span>)], [I(<span class="string">"abab"</span>)]), e(<span class="string">r"(ab){2,3}"</span>));
 
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;abab&quot;</span>)], [I(<span class="string">&quot;abab&quot;</span>)]), e(<span class="string">r&quot;(ab){2,}&quot;</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"abab"</span>)], [I(<span class="string">"abab"</span>)]), e(<span class="string">r"(ab){2,}"</span>));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>impossible() {
         <span class="kw">let </span>empty: [<span class="kw-2">&amp;</span>str; <span class="number">0</span>] = [];
 
-        <span class="macro">assert_eq!</span>(exact(empty), e(<span class="string">r&quot;[a&amp;&amp;b]&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact(empty), e(<span class="string">r&quot;a[a&amp;&amp;b]&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact(empty), e(<span class="string">r&quot;[a&amp;&amp;b]b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact(empty), e(<span class="string">r&quot;a[a&amp;&amp;b]b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>]), e(<span class="string">r&quot;a|[a&amp;&amp;b]|b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>]), e(<span class="string">r&quot;a|c[a&amp;&amp;b]|b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>]), e(<span class="string">r&quot;a|[a&amp;&amp;b]d|b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>]), e(<span class="string">r&quot;a|c[a&amp;&amp;b]d|b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;[a&amp;&amp;b]*&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;MN&quot;</span>]), e(<span class="string">r&quot;M[a&amp;&amp;b]*N&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact(empty), e(<span class="string">r"[a&amp;&amp;b]"</span>));
+        <span class="macro">assert_eq!</span>(exact(empty), e(<span class="string">r"a[a&amp;&amp;b]"</span>));
+        <span class="macro">assert_eq!</span>(exact(empty), e(<span class="string">r"[a&amp;&amp;b]b"</span>));
+        <span class="macro">assert_eq!</span>(exact(empty), e(<span class="string">r"a[a&amp;&amp;b]b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"a"</span>, <span class="string">"b"</span>]), e(<span class="string">r"a|[a&amp;&amp;b]|b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"a"</span>, <span class="string">"b"</span>]), e(<span class="string">r"a|c[a&amp;&amp;b]|b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"a"</span>, <span class="string">"b"</span>]), e(<span class="string">r"a|[a&amp;&amp;b]d|b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"a"</span>, <span class="string">"b"</span>]), e(<span class="string">r"a|c[a&amp;&amp;b]d|b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>]), e(<span class="string">r"[a&amp;&amp;b]*"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"MN"</span>]), e(<span class="string">r"M[a&amp;&amp;b]*N"</span>));
     }
 
     <span class="comment">// This tests patterns that contain something that defeats literal
@@ -5890,45 +5890,45 @@ implemented on [`Seq`].
     //
     // The main idea is that when literal extraction sees something that
     // it knows will blow a limit, it replaces it with a marker that says
-    // &quot;any literal will match here.&quot; While not necessarily true, the
+    // "any literal will match here." While not necessarily true, the
     // over-estimation is just fine for the purposes of literal extraction,
-    // because the imprecision doesn&#39;t matter: too big is too big.
+    // because the imprecision doesn't matter: too big is too big.
     //
     // This is one of the trickier parts of literal extraction, since we need
     // to make sure all of our literal extraction operations correctly compose
     // with the markers.
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>anything() {
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;.&quot;</span>));
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;(?s).&quot;</span>));
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;[A-Za-z]&quot;</span>));
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;[A-Z]&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;[A-Z]{0}&quot;</span>));
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;[A-Z]?&quot;</span>));
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;[A-Z]*&quot;</span>));
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;[A-Z]+&quot;</span>));
-        <span class="macro">assert_eq!</span>((seq([I(<span class="string">&quot;1&quot;</span>)]), Seq::infinite()), e(<span class="string">r&quot;1[A-Z]&quot;</span>));
-        <span class="macro">assert_eq!</span>((seq([I(<span class="string">&quot;1&quot;</span>)]), seq([I(<span class="string">&quot;2&quot;</span>)])), e(<span class="string">r&quot;1[A-Z]2&quot;</span>));
-        <span class="macro">assert_eq!</span>((Seq::infinite(), seq([I(<span class="string">&quot;123&quot;</span>)])), e(<span class="string">r&quot;[A-Z]+123&quot;</span>));
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;[A-Z]+123[A-Z]+&quot;</span>));
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;1|[A-Z]|3&quot;</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"."</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"(?s)."</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"[A-Za-z]"</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"[A-Z]"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>]), e(<span class="string">r"[A-Z]{0}"</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"[A-Z]?"</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"[A-Z]*"</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"[A-Z]+"</span>));
+        <span class="macro">assert_eq!</span>((seq([I(<span class="string">"1"</span>)]), Seq::infinite()), e(<span class="string">r"1[A-Z]"</span>));
+        <span class="macro">assert_eq!</span>((seq([I(<span class="string">"1"</span>)]), seq([I(<span class="string">"2"</span>)])), e(<span class="string">r"1[A-Z]2"</span>));
+        <span class="macro">assert_eq!</span>((Seq::infinite(), seq([I(<span class="string">"123"</span>)])), e(<span class="string">r"[A-Z]+123"</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"[A-Z]+123[A-Z]+"</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"1|[A-Z]|3"</span>));
         <span class="macro">assert_eq!</span>(
-            (seq([E(<span class="string">&quot;1&quot;</span>), I(<span class="string">&quot;2&quot;</span>), E(<span class="string">&quot;3&quot;</span>)]), Seq::infinite()),
-            e(<span class="string">r&quot;1|2[A-Z]|3&quot;</span>),
+            (seq([E(<span class="string">"1"</span>), I(<span class="string">"2"</span>), E(<span class="string">"3"</span>)]), Seq::infinite()),
+            e(<span class="string">r"1|2[A-Z]|3"</span>),
         );
         <span class="macro">assert_eq!</span>(
-            (Seq::infinite(), seq([E(<span class="string">&quot;1&quot;</span>), I(<span class="string">&quot;2&quot;</span>), E(<span class="string">&quot;3&quot;</span>)])),
-            e(<span class="string">r&quot;1|[A-Z]2|3&quot;</span>),
+            (Seq::infinite(), seq([E(<span class="string">"1"</span>), I(<span class="string">"2"</span>), E(<span class="string">"3"</span>)])),
+            e(<span class="string">r"1|[A-Z]2|3"</span>),
         );
         <span class="macro">assert_eq!</span>(
-            (seq([E(<span class="string">&quot;1&quot;</span>), I(<span class="string">&quot;2&quot;</span>), E(<span class="string">&quot;4&quot;</span>)]), seq([E(<span class="string">&quot;1&quot;</span>), I(<span class="string">&quot;3&quot;</span>), E(<span class="string">&quot;4&quot;</span>)])),
-            e(<span class="string">r&quot;1|2[A-Z]3|4&quot;</span>),
+            (seq([E(<span class="string">"1"</span>), I(<span class="string">"2"</span>), E(<span class="string">"4"</span>)]), seq([E(<span class="string">"1"</span>), I(<span class="string">"3"</span>), E(<span class="string">"4"</span>)])),
+            e(<span class="string">r"1|2[A-Z]3|4"</span>),
         );
-        <span class="macro">assert_eq!</span>((Seq::infinite(), seq([I(<span class="string">&quot;2&quot;</span>)])), e(<span class="string">r&quot;(?:|1)[A-Z]2&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">&quot;a&quot;</span>)], [I(<span class="string">&quot;z&quot;</span>)]), e(<span class="string">r&quot;a.z&quot;</span>));
+        <span class="macro">assert_eq!</span>((Seq::infinite(), seq([I(<span class="string">"2"</span>)])), e(<span class="string">r"(?:|1)[A-Z]2"</span>));
+        <span class="macro">assert_eq!</span>(inexact([I(<span class="string">"a"</span>)], [I(<span class="string">"z"</span>)]), e(<span class="string">r"a.z"</span>));
     }
 
-    <span class="comment">// Like the &#39;anything&#39; test, but it uses smaller limits in order to test
+    <span class="comment">// Like the 'anything' test, but it uses smaller limits in order to test
     // the logic for effectively aborting literal extraction when the seqs get
     // too big.
     </span><span class="attr">#[test]
@@ -5954,100 +5954,100 @@ implemented on [`Seq`].
         <span class="macro">assert_eq!</span>(
             (
                 seq([
-                    I(<span class="string">&quot;aaa&quot;</span>),
-                    I(<span class="string">&quot;aab&quot;</span>),
-                    I(<span class="string">&quot;aba&quot;</span>),
-                    I(<span class="string">&quot;abb&quot;</span>),
-                    I(<span class="string">&quot;baa&quot;</span>),
-                    I(<span class="string">&quot;bab&quot;</span>),
-                    I(<span class="string">&quot;bba&quot;</span>),
-                    I(<span class="string">&quot;bbb&quot;</span>)
+                    I(<span class="string">"aaa"</span>),
+                    I(<span class="string">"aab"</span>),
+                    I(<span class="string">"aba"</span>),
+                    I(<span class="string">"abb"</span>),
+                    I(<span class="string">"baa"</span>),
+                    I(<span class="string">"bab"</span>),
+                    I(<span class="string">"bba"</span>),
+                    I(<span class="string">"bbb"</span>)
                 ]),
                 seq([
-                    I(<span class="string">&quot;aaa&quot;</span>),
-                    I(<span class="string">&quot;aab&quot;</span>),
-                    I(<span class="string">&quot;aba&quot;</span>),
-                    I(<span class="string">&quot;abb&quot;</span>),
-                    I(<span class="string">&quot;baa&quot;</span>),
-                    I(<span class="string">&quot;bab&quot;</span>),
-                    I(<span class="string">&quot;bba&quot;</span>),
-                    I(<span class="string">&quot;bbb&quot;</span>)
+                    I(<span class="string">"aaa"</span>),
+                    I(<span class="string">"aab"</span>),
+                    I(<span class="string">"aba"</span>),
+                    I(<span class="string">"abb"</span>),
+                    I(<span class="string">"baa"</span>),
+                    I(<span class="string">"bab"</span>),
+                    I(<span class="string">"bba"</span>),
+                    I(<span class="string">"bbb"</span>)
                 ])
             ),
-            e(<span class="string">r&quot;[ab]{3}{3}&quot;</span>)
+            e(<span class="string">r"[ab]{3}{3}"</span>)
         );
 
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;ab|cd|ef|gh|ij|kl|mn|op|qr|st|uv|wx|yz&quot;</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"ab|cd|ef|gh|ij|kl|mn|op|qr|st|uv|wx|yz"</span>));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>empty() {
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;^&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;$&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;(?m:^)&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;(?m:$)&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;\b&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;\B&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;(?-u:\b)&quot;</span>));
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;&quot;</span>]), e(<span class="string">r&quot;(?-u:\B)&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>]), e(<span class="string">r""</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>]), e(<span class="string">r"^"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>]), e(<span class="string">r"$"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>]), e(<span class="string">r"(?m:^)"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>]), e(<span class="string">r"(?m:$)"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>]), e(<span class="string">r"\b"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>]), e(<span class="string">r"\B"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>]), e(<span class="string">r"(?-u:\b)"</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">""</span>]), e(<span class="string">r"(?-u:\B)"</span>));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>odds_and_ends() {
-        <span class="macro">assert_eq!</span>((Seq::infinite(), seq([I(<span class="string">&quot;a&quot;</span>)])), e(<span class="string">r&quot;.a&quot;</span>));
-        <span class="macro">assert_eq!</span>((seq([I(<span class="string">&quot;a&quot;</span>)]), Seq::infinite()), e(<span class="string">r&quot;a.&quot;</span>));
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;a|.&quot;</span>));
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;.|a&quot;</span>));
+        <span class="macro">assert_eq!</span>((Seq::infinite(), seq([I(<span class="string">"a"</span>)])), e(<span class="string">r".a"</span>));
+        <span class="macro">assert_eq!</span>((seq([I(<span class="string">"a"</span>)]), Seq::infinite()), e(<span class="string">r"a."</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"a|."</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r".|a"</span>));
 
-        <span class="kw">let </span>pat = <span class="string">r&quot;M[ou]&#39;?am+[ae]r .*([AEae]l[- ])?[GKQ]h?[aeu]+([dtz][dhz]?)+af[iy]&quot;</span>;
+        <span class="kw">let </span>pat = <span class="string">r"M[ou]'?am+[ae]r .*([AEae]l[- ])?[GKQ]h?[aeu]+([dtz][dhz]?)+af[iy]"</span>;
         <span class="kw">let </span>expected = inexact(
-            [<span class="string">&quot;Mo&#39;am&quot;</span>, <span class="string">&quot;Moam&quot;</span>, <span class="string">&quot;Mu&#39;am&quot;</span>, <span class="string">&quot;Muam&quot;</span>].map(I),
+            [<span class="string">"Mo'am"</span>, <span class="string">"Moam"</span>, <span class="string">"Mu'am"</span>, <span class="string">"Muam"</span>].map(I),
             [
-                <span class="string">&quot;ddafi&quot;</span>, <span class="string">&quot;ddafy&quot;</span>, <span class="string">&quot;dhafi&quot;</span>, <span class="string">&quot;dhafy&quot;</span>, <span class="string">&quot;dzafi&quot;</span>, <span class="string">&quot;dzafy&quot;</span>, <span class="string">&quot;dafi&quot;</span>,
-                <span class="string">&quot;dafy&quot;</span>, <span class="string">&quot;tdafi&quot;</span>, <span class="string">&quot;tdafy&quot;</span>, <span class="string">&quot;thafi&quot;</span>, <span class="string">&quot;thafy&quot;</span>, <span class="string">&quot;tzafi&quot;</span>, <span class="string">&quot;tzafy&quot;</span>,
-                <span class="string">&quot;tafi&quot;</span>, <span class="string">&quot;tafy&quot;</span>, <span class="string">&quot;zdafi&quot;</span>, <span class="string">&quot;zdafy&quot;</span>, <span class="string">&quot;zhafi&quot;</span>, <span class="string">&quot;zhafy&quot;</span>, <span class="string">&quot;zzafi&quot;</span>,
-                <span class="string">&quot;zzafy&quot;</span>, <span class="string">&quot;zafi&quot;</span>, <span class="string">&quot;zafy&quot;</span>,
+                <span class="string">"ddafi"</span>, <span class="string">"ddafy"</span>, <span class="string">"dhafi"</span>, <span class="string">"dhafy"</span>, <span class="string">"dzafi"</span>, <span class="string">"dzafy"</span>, <span class="string">"dafi"</span>,
+                <span class="string">"dafy"</span>, <span class="string">"tdafi"</span>, <span class="string">"tdafy"</span>, <span class="string">"thafi"</span>, <span class="string">"thafy"</span>, <span class="string">"tzafi"</span>, <span class="string">"tzafy"</span>,
+                <span class="string">"tafi"</span>, <span class="string">"tafy"</span>, <span class="string">"zdafi"</span>, <span class="string">"zdafy"</span>, <span class="string">"zhafi"</span>, <span class="string">"zhafy"</span>, <span class="string">"zzafi"</span>,
+                <span class="string">"zzafy"</span>, <span class="string">"zafi"</span>, <span class="string">"zafy"</span>,
             ]
             .map(I),
         );
         <span class="macro">assert_eq!</span>(expected, e(pat));
 
         <span class="macro">assert_eq!</span>(
-            (seq([<span class="string">&quot;fn is_&quot;</span>, <span class="string">&quot;fn as_&quot;</span>].map(I)), Seq::infinite()),
-            e(<span class="string">r&quot;fn is_([A-Z]+)|fn as_([A-Z]+)&quot;</span>),
+            (seq([<span class="string">"fn is_"</span>, <span class="string">"fn as_"</span>].map(I)), Seq::infinite()),
+            e(<span class="string">r"fn is_([A-Z]+)|fn as_([A-Z]+)"</span>),
         );
         <span class="macro">assert_eq!</span>(
-            inexact([I(<span class="string">&quot;foo&quot;</span>)], [I(<span class="string">&quot;quux&quot;</span>)]),
-            e(<span class="string">r&quot;foo[A-Z]+bar[A-Z]+quux&quot;</span>)
+            inexact([I(<span class="string">"foo"</span>)], [I(<span class="string">"quux"</span>)]),
+            e(<span class="string">r"foo[A-Z]+bar[A-Z]+quux"</span>)
         );
-        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r&quot;[A-Z]+bar[A-Z]+&quot;</span>));
+        <span class="macro">assert_eq!</span>(infinite(), e(<span class="string">r"[A-Z]+bar[A-Z]+"</span>));
         <span class="macro">assert_eq!</span>(
-            exact([<span class="string">&quot;Sherlock Holmes&quot;</span>]),
-            e(<span class="string">r&quot;(?m)^Sherlock Holmes|Sherlock Holmes$&quot;</span>)
+            exact([<span class="string">"Sherlock Holmes"</span>]),
+            e(<span class="string">r"(?m)^Sherlock Holmes|Sherlock Holmes$"</span>)
         );
 
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;sa&quot;</span>, <span class="string">&quot;sb&quot;</span>]), e(<span class="string">r&quot;\bs(?:[ab])&quot;</span>));
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"sa"</span>, <span class="string">"sb"</span>]), e(<span class="string">r"\bs(?:[ab])"</span>));
     }
 
     <span class="comment">// This tests a specific regex along with some heuristic steps to reduce
     // the sequences extracted. This is meant to roughly correspond to the
     // types of heuristics used to shrink literal sets in practice. (Shrinking
-    // is done because you want to balance &quot;spend too much work looking for
-    // too many literals&quot; and &quot;spend too much work processing false positive
-    // matches from short literals.&quot;)
+    // is done because you want to balance "spend too much work looking for
+    // too many literals" and "spend too much work processing false positive
+    // matches from short literals.")
     </span><span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;unicode-case&quot;</span>)]
+    #[cfg(feature = <span class="string">"unicode-case"</span>)]
     </span><span class="kw">fn </span>holmes() {
         <span class="kw">let </span>expected = inexact(
-            [<span class="string">&quot;HOL&quot;</span>, <span class="string">&quot;HOl&quot;</span>, <span class="string">&quot;HoL&quot;</span>, <span class="string">&quot;Hol&quot;</span>, <span class="string">&quot;hOL&quot;</span>, <span class="string">&quot;hOl&quot;</span>, <span class="string">&quot;hoL&quot;</span>, <span class="string">&quot;hol&quot;</span>].map(I),
+            [<span class="string">"HOL"</span>, <span class="string">"HOl"</span>, <span class="string">"HoL"</span>, <span class="string">"Hol"</span>, <span class="string">"hOL"</span>, <span class="string">"hOl"</span>, <span class="string">"hoL"</span>, <span class="string">"hol"</span>].map(I),
             [
-                <span class="string">&quot;MES&quot;</span>, <span class="string">&quot;MEs&quot;</span>, <span class="string">&quot;Eſ&quot;</span>, <span class="string">&quot;MeS&quot;</span>, <span class="string">&quot;Mes&quot;</span>, <span class="string">&quot;eſ&quot;</span>, <span class="string">&quot;mES&quot;</span>, <span class="string">&quot;mEs&quot;</span>, <span class="string">&quot;meS&quot;</span>,
-                <span class="string">&quot;mes&quot;</span>,
+                <span class="string">"MES"</span>, <span class="string">"MEs"</span>, <span class="string">"Eſ"</span>, <span class="string">"MeS"</span>, <span class="string">"Mes"</span>, <span class="string">"eſ"</span>, <span class="string">"mES"</span>, <span class="string">"mEs"</span>, <span class="string">"meS"</span>,
+                <span class="string">"mes"</span>,
             ]
             .map(I),
         );
-        <span class="kw">let </span>(<span class="kw-2">mut </span>prefixes, <span class="kw-2">mut </span>suffixes) = e(<span class="string">r&quot;(?i)Holmes&quot;</span>);
+        <span class="kw">let </span>(<span class="kw-2">mut </span>prefixes, <span class="kw-2">mut </span>suffixes) = e(<span class="string">r"(?i)Holmes"</span>);
         prefixes.keep_first_bytes(<span class="number">3</span>);
         suffixes.keep_last_bytes(<span class="number">3</span>);
         prefixes.minimize_by_preference();
@@ -6061,10 +6061,10 @@ implemented on [`Seq`].
     // code in Extractor::union to try and trim down the literal sequences
     // if the union would blow the limits set.
     </span><span class="attr">#[test]
-    #[cfg(feature = <span class="string">&quot;unicode-case&quot;</span>)]
+    #[cfg(feature = <span class="string">"unicode-case"</span>)]
     </span><span class="kw">fn </span>holmes_alt() {
         <span class="kw">let </span><span class="kw-2">mut </span>pre =
-            prefixes(<span class="string">r&quot;(?i)Sherlock|Holmes|Watson|Irene|Adler|John|Baker&quot;</span>);
+            prefixes(<span class="string">r"(?i)Sherlock|Holmes|Watson|Irene|Adler|John|Baker"</span>);
         <span class="macro">assert!</span>(pre.len().unwrap() &gt; <span class="number">0</span>);
         pre.optimize_for_prefix_by_preference();
         <span class="macro">assert!</span>(pre.len().unwrap() &gt; <span class="number">0</span>);
@@ -6074,32 +6074,32 @@ implemented on [`Seq`].
     // See: CVE-2022-24713
     //
     // We test this here to ensure literal extraction completes in reasonable
-    // time and isn&#39;t materially impacted by these sorts of pathological
+    // time and isn't materially impacted by these sorts of pathological
     // repeats.
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>crazy_repeats() {
-        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">&quot;&quot;</span>)], [E(<span class="string">&quot;&quot;</span>)]), e(<span class="string">r&quot;(?:){4294967295}&quot;</span>));
+        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">""</span>)], [E(<span class="string">""</span>)]), e(<span class="string">r"(?:){4294967295}"</span>));
         <span class="macro">assert_eq!</span>(
-            inexact([E(<span class="string">&quot;&quot;</span>)], [E(<span class="string">&quot;&quot;</span>)]),
-            e(<span class="string">r&quot;(?:){64}{64}{64}{64}{64}{64}&quot;</span>)
+            inexact([E(<span class="string">""</span>)], [E(<span class="string">""</span>)]),
+            e(<span class="string">r"(?:){64}{64}{64}{64}{64}{64}"</span>)
         );
-        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">&quot;&quot;</span>)], [E(<span class="string">&quot;&quot;</span>)]), e(<span class="string">r&quot;x{0}{4294967295}&quot;</span>));
-        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">&quot;&quot;</span>)], [E(<span class="string">&quot;&quot;</span>)]), e(<span class="string">r&quot;(?:|){4294967295}&quot;</span>));
+        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">""</span>)], [E(<span class="string">""</span>)]), e(<span class="string">r"x{0}{4294967295}"</span>));
+        <span class="macro">assert_eq!</span>(inexact([E(<span class="string">""</span>)], [E(<span class="string">""</span>)]), e(<span class="string">r"(?:|){4294967295}"</span>));
 
         <span class="macro">assert_eq!</span>(
-            inexact([E(<span class="string">&quot;&quot;</span>)], [E(<span class="string">&quot;&quot;</span>)]),
-            e(<span class="string">r&quot;(?:){8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}&quot;</span>)
+            inexact([E(<span class="string">""</span>)], [E(<span class="string">""</span>)]),
+            e(<span class="string">r"(?:){8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}"</span>)
         );
-        <span class="kw">let </span>repa = <span class="string">&quot;a&quot;</span>.repeat(<span class="number">100</span>);
+        <span class="kw">let </span>repa = <span class="string">"a"</span>.repeat(<span class="number">100</span>);
         <span class="macro">assert_eq!</span>(
             inexact([I(<span class="kw-2">&amp;</span>repa)], [I(<span class="kw-2">&amp;</span>repa)]),
-            e(<span class="string">r&quot;a{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}&quot;</span>)
+            e(<span class="string">r"a{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}{8}"</span>)
         );
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>huge() {
-        <span class="kw">let </span>pat = <span class="string">r#&quot;(?-u)
+        <span class="kw">let </span>pat = <span class="string">r#"(?-u)
         2(?:
           [45]\d{3}|
           7(?:
@@ -6384,7 +6384,7 @@ implemented on [`Seq`].
             [24]1
           )\d{2}
         )\d{3}
-        &quot;#</span>;
+        "#</span>;
         <span class="comment">// TODO: This is a good candidate of a seq of literals that could be
         // shrunk quite a bit and still be very productive with respect to
         // literal optimizations.
@@ -6395,33 +6395,33 @@ implemented on [`Seq`].
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>optimize() {
-        <span class="comment">// This gets a common prefix that isn&#39;t too short.
+        <span class="comment">// This gets a common prefix that isn't too short.
         </span><span class="kw">let </span>(p, s) =
-            opt([<span class="string">&quot;foobarfoobar&quot;</span>, <span class="string">&quot;foobar&quot;</span>, <span class="string">&quot;foobarzfoobar&quot;</span>, <span class="string">&quot;foobarfoobar&quot;</span>]);
-        <span class="macro">assert_eq!</span>(seq([I(<span class="string">&quot;foobar&quot;</span>)]), p);
-        <span class="macro">assert_eq!</span>(seq([I(<span class="string">&quot;foobar&quot;</span>)]), s);
+            opt([<span class="string">"foobarfoobar"</span>, <span class="string">"foobar"</span>, <span class="string">"foobarzfoobar"</span>, <span class="string">"foobarfoobar"</span>]);
+        <span class="macro">assert_eq!</span>(seq([I(<span class="string">"foobar"</span>)]), p);
+        <span class="macro">assert_eq!</span>(seq([I(<span class="string">"foobar"</span>)]), s);
 
-        <span class="comment">// This also finds a common prefix, but since it&#39;s only one byte, it
+        <span class="comment">// This also finds a common prefix, but since it's only one byte, it
         // prefers the multiple literals.
-        </span><span class="kw">let </span>(p, s) = opt([<span class="string">&quot;abba&quot;</span>, <span class="string">&quot;akka&quot;</span>, <span class="string">&quot;abccba&quot;</span>]);
-        <span class="macro">assert_eq!</span>(exact([<span class="string">&quot;abba&quot;</span>, <span class="string">&quot;akka&quot;</span>, <span class="string">&quot;abccba&quot;</span>]), (p, s));
+        </span><span class="kw">let </span>(p, s) = opt([<span class="string">"abba"</span>, <span class="string">"akka"</span>, <span class="string">"abccba"</span>]);
+        <span class="macro">assert_eq!</span>(exact([<span class="string">"abba"</span>, <span class="string">"akka"</span>, <span class="string">"abccba"</span>]), (p, s));
 
-        <span class="kw">let </span>(p, s) = opt([<span class="string">&quot;sam&quot;</span>, <span class="string">&quot;samwise&quot;</span>]);
-        <span class="macro">assert_eq!</span>((seq([E(<span class="string">&quot;sam&quot;</span>)]), seq([E(<span class="string">&quot;sam&quot;</span>), E(<span class="string">&quot;samwise&quot;</span>)])), (p, s));
+        <span class="kw">let </span>(p, s) = opt([<span class="string">"sam"</span>, <span class="string">"samwise"</span>]);
+        <span class="macro">assert_eq!</span>((seq([E(<span class="string">"sam"</span>)]), seq([E(<span class="string">"sam"</span>), E(<span class="string">"samwise"</span>)])), (p, s));
 
         <span class="comment">// The empty string is poisonous, so our seq becomes infinite, even
         // though all literals are exact.
-        </span><span class="kw">let </span>(p, s) = opt([<span class="string">&quot;foobarfoo&quot;</span>, <span class="string">&quot;foo&quot;</span>, <span class="string">&quot;&quot;</span>, <span class="string">&quot;foozfoo&quot;</span>, <span class="string">&quot;foofoo&quot;</span>]);
+        </span><span class="kw">let </span>(p, s) = opt([<span class="string">"foobarfoo"</span>, <span class="string">"foo"</span>, <span class="string">""</span>, <span class="string">"foozfoo"</span>, <span class="string">"foofoo"</span>]);
         <span class="macro">assert!</span>(!p.is_finite());
         <span class="macro">assert!</span>(!s.is_finite());
 
         <span class="comment">// A space is also poisonous, so our seq becomes infinite. But this
-        // only gets triggered when we don&#39;t have a completely exact sequence.
+        // only gets triggered when we don't have a completely exact sequence.
         // When the sequence is exact, spaces are okay, since we presume that
         // any prefilter will match a space more quickly than the regex engine.
-        // (When the sequence is exact, there&#39;s a chance of the prefilter being
+        // (When the sequence is exact, there's a chance of the prefilter being
         // used without needing the regex engine at all.)
-        </span><span class="kw">let </span><span class="kw-2">mut </span>p = seq([E(<span class="string">&quot;foobarfoo&quot;</span>), I(<span class="string">&quot;foo&quot;</span>), E(<span class="string">&quot; &quot;</span>), E(<span class="string">&quot;foofoo&quot;</span>)]);
+        </span><span class="kw">let </span><span class="kw-2">mut </span>p = seq([E(<span class="string">"foobarfoo"</span>), I(<span class="string">"foo"</span>), E(<span class="string">" "</span>), E(<span class="string">"foofoo"</span>)]);
         p.optimize_for_prefix_by_preference();
         <span class="macro">assert!</span>(!p.is_finite());
     }

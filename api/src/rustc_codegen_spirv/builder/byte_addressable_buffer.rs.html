@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/byte_addressable_buffer.rs`."><title>byte_addressable_buffer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/byte_addressable_buffer.rs`."><title>byte_addressable_buffer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -396,15 +396,15 @@
 <span class="kw">use </span>rustc_target::abi::call::PassMode;
 <span class="kw">use </span>rustc_target::abi::{Align, Size};
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;tcx</span>&gt; Builder&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; Builder&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; {
     <span class="kw">fn </span>load_err(<span class="kw-2">&amp;mut </span><span class="self">self</span>, original_type: Word, invalid_type: Word) -&gt; SpirvValue {
         <span class="kw">let </span><span class="kw-2">mut </span>err = <span class="self">self</span>.struct_err(<span class="macro">format!</span>(
-            <span class="string">&quot;cannot load type {} in an untyped buffer load&quot;</span>,
+            <span class="string">"cannot load type {} in an untyped buffer load"</span>,
             <span class="self">self</span>.debug_type(original_type)
         ));
         <span class="kw">if </span>original_type != invalid_type {
             err.note(<span class="macro">format!</span>(
-                <span class="string">&quot;due to containing type {}&quot;</span>,
+                <span class="string">"due to containing type {}"</span>,
                 <span class="self">self</span>.debug_type(invalid_type)
             ));
         }
@@ -567,20 +567,20 @@
                     ty: result_type,
                 };
             }
-            <span class="comment">// PassMode::Pair is identical to PassMode::Direct - it&#39;s returned as a struct
+            <span class="comment">// PassMode::Pair is identical to PassMode::Direct - it's returned as a struct
             </span>PassMode::Direct(<span class="kw">_</span>) | PassMode::Pair(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; (),
             PassMode::Cast { .. } =&gt; {
-                <span class="self">self</span>.fatal(<span class="string">&quot;PassMode::Cast not supported in codegen_buffer_load_intrinsic&quot;</span>)
+                <span class="self">self</span>.fatal(<span class="string">"PassMode::Cast not supported in codegen_buffer_load_intrinsic"</span>)
             }
             PassMode::Indirect { .. } =&gt; {
-                <span class="self">self</span>.fatal(<span class="string">&quot;PassMode::Indirect not supported in codegen_buffer_load_intrinsic&quot;</span>)
+                <span class="self">self</span>.fatal(<span class="string">"PassMode::Indirect not supported in codegen_buffer_load_intrinsic"</span>)
             }
         }
 
         <span class="comment">// Signature: fn load&lt;T&gt;(array: &amp;[u32], index: u32) -&gt; T;
         </span><span class="kw">if </span>args.len() != <span class="number">3 </span>{
             <span class="self">self</span>.fatal(<span class="macro">format!</span>(
-                <span class="string">&quot;buffer_load_intrinsic should have 3 args, it has {}&quot;</span>,
+                <span class="string">"buffer_load_intrinsic should have 3 args, it has {}"</span>,
                 args.len()
             ));
         }
@@ -594,11 +594,11 @@
 
     <span class="kw">fn </span>store_err(<span class="kw-2">&amp;mut </span><span class="self">self</span>, original_type: Word, value: SpirvValue) -&gt; <span class="prelude-ty">Result</span>&lt;(), ErrorGuaranteed&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>err = <span class="self">self</span>.struct_err(<span class="macro">format!</span>(
-            <span class="string">&quot;cannot store type {} in an untyped buffer store&quot;</span>,
+            <span class="string">"cannot store type {} in an untyped buffer store"</span>,
             <span class="self">self</span>.debug_type(original_type)
         ));
         <span class="kw">if </span>original_type != value.ty {
-            err.note(<span class="macro">format!</span>(<span class="string">&quot;due to containing type {}&quot;</span>, value.ty));
+            err.note(<span class="macro">format!</span>(<span class="string">"due to containing type {}"</span>, value.ty));
         }
         <span class="prelude-val">Err</span>(err.emit())
     }
@@ -738,16 +738,16 @@
             PassMode::Direct(<span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
             PassMode::Pair(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
             PassMode::Cast { .. } =&gt; {
-                <span class="self">self</span>.fatal(<span class="string">&quot;PassMode::Cast not supported in codegen_buffer_store_intrinsic&quot;</span>)
+                <span class="self">self</span>.fatal(<span class="string">"PassMode::Cast not supported in codegen_buffer_store_intrinsic"</span>)
             }
             PassMode::Indirect { .. } =&gt; {
-                <span class="self">self</span>.fatal(<span class="string">&quot;PassMode::Indirect not supported in codegen_buffer_store_intrinsic&quot;</span>)
+                <span class="self">self</span>.fatal(<span class="string">"PassMode::Indirect not supported in codegen_buffer_store_intrinsic"</span>)
             }
         };
         <span class="kw">let </span>expected_args = <span class="kw">if </span>is_pair { <span class="number">5 </span>} <span class="kw">else </span>{ <span class="number">4 </span>};
         <span class="kw">if </span>args.len() != expected_args {
             <span class="self">self</span>.fatal(<span class="macro">format!</span>(
-                <span class="string">&quot;buffer_store_intrinsic should have {} args, it has {}&quot;</span>,
+                <span class="string">"buffer_store_intrinsic should have {} args, it has {}"</span>,
                 expected_args,
                 args.len()
             ));
@@ -764,7 +764,7 @@
 
             <span class="kw">let </span>size_of_one = <span class="self">self</span>.lookup_type(value_one.ty).sizeof(<span class="self">self</span>);
             <span class="kw">if </span>one_result.is_ok() &amp;&amp; size_of_one != <span class="prelude-val">Some</span>(Size::from_bytes(<span class="number">4</span>)) {
-                <span class="self">self</span>.fatal(<span class="string">&quot;Expected PassMode::Pair first element to have size 4&quot;</span>);
+                <span class="self">self</span>.fatal(<span class="string">"Expected PassMode::Pair first element to have size 4"</span>);
             }
 
             <span class="kw">let _ </span>= <span class="self">self</span>.recurse_store_type(value_two.ty, value_two, array, word_index, <span class="number">1</span>);

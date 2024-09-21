@@ -1,0 +1,1 @@
+searchState.loadedDescShard("rustc_codegen_spirv_types", 0, "<code>rustc_codegen_spirv-types</code>\n/// SPIR-V operand kind: Capability\nReturns the argument unchanged.\nReturns the argument unchanged.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.")

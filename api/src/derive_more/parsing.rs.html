@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/derive_more-0.99.17/src/parsing.rs`."><title>parsing.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="derive_more" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../derive_more/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/derive_more-0.99.18/src/parsing.rs`."><title>parsing.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="derive_more" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../derive_more/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -900,7 +900,7 @@
     <span class="kw">pub </span>line: usize,
     <span class="kw">pub </span>column: usize,
     <span class="kw">pub </span>offset: usize,
-    <span class="kw">pub </span>expected: ::std::collections::HashSet&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;,
+    <span class="kw">pub </span>expected: ::std::collections::HashSet&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;,
 }
 <span class="kw">pub type </span>ParseResult&lt;T&gt; = <span class="prelude-ty">Result</span>&lt;T, ParseError&gt;;
 <span class="kw">impl </span>::std::fmt::Display <span class="kw">for </span>ParseError {
@@ -908,20 +908,20 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         fmt: <span class="kw-2">&amp;mut </span>::std::fmt::Formatter,
     ) -&gt; ::std::result::Result&lt;(), ::std::fmt::Error&gt; {
-        <span class="macro">write!</span>(fmt, <span class="string">&quot;error at {}:{}: expected &quot;</span>, <span class="self">self</span>.line, <span class="self">self</span>.column)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(fmt, <span class="string">"error at {}:{}: expected "</span>, <span class="self">self</span>.line, <span class="self">self</span>.column)<span class="question-mark">?</span>;
         <span class="kw">if </span><span class="self">self</span>.expected.len() == <span class="number">0 </span>{
-            <span class="macro">write!</span>(fmt, <span class="string">&quot;EOF&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(fmt, <span class="string">"EOF"</span>)<span class="question-mark">?</span>;
         } <span class="kw">else if </span><span class="self">self</span>.expected.len() == <span class="number">1 </span>{
             <span class="macro">write!</span>(
                 fmt,
-                <span class="string">&quot;`{}`&quot;</span>,
+                <span class="string">"`{}`"</span>,
                 escape_default(<span class="self">self</span>.expected.iter().next().unwrap())
             )<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
             <span class="kw">let </span><span class="kw-2">mut </span>iter = <span class="self">self</span>.expected.iter();
-            <span class="macro">write!</span>(fmt, <span class="string">&quot;one of `{}`&quot;</span>, escape_default(iter.next().unwrap()))<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(fmt, <span class="string">"one of `{}`"</span>, escape_default(iter.next().unwrap()))<span class="question-mark">?</span>;
             <span class="kw">for </span>elem <span class="kw">in </span>iter {
-                <span class="macro">write!</span>(fmt, <span class="string">&quot;, `{}`&quot;</span>, escape_default(elem))<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(fmt, <span class="string">", `{}`"</span>, escape_default(elem))<span class="question-mark">?</span>;
             }
         }
         <span class="prelude-val">Ok</span>(())
@@ -929,14 +929,14 @@
 }
 <span class="kw">impl </span>::std::error::Error <span class="kw">for </span>ParseError {
     <span class="kw">fn </span>description(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="string">&quot;parse error&quot;
+        <span class="string">"parse error"
     </span>}
 }
 <span class="kw">fn </span>slice_eq(
     input: <span class="kw-2">&amp;</span>str,
     state: <span class="kw-2">&amp;mut </span>ParseState,
     pos: usize,
-    m: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    m: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; RuleResult&lt;()&gt; {
     <span class="attr">#![inline]
     #![allow(dead_code)]
@@ -951,7 +951,7 @@
     input: <span class="kw-2">&amp;</span>str,
     state: <span class="kw-2">&amp;mut </span>ParseState,
     pos: usize,
-    m: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str,
+    m: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 ) -&gt; RuleResult&lt;()&gt; {
     <span class="attr">#![inline]
     #![allow(dead_code)]
@@ -973,17 +973,17 @@
         <span class="kw">let </span>(<span class="kw">_</span>, next) = char_range_at(input, pos);
         Matched(next, ())
     } <span class="kw">else </span>{
-        state.mark_failure(pos, <span class="string">&quot;&lt;character&gt;&quot;</span>)
+        state.mark_failure(pos, <span class="string">"&lt;character&gt;"</span>)
     }
 }
 <span class="kw">fn </span>pos_to_line(input: <span class="kw-2">&amp;</span>str, pos: usize) -&gt; (usize, usize) {
     <span class="kw">let </span>before = <span class="kw-2">&amp;</span>input[..pos];
-    <span class="kw">let </span>line = before.as_bytes().iter().filter(|&amp;&amp;c| c == <span class="string">b&#39;\n&#39;</span>).count() + <span class="number">1</span>;
-    <span class="kw">let </span>col = before.chars().rev().take_while(|<span class="kw-2">&amp;</span>c| c != <span class="string">&#39;\n&#39;</span>).count() + <span class="number">1</span>;
+    <span class="kw">let </span>line = before.as_bytes().iter().filter(|&amp;&amp;c| c == <span class="string">b'\n'</span>).count() + <span class="number">1</span>;
+    <span class="kw">let </span>col = before.chars().rev().take_while(|<span class="kw-2">&amp;</span>c| c != <span class="string">'\n'</span>).count() + <span class="number">1</span>;
     (line, col)
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;input</span>&gt; ParseState&lt;<span class="lifetime">&#39;input</span>&gt; {
-    <span class="kw">fn </span>mark_failure(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pos: usize, expected: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; RuleResult&lt;()&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'input</span>&gt; ParseState&lt;<span class="lifetime">'input</span>&gt; {
+    <span class="kw">fn </span>mark_failure(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pos: usize, expected: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; RuleResult&lt;()&gt; {
         <span class="kw">if </span><span class="self">self</span>.suppress_fail == <span class="number">0 </span>{
             <span class="kw">if </span>pos &gt; <span class="self">self</span>.max_err_pos {
                 <span class="self">self</span>.max_err_pos = pos;
@@ -996,14 +996,14 @@
         Failed
     }
 }
-<span class="kw">struct </span>ParseState&lt;<span class="lifetime">&#39;input</span>&gt; {
+<span class="kw">struct </span>ParseState&lt;<span class="lifetime">'input</span>&gt; {
     max_err_pos: usize,
     suppress_fail: usize,
-    expected: ::std::collections::HashSet&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt;,
-    _phantom: ::std::marker::PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>()&gt;,
+    expected: ::std::collections::HashSet&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt;,
+    _phantom: ::std::marker::PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">'input </span>()&gt;,
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;input</span>&gt; ParseState&lt;<span class="lifetime">&#39;input</span>&gt; {
-    <span class="kw">fn </span>new() -&gt; ParseState&lt;<span class="lifetime">&#39;input</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'input</span>&gt; ParseState&lt;<span class="lifetime">'input</span>&gt; {
+    <span class="kw">fn </span>new() -&gt; ParseState&lt;<span class="lifetime">'input</span>&gt; {
         ParseState {
             max_err_pos: <span class="number">0</span>,
             suppress_fail: <span class="number">0</span>,
@@ -1013,27 +1013,27 @@
     }
 }
 
-<span class="kw">fn </span>__parse_discard_doubles&lt;<span class="lifetime">&#39;input</span>&gt;(
-    __input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str,
-    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">&#39;input</span>&gt;,
+<span class="kw">fn </span>__parse_discard_doubles&lt;<span class="lifetime">'input</span>&gt;(
+    __input: <span class="kw-2">&amp;</span><span class="lifetime">'input </span>str,
+    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">'input</span>&gt;,
     __pos: usize,
-) -&gt; RuleResult&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str&gt;&gt; {
+) -&gt; RuleResult&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'input </span>str&gt;&gt; {
     <span class="attr">#![allow(non_snake_case, unused)]
     </span>{
         <span class="kw">let </span>__seq_res = {
             <span class="kw">let </span>__choice_res = {
-                <span class="kw">let </span>__seq_res = slice_eq(__input, __state, __pos, <span class="string">&quot;{&quot;</span>);
+                <span class="kw">let </span>__seq_res = slice_eq(__input, __state, __pos, <span class="string">"{"</span>);
                 <span class="kw">match </span>__seq_res {
-                    Matched(__pos, <span class="kw">_</span>) =&gt; slice_eq(__input, __state, __pos, <span class="string">&quot;{&quot;</span>),
+                    Matched(__pos, <span class="kw">_</span>) =&gt; slice_eq(__input, __state, __pos, <span class="string">"{"</span>),
                     Failed =&gt; Failed,
                 }
             };
             <span class="kw">match </span>__choice_res {
                 Matched(__pos, __value) =&gt; Matched(__pos, __value),
                 Failed =&gt; {
-                    <span class="kw">let </span>__seq_res = slice_eq(__input, __state, __pos, <span class="string">&quot;}&quot;</span>);
+                    <span class="kw">let </span>__seq_res = slice_eq(__input, __state, __pos, <span class="string">"}"</span>);
                     <span class="kw">match </span>__seq_res {
-                        Matched(__pos, <span class="kw">_</span>) =&gt; slice_eq(__input, __state, __pos, <span class="string">&quot;}&quot;</span>),
+                        Matched(__pos, <span class="kw">_</span>) =&gt; slice_eq(__input, __state, __pos, <span class="string">"}"</span>),
                         Failed =&gt; Failed,
                     }
                 }
@@ -1046,11 +1046,11 @@
     }
 }
 
-<span class="kw">fn </span>__parse_placeholder_inner&lt;<span class="lifetime">&#39;input</span>&gt;(
-    __input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str,
-    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">&#39;input</span>&gt;,
+<span class="kw">fn </span>__parse_placeholder_inner&lt;<span class="lifetime">'input</span>&gt;(
+    __input: <span class="kw-2">&amp;</span><span class="lifetime">'input </span>str,
+    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">'input</span>&gt;,
     __pos: usize,
-) -&gt; RuleResult&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str&gt;&gt; {
+) -&gt; RuleResult&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'input </span>str&gt;&gt; {
     <span class="attr">#![allow(non_snake_case, unused)]
     </span>{
         <span class="kw">let </span>__seq_res = {
@@ -1059,11 +1059,11 @@
                 <span class="kw">let </span>__seq_res = <span class="kw">if </span>__input.len() &gt; __pos {
                     <span class="kw">let </span>(__ch, __next) = char_range_at(__input, __pos);
                     <span class="kw">match </span>__ch {
-                        <span class="string">&#39;{&#39; </span>=&gt; Matched(__next, ()),
-                        <span class="kw">_ </span>=&gt; __state.mark_failure(__pos, <span class="string">&quot;[{]&quot;</span>),
+                        <span class="string">'{' </span>=&gt; Matched(__next, ()),
+                        <span class="kw">_ </span>=&gt; __state.mark_failure(__pos, <span class="string">"[{]"</span>),
                     }
                 } <span class="kw">else </span>{
-                    __state.mark_failure(__pos, <span class="string">&quot;[{]&quot;</span>)
+                    __state.mark_failure(__pos, <span class="string">"[{]"</span>)
                 };
                 <span class="kw">match </span>__seq_res {
                     Matched(__pos, <span class="kw">_</span>) =&gt; {
@@ -1078,13 +1078,13 @@
                                             <span class="kw">let </span>(__ch, __next) =
                                                 char_range_at(__input, __pos);
                                             <span class="kw">match </span>__ch {
-                                                <span class="string">&#39;{&#39; </span>| <span class="string">&#39;}&#39; </span>=&gt; Matched(__next, ()),
+                                                <span class="string">'{' </span>| <span class="string">'}' </span>=&gt; Matched(__next, ()),
                                                 <span class="kw">_ </span>=&gt; {
-                                                    __state.mark_failure(__pos, <span class="string">&quot;[{}]&quot;</span>)
+                                                    __state.mark_failure(__pos, <span class="string">"[{}]"</span>)
                                                 }
                                             }
                                         } <span class="kw">else </span>{
-                                            __state.mark_failure(__pos, <span class="string">&quot;[{}]&quot;</span>)
+                                            __state.mark_failure(__pos, <span class="string">"[{}]"</span>)
                                         };
                                         __state.suppress_fail -= <span class="number">1</span>;
                                         <span class="kw">match </span>__assert_res {
@@ -1115,11 +1115,11 @@
                                 <span class="kw">if </span>__input.len() &gt; __pos {
                                     <span class="kw">let </span>(__ch, __next) = char_range_at(__input, __pos);
                                     <span class="kw">match </span>__ch {
-                                        <span class="string">&#39;}&#39; </span>=&gt; Matched(__next, ()),
-                                        <span class="kw">_ </span>=&gt; __state.mark_failure(__pos, <span class="string">&quot;[}]&quot;</span>),
+                                        <span class="string">'}' </span>=&gt; Matched(__next, ()),
+                                        <span class="kw">_ </span>=&gt; __state.mark_failure(__pos, <span class="string">"[}]"</span>),
                                     }
                                 } <span class="kw">else </span>{
-                                    __state.mark_failure(__pos, <span class="string">&quot;[}]&quot;</span>)
+                                    __state.mark_failure(__pos, <span class="string">"[}]"</span>)
                                 }
                             }
                             Failed =&gt; Failed,
@@ -1141,11 +1141,11 @@
     }
 }
 
-<span class="kw">fn </span>__parse_discard_any&lt;<span class="lifetime">&#39;input</span>&gt;(
-    __input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str,
-    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">&#39;input</span>&gt;,
+<span class="kw">fn </span>__parse_discard_any&lt;<span class="lifetime">'input</span>&gt;(
+    __input: <span class="kw-2">&amp;</span><span class="lifetime">'input </span>str,
+    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">'input</span>&gt;,
     __pos: usize,
-) -&gt; RuleResult&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str&gt;&gt; {
+) -&gt; RuleResult&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'input </span>str&gt;&gt; {
     <span class="attr">#![allow(non_snake_case, unused)]
     </span>{
         <span class="kw">let </span>__seq_res = any_char(__input, __state, __pos);
@@ -1156,9 +1156,9 @@
     }
 }
 
-<span class="kw">fn </span>__parse_arg&lt;<span class="lifetime">&#39;input</span>&gt;(
-    __input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str,
-    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">&#39;input</span>&gt;,
+<span class="kw">fn </span>__parse_arg&lt;<span class="lifetime">'input</span>&gt;(
+    __input: <span class="kw-2">&amp;</span><span class="lifetime">'input </span>str,
+    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">'input</span>&gt;,
     __pos: usize,
 ) -&gt; RuleResult&lt;usize&gt; {
     <span class="attr">#![allow(non_snake_case, unused)]
@@ -1173,11 +1173,11 @@
                     <span class="kw">let </span>__step_res = <span class="kw">if </span>__input.len() &gt; __pos {
                         <span class="kw">let </span>(__ch, __next) = char_range_at(__input, __pos);
                         <span class="kw">match </span>__ch {
-                            <span class="string">&#39;0&#39;</span>...<span class="string">&#39;9&#39; </span>=&gt; Matched(__next, ()),
-                            <span class="kw">_ </span>=&gt; __state.mark_failure(__pos, <span class="string">&quot;[0-9]&quot;</span>),
+                            <span class="string">'0'</span>...<span class="string">'9' </span>=&gt; Matched(__next, ()),
+                            <span class="kw">_ </span>=&gt; __state.mark_failure(__pos, <span class="string">"[0-9]"</span>),
                         }
                     } <span class="kw">else </span>{
-                        __state.mark_failure(__pos, <span class="string">&quot;[0-9]&quot;</span>)
+                        __state.mark_failure(__pos, <span class="string">"[0-9]"</span>)
                     };
                     <span class="kw">match </span>__step_res {
                         Matched(__newpos, __value) =&gt; {
@@ -1208,44 +1208,44 @@
     }
 }
 
-<span class="kw">fn </span>__parse_ty&lt;<span class="lifetime">&#39;input</span>&gt;(
-    __input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str,
-    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">&#39;input</span>&gt;,
+<span class="kw">fn </span>__parse_ty&lt;<span class="lifetime">'input</span>&gt;(
+    __input: <span class="kw-2">&amp;</span><span class="lifetime">'input </span>str,
+    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">'input</span>&gt;,
     __pos: usize,
-) -&gt; RuleResult&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str&gt; {
+) -&gt; RuleResult&lt;<span class="kw-2">&amp;</span><span class="lifetime">'input </span>str&gt; {
     <span class="attr">#![allow(non_snake_case, unused)]
     </span>{
         <span class="kw">let </span>__seq_res = {
             <span class="kw">let </span>str_start = __pos;
             <span class="kw">match </span>{
                 <span class="kw">let </span>__choice_res = {
-                    <span class="kw">let </span>__choice_res = slice_eq(__input, __state, __pos, <span class="string">&quot;x?&quot;</span>);
+                    <span class="kw">let </span>__choice_res = slice_eq(__input, __state, __pos, <span class="string">"x?"</span>);
                     <span class="kw">match </span>__choice_res {
                         Matched(__pos, __value) =&gt; Matched(__pos, __value),
-                        Failed =&gt; slice_eq(__input, __state, __pos, <span class="string">&quot;X?&quot;</span>),
+                        Failed =&gt; slice_eq(__input, __state, __pos, <span class="string">"X?"</span>),
                     }
                 };
                 <span class="kw">match </span>__choice_res {
                     Matched(__pos, __value) =&gt; Matched(__pos, __value),
                     Failed =&gt; {
-                        <span class="kw">let </span>__choice_res = slice_eq(__input, __state, __pos, <span class="string">&quot;o&quot;</span>);
+                        <span class="kw">let </span>__choice_res = slice_eq(__input, __state, __pos, <span class="string">"o"</span>);
                         <span class="kw">match </span>__choice_res {
                             Matched(__pos, __value) =&gt; Matched(__pos, __value),
                             Failed =&gt; {
                                 <span class="kw">let </span>__choice_res =
-                                    slice_eq(__input, __state, __pos, <span class="string">&quot;x&quot;</span>);
+                                    slice_eq(__input, __state, __pos, <span class="string">"x"</span>);
                                 <span class="kw">match </span>__choice_res {
                                     Matched(__pos, __value) =&gt; Matched(__pos, __value),
                                     Failed =&gt; {
                                         <span class="kw">let </span>__choice_res =
-                                            slice_eq(__input, __state, __pos, <span class="string">&quot;X&quot;</span>);
+                                            slice_eq(__input, __state, __pos, <span class="string">"X"</span>);
                                         <span class="kw">match </span>__choice_res {
                                             Matched(__pos, __value) =&gt; {
                                                 Matched(__pos, __value)
                                             }
                                             Failed =&gt; {
                                                 <span class="kw">let </span>__choice_res = slice_eq(
-                                                    __input, __state, __pos, <span class="string">&quot;p&quot;</span>,
+                                                    __input, __state, __pos, <span class="string">"p"</span>,
                                                 );
                                                 <span class="kw">match </span>__choice_res {
                                                     Matched(__pos, __value) =&gt; {
@@ -1254,7 +1254,7 @@
                                                     Failed =&gt; {
                                                         <span class="kw">let </span>__choice_res = slice_eq(
                                                             __input, __state, __pos,
-                                                            <span class="string">&quot;b&quot;</span>,
+                                                            <span class="string">"b"</span>,
                                                         );
                                                         <span class="kw">match </span>__choice_res {
                                                             Matched(__pos, __value) =&gt; {
@@ -1265,7 +1265,7 @@
                                                                     slice_eq(
                                                                         __input,
                                                                         __state, __pos,
-                                                                        <span class="string">&quot;e&quot;</span>,
+                                                                        <span class="string">"e"</span>,
                                                                     );
                                                                 <span class="kw">match </span>__choice_res {
                                                                     Matched(
@@ -1280,9 +1280,9 @@
                                                                                 __input,
                                                                                 __state,
                                                                                 __pos,
-                                                                                <span class="string">&quot;E&quot;</span>,
+                                                                                <span class="string">"E"</span>,
                                                                             );
-                                                                        <span class="kw">match </span>__choice_res { Matched ( __pos , __value ) =&gt; Matched ( __pos , __value ) , Failed =&gt; slice_eq ( __input , __state , __pos , <span class="string">&quot;?&quot; </span>) }
+                                                                        <span class="kw">match </span>__choice_res { Matched ( __pos , __value ) =&gt; Matched ( __pos , __value ) , Failed =&gt; slice_eq ( __input , __state , __pos , <span class="string">"?" </span>) }
                                                                     }
                                                                 }
                                                             }
@@ -1311,14 +1311,14 @@
     }
 }
 
-<span class="kw">fn </span>__parse_format_spec&lt;<span class="lifetime">&#39;input</span>&gt;(
-    __input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str,
-    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">&#39;input</span>&gt;,
+<span class="kw">fn </span>__parse_format_spec&lt;<span class="lifetime">'input</span>&gt;(
+    __input: <span class="kw-2">&amp;</span><span class="lifetime">'input </span>str,
+    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">'input</span>&gt;,
     __pos: usize,
-) -&gt; RuleResult&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str&gt;&gt; {
+) -&gt; RuleResult&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'input </span>str&gt;&gt; {
     <span class="attr">#![allow(non_snake_case, unused)]
     </span>{
-        <span class="kw">let </span>__seq_res = slice_eq(__input, __state, __pos, <span class="string">&quot;:&quot;</span>);
+        <span class="kw">let </span>__seq_res = slice_eq(__input, __state, __pos, <span class="string">":"</span>);
         <span class="kw">match </span>__seq_res {
             Matched(__pos, <span class="kw">_</span>) =&gt; {
                 <span class="kw">let </span>__seq_res = <span class="kw">match </span>{
@@ -1328,11 +1328,11 @@
                             <span class="kw">let </span>__assert_res = <span class="kw">if </span>__input.len() &gt; __pos {
                                 <span class="kw">let </span>(__ch, __next) = char_range_at(__input, __pos);
                                 <span class="kw">match </span>__ch {
-                                    <span class="string">&#39;&lt;&#39; </span>| <span class="string">&#39;^&#39; </span>| <span class="string">&#39;&gt;&#39; </span>=&gt; Matched(__next, ()),
-                                    <span class="kw">_ </span>=&gt; __state.mark_failure(__pos, <span class="string">&quot;[&lt;^&gt;]&quot;</span>),
+                                    <span class="string">'&lt;' </span>| <span class="string">'^' </span>| <span class="string">'&gt;' </span>=&gt; Matched(__next, ()),
+                                    <span class="kw">_ </span>=&gt; __state.mark_failure(__pos, <span class="string">"[&lt;^&gt;]"</span>),
                                 }
                             } <span class="kw">else </span>{
-                                __state.mark_failure(__pos, <span class="string">&quot;[&lt;^&gt;]&quot;</span>)
+                                __state.mark_failure(__pos, <span class="string">"[&lt;^&gt;]"</span>)
                             };
                             __state.suppress_fail -= <span class="number">1</span>;
                             <span class="kw">match </span>__assert_res {
@@ -1353,11 +1353,11 @@
                             <span class="kw">if </span>__input.len() &gt; __pos {
                                 <span class="kw">let </span>(__ch, __next) = char_range_at(__input, __pos);
                                 <span class="kw">match </span>__ch {
-                                    <span class="string">&#39;&lt;&#39; </span>| <span class="string">&#39;^&#39; </span>| <span class="string">&#39;&gt;&#39; </span>=&gt; Matched(__next, ()),
-                                    <span class="kw">_ </span>=&gt; __state.mark_failure(__pos, <span class="string">&quot;[&lt;^&gt;]&quot;</span>),
+                                    <span class="string">'&lt;' </span>| <span class="string">'^' </span>| <span class="string">'&gt;' </span>=&gt; Matched(__next, ()),
+                                    <span class="kw">_ </span>=&gt; __state.mark_failure(__pos, <span class="string">"[&lt;^&gt;]"</span>),
                                 }
                             } <span class="kw">else </span>{
-                                __state.mark_failure(__pos, <span class="string">&quot;[&lt;^&gt;]&quot;</span>)
+                                __state.mark_failure(__pos, <span class="string">"[&lt;^&gt;]"</span>)
                             }
                         }
                         Failed =&gt; Failed,
@@ -1369,10 +1369,10 @@
                 <span class="kw">match </span>__seq_res {
                     Matched(__pos, <span class="kw">_</span>) =&gt; {
                         <span class="kw">let </span>__seq_res = <span class="kw">match </span>{
-                            <span class="kw">let </span>__choice_res = slice_eq(__input, __state, __pos, <span class="string">&quot;+&quot;</span>);
+                            <span class="kw">let </span>__choice_res = slice_eq(__input, __state, __pos, <span class="string">"+"</span>);
                             <span class="kw">match </span>__choice_res {
                                 Matched(__pos, __value) =&gt; Matched(__pos, __value),
-                                Failed =&gt; slice_eq(__input, __state, __pos, <span class="string">&quot;-&quot;</span>),
+                                Failed =&gt; slice_eq(__input, __state, __pos, <span class="string">"-"</span>),
                             }
                         } {
                             Matched(__newpos, <span class="kw">_</span>) =&gt; Matched(__newpos, ()),
@@ -1381,7 +1381,7 @@
                         <span class="kw">match </span>__seq_res {
                             Matched(__pos, <span class="kw">_</span>) =&gt; {
                                 <span class="kw">let </span>__seq_res =
-                                    <span class="kw">match </span>slice_eq(__input, __state, __pos, <span class="string">&quot;#&quot;</span>) {
+                                    <span class="kw">match </span>slice_eq(__input, __state, __pos, <span class="string">"#"</span>) {
                                         Matched(__newpos, <span class="kw">_</span>) =&gt; Matched(__newpos, ()),
                                         Failed =&gt; Matched(__pos, ()),
                                     };
@@ -1401,23 +1401,23 @@
                                                                         __input, __pos,
                                                                     );
                                                                 <span class="kw">match </span>__ch {
-                                                                    <span class="string">&#39;A&#39;</span>...<span class="string">&#39;Z&#39;
-                                                                    </span>| <span class="string">&#39;a&#39;</span>...<span class="string">&#39;z&#39;
-                                                                    </span>| <span class="string">&#39;0&#39;</span>...<span class="string">&#39;9&#39;
-                                                                    </span>| <span class="string">&#39;_&#39; </span>=&gt; Matched(
+                                                                    <span class="string">'A'</span>...<span class="string">'Z'
+                                                                    </span>| <span class="string">'a'</span>...<span class="string">'z'
+                                                                    </span>| <span class="string">'0'</span>...<span class="string">'9'
+                                                                    </span>| <span class="string">'_' </span>=&gt; Matched(
                                                                         __next,
                                                                         (),
                                                                     ),
                                                                     <span class="kw">_ </span>=&gt; __state
                                                                         .mark_failure(
                                                                         __pos,
-                                                                        <span class="string">&quot;[A-Za-z0-9_]&quot;</span>,
+                                                                        <span class="string">"[A-Za-z0-9_]"</span>,
                                                                     ),
                                                                 }
                                                             } <span class="kw">else </span>{
                                                                 __state.mark_failure(
                                                                     __pos,
-                                                                    <span class="string">&quot;[A-Za-z0-9_]&quot;</span>,
+                                                                    <span class="string">"[A-Za-z0-9_]"</span>,
                                                                 )
                                                             };
                                                         <span class="kw">match </span>__step_res {
@@ -1442,7 +1442,7 @@
                                                 };
                                                 <span class="kw">match </span>__seq_res {
                                                     Matched(__pos, <span class="kw">_</span>) =&gt; slice_eq(
-                                                        __input, __state, __pos, <span class="string">&quot;$&quot;</span>,
+                                                        __input, __state, __pos, <span class="string">"$"</span>,
                                                     ),
                                                     Failed =&gt; Failed,
                                                 }
@@ -1465,17 +1465,17 @@
                                                                     __input, __pos,
                                                                 );
                                                             <span class="kw">match </span>__ch {
-                                                                <span class="string">&#39;0&#39;</span>...<span class="string">&#39;9&#39; </span>=&gt; {
+                                                                <span class="string">'0'</span>...<span class="string">'9' </span>=&gt; {
                                                                     Matched(__next, ())
                                                                 }
                                                                 <span class="kw">_ </span>=&gt; __state
                                                                     .mark_failure(
-                                                                        __pos, <span class="string">&quot;[0-9]&quot;</span>,
+                                                                        __pos, <span class="string">"[0-9]"</span>,
                                                                     ),
                                                             }
                                                         } <span class="kw">else </span>{
                                                             __state.mark_failure(
-                                                                __pos, <span class="string">&quot;[0-9]&quot;</span>,
+                                                                __pos, <span class="string">"[0-9]"</span>,
                                                             )
                                                         };
                                                         <span class="kw">match </span>__step_res {
@@ -1508,7 +1508,7 @@
                                         <span class="kw">match </span>__seq_res {
                                             Matched(__pos, <span class="kw">_</span>) =&gt; {
                                                 <span class="kw">let </span>__seq_res = <span class="kw">match </span>slice_eq(
-                                                    __input, __state, __pos, <span class="string">&quot;0&quot;</span>,
+                                                    __input, __state, __pos, <span class="string">"0"</span>,
                                                 ) {
                                                     Matched(__newpos, <span class="kw">_</span>) =&gt; {
                                                         Matched(__newpos, ())
@@ -1520,7 +1520,7 @@
                                                         <span class="kw">let </span>__seq_res = <span class="kw">match </span>{
                                                             <span class="kw">let </span>__seq_res = slice_eq(
                                                                 __input, __state,
-                                                                __pos, <span class="string">&quot;.&quot;</span>,
+                                                                __pos, <span class="string">"."</span>,
                                                             );
                                                             <span class="kw">match </span>__seq_res {
                                                                 Matched(__pos, <span class="kw">_</span>) =&gt; {
@@ -1534,12 +1534,12 @@
                                                                                 <span class="macro">vec!</span>[];
                                                                             <span class="kw">loop </span>{
                                                                                 <span class="kw">let </span>__pos = __repeat_pos ;
-                                                                                <span class="kw">let </span>__step_res = <span class="kw">if </span>__input . len ( ) &gt; __pos { <span class="kw">let </span>( __ch , __next ) = char_range_at ( __input , __pos ) ; <span class="kw">match </span>__ch { <span class="string">&#39;A&#39; </span>... <span class="string">&#39;Z&#39; </span>| <span class="string">&#39;a&#39; </span>... <span class="string">&#39;z&#39; </span>| <span class="string">&#39;0&#39; </span>... <span class="string">&#39;9&#39; </span>| <span class="string">&#39;_&#39; </span>=&gt; Matched ( __next , ( ) ) , <span class="kw">_ </span>=&gt; __state . mark_failure ( __pos , <span class="string">&quot;[A-Za-z0-9_]&quot; </span>) , } } <span class="kw">else </span>{ __state . mark_failure ( __pos , <span class="string">&quot;[A-Za-z0-9_]&quot; </span>) } ;
+                                                                                <span class="kw">let </span>__step_res = <span class="kw">if </span>__input . len ( ) &gt; __pos { <span class="kw">let </span>( __ch , __next ) = char_range_at ( __input , __pos ) ; <span class="kw">match </span>__ch { <span class="string">'A' </span>... <span class="string">'Z' </span>| <span class="string">'a' </span>... <span class="string">'z' </span>| <span class="string">'0' </span>... <span class="string">'9' </span>| <span class="string">'_' </span>=&gt; Matched ( __next , ( ) ) , <span class="kw">_ </span>=&gt; __state . mark_failure ( __pos , <span class="string">"[A-Za-z0-9_]" </span>) , } } <span class="kw">else </span>{ __state . mark_failure ( __pos , <span class="string">"[A-Za-z0-9_]" </span>) } ;
                                                                                 <span class="kw">match </span>__step_res { Matched ( __newpos , __value ) =&gt; { __repeat_pos = __newpos ; __repeat_value . push ( __value ) ; } , Failed =&gt; { <span class="kw">break </span>; } }
                                                                             }
                                                                             <span class="kw">if </span>__repeat_value . len ( ) &gt;= <span class="number">1 </span>{ Matched ( __repeat_pos , ( ) ) } <span class="kw">else </span>{ Failed }
                                                                         };
-                                                                        <span class="kw">match </span>__seq_res { Matched ( __pos , <span class="kw">_ </span>) =&gt; { slice_eq ( __input , __state , __pos , <span class="string">&quot;$&quot; </span>) } Failed =&gt; Failed , }
+                                                                        <span class="kw">match </span>__seq_res { Matched ( __pos , <span class="kw">_ </span>) =&gt; { slice_eq ( __input , __state , __pos , <span class="string">"$" </span>) } Failed =&gt; Failed , }
                                                                     };
                                                                     <span class="kw">match </span>__choice_res {
                                                                         Matched(
@@ -1556,12 +1556,12 @@
                                                                                 </span>__repeat_value = <span class="macro">vec!</span>[];
                                                                                 <span class="kw">loop </span>{
                                                                                     <span class="kw">let </span>__pos = __repeat_pos ;
-                                                                                    <span class="kw">let </span>__step_res = <span class="kw">if </span>__input . len ( ) &gt; __pos { <span class="kw">let </span>( __ch , __next ) = char_range_at ( __input , __pos ) ; <span class="kw">match </span>__ch { <span class="string">&#39;0&#39; </span>... <span class="string">&#39;9&#39; </span>=&gt; Matched ( __next , ( ) ) , <span class="kw">_ </span>=&gt; __state . mark_failure ( __pos , <span class="string">&quot;[0-9]&quot; </span>) , } } <span class="kw">else </span>{ __state . mark_failure ( __pos , <span class="string">&quot;[0-9]&quot; </span>) } ;
+                                                                                    <span class="kw">let </span>__step_res = <span class="kw">if </span>__input . len ( ) &gt; __pos { <span class="kw">let </span>( __ch , __next ) = char_range_at ( __input , __pos ) ; <span class="kw">match </span>__ch { <span class="string">'0' </span>... <span class="string">'9' </span>=&gt; Matched ( __next , ( ) ) , <span class="kw">_ </span>=&gt; __state . mark_failure ( __pos , <span class="string">"[0-9]" </span>) , } } <span class="kw">else </span>{ __state . mark_failure ( __pos , <span class="string">"[0-9]" </span>) } ;
                                                                                     <span class="kw">match </span>__step_res { Matched ( __newpos , __value ) =&gt; { __repeat_pos = __newpos ; __repeat_value . push ( __value ) ; } , Failed =&gt; { <span class="kw">break </span>; } }
                                                                                 }
                                                                                 <span class="kw">if </span>__repeat_value . len ( ) &gt;= <span class="number">1 </span>{ Matched ( __repeat_pos , ( ) ) } <span class="kw">else </span>{ Failed }
                                                                             };
-                                                                            <span class="kw">match </span>__choice_res { Matched ( __pos , __value ) =&gt; Matched ( __pos , __value ) , Failed =&gt; slice_eq ( __input , __state , __pos , <span class="string">&quot;*&quot; </span>) }
+                                                                            <span class="kw">match </span>__choice_res { Matched ( __pos , __value ) =&gt; Matched ( __pos , __value ) , Failed =&gt; slice_eq ( __input , __state , __pos , <span class="string">"*" </span>) }
                                                                         }
                                                                     }
                                                                 }
@@ -1632,11 +1632,11 @@
     }
 }
 
-<span class="kw">fn </span>__parse_all_placeholders&lt;<span class="lifetime">&#39;input</span>&gt;(
-    __input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str,
-    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">&#39;input</span>&gt;,
+<span class="kw">fn </span>__parse_all_placeholders&lt;<span class="lifetime">'input</span>&gt;(
+    __input: <span class="kw-2">&amp;</span><span class="lifetime">'input </span>str,
+    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">'input</span>&gt;,
     __pos: usize,
-) -&gt; RuleResult&lt;Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str&gt;&gt; {
+) -&gt; RuleResult&lt;Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'input </span>str&gt;&gt; {
     <span class="attr">#![allow(non_snake_case, unused)]
     </span>{
         <span class="kw">let </span>__seq_res = {
@@ -1679,14 +1679,14 @@
     }
 }
 
-<span class="kw">fn </span>__parse_format&lt;<span class="lifetime">&#39;input</span>&gt;(
-    __input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str,
-    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">&#39;input</span>&gt;,
+<span class="kw">fn </span>__parse_format&lt;<span class="lifetime">'input</span>&gt;(
+    __input: <span class="kw-2">&amp;</span><span class="lifetime">'input </span>str,
+    __state: <span class="kw-2">&amp;mut </span>ParseState&lt;<span class="lifetime">'input</span>&gt;,
     __pos: usize,
-) -&gt; RuleResult&lt;(<span class="prelude-ty">Option</span>&lt;usize&gt;, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str&gt;)&gt; {
+) -&gt; RuleResult&lt;(<span class="prelude-ty">Option</span>&lt;usize&gt;, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'input </span>str&gt;)&gt; {
     <span class="attr">#![allow(non_snake_case, unused)]
     </span>{
-        <span class="kw">let </span>__seq_res = slice_eq(__input, __state, __pos, <span class="string">&quot;{&quot;</span>);
+        <span class="kw">let </span>__seq_res = slice_eq(__input, __state, __pos, <span class="string">"{"</span>);
         <span class="kw">match </span>__seq_res {
             Matched(__pos, <span class="kw">_</span>) =&gt; {
                 <span class="kw">let </span>__seq_res = <span class="kw">match </span>__parse_arg(__input, __state, __pos) {
@@ -1704,7 +1704,7 @@
                             };
                         <span class="kw">match </span>__seq_res {
                             Matched(__pos, o) =&gt; {
-                                <span class="kw">let </span>__seq_res = slice_eq(__input, __state, __pos, <span class="string">&quot;}&quot;</span>);
+                                <span class="kw">let </span>__seq_res = slice_eq(__input, __state, __pos, <span class="string">"}"</span>);
                                 <span class="kw">match </span>__seq_res {
                                     Matched(__pos, <span class="kw">_</span>) =&gt; {
                                         Matched(__pos, { (n, o.and_then(|x| x)) })
@@ -1723,7 +1723,7 @@
     }
 }
 
-<span class="kw">pub fn </span>all_placeholders&lt;<span class="lifetime">&#39;input</span>&gt;(__input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str) -&gt; ParseResult&lt;Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str&gt;&gt; {
+<span class="kw">pub fn </span>all_placeholders&lt;<span class="lifetime">'input</span>&gt;(__input: <span class="kw-2">&amp;</span><span class="lifetime">'input </span>str) -&gt; ParseResult&lt;Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'input </span>str&gt;&gt; {
     <span class="attr">#![allow(non_snake_case, unused)]
     </span><span class="kw">let </span><span class="kw-2">mut </span>__state = ParseState::new();
     <span class="kw">match </span>__parse_all_placeholders(__input, <span class="kw-2">&amp;mut </span>__state, <span class="number">0</span>) {
@@ -1743,9 +1743,9 @@
     })
 }
 
-<span class="kw">pub fn </span>format&lt;<span class="lifetime">&#39;input</span>&gt;(
-    __input: <span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str,
-) -&gt; ParseResult&lt;(<span class="prelude-ty">Option</span>&lt;usize&gt;, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;input </span>str&gt;)&gt; {
+<span class="kw">pub fn </span>format&lt;<span class="lifetime">'input</span>&gt;(
+    __input: <span class="kw-2">&amp;</span><span class="lifetime">'input </span>str,
+) -&gt; ParseResult&lt;(<span class="prelude-ty">Option</span>&lt;usize&gt;, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'input </span>str&gt;)&gt; {
     <span class="attr">#![allow(non_snake_case, unused)]
     </span><span class="kw">let </span><span class="kw-2">mut </span>__state = ParseState::new();
     <span class="kw">match </span>__parse_format(__input, <span class="kw-2">&amp;mut </span>__state, <span class="number">0</span>) {

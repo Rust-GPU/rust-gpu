@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/once_cell-1.19.0/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="once_cell" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../once_cell/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/once_cell-1.19.0/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="once_cell" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../once_cell/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1415,7 +1415,7 @@
 //! `once_cell` provides two new cell-like types, [`unsync::OnceCell`] and
 //! [`sync::OnceCell`]. A `OnceCell` might store arbitrary non-`Copy` types, can
 //! be assigned to at most once and provides direct access to the stored
-//! contents. The core API looks *roughly* like this (and there&#39;s much more
+//! contents. The core API looks *roughly* like this (and there's much more
 //! inside, read on!):
 //!
 //! ```rust,ignore
@@ -1457,8 +1457,8 @@
 //! static INSTANCE: OnceCell&lt;Logger&gt; = OnceCell::new();
 //!
 //! impl Logger {
-//!     pub fn global() -&gt; &amp;&#39;static Logger {
-//!         INSTANCE.get().expect(&quot;logger is not initialized&quot;)
+//!     pub fn global() -&gt; &amp;'static Logger {
+//!         INSTANCE.get().expect("logger is not initialized")
 //!     }
 //!
 //!     fn from_cli(args: env::Args) -&gt; Result&lt;Logger, std::io::Error&gt; {
@@ -1483,12 +1483,12 @@
 //!
 //! use once_cell::sync::OnceCell;
 //!
-//! fn global_data() -&gt; &amp;&#39;static Mutex&lt;HashMap&lt;i32, String&gt;&gt; {
+//! fn global_data() -&gt; &amp;'static Mutex&lt;HashMap&lt;i32, String&gt;&gt; {
 //!     static INSTANCE: OnceCell&lt;Mutex&lt;HashMap&lt;i32, String&gt;&gt;&gt; = OnceCell::new();
 //!     INSTANCE.get_or_init(|| {
 //!         let mut m = HashMap::new();
-//!         m.insert(13, &quot;Spica&quot;.to_string());
-//!         m.insert(74, &quot;Hoyten&quot;.to_string());
+//!         m.insert(13, "Spica".to_string());
+//!         m.insert(74, "Hoyten".to_string());
 //!         Mutex::new(m)
 //!     })
 //! }
@@ -1503,13 +1503,13 @@
 //!
 //! static GLOBAL_DATA: Lazy&lt;Mutex&lt;HashMap&lt;i32, String&gt;&gt;&gt; = Lazy::new(|| {
 //!     let mut m = HashMap::new();
-//!     m.insert(13, &quot;Spica&quot;.to_string());
-//!     m.insert(74, &quot;Hoyten&quot;.to_string());
+//!     m.insert(13, "Spica".to_string());
+//!     m.insert(74, "Hoyten".to_string());
 //!     Mutex::new(m)
 //! });
 //!
 //! fn main() {
-//!     println!(&quot;{:?}&quot;, GLOBAL_DATA.lock().unwrap());
+//!     println!("{:?}", GLOBAL_DATA.lock().unwrap());
 //! }
 //! ```
 //!
@@ -1562,7 +1562,7 @@
 //! ## Lazily Compiled Regex
 //!
 //! This is a `regex!` macro which takes a string literal and returns an
-//! *expression* that evaluates to a `&amp;&#39;static Regex`:
+//! *expression* that evaluates to a `&amp;'static Regex`:
 //!
 //! ```
 //! macro_rules! regex {
@@ -1573,8 +1573,8 @@
 //! }
 //! ```
 //!
-//! This macro can be useful to avoid the &quot;compile regex on every loop
-//! iteration&quot; problem.
+//! This macro can be useful to avoid the "compile regex on every loop
+//! iteration" problem.
 //!
 //! ## Runtime `include_bytes!`
 //!
@@ -1588,26 +1588,26 @@
 //! use once_cell::sync::OnceCell;
 //!
 //! pub struct TestResource {
-//!     path: &amp;&#39;static str,
+//!     path: &amp;'static str,
 //!     cell: OnceCell&lt;Vec&lt;u8&gt;&gt;,
 //! }
 //!
 //! impl TestResource {
-//!     pub const fn new(path: &amp;&#39;static str) -&gt; TestResource {
+//!     pub const fn new(path: &amp;'static str) -&gt; TestResource {
 //!         TestResource { path, cell: OnceCell::new() }
 //!     }
 //!     pub fn bytes(&amp;self) -&gt; &amp;[u8] {
 //!         self.cell.get_or_init(|| {
-//!             let dir = std::env::var(&quot;CARGO_MANIFEST_DIR&quot;).unwrap();
+//!             let dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
 //!             let path = Path::new(dir.as_str()).join(self.path);
 //!             std::fs::read(&amp;path).unwrap_or_else(|_err| {
-//!                 panic!(&quot;failed to load test resource: {}&quot;, path.display())
+//!                 panic!("failed to load test resource: {}", path.display())
 //!             })
 //!         }).as_slice()
 //!     }
 //! }
 //!
-//! static TEST_IMAGE: TestResource = TestResource::new(&quot;test_data/lena.png&quot;);
+//! static TEST_IMAGE: TestResource = TestResource::new("test_data/lena.png");
 //!
 //! #[test]
 //! fn test_sobel_filter() {
@@ -1619,7 +1619,7 @@
 //!
 //! ## `lateinit`
 //!
-//! `LateInit` type for delayed initialization. It is reminiscent of Kotlin&#39;s
+//! `LateInit` type for delayed initialization. It is reminiscent of Kotlin's
 //! `lateinit` keyword and allows construction of cyclic data structures:
 //!
 //!
@@ -1646,13 +1646,13 @@
 //! }
 //!
 //! #[derive(Default)]
-//! struct A&lt;&#39;a&gt; {
-//!     b: LateInit&lt;&amp;&#39;a B&lt;&#39;a&gt;&gt;,
+//! struct A&lt;'a&gt; {
+//!     b: LateInit&lt;&amp;'a B&lt;'a&gt;&gt;,
 //! }
 //!
 //! #[derive(Default)]
-//! struct B&lt;&#39;a&gt; {
-//!     a: LateInit&lt;&amp;&#39;a A&lt;&#39;a&gt;&gt;
+//! struct B&lt;'a&gt; {
+//!     a: LateInit&lt;&amp;'a A&lt;'a&gt;&gt;
 //! }
 //!
 //!
@@ -1715,9 +1715,9 @@
 //!
 //! **Should I use the sync or unsync flavor?**
 //!
-//! Because Rust compiler checks thread safety for you, it&#39;s impossible to
+//! Because Rust compiler checks thread safety for you, it's impossible to
 //! accidentally use `unsync` where `sync` is required. So, use `unsync` in
-//! single-threaded code and `sync` in multi-threaded. It&#39;s easy to switch
+//! single-threaded code and `sync` in multi-threaded. It's easy to switch
 //! between the two if code becomes multi-threaded later.
 //!
 //! At the moment, `unsync` has an additional benefit that reentrant
@@ -1757,13 +1757,13 @@
 //!
 //! **Should I use `std::cell::OnceCell`, `once_cell`, or `lazy_static`?**
 //!
-//! If you can use `std` version (your MSRV is at least 1.70, and you don&#39;t need
+//! If you can use `std` version (your MSRV is at least 1.70, and you don't need
 //! extra features `once_cell` provides), use `std`. Otherwise, use `once_cell`.
-//! Don&#39;t use `lazy_static`.
+//! Don't use `lazy_static`.
 //!
 //! # Related crates
 //!
-//! * Most of this crate&#39;s functionality is available in `std` starting with
+//! * Most of this crate's functionality is available in `std` starting with
 //!   Rust 1.70. See `std::cell::OnceCell` and `std::sync::OnceLock`.
 //! * [double-checked-cell](https://github.com/niklasf/double-checked-cell)
 //! * [lazy-init](https://crates.io/crates/lazy-init)
@@ -1774,21 +1774,21 @@
 //! * [generic_once_cell](https://crates.io/crates/generic_once_cell) (bring
 //!   your own mutex)
 
-</span><span class="attr">#![cfg_attr(not(feature = <span class="string">&quot;std&quot;</span>), no_std)]
+</span><span class="attr">#![cfg_attr(not(feature = <span class="string">"std"</span>), no_std)]
 
-#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">extern crate </span>alloc;
 
-<span class="attr">#[cfg(all(feature = <span class="string">&quot;critical-section&quot;</span>, not(feature = <span class="string">&quot;std&quot;</span>)))]
-#[path = <span class="string">&quot;imp_cs.rs&quot;</span>]
+<span class="attr">#[cfg(all(feature = <span class="string">"critical-section"</span>, not(feature = <span class="string">"std"</span>)))]
+#[path = <span class="string">"imp_cs.rs"</span>]
 </span><span class="kw">mod </span>imp;
 
-<span class="attr">#[cfg(all(feature = <span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;parking_lot&quot;</span>))]
-#[path = <span class="string">&quot;imp_pl.rs&quot;</span>]
+<span class="attr">#[cfg(all(feature = <span class="string">"std"</span>, feature = <span class="string">"parking_lot"</span>))]
+#[path = <span class="string">"imp_pl.rs"</span>]
 </span><span class="kw">mod </span>imp;
 
-<span class="attr">#[cfg(all(feature = <span class="string">&quot;std&quot;</span>, not(feature = <span class="string">&quot;parking_lot&quot;</span>)))]
-#[path = <span class="string">&quot;imp_std.rs&quot;</span>]
+<span class="attr">#[cfg(all(feature = <span class="string">"std"</span>, not(feature = <span class="string">"parking_lot"</span>)))]
+#[path = <span class="string">"imp_std.rs"</span>]
 </span><span class="kw">mod </span>imp;
 
 <span class="doccomment">/// Single-threaded version of `OnceCell`.
@@ -1815,9 +1815,9 @@
     /// assert!(cell.get().is_none());
     ///
     /// let value: &amp;String = cell.get_or_init(|| {
-    ///     &quot;Hello, World!&quot;.to_string()
+    ///     "Hello, World!".to_string()
     /// });
-    /// assert_eq!(value, &quot;Hello, World!&quot;);
+    /// assert_eq!(value, "Hello, World!");
     /// assert!(cell.get().is_some());
     /// ```
     </span><span class="kw">pub struct </span>OnceCell&lt;T&gt; {
@@ -1841,8 +1841,8 @@
     <span class="kw">impl</span>&lt;T: fmt::Debug&gt; fmt::Debug <span class="kw">for </span>OnceCell&lt;T&gt; {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
             <span class="kw">match </span><span class="self">self</span>.get() {
-                <span class="prelude-val">Some</span>(v) =&gt; f.debug_tuple(<span class="string">&quot;OnceCell&quot;</span>).field(v).finish(),
-                <span class="prelude-val">None </span>=&gt; f.write_str(<span class="string">&quot;OnceCell(Uninit)&quot;</span>),
+                <span class="prelude-val">Some</span>(v) =&gt; f.debug_tuple(<span class="string">"OnceCell"</span>).field(v).finish(),
+                <span class="prelude-val">None </span>=&gt; f.write_str(<span class="string">"OnceCell(Uninit)"</span>),
             }
         }
     }
@@ -1893,7 +1893,7 @@
         /// Returns `None` if the cell is empty.
         </span><span class="attr">#[inline]
         </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>T&gt; {
-            <span class="comment">// Safe due to `inner`&#39;s invariant of being written to at most once.
+            <span class="comment">// Safe due to `inner`'s invariant of being written to at most once.
             // Had multiple writes to `inner` been allowed, a reference to the
             // value we return now would become dangling by a write of a
             // different value later.
@@ -1967,9 +1967,9 @@
 
             <span class="kw">let </span>slot = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.inner.get() };
             <span class="comment">// This is the only place where we set the slot, no races
-            // due to reentrancy/concurrency are possible, and we&#39;ve
+            // due to reentrancy/concurrency are possible, and we've
             // checked that slot is currently `None`, so this write
-            // maintains the `inner`&#39;s invariant.
+            // maintains the `inner`'s invariant.
             </span><span class="kw-2">*</span>slot = <span class="prelude-val">Some</span>(value);
             <span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ slot.as_ref().unwrap_unchecked() })
         }
@@ -2043,13 +2043,13 @@
             // UB (see `reentrant_init` test). I believe that just removing this
             // `assert`, while keeping `set/get` would be sound, but it seems
             // better to panic, rather than to silently use an old value.
-            </span><span class="macro">assert!</span>(<span class="self">self</span>.set(val).is_ok(), <span class="string">&quot;reentrant init&quot;</span>);
+            </span><span class="macro">assert!</span>(<span class="self">self</span>.set(val).is_ok(), <span class="string">"reentrant init"</span>);
             <span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ <span class="self">self</span>.get().unwrap_unchecked() })
         }
 
         <span class="doccomment">/// Takes the value out of this `OnceCell`, moving it back to an uninitialized state.
         ///
-        /// Has no effect and returns `None` if the `OnceCell` hasn&#39;t been initialized.
+        /// Has no effect and returns `None` if the `OnceCell` hasn't been initialized.
         ///
         /// # Examples
         ///
@@ -2060,8 +2060,8 @@
         /// assert_eq!(cell.take(), None);
         ///
         /// let mut cell = OnceCell::new();
-        /// cell.set(&quot;hello&quot;.to_string()).unwrap();
-        /// assert_eq!(cell.take(), Some(&quot;hello&quot;.to_string()));
+        /// cell.set("hello".to_string()).unwrap();
+        /// assert_eq!(cell.take(), Some("hello".to_string()));
         /// assert_eq!(cell.get(), None);
         /// ```
         ///
@@ -2093,8 +2093,8 @@
         /// assert_eq!(cell.into_inner(), None);
         ///
         /// let cell = OnceCell::new();
-        /// cell.set(&quot;hello&quot;.to_string()).unwrap();
-        /// assert_eq!(cell.into_inner(), Some(&quot;hello&quot;.to_string()));
+        /// cell.set("hello".to_string()).unwrap();
+        /// assert_eq!(cell.into_inner(), Some("hello".to_string()));
         /// ```
         </span><span class="kw">pub fn </span>into_inner(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
             <span class="comment">// Because `into_inner` takes `self` by value, the compiler statically verifies
@@ -2110,12 +2110,12 @@
     /// use once_cell::unsync::Lazy;
     ///
     /// let lazy: Lazy&lt;i32&gt; = Lazy::new(|| {
-    ///     println!(&quot;initializing&quot;);
+    ///     println!("initializing");
     ///     92
     /// });
-    /// println!(&quot;ready&quot;);
-    /// println!(&quot;{}&quot;, *lazy);
-    /// println!(&quot;{}&quot;, *lazy);
+    /// println!("ready");
+    /// println!("{}", *lazy);
+    /// println!("{}", *lazy);
     ///
     /// // Prints:
     /// //   ready
@@ -2132,7 +2132,7 @@
 
     <span class="kw">impl</span>&lt;T: fmt::Debug, F&gt; fmt::Debug <span class="kw">for </span>Lazy&lt;T, F&gt; {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-            f.debug_struct(<span class="string">&quot;Lazy&quot;</span>).field(<span class="string">&quot;cell&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cell).field(<span class="string">&quot;init&quot;</span>, <span class="kw-2">&amp;</span><span class="string">&quot;..&quot;</span>).finish()
+            f.debug_struct(<span class="string">"Lazy"</span>).field(<span class="string">"cell"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cell).field(<span class="string">"init"</span>, <span class="kw-2">&amp;</span><span class="string">".."</span>).finish()
         }
     }
 
@@ -2144,11 +2144,11 @@
         /// # fn main() {
         /// use once_cell::unsync::Lazy;
         ///
-        /// let hello = &quot;Hello, World!&quot;.to_string();
+        /// let hello = "Hello, World!".to_string();
         ///
         /// let lazy = Lazy::new(|| hello.to_uppercase());
         ///
-        /// assert_eq!(&amp;*lazy, &quot;HELLO, WORLD!&quot;);
+        /// assert_eq!(&amp;*lazy, "HELLO, WORLD!");
         /// # }
         /// ```
         </span><span class="kw">pub const fn </span>new(init: F) -&gt; Lazy&lt;T, F&gt; {
@@ -2162,7 +2162,7 @@
             <span class="kw">let </span>cell = this.cell;
             <span class="kw">let </span>init = this.init;
             cell.into_inner().ok_or_else(|| {
-                init.take().unwrap_or_else(|| <span class="macro">panic!</span>(<span class="string">&quot;Lazy instance has previously been poisoned&quot;</span>))
+                init.take().unwrap_or_else(|| <span class="macro">panic!</span>(<span class="string">"Lazy instance has previously been poisoned"</span>))
             })
         }
     }
@@ -2185,7 +2185,7 @@
         </span><span class="kw">pub fn </span>force(this: <span class="kw-2">&amp;</span>Lazy&lt;T, F&gt;) -&gt; <span class="kw-2">&amp;</span>T {
             this.cell.get_or_init(|| <span class="kw">match </span>this.init.take() {
                 <span class="prelude-val">Some</span>(f) =&gt; f(),
-                <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Lazy instance has previously been poisoned&quot;</span>),
+                <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Lazy instance has previously been poisoned"</span>),
             })
         }
 
@@ -2207,7 +2207,7 @@
             <span class="kw">if </span>this.cell.get_mut().is_none() {
                 <span class="kw">let </span>value = <span class="kw">match </span>this.init.get_mut().take() {
                     <span class="prelude-val">Some</span>(f) =&gt; f(),
-                    <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Lazy instance has previously been poisoned&quot;</span>),
+                    <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Lazy instance has previously been poisoned"</span>),
                 };
                 this.cell = OnceCell::with_value(value);
             }
@@ -2271,7 +2271,7 @@
 }
 
 <span class="doccomment">/// Thread-safe, blocking version of `OnceCell`.
-</span><span class="attr">#[cfg(any(feature = <span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;critical-section&quot;</span>))]
+</span><span class="attr">#[cfg(any(feature = <span class="string">"std"</span>, feature = <span class="string">"critical-section"</span>))]
 </span><span class="kw">pub mod </span>sync {
     <span class="kw">use </span>core::{
         cell::Cell,
@@ -2301,14 +2301,14 @@
     ///
     /// std::thread::spawn(|| {
     ///     let value: &amp;String = CELL.get_or_init(|| {
-    ///         &quot;Hello, World!&quot;.to_string()
+    ///         "Hello, World!".to_string()
     ///     });
-    ///     assert_eq!(value, &quot;Hello, World!&quot;);
+    ///     assert_eq!(value, "Hello, World!");
     /// }).join().unwrap();
     ///
     /// let value: Option&lt;&amp;String&gt; = CELL.get();
     /// assert!(value.is_some());
-    /// assert_eq!(value.unwrap().as_str(), &quot;Hello, World!&quot;);
+    /// assert_eq!(value.unwrap().as_str(), "Hello, World!");
     /// ```
     </span><span class="kw">pub struct </span>OnceCell&lt;T&gt;(Imp&lt;T&gt;);
 
@@ -2321,8 +2321,8 @@
     <span class="kw">impl</span>&lt;T: fmt::Debug&gt; fmt::Debug <span class="kw">for </span>OnceCell&lt;T&gt; {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
             <span class="kw">match </span><span class="self">self</span>.get() {
-                <span class="prelude-val">Some</span>(v) =&gt; f.debug_tuple(<span class="string">&quot;OnceCell&quot;</span>).field(v).finish(),
-                <span class="prelude-val">None </span>=&gt; f.write_str(<span class="string">&quot;OnceCell(Uninit)&quot;</span>),
+                <span class="prelude-val">Some</span>(v) =&gt; f.debug_tuple(<span class="string">"OnceCell"</span>).field(v).finish(),
+                <span class="prelude-val">None </span>=&gt; f.write_str(<span class="string">"OnceCell(Uninit)"</span>),
             }
         }
     }
@@ -2401,13 +2401,13 @@
         /// assert_eq!(*value, 92);
         /// t.join().unwrap();
         /// ```
-        </span><span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+        </span><span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
         </span><span class="kw">pub fn </span>wait(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>T {
             <span class="kw">if </span>!<span class="self">self</span>.<span class="number">0</span>.is_initialized() {
                 <span class="self">self</span>.<span class="number">0</span>.wait()
             }
             <span class="macro">debug_assert!</span>(<span class="self">self</span>.<span class="number">0</span>.is_initialized());
-            <span class="comment">// Safe b/c of the wait call above and the fact that we didn&#39;t
+            <span class="comment">// Safe b/c of the wait call above and the fact that we didn't
             // relinquish our borrow.
             </span><span class="kw">unsafe </span>{ <span class="self">self</span>.get_unchecked() }
         }
@@ -2579,7 +2579,7 @@
 
         <span class="doccomment">/// Takes the value out of this `OnceCell`, moving it back to an uninitialized state.
         ///
-        /// Has no effect and returns `None` if the `OnceCell` hasn&#39;t been initialized.
+        /// Has no effect and returns `None` if the `OnceCell` hasn't been initialized.
         ///
         /// # Examples
         ///
@@ -2590,8 +2590,8 @@
         /// assert_eq!(cell.take(), None);
         ///
         /// let mut cell = OnceCell::new();
-        /// cell.set(&quot;hello&quot;.to_string()).unwrap();
-        /// assert_eq!(cell.take(), Some(&quot;hello&quot;.to_string()));
+        /// cell.set("hello".to_string()).unwrap();
+        /// assert_eq!(cell.take(), Some("hello".to_string()));
         /// assert_eq!(cell.get(), None);
         /// ```
         ///
@@ -2622,8 +2622,8 @@
         /// assert_eq!(cell.into_inner(), None);
         ///
         /// let cell = OnceCell::new();
-        /// cell.set(&quot;hello&quot;.to_string()).unwrap();
-        /// assert_eq!(cell.into_inner(), Some(&quot;hello&quot;.to_string()));
+        /// cell.set("hello".to_string()).unwrap();
+        /// assert_eq!(cell.into_inner(), Some("hello".to_string()));
         /// ```
         </span><span class="attr">#[inline]
         </span><span class="kw">pub fn </span>into_inner(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
@@ -2643,25 +2643,25 @@
     /// use once_cell::sync::Lazy;
     ///
     /// static HASHMAP: Lazy&lt;HashMap&lt;i32, String&gt;&gt; = Lazy::new(|| {
-    ///     println!(&quot;initializing&quot;);
+    ///     println!("initializing");
     ///     let mut m = HashMap::new();
-    ///     m.insert(13, &quot;Spica&quot;.to_string());
-    ///     m.insert(74, &quot;Hoyten&quot;.to_string());
+    ///     m.insert(13, "Spica".to_string());
+    ///     m.insert(74, "Hoyten".to_string());
     ///     m
     /// });
     ///
     /// fn main() {
-    ///     println!(&quot;ready&quot;);
+    ///     println!("ready");
     ///     std::thread::spawn(|| {
-    ///         println!(&quot;{:?}&quot;, HASHMAP.get(&amp;13));
+    ///         println!("{:?}", HASHMAP.get(&amp;13));
     ///     }).join().unwrap();
-    ///     println!(&quot;{:?}&quot;, HASHMAP.get(&amp;74));
+    ///     println!("{:?}", HASHMAP.get(&amp;74));
     ///
     ///     // Prints:
     ///     //   ready
     ///     //   initializing
-    ///     //   Some(&quot;Spica&quot;)
-    ///     //   Some(&quot;Hoyten&quot;)
+    ///     //   Some("Spica")
+    ///     //   Some("Hoyten")
     /// }
     /// ```
     </span><span class="kw">pub struct </span>Lazy&lt;T, F = <span class="kw">fn</span>() -&gt; T&gt; {
@@ -2671,7 +2671,7 @@
 
     <span class="kw">impl</span>&lt;T: fmt::Debug, F&gt; fmt::Debug <span class="kw">for </span>Lazy&lt;T, F&gt; {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-            f.debug_struct(<span class="string">&quot;Lazy&quot;</span>).field(<span class="string">&quot;cell&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cell).field(<span class="string">&quot;init&quot;</span>, <span class="kw-2">&amp;</span><span class="string">&quot;..&quot;</span>).finish()
+            f.debug_struct(<span class="string">"Lazy"</span>).field(<span class="string">"cell"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cell).field(<span class="string">"init"</span>, <span class="kw-2">&amp;</span><span class="string">".."</span>).finish()
         }
     }
 
@@ -2698,7 +2698,7 @@
             <span class="kw">let </span>cell = this.cell;
             <span class="kw">let </span>init = this.init;
             cell.into_inner().ok_or_else(|| {
-                init.take().unwrap_or_else(|| <span class="macro">panic!</span>(<span class="string">&quot;Lazy instance has previously been poisoned&quot;</span>))
+                init.take().unwrap_or_else(|| <span class="macro">panic!</span>(<span class="string">"Lazy instance has previously been poisoned"</span>))
             })
         }
     }
@@ -2720,7 +2720,7 @@
         </span><span class="kw">pub fn </span>force(this: <span class="kw-2">&amp;</span>Lazy&lt;T, F&gt;) -&gt; <span class="kw-2">&amp;</span>T {
             this.cell.get_or_init(|| <span class="kw">match </span>this.init.take() {
                 <span class="prelude-val">Some</span>(f) =&gt; f(),
-                <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Lazy instance has previously been poisoned&quot;</span>),
+                <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Lazy instance has previously been poisoned"</span>),
             })
         }
 
@@ -2740,7 +2740,7 @@
             <span class="kw">if </span>this.cell.get_mut().is_none() {
                 <span class="kw">let </span>value = <span class="kw">match </span>this.init.get_mut().take() {
                     <span class="prelude-val">Some</span>(f) =&gt; f(),
-                    <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">&quot;Lazy instance has previously been poisoned&quot;</span>),
+                    <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">"Lazy instance has previously been poisoned"</span>),
                 };
                 this.cell = OnceCell::with_value(value);
             }
@@ -2820,6 +2820,6 @@
     </span><span class="kw">fn </span>_dummy() {}
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;race&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"race"</span>)]
 </span><span class="kw">pub mod </span>race;
 </code></pre></div></section></main></body></html>

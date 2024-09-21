@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitflags-2.6.0/src/parser.rs`."><title>parser.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bitflags" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../bitflags/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bitflags-2.6.0/src/parser.rs`."><title>parser.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bitflags" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../bitflags/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -369,7 +369,7 @@ a|b|0x0C
 <span class="doccomment">/**
 Write a flags value as text.
 
-Any bits that aren&#39;t part of a contained flag will be formatted as a hex number.
+Any bits that aren't part of a contained flag will be formatted as a hex number.
 */
 </span><span class="kw">pub fn </span>to_writer&lt;B: Flags&gt;(flags: <span class="kw-2">&amp;</span>B, <span class="kw-2">mut </span>writer: <span class="kw">impl </span>Write) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt;
 <span class="kw">where
@@ -381,14 +381,14 @@ Any bits that aren&#39;t part of a contained flag will be formatted as a hex num
     //
     // The names of set flags are written in a bar-separated-format,
     // followed by a hex number of any remaining bits that are set
-    // but don&#39;t correspond to any flags.
+    // but don't correspond to any flags.
 
     // Iterate over known flag values
     </span><span class="kw">let </span><span class="kw-2">mut </span>first = <span class="bool-val">true</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>iter = flags.iter_names();
     <span class="kw">for </span>(name, <span class="kw">_</span>) <span class="kw">in </span><span class="kw-2">&amp;mut </span>iter {
         <span class="kw">if </span>!first {
-            writer.write_str(<span class="string">&quot; | &quot;</span>)<span class="question-mark">?</span>;
+            writer.write_str(<span class="string">" | "</span>)<span class="question-mark">?</span>;
         }
 
         first = <span class="bool-val">false</span>;
@@ -399,25 +399,25 @@ Any bits that aren&#39;t part of a contained flag will be formatted as a hex num
     </span><span class="kw">let </span>remaining = iter.remaining().bits();
     <span class="kw">if </span>remaining != B::Bits::EMPTY {
         <span class="kw">if </span>!first {
-            writer.write_str(<span class="string">&quot; | &quot;</span>)<span class="question-mark">?</span>;
+            writer.write_str(<span class="string">" | "</span>)<span class="question-mark">?</span>;
         }
 
-        writer.write_str(<span class="string">&quot;0x&quot;</span>)<span class="question-mark">?</span>;
+        writer.write_str(<span class="string">"0x"</span>)<span class="question-mark">?</span>;
         remaining.write_hex(writer)<span class="question-mark">?</span>;
     }
 
     fmt::Result::Ok(())
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>AsDisplay&lt;<span class="lifetime">&#39;a</span>, B&gt;(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>B);
+<span class="attr">#[cfg(feature = <span class="string">"serde"</span>)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>AsDisplay&lt;<span class="lifetime">'a</span>, B&gt;(<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw-2">&amp;</span><span class="lifetime">'a </span>B);
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;serde&quot;</span>)]
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, B: Flags&gt; fmt::Display <span class="kw">for </span>AsDisplay&lt;<span class="lifetime">&#39;a</span>, B&gt;
+<span class="attr">#[cfg(feature = <span class="string">"serde"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, B: Flags&gt; fmt::Display <span class="kw">for </span>AsDisplay&lt;<span class="lifetime">'a</span>, B&gt;
 <span class="kw">where
     </span>B::Bits: WriteHex,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         to_writer(<span class="self">self</span>.<span class="number">0</span>, f)
     }
 }
@@ -425,7 +425,7 @@ Any bits that aren&#39;t part of a contained flag will be formatted as a hex num
 <span class="doccomment">/**
 Parse a flags value from text.
 
-This function will fail on any names that don&#39;t correspond to defined flags.
+This function will fail on any names that don't correspond to defined flags.
 Unknown bits will be retained.
 */
 </span><span class="kw">pub fn </span>from_str&lt;B: Flags&gt;(input: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;B, ParseError&gt;
@@ -439,17 +439,17 @@ Unknown bits will be retained.
         <span class="kw">return </span><span class="prelude-val">Ok</span>(parsed_flags);
     }
 
-    <span class="kw">for </span>flag <span class="kw">in </span>input.split(<span class="string">&#39;|&#39;</span>) {
+    <span class="kw">for </span>flag <span class="kw">in </span>input.split(<span class="string">'|'</span>) {
         <span class="kw">let </span>flag = flag.trim();
 
-        <span class="comment">// If the flag is empty then we&#39;ve got missing input
+        <span class="comment">// If the flag is empty then we've got missing input
         </span><span class="kw">if </span>flag.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError::empty_flag());
         }
 
-        <span class="comment">// If the flag starts with `0x` then it&#39;s a hex number
+        <span class="comment">// If the flag starts with `0x` then it's a hex number
         // Parse it directly to the underlying bits type
-        </span><span class="kw">let </span>parsed_flag = <span class="kw">if let </span><span class="prelude-val">Some</span>(flag) = flag.strip_prefix(<span class="string">&quot;0x&quot;</span>) {
+        </span><span class="kw">let </span>parsed_flag = <span class="kw">if let </span><span class="prelude-val">Some</span>(flag) = flag.strip_prefix(<span class="string">"0x"</span>) {
             <span class="kw">let </span>bits =
                 &lt;B::Bits&gt;::parse_hex(flag).map_err(|<span class="kw">_</span>| ParseError::invalid_hex_flag(flag))<span class="question-mark">?</span>;
 
@@ -457,7 +457,7 @@ Unknown bits will be retained.
         }
         <span class="comment">// Otherwise the flag is a name
         // The generated flags type will determine whether
-        // or not it&#39;s a valid identifier
+        // or not it's a valid identifier
         </span><span class="kw">else </span>{
             B::from_name(flag).ok_or_else(|| ParseError::invalid_named_flag(flag))<span class="question-mark">?
         </span>};
@@ -481,7 +481,7 @@ Write a flags value as text, ignoring any unknown bits.
 <span class="doccomment">/**
 Parse a flags value from text.
 
-This function will fail on any names that don&#39;t correspond to defined flags.
+This function will fail on any names that don't correspond to defined flags.
 Unknown bits will be ignored.
 */
 </span><span class="kw">pub fn </span>from_str_truncate&lt;B: Flags&gt;(input: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;B, ParseError&gt;
@@ -502,7 +502,7 @@ Write only the contained, defined, named flags in a flags value as text.
     <span class="kw">let </span><span class="kw-2">mut </span>iter = flags.iter_names();
     <span class="kw">for </span>(name, <span class="kw">_</span>) <span class="kw">in </span><span class="kw-2">&amp;mut </span>iter {
         <span class="kw">if </span>!first {
-            writer.write_str(<span class="string">&quot; | &quot;</span>)<span class="question-mark">?</span>;
+            writer.write_str(<span class="string">" | "</span>)<span class="question-mark">?</span>;
         }
 
         first = <span class="bool-val">false</span>;
@@ -515,7 +515,7 @@ Write only the contained, defined, named flags in a flags value as text.
 <span class="doccomment">/**
 Parse a flags value from text.
 
-This function will fail on any names that don&#39;t correspond to defined flags.
+This function will fail on any names that don't correspond to defined flags.
 This function will fail to parse hex values.
 */
 </span><span class="kw">pub fn </span>from_str_strict&lt;B: Flags&gt;(input: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;B, ParseError&gt; {
@@ -529,18 +529,18 @@ This function will fail to parse hex values.
         <span class="kw">return </span><span class="prelude-val">Ok</span>(parsed_flags);
     }
 
-    <span class="kw">for </span>flag <span class="kw">in </span>input.split(<span class="string">&#39;|&#39;</span>) {
+    <span class="kw">for </span>flag <span class="kw">in </span>input.split(<span class="string">'|'</span>) {
         <span class="kw">let </span>flag = flag.trim();
 
-        <span class="comment">// If the flag is empty then we&#39;ve got missing input
+        <span class="comment">// If the flag is empty then we've got missing input
         </span><span class="kw">if </span>flag.is_empty() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError::empty_flag());
         }
 
-        <span class="comment">// If the flag starts with `0x` then it&#39;s a hex number
-        // These aren&#39;t supported in the strict parser
-        </span><span class="kw">if </span>flag.starts_with(<span class="string">&quot;0x&quot;</span>) {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError::invalid_hex_flag(<span class="string">&quot;unsupported hex flag value&quot;</span>));
+        <span class="comment">// If the flag starts with `0x` then it's a hex number
+        // These aren't supported in the strict parser
+        </span><span class="kw">if </span>flag.starts_with(<span class="string">"0x"</span>) {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(ParseError::invalid_hex_flag(<span class="string">"unsupported hex flag value"</span>));
         }
 
         <span class="kw">let </span>parsed_flag = B::from_name(flag).ok_or_else(|| ParseError::invalid_named_flag(flag))<span class="question-mark">?</span>;
@@ -580,15 +580,15 @@ Parse a value from a hex string.
 </span><span class="kw">enum </span>ParseErrorKind {
     EmptyFlag,
     InvalidNamedFlag {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
         </span>got: (),
-        <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
         </span>got: String,
     },
     InvalidHexFlag {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;std&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"std"</span>))]
         </span>got: (),
-        <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
         </span>got: String,
     },
 }
@@ -599,7 +599,7 @@ Parse a value from a hex string.
         <span class="kw">let </span>_flag = flag;
 
         <span class="kw">let </span>got = {
-            <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+            <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
             </span>{
                 _flag.to_string()
             }
@@ -608,12 +608,12 @@ Parse a value from a hex string.
         ParseError(ParseErrorKind::InvalidHexFlag { got })
     }
 
-    <span class="doccomment">/// A named flag that doesn&#39;t correspond to any on the flags type was encountered.
+    <span class="doccomment">/// A named flag that doesn't correspond to any on the flags type was encountered.
     </span><span class="kw">pub fn </span>invalid_named_flag(flag: <span class="kw">impl </span>fmt::Display) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>_flag = flag;
 
         <span class="kw">let </span>got = {
-            <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+            <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
             </span>{
                 _flag.to_string()
             }
@@ -622,37 +622,37 @@ Parse a value from a hex string.
         ParseError(ParseErrorKind::InvalidNamedFlag { got })
     }
 
-    <span class="doccomment">/// A hex or named flag wasn&#39;t found between separators.
+    <span class="doccomment">/// A hex or named flag wasn't found between separators.
     </span><span class="kw">pub const fn </span>empty_flag() -&gt; <span class="self">Self </span>{
         ParseError(ParseErrorKind::EmptyFlag)
     }
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>ParseError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0 </span>{
             ParseErrorKind::InvalidNamedFlag { got } =&gt; {
                 <span class="kw">let </span>_got = got;
 
-                <span class="macro">write!</span>(f, <span class="string">&quot;unrecognized named flag&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"unrecognized named flag"</span>)<span class="question-mark">?</span>;
 
-                <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+                <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
                 </span>{
-                    <span class="macro">write!</span>(f, <span class="string">&quot; `{}`&quot;</span>, _got)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">" `{}`"</span>, _got)<span class="question-mark">?</span>;
                 }
             }
             ParseErrorKind::InvalidHexFlag { got } =&gt; {
                 <span class="kw">let </span>_got = got;
 
-                <span class="macro">write!</span>(f, <span class="string">&quot;invalid hex flag&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"invalid hex flag"</span>)<span class="question-mark">?</span>;
 
-                <span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+                <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
                 </span>{
-                    <span class="macro">write!</span>(f, <span class="string">&quot; `{}`&quot;</span>, _got)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">" `{}`"</span>, _got)<span class="question-mark">?</span>;
                 }
             }
             ParseErrorKind::EmptyFlag =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;encountered empty flag&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"encountered empty flag"</span>)<span class="question-mark">?</span>;
             }
         }
 
@@ -660,6 +660,6 @@ Parse a value from a hex string.
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>ParseError {}
 </code></pre></div></section></main></body></html>

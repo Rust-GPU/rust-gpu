@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/packed/teddy/generic.rs`."><title>generic.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../aho_corasick/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/packed/teddy/generic.rs`."><title>generic.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1428,13 +1428,13 @@
     }
 }
 
-<span class="doccomment">/// A &quot;slim&quot; Teddy implementation that is generic over both the vector type
+<span class="doccomment">/// A "slim" Teddy implementation that is generic over both the vector type
 /// and the minimum length of the patterns being searched for.
 ///
 /// Only 1, 2, 3 and 4 bytes are supported as minimum lengths.
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Slim&lt;V, <span class="kw">const </span>BYTES: usize&gt; {
-    <span class="doccomment">/// A generic data structure for doing &quot;slim&quot; Teddy verification.
+    <span class="doccomment">/// A generic data structure for doing "slim" Teddy verification.
     </span>teddy: Teddy&lt;<span class="number">8</span>&gt;,
     <span class="doccomment">/// The masks used as inputs to the shuffle operation to generate
     /// candidates (which are fed into the verification routines).
@@ -1442,7 +1442,7 @@
 }
 
 <span class="kw">impl</span>&lt;V: Vector, <span class="kw">const </span>BYTES: usize&gt; Slim&lt;V, BYTES&gt; {
-    <span class="doccomment">/// Create a new &quot;slim&quot; Teddy searcher for the given patterns.
+    <span class="doccomment">/// Create a new "slim" Teddy searcher for the given patterns.
     ///
     /// # Panics
     ///
@@ -1456,7 +1456,7 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>new(patterns: Arc&lt;Patterns&gt;) -&gt; Slim&lt;V, BYTES&gt; {
         <span class="macro">assert!</span>(
             <span class="number">1 </span>&lt;= BYTES &amp;&amp; BYTES &lt;= <span class="number">4</span>,
-            <span class="string">&quot;only 1, 2, 3 or 4 bytes are supported&quot;
+            <span class="string">"only 1, 2, 3 or 4 bytes are supported"
         </span>);
         <span class="kw">let </span>teddy = Teddy::new(patterns);
         <span class="kw">let </span>masks = SlimMaskBuilder::from_teddy(<span class="kw-2">&amp;</span>teddy);
@@ -1517,7 +1517,7 @@
     </span>}
 
     <span class="doccomment">/// Look for a match starting at the `V::BYTES` at and after `cur`. If
-    /// there isn&#39;t one, then `None` is returned.
+    /// there isn't one, then `None` is returned.
     ///
     /// # Safety
     ///
@@ -1543,7 +1543,7 @@
     </span>}
 
     <span class="doccomment">/// Look for a candidate match (represented as a vector) starting at the
-    /// `V::BYTES` at and after `cur`. If there isn&#39;t one, then a vector with
+    /// `V::BYTES` at and after `cur`. If there isn't one, then a vector with
     /// all bits set to zero is returned.
     ///
     /// # Safety
@@ -1761,13 +1761,13 @@
     }
 }
 
-<span class="doccomment">/// A &quot;fat&quot; Teddy implementation that is generic over both the vector type
+<span class="doccomment">/// A "fat" Teddy implementation that is generic over both the vector type
 /// and the minimum length of the patterns being searched for.
 ///
 /// Only 1, 2, 3 and 4 bytes are supported as minimum lengths.
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Fat&lt;V, <span class="kw">const </span>BYTES: usize&gt; {
-    <span class="doccomment">/// A generic data structure for doing &quot;fat&quot; Teddy verification.
+    <span class="doccomment">/// A generic data structure for doing "fat" Teddy verification.
     </span>teddy: Teddy&lt;<span class="number">16</span>&gt;,
     <span class="doccomment">/// The masks used as inputs to the shuffle operation to generate
     /// candidates (which are fed into the verification routines).
@@ -1775,7 +1775,7 @@
 }
 
 <span class="kw">impl</span>&lt;V: FatVector, <span class="kw">const </span>BYTES: usize&gt; Fat&lt;V, BYTES&gt; {
-    <span class="doccomment">/// Create a new &quot;fat&quot; Teddy searcher for the given patterns.
+    <span class="doccomment">/// Create a new "fat" Teddy searcher for the given patterns.
     ///
     /// # Panics
     ///
@@ -1789,7 +1789,7 @@
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">unsafe fn </span>new(patterns: Arc&lt;Patterns&gt;) -&gt; Fat&lt;V, BYTES&gt; {
         <span class="macro">assert!</span>(
             <span class="number">1 </span>&lt;= BYTES &amp;&amp; BYTES &lt;= <span class="number">4</span>,
-            <span class="string">&quot;only 1, 2, 3 or 4 bytes are supported&quot;
+            <span class="string">"only 1, 2, 3 or 4 bytes are supported"
         </span>);
         <span class="kw">let </span>teddy = Teddy::new(patterns);
         <span class="kw">let </span>masks = FatMaskBuilder::from_teddy(<span class="kw-2">&amp;</span>teddy);
@@ -1850,7 +1850,7 @@
     </span>}
 
     <span class="doccomment">/// Look for a match starting at the `V::BYTES` at and after `cur`. If
-    /// there isn&#39;t one, then `None` is returned.
+    /// there isn't one, then `None` is returned.
     ///
     /// # Safety
     ///
@@ -1876,7 +1876,7 @@
     </span>}
 
     <span class="doccomment">/// Look for a candidate match (represented as a vector) starting at the
-    /// `V::BYTES` at and after `cur`. If there isn&#39;t one, then a vector with
+    /// `V::BYTES` at and after `cur`. If there isn't one, then a vector with
     /// all bits set to zero is returned.
     ///
     /// # Safety
@@ -2094,15 +2094,15 @@
     }
 }
 
-<span class="doccomment">/// The common elements of all &quot;slim&quot; and &quot;fat&quot; Teddy search implementations.
+<span class="doccomment">/// The common elements of all "slim" and "fat" Teddy search implementations.
 ///
 /// Essentially, this contains the patterns and the buckets. Namely, it
 /// contains enough to implement the verification step after candidates are
 /// identified via the shuffle masks.
 ///
 /// It is generic over the number of buckets used. In general, the number of
-/// buckets is either 8 (for &quot;slim&quot; Teddy) or 16 (for &quot;fat&quot; Teddy). The generic
-/// parameter isn&#39;t really meant to be instantiated for any value other than
+/// buckets is either 8 (for "slim" Teddy) or 16 (for "fat" Teddy). The generic
+/// parameter isn't really meant to be instantiated for any value other than
 /// 8 or 16, although it is technically possible. The main hiccup is that there
 /// is some bit-shifting done in the critical part of verification that could
 /// be quite expensive if `N` is not a multiple of 2.
@@ -2117,29 +2117,29 @@
     /// actual patterns when using Teddy.
     </span>buckets: [Vec&lt;PatternID&gt;; BUCKETS],
     <span class="comment">// N.B. The above representation is very simple, but it definitely results
-    // in ping-ponging between different allocations during verification. I&#39;ve
+    // in ping-ponging between different allocations during verification. I've
     // tried experimenting with other representations that flatten the pattern
-    // strings into a single allocation, but it doesn&#39;t seem to help much.
+    // strings into a single allocation, but it doesn't seem to help much.
     // Probably everything is small enough to fit into cache anyway, and so the
-    // pointer chasing isn&#39;t a big deal?
+    // pointer chasing isn't a big deal?
     //
-    // One other avenue I haven&#39;t explored is some kind of hashing trick
-    // that let&#39;s us do another high-confidence check before launching into
+    // One other avenue I haven't explored is some kind of hashing trick
+    // that let's us do another high-confidence check before launching into
     // `memcmp`.
 </span>}
 
 <span class="kw">impl</span>&lt;<span class="kw">const </span>BUCKETS: usize&gt; Teddy&lt;BUCKETS&gt; {
     <span class="doccomment">/// Create a new generic data structure for Teddy verification.
     </span><span class="kw">fn </span>new(patterns: Arc&lt;Patterns&gt;) -&gt; Teddy&lt;BUCKETS&gt; {
-        <span class="macro">assert_ne!</span>(<span class="number">0</span>, patterns.len(), <span class="string">&quot;Teddy requires at least one pattern&quot;</span>);
+        <span class="macro">assert_ne!</span>(<span class="number">0</span>, patterns.len(), <span class="string">"Teddy requires at least one pattern"</span>);
         <span class="macro">assert_ne!</span>(
             <span class="number">0</span>,
             patterns.minimum_len(),
-            <span class="string">&quot;Teddy does not support zero-length patterns&quot;
+            <span class="string">"Teddy does not support zero-length patterns"
         </span>);
         <span class="macro">assert!</span>(
             BUCKETS == <span class="number">8 </span>|| BUCKETS == <span class="number">16</span>,
-            <span class="string">&quot;Teddy only supports 8 or 16 buckets&quot;
+            <span class="string">"Teddy only supports 8 or 16 buckets"
         </span>);
         <span class="comment">// MSRV(1.63): Use core::array::from_fn below instead of allocating a
         // superfluous outer Vec. Not a big deal (especially given the BTreeMap
@@ -2160,7 +2160,7 @@
             // So we could assign patterns with the same N-prefix (where N is
             // the size of the mask, which is one of {1, 2, 3}) to the same
             // bucket. However, case insensitive searches are fairly common, so
-            // we&#39;d for example, ideally want to treat `abc` and `ABC` as if
+            // we'd for example, ideally want to treat `abc` and `ABC` as if
             // they shared the same prefix. ASCII has the nice property that
             // the lower 4 bits of A and a are the same, so we therefore group
             // patterns with the same low-nybble-N-prefix into the same bucket.
@@ -2173,13 +2173,13 @@
             // guarantees that all possible ambiguous matches will occur in
             // the same bucket. The verification routine could be adjusted to
             // support correct leftmost match semantics regardless of bucket
-            // allocation, but that results in a performance hit. It&#39;s much
+            // allocation, but that results in a performance hit. It's much
             // nicer to be able to just stop as soon as a match is found.
             </span><span class="kw">let </span>lonybs = pattern.low_nybbles(t.mask_len());
             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>bucket) = map.get(<span class="kw-2">&amp;</span>lonybs) {
                 t.buckets[bucket].push(id);
             } <span class="kw">else </span>{
-                <span class="comment">// N.B. We assign buckets in reverse because it shouldn&#39;t have
+                <span class="comment">// N.B. We assign buckets in reverse because it shouldn't have
                 // any influence on performance, but it does make it harder to
                 // get leftmost match semantics accidentally correct.
                 </span><span class="kw">let </span>bucket = (BUCKETS - <span class="number">1</span>) - (id.as_usize() % BUCKETS);
@@ -2270,14 +2270,14 @@
     /// units of bytes.
     </span><span class="kw">fn </span>memory_usage(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="comment">// This is an upper bound rather than a precise accounting. No
-        // particular reason, other than it&#39;s probably very close to actual
+        // particular reason, other than it's probably very close to actual
         // memory usage in practice.
         </span><span class="self">self</span>.patterns.len() * core::mem::size_of::&lt;PatternID&gt;()
     }
 }
 
 <span class="kw">impl </span>Teddy&lt;<span class="number">8</span>&gt; {
-    <span class="doccomment">/// Runs the verification routine for &quot;slim&quot; Teddy.
+    <span class="doccomment">/// Runs the verification routine for "slim" Teddy.
     ///
     /// The candidate given should be a collection of 8-bit bitsets (one bitset
     /// per lane), where the ith bit is set in the jth lane if and only if the
@@ -2311,7 +2311,7 @@
 }
 
 <span class="kw">impl </span>Teddy&lt;<span class="number">16</span>&gt; {
-    <span class="doccomment">/// Runs the verification routine for &quot;fat&quot; Teddy.
+    <span class="doccomment">/// Runs the verification routine for "fat" Teddy.
     ///
     /// The candidate given should be a collection of 8-bit bitsets (one bitset
     /// per lane), where the ith bit is set in the jth lane if and only if the
@@ -2392,8 +2392,8 @@
 ///
 /// For Fat Teddy, the bitsets are not repeated, but instead, the high half
 /// bits correspond to an addition 8 buckets. So that a bitset `00100010` has
-/// buckets 1 and 5 set if it&#39;s in the lower half, but has buckets 9 and 13 set
-/// if it&#39;s in the higher half.
+/// buckets 1 and 5 set if it's in the lower half, but has buckets 9 and 13 set
+/// if it's in the higher half.
 </span><span class="attr">#[derive(Clone, Copy, Debug)]
 </span><span class="kw">struct </span>Mask&lt;V&gt; {
     lo: V,
@@ -2553,7 +2553,7 @@
 /// the byte (0-15, inclusive) corresponds to the nybble.
 ///
 /// Each mask is used as the target of a shuffle, where the indices for the
-/// shuffle are taken from the haystack. AND&#39;ing the shuffles for both the
+/// shuffle are taken from the haystack. AND'ing the shuffles for both the
 /// low and high masks together also results in 8-bit bitsets, but where bit
 /// `i` is set if and only if the correspond *byte* is in the ith bucket.
 </span><span class="attr">#[derive(Clone, Default)]
@@ -2638,20 +2638,20 @@
 }
 
 <span class="kw">impl </span>Debug <span class="kw">for </span>SlimMaskBuilder {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
         <span class="kw">let </span>(<span class="kw-2">mut </span>parts_lo, <span class="kw-2">mut </span>parts_hi) = (<span class="macro">vec!</span>[], <span class="macro">vec!</span>[]);
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">32 </span>{
-            parts_lo.push(<span class="macro">format!</span>(<span class="string">&quot;{:02}: {:08b}&quot;</span>, i, <span class="self">self</span>.lo[i]));
-            parts_hi.push(<span class="macro">format!</span>(<span class="string">&quot;{:02}: {:08b}&quot;</span>, i, <span class="self">self</span>.hi[i]));
+            parts_lo.push(<span class="macro">format!</span>(<span class="string">"{:02}: {:08b}"</span>, i, <span class="self">self</span>.lo[i]));
+            parts_hi.push(<span class="macro">format!</span>(<span class="string">"{:02}: {:08b}"</span>, i, <span class="self">self</span>.hi[i]));
         }
-        f.debug_struct(<span class="string">&quot;SlimMaskBuilder&quot;</span>)
-            .field(<span class="string">&quot;lo&quot;</span>, <span class="kw-2">&amp;</span>parts_lo)
-            .field(<span class="string">&quot;hi&quot;</span>, <span class="kw-2">&amp;</span>parts_hi)
+        f.debug_struct(<span class="string">"SlimMaskBuilder"</span>)
+            .field(<span class="string">"lo"</span>, <span class="kw-2">&amp;</span>parts_lo)
+            .field(<span class="string">"hi"</span>, <span class="kw-2">&amp;</span>parts_hi)
             .finish()
     }
 }
 
-<span class="doccomment">/// Represents the low and high nybble masks that will be used during &quot;fat&quot;
+<span class="doccomment">/// Represents the low and high nybble masks that will be used during "fat"
 /// Teddy search.
 ///
 /// Each mask is 32 bytes wide, and at the time of writing, only 256-bit vectors
@@ -2750,15 +2750,15 @@
 }
 
 <span class="kw">impl </span>Debug <span class="kw">for </span>FatMaskBuilder {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
         <span class="kw">let </span>(<span class="kw-2">mut </span>parts_lo, <span class="kw-2">mut </span>parts_hi) = (<span class="macro">vec!</span>[], <span class="macro">vec!</span>[]);
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">32 </span>{
-            parts_lo.push(<span class="macro">format!</span>(<span class="string">&quot;{:02}: {:08b}&quot;</span>, i, <span class="self">self</span>.lo[i]));
-            parts_hi.push(<span class="macro">format!</span>(<span class="string">&quot;{:02}: {:08b}&quot;</span>, i, <span class="self">self</span>.hi[i]));
+            parts_lo.push(<span class="macro">format!</span>(<span class="string">"{:02}: {:08b}"</span>, i, <span class="self">self</span>.lo[i]));
+            parts_hi.push(<span class="macro">format!</span>(<span class="string">"{:02}: {:08b}"</span>, i, <span class="self">self</span>.hi[i]));
         }
-        f.debug_struct(<span class="string">&quot;FatMaskBuilder&quot;</span>)
-            .field(<span class="string">&quot;lo&quot;</span>, <span class="kw-2">&amp;</span>parts_lo)
-            .field(<span class="string">&quot;hi&quot;</span>, <span class="kw-2">&amp;</span>parts_hi)
+        f.debug_struct(<span class="string">"FatMaskBuilder"</span>)
+            .field(<span class="string">"lo"</span>, <span class="kw-2">&amp;</span>parts_lo)
+            .field(<span class="string">"hi"</span>, <span class="kw-2">&amp;</span>parts_hi)
             .finish()
     }
 }

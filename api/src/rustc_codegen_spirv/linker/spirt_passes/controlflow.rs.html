@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/spirt_passes/controlflow.rs`."><title>controlflow.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/spirt_passes/controlflow.rs`."><title>controlflow.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -443,25 +443,25 @@
     linker_options: <span class="kw-2">&amp;</span><span class="kw">crate</span>::linker::Options,
     module: <span class="kw-2">&amp;mut </span>Module,
 ) {
-    <span class="comment">// HACK(eddyb) this shouldn&#39;t be the place to parse `abort_strategy`.
+    <span class="comment">// HACK(eddyb) this shouldn't be the place to parse `abort_strategy`.
     </span><span class="kw">enum </span>Strategy {
         Unreachable,
         DebugPrintf { inputs: bool, backtrace: bool },
     }
     <span class="kw">let </span>abort_strategy = linker_options.abort_strategy.as_ref().map(|s| {
-        <span class="kw">if </span>s == <span class="string">&quot;unreachable&quot; </span>{
+        <span class="kw">if </span>s == <span class="string">"unreachable" </span>{
             <span class="kw">return </span>Strategy::Unreachable;
         }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = s.strip_prefix(<span class="string">&quot;debug-printf&quot;</span>) {
-            <span class="kw">let </span>(inputs, s) = s.strip_prefix(<span class="string">&quot;+inputs&quot;</span>).map_or((<span class="bool-val">false</span>, s), |s| (<span class="bool-val">true</span>, s));
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = s.strip_prefix(<span class="string">"debug-printf"</span>) {
+            <span class="kw">let </span>(inputs, s) = s.strip_prefix(<span class="string">"+inputs"</span>).map_or((<span class="bool-val">false</span>, s), |s| (<span class="bool-val">true</span>, s));
             <span class="kw">let </span>(backtrace, s) = s
-                .strip_prefix(<span class="string">&quot;+backtrace&quot;</span>)
+                .strip_prefix(<span class="string">"+backtrace"</span>)
                 .map_or((<span class="bool-val">false</span>, s), |s| (<span class="bool-val">true</span>, s));
             <span class="kw">if </span>s.is_empty() {
                 <span class="kw">return </span>Strategy::DebugPrintf { inputs, backtrace };
             }
         }
-        <span class="macro">panic!</span>(<span class="string">&quot;unknown `--abort-strategy={s}&quot;</span>);
+        <span class="macro">panic!</span>(<span class="string">"unknown `--abort-strategy={s}"</span>);
     });
 
     <span class="kw">let </span>cx = <span class="kw-2">&amp;</span>module.cx();
@@ -513,12 +513,12 @@
                 [spv::Imm::Short(em_kind, <span class="kw">_</span>), <span class="kw-2">ref </span>name_imms @ ..] =&gt; {
                     <span class="macro">assert_eq!</span>(em_kind, wk.ExecutionModel);
                     <span class="kw">super</span>::diagnostics::decode_spv_lit_str_with(name_imms, |name| {
-                        fmt += <span class="kw-2">&amp;</span>name.replace(<span class="string">&#39;%&#39;</span>, <span class="string">&quot;%%&quot;</span>);
+                        fmt += <span class="kw-2">&amp;</span>name.replace(<span class="string">'%'</span>, <span class="string">"%%"</span>);
                     });
                 }
                 <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
             }
-            fmt += <span class="string">&quot;(&quot;</span>;
+            fmt += <span class="string">"("</span>;
 
             <span class="comment">// Collect entry-point inputs `OpLoad`ed by the entry block.
             // HACK(eddyb) this relies on Rust-GPU always eagerly loading inputs.
@@ -562,10 +562,10 @@
                             [spv::Imm::Short(<span class="kw">_</span>, <span class="number">32</span>), spv::Imm::Short(<span class="kw">_</span>, signedness)]
                                 <span class="kw">if </span>spv_inst.opcode == wk.OpTypeInt =&gt;
                             {
-                                <span class="prelude-val">Some</span>(<span class="kw">if </span>signedness != <span class="number">0 </span>{ <span class="string">&quot;i&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;u&quot; </span>})
+                                <span class="prelude-val">Some</span>(<span class="kw">if </span>signedness != <span class="number">0 </span>{ <span class="string">"i" </span>} <span class="kw">else </span>{ <span class="string">"u" </span>})
                             }
                             [spv::Imm::Short(<span class="kw">_</span>, <span class="number">32</span>)] <span class="kw">if </span>spv_inst.opcode == wk.OpTypeFloat =&gt; {
-                                <span class="prelude-val">Some</span>(<span class="string">&quot;f&quot;</span>)
+                                <span class="prelude-val">Some</span>(<span class="string">"f"</span>)
                             }
                             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                         },
@@ -589,24 +589,24 @@
                     };
                     <span class="kw">if let </span><span class="prelude-val">Some</span>((scalar_fmt, vlen)) = vector_or_scalar_type(ty) {
                         <span class="kw">if </span>!first_input {
-                            fmt += <span class="string">&quot;, &quot;</span>;
+                            fmt += <span class="string">", "</span>;
                         }
                         first_input = <span class="bool-val">false</span>;
 
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = name_from_attrs(module.global_vars[gv].attrs) {
-                            fmt += <span class="kw-2">&amp;</span>name.replace(<span class="string">&#39;%&#39;</span>, <span class="string">&quot;%%&quot;</span>);
-                            fmt += <span class="string">&quot; = &quot;</span>;
+                            fmt += <span class="kw-2">&amp;</span>name.replace(<span class="string">'%'</span>, <span class="string">"%%"</span>);
+                            fmt += <span class="string">" = "</span>;
                         }
                         <span class="kw">match </span>vlen {
-                            <span class="prelude-val">Some</span>(vlen) =&gt; <span class="macro">write!</span>(fmt, <span class="string">&quot;vec{vlen}(%v{vlen}{scalar_fmt})&quot;</span>).unwrap(),
-                            <span class="prelude-val">None </span>=&gt; <span class="macro">write!</span>(fmt, <span class="string">&quot;%{scalar_fmt}&quot;</span>).unwrap(),
+                            <span class="prelude-val">Some</span>(vlen) =&gt; <span class="macro">write!</span>(fmt, <span class="string">"vec{vlen}(%v{vlen}{scalar_fmt})"</span>).unwrap(),
+                            <span class="prelude-val">None </span>=&gt; <span class="macro">write!</span>(fmt, <span class="string">"%{scalar_fmt}"</span>).unwrap(),
                         }
                         debug_printf_context_inputs.push(value);
                     }
                 }
             }
 
-            fmt += <span class="string">&quot;)&quot;</span>;
+            fmt += <span class="string">")"</span>;
 
             debug_printf_context_fmt_str = fmt;
         } <span class="kw">else </span>{
@@ -616,7 +616,7 @@
         <span class="kw">let </span>rpo_regions = func_def_body
             .unstructured_cfg
             .as_ref()
-            .expect(<span class="string">&quot;Abort-&gt;OpReturn can only be done on unstructured CFGs&quot;</span>)
+            .expect(<span class="string">"Abort-&gt;OpReturn can only be done on unstructured CFGs"</span>)
             .rev_post_order(func_def_body);
         <span class="kw">for </span>region <span class="kw">in </span>rpo_regions {
             <span class="kw">let </span>region_def = <span class="kw-2">&amp;</span>func_def_body.control_regions[region];
@@ -724,7 +724,7 @@
                         <span class="kw">let </span>block_insts_custom = block_insts_maybe_custom
                             .filter_map(|(func_at_inst, custom)| <span class="prelude-val">Some</span>((func_at_inst, custom<span class="question-mark">?</span>)));
                         <span class="kw">for </span>(func_at_inst, custom) <span class="kw">in </span>block_insts_custom {
-                            <span class="comment">// Stop at the abort, that we don&#39;t undo its debug context.
+                            <span class="comment">// Stop at the abort, that we don't undo its debug context.
                             </span><span class="kw">if </span>func_at_inst.position == abort_inst {
                                 <span class="kw">break</span>;
                             }
@@ -773,67 +773,67 @@
                             <span class="comment">// FIXME(eddyb) figure out what is going on with
                             // these column number conventions, below is a
                             // related comment from `spirt::print`:
-                            // &gt; // HACK(eddyb) Rust-GPU&#39;s column numbers seem
+                            // &gt; // HACK(eddyb) Rust-GPU's column numbers seem
                             // &gt; // off-by-one wrt what e.g. VSCode expects
-                            // &gt; // for `:line:col` syntax, but it&#39;s hard to
-                            // &gt; // tell from the spec and `glslang` doesn&#39;t
+                            // &gt; // for `:line:col` syntax, but it's hard to
+                            // &gt; // tell from the spec and `glslang` doesn't
                             // &gt; // even emit column numbers at all!
                             </span><span class="kw">let </span>col = col + <span class="number">1</span>;
-                            <span class="macro">format!</span>(<span class="string">&quot;{file}:{line}:{col}&quot;</span>).replace(<span class="string">&#39;%&#39;</span>, <span class="string">&quot;%%&quot;</span>)
+                            <span class="macro">format!</span>(<span class="string">"{file}:{line}:{col}"</span>).replace(<span class="string">'%'</span>, <span class="string">"%%"</span>)
                         };
 
                         <span class="comment">// HACK(eddyb) this improves readability w/ very verbose Vulkan loggers.
-                        </span>fmt += <span class="string">&quot;\n&quot;</span>;
+                        </span>fmt += <span class="string">"\n"</span>;
 
-                        fmt += <span class="string">&quot;[Rust &quot;</span>;
+                        fmt += <span class="string">"[Rust "</span>;
 
-                        <span class="comment">// HACK(eddyb) turn &quot;panic&quot; into &quot;panicked&quot;, while the
-                        // general case looks like &quot;abort&quot; -&gt; &quot;aborted&quot;.
+                        <span class="comment">// HACK(eddyb) turn "panic" into "panicked", while the
+                        // general case looks like "abort" -&gt; "aborted".
                         </span><span class="kw">match </span><span class="kw-2">&amp;</span>cx[const_str(abort_kind)] {
-                            <span class="string">&quot;panic&quot; </span>=&gt; fmt += <span class="string">&quot;panicked&quot;</span>,
+                            <span class="string">"panic" </span>=&gt; fmt += <span class="string">"panicked"</span>,
                             verb =&gt; {
                                 fmt += verb;
-                                fmt += <span class="string">&quot;en&quot;</span>;
+                                fmt += <span class="string">"en"</span>;
                             }
                         };
 
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(loc) = current_debug_src_loc.take() {
-                            fmt += <span class="string">&quot; at &quot;</span>;
+                            fmt += <span class="string">" at "</span>;
                             fmt += <span class="kw-2">&amp;</span>fmt_dbg_src_loc(loc);
                         }
 
-                        fmt += <span class="string">&quot;]\n &quot;</span>;
-                        fmt += <span class="kw-2">&amp;</span>message_debug_printf_fmt_str.replace(<span class="string">&#39;\n&#39;</span>, <span class="string">&quot;\n &quot;</span>);
+                        fmt += <span class="string">"]\n "</span>;
+                        fmt += <span class="kw-2">&amp;</span>message_debug_printf_fmt_str.replace(<span class="string">'\n'</span>, <span class="string">"\n "</span>);
 
                         <span class="kw">let </span><span class="kw-2">mut </span>innermost = <span class="bool-val">true</span>;
                         <span class="kw">let </span><span class="kw-2">mut </span>append_call = |callsite_debug_src_loc, callee: <span class="kw-2">&amp;</span>str| {
                             <span class="kw">if </span>innermost {
                                 innermost = <span class="bool-val">false</span>;
-                                fmt += <span class="string">&quot;\n      in &quot;</span>;
+                                fmt += <span class="string">"\n      in "</span>;
                             } <span class="kw">else if </span>current_debug_src_loc.is_some() {
-                                fmt += <span class="string">&quot;\n      by &quot;</span>;
+                                fmt += <span class="string">"\n      by "</span>;
                             } <span class="kw">else </span>{
-                                <span class="comment">// HACK(eddyb) previous call didn&#39;t have a `called at` line.
-                                </span>fmt += <span class="string">&quot;\n      called by &quot;</span>;
+                                <span class="comment">// HACK(eddyb) previous call didn't have a `called at` line.
+                                </span>fmt += <span class="string">"\n      called by "</span>;
                             }
                             fmt += callee;
                             <span class="kw">if let </span><span class="prelude-val">Some</span>(loc) = callsite_debug_src_loc {
-                                fmt += <span class="string">&quot;\n        called at &quot;</span>;
+                                fmt += <span class="string">"\n        called at "</span>;
                                 fmt += <span class="kw-2">&amp;</span>fmt_dbg_src_loc(loc);
                             }
                             current_debug_src_loc = callsite_debug_src_loc;
                         };
                         <span class="kw">while let </span><span class="prelude-val">Some</span>((callsite_debug_src_loc, callee)) = call_stack.pop() {
-                            append_call(callsite_debug_src_loc, <span class="kw-2">&amp;</span>cx[callee].replace(<span class="string">&#39;%&#39;</span>, <span class="string">&quot;%%&quot;</span>));
+                            append_call(callsite_debug_src_loc, <span class="kw-2">&amp;</span>cx[callee].replace(<span class="string">'%'</span>, <span class="string">"%%"</span>));
                         }
                         append_call(<span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>debug_printf_context_fmt_str);
 
-                        fmt += <span class="string">&quot;\n&quot;</span>;
+                        fmt += <span class="string">"\n"</span>;
 
                         <span class="kw">let </span>abort_inst_def = <span class="kw-2">&amp;mut </span>func_def_body.data_insts[abort_inst];
                         abort_inst_def.form = cx.intern(DataInstFormDef {
                             kind: DataInstKind::SpvExtInst {
-                                ext_set: cx.intern(<span class="string">&quot;NonSemantic.DebugPrintf&quot;</span>),
+                                ext_set: cx.intern(<span class="string">"NonSemantic.DebugPrintf"</span>),
                                 inst: <span class="number">1</span>,
                             },
                             output_type: cx[abort_inst_def.form].output_type,

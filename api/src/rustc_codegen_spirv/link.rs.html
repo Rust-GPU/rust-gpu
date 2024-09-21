@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/link.rs`."><title>link.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/link.rs`."><title>link.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -654,6 +654,10 @@
 <a href="#654" id="654">654</a>
 <a href="#655" id="655">655</a>
 <a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::codegen_cx::{CodegenArgs, SpirvMetadata};
 <span class="kw">use crate</span>::{linker, SpirvCodegenBackend, SpirvModuleBuffer, SpirvThinBuffer};
 <span class="kw">use </span>ar::{Archive, GnuBuilder, Header};
@@ -665,7 +669,7 @@
 <span class="kw">use </span>rustc_codegen_ssa::back::write::CodegenContext;
 <span class="kw">use </span>rustc_codegen_ssa::{CodegenResults, NativeLib};
 <span class="kw">use </span>rustc_data_structures::fx::FxHashSet;
-<span class="kw">use </span>rustc_errors::FatalError;
+<span class="kw">use </span>rustc_errors::{Diag, FatalError};
 <span class="kw">use </span>rustc_metadata::fs::METADATA_FILENAME;
 <span class="kw">use </span>rustc_middle::bug;
 <span class="kw">use </span>rustc_middle::dep_graph::WorkProduct;
@@ -702,7 +706,7 @@
 
         <span class="kw">if </span>invalid_output_for_target(sess, crate_type) {
             <span class="macro">bug!</span>(
-                <span class="string">&quot;invalid output type `{:?}` for target os `{}`&quot;</span>,
+                <span class="string">"invalid output type `{:?}` for target os `{}`"</span>,
                 crate_type,
                 sess.opts.target_triple
             );
@@ -725,10 +729,10 @@
                     link_rlib(sess, codegen_results, <span class="kw-2">&amp;</span>out_filename_file_for_writing);
                 }
                 CrateType::Executable | CrateType::Cdylib | CrateType::Dylib =&gt; {
-                    <span class="comment">// HACK(eddyb) there&#39;s no way way to access `outputs.filestem`,
+                    <span class="comment">// HACK(eddyb) there's no way way to access `outputs.filestem`,
                     // so we pay the cost of building a whole `PathBuf` instead.
                     </span><span class="kw">let </span>disambiguated_crate_name_for_dumps = outputs
-                        .with_extension(<span class="string">&quot;&quot;</span>)
+                        .with_extension(<span class="string">""</span>)
                         .file_name()
                         .unwrap()
                         .to_os_string();
@@ -743,7 +747,8 @@
                     );
                 }
                 other =&gt; {
-                    sess.err(<span class="macro">format!</span>(<span class="string">&quot;CrateType {other:?} not supported yet&quot;</span>));
+                    sess.dcx()
+                        .err(<span class="macro">format!</span>(<span class="string">"CrateType {other:?} not supported yet"</span>));
                 }
             }
             <span class="kw">match </span>out_filename {
@@ -780,8 +785,8 @@
             ..
         } = lib.kind
         {
-            sess.err(<span class="macro">format!</span>(
-                <span class="string">&quot;adding native library to rlib not supported yet: {}&quot;</span>,
+            sess.dcx().err(<span class="macro">format!</span>(
+                <span class="string">"adding native library to rlib not supported yet: {}"</span>,
                 lib.name
             ));
         }
@@ -822,7 +827,7 @@
     <span class="kw">let </span>cg_args = CodegenArgs::from_session(sess);
 
     <span class="comment">// HACK(eddyb) this removes the `.json` in `.spv.json`, from `out_filename`.
-    </span><span class="kw">let </span>out_path_spv = out_filename.with_extension(<span class="string">&quot;&quot;</span>);
+    </span><span class="kw">let </span>out_path_spv = out_filename.with_extension(<span class="string">""</span>);
 
     <span class="kw">let </span>link_result = do_link(
         sess,
@@ -844,7 +849,7 @@
         linker::LinkResult::MultipleModules {
             file_stem_to_entry_name_and_module,
         } =&gt; {
-            <span class="kw">let </span>out_dir = out_path_spv.with_extension(<span class="string">&quot;spvs&quot;</span>);
+            <span class="kw">let </span>out_dir = out_path_spv.with_extension(<span class="string">"spvs"</span>);
             <span class="kw">if </span>!out_dir.is_dir() {
                 std::fs::create_dir_all(<span class="kw-2">&amp;</span>out_dir).unwrap();
             }
@@ -853,7 +858,7 @@
                 .into_iter()
                 .map(|(file_stem, (entry_name, module))| {
                     <span class="kw">let </span><span class="kw-2">mut </span>out_file_name = file_stem;
-                    out_file_name.push(<span class="string">&quot;.spv&quot;</span>);
+                    out_file_name.push(<span class="string">".spv"</span>);
                     <span class="kw">let </span>out_file_path = out_dir.join(out_file_name);
                     post_link_single_module(
                         sess,
@@ -873,7 +878,9 @@
     };
 
     <span class="kw">let </span>file = File::create(out_filename).unwrap();
-    serde_json::to_writer(BufWriter::new(file), <span class="kw-2">&amp;</span>compile_result).unwrap();
+    <span class="comment">// FIXME(eddyb) move this functionality into `rustc_codegen_spirv_types`.
+    </span>rustc_codegen_spirv_types::serde_json::to_writer(BufWriter::new(file), <span class="kw-2">&amp;</span>compile_result)
+        .unwrap();
 }
 
 <span class="kw">fn </span>entry_points(module: <span class="kw-2">&amp;</span>rspirv::dr::Module) -&gt; Vec&lt;String&gt; {
@@ -926,16 +933,16 @@
         || (sess.opts.debuginfo == DebugInfo::None &amp;&amp; cg_args.spirv_metadata == SpirvMetadata::None)
     {
         <span class="kw">if </span>cg_args.run_spirv_opt {
-            <span class="kw">let </span>_timer = sess.timer(<span class="string">&quot;link_spirv_opt&quot;</span>);
+            <span class="kw">let </span>_timer = sess.timer(<span class="string">"link_spirv_opt"</span>);
             do_spirv_opt(sess, cg_args, spv_binary, out_filename, opt_options)
         } <span class="kw">else </span>{
             <span class="kw">let </span>reason = <span class="kw">match </span>(sess.opts.optimize, sess.opts.debuginfo == DebugInfo::None) {
-                (OptLevel::No, <span class="bool-val">true</span>) =&gt; <span class="string">&quot;debuginfo=None&quot;</span>.to_string(),
-                (optlevel, <span class="bool-val">false</span>) =&gt; <span class="macro">format!</span>(<span class="string">&quot;optlevel={optlevel:?}&quot;</span>),
-                (optlevel, <span class="bool-val">true</span>) =&gt; <span class="macro">format!</span>(<span class="string">&quot;optlevel={optlevel:?}, debuginfo=None&quot;</span>),
+                (OptLevel::No, <span class="bool-val">true</span>) =&gt; <span class="string">"debuginfo=None"</span>.to_string(),
+                (optlevel, <span class="bool-val">false</span>) =&gt; <span class="macro">format!</span>(<span class="string">"optlevel={optlevel:?}"</span>),
+                (optlevel, <span class="bool-val">true</span>) =&gt; <span class="macro">format!</span>(<span class="string">"optlevel={optlevel:?}, debuginfo=None"</span>),
             };
-            sess.warn(<span class="macro">format!</span>(
-                <span class="string">&quot;`spirv-opt` should have ran ({reason}) but was disabled by `--no-spirv-opt`&quot;
+            sess.dcx().warn(<span class="macro">format!</span>(
+                <span class="string">"`spirv-opt` should have ran ({reason}) but was disabled by `--no-spirv-opt`"
             </span>));
             spv_binary
         }
@@ -948,12 +955,14 @@
     }
 
     {
-        <span class="kw">let </span>save_modules_timer = sess.timer(<span class="string">&quot;link_save_modules&quot;</span>);
+        <span class="kw">let </span>save_modules_timer = sess.timer(<span class="string">"link_save_modules"</span>);
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = std::fs::write(out_filename, spirv_tools::binary::from_binary(<span class="kw-2">&amp;</span>spv_binary))
         {
-            <span class="kw">let </span><span class="kw-2">mut </span>err = sess.struct_err(<span class="string">&quot;failed to serialize spirv-binary to disk&quot;</span>);
-            err.note(<span class="macro">format!</span>(<span class="string">&quot;module `{}`&quot;</span>, out_filename.display()));
-            err.note(<span class="macro">format!</span>(<span class="string">&quot;I/O error: {e:#}&quot;</span>));
+            <span class="kw">let </span><span class="kw-2">mut </span>err = sess
+                .dcx()
+                .struct_err(<span class="string">"failed to serialize spirv-binary to disk"</span>);
+            err.note(<span class="macro">format!</span>(<span class="string">"module `{}`"</span>, out_filename.display()));
+            err.note(<span class="macro">format!</span>(<span class="string">"I/O error: {e:#}"</span>));
             err.emit();
         }
 
@@ -999,17 +1008,16 @@
             <span class="comment">// TODO: Adds spans here? Not sure how useful with binary, but maybe?
 
             </span><span class="kw">let </span><span class="kw-2">mut </span>err = <span class="kw">match </span>msg.level {
-                Level::Fatal | Level::InternalError =&gt; {
-                    <span class="comment">// FIXME(eddyb) this was `struct_fatal` but that doesn&#39;t seem
-                    // necessary and also lacks `.forget_guarantee()`.
-                    </span>sess.struct_err(msg.message).forget_guarantee()
+                <span class="comment">// We have to manually construct this after `forget_guarantee` was removed in
+                // &lt;https://github.com/rust-lang/rust/commit/2cd14bc9394ca6675e08d02c02c5f9abfa813616&gt;
+                </span>Level::Error | Level::Fatal | Level::InternalError =&gt; {
+                    Diag::&lt;()&gt;::new(sess.dcx(), rustc_errors::Level::Error, msg.message)
                 }
-                Level::Error =&gt; sess.struct_err(msg.message).forget_guarantee(),
-                Level::Warning =&gt; sess.struct_warn(msg.message),
-                Level::Info | Level::Debug =&gt; sess.struct_note_without_error(msg.message),
+                Level::Warning =&gt; sess.dcx().struct_warn(msg.message),
+                Level::Info | Level::Debug =&gt; sess.dcx().struct_note(msg.message),
             };
 
-            err.note(<span class="macro">format!</span>(<span class="string">&quot;module `{}`&quot;</span>, filename.display()));
+            err.note(<span class="macro">format!</span>(<span class="string">"module `{}`"</span>, filename.display()));
             err.emit();
         },
         <span class="prelude-val">Some</span>(options),
@@ -1019,9 +1027,9 @@
         <span class="prelude-val">Ok</span>(spirv_tools::binary::Binary::OwnedU32(words)) =&gt; words,
         <span class="prelude-val">Ok</span>(binary) =&gt; binary.as_words().to_vec(),
         <span class="prelude-val">Err</span>(e) =&gt; {
-            <span class="kw">let </span><span class="kw-2">mut </span>err = sess.struct_warn(e.to_string());
-            err.note(<span class="string">&quot;spirv-opt failed, leaving as unoptimized&quot;</span>);
-            err.note(<span class="macro">format!</span>(<span class="string">&quot;module `{}`&quot;</span>, filename.display()));
+            <span class="kw">let </span><span class="kw-2">mut </span>err = sess.dcx().struct_warn(e.to_string());
+            err.note(<span class="string">"spirv-opt failed, leaving as unoptimized"</span>);
+            err.note(<span class="macro">format!</span>(<span class="string">"module `{}`"</span>, filename.display()));
             err.emit();
             spv_binary
         }
@@ -1039,9 +1047,9 @@
     <span class="kw">let </span>validator = val::create(sess.target.options.env.parse().ok());
 
     <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = validator.validate(spv_binary, <span class="prelude-val">Some</span>(options)) {
-        <span class="kw">let </span><span class="kw-2">mut </span>err = sess.struct_err(e.to_string());
-        err.note(<span class="string">&quot;spirv-val failed&quot;</span>);
-        err.note(<span class="macro">format!</span>(<span class="string">&quot;module `{}`&quot;</span>, filename.display()));
+        <span class="kw">let </span><span class="kw-2">mut </span>err = sess.dcx().struct_err(e.to_string());
+        err.note(<span class="string">"spirv-val failed"</span>);
+        err.note(<span class="macro">format!</span>(<span class="string">"module `{}`"</span>, filename.display()));
         err.emit();
     }
 }
@@ -1081,7 +1089,7 @@
         .dependency_formats
         .iter()
         .find(|(ty, <span class="kw">_</span>)| <span class="kw-2">*</span>ty == crate_type)
-        .expect(<span class="string">&quot;failed to find crate type in dependency format list&quot;</span>);
+        .expect(<span class="string">"failed to find crate type in dependency format list"</span>);
     <span class="kw">for </span><span class="kw-2">&amp;</span>cnum <span class="kw">in </span><span class="kw-2">&amp;</span>codegen_results.crate_info.used_crates {
         <span class="kw">let </span>src = <span class="kw-2">&amp;</span>codegen_results.crate_info.used_crate_source[<span class="kw-2">&amp;</span>cnum];
         <span class="kw">match </span>data[cnum.as_usize() - <span class="number">1</span>] {
@@ -1089,7 +1097,7 @@
             Linkage::Static =&gt; rlibs.push(src.rlib.as_ref().unwrap().<span class="number">0</span>.clone()),
             <span class="comment">//Linkage::Dynamic =&gt; rlibs.push(src.dylib.as_ref().unwrap().0.clone()),
             </span>Linkage::Dynamic =&gt; {
-                sess.err(<span class="string">&quot;TODO: Linkage::Dynamic not supported yet&quot;</span>);
+                sess.dcx().err(<span class="string">"TODO: Linkage::Dynamic not supported yet"</span>);
             }
         }
     }
@@ -1105,7 +1113,7 @@
         .dependency_formats
         .iter()
         .find(|(ty, <span class="kw">_</span>)| <span class="kw-2">*</span>ty == crate_type)
-        .expect(<span class="string">&quot;failed to find crate type in dependency format list&quot;</span>);
+        .expect(<span class="string">"failed to find crate type in dependency format list"</span>);
 
     <span class="kw">for </span><span class="kw-2">&amp;</span>cnum <span class="kw">in </span><span class="kw-2">&amp;</span>codegen_results.crate_info.used_crates {
         <span class="kw">for </span>lib <span class="kw">in </span>codegen_results.crate_info.native_libraries[<span class="kw-2">&amp;</span>cnum].iter() {
@@ -1123,8 +1131,8 @@
                     ..
                 } =&gt; {}
 
-                <span class="kw">_ </span>=&gt; sess.fatal(<span class="macro">format!</span>(
-                    <span class="string">&quot;`NativeLibKind::{:?}` (name={:?}) not supported yet&quot;</span>,
+                <span class="kw">_ </span>=&gt; sess.dcx().fatal(<span class="macro">format!</span>(
+                    <span class="string">"`NativeLibKind::{:?}` (name={:?}) not supported yet"</span>,
                     lib.kind, lib.name
                 )),
             }
@@ -1136,7 +1144,7 @@
 // (see `compiler/rustc_codegen_ssa/src/back/link.rs`)
 </span><span class="kw">fn </span>relevant_lib(sess: <span class="kw-2">&amp;</span>Session, lib: <span class="kw-2">&amp;</span>NativeLib) -&gt; bool {
     <span class="kw">match </span>lib.cfg {
-        <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>cfg) =&gt; rustc_attr::cfg_matches(cfg, <span class="kw-2">&amp;</span>sess.parse_sess, CRATE_NODE_ID, <span class="prelude-val">None</span>),
+        <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>cfg) =&gt; rustc_attr::cfg_matches(cfg, sess, CRATE_NODE_ID, <span class="prelude-val">None</span>),
         <span class="prelude-val">None </span>=&gt; <span class="bool-val">true</span>,
     }
 }
@@ -1148,7 +1156,7 @@
             file.file_name()
                 .unwrap()
                 .to_str()
-                .expect(<span class="string">&quot;archive file names should be valid ASCII/UTF-8&quot;</span>),
+                .expect(<span class="string">"archive file names should be valid ASCII/UTF-8"</span>),
         )
     });
     <span class="kw">let </span>out_file = File::create(out_filename).unwrap();
@@ -1171,11 +1179,11 @@
     <span class="kw">for </span>(file, name) <span class="kw">in </span>files_with_names {
         <span class="macro">assert!</span>(
             filenames.insert(name),
-            <span class="string">&quot;Duplicate filename in archive: {:?}&quot;</span>,
+            <span class="string">"Duplicate filename in archive: {:?}"</span>,
             file.file_name().unwrap()
         );
 
-        <span class="comment">// NOTE(eddyb) we can&#39;t use `append_path` or `append_file`, as they
+        <span class="comment">// NOTE(eddyb) we can't use `append_path` or `append_file`, as they
         // record too much metadata by default (mtime/UID/GID, at least),
         // which is determintal to reproducible build artifacts, but also
         // can misbehave in environments with high UIDs/GIDs (see #889).
@@ -1188,7 +1196,7 @@
     builder.into_inner().unwrap();
 }
 
-<span class="doccomment">/// This is the actual guts of linking: the rest of the link-related functions are just digging through rustc&#39;s
+<span class="doccomment">/// This is the actual guts of linking: the rest of the link-related functions are just digging through rustc's
 /// shenanigans to collect all the object files we need to link.
 </span><span class="kw">fn </span>do_link(
     sess: <span class="kw-2">&amp;</span>Session,
@@ -1198,7 +1206,7 @@
     outputs: <span class="kw-2">&amp;</span>OutputFilenames,
     disambiguated_crate_name_for_dumps: <span class="kw-2">&amp;</span>OsStr,
 ) -&gt; linker::LinkResult {
-    <span class="kw">let </span>load_modules_timer = sess.timer(<span class="string">&quot;link_load_modules&quot;</span>);
+    <span class="kw">let </span>load_modules_timer = sess.timer(<span class="string">"link_load_modules"</span>);
 
     <span class="kw">let </span><span class="kw-2">mut </span>modules = Vec::new();
     <span class="kw">let </span><span class="kw-2">mut </span>add_module = |file_name: <span class="kw-2">&amp;</span>OsStr, bytes: <span class="kw-2">&amp;</span>[u8]| {
@@ -1211,7 +1219,7 @@
             <span class="comment">// FIXME(eddyb) is it a good idea to re-`assemble` the `rspirv::dr`
             // module, or should this just save the original bytes?
             </span>std::fs::write(
-                dir.join(file_name).with_extension(<span class="string">&quot;spv&quot;</span>),
+                dir.join(file_name).with_extension(<span class="string">"spv"</span>),
                 spirv_tools::binary::from_binary(<span class="kw-2">&amp;</span>module.assemble()),
             )
             .unwrap();
@@ -1224,7 +1232,7 @@
         add_module(obj.file_name().unwrap(), <span class="kw-2">&amp;</span>std::fs::read(obj).unwrap());
     }
 
-    <span class="comment">// `rlibs` are archive files we&#39;ve created in `create_archive`, usually produced by crates that are being
+    <span class="comment">// `rlibs` are archive files we've created in `create_archive`, usually produced by crates that are being
     // referenced. We need to unpack them and add the modules inside.
     </span><span class="kw">for </span>rlib <span class="kw">in </span>rlibs {
         <span class="kw">let </span><span class="kw-2">mut </span>archive = Archive::new(File::open(rlib).unwrap());
@@ -1256,8 +1264,8 @@
     <span class="kw">match </span>link_result {
         <span class="prelude-val">Ok</span>(v) =&gt; v,
         <span class="prelude-val">Err</span>(rustc_errors::ErrorGuaranteed { .. }) =&gt; {
-            sess.abort_if_errors();
-            <span class="macro">bug!</span>(<span class="string">&quot;Linker errored, but no error reported&quot;</span>);
+            sess.dcx().abort_if_errors();
+            <span class="macro">bug!</span>(<span class="string">"Linker errored, but no error reported"</span>);
         }
     }
 }
@@ -1270,11 +1278,11 @@
     cached_modules: Vec&lt;(SerializedModule&lt;SpirvModuleBuffer&gt;, WorkProduct)&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;LtoModuleCodegen&lt;SpirvCodegenBackend&gt;&gt;, Vec&lt;WorkProduct&gt;), FatalError&gt; {
     <span class="kw">if </span>cgcx.opts.cg.linker_plugin_lto.enabled() {
-        <span class="macro">unreachable!</span>(<span class="string">&quot;We should never reach this case if the LTO step is deferred to the linker&quot;</span>);
+        <span class="macro">unreachable!</span>(<span class="string">"We should never reach this case if the LTO step is deferred to the linker"</span>);
     }
     <span class="macro">assert!</span>(
         cgcx.lto == Lto::ThinLocal,
-        <span class="string">&quot;no actual LTO implemented in Rust-GPU&quot;
+        <span class="string">"no actual LTO implemented in Rust-GPU"
     </span>);
     <span class="kw">let </span><span class="kw-2">mut </span>thin_buffers = Vec::with_capacity(modules.len());
     <span class="kw">let </span><span class="kw-2">mut </span>module_names = Vec::with_capacity(modules.len() + cached_modules.len());

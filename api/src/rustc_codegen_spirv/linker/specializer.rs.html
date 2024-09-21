@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/specializer.rs`."><title>specializer.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/specializer.rs`."><title>specializer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2579,33 +2579,37 @@
 <a href="#2579" id="2579">2579</a>
 <a href="#2580" id="2580">2580</a>
 <a href="#2581" id="2581">2581</a>
+<a href="#2582" id="2582">2582</a>
+<a href="#2583" id="2583">2583</a>
+<a href="#2584" id="2584">2584</a>
+<a href="#2585" id="2585">2585</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Specialize globals (types, constants and module-scoped variables) and functions,
-//! to legalize a SPIR-V module representing a &quot;family&quot; of types with a single type,
-//! by treating some globals and functions as &quot;generic&quot;, inferring minimal sets
-//! of &quot;generic parameters&quot;, and &quot;monomorphizing&quot; them (i.e. expanding them into
+//! to legalize a SPIR-V module representing a "family" of types with a single type,
+//! by treating some globals and functions as "generic", inferring minimal sets
+//! of "generic parameters", and "monomorphizing" them (i.e. expanding them into
 //! one specialized copy per distinctly parameterized instance required).
 //!
 //! For now, this is only used for pointer type storage classes, because
-//! Rust&#39;s pointer/reference types don&#39;t have an &quot;address space&quot; distinction,
-//! and we also wouldn&#39;t want users to annotate every single type anyway.
+//! Rust's pointer/reference types don't have an "address space" distinction,
+//! and we also wouldn't want users to annotate every single type anyway.
 //!
 //! # Future plans
 //!
 //! Recursive data types (using `OpTypeForwardPointer`) are not supported, but
 //! here is an outline of how that could work:
 //! * groups of mutually-recursive `OpTypeForwardPointer`s are computed via SCCs
-//! * each mutual-recursive group gets a single &quot;generic&quot; parameter count, that all
-//!   pointer types in the group will use, and which is the sum of the &quot;generic&quot;
+//! * each mutual-recursive group gets a single "generic" parameter count, that all
+//!   pointer types in the group will use, and which is the sum of the "generic"
 //!   parameters of all the leaves referenced by the pointer types in the group,
 //!   ignoring the pointer types in the group themselves
-//! * once the pointer types have been assigned their &quot;g&quot;eneric parameter count,
+//! * once the pointer types have been assigned their "g"eneric parameter count,
 //!   the non-pointer types in each SCC - i.e. (indirectly) referenced by one of
 //!   the pointer types in the group, and which in turn (indirectly) references
-//!   a pointer type in the group - can have their &quot;generic&quot; parameters computed
-//!   as normal, taking care to record where in the combined lists of &quot;generic&quot;
+//!   a pointer type in the group - can have their "generic" parameters computed
+//!   as normal, taking care to record where in the combined lists of "generic"
 //!   parameters, any of the pointer types in the group show up
-//! * each pointer type in the group will &quot;fan out&quot; a copy of its full set of
-//!   &quot;generic&quot; parameters to every (indirect) mention of any pointer type in
+//! * each pointer type in the group will "fan out" a copy of its full set of
+//!   "generic" parameters to every (indirect) mention of any pointer type in
 //!   the group, using an additional parameter remapping, for which `Generic`:
 //!   * requires this extra documentation:
 //!     ```
@@ -2639,21 +2643,20 @@
 <span class="kw">use </span>rustc_data_structures::fx::{FxHashMap, FxHashSet};
 <span class="kw">use </span>smallvec::SmallVec;
 <span class="kw">use </span>std::collections::{BTreeMap, VecDeque};
-<span class="kw">use </span>std::convert::{TryFrom, TryInto};
 <span class="kw">use </span>std::ops::{Range, RangeTo};
 <span class="kw">use </span>std::{fmt, io, iter, mem, slice};
 
 <span class="comment">// FIXME(eddyb) move this elsewhere.
-</span><span class="kw">struct </span>FmtBy&lt;F: Fn(<span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result&gt;(F);
+</span><span class="kw">struct </span>FmtBy&lt;F: Fn(<span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result&gt;(F);
 
-<span class="kw">impl</span>&lt;F: Fn(<span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result&gt; fmt::Debug <span class="kw">for </span>FmtBy&lt;F&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+<span class="kw">impl</span>&lt;F: Fn(<span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result&gt; fmt::Debug <span class="kw">for </span>FmtBy&lt;F&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="self">self</span>.<span class="number">0</span>(f)
     }
 }
 
-<span class="kw">impl</span>&lt;F: Fn(<span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result&gt; fmt::Display <span class="kw">for </span>FmtBy&lt;F&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+<span class="kw">impl</span>&lt;F: Fn(<span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result&gt; fmt::Display <span class="kw">for </span>FmtBy&lt;F&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="self">self</span>.<span class="number">0</span>(f)
     }
 }
@@ -2666,8 +2669,8 @@
     <span class="doccomment">/// The operand that should be used to replace unresolved inference variables,
     /// i.e. the uses of operands for which `specialize_operand` returns `true`,
     /// but which none of the instructions in the same SPIR-V function require
-    /// any particular concrete value or relate it to the function&#39;s signature,
-    /// so an arbitrary choice can be made (as long as it&#39;s valid SPIR-V etc.).
+    /// any particular concrete value or relate it to the function's signature,
+    /// so an arbitrary choice can be made (as long as it's valid SPIR-V etc.).
     </span><span class="kw">fn </span>concrete_fallback(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Operand;
 }
 
@@ -2723,7 +2726,7 @@
 
     specializer.collect_generics(<span class="kw-2">&amp;</span>module);
 
-    <span class="comment">// &quot;Generic&quot; module-scoped variables can be fully constrained to the point
+    <span class="comment">// "Generic" module-scoped variables can be fully constrained to the point
     // where we could theoretically always add an instance for them, in order
     // to preserve them, even if they would appear to otherwise be unused.
     // We do this here for fully-constrained variables used by `OpEntryPoint`s,
@@ -2767,11 +2770,11 @@
         expander.alloc_instance_id(interface_instance);
     }
 
-    <span class="comment">// For non-&quot;generic&quot; functions, we can apply `replacements` right away,
+    <span class="comment">// For non-"generic" functions, we can apply `replacements` right away,
     // though not before finishing inference for all functions first
     // (because `expander` needs to borrow `specializer` immutably).
     </span><span class="kw">if </span>debug {
-        <span class="macro">eprintln!</span>(<span class="string">&quot;non-generic replacements:&quot;</span>);
+        <span class="macro">eprintln!</span>(<span class="string">"non-generic replacements:"</span>);
     }
     <span class="kw">for </span>(func_idx, replacements) <span class="kw">in </span>non_generic_replacements {
         <span class="kw">let </span><span class="kw-2">mut </span>func = mem::replace(
@@ -2782,14 +2785,14 @@
             <span class="kw">let </span>empty = replacements.with_instance.is_empty()
                 &amp;&amp; replacements.with_concrete_or_param.is_empty();
             <span class="kw">if </span>!empty {
-                <span class="macro">eprintln!</span>(<span class="string">&quot;    in %{}:&quot;</span>, func.def_id().unwrap());
+                <span class="macro">eprintln!</span>(<span class="string">"    in %{}:"</span>, func.def_id().unwrap());
             }
         }
         <span class="kw">for </span>(loc, operand) <span class="kw">in
             </span>replacements.to_concrete(<span class="kw-2">&amp;</span>[], |instance| expander.alloc_instance_id(instance))
         {
             <span class="kw">if </span>debug {
-                <span class="macro">eprintln!</span>(<span class="string">&quot;        {operand} -&gt; {loc:?}&quot;</span>);
+                <span class="macro">eprintln!</span>(<span class="string">"        {operand} -&gt; {loc:?}"</span>);
             }
             func.index_set(loc, operand.into());
         }
@@ -2815,7 +2818,10 @@
 }
 
 <span class="attr">#[derive(Debug)]
-</span><span class="kw">struct </span>NotSupportedAsCopyOperand(Operand);
+</span><span class="kw">struct </span>NotSupportedAsCopyOperand(
+    <span class="comment">// HACK(eddyb) only exists for `fmt::Debug` in case of error.
+    </span><span class="attr">#[allow(dead_code)] </span>Operand,
+);
 
 <span class="kw">impl </span>TryFrom&lt;<span class="kw-2">&amp;</span>Operand&gt; <span class="kw">for </span>CopyOperand {
     <span class="kw">type </span>Error = NotSupportedAsCopyOperand;
@@ -2838,15 +2844,15 @@
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>CopyOperand {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::IdRef(id) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;%{id}&quot;</span>),
-            <span class="self">Self</span>::StorageClass(s) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{s:?}&quot;</span>),
+            <span class="self">Self</span>::IdRef(id) =&gt; <span class="macro">write!</span>(f, <span class="string">"%{id}"</span>),
+            <span class="self">Self</span>::StorageClass(s) =&gt; <span class="macro">write!</span>(f, <span class="string">"{s:?}"</span>),
         }
     }
 }
 
-<span class="doccomment">/// The &quot;value&quot; of a `Param`/`InferVar`, if we know anything about it.
+<span class="doccomment">/// The "value" of a `Param`/`InferVar`, if we know anything about it.
 </span><span class="comment">// FIXME(eddyb) find a more specific name.
 </span><span class="attr">#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 </span><span class="kw">enum </span>Value&lt;T&gt; {
@@ -2860,7 +2866,7 @@
     ///
     /// For consistency, and to allow some `Param` &lt;-&gt; `InferVar` mapping,
     /// all cases of `values[y] == Value::SameAs(x)` should have `x &lt; y`,
-    /// i.e. &quot;newer&quot; variables must be redirected to &quot;older&quot; ones.
+    /// i.e. "newer" variables must be redirected to "older" ones.
     </span>SameAs(T),
 }
 
@@ -2874,26 +2880,26 @@
     }
 }
 
-<span class="doccomment">/// Newtype&#39;d &quot;generic&quot; parameter index.
+<span class="doccomment">/// Newtype'd "generic" parameter index.
 </span><span class="comment">// FIXME(eddyb) use `rustc_index` for this instead.
 </span><span class="attr">#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 </span><span class="kw">struct </span>Param(u32);
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>Param {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;${}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">"${}"</span>, <span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
 <span class="kw">impl </span>Param {
     <span class="comment">// HACK(eddyb) this works around `Range&lt;Param&gt;` not being iterable
-    // because `Param` doesn&#39;t implement the (unstable) `Step` trait.
+    // because `Param` doesn't implement the (unstable) `Step` trait.
     </span><span class="kw">fn </span>range_iter(range: <span class="kw-2">&amp;</span>Range&lt;<span class="self">Self</span>&gt;) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="self">Self</span>&gt; + Clone {
         (range.start.<span class="number">0</span>..range.end.<span class="number">0</span>).map(<span class="self">Self</span>)
     }
 }
 
-<span class="doccomment">/// A specific instance of a &quot;generic&quot; global/function.
+<span class="doccomment">/// A specific instance of a "generic" global/function.
 </span><span class="attr">#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 </span><span class="kw">struct </span>Instance&lt;GA&gt; {
     generic_id: Word,
@@ -2920,9 +2926,9 @@
     }
 
     <span class="comment">// FIXME(eddyb) implement `Step` for `Param` and `InferVar` instead.
-    </span><span class="kw">fn </span>display&lt;<span class="lifetime">&#39;a</span>, T: fmt::Display, GAI: Iterator&lt;Item = T&gt; + Clone&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-        f: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>GA) -&gt; GAI,
+    </span><span class="kw">fn </span>display&lt;<span class="lifetime">'a</span>, T: fmt::Display, GAI: Iterator&lt;Item = T&gt; + Clone&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        f: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>GA) -&gt; GAI,
     ) -&gt; <span class="kw">impl </span>fmt::Display {
         <span class="kw">let </span><span class="kw-2">&amp;</span><span class="self">Self </span>{
             generic_id,
@@ -2930,14 +2936,14 @@
         } = <span class="self">self</span>;
         <span class="kw">let </span>generic_args_iter = f(generic_args);
         FmtBy(<span class="kw">move </span>|f| {
-            <span class="macro">write!</span>(f, <span class="string">&quot;%{generic_id}&lt;&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"%{generic_id}&lt;"</span>)<span class="question-mark">?</span>;
             <span class="kw">for </span>(i, arg) <span class="kw">in </span>generic_args_iter.clone().enumerate() {
                 <span class="kw">if </span>i != <span class="number">0 </span>{
-                    <span class="macro">write!</span>(f, <span class="string">&quot;, &quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">", "</span>)<span class="question-mark">?</span>;
                 }
-                <span class="macro">write!</span>(f, <span class="string">&quot;{arg}&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"{arg}"</span>)<span class="question-mark">?</span>;
             }
-            <span class="macro">write!</span>(f, <span class="string">&quot;&gt;&quot;</span>)
+            <span class="macro">write!</span>(f, <span class="string">"&gt;"</span>)
         })
     }
 }
@@ -2956,7 +2962,9 @@
 }
 
 <span class="kw">trait </span>OperandIndexGetSet&lt;I&gt; {
-    <span class="kw">fn </span>index_get(<span class="kw-2">&amp;</span><span class="self">self</span>, index: I) -&gt; Operand;
+    <span class="comment">// FIXME(eddyb) how come this isn't used? (is iteration preferred?)
+    </span><span class="attr">#[allow(dead_code)]
+    </span><span class="kw">fn </span>index_get(<span class="kw-2">&amp;</span><span class="self">self</span>, index: I) -&gt; Operand;
     <span class="kw">fn </span>index_set(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: I, operand: Operand);
 }
 
@@ -3024,7 +3032,7 @@
 }
 
 <span class="comment">// FIXME(eddyb) this is a bit like `Value&lt;Param&gt;` but more explicit,
-// and the name isn&#39;t too nice, but at least it&#39;s very clear.
+// and the name isn't too nice, but at least it's very clear.
 </span><span class="attr">#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 </span><span class="kw">enum </span>ConcreteOrParam {
     Concrete(CopyOperand),
@@ -3043,7 +3051,7 @@
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">struct </span>Replacements {
-    <span class="doccomment">/// Operands that need to be replaced with instances of &quot;generic&quot; globals.
+    <span class="doccomment">/// Operands that need to be replaced with instances of "generic" globals.
     /// Keyed by instance to optimize for few instances used many times.
     </span><span class="comment">// FIXME(eddyb) fine-tune the length of `SmallVec&lt;[_; 4]&gt;` here.
     </span>with_instance: IndexMap&lt;Instance&lt;SmallVec&lt;[ConcreteOrParam; <span class="number">4</span>]&gt;&gt;, Vec&lt;OperandLocation&gt;&gt;,
@@ -3055,14 +3063,14 @@
 <span class="kw">impl </span>Replacements {
     <span class="doccomment">/// Apply `generic_args` to all the `ConcreteOrParam`s in this `Replacements`
     /// (i.e. replacing `Param(i)` with `generic_args[i]`), producing a stream of
-    /// &quot;replace the operand at `OperandLocation` with this concrete `CopyOperand`&quot;.
+    /// "replace the operand at `OperandLocation` with this concrete `CopyOperand`".
     /// The `concrete_instance_id` closure should look up and/or allocate an ID
     /// for a specific concrete `Instance`.
-    </span><span class="kw">fn </span>to_concrete&lt;<span class="lifetime">&#39;a</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-        generic_args: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[CopyOperand],
-        <span class="kw-2">mut </span>concrete_instance_id: <span class="kw">impl </span>FnMut(Instance&lt;SmallVec&lt;[CopyOperand; <span class="number">4</span>]&gt;&gt;) -&gt; Word + <span class="lifetime">&#39;a</span>,
-    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (OperandLocation, CopyOperand)&gt; + <span class="lifetime">&#39;a </span>{
+    </span><span class="kw">fn </span>to_concrete&lt;<span class="lifetime">'a</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        generic_args: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[CopyOperand],
+        <span class="kw-2">mut </span>concrete_instance_id: <span class="kw">impl </span>FnMut(Instance&lt;SmallVec&lt;[CopyOperand; <span class="number">4</span>]&gt;&gt;) -&gt; Word + <span class="lifetime">'a</span>,
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (OperandLocation, CopyOperand)&gt; + <span class="lifetime">'a </span>{
         <span class="self">self</span>.with_instance
             .iter()
             .flat_map(<span class="kw">move </span>|(instance, locations)| {
@@ -3081,8 +3089,8 @@
     }
 }
 
-<span class="doccomment">/// Computed &quot;generic&quot; shape for a SPIR-V global/function. In the interest of efficient
-/// representation, the parameters of operands that are themselves &quot;generic&quot;,
+<span class="doccomment">/// Computed "generic" shape for a SPIR-V global/function. In the interest of efficient
+/// representation, the parameters of operands that are themselves "generic",
 /// are concatenated by default, i.e. parameters come from disjoint leaves.
 ///
 /// As an example, for `%T = OpTypeStruct %A %B`, if `%A` and `%B` have 2 and 3
@@ -3097,12 +3105,12 @@
     // complicate `InferOperandList`, which has to be able to iterate them.
     </span>def: Instruction,
 
-    <span class="doccomment">/// `param_values[p]` constrains what &quot;generic&quot; args `Param(p)` could take.
+    <span class="doccomment">/// `param_values[p]` constrains what "generic" args `Param(p)` could take.
     /// This is only present if any constraints were inferred from the defining
     /// instruction of a global, or the body of a function. Inference performed
     /// after `collect_generics` (e.g. from instructions in function bodies) is
     /// monotonic, i.e. it may only introduce more constraints, not remove any.
-    </span><span class="comment">// FIXME(eddyb) use `rustc_index`&#39;s `IndexVec` for this.
+    </span><span class="comment">// FIXME(eddyb) use `rustc_index`'s `IndexVec` for this.
     </span>param_values: <span class="prelude-ty">Option</span>&lt;Vec&lt;Value&lt;Param&gt;&gt;&gt;,
 
     <span class="doccomment">/// Operand replacements that need to be performed on the defining instruction
@@ -3129,12 +3137,12 @@
 }
 
 <span class="kw">impl</span>&lt;S: Specialization&gt; Specializer&lt;S&gt; {
-    <span class="doccomment">/// Returns the number of &quot;generic&quot; parameters `operand` &quot;takes&quot;, either
-    /// because it&#39;s specialized by, or it refers to a &quot;generic&quot; global/function.
+    <span class="doccomment">/// Returns the number of "generic" parameters `operand` "takes", either
+    /// because it's specialized by, or it refers to a "generic" global/function.
     /// In the latter case, the `&amp;Generic` for that global/function is also returned.
     </span><span class="kw">fn </span>params_needed_by(<span class="kw-2">&amp;</span><span class="self">self</span>, operand: <span class="kw-2">&amp;</span>Operand) -&gt; (u32, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Generic&gt;) {
         <span class="kw">if </span><span class="self">self</span>.specialization.specialize_operand(operand) {
-            <span class="comment">// Each operand we specialize by is one leaf &quot;generic&quot; parameter.
+            <span class="comment">// Each operand we specialize by is one leaf "generic" parameter.
             </span>(<span class="number">1</span>, <span class="prelude-val">None</span>)
         } <span class="kw">else if let </span>Operand::IdRef(id) = operand {
             <span class="self">self</span>.generics
@@ -3147,7 +3155,7 @@
 
     <span class="kw">fn </span>collect_generics(<span class="kw-2">&amp;mut </span><span class="self">self</span>, module: <span class="kw-2">&amp;</span>Module) {
         <span class="comment">// Process all defining instructions for globals (types, constants,
-        // and module-scoped variables), and functions&#39; `OpFunction` instructions,
+        // and module-scoped variables), and functions' `OpFunction` instructions,
         // but note that for `OpFunction`s only the signature is considered,
         // actual inference based on bodies happens later, in `infer_function`.
         </span><span class="kw">let </span>types_global_values_and_functions = module
@@ -3163,13 +3171,13 @@
             } <span class="kw">else </span>{
                 <span class="kw">let </span>result_id = inst.result_id.unwrap_or_else(|| {
                     <span class="macro">unreachable!</span>(
-                        <span class="string">&quot;Op{:?} is in `types_global_values` but not have a result ID&quot;</span>,
+                        <span class="string">"Op{:?} is in `types_global_values` but not have a result ID"</span>,
                         inst.class.opcode
                     );
                 });
                 <span class="kw">if </span>forward_declared_pointers.remove(<span class="kw-2">&amp;</span>result_id) {
                     <span class="comment">// HACK(eddyb) this is a forward-declared pointer, pretend
-                    // it&#39;s not &quot;generic&quot; at all to avoid breaking the rest of
+                    // it's not "generic" at all to avoid breaking the rest of
                     // the logic - see module-level docs for how this should be
                     // handled in the future to support recursive data types.
                     </span><span class="macro">assert_eq!</span>(inst.class.opcode, Op::TypePointer);
@@ -3212,7 +3220,7 @@
                 )
             };
 
-            <span class="comment">// Inference variables become &quot;generic&quot; parameters.
+            <span class="comment">// Inference variables become "generic" parameters.
             </span><span class="kw">if </span>param_count &gt; <span class="number">0 </span>{
                 <span class="self">self</span>.generics.insert(
                     result_id,
@@ -3229,7 +3237,7 @@
 
     <span class="doccomment">/// Perform inference across the entire definition of `func`, including all
     /// the instructions in its body, and either store the resulting `Replacements`
-    /// in its `Generic` (if `func` is &quot;generic&quot;), or return them otherwise.
+    /// in its `Generic` (if `func` is "generic"), or return them otherwise.
     </span><span class="kw">fn </span>infer_function(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: <span class="kw-2">&amp;</span>Function) -&gt; <span class="prelude-ty">Option</span>&lt;Replacements&gt; {
         <span class="kw">let </span>func_id = func.def_id().unwrap();
 
@@ -3261,7 +3269,7 @@
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(generic) = <span class="self">self</span>.generics.get_mut(<span class="kw-2">&amp;</span>func_id) {
             <span class="comment">// All constraints `func` could have from `collect_generics`
-            // would have to come from its `OpTypeFunction`, but types don&#39;t have
+            // would have to come from its `OpTypeFunction`, but types don't have
             // internal constraints like e.g. `OpConstant*` and `OpVariable` do.
             </span><span class="macro">assert!</span>(generic.param_values.is_none());
 
@@ -3275,53 +3283,53 @@
     }
 }
 
-<span class="doccomment">/// Newtype&#39;d inference variable index.
+<span class="doccomment">/// Newtype'd inference variable index.
 </span><span class="comment">// FIXME(eddyb) use `rustc_index` for this instead.
 </span><span class="attr">#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 </span><span class="kw">struct </span>InferVar(u32);
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>InferVar {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;?{}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">"?{}"</span>, <span class="self">self</span>.<span class="number">0</span>)
     }
 }
 
 <span class="kw">impl </span>InferVar {
     <span class="comment">// HACK(eddyb) this works around `Range&lt;InferVar&gt;` not being iterable
-    // because `InferVar` doesn&#39;t implement the (unstable) `Step` trait.
+    // because `InferVar` doesn't implement the (unstable) `Step` trait.
     </span><span class="kw">fn </span>range_iter(range: <span class="kw-2">&amp;</span>Range&lt;<span class="self">Self</span>&gt;) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="self">Self</span>&gt; + Clone {
         (range.start.<span class="number">0</span>..range.end.<span class="number">0</span>).map(<span class="self">Self</span>)
     }
 }
 
-<span class="kw">struct </span>InferCx&lt;<span class="lifetime">&#39;a</span>, S: Specialization&gt; {
-    specializer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Specializer&lt;S&gt;,
+<span class="kw">struct </span>InferCx&lt;<span class="lifetime">'a</span>, S: Specialization&gt; {
+    specializer: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Specializer&lt;S&gt;,
 
     <span class="doccomment">/// `infer_var_values[i]` holds the current state of `InferVar(i)`.
     /// Each inference variable starts out as `Unknown`, may become `SameAs`
     /// pointing to another inference variable, but eventually inference must
     /// result in `Known` values (i.e. concrete `Operand`s).
-    </span><span class="comment">// FIXME(eddyb) use `rustc_index`&#39;s `IndexVec` for this.
+    </span><span class="comment">// FIXME(eddyb) use `rustc_index`'s `IndexVec` for this.
     </span>infer_var_values: Vec&lt;Value&lt;InferVar&gt;&gt;,
 
     <span class="doccomment">/// Instantiated *Result Type* of each instruction that has any `InferVar`s,
-    /// used when an instruction&#39;s result is an input to a later instruction.
+    /// used when an instruction's result is an input to a later instruction.
     ///
     /// Note that for consistency, for `OpFunction` this contains *Function Type*
     /// instead of *Result Type*, which is inexplicably specified as:
     /// &gt; *Result Type* must be the same as the *Return Type* declared in *Function Type*
     </span>type_of_result: IndexMap&lt;Word, InferOperand&gt;,
 
-    <span class="doccomment">/// Operands that need to be replaced with instances of &quot;generic&quot; globals/functions
-    /// (taking as &quot;generic&quot; arguments the results of inference).
+    <span class="doccomment">/// Operands that need to be replaced with instances of "generic" globals/functions
+    /// (taking as "generic" arguments the results of inference).
     </span>instantiated_operands: Vec&lt;(OperandLocation, Instance&lt;Range&lt;InferVar&gt;&gt;)&gt;,
 
     <span class="doccomment">/// Operands that need to be replaced with results of inference.
     </span>inferred_operands: Vec&lt;(OperandLocation, InferVar)&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, S: Specialization&gt; InferCx&lt;<span class="lifetime">&#39;a</span>, S&gt; {
-    <span class="kw">fn </span>new(specializer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Specializer&lt;S&gt;) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, S: Specialization&gt; InferCx&lt;<span class="lifetime">'a</span>, S&gt; {
+    <span class="kw">fn </span>new(specializer: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Specializer&lt;S&gt;) -&gt; <span class="self">Self </span>{
         InferCx {
             specializer,
 
@@ -3343,12 +3351,12 @@
 
 <span class="kw">impl </span>InferOperand {
     <span class="doccomment">/// Construct an `InferOperand` based on whether `operand` refers to some
-    /// &quot;generic&quot; definition, or we&#39;re specializing by it.
+    /// "generic" definition, or we're specializing by it.
     /// Also returns the remaining inference variables, not used by this operand.
     </span><span class="kw">fn </span>from_operand_and_generic_args(
         operand: <span class="kw-2">&amp;</span>Operand,
         generic_args: Range&lt;InferVar&gt;,
-        cx: <span class="kw-2">&amp;</span>InferCx&lt;<span class="lifetime">&#39;_</span>, <span class="kw">impl </span>Specialization&gt;,
+        cx: <span class="kw-2">&amp;</span>InferCx&lt;<span class="lifetime">'_</span>, <span class="kw">impl </span>Specialization&gt;,
     ) -&gt; (<span class="self">Self</span>, Range&lt;InferVar&gt;) {
         <span class="kw">let </span>(needed, generic) = cx.specializer.params_needed_by(operand);
         <span class="kw">let </span>split = InferVar(generic_args.start.<span class="number">0 </span>+ needed);
@@ -3369,28 +3377,28 @@
         )
     }
 
-    <span class="kw">fn </span>display_with_infer_var_values&lt;<span class="lifetime">&#39;a</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-        infer_var_value: <span class="kw">impl </span>Fn(InferVar) -&gt; Value&lt;InferVar&gt; + Copy + <span class="lifetime">&#39;a</span>,
-    ) -&gt; <span class="kw">impl </span>fmt::Display + <span class="lifetime">&#39;_ </span>{
+    <span class="kw">fn </span>display_with_infer_var_values&lt;<span class="lifetime">'a</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        infer_var_value: <span class="kw">impl </span>Fn(InferVar) -&gt; Value&lt;InferVar&gt; + Copy + <span class="lifetime">'a</span>,
+    ) -&gt; <span class="kw">impl </span>fmt::Display + <span class="lifetime">'_ </span>{
         FmtBy(<span class="kw">move </span>|f| {
             <span class="kw">let </span>var_with_value = |v| {
                 FmtBy(<span class="kw">move </span>|f| {
-                    <span class="macro">write!</span>(f, <span class="string">&quot;{v}&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">"{v}"</span>)<span class="question-mark">?</span>;
                     <span class="kw">match </span>infer_var_value(v) {
                         Value::Unknown =&gt; <span class="prelude-val">Ok</span>(()),
-                        Value::Known(o) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot; = {o}&quot;</span>),
-                        Value::SameAs(v) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot; = {v}&quot;</span>),
+                        Value::Known(o) =&gt; <span class="macro">write!</span>(f, <span class="string">" = {o}"</span>),
+                        Value::SameAs(v) =&gt; <span class="macro">write!</span>(f, <span class="string">" = {v}"</span>),
                     }
                 })
             };
             <span class="kw">match </span><span class="self">self </span>{
-                <span class="self">Self</span>::Unknown =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;_&quot;</span>),
-                <span class="self">Self</span>::Var(v) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, var_with_value(<span class="kw-2">*</span>v)),
-                <span class="self">Self</span>::Concrete(o) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{o}&quot;</span>),
+                <span class="self">Self</span>::Unknown =&gt; <span class="macro">write!</span>(f, <span class="string">"_"</span>),
+                <span class="self">Self</span>::Var(v) =&gt; <span class="macro">write!</span>(f, <span class="string">"{}"</span>, var_with_value(<span class="kw-2">*</span>v)),
+                <span class="self">Self</span>::Concrete(o) =&gt; <span class="macro">write!</span>(f, <span class="string">"{o}"</span>),
                 <span class="self">Self</span>::Instance(instance) =&gt; <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;{}&quot;</span>,
+                    <span class="string">"{}"</span>,
                     instance.display(|generic_args| {
                         InferVar::range_iter(generic_args).map(var_with_value)
                     })
@@ -3399,13 +3407,13 @@
         })
     }
 
-    <span class="kw">fn </span>display_with_infer_cx&lt;<span class="lifetime">&#39;a</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-        cx: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>InferCx&lt;<span class="lifetime">&#39;_</span>, <span class="kw">impl </span>Specialization&gt;,
-    ) -&gt; <span class="kw">impl </span>fmt::Display + <span class="lifetime">&#39;_ </span>{
+    <span class="kw">fn </span>display_with_infer_cx&lt;<span class="lifetime">'a</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        cx: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>InferCx&lt;<span class="lifetime">'_</span>, <span class="kw">impl </span>Specialization&gt;,
+    ) -&gt; <span class="kw">impl </span>fmt::Display + <span class="lifetime">'_ </span>{
         <span class="self">self</span>.display_with_infer_var_values(<span class="kw">move </span>|v| {
-            <span class="comment">// HACK(eddyb) can&#39;t use `resolve_infer_var` because that mutates
-            // `InferCx` (for the &quot;path compression&quot; union-find optimization).
+            <span class="comment">// HACK(eddyb) can't use `resolve_infer_var` because that mutates
+            // `InferCx` (for the "path compression" union-find optimization).
             </span><span class="kw">let </span>get = |v: InferVar| cx.infer_var_values[v.<span class="number">0 </span><span class="kw">as </span>usize];
             <span class="kw">let </span><span class="kw-2">mut </span>value = get(v);
             <span class="kw">while let </span>Value::SameAs(v) = value {
@@ -3421,7 +3429,7 @@
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>InferOperand {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="self">self</span>.display_with_infer_var_values(|<span class="kw">_</span>| Value::Unknown)
             .fmt(f)
     }
@@ -3435,15 +3443,15 @@
 </span><span class="kw">enum </span>InferOperandListTransform {
     <span class="doccomment">/// The list is the result of keeping only ID operands, and mapping them to
     /// their types (or `InferOperand::Unknown` for non-value operands, or
-    /// value operands which don&#39;t have a &quot;generic&quot; type).
+    /// value operands which don't have a "generic" type).
     ///
     /// This is used to match against the `inputs` `TyListPat` of `InstSig`.
     </span>TypeOfId,
 }
 
 <span class="attr">#[derive(Clone, PartialEq)]
-</span><span class="kw">struct </span>InferOperandList&lt;<span class="lifetime">&#39;a</span>&gt; {
-    operands: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Operand],
+</span><span class="kw">struct </span>InferOperandList&lt;<span class="lifetime">'a</span>&gt; {
+    operands: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[Operand],
 
     <span class="doccomment">/// Joined ranges of all `InferVar`s needed by individual `Operand`s,
     /// either for `InferOperand::Instance` or `InferOperand::Var`.
@@ -3452,11 +3460,11 @@
     transform: <span class="prelude-ty">Option</span>&lt;InferOperandListTransform&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; InferOperandList&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; InferOperandList&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>split_first(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        cx: <span class="kw-2">&amp;</span>InferCx&lt;<span class="lifetime">&#39;_</span>, <span class="kw">impl </span>Specialization&gt;,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;(InferOperand, InferOperandList&lt;<span class="lifetime">&#39;a</span>&gt;)&gt; {
+        cx: <span class="kw-2">&amp;</span>InferCx&lt;<span class="lifetime">'_</span>, <span class="kw">impl </span>Specialization&gt;,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;(InferOperand, InferOperandList&lt;<span class="lifetime">'a</span>&gt;)&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>list = <span class="self">self</span>.clone();
         <span class="kw">loop </span>{
             <span class="kw">let </span>(first_operand, rest) = list.operands.split_first()<span class="question-mark">?</span>;
@@ -3469,7 +3477,7 @@
             );
             list.all_generic_args = rest_args;
 
-            <span class="comment">// Maybe filter this operand, but only *after* consuming the &quot;generic&quot; args for it.
+            <span class="comment">// Maybe filter this operand, but only *after* consuming the "generic" args for it.
             </span><span class="kw">match </span><span class="self">self</span>.transform {
                 <span class="prelude-val">None </span>=&gt; {}
 
@@ -3499,11 +3507,11 @@
                         <span class="kw">let </span>generic = <span class="kw-2">&amp;</span>cx.specializer.generics[<span class="kw-2">&amp;</span>instance.generic_id];
 
                         <span class="comment">// HACK(eddyb) work around the inexplicable fact that `OpFunction` is
-                        // specified with a *Result Type* that isn&#39;t the type of its *Result*:
+                        // specified with a *Result Type* that isn't the type of its *Result*:
                         // &gt; *Result Type* must be the same as the *Return Type* declared in *Function Type*
                         // So we use *Function Type* instead as the type of its *Result*, and
                         // we are helped by `instantiate_instruction`, which ensures that the
-                        // &quot;generic&quot; args we have are specifically meant for *Function Type*.
+                        // "generic" args we have are specifically meant for *Function Type*.
                         </span><span class="kw">let </span>type_of_result = <span class="kw">match </span>generic.def.class.opcode {
                             Op::Function =&gt; <span class="prelude-val">Some</span>(generic.def.operands[<span class="number">1</span>].unwrap_id_ref()),
                             <span class="kw">_ </span>=&gt; generic.def.result_type,
@@ -3528,12 +3536,12 @@
         }
     }
 
-    <span class="kw">fn </span>iter&lt;<span class="lifetime">&#39;b</span>&gt;(
+    <span class="kw">fn </span>iter&lt;<span class="lifetime">'b</span>&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        cx: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>InferCx&lt;<span class="lifetime">&#39;_</span>, <span class="kw">impl </span>Specialization&gt;,
-    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = InferOperand&gt; + <span class="lifetime">&#39;b
+        cx: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>InferCx&lt;<span class="lifetime">'_</span>, <span class="kw">impl </span>Specialization&gt;,
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = InferOperand&gt; + <span class="lifetime">'b
     </span><span class="kw">where
-        </span><span class="lifetime">&#39;a</span>: <span class="lifetime">&#39;b</span>,
+        </span><span class="lifetime">'a</span>: <span class="lifetime">'b</span>,
     {
         <span class="kw">let </span><span class="kw-2">mut </span>list = <span class="self">self</span>.clone();
         iter::from_fn(<span class="kw">move </span>|| {
@@ -3543,14 +3551,14 @@
         })
     }
 
-    <span class="kw">fn </span>display_with_infer_cx&lt;<span class="lifetime">&#39;b</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span><span class="self">self</span>,
-        cx: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>InferCx&lt;<span class="lifetime">&#39;a</span>, <span class="kw">impl </span>Specialization&gt;,
-    ) -&gt; <span class="kw">impl </span>fmt::Display + <span class="lifetime">&#39;_ </span>{
+    <span class="kw">fn </span>display_with_infer_cx&lt;<span class="lifetime">'b</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'b </span><span class="self">self</span>,
+        cx: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>InferCx&lt;<span class="lifetime">'a</span>, <span class="kw">impl </span>Specialization&gt;,
+    ) -&gt; <span class="kw">impl </span>fmt::Display + <span class="lifetime">'_ </span>{
         FmtBy(<span class="kw">move </span>|f| {
             f.debug_list()
                 .entries(<span class="self">self</span>.iter(cx).map(|operand| {
-                    FmtBy(<span class="kw">move </span>|f| <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, operand.display_with_infer_cx(cx)))
+                    FmtBy(<span class="kw">move </span>|f| <span class="macro">write!</span>(f, <span class="string">"{}"</span>, operand.display_with_infer_cx(cx)))
                 }))
                 .finish()
         })
@@ -3586,18 +3594,18 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, A: smallvec::Array&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>SmallIntMap&lt;A&gt; {
-    <span class="kw">type </span>Item = (usize, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>A::Item);
-    <span class="kw">type </span>IntoIter = iter::Enumerate&lt;slice::IterMut&lt;<span class="lifetime">&#39;a</span>, A::Item&gt;&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, A: smallvec::Array&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>SmallIntMap&lt;A&gt; {
+    <span class="kw">type </span>Item = (usize, <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>A::Item);
+    <span class="kw">type </span>IntoIter = iter::Enumerate&lt;slice::IterMut&lt;<span class="lifetime">'a</span>, A::Item&gt;&gt;;
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
         <span class="self">self</span>.<span class="number">0</span>.iter_mut().enumerate()
     }
 }
 
 <span class="attr">#[derive(PartialEq)]
-</span><span class="kw">struct </span>IndexCompositeMatch&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="doccomment">/// *Indexes* `Operand`s (see `TyPat::IndexComposite`&#39;s doc comment for details).
-    </span>indices: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Operand],
+</span><span class="kw">struct </span>IndexCompositeMatch&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="doccomment">/// *Indexes* `Operand`s (see `TyPat::IndexComposite`'s doc comment for details).
+    </span>indices: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[Operand],
 
     <span class="doccomment">/// The result of indexing the composite type with all `indices`.
     </span>leaf: InferOperand,
@@ -3606,12 +3614,12 @@
 <span class="doccomment">/// Inference success (e.g. type matched type pattern).
 </span><span class="attr">#[must_use]
 #[derive(Default)]
-</span><span class="kw">struct </span>Match&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="doccomment">/// Whether this success isn&#39;t guaranteed, because of missing information
-    /// (such as the defining instructions of non-&quot;generic&quot; types).
+</span><span class="kw">struct </span>Match&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="doccomment">/// Whether this success isn't guaranteed, because of missing information
+    /// (such as the defining instructions of non-"generic" types).
     ///
     /// If there are other alternatives, they will be attempted as well,
-    /// and merged using `Match::or` (if they don&#39;t result in `Unapplicable`).
+    /// and merged using `Match::or` (if they don't result in `Unapplicable`).
     </span>ambiguous: bool,
 
     <span class="comment">// FIXME(eddyb) create some type for these that allows providing common methods
@@ -3626,14 +3634,14 @@
 
     <span class="doccomment">/// `index_composite_found[i][..]` holds all the `InferOperand`s matched by
     /// `TyPat::IndexComposite(TyPat::Var(i))` (currently `i` is always `0`, aka `TyPat::T`).
-    </span>index_composite_ty_var_found: SmallIntMap&lt;[SmallVec&lt;[IndexCompositeMatch&lt;<span class="lifetime">&#39;a</span>&gt;; <span class="number">1</span>]&gt;; <span class="number">1</span>]&gt;,
+    </span>index_composite_ty_var_found: SmallIntMap&lt;[SmallVec&lt;[IndexCompositeMatch&lt;<span class="lifetime">'a</span>&gt;; <span class="number">1</span>]&gt;; <span class="number">1</span>]&gt;,
 
     <span class="doccomment">/// `ty_list_var_found[i][..]` holds all the `InferOperandList`s matched by
     /// `TyListPat::Var(i)` (currently `i` is always `0`, aka `TyListPat::TS`).
-    </span>ty_list_var_found: SmallIntMap&lt;[SmallVec&lt;[InferOperandList&lt;<span class="lifetime">&#39;a</span>&gt;; <span class="number">2</span>]&gt;; <span class="number">1</span>]&gt;,
+    </span>ty_list_var_found: SmallIntMap&lt;[SmallVec&lt;[InferOperandList&lt;<span class="lifetime">'a</span>&gt;; <span class="number">2</span>]&gt;; <span class="number">1</span>]&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Match&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Match&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Combine two `Match`es such that the result implies both of them apply,
     /// i.e. contains the union of their constraints.
     </span><span class="kw">fn </span>and(<span class="kw-2">mut </span><span class="self">self</span>, other: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
@@ -3702,14 +3710,14 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">fn </span>debug_with_infer_cx&lt;<span class="lifetime">&#39;b</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span><span class="self">self</span>,
-        cx: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>InferCx&lt;<span class="lifetime">&#39;a</span>, <span class="kw">impl </span>Specialization&gt;,
-    ) -&gt; <span class="kw">impl </span>fmt::Debug + Captures&lt;<span class="lifetime">&#39;a</span>&gt; + <span class="lifetime">&#39;_ </span>{
-        <span class="kw">fn </span>debug_var_found&lt;<span class="lifetime">&#39;a</span>, A: smallvec::Array&lt;Item = T&gt; + <span class="lifetime">&#39;a</span>, T: <span class="lifetime">&#39;a</span>, TD: fmt::Display&gt;(
-            var_found: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>SmallIntMap&lt;<span class="kw">impl </span>smallvec::Array&lt;Item = SmallVec&lt;A&gt;&gt;&gt;,
-            display: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T) -&gt; TD,
-        ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw">impl </span>fmt::Debug + <span class="lifetime">&#39;a</span>&gt; + <span class="lifetime">&#39;a </span>{
+    <span class="kw">fn </span>debug_with_infer_cx&lt;<span class="lifetime">'b</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'b </span><span class="self">self</span>,
+        cx: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>InferCx&lt;<span class="lifetime">'a</span>, <span class="kw">impl </span>Specialization&gt;,
+    ) -&gt; <span class="kw">impl </span>fmt::Debug + Captures&lt;<span class="lifetime">'a</span>&gt; + <span class="lifetime">'_ </span>{
+        <span class="kw">fn </span>debug_var_found&lt;<span class="lifetime">'a</span>, A: smallvec::Array&lt;Item = T&gt; + <span class="lifetime">'a</span>, T: <span class="lifetime">'a</span>, TD: fmt::Display&gt;(
+            var_found: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>SmallIntMap&lt;<span class="kw">impl </span>smallvec::Array&lt;Item = SmallVec&lt;A&gt;&gt;&gt;,
+            display: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>T) -&gt; TD,
+        ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw">impl </span>fmt::Debug + <span class="lifetime">'a</span>&gt; + <span class="lifetime">'a </span>{
             var_found
                 .<span class="number">0
                 </span>.iter()
@@ -3717,9 +3725,9 @@
                 .map(<span class="kw">move </span>|found| {
                     FmtBy(<span class="kw">move </span>|f| {
                         <span class="kw">let </span><span class="kw-2">mut </span>found = found.iter().map(display);
-                        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, found.next().unwrap())<span class="question-mark">?</span>;
+                        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, found.next().unwrap())<span class="question-mark">?</span>;
                         <span class="kw">for </span>x <span class="kw">in </span>found {
-                            <span class="macro">write!</span>(f, <span class="string">&quot; = {x}&quot;</span>)<span class="question-mark">?</span>;
+                            <span class="macro">write!</span>(f, <span class="string">" = {x}"</span>)<span class="question-mark">?</span>;
                         }
                         <span class="prelude-val">Ok</span>(())
                     })
@@ -3733,7 +3741,7 @@
                 index_composite_ty_var_found,
                 ty_list_var_found,
             } = <span class="self">self</span>;
-            <span class="macro">write!</span>(f, <span class="string">&quot;Match{} &quot;</span>, <span class="kw">if </span><span class="kw-2">*</span>ambiguous { <span class="string">&quot; (ambiguous)&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>})<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"Match{} "</span>, <span class="kw">if </span><span class="kw-2">*</span>ambiguous { <span class="string">" (ambiguous)" </span>} <span class="kw">else </span>{ <span class="string">"" </span>})<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>list = f.debug_list();
             list.entries(debug_var_found(storage_class_var_found, <span class="kw-2">&amp;</span><span class="kw">move </span>|operand| {
                 operand.display_with_infer_cx(cx)
@@ -3752,18 +3760,18 @@
                         FmtBy(<span class="kw">move </span>|f| {
                             <span class="kw">match </span>ty_var_found.get(i) {
                                 <span class="prelude-val">Some</span>(found) <span class="kw">if </span>found.len() == <span class="number">1 </span>=&gt; {
-                                    <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, found[<span class="number">0</span>].display_with_infer_cx(cx))<span class="question-mark">?</span>;
+                                    <span class="macro">write!</span>(f, <span class="string">"{}"</span>, found[<span class="number">0</span>].display_with_infer_cx(cx))<span class="question-mark">?</span>;
                                 }
                                 found =&gt; {
                                     <span class="kw">let </span>found = found.map_or(<span class="kw-2">&amp;</span>[][..], |xs| <span class="kw-2">&amp;</span>xs[..]);
-                                    <span class="macro">write!</span>(f, <span class="string">&quot;(&quot;</span>)<span class="question-mark">?</span>;
+                                    <span class="macro">write!</span>(f, <span class="string">"("</span>)<span class="question-mark">?</span>;
                                     <span class="kw">for </span>(j, operand) <span class="kw">in </span>found.iter().enumerate() {
                                         <span class="kw">if </span>j != <span class="number">0 </span>{
-                                            <span class="macro">write!</span>(f, <span class="string">&quot; = &quot;</span>)<span class="question-mark">?</span>;
+                                            <span class="macro">write!</span>(f, <span class="string">" = "</span>)<span class="question-mark">?</span>;
                                         }
-                                        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, operand.display_with_infer_cx(cx))<span class="question-mark">?</span>;
+                                        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, operand.display_with_infer_cx(cx))<span class="question-mark">?</span>;
                                     }
-                                    <span class="macro">write!</span>(f, <span class="string">&quot;)&quot;</span>)<span class="question-mark">?</span>;
+                                    <span class="macro">write!</span>(f, <span class="string">")"</span>)<span class="question-mark">?</span>;
                                 }
                             }
                             <span class="kw">for </span>operand <span class="kw">in </span><span class="kw-2">&amp;</span>indices[..] {
@@ -3775,11 +3783,11 @@
                                     <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                                 };
                                 <span class="kw">match </span>maybe_idx {
-                                    <span class="prelude-val">Some</span>(idx) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;.{idx}&quot;</span>)<span class="question-mark">?</span>,
-                                    <span class="prelude-val">None </span>=&gt; <span class="macro">write!</span>(f, <span class="string">&quot;[{operand}]&quot;</span>)<span class="question-mark">?</span>,
+                                    <span class="prelude-val">Some</span>(idx) =&gt; <span class="macro">write!</span>(f, <span class="string">".{idx}"</span>)<span class="question-mark">?</span>,
+                                    <span class="prelude-val">None </span>=&gt; <span class="macro">write!</span>(f, <span class="string">"[{operand}]"</span>)<span class="question-mark">?</span>,
                                 }
                             }
-                            <span class="macro">write!</span>(f, <span class="string">&quot; = {}&quot;</span>, leaf.display_with_infer_cx(cx))
+                            <span class="macro">write!</span>(f, <span class="string">" = {}"</span>, leaf.display_with_infer_cx(cx))
                         })
                     }),
             );
@@ -3791,17 +3799,17 @@
     }
 }
 
-<span class="doccomment">/// Pattern-matching failure, returned by `match_*` when the pattern doesn&#39;t apply.
+<span class="doccomment">/// Pattern-matching failure, returned by `match_*` when the pattern doesn't apply.
 </span><span class="kw">struct </span>Unapplicable;
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, S: Specialization&gt; InferCx&lt;<span class="lifetime">&#39;a</span>, S&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, S: Specialization&gt; InferCx&lt;<span class="lifetime">'a</span>, S&gt; {
     <span class="doccomment">/// Match `storage_class` against `pat`, returning a `Match` with found `Var`s.
     </span><span class="attr">#[allow(clippy::unused_self)] </span><span class="comment">// TODO: remove?
     </span><span class="kw">fn </span>match_storage_class_pat(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         pat: <span class="kw-2">&amp;</span>StorageClassPat,
         storage_class: InferOperand,
-    ) -&gt; Match&lt;<span class="lifetime">&#39;a</span>&gt; {
+    ) -&gt; Match&lt;<span class="lifetime">'a</span>&gt; {
         <span class="kw">match </span>pat {
             StorageClassPat::Any =&gt; Match::default(),
             StorageClassPat::Var(i) =&gt; {
@@ -3815,7 +3823,7 @@
     }
 
     <span class="doccomment">/// Match `ty` against `pat`, returning a `Match` with found `Var`s.
-    </span><span class="kw">fn </span>match_ty_pat(<span class="kw-2">&amp;</span><span class="self">self</span>, pat: <span class="kw-2">&amp;</span>TyPat&lt;<span class="lifetime">&#39;_</span>&gt;, ty: InferOperand) -&gt; <span class="prelude-ty">Result</span>&lt;Match&lt;<span class="lifetime">&#39;a</span>&gt;, Unapplicable&gt; {
+    </span><span class="kw">fn </span>match_ty_pat(<span class="kw-2">&amp;</span><span class="self">self</span>, pat: <span class="kw-2">&amp;</span>TyPat&lt;<span class="lifetime">'_</span>&gt;, ty: InferOperand) -&gt; <span class="prelude-ty">Result</span>&lt;Match&lt;<span class="lifetime">'a</span>&gt;, Unapplicable&gt; {
         <span class="kw">match </span>pat {
             TyPat::Any =&gt; <span class="prelude-val">Ok</span>(Match::default()),
             TyPat::Var(i) =&gt; {
@@ -3838,7 +3846,7 @@
                         IndexCompositeMatch {
                             <span class="comment">// HACK(eddyb) leave empty `indices` in here for
                             // `match_inst_sig` to fill in, as it has access
-                            // to the whole `Instruction` but we don&#39;t.
+                            // to the whole `Instruction` but we don't.
                             </span>indices: <span class="kw-2">&amp;</span>[],
                             leaf: ty,
                         },
@@ -3846,8 +3854,8 @@
                     <span class="prelude-val">Ok</span>(m)
                 }
                 <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(
-                    <span class="string">&quot;`IndexComposite({:?})` isn&#39;t supported, only type variable
-                     patterns are (for the composite type), e.g. `IndexComposite(T)`&quot;</span>,
+                    <span class="string">"`IndexComposite({:?})` isn't supported, only type variable
+                     patterns are (for the composite type), e.g. `IndexComposite(T)`"</span>,
                     composite_pat
                 ),
             },
@@ -3881,8 +3889,8 @@
                         <span class="macro">unreachable!</span>()
                     }
 
-                    <span class="comment">// HACK(eddyb) `TyPat::Void` can&#39;t be observed because it&#39;s
-                    // not &quot;generic&quot;, so it would return early as ambiguous.
+                    <span class="comment">// HACK(eddyb) `TyPat::Void` can't be observed because it's
+                    // not "generic", so it would return early as ambiguous.
                     </span>TyPat::Void =&gt; <span class="macro">unreachable!</span>(),
 
                     TyPat::Pointer(storage_class_pat, pointee_pat) =&gt; {
@@ -3930,9 +3938,9 @@
     <span class="doccomment">/// Match `ty_list` against `pat`, returning a `Match` with found `Var`s.
     </span><span class="kw">fn </span>match_ty_list_pat(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        <span class="kw-2">mut </span>list_pat: <span class="kw-2">&amp;</span>TyListPat&lt;<span class="lifetime">&#39;_</span>&gt;,
-        <span class="kw-2">mut </span>ty_list: InferOperandList&lt;<span class="lifetime">&#39;a</span>&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Match&lt;<span class="lifetime">&#39;a</span>&gt;, Unapplicable&gt; {
+        <span class="kw-2">mut </span>list_pat: <span class="kw-2">&amp;</span>TyListPat&lt;<span class="lifetime">'_</span>&gt;,
+        <span class="kw-2">mut </span>ty_list: InferOperandList&lt;<span class="lifetime">'a</span>&gt;,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Match&lt;<span class="lifetime">'a</span>&gt;, Unapplicable&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>m = Match::default();
 
         <span class="kw">while let </span>TyListPat::Cons { first: pat, suffix } = list_pat {
@@ -3975,15 +3983,15 @@
         <span class="prelude-val">Ok</span>(m)
     }
 
-    <span class="doccomment">/// Match `inst`&#39;s input operands (with `inputs_generic_args` as &quot;generic&quot; args),
+    <span class="doccomment">/// Match `inst`'s input operands (with `inputs_generic_args` as "generic" args),
     /// and `result_type`, against `sig`, returning a `Match` with found `Var`s.
     </span><span class="kw">fn </span>match_inst_sig(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        sig: <span class="kw-2">&amp;</span>InstSig&lt;<span class="lifetime">&#39;_</span>&gt;,
-        inst: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Instruction,
+        sig: <span class="kw-2">&amp;</span>InstSig&lt;<span class="lifetime">'_</span>&gt;,
+        inst: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Instruction,
         inputs_generic_args: Range&lt;InferVar&gt;,
         result_type: <span class="prelude-ty">Option</span>&lt;InferOperand&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Match&lt;<span class="lifetime">&#39;a</span>&gt;, Unapplicable&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Match&lt;<span class="lifetime">'a</span>&gt;, Unapplicable&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>m = Match::default();
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pat) = sig.storage_class {
@@ -4034,7 +4042,7 @@
                 <span class="macro">assert_eq!</span>(
                     list_pat,
                     <span class="kw-2">&amp;</span>TyListPat::Any,
-                    <span class="string">&quot;`IndexComposite` must have input types end in `..`&quot;
+                    <span class="string">"`IndexComposite` must have input types end in `..`"
                 </span>);
 
                 <span class="comment">// Extract the underlying remaining `operands` - while iterating on
@@ -4056,15 +4064,15 @@
         <span class="prelude-val">Ok</span>(m)
     }
 
-    <span class="doccomment">/// Match `inst`&#39;s input operands (with `inputs_generic_args` as &quot;generic&quot; args),
+    <span class="doccomment">/// Match `inst`'s input operands (with `inputs_generic_args` as "generic" args),
     /// and `result_type`, against `sigs`, returning a `Match` with found `Var`s.
     </span><span class="kw">fn </span>match_inst_sigs(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        sigs: <span class="kw-2">&amp;</span>[InstSig&lt;<span class="lifetime">&#39;_</span>&gt;],
-        inst: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Instruction,
+        sigs: <span class="kw-2">&amp;</span>[InstSig&lt;<span class="lifetime">'_</span>&gt;],
+        inst: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Instruction,
         inputs_generic_args: Range&lt;InferVar&gt;,
         result_type: <span class="prelude-ty">Option</span>&lt;InferOperand&gt;,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Match&lt;<span class="lifetime">&#39;a</span>&gt;, Unapplicable&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Match&lt;<span class="lifetime">'a</span>&gt;, Unapplicable&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="prelude-val">Err</span>(Unapplicable);
         <span class="kw">for </span>sig <span class="kw">in </span>sigs {
             result = <span class="kw">match </span>(
@@ -4092,22 +4100,22 @@
         <span class="comment">// FIXME(eddyb) better error reporting than this.
         </span><span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Conflict(a, b) =&gt; {
-                <span class="macro">eprintln!</span>(<span class="string">&quot;inference conflict: {a:?} vs {b:?}&quot;</span>);
+                <span class="macro">eprintln!</span>(<span class="string">"inference conflict: {a:?} vs {b:?}"</span>);
             }
         }
-        <span class="macro">eprint!</span>(<span class="string">&quot;    in &quot;</span>);
+        <span class="macro">eprint!</span>(<span class="string">"    in "</span>);
         <span class="comment">// FIXME(eddyb) deduplicate this with other instruction printing logic.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(result_id) = inst.result_id {
-            <span class="macro">eprint!</span>(<span class="string">&quot;%{result_id} = &quot;</span>);
+            <span class="macro">eprint!</span>(<span class="string">"%{result_id} = "</span>);
         }
-        <span class="macro">eprint!</span>(<span class="string">&quot;Op{:?}&quot;</span>, inst.class.opcode);
+        <span class="macro">eprint!</span>(<span class="string">"Op{:?}"</span>, inst.class.opcode);
         <span class="kw">for </span>operand <span class="kw">in </span>inst
             .result_type
             .map(Operand::IdRef)
             .iter()
             .chain(inst.operands.iter())
         {
-            <span class="macro">eprint!</span>(<span class="string">&quot; {operand}&quot;</span>);
+            <span class="macro">eprint!</span>(<span class="string">" {operand}"</span>);
         }
         <span class="macro">eprintln!</span>();
 
@@ -4115,9 +4123,9 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, S: Specialization&gt; InferCx&lt;<span class="lifetime">&#39;a</span>, S&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, S: Specialization&gt; InferCx&lt;<span class="lifetime">'a</span>, S&gt; {
     <span class="doccomment">/// Traverse `SameAs` chains starting at `x` and return the first `InferVar`
-    /// that isn&#39;t `SameAs` (i.e. that is `Unknown` or `Known`).
+    /// that isn't `SameAs` (i.e. that is `Unknown` or `Known`).
     /// This corresponds to `find(v)` from union-find.
     </span><span class="kw">fn </span>resolve_infer_var(<span class="kw-2">&amp;mut </span><span class="self">self</span>, v: InferVar) -&gt; InferVar {
         <span class="kw">match </span><span class="self">self</span>.infer_var_values[v.<span class="number">0 </span><span class="kw">as </span>usize] {
@@ -4126,7 +4134,7 @@
                 <span class="kw">let </span>resolved = <span class="self">self</span>.resolve_infer_var(next);
                 <span class="kw">if </span>resolved != next {
                     <span class="comment">// Update the `SameAs` entry for faster lookup next time
-                    // (also known as &quot;path compression&quot; in union-find).
+                    // (also known as "path compression" in union-find).
                     </span><span class="self">self</span>.infer_var_values[v.<span class="number">0 </span><span class="kw">as </span>usize] = Value::SameAs(resolved);
                 }
                 resolved
@@ -4143,7 +4151,7 @@
             <span class="kw">return </span><span class="prelude-val">Ok</span>(a);
         }
 
-        <span class="comment">// Maintain the invariant that &quot;newer&quot; variables are redirected to &quot;older&quot; ones.
+        <span class="comment">// Maintain the invariant that "newer" variables are redirected to "older" ones.
         </span><span class="kw">let </span>(older, newer) = (a.min(b), a.max(b));
         <span class="kw">let </span>newer_value = mem::replace(
             <span class="kw-2">&amp;mut </span><span class="self">self</span>.infer_var_values[newer.<span class="number">0 </span><span class="kw">as </span>usize],
@@ -4190,8 +4198,8 @@
             <span class="self">self</span>.equate_infer_vars(a, b)<span class="question-mark">?</span>;
         }
 
-        <span class="comment">// Pick the &quot;oldest&quot; range to maintain the invariant that &quot;newer&quot; variables
-        // are redirected to &quot;older&quot; ones, while keeping a contiguous range
+        <span class="comment">// Pick the "oldest" range to maintain the invariant that "newer" variables
+        // are redirected to "older" ones, while keeping a contiguous range
         // (instead of splitting it into individual variables), for performance.
         </span><span class="prelude-val">Ok</span>(<span class="kw">if </span>a.start &lt; b.start { a } <span class="kw">else </span>{ b })
     }
@@ -4208,7 +4216,7 @@
 
         <span class="attr">#[allow(clippy::match_same_arms)]
         </span><span class="prelude-val">Ok</span>(<span class="kw">match </span>(a.clone(), b.clone()) {
-            <span class="comment">// Instances of &quot;generic&quot; globals/functions must be of the same ID,
+            <span class="comment">// Instances of "generic" globals/functions must be of the same ID,
             // and their `generic_args` inference variables must be unified.
             </span>(
                 InferOperand::Instance(Instance {
@@ -4229,7 +4237,7 @@
                 })
             }
 
-            <span class="comment">// Instances of &quot;generic&quot; globals/functions can never equal anything else.
+            <span class="comment">// Instances of "generic" globals/functions can never equal anything else.
             </span>(InferOperand::Instance(<span class="kw">_</span>), <span class="kw">_</span>) | (<span class="kw">_</span>, InferOperand::Instance(<span class="kw">_</span>)) =&gt; {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(InferError::Conflict(a, b));
             }
@@ -4273,7 +4281,7 @@
         })
     }
 
-    <span class="doccomment">/// Compute the result (&quot;leaf&quot;) type for a `TyPat::IndexComposite` pattern,
+    <span class="doccomment">/// Compute the result ("leaf") type for a `TyPat::IndexComposite` pattern,
     /// by applying each index in `indices` to `composite_ty`, extracting the
     /// element type (for `OpType{Array,RuntimeArray,Vector,Matrix}`), or the
     /// field type for `OpTypeStruct`, where `indices` contains the field index.
@@ -4300,15 +4308,15 @@
                 Op::TypeStruct =&gt; <span class="kw">match </span>idx {
                     Operand::IdRef(id) =&gt; {
                         <span class="kw-2">*</span><span class="self">self</span>.specializer.int_consts.get(id).unwrap_or_else(|| {
-                            <span class="macro">unreachable!</span>(<span class="string">&quot;non-constant `OpTypeStruct` field index {}&quot;</span>, id);
+                            <span class="macro">unreachable!</span>(<span class="string">"non-constant `OpTypeStruct` field index {}"</span>, id);
                         })
                     }
                     <span class="kw-2">&amp;</span>Operand::LiteralInt32(i) =&gt; i,
                     <span class="kw">_ </span>=&gt; {
-                        <span class="macro">unreachable!</span>(<span class="string">&quot;invalid `OpTypeStruct` field index operand {:?}&quot;</span>, idx);
+                        <span class="macro">unreachable!</span>(<span class="string">"invalid `OpTypeStruct` field index operand {:?}"</span>, idx);
                     }
                 },
-                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;indexing non-composite type `Op{:?}`&quot;</span>, ty_opcode),
+                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">"indexing non-composite type `Op{:?}`"</span>, ty_opcode),
             };
 
             ty = ty_operands
@@ -4316,7 +4324,7 @@
                 .nth(ty_operands_idx <span class="kw">as </span>usize)
                 .unwrap_or_else(|| {
                     <span class="macro">unreachable!</span>(
-                        <span class="string">&quot;out of bounds index {} for `Op{:?}`&quot;</span>,
+                        <span class="string">"out of bounds index {} for `Op{:?}`"</span>,
                         ty_operands_idx, ty_opcode
                     );
                 });
@@ -4326,7 +4334,7 @@
 
     <span class="doccomment">/// Enforce that all the `InferOperand`/`InferOperandList`s found for the
     /// same pattern variable (i.e. `*Pat::Var(i)` with the same `i`), are equal.
-    </span><span class="kw">fn </span>equate_match_findings(<span class="kw-2">&amp;mut </span><span class="self">self</span>, m: Match&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), InferError&gt; {
+    </span><span class="kw">fn </span>equate_match_findings(<span class="kw-2">&amp;mut </span><span class="self">self</span>, m: Match&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), InferError&gt; {
         <span class="kw">let </span>Match {
             ambiguous: <span class="kw">_</span>,
 
@@ -4348,8 +4356,8 @@
             <span class="kw">if let </span><span class="prelude-val">Some</span>(first) = found.next() {
                 <span class="kw">let </span>equated_ty = found.try_fold(first, |a, b| <span class="self">self</span>.equate_infer_operands(a, b))<span class="question-mark">?</span>;
 
-                <span class="comment">// Apply any `IndexComposite(Var(i))`&#39;s indices to `equated_ty`,
-                // and equate the resulting &quot;leaf&quot; type with the found &quot;leaf&quot; type.
+                <span class="comment">// Apply any `IndexComposite(Var(i))`'s indices to `equated_ty`,
+                // and equate the resulting "leaf" type with the found "leaf" type.
                 </span><span class="kw">let </span>index_composite_found = index_composite_ty_var_found
                     .get(i)
                     .map_or(<span class="kw-2">&amp;</span>[][..], |xs| <span class="kw-2">&amp;</span>xs[..]);
@@ -4362,7 +4370,7 @@
 
         <span class="kw">for </span>(<span class="kw">_</span>, <span class="kw-2">mut </span>found) <span class="kw">in </span>ty_list_var_found {
             <span class="kw">if let </span><span class="prelude-val">Some</span>((first_list, other_lists)) = found.split_first_mut() {
-                <span class="comment">// Advance all the lists in lock-step so that we don&#39;t have to
+                <span class="comment">// Advance all the lists in lock-step so that we don't have to
                 // allocate state proportional to list length and/or `found.len()`.
                 </span><span class="kw">while let </span><span class="prelude-val">Some</span>((first, rest)) = first_list.split_first(<span class="self">self</span>) {
                     <span class="kw-2">*</span>first_list = rest;
@@ -4370,7 +4378,7 @@
                     other_lists.iter_mut().try_fold(first, |a, b_list| {
                         <span class="kw">let </span>(b, rest) = b_list
                             .split_first(<span class="self">self</span>)
-                            .expect(<span class="string">&quot;list length mismatch (invalid SPIR-V?)&quot;</span>);
+                            .expect(<span class="string">"list length mismatch (invalid SPIR-V?)"</span>);
                         <span class="kw-2">*</span>b_list = rest;
                         <span class="self">self</span>.equate_infer_operands(a, b)
                     })<span class="question-mark">?</span>;
@@ -4379,7 +4387,7 @@
                 <span class="kw">for </span>other_list <span class="kw">in </span>other_lists {
                     <span class="macro">assert!</span>(
                         other_list.split_first(<span class="self">self</span>).is_none(),
-                        <span class="string">&quot;list length mismatch (invalid SPIR-V?)&quot;
+                        <span class="string">"list length mismatch (invalid SPIR-V?)"
                     </span>);
                 }
             }
@@ -4402,20 +4410,20 @@
         }
     }
 
-    <span class="doccomment">/// Instantiate all of `inst`&#39;s operands (and *Result Type*) that refer to
-    /// &quot;generic&quot; globals/functions, or we need to specialize by, with fresh
+    <span class="doccomment">/// Instantiate all of `inst`'s operands (and *Result Type*) that refer to
+    /// "generic" globals/functions, or we need to specialize by, with fresh
     /// inference variables, and enforce any inference constraints applicable.
-    </span><span class="kw">fn </span>instantiate_instruction(<span class="kw-2">&amp;mut </span><span class="self">self</span>, inst: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Instruction, inst_loc: InstructionLocation) {
+    </span><span class="kw">fn </span>instantiate_instruction(<span class="kw-2">&amp;mut </span><span class="self">self</span>, inst: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Instruction, inst_loc: InstructionLocation) {
         <span class="kw">let </span><span class="kw-2">mut </span>all_generic_args = {
             <span class="kw">let </span>next_infer_var = InferVar(<span class="self">self</span>.infer_var_values.len().try_into().unwrap());
             next_infer_var..next_infer_var
         };
 
         <span class="comment">// HACK(eddyb) work around the inexplicable fact that `OpFunction` is
-        // specified with a *Result Type* that isn&#39;t the type of its *Result*:
+        // specified with a *Result Type* that isn't the type of its *Result*:
         // &gt; *Result Type* must be the same as the *Return Type* declared in *Function Type*
-        // Specifically, we don&#39;t instantiate *Result Type* (to avoid ending
-        // up with redundant `InferVar`s), and instead overlap its &quot;generic&quot; args
+        // Specifically, we don't instantiate *Result Type* (to avoid ending
+        // up with redundant `InferVar`s), and instead overlap its "generic" args
         // with that of the *Function Type*, for `instantiations.
         </span><span class="kw">let </span>(instantiate_result_type, record_fn_ret_ty, type_of_result) = <span class="kw">match </span>inst.class.opcode {
             Op::Function =&gt; (
@@ -4453,7 +4461,7 @@
                 <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
             };
 
-            <span class="comment">// Initialize the new inference variables (for `operand`&#39;s &quot;generic&quot; args)
+            <span class="comment">// Initialize the new inference variables (for `operand`'s "generic" args)
             // with either `generic.param_values` (if present) or all `Unknown`s.
             </span><span class="kw">match </span>generic {
                 <span class="prelude-val">Some</span>(Generic {
@@ -4537,15 +4545,15 @@
                 };
 
                 <span class="kw">if </span>inst_loc != InstructionLocation::Module {
-                    <span class="macro">eprint!</span>(<span class="string">&quot;    &quot;</span>);
+                    <span class="macro">eprint!</span>(<span class="string">"    "</span>);
                 }
-                <span class="macro">eprint!</span>(<span class="string">&quot;{prefix}&quot;</span>);
+                <span class="macro">eprint!</span>(<span class="string">"{prefix}"</span>);
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(result_id) = inst.result_id {
-                    <span class="macro">eprint!</span>(<span class="string">&quot;%{result_id} = &quot;</span>);
+                    <span class="macro">eprint!</span>(<span class="string">"%{result_id} = "</span>);
                 }
-                <span class="macro">eprint!</span>(<span class="string">&quot;Op{:?}&quot;</span>, inst.class.opcode);
+                <span class="macro">eprint!</span>(<span class="string">"Op{:?}"</span>, inst.class.opcode);
                 <span class="kw">for </span>operand <span class="kw">in </span>result_type.into_iter().chain(inputs.iter(cx)) {
-                    <span class="macro">eprint!</span>(<span class="string">&quot; {}&quot;</span>, operand.display_with_infer_cx(cx));
+                    <span class="macro">eprint!</span>(<span class="string">" {}"</span>, operand.display_with_infer_cx(cx));
                 }
                 <span class="macro">eprintln!</span>();
             }
@@ -4554,10 +4562,10 @@
         <span class="comment">// If we have some instruction signatures for `inst`, enforce them.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(sigs) = spirv_type_constraints::instruction_signatures(inst.class.opcode) {
             <span class="comment">// HACK(eddyb) workaround for `OpFunction`, see earlier HACK commment.
-            // (specifically, `type_of_result` isn&#39;t *Result Type* for `OpFunction`)
+            // (specifically, `type_of_result` isn't *Result Type* for `OpFunction`)
             </span><span class="macro">assert_ne!</span>(inst.class.opcode, Op::Function);
 
-            debug_dump_if_enabled(<span class="self">self</span>, <span class="string">&quot; -&gt; &quot;</span>);
+            debug_dump_if_enabled(<span class="self">self</span>, <span class="string">" -&gt; "</span>);
 
             <span class="kw">let </span>m = <span class="kw">match </span><span class="self">self</span>.match_inst_sigs(
                 sigs,
@@ -4567,31 +4575,31 @@
             ) {
                 <span class="prelude-val">Ok</span>(m) =&gt; m,
 
-                <span class="comment">// While this could be an user error *in theory*, we haven&#39;t really
+                <span class="comment">// While this could be an user error *in theory*, we haven't really
                 // unified any of the `InferOperand`s found by pattern match variables,
                 // at this point, so the only the possible error case is that `inst`
-                // doesn&#39;t match the *shapes* specified in `sigs`, i.e. this is likely
+                // doesn't match the *shapes* specified in `sigs`, i.e. this is likely
                 // a bug in `spirv_type_constraints`, not some kind of inference conflict.
                 </span><span class="prelude-val">Err</span>(Unapplicable) =&gt; <span class="macro">unreachable!</span>(
-                    <span class="string">&quot;spirv_type_constraints(Op{:?}) = `{:?}` doesn&#39;t match `{:?}`&quot;</span>,
+                    <span class="string">"spirv_type_constraints(Op{:?}) = `{:?}` doesn't match `{:?}`"</span>,
                     inst.class.opcode, sigs, inst
                 ),
             };
 
             <span class="kw">if </span><span class="self">self</span>.specializer.debug {
                 <span class="kw">if </span>inst_loc != InstructionLocation::Module {
-                    <span class="macro">eprint!</span>(<span class="string">&quot;    &quot;</span>);
+                    <span class="macro">eprint!</span>(<span class="string">"    "</span>);
                 }
-                <span class="macro">eprintln!</span>(<span class="string">&quot;    found {:?}&quot;</span>, m.debug_with_infer_cx(<span class="self">self</span>));
+                <span class="macro">eprintln!</span>(<span class="string">"    found {:?}"</span>, m.debug_with_infer_cx(<span class="self">self</span>));
             }
 
             <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.equate_match_findings(m) {
                 e.report(inst);
             }
 
-            debug_dump_if_enabled(<span class="self">self</span>, <span class="string">&quot; &lt;- &quot;</span>);
+            debug_dump_if_enabled(<span class="self">self</span>, <span class="string">" &lt;- "</span>);
         } <span class="kw">else </span>{
-            debug_dump_if_enabled(<span class="self">self</span>, <span class="string">&quot;&quot;</span>);
+            debug_dump_if_enabled(<span class="self">self</span>, <span class="string">""</span>);
         }
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(type_of_result) = type_of_result {
@@ -4607,31 +4615,31 @@
         }
     }
 
-    <span class="doccomment">/// Instantiate `func`&#39;s definition and all instructions in its body,
+    <span class="doccomment">/// Instantiate `func`'s definition and all instructions in its body,
     /// effectively performing inference across the entire function body.
-    </span><span class="kw">fn </span>instantiate_function(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Function) {
+    </span><span class="kw">fn </span>instantiate_function(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Function) {
         <span class="kw">let </span>func_id = func.def_id().unwrap();
 
         <span class="kw">if </span><span class="self">self</span>.specializer.debug {
             <span class="macro">eprintln!</span>();
-            <span class="macro">eprint!</span>(<span class="string">&quot;specializer::instantiate_function(%{func_id}&quot;</span>);
+            <span class="macro">eprint!</span>(<span class="string">"specializer::instantiate_function(%{func_id}"</span>);
             <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = <span class="self">self</span>.specializer.debug_names.get(<span class="kw-2">&amp;</span>func_id) {
-                <span class="macro">eprint!</span>(<span class="string">&quot; {name}&quot;</span>);
+                <span class="macro">eprint!</span>(<span class="string">" {name}"</span>);
             }
-            <span class="macro">eprintln!</span>(<span class="string">&quot;):&quot;</span>);
+            <span class="macro">eprintln!</span>(<span class="string">"):"</span>);
         }
 
         <span class="comment">// Instantiate the defining `OpFunction` first, so that the first
         // inference variables match the parameters from the `Generic`
-        // (if the `OpTypeFunction` is &quot;generic&quot;, that is).
+        // (if the `OpTypeFunction` is "generic", that is).
         </span><span class="macro">assert!</span>(<span class="self">self</span>.infer_var_values.is_empty());
         <span class="self">self</span>.instantiate_instruction(func.def.as_ref().unwrap(), InstructionLocation::Module);
 
         <span class="kw">if </span><span class="self">self</span>.specializer.debug {
-            <span class="macro">eprintln!</span>(<span class="string">&quot;infer body {{&quot;</span>);
+            <span class="macro">eprintln!</span>(<span class="string">"infer body {{"</span>);
         }
 
-        <span class="comment">// If the `OpTypeFunction` is indeed &quot;generic&quot;, we have to extract the
+        <span class="comment">// If the `OpTypeFunction` is indeed "generic", we have to extract the
         // return / parameter types for `OpReturnValue` and `OpFunctionParameter`.
         </span><span class="kw">let </span>ret_ty = <span class="kw">match </span><span class="self">self</span>.type_of_result.get(<span class="kw-2">&amp;</span>func_id).cloned() {
             <span class="prelude-val">Some</span>(InferOperand::Instance(instance)) =&gt; {
@@ -4656,7 +4664,7 @@
 
                     <span class="kw">if </span><span class="self">self</span>.specializer.debug {
                         <span class="macro">eprintln!</span>(
-                            <span class="string">&quot;    %{} = Op{:?} {}&quot;</span>,
+                            <span class="string">"    %{} = Op{:?} {}"</span>,
                             param.result_id.unwrap(),
                             param.class.opcode,
                             param_ty.display_with_infer_cx(<span class="self">self</span>)
@@ -4688,7 +4696,7 @@
 
         <span class="kw">for </span>(block_idx, block) <span class="kw">in </span>func.blocks.iter().enumerate() {
             <span class="kw">for </span>(inst_idx, inst) <span class="kw">in </span>block.instructions.iter().enumerate() {
-                <span class="comment">// Manually handle `OpReturnValue`/`OpReturn` because there&#39;s no
+                <span class="comment">// Manually handle `OpReturnValue`/`OpReturn` because there's no
                 // way to inject `ret_ty` into `spirv_type_constraints` rules.
                 </span><span class="kw">match </span>inst.class.opcode {
                     Op::ReturnValue =&gt; {
@@ -4717,9 +4725,9 @@
         }
 
         <span class="kw">if </span><span class="self">self</span>.specializer.debug {
-            <span class="macro">eprint!</span>(<span class="string">&quot;}}&quot;</span>);
+            <span class="macro">eprint!</span>(<span class="string">"}}"</span>);
             <span class="kw">if let </span><span class="prelude-val">Some</span>(func_ty) = <span class="self">self</span>.type_of_result.get(<span class="kw-2">&amp;</span>func_id) {
-                <span class="macro">eprint!</span>(<span class="string">&quot; -&gt; %{}: {}&quot;</span>, func_id, func_ty.display_with_infer_cx(<span class="self">self</span>));
+                <span class="macro">eprint!</span>(<span class="string">" -&gt; %{}: {}"</span>, func_id, func_ty.display_with_infer_cx(<span class="self">self</span>));
             }
             <span class="macro">eprintln!</span>();
         }
@@ -4791,29 +4799,29 @@
 }
 
 <span class="comment">// HACK(eddyb) this state could live in `Specializer` except for the fact that
-// it&#39;s commonly mutated at the same time as parts of `Specializer` are read,
+// it's commonly mutated at the same time as parts of `Specializer` are read,
 // and in particular this arrangement allows calling `&amp;mut self` methods on
 // `Expander` while (immutably) iterating over data inside the `Specializer`.
-</span><span class="kw">struct </span>Expander&lt;<span class="lifetime">&#39;a</span>, S: Specialization&gt; {
-    specializer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Specializer&lt;S&gt;,
+</span><span class="kw">struct </span>Expander&lt;<span class="lifetime">'a</span>, S: Specialization&gt; {
+    specializer: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Specializer&lt;S&gt;,
 
     builder: Builder,
 
-    <span class="doccomment">/// All the instances of &quot;generic&quot; globals/functions that need to be expanded,
+    <span class="doccomment">/// All the instances of "generic" globals/functions that need to be expanded,
     /// and their cached IDs (which are allocated as-needed, before expansion).
     </span><span class="comment">// NOTE(eddyb) this relies on `BTreeMap` so that `all_instances_of` can use
     // `BTreeMap::range` to get all `Instances` that share a certain ID.
     // FIXME(eddyb) fine-tune the length of `SmallVec&lt;[_; 4]&gt;` here.
     </span>instances: BTreeMap&lt;Instance&lt;SmallVec&lt;[CopyOperand; <span class="number">4</span>]&gt;&gt;, Word&gt;,
 
-    <span class="doccomment">/// Instances of &quot;generic&quot; globals/functions that have yet to have had their
+    <span class="doccomment">/// Instances of "generic" globals/functions that have yet to have had their
     /// own `replacements` analyzed in order to fully collect all instances.
     </span><span class="comment">// FIXME(eddyb) fine-tune the length of `SmallVec&lt;[_; 4]&gt;` here.
     </span>propagate_instances_queue: VecDeque&lt;Instance&lt;SmallVec&lt;[CopyOperand; <span class="number">4</span>]&gt;&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, S: Specialization&gt; Expander&lt;<span class="lifetime">&#39;a</span>, S&gt; {
-    <span class="kw">fn </span>new(specializer: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Specializer&lt;S&gt;, module: Module) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, S: Specialization&gt; Expander&lt;<span class="lifetime">'a</span>, S&gt; {
+    <span class="kw">fn </span>new(specializer: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Specializer&lt;S&gt;, module: Module) -&gt; <span class="self">Self </span>{
         Expander {
             specializer,
 
@@ -4831,7 +4839,7 @@
     </span><span class="kw">fn </span>all_instances_of(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         generic_id: Word,
-    ) -&gt; std::collections::btree_map::Range&lt;<span class="lifetime">&#39;_</span>, Instance&lt;SmallVec&lt;[CopyOperand; <span class="number">4</span>]&gt;&gt;, Word&gt; {
+    ) -&gt; std::collections::btree_map::Range&lt;<span class="lifetime">'_</span>, Instance&lt;SmallVec&lt;[CopyOperand; <span class="number">4</span>]&gt;&gt;, Word&gt; {
         <span class="kw">let </span>first_instance_of = |generic_id| Instance {
             generic_id,
             generic_args: SmallVec::new(),
@@ -4875,12 +4883,12 @@
         }
     }
 
-    <span class="doccomment">/// Expand every &quot;generic&quot; global/function, and `OpName`/decorations applied
+    <span class="doccomment">/// Expand every "generic" global/function, and `OpName`/decorations applied
     /// to them, to their respective full set of instances, treating the original
-    /// &quot;generic&quot; definition and its inferred `Replacements` as a template.
+    /// "generic" definition and its inferred `Replacements` as a template.
     </span><span class="kw">fn </span>expand_module(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; Module {
         <span class="comment">// From here on out we assume all instances are known, so ensure there
-        // aren&#39;t any left unpropagated.
+        // aren't any left unpropagated.
         </span><span class="self">self</span>.propagate_instances();
 
         <span class="comment">// HACK(eddyb) steal `Vec`s so that we can still call methods on `self` below.
@@ -4897,7 +4905,7 @@
             <span class="kw">let </span>func_id = inst.operands[<span class="number">1</span>].unwrap_id_ref();
             <span class="macro">assert!</span>(
                 !<span class="self">self</span>.specializer.generics.contains_key(<span class="kw-2">&amp;</span>func_id),
-                <span class="string">&quot;entry-point %{func_id} shouldn&#39;t be \&quot;generic\&quot;&quot;
+                <span class="string">"entry-point %{func_id} shouldn't be \"generic\""
             </span>);
 
             <span class="kw">for </span>interface_operand <span class="kw">in </span><span class="kw-2">&amp;mut </span>inst.operands[<span class="number">3</span>..] {
@@ -4905,13 +4913,13 @@
                 <span class="kw">let </span><span class="kw-2">mut </span>instances = <span class="self">self</span>.all_instances_of(interface_id);
                 <span class="kw">match </span>(instances.next(), instances.next()) {
                     (<span class="prelude-val">None</span>, <span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(
-                        <span class="string">&quot;entry-point %{} has overly-\&quot;generic\&quot; \
-                         interface variable %{}, with no instances&quot;</span>,
+                        <span class="string">"entry-point %{} has overly-\"generic\" \
+                         interface variable %{}, with no instances"</span>,
                         func_id, interface_id
                     ),
                     (<span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="prelude-val">Some</span>(<span class="kw">_</span>)) =&gt; <span class="macro">unreachable!</span>(
-                        <span class="string">&quot;entry-point %{} has overly-\&quot;generic\&quot; \
-                         interface variable %{}, with too many instances: {:?}&quot;</span>,
+                        <span class="string">"entry-point %{} has overly-\"generic\" \
+                         interface variable %{}, with too many instances: {:?}"</span>,
                         func_id,
                         interface_id,
                         FmtBy(|f| f
@@ -4919,7 +4927,7 @@
                             .entries(<span class="self">self</span>.all_instances_of(interface_id).map(
                                 |(instance, <span class="kw">_</span>)| FmtBy(<span class="kw">move </span>|f| <span class="macro">write!</span>(
                                     f,
-                                    <span class="string">&quot;{}&quot;</span>,
+                                    <span class="string">"{}"</span>,
                                     instance.display(|generic_args| generic_args.iter().copied())
                                 ))
                             ))
@@ -4935,7 +4943,7 @@
         <span class="comment">// FIXME(eddyb) bucket `instances` into global vs function, and count
         // annotations separately, so that we can know exact capacities below.
 
-        // Expand `Op* %target ...` when `target` is &quot;generic&quot;.
+        // Expand `Op* %target ...` when `target` is "generic".
         </span><span class="kw">let </span>expand_debug_or_annotation = |insts: Vec&lt;Instruction&gt;| {
             <span class="kw">let </span><span class="kw-2">mut </span>expanded_insts = Vec::with_capacity(insts.len().next_power_of_two());
             <span class="kw">for </span>inst <span class="kw">in </span>insts {
@@ -4956,13 +4964,13 @@
             expanded_insts
         };
 
-        <span class="comment">// Expand `Op(Member)Name %target ...` when `target` is &quot;generic&quot;.
+        <span class="comment">// Expand `Op(Member)Name %target ...` when `target` is "generic".
         </span><span class="kw">let </span>expanded_debug_names = expand_debug_or_annotation(debug_names);
 
-        <span class="comment">// Expand `Op(Member)Decorate* %target ...`, when `target` is &quot;generic&quot;.
+        <span class="comment">// Expand `Op(Member)Decorate* %target ...`, when `target` is "generic".
         </span><span class="kw">let </span><span class="kw-2">mut </span>expanded_annotations = expand_debug_or_annotation(annotations);
 
-        <span class="comment">// Expand &quot;generic&quot; globals (types, constants and module-scoped variables).
+        <span class="comment">// Expand "generic" globals (types, constants and module-scoped variables).
         </span><span class="kw">let </span><span class="kw-2">mut </span>expanded_types_global_values =
             Vec::with_capacity(types_global_values.len().next_power_of_two());
         <span class="kw">for </span>inst <span class="kw">in </span>types_global_values {
@@ -4987,7 +4995,7 @@
             expanded_types_global_values.push(inst);
         }
 
-        <span class="comment">// Expand &quot;generic&quot; functions.
+        <span class="comment">// Expand "generic" functions.
         </span><span class="kw">let </span><span class="kw-2">mut </span>expanded_functions = Vec::with_capacity(functions.len().next_power_of_two());
         <span class="kw">for </span>func <span class="kw">in </span>functions {
             <span class="kw">let </span>func_id = func.def_id().unwrap();
@@ -5011,7 +5019,7 @@
                 // to avoid conflicts between all the expanded copies.
                 // While some passes (such as inlining) may handle IDs reuse
                 // between different function bodies (mostly because they do
-                // their own renumbering), it&#39;s better not to tempt fate here.
+                // their own renumbering), it's better not to tempt fate here.
                 // FIXME(eddyb) use compact IDs for more efficient renumbering.
                 </span><span class="kw">let </span>newly_expanded_functions =
                     <span class="kw-2">&amp;mut </span>expanded_functions[old_expanded_functions_len..];
@@ -5027,7 +5035,7 @@
                             <span class="kw">let </span>old_id = param.result_id.unwrap();
                             <span class="kw">let </span>new_id = <span class="self">self</span>.builder.id();
 
-                            <span class="comment">// HACK(eddyb) this is only needed because we&#39;re using
+                            <span class="comment">// HACK(eddyb) this is only needed because we're using
                             // `apply_rewrite_rules` and that only works on `Block`s,
                             // it should be generalized to handle `Function`s too.
                             </span>param.result_id = <span class="prelude-val">Some</span>(new_id);
@@ -5063,7 +5071,7 @@
             expanded_functions.push(func);
         }
 
-        <span class="comment">// No new instances should&#39;ve been found during expansion - they would&#39;ve
+        <span class="comment">// No new instances should've been found during expansion - they would've
         // panicked while attempting to get `self.instances[&amp;instance]` anyway.
         </span><span class="macro">assert!</span>(<span class="self">self</span>.propagate_instances_queue.is_empty());
 
@@ -5078,18 +5086,18 @@
     }
 
     <span class="kw">fn </span>dump_instances(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>io::Write) -&gt; io::Result&lt;()&gt; {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;; All specializer \&quot;generic\&quot;s and their instances:&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"; All specializer \"generic\"s and their instances:"</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
         <span class="comment">// FIXME(eddyb) maybe dump (transitive) dependencies? could use a def-use graph.
         </span><span class="kw">for </span>(<span class="kw-2">&amp;</span>generic_id, generic) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.specializer.generics {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = <span class="self">self</span>.specializer.debug_names.get(<span class="kw-2">&amp;</span>generic_id) {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;; {name}&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"; {name}"</span>)<span class="question-mark">?</span>;
             }
 
             <span class="macro">write!</span>(
                 w,
-                <span class="string">&quot;{} = Op{:?}&quot;</span>,
+                <span class="string">"{} = Op{:?}"</span>,
                 Instance {
                     generic_id,
                     generic_args: Param(<span class="number">0</span>)..Param(generic.param_count)
@@ -5105,7 +5113,7 @@
                 .iter()
                 .chain(generic.def.operands.iter())
             {
-                <span class="macro">write!</span>(w, <span class="string">&quot; &quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(w, <span class="string">" "</span>)<span class="question-mark">?</span>;
                 <span class="kw">let </span>(needed, used_generic) = <span class="self">self</span>.specializer.params_needed_by(operand);
                 <span class="kw">let </span>params = next_param..Param(next_param.<span class="number">0 </span>+ needed);
 
@@ -5117,7 +5125,7 @@
                 <span class="kw">if </span>used_generic.is_some() {
                     <span class="macro">write!</span>(
                         w,
-                        <span class="string">&quot;{}&quot;</span>,
+                        <span class="string">"{}"</span>,
                         Instance {
                             generic_id: operand.unwrap_id_ref(),
                             generic_args: params
@@ -5125,21 +5133,21 @@
                         .display(Param::range_iter)
                     )<span class="question-mark">?</span>;
                 } <span class="kw">else if </span>needed == <span class="number">1 </span>{
-                    <span class="macro">write!</span>(w, <span class="string">&quot;{}&quot;</span>, params.start)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(w, <span class="string">"{}"</span>, params.start)<span class="question-mark">?</span>;
                 } <span class="kw">else </span>{
-                    <span class="macro">write!</span>(w, <span class="string">&quot;{operand}&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(w, <span class="string">"{operand}"</span>)<span class="question-mark">?</span>;
                 }
             }
             <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
             <span class="kw">if let </span><span class="prelude-val">Some</span>(param_values) = <span class="kw-2">&amp;</span>generic.param_values {
-                <span class="macro">write!</span>(w, <span class="string">&quot;        where&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(w, <span class="string">"        where"</span>)<span class="question-mark">?</span>;
                 <span class="kw">for </span>(i, v) <span class="kw">in </span>param_values.iter().enumerate() {
                     <span class="kw">let </span>p = Param(i <span class="kw">as </span>u32);
                     <span class="kw">match </span>v {
                         Value::Unknown =&gt; {}
-                        Value::Known(o) =&gt; <span class="macro">write!</span>(w, <span class="string">&quot; {p} = {o},&quot;</span>)<span class="question-mark">?</span>,
-                        Value::SameAs(q) =&gt; <span class="macro">write!</span>(w, <span class="string">&quot; {p} = {q},&quot;</span>)<span class="question-mark">?</span>,
+                        Value::Known(o) =&gt; <span class="macro">write!</span>(w, <span class="string">" {p} = {o},"</span>)<span class="question-mark">?</span>,
+                        Value::SameAs(q) =&gt; <span class="macro">write!</span>(w, <span class="string">" {p} = {q},"</span>)<span class="question-mark">?</span>,
                     }
                 }
                 <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
@@ -5149,7 +5157,7 @@
                 <span class="macro">assert_eq!</span>(instance.generic_id, generic_id);
                 <span class="macro">writeln!</span>(
                     w,
-                    <span class="string">&quot;    %{} = {}&quot;</span>,
+                    <span class="string">"    %{} = {}"</span>,
                     instance_id,
                     instance.display(|generic_args| generic_args.iter().copied())
                 )<span class="question-mark">?</span>;

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.30/src/backend/libc/c.rs`."><title>c.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../rustix/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.37/src/backend/libc/c.rs`."><title>c.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../rustix/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -466,134 +466,168 @@
 <a href="#466" id="466">466</a>
 <a href="#467" id="467">467</a>
 <a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Libc and supplemental types and constants.
 
 </span><span class="attr">#![allow(unused_imports)]
 
-</span><span class="comment">// Import everything from libc, but we&#39;ll add some stuff and override some
+</span><span class="comment">// Import everything from libc, but we'll add some stuff and override some
 // things below.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>libc::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// `PROC_SUPER_MAGIC`—The magic number for the procfs filesystem.
-</span><span class="attr">#[cfg(all(linux_kernel, target_env = <span class="string">&quot;musl&quot;</span>))]
+</span><span class="attr">#[cfg(all(linux_kernel, target_env = <span class="string">"musl"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>PROC_SUPER_MAGIC: u32 = <span class="number">0x0000_9fa0</span>;
 
 <span class="doccomment">/// `NFS_SUPER_MAGIC`—The magic number for the NFS filesystem.
-</span><span class="attr">#[cfg(all(linux_kernel, target_env = <span class="string">&quot;musl&quot;</span>))]
+</span><span class="attr">#[cfg(all(linux_kernel, target_env = <span class="string">"musl"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>NFS_SUPER_MAGIC: u32 = <span class="number">0x0000_6969</span>;
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;process&quot;</span>)]
-#[cfg(not(any(target_os = <span class="string">&quot;espidf&quot;</span>, target_os = <span class="string">&quot;wasi&quot;</span>)))]
+<span class="attr">#[cfg(feature = <span class="string">"process"</span>)]
+#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"wasi"</span>)))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>EXIT_SIGNALED_SIGABRT: c_int = <span class="number">128 </span>+ SIGABRT <span class="kw">as </span>c_int;
 
 <span class="comment">// TODO: Upstream these.
-</span><span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+</span><span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_TSN: c_int = linux_raw_sys::if_ether::ETH_P_TSN <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_ERSPAN2: c_int = linux_raw_sys::if_ether::ETH_P_ERSPAN2 <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_ERSPAN: c_int = linux_raw_sys::if_ether::ETH_P_ERSPAN <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_PROFINET: c_int = linux_raw_sys::if_ether::ETH_P_PROFINET <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_REALTEK: c_int = linux_raw_sys::if_ether::ETH_P_REALTEK <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_ETHERCAT: c_int = linux_raw_sys::if_ether::ETH_P_ETHERCAT <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_PREAUTH: c_int = linux_raw_sys::if_ether::ETH_P_PREAUTH <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_LLDP: c_int = linux_raw_sys::if_ether::ETH_P_LLDP <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_MRP: c_int = linux_raw_sys::if_ether::ETH_P_MRP <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_NCSI: c_int = linux_raw_sys::if_ether::ETH_P_NCSI <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_CFM: c_int = linux_raw_sys::if_ether::ETH_P_CFM <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_IBOE: c_int = linux_raw_sys::if_ether::ETH_P_IBOE <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_HSR: c_int = linux_raw_sys::if_ether::ETH_P_HSR <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_NSH: c_int = linux_raw_sys::if_ether::ETH_P_NSH <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_DSA_8021Q: c_int = linux_raw_sys::if_ether::ETH_P_DSA_8021Q <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_DSA_A5PSW: c_int = linux_raw_sys::if_ether::ETH_P_DSA_A5PSW <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_IFE: c_int = linux_raw_sys::if_ether::ETH_P_IFE <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_CAN: c_int = linux_raw_sys::if_ether::ETH_P_CAN <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_CANXL: c_int = linux_raw_sys::if_ether::ETH_P_CANXL <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_XDSA: c_int = linux_raw_sys::if_ether::ETH_P_XDSA <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_MAP: c_int = linux_raw_sys::if_ether::ETH_P_MAP <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;net&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"net"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ETH_P_MCTP: c_int = linux_raw_sys::if_ether::ETH_P_MCTP <span class="kw">as _</span>;
 
 <span class="attr">#[cfg(all(
     linux_kernel,
     any(
-        target_arch = <span class="string">&quot;mips&quot;</span>,
-        target_arch = <span class="string">&quot;mips32r6&quot;</span>,
-        target_arch = <span class="string">&quot;mips64&quot;</span>,
-        target_arch = <span class="string">&quot;mips64r6&quot;</span>,
-        target_arch = <span class="string">&quot;sparc&quot;</span>,
-        target_arch = <span class="string">&quot;sparc64&quot;
+        target_arch = <span class="string">"mips"</span>,
+        target_arch = <span class="string">"mips32r6"</span>,
+        target_arch = <span class="string">"mips64"</span>,
+        target_arch = <span class="string">"mips64r6"</span>,
+        target_arch = <span class="string">"sparc"</span>,
+        target_arch = <span class="string">"sparc64"
     </span>)
 ))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>SIGEMT: c_int = linux_raw_sys::general::SIGEMT <span class="kw">as _</span>;
 
 <span class="comment">// TODO: Upstream these.
-</span><span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;termios&quot;</span>))]
+</span><span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"termios"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>IUCLC: tcflag_t = linux_raw_sys::general::IUCLC <span class="kw">as _</span>;
-<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">&quot;termios&quot;</span>))]
+<span class="attr">#[cfg(all(linux_kernel, feature = <span class="string">"termios"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>XCASE: tcflag_t = linux_raw_sys::general::XCASE <span class="kw">as _</span>;
 
-<span class="attr">#[cfg(target_os = <span class="string">&quot;aix&quot;</span>)]
+<span class="attr">#[cfg(target_os = <span class="string">"aix"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MSG_DONTWAIT: c_int = libc::MSG_NONBLOCK;
 
-<span class="comment">// TODO: Remove once https://github.com/rust-lang/libc/pull/3377 is merged and released.
-</span><span class="attr">#[cfg(target_os = <span class="string">&quot;netbsd&quot;</span>)]
-#[cfg(feature = <span class="string">&quot;net&quot;</span>)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>SO_NOSIGPIPE: c_int = <span class="number">0x0800</span>;
+<span class="comment">// `O_LARGEFILE` can be automatically set by the kernel on Linux:
+// &lt;https://github.com/torvalds/linux/blob/v6.7/fs/open.c#L1458-L1459&gt;
+// so libc implementations may leave it undefined or defined to zero.
+</span><span class="attr">#[cfg(linux_kernel)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>O_LARGEFILE: c_int = linux_raw_sys::general::O_LARGEFILE <span class="kw">as _</span>;
+
+<span class="comment">// Gated under `_LARGEFILE_SOURCE` but automatically set by the kernel.
+// &lt;https://github.com/illumos/illumos-gate/blob/fb2cb638e5604b214d8ea8d4f01ad2e77b437c17/usr/src/ucbhead/sys/fcntl.h#L64&gt;
+</span><span class="attr">#[cfg(target_os = <span class="string">"illumos"</span>)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>O_LARGEFILE: c_int = <span class="number">0x2000</span>;
+
+<span class="comment">// TODO: This is new in Linux 6.11; remove when linux-raw-sys is updated.
+</span><span class="attr">#[cfg(linux_kernel)]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MAP_DROPPABLE: u32 = <span class="number">0x8</span>;
 
 <span class="comment">// On PowerPC, the regular `termios` has the `termios2` fields and there is no
-// `termios2`. linux-raw-sys has aliases `termios2` to `termios` to cover this
-// difference, but we still need to manually import it since `libc` doesn&#39;t
-// have this.
+// `termios2`, so we define aliases.
 </span><span class="attr">#[cfg(all(
     linux_kernel,
-    feature = <span class="string">&quot;termios&quot;</span>,
-    any(target_arch = <span class="string">&quot;powerpc&quot;</span>, target_arch = <span class="string">&quot;powerpc64&quot;</span>)
+    feature = <span class="string">"termios"</span>,
+    any(target_arch = <span class="string">"powerpc"</span>, target_arch = <span class="string">"powerpc64"</span>)
 ))]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>{
-    linux_raw_sys::general::{termios2, CIBAUD},
-    linux_raw_sys::ioctl::{TCGETS2, TCSETS2, TCSETSF2, TCSETSW2},
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>libc::{
+    termios <span class="kw">as </span>termios2, TCGETS <span class="kw">as </span>TCGETS2, TCSETS <span class="kw">as </span>TCSETS2, TCSETSF <span class="kw">as </span>TCSETSF2,
+    TCSETSW <span class="kw">as </span>TCSETSW2,
 };
+
+<span class="comment">// And PowerPC doesn't define `CIBAUD`, but it does define `IBSHIFT`, so we can
+// compute `CIBAUD` ourselves.
+</span><span class="attr">#[cfg(all(
+    linux_kernel,
+    feature = <span class="string">"termios"</span>,
+    any(target_arch = <span class="string">"powerpc"</span>, target_arch = <span class="string">"powerpc64"</span>)
+))]
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>CIBAUD: u32 = libc::CBAUD &lt;&lt; libc::IBSHIFT;
 
 <span class="comment">// Automatically enable “large file” support (LFS) features.
 
-</span><span class="attr">#[cfg(target_os = <span class="string">&quot;vxworks&quot;</span>)]
+</span><span class="attr">#[cfg(target_os = <span class="string">"vxworks"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>libc::_Vx_ticks64_t <span class="kw">as </span>_Vx_ticks_t;
 <span class="attr">#[cfg(linux_kernel)]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>libc::fallocate64 <span class="kw">as </span>fallocate;
-<span class="attr">#[cfg(not(any(target_arch = <span class="string">&quot;aarch64&quot;</span>, target_arch = <span class="string">&quot;riscv64&quot;</span>)))]
-#[cfg(any(linux_like, target_os = <span class="string">&quot;aix&quot;</span>))]
+<span class="attr">#[cfg(not(any(target_arch = <span class="string">"aarch64"</span>, target_arch = <span class="string">"riscv64"</span>)))]
+#[cfg(any(linux_like, target_os = <span class="string">"aix"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>libc::open64 <span class="kw">as </span>open;
 <span class="attr">#[cfg(any(
     linux_kernel,
-    target_os = <span class="string">&quot;aix&quot;</span>,
-    target_os = <span class="string">&quot;hurd&quot;</span>,
-    target_os = <span class="string">&quot;l4re&quot;
+    target_os = <span class="string">"aix"</span>,
+    target_os = <span class="string">"hurd"</span>,
+    target_os = <span class="string">"l4re"
 </span>))]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>libc::posix_fallocate64 <span class="kw">as </span>posix_fallocate;
-<span class="attr">#[cfg(any(all(linux_like, not(target_os = <span class="string">&quot;android&quot;</span>)), target_os = <span class="string">&quot;aix&quot;</span>))]
+<span class="attr">#[cfg(any(all(linux_like, not(target_os = <span class="string">"android"</span>)), target_os = <span class="string">"aix"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>libc::{blkcnt64_t <span class="kw">as </span>blkcnt_t, rlim64_t <span class="kw">as </span>rlim_t};
 <span class="comment">// TODO: AIX has `stat64x`, `fstat64x`, `lstat64x`, and `stat64xat`; add them
-// to the upstream libc crate and implement rustix&#39;s `statat` etc. with them.
-</span><span class="attr">#[cfg(target_os = <span class="string">&quot;aix&quot;</span>)]
+// to the upstream libc crate and implement rustix's `statat` etc. with them.
+</span><span class="attr">#[cfg(target_os = <span class="string">"aix"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>libc::{
     blksize64_t <span class="kw">as </span>blksize_t, fstat64 <span class="kw">as </span>fstat, fstatfs64 <span class="kw">as </span>fstatfs, fstatvfs64 <span class="kw">as </span>fstatvfs,
     ftruncate64 <span class="kw">as </span>ftruncate, getrlimit64 <span class="kw">as </span>getrlimit, ino_t, lseek64 <span class="kw">as </span>lseek, mmap,
@@ -601,7 +635,7 @@
     rlimit64 <span class="kw">as </span>rlimit, setrlimit64 <span class="kw">as </span>setrlimit, stat64at <span class="kw">as </span>fstatat, statfs64 <span class="kw">as </span>statfs,
     statvfs64 <span class="kw">as </span>statvfs, RLIM_INFINITY,
 };
-<span class="attr">#[cfg(any(linux_like, target_os = <span class="string">&quot;hurd&quot;</span>))]
+<span class="attr">#[cfg(any(linux_like, target_os = <span class="string">"hurd"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>libc::{
     fstat64 <span class="kw">as </span>fstat, fstatat64 <span class="kw">as </span>fstatat, fstatfs64 <span class="kw">as </span>fstatfs, fstatvfs64 <span class="kw">as </span>fstatvfs,
     ftruncate64 <span class="kw">as </span>ftruncate, getrlimit64 <span class="kw">as </span>getrlimit, ino64_t <span class="kw">as </span>ino_t, lseek64 <span class="kw">as </span>lseek,
@@ -617,32 +651,32 @@
 <span class="attr">#[cfg(not(all(
     linux_kernel,
     any(
-        target_pointer_width = <span class="string">&quot;32&quot;</span>,
-        target_arch = <span class="string">&quot;mips64&quot;</span>,
-        target_arch = <span class="string">&quot;mips64r6&quot;
+        target_pointer_width = <span class="string">"32"</span>,
+        target_arch = <span class="string">"mips64"</span>,
+        target_arch = <span class="string">"mips64r6"
     </span>)
 )))]
-#[cfg(any(linux_like, target_os = <span class="string">&quot;aix&quot;</span>, target_os = <span class="string">&quot;hurd&quot;</span>))]
+#[cfg(any(linux_like, target_os = <span class="string">"aix"</span>, target_os = <span class="string">"hurd"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>libc::{lstat64 <span class="kw">as </span>lstat, stat64 <span class="kw">as </span>stat};
 <span class="attr">#[cfg(any(
     linux_kernel,
-    target_os = <span class="string">&quot;aix&quot;</span>,
-    target_os = <span class="string">&quot;hurd&quot;</span>,
-    target_os = <span class="string">&quot;emscripten&quot;
+    target_os = <span class="string">"aix"</span>,
+    target_os = <span class="string">"hurd"</span>,
+    target_os = <span class="string">"emscripten"
 </span>))]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>libc::{pread64 <span class="kw">as </span>pread, pwrite64 <span class="kw">as </span>pwrite};
-<span class="attr">#[cfg(any(target_os = <span class="string">&quot;linux&quot;</span>, target_os = <span class="string">&quot;hurd&quot;</span>, target_os = <span class="string">&quot;emscripten&quot;</span>))]
+<span class="attr">#[cfg(any(target_os = <span class="string">"linux"</span>, target_os = <span class="string">"hurd"</span>, target_os = <span class="string">"emscripten"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>libc::{preadv64 <span class="kw">as </span>preadv, pwritev64 <span class="kw">as </span>pwritev};
 
-<span class="attr">#[cfg(all(target_os = <span class="string">&quot;linux&quot;</span>, any(target_env = <span class="string">&quot;gnu&quot;</span>, target_env = <span class="string">&quot;uclibc&quot;</span>)))]
+<span class="attr">#[cfg(all(target_os = <span class="string">"linux"</span>, any(target_env = <span class="string">"gnu"</span>, target_env = <span class="string">"uclibc"</span>)))]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>prlimit(
     pid: libc::pid_t,
     resource: libc::__rlimit_resource_t,
     new_limit: <span class="kw-2">*const </span>libc::rlimit64,
     old_limit: <span class="kw-2">*mut </span>libc::rlimit64,
 ) -&gt; libc::c_int {
-    <span class="comment">// `prlimit64` wasn&#39;t supported in glibc until 2.13.
-    </span><span class="macro">weak_or_syscall! </span>{
+    <span class="comment">// `prlimit64` wasn't supported in glibc until 2.13.
+    </span><span class="macro">weak_or_syscall!</span> {
         <span class="kw">fn </span>prlimit64(
             pid: libc::pid_t,
             resource: libc::__rlimit_resource_t,
@@ -654,14 +688,14 @@
     prlimit64(pid, resource, new_limit, old_limit)
 }
 
-<span class="attr">#[cfg(all(target_os = <span class="string">&quot;linux&quot;</span>, target_env = <span class="string">&quot;musl&quot;</span>))]
+<span class="attr">#[cfg(all(target_os = <span class="string">"linux"</span>, target_env = <span class="string">"musl"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>prlimit(
     pid: libc::pid_t,
     resource: libc::c_int,
     new_limit: <span class="kw-2">*const </span>libc::rlimit64,
     old_limit: <span class="kw-2">*mut </span>libc::rlimit64,
 ) -&gt; libc::c_int {
-    <span class="macro">weak_or_syscall! </span>{
+    <span class="macro">weak_or_syscall!</span> {
         <span class="kw">fn </span>prlimit64(
             pid: libc::pid_t,
             resource: libc::c_int,
@@ -673,14 +707,14 @@
     prlimit64(pid, resource, new_limit, old_limit)
 }
 
-<span class="attr">#[cfg(target_os = <span class="string">&quot;android&quot;</span>)]
+<span class="attr">#[cfg(target_os = <span class="string">"android"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">unsafe fn </span>prlimit(
     pid: libc::pid_t,
     resource: libc::c_int,
     new_limit: <span class="kw-2">*const </span>libc::rlimit64,
     old_limit: <span class="kw-2">*mut </span>libc::rlimit64,
 ) -&gt; libc::c_int {
-    <span class="macro">weak_or_syscall! </span>{
+    <span class="macro">weak_or_syscall!</span> {
         <span class="kw">fn </span>prlimit64(
             pid: libc::pid_t,
             resource: libc::c_int,
@@ -692,7 +726,7 @@
     prlimit64(pid, resource, new_limit, old_limit)
 }
 
-<span class="attr">#[cfg(target_os = <span class="string">&quot;android&quot;</span>)]
+<span class="attr">#[cfg(target_os = <span class="string">"android"</span>)]
 </span><span class="kw">mod </span>readwrite_pv64 {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -703,18 +737,18 @@
         offset: libc::off64_t,
     ) -&gt; libc::ssize_t {
         <span class="comment">// Older Android libc lacks `preadv64`, so use the `weak!` mechanism to
-        // test for it, and call back to `libc::syscall`. We don&#39;t use
+        // test for it, and call back to `libc::syscall`. We don't use
         // `weak_or_syscall` here because we need to pass the 64-bit offset
         // specially.
-        </span><span class="macro">weak! </span>{
+        </span><span class="macro">weak!</span> {
             <span class="kw">fn </span>preadv64(libc::c_int, <span class="kw-2">*const </span>libc::iovec, libc::c_int, libc::off64_t) -&gt; libc::ssize_t
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(fun) = preadv64.get() {
             fun(fd, iov, iovcnt, offset)
         } <span class="kw">else </span>{
-            <span class="comment">// Unlike the plain &quot;p&quot; functions, the &quot;pv&quot; functions pass their
+            <span class="comment">// Unlike the plain "p" functions, the "pv" functions pass their
             // offset in an endian-independent way, and always in two registers.
-            </span><span class="macro">syscall! </span>{
+            </span><span class="macro">syscall!</span> {
                 <span class="kw">fn </span>preadv(
                     fd: libc::c_int,
                     iov: <span class="kw-2">*const </span>libc::iovec,
@@ -733,15 +767,15 @@
         offset: libc::off64_t,
     ) -&gt; libc::ssize_t {
         <span class="comment">// See the comments in `preadv64`.
-        </span><span class="macro">weak! </span>{
+        </span><span class="macro">weak!</span> {
             <span class="kw">fn </span>pwritev64(libc::c_int, <span class="kw-2">*const </span>libc::iovec, libc::c_int, libc::off64_t) -&gt; libc::ssize_t
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(fun) = pwritev64.get() {
             fun(fd, iov, iovcnt, offset)
         } <span class="kw">else </span>{
-            <span class="comment">// Unlike the plain &quot;p&quot; functions, the &quot;pv&quot; functions pass their
+            <span class="comment">// Unlike the plain "p" functions, the "pv" functions pass their
             // offset in an endian-independent way, and always in two registers.
-            </span><span class="macro">syscall! </span>{
+            </span><span class="macro">syscall!</span> {
                 <span class="kw">fn </span>pwritev(
                     fd: libc::c_int,
                     iov: <span class="kw-2">*const </span>libc::iovec,
@@ -754,13 +788,13 @@
         }
     }
 }
-<span class="attr">#[cfg(target_os = <span class="string">&quot;android&quot;</span>)]
+<span class="attr">#[cfg(target_os = <span class="string">"android"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>readwrite_pv64::{preadv64 <span class="kw">as </span>preadv, pwritev64 <span class="kw">as </span>pwritev};
 
 <span class="comment">// macOS added `preadv` and `pwritev` in version 11.0.
 </span><span class="attr">#[cfg(apple)]
 </span><span class="kw">mod </span>readwrite_pv {
-    <span class="macro">weakcall! </span>{
+    <span class="macro">weakcall!</span> {
         <span class="kw">pub</span>(<span class="kw">in </span><span class="kw">super</span>::<span class="kw">super</span>) <span class="kw">fn </span>preadv(
             fd: libc::c_int,
             iov: <span class="kw-2">*const </span>libc::iovec,
@@ -768,7 +802,7 @@
             offset: libc::off_t
         ) -&gt; libc::ssize_t
     }
-    <span class="macro">weakcall! </span>{
+    <span class="macro">weakcall!</span> {
         <span class="kw">pub</span>(<span class="kw">in </span><span class="kw">super</span>::<span class="kw">super</span>) <span class="kw">fn </span>pwritev(
             fd: libc::c_int,
             iov: <span class="kw-2">*const </span>libc::iovec,
@@ -780,7 +814,7 @@
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>readwrite_pv::{preadv, pwritev};
 
 <span class="comment">// glibc added `preadv64v2` and `pwritev64v2` in version 2.26.
-</span><span class="attr">#[cfg(all(target_os = <span class="string">&quot;linux&quot;</span>, target_env = <span class="string">&quot;gnu&quot;</span>))]
+</span><span class="attr">#[cfg(all(target_os = <span class="string">"linux"</span>, target_env = <span class="string">"gnu"</span>))]
 </span><span class="kw">mod </span>readwrite_pv64v2 {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
@@ -792,18 +826,18 @@
         flags: libc::c_int,
     ) -&gt; libc::ssize_t {
         <span class="comment">// Older glibc lacks `preadv64v2`, so use the `weak!` mechanism to
-        // test for it, and call back to `libc::syscall`. We don&#39;t use
+        // test for it, and call back to `libc::syscall`. We don't use
         // `weak_or_syscall` here because we need to pass the 64-bit offset
         // specially.
-        </span><span class="macro">weak! </span>{
+        </span><span class="macro">weak!</span> {
             <span class="kw">fn </span>preadv64v2(libc::c_int, <span class="kw-2">*const </span>libc::iovec, libc::c_int, libc::off64_t, libc::c_int) -&gt; libc::ssize_t
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(fun) = preadv64v2.get() {
             fun(fd, iov, iovcnt, offset, flags)
         } <span class="kw">else </span>{
-            <span class="comment">// Unlike the plain &quot;p&quot; functions, the &quot;pv&quot; functions pass their
+            <span class="comment">// Unlike the plain "p" functions, the "pv" functions pass their
             // offset in an endian-independent way, and always in two registers.
-            </span><span class="macro">syscall! </span>{
+            </span><span class="macro">syscall!</span> {
                 <span class="kw">fn </span>preadv2(
                     fd: libc::c_int,
                     iov: <span class="kw-2">*const </span>libc::iovec,
@@ -831,15 +865,15 @@
         flags: libc::c_int,
     ) -&gt; libc::ssize_t {
         <span class="comment">// See the comments in `preadv64v2`.
-        </span><span class="macro">weak! </span>{
+        </span><span class="macro">weak!</span> {
             <span class="kw">fn </span>pwritev64v2(libc::c_int, <span class="kw-2">*const </span>libc::iovec, libc::c_int, libc::off64_t, libc::c_int) -&gt; libc::ssize_t
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(fun) = pwritev64v2.get() {
             fun(fd, iov, iovcnt, offset, flags)
         } <span class="kw">else </span>{
-            <span class="comment">// Unlike the plain &quot;p&quot; functions, the &quot;pv&quot; functions pass their
+            <span class="comment">// Unlike the plain "p" functions, the "pv" functions pass their
             // offset in an endian-independent way, and always in two registers.
-            </span><span class="macro">syscall! </span>{
+            </span><span class="macro">syscall!</span> {
                 <span class="kw">fn </span>pwritev2(
                     fd: libc::c_int,
                     iov: <span class="kw-2">*const </span>libc::iovec,
@@ -860,14 +894,14 @@
         }
     }
 }
-<span class="attr">#[cfg(all(target_os = <span class="string">&quot;linux&quot;</span>, target_env = <span class="string">&quot;gnu&quot;</span>))]
+<span class="attr">#[cfg(all(target_os = <span class="string">"linux"</span>, target_env = <span class="string">"gnu"</span>))]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>readwrite_pv64v2::{preadv64v2 <span class="kw">as </span>preadv2, pwritev64v2 <span class="kw">as </span>pwritev2};
 
-<span class="comment">// On non-glibc, assume we don&#39;t have `pwritev2`/`preadv2` in libc and use
+<span class="comment">// On non-glibc, assume we don't have `pwritev2`/`preadv2` in libc and use
 // `c::syscall` instead.
 </span><span class="attr">#[cfg(any(
-    target_os = <span class="string">&quot;android&quot;</span>,
-    all(target_os = <span class="string">&quot;linux&quot;</span>, not(target_env = <span class="string">&quot;gnu&quot;</span>)),
+    target_os = <span class="string">"android"</span>,
+    all(target_os = <span class="string">"linux"</span>, not(target_env = <span class="string">"gnu"</span>)),
 ))]
 </span><span class="kw">mod </span>readwrite_pv64v2 {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -879,9 +913,9 @@
         offset: libc::off64_t,
         flags: libc::c_int,
     ) -&gt; libc::ssize_t {
-        <span class="comment">// Unlike the plain &quot;p&quot; functions, the &quot;pv&quot; functions pass their offset
+        <span class="comment">// Unlike the plain "p" functions, the "pv" functions pass their offset
         // in an endian-independent way, and always in two registers.
-        </span><span class="macro">syscall! </span>{
+        </span><span class="macro">syscall!</span> {
             <span class="kw">fn </span>preadv2(
                 fd: libc::c_int,
                 iov: <span class="kw-2">*const </span>libc::iovec,
@@ -907,9 +941,9 @@
         offset: libc::off64_t,
         flags: libc::c_int,
     ) -&gt; libc::ssize_t {
-        <span class="comment">// Unlike the plain &quot;p&quot; functions, the &quot;pv&quot; functions pass their offset
+        <span class="comment">// Unlike the plain "p" functions, the "pv" functions pass their offset
         // in an endian-independent way, and always in two registers.
-        </span><span class="macro">syscall! </span>{
+        </span><span class="macro">syscall!</span> {
             <span class="kw">fn </span>pwritev2(
                 fd: libc::c_int,
                 iov: <span class="kw-2">*const </span>libc::iovec,
@@ -930,8 +964,8 @@
     }
 }
 <span class="attr">#[cfg(any(
-    target_os = <span class="string">&quot;android&quot;</span>,
-    all(target_os = <span class="string">&quot;linux&quot;</span>, not(target_env = <span class="string">&quot;gnu&quot;</span>)),
+    target_os = <span class="string">"android"</span>,
+    all(target_os = <span class="string">"linux"</span>, not(target_env = <span class="string">"gnu"</span>)),
 ))]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">use </span>readwrite_pv64v2::{preadv64v2 <span class="kw">as </span>preadv2, pwritev64v2 <span class="kw">as </span>pwritev2};
 </code></pre></div></section></main></body></html>

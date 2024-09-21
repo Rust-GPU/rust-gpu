@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/dfa/onepass.rs`."><title>onepass.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex_automata/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/dfa/onepass.rs`."><title>onepass.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -3202,29 +3202,29 @@ configuring a one-pass DFA.
 </span><span class="comment">// A note on naming and credit:
 //
 // As far as I know, Russ Cox came up with the practical vision and
-// implementation of a &quot;one-pass regex engine.&quot; He mentions and describes it
+// implementation of a "one-pass regex engine." He mentions and describes it
 // briefly in the third article of his regexp article series:
 // https://swtch.com/~rsc/regexp/regexp3.html
 //
-// Cox&#39;s implementation is in RE2, and the implementation below is most
-// heavily inspired by RE2&#39;s. The key thing they have in common is that
+// Cox's implementation is in RE2, and the implementation below is most
+// heavily inspired by RE2's. The key thing they have in common is that
 // their transitions are defined over an alphabet of bytes. In contrast,
-// Go&#39;s regex engine also has a one-pass engine, but its transitions are
+// Go's regex engine also has a one-pass engine, but its transitions are
 // more firmly rooted on Unicode codepoints. The ideas are the same, but the
 // implementations are different.
 //
-// RE2 tends to call this a &quot;one-pass NFA.&quot; Here, we call it a &quot;one-pass DFA.&quot;
-// They&#39;re both true in their own ways:
+// RE2 tends to call this a "one-pass NFA." Here, we call it a "one-pass DFA."
+// They're both true in their own ways:
 //
-// * The &quot;one-pass&quot; criterion is generally a property of the NFA itself. In
+// * The "one-pass" criterion is generally a property of the NFA itself. In
 // particular, it is said that an NFA is one-pass if, after each byte of input
-// during a search, there is at most one &quot;VM thread&quot; remaining to take for the
+// during a search, there is at most one "VM thread" remaining to take for the
 // next byte of input. That is, there is never any ambiguity as to the path to
 // take through the NFA during a search.
 //
 // * On the other hand, once a one-pass NFA has its representation converted
 // to something where a constant number of instructions is used for each byte
-// of input, the implementation looks a lot more like a DFA. It&#39;s technically
+// of input, the implementation looks a lot more like a DFA. It's technically
 // more powerful than a DFA since it has side effects (storing offsets inside
 // of slots activated by a transition), but it is far closer to a DFA than an
 // NFA simulation.
@@ -3277,19 +3277,19 @@ configuring a one-pass DFA.
     /// appears first in the concrete syntax is chosen.
     ///
     /// Currently, the only other kind of match semantics supported is
-    /// [`MatchKind::All`]. This corresponds to &quot;classical DFA&quot; construction
+    /// [`MatchKind::All`]. This corresponds to "classical DFA" construction
     /// where all possible matches are visited.
     ///
     /// When it comes to the one-pass DFA, it is rarer for preference order and
-    /// &quot;longest match&quot; to actually disagree. Since if they did disagree, then
-    /// the regex typically isn&#39;t one-pass. For example, searching `Samwise`
+    /// "longest match" to actually disagree. Since if they did disagree, then
+    /// the regex typically isn't one-pass. For example, searching `Samwise`
     /// for `Sam|Samwise` will report `Sam` for leftmost-first matching and
-    /// `Samwise` for &quot;longest match&quot; or &quot;all&quot; matching. However, this regex is
+    /// `Samwise` for "longest match" or "all" matching. However, this regex is
     /// not one-pass if taken literally. The equivalent regex, `Sam(?:|wise)`
     /// is one-pass and `Sam|Samwise` may be optimized to it.
     ///
-    /// The other main difference is that &quot;all&quot; match semantics don&#39;t support
-    /// non-greedy matches. &quot;All&quot; match semantics always try to match as much
+    /// The other main difference is that "all" match semantics don't support
+    /// non-greedy matches. "All" match semantics always try to match as much
     /// as possible.
     </span><span class="kw">pub fn </span>match_kind(<span class="kw-2">mut </span><span class="self">self</span>, kind: MatchKind) -&gt; Config {
         <span class="self">self</span>.match_kind = <span class="prelude-val">Some</span>(kind);
@@ -3326,16 +3326,16 @@ configuring a one-pass DFA.
     ///
     /// let re = DFA::builder()
     ///     .configure(DFA::config().starts_for_each_pattern(true))
-    ///     .build_many(&amp;[&quot;[a-z]+&quot;, &quot;[0-9]+&quot;])?;
+    ///     .build_many(&amp;["[a-z]+", "[0-9]+"])?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
-    /// let haystack = &quot;123abc&quot;;
+    /// let haystack = "123abc";
     /// let input = Input::new(haystack).anchored(Anchored::Yes);
     ///
     /// // A normal multi-pattern search will show pattern 1 matches.
     /// re.try_search(&amp;mut cache, &amp;input, &amp;mut caps)?;
     /// assert_eq!(Some(Match::must(1, 0..3)), caps.get_match());
     ///
-    /// // If we only want to report pattern 0 matches, then we&#39;ll get no
+    /// // If we only want to report pattern 0 matches, then we'll get no
     /// // match here.
     /// let input = input.anchored(Anchored::Pattern(PatternID::must(0)));
     /// re.try_search(&amp;mut cache, &amp;input, &amp;mut caps)?;
@@ -3348,7 +3348,7 @@ configuring a one-pass DFA.
         <span class="self">self
     </span>}
 
-    <span class="doccomment">/// Whether to attempt to shrink the size of the DFA&#39;s alphabet or not.
+    <span class="doccomment">/// Whether to attempt to shrink the size of the DFA's alphabet or not.
     ///
     /// This option is enabled by default and should never be disabled unless
     /// one is debugging a one-pass DFA.
@@ -3385,7 +3385,7 @@ configuring a one-pass DFA.
     <span class="doccomment">/// Set a size limit on the total heap used by a one-pass DFA.
     ///
     /// This size limit is expressed in bytes and is applied during
-    /// construction of a one-pass DFA. If the DFA&#39;s heap usage exceeds
+    /// construction of a one-pass DFA. If the DFA's heap usage exceeds
     /// this configured limit, then construction is stopped and an error is
     /// returned.
     ///
@@ -3402,19 +3402,19 @@ configuring a one-pass DFA.
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::{dfa::onepass::DFA, Match};
     ///
-    /// // 6MB isn&#39;t enough!
+    /// // 6MB isn't enough!
     /// DFA::builder()
     ///     .configure(DFA::config().size_limit(Some(6_000_000)))
-    ///     .build(r&quot;\w{20}&quot;)
+    ///     .build(r"\w{20}")
     ///     .unwrap_err();
     ///
     /// // ... but 7MB probably is!
-    /// // (Note that DFA sizes aren&#39;t necessarily stable between releases.)
+    /// // (Note that DFA sizes aren't necessarily stable between releases.)
     /// let re = DFA::builder()
     ///     .configure(DFA::config().size_limit(Some(7_000_000)))
-    ///     .build(r&quot;\w{20}&quot;)?;
+    ///     .build(r"\w{20}")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
-    /// let haystack = &quot;A&quot;.repeat(20);
+    /// let haystack = "A".repeat(20);
     /// re.captures(&amp;mut cache, &amp;haystack, &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 0..20)), caps.get_match());
     ///
@@ -3457,7 +3457,7 @@ configuring a one-pass DFA.
 
     <span class="doccomment">/// Overwrite the default configuration such that the options in `o` are
     /// always used. If an option in `o` is not set, then the corresponding
-    /// option in `self` is used. If it&#39;s not set in `self` either, then it
+    /// option in `self` is used. If it's not set in `self` either, then it
     /// remains not set.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>overwrite(<span class="kw-2">&amp;</span><span class="self">self</span>, o: Config) -&gt; Config {
         Config {
@@ -3506,10 +3506,10 @@ configuring a one-pass DFA.
 /// let re = DFA::builder()
 ///     .syntax(syntax::Config::new().utf8(false))
 ///     .thompson(thompson::Config::new().utf8(false))
-///     .build(r&quot;foo(?-u:[^b])ar.*&quot;)?;
+///     .build(r"foo(?-u:[^b])ar.*")?;
 /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
 ///
-/// let haystack = b&quot;foo\xFFarzz\xE2\x98\xFF\n&quot;;
+/// let haystack = b"foo\xFFarzz\xE2\x98\xFF\n";
 /// re.captures(&amp;mut cache, haystack, &amp;mut caps);
 /// // Notice that `(?-u:[^b])` matches invalid UTF-8,
 /// // but the subsequent `.*` does not! Disabling UTF-8
@@ -3526,7 +3526,7 @@ configuring a one-pass DFA.
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>Builder {
     config: Config,
-    <span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span>thompson: thompson::Compiler,
 }
 
@@ -3535,7 +3535,7 @@ configuring a one-pass DFA.
     </span><span class="kw">pub fn </span>new() -&gt; Builder {
         Builder {
             config: Config::default(),
-            <span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+            <span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
             </span>thompson: thompson::Compiler::new(),
         }
     }
@@ -3544,7 +3544,7 @@ configuring a one-pass DFA.
     ///
     /// If there was a problem parsing or compiling the pattern, then an error
     /// is returned.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>, pattern: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;DFA, BuildError&gt; {
         <span class="self">self</span>.build_many(<span class="kw-2">&amp;</span>[pattern])
     }
@@ -3553,7 +3553,7 @@ configuring a one-pass DFA.
     ///
     /// When matches are returned, the pattern ID corresponds to the index of
     /// the pattern in the slice given.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>build_many&lt;P: AsRef&lt;str&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         patterns: <span class="kw-2">&amp;</span>[P],
@@ -3576,32 +3576,32 @@ configuring a one-pass DFA.
     /// // This shows how to set non-default options for building an NFA.
     /// let nfa = NFA::compiler()
     ///     .configure(NFA::config().shrink(true))
-    ///     .build(r&quot;[a-z0-9]+&quot;)?;
+    ///     .build(r"[a-z0-9]+")?;
     /// let re = DFA::builder().build_from_nfa(nfa)?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
-    /// re.captures(&amp;mut cache, &quot;foo123bar&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "foo123bar", &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 0..9)), caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="kw">pub fn </span>build_from_nfa(<span class="kw-2">&amp;</span><span class="self">self</span>, nfa: NFA) -&gt; <span class="prelude-ty">Result</span>&lt;DFA, BuildError&gt; {
-        <span class="comment">// Why take ownership if we&#39;re just going to pass a reference to the
+        <span class="comment">// Why take ownership if we're just going to pass a reference to the
         // NFA to our internal builder? Well, the first thing to note is that
         // an NFA uses reference counting internally, so either choice is going
-        // to be cheap. So there isn&#39;t much cost either way.
+        // to be cheap. So there isn't much cost either way.
         //
         // The real reason is that a one-pass DFA, semantically, shares
-        // ownership of an NFA. This is unlike other DFAs that don&#39;t share
+        // ownership of an NFA. This is unlike other DFAs that don't share
         // ownership of an NFA at all, primarily because they want to be
         // self-contained in order to support cheap (de)serialization.
         //
-        // But then why pass a &#39;&amp;nfa&#39; below if we want to share ownership?
-        // Well, it turns out that using a &#39;&amp;NFA&#39; in our internal builder
-        // separates its lifetime from the DFA we&#39;re building, and this turns
+        // But then why pass a '&amp;nfa' below if we want to share ownership?
+        // Well, it turns out that using a '&amp;NFA' in our internal builder
+        // separates its lifetime from the DFA we're building, and this turns
         // out to make code a bit more composable. e.g., We can iterate over
         // things inside the NFA while borrowing the builder as mutable because
         // we know the NFA cannot be mutated. So TL;DR --- this weirdness is
-        // &quot;because borrow checker.&quot;
+        // "because borrow checker."
         </span>InternalBuilder::new(<span class="self">self</span>.config.clone(), <span class="kw-2">&amp;</span>nfa).build()
     }
 
@@ -3619,7 +3619,7 @@ configuring a one-pass DFA.
     ///
     /// These settings only apply when constructing a one-pass DFA directly
     /// from a pattern.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>syntax(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         config: <span class="kw">crate</span>::util::syntax::Config,
@@ -3636,7 +3636,7 @@ configuring a one-pass DFA.
     ///
     /// These settings only apply when constructing a DFA directly from a
     /// pattern.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>thompson(<span class="kw-2">&amp;mut </span><span class="self">self</span>, config: thompson::Config) -&gt; <span class="kw-2">&amp;mut </span>Builder {
         <span class="self">self</span>.thompson.configure(config);
         <span class="self">self
@@ -3652,68 +3652,68 @@ configuring a one-pass DFA.
 /// expense in some cases, so it might make sense to try an identify common
 /// patterns in the NFA that make it definitively not one-pass. That way, we
 /// can avoid ever trying to build a one-pass DFA in the first place. For
-/// example, &#39;\w*\s&#39; is not one-pass, and since &#39;\w&#39; is Unicode-aware by
-/// default, it&#39;s probably not a trivial cost to try and build a one-pass DFA
+/// example, '\w*\s' is not one-pass, and since '\w' is Unicode-aware by
+/// default, it's probably not a trivial cost to try and build a one-pass DFA
 /// for it and then fail.
 ///
 /// Note that some (immutable) fields are duplicated here. For example, the
-/// &#39;nfa&#39; and &#39;classes&#39; fields are both in the &#39;DFA&#39;. They are the same thing,
+/// 'nfa' and 'classes' fields are both in the 'DFA'. They are the same thing,
 /// but we duplicate them because it makes composition easier below. Otherwise,
-/// since the borrow checker can&#39;t see through method calls, the mutable borrow
+/// since the borrow checker can't see through method calls, the mutable borrow
 /// we use to mutate the DFA winds up preventing borrowing from any other part
-/// of the DFA, even though we aren&#39;t mutating those parts. We only do this
+/// of the DFA, even though we aren't mutating those parts. We only do this
 /// because the duplication is cheap.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">struct </span>InternalBuilder&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="doccomment">/// The DFA we&#39;re building.
+</span><span class="kw">struct </span>InternalBuilder&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="doccomment">/// The DFA we're building.
     </span>dfa: DFA,
-    <span class="doccomment">/// An unordered collection of NFA state IDs that we haven&#39;t yet tried to
+    <span class="doccomment">/// An unordered collection of NFA state IDs that we haven't yet tried to
     /// build into a DFA state yet.
     ///
     /// This collection does not ultimately wind up including every NFA state
-    /// ID. Instead, each ID represents a &quot;start&quot; state for a sub-graph of the
+    /// ID. Instead, each ID represents a "start" state for a sub-graph of the
     /// NFA. The set of NFA states we then use to build a DFA state consists
-    /// of that &quot;start&quot; state and all states reachable from it via epsilon
+    /// of that "start" state and all states reachable from it via epsilon
     /// transitions.
     </span>uncompiled_nfa_ids: Vec&lt;StateID&gt;,
     <span class="doccomment">/// A map from NFA state ID to DFA state ID. This is useful for easily
-    /// determining whether an NFA state has been used as a &quot;starting&quot; point
-    /// to build a DFA state yet. If it hasn&#39;t, then it is mapped to DEAD,
+    /// determining whether an NFA state has been used as a "starting" point
+    /// to build a DFA state yet. If it hasn't, then it is mapped to DEAD,
     /// and since DEAD is specially added and never corresponds to any NFA
     /// state, it follows that a mapping to DEAD implies the NFA state has
     /// no corresponding DFA state yet.
     </span>nfa_to_dfa_id: Vec&lt;StateID&gt;,
     <span class="doccomment">/// A stack used to traverse the NFA states that make up a single DFA
     /// state. Traversal occurs until the stack is empty, and we only push to
-    /// the stack when the state ID isn&#39;t in &#39;seen&#39;. Actually, even more than
+    /// the stack when the state ID isn't in 'seen'. Actually, even more than
     /// that, if we try to push something on to this stack that is already in
-    /// &#39;seen&#39;, then we bail out on construction completely, since it implies
+    /// 'seen', then we bail out on construction completely, since it implies
     /// that the NFA is not one-pass.
     </span>stack: Vec&lt;(StateID, Epsilons)&gt;,
-    <span class="doccomment">/// The set of NFA states that we&#39;ve visited via &#39;stack&#39;.
+    <span class="doccomment">/// The set of NFA states that we've visited via 'stack'.
     </span>seen: SparseSet,
     <span class="doccomment">/// Whether a match NFA state has been observed while constructing a
     /// one-pass DFA state. Once a match state is seen, assuming we are using
-    /// leftmost-first match semantics, then we don&#39;t add any more transitions
-    /// to the DFA state we&#39;re building.
+    /// leftmost-first match semantics, then we don't add any more transitions
+    /// to the DFA state we're building.
     </span>matched: bool,
     <span class="doccomment">/// The config passed to the builder.
     ///
     /// This is duplicated in dfa.config.
     </span>config: Config,
-    <span class="doccomment">/// The NFA we&#39;re building a one-pass DFA from.
+    <span class="doccomment">/// The NFA we're building a one-pass DFA from.
     ///
     /// This is duplicated in dfa.nfa.
-    </span>nfa: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>NFA,
+    </span>nfa: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>NFA,
     <span class="doccomment">/// The equivalence classes that make up the alphabet for this DFA&gt;
     ///
     /// This is duplicated in dfa.classes.
     </span>classes: ByteClasses,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; InternalBuilder&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; InternalBuilder&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Create a new builder with an initial empty DFA.
-    </span><span class="kw">fn </span>new(config: Config, nfa: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>NFA) -&gt; InternalBuilder {
+    </span><span class="kw">fn </span>new(config: Config, nfa: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>NFA) -&gt; InternalBuilder {
         <span class="kw">let </span>classes = <span class="kw">if </span>!config.get_byte_classes() {
             <span class="comment">// A one-pass DFA will always use the equivalence class map, but
             // enabling this option is useful for debugging. Namely, this will
@@ -3724,14 +3724,14 @@ configuring a one-pass DFA.
         } <span class="kw">else </span>{
             nfa.byte_classes().clone()
         };
-        <span class="comment">// Normally a DFA alphabet includes the EOI symbol, but we don&#39;t need
+        <span class="comment">// Normally a DFA alphabet includes the EOI symbol, but we don't need
         // that in the one-pass DFA since we handle look-around explicitly
-        // without encoding it into the DFA. Thus, we don&#39;t need to delay
+        // without encoding it into the DFA. Thus, we don't need to delay
         // matches by 1 byte. However, we reuse the space that *would* be used
         // by the EOI transition by putting match information there (like which
         // pattern matches and which look-around assertions need to hold). So
         // this means our real alphabet length is 1 fewer than what the byte
-        // classes report, since we don&#39;t use EOI.
+        // classes report, since we don't use EOI.
         </span><span class="kw">let </span>alphabet_len = classes.alphabet_len().checked_sub(<span class="number">1</span>).unwrap();
         <span class="kw">let </span>stride2 = classes.stride2();
         <span class="kw">let </span>dfa = DFA {
@@ -3790,7 +3790,7 @@ configuring a one-pass DFA.
         }
         <span class="kw">if </span><span class="self">self</span>.nfa.group_info().explicit_slot_len() &gt; Slots::LIMIT {
             <span class="kw">return </span><span class="prelude-val">Err</span>(BuildError::not_one_pass(
-                <span class="string">&quot;too many explicit capturing groups (max is 16)&quot;</span>,
+                <span class="string">"too many explicit capturing groups (max is 16)"</span>,
             ));
         }
         <span class="macro">assert_eq!</span>(DEAD, <span class="self">self</span>.add_empty_state()<span class="question-mark">?</span>);
@@ -3808,22 +3808,22 @@ configuring a one-pass DFA.
                 )<span class="question-mark">?</span>;
             }
         }
-        <span class="comment">// NOTE: One wonders what the effects of treating &#39;uncompiled_nfa_ids&#39;
+        <span class="comment">// NOTE: One wonders what the effects of treating 'uncompiled_nfa_ids'
         // as a stack are. It is really an unordered *set* of NFA state IDs.
         // If it, for example, in practice led to discovering whether a regex
-        // was or wasn&#39;t one-pass later than if we processed NFA state IDs in
+        // was or wasn't one-pass later than if we processed NFA state IDs in
         // ascending order, then that would make this routine more costly in
-        // the somewhat common case of a regex that isn&#39;t one-pass.
+        // the somewhat common case of a regex that isn't one-pass.
         </span><span class="kw">while let </span><span class="prelude-val">Some</span>(nfa_id) = <span class="self">self</span>.uncompiled_nfa_ids.pop() {
             <span class="kw">let </span>dfa_id = <span class="self">self</span>.nfa_to_dfa_id[nfa_id];
-            <span class="comment">// Once we see a match, we keep going, but don&#39;t add any new
-            // transitions. Normally we&#39;d just stop, but we have to keep
+            <span class="comment">// Once we see a match, we keep going, but don't add any new
+            // transitions. Normally we'd just stop, but we have to keep
             // going in order to verify that our regex is actually one-pass.
             </span><span class="self">self</span>.matched = <span class="bool-val">false</span>;
-            <span class="comment">// The NFA states we&#39;ve already explored for this DFA state.
+            <span class="comment">// The NFA states we've already explored for this DFA state.
             </span><span class="self">self</span>.seen.clear();
             <span class="comment">// The NFA states to explore via epsilon transitions. If we ever
-            // try to push an NFA state that we&#39;ve already seen, then the NFA
+            // try to push an NFA state that we've already seen, then the NFA
             // is not one-pass because it implies there are multiple epsilon
             // transition paths that lead to the same NFA state. In other
             // words, there is ambiguity.
@@ -3859,7 +3859,7 @@ configuring a one-pass DFA.
                     thompson::State::Capture { next, slot, .. } =&gt; {
                         <span class="kw">let </span>slot = slot.as_usize();
                         <span class="kw">let </span>epsilons = <span class="kw">if </span>slot &lt; explicit_slot_start {
-                            <span class="comment">// If this is an implicit slot, we don&#39;t care
+                            <span class="comment">// If this is an implicit slot, we don't care
                             // about it, since we handle implicit slots in
                             // the search routine. We can get away with that
                             // because there are 2 implicit slots for every
@@ -3879,16 +3879,16 @@ configuring a one-pass DFA.
                     thompson::State::Match { pattern_id } =&gt; {
                         <span class="comment">// If we found two different paths to a match state
                         // for the same DFA state, then we have ambiguity.
-                        // Thus, it&#39;s not one-pass.
+                        // Thus, it's not one-pass.
                         </span><span class="kw">if </span><span class="self">self</span>.matched {
                             <span class="kw">return </span><span class="prelude-val">Err</span>(BuildError::not_one_pass(
-                                <span class="string">&quot;multiple epsilon transitions to match state&quot;</span>,
+                                <span class="string">"multiple epsilon transitions to match state"</span>,
                             ));
                         }
                         <span class="self">self</span>.matched = <span class="bool-val">true</span>;
-                        <span class="comment">// Shove the matching pattern ID and the &#39;epsilons&#39;
-                        // into the current DFA state&#39;s pattern epsilons. The
-                        // &#39;epsilons&#39; includes the slots we need to capture
+                        <span class="comment">// Shove the matching pattern ID and the 'epsilons'
+                        // into the current DFA state's pattern epsilons. The
+                        // 'epsilons' includes the slots we need to capture
                         // before reporting the match and also the conditional
                         // epsilon transitions we need to check before we can
                         // report a match.
@@ -3904,8 +3904,8 @@ configuring a one-pass DFA.
                         // actually need to keep going in order to verify that
                         // we actually have a one-pass regex. e.g., We might
                         // see more Match states (e.g., for other patterns)
-                        // that imply that we don&#39;t have a one-pass regex.
-                        // So instead, we mark that we&#39;ve found a match and
+                        // that imply that we don't have a one-pass regex.
+                        // So instead, we mark that we've found a match and
                         // continue on. When we go to compile a new DFA state,
                         // we just skip that part. But otherwise check that the
                         // one-pass property is upheld.
@@ -3918,13 +3918,13 @@ configuring a one-pass DFA.
     }
 
     <span class="doccomment">/// Shuffle all match states to the end of the transition table and set
-    /// &#39;min_match_id&#39; to the ID of the first such match state.
+    /// 'min_match_id' to the ID of the first such match state.
     ///
     /// The point of this is to make it extremely cheap to determine whether
     /// a state is a match state or not. We need to check on this on every
     /// transition during a search, so it being cheap is important. This
     /// permits us to check it by simply comparing two state identifiers, as
-    /// opposed to looking for the pattern ID in the state&#39;s `PatternEpsilons`.
+    /// opposed to looking for the pattern ID in the state's `PatternEpsilons`.
     /// (Which requires a memory load and some light arithmetic.)
     </span><span class="kw">fn </span>shuffle_states(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="kw">let </span><span class="kw-2">mut </span>remapper = Remapper::new(<span class="kw-2">&amp;</span><span class="self">self</span>.dfa);
@@ -3939,7 +3939,7 @@ configuring a one-pass DFA.
             remapper.swap(<span class="kw-2">&amp;mut </span><span class="self">self</span>.dfa, next_dest, id);
             <span class="self">self</span>.dfa.min_match_id = next_dest;
             next_dest = <span class="self">self</span>.dfa.prev_state_id(next_dest).expect(
-                <span class="string">&quot;match states should be a proper subset of all states&quot;</span>,
+                <span class="string">"match states should be a proper subset of all states"</span>,
             );
         }
         remapper.remap(<span class="kw-2">&amp;mut </span><span class="self">self</span>.dfa);
@@ -3947,7 +3947,7 @@ configuring a one-pass DFA.
 
     <span class="doccomment">/// Compile the given NFA transition into the DFA state given.
     ///
-    /// &#39;Epsilons&#39; corresponds to any conditional epsilon transitions that need
+    /// 'Epsilons' corresponds to any conditional epsilon transitions that need
     /// to be satisfied to follow this transition, and any slots that need to
     /// be saved if the transition is followed.
     ///
@@ -3972,7 +3972,7 @@ configuring a one-pass DFA.
             <span class="kw">let </span>newtrans =
                 Transition::new(<span class="self">self</span>.matched, next_dfa_id, epsilons);
             <span class="comment">// If the old transition points to the DEAD state, then we know
-            // &#39;byte&#39; has not been mapped to any transition for this DFA state
+            // 'byte' has not been mapped to any transition for this DFA state
             // yet. So set it unconditionally. Otherwise, we require that the
             // old and new transitions are equivalent. Otherwise, there is
             // ambiguity and thus the regex is not one-pass.
@@ -3980,7 +3980,7 @@ configuring a one-pass DFA.
                 <span class="self">self</span>.dfa.set_transition(dfa_id, byte, newtrans);
             } <span class="kw">else if </span>oldtrans != newtrans {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(BuildError::not_one_pass(
-                    <span class="string">&quot;conflicting transition&quot;</span>,
+                    <span class="string">"conflicting transition"</span>,
                 ));
             }
         }
@@ -4018,10 +4018,10 @@ configuring a one-pass DFA.
     <span class="doccomment">/// Add a new DFA state corresponding to the given NFA state. If adding a
     /// state would blow any limits (configured or hard-coded), then an error
     /// is returned. If a DFA state already exists for the given NFA state,
-    /// then that DFA state&#39;s ID is returned and no new states are added.
+    /// then that DFA state's ID is returned and no new states are added.
     ///
     /// It is not expected that this routine is called for every NFA state.
-    /// Instead, an NFA state ID will usually correspond to the &quot;start&quot; state
+    /// Instead, an NFA state ID will usually correspond to the "start" state
     /// for a sub-graph of the NFA, where all states in the sub-graph are
     /// reachable via epsilon transitions (conditional or unconditional). That
     /// sub-graph of NFA states is ultimately what produces a single DFA state.
@@ -4029,7 +4029,7 @@ configuring a one-pass DFA.
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         nfa_id: StateID,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;StateID, BuildError&gt; {
-        <span class="comment">// If we&#39;ve already built a DFA state for the given NFA state, then
+        <span class="comment">// If we've already built a DFA state for the given NFA state, then
         // just return that. We definitely do not want to have more than one
         // DFA state in existence for the same NFA state, since all but one of
         // them will likely become unreachable. And at least some of them are
@@ -4038,7 +4038,7 @@ configuring a one-pass DFA.
         <span class="kw">if </span>existing_dfa_id != DEAD {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(existing_dfa_id);
         }
-        <span class="comment">// If we don&#39;t have any DFA state yet, add it and then add the given
+        <span class="comment">// If we don't have any DFA state yet, add it and then add the given
         // NFA state to the list of states to explore.
         </span><span class="kw">let </span>dfa_id = <span class="self">self</span>.add_empty_state()<span class="question-mark">?</span>;
         <span class="self">self</span>.nfa_to_dfa_id[nfa_id] = dfa_id;
@@ -4060,7 +4060,7 @@ configuring a one-pass DFA.
         // our state ID space shrinks. We justify this by the assumption that
         // a one-pass DFA is just already doing a fair bit more work than a
         // normal DFA anyway, so an extra multiplication to compute a state
-        // transition doesn&#39;t seem like a huge deal.
+        // transition doesn't seem like a huge deal.
         </span><span class="kw">let </span>next_id = <span class="self">self</span>.dfa.table.len() &gt;&gt; <span class="self">self</span>.dfa.stride2();
         <span class="kw">let </span>id = StateID::new(next_id)
             .map_err(|<span class="kw">_</span>| BuildError::too_many_states(state_limit))<span class="question-mark">?</span>;
@@ -4070,10 +4070,10 @@ configuring a one-pass DFA.
         <span class="self">self</span>.dfa
             .table
             .extend(core::iter::repeat(Transition(<span class="number">0</span>)).take(<span class="self">self</span>.dfa.stride()));
-        <span class="comment">// The default empty value for &#39;PatternEpsilons&#39; is sadly not all
+        <span class="comment">// The default empty value for 'PatternEpsilons' is sadly not all
         // zeroes. Instead, a special sentinel is used to indicate that there
         // is no pattern. So we need to explicitly set the pattern epsilons to
-        // the correct &quot;empty&quot; PatternEpsilons.
+        // the correct "empty" PatternEpsilons.
         </span><span class="self">self</span>.dfa.set_pattern_epsilons(id, PatternEpsilons::empty());
         <span class="kw">if let </span><span class="prelude-val">Some</span>(size_limit) = <span class="self">self</span>.config.get_size_limit() {
             <span class="kw">if </span><span class="self">self</span>.dfa.memory_usage() &gt; size_limit {
@@ -4096,7 +4096,7 @@ configuring a one-pass DFA.
         epsilons: Epsilons,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), BuildError&gt; {
         <span class="comment">// If we already have seen a match and we are compiling a leftmost
-        // first DFA, then we shouldn&#39;t add any more states to look at. This is
+        // first DFA, then we shouldn't add any more states to look at. This is
         // effectively how preference order and non-greediness is implemented.
         // if !self.config.get_match_kind().continue_past_first_match()
         // &amp;&amp; self.matched
@@ -4105,7 +4105,7 @@ configuring a one-pass DFA.
         // }
         </span><span class="kw">if </span>!<span class="self">self</span>.seen.insert(nfa_id) {
             <span class="kw">return </span><span class="prelude-val">Err</span>(BuildError::not_one_pass(
-                <span class="string">&quot;multiple epsilon transitions to same state&quot;</span>,
+                <span class="string">"multiple epsilon transitions to same state"</span>,
             ));
         }
         <span class="self">self</span>.stack.push((nfa_id, epsilons));
@@ -4118,10 +4118,10 @@ configuring a one-pass DFA.
 ///
 /// A one-pass DFA can be built from an NFA that is one-pass. An NFA is
 /// one-pass when there is never any ambiguity about how to continue a search.
-/// For example, `a*a` is not one-pass becuase during a search, it&#39;s not
+/// For example, `a*a` is not one-pass becuase during a search, it's not
 /// possible to know whether to continue matching the `a*` or to move on to
 /// the single `a`. However, `a*b` is one-pass, because for every byte in the
-/// input, it&#39;s always clear when to move on from `a*` to `b`.
+/// input, it's always clear when to move on from `a*` to `b`.
 ///
 /// # Only anchored searches are supported
 ///
@@ -4165,13 +4165,13 @@ configuring a one-pass DFA.
 /// no way to configure it. If your pattern(s) exceed this limit, then building
 /// a one-pass DFA will fail.
 /// * If the number of patterns exceeds an internal unconfigurable limit, then
-/// building a one-pass DFA will fail. This limit is quite large and you&#39;re
+/// building a one-pass DFA will fail. This limit is quite large and you're
 /// unlikely to hit it.
 /// * If the total number of states exceeds an internal unconfigurable limit,
 /// then building a one-pass DFA will fail. This limit is quite large and
-/// you&#39;re unlikely to hit it.
+/// you're unlikely to hit it.
 ///
-/// # Other examples of regexes that aren&#39;t one-pass
+/// # Other examples of regexes that aren't one-pass
 ///
 /// One particularly unfortunate example is that enabling Unicode can cause
 /// regexes that were one-pass to no longer be one-pass. Consider the regex
@@ -4198,7 +4198,7 @@ configuring a one-pass DFA.
 ///
 /// Unlike a general DFA, a one-pass DFA has stricter bounds on its resource
 /// usage. Namely, construction of a one-pass DFA has a time and space
-/// complexity of `O(n)`, where `n ~ nfa.states().len()`. (A general DFA&#39;s time
+/// complexity of `O(n)`, where `n ~ nfa.states().len()`. (A general DFA's time
 /// and space complexity is `O(2^n)`.) This smaller time bound is achieved
 /// because there is at most one DFA state created for each NFA state. If
 /// additional DFA states would be required, then the pattern is not one-pass
@@ -4222,13 +4222,13 @@ configuring a one-pass DFA.
 /// # if cfg!(miri) { return Ok(()); } // miri takes too long
 /// use regex_automata::{dfa::onepass::DFA, Match, Span};
 ///
-/// let re = DFA::new(r&quot;\b(?P&lt;first&gt;\w+)[[:space:]]+(?P&lt;last&gt;\w+)\b&quot;)?;
+/// let re = DFA::new(r"\b(?P&lt;first&gt;\w+)[[:space:]]+(?P&lt;last&gt;\w+)\b")?;
 /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
 ///
-/// re.captures(&amp;mut cache, &quot;Шерлок Холмс&quot;, &amp;mut caps);
+/// re.captures(&amp;mut cache, "Шерлок Холмс", &amp;mut caps);
 /// assert_eq!(Some(Match::must(0, 0..23)), caps.get_match());
-/// assert_eq!(Some(Span::from(0..12)), caps.get_group_by_name(&quot;first&quot;));
-/// assert_eq!(Some(Span::from(13..23)), caps.get_group_by_name(&quot;last&quot;));
+/// assert_eq!(Some(Span::from(0..12)), caps.get_group_by_name("first"));
+/// assert_eq!(Some(Span::from(13..23)), caps.get_group_by_name("last"));
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
 /// ```
 ///
@@ -4251,9 +4251,9 @@ configuring a one-pass DFA.
 ///     Anchored, Input, Span,
 /// };
 ///
-/// let re = DFA::new(r&quot;\w(\d)\w&quot;)?;
+/// let re = DFA::new(r"\w(\d)\w")?;
 /// let (mut cache, caps) = (re.create_cache(), re.create_captures());
-/// let input = Input::new(&quot;a1zb2yc3x&quot;).anchored(Anchored::Yes);
+/// let input = Input::new("a1zb2yc3x").anchored(Anchored::Yes);
 ///
 /// let mut it = Searcher::new(input).into_captures_iter(caps, |input, caps| {
 ///     Ok(re.try_search(&amp;mut cache, input, caps)?)
@@ -4269,19 +4269,19 @@ configuring a one-pass DFA.
     </span>config: Config,
     <span class="doccomment">/// The NFA used to build this DFA.
     ///
-    /// NOTE: We probably don&#39;t need to store the NFA here, but we use enough
-    /// bits from it that it&#39;s convenient to do so. And there really isn&#39;t much
+    /// NOTE: We probably don't need to store the NFA here, but we use enough
+    /// bits from it that it's convenient to do so. And there really isn't much
     /// cost to doing so either, since an NFA is reference counted internally.
     </span>nfa: NFA,
-    <span class="doccomment">/// The transition table. Given a state ID &#39;s&#39; and a byte of haystack &#39;b&#39;,
+    <span class="doccomment">/// The transition table. Given a state ID 's' and a byte of haystack 'b',
     /// the next state is `table[sid + classes[byte]]`.
     ///
     /// The stride of this table (i.e., the number of columns) is always
     /// a power of 2, even if the alphabet length is smaller. This makes
     /// converting between state IDs and state indices very cheap.
     ///
-    /// Note that the stride always includes room for one extra &quot;transition&quot;
-    /// that isn&#39;t actually a transition. It is a &#39;PatternEpsilons&#39; that is
+    /// Note that the stride always includes room for one extra "transition"
+    /// that isn't actually a transition. It is a 'PatternEpsilons' that is
     /// used for match states only. Because of this, the maximum number of
     /// active columns in the transition table is 257, which means the maximum
     /// stride is 512 (the next power of 2 greater than or equal to 257).
@@ -4292,7 +4292,7 @@ configuring a one-pass DFA.
     /// when searching for matches of any pattern in the DFA.
     ///
     /// `starts[i]` where i&gt;0 corresponds to the starting state for the pattern
-    /// ID &#39;i-1&#39;. These starting states are optional.
+    /// ID 'i-1'. These starting states are optional.
     </span>starts: Vec&lt;StateID&gt;,
     <span class="doccomment">/// Every state ID &gt;= this value corresponds to a match state.
     ///
@@ -4317,17 +4317,17 @@ configuring a one-pass DFA.
     /// PERF: One wonders whether it would be better to put this in a separate
     /// allocation, since only match states have a non-empty PatternEpsilons
     /// and the number of match states tends be dwarfed by the number of
-    /// non-match states. So this would save &#39;8*len(non_match_states)&#39; for each
+    /// non-match states. So this would save '8*len(non_match_states)' for each
     /// DFA. The question is whether moving this to a different allocation will
     /// lead to a perf hit during searches. You might think dealing with match
     /// states is rare, but some regexes spend a lot of time in match states
     /// gobbling up input. But... match state handling is already somewhat
-    /// expensive, so maybe this wouldn&#39;t do much? Either way, it&#39;s worth
+    /// expensive, so maybe this wouldn't do much? Either way, it's worth
     /// experimenting.
     </span>pateps_offset: usize,
     <span class="doccomment">/// The first explicit slot index. This refers to the first slot appearing
-    /// immediately after the last implicit slot. It is always &#39;patterns.len()
-    /// * 2&#39;.
+    /// immediately after the last implicit slot. It is always 'patterns.len()
+    /// * 2'.
     ///
     /// We record this because we only store the explicit slots in our DFA
     /// transition table that need to be saved. Implicit slots are handled
@@ -4347,20 +4347,20 @@ configuring a one-pass DFA.
     /// ```
     /// use regex_automata::{dfa::onepass::DFA, Match};
     ///
-    /// let re = DFA::new(&quot;foo[0-9]+bar&quot;)?;
+    /// let re = DFA::new("foo[0-9]+bar")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;foo12345barzzz&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "foo12345barzzz", &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 0..11)), caps.get_match());
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     #[inline]
     </span><span class="kw">pub fn </span>new(pattern: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;DFA, BuildError&gt; {
         DFA::builder().build(pattern)
     }
 
-    <span class="doccomment">/// Like `new`, but parses multiple patterns into a single &quot;multi regex.&quot;
+    <span class="doccomment">/// Like `new`, but parses multiple patterns into a single "multi regex."
     /// This similarly uses the default regex configuration.
     ///
     /// # Example
@@ -4368,18 +4368,18 @@ configuring a one-pass DFA.
     /// ```
     /// use regex_automata::{dfa::onepass::DFA, Match};
     ///
-    /// let re = DFA::new_many(&amp;[&quot;[a-z]+&quot;, &quot;[0-9]+&quot;])?;
+    /// let re = DFA::new_many(&amp;["[a-z]+", "[0-9]+"])?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;abc123&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "abc123", &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 0..3)), caps.get_match());
     ///
-    /// re.captures(&amp;mut cache, &quot;123abc&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "123abc", &amp;mut caps);
     /// assert_eq!(Some(Match::must(1, 0..3)), caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     #[inline]
     </span><span class="kw">pub fn </span>new_many&lt;P: AsRef&lt;str&gt;&gt;(patterns: <span class="kw-2">&amp;</span>[P]) -&gt; <span class="prelude-ty">Result</span>&lt;DFA, BuildError&gt; {
         DFA::builder().build_many(patterns)
@@ -4403,10 +4403,10 @@ configuring a one-pass DFA.
     /// use regex_syntax::hir::{Hir, Class, ClassBytes, ClassBytesRange};
     ///
     /// let hir = Hir::class(Class::Bytes(ClassBytes::new(vec![
-    ///     ClassBytesRange::new(b&#39;0&#39;, b&#39;9&#39;),
-    ///     ClassBytesRange::new(b&#39;A&#39;, b&#39;Z&#39;),
-    ///     ClassBytesRange::new(b&#39;_&#39;, b&#39;_&#39;),
-    ///     ClassBytesRange::new(b&#39;a&#39;, b&#39;z&#39;),
+    ///     ClassBytesRange::new(b'0', b'9'),
+    ///     ClassBytesRange::new(b'A', b'Z'),
+    ///     ClassBytesRange::new(b'_', b'_'),
+    ///     ClassBytesRange::new(b'a', b'z'),
     /// ])));
     ///
     /// let config = NFA::config().nfa_size_limit(Some(1_000));
@@ -4415,7 +4415,7 @@ configuring a one-pass DFA.
     /// let re = DFA::new_from_nfa(nfa)?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     /// let expected = Some(Match::must(0, 0..1));
-    /// re.captures(&amp;mut cache, &quot;A&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "A", &amp;mut caps);
     /// assert_eq!(expected, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -4436,9 +4436,9 @@ configuring a one-pass DFA.
     /// let mut caps = dfa.create_captures();
     ///
     /// let expected = Match::must(0, 0..0);
-    /// dfa.captures(&amp;mut cache, &quot;&quot;, &amp;mut caps);
+    /// dfa.captures(&amp;mut cache, "", &amp;mut caps);
     /// assert_eq!(Some(expected), caps.get_match());
-    /// dfa.captures(&amp;mut cache, &quot;foo&quot;, &amp;mut caps);
+    /// dfa.captures(&amp;mut cache, "foo", &amp;mut caps);
     /// assert_eq!(Some(expected), caps.get_match());
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -4458,9 +4458,9 @@ configuring a one-pass DFA.
     /// let mut cache = dfa.create_cache();
     /// let mut caps = dfa.create_captures();
     ///
-    /// dfa.captures(&amp;mut cache, &quot;&quot;, &amp;mut caps);
+    /// dfa.captures(&amp;mut cache, "", &amp;mut caps);
     /// assert_eq!(None, caps.get_match());
-    /// dfa.captures(&amp;mut cache, &quot;foo&quot;, &amp;mut caps);
+    /// dfa.captures(&amp;mut cache, "foo", &amp;mut caps);
     /// assert_eq!(None, caps.get_match());
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -4477,22 +4477,22 @@ configuring a one-pass DFA.
     /// # Example
     ///
     /// This example shows how to change the match semantics of this DFA from
-    /// its default &quot;leftmost first&quot; to &quot;all.&quot; When using &quot;all,&quot; non-greediness
-    /// doesn&#39;t apply and neither does preference order matching. Instead, the
+    /// its default "leftmost first" to "all." When using "all," non-greediness
+    /// doesn't apply and neither does preference order matching. Instead, the
     /// longest match possible is always returned. (Although, by construction,
-    /// it&#39;s impossible for a one-pass DFA to have a different answer for
-    /// &quot;preference order&quot; vs &quot;longest match.&quot;)
+    /// it's impossible for a one-pass DFA to have a different answer for
+    /// "preference order" vs "longest match.")
     ///
     /// ```
     /// use regex_automata::{dfa::onepass::DFA, Match, MatchKind};
     ///
     /// let re = DFA::builder()
     ///     .configure(DFA::config().match_kind(MatchKind::All))
-    ///     .build(r&quot;(abc)+?&quot;)?;
+    ///     .build(r"(abc)+?")?;
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     ///
-    /// re.captures(&amp;mut cache, &quot;abcabc&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "abcabc", &amp;mut caps);
     /// // Normally, the non-greedy repetition would give us a 0..3 match.
     /// assert_eq!(Some(Match::must(0, 0..6)), caps.get_match());
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -4523,10 +4523,10 @@ configuring a one-pass DFA.
     /// let re = DFA::builder()
     ///     .syntax(syntax::Config::new().utf8(false))
     ///     .thompson(thompson::Config::new().utf8(false))
-    ///     .build(r&quot;foo(?-u:[^b])ar.*&quot;)?;
+    ///     .build(r"foo(?-u:[^b])ar.*")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// let haystack = b&quot;foo\xFFarzz\xE2\x98\xFF\n&quot;;
+    /// let haystack = b"foo\xFFarzz\xE2\x98\xFF\n";
     /// let expected = Some(Match::must(0, 0..8));
     /// re.captures(&amp;mut cache, haystack, &amp;mut caps);
     /// assert_eq!(expected, caps.get_match());
@@ -4578,27 +4578,27 @@ configuring a one-pass DFA.
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::{dfa::onepass::DFA, Match};
     ///
-    /// let re1 = DFA::new(r&quot;\w&quot;)?;
-    /// let re2 = DFA::new(r&quot;\W&quot;)?;
+    /// let re1 = DFA::new(r"\w")?;
+    /// let re2 = DFA::new(r"\W")?;
     /// let mut caps1 = re1.create_captures();
     /// let mut caps2 = re2.create_captures();
     ///
     /// let mut cache = re1.create_cache();
     /// assert_eq!(
     ///     Some(Match::must(0, 0..2)),
-    ///     { re1.captures(&amp;mut cache, &quot;Δ&quot;, &amp;mut caps1); caps1.get_match() },
+    ///     { re1.captures(&amp;mut cache, "Δ", &amp;mut caps1); caps1.get_match() },
     /// );
     ///
-    /// // Using &#39;cache&#39; with re2 is not allowed. It may result in panics or
+    /// // Using 'cache' with re2 is not allowed. It may result in panics or
     /// // incorrect results. In order to re-purpose the cache, we must reset
-    /// // it with the one-pass DFA we&#39;d like to use it with.
+    /// // it with the one-pass DFA we'd like to use it with.
     /// //
-    /// // Similarly, after this reset, using the cache with &#39;re1&#39; is also not
+    /// // Similarly, after this reset, using the cache with 're1' is also not
     /// // allowed.
     /// re2.reset_cache(&amp;mut cache);
     /// assert_eq!(
     ///     Some(Match::must(0, 0..3)),
-    ///     { re2.captures(&amp;mut cache, &quot;☃&quot;, &amp;mut caps2); caps2.get_match() },
+    ///     { re2.captures(&amp;mut cache, "☃", &amp;mut caps2); caps2.get_match() },
     /// );
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -4676,12 +4676,12 @@ configuring a one-pass DFA.
     /// (Unused transitions map to dead states.)
     ///
     /// The stride of a DFA is always equivalent to the smallest power of
-    /// 2 that is greater than or equal to the DFA&#39;s alphabet length. This
+    /// 2 that is greater than or equal to the DFA's alphabet length. This
     /// definition uses extra space, but possibly permits faster translation
-    /// between state identifiers and their corresponding offsets in this DFA&#39;s
+    /// between state identifiers and their corresponding offsets in this DFA's
     /// transition table.
     ///
-    /// For example, if the DFA&#39;s stride is 16 transitions, then its `stride2`
+    /// For example, if the DFA's stride is 16 transitions, then its `stride2`
     /// is `4` since `2^4 = 16`.
     ///
     /// The minimum `stride2` value is `1` (corresponding to a stride of `2`)
@@ -4700,7 +4700,7 @@ configuring a one-pass DFA.
     }
 
     <span class="doccomment">/// Returns the total stride for every state in this DFA. This corresponds
-    /// to the total number of transitions used by each state in this DFA&#39;s
+    /// to the total number of transitions used by each state in this DFA's
     /// transition table.
     ///
     /// Please see [`DFA::stride2`] for more information. In particular, this
@@ -4770,11 +4770,11 @@ configuring a one-pass DFA.
     /// ```
     /// use regex_automata::dfa::onepass::DFA;
     ///
-    /// let re = DFA::new(&quot;foo[0-9]+bar&quot;)?;
+    /// let re = DFA::new("foo[0-9]+bar")?;
     /// let mut cache = re.create_cache();
     ///
-    /// assert!(re.is_match(&amp;mut cache, &quot;foo12345bar&quot;));
-    /// assert!(!re.is_match(&amp;mut cache, &quot;foobar&quot;));
+    /// assert!(re.is_match(&amp;mut cache, "foo12345bar"));
+    /// assert!(!re.is_match(&amp;mut cache, "foobar"));
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     ///
@@ -4787,10 +4787,10 @@ configuring a one-pass DFA.
     /// ```
     /// use regex_automata::{dfa::onepass::DFA, Input};
     ///
-    /// let re = DFA::new(&quot;a*&quot;)?;
+    /// let re = DFA::new("a*")?;
     /// let mut cache = re.create_cache();
     ///
-    /// assert!(!re.is_match(&amp;mut cache, Input::new(&quot;☃&quot;).span(1..2)));
+    /// assert!(!re.is_match(&amp;mut cache, Input::new("☃").span(1..2)));
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     ///
@@ -4803,14 +4803,14 @@ configuring a one-pass DFA.
     ///
     /// let re = DFA::builder()
     ///     .thompson(NFA::config().utf8(false))
-    ///     .build(&quot;a*&quot;)?;
+    ///     .build("a*")?;
     /// let mut cache = re.create_cache();
     ///
-    /// assert!(re.is_match(&amp;mut cache, Input::new(&quot;☃&quot;).span(1..2)));
+    /// assert!(re.is_match(&amp;mut cache, Input::new("☃").span(1..2)));
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>is_match&lt;<span class="lifetime">&#39;h</span>, I: Into&lt;Input&lt;<span class="lifetime">&#39;h</span>&gt;&gt;&gt;(
+    </span><span class="kw">pub fn </span>is_match&lt;<span class="lifetime">'h</span>, I: Into&lt;Input&lt;<span class="lifetime">'h</span>&gt;&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
         input: I,
@@ -4855,9 +4855,9 @@ configuring a one-pass DFA.
     /// example, `Sam|Samwise` will match `Sam` in `Samwise`, but `Samwise|Sam`
     /// will match `Samwise` in `Samwise`.
     ///
-    /// Generally speaking, the &quot;leftmost first&quot; match is how most backtracking
+    /// Generally speaking, the "leftmost first" match is how most backtracking
     /// regular expressions tend to work. This is in contrast to POSIX-style
-    /// regular expressions that yield &quot;leftmost longest&quot; matches. Namely,
+    /// regular expressions that yield "leftmost longest" matches. Namely,
     /// both `Sam|Samwise` and `Samwise|Sam` match `Samwise` when using
     /// leftmost longest semantics. (This crate does not currently support
     /// leftmost longest semantics.)
@@ -4865,23 +4865,23 @@ configuring a one-pass DFA.
     /// ```
     /// use regex_automata::{dfa::onepass::DFA, Match};
     ///
-    /// let re = DFA::new(&quot;foo[0-9]+&quot;)?;
+    /// let re = DFA::new("foo[0-9]+")?;
     /// let mut cache = re.create_cache();
     /// let expected = Match::must(0, 0..8);
-    /// assert_eq!(Some(expected), re.find(&amp;mut cache, &quot;foo12345&quot;));
+    /// assert_eq!(Some(expected), re.find(&amp;mut cache, "foo12345"));
     ///
     /// // Even though a match is found after reading the first byte (`a`),
     /// // the leftmost first match semantics demand that we find the earliest
     /// // match that prefers earlier parts of the pattern over later parts.
-    /// let re = DFA::new(&quot;abc|a&quot;)?;
+    /// let re = DFA::new("abc|a")?;
     /// let mut cache = re.create_cache();
     /// let expected = Match::must(0, 0..3);
-    /// assert_eq!(Some(expected), re.find(&amp;mut cache, &quot;abc&quot;));
+    /// assert_eq!(Some(expected), re.find(&amp;mut cache, "abc"));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>find&lt;<span class="lifetime">&#39;h</span>, I: Into&lt;Input&lt;<span class="lifetime">&#39;h</span>&gt;&gt;&gt;(
+    </span><span class="kw">pub fn </span>find&lt;<span class="lifetime">'h</span>, I: Into&lt;Input&lt;<span class="lifetime">'h</span>&gt;&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
         input: I,
@@ -4942,19 +4942,19 @@ configuring a one-pass DFA.
     /// let re = DFA::new(
     ///     // Notice that we use ASCII here. The corresponding Unicode regex
     ///     // is sadly not one-pass.
-    ///     &quot;(?P&lt;first&gt;[[:alpha:]]+)[[:space:]]+(?P&lt;last&gt;[[:alpha:]]+)&quot;,
+    ///     "(?P&lt;first&gt;[[:alpha:]]+)[[:space:]]+(?P&lt;last&gt;[[:alpha:]]+)",
     /// )?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, &quot;Bruce Springsteen&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "Bruce Springsteen", &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 0..17)), caps.get_match());
     /// assert_eq!(Some(Span::from(0..5)), caps.get_group(1));
-    /// assert_eq!(Some(Span::from(6..17)), caps.get_group_by_name(&quot;last&quot;));
+    /// assert_eq!(Some(Span::from(6..17)), caps.get_group_by_name("last"));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>captures&lt;<span class="lifetime">&#39;h</span>, I: Into&lt;Input&lt;<span class="lifetime">&#39;h</span>&gt;&gt;&gt;(
+    </span><span class="kw">pub fn </span>captures&lt;<span class="lifetime">'h</span>, I: Into&lt;Input&lt;<span class="lifetime">'h</span>&gt;&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
         input: I,
@@ -5006,7 +5006,7 @@ configuring a one-pass DFA.
     /// would have failed.
     ///
     /// Nevertheless, this can still be useful if you only care about matches
-    /// for a specific pattern, and want the DFA to report &quot;no match&quot; even if
+    /// for a specific pattern, and want the DFA to report "no match" even if
     /// some other pattern would have matched.
     ///
     /// Note that in order to make use of this functionality,
@@ -5020,16 +5020,16 @@ configuring a one-pass DFA.
     ///
     /// let re = DFA::builder()
     ///     .configure(DFA::config().starts_for_each_pattern(true))
-    ///     .build_many(&amp;[&quot;[a-z]+&quot;, &quot;[0-9]+&quot;])?;
+    ///     .build_many(&amp;["[a-z]+", "[0-9]+"])?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
-    /// let haystack = &quot;123abc&quot;;
+    /// let haystack = "123abc";
     /// let input = Input::new(haystack).anchored(Anchored::Yes);
     ///
     /// // A normal multi-pattern search will show pattern 1 matches.
     /// re.try_search(&amp;mut cache, &amp;input, &amp;mut caps)?;
     /// assert_eq!(Some(Match::must(1, 0..3)), caps.get_match());
     ///
-    /// // If we only want to report pattern 0 matches, then we&#39;ll get no
+    /// // If we only want to report pattern 0 matches, then we'll get no
     /// // match here.
     /// let input = input.anchored(Anchored::Pattern(PatternID::must(0)));
     /// re.try_search(&amp;mut cache, &amp;input, &amp;mut caps)?;
@@ -5050,11 +5050,11 @@ configuring a one-pass DFA.
     /// // one-pass DFAs fully support Unicode word boundaries!
     /// // A sad joke is that a Unicode aware regex like \w+\s is not one-pass.
     /// // :-(
-    /// let re = DFA::new(r&quot;\b[0-9]{3}\b&quot;)?;
+    /// let re = DFA::new(r"\b[0-9]{3}\b")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
-    /// let haystack = &quot;foo123bar&quot;;
+    /// let haystack = "foo123bar";
     ///
-    /// // Since we sub-slice the haystack, the search doesn&#39;t know about
+    /// // Since we sub-slice the haystack, the search doesn't know about
     /// // the larger context and assumes that `123` is surrounded by word
     /// // boundaries. And of course, the match position is reported relative
     /// // to the sub-slice as well, which means we get `0..3` instead of
@@ -5079,7 +5079,7 @@ configuring a one-pass DFA.
     </span><span class="kw">pub fn </span>try_search(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         caps: <span class="kw-2">&amp;mut </span>Captures,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MatchError&gt; {
         <span class="kw">let </span>pid = <span class="self">self</span>.try_search_slots(cache, input, caps.slots_mut())<span class="question-mark">?</span>;
@@ -5096,10 +5096,10 @@ configuring a one-pass DFA.
     ///
     /// This is like [`DFA::try_search`], but it accepts a raw slots slice
     /// instead of a `Captures` value. This is useful in contexts where you
-    /// don&#39;t want or need to allocate a `Captures`.
+    /// don't want or need to allocate a `Captures`.
     ///
     /// It is legal to pass _any_ number of slots to this routine. If the regex
-    /// engine would otherwise write a slot offset that doesn&#39;t fit in the
+    /// engine would otherwise write a slot offset that doesn't fit in the
     /// provided slice, then it is simply skipped. In general though, there are
     /// usually three slice lengths you might want to use:
     ///
@@ -5136,11 +5136,11 @@ configuring a one-pass DFA.
     /// use regex_automata::{dfa::onepass::DFA, Anchored, Input, PatternID};
     ///
     /// let re = DFA::new_many(&amp;[
-    ///     r&quot;[a-zA-Z]+&quot;,
-    ///     r&quot;[0-9]+&quot;,
+    ///     r"[a-zA-Z]+",
+    ///     r"[0-9]+",
     /// ])?;
     /// let mut cache = re.create_cache();
-    /// let input = Input::new(&quot;123&quot;).anchored(Anchored::Yes);
+    /// let input = Input::new("123").anchored(Anchored::Yes);
     ///
     /// // We only care about the overall match offsets here, so we just
     /// // allocate two slots for each pattern. Each slot records the start
@@ -5149,8 +5149,8 @@ configuring a one-pass DFA.
     /// let pid = re.try_search_slots(&amp;mut cache, &amp;input, &amp;mut slots)?;
     /// assert_eq!(Some(PatternID::must(1)), pid);
     ///
-    /// // The overall match offsets are always at &#39;pid * 2&#39; and &#39;pid * 2 + 1&#39;.
-    /// // See &#39;GroupInfo&#39; for more details on the mapping between groups and
+    /// // The overall match offsets are always at 'pid * 2' and 'pid * 2 + 1'.
+    /// // See 'GroupInfo' for more details on the mapping between groups and
     /// // slot indices.
     /// let slot_start = pid.unwrap().as_usize() * 2;
     /// let slot_end = slot_start + 1;
@@ -5163,7 +5163,7 @@ configuring a one-pass DFA.
     </span><span class="kw">pub fn </span>try_search_slots(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;PatternID&gt;, MatchError&gt; {
         <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
@@ -5179,14 +5179,14 @@ configuring a one-pass DFA.
             <span class="kw">let </span><span class="kw-2">mut </span>enough = [<span class="prelude-val">None</span>, <span class="prelude-val">None</span>];
             <span class="kw">let </span>got = <span class="self">self</span>.try_search_slots_imp(cache, input, <span class="kw-2">&amp;mut </span>enough)<span class="question-mark">?</span>;
             <span class="comment">// This is OK because we know `enough_slots` is strictly bigger
-            // than `slots`, otherwise this special case isn&#39;t reached.
+            // than `slots`, otherwise this special case isn't reached.
             </span>slots.copy_from_slice(<span class="kw-2">&amp;</span>enough[..slots.len()]);
             <span class="kw">return </span><span class="prelude-val">Ok</span>(got);
         }
         <span class="kw">let </span><span class="kw-2">mut </span>enough = <span class="macro">vec!</span>[<span class="prelude-val">None</span>; min];
         <span class="kw">let </span>got = <span class="self">self</span>.try_search_slots_imp(cache, input, <span class="kw-2">&amp;mut </span>enough)<span class="question-mark">?</span>;
         <span class="comment">// This is OK because we know `enough_slots` is strictly bigger than
-        // `slots`, otherwise this special case isn&#39;t reached.
+        // `slots`, otherwise this special case isn't reached.
         </span>slots.copy_from_slice(<span class="kw-2">&amp;</span>enough[..slots.len()]);
         <span class="prelude-val">Ok</span>(got)
     }
@@ -5195,7 +5195,7 @@ configuring a one-pass DFA.
     </span><span class="kw">fn </span>try_search_slots_imp(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;PatternID&gt;, MatchError&gt; {
         <span class="kw">let </span>utf8empty = <span class="self">self</span>.get_nfa().has_empty() &amp;&amp; <span class="self">self</span>.get_nfa().is_utf8();
@@ -5204,20 +5204,20 @@ configuring a one-pass DFA.
             <span class="prelude-val">Some</span>(pid) <span class="kw">if </span>!utf8empty =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(pid)),
             <span class="prelude-val">Some</span>(pid) =&gt; {
                 <span class="comment">// These slot indices are always correct because we know our
-                // &#39;pid&#39; is valid and thus we know that the slot indices for it
+                // 'pid' is valid and thus we know that the slot indices for it
                 // are valid.
                 </span><span class="kw">let </span>slot_start = pid.as_usize().wrapping_mul(<span class="number">2</span>);
                 <span class="kw">let </span>slot_end = slot_start.wrapping_add(<span class="number">1</span>);
                 <span class="comment">// OK because we know we have a match and we know our caller
                 // provided slots are big enough (which we make true above if
-                // the caller didn&#39;t). Namely, we&#39;re only here when &#39;utf8empty&#39;
-                // is true, and when that&#39;s true, we require slots for every
+                // the caller didn't). Namely, we're only here when 'utf8empty'
+                // is true, and when that's true, we require slots for every
                 // pattern.
                 </span><span class="kw">let </span>start = slots[slot_start].unwrap().get();
                 <span class="kw">let </span>end = slots[slot_end].unwrap().get();
                 <span class="comment">// If our match splits a codepoint, then we cannot report is
                 // as a match. And since one-pass DFAs only support anchored
-                // searches, we don&#39;t try to skip ahead to find the next match.
+                // searches, we don't try to skip ahead to find the next match.
                 // We can just quit with nothing.
                 </span><span class="kw">if </span>start == end &amp;&amp; !input.is_char_boundary(start) {
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
@@ -5232,7 +5232,7 @@ configuring a one-pass DFA.
     <span class="kw">fn </span>search_imp(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;PatternID&gt;, MatchError&gt; {
         <span class="comment">// PERF: Some ideas. I ran out of steam after my initial impl to try
@@ -5240,34 +5240,34 @@ configuring a one-pass DFA.
         //
         // 1) Try doing more state shuffling. Right now, all we do is push
         // match states to the end of the transition table so that we can do
-        // &#39;if sid &gt;= self.min_match_id&#39; to know whether we&#39;re in a match
+        // 'if sid &gt;= self.min_match_id' to know whether we're in a match
         // state or not. But what about doing something like dense DFAs and
         // pushing dead, match and states with captures/looks all toward the
-        // beginning of the transition table. Then we could do &#39;if sid &lt;=
-        // self.max_special_id&#39;, in which case, we need to do some special
+        // beginning of the transition table. Then we could do 'if sid &lt;=
+        // self.max_special_id', in which case, we need to do some special
         // handling of some sort. Otherwise, we get the happy path, just
         // like in a DFA search. The main argument against this is that the
         // one-pass DFA is likely to be used most often with capturing groups
         // and if capturing groups are common, then this might wind up being a
         // pessimization.
         //
-        // 2) Consider moving &#39;PatternEpsilons&#39; out of the transition table.
+        // 2) Consider moving 'PatternEpsilons' out of the transition table.
         // It is only needed for match states and usually a small minority of
-        // states are match states. Therefore, we&#39;re using an extra &#39;u64&#39; for
+        // states are match states. Therefore, we're using an extra 'u64' for
         // most states.
         //
         // 3) I played around with the match state handling and it seems like
         // there is probably a lot left on the table for improvement. The
-        // key tension is that the &#39;find_match&#39; routine is a giant mess, but
+        // key tension is that the 'find_match' routine is a giant mess, but
         // splitting it out into a non-inlineable function is a non-starter
-        // because the match state might consume input, so &#39;find_match&#39; COULD
+        // because the match state might consume input, so 'find_match' COULD
         // be called quite a lot, and a function call at that point would trash
         // perf. In theory, we could detect whether a match state consumes
         // input and then specialize our search routine based on that. In that
         // case, maybe an extra function call is OK, but even then, it might be
         // too much of a latency hit. Another idea is to just try and figure
-        // out how to reduce the code size of &#39;find_match&#39;. RE2 has a trick
-        // here where the match handling isn&#39;t done if we know the next byte of
+        // out how to reduce the code size of 'find_match'. RE2 has a trick
+        // here where the match handling isn't done if we know the next byte of
         // input yields a match too. Maybe we adopt that?
         //
         // This just might be a tricky DFA to optimize.
@@ -5278,7 +5278,7 @@ configuring a one-pass DFA.
         <span class="comment">// We unfortunately have a bit of book-keeping to do to set things
         // up. We do have to setup our cache and clear all of our slots. In
         // particular, clearing the slots is necessary for the case where we
-        // report a match, but one of the capturing groups didn&#39;t participate
+        // report a match, but one of the capturing groups didn't participate
         // in the match but had a span set from a previous search. That would
         // be bad. In theory, we could avoid all this slot clearing if we knew
         // that every slot was always activated for every match. Then we would
@@ -5310,7 +5310,7 @@ configuring a one-pass DFA.
             Anchored::Yes =&gt; <span class="self">self</span>.start(),
             Anchored::Pattern(pid) =&gt; <span class="self">self</span>.start_pattern(pid)<span class="question-mark">?</span>,
             Anchored::No =&gt; {
-                <span class="comment">// If the regex is itself always anchored, then we&#39;re fine,
+                <span class="comment">// If the regex is itself always anchored, then we're fine,
                 // even if the search is configured to be unanchored.
                 </span><span class="kw">if </span>!<span class="self">self</span>.nfa.is_always_start_anchored() {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(MatchError::unsupported_anchored(
@@ -5361,19 +5361,19 @@ configuring a one-pass DFA.
         <span class="prelude-val">Ok</span>(pid)
     }
 
-    <span class="doccomment">/// Assumes &#39;sid&#39; is a match state and looks for whether a match can
-    /// be reported. If so, appropriate offsets are written to &#39;slots&#39; and
-    /// &#39;matched_pid&#39; is set to the matching pattern ID.
+    <span class="doccomment">/// Assumes 'sid' is a match state and looks for whether a match can
+    /// be reported. If so, appropriate offsets are written to 'slots' and
+    /// 'matched_pid' is set to the matching pattern ID.
     ///
-    /// Even when &#39;sid&#39; is a match state, it&#39;s possible that a match won&#39;t
+    /// Even when 'sid' is a match state, it's possible that a match won't
     /// be reported. For example, when the conditional epsilon transitions
-    /// leading to the match state aren&#39;t satisfied at the given position in
+    /// leading to the match state aren't satisfied at the given position in
     /// the haystack.
-    </span><span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>find_match(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cache: <span class="kw-2">&amp;mut </span>Cache,
-        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">&#39;_</span>&gt;,
+        input: <span class="kw-2">&amp;</span>Input&lt;<span class="lifetime">'_</span>&gt;,
         at: usize,
         sid: StateID,
         slots: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;],
@@ -5392,10 +5392,10 @@ configuring a one-pass DFA.
             <span class="kw">return </span><span class="bool-val">false</span>;
         }
         <span class="kw">let </span>pid = pateps.pattern_id_unchecked();
-        <span class="comment">// This calculation is always correct because we know our &#39;pid&#39; is
+        <span class="comment">// This calculation is always correct because we know our 'pid' is
         // valid and thus we know that the slot indices for it are valid.
         </span><span class="kw">let </span>slot_end = pid.as_usize().wrapping_mul(<span class="number">2</span>).wrapping_add(<span class="number">1</span>);
-        <span class="comment">// Set the implicit &#39;end&#39; slot for the matching pattern. (The &#39;start&#39;
+        <span class="comment">// Set the implicit 'end' slot for the matching pattern. (The 'start'
         // slot was set at the beginning of the search.)
         </span><span class="kw">if </span>slot_end &lt; slots.len() {
             slots[slot_end] = NonMaxUsize::new(at);
@@ -5405,9 +5405,9 @@ configuring a one-pass DFA.
         // We *also* need to set any explicit slots that are active as part of
         // the path to the match state.
         </span><span class="kw">if </span><span class="self">self</span>.explicit_slot_start &lt; slots.len() {
-            <span class="comment">// NOTE: The &#39;cache.explicit_slots()&#39; slice is setup at the
+            <span class="comment">// NOTE: The 'cache.explicit_slots()' slice is setup at the
             // beginning of every search such that it is guaranteed to return a
-            // slice of length equivalent to &#39;slots[explicit_slot_start..]&#39;.
+            // slice of length equivalent to 'slots[explicit_slot_start..]'.
             </span>slots[<span class="self">self</span>.explicit_slot_start..]
                 .copy_from_slice(cache.explicit_slots());
             epsilons.slots().apply(at, <span class="kw-2">&amp;mut </span>slots[<span class="self">self</span>.explicit_slot_start..]);
@@ -5424,7 +5424,7 @@ configuring a one-pass DFA.
     }
 
     <span class="doccomment">/// Returns the anchored start state for matching the given pattern. If
-    /// &#39;starts_for_each_pattern&#39;
+    /// 'starts_for_each_pattern'
     /// was not enabled, then this returns an error. If the given pattern is
     /// not in this DFA, then `Ok(None)` is returned.
     </span><span class="kw">fn </span>start_pattern(<span class="kw-2">&amp;</span><span class="self">self</span>, pid: PatternID) -&gt; <span class="prelude-ty">Result</span>&lt;StateID, MatchError&gt; {
@@ -5433,7 +5433,7 @@ configuring a one-pass DFA.
                 pid,
             )));
         }
-        <span class="comment">// &#39;starts&#39; always has non-zero length. The first entry is always the
+        <span class="comment">// 'starts' always has non-zero length. The first entry is always the
         // anchored starting state for all patterns, and the following entries
         // are optional and correspond to the anchored starting states for
         // patterns at pid+1. Thus, starts.len()-1 corresponds to the total
@@ -5460,16 +5460,16 @@ configuring a one-pass DFA.
         <span class="self">self</span>.table[offset + class] = to;
     }
 
-    <span class="doccomment">/// Return an iterator of &quot;sparse&quot; transitions for the given state ID.
-    /// &quot;sparse&quot; in this context means that consecutive transitions that are
+    <span class="doccomment">/// Return an iterator of "sparse" transitions for the given state ID.
+    /// "sparse" in this context means that consecutive transitions that are
     /// equivalent are returned as one group, and transitions to the DEAD state
     /// are ignored.
     ///
-    /// This winds up being useful for debug printing, since it&#39;s much terser
+    /// This winds up being useful for debug printing, since it's much terser
     /// to display runs of equivalent transitions than the transition for every
-    /// possible byte value. Indeed, in practice, it&#39;s very common for runs
+    /// possible byte value. Indeed, in practice, it's very common for runs
     /// of equivalent transitions to appear.
-    </span><span class="kw">fn </span>sparse_transitions(<span class="kw-2">&amp;</span><span class="self">self</span>, sid: StateID) -&gt; SparseTransitionIter&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">fn </span>sparse_transitions(<span class="kw-2">&amp;</span><span class="self">self</span>, sid: StateID) -&gt; SparseTransitionIter&lt;<span class="lifetime">'_</span>&gt; {
         <span class="kw">let </span>start = sid.as_usize() &lt;&lt; <span class="self">self</span>.stride2();
         <span class="kw">let </span>end = start + <span class="self">self</span>.alphabet_len();
         SparseTransitionIter {
@@ -5499,29 +5499,29 @@ configuring a one-pass DFA.
         <span class="kw">if </span>id == DEAD {
             <span class="prelude-val">None
         </span>} <span class="kw">else </span>{
-            <span class="comment">// CORRECTNESS: Since &#39;id&#39; is not the first state, subtracting 1
+            <span class="comment">// CORRECTNESS: Since 'id' is not the first state, subtracting 1
             // is always valid.
             </span><span class="prelude-val">Some</span>(StateID::new_unchecked(id.as_usize().checked_sub(<span class="number">1</span>).unwrap()))
         }
     }
 
-    <span class="doccomment">/// Returns the state ID of the last state in this DFA&#39;s transition table.
-    /// &quot;last&quot; in this context means the last state to appear in memory, i.e.,
+    <span class="doccomment">/// Returns the state ID of the last state in this DFA's transition table.
+    /// "last" in this context means the last state to appear in memory, i.e.,
     /// the one with the greatest ID.
     </span><span class="kw">fn </span>last_state_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StateID {
         <span class="comment">// CORRECTNESS: A DFA table is always non-empty since it always at
         // least contains a DEAD state. Since every state has the same stride,
-        // we can just compute what the &quot;next&quot; state ID would have been and
+        // we can just compute what the "next" state ID would have been and
         // then subtract 1 from it.
         </span>StateID::new_unchecked(
             (<span class="self">self</span>.table.len() &gt;&gt; <span class="self">self</span>.stride2()).checked_sub(<span class="number">1</span>).unwrap(),
         )
     }
 
-    <span class="doccomment">/// Move the transitions from &#39;id1&#39; to &#39;id2&#39; and vice versa.
+    <span class="doccomment">/// Move the transitions from 'id1' to 'id2' and vice versa.
     ///
     /// WARNING: This does not update the rest of the transition table to have
-    /// transitions to &#39;id1&#39; changed to &#39;id2&#39; and vice versa. This merely moves
+    /// transitions to 'id1' changed to 'id2' and vice versa. This merely moves
     /// the states in memory.
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>swap_states(<span class="kw-2">&amp;mut </span><span class="self">self</span>, id1: StateID, id2: StateID) {
         <span class="kw">let </span>o1 = id1.as_usize() &lt;&lt; <span class="self">self</span>.stride2();
@@ -5559,69 +5559,69 @@ configuring a one-pass DFA.
             {
                 <span class="kw">let </span>next = trans.state_id();
                 <span class="kw">if </span>i &gt; <span class="number">0 </span>{
-                    <span class="macro">write!</span>(f, <span class="string">&quot;, &quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">", "</span>)<span class="question-mark">?</span>;
                 }
                 <span class="kw">if </span>start == end {
                     <span class="macro">write!</span>(
                         f,
-                        <span class="string">&quot;{:?} =&gt; {:?}&quot;</span>,
+                        <span class="string">"{:?} =&gt; {:?}"</span>,
                         DebugByte(start),
                         next.as_usize(),
                     )<span class="question-mark">?</span>;
                 } <span class="kw">else </span>{
                     <span class="macro">write!</span>(
                         f,
-                        <span class="string">&quot;{:?}-{:?} =&gt; {:?}&quot;</span>,
+                        <span class="string">"{:?}-{:?} =&gt; {:?}"</span>,
                         DebugByte(start),
                         DebugByte(end),
                         next.as_usize(),
                     )<span class="question-mark">?</span>;
                 }
                 <span class="kw">if </span>trans.match_wins() {
-                    <span class="macro">write!</span>(f, <span class="string">&quot; (MW)&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">" (MW)"</span>)<span class="question-mark">?</span>;
                 }
                 <span class="kw">if </span>!trans.epsilons().is_empty() {
-                    <span class="macro">write!</span>(f, <span class="string">&quot; ({:?})&quot;</span>, trans.epsilons())<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">" ({:?})"</span>, trans.epsilons())<span class="question-mark">?</span>;
                 }
             }
             <span class="prelude-val">Ok</span>(())
         }
 
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;onepass::DFA(&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"onepass::DFA("</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.state_len() {
             <span class="kw">let </span>sid = StateID::must(index);
             <span class="kw">let </span>pateps = <span class="self">self</span>.pattern_epsilons(sid);
             <span class="kw">if </span>sid == DEAD {
-                <span class="macro">write!</span>(f, <span class="string">&quot;D &quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"D "</span>)<span class="question-mark">?</span>;
             } <span class="kw">else if </span>pateps.pattern_id().is_some() {
-                <span class="macro">write!</span>(f, <span class="string">&quot;* &quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"* "</span>)<span class="question-mark">?</span>;
             } <span class="kw">else </span>{
-                <span class="macro">write!</span>(f, <span class="string">&quot;  &quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"  "</span>)<span class="question-mark">?</span>;
             }
-            <span class="macro">write!</span>(f, <span class="string">&quot;{:06?}&quot;</span>, sid.as_usize())<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"{:06?}"</span>, sid.as_usize())<span class="question-mark">?</span>;
             <span class="kw">if </span>!pateps.is_empty() {
-                <span class="macro">write!</span>(f, <span class="string">&quot; ({:?})&quot;</span>, pateps)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">" ({:?})"</span>, pateps)<span class="question-mark">?</span>;
             }
-            <span class="macro">write!</span>(f, <span class="string">&quot;: &quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">": "</span>)<span class="question-mark">?</span>;
             debug_state_transitions(f, <span class="self">self</span>, sid)<span class="question-mark">?</span>;
-            <span class="macro">write!</span>(f, <span class="string">&quot;\n&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"\n"</span>)<span class="question-mark">?</span>;
         }
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">""</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>(i, <span class="kw-2">&amp;</span>sid) <span class="kw">in </span><span class="self">self</span>.starts.iter().enumerate() {
             <span class="kw">if </span>i == <span class="number">0 </span>{
-                <span class="macro">writeln!</span>(f, <span class="string">&quot;START(ALL): {:?}&quot;</span>, sid.as_usize())<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(f, <span class="string">"START(ALL): {:?}"</span>, sid.as_usize())<span class="question-mark">?</span>;
             } <span class="kw">else </span>{
                 <span class="macro">writeln!</span>(
                     f,
-                    <span class="string">&quot;START(pattern: {:?}): {:?}&quot;</span>,
+                    <span class="string">"START(pattern: {:?}): {:?}"</span>,
                     i - <span class="number">1</span>,
                     sid.as_usize(),
                 )<span class="question-mark">?</span>;
             }
         }
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;state length: {:?}&quot;</span>, <span class="self">self</span>.state_len())<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;pattern length: {:?}&quot;</span>, <span class="self">self</span>.pattern_len())<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;)&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"state length: {:?}"</span>, <span class="self">self</span>.state_len())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"pattern length: {:?}"</span>, <span class="self">self</span>.pattern_len())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">")"</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -5629,17 +5629,17 @@ configuring a one-pass DFA.
 <span class="doccomment">/// An iterator over groups of consecutive equivalent transitions in a single
 /// state.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">struct </span>SparseTransitionIter&lt;<span class="lifetime">&#39;a</span>&gt; {
-    it: core::iter::Enumerate&lt;core::slice::Iter&lt;<span class="lifetime">&#39;a</span>, Transition&gt;&gt;,
+</span><span class="kw">struct </span>SparseTransitionIter&lt;<span class="lifetime">'a</span>&gt; {
+    it: core::iter::Enumerate&lt;core::slice::Iter&lt;<span class="lifetime">'a</span>, Transition&gt;&gt;,
     cur: <span class="prelude-ty">Option</span>&lt;(u8, u8, Transition)&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>SparseTransitionIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Iterator <span class="kw">for </span>SparseTransitionIter&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">type </span>Item = (u8, u8, Transition);
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(u8, u8, Transition)&gt; {
         <span class="kw">while let </span><span class="prelude-val">Some</span>((b, <span class="kw-2">&amp;</span>trans)) = <span class="self">self</span>.it.next() {
-            <span class="comment">// Fine because we&#39;ll never have more than u8::MAX transitions in
+            <span class="comment">// Fine because we'll never have more than u8::MAX transitions in
             // one state.
             </span><span class="kw">let </span>b = b.as_u8();
             <span class="kw">let </span>(prev_start, prev_end, prev_trans) = <span class="kw">match </span><span class="self">self</span>.cur {
@@ -5687,8 +5687,8 @@ configuring a one-pass DFA.
     /// place to store candidate capture offsets without overwriting the slot
     /// offsets recorded for the most recently seen match.
     </span>explicit_slots: Vec&lt;<span class="prelude-ty">Option</span>&lt;NonMaxUsize&gt;&gt;,
-    <span class="doccomment">/// The number of slots in the caller-provided &#39;Captures&#39; value for the
-    /// current search. This is always at most &#39;explicit_slots.len()&#39;, but
+    <span class="doccomment">/// The number of slots in the caller-provided 'Captures' value for the
+    /// current search. This is always at most 'explicit_slots.len()', but
     /// might be less than it, if the caller provided fewer slots to fill.
     </span>explicit_slot_len: usize,
 }
@@ -5723,27 +5723,27 @@ configuring a one-pass DFA.
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::{dfa::onepass::DFA, Match};
     ///
-    /// let re1 = DFA::new(r&quot;\w&quot;)?;
-    /// let re2 = DFA::new(r&quot;\W&quot;)?;
+    /// let re1 = DFA::new(r"\w")?;
+    /// let re2 = DFA::new(r"\W")?;
     /// let mut caps1 = re1.create_captures();
     /// let mut caps2 = re2.create_captures();
     ///
     /// let mut cache = re1.create_cache();
     /// assert_eq!(
     ///     Some(Match::must(0, 0..2)),
-    ///     { re1.captures(&amp;mut cache, &quot;Δ&quot;, &amp;mut caps1); caps1.get_match() },
+    ///     { re1.captures(&amp;mut cache, "Δ", &amp;mut caps1); caps1.get_match() },
     /// );
     ///
-    /// // Using &#39;cache&#39; with re2 is not allowed. It may result in panics or
+    /// // Using 'cache' with re2 is not allowed. It may result in panics or
     /// // incorrect results. In order to re-purpose the cache, we must reset
-    /// // it with the one-pass DFA we&#39;d like to use it with.
+    /// // it with the one-pass DFA we'd like to use it with.
     /// //
-    /// // Similarly, after this reset, using the cache with &#39;re1&#39; is also not
+    /// // Similarly, after this reset, using the cache with 're1' is also not
     /// // allowed.
     /// re2.reset_cache(&amp;mut cache);
     /// assert_eq!(
     ///     Some(Match::must(0, 0..3)),
-    ///     { re2.captures(&amp;mut cache, &quot;☃&quot;, &amp;mut caps2); caps2.get_match() },
+    ///     { re2.captures(&amp;mut cache, "☃", &amp;mut caps2); caps2.get_match() },
     /// );
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -5774,7 +5774,7 @@ configuring a one-pass DFA.
 <span class="doccomment">/// Represents a single transition in a one-pass DFA.
 ///
 /// The high 21 bits corresponds to the state ID. The bit following corresponds
-/// to the special &quot;match wins&quot; flag. The remaining low 42 bits corresponds to
+/// to the special "match wins" flag. The remaining low 42 bits corresponds to
 /// the transition epsilons, which contains the slots that should be saved when
 /// this transition is followed and the conditional epsilon transitions that
 /// must be satisfied in order to follow this transition.
@@ -5801,19 +5801,19 @@ configuring a one-pass DFA.
         <span class="self">self</span>.state_id() == DEAD
     }
 
-    <span class="doccomment">/// Return whether this transition has a &quot;match wins&quot; property.
+    <span class="doccomment">/// Return whether this transition has a "match wins" property.
     ///
     /// When a transition has this property, it means that if a match has been
     /// found and the search uses leftmost-first semantics, then that match
     /// should be returned immediately instead of continuing on.
     ///
-    /// The &quot;match wins&quot; name comes from RE2, which uses a pretty much
+    /// The "match wins" name comes from RE2, which uses a pretty much
     /// identical mechanism for implementing leftmost-first semantics.
     </span><span class="kw">fn </span>match_wins(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         (<span class="self">self</span>.<span class="number">0 </span>&gt;&gt; Transition::MATCH_WINS_SHIFT &amp; <span class="number">1</span>) == <span class="number">1
     </span>}
 
-    <span class="doccomment">/// Return the &quot;next&quot; state ID that this transition points to.
+    <span class="doccomment">/// Return the "next" state ID that this transition points to.
     </span><span class="kw">fn </span>state_id(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; StateID {
         <span class="comment">// OK because a Transition has a valid StateID in its upper bits by
         // construction. The cast to usize is also correct, even on 16-bit
@@ -5824,7 +5824,7 @@ configuring a one-pass DFA.
         )
     }
 
-    <span class="doccomment">/// Set the &quot;next&quot; state ID in this transition.
+    <span class="doccomment">/// Set the "next" state ID in this transition.
     </span><span class="kw">fn </span>set_state_id(<span class="kw-2">&amp;mut </span><span class="self">self</span>, sid: StateID) {
         <span class="kw-2">*</span><span class="self">self </span>= Transition::new(<span class="self">self</span>.match_wins(), sid, <span class="self">self</span>.epsilons());
     }
@@ -5838,32 +5838,32 @@ configuring a one-pass DFA.
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>Transition {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
         <span class="kw">if </span><span class="self">self</span>.is_dead() {
-            <span class="kw">return </span><span class="macro">write!</span>(f, <span class="string">&quot;0&quot;</span>);
+            <span class="kw">return </span><span class="macro">write!</span>(f, <span class="string">"0"</span>);
         }
-        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.state_id().as_usize())<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.state_id().as_usize())<span class="question-mark">?</span>;
         <span class="kw">if </span><span class="self">self</span>.match_wins() {
-            <span class="macro">write!</span>(f, <span class="string">&quot;-MW&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"-MW"</span>)<span class="question-mark">?</span>;
         }
         <span class="kw">if </span>!<span class="self">self</span>.epsilons().is_empty() {
-            <span class="macro">write!</span>(f, <span class="string">&quot;-{:?}&quot;</span>, <span class="self">self</span>.epsilons())<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"-{:?}"</span>, <span class="self">self</span>.epsilons())<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
 }
 
-<span class="doccomment">/// A representation of a match state&#39;s pattern ID along with the epsilons for
+<span class="doccomment">/// A representation of a match state's pattern ID along with the epsilons for
 /// when a match occurs.
 ///
 /// A match state in a one-pass DFA, unlike in a more general DFA, has exactly
 /// one pattern ID. If it had more, then the original NFA would not have been
 /// one-pass.
 ///
-/// The &quot;epsilons&quot; part of this corresponds to what was found in the epsilon
+/// The "epsilons" part of this corresponds to what was found in the epsilon
 /// transitions between the transition taken in the last byte of input and the
 /// ultimate match state. This might include saving slots and/or conditional
 /// epsilon transitions that must be satisfied before one can report the match.
 ///
-/// Technically, every state has room for a &#39;PatternEpsilons&#39;, but it is only
+/// Technically, every state has room for a 'PatternEpsilons', but it is only
 /// ever non-empty for match states.
 </span><span class="attr">#[derive(Clone, Copy)]
 </span><span class="kw">struct </span>PatternEpsilons(u64);
@@ -5871,7 +5871,7 @@ configuring a one-pass DFA.
 <span class="kw">impl </span>PatternEpsilons {
     <span class="kw">const </span>PATTERN_ID_BITS: u64 = <span class="number">22</span>;
     <span class="kw">const </span>PATTERN_ID_SHIFT: u64 = <span class="number">64 </span>- PatternEpsilons::PATTERN_ID_BITS;
-    <span class="comment">// A sentinel value indicating that this is not a match state. We don&#39;t
+    <span class="comment">// A sentinel value indicating that this is not a match state. We don't
     // use 0 since 0 is a valid pattern ID.
     </span><span class="kw">const </span>PATTERN_ID_NONE: u64 = <span class="number">0x00000000_003FFFFF</span>;
     <span class="kw">const </span>PATTERN_ID_LIMIT: u64 = PatternEpsilons::PATTERN_ID_NONE;
@@ -5887,7 +5887,7 @@ configuring a one-pass DFA.
         )
     }
 
-    <span class="doccomment">/// Whether this pattern epsilons is empty or not. It&#39;s empty when it has
+    <span class="doccomment">/// Whether this pattern epsilons is empty or not. It's empty when it has
     /// no pattern ID and an empty epsilons.
     </span><span class="kw">fn </span>is_empty(<span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.pattern_id().is_none() &amp;&amp; <span class="self">self</span>.epsilons().is_empty()
@@ -5903,13 +5903,13 @@ configuring a one-pass DFA.
         }
     }
 
-    <span class="doccomment">/// Returns the pattern ID without checking whether it&#39;s valid. If this is
+    <span class="doccomment">/// Returns the pattern ID without checking whether it's valid. If this is
     /// called and there is no pattern ID in this `PatternEpsilons`, then this
     /// will likely produce an incorrect result or possibly even a panic or
     /// an overflow. But safety will not be violated.
     ///
     /// This is useful when you know a particular state is a match state. If
-    /// it&#39;s a match state, then it must have a pattern ID.
+    /// it's a match state, then it must have a pattern ID.
     </span><span class="kw">fn </span>pattern_id_unchecked(<span class="self">self</span>) -&gt; PatternID {
         <span class="kw">let </span>pid = <span class="self">self</span>.<span class="number">0 </span>&gt;&gt; PatternEpsilons::PATTERN_ID_SHIFT;
         PatternID::new_unchecked(pid.as_usize())
@@ -5942,16 +5942,16 @@ configuring a one-pass DFA.
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>PatternEpsilons {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
         <span class="kw">if </span><span class="self">self</span>.is_empty() {
-            <span class="kw">return </span><span class="macro">write!</span>(f, <span class="string">&quot;N/A&quot;</span>);
+            <span class="kw">return </span><span class="macro">write!</span>(f, <span class="string">"N/A"</span>);
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pid) = <span class="self">self</span>.pattern_id() {
-            <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, pid.as_usize())<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"{}"</span>, pid.as_usize())<span class="question-mark">?</span>;
         }
         <span class="kw">if </span>!<span class="self">self</span>.epsilons().is_empty() {
             <span class="kw">if </span><span class="self">self</span>.pattern_id().is_some() {
-                <span class="macro">write!</span>(f, <span class="string">&quot;/&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"/"</span>)<span class="question-mark">?</span>;
             }
-            <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>.epsilons())<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, <span class="self">self</span>.epsilons())<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
@@ -5972,7 +5972,7 @@ configuring a one-pass DFA.
 ///
 /// Epsilons is represented as a 42-bit integer. For example, it is packed into
 /// the lower 42 bits of a `Transition`. (Where the high 22 bits contains a
-/// `StateID` and a special &quot;match wins&quot; property.)
+/// `StateID` and a special "match wins" property.)
 </span><span class="attr">#[derive(Clone, Copy)]
 </span><span class="kw">struct </span>Epsilons(u64);
 
@@ -6023,18 +6023,18 @@ configuring a one-pass DFA.
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
         <span class="kw">let </span><span class="kw-2">mut </span>wrote = <span class="bool-val">false</span>;
         <span class="kw">if </span>!<span class="self">self</span>.slots().is_empty() {
-            <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>.slots())<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, <span class="self">self</span>.slots())<span class="question-mark">?</span>;
             wrote = <span class="bool-val">true</span>;
         }
         <span class="kw">if </span>!<span class="self">self</span>.looks().is_empty() {
             <span class="kw">if </span>wrote {
-                <span class="macro">write!</span>(f, <span class="string">&quot;/&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"/"</span>)<span class="question-mark">?</span>;
             }
-            <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>.looks())<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, <span class="self">self</span>.looks())<span class="question-mark">?</span>;
             wrote = <span class="bool-val">true</span>;
         }
         <span class="kw">if </span>!wrote {
-            <span class="macro">write!</span>(f, <span class="string">&quot;N/A&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"N/A"</span>)<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
@@ -6056,9 +6056,9 @@ configuring a one-pass DFA.
 /// that means we only need to represent explicit slots in our epsilon
 /// transitions.
 ///
-/// Its representation is a bit set. The bit &#39;i&#39; is set if and only if there
-/// exists an explicit slot at index &#39;c&#39;, where &#39;c = (#patterns * 2) + i&#39;. That
-/// is, the bit &#39;i&#39; corresponds to the first explicit slot and the first
+/// Its representation is a bit set. The bit 'i' is set if and only if there
+/// exists an explicit slot at index 'c', where 'c = (#patterns * 2) + i'. That
+/// is, the bit 'i' corresponds to the first explicit slot and the first
 /// explicit slot appears immediately following the last implicit slot. (If
 /// this is confusing, see `GroupInfo` for more details on how slots works.)
 ///
@@ -6068,9 +6068,9 @@ configuring a one-pass DFA.
 /// transition must be captured by recording the current search position.
 ///
 /// The API of `Slots` requires the caller to handle the explicit slot offset.
-/// That is, a `Slots` doesn&#39;t know where the explicit slots start for a
-/// particular NFA. Thus, if the callers see&#39;s the bit &#39;i&#39; is set, then they
-/// need to do the arithmetic above to find &#39;c&#39;, which is the real actual slot
+/// That is, a `Slots` doesn't know where the explicit slots start for a
+/// particular NFA. Thus, if the callers see's the bit 'i' is set, then they
+/// need to do the arithmetic above to find 'c', which is the real actual slot
 /// index in the corresponding NFA.
 </span><span class="attr">#[derive(Clone, Copy)]
 </span><span class="kw">struct </span>Slots(u32);
@@ -6129,9 +6129,9 @@ configuring a one-pass DFA.
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>Slots {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;S&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(f, <span class="string">"S"</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>slot <span class="kw">in </span><span class="self">self</span>.iter() {
-            <span class="macro">write!</span>(f, <span class="string">&quot;-{:?}&quot;</span>, slot)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"-{:?}"</span>, slot)<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
@@ -6187,7 +6187,7 @@ configuring a one-pass DFA.
     TooManyPatterns { limit: u64 },
     UnsupportedLook { look: Look },
     ExceededSizeLimit { limit: usize },
-    NotOnePass { msg: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str },
+    NotOnePass { msg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str },
 }
 
 <span class="kw">impl </span>BuildError {
@@ -6215,14 +6215,14 @@ configuring a one-pass DFA.
         BuildError { kind: BuildErrorKind::ExceededSizeLimit { limit } }
     }
 
-    <span class="kw">fn </span>not_one_pass(msg: <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str) -&gt; BuildError {
+    <span class="kw">fn </span>not_one_pass(msg: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str) -&gt; BuildError {
         BuildError { kind: BuildErrorKind::NotOnePass { msg } }
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;std&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>BuildError {
-    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">&#39;static</span>)&gt; {
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>std::error::Error + <span class="lifetime">'static</span>)&gt; {
         <span class="kw">use </span><span class="self">self</span>::BuildErrorKind::<span class="kw-2">*</span>;
 
         <span class="kw">match </span><span class="self">self</span>.kind {
@@ -6234,43 +6234,43 @@ configuring a one-pass DFA.
 }
 
 <span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>BuildError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
         <span class="kw">use </span><span class="self">self</span>::BuildErrorKind::<span class="kw-2">*</span>;
 
         <span class="kw">match </span><span class="self">self</span>.kind {
-            NFA(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;error building NFA&quot;</span>),
-            Word(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;NFA contains Unicode word boundary&quot;</span>),
+            NFA(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"error building NFA"</span>),
+            Word(<span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"NFA contains Unicode word boundary"</span>),
             TooManyStates { limit } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;one-pass DFA exceeded a limit of {:?} for number of states&quot;</span>,
+                <span class="string">"one-pass DFA exceeded a limit of {:?} for number of states"</span>,
                 limit,
             ),
             TooManyPatterns { limit } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;one-pass DFA exceeded a limit of {:?} for number of patterns&quot;</span>,
+                <span class="string">"one-pass DFA exceeded a limit of {:?} for number of patterns"</span>,
                 limit,
             ),
             UnsupportedLook { look } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;one-pass DFA does not support the {:?} assertion&quot;</span>,
+                <span class="string">"one-pass DFA does not support the {:?} assertion"</span>,
                 look,
             ),
             ExceededSizeLimit { limit } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;one-pass DFA exceeded size limit of {:?} during building&quot;</span>,
+                <span class="string">"one-pass DFA exceeded size limit of {:?} during building"</span>,
                 limit,
             ),
             NotOnePass { msg } =&gt; <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;one-pass DFA could not be built because \
-                 pattern is not one-pass: {}&quot;</span>,
+                <span class="string">"one-pass DFA could not be built because \
+                 pattern is not one-pass: {}"</span>,
                 msg,
             ),
         }
     }
 }
 
-<span class="attr">#[cfg(all(test, feature = <span class="string">&quot;syntax&quot;</span>))]
+<span class="attr">#[cfg(all(test, feature = <span class="string">"syntax"</span>))]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>alloc::string::ToString;
 
@@ -6278,30 +6278,30 @@ configuring a one-pass DFA.
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fail_conflicting_transition() {
-        <span class="kw">let </span>predicate = |err: <span class="kw-2">&amp;</span>str| err.contains(<span class="string">&quot;conflicting transition&quot;</span>);
+        <span class="kw">let </span>predicate = |err: <span class="kw-2">&amp;</span>str| err.contains(<span class="string">"conflicting transition"</span>);
 
-        <span class="kw">let </span>err = DFA::new(<span class="string">r&quot;a*[ab]&quot;</span>).unwrap_err().to_string();
-        <span class="macro">assert!</span>(predicate(<span class="kw-2">&amp;</span>err), <span class="string">&quot;{}&quot;</span>, err);
+        <span class="kw">let </span>err = DFA::new(<span class="string">r"a*[ab]"</span>).unwrap_err().to_string();
+        <span class="macro">assert!</span>(predicate(<span class="kw-2">&amp;</span>err), <span class="string">"{}"</span>, err);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fail_multiple_epsilon() {
         <span class="kw">let </span>predicate = |err: <span class="kw-2">&amp;</span>str| {
-            err.contains(<span class="string">&quot;multiple epsilon transitions to same state&quot;</span>)
+            err.contains(<span class="string">"multiple epsilon transitions to same state"</span>)
         };
 
-        <span class="kw">let </span>err = DFA::new(<span class="string">r&quot;(^|$)a&quot;</span>).unwrap_err().to_string();
-        <span class="macro">assert!</span>(predicate(<span class="kw-2">&amp;</span>err), <span class="string">&quot;{}&quot;</span>, err);
+        <span class="kw">let </span>err = DFA::new(<span class="string">r"(^|$)a"</span>).unwrap_err().to_string();
+        <span class="macro">assert!</span>(predicate(<span class="kw-2">&amp;</span>err), <span class="string">"{}"</span>, err);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>fail_multiple_match() {
         <span class="kw">let </span>predicate = |err: <span class="kw-2">&amp;</span>str| {
-            err.contains(<span class="string">&quot;multiple epsilon transitions to match state&quot;</span>)
+            err.contains(<span class="string">"multiple epsilon transitions to match state"</span>)
         };
 
-        <span class="kw">let </span>err = DFA::new_many(<span class="kw-2">&amp;</span>[<span class="string">r&quot;^&quot;</span>, <span class="string">r&quot;$&quot;</span>]).unwrap_err().to_string();
-        <span class="macro">assert!</span>(predicate(<span class="kw-2">&amp;</span>err), <span class="string">&quot;{}&quot;</span>, err);
+        <span class="kw">let </span>err = DFA::new_many(<span class="kw-2">&amp;</span>[<span class="string">r"^"</span>, <span class="string">r"$"</span>]).unwrap_err().to_string();
+        <span class="macro">assert!</span>(predicate(<span class="kw-2">&amp;</span>err), <span class="string">"{}"</span>, err);
     }
 
     <span class="comment">// This test is meant to build a one-pass regex with the maximum number of
@@ -6314,10 +6314,10 @@ configuring a one-pass DFA.
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>max_slots() {
         <span class="comment">// One too many...
-        </span><span class="kw">let </span>pat = <span class="string">r&quot;(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)(l)(m)(n)(o)(p)(q)&quot;</span>;
+        </span><span class="kw">let </span>pat = <span class="string">r"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)(l)(m)(n)(o)(p)(q)"</span>;
         <span class="macro">assert!</span>(DFA::new(pat).is_err());
         <span class="comment">// Just right.
-        </span><span class="kw">let </span>pat = <span class="string">r&quot;(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)(l)(m)(n)(o)(p)&quot;</span>;
+        </span><span class="kw">let </span>pat = <span class="string">r"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)(l)(m)(n)(o)(p)"</span>;
         <span class="macro">assert!</span>(DFA::new(pat).is_ok());
     }
 
@@ -6326,7 +6326,7 @@ configuring a one-pass DFA.
     //
     // The utility of this test is that each one-pass transition has a small
     // amount of space to store look-around assertions. Currently, there is
-    // logic in the one-pass constructor to ensure there aren&#39;t more than ten
+    // logic in the one-pass constructor to ensure there aren't more than ten
     // possible assertions. And indeed, there are only ten possible assertions
     // (at time of writing), so this is okay. But conceivably, more assertions
     // could be added. So we check that things at least work with what we
@@ -6334,22 +6334,22 @@ configuring a one-pass DFA.
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>assertions() {
         <span class="comment">// haystack anchors
-        </span><span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;^&quot;</span>).is_ok());
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;$&quot;</span>).is_ok());
+        </span><span class="macro">assert!</span>(DFA::new(<span class="string">r"^"</span>).is_ok());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"$"</span>).is_ok());
 
         <span class="comment">// line anchors
-        </span><span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;(?m)^&quot;</span>).is_ok());
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;(?m)$&quot;</span>).is_ok());
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;(?Rm)^&quot;</span>).is_ok());
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;(?Rm)$&quot;</span>).is_ok());
+        </span><span class="macro">assert!</span>(DFA::new(<span class="string">r"(?m)^"</span>).is_ok());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"(?m)$"</span>).is_ok());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"(?Rm)^"</span>).is_ok());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"(?Rm)$"</span>).is_ok());
 
         <span class="comment">// word boundaries
-        </span><span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">&quot;unicode-word-boundary&quot;</span>) {
-            <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;\b&quot;</span>).is_ok());
-            <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;\B&quot;</span>).is_ok());
+        </span><span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">"unicode-word-boundary"</span>) {
+            <span class="macro">assert!</span>(DFA::new(<span class="string">r"\b"</span>).is_ok());
+            <span class="macro">assert!</span>(DFA::new(<span class="string">r"\B"</span>).is_ok());
         }
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;(?-u)\b&quot;</span>).is_ok());
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;(?-u)\B&quot;</span>).is_ok());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"(?-u)\b"</span>).is_ok());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"(?-u)\B"</span>).is_ok());
     }
 
     <span class="attr">#[cfg(not(miri))] </span><span class="comment">// takes too long on miri
@@ -6357,29 +6357,29 @@ configuring a one-pass DFA.
     </span><span class="kw">fn </span>is_one_pass() {
         <span class="kw">use </span><span class="kw">crate</span>::util::syntax;
 
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;a*b&quot;</span>).is_ok());
-        <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">&quot;unicode-perl&quot;</span>) {
-            <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;\w&quot;</span>).is_ok());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"a*b"</span>).is_ok());
+        <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">"unicode-perl"</span>) {
+            <span class="macro">assert!</span>(DFA::new(<span class="string">r"\w"</span>).is_ok());
         }
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;(?-u)\w*\s&quot;</span>).is_ok());
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;(?s:.)*?&quot;</span>).is_ok());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"(?-u)\w*\s"</span>).is_ok());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"(?s:.)*?"</span>).is_ok());
         <span class="macro">assert!</span>(DFA::builder()
             .syntax(syntax::Config::new().utf8(<span class="bool-val">false</span>))
-            .build(<span class="string">r&quot;(?s-u:.)*?&quot;</span>)
+            .build(<span class="string">r"(?s-u:.)*?"</span>)
             .is_ok());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>is_not_one_pass() {
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;a*a&quot;</span>).is_err());
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;(?s-u:.)*?&quot;</span>).is_err());
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;(?s:.)*?a&quot;</span>).is_err());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"a*a"</span>).is_err());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"(?s-u:.)*?"</span>).is_err());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"(?s:.)*?a"</span>).is_err());
     }
 
     <span class="attr">#[cfg(not(miri))]
     #[test]
     </span><span class="kw">fn </span>is_not_one_pass_bigger() {
-        <span class="macro">assert!</span>(DFA::new(<span class="string">r&quot;\w*\s&quot;</span>).is_err());
+        <span class="macro">assert!</span>(DFA::new(<span class="string">r"\w*\s"</span>).is_err());
     }
 }
 </code></pre></div></section></main></body></html>

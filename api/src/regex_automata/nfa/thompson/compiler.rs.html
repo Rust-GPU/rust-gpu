@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/nfa/thompson/compiler.rs`."><title>compiler.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../regex_automata/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/nfa/thompson/compiler.rs`."><title>compiler.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2263,6 +2263,87 @@
 <a href="#2263" id="2263">2263</a>
 <a href="#2264" id="2264">2264</a>
 <a href="#2265" id="2265">2265</a>
+<a href="#2266" id="2266">2266</a>
+<a href="#2267" id="2267">2267</a>
+<a href="#2268" id="2268">2268</a>
+<a href="#2269" id="2269">2269</a>
+<a href="#2270" id="2270">2270</a>
+<a href="#2271" id="2271">2271</a>
+<a href="#2272" id="2272">2272</a>
+<a href="#2273" id="2273">2273</a>
+<a href="#2274" id="2274">2274</a>
+<a href="#2275" id="2275">2275</a>
+<a href="#2276" id="2276">2276</a>
+<a href="#2277" id="2277">2277</a>
+<a href="#2278" id="2278">2278</a>
+<a href="#2279" id="2279">2279</a>
+<a href="#2280" id="2280">2280</a>
+<a href="#2281" id="2281">2281</a>
+<a href="#2282" id="2282">2282</a>
+<a href="#2283" id="2283">2283</a>
+<a href="#2284" id="2284">2284</a>
+<a href="#2285" id="2285">2285</a>
+<a href="#2286" id="2286">2286</a>
+<a href="#2287" id="2287">2287</a>
+<a href="#2288" id="2288">2288</a>
+<a href="#2289" id="2289">2289</a>
+<a href="#2290" id="2290">2290</a>
+<a href="#2291" id="2291">2291</a>
+<a href="#2292" id="2292">2292</a>
+<a href="#2293" id="2293">2293</a>
+<a href="#2294" id="2294">2294</a>
+<a href="#2295" id="2295">2295</a>
+<a href="#2296" id="2296">2296</a>
+<a href="#2297" id="2297">2297</a>
+<a href="#2298" id="2298">2298</a>
+<a href="#2299" id="2299">2299</a>
+<a href="#2300" id="2300">2300</a>
+<a href="#2301" id="2301">2301</a>
+<a href="#2302" id="2302">2302</a>
+<a href="#2303" id="2303">2303</a>
+<a href="#2304" id="2304">2304</a>
+<a href="#2305" id="2305">2305</a>
+<a href="#2306" id="2306">2306</a>
+<a href="#2307" id="2307">2307</a>
+<a href="#2308" id="2308">2308</a>
+<a href="#2309" id="2309">2309</a>
+<a href="#2310" id="2310">2310</a>
+<a href="#2311" id="2311">2311</a>
+<a href="#2312" id="2312">2312</a>
+<a href="#2313" id="2313">2313</a>
+<a href="#2314" id="2314">2314</a>
+<a href="#2315" id="2315">2315</a>
+<a href="#2316" id="2316">2316</a>
+<a href="#2317" id="2317">2317</a>
+<a href="#2318" id="2318">2318</a>
+<a href="#2319" id="2319">2319</a>
+<a href="#2320" id="2320">2320</a>
+<a href="#2321" id="2321">2321</a>
+<a href="#2322" id="2322">2322</a>
+<a href="#2323" id="2323">2323</a>
+<a href="#2324" id="2324">2324</a>
+<a href="#2325" id="2325">2325</a>
+<a href="#2326" id="2326">2326</a>
+<a href="#2327" id="2327">2327</a>
+<a href="#2328" id="2328">2328</a>
+<a href="#2329" id="2329">2329</a>
+<a href="#2330" id="2330">2330</a>
+<a href="#2331" id="2331">2331</a>
+<a href="#2332" id="2332">2332</a>
+<a href="#2333" id="2333">2333</a>
+<a href="#2334" id="2334">2334</a>
+<a href="#2335" id="2335">2335</a>
+<a href="#2336" id="2336">2336</a>
+<a href="#2337" id="2337">2337</a>
+<a href="#2338" id="2338">2338</a>
+<a href="#2339" id="2339">2339</a>
+<a href="#2340" id="2340">2340</a>
+<a href="#2341" id="2341">2341</a>
+<a href="#2342" id="2342">2342</a>
+<a href="#2343" id="2343">2343</a>
+<a href="#2344" id="2344">2344</a>
+<a href="#2345" id="2345">2345</a>
+<a href="#2346" id="2346">2346</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{borrow::Borrow, cell::RefCell};
 
 <span class="kw">use </span>alloc::{sync::Arc, vec, vec::Vec};
@@ -2316,19 +2397,19 @@
     ///
     /// UTF-8 mode generally consists of two things:
     ///
-    /// 1. Whether the NFA&#39;s states are constructed such that all paths to a
+    /// 1. Whether the NFA's states are constructed such that all paths to a
     /// match state that consume at least one byte always correspond to valid
     /// UTF-8.
     /// 2. Whether all paths to a match state that do _not_ consume any bytes
     /// should always correspond to valid UTF-8 boundaries.
     ///
     /// (1) is a guarantee made by whoever constructs the NFA.
-    /// If you&#39;re parsing a regex from its concrete syntax, then
+    /// If you're parsing a regex from its concrete syntax, then
     /// [`syntax::Config::utf8`](crate::util::syntax::Config::utf8) can make
     /// this guarantee for you. It does it by returning an error if the regex
     /// pattern could every report a non-empty match span that contains invalid
     /// UTF-8. So long as `syntax::Config::utf8` mode is enabled and your regex
-    /// successfully parses, then you&#39;re guaranteed that the corresponding NFA
+    /// successfully parses, then you're guaranteed that the corresponding NFA
     /// will only ever report non-empty match spans containing valid UTF-8.
     ///
     /// (2) is a trickier guarantee because it cannot be enforced by the NFA
@@ -2355,10 +2436,10 @@
     /// Therefore, it may make sense to enable `syntax::Config::utf8` while
     /// simultaneously *disabling* this option. That would ensure all non-empty
     /// match spans are valid UTF-8, but that empty match spans may still split
-    /// a codepoint or match at other places that aren&#39;t valid UTF-8.
+    /// a codepoint or match at other places that aren't valid UTF-8.
     ///
     /// In general, this mode is only relevant if your regex can match the
-    /// empty string. Most regexes don&#39;t.
+    /// empty string. Most regexes don't.
     ///
     /// This is enabled by default.
     ///
@@ -2373,11 +2454,11 @@
     ///     Match, Input,
     /// };
     ///
-    /// let re = PikeVM::new(&quot;&quot;)?;
+    /// let re = PikeVM::new("")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
     /// // UTF-8 mode is enabled by default.
-    /// let mut input = Input::new(&quot;☃&quot;);
+    /// let mut input = Input::new("☃");
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 0..0)), caps.get_match());
     ///
@@ -2388,10 +2469,10 @@
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 3..3)), caps.get_match());
     ///
-    /// // But if we disable UTF-8, then we&#39;ll get matches at 1..1 and 2..2:
+    /// // But if we disable UTF-8, then we'll get matches at 1..1 and 2..2:
     /// let re = PikeVM::builder()
     ///     .thompson(thompson::Config::new().utf8(false))
-    ///     .build(&quot;&quot;)?;
+    ///     .build("")?;
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 1..1)), caps.get_match());
     ///
@@ -2452,11 +2533,11 @@
     ///         .which_captures(WhichCaptures::None)
     ///         .reverse(true)
     ///     )
-    ///     .build(&quot;baz[0-9]+&quot;)?;
+    ///     .build("baz[0-9]+")?;
     /// let expected = Some(HalfMatch::must(0, 3));
     /// assert_eq!(
     ///     expected,
-    ///     dfa.try_search_rev(&amp;Input::new(&quot;foobaz12345bar&quot;))?,
+    ///     dfa.try_search_rev(&amp;Input::new("foobaz12345bar"))?,
     /// );
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2495,16 +2576,16 @@
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::nfa::thompson::NFA;
     ///
-    /// // 300KB isn&#39;t enough!
+    /// // 300KB isn't enough!
     /// NFA::compiler()
     ///     .configure(NFA::config().nfa_size_limit(Some(300_000)))
-    ///     .build(r&quot;\w{20}&quot;)
+    ///     .build(r"\w{20}")
     ///     .unwrap_err();
     ///
     /// // ... but 400KB probably is.
     /// let nfa = NFA::compiler()
     ///     .configure(NFA::config().nfa_size_limit(Some(400_000)))
-    ///     .build(r&quot;\w{20}&quot;)?;
+    ///     .build(r"\w{20}")?;
     ///
     /// assert_eq!(nfa.pattern_len(), 1);
     ///
@@ -2526,7 +2607,7 @@
     ///
     /// A reason to keep this disabled is if you want to compile an NFA and
     /// start using it as quickly as possible without needing to build a DFA,
-    /// and you don&#39;t mind using a bit of extra memory for the NFA. e.g., for
+    /// and you don't mind using a bit of extra memory for the NFA. e.g., for
     /// an NFA simulation or for a lazy DFA.
     ///
     /// NFA shrinking is currently most useful when compiling a reverse
@@ -2535,7 +2616,7 @@
     /// NFA states.
     ///
     /// This is disabled by default because it can increase compile times
-    /// quite a bit if you aren&#39;t building a full DFA.
+    /// quite a bit if you aren't building a full DFA.
     ///
     /// # Example
     ///
@@ -2553,10 +2634,10 @@
     ///     .reverse(true);
     /// let not_shrunk = NFA::compiler()
     ///     .configure(config.clone().shrink(false))
-    ///     .build(r&quot;\w&quot;)?;
+    ///     .build(r"\w")?;
     /// let shrunk = NFA::compiler()
     ///     .configure(config.clone().shrink(true))
-    ///     .build(r&quot;\w&quot;)?;
+    ///     .build(r"\w")?;
     ///
     /// // While a specific shrink factor is not guaranteed, the savings can be
     /// // considerable in some cases.
@@ -2569,7 +2650,7 @@
         <span class="self">self
     </span>}
 
-    <span class="doccomment">/// Whether to include &#39;Capture&#39; states in the NFA.
+    <span class="doccomment">/// Whether to include 'Capture' states in the NFA.
     ///
     /// Currently, enabling this setting requires disabling the
     /// [`reverse`](Config::reverse) setting. If both are enabled, then the
@@ -2596,15 +2677,15 @@
     ///
     /// let re = PikeVM::builder()
     ///     .thompson(NFA::config().which_captures(WhichCaptures::None))
-    ///     .build(r&quot;[a-z]+&quot;)?;
+    ///     .build(r"[a-z]+")?;
     /// let mut cache = re.create_cache();
     ///
-    /// assert!(re.is_match(&amp;mut cache, &quot;abc&quot;));
-    /// assert_eq!(None, re.find(&amp;mut cache, &quot;abc&quot;));
+    /// assert!(re.is_match(&amp;mut cache, "abc"));
+    /// assert_eq!(None, re.find(&amp;mut cache, "abc"));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[deprecated(since = <span class="string">&quot;0.3.5&quot;</span>, note = <span class="string">&quot;use which_captures instead&quot;</span>)]
+    </span><span class="attr">#[deprecated(since = <span class="string">"0.3.5"</span>, note = <span class="string">"use which_captures instead"</span>)]
     </span><span class="kw">pub fn </span>captures(<span class="self">self</span>, yes: bool) -&gt; Config {
         <span class="self">self</span>.which_captures(<span class="kw">if </span>yes {
             WhichCaptures::All
@@ -2644,11 +2725,11 @@
     ///
     /// let re = PikeVM::builder()
     ///     .thompson(NFA::config().which_captures(WhichCaptures::None))
-    ///     .build(r&quot;[a-z]+&quot;)?;
+    ///     .build(r"[a-z]+")?;
     /// let mut cache = re.create_cache();
     ///
-    /// assert!(re.is_match(&amp;mut cache, &quot;abc&quot;));
-    /// assert_eq!(None, re.find(&amp;mut cache, &quot;abc&quot;));
+    /// assert!(re.is_match(&amp;mut cache, "abc"));
+    /// assert_eq!(None, re.find(&amp;mut cache, "abc"));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -2664,11 +2745,11 @@
     ///
     /// let re = BoundedBacktracker::builder()
     ///     .thompson(NFA::config().which_captures(WhichCaptures::None))
-    ///     .build(r&quot;[a-z]+&quot;)?;
+    ///     .build(r"[a-z]+")?;
     /// let mut cache = re.create_cache();
     ///
-    /// assert!(re.try_is_match(&amp;mut cache, &quot;abc&quot;)?);
-    /// assert_eq!(None, re.try_find(&amp;mut cache, &quot;abc&quot;)?);
+    /// assert!(re.try_is_match(&amp;mut cache, "abc")?);
+    /// assert_eq!(None, re.try_find(&amp;mut cache, "abc")?);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -2696,22 +2777,22 @@
     /// };
     ///
     /// let mut lookm = LookMatcher::new();
-    /// lookm.set_line_terminator(b&#39;\x00&#39;);
+    /// lookm.set_line_terminator(b'\x00');
     ///
     /// let re = PikeVM::builder()
     ///     .thompson(thompson::Config::new().look_matcher(lookm))
-    ///     .build(r&quot;(?m)^[a-z]+$&quot;)?;
+    ///     .build(r"(?m)^[a-z]+$")?;
     /// let mut cache = re.create_cache();
     ///
     /// // Multi-line assertions now use NUL as a terminator.
     /// assert_eq!(
     ///     Some(Match::must(0, 1..4)),
-    ///     re.find(&amp;mut cache, b&quot;\x00abc\x00&quot;),
+    ///     re.find(&amp;mut cache, b"\x00abc\x00"),
     /// );
     /// // ... and \n is no longer recognized as a terminator.
     /// assert_eq!(
     ///     None,
-    ///     re.find(&amp;mut cache, b&quot;\nabc\n&quot;),
+    ///     re.find(&amp;mut cache, b"\nabc\n"),
     /// );
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2753,7 +2834,7 @@
     }
 
     <span class="doccomment">/// Return whether NFA compilation is configured to produce capture states.
-    </span><span class="attr">#[deprecated(since = <span class="string">&quot;0.3.5&quot;</span>, note = <span class="string">&quot;use get_which_captures instead&quot;</span>)]
+    </span><span class="attr">#[deprecated(since = <span class="string">"0.3.5"</span>, note = <span class="string">"use get_which_captures instead"</span>)]
     </span><span class="kw">pub fn </span>get_captures(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.get_which_captures().is_any()
     }
@@ -2785,7 +2866,7 @@
 
     <span class="doccomment">/// Overwrite the default configuration such that the options in `o` are
     /// always used. If an option in `o` is not set, then the corresponding
-    /// option in `self` is used. If it&#39;s not set in `self` either, then it
+    /// option in `self` is used. If it's not set in `self` either, then it
     /// remains not set.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>overwrite(<span class="kw-2">&amp;</span><span class="self">self</span>, o: Config) -&gt; Config {
         Config {
@@ -2826,7 +2907,7 @@
     <span class="doccomment">/// No capture states are compiled into the Thompson NFA.
     ///
     /// This is useful when capture states are either not needed (for example,
-    /// if one is only trying to build a DFA) or if they aren&#39;t supported (for
+    /// if one is only trying to build a DFA) or if they aren't supported (for
     /// example, a reverse NFA).
     </span><span class="prelude-val">None</span>,
 }
@@ -2853,7 +2934,7 @@
 }
 
 <span class="comment">/*
-This compiler below uses Thompson&#39;s construction algorithm. The compiler takes
+This compiler below uses Thompson's construction algorithm. The compiler takes
 a regex-syntax::Hir as input and emits an NFA graph as output. The NFA graph
 is structured in a way that permits it to be executed by a virtual machine and
 also used to efficiently build a DFA.
@@ -2861,8 +2942,8 @@ also used to efficiently build a DFA.
 The compiler deals with a slightly expanded set of NFA states than what is
 in a final NFA (as exhibited by builder::State and nfa::State). Notably a
 compiler state includes an empty node that has exactly one unconditional
-epsilon transition to the next state. In other words, it&#39;s a &quot;goto&quot; instruction
-if one views Thompson&#39;s NFA as a set of bytecode instructions. These goto
+epsilon transition to the next state. In other words, it's a "goto" instruction
+if one views Thompson's NFA as a set of bytecode instructions. These goto
 instructions are removed in a subsequent phase before returning the NFA to the
 caller. The purpose of these empty nodes is that they make the construction
 algorithm substantially simpler to implement. We remove them before returning
@@ -2872,22 +2953,22 @@ a DFA).
 
 In the future, it would be nice to provide a Glushkov compiler as well, as it
 would work well as a bit-parallel NFA for smaller regexes. But the Thompson
-construction is one I&#39;m more familiar with and seems more straight-forward to
+construction is one I'm more familiar with and seems more straight-forward to
 deal with when it comes to large Unicode character classes.
 
 Internally, the compiler uses interior mutability to improve composition in the
-face of the borrow checker. In particular, we&#39;d really like to be able to write
+face of the borrow checker. In particular, we'd really like to be able to write
 things like this:
 
     self.c_concat(exprs.iter().map(|e| self.c(e)))
 
 Which elegantly uses iterators to build up a sequence of compiled regex
 sub-expressions and then hands it off to the concatenating compiler routine.
-Without interior mutability, the borrow checker won&#39;t let us borrow `self`
+Without interior mutability, the borrow checker won't let us borrow `self`
 mutably both inside and outside the closure at the same time.
 */
 
-</span><span class="doccomment">/// A builder for compiling an NFA from a regex&#39;s high-level intermediate
+</span><span class="doccomment">/// A builder for compiling an NFA from a regex's high-level intermediate
 /// representation (HIR).
 ///
 /// This compiler provides a way to translate a parsed regex pattern into an
@@ -2902,7 +2983,7 @@ mutably both inside and outside the closure at the same time.
 ///
 /// Note that a compiler is not the same as a [`thompson::Builder`](Builder).
 /// A `Builder` provides a lower level API that is uncoupled from a regex
-/// pattern&#39;s concrete syntax or even its HIR. Instead, it permits stitching
+/// pattern's concrete syntax or even its HIR. Instead, it permits stitching
 /// together an NFA by hand. See its docs for examples.
 ///
 /// # Example: compilation from concrete syntax
@@ -2917,13 +2998,13 @@ mutably both inside and outside the closure at the same time.
 /// };
 ///
 /// let config = NFA::config().nfa_size_limit(Some(1_000));
-/// let nfa = NFA::compiler().configure(config).build(r&quot;(?-u)\w&quot;)?;
+/// let nfa = NFA::compiler().configure(config).build(r"(?-u)\w")?;
 ///
 /// let re = PikeVM::new_from_nfa(nfa)?;
 /// let mut cache = re.create_cache();
 /// let mut caps = re.create_captures();
 /// let expected = Some(Match::must(0, 3..4));
-/// re.captures(&amp;mut cache, &quot;!@#A#@!&quot;, &amp;mut caps);
+/// re.captures(&amp;mut cache, "!@#A#@!", &amp;mut caps);
 /// assert_eq!(expected, caps.get_match());
 ///
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2939,10 +3020,10 @@ mutably both inside and outside the closure at the same time.
 /// use regex_syntax::hir::{Hir, Class, ClassBytes, ClassBytesRange};
 ///
 /// let hir = Hir::class(Class::Bytes(ClassBytes::new(vec![
-///     ClassBytesRange::new(b&#39;0&#39;, b&#39;9&#39;),
-///     ClassBytesRange::new(b&#39;A&#39;, b&#39;Z&#39;),
-///     ClassBytesRange::new(b&#39;_&#39;, b&#39;_&#39;),
-///     ClassBytesRange::new(b&#39;a&#39;, b&#39;z&#39;),
+///     ClassBytesRange::new(b'0', b'9'),
+///     ClassBytesRange::new(b'A', b'Z'),
+///     ClassBytesRange::new(b'_', b'_'),
+///     ClassBytesRange::new(b'a', b'z'),
 /// ])));
 ///
 /// let config = NFA::config().nfa_size_limit(Some(1_000));
@@ -2952,7 +3033,7 @@ mutably both inside and outside the closure at the same time.
 /// let mut cache = re.create_cache();
 /// let mut caps = re.create_captures();
 /// let expected = Some(Match::must(0, 3..4));
-/// re.captures(&amp;mut cache, &quot;!@#A#@!&quot;, &amp;mut caps);
+/// re.captures(&amp;mut cache, "!@#A#@!", &amp;mut caps);
 /// assert_eq!(expected, caps.get_match());
 ///
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -3007,13 +3088,13 @@ mutably both inside and outside the closure at the same time.
     /// use regex_automata::{nfa::thompson::{NFA, pikevm::PikeVM}, Match};
     ///
     /// let config = NFA::config().nfa_size_limit(Some(1_000));
-    /// let nfa = NFA::compiler().configure(config).build(r&quot;(?-u)\w&quot;)?;
+    /// let nfa = NFA::compiler().configure(config).build(r"(?-u)\w")?;
     ///
     /// let re = PikeVM::new_from_nfa(nfa)?;
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     /// let expected = Some(Match::must(0, 3..4));
-    /// re.captures(&amp;mut cache, &quot;!@#A#@!&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "!@#A#@!", &amp;mut caps);
     /// assert_eq!(expected, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -3034,15 +3115,15 @@ mutably both inside and outside the closure at the same time.
     ///
     /// let config = NFA::config().nfa_size_limit(Some(1_000));
     /// let nfa = NFA::compiler().configure(config).build_many(&amp;[
-    ///     r&quot;(?-u)\s&quot;,
-    ///     r&quot;(?-u)\w&quot;,
+    ///     r"(?-u)\s",
+    ///     r"(?-u)\w",
     /// ])?;
     ///
     /// let re = PikeVM::new_from_nfa(nfa)?;
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     /// let expected = Some(Match::must(1, 1..2));
-    /// re.captures(&amp;mut cache, &quot;!A! !A!&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "!A! !A!", &amp;mut caps);
     /// assert_eq!(expected, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -3059,7 +3140,7 @@ mutably both inside and outside the closure at the same time.
                     .parse(p.as_ref())
                     .map_err(BuildError::syntax)<span class="question-mark">?</span>,
             );
-            <span class="macro">debug!</span>(<span class="string">&quot;parsed: {:?}&quot;</span>, p.as_ref());
+            <span class="macro">debug!</span>(<span class="string">"parsed: {:?}"</span>, p.as_ref());
         }
         <span class="self">self</span>.build_many_from_hir(<span class="kw-2">&amp;</span>hirs)
     }
@@ -3080,10 +3161,10 @@ mutably both inside and outside the closure at the same time.
     /// use regex_syntax::hir::{Hir, Class, ClassBytes, ClassBytesRange};
     ///
     /// let hir = Hir::class(Class::Bytes(ClassBytes::new(vec![
-    ///     ClassBytesRange::new(b&#39;0&#39;, b&#39;9&#39;),
-    ///     ClassBytesRange::new(b&#39;A&#39;, b&#39;Z&#39;),
-    ///     ClassBytesRange::new(b&#39;_&#39;, b&#39;_&#39;),
-    ///     ClassBytesRange::new(b&#39;a&#39;, b&#39;z&#39;),
+    ///     ClassBytesRange::new(b'0', b'9'),
+    ///     ClassBytesRange::new(b'A', b'Z'),
+    ///     ClassBytesRange::new(b'_', b'_'),
+    ///     ClassBytesRange::new(b'a', b'z'),
     /// ])));
     ///
     /// let config = NFA::config().nfa_size_limit(Some(1_000));
@@ -3093,7 +3174,7 @@ mutably both inside and outside the closure at the same time.
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     /// let expected = Some(Match::must(0, 3..4));
-    /// re.captures(&amp;mut cache, &quot;!@#A#@!&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "!@#A#@!", &amp;mut caps);
     /// assert_eq!(expected, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -3116,14 +3197,14 @@ mutably both inside and outside the closure at the same time.
     ///
     /// let hirs = &amp;[
     ///     Hir::class(Class::Bytes(ClassBytes::new(vec![
-    ///         ClassBytesRange::new(b&#39;\t&#39;, b&#39;\r&#39;),
-    ///         ClassBytesRange::new(b&#39; &#39;, b&#39; &#39;),
+    ///         ClassBytesRange::new(b'\t', b'\r'),
+    ///         ClassBytesRange::new(b' ', b' '),
     ///     ]))),
     ///     Hir::class(Class::Bytes(ClassBytes::new(vec![
-    ///         ClassBytesRange::new(b&#39;0&#39;, b&#39;9&#39;),
-    ///         ClassBytesRange::new(b&#39;A&#39;, b&#39;Z&#39;),
-    ///         ClassBytesRange::new(b&#39;_&#39;, b&#39;_&#39;),
-    ///         ClassBytesRange::new(b&#39;a&#39;, b&#39;z&#39;),
+    ///         ClassBytesRange::new(b'0', b'9'),
+    ///         ClassBytesRange::new(b'A', b'Z'),
+    ///         ClassBytesRange::new(b'_', b'_'),
+    ///         ClassBytesRange::new(b'a', b'z'),
     ///     ]))),
     /// ];
     ///
@@ -3134,7 +3215,7 @@ mutably both inside and outside the closure at the same time.
     /// let mut cache = re.create_cache();
     /// let mut caps = re.create_captures();
     /// let expected = Some(Match::must(1, 1..2));
-    /// re.captures(&amp;mut cache, &quot;!A! !A!&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, "!A! !A!", &amp;mut caps);
     /// assert_eq!(expected, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -3154,7 +3235,7 @@ mutably both inside and outside the closure at the same time.
     /// use regex_automata::nfa::thompson::NFA;
     ///
     /// let config = NFA::config().nfa_size_limit(Some(1_000));
-    /// let nfa = NFA::compiler().configure(config).build(r&quot;(?-u)\w&quot;)?;
+    /// let nfa = NFA::compiler().configure(config).build(r"(?-u)\w")?;
     /// assert_eq!(nfa.pattern_len(), 1);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -3180,7 +3261,7 @@ mutably both inside and outside the closure at the same time.
     /// use regex_automata::{nfa::thompson::NFA, util::syntax};
     ///
     /// let syntax_config = syntax::Config::new().unicode(false);
-    /// let nfa = NFA::compiler().syntax(syntax_config).build(r&quot;\w&quot;)?;
+    /// let nfa = NFA::compiler().syntax(syntax_config).build(r"\w")?;
     /// // If Unicode were enabled, the number of states would be much bigger.
     /// assert!(nfa.states().len() &lt; 15);
     ///
@@ -3224,12 +3305,14 @@ mutably both inside and outside the closure at the same time.
         <span class="comment">// We always add an unanchored prefix unless we were specifically told
         // not to (for tests only), or if we know that the regex is anchored
         // for all matches. When an unanchored prefix is not added, then the
-        // NFA&#39;s anchored and unanchored start states are equivalent.
+        // NFA's anchored and unanchored start states are equivalent.
         </span><span class="kw">let </span>all_anchored = exprs.iter().all(|e| {
-            e.borrow()
-                .properties()
-                .look_set_prefix()
-                .contains(hir::Look::Start)
+            <span class="kw">let </span>props = e.borrow().properties();
+            <span class="kw">if </span><span class="self">self</span>.config.get_reverse() {
+                props.look_set_suffix().contains(hir::Look::End)
+            } <span class="kw">else </span>{
+                props.look_set_prefix().contains(hir::Look::Start)
+            }
         });
         <span class="kw">let </span>anchored = !<span class="self">self</span>.config.get_unanchored_prefix() || all_anchored;
         <span class="kw">let </span>unanchored_prefix = <span class="kw">if </span>anchored {
@@ -3252,7 +3335,7 @@ mutably both inside and outside the closure at the same time.
             .borrow_mut()
             .build(compiled.start, unanchored_prefix.start)<span class="question-mark">?</span>;
 
-        <span class="macro">debug!</span>(<span class="string">&quot;HIR-to-NFA compilation complete, config: {:?}&quot;</span>, <span class="self">self</span>.config);
+        <span class="macro">debug!</span>(<span class="string">"HIR-to-NFA compilation complete, config: {:?}"</span>, <span class="self">self</span>.config);
         <span class="prelude-val">Ok</span>(nfa)
     }
 
@@ -3275,7 +3358,7 @@ mutably both inside and outside the closure at the same time.
 
     <span class="doccomment">/// Compile a concatenation of the sub-expressions yielded by the given
     /// iterator. If the iterator yields no elements, then this compiles down
-    /// to an &quot;empty&quot; state that always matches.
+    /// to an "empty" state that always matches.
     ///
     /// If the compiler is in reverse mode, then the expressions given are
     /// automatically compiled in reverse.
@@ -3303,7 +3386,7 @@ mutably both inside and outside the closure at the same time.
 
     <span class="doccomment">/// Compile an alternation of the given HIR values.
     ///
-    /// This is like &#39;c_alt_iter&#39;, but it accepts a slice of HIR values instead
+    /// This is like 'c_alt_iter', but it accepts a slice of HIR values instead
     /// of an iterator of compiled NFA subgraphs. The point of accepting a
     /// slice here is that it opens up some optimization opportunities. For
     /// example, if all of the HIR values are literals, then this routine might
@@ -3337,11 +3420,11 @@ mutably both inside and outside the closure at the same time.
 
     <span class="doccomment">/// Compile an alternation, where each element yielded by the given
     /// iterator represents an item in the alternation. If the iterator yields
-    /// no elements, then this compiles down to a &quot;fail&quot; state.
+    /// no elements, then this compiles down to a "fail" state.
     ///
-    /// In an alternation, expressions appearing earlier are &quot;preferred&quot; at
+    /// In an alternation, expressions appearing earlier are "preferred" at
     /// match time over expressions appearing later. At least, this is true
-    /// when using &quot;leftmost first&quot; match semantics. (If &quot;leftmost longest&quot; are
+    /// when using "leftmost first" match semantics. (If "leftmost longest" are
     /// ever added in the future, then this preference order of priority would
     /// not apply in that mode.)
     </span><span class="kw">fn </span>c_alt_iter&lt;I&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>it: I) -&gt; <span class="prelude-ty">Result</span>&lt;ThompsonRef, BuildError&gt;
@@ -3372,13 +3455,13 @@ mutably both inside and outside the closure at the same time.
     }
 
     <span class="doccomment">/// Compile the given capture sub-expression. `expr` should be the
-    /// sub-expression contained inside the capture. If &quot;capture&quot; states are
+    /// sub-expression contained inside the capture. If "capture" states are
     /// enabled, then they are added as appropriate.
     ///
     /// This accepts the pieces of a capture instead of a `hir::Capture` so
-    /// that it&#39;s easy to manufacture a &quot;fake&quot; group when necessary, e.g., for
+    /// that it's easy to manufacture a "fake" group when necessary, e.g., for
     /// adding the entire pattern as if it were a group in order to create
-    /// appropriate &quot;capture&quot; states in the NFA.
+    /// appropriate "capture" states in the NFA.
     </span><span class="kw">fn </span>c_cap(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         index: u32,
@@ -3496,7 +3579,7 @@ mutably both inside and outside the closure at the same time.
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ThompsonRef, BuildError&gt; {
         <span class="kw">if </span>n == <span class="number">0 </span>{
             <span class="comment">// When the expression cannot match the empty string, then we
-            // can get away with something much simpler: just one &#39;alt&#39;
+            // can get away with something much simpler: just one 'alt'
             // instruction that optionally repeats itself. But if the expr
             // can match the empty string... see below.
             </span><span class="kw">if </span>expr.properties().minimum_len().map_or(<span class="bool-val">false</span>, |len| len &gt; <span class="number">0</span>) {
@@ -3511,11 +3594,11 @@ mutably both inside and outside the closure at the same time.
                 <span class="kw">return </span><span class="prelude-val">Ok</span>(ThompsonRef { start: union, end: union });
             }
 
-            <span class="comment">// What&#39;s going on here? Shouldn&#39;t x* be simpler than this? It
+            <span class="comment">// What's going on here? Shouldn't x* be simpler than this? It
             // turns out that when implementing leftmost-first (Perl-like)
             // match semantics, x* results in an incorrect preference order
             // when computing the transitive closure of states if and only if
-            // &#39;x&#39; can match the empty string. So instead, we compile x* as
+            // 'x' can match the empty string. So instead, we compile x* as
             // (x+)?, which preserves the correct preference order.
             //
             // See: https://github.com/rust-lang/regex/issues/779
@@ -3596,14 +3679,14 @@ mutably both inside and outside the closure at the same time.
 
     <span class="doccomment">/// Compile the given byte oriented character class.
     ///
-    /// This uses &quot;sparse&quot; states to represent an alternation between ranges in
-    /// this character class. We can use &quot;sparse&quot; states instead of stitching
-    /// together a &quot;union&quot; state because all ranges in a character class have
+    /// This uses "sparse" states to represent an alternation between ranges in
+    /// this character class. We can use "sparse" states instead of stitching
+    /// together a "union" state because all ranges in a character class have
     /// equal priority *and* are non-overlapping (thus, only one can match, so
-    /// there&#39;s never a question of priority in the first place). This saves a
+    /// there's never a question of priority in the first place). This saves a
     /// fair bit of overhead when traversing an NFA.
     ///
-    /// This routine compiles an empty character class into a &quot;fail&quot; state.
+    /// This routine compiles an empty character class into a "fail" state.
     </span><span class="kw">fn </span>c_byte_class(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cls: <span class="kw-2">&amp;</span>hir::ClassBytes,
@@ -3632,7 +3715,7 @@ mutably both inside and outside the closure at the same time.
     /// of the expense of compilation may be reduce by disabling Unicode in the
     /// pattern.
     ///
-    /// This routine compiles an empty character class into a &quot;fail&quot; state.
+    /// This routine compiles an empty character class into a "fail" state.
     </span><span class="kw">fn </span>c_unicode_class(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cls: <span class="kw-2">&amp;</span>hir::ClassUnicode,
@@ -3644,10 +3727,10 @@ mutably both inside and outside the closure at the same time.
             <span class="kw">let </span>end = <span class="self">self</span>.add_empty()<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>trans = Vec::with_capacity(cls.ranges().len());
             <span class="kw">for </span>r <span class="kw">in </span>cls.iter() {
-                <span class="comment">// The unwraps below are OK because we&#39;ve verified that this
+                <span class="comment">// The unwraps below are OK because we've verified that this
                 // class only contains ASCII codepoints.
                 </span>trans.push(Transition {
-                    <span class="comment">// FIXME(1.59): use the &#39;TryFrom&lt;char&gt; for u8&#39; impl.
+                    <span class="comment">// FIXME(1.59): use the 'TryFrom&lt;char&gt; for u8' impl.
                     </span>start: u8::try_from(u32::from(r.start())).unwrap(),
                     end: u8::try_from(u32::from(r.end())).unwrap(),
                     next: end,
@@ -3656,9 +3739,9 @@ mutably both inside and outside the closure at the same time.
             <span class="prelude-val">Ok</span>(ThompsonRef { start: <span class="self">self</span>.add_sparse(trans)<span class="question-mark">?</span>, end })
         } <span class="kw">else if </span><span class="self">self</span>.is_reverse() {
             <span class="kw">if </span>!<span class="self">self</span>.config.get_shrink() {
-                <span class="comment">// When we don&#39;t want to spend the extra time shrinking, we
+                <span class="comment">// When we don't want to spend the extra time shrinking, we
                 // compile the UTF-8 automaton in reverse using something like
-                // the &quot;naive&quot; approach, but will attempt to re-use common
+                // the "naive" approach, but will attempt to re-use common
                 // suffixes.
                 </span><span class="self">self</span>.c_unicode_class_reverse_with_suffix(cls)
             } <span class="kw">else </span>{
@@ -3669,9 +3752,9 @@ mutably both inside and outside the closure at the same time.
                 // sequences into a range trie, which can then output our
                 // sequences in the correct order. Unfortunately, building the
                 // range trie is fairly expensive (but not nearly as expensive
-                // as building a DFA). Hence the reason why the &#39;shrink&#39; option
+                // as building a DFA). Hence the reason why the 'shrink' option
                 // exists, so that this path can be toggled off. For example,
-                // we might want to turn this off if we know we won&#39;t be
+                // we might want to turn this off if we know we won't be
                 // compiling a DFA.
                 </span><span class="kw">let </span><span class="kw-2">mut </span>trie = <span class="self">self</span>.trie_state.borrow_mut();
                 trie.clear();
@@ -3709,11 +3792,11 @@ mutably both inside and outside the closure at the same time.
             utf8c.finish()
         }
 
-        <span class="comment">// For reference, the code below is the &quot;naive&quot; version of compiling a
+        <span class="comment">// For reference, the code below is the "naive" version of compiling a
         // UTF-8 automaton. It is deliciously simple (and works for both the
         // forward and reverse cases), but will unfortunately produce very
         // large NFAs. When compiling a forward automaton, the size difference
-        // can sometimes be an order of magnitude. For example, the &#39;\w&#39; regex
+        // can sometimes be an order of magnitude. For example, the '\w' regex
         // will generate about ~3000 NFA states using the naive approach below,
         // but only 283 states when using the approach above. This is because
         // the approach above actually compiles a *minimal* (or near minimal,
@@ -3729,14 +3812,14 @@ mutably both inside and outside the closure at the same time.
         //
         // One good example of the substantial difference this can make is to
         // compare and contrast performance of the Pike VM when the code below
-        // is active vs the code above. Here&#39;s an example to try:
+        // is active vs the code above. Here's an example to try:
         //
-        //   regex-cli find match pikevm -b -p &#39;(?m)^\w{20}&#39; non-ascii-file
+        //   regex-cli find match pikevm -b -p '(?m)^\w{20}' non-ascii-file
         //
         // With Unicode classes generated below, this search takes about 45s on
         // my machine. But with the compressed version above, the search takes
         // only around 1.4s. The NFA is also 20% smaller. This is in part due
-        // to the compression, but also because of the utilization of &#39;sparse&#39;
+        // to the compression, but also because of the utilization of 'sparse'
         // NFA states. They lead to much less state shuffling during the NFA
         // search.
         /*
@@ -3757,24 +3840,24 @@ mutably both inside and outside the closure at the same time.
     <span class="doccomment">/// Compile the given Unicode character class in reverse with suffix
     /// caching.
     ///
-    /// This is a &quot;quick&quot; way to compile large Unicode classes into reverse
+    /// This is a "quick" way to compile large Unicode classes into reverse
     /// UTF-8 automata while doing a small amount of compression on that
     /// automata by reusing common suffixes.
     ///
     /// A more comprehensive compression scheme can be accomplished by using
     /// a range trie to efficiently sort a reverse sequence of UTF-8 byte
-    /// rqanges, and then use Daciuk&#39;s algorithm via `Utf8Compiler`.
+    /// rqanges, and then use Daciuk's algorithm via `Utf8Compiler`.
     ///
-    /// This is the technique used when &quot;NFA shrinking&quot; is disabled.
+    /// This is the technique used when "NFA shrinking" is disabled.
     ///
-    /// (This also tries to use &quot;sparse&quot; states where possible, just like
+    /// (This also tries to use "sparse" states where possible, just like
     /// `c_byte_class` does.)
     </span><span class="kw">fn </span>c_unicode_class_reverse_with_suffix(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         cls: <span class="kw-2">&amp;</span>hir::ClassUnicode,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;ThompsonRef, BuildError&gt; {
         <span class="comment">// N.B. It would likely be better to cache common *prefixes* in the
-        // reverse direction, but it&#39;s not quite clear how to do that. The
+        // reverse direction, but it's not quite clear how to do that. The
         // advantage of caching suffixes is that it does give us a win, and
         // has a very small additional overhead.
         </span><span class="kw">let </span><span class="kw-2">mut </span>cache = <span class="self">self</span>.utf8_suffix.borrow_mut();
@@ -3840,7 +3923,7 @@ mutably both inside and outside the closure at the same time.
         <span class="self">self</span>.c_concat(bytes.iter().copied().map(|b| <span class="self">self</span>.c_range(b, b)))
     }
 
-    <span class="doccomment">/// Compile a &quot;range&quot; state with one transition that may only be followed
+    <span class="doccomment">/// Compile a "range" state with one transition that may only be followed
     /// if the input byte is in the (inclusive) range given.
     ///
     /// Both the `start` and `end` locations point to the state created.
@@ -3851,7 +3934,7 @@ mutably both inside and outside the closure at the same time.
         <span class="prelude-val">Ok</span>(ThompsonRef { start: id, end: id })
     }
 
-    <span class="doccomment">/// Compile an &quot;empty&quot; state with one unconditional epsilon transition.
+    <span class="doccomment">/// Compile an "empty" state with one unconditional epsilon transition.
     ///
     /// Both the `start` and `end` locations point to the state created.
     /// Callers will likely want to keep the `start`, but patch the `end` to
@@ -3861,7 +3944,7 @@ mutably both inside and outside the closure at the same time.
         <span class="prelude-val">Ok</span>(ThompsonRef { start: id, end: id })
     }
 
-    <span class="doccomment">/// Compile a &quot;fail&quot; state that can never have any outgoing transitions.
+    <span class="doccomment">/// Compile a "fail" state that can never have any outgoing transitions.
     </span><span class="kw">fn </span>c_fail(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;ThompsonRef, BuildError&gt; {
         <span class="kw">let </span>id = <span class="self">self</span>.add_fail()<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(ThompsonRef { start: id, end: id })
@@ -3869,7 +3952,7 @@ mutably both inside and outside the closure at the same time.
 
     <span class="comment">// The below helpers are meant to be simple wrappers around the
     // corresponding Builder methods. For the most part, they let us write
-    // &#39;self.add_foo()&#39; instead of &#39;self.builder.borrow_mut().add_foo()&#39;, where
+    // 'self.add_foo()' instead of 'self.builder.borrow_mut().add_foo()', where
     // the latter is a mouthful. Some of the methods do inject a little bit
     // of extra logic. e.g., Flipping look-around operators when compiling in
     // reverse mode.
@@ -3957,7 +4040,7 @@ mutably both inside and outside the closure at the same time.
 }
 
 <span class="doccomment">/// A value that represents the result of compiling a sub-expression of a
-/// regex&#39;s HIR. Specifically, this represents a sub-graph of the NFA that
+/// regex's HIR. Specifically, this represents a sub-graph of the NFA that
 /// has an initial state at `start` and a final state at `end`.
 </span><span class="attr">#[derive(Clone, Copy, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ThompsonRef {
@@ -3965,18 +4048,18 @@ mutably both inside and outside the closure at the same time.
     <span class="kw">pub</span>(<span class="kw">crate</span>) end: StateID,
 }
 
-<span class="doccomment">/// A UTF-8 compiler based on Daciuk&#39;s algorithm for compilining minimal DFAs
+<span class="doccomment">/// A UTF-8 compiler based on Daciuk's algorithm for compilining minimal DFAs
 /// from a lexicographically sorted sequence of strings in linear time.
 ///
 /// The trick here is that any Unicode codepoint range can be converted to
 /// a sequence of byte ranges that form a UTF-8 automaton. Connecting them
 /// together via an alternation is trivial, and indeed, it works. However,
 /// there is a lot of redundant structure in many UTF-8 automatons. Since our
-/// UTF-8 ranges are in lexicographic order, we can use Daciuk&#39;s algorithm
+/// UTF-8 ranges are in lexicographic order, we can use Daciuk's algorithm
 /// to build nearly minimal DFAs in linear time. (They are guaranteed to be
 /// minimal because we use a bounded cache of previously build DFA states.)
 ///
-/// The drawback is that this sadly doesn&#39;t work for reverse automata, since
+/// The drawback is that this sadly doesn't work for reverse automata, since
 /// the ranges are no longer in lexicographic order. For that, we invented the
 /// range trie (which gets its own module). Once a range trie is built, we then
 /// use this same Utf8Compiler to build a reverse UTF-8 automaton.
@@ -3986,9 +4069,9 @@ mutably both inside and outside the closure at the same time.
 ///
 /// There is also another implementation of this in the `fst` crate.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">struct </span>Utf8Compiler&lt;<span class="lifetime">&#39;a</span>&gt; {
-    builder: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Builder,
-    state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Utf8State,
+</span><span class="kw">struct </span>Utf8Compiler&lt;<span class="lifetime">'a</span>&gt; {
+    builder: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Builder,
+    state: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Utf8State,
     target: StateID,
 }
 
@@ -4021,11 +4104,11 @@ mutably both inside and outside the closure at the same time.
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Utf8Compiler&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Utf8Compiler&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">fn </span>new(
-        builder: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Builder,
-        state: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Utf8State,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;Utf8Compiler&lt;<span class="lifetime">&#39;a</span>&gt;, BuildError&gt; {
+        builder: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Builder,
+        state: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Utf8State,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;Utf8Compiler&lt;<span class="lifetime">'a</span>&gt;, BuildError&gt; {
         <span class="kw">let </span>target = builder.add_empty()<span class="question-mark">?</span>;
         state.clear();
         <span class="kw">let </span><span class="kw-2">mut </span>utf8c = Utf8Compiler { builder, state, target };
@@ -4086,7 +4169,7 @@ mutably both inside and outside the closure at the same time.
             .uncompiled
             .len()
             .checked_sub(<span class="number">1</span>)
-            .expect(<span class="string">&quot;non-empty nodes&quot;</span>);
+            .expect(<span class="string">"non-empty nodes"</span>);
         <span class="macro">assert!</span>(<span class="self">self</span>.state.uncompiled[last].last.is_none());
         <span class="self">self</span>.state.uncompiled[last].last = <span class="prelude-val">Some</span>(Utf8LastTransition {
             start: ranges[<span class="number">0</span>].start,
@@ -4113,7 +4196,7 @@ mutably both inside and outside the closure at the same time.
     <span class="kw">fn </span>pop_root(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Vec&lt;Transition&gt; {
         <span class="macro">assert_eq!</span>(<span class="self">self</span>.state.uncompiled.len(), <span class="number">1</span>);
         <span class="macro">assert!</span>(<span class="self">self</span>.state.uncompiled[<span class="number">0</span>].last.is_none());
-        <span class="self">self</span>.state.uncompiled.pop().expect(<span class="string">&quot;non-empty nodes&quot;</span>).trans
+        <span class="self">self</span>.state.uncompiled.pop().expect(<span class="string">"non-empty nodes"</span>).trans
     }
 
     <span class="kw">fn </span>top_last_freeze(<span class="kw-2">&amp;mut </span><span class="self">self</span>, next: StateID) {
@@ -4122,7 +4205,7 @@ mutably both inside and outside the closure at the same time.
             .uncompiled
             .len()
             .checked_sub(<span class="number">1</span>)
-            .expect(<span class="string">&quot;non-empty nodes&quot;</span>);
+            .expect(<span class="string">"non-empty nodes"</span>);
         <span class="self">self</span>.state.uncompiled[last].set_last_transition(next);
     }
 }
@@ -4141,11 +4224,11 @@ mutably both inside and outside the closure at the same time.
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>alloc::{vec, vec::Vec};
+    <span class="kw">use </span>alloc::vec;
 
     <span class="kw">use crate</span>::{
-        nfa::thompson::{SparseTransitions, State, Transition, NFA},
-        util::primitives::{PatternID, SmallIndex, StateID},
+        nfa::thompson::{SparseTransitions, State},
+        util::primitives::SmallIndex,
     };
 
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
@@ -4193,6 +4276,11 @@ mutably both inside and outside the closure at the same time.
         State::Sparse(SparseTransitions { transitions })
     }
 
+    <span class="kw">fn </span>s_look(look: Look, next: usize) -&gt; State {
+        <span class="kw">let </span>next = sid(next);
+        State::Look { look, next }
+    }
+
     <span class="kw">fn </span>s_bin_union(alt1: usize, alt2: usize) -&gt; State {
         State::BinaryUnion { alt1: sid(alt1), alt2: sid(alt2) }
     }
@@ -4230,33 +4318,107 @@ mutably both inside and outside the closure at the same time.
     </span><span class="kw">fn </span>compile_unanchored_prefix() {
         <span class="kw">let </span>nfa = NFA::compiler()
             .configure(NFA::config().which_captures(WhichCaptures::None))
-            .build(<span class="string">r&quot;a&quot;</span>)
+            .build(<span class="string">r"a"</span>)
             .unwrap();
         <span class="macro">assert_eq!</span>(
             nfa.states(),
             <span class="kw-2">&amp;</span>[
                 s_bin_union(<span class="number">2</span>, <span class="number">1</span>),
                 s_range(<span class="number">0</span>, <span class="number">255</span>, <span class="number">0</span>),
-                s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">3</span>),
+                s_byte(<span class="string">b'a'</span>, <span class="number">3</span>),
                 s_match(<span class="number">0</span>),
             ]
         );
     }
 
     <span class="attr">#[test]
+    </span><span class="kw">fn </span>compile_no_unanchored_prefix_with_start_anchor() {
+        <span class="kw">let </span>nfa = NFA::compiler()
+            .configure(NFA::config().which_captures(WhichCaptures::None))
+            .build(<span class="string">r"^a"</span>)
+            .unwrap();
+        <span class="macro">assert_eq!</span>(
+            nfa.states(),
+            <span class="kw-2">&amp;</span>[s_look(Look::Start, <span class="number">1</span>), s_byte(<span class="string">b'a'</span>, <span class="number">2</span>), s_match(<span class="number">0</span>)]
+        );
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>compile_yes_unanchored_prefix_with_end_anchor() {
+        <span class="kw">let </span>nfa = NFA::compiler()
+            .configure(NFA::config().which_captures(WhichCaptures::None))
+            .build(<span class="string">r"a$"</span>)
+            .unwrap();
+        <span class="macro">assert_eq!</span>(
+            nfa.states(),
+            <span class="kw-2">&amp;</span>[
+                s_bin_union(<span class="number">2</span>, <span class="number">1</span>),
+                s_range(<span class="number">0</span>, <span class="number">255</span>, <span class="number">0</span>),
+                s_byte(<span class="string">b'a'</span>, <span class="number">3</span>),
+                s_look(Look::End, <span class="number">4</span>),
+                s_match(<span class="number">0</span>),
+            ]
+        );
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>compile_yes_reverse_unanchored_prefix_with_start_anchor() {
+        <span class="kw">let </span>nfa = NFA::compiler()
+            .configure(
+                NFA::config()
+                    .reverse(<span class="bool-val">true</span>)
+                    .which_captures(WhichCaptures::None),
+            )
+            .build(<span class="string">r"^a"</span>)
+            .unwrap();
+        <span class="macro">assert_eq!</span>(
+            nfa.states(),
+            <span class="kw-2">&amp;</span>[
+                s_bin_union(<span class="number">2</span>, <span class="number">1</span>),
+                s_range(<span class="number">0</span>, <span class="number">255</span>, <span class="number">0</span>),
+                s_byte(<span class="string">b'a'</span>, <span class="number">3</span>),
+                <span class="comment">// Anchors get flipped in a reverse automaton.
+                </span>s_look(Look::End, <span class="number">4</span>),
+                s_match(<span class="number">0</span>),
+            ],
+        );
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>compile_no_reverse_unanchored_prefix_with_end_anchor() {
+        <span class="kw">let </span>nfa = NFA::compiler()
+            .configure(
+                NFA::config()
+                    .reverse(<span class="bool-val">true</span>)
+                    .which_captures(WhichCaptures::None),
+            )
+            .build(<span class="string">r"a$"</span>)
+            .unwrap();
+        <span class="macro">assert_eq!</span>(
+            nfa.states(),
+            <span class="kw-2">&amp;</span>[
+                <span class="comment">// Anchors get flipped in a reverse automaton.
+                </span>s_look(Look::Start, <span class="number">1</span>),
+                s_byte(<span class="string">b'a'</span>, <span class="number">2</span>),
+                s_match(<span class="number">0</span>),
+            ],
+        );
+    }
+
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>compile_empty() {
-        <span class="macro">assert_eq!</span>(build(<span class="string">&quot;&quot;</span>).states(), <span class="kw-2">&amp;</span>[s_match(<span class="number">0</span>),]);
+        <span class="macro">assert_eq!</span>(build(<span class="string">""</span>).states(), <span class="kw-2">&amp;</span>[s_match(<span class="number">0</span>),]);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>compile_literal() {
-        <span class="macro">assert_eq!</span>(build(<span class="string">&quot;a&quot;</span>).states(), <span class="kw-2">&amp;</span>[s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">1</span>), s_match(<span class="number">0</span>),]);
+        <span class="macro">assert_eq!</span>(build(<span class="string">"a"</span>).states(), <span class="kw-2">&amp;</span>[s_byte(<span class="string">b'a'</span>, <span class="number">1</span>), s_match(<span class="number">0</span>),]);
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">&quot;ab&quot;</span>).states(),
-            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">1</span>), s_byte(<span class="string">b&#39;b&#39;</span>, <span class="number">2</span>), s_match(<span class="number">0</span>),]
+            build(<span class="string">"ab"</span>).states(),
+            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b'a'</span>, <span class="number">1</span>), s_byte(<span class="string">b'b'</span>, <span class="number">2</span>), s_match(<span class="number">0</span>),]
         );
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">&quot;☃&quot;</span>).states(),
+            build(<span class="string">"☃"</span>).states(),
             <span class="kw-2">&amp;</span>[s_byte(<span class="number">0xE2</span>, <span class="number">1</span>), s_byte(<span class="number">0x98</span>, <span class="number">2</span>), s_byte(<span class="number">0x83</span>, <span class="number">3</span>), s_match(<span class="number">0</span>)]
         );
 
@@ -4268,20 +4430,20 @@ mutably both inside and outside the closure at the same time.
                     .unanchored_prefix(<span class="bool-val">false</span>),
             )
             .syntax(<span class="kw">crate</span>::util::syntax::Config::new().utf8(<span class="bool-val">false</span>))
-            .build(<span class="string">r&quot;(?-u)\xFF&quot;</span>)
+            .build(<span class="string">r"(?-u)\xFF"</span>)
             .unwrap();
-        <span class="macro">assert_eq!</span>(nfa.states(), <span class="kw-2">&amp;</span>[s_byte(<span class="string">b&#39;\xFF&#39;</span>, <span class="number">1</span>), s_match(<span class="number">0</span>),]);
+        <span class="macro">assert_eq!</span>(nfa.states(), <span class="kw-2">&amp;</span>[s_byte(<span class="string">b'\xFF'</span>, <span class="number">1</span>), s_match(<span class="number">0</span>),]);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>compile_class_ascii() {
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;[a-z]&quot;</span>).states(),
-            <span class="kw-2">&amp;</span>[s_range(<span class="string">b&#39;a&#39;</span>, <span class="string">b&#39;z&#39;</span>, <span class="number">1</span>), s_match(<span class="number">0</span>),]
+            build(<span class="string">r"[a-z]"</span>).states(),
+            <span class="kw-2">&amp;</span>[s_range(<span class="string">b'a'</span>, <span class="string">b'z'</span>, <span class="number">1</span>), s_match(<span class="number">0</span>),]
         );
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;[x-za-c]&quot;</span>).states(),
-            <span class="kw-2">&amp;</span>[s_sparse(<span class="kw-2">&amp;</span>[(<span class="string">b&#39;a&#39;</span>, <span class="string">b&#39;c&#39;</span>, <span class="number">1</span>), (<span class="string">b&#39;x&#39;</span>, <span class="string">b&#39;z&#39;</span>, <span class="number">1</span>)]), s_match(<span class="number">0</span>)]
+            build(<span class="string">r"[x-za-c]"</span>).states(),
+            <span class="kw-2">&amp;</span>[s_sparse(<span class="kw-2">&amp;</span>[(<span class="string">b'a'</span>, <span class="string">b'c'</span>, <span class="number">1</span>), (<span class="string">b'x'</span>, <span class="string">b'z'</span>, <span class="number">1</span>)]), s_match(<span class="number">0</span>)]
         );
     }
 
@@ -4289,11 +4451,11 @@ mutably both inside and outside the closure at the same time.
     #[cfg(not(miri))]
     </span><span class="kw">fn </span>compile_class_unicode() {
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;[\u03B1-\u03B4]&quot;</span>).states(),
+            build(<span class="string">r"[\u03B1-\u03B4]"</span>).states(),
             <span class="kw-2">&amp;</span>[s_range(<span class="number">0xB1</span>, <span class="number">0xB4</span>, <span class="number">2</span>), s_byte(<span class="number">0xCE</span>, <span class="number">0</span>), s_match(<span class="number">0</span>)]
         );
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;[\u03B1-\u03B4\u{1F919}-\u{1F91E}]&quot;</span>).states(),
+            build(<span class="string">r"[\u03B1-\u03B4\u{1F919}-\u{1F91E}]"</span>).states(),
             <span class="kw-2">&amp;</span>[
                 s_range(<span class="number">0xB1</span>, <span class="number">0xB4</span>, <span class="number">5</span>),
                 s_range(<span class="number">0x99</span>, <span class="number">0x9E</span>, <span class="number">5</span>),
@@ -4304,11 +4466,11 @@ mutably both inside and outside the closure at the same time.
             ]
         );
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;[a-z☃]&quot;</span>).states(),
+            build(<span class="string">r"[a-z☃]"</span>).states(),
             <span class="kw-2">&amp;</span>[
                 s_byte(<span class="number">0x83</span>, <span class="number">3</span>),
                 s_byte(<span class="number">0x98</span>, <span class="number">0</span>),
-                s_sparse(<span class="kw-2">&amp;</span>[(<span class="string">b&#39;a&#39;</span>, <span class="string">b&#39;z&#39;</span>, <span class="number">3</span>), (<span class="number">0xE2</span>, <span class="number">0xE2</span>, <span class="number">1</span>)]),
+                s_sparse(<span class="kw-2">&amp;</span>[(<span class="string">b'a'</span>, <span class="string">b'z'</span>, <span class="number">3</span>), (<span class="number">0xE2</span>, <span class="number">0xE2</span>, <span class="number">1</span>)]),
                 s_match(<span class="number">0</span>),
             ]
         );
@@ -4317,60 +4479,60 @@ mutably both inside and outside the closure at the same time.
     <span class="attr">#[test]
     </span><span class="kw">fn </span>compile_repetition() {
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;a?&quot;</span>).states(),
-            <span class="kw-2">&amp;</span>[s_bin_union(<span class="number">1</span>, <span class="number">2</span>), s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">2</span>), s_match(<span class="number">0</span>),]
+            build(<span class="string">r"a?"</span>).states(),
+            <span class="kw-2">&amp;</span>[s_bin_union(<span class="number">1</span>, <span class="number">2</span>), s_byte(<span class="string">b'a'</span>, <span class="number">2</span>), s_match(<span class="number">0</span>),]
         );
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;a??&quot;</span>).states(),
-            <span class="kw-2">&amp;</span>[s_bin_union(<span class="number">2</span>, <span class="number">1</span>), s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">2</span>), s_match(<span class="number">0</span>),]
+            build(<span class="string">r"a??"</span>).states(),
+            <span class="kw-2">&amp;</span>[s_bin_union(<span class="number">2</span>, <span class="number">1</span>), s_byte(<span class="string">b'a'</span>, <span class="number">2</span>), s_match(<span class="number">0</span>),]
         );
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>compile_group() {
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;ab+&quot;</span>).states(),
-            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">1</span>), s_byte(<span class="string">b&#39;b&#39;</span>, <span class="number">2</span>), s_bin_union(<span class="number">1</span>, <span class="number">3</span>), s_match(<span class="number">0</span>)]
+            build(<span class="string">r"ab+"</span>).states(),
+            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b'a'</span>, <span class="number">1</span>), s_byte(<span class="string">b'b'</span>, <span class="number">2</span>), s_bin_union(<span class="number">1</span>, <span class="number">3</span>), s_match(<span class="number">0</span>)]
         );
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;(ab)&quot;</span>).states(),
-            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">1</span>), s_byte(<span class="string">b&#39;b&#39;</span>, <span class="number">2</span>), s_match(<span class="number">0</span>)]
+            build(<span class="string">r"(ab)"</span>).states(),
+            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b'a'</span>, <span class="number">1</span>), s_byte(<span class="string">b'b'</span>, <span class="number">2</span>), s_match(<span class="number">0</span>)]
         );
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;(ab)+&quot;</span>).states(),
-            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">1</span>), s_byte(<span class="string">b&#39;b&#39;</span>, <span class="number">2</span>), s_bin_union(<span class="number">0</span>, <span class="number">3</span>), s_match(<span class="number">0</span>)]
+            build(<span class="string">r"(ab)+"</span>).states(),
+            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b'a'</span>, <span class="number">1</span>), s_byte(<span class="string">b'b'</span>, <span class="number">2</span>), s_bin_union(<span class="number">0</span>, <span class="number">3</span>), s_match(<span class="number">0</span>)]
         );
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>compile_alternation() {
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;a|b&quot;</span>).states(),
-            <span class="kw-2">&amp;</span>[s_range(<span class="string">b&#39;a&#39;</span>, <span class="string">b&#39;b&#39;</span>, <span class="number">1</span>), s_match(<span class="number">0</span>)]
+            build(<span class="string">r"a|b"</span>).states(),
+            <span class="kw-2">&amp;</span>[s_range(<span class="string">b'a'</span>, <span class="string">b'b'</span>, <span class="number">1</span>), s_match(<span class="number">0</span>)]
         );
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;ab|cd&quot;</span>).states(),
+            build(<span class="string">r"ab|cd"</span>).states(),
             <span class="kw-2">&amp;</span>[
-                s_byte(<span class="string">b&#39;b&#39;</span>, <span class="number">3</span>),
-                s_byte(<span class="string">b&#39;d&#39;</span>, <span class="number">3</span>),
-                s_sparse(<span class="kw-2">&amp;</span>[(<span class="string">b&#39;a&#39;</span>, <span class="string">b&#39;a&#39;</span>, <span class="number">0</span>), (<span class="string">b&#39;c&#39;</span>, <span class="string">b&#39;c&#39;</span>, <span class="number">1</span>)]),
+                s_byte(<span class="string">b'b'</span>, <span class="number">3</span>),
+                s_byte(<span class="string">b'd'</span>, <span class="number">3</span>),
+                s_sparse(<span class="kw-2">&amp;</span>[(<span class="string">b'a'</span>, <span class="string">b'a'</span>, <span class="number">0</span>), (<span class="string">b'c'</span>, <span class="string">b'c'</span>, <span class="number">1</span>)]),
                 s_match(<span class="number">0</span>)
             ],
         );
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;|b&quot;</span>).states(),
-            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b&#39;b&#39;</span>, <span class="number">2</span>), s_bin_union(<span class="number">2</span>, <span class="number">0</span>), s_match(<span class="number">0</span>)]
+            build(<span class="string">r"|b"</span>).states(),
+            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b'b'</span>, <span class="number">2</span>), s_bin_union(<span class="number">2</span>, <span class="number">0</span>), s_match(<span class="number">0</span>)]
         );
         <span class="macro">assert_eq!</span>(
-            build(<span class="string">r&quot;a|&quot;</span>).states(),
-            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">2</span>), s_bin_union(<span class="number">0</span>, <span class="number">2</span>), s_match(<span class="number">0</span>)]
+            build(<span class="string">r"a|"</span>).states(),
+            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b'a'</span>, <span class="number">2</span>), s_bin_union(<span class="number">0</span>, <span class="number">2</span>), s_match(<span class="number">0</span>)]
         );
     }
 
     <span class="comment">// This tests the use of a non-binary union, i.e., a state with more than
     // 2 unconditional epsilon transitions. The only place they tend to appear
-    // is in reverse NFAs when shrinking is disabled. Otherwise, &#39;binary-union&#39;
-    // and &#39;sparse&#39; tend to cover all other cases of alternation.
+    // is in reverse NFAs when shrinking is disabled. Otherwise, 'binary-union'
+    // and 'sparse' tend to cover all other cases of alternation.
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>compile_non_binary_union() {
         <span class="kw">let </span>nfa = NFA::compiler()
@@ -4381,7 +4543,7 @@ mutably both inside and outside the closure at the same time.
                     .shrink(<span class="bool-val">false</span>)
                     .unanchored_prefix(<span class="bool-val">false</span>),
             )
-            .build(<span class="string">r&quot;[\u1000\u2000\u3000]&quot;</span>)
+            .build(<span class="string">r"[\u1000\u2000\u3000]"</span>)
             .unwrap();
         <span class="macro">assert_eq!</span>(
             nfa.states(),
@@ -4409,14 +4571,14 @@ mutably both inside and outside the closure at the same time.
                     .which_captures(WhichCaptures::None)
                     .unanchored_prefix(<span class="bool-val">false</span>),
             )
-            .build_many(<span class="kw-2">&amp;</span>[<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>])
+            .build_many(<span class="kw-2">&amp;</span>[<span class="string">"a"</span>, <span class="string">"b"</span>])
             .unwrap();
         <span class="macro">assert_eq!</span>(
             nfa.states(),
             <span class="kw-2">&amp;</span>[
-                s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">1</span>),
+                s_byte(<span class="string">b'a'</span>, <span class="number">1</span>),
                 s_match(<span class="number">0</span>),
-                s_byte(<span class="string">b&#39;b&#39;</span>, <span class="number">3</span>),
+                s_byte(<span class="string">b'b'</span>, <span class="number">3</span>),
                 s_match(<span class="number">1</span>),
                 s_bin_union(<span class="number">0</span>, <span class="number">2</span>),
             ]
@@ -4466,17 +4628,17 @@ mutably both inside and outside the closure at the same time.
                     .unanchored_prefix(<span class="bool-val">false</span>)
                     .which_captures(WhichCaptures::All),
             )
-            .build(<span class="string">&quot;a(b)c&quot;</span>)
+            .build(<span class="string">"a(b)c"</span>)
             .unwrap();
         <span class="macro">assert_eq!</span>(
             nfa.states(),
             <span class="kw-2">&amp;</span>[
                 s_cap(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>),
-                s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">2</span>),
+                s_byte(<span class="string">b'a'</span>, <span class="number">2</span>),
                 s_cap(<span class="number">3</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>),
-                s_byte(<span class="string">b&#39;b&#39;</span>, <span class="number">4</span>),
+                s_byte(<span class="string">b'b'</span>, <span class="number">4</span>),
                 s_cap(<span class="number">5</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">3</span>),
-                s_byte(<span class="string">b&#39;c&#39;</span>, <span class="number">6</span>),
+                s_byte(<span class="string">b'c'</span>, <span class="number">6</span>),
                 s_cap(<span class="number">7</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>),
                 s_match(<span class="number">0</span>)
             ]
@@ -4493,15 +4655,15 @@ mutably both inside and outside the closure at the same time.
                     .unanchored_prefix(<span class="bool-val">false</span>)
                     .which_captures(WhichCaptures::Implicit),
             )
-            .build(<span class="string">&quot;a(b)c&quot;</span>)
+            .build(<span class="string">"a(b)c"</span>)
             .unwrap();
         <span class="macro">assert_eq!</span>(
             nfa.states(),
             <span class="kw-2">&amp;</span>[
                 s_cap(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>),
-                s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">2</span>),
-                s_byte(<span class="string">b&#39;b&#39;</span>, <span class="number">3</span>),
-                s_byte(<span class="string">b&#39;c&#39;</span>, <span class="number">4</span>),
+                s_byte(<span class="string">b'a'</span>, <span class="number">2</span>),
+                s_byte(<span class="string">b'b'</span>, <span class="number">3</span>),
+                s_byte(<span class="string">b'c'</span>, <span class="number">4</span>),
                 s_cap(<span class="number">5</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>),
                 s_match(<span class="number">0</span>)
             ]
@@ -4518,11 +4680,11 @@ mutably both inside and outside the closure at the same time.
                     .unanchored_prefix(<span class="bool-val">false</span>)
                     .which_captures(WhichCaptures::None),
             )
-            .build(<span class="string">&quot;a(b)c&quot;</span>)
+            .build(<span class="string">"a(b)c"</span>)
             .unwrap();
         <span class="macro">assert_eq!</span>(
             nfa.states(),
-            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b&#39;a&#39;</span>, <span class="number">1</span>), s_byte(<span class="string">b&#39;b&#39;</span>, <span class="number">2</span>), s_byte(<span class="string">b&#39;c&#39;</span>, <span class="number">3</span>), s_match(<span class="number">0</span>)]
+            <span class="kw-2">&amp;</span>[s_byte(<span class="string">b'a'</span>, <span class="number">1</span>), s_byte(<span class="string">b'b'</span>, <span class="number">2</span>), s_byte(<span class="string">b'c'</span>, <span class="number">3</span>), s_match(<span class="number">0</span>)]
         );
         <span class="kw">let </span>ginfo = nfa.group_info();
         <span class="macro">assert_eq!</span>(<span class="number">0</span>, ginfo.all_group_len());

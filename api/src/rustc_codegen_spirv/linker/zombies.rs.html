@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/zombies.rs`."><title>zombies.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/zombies.rs`."><title>zombies.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -423,9 +423,6 @@
 <a href="#423" id="423">423</a>
 <a href="#424" id="424">424</a>
 <a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! See documentation on `CodegenCx::zombie` for a description of the zombie system.
 
 </span><span class="kw">use super</span>::{get_name, get_names};
@@ -434,31 +431,31 @@
 <span class="kw">use </span>rspirv::dr::{Instruction, Module, Operand};
 <span class="kw">use </span>rspirv::spirv::{Op, Word};
 <span class="kw">use </span>rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexMap};
-<span class="kw">use </span>rustc_errors::{DiagnosticBuilder, ErrorGuaranteed};
+<span class="kw">use </span>rustc_errors::Diag;
 <span class="kw">use </span>rustc_session::Session;
 <span class="kw">use </span>rustc_span::{Span, DUMMY_SP};
 <span class="kw">use </span>smallvec::SmallVec;
 
 <span class="attr">#[derive(Copy, Clone)]
-</span><span class="kw">struct </span>Zombie&lt;<span class="lifetime">&#39;a</span>&gt; {
+</span><span class="kw">struct </span>Zombie&lt;<span class="lifetime">'a</span>&gt; {
     id: Word,
-    kind: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>ZombieKind&lt;<span class="lifetime">&#39;a</span>&gt;,
+    kind: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>ZombieKind&lt;<span class="lifetime">'a</span>&gt;,
 }
 
-<span class="kw">enum </span>ZombieKind&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">enum </span>ZombieKind&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Definition annotated with `ZombieDecoration`.
     </span>Leaf,
 
-    <span class="doccomment">/// Transitively zombie&#39;d by using other zombies, from an instruction.
-    </span>Uses(Vec&lt;ZombieUse&lt;<span class="lifetime">&#39;a</span>&gt;&gt;),
+    <span class="doccomment">/// Transitively zombie'd by using other zombies, from an instruction.
+    </span>Uses(Vec&lt;ZombieUse&lt;<span class="lifetime">'a</span>&gt;&gt;),
 }
 
-<span class="kw">struct </span>ZombieUse&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">struct </span>ZombieUse&lt;<span class="lifetime">'a</span>&gt; {
     used_zombie_id: Word,
 
-    <span class="doccomment">/// Active debug &quot;source location&quot; instruction at the time of the use, if any
+    <span class="doccomment">/// Active debug "source location" instruction at the time of the use, if any
     /// (both `OpLine` and `CustomInst::SetDebugSrcLoc` are supported).
-    </span>use_debug_src_loc_inst: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Instruction&gt;,
+    </span>use_debug_src_loc_inst: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Instruction&gt;,
 
     origin: UseOrigin,
 }
@@ -469,33 +466,33 @@
     CallCalleeOperand { caller_func_id: Word },
 }
 
-<span class="kw">struct </span>Zombies&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="doccomment">/// ID of `OpExtInstImport` for our custom &quot;extended instruction set&quot;,
+<span class="kw">struct </span>Zombies&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="doccomment">/// ID of `OpExtInstImport` for our custom "extended instruction set",
     /// if present (see `crate::custom_insts` for more details).
     </span>custom_ext_inst_set_import: <span class="prelude-ty">Option</span>&lt;Word&gt;,
 
-    id_to_zombie_kind: FxIndexMap&lt;Word, ZombieKind&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
+    id_to_zombie_kind: FxIndexMap&lt;Word, ZombieKind&lt;<span class="lifetime">'a</span>&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Zombies&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Zombies&lt;<span class="lifetime">'a</span>&gt; {
     <span class="comment">// FIXME(eddyb) rename all the other methods to say `_inst` explicitly.
-    </span><span class="kw">fn </span>get_zombie_by_id(<span class="kw-2">&amp;</span><span class="self">self</span>, id: Word) -&gt; <span class="prelude-ty">Option</span>&lt;Zombie&lt;<span class="lifetime">&#39;_</span>&gt;&gt; {
+    </span><span class="kw">fn </span>get_zombie_by_id(<span class="kw-2">&amp;</span><span class="self">self</span>, id: Word) -&gt; <span class="prelude-ty">Option</span>&lt;Zombie&lt;<span class="lifetime">'_</span>&gt;&gt; {
         <span class="self">self</span>.id_to_zombie_kind
             .get(<span class="kw-2">&amp;</span>id)
             .map(|kind| Zombie { id, kind })
     }
 
-    <span class="kw">fn </span>zombies_used_from_inst&lt;<span class="lifetime">&#39;b</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span><span class="self">self</span>,
-        inst: <span class="kw-2">&amp;</span><span class="lifetime">&#39;b </span>Instruction,
-    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Zombie&lt;<span class="lifetime">&#39;b</span>&gt;&gt; + <span class="lifetime">&#39;b </span>{
+    <span class="kw">fn </span>zombies_used_from_inst&lt;<span class="lifetime">'b</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'b </span><span class="self">self</span>,
+        inst: <span class="kw-2">&amp;</span><span class="lifetime">'b </span>Instruction,
+    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Zombie&lt;<span class="lifetime">'b</span>&gt;&gt; + <span class="lifetime">'b </span>{
         inst.result_type
             .into_iter()
             .chain(inst.operands.iter().filter_map(|op| op.id_ref_any()))
             .filter_map(<span class="kw">move </span>|id| <span class="self">self</span>.get_zombie_by_id(id))
     }
 
-    <span class="kw">fn </span>spread(<span class="kw-2">&amp;mut </span><span class="self">self</span>, module: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Module) -&gt; bool {
+    <span class="kw">fn </span>spread(<span class="kw-2">&amp;mut </span><span class="self">self</span>, module: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Module) -&gt; bool {
         <span class="kw">let </span><span class="kw-2">mut </span>any = <span class="bool-val">false</span>;
         <span class="comment">// globals are easy
         </span>{
@@ -538,8 +535,8 @@
             }
         }
         <span class="comment">// No need to zombie defs within a function: If any def within a function is zombied, then the
-        // whole function is zombied. But, we don&#39;t have to mark the defs within a function as zombie,
-        // because the defs can&#39;t escape the function.
+        // whole function is zombied. But, we don't have to mark the defs within a function as zombie,
+        // because the defs can't escape the function.
         // HACK(eddyb) one exception to this is function-local variables, or the
         // `OpBitcast`s of pointer casts, either of which which may actually be
         // unused and as such cannot be allowed to always zombie the function.
@@ -628,16 +625,16 @@
     }
 }
 
-<span class="kw">struct </span>ZombieReporter&lt;<span class="lifetime">&#39;a</span>&gt; {
-    sess: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Session,
-    module: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Module,
-    zombies: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Zombies&lt;<span class="lifetime">&#39;a</span>&gt;,
+<span class="kw">struct </span>ZombieReporter&lt;<span class="lifetime">'a</span>&gt; {
+    sess: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Session,
+    module: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Module,
+    zombies: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Zombies&lt;<span class="lifetime">'a</span>&gt;,
 
-    id_to_name: <span class="prelude-ty">Option</span>&lt;FxHashMap&lt;Word, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;&gt;,
-    span_regen: SpanRegenerator&lt;<span class="lifetime">&#39;a</span>&gt;,
+    id_to_name: <span class="prelude-ty">Option</span>&lt;FxHashMap&lt;Word, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt;&gt;,
+    span_regen: SpanRegenerator&lt;<span class="lifetime">'a</span>&gt;,
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; ZombieReporter&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">fn </span>new(sess: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Session, module: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Module, zombies: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Zombies&lt;<span class="lifetime">&#39;a</span>&gt;) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ZombieReporter&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">fn </span>new(sess: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Session, module: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Module, zombies: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Zombies&lt;<span class="lifetime">'a</span>&gt;) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             sess,
             module,
@@ -648,16 +645,16 @@
         }
     }
 
-    <span class="comment">// If an entry point references a zombie&#39;d value, then the entry point would normally get removed.
-    // That&#39;s an absolutely horrible experience to debug, though, so instead, create a nice error
+    <span class="comment">// If an entry point references a zombie'd value, then the entry point would normally get removed.
+    // That's an absolutely horrible experience to debug, though, so instead, create a nice error
     // message containing the stack trace of how the entry point got to the zombie value.
     </span><span class="kw">fn </span>report_all(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="kw">super</span>::Result&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="prelude-val">Ok</span>(());
         <span class="comment">// FIXME(eddyb) this loop means that every entry-point can potentially
-        // list out all the leaves, but that shouldn&#39;t be a huge issue.
+        // list out all the leaves, but that shouldn't be a huge issue.
         </span><span class="kw">for </span>root_id <span class="kw">in </span><span class="kw">super</span>::dce::collect_roots(<span class="self">self</span>.module) {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(zombie) = <span class="self">self</span>.zombies.get_zombie_by_id(root_id) {
-                <span class="kw">for </span>(<span class="kw">_</span>, <span class="kw-2">mut </span>err) <span class="kw">in </span><span class="self">self</span>.build_errors_keyed_by_leaf_id(zombie) {
+                <span class="kw">for </span>(<span class="kw">_</span>, err) <span class="kw">in </span><span class="self">self</span>.build_errors_keyed_by_leaf_id(zombie) {
                     result = <span class="prelude-val">Err</span>(err.emit());
                 }
             }
@@ -667,32 +664,32 @@
 
     <span class="kw">fn </span>add_use_note_to_err(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        err: <span class="kw-2">&amp;mut </span>DiagnosticBuilder&lt;<span class="lifetime">&#39;a</span>, ErrorGuaranteed&gt;,
+        err: <span class="kw-2">&amp;mut </span>Diag&lt;<span class="lifetime">'a</span>&gt;,
         span: Span,
-        zombie: Zombie&lt;<span class="lifetime">&#39;_</span>&gt;,
-        zombie_use: <span class="kw-2">&amp;</span>ZombieUse&lt;<span class="lifetime">&#39;_</span>&gt;,
+        zombie: Zombie&lt;<span class="lifetime">'_</span>&gt;,
+        zombie_use: <span class="kw-2">&amp;</span>ZombieUse&lt;<span class="lifetime">'_</span>&gt;,
     ) {
         <span class="kw">let </span><span class="kw-2">mut </span>id_to_name = |id, kind| {
             <span class="self">self</span>.id_to_name
                 .get_or_insert_with(|| get_names(<span class="self">self</span>.module))
                 .get(<span class="kw-2">&amp;</span>id)
                 .map_or_else(
-                    || <span class="macro">format!</span>(<span class="string">&quot;unnamed {kind} (%{id})&quot;</span>),
-                    |<span class="kw-2">&amp;</span>name| <span class="macro">format!</span>(<span class="string">&quot;`{name}`&quot;</span>),
+                    || <span class="macro">format!</span>(<span class="string">"unnamed {kind} (%{id})"</span>),
+                    |<span class="kw-2">&amp;</span>name| <span class="macro">format!</span>(<span class="string">"`{name}`"</span>),
                 )
         };
         <span class="kw">let </span>note = <span class="kw">match </span>zombie_use.origin {
             UseOrigin::GlobalOperandOrResultType =&gt; {
-                <span class="macro">format!</span>(<span class="string">&quot;used by {}&quot;</span>, id_to_name(zombie.id, <span class="string">&quot;global&quot;</span>))
+                <span class="macro">format!</span>(<span class="string">"used by {}"</span>, id_to_name(zombie.id, <span class="string">"global"</span>))
             }
             UseOrigin::IntraFuncOperandOrResultType { parent_func_id } =&gt; {
                 <span class="macro">format!</span>(
-                    <span class="string">&quot;used from within {}&quot;</span>,
-                    id_to_name(parent_func_id, <span class="string">&quot;function&quot;</span>)
+                    <span class="string">"used from within {}"</span>,
+                    id_to_name(parent_func_id, <span class="string">"function"</span>)
                 )
             }
             UseOrigin::CallCalleeOperand { caller_func_id } =&gt; {
-                <span class="macro">format!</span>(<span class="string">&quot;called by {}&quot;</span>, id_to_name(caller_func_id, <span class="string">&quot;function&quot;</span>))
+                <span class="macro">format!</span>(<span class="string">"called by {}"</span>, id_to_name(caller_func_id, <span class="string">"function"</span>))
             }
         };
         <span class="kw">let </span>span = zombie_use
@@ -703,13 +700,10 @@
         err.span_note(span, note);
     }
 
-    <span class="kw">fn </span>build_errors_keyed_by_leaf_id(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        zombie: Zombie&lt;<span class="lifetime">&#39;_</span>&gt;,
-    ) -&gt; FxIndexMap&lt;Word, DiagnosticBuilder&lt;<span class="lifetime">&#39;a</span>, ErrorGuaranteed&gt;&gt; {
+    <span class="kw">fn </span>build_errors_keyed_by_leaf_id(<span class="kw-2">&amp;mut </span><span class="self">self</span>, zombie: Zombie&lt;<span class="lifetime">'_</span>&gt;) -&gt; FxIndexMap&lt;Word, Diag&lt;<span class="lifetime">'a</span>&gt;&gt; {
         <span class="comment">// FIXME(eddyb) this is a bit inefficient, compared to some kind of
-        // &quot;small map&quot;, but this is the error path, and being correct is more
-        // important here - in particular, we don&#39;t want to ignore *any* leaves.
+        // "small map", but this is the error path, and being correct is more
+        // important here - in particular, we don't want to ignore *any* leaves.
         </span><span class="kw">let </span><span class="kw-2">mut </span>errors_keyed_by_leaf_id = FxIndexMap::default();
 
         <span class="kw">let </span>span = <span class="self">self
@@ -722,7 +716,7 @@
                 <span class="kw">let </span>reason = <span class="self">self</span>.span_regen.zombie_for_id(zombie.id).unwrap().reason;
                 errors_keyed_by_leaf_id.insert(
                     zombie.id,
-                    <span class="self">self</span>.sess.struct_span_err(span, reason.to_string()),
+                    <span class="self">self</span>.sess.dcx().struct_span_err(span, reason.to_string()),
                 );
             }
             ZombieKind::Uses(zombie_uses) =&gt; {
@@ -793,9 +787,9 @@
             }
 
             <span class="kw">let </span>reason = span_regen.zombie_for_id(zombie_leaf_id).unwrap().reason;
-            <span class="macro">eprint!</span>(<span class="string">&quot;zombie&#39;d %{zombie_id} because {reason}&quot;</span>);
+            <span class="macro">eprint!</span>(<span class="string">"zombie'd %{zombie_id} because {reason}"</span>);
             <span class="kw">if </span>!infection_chain.is_empty() {
-                <span class="macro">eprint!</span>(<span class="string">&quot; (infected via {:?})&quot;</span>, infection_chain);
+                <span class="macro">eprint!</span>(<span class="string">" (infected via {:?})"</span>, infection_chain);
             }
             <span class="macro">eprintln!</span>();
         }
@@ -817,13 +811,13 @@
 
                 <span class="kw">let </span>name = get_name(<span class="kw-2">&amp;</span>names, f.def_id().unwrap());
                 <span class="kw">let </span>reason = span_regen.zombie_for_id(zombie_leaf_id).unwrap().reason;
-                <span class="macro">eprintln!</span>(<span class="string">&quot;function removed {name:?} because {reason:?}&quot;</span>);
+                <span class="macro">eprintln!</span>(<span class="string">"function removed {name:?} because {reason:?}"</span>);
             }
         }
     }
 
     <span class="comment">// FIXME(eddyb) this should be unnecessary, either something is unused, and
-    // it will get DCE&#39;d *anyway*, or it caused an error.
+    // it will get DCE'd *anyway*, or it caused an error.
     </span>{
         <span class="comment">// HACK(eddyb) cannot use the original map because it borrows the `Module`.
         </span><span class="kw">let </span>all_zombies: FxHashSet&lt;<span class="kw">_</span>&gt; = zombies.id_to_zombie_kind.into_keys().collect();

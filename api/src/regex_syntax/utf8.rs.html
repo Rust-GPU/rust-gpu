@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-syntax-0.8.2/src/utf8.rs`."><title>utf8.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../regex_syntax/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-syntax-0.8.4/src/utf8.rs`."><title>utf8.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="regex_syntax" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../regex_syntax/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -602,7 +602,7 @@ an example.
 
 # Wait, what is this?
 
-This is simplest to explain with an example. Let&#39;s say you wanted to test
+This is simplest to explain with an example. Let's say you wanted to test
 whether a particular byte sequence was a Cyrillic character. One possible
 scalar value range is `[0400-04FF]`. The set of allowed bytes for this
 range can be expressed as a sequence of byte ranges:
@@ -617,10 +617,10 @@ corresponding pair of bytes: `D0` to `D3` and `80` to `BF`.
 
 However, what if you wanted to add the Cyrillic Supplementary characters to
 your range? Your range might then become `[0400-052F]`. The same procedure
-as above doesn&#39;t quite work because `052F` encodes to `D4 AF`. The byte ranges
-you&#39;d get from the previous transformation would be `[D0-D4][80-AF]`. However,
-this isn&#39;t quite correct because this range doesn&#39;t capture many characters,
-for example, `04FF` (because its last byte, `BF` isn&#39;t in the range `80-AF`).
+as above doesn't quite work because `052F` encodes to `D4 AF`. The byte ranges
+you'd get from the previous transformation would be `[D0-D4][80-AF]`. However,
+this isn't quite correct because this range doesn't capture many characters,
+for example, `04FF` (because its last byte, `BF` isn't in the range `80-AF`).
 
 Instead, you need multiple sequences of byte ranges:
 
@@ -666,7 +666,7 @@ Unicode scalar values.
 
 I got the idea and general implementation strategy from Russ Cox in his
 [article on regexps](https://web.archive.org/web/20160404141123/https://swtch.com/~rsc/regexp/regexp3.html) and RE2.
-Russ Cox got it from Ken Thompson&#39;s `grep` (no source, folk lore?).
+Russ Cox got it from Ken Thompson's `grep` (no source, folk lore?).
 I also got the idea from
 [Lucene](https://github.com/apache/lucene-solr/blob/ae93f4e7ac6a3908046391de35d4f50a0d3c59ca/lucene/core/src/java/org/apache/lucene/util/automaton/UTF32ToUTF8.java),
 which uses it for executing automata on their term index.
@@ -720,7 +720,7 @@ which uses it for executing automata on their term index.
                 Utf8Range::new(start[<span class="number">2</span>], end[<span class="number">2</span>]),
                 Utf8Range::new(start[<span class="number">3</span>], end[<span class="number">3</span>]),
             ]),
-            n =&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;invalid encoded length: {}&quot;</span>, n),
+            n =&gt; <span class="macro">unreachable!</span>(<span class="string">"invalid encoded length: {}"</span>, n),
         }
     }
 
@@ -782,9 +782,9 @@ which uses it for executing automata on their term index.
     </span>}
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Utf8Sequence {
-    <span class="kw">type </span>IntoIter = slice::Iter&lt;<span class="lifetime">&#39;a</span>, Utf8Range&gt;;
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Utf8Range;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>Utf8Sequence {
+    <span class="kw">type </span>IntoIter = slice::Iter&lt;<span class="lifetime">'a</span>, Utf8Range&gt;;
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Utf8Range;
 
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
         <span class="self">self</span>.as_slice().iter()
@@ -792,14 +792,14 @@ which uses it for executing automata on their term index.
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Utf8Sequence {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">use </span><span class="self">self</span>::Utf8Sequence::<span class="kw-2">*</span>;
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            One(<span class="kw-2">ref </span>r) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, r),
-            Two(<span class="kw-2">ref </span>r) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{:?}{:?}&quot;</span>, r[<span class="number">0</span>], r[<span class="number">1</span>]),
-            Three(<span class="kw-2">ref </span>r) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;{:?}{:?}{:?}&quot;</span>, r[<span class="number">0</span>], r[<span class="number">1</span>], r[<span class="number">2</span>]),
+            One(<span class="kw-2">ref </span>r) =&gt; <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, r),
+            Two(<span class="kw-2">ref </span>r) =&gt; <span class="macro">write!</span>(f, <span class="string">"{:?}{:?}"</span>, r[<span class="number">0</span>], r[<span class="number">1</span>]),
+            Three(<span class="kw-2">ref </span>r) =&gt; <span class="macro">write!</span>(f, <span class="string">"{:?}{:?}{:?}"</span>, r[<span class="number">0</span>], r[<span class="number">1</span>], r[<span class="number">2</span>]),
             Four(<span class="kw-2">ref </span>r) =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;{:?}{:?}{:?}{:?}&quot;</span>, r[<span class="number">0</span>], r[<span class="number">1</span>], r[<span class="number">2</span>], r[<span class="number">3</span>])
+                <span class="macro">write!</span>(f, <span class="string">"{:?}{:?}{:?}{:?}"</span>, r[<span class="number">0</span>], r[<span class="number">1</span>], r[<span class="number">2</span>], r[<span class="number">3</span>])
             }
         }
     }
@@ -826,11 +826,11 @@ which uses it for executing automata on their term index.
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Utf8Range {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">if </span><span class="self">self</span>.start == <span class="self">self</span>.end {
-            <span class="macro">write!</span>(f, <span class="string">&quot;[{:X}]&quot;</span>, <span class="self">self</span>.start)
+            <span class="macro">write!</span>(f, <span class="string">"[{:X}]"</span>, <span class="self">self</span>.start)
         } <span class="kw">else </span>{
-            <span class="macro">write!</span>(f, <span class="string">&quot;[{:X}-{:X}]&quot;</span>, <span class="self">self</span>.start, <span class="self">self</span>.end)
+            <span class="macro">write!</span>(f, <span class="string">"[{:X}-{:X}]"</span>, <span class="self">self</span>.start, <span class="self">self</span>.end)
         }
     }
 }
@@ -865,11 +865,11 @@ which uses it for executing automata on their term index.
 /// }
 ///
 /// // Test the basic multilingual plane.
-/// let seqs: Vec&lt;_&gt; = Utf8Sequences::new(&#39;\u{0}&#39;, &#39;\u{FFFF}&#39;).collect();
+/// let seqs: Vec&lt;_&gt; = Utf8Sequences::new('\u{0}', '\u{FFFF}').collect();
 ///
-/// // UTF-8 encoding of &#39;a&#39;.
+/// // UTF-8 encoding of 'a'.
 /// assert!(matches(&amp;seqs, &amp;[0x61]));
-/// // UTF-8 encoding of &#39;☃&#39; (`\u{2603}`).
+/// // UTF-8 encoding of '☃' (`\u{2603}`).
 /// assert!(matches(&amp;seqs, &amp;[0xE2, 0x98, 0x83]));
 /// // UTF-8 encoding of `\u{10348}` (outside the BMP).
 /// assert!(!matches(&amp;seqs, &amp;[0xF0, 0x90, 0x8D, 0x88]));
@@ -881,7 +881,7 @@ which uses it for executing automata on their term index.
 /// assert!(!matches(&amp;seqs, &amp;[0xFF, 0xFF]));
 /// ```
 ///
-/// If this example seems circuitous, that&#39;s because it is! It&#39;s meant to be
+/// If this example seems circuitous, that's because it is! It's meant to be
 /// illustrative. In practice, you could just try to decode your byte sequence
 /// and compare it with the scalar value range directly. However, this is not
 /// always possible (for example, in a byte based automaton).
@@ -894,9 +894,9 @@ which uses it for executing automata on their term index.
     <span class="doccomment">/// Create a new iterator over UTF-8 byte ranges for the scalar value range
     /// given.
     </span><span class="kw">pub fn </span>new(start: char, end: char) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>it = Utf8Sequences { range_stack: <span class="macro">vec!</span>[] };
-        it.push(u32::from(start), u32::from(end));
-        it
+        <span class="kw">let </span>range =
+            ScalarRange { start: u32::from(start), end: u32::from(end) };
+        Utf8Sequences { range_stack: <span class="macro">vec!</span>[range] }
     }
 
     <span class="doccomment">/// reset resets the scalar value range.
@@ -920,8 +920,8 @@ which uses it for executing automata on their term index.
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>ScalarRange {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;ScalarRange({:X}, {:X})&quot;</span>, <span class="self">self</span>.start, <span class="self">self</span>.end)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">"ScalarRange({:X}, {:X})"</span>, <span class="self">self</span>.start, <span class="self">self</span>.end)
     }
 }
 
@@ -929,23 +929,23 @@ which uses it for executing automata on their term index.
     <span class="kw">type </span>Item = Utf8Sequence;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
-        <span class="lifetime">&#39;TOP</span>: <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>r) = <span class="self">self</span>.range_stack.pop() {
-            <span class="lifetime">&#39;INNER</span>: <span class="kw">loop </span>{
+        <span class="lifetime">'TOP</span>: <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>r) = <span class="self">self</span>.range_stack.pop() {
+            <span class="lifetime">'INNER</span>: <span class="kw">loop </span>{
                 <span class="kw">if let </span><span class="prelude-val">Some</span>((r1, r2)) = r.split() {
                     <span class="self">self</span>.push(r2.start, r2.end);
                     r.start = r1.start;
                     r.end = r1.end;
-                    <span class="kw">continue </span><span class="lifetime">&#39;INNER</span>;
+                    <span class="kw">continue </span><span class="lifetime">'INNER</span>;
                 }
                 <span class="kw">if </span>!r.is_valid() {
-                    <span class="kw">continue </span><span class="lifetime">&#39;TOP</span>;
+                    <span class="kw">continue </span><span class="lifetime">'TOP</span>;
                 }
                 <span class="kw">for </span>i <span class="kw">in </span><span class="number">1</span>..MAX_UTF8_BYTES {
                     <span class="kw">let </span>max = max_scalar_value(i);
                     <span class="kw">if </span>r.start &lt;= max &amp;&amp; max &lt; r.end {
                         <span class="self">self</span>.push(max + <span class="number">1</span>, r.end);
                         r.end = max;
-                        <span class="kw">continue </span><span class="lifetime">&#39;INNER</span>;
+                        <span class="kw">continue </span><span class="lifetime">'INNER</span>;
                     }
                 }
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(ascii_range) = r.as_ascii() {
@@ -957,12 +957,12 @@ which uses it for executing automata on their term index.
                         <span class="kw">if </span>(r.start &amp; m) != <span class="number">0 </span>{
                             <span class="self">self</span>.push((r.start | m) + <span class="number">1</span>, r.end);
                             r.end = r.start | m;
-                            <span class="kw">continue </span><span class="lifetime">&#39;INNER</span>;
+                            <span class="kw">continue </span><span class="lifetime">'INNER</span>;
                         }
                         <span class="kw">if </span>(r.end &amp; m) != m {
                             <span class="self">self</span>.push(r.end &amp; !m, r.end);
                             r.end = (r.end &amp; !m) - <span class="number">1</span>;
-                            <span class="kw">continue </span><span class="lifetime">&#39;INNER</span>;
+                            <span class="kw">continue </span><span class="lifetime">'INNER</span>;
                         }
                     }
                 }
@@ -1040,7 +1040,7 @@ which uses it for executing automata on their term index.
         <span class="number">2 </span>=&gt; <span class="number">0x07FF</span>,
         <span class="number">3 </span>=&gt; <span class="number">0xFFFF</span>,
         <span class="number">4 </span>=&gt; <span class="number">0x0010_FFFF</span>,
-        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;invalid UTF-8 byte sequence size&quot;</span>),
+        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">"invalid UTF-8 byte sequence size"</span>),
     }
 }
 
@@ -1062,9 +1062,9 @@ which uses it for executing automata on their term index.
             <span class="kw">for </span>r <span class="kw">in </span>Utf8Sequences::new(start, end) {
                 <span class="kw">if </span>r.matches(<span class="kw-2">&amp;</span>buf) {
                     <span class="macro">panic!</span>(
-                        <span class="string">&quot;Sequence ({:X}, {:X}) contains range {:?}, \
+                        <span class="string">"Sequence ({:X}, {:X}) contains range {:?}, \
                          which matches surrogate code point {:X} \
-                         with encoded bytes {:?}&quot;</span>,
+                         with encoded bytes {:?}"</span>,
                         u32::from(start),
                         u32::from(end),
                         r,
@@ -1078,11 +1078,11 @@ which uses it for executing automata on their term index.
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>codepoints_no_surrogates() {
-        never_accepts_surrogate_codepoints(<span class="string">&#39;\u{0}&#39;</span>, <span class="string">&#39;\u{FFFF}&#39;</span>);
-        never_accepts_surrogate_codepoints(<span class="string">&#39;\u{0}&#39;</span>, <span class="string">&#39;\u{10FFFF}&#39;</span>);
-        never_accepts_surrogate_codepoints(<span class="string">&#39;\u{0}&#39;</span>, <span class="string">&#39;\u{10FFFE}&#39;</span>);
-        never_accepts_surrogate_codepoints(<span class="string">&#39;\u{80}&#39;</span>, <span class="string">&#39;\u{10FFFF}&#39;</span>);
-        never_accepts_surrogate_codepoints(<span class="string">&#39;\u{D7FF}&#39;</span>, <span class="string">&#39;\u{E000}&#39;</span>);
+        never_accepts_surrogate_codepoints(<span class="string">'\u{0}'</span>, <span class="string">'\u{FFFF}'</span>);
+        never_accepts_surrogate_codepoints(<span class="string">'\u{0}'</span>, <span class="string">'\u{10FFFF}'</span>);
+        never_accepts_surrogate_codepoints(<span class="string">'\u{0}'</span>, <span class="string">'\u{10FFFE}'</span>);
+        never_accepts_surrogate_codepoints(<span class="string">'\u{80}'</span>, <span class="string">'\u{10FFFF}'</span>);
+        never_accepts_surrogate_codepoints(<span class="string">'\u{D7FF}'</span>, <span class="string">'\u{E000}'</span>);
     }
 
     <span class="attr">#[test]
@@ -1103,7 +1103,7 @@ which uses it for executing automata on their term index.
     </span><span class="kw">fn </span>bmp() {
         <span class="kw">use </span><span class="kw">crate</span>::utf8::Utf8Sequence::<span class="kw-2">*</span>;
 
-        <span class="kw">let </span>seqs = Utf8Sequences::new(<span class="string">&#39;\u{0}&#39;</span>, <span class="string">&#39;\u{FFFF}&#39;</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="kw">let </span>seqs = Utf8Sequences::new(<span class="string">'\u{0}'</span>, <span class="string">'\u{FFFF}'</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="macro">assert_eq!</span>(
             seqs,
             <span class="macro">vec!</span>[

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memchr-2.7.1/src/memmem/mod.rs`."><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../memchr/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/memchr-2.7.4/src/memmem/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="memchr" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../memchr/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -738,7 +738,7 @@
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
 This module provides forward and reverse substring search routines.
 
-Unlike the standard library&#39;s substring search routines, these work on
+Unlike the standard library's substring search routines, these work on
 arbitrary bytes. For all non-empty needles, these routines will report exactly
 the same values as the corresponding routines in the standard library. For
 the empty needle, the standard library reports matches only at valid UTF-8
@@ -756,9 +756,9 @@ in a haystack.
 ```
 use memchr::memmem;
 
-let haystack = b&quot;foo bar foo baz foo&quot;;
+let haystack = b"foo bar foo baz foo";
 
-let mut it = memmem::find_iter(haystack, &quot;foo&quot;);
+let mut it = memmem::find_iter(haystack, "foo");
 assert_eq!(Some(0), it.next());
 assert_eq!(Some(8), it.next());
 assert_eq!(Some(16), it.next());
@@ -771,14 +771,14 @@ This example shows how to use [`rfind_iter`] to find occurrences of a substring
 in a haystack starting from the end of the haystack.
 
 **NOTE:** This module does not implement double ended iterators, so reverse
-searches aren&#39;t done by calling `rev` on a forward iterator.
+searches aren't done by calling `rev` on a forward iterator.
 
 ```
 use memchr::memmem;
 
-let haystack = b&quot;foo bar foo baz foo&quot;;
+let haystack = b"foo bar foo baz foo";
 
-let mut it = memmem::rfind_iter(haystack, &quot;foo&quot;);
+let mut it = memmem::rfind_iter(haystack, "foo");
 assert_eq!(Some(16), it.next());
 assert_eq!(Some(8), it.next());
 assert_eq!(Some(0), it.next());
@@ -796,10 +796,10 @@ reverse searches).
 ```
 use memchr::memmem;
 
-let finder = memmem::Finder::new(&quot;foo&quot;);
+let finder = memmem::Finder::new("foo");
 
-assert_eq!(Some(4), finder.find(b&quot;baz foo quux&quot;));
-assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
+assert_eq!(Some(4), finder.find(b"baz foo quux"));
+assert_eq!(None, finder.find(b"quux baz bar"));
 ```
 */
 
@@ -807,8 +807,8 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 
 <span class="comment">// This is exported here for use in the crate::arch::all::twoway
 // implementation. This is essentially an abstraction breaker. Namely, the
-// public API of twoway doesn&#39;t support providing a prefilter, but its crate
-// internal API does. The main reason for this is that I didn&#39;t want to do the
+// public API of twoway doesn't support providing a prefilter, but its crate
+// internal API does. The main reason for this is that I didn't want to do the
 // API design required to support it without a concrete use case.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span><span class="kw">crate</span>::memmem::searcher::Pre;
 
@@ -842,18 +842,18 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 /// ```
 /// use memchr::memmem;
 ///
-/// let haystack = b&quot;foo bar foo baz foo&quot;;
-/// let mut it = memmem::find_iter(haystack, b&quot;foo&quot;);
+/// let haystack = b"foo bar foo baz foo";
+/// let mut it = memmem::find_iter(haystack, b"foo");
 /// assert_eq!(Some(0), it.next());
 /// assert_eq!(Some(8), it.next());
 /// assert_eq!(Some(16), it.next());
 /// assert_eq!(None, it.next());
 /// ```
 </span><span class="attr">#[inline]
-</span><span class="kw">pub fn </span>find_iter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>, N: <span class="lifetime">&#39;n </span>+ <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    needle: <span class="kw-2">&amp;</span><span class="lifetime">&#39;n </span>N,
-) -&gt; FindIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; {
+</span><span class="kw">pub fn </span>find_iter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>, N: <span class="lifetime">'n </span>+ <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    needle: <span class="kw-2">&amp;</span><span class="lifetime">'n </span>N,
+) -&gt; FindIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; {
     FindIter::new(haystack, Finder::new(needle))
 }
 
@@ -876,24 +876,24 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 /// ```
 /// use memchr::memmem;
 ///
-/// let haystack = b&quot;foo bar foo baz foo&quot;;
-/// let mut it = memmem::rfind_iter(haystack, b&quot;foo&quot;);
+/// let haystack = b"foo bar foo baz foo";
+/// let mut it = memmem::rfind_iter(haystack, b"foo");
 /// assert_eq!(Some(16), it.next());
 /// assert_eq!(Some(8), it.next());
 /// assert_eq!(Some(0), it.next());
 /// assert_eq!(None, it.next());
 /// ```
 </span><span class="attr">#[inline]
-</span><span class="kw">pub fn </span>rfind_iter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>, N: <span class="lifetime">&#39;n </span>+ <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    needle: <span class="kw-2">&amp;</span><span class="lifetime">&#39;n </span>N,
-) -&gt; FindRevIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; {
+</span><span class="kw">pub fn </span>rfind_iter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>, N: <span class="lifetime">'n </span>+ <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    needle: <span class="kw-2">&amp;</span><span class="lifetime">'n </span>N,
+) -&gt; FindRevIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; {
     FindRevIter::new(haystack, FinderRev::new(needle))
 }
 
 <span class="doccomment">/// Returns the index of the first occurrence of the given needle.
 ///
-/// Note that if you&#39;re are searching for the same needle in many different
+/// Note that if you're are searching for the same needle in many different
 /// small haystacks, it may be faster to initialize a [`Finder`] once,
 /// and reuse it for each search.
 ///
@@ -913,10 +913,10 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 /// ```
 /// use memchr::memmem;
 ///
-/// let haystack = b&quot;foo bar baz&quot;;
-/// assert_eq!(Some(0), memmem::find(haystack, b&quot;foo&quot;));
-/// assert_eq!(Some(4), memmem::find(haystack, b&quot;bar&quot;));
-/// assert_eq!(None, memmem::find(haystack, b&quot;quux&quot;));
+/// let haystack = b"foo bar baz";
+/// assert_eq!(Some(0), memmem::find(haystack, b"foo"));
+/// assert_eq!(Some(4), memmem::find(haystack, b"bar"));
+/// assert_eq!(None, memmem::find(haystack, b"quux"));
 /// ```
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>find(haystack: <span class="kw-2">&amp;</span>[u8], needle: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -929,7 +929,7 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 
 <span class="doccomment">/// Returns the index of the last occurrence of the given needle.
 ///
-/// Note that if you&#39;re are searching for the same needle in many different
+/// Note that if you're are searching for the same needle in many different
 /// small haystacks, it may be faster to initialize a [`FinderRev`] once,
 /// and reuse it for each search.
 ///
@@ -949,11 +949,11 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 /// ```
 /// use memchr::memmem;
 ///
-/// let haystack = b&quot;foo bar baz&quot;;
-/// assert_eq!(Some(0), memmem::rfind(haystack, b&quot;foo&quot;));
-/// assert_eq!(Some(4), memmem::rfind(haystack, b&quot;bar&quot;));
-/// assert_eq!(Some(8), memmem::rfind(haystack, b&quot;ba&quot;));
-/// assert_eq!(None, memmem::rfind(haystack, b&quot;quux&quot;));
+/// let haystack = b"foo bar baz";
+/// assert_eq!(Some(0), memmem::rfind(haystack, b"foo"));
+/// assert_eq!(Some(4), memmem::rfind(haystack, b"bar"));
+/// assert_eq!(Some(8), memmem::rfind(haystack, b"ba"));
+/// assert_eq!(None, memmem::rfind(haystack, b"quux"));
 /// ```
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>rfind(haystack: <span class="kw-2">&amp;</span>[u8], needle: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -968,22 +968,22 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 ///
 /// Matches are reported by the byte offset at which they begin.
 ///
-/// `&#39;h` is the lifetime of the haystack while `&#39;n` is the lifetime of the
+/// `'h` is the lifetime of the haystack while `'n` is the lifetime of the
 /// needle.
 </span><span class="attr">#[derive(Debug, Clone)]
-</span><span class="kw">pub struct </span>FindIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; {
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+</span><span class="kw">pub struct </span>FindIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
     prestate: PrefilterState,
-    finder: Finder&lt;<span class="lifetime">&#39;n</span>&gt;,
+    finder: Finder&lt;<span class="lifetime">'n</span>&gt;,
     pos: usize,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; FindIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; FindIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; {
     <span class="attr">#[inline(always)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-        finder: Finder&lt;<span class="lifetime">&#39;n</span>&gt;,
-    ) -&gt; FindIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; {
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+        finder: Finder&lt;<span class="lifetime">'n</span>&gt;,
+    ) -&gt; FindIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; {
         <span class="kw">let </span>prestate = PrefilterState::new();
         FindIter { haystack, prestate, finder, pos: <span class="number">0 </span>}
     }
@@ -995,9 +995,9 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     /// this copies the needle.
     ///
     /// This is only available when the `alloc` feature is enabled.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     #[inline]
-    </span><span class="kw">pub fn </span>into_owned(<span class="self">self</span>) -&gt; FindIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;static</span>&gt; {
+    </span><span class="kw">pub fn </span>into_owned(<span class="self">self</span>) -&gt; FindIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'static</span>&gt; {
         FindIter {
             haystack: <span class="self">self</span>.haystack,
             prestate: <span class="self">self</span>.prestate,
@@ -1007,7 +1007,7 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; Iterator <span class="kw">for </span>FindIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; Iterator <span class="kw">for </span>FindIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; {
     <span class="kw">type </span>Item = usize;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -1045,23 +1045,23 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 ///
 /// Matches are reported by the byte offset at which they begin.
 ///
-/// `&#39;h` is the lifetime of the haystack while `&#39;n` is the lifetime of the
+/// `'h` is the lifetime of the haystack while `'n` is the lifetime of the
 /// needle.
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>FindRevIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; {
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    finder: FinderRev&lt;<span class="lifetime">&#39;n</span>&gt;,
+</span><span class="kw">pub struct </span>FindRevIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    finder: FinderRev&lt;<span class="lifetime">'n</span>&gt;,
     <span class="doccomment">/// When searching with an empty needle, this gets set to `None` after
-    /// we&#39;ve yielded the last element at `0`.
+    /// we've yielded the last element at `0`.
     </span>pos: <span class="prelude-ty">Option</span>&lt;usize&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; FindRevIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; FindRevIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; {
     <span class="attr">#[inline(always)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-        finder: FinderRev&lt;<span class="lifetime">&#39;n</span>&gt;,
-    ) -&gt; FindRevIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; {
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+        finder: FinderRev&lt;<span class="lifetime">'n</span>&gt;,
+    ) -&gt; FindRevIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; {
         <span class="kw">let </span>pos = <span class="prelude-val">Some</span>(haystack.len());
         FindRevIter { haystack, finder, pos }
     }
@@ -1073,9 +1073,9 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     /// this copies the needle.
     ///
     /// This is only available when the `std` feature is enabled.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     #[inline]
-    </span><span class="kw">pub fn </span>into_owned(<span class="self">self</span>) -&gt; FindRevIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;static</span>&gt; {
+    </span><span class="kw">pub fn </span>into_owned(<span class="self">self</span>) -&gt; FindRevIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'static</span>&gt; {
         FindRevIter {
             haystack: <span class="self">self</span>.haystack,
             finder: <span class="self">self</span>.finder.into_owned(),
@@ -1084,7 +1084,7 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; Iterator <span class="kw">for </span>FindRevIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; Iterator <span class="kw">for </span>FindRevIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; {
     <span class="kw">type </span>Item = usize;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -1112,7 +1112,7 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 /// The purpose of this type is to permit callers to construct a substring
 /// searcher that can be used to search haystacks without the overhead of
 /// constructing the searcher in the first place. This is a somewhat niche
-/// concern when it&#39;s necessary to re-use the same needle to search multiple
+/// concern when it's necessary to re-use the same needle to search multiple
 /// different haystacks with as little overhead as possible. In general, using
 /// [`find`] is good enough, but `Finder` is useful when you can meaningfully
 /// observe searcher construction time in a profile.
@@ -1121,15 +1121,15 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 /// version which permits building a `Finder` that is not connected to
 /// the lifetime of its needle.
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>Finder&lt;<span class="lifetime">&#39;n</span>&gt; {
-    needle: CowBytes&lt;<span class="lifetime">&#39;n</span>&gt;,
+</span><span class="kw">pub struct </span>Finder&lt;<span class="lifetime">'n</span>&gt; {
+    needle: CowBytes&lt;<span class="lifetime">'n</span>&gt;,
     searcher: Searcher,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;n</span>&gt; Finder&lt;<span class="lifetime">&#39;n</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'n</span>&gt; Finder&lt;<span class="lifetime">'n</span>&gt; {
     <span class="doccomment">/// Create a new finder for the given needle.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>new&lt;B: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(needle: <span class="kw-2">&amp;</span><span class="lifetime">&#39;n </span>B) -&gt; Finder&lt;<span class="lifetime">&#39;n</span>&gt; {
+    </span><span class="kw">pub fn </span>new&lt;B: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(needle: <span class="kw-2">&amp;</span><span class="lifetime">'n </span>B) -&gt; Finder&lt;<span class="lifetime">'n</span>&gt; {
         FinderBuilder::new().build_forward(needle)
     }
 
@@ -1152,10 +1152,10 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     /// ```
     /// use memchr::memmem::Finder;
     ///
-    /// let haystack = b&quot;foo bar baz&quot;;
-    /// assert_eq!(Some(0), Finder::new(&quot;foo&quot;).find(haystack));
-    /// assert_eq!(Some(4), Finder::new(&quot;bar&quot;).find(haystack));
-    /// assert_eq!(None, Finder::new(&quot;quux&quot;).find(haystack));
+    /// let haystack = b"foo bar baz";
+    /// assert_eq!(Some(0), Finder::new("foo").find(haystack));
+    /// assert_eq!(Some(4), Finder::new("bar").find(haystack));
+    /// assert_eq!(None, Finder::new("quux").find(haystack));
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>find(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -1182,8 +1182,8 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     /// ```
     /// use memchr::memmem::Finder;
     ///
-    /// let haystack = b&quot;foo bar foo baz foo&quot;;
-    /// let finder = Finder::new(b&quot;foo&quot;);
+    /// let haystack = b"foo bar foo baz foo";
+    /// let finder = Finder::new(b"foo");
     /// let mut it = finder.find_iter(haystack);
     /// assert_eq!(Some(0), it.next());
     /// assert_eq!(Some(8), it.next());
@@ -1191,10 +1191,10 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     /// assert_eq!(None, it.next());
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>find_iter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    ) -&gt; FindIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub fn </span>find_iter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    ) -&gt; FindIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'a</span>&gt; {
         FindIter::new(haystack, <span class="self">self</span>.as_ref())
     }
 
@@ -1205,9 +1205,9 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     /// this copies the needle.
     ///
     /// This is only available when the `alloc` feature is enabled.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     #[inline]
-    </span><span class="kw">pub fn </span>into_owned(<span class="self">self</span>) -&gt; Finder&lt;<span class="lifetime">&#39;static</span>&gt; {
+    </span><span class="kw">pub fn </span>into_owned(<span class="self">self</span>) -&gt; Finder&lt;<span class="lifetime">'static</span>&gt; {
         Finder {
             needle: <span class="self">self</span>.needle.into_owned(),
             searcher: <span class="self">self</span>.searcher.clone(),
@@ -1216,16 +1216,16 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 
     <span class="doccomment">/// Convert this finder into its borrowed variant.
     ///
-    /// This is primarily useful if your finder is owned and you&#39;d like to
+    /// This is primarily useful if your finder is owned and you'd like to
     /// store its borrowed variant in some intermediate data structure.
     ///
     /// Note that the lifetime parameter of the returned finder is tied to the
-    /// lifetime of `self`, and may be shorter than the `&#39;n` lifetime of the
-    /// needle itself. Namely, a finder&#39;s needle can be either borrowed or
+    /// lifetime of `self`, and may be shorter than the `'n` lifetime of the
+    /// needle itself. Namely, a finder's needle can be either borrowed or
     /// owned, so the lifetime of the needle returned must necessarily be the
     /// shorter of the two.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Finder&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Finder&lt;<span class="lifetime">'_</span>&gt; {
         Finder {
             needle: CowBytes::new(<span class="self">self</span>.needle()),
             searcher: <span class="self">self</span>.searcher.clone(),
@@ -1235,8 +1235,8 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     <span class="doccomment">/// Returns the needle that this finder searches for.
     ///
     /// Note that the lifetime of the needle returned is tied to the lifetime
-    /// of the finder, and may be shorter than the `&#39;n` lifetime. Namely, a
-    /// finder&#39;s needle can be either borrowed or owned, so the lifetime of the
+    /// of the finder, and may be shorter than the `'n` lifetime. Namely, a
+    /// finder's needle can be either borrowed or owned, so the lifetime of the
     /// needle returned must necessarily be the shorter of the two.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>needle(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
@@ -1249,7 +1249,7 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 /// The purpose of this type is to permit callers to construct a substring
 /// searcher that can be used to search haystacks without the overhead of
 /// constructing the searcher in the first place. This is a somewhat niche
-/// concern when it&#39;s necessary to re-use the same needle to search multiple
+/// concern when it's necessary to re-use the same needle to search multiple
 /// different haystacks with as little overhead as possible. In general,
 /// using [`rfind`] is good enough, but `FinderRev` is useful when you can
 /// meaningfully observe searcher construction time in a profile.
@@ -1258,15 +1258,15 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 /// version which permits building a `FinderRev` that is not connected to
 /// the lifetime of its needle.
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>FinderRev&lt;<span class="lifetime">&#39;n</span>&gt; {
-    needle: CowBytes&lt;<span class="lifetime">&#39;n</span>&gt;,
+</span><span class="kw">pub struct </span>FinderRev&lt;<span class="lifetime">'n</span>&gt; {
+    needle: CowBytes&lt;<span class="lifetime">'n</span>&gt;,
     searcher: SearcherRev,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;n</span>&gt; FinderRev&lt;<span class="lifetime">&#39;n</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'n</span>&gt; FinderRev&lt;<span class="lifetime">'n</span>&gt; {
     <span class="doccomment">/// Create a new reverse finder for the given needle.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>new&lt;B: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(needle: <span class="kw-2">&amp;</span><span class="lifetime">&#39;n </span>B) -&gt; FinderRev&lt;<span class="lifetime">&#39;n</span>&gt; {
+    </span><span class="kw">pub fn </span>new&lt;B: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(needle: <span class="kw-2">&amp;</span><span class="lifetime">'n </span>B) -&gt; FinderRev&lt;<span class="lifetime">'n</span>&gt; {
         FinderBuilder::new().build_reverse(needle)
     }
 
@@ -1292,10 +1292,10 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     /// ```
     /// use memchr::memmem::FinderRev;
     ///
-    /// let haystack = b&quot;foo bar baz&quot;;
-    /// assert_eq!(Some(0), FinderRev::new(&quot;foo&quot;).rfind(haystack));
-    /// assert_eq!(Some(4), FinderRev::new(&quot;bar&quot;).rfind(haystack));
-    /// assert_eq!(None, FinderRev::new(&quot;quux&quot;).rfind(haystack));
+    /// let haystack = b"foo bar baz";
+    /// assert_eq!(Some(0), FinderRev::new("foo").rfind(haystack));
+    /// assert_eq!(Some(4), FinderRev::new("bar").rfind(haystack));
+    /// assert_eq!(None, FinderRev::new("quux").rfind(haystack));
     /// ```
     </span><span class="kw">pub fn </span>rfind&lt;B: AsRef&lt;[u8]&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: B) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="self">self</span>.searcher.rfind(haystack.as_ref(), <span class="self">self</span>.needle.as_slice())
@@ -1320,8 +1320,8 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     /// ```
     /// use memchr::memmem::FinderRev;
     ///
-    /// let haystack = b&quot;foo bar foo baz foo&quot;;
-    /// let finder = FinderRev::new(b&quot;foo&quot;);
+    /// let haystack = b"foo bar foo baz foo";
+    /// let finder = FinderRev::new(b"foo");
     /// let mut it = finder.rfind_iter(haystack);
     /// assert_eq!(Some(16), it.next());
     /// assert_eq!(Some(8), it.next());
@@ -1329,10 +1329,10 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     /// assert_eq!(None, it.next());
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>rfind_iter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;h</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    ) -&gt; FindRevIter&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;a</span>&gt; {
+    </span><span class="kw">pub fn </span>rfind_iter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'h</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    ) -&gt; FindRevIter&lt;<span class="lifetime">'h</span>, <span class="lifetime">'a</span>&gt; {
         FindRevIter::new(haystack, <span class="self">self</span>.as_ref())
     }
 
@@ -1343,9 +1343,9 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     /// this copies the needle.
     ///
     /// This is only available when the `std` feature is enabled.
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     #[inline]
-    </span><span class="kw">pub fn </span>into_owned(<span class="self">self</span>) -&gt; FinderRev&lt;<span class="lifetime">&#39;static</span>&gt; {
+    </span><span class="kw">pub fn </span>into_owned(<span class="self">self</span>) -&gt; FinderRev&lt;<span class="lifetime">'static</span>&gt; {
         FinderRev {
             needle: <span class="self">self</span>.needle.into_owned(),
             searcher: <span class="self">self</span>.searcher.clone(),
@@ -1354,16 +1354,16 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 
     <span class="doccomment">/// Convert this finder into its borrowed variant.
     ///
-    /// This is primarily useful if your finder is owned and you&#39;d like to
+    /// This is primarily useful if your finder is owned and you'd like to
     /// store its borrowed variant in some intermediate data structure.
     ///
     /// Note that the lifetime parameter of the returned finder is tied to the
-    /// lifetime of `self`, and may be shorter than the `&#39;n` lifetime of the
-    /// needle itself. Namely, a finder&#39;s needle can be either borrowed or
+    /// lifetime of `self`, and may be shorter than the `'n` lifetime of the
+    /// needle itself. Namely, a finder's needle can be either borrowed or
     /// owned, so the lifetime of the needle returned must necessarily be the
     /// shorter of the two.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FinderRev&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub fn </span>as_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; FinderRev&lt;<span class="lifetime">'_</span>&gt; {
         FinderRev {
             needle: CowBytes::new(<span class="self">self</span>.needle()),
             searcher: <span class="self">self</span>.searcher.clone(),
@@ -1373,8 +1373,8 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     <span class="doccomment">/// Returns the needle that this finder searches for.
     ///
     /// Note that the lifetime of the needle returned is tied to the lifetime
-    /// of the finder, and may be shorter than the `&#39;n` lifetime. Namely, a
-    /// finder&#39;s needle can be either borrowed or owned, so the lifetime of the
+    /// of the finder, and may be shorter than the `'n` lifetime. Namely, a
+    /// finder's needle can be either borrowed or owned, so the lifetime of the
     /// needle returned must necessarily be the shorter of the two.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>needle(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[u8] {
@@ -1400,10 +1400,10 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 
     <span class="doccomment">/// Build a forward finder using the given needle from the current
     /// settings.
-    </span><span class="kw">pub fn </span>build_forward&lt;<span class="lifetime">&#39;n</span>, B: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(
+    </span><span class="kw">pub fn </span>build_forward&lt;<span class="lifetime">'n</span>, B: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        needle: <span class="kw-2">&amp;</span><span class="lifetime">&#39;n </span>B,
-    ) -&gt; Finder&lt;<span class="lifetime">&#39;n</span>&gt; {
+        needle: <span class="kw-2">&amp;</span><span class="lifetime">'n </span>B,
+    ) -&gt; Finder&lt;<span class="lifetime">'n</span>&gt; {
         <span class="self">self</span>.build_forward_with_ranker(DefaultFrequencyRank, needle)
     }
 
@@ -1411,14 +1411,14 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
     /// determining the frequency of a given byte in the dataset.
     /// See [`HeuristicFrequencyRank`] for more details.
     </span><span class="kw">pub fn </span>build_forward_with_ranker&lt;
-        <span class="lifetime">&#39;n</span>,
+        <span class="lifetime">'n</span>,
         R: HeuristicFrequencyRank,
         B: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;,
     &gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         ranker: R,
-        needle: <span class="kw-2">&amp;</span><span class="lifetime">&#39;n </span>B,
-    ) -&gt; Finder&lt;<span class="lifetime">&#39;n</span>&gt; {
+        needle: <span class="kw-2">&amp;</span><span class="lifetime">'n </span>B,
+    ) -&gt; Finder&lt;<span class="lifetime">'n</span>&gt; {
         <span class="kw">let </span>needle = needle.as_ref();
         Finder {
             needle: CowBytes::new(needle),
@@ -1428,10 +1428,10 @@ assert_eq!(None, finder.find(b&quot;quux baz bar&quot;));
 
     <span class="doccomment">/// Build a reverse finder using the given needle from the current
     /// settings.
-    </span><span class="kw">pub fn </span>build_reverse&lt;<span class="lifetime">&#39;n</span>, B: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(
+    </span><span class="kw">pub fn </span>build_reverse&lt;<span class="lifetime">'n</span>, B: <span class="question-mark">?</span>Sized + AsRef&lt;[u8]&gt;&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        needle: <span class="kw-2">&amp;</span><span class="lifetime">&#39;n </span>B,
-    ) -&gt; FinderRev&lt;<span class="lifetime">&#39;n</span>&gt; {
+        needle: <span class="kw-2">&amp;</span><span class="lifetime">'n </span>B,
+    ) -&gt; FinderRev&lt;<span class="lifetime">'n</span>&gt; {
         <span class="kw">let </span>needle = needle.as_ref();
         FinderRev {
             needle: CowBytes::new(needle),

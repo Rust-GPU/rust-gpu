@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/libm_intrinsics.rs`."><title>libm_intrinsics.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/libm_intrinsics.rs`."><title>libm_intrinsics.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -393,162 +393,162 @@
 }
 
 <span class="kw">pub const </span>TABLE: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, LibmIntrinsic)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;acos&quot;</span>, LibmIntrinsic::GLOp(GLOp::Acos)),
-    (<span class="string">&quot;acosf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Acos)),
-    (<span class="string">&quot;acosh&quot;</span>, LibmIntrinsic::GLOp(GLOp::Acosh)),
-    (<span class="string">&quot;acoshf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Acosh)),
-    (<span class="string">&quot;asin&quot;</span>, LibmIntrinsic::GLOp(GLOp::Asin)),
-    (<span class="string">&quot;asinf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Asin)),
-    (<span class="string">&quot;asinh&quot;</span>, LibmIntrinsic::GLOp(GLOp::Asinh)),
-    (<span class="string">&quot;asinhf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Asinh)),
-    (<span class="string">&quot;atan2&quot;</span>, LibmIntrinsic::GLOp(GLOp::Atan2)),
-    (<span class="string">&quot;atan2f&quot;</span>, LibmIntrinsic::GLOp(GLOp::Atan2)),
-    (<span class="string">&quot;atan&quot;</span>, LibmIntrinsic::GLOp(GLOp::Atan)),
-    (<span class="string">&quot;atanf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Atan)),
-    (<span class="string">&quot;atanh&quot;</span>, LibmIntrinsic::GLOp(GLOp::Atanh)),
-    (<span class="string">&quot;atanhf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Atanh)),
-    (<span class="string">&quot;cbrt&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Cbrt)),
-    (<span class="string">&quot;cbrtf&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Cbrt)),
-    (<span class="string">&quot;ceil&quot;</span>, LibmIntrinsic::GLOp(GLOp::Ceil)),
-    (<span class="string">&quot;ceilf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Ceil)),
+    (<span class="string">"acos"</span>, LibmIntrinsic::GLOp(GLOp::Acos)),
+    (<span class="string">"acosf"</span>, LibmIntrinsic::GLOp(GLOp::Acos)),
+    (<span class="string">"acosh"</span>, LibmIntrinsic::GLOp(GLOp::Acosh)),
+    (<span class="string">"acoshf"</span>, LibmIntrinsic::GLOp(GLOp::Acosh)),
+    (<span class="string">"asin"</span>, LibmIntrinsic::GLOp(GLOp::Asin)),
+    (<span class="string">"asinf"</span>, LibmIntrinsic::GLOp(GLOp::Asin)),
+    (<span class="string">"asinh"</span>, LibmIntrinsic::GLOp(GLOp::Asinh)),
+    (<span class="string">"asinhf"</span>, LibmIntrinsic::GLOp(GLOp::Asinh)),
+    (<span class="string">"atan2"</span>, LibmIntrinsic::GLOp(GLOp::Atan2)),
+    (<span class="string">"atan2f"</span>, LibmIntrinsic::GLOp(GLOp::Atan2)),
+    (<span class="string">"atan"</span>, LibmIntrinsic::GLOp(GLOp::Atan)),
+    (<span class="string">"atanf"</span>, LibmIntrinsic::GLOp(GLOp::Atan)),
+    (<span class="string">"atanh"</span>, LibmIntrinsic::GLOp(GLOp::Atanh)),
+    (<span class="string">"atanhf"</span>, LibmIntrinsic::GLOp(GLOp::Atanh)),
+    (<span class="string">"cbrt"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Cbrt)),
+    (<span class="string">"cbrtf"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Cbrt)),
+    (<span class="string">"ceil"</span>, LibmIntrinsic::GLOp(GLOp::Ceil)),
+    (<span class="string">"ceilf"</span>, LibmIntrinsic::GLOp(GLOp::Ceil)),
     (
-        <span class="string">&quot;copysign&quot;</span>,
+        <span class="string">"copysign"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::CopySign),
     ),
     (
-        <span class="string">&quot;copysignf&quot;</span>,
+        <span class="string">"copysignf"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::CopySign),
     ),
-    (<span class="string">&quot;cos&quot;</span>, LibmIntrinsic::GLOp(GLOp::Cos)),
-    (<span class="string">&quot;cosf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Cos)),
-    (<span class="string">&quot;cosh&quot;</span>, LibmIntrinsic::GLOp(GLOp::Cosh)),
-    (<span class="string">&quot;coshf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Cosh)),
-    (<span class="string">&quot;erf&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Erf)),
-    (<span class="string">&quot;erff&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Erf)),
-    (<span class="string">&quot;erfc&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Erfc)),
-    (<span class="string">&quot;erfcf&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Erfc)),
-    (<span class="string">&quot;exp10&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Exp10)),
-    (<span class="string">&quot;exp10f&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Exp10)),
-    (<span class="string">&quot;exp2&quot;</span>, LibmIntrinsic::GLOp(GLOp::Exp2)),
-    (<span class="string">&quot;exp2f&quot;</span>, LibmIntrinsic::GLOp(GLOp::Exp2)),
-    (<span class="string">&quot;exp&quot;</span>, LibmIntrinsic::GLOp(GLOp::Exp)),
-    (<span class="string">&quot;expf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Exp)),
-    (<span class="string">&quot;expm1&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Expm1)),
-    (<span class="string">&quot;expm1f&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Expm1)),
-    (<span class="string">&quot;fabs&quot;</span>, LibmIntrinsic::GLOp(GLOp::FAbs)),
-    (<span class="string">&quot;fabsf&quot;</span>, LibmIntrinsic::GLOp(GLOp::FAbs)),
-    (<span class="string">&quot;fdim&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Fdim)),
-    (<span class="string">&quot;fdimf&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Fdim)),
-    (<span class="string">&quot;floor&quot;</span>, LibmIntrinsic::GLOp(GLOp::Floor)),
-    (<span class="string">&quot;floorf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Floor)),
-    (<span class="string">&quot;fma&quot;</span>, LibmIntrinsic::GLOp(GLOp::Fma)),
-    (<span class="string">&quot;fmaf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Fma)),
-    (<span class="string">&quot;fmax&quot;</span>, LibmIntrinsic::GLOp(GLOp::FMax)),
-    (<span class="string">&quot;fmaxf&quot;</span>, LibmIntrinsic::GLOp(GLOp::FMax)),
-    (<span class="string">&quot;fmin&quot;</span>, LibmIntrinsic::GLOp(GLOp::FMin)),
-    (<span class="string">&quot;fminf&quot;</span>, LibmIntrinsic::GLOp(GLOp::FMin)),
-    (<span class="string">&quot;fmod&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Fmod)),
-    (<span class="string">&quot;fmodf&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Fmod)),
-    (<span class="string">&quot;frexp&quot;</span>, LibmIntrinsic::GLOp(GLOp::FrexpStruct)),
-    (<span class="string">&quot;frexpf&quot;</span>, LibmIntrinsic::GLOp(GLOp::FrexpStruct)),
-    (<span class="string">&quot;hypot&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Hypot)),
-    (<span class="string">&quot;hypotf&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Hypot)),
-    (<span class="string">&quot;ilogb&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Ilogb)),
-    (<span class="string">&quot;ilogbf&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Ilogb)),
-    (<span class="string">&quot;j0&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::J0)),
-    (<span class="string">&quot;j0f&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::J0)),
-    (<span class="string">&quot;y0&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Y0)),
-    (<span class="string">&quot;y0f&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Y0)),
-    (<span class="string">&quot;j1&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::J1)),
-    (<span class="string">&quot;j1f&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::J1)),
-    (<span class="string">&quot;y1&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Y1)),
-    (<span class="string">&quot;y1f&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Y1)),
-    (<span class="string">&quot;jn&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Jn)),
-    (<span class="string">&quot;jnf&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Jn)),
-    (<span class="string">&quot;yn&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Yn)),
-    (<span class="string">&quot;ynf&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Yn)),
-    (<span class="string">&quot;ldexp&quot;</span>, LibmIntrinsic::GLOp(GLOp::Ldexp)),
-    (<span class="string">&quot;ldexpf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Ldexp)),
-    (<span class="string">&quot;lgamma&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Lgamma)),
+    (<span class="string">"cos"</span>, LibmIntrinsic::GLOp(GLOp::Cos)),
+    (<span class="string">"cosf"</span>, LibmIntrinsic::GLOp(GLOp::Cos)),
+    (<span class="string">"cosh"</span>, LibmIntrinsic::GLOp(GLOp::Cosh)),
+    (<span class="string">"coshf"</span>, LibmIntrinsic::GLOp(GLOp::Cosh)),
+    (<span class="string">"erf"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Erf)),
+    (<span class="string">"erff"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Erf)),
+    (<span class="string">"erfc"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Erfc)),
+    (<span class="string">"erfcf"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Erfc)),
+    (<span class="string">"exp10"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Exp10)),
+    (<span class="string">"exp10f"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Exp10)),
+    (<span class="string">"exp2"</span>, LibmIntrinsic::GLOp(GLOp::Exp2)),
+    (<span class="string">"exp2f"</span>, LibmIntrinsic::GLOp(GLOp::Exp2)),
+    (<span class="string">"exp"</span>, LibmIntrinsic::GLOp(GLOp::Exp)),
+    (<span class="string">"expf"</span>, LibmIntrinsic::GLOp(GLOp::Exp)),
+    (<span class="string">"expm1"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Expm1)),
+    (<span class="string">"expm1f"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Expm1)),
+    (<span class="string">"fabs"</span>, LibmIntrinsic::GLOp(GLOp::FAbs)),
+    (<span class="string">"fabsf"</span>, LibmIntrinsic::GLOp(GLOp::FAbs)),
+    (<span class="string">"fdim"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Fdim)),
+    (<span class="string">"fdimf"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Fdim)),
+    (<span class="string">"floor"</span>, LibmIntrinsic::GLOp(GLOp::Floor)),
+    (<span class="string">"floorf"</span>, LibmIntrinsic::GLOp(GLOp::Floor)),
+    (<span class="string">"fma"</span>, LibmIntrinsic::GLOp(GLOp::Fma)),
+    (<span class="string">"fmaf"</span>, LibmIntrinsic::GLOp(GLOp::Fma)),
+    (<span class="string">"fmax"</span>, LibmIntrinsic::GLOp(GLOp::FMax)),
+    (<span class="string">"fmaxf"</span>, LibmIntrinsic::GLOp(GLOp::FMax)),
+    (<span class="string">"fmin"</span>, LibmIntrinsic::GLOp(GLOp::FMin)),
+    (<span class="string">"fminf"</span>, LibmIntrinsic::GLOp(GLOp::FMin)),
+    (<span class="string">"fmod"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Fmod)),
+    (<span class="string">"fmodf"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Fmod)),
+    (<span class="string">"frexp"</span>, LibmIntrinsic::GLOp(GLOp::FrexpStruct)),
+    (<span class="string">"frexpf"</span>, LibmIntrinsic::GLOp(GLOp::FrexpStruct)),
+    (<span class="string">"hypot"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Hypot)),
+    (<span class="string">"hypotf"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Hypot)),
+    (<span class="string">"ilogb"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Ilogb)),
+    (<span class="string">"ilogbf"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Ilogb)),
+    (<span class="string">"j0"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::J0)),
+    (<span class="string">"j0f"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::J0)),
+    (<span class="string">"y0"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Y0)),
+    (<span class="string">"y0f"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Y0)),
+    (<span class="string">"j1"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::J1)),
+    (<span class="string">"j1f"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::J1)),
+    (<span class="string">"y1"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Y1)),
+    (<span class="string">"y1f"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Y1)),
+    (<span class="string">"jn"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Jn)),
+    (<span class="string">"jnf"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Jn)),
+    (<span class="string">"yn"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Yn)),
+    (<span class="string">"ynf"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Yn)),
+    (<span class="string">"ldexp"</span>, LibmIntrinsic::GLOp(GLOp::Ldexp)),
+    (<span class="string">"ldexpf"</span>, LibmIntrinsic::GLOp(GLOp::Ldexp)),
+    (<span class="string">"lgamma"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Lgamma)),
     (
-        <span class="string">&quot;lgammaf&quot;</span>,
+        <span class="string">"lgammaf"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::Lgamma),
     ),
     (
-        <span class="string">&quot;lgamma_r&quot;</span>,
+        <span class="string">"lgamma_r"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::LgammaR),
     ),
     (
-        <span class="string">&quot;lgammaf_r&quot;</span>,
+        <span class="string">"lgammaf_r"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::LgammaR),
     ),
-    (<span class="string">&quot;tgamma&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Tgamma)),
+    (<span class="string">"tgamma"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Tgamma)),
     (
-        <span class="string">&quot;tgammaf&quot;</span>,
+        <span class="string">"tgammaf"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::Tgamma),
     ),
-    (<span class="string">&quot;log10&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Log10)),
-    (<span class="string">&quot;log10f&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Log10)),
-    (<span class="string">&quot;log1p&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Log1p)),
-    (<span class="string">&quot;log1pf&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Log1p)),
-    (<span class="string">&quot;log2&quot;</span>, LibmIntrinsic::GLOp(GLOp::Log2)),
-    (<span class="string">&quot;log2f&quot;</span>, LibmIntrinsic::GLOp(GLOp::Log2)),
-    (<span class="string">&quot;log&quot;</span>, LibmIntrinsic::GLOp(GLOp::Log)),
-    (<span class="string">&quot;logf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Log)),
-    (<span class="string">&quot;modf&quot;</span>, LibmIntrinsic::GLOp(GLOp::ModfStruct)),
-    (<span class="string">&quot;modff&quot;</span>, LibmIntrinsic::GLOp(GLOp::ModfStruct)),
+    (<span class="string">"log10"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Log10)),
+    (<span class="string">"log10f"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Log10)),
+    (<span class="string">"log1p"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Log1p)),
+    (<span class="string">"log1pf"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Log1p)),
+    (<span class="string">"log2"</span>, LibmIntrinsic::GLOp(GLOp::Log2)),
+    (<span class="string">"log2f"</span>, LibmIntrinsic::GLOp(GLOp::Log2)),
+    (<span class="string">"log"</span>, LibmIntrinsic::GLOp(GLOp::Log)),
+    (<span class="string">"logf"</span>, LibmIntrinsic::GLOp(GLOp::Log)),
+    (<span class="string">"modf"</span>, LibmIntrinsic::GLOp(GLOp::ModfStruct)),
+    (<span class="string">"modff"</span>, LibmIntrinsic::GLOp(GLOp::ModfStruct)),
     (
-        <span class="string">&quot;nextafter&quot;</span>,
+        <span class="string">"nextafter"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::NextAfter),
     ),
     (
-        <span class="string">&quot;nextafterf&quot;</span>,
+        <span class="string">"nextafterf"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::NextAfter),
     ),
-    (<span class="string">&quot;pow&quot;</span>, LibmIntrinsic::GLOp(GLOp::Pow)),
-    (<span class="string">&quot;powf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Pow)),
+    (<span class="string">"pow"</span>, LibmIntrinsic::GLOp(GLOp::Pow)),
+    (<span class="string">"powf"</span>, LibmIntrinsic::GLOp(GLOp::Pow)),
     (
-        <span class="string">&quot;remainder&quot;</span>,
+        <span class="string">"remainder"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::Remainder),
     ),
     (
-        <span class="string">&quot;remainderf&quot;</span>,
+        <span class="string">"remainderf"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::Remainder),
     ),
-    (<span class="string">&quot;remquo&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::RemQuo)),
+    (<span class="string">"remquo"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::RemQuo)),
     (
-        <span class="string">&quot;remquof&quot;</span>,
+        <span class="string">"remquof"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::RemQuo),
     ),
-    (<span class="string">&quot;rint&quot;</span>, LibmIntrinsic::GLOp(GLOp::RoundEven)),
-    (<span class="string">&quot;rintf&quot;</span>, LibmIntrinsic::GLOp(GLOp::RoundEven)),
-    (<span class="string">&quot;round&quot;</span>, LibmIntrinsic::GLOp(GLOp::Round)),
-    (<span class="string">&quot;roundf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Round)),
-    (<span class="string">&quot;scalbn&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Scalbn)),
+    (<span class="string">"rint"</span>, LibmIntrinsic::GLOp(GLOp::RoundEven)),
+    (<span class="string">"rintf"</span>, LibmIntrinsic::GLOp(GLOp::RoundEven)),
+    (<span class="string">"round"</span>, LibmIntrinsic::GLOp(GLOp::Round)),
+    (<span class="string">"roundf"</span>, LibmIntrinsic::GLOp(GLOp::Round)),
+    (<span class="string">"scalbn"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::Scalbn)),
     (
-        <span class="string">&quot;scalbnf&quot;</span>,
+        <span class="string">"scalbnf"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::Scalbn),
     ),
-    (<span class="string">&quot;sin&quot;</span>, LibmIntrinsic::GLOp(GLOp::Sin)),
-    (<span class="string">&quot;sincos&quot;</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::SinCos)),
+    (<span class="string">"sin"</span>, LibmIntrinsic::GLOp(GLOp::Sin)),
+    (<span class="string">"sincos"</span>, LibmIntrinsic::Custom(LibmCustomIntrinsic::SinCos)),
     (
-        <span class="string">&quot;sincosf&quot;</span>,
+        <span class="string">"sincosf"</span>,
         LibmIntrinsic::Custom(LibmCustomIntrinsic::SinCos),
     ),
-    (<span class="string">&quot;sinf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Sin)),
-    (<span class="string">&quot;sinh&quot;</span>, LibmIntrinsic::GLOp(GLOp::Sinh)),
-    (<span class="string">&quot;sinhf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Sinh)),
-    (<span class="string">&quot;sqrt&quot;</span>, LibmIntrinsic::GLOp(GLOp::Sqrt)),
-    (<span class="string">&quot;sqrtf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Sqrt)),
-    (<span class="string">&quot;tan&quot;</span>, LibmIntrinsic::GLOp(GLOp::Tan)),
-    (<span class="string">&quot;tanf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Tan)),
-    (<span class="string">&quot;tanh&quot;</span>, LibmIntrinsic::GLOp(GLOp::Tanh)),
-    (<span class="string">&quot;tanhf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Tanh)),
-    (<span class="string">&quot;trunc&quot;</span>, LibmIntrinsic::GLOp(GLOp::Trunc)),
-    (<span class="string">&quot;truncf&quot;</span>, LibmIntrinsic::GLOp(GLOp::Trunc)),
+    (<span class="string">"sinf"</span>, LibmIntrinsic::GLOp(GLOp::Sin)),
+    (<span class="string">"sinh"</span>, LibmIntrinsic::GLOp(GLOp::Sinh)),
+    (<span class="string">"sinhf"</span>, LibmIntrinsic::GLOp(GLOp::Sinh)),
+    (<span class="string">"sqrt"</span>, LibmIntrinsic::GLOp(GLOp::Sqrt)),
+    (<span class="string">"sqrtf"</span>, LibmIntrinsic::GLOp(GLOp::Sqrt)),
+    (<span class="string">"tan"</span>, LibmIntrinsic::GLOp(GLOp::Tan)),
+    (<span class="string">"tanf"</span>, LibmIntrinsic::GLOp(GLOp::Tan)),
+    (<span class="string">"tanh"</span>, LibmIntrinsic::GLOp(GLOp::Tanh)),
+    (<span class="string">"tanhf"</span>, LibmIntrinsic::GLOp(GLOp::Tanh)),
+    (<span class="string">"trunc"</span>, LibmIntrinsic::GLOp(GLOp::Trunc)),
+    (<span class="string">"truncf"</span>, LibmIntrinsic::GLOp(GLOp::Trunc)),
 ];
 
-<span class="kw">impl </span>Builder&lt;<span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span>&gt; {
+<span class="kw">impl </span>Builder&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt; {
     <span class="kw">pub fn </span>call_libm_intrinsic(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         intrinsic: LibmIntrinsic,
@@ -613,92 +613,92 @@
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Erf) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Erf not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Erf not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Erfc) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Erfc not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Erfc not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Fdim) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Fdim not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Fdim not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Hypot) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Hypot not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Hypot not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Ilogb) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Ilogb not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Ilogb not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::J0) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;J0 not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"J0 not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Y0) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Y0 not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Y0 not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::J1) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;J1 not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"J1 not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Y1) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Y1 not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Y1 not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Jn) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Jn not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Jn not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Yn) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Yn not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Yn not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Lgamma) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Lgamma not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Lgamma not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::LgammaR) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;LgammaR not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"LgammaR not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Tgamma) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Tgamma not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Tgamma not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::NextAfter) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;NextAfter not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"NextAfter not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Remainder) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Remainder not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Remainder not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::RemQuo) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;RemQuo not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"RemQuo not supported yet"</span>);
                 undef
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Scalbn) =&gt; {
                 <span class="kw">let </span>undef = <span class="self">self</span>.undef(result_type);
-                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">&quot;Scalbn not supported yet&quot;</span>);
+                <span class="self">self</span>.zombie(undef.def(<span class="self">self</span>), <span class="string">"Scalbn not supported yet"</span>);
                 undef
             }
         }

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/hashbrown-0.14.3/src/table.rs`."><title>table.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hashbrown" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../hashbrown/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/hashbrown-0.14.5/src/table.rs`."><title>table.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hashbrown" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../hashbrown/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2062,6 +2062,12 @@
 <a href="#2062" id="2062">2062</a>
 <a href="#2063" id="2063">2063</a>
 <a href="#2064" id="2064">2064</a>
+<a href="#2065" id="2065">2065</a>
+<a href="#2066" id="2066">2066</a>
+<a href="#2067" id="2067">2067</a>
+<a href="#2068" id="2068">2068</a>
+<a href="#2069" id="2069">2069</a>
+<a href="#2070" id="2070">2070</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::{fmt, iter::FusedIterator, marker::PhantomData};
 
 <span class="kw">use crate</span>::{
@@ -2085,7 +2091,7 @@
 ///   requires indexing the associated `Vec` to get the actual value referred to
 ///   by the index.
 /// - Avoiding re-computing a hash when it is already known.
-/// - Mutating the key of an element in a way that doesn&#39;t affect its hash.
+/// - Mutating the key of an element in a way that doesn't affect its hash.
 ///
 /// To achieve this, `HashTable` methods that search for an element in the table
 /// require a hash value and equality function to be explicitly passed in as
@@ -2165,7 +2171,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use bumpalo::Bump;
@@ -2180,18 +2186,18 @@
     /// // The created HashTable holds none elements
     /// assert_eq!(table.len(), 0);
     ///
-    /// // The created HashTable also doesn&#39;t allocate memory
+    /// // The created HashTable also doesn't allocate memory
     /// assert_eq!(table.capacity(), 0);
     ///
     /// // Now we insert element inside created HashTable
-    /// table.insert_unique(hasher(&amp;&quot;One&quot;), &quot;One&quot;, hasher);
+    /// table.insert_unique(hasher(&amp;"One"), "One", hasher);
     /// // We can see that the HashTable holds 1 element
     /// assert_eq!(table.len(), 1);
     /// // And it also allocates some capacity
     /// assert!(table.capacity() &gt; 1);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2209,7 +2215,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use bumpalo::Bump;
@@ -2228,19 +2234,19 @@
     /// assert!(empty_map_capacity &gt;= 5);
     ///
     /// // Now we insert some 5 elements inside created HashTable
-    /// table.insert_unique(hasher(&amp;&quot;One&quot;), &quot;One&quot;, hasher);
-    /// table.insert_unique(hasher(&amp;&quot;Two&quot;), &quot;Two&quot;, hasher);
-    /// table.insert_unique(hasher(&amp;&quot;Three&quot;), &quot;Three&quot;, hasher);
-    /// table.insert_unique(hasher(&amp;&quot;Four&quot;), &quot;Four&quot;, hasher);
-    /// table.insert_unique(hasher(&amp;&quot;Five&quot;), &quot;Five&quot;, hasher);
+    /// table.insert_unique(hasher(&amp;"One"), "One", hasher);
+    /// table.insert_unique(hasher(&amp;"Two"), "Two", hasher);
+    /// table.insert_unique(hasher(&amp;"Three"), "Three", hasher);
+    /// table.insert_unique(hasher(&amp;"Four"), "Four", hasher);
+    /// table.insert_unique(hasher(&amp;"Five"), "Five", hasher);
     ///
     /// // We can see that the HashTable holds 5 elements
     /// assert_eq!(table.len(), 5);
-    /// // But its capacity isn&#39;t changed
+    /// // But its capacity isn't changed
     /// assert_eq!(table.capacity(), empty_map_capacity)
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2265,7 +2271,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2281,7 +2287,7 @@
     /// assert_eq!(table.find(hasher(&amp;4), |&amp;val| val == 4), None);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2303,7 +2309,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2312,15 +2318,15 @@
     /// let mut table = HashTable::new();
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
-    /// table.insert_unique(hasher(&amp;1), (1, &quot;a&quot;), |val| hasher(&amp;val.0));
+    /// table.insert_unique(hasher(&amp;1), (1, "a"), |val| hasher(&amp;val.0));
     /// if let Some(val) = table.find_mut(hasher(&amp;1), |val| val.0 == 1) {
-    ///     val.1 = &quot;b&quot;;
+    ///     val.1 = "b";
     /// }
-    /// assert_eq!(table.find(hasher(&amp;1), |val| val.0 == 1), Some(&amp;(1, &quot;b&quot;)));
+    /// assert_eq!(table.find(hasher(&amp;1), |val| val.0 == 1), Some(&amp;(1, "b")));
     /// assert_eq!(table.find(hasher(&amp;2), |val| val.0 == 2), None);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2342,7 +2348,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2351,22 +2357,23 @@
     /// let mut table = HashTable::new();
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
-    /// table.insert_unique(hasher(&amp;1), (1, &quot;a&quot;), |val| hasher(&amp;val.0));
+    /// table.insert_unique(hasher(&amp;1), (1, "a"), |val| hasher(&amp;val.0));
     /// if let Ok(entry) = table.find_entry(hasher(&amp;1), |val| val.0 == 1) {
     ///     entry.remove();
     /// }
     /// assert_eq!(table.find(hasher(&amp;1), |val| val.0 == 1), None);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">"inline-more"</span>, inline)]
     </span><span class="kw">pub fn </span>find_entry(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         hash: u64,
         eq: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>T) -&gt; bool,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;OccupiedEntry&lt;<span class="lifetime">&#39;_</span>, T, A&gt;, AbsentEntry&lt;<span class="lifetime">&#39;_</span>, T, A&gt;&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;OccupiedEntry&lt;<span class="lifetime">'_</span>, T, A&gt;, AbsentEntry&lt;<span class="lifetime">'_</span>, T, A&gt;&gt; {
         <span class="kw">match </span><span class="self">self</span>.raw.find(hash, eq) {
             <span class="prelude-val">Some</span>(bucket) =&gt; <span class="prelude-val">Ok</span>(OccupiedEntry {
                 hash,
@@ -2381,7 +2388,7 @@
     /// and which satisfies the equality function passed.
     ///
     /// This can be used to remove the entry from the table, or insert a new
-    /// entry with the given hash if one doesn&#39;t already exist.
+    /// entry with the given hash if one doesn't already exist.
     ///
     /// This method will call `eq` for all entries with the given hash, but may
     /// also call it for entries with a different hash. `eq` should only return
@@ -2396,7 +2403,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::hash_table::Entry;
@@ -2406,28 +2413,29 @@
     /// let mut table = HashTable::new();
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
-    /// table.insert_unique(hasher(&amp;1), (1, &quot;a&quot;), |val| hasher(&amp;val.0));
+    /// table.insert_unique(hasher(&amp;1), (1, "a"), |val| hasher(&amp;val.0));
     /// if let Entry::Occupied(entry) = table.entry(hasher(&amp;1), |val| val.0 == 1, |val| hasher(&amp;val.0))
     /// {
     ///     entry.remove();
     /// }
     /// if let Entry::Vacant(entry) = table.entry(hasher(&amp;2), |val| val.0 == 2, |val| hasher(&amp;val.0)) {
-    ///     entry.insert((2, &quot;b&quot;));
+    ///     entry.insert((2, "b"));
     /// }
     /// assert_eq!(table.find(hasher(&amp;1), |val| val.0 == 1), None);
-    /// assert_eq!(table.find(hasher(&amp;2), |val| val.0 == 2), Some(&amp;(2, &quot;b&quot;)));
+    /// assert_eq!(table.find(hasher(&amp;2), |val| val.0 == 2), Some(&amp;(2, "b")));
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">"inline-more"</span>, inline)]
     </span><span class="kw">pub fn </span>entry(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         hash: u64,
         eq: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>T) -&gt; bool,
         hasher: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>T) -&gt; u64,
-    ) -&gt; Entry&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {
+    ) -&gt; Entry&lt;<span class="lifetime">'_</span>, T, A&gt; {
         <span class="kw">match </span><span class="self">self</span>.raw.find_or_find_insert_slot(hash, eq, hasher) {
             <span class="prelude-val">Ok</span>(bucket) =&gt; Entry::Occupied(OccupiedEntry {
                 hash,
@@ -2452,7 +2460,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2464,7 +2472,7 @@
     /// v.insert_unique(hasher(&amp;1), 1, hasher);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2473,7 +2481,7 @@
         hash: u64,
         value: T,
         hasher: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>T) -&gt; u64,
-    ) -&gt; OccupiedEntry&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {
+    ) -&gt; OccupiedEntry&lt;<span class="lifetime">'_</span>, T, A&gt; {
         <span class="kw">let </span>bucket = <span class="self">self</span>.raw.insert(hash, value, hasher);
         OccupiedEntry {
             hash,
@@ -2487,7 +2495,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2501,7 +2509,7 @@
     /// assert!(v.is_empty());
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2519,7 +2527,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2535,7 +2543,7 @@
     /// assert!(table.capacity() &gt;= 2);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2556,7 +2564,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2574,7 +2582,7 @@
     /// assert!(table.capacity() &gt;= 2);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2601,7 +2609,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2614,7 +2622,7 @@
     /// assert!(table.capacity() &gt;= 10);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2637,7 +2645,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2648,10 +2656,10 @@
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
     /// table
     ///     .try_reserve(10, hasher)
-    ///     .expect(&quot;why is the test harness OOMing on 10 bytes?&quot;);
+    ///     .expect("why is the test harness OOMing on 10 bytes?");
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2681,7 +2689,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2695,7 +2703,7 @@
     /// assert_eq!(v.len(), 1);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2708,7 +2716,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2722,7 +2730,7 @@
     /// assert!(!v.is_empty());
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2731,12 +2739,12 @@
     }
 
     <span class="doccomment">/// An iterator visiting all elements in arbitrary order.
-    /// The iterator element type is `&amp;&#39;a T`.
+    /// The iterator element type is `&amp;'a T`.
     ///
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2745,20 +2753,20 @@
     /// let mut table = HashTable::new();
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
-    /// table.insert_unique(hasher(&amp;&quot;a&quot;), &quot;b&quot;, hasher);
-    /// table.insert_unique(hasher(&amp;&quot;b&quot;), &quot;b&quot;, hasher);
+    /// table.insert_unique(hasher(&amp;"a"), "b", hasher);
+    /// table.insert_unique(hasher(&amp;"b"), "b", hasher);
     ///
     /// // Will print in an arbitrary order.
     /// for x in table.iter() {
-    ///     println!(&quot;{}&quot;, x);
+    ///     println!("{}", x);
     /// }
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">'_</span>, T&gt; {
         Iter {
             inner: <span class="kw">unsafe </span>{ <span class="self">self</span>.raw.iter() },
             marker: PhantomData,
@@ -2767,12 +2775,12 @@
 
     <span class="doccomment">/// An iterator visiting all elements in arbitrary order,
     /// with mutable references to the elements.
-    /// The iterator element type is `&amp;&#39;a mut T`.
+    /// The iterator element type is `&amp;'a mut T`.
     ///
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2794,7 +2802,7 @@
     /// let mut vec: Vec&lt;i32&gt; = Vec::new();
     ///
     /// for val in &amp;table {
-    ///     println!(&quot;val: {}&quot;, val);
+    ///     println!("val: {}", val);
     ///     vec.push(*val);
     /// }
     ///
@@ -2806,11 +2814,11 @@
     /// assert_eq!(table.len(), 3);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span><span class="kw">pub fn </span>iter_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; IterMut&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+    </span><span class="kw">pub fn </span>iter_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; IterMut&lt;<span class="lifetime">'_</span>, T&gt; {
         IterMut {
             inner: <span class="kw">unsafe </span>{ <span class="self">self</span>.raw.iter() },
             marker: PhantomData,
@@ -2824,7 +2832,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2840,7 +2848,7 @@
     /// assert_eq!(table.len(), 3);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -2860,7 +2868,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2876,17 +2884,17 @@
     ///
     /// // print 1, 2, 3 in an arbitrary order
     /// for i in table.drain() {
-    ///     println!(&quot;{}&quot;, i);
+    ///     println!("{}", i);
     /// }
     ///
     /// assert!(table.is_empty());
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span><span class="kw">pub fn </span>drain(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Drain&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {
+    </span><span class="kw">pub fn </span>drain(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; Drain&lt;<span class="lifetime">'_</span>, T, A&gt; {
         Drain {
             inner: <span class="self">self</span>.raw.drain(),
         }
@@ -2907,7 +2915,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -2930,11 +2938,11 @@
     /// assert_eq!(odds, vec![1, 3, 5, 7]);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span><span class="kw">pub fn </span>extract_if&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: F) -&gt; ExtractIf&lt;<span class="lifetime">&#39;_</span>, T, F, A&gt;
+    </span><span class="kw">pub fn </span>extract_if&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: F) -&gt; ExtractIf&lt;<span class="lifetime">'_</span>, T, F, A&gt;
     <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;mut </span>T) -&gt; bool,
     {
@@ -2959,7 +2967,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::hash_table::Entry;
@@ -2970,33 +2978,33 @@
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
     /// for (k, v) in [
-    ///     (&quot;Bodleian Library&quot;, 1602),
-    ///     (&quot;Athenæum&quot;, 1807),
-    ///     (&quot;Herzogin-Anna-Amalia-Bibliothek&quot;, 1691),
-    ///     (&quot;Library of Congress&quot;, 1800),
+    ///     ("Bodleian Library", 1602),
+    ///     ("Athenæum", 1807),
+    ///     ("Herzogin-Anna-Amalia-Bibliothek", 1691),
+    ///     ("Library of Congress", 1800),
     /// ] {
     ///     libraries.insert_unique(hasher(&amp;k), (k, v), |(k, _)| hasher(&amp;k));
     /// }
     ///
-    /// let keys = [&quot;Athenæum&quot;, &quot;Library of Congress&quot;];
+    /// let keys = ["Athenæum", "Library of Congress"];
     /// let got = libraries.get_many_mut(keys.map(|k| hasher(&amp;k)), |i, val| keys[i] == val.0);
     /// assert_eq!(
     ///     got,
-    ///     Some([&amp;mut (&quot;Athenæum&quot;, 1807), &amp;mut (&quot;Library of Congress&quot;, 1800),]),
+    ///     Some([&amp;mut ("Athenæum", 1807), &amp;mut ("Library of Congress", 1800),]),
     /// );
     ///
     /// // Missing keys result in None
-    /// let keys = [&quot;Athenæum&quot;, &quot;New York Public Library&quot;];
+    /// let keys = ["Athenæum", "New York Public Library"];
     /// let got = libraries.get_many_mut(keys.map(|k| hasher(&amp;k)), |i, val| keys[i] == val.0);
     /// assert_eq!(got, None);
     ///
     /// // Duplicate keys result in None
-    /// let keys = [&quot;Athenæum&quot;, &quot;Athenæum&quot;];
+    /// let keys = ["Athenæum", "Athenæum"];
     /// let got = libraries.get_many_mut(keys.map(|k| hasher(&amp;k)), |i, val| keys[i] == val.0);
     /// assert_eq!(got, None);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -3004,7 +3012,7 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         hashes: [u64; N],
         eq: <span class="kw">impl </span>FnMut(usize, <span class="kw-2">&amp;</span>T) -&gt; bool,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;[<span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw-2">mut </span>T; N]&gt; {
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;[<span class="kw-2">&amp;</span><span class="lifetime">'_ </span><span class="kw-2">mut </span>T; N]&gt; {
         <span class="self">self</span>.raw.get_many_mut(hashes, eq)
     }
 
@@ -3029,7 +3037,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::hash_table::Entry;
@@ -3040,33 +3048,33 @@
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
     /// for (k, v) in [
-    ///     (&quot;Bodleian Library&quot;, 1602),
-    ///     (&quot;Athenæum&quot;, 1807),
-    ///     (&quot;Herzogin-Anna-Amalia-Bibliothek&quot;, 1691),
-    ///     (&quot;Library of Congress&quot;, 1800),
+    ///     ("Bodleian Library", 1602),
+    ///     ("Athenæum", 1807),
+    ///     ("Herzogin-Anna-Amalia-Bibliothek", 1691),
+    ///     ("Library of Congress", 1800),
     /// ] {
     ///     libraries.insert_unique(hasher(&amp;k), (k, v), |(k, _)| hasher(&amp;k));
     /// }
     ///
-    /// let keys = [&quot;Athenæum&quot;, &quot;Library of Congress&quot;];
+    /// let keys = ["Athenæum", "Library of Congress"];
     /// let got = libraries.get_many_mut(keys.map(|k| hasher(&amp;k)), |i, val| keys[i] == val.0);
     /// assert_eq!(
     ///     got,
-    ///     Some([&amp;mut (&quot;Athenæum&quot;, 1807), &amp;mut (&quot;Library of Congress&quot;, 1800),]),
+    ///     Some([&amp;mut ("Athenæum", 1807), &amp;mut ("Library of Congress", 1800),]),
     /// );
     ///
     /// // Missing keys result in None
-    /// let keys = [&quot;Athenæum&quot;, &quot;New York Public Library&quot;];
+    /// let keys = ["Athenæum", "New York Public Library"];
     /// let got = libraries.get_many_mut(keys.map(|k| hasher(&amp;k)), |i, val| keys[i] == val.0);
     /// assert_eq!(got, None);
     ///
     /// // Duplicate keys result in None
-    /// let keys = [&quot;Athenæum&quot;, &quot;Athenæum&quot;];
+    /// let keys = ["Athenæum", "Athenæum"];
     /// let got = libraries.get_many_mut(keys.map(|k| hasher(&amp;k)), |i, val| keys[i] == val.0);
     /// assert_eq!(got, None);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -3074,7 +3082,7 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         hashes: [u64; N],
         eq: <span class="kw">impl </span>FnMut(usize, <span class="kw-2">&amp;</span>T) -&gt; bool,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;[<span class="kw-2">&amp;</span><span class="lifetime">&#39;_ </span><span class="kw-2">mut </span>T; N]&gt; {
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;[<span class="kw-2">&amp;</span><span class="lifetime">'_ </span><span class="kw-2">mut </span>T; N]&gt; {
         <span class="self">self</span>.raw.get_many_unchecked_mut(hashes, eq)
     }
 }
@@ -3093,26 +3101,26 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, A&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>HashTable&lt;T, A&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T, A&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>HashTable&lt;T, A&gt;
 <span class="kw">where
     </span>A: Allocator,
 {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T;
-    <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">&#39;a</span>, T&gt;;
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T;
+    <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">'a</span>, T&gt;;
 
-    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">'a</span>, T&gt; {
         <span class="self">self</span>.iter()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, A&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T, A&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt;
 <span class="kw">where
     </span>A: Allocator,
 {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T;
-    <span class="kw">type </span>IntoIter = IterMut&lt;<span class="lifetime">&#39;a</span>, T&gt;;
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>T;
+    <span class="kw">type </span>IntoIter = IterMut&lt;<span class="lifetime">'a</span>, T&gt;;
 
-    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; IterMut&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; IterMut&lt;<span class="lifetime">'a</span>, T&gt; {
         <span class="self">self</span>.iter_mut()
     }
 }
@@ -3145,7 +3153,7 @@
     </span>T: fmt::Debug,
     A: Allocator,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         f.debug_set().entries(<span class="self">self</span>.iter()).finish()
     }
 }
@@ -3160,7 +3168,7 @@
 /// # Examples
 ///
 /// ```
-/// # #[cfg(feature = &quot;nightly&quot;)]
+/// # #[cfg(feature = "nightly")]
 /// # fn test() {
 /// use ahash::AHasher;
 /// use hashbrown::hash_table::{Entry, HashTable, OccupiedEntry};
@@ -3169,41 +3177,41 @@
 /// let mut table = HashTable::new();
 /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
 /// let hasher = |val: &amp;_| hasher.hash_one(val);
-/// for x in [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;] {
+/// for x in ["a", "b", "c"] {
 ///     table.insert_unique(hasher(&amp;x), x, hasher);
 /// }
 /// assert_eq!(table.len(), 3);
 ///
 /// // Existing value (insert)
-/// let entry: Entry&lt;_&gt; = table.entry(hasher(&amp;&quot;a&quot;), |&amp;x| x == &quot;a&quot;, hasher);
-/// let _raw_o: OccupiedEntry&lt;_, _&gt; = entry.insert(&quot;a&quot;);
+/// let entry: Entry&lt;_&gt; = table.entry(hasher(&amp;"a"), |&amp;x| x == "a", hasher);
+/// let _raw_o: OccupiedEntry&lt;_, _&gt; = entry.insert("a");
 /// assert_eq!(table.len(), 3);
 /// // Nonexistent value (insert)
-/// table.entry(hasher(&amp;&quot;d&quot;), |&amp;x| x == &quot;d&quot;, hasher).insert(&quot;d&quot;);
+/// table.entry(hasher(&amp;"d"), |&amp;x| x == "d", hasher).insert("d");
 ///
 /// // Existing value (or_insert)
 /// table
-///     .entry(hasher(&amp;&quot;b&quot;), |&amp;x| x == &quot;b&quot;, hasher)
-///     .or_insert(&quot;b&quot;);
+///     .entry(hasher(&amp;"b"), |&amp;x| x == "b", hasher)
+///     .or_insert("b");
 /// // Nonexistent value (or_insert)
 /// table
-///     .entry(hasher(&amp;&quot;e&quot;), |&amp;x| x == &quot;e&quot;, hasher)
-///     .or_insert(&quot;e&quot;);
+///     .entry(hasher(&amp;"e"), |&amp;x| x == "e", hasher)
+///     .or_insert("e");
 ///
-/// println!(&quot;Our HashTable: {:?}&quot;, table);
+/// println!("Our HashTable: {:?}", table);
 ///
 /// let mut vec: Vec&lt;_&gt; = table.iter().copied().collect();
 /// // The `Iter` iterator produces items in arbitrary order, so the
 /// // items must be sorted to test them against a sorted array.
 /// vec.sort_unstable();
-/// assert_eq!(vec, [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;, &quot;e&quot;]);
+/// assert_eq!(vec, ["a", "b", "c", "d", "e"]);
 /// # }
 /// # fn main() {
-/// #     #[cfg(feature = &quot;nightly&quot;)]
+/// #     #[cfg(feature = "nightly")]
 /// #     test()
 /// # }
 /// ```
-</span><span class="kw">pub enum </span>Entry&lt;<span class="lifetime">&#39;a</span>, T, A = Global&gt;
+</span><span class="kw">pub enum </span>Entry&lt;<span class="lifetime">'a</span>, T, A = Global&gt;
 <span class="kw">where
     </span>A: Allocator,
 {
@@ -3212,7 +3220,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::hash_table::{Entry, HashTable, OccupiedEntry};
@@ -3221,28 +3229,28 @@
     /// let mut table = HashTable::new();
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
-    /// for x in [&quot;a&quot;, &quot;b&quot;] {
+    /// for x in ["a", "b"] {
     ///     table.insert_unique(hasher(&amp;x), x, hasher);
     /// }
     ///
-    /// match table.entry(hasher(&amp;&quot;a&quot;), |&amp;x| x == &quot;a&quot;, hasher) {
+    /// match table.entry(hasher(&amp;"a"), |&amp;x| x == "a", hasher) {
     ///     Entry::Vacant(_) =&gt; unreachable!(),
     ///     Entry::Occupied(_) =&gt; {}
     /// }
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span>Occupied(OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, T, A&gt;),
+    </span>Occupied(OccupiedEntry&lt;<span class="lifetime">'a</span>, T, A&gt;),
 
     <span class="doccomment">/// A vacant entry.
     ///
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::hash_table::{Entry, HashTable, OccupiedEntry};
@@ -3252,29 +3260,29 @@
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
     ///
-    /// match table.entry(hasher(&amp;&quot;a&quot;), |&amp;x| x == &quot;a&quot;, hasher) {
+    /// match table.entry(hasher(&amp;"a"), |&amp;x| x == "a", hasher) {
     ///     Entry::Vacant(_) =&gt; {}
     ///     Entry::Occupied(_) =&gt; unreachable!(),
     /// }
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span>Vacant(VacantEntry&lt;<span class="lifetime">&#39;a</span>, T, A&gt;),
+    </span>Vacant(VacantEntry&lt;<span class="lifetime">'a</span>, T, A&gt;),
 }
 
-<span class="kw">impl</span>&lt;T: fmt::Debug, A: Allocator&gt; fmt::Debug <span class="kw">for </span>Entry&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+<span class="kw">impl</span>&lt;T: fmt::Debug, A: Allocator&gt; fmt::Debug <span class="kw">for </span>Entry&lt;<span class="lifetime">'_</span>, T, A&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            Entry::Vacant(<span class="kw-2">ref </span>v) =&gt; f.debug_tuple(<span class="string">&quot;Entry&quot;</span>).field(v).finish(),
-            Entry::Occupied(<span class="kw-2">ref </span>o) =&gt; f.debug_tuple(<span class="string">&quot;Entry&quot;</span>).field(o).finish(),
+            Entry::Vacant(<span class="kw-2">ref </span>v) =&gt; f.debug_tuple(<span class="string">"Entry"</span>).field(v).finish(),
+            Entry::Occupied(<span class="kw-2">ref </span>o) =&gt; f.debug_tuple(<span class="string">"Entry"</span>).field(o).finish(),
         }
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, A&gt; Entry&lt;<span class="lifetime">&#39;a</span>, T, A&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T, A&gt; Entry&lt;<span class="lifetime">'a</span>, T, A&gt;
 <span class="kw">where
     </span>A: Allocator,
 {
@@ -3284,7 +3292,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -3295,17 +3303,17 @@
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
     ///
     /// let entry = table
-    ///     .entry(hasher(&amp;&quot;horseyland&quot;), |&amp;x| x == &quot;horseyland&quot;, hasher)
-    ///     .insert(&quot;horseyland&quot;);
+    ///     .entry(hasher(&amp;"horseyland"), |&amp;x| x == "horseyland", hasher)
+    ///     .insert("horseyland");
     ///
-    /// assert_eq!(entry.get(), &amp;&quot;horseyland&quot;);
+    /// assert_eq!(entry.get(), &amp;"horseyland");
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span><span class="kw">pub fn </span>insert(<span class="self">self</span>, value: T) -&gt; OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, T, A&gt; {
+    </span><span class="kw">pub fn </span>insert(<span class="self">self</span>, value: T) -&gt; OccupiedEntry&lt;<span class="lifetime">'a</span>, T, A&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             Entry::Occupied(<span class="kw-2">mut </span>entry) =&gt; {
                 <span class="kw-2">*</span>entry.get_mut() = value;
@@ -3322,7 +3330,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -3334,27 +3342,27 @@
     ///
     /// // nonexistent key
     /// table
-    ///     .entry(hasher(&amp;&quot;poneyland&quot;), |&amp;x| x == &quot;poneyland&quot;, hasher)
-    ///     .or_insert(&quot;poneyland&quot;);
+    ///     .entry(hasher(&amp;"poneyland"), |&amp;x| x == "poneyland", hasher)
+    ///     .or_insert("poneyland");
     /// assert!(table
-    ///     .find(hasher(&amp;&quot;poneyland&quot;), |&amp;x| x == &quot;poneyland&quot;)
+    ///     .find(hasher(&amp;"poneyland"), |&amp;x| x == "poneyland")
     ///     .is_some());
     ///
     /// // existing key
     /// table
-    ///     .entry(hasher(&amp;&quot;poneyland&quot;), |&amp;x| x == &quot;poneyland&quot;, hasher)
-    ///     .or_insert(&quot;poneyland&quot;);
+    ///     .entry(hasher(&amp;"poneyland"), |&amp;x| x == "poneyland", hasher)
+    ///     .or_insert("poneyland");
     /// assert!(table
-    ///     .find(hasher(&amp;&quot;poneyland&quot;), |&amp;x| x == &quot;poneyland&quot;)
+    ///     .find(hasher(&amp;"poneyland"), |&amp;x| x == "poneyland")
     ///     .is_some());
     /// assert_eq!(table.len(), 1);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span><span class="kw">pub fn </span>or_insert(<span class="self">self</span>, default: T) -&gt; OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, T, A&gt; {
+    </span><span class="kw">pub fn </span>or_insert(<span class="self">self</span>, default: T) -&gt; OccupiedEntry&lt;<span class="lifetime">'a</span>, T, A&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             Entry::Occupied(entry) =&gt; entry,
             Entry::Vacant(entry) =&gt; entry.insert(default),
@@ -3368,7 +3376,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -3379,19 +3387,19 @@
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
     ///
     /// table
-    ///     .entry(hasher(&quot;poneyland&quot;), |x| x == &quot;poneyland&quot;, |val| hasher(val))
-    ///     .or_insert_with(|| &quot;poneyland&quot;.to_string());
+    ///     .entry(hasher("poneyland"), |x| x == "poneyland", |val| hasher(val))
+    ///     .or_insert_with(|| "poneyland".to_string());
     ///
     /// assert!(table
-    ///     .find(hasher(&amp;&quot;poneyland&quot;), |x| x == &quot;poneyland&quot;)
+    ///     .find(hasher(&amp;"poneyland"), |x| x == "poneyland")
     ///     .is_some());
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span><span class="kw">pub fn </span>or_insert_with(<span class="self">self</span>, default: <span class="kw">impl </span>FnOnce() -&gt; T) -&gt; OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, T, A&gt; {
+    </span><span class="kw">pub fn </span>or_insert_with(<span class="self">self</span>, default: <span class="kw">impl </span>FnOnce() -&gt; T) -&gt; OccupiedEntry&lt;<span class="lifetime">'a</span>, T, A&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             Entry::Occupied(entry) =&gt; entry,
             Entry::Vacant(entry) =&gt; entry.insert(default()),
@@ -3404,7 +3412,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::HashTable;
@@ -3416,32 +3424,32 @@
     ///
     /// table
     ///     .entry(
-    ///         hasher(&amp;&quot;poneyland&quot;),
-    ///         |&amp;(x, _)| x == &quot;poneyland&quot;,
+    ///         hasher(&amp;"poneyland"),
+    ///         |&amp;(x, _)| x == "poneyland",
     ///         |(k, _)| hasher(&amp;k),
     ///     )
     ///     .and_modify(|(_, v)| *v += 1)
-    ///     .or_insert((&quot;poneyland&quot;, 42));
+    ///     .or_insert(("poneyland", 42));
     /// assert_eq!(
-    ///     table.find(hasher(&amp;&quot;poneyland&quot;), |&amp;(k, _)| k == &quot;poneyland&quot;),
-    ///     Some(&amp;(&quot;poneyland&quot;, 42))
+    ///     table.find(hasher(&amp;"poneyland"), |&amp;(k, _)| k == "poneyland"),
+    ///     Some(&amp;("poneyland", 42))
     /// );
     ///
     /// table
     ///     .entry(
-    ///         hasher(&amp;&quot;poneyland&quot;),
-    ///         |&amp;(x, _)| x == &quot;poneyland&quot;,
+    ///         hasher(&amp;"poneyland"),
+    ///         |&amp;(x, _)| x == "poneyland",
     ///         |(k, _)| hasher(&amp;k),
     ///     )
     ///     .and_modify(|(_, v)| *v += 1)
-    ///     .or_insert((&quot;poneyland&quot;, 42));
+    ///     .or_insert(("poneyland", 42));
     /// assert_eq!(
-    ///     table.find(hasher(&amp;&quot;poneyland&quot;), |&amp;(k, _)| k == &quot;poneyland&quot;),
-    ///     Some(&amp;(&quot;poneyland&quot;, 43))
+    ///     table.find(hasher(&amp;"poneyland"), |&amp;(k, _)| k == "poneyland"),
+    ///     Some(&amp;("poneyland", 43))
     /// );
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
@@ -3464,7 +3472,7 @@
 /// # Examples
 ///
 /// ```
-/// # #[cfg(feature = &quot;nightly&quot;)]
+/// # #[cfg(feature = "nightly")]
 /// # fn test() {
 /// use ahash::AHasher;
 /// use hashbrown::hash_table::{Entry, HashTable, OccupiedEntry};
@@ -3473,70 +3481,70 @@
 /// let mut table = HashTable::new();
 /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
 /// let hasher = |val: &amp;_| hasher.hash_one(val);
-/// for x in [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;] {
+/// for x in ["a", "b", "c"] {
 ///     table.insert_unique(hasher(&amp;x), x, hasher);
 /// }
 /// assert_eq!(table.len(), 3);
 ///
-/// let _entry_o: OccupiedEntry&lt;_, _&gt; = table.find_entry(hasher(&amp;&quot;a&quot;), |&amp;x| x == &quot;a&quot;).unwrap();
+/// let _entry_o: OccupiedEntry&lt;_, _&gt; = table.find_entry(hasher(&amp;"a"), |&amp;x| x == "a").unwrap();
 /// assert_eq!(table.len(), 3);
 ///
 /// // Existing key
-/// match table.entry(hasher(&amp;&quot;a&quot;), |&amp;x| x == &quot;a&quot;, hasher) {
+/// match table.entry(hasher(&amp;"a"), |&amp;x| x == "a", hasher) {
 ///     Entry::Vacant(_) =&gt; unreachable!(),
 ///     Entry::Occupied(view) =&gt; {
-///         assert_eq!(view.get(), &amp;&quot;a&quot;);
+///         assert_eq!(view.get(), &amp;"a");
 ///     }
 /// }
 ///
 /// assert_eq!(table.len(), 3);
 ///
 /// // Existing key (take)
-/// match table.entry(hasher(&amp;&quot;c&quot;), |&amp;x| x == &quot;c&quot;, hasher) {
+/// match table.entry(hasher(&amp;"c"), |&amp;x| x == "c", hasher) {
 ///     Entry::Vacant(_) =&gt; unreachable!(),
 ///     Entry::Occupied(view) =&gt; {
-///         assert_eq!(view.remove().0, &quot;c&quot;);
+///         assert_eq!(view.remove().0, "c");
 ///     }
 /// }
-/// assert_eq!(table.find(hasher(&amp;&quot;c&quot;), |&amp;x| x == &quot;c&quot;), None);
+/// assert_eq!(table.find(hasher(&amp;"c"), |&amp;x| x == "c"), None);
 /// assert_eq!(table.len(), 2);
 /// # }
 /// # fn main() {
-/// #     #[cfg(feature = &quot;nightly&quot;)]
+/// #     #[cfg(feature = "nightly")]
 /// #     test()
 /// # }
 /// ```
-</span><span class="kw">pub struct </span>OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, T, A = Global&gt;
+</span><span class="kw">pub struct </span>OccupiedEntry&lt;<span class="lifetime">'a</span>, T, A = Global&gt;
 <span class="kw">where
     </span>A: Allocator,
 {
     hash: u64,
     bucket: Bucket&lt;T&gt;,
-    table: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt;,
+    table: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt;,
 }
 
-<span class="kw">unsafe impl</span>&lt;T, A&gt; Send <span class="kw">for </span>OccupiedEntry&lt;<span class="lifetime">&#39;_</span>, T, A&gt;
+<span class="kw">unsafe impl</span>&lt;T, A&gt; Send <span class="kw">for </span>OccupiedEntry&lt;<span class="lifetime">'_</span>, T, A&gt;
 <span class="kw">where
     </span>T: Send,
     A: Send + Allocator,
 {
 }
-<span class="kw">unsafe impl</span>&lt;T, A&gt; Sync <span class="kw">for </span>OccupiedEntry&lt;<span class="lifetime">&#39;_</span>, T, A&gt;
+<span class="kw">unsafe impl</span>&lt;T, A&gt; Sync <span class="kw">for </span>OccupiedEntry&lt;<span class="lifetime">'_</span>, T, A&gt;
 <span class="kw">where
     </span>T: Sync,
     A: Sync + Allocator,
 {
 }
 
-<span class="kw">impl</span>&lt;T: fmt::Debug, A: Allocator&gt; fmt::Debug <span class="kw">for </span>OccupiedEntry&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.debug_struct(<span class="string">&quot;OccupiedEntry&quot;</span>)
-            .field(<span class="string">&quot;value&quot;</span>, <span class="self">self</span>.get())
+<span class="kw">impl</span>&lt;T: fmt::Debug, A: Allocator&gt; fmt::Debug <span class="kw">for </span>OccupiedEntry&lt;<span class="lifetime">'_</span>, T, A&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">"OccupiedEntry"</span>)
+            .field(<span class="string">"value"</span>, <span class="self">self</span>.get())
             .finish()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, A&gt; OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, T, A&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T, A&gt; OccupiedEntry&lt;<span class="lifetime">'a</span>, T, A&gt;
 <span class="kw">where
     </span>A: Allocator,
 {
@@ -3547,7 +3555,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::hash_table::Entry;
@@ -3560,25 +3568,26 @@
     /// // The table is empty
     /// assert!(table.is_empty() &amp;&amp; table.capacity() == 0);
     ///
-    /// table.insert_unique(hasher(&amp;&quot;poneyland&quot;), &quot;poneyland&quot;, hasher);
+    /// table.insert_unique(hasher(&amp;"poneyland"), "poneyland", hasher);
     /// let capacity_before_remove = table.capacity();
     ///
-    /// if let Entry::Occupied(o) = table.entry(hasher(&amp;&quot;poneyland&quot;), |&amp;x| x == &quot;poneyland&quot;, hasher) {
-    ///     assert_eq!(o.remove().0, &quot;poneyland&quot;);
+    /// if let Entry::Occupied(o) = table.entry(hasher(&amp;"poneyland"), |&amp;x| x == "poneyland", hasher) {
+    ///     assert_eq!(o.remove().0, "poneyland");
     /// }
     ///
     /// assert!(table
-    ///     .find(hasher(&amp;&quot;poneyland&quot;), |&amp;x| x == &quot;poneyland&quot;)
+    ///     .find(hasher(&amp;"poneyland"), |&amp;x| x == "poneyland")
     ///     .is_none());
     /// // Now table hold none elements but capacity is equal to the old one
     /// assert!(table.len() == 0 &amp;&amp; table.capacity() == capacity_before_remove);
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span><span class="kw">pub fn </span>remove(<span class="self">self</span>) -&gt; (T, VacantEntry&lt;<span class="lifetime">&#39;a</span>, T, A&gt;) {
+    </span><span class="attr">#[cfg_attr(feature = <span class="string">"inline-more"</span>, inline)]
+    </span><span class="kw">pub fn </span>remove(<span class="self">self</span>) -&gt; (T, VacantEntry&lt;<span class="lifetime">'a</span>, T, A&gt;) {
         <span class="kw">let </span>(val, slot) = <span class="kw">unsafe </span>{ <span class="self">self</span>.table.raw.remove(<span class="self">self</span>.bucket) };
         (
             val,
@@ -3595,7 +3604,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::hash_table::Entry;
@@ -3605,18 +3614,19 @@
     /// let mut table: HashTable&lt;&amp;str&gt; = HashTable::new();
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
-    /// table.insert_unique(hasher(&amp;&quot;poneyland&quot;), &quot;poneyland&quot;, hasher);
+    /// table.insert_unique(hasher(&amp;"poneyland"), "poneyland", hasher);
     ///
-    /// match table.entry(hasher(&amp;&quot;poneyland&quot;), |&amp;x| x == &quot;poneyland&quot;, hasher) {
+    /// match table.entry(hasher(&amp;"poneyland"), |&amp;x| x == "poneyland", hasher) {
     ///     Entry::Vacant(_) =&gt; panic!(),
-    ///     Entry::Occupied(entry) =&gt; assert_eq!(entry.get(), &amp;&quot;poneyland&quot;),
+    ///     Entry::Occupied(entry) =&gt; assert_eq!(entry.get(), &amp;"poneyland"),
     /// }
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>T {
         <span class="kw">unsafe </span>{ <span class="self">self</span>.bucket.as_ref() }
     }
@@ -3631,7 +3641,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::hash_table::Entry;
@@ -3641,16 +3651,16 @@
     /// let mut table: HashTable&lt;(&amp;str, u32)&gt; = HashTable::new();
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
-    /// table.insert_unique(hasher(&amp;&quot;poneyland&quot;), (&quot;poneyland&quot;, 12), |(k, _)| hasher(&amp;k));
+    /// table.insert_unique(hasher(&amp;"poneyland"), ("poneyland", 12), |(k, _)| hasher(&amp;k));
     ///
     /// assert_eq!(
-    ///     table.find(hasher(&amp;&quot;poneyland&quot;), |&amp;(x, _)| x == &quot;poneyland&quot;,),
-    ///     Some(&amp;(&quot;poneyland&quot;, 12))
+    ///     table.find(hasher(&amp;"poneyland"), |&amp;(x, _)| x == "poneyland",),
+    ///     Some(&amp;("poneyland", 12))
     /// );
     ///
     /// if let Entry::Occupied(mut o) = table.entry(
-    ///     hasher(&amp;&quot;poneyland&quot;),
-    ///     |&amp;(x, _)| x == &quot;poneyland&quot;,
+    ///     hasher(&amp;"poneyland"),
+    ///     |&amp;(x, _)| x == "poneyland",
     ///     |(k, _)| hasher(&amp;k),
     /// ) {
     ///     o.get_mut().1 += 10;
@@ -3661,15 +3671,16 @@
     /// }
     ///
     /// assert_eq!(
-    ///     table.find(hasher(&amp;&quot;poneyland&quot;), |&amp;(x, _)| x == &quot;poneyland&quot;,),
-    ///     Some(&amp;(&quot;poneyland&quot;, 24))
+    ///     table.find(hasher(&amp;"poneyland"), |&amp;(x, _)| x == "poneyland",),
+    ///     Some(&amp;("poneyland", 24))
     /// );
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
+    </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>get_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>T {
         <span class="kw">unsafe </span>{ <span class="self">self</span>.bucket.as_mut() }
     }
@@ -3684,7 +3695,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::hash_table::Entry;
@@ -3694,17 +3705,17 @@
     /// let mut table: HashTable&lt;(&amp;str, u32)&gt; = HashTable::new();
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
-    /// table.insert_unique(hasher(&amp;&quot;poneyland&quot;), (&quot;poneyland&quot;, 12), |(k, _)| hasher(&amp;k));
+    /// table.insert_unique(hasher(&amp;"poneyland"), ("poneyland", 12), |(k, _)| hasher(&amp;k));
     ///
     /// assert_eq!(
-    ///     table.find(hasher(&amp;&quot;poneyland&quot;), |&amp;(x, _)| x == &quot;poneyland&quot;,),
-    ///     Some(&amp;(&quot;poneyland&quot;, 12))
+    ///     table.find(hasher(&amp;"poneyland"), |&amp;(x, _)| x == "poneyland",),
+    ///     Some(&amp;("poneyland", 12))
     /// );
     ///
     /// let value: &amp;mut (&amp;str, u32);
     /// match table.entry(
-    ///     hasher(&amp;&quot;poneyland&quot;),
-    ///     |&amp;(x, _)| x == &quot;poneyland&quot;,
+    ///     hasher(&amp;"poneyland"),
+    ///     |&amp;(x, _)| x == "poneyland",
     ///     |(k, _)| hasher(&amp;k),
     /// ) {
     ///     Entry::Occupied(entry) =&gt; value = entry.into_mut(),
@@ -3713,22 +3724,22 @@
     /// value.1 += 10;
     ///
     /// assert_eq!(
-    ///     table.find(hasher(&amp;&quot;poneyland&quot;), |&amp;(x, _)| x == &quot;poneyland&quot;,),
-    ///     Some(&amp;(&quot;poneyland&quot;, 22))
+    ///     table.find(hasher(&amp;"poneyland"), |&amp;(x, _)| x == "poneyland",),
+    ///     Some(&amp;("poneyland", 22))
     /// );
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span><span class="kw">pub fn </span>into_mut(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T {
+    </span><span class="kw">pub fn </span>into_mut(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>T {
         <span class="kw">unsafe </span>{ <span class="self">self</span>.bucket.as_mut() }
     }
 
     <span class="doccomment">/// Converts the OccupiedEntry into a mutable reference to the underlying
     /// table.
-    </span><span class="kw">pub fn </span>into_table(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt; {
+    </span><span class="kw">pub fn </span>into_table(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt; {
         <span class="self">self</span>.table
     }
 }
@@ -3741,7 +3752,7 @@
 /// # Examples
 ///
 /// ```
-/// # #[cfg(feature = &quot;nightly&quot;)]
+/// # #[cfg(feature = "nightly")]
 /// # fn test() {
 /// use ahash::AHasher;
 /// use hashbrown::hash_table::{Entry, HashTable, VacantEntry};
@@ -3751,43 +3762,43 @@
 /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
 /// let hasher = |val: &amp;_| hasher.hash_one(val);
 ///
-/// let entry_v: VacantEntry&lt;_, _&gt; = match table.entry(hasher(&amp;&quot;a&quot;), |&amp;x| x == &quot;a&quot;, hasher) {
+/// let entry_v: VacantEntry&lt;_, _&gt; = match table.entry(hasher(&amp;"a"), |&amp;x| x == "a", hasher) {
 ///     Entry::Vacant(view) =&gt; view,
 ///     Entry::Occupied(_) =&gt; unreachable!(),
 /// };
-/// entry_v.insert(&quot;a&quot;);
-/// assert!(table.find(hasher(&amp;&quot;a&quot;), |&amp;x| x == &quot;a&quot;).is_some() &amp;&amp; table.len() == 1);
+/// entry_v.insert("a");
+/// assert!(table.find(hasher(&amp;"a"), |&amp;x| x == "a").is_some() &amp;&amp; table.len() == 1);
 ///
 /// // Nonexistent key (insert)
-/// match table.entry(hasher(&amp;&quot;b&quot;), |&amp;x| x == &quot;b&quot;, hasher) {
+/// match table.entry(hasher(&amp;"b"), |&amp;x| x == "b", hasher) {
 ///     Entry::Vacant(view) =&gt; {
-///         view.insert(&quot;b&quot;);
+///         view.insert("b");
 ///     }
 ///     Entry::Occupied(_) =&gt; unreachable!(),
 /// }
-/// assert!(table.find(hasher(&amp;&quot;b&quot;), |&amp;x| x == &quot;b&quot;).is_some() &amp;&amp; table.len() == 2);
+/// assert!(table.find(hasher(&amp;"b"), |&amp;x| x == "b").is_some() &amp;&amp; table.len() == 2);
 /// # }
 /// # fn main() {
-/// #     #[cfg(feature = &quot;nightly&quot;)]
+/// #     #[cfg(feature = "nightly")]
 /// #     test()
 /// # }
 /// ```
-</span><span class="kw">pub struct </span>VacantEntry&lt;<span class="lifetime">&#39;a</span>, T, A = Global&gt;
+</span><span class="kw">pub struct </span>VacantEntry&lt;<span class="lifetime">'a</span>, T, A = Global&gt;
 <span class="kw">where
     </span>A: Allocator,
 {
     hash: u64,
     insert_slot: InsertSlot,
-    table: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt;,
+    table: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt;,
 }
 
-<span class="kw">impl</span>&lt;T: fmt::Debug, A: Allocator&gt; fmt::Debug <span class="kw">for </span>VacantEntry&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.write_str(<span class="string">&quot;VacantEntry&quot;</span>)
+<span class="kw">impl</span>&lt;T: fmt::Debug, A: Allocator&gt; fmt::Debug <span class="kw">for </span>VacantEntry&lt;<span class="lifetime">'_</span>, T, A&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        f.write_str(<span class="string">"VacantEntry"</span>)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, A&gt; VacantEntry&lt;<span class="lifetime">&#39;a</span>, T, A&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T, A&gt; VacantEntry&lt;<span class="lifetime">'a</span>, T, A&gt;
 <span class="kw">where
     </span>A: Allocator,
 {
@@ -3799,7 +3810,7 @@
     /// # Examples
     ///
     /// ```
-    /// # #[cfg(feature = &quot;nightly&quot;)]
+    /// # #[cfg(feature = "nightly")]
     /// # fn test() {
     /// use ahash::AHasher;
     /// use hashbrown::hash_table::Entry;
@@ -3810,20 +3821,21 @@
     /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
     /// let hasher = |val: &amp;_| hasher.hash_one(val);
     ///
-    /// if let Entry::Vacant(o) = table.entry(hasher(&amp;&quot;poneyland&quot;), |&amp;x| x == &quot;poneyland&quot;, hasher) {
-    ///     o.insert(&quot;poneyland&quot;);
+    /// if let Entry::Vacant(o) = table.entry(hasher(&amp;"poneyland"), |&amp;x| x == "poneyland", hasher) {
+    ///     o.insert("poneyland");
     /// }
     /// assert_eq!(
-    ///     table.find(hasher(&amp;&quot;poneyland&quot;), |&amp;x| x == &quot;poneyland&quot;),
-    ///     Some(&amp;&quot;poneyland&quot;)
+    ///     table.find(hasher(&amp;"poneyland"), |&amp;x| x == "poneyland"),
+    ///     Some(&amp;"poneyland")
     /// );
     /// # }
     /// # fn main() {
-    /// #     #[cfg(feature = &quot;nightly&quot;)]
+    /// #     #[cfg(feature = "nightly")]
     /// #     test()
     /// # }
     /// ```
-    </span><span class="kw">pub fn </span>insert(<span class="self">self</span>, value: T) -&gt; OccupiedEntry&lt;<span class="lifetime">&#39;a</span>, T, A&gt; {
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>insert(<span class="self">self</span>, value: T) -&gt; OccupiedEntry&lt;<span class="lifetime">'a</span>, T, A&gt; {
         <span class="kw">let </span>bucket = <span class="kw">unsafe </span>{
             <span class="self">self</span>.table
                 .raw
@@ -3838,14 +3850,14 @@
 
     <span class="doccomment">/// Converts the VacantEntry into a mutable reference to the underlying
     /// table.
-    </span><span class="kw">pub fn </span>into_table(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt; {
+    </span><span class="kw">pub fn </span>into_table(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt; {
         <span class="self">self</span>.table
     }
 }
 
 <span class="doccomment">/// Type representing the absence of an entry, as returned by [`HashTable::find_entry`].
 ///
-/// This type only exists due to [limitations] in Rust&#39;s NLL borrow checker. In
+/// This type only exists due to [limitations] in Rust's NLL borrow checker. In
 /// the future, `find_entry` will return an `Option&lt;OccupiedEntry&gt;` and this
 /// type will be removed.
 ///
@@ -3854,7 +3866,7 @@
 /// # Examples
 ///
 /// ```
-/// # #[cfg(feature = &quot;nightly&quot;)]
+/// # #[cfg(feature = "nightly")]
 /// # fn test() {
 /// use ahash::AHasher;
 /// use hashbrown::hash_table::{AbsentEntry, Entry, HashTable};
@@ -3864,65 +3876,65 @@
 /// let hasher = BuildHasherDefault::&lt;AHasher&gt;::default();
 /// let hasher = |val: &amp;_| hasher.hash_one(val);
 ///
-/// let entry_v: AbsentEntry&lt;_, _&gt; = table.find_entry(hasher(&amp;&quot;a&quot;), |&amp;x| x == &quot;a&quot;).unwrap_err();
+/// let entry_v: AbsentEntry&lt;_, _&gt; = table.find_entry(hasher(&amp;"a"), |&amp;x| x == "a").unwrap_err();
 /// entry_v
 ///     .into_table()
-///     .insert_unique(hasher(&amp;&quot;a&quot;), &quot;a&quot;, hasher);
-/// assert!(table.find(hasher(&amp;&quot;a&quot;), |&amp;x| x == &quot;a&quot;).is_some() &amp;&amp; table.len() == 1);
+///     .insert_unique(hasher(&amp;"a"), "a", hasher);
+/// assert!(table.find(hasher(&amp;"a"), |&amp;x| x == "a").is_some() &amp;&amp; table.len() == 1);
 ///
 /// // Nonexistent key (insert)
-/// match table.entry(hasher(&amp;&quot;b&quot;), |&amp;x| x == &quot;b&quot;, hasher) {
+/// match table.entry(hasher(&amp;"b"), |&amp;x| x == "b", hasher) {
 ///     Entry::Vacant(view) =&gt; {
-///         view.insert(&quot;b&quot;);
+///         view.insert("b");
 ///     }
 ///     Entry::Occupied(_) =&gt; unreachable!(),
 /// }
-/// assert!(table.find(hasher(&amp;&quot;b&quot;), |&amp;x| x == &quot;b&quot;).is_some() &amp;&amp; table.len() == 2);
+/// assert!(table.find(hasher(&amp;"b"), |&amp;x| x == "b").is_some() &amp;&amp; table.len() == 2);
 /// # }
 /// # fn main() {
-/// #     #[cfg(feature = &quot;nightly&quot;)]
+/// #     #[cfg(feature = "nightly")]
 /// #     test()
 /// # }
 /// ```
-</span><span class="kw">pub struct </span>AbsentEntry&lt;<span class="lifetime">&#39;a</span>, T, A = Global&gt;
+</span><span class="kw">pub struct </span>AbsentEntry&lt;<span class="lifetime">'a</span>, T, A = Global&gt;
 <span class="kw">where
     </span>A: Allocator,
 {
-    table: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt;,
+    table: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt;,
 }
 
-<span class="kw">impl</span>&lt;T: fmt::Debug, A: Allocator&gt; fmt::Debug <span class="kw">for </span>AbsentEntry&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.write_str(<span class="string">&quot;AbsentEntry&quot;</span>)
+<span class="kw">impl</span>&lt;T: fmt::Debug, A: Allocator&gt; fmt::Debug <span class="kw">for </span>AbsentEntry&lt;<span class="lifetime">'_</span>, T, A&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        f.write_str(<span class="string">"AbsentEntry"</span>)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, A&gt; AbsentEntry&lt;<span class="lifetime">&#39;a</span>, T, A&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T, A&gt; AbsentEntry&lt;<span class="lifetime">'a</span>, T, A&gt;
 <span class="kw">where
     </span>A: Allocator,
 {
     <span class="doccomment">/// Converts the AbsentEntry into a mutable reference to the underlying
     /// table.
-    </span><span class="kw">pub fn </span>into_table(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt; {
+    </span><span class="kw">pub fn </span>into_table(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>HashTable&lt;T, A&gt; {
         <span class="self">self</span>.table
     }
 }
 
 <span class="doccomment">/// An iterator over the entries of a `HashTable` in arbitrary order.
-/// The iterator element type is `&amp;&#39;a T`.
+/// The iterator element type is `&amp;'a T`.
 ///
 /// This `struct` is created by the [`iter`] method on [`HashTable`]. See its
 /// documentation for more.
 ///
 /// [`iter`]: struct.HashTable.html#method.iter
 /// [`HashTable`]: struct.HashTable.html
-</span><span class="kw">pub struct </span>Iter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+</span><span class="kw">pub struct </span>Iter&lt;<span class="lifetime">'a</span>, T&gt; {
     inner: RawIter&lt;T&gt;,
-    marker: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T&gt;,
+    marker: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>T&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; Iterator <span class="kw">for </span>Iter&lt;<span class="lifetime">&#39;a</span>, T&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T&gt; Iterator <span class="kw">for </span>Iter&lt;<span class="lifetime">'a</span>, T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="comment">// Avoid `Option::map` because it bloats LLVM IR.
@@ -3946,29 +3958,29 @@
     }
 }
 
-<span class="kw">impl</span>&lt;T&gt; ExactSizeIterator <span class="kw">for </span>Iter&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+<span class="kw">impl</span>&lt;T&gt; ExactSizeIterator <span class="kw">for </span>Iter&lt;<span class="lifetime">'_</span>, T&gt; {
     <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.inner.len()
     }
 }
 
-<span class="kw">impl</span>&lt;T&gt; FusedIterator <span class="kw">for </span>Iter&lt;<span class="lifetime">&#39;_</span>, T&gt; {}
+<span class="kw">impl</span>&lt;T&gt; FusedIterator <span class="kw">for </span>Iter&lt;<span class="lifetime">'_</span>, T&gt; {}
 
 <span class="doccomment">/// A mutable iterator over the entries of a `HashTable` in arbitrary order.
-/// The iterator element type is `&amp;&#39;a mut T`.
+/// The iterator element type is `&amp;'a mut T`.
 ///
 /// This `struct` is created by the [`iter_mut`] method on [`HashTable`]. See its
 /// documentation for more.
 ///
 /// [`iter_mut`]: struct.HashTable.html#method.iter_mut
 /// [`HashTable`]: struct.HashTable.html
-</span><span class="kw">pub struct </span>IterMut&lt;<span class="lifetime">&#39;a</span>, T&gt; {
+</span><span class="kw">pub struct </span>IterMut&lt;<span class="lifetime">'a</span>, T&gt; {
     inner: RawIter&lt;T&gt;,
-    marker: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T&gt;,
+    marker: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>T&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T&gt; Iterator <span class="kw">for </span>IterMut&lt;<span class="lifetime">&#39;a</span>, T&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T;
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T&gt; Iterator <span class="kw">for </span>IterMut&lt;<span class="lifetime">'a</span>, T&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>T;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="comment">// Avoid `Option::map` because it bloats LLVM IR.
@@ -3992,13 +4004,13 @@
     }
 }
 
-<span class="kw">impl</span>&lt;T&gt; ExactSizeIterator <span class="kw">for </span>IterMut&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+<span class="kw">impl</span>&lt;T&gt; ExactSizeIterator <span class="kw">for </span>IterMut&lt;<span class="lifetime">'_</span>, T&gt; {
     <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.inner.len()
     }
 }
 
-<span class="kw">impl</span>&lt;T&gt; FusedIterator <span class="kw">for </span>IterMut&lt;<span class="lifetime">&#39;_</span>, T&gt; {}
+<span class="kw">impl</span>&lt;T&gt; FusedIterator <span class="kw">for </span>IterMut&lt;<span class="lifetime">'_</span>, T&gt; {}
 
 <span class="doccomment">/// An owning iterator over the entries of a `HashTable` in arbitrary order.
 /// The iterator element type is `T`.
@@ -4058,13 +4070,13 @@
 ///
 /// [`HashTable`]: struct.HashTable.html
 /// [`drain`]: struct.HashTable.html#method.drain
-</span><span class="kw">pub struct </span>Drain&lt;<span class="lifetime">&#39;a</span>, T, A: Allocator = Global&gt; {
-    inner: RawDrain&lt;<span class="lifetime">&#39;a</span>, T, A&gt;,
+</span><span class="kw">pub struct </span>Drain&lt;<span class="lifetime">'a</span>, T, A: Allocator = Global&gt; {
+    inner: RawDrain&lt;<span class="lifetime">'a</span>, T, A&gt;,
 }
 
-<span class="kw">impl</span>&lt;T, A: Allocator&gt; Drain&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {
+<span class="kw">impl</span>&lt;T, A: Allocator&gt; Drain&lt;<span class="lifetime">'_</span>, T, A&gt; {
     <span class="doccomment">/// Returns a iterator of references over the remaining items.
-    </span><span class="kw">fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;_</span>, T&gt; {
+    </span><span class="kw">fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">'_</span>, T&gt; {
         Iter {
             inner: <span class="self">self</span>.inner.iter(),
             marker: PhantomData,
@@ -4072,7 +4084,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;T, A: Allocator&gt; Iterator <span class="kw">for </span>Drain&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {
+<span class="kw">impl</span>&lt;T, A: Allocator&gt; Iterator <span class="kw">for </span>Drain&lt;<span class="lifetime">'_</span>, T, A&gt; {
     <span class="kw">type </span>Item = T;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
@@ -4082,33 +4094,33 @@
         <span class="self">self</span>.inner.size_hint()
     }
 }
-<span class="kw">impl</span>&lt;T, A: Allocator&gt; ExactSizeIterator <span class="kw">for </span>Drain&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {
+<span class="kw">impl</span>&lt;T, A: Allocator&gt; ExactSizeIterator <span class="kw">for </span>Drain&lt;<span class="lifetime">'_</span>, T, A&gt; {
     <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.inner.len()
     }
 }
-<span class="kw">impl</span>&lt;T, A: Allocator&gt; FusedIterator <span class="kw">for </span>Drain&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {}
+<span class="kw">impl</span>&lt;T, A: Allocator&gt; FusedIterator <span class="kw">for </span>Drain&lt;<span class="lifetime">'_</span>, T, A&gt; {}
 
-<span class="kw">impl</span>&lt;T: fmt::Debug, A: Allocator&gt; fmt::Debug <span class="kw">for </span>Drain&lt;<span class="lifetime">&#39;_</span>, T, A&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+<span class="kw">impl</span>&lt;T: fmt::Debug, A: Allocator&gt; fmt::Debug <span class="kw">for </span>Drain&lt;<span class="lifetime">'_</span>, T, A&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         f.debug_list().entries(<span class="self">self</span>.iter()).finish()
     }
 }
 
-<span class="doccomment">/// A draining iterator over entries of a `HashTable` which don&#39;t satisfy the predicate `f`.
+<span class="doccomment">/// A draining iterator over entries of a `HashTable` which don't satisfy the predicate `f`.
 ///
 /// This `struct` is created by [`HashTable::extract_if`]. See its
 /// documentation for more.
-</span><span class="attr">#[must_use = <span class="string">&quot;Iterators are lazy unless consumed&quot;</span>]
-</span><span class="kw">pub struct </span>ExtractIf&lt;<span class="lifetime">&#39;a</span>, T, F, A: Allocator = Global&gt;
+</span><span class="attr">#[must_use = <span class="string">"Iterators are lazy unless consumed"</span>]
+</span><span class="kw">pub struct </span>ExtractIf&lt;<span class="lifetime">'a</span>, T, F, A: Allocator = Global&gt;
 <span class="kw">where
     </span>F: FnMut(<span class="kw-2">&amp;mut </span>T) -&gt; bool,
 {
     f: F,
-    inner: RawExtractIf&lt;<span class="lifetime">&#39;a</span>, T, A&gt;,
+    inner: RawExtractIf&lt;<span class="lifetime">'a</span>, T, A&gt;,
 }
 
-<span class="kw">impl</span>&lt;T, F, A: Allocator&gt; Iterator <span class="kw">for </span>ExtractIf&lt;<span class="lifetime">&#39;_</span>, T, F, A&gt;
+<span class="kw">impl</span>&lt;T, F, A: Allocator&gt; Iterator <span class="kw">for </span>ExtractIf&lt;<span class="lifetime">'_</span>, T, F, A&gt;
 <span class="kw">where
     </span>F: FnMut(<span class="kw-2">&amp;mut </span>T) -&gt; bool,
 {
@@ -4125,5 +4137,5 @@
     }
 }
 
-<span class="kw">impl</span>&lt;T, F, A: Allocator&gt; FusedIterator <span class="kw">for </span>ExtractIf&lt;<span class="lifetime">&#39;_</span>, T, F, A&gt; <span class="kw">where </span>F: FnMut(<span class="kw-2">&amp;mut </span>T) -&gt; bool {}
+<span class="kw">impl</span>&lt;T, F, A: Allocator&gt; FusedIterator <span class="kw">for </span>ExtractIf&lt;<span class="lifetime">'_</span>, T, F, A&gt; <span class="kw">where </span>F: FnMut(<span class="kw-2">&amp;mut </span>T) -&gt; bool {}
 </code></pre></div></section></main></body></html>

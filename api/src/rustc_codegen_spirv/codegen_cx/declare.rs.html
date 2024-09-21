@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/declare.rs`."><title>declare.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/declare.rs`."><title>declare.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -365,6 +365,9 @@
 <a href="#365" id="365">365</a>
 <a href="#366" id="366">366</a>
 <a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::CodegenCx;
 <span class="kw">use </span><span class="kw">crate</span>::abi::ConvSpirvType;
 <span class="kw">use </span><span class="kw">crate</span>::attr::AggregatedSpirvAttributes;
@@ -401,9 +404,9 @@
     control
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="doccomment">/// Returns a function if it already exists, or declares a header if it doesn&#39;t.
-    </span><span class="kw">pub fn </span>get_fn_ext(<span class="kw-2">&amp;</span><span class="self">self</span>, instance: Instance&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; SpirvValue {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="doccomment">/// Returns a function if it already exists, or declares a header if it doesn't.
+    </span><span class="kw">pub fn </span>get_fn_ext(<span class="kw-2">&amp;</span><span class="self">self</span>, instance: Instance&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; SpirvValue {
         <span class="macro">assert!</span>(!instance.args.has_infer());
         <span class="macro">assert!</span>(!instance.args.has_escaping_bound_vars());
 
@@ -411,7 +414,7 @@
             <span class="kw">return </span>func;
         }
 
-        <span class="comment">// Because we&#39;ve already declared everything with predefine_fn, if we hit this branch, we&#39;re guaranteed to be
+        <span class="comment">// Because we've already declared everything with predefine_fn, if we hit this branch, we're guaranteed to be
         // importing this function from elsewhere. So, slap an extern on it.
         </span><span class="kw">let </span>linkage = <span class="prelude-val">Some</span>(LinkageType::Import);
         <span class="kw">let </span>llfn = <span class="self">self</span>.declare_fn_ext(instance, linkage);
@@ -425,23 +428,25 @@
     // MiscMethods::get_fn -&gt; get_fn_ext -&gt; declare_fn_ext
     // MiscMethods::get_fn_addr -&gt; get_fn_ext -&gt; declare_fn_ext
     // PreDefineMethods::predefine_fn -&gt; declare_fn_ext
-    </span><span class="kw">fn </span>declare_fn_ext(<span class="kw-2">&amp;</span><span class="self">self</span>, instance: Instance&lt;<span class="lifetime">&#39;tcx</span>&gt;, linkage: <span class="prelude-ty">Option</span>&lt;LinkageType&gt;) -&gt; SpirvValue {
-        <span class="kw">let </span>control = attrs_to_spirv(<span class="self">self</span>.tcx.codegen_fn_attrs(instance.def_id()));
+    </span><span class="kw">fn </span>declare_fn_ext(<span class="kw-2">&amp;</span><span class="self">self</span>, instance: Instance&lt;<span class="lifetime">'tcx</span>&gt;, linkage: <span class="prelude-ty">Option</span>&lt;LinkageType&gt;) -&gt; SpirvValue {
+        <span class="kw">let </span>def_id = instance.def_id();
+
+        <span class="kw">let </span>control = attrs_to_spirv(<span class="self">self</span>.tcx.codegen_fn_attrs(def_id));
         <span class="kw">let </span>fn_abi = <span class="self">self</span>.fn_abi_of_instance(instance, ty::List::empty());
-        <span class="kw">let </span>span = <span class="self">self</span>.tcx.def_span(instance.def_id());
+        <span class="kw">let </span>span = <span class="self">self</span>.tcx.def_span(def_id);
         <span class="kw">let </span>function_type = fn_abi.spirv_type(span, <span class="self">self</span>);
         <span class="kw">let </span>(return_type, argument_types) = <span class="kw">match </span><span class="self">self</span>.lookup_type(function_type) {
             SpirvType::Function {
                 return_type,
                 arguments,
             } =&gt; (return_type, arguments),
-            other =&gt; <span class="macro">bug!</span>(<span class="string">&quot;fn_abi type {}&quot;</span>, other.debug(function_type, <span class="self">self</span>)),
+            other =&gt; <span class="macro">bug!</span>(<span class="string">"fn_abi type {}"</span>, other.debug(function_type, <span class="self">self</span>)),
         };
 
         <span class="kw">if </span><span class="kw">crate</span>::is_blocklisted_fn(<span class="self">self</span>.tcx, <span class="kw-2">&amp;</span><span class="self">self</span>.sym, instance) {
             <span class="comment">// This can happen if we call a blocklisted function in another crate.
             </span><span class="kw">let </span>result = <span class="self">self</span>.undef(function_type);
-            <span class="self">self</span>.zombie_with_span(result.def_cx(<span class="self">self</span>), span, <span class="string">&quot;called blocklisted fn&quot;</span>);
+            <span class="self">self</span>.zombie_with_span(result.def_cx(<span class="self">self</span>), span, <span class="string">"called blocklisted fn"</span>);
             <span class="kw">return </span>result;
         }
         <span class="kw">let </span>fn_id = {
@@ -466,7 +471,7 @@
         // which prevents us from attaching `OpLine`s to `OpFunction` definitions,
         // but we can use our custom `SrcLocDecoration` instead.
         </span><span class="kw">let </span>src_loc_inst = SrcLocDecoration::from_rustc_span(
-            <span class="self">self</span>.tcx.def_ident_span(instance.def_id()).unwrap_or(span),
+            <span class="self">self</span>.tcx.def_ident_span(def_id).unwrap_or(span),
             <span class="kw-2">&amp;</span><span class="self">self</span>.builder,
         )
         .map(|src_loc| src_loc.encode_to_inst(fn_id));
@@ -484,7 +489,7 @@
         // is always a valid identifier, we may have to offer the mangled name
         // (as some sort of opt-in, or toggled based on the platform, etc.).
         </span><span class="kw">let </span>symbol_name = <span class="self">self</span>.tcx.symbol_name(instance).name;
-        <span class="kw">let </span>demangled_symbol_name = <span class="macro">format!</span>(<span class="string">&quot;{:#}&quot;</span>, rustc_demangle::demangle(symbol_name));
+        <span class="kw">let </span>demangled_symbol_name = <span class="macro">format!</span>(<span class="string">"{:#}"</span>, rustc_demangle::demangle(symbol_name));
         <span class="self">self</span>.emit_global().name(fn_id, <span class="kw-2">&amp;</span>demangled_symbol_name);
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(linkage) = linkage {
@@ -495,12 +500,12 @@
 
         <span class="kw">let </span>attrs = AggregatedSpirvAttributes::parse(
             <span class="self">self</span>,
-            <span class="kw">match </span><span class="self">self</span>.tcx.def_kind(instance.def_id()) {
+            <span class="kw">match </span><span class="self">self</span>.tcx.def_kind(def_id) {
                 <span class="comment">// This was made to ICE cross-crate at some point, but then got
                 // reverted in https://github.com/rust-lang/rust/pull/111381.
                 // FIXME(eddyb) remove this workaround once we rustup past that.
                 </span>DefKind::Closure =&gt; <span class="kw-2">&amp;</span>[],
-                <span class="kw">_ </span>=&gt; <span class="self">self</span>.tcx.get_attrs_unchecked(instance.def_id()),
+                <span class="kw">_ </span>=&gt; <span class="self">self</span>.tcx.get_attrs_unchecked(def_id),
             },
         );
         <span class="kw">if let </span><span class="prelude-val">Some</span>(entry) = attrs.entry.map(|attr| attr.value) {
@@ -510,32 +515,33 @@
                 .map_or_else(|| instance.to_string(), ToString::to_string);
             <span class="self">self</span>.entry_stub(<span class="kw-2">&amp;</span>instance, fn_abi, declared, entry_name, entry);
         }
-        <span class="kw">if </span>attrs.buffer_load_intrinsic.is_some() {
+
+        <span class="comment">// FIXME(eddyb) should the maps exist at all, now that the `DefId` is known
+        // at `call` time, and presumably its high-level details can be looked up?
+        </span><span class="kw">if </span>attrs.buffer_load_intrinsic.is_some() {
             <span class="kw">let </span>mode = <span class="kw-2">&amp;</span>fn_abi.ret.mode;
-            <span class="self">self</span>.buffer_load_intrinsic_fn_id
+            <span class="self">self</span>.buffer_load_intrinsics
                 .borrow_mut()
-                .insert(fn_id, mode);
+                .insert(def_id, mode);
         }
         <span class="kw">if </span>attrs.buffer_store_intrinsic.is_some() {
             <span class="kw">let </span>mode = <span class="kw-2">&amp;</span>fn_abi.args.last().unwrap().mode;
-            <span class="self">self</span>.buffer_store_intrinsic_fn_id
+            <span class="self">self</span>.buffer_store_intrinsics
                 .borrow_mut()
-                .insert(fn_id, mode);
+                .insert(def_id, mode);
         }
 
-        <span class="kw">let </span>instance_def_id = instance.def_id();
-
-        <span class="kw">if </span><span class="self">self</span>.tcx.crate_name(instance_def_id.krate) == <span class="self">self</span>.sym.libm {
-            <span class="kw">let </span>item_name = <span class="self">self</span>.tcx.item_name(instance_def_id);
+        <span class="kw">if </span><span class="self">self</span>.tcx.crate_name(def_id.krate) == <span class="self">self</span>.sym.libm {
+            <span class="kw">let </span>item_name = <span class="self">self</span>.tcx.item_name(def_id);
             <span class="kw">let </span>intrinsic = <span class="self">self</span>.sym.libm_intrinsics.get(<span class="kw-2">&amp;</span>item_name);
-            <span class="kw">if </span><span class="self">self</span>.tcx.visibility(instance.def_id()) == ty::Visibility::Public {
+            <span class="kw">if </span><span class="self">self</span>.tcx.visibility(def_id) == ty::Visibility::Public {
                 <span class="kw">match </span>intrinsic {
                     <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>intrinsic) =&gt; {
-                        <span class="self">self</span>.libm_intrinsics.borrow_mut().insert(fn_id, intrinsic);
+                        <span class="self">self</span>.libm_intrinsics.borrow_mut().insert(def_id, intrinsic);
                     }
                     <span class="prelude-val">None </span>=&gt; {
-                        <span class="self">self</span>.tcx.sess.err(<span class="macro">format!</span>(
-                            <span class="string">&quot;missing libm intrinsic {symbol_name}, which is {instance}&quot;
+                        <span class="self">self</span>.tcx.dcx().err(<span class="macro">format!</span>(
+                            <span class="string">"missing libm intrinsic {symbol_name}, which is {instance}"
                         </span>));
                     }
                 }
@@ -546,16 +552,16 @@
             <span class="self">self</span>.tcx.lang_items().panic_fn(),
             <span class="self">self</span>.tcx.lang_items().panic_fmt(),
         ]
-        .contains(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(instance_def_id))
+        .contains(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(def_id))
         {
-            <span class="self">self</span>.panic_entry_point_ids.borrow_mut().insert(fn_id);
+            <span class="self">self</span>.panic_entry_points.borrow_mut().insert(def_id);
         }
 
         <span class="comment">// HACK(eddyb) there is no good way to identify these definitions
-        // (e.g. no `#[lang = &quot;...&quot;]` attribute), but this works well enough.
+        // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
         </span><span class="kw">if </span>[
-            <span class="string">&quot;&lt;core::fmt::Arguments&gt;::new_v1&quot;</span>,
-            <span class="string">&quot;&lt;core::fmt::Arguments&gt;::new_const&quot;</span>,
+            <span class="string">"&lt;core::fmt::Arguments&gt;::new_v1"</span>,
+            <span class="string">"&lt;core::fmt::Arguments&gt;::new_const"</span>,
         ]
         .contains(&amp;&amp;demangled_symbol_name[..])
         {
@@ -563,20 +569,20 @@
         }
 
         <span class="comment">// HACK(eddyb) there is no good way to identify these definitions
-        // (e.g. no `#[lang = &quot;...&quot;]` attribute), but this works well enough.
-        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(suffix) = demangled_symbol_name.strip_prefix(<span class="string">&quot;&lt;core::fmt::rt::Argument&gt;::new_&quot;</span>)
+        // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(suffix) = demangled_symbol_name.strip_prefix(<span class="string">"&lt;core::fmt::rt::Argument&gt;::new_"</span>)
         {
-            <span class="kw">let </span>spec = suffix.split_once(<span class="string">&quot;::&lt;&quot;</span>).and_then(|(method_suffix, <span class="kw">_</span>)| {
+            <span class="kw">let </span>spec = suffix.split_once(<span class="string">"::&lt;"</span>).and_then(|(method_suffix, <span class="kw">_</span>)| {
                 <span class="prelude-val">Some</span>(<span class="kw">match </span>method_suffix {
-                    <span class="string">&quot;display&quot; </span>=&gt; <span class="string">&#39; &#39;</span>,
-                    <span class="string">&quot;debug&quot; </span>=&gt; <span class="string">&#39;?&#39;</span>,
-                    <span class="string">&quot;octal&quot; </span>=&gt; <span class="string">&#39;o&#39;</span>,
-                    <span class="string">&quot;lower_hex&quot; </span>=&gt; <span class="string">&#39;x&#39;</span>,
-                    <span class="string">&quot;upper_hex&quot; </span>=&gt; <span class="string">&#39;X&#39;</span>,
-                    <span class="string">&quot;pointer&quot; </span>=&gt; <span class="string">&#39;p&#39;</span>,
-                    <span class="string">&quot;binary&quot; </span>=&gt; <span class="string">&#39;b&#39;</span>,
-                    <span class="string">&quot;lower_exp&quot; </span>=&gt; <span class="string">&#39;e&#39;</span>,
-                    <span class="string">&quot;upper_exp&quot; </span>=&gt; <span class="string">&#39;E&#39;</span>,
+                    <span class="string">"display" </span>=&gt; <span class="string">' '</span>,
+                    <span class="string">"debug" </span>=&gt; <span class="string">'?'</span>,
+                    <span class="string">"octal" </span>=&gt; <span class="string">'o'</span>,
+                    <span class="string">"lower_hex" </span>=&gt; <span class="string">'x'</span>,
+                    <span class="string">"upper_hex" </span>=&gt; <span class="string">'X'</span>,
+                    <span class="string">"pointer" </span>=&gt; <span class="string">'p'</span>,
+                    <span class="string">"binary" </span>=&gt; <span class="string">'b'</span>,
+                    <span class="string">"lower_exp" </span>=&gt; <span class="string">'e'</span>,
+                    <span class="string">"upper_exp" </span>=&gt; <span class="string">'E'</span>,
                     <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
                 })
             });
@@ -604,7 +610,7 @@
             .contains_key(<span class="kw-2">&amp;</span>MonoItem::Static(def_id));
         <span class="macro">assert!</span>(
             !defined_in_current_codegen_unit,
-            <span class="string">&quot;get_static() should always hit the cache for statics defined in the same CGU, but did not for `{def_id:?}`&quot;
+            <span class="string">"get_static() should always hit the cache for statics defined in the same CGU, but did not for `{def_id:?}`"
         </span>);
 
         <span class="kw">let </span>ty = instance.ty(<span class="self">self</span>.tcx, ParamEnv::reveal_all());
@@ -625,12 +631,12 @@
             .with_type(ptr_ty);
         <span class="comment">// TODO: These should be StorageClass::Private, so just zombie for now.
         // FIXME(eddyb) why zombie? this looks like it should just work nowadays.
-        </span><span class="self">self</span>.zombie_with_span(result.def_cx(<span class="self">self</span>), span, <span class="string">&quot;globals are not supported yet&quot;</span>);
+        </span><span class="self">self</span>.zombie_with_span(result.def_cx(<span class="self">self</span>), span, <span class="string">"globals are not supported yet"</span>);
         result
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; PreDefineMethods&lt;<span class="lifetime">&#39;tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; PreDefineMethods&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">fn </span>predefine_static(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         def_id: DefId,
@@ -646,8 +652,8 @@
             Linkage::External =&gt; <span class="prelude-val">Some</span>(LinkageType::Export),
             Linkage::Internal =&gt; <span class="prelude-val">None</span>,
             other =&gt; {
-                <span class="self">self</span>.tcx.sess.err(<span class="macro">format!</span>(
-                    <span class="string">&quot;TODO: Linkage type {other:?} not supported yet for static var symbol {symbol_name}&quot;
+                <span class="self">self</span>.tcx.dcx().err(<span class="macro">format!</span>(
+                    <span class="string">"TODO: Linkage type {other:?} not supported yet for static var symbol {symbol_name}"
                 </span>));
                 <span class="prelude-val">None
             </span>}
@@ -663,7 +669,7 @@
 
     <span class="kw">fn </span>predefine_fn(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        instance: Instance&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+        instance: Instance&lt;<span class="lifetime">'tcx</span>&gt;,
         linkage: Linkage,
         _visibility: Visibility,
         symbol_name: <span class="kw-2">&amp;</span>str,
@@ -671,12 +677,12 @@
         <span class="kw">let </span>linkage2 = <span class="kw">match </span>linkage {
             <span class="comment">// super sketchy hack: memcpy, memmove, memset, memcmp, and bcmp in the
             // compiler_builtins crate use the WeakAny linkage type. Treat it as actually External
-            // linkage because we know there&#39;s only one of them.
+            // linkage because we know there's only one of them.
             </span>Linkage::External | Linkage::WeakAny =&gt; <span class="prelude-val">Some</span>(LinkageType::Export),
             Linkage::Internal =&gt; <span class="prelude-val">None</span>,
             other =&gt; {
-                <span class="self">self</span>.tcx.sess.err(<span class="macro">format!</span>(
-                    <span class="string">&quot;TODO: Linkage type {other:?} not supported yet for function symbol {symbol_name}&quot;
+                <span class="self">self</span>.tcx.dcx().err(<span class="macro">format!</span>(
+                    <span class="string">"TODO: Linkage type {other:?} not supported yet for function symbol {symbol_name}"
                 </span>));
                 <span class="prelude-val">None
             </span>}
@@ -687,7 +693,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; StaticMethods <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; StaticMethods <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">fn </span>static_addr_of(<span class="kw-2">&amp;</span><span class="self">self</span>, cv: <span class="self">Self</span>::Value, _align: Align, _kind: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="self">Self</span>::Value {
         <span class="self">self</span>.def_constant(
             <span class="self">self</span>.type_ptr_to(cv.ty),
@@ -697,7 +703,7 @@
         )
     }
 
-    <span class="kw">fn </span>codegen_static(<span class="kw-2">&amp;</span><span class="self">self</span>, def_id: DefId, _is_mutable: bool) {
+    <span class="kw">fn </span>codegen_static(<span class="kw-2">&amp;</span><span class="self">self</span>, def_id: DefId) {
         <span class="kw">let </span>g = <span class="self">self</span>.get_static(def_id);
 
         <span class="kw">let </span>alloc = <span class="kw">match </span><span class="self">self</span>.tcx.eval_static_initializer(def_id) {
@@ -707,8 +713,8 @@
         };
         <span class="kw">let </span>value_ty = <span class="kw">match </span><span class="self">self</span>.lookup_type(g.ty) {
             SpirvType::Pointer { pointee } =&gt; pointee,
-            other =&gt; <span class="self">self</span>.tcx.sess.fatal(<span class="macro">format!</span>(
-                <span class="string">&quot;global had non-pointer type {}&quot;</span>,
+            other =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="macro">format!</span>(
+                <span class="string">"global had non-pointer type {}"</span>,
                 other.debug(g.ty, <span class="self">self</span>)
             )),
         };
@@ -718,7 +724,7 @@
             .set_global_initializer(g.def_cx(<span class="self">self</span>), v.def_cx(<span class="self">self</span>));
     }
 
-    <span class="doccomment">/// Mark the given global value as &quot;used&quot;, to prevent the compiler and linker from potentially
+    <span class="doccomment">/// Mark the given global value as "used", to prevent the compiler and linker from potentially
     /// removing a static variable that may otherwise appear unused.
     </span><span class="kw">fn </span>add_used_global(<span class="kw-2">&amp;</span><span class="self">self</span>, _global: <span class="self">Self</span>::Value) {
         <span class="comment">// TODO: Ignore for now.

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/util/prefilter/aho_corasick.rs`."><title>aho_corasick.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../regex_automata/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/util/prefilter/aho_corasick.rs`."><title>aho_corasick.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -154,9 +154,9 @@
 
 <span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>AhoCorasick {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>))]
+    <span class="attr">#[cfg(not(feature = <span class="string">"perf-literal-multisubstring"</span>))]
     </span>_unused: (),
-    <span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"perf-literal-multisubstring"</span>)]
     </span>ac: aho_corasick::AhoCorasick,
 }
 
@@ -165,21 +165,21 @@
         kind: MatchKind,
         needles: <span class="kw-2">&amp;</span>[B],
     ) -&gt; <span class="prelude-ty">Option</span>&lt;AhoCorasick&gt; {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"perf-literal-multisubstring"</span>))]
         </span>{
             <span class="prelude-val">None
         </span>}
-        <span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"perf-literal-multisubstring"</span>)]
         </span>{
             <span class="comment">// We used to use `aho_corasick::MatchKind::Standard` here when
             // `kind` was `MatchKind::All`, but this is not correct. The
-            // &quot;standard&quot; Aho-Corasick match semantics are to report a match
-            // immediately as soon as it is seen, but `All` isn&#39;t like that.
-            // In particular, with &quot;standard&quot; semantics, given the needles
-            // &quot;abc&quot; and &quot;b&quot; and the haystack &quot;abc,&quot; it would report a match
+            // "standard" Aho-Corasick match semantics are to report a match
+            // immediately as soon as it is seen, but `All` isn't like that.
+            // In particular, with "standard" semantics, given the needles
+            // "abc" and "b" and the haystack "abc," it would report a match
             // at offset 1 before a match at offset 0. This is never what we
             // want in the context of the regex engine, regardless of whether
-            // we have leftmost-first or &#39;all&#39; semantics. Namely, we always
+            // we have leftmost-first or 'all' semantics. Namely, we always
             // want the leftmost match.
             </span><span class="kw">let </span>ac_match_kind = <span class="kw">match </span>kind {
                 MatchKind::LeftmostFirst | MatchKind::All =&gt; {
@@ -219,7 +219,7 @@
             <span class="kw">let </span>ac = <span class="kw">match </span>result {
                 <span class="prelude-val">Ok</span>(ac) =&gt; ac,
                 <span class="prelude-val">Err</span>(_err) =&gt; {
-                    <span class="macro">debug!</span>(<span class="string">&quot;aho-corasick prefilter failed to build: {}&quot;</span>, _err);
+                    <span class="macro">debug!</span>(<span class="string">"aho-corasick prefilter failed to build: {}"</span>, _err);
                     <span class="kw">return </span><span class="prelude-val">None</span>;
                 }
             };
@@ -230,11 +230,11 @@
 
 <span class="kw">impl </span>PrefilterI <span class="kw">for </span>AhoCorasick {
     <span class="kw">fn </span>find(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; <span class="prelude-ty">Option</span>&lt;Span&gt; {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"perf-literal-multisubstring"</span>))]
         </span>{
             <span class="macro">unreachable!</span>()
         }
-        <span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"perf-literal-multisubstring"</span>)]
         </span>{
             <span class="kw">let </span>input =
                 aho_corasick::Input::new(haystack).span(span.start..span.end);
@@ -245,11 +245,11 @@
     }
 
     <span class="kw">fn </span>prefix(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; <span class="prelude-ty">Option</span>&lt;Span&gt; {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"perf-literal-multisubstring"</span>))]
         </span>{
             <span class="macro">unreachable!</span>()
         }
-        <span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"perf-literal-multisubstring"</span>)]
         </span>{
             <span class="kw">let </span>input = aho_corasick::Input::new(haystack)
                 .anchored(aho_corasick::Anchored::Yes)
@@ -261,37 +261,37 @@
     }
 
     <span class="kw">fn </span>memory_usage(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"perf-literal-multisubstring"</span>))]
         </span>{
             <span class="macro">unreachable!</span>()
         }
-        <span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"perf-literal-multisubstring"</span>)]
         </span>{
             <span class="self">self</span>.ac.memory_usage()
         }
     }
 
     <span class="kw">fn </span>is_fast(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"perf-literal-multisubstring"</span>))]
         </span>{
             <span class="macro">unreachable!</span>()
         }
-        <span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal-multisubstring&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"perf-literal-multisubstring"</span>)]
         </span>{
-            <span class="comment">// Aho-Corasick is never considered &quot;fast&quot; because it&#39;s never
+            <span class="comment">// Aho-Corasick is never considered "fast" because it's never
             // going to be even close to an order of magnitude faster than the
             // regex engine itself (assuming a DFA is used). In fact, it is
             // usually slower. The magic of Aho-Corasick is that it can search
             // a *large* number of literals with a relatively small amount of
             // memory. The regex engines are far more wasteful.
             //
-            // Aho-Corasick may be &quot;fast&quot; when the regex engine corresponds
-            // to, say, the PikeVM. That happens when the lazy DFA couldn&#39;t be
+            // Aho-Corasick may be "fast" when the regex engine corresponds
+            // to, say, the PikeVM. That happens when the lazy DFA couldn't be
             // built or used for some reason. But in these cases, the regex
-            // itself is likely quite big and we&#39;re probably hosed no matter
+            // itself is likely quite big and we're probably hosed no matter
             // what we do. (In this case, the best bet is for the caller to
             // increase some of the memory limits on the hybrid cache capacity
-            // and hope that&#39;s enough.)
+            // and hope that's enough.)
             </span><span class="bool-val">false
         </span>}
     }

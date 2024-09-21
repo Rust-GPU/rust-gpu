@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/elsa-1.10.0/src/index_map.rs`."><title>index_map.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="elsa" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../elsa/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/elsa-1.10.0/src/index_map.rs`."><title>index_map.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="elsa" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../elsa/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -357,7 +357,7 @@
     ///
     /// Existing values are never overwritten.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Hash`] and [`Eq`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -365,8 +365,8 @@
     /// ```
     /// use elsa::index_map::FrozenIndexMap;
     /// let map = FrozenIndexMap::new();
-    /// assert_eq!(map.insert(1, Box::new(&quot;a&quot;)), &amp;&quot;a&quot;);
-    /// assert_eq!(map.insert(1, Box::new(&quot;b&quot;)), &amp;&quot;a&quot;);
+    /// assert_eq!(map.insert(1, Box::new("a")), &amp;"a");
+    /// assert_eq!(map.insert(1, Box::new("b")), &amp;"a");
     /// ```
     </span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;</span><span class="self">self</span>, k: K, v: V) -&gt; <span class="kw-2">&amp;</span>V::Target {
         <span class="macro">assert!</span>(!<span class="self">self</span>.in_use.get());
@@ -388,7 +388,7 @@
     ///
     /// Existing values are never overwritten.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Hash`] and [`Eq`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -396,8 +396,8 @@
     /// ```
     /// use elsa::index_map::FrozenIndexMap;
     /// let map = FrozenIndexMap::new();
-    /// assert_eq!(map.insert_full(12, Box::new(&quot;a&quot;)), (0, &amp;&quot;a&quot;));
-    /// assert_eq!(map.insert_full(12, Box::new(&quot;b&quot;)), (0, &amp;&quot;a&quot;));
+    /// assert_eq!(map.insert_full(12, Box::new("a")), (0, &amp;"a"));
+    /// assert_eq!(map.insert_full(12, Box::new("b")), (0, &amp;"a"));
     /// ```
     </span><span class="kw">pub fn </span>insert_full(<span class="kw-2">&amp;</span><span class="self">self</span>, k: K, v: V) -&gt; (usize, <span class="kw-2">&amp;</span>V::Target) {
         <span class="macro">assert!</span>(!<span class="self">self</span>.in_use.get());
@@ -414,7 +414,7 @@
 
     <span class="doccomment">/// Returns a reference to the value corresponding to the key.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Hash`] and [`Eq`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -424,8 +424,8 @@
     /// use elsa::FrozenIndexMap;
     ///
     /// let map = FrozenIndexMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// assert_eq!(map.get(&amp;1), Some(&amp;&quot;a&quot;));
+    /// map.insert(1, Box::new("a"));
+    /// assert_eq!(map.get(&amp;1), Some(&amp;"a"));
     /// assert_eq!(map.get(&amp;2), None);
     /// ```
     </span><span class="kw">pub fn </span>get&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V::Target&gt;
@@ -445,7 +445,7 @@
 
     <span class="doccomment">/// Returns a reference to the key-value mapping corresponding to an index.
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Hash`] and [`Eq`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -455,9 +455,9 @@
     /// use elsa::index_map::FrozenIndexMap;
     ///
     /// let map = FrozenIndexMap::new();
-    /// let (idx, _ref) = map.insert_full(Box::new(&quot;foo&quot;), Box::new(&quot;a&quot;));
+    /// let (idx, _ref) = map.insert_full(Box::new("foo"), Box::new("a"));
     /// assert_eq!(idx, 0);
-    /// assert_eq!(map.get_index(idx), Some((&amp;&quot;foo&quot;, &amp;&quot;a&quot;)));
+    /// assert_eq!(map.get_index(idx), Some((&amp;"foo", &amp;"a")));
     /// assert_eq!(map.get_index(idx + 1), None);
     /// ```
     </span><span class="kw">pub fn </span>get_index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>K::Target, <span class="kw-2">&amp;</span>V::Target)&gt;
@@ -476,7 +476,7 @@
 
     <span class="doccomment">/// Applies a function to the owner of the value corresponding to the key (if any).
     ///
-    /// The key may be any borrowed form of the map&#39;s key type, but
+    /// The key may be any borrowed form of the map's key type, but
     /// [`Hash`] and [`Eq`] on the borrowed form *must* match those for
     /// the key type.
     ///
@@ -486,8 +486,8 @@
     /// use elsa::FrozenIndexMap;
     ///
     /// let map = FrozenIndexMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// assert_eq!(map.map_get(&amp;1, Clone::clone), Some(Box::new(&quot;a&quot;)));
+    /// map.insert(1, Box::new("a"));
+    /// assert_eq!(map.map_get(&amp;1, Clone::clone), Some(Box::new("a")));
     /// assert_eq!(map.map_get(&amp;2, Clone::clone), None);
     /// ```
     </span><span class="kw">pub fn </span>map_get&lt;Q: <span class="question-mark">?</span>Sized, T, F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q, f: F) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
@@ -518,11 +518,11 @@
     /// use elsa::FrozenIndexMap;
     ///
     /// let map = FrozenIndexMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// map.insert(2, Box::new(&quot;b&quot;));
+    /// map.insert(1, Box::new("a"));
+    /// map.insert(2, Box::new("b"));
     /// let tuple_vec = map.into_tuple_vec();
     ///
-    /// assert_eq!(tuple_vec, vec![(1, Box::new(&quot;a&quot;)), (2, Box::new(&quot;b&quot;))]);
+    /// assert_eq!(tuple_vec, vec![(1, Box::new("a")), (2, Box::new("b"))]);
     /// ```
     </span><span class="kw">pub fn </span>into_tuple_vec(<span class="self">self</span>) -&gt; Vec&lt;(K, V)&gt; {
         <span class="self">self</span>.map.into_inner().into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
@@ -535,7 +535,7 @@
     <span class="doccomment">/// Get mutable access to the underlying [`IndexMap`].
     ///
     /// This is safe, as it requires a `&amp;mut self`, ensuring nothing is using
-    /// the &#39;frozen&#39; contents.
+    /// the 'frozen' contents.
     </span><span class="kw">pub fn </span>as_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>IndexMap&lt;K, V, S&gt; {
         <span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.map.get() }
     }
@@ -577,12 +577,12 @@
     /// use elsa::FrozenIndexMap;
     ///
     /// let map = FrozenIndexMap::new();
-    /// map.insert(1, Box::new(&quot;a&quot;));
-    /// assert_eq!(map[&amp;1], &quot;a&quot;);
+    /// map.insert(1, Box::new("a"));
+    /// assert_eq!(map[&amp;1], "a");
     /// ```
     </span><span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, idx: <span class="kw-2">&amp;</span>Q) -&gt; <span class="kw-2">&amp;</span>V::Target {
         <span class="self">self</span>.get(<span class="kw-2">&amp;</span>idx)
-            .expect(<span class="string">&quot;attempted to index FrozenIndexMap with unknown key&quot;</span>)
+            .expect(<span class="string">"attempted to index FrozenIndexMap with unknown key"</span>)
     }
 }
 

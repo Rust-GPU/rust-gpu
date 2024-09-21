@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/spirv_type.rs`."><title>spirv_type.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../rustc_codegen_spirv/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/spirv_type.rs`."><title>spirv_type.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -808,6 +808,11 @@
 <a href="#808" id="808">808</a>
 <a href="#809" id="809">809</a>
 <a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::abi::{RecursivePointeeCache, TyLayoutNameKey};
 <span class="kw">use </span><span class="kw">crate</span>::builder_spirv::SpirvValue;
 <span class="kw">use </span><span class="kw">crate</span>::codegen_cx::CodegenCx;
@@ -826,19 +831,19 @@
 
 <span class="doccomment">/// Spir-v types are represented as simple Words, which are the `result_id` of instructions like
 /// `OpTypeInteger`. Sometimes, however, we want to inspect one of these Words and ask questions
-/// like &quot;Is this an `OpTypeInteger`? How many bits does it have?&quot;. This struct holds all of that
+/// like "Is this an `OpTypeInteger`? How many bits does it have?". This struct holds all of that
 /// information. All types that are emitted are registered in `CodegenCx`, so you can always look
-/// up the definition of a `Word` via `cx.lookup_type`. Note that this type doesn&#39;t actually store
+/// up the definition of a `Word` via `cx.lookup_type`. Note that this type doesn't actually store
 /// the `result_id` of the type declaration instruction, merely the contents.
 </span><span class="comment">//
-// FIXME(eddyb) should `SpirvType`s be behind `&amp;&#39;tcx` from `tcx.arena.dropless`?
-</span><span class="attr">#[derive(Copy, Clone, Debug, PartialEq, Eq, Ord, PartialOrd, Hash)]
-</span><span class="kw">pub enum </span>SpirvType&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+// FIXME(eddyb) should `SpirvType`s be behind `&amp;'tcx` from `tcx.arena.dropless`?
+</span><span class="attr">#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+</span><span class="kw">pub enum </span>SpirvType&lt;<span class="lifetime">'tcx</span>&gt; {
     Void,
     Bool,
     Integer(u32, bool),
     Float(u32),
-    <span class="doccomment">/// This uses the rustc definition of &quot;adt&quot;, i.e. a struct, enum, or union
+    <span class="doccomment">/// This uses the rustc definition of "adt", i.e. a struct, enum, or union
     </span>Adt {
         <span class="doccomment">/// Not emitted into SPIR-V, but used to avoid too much deduplication,
         /// which could result in one SPIR-V `OpType*` having many names
@@ -847,9 +852,9 @@
 
         align: Align,
         size: <span class="prelude-ty">Option</span>&lt;Size&gt;,
-        field_types: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>[Word],
-        field_offsets: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>[Size],
-        field_names: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>[Symbol]&gt;,
+        field_types: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>[Word],
+        field_offsets: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>[Size],
+        field_names: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>[Symbol]&gt;,
     },
     Vector {
         element: Word,
@@ -874,7 +879,7 @@
     },
     Function {
         return_type: Word,
-        arguments: <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>[Word],
+        arguments: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>[Word],
     },
     Image {
         sampled_type: Word,
@@ -900,10 +905,10 @@
     RayQueryKhr,
 }
 
-<span class="kw">impl </span>SpirvType&lt;<span class="lifetime">&#39;_</span>&gt; {
+<span class="kw">impl </span>SpirvType&lt;<span class="lifetime">'_</span>&gt; {
     <span class="doccomment">/// Note: `Builder::type_*` should be called *nowhere else* but here, to ensure
     /// `CodegenCx::type_defs` stays up-to-date
-    </span><span class="kw">pub fn </span>def(<span class="self">self</span>, def_span: Span, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Word {
+    </span><span class="kw">pub fn </span>def(<span class="self">self</span>, def_span: Span, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'_</span>&gt;) -&gt; Word {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(cached) = cx.type_cache.get(<span class="kw-2">&amp;</span><span class="self">self</span>) {
             <span class="kw">return </span>cached;
         }
@@ -913,28 +918,28 @@
             <span class="self">Self</span>::Bool =&gt; cx.emit_global().type_bool_id(id),
             <span class="self">Self</span>::Integer(width, signedness) =&gt; {
                 <span class="kw">let </span>result = cx.emit_global().type_int_id(id, width, signedness <span class="kw">as </span>u32);
-                <span class="kw">let </span>u_or_i = <span class="kw">if </span>signedness { <span class="string">&quot;i&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;u&quot; </span>};
+                <span class="kw">let </span>u_or_i = <span class="kw">if </span>signedness { <span class="string">"i" </span>} <span class="kw">else </span>{ <span class="string">"u" </span>};
                 <span class="kw">match </span>width {
                     <span class="number">8 </span><span class="kw">if </span>!cx.builder.has_capability(Capability::Int8) =&gt; cx.zombie_with_span(
                         result,
                         def_span,
-                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;`{u_or_i}8` without `OpCapability Int8`&quot;</span>),
+                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"`{u_or_i}8` without `OpCapability Int8`"</span>),
                     ),
                     <span class="number">16 </span><span class="kw">if </span>!cx.builder.has_capability(Capability::Int16) =&gt; cx.zombie_with_span(
                         result,
                         def_span,
-                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;`{u_or_i}16` without `OpCapability Int16`&quot;</span>),
+                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"`{u_or_i}16` without `OpCapability Int16`"</span>),
                     ),
                     <span class="number">64 </span><span class="kw">if </span>!cx.builder.has_capability(Capability::Int64) =&gt; cx.zombie_with_span(
                         result,
                         def_span,
-                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;`{u_or_i}64` without `OpCapability Int64`&quot;</span>),
+                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"`{u_or_i}64` without `OpCapability Int64`"</span>),
                     ),
                     <span class="number">8 </span>| <span class="number">16 </span>| <span class="number">32 </span>| <span class="number">64 </span>=&gt; {}
                     w =&gt; cx.zombie_with_span(
                         result,
                         def_span,
-                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;`{u_or_i}{w}` unsupported in SPIR-V&quot;</span>),
+                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"`{u_or_i}{w}` unsupported in SPIR-V"</span>),
                     ),
                 };
                 result
@@ -942,16 +947,21 @@
             <span class="self">Self</span>::Float(width) =&gt; {
                 <span class="kw">let </span>result = cx.emit_global().type_float_id(id, width);
                 <span class="kw">match </span>width {
+                    <span class="number">16 </span><span class="kw">if </span>!cx.builder.has_capability(Capability::Float16) =&gt; cx.zombie_with_span(
+                        result,
+                        def_span,
+                        <span class="string">"`f16` without `OpCapability Float16`"</span>,
+                    ),
                     <span class="number">64 </span><span class="kw">if </span>!cx.builder.has_capability(Capability::Float64) =&gt; cx.zombie_with_span(
                         result,
                         def_span,
-                        <span class="string">&quot;`f64` without `OpCapability Float64`&quot;</span>,
+                        <span class="string">"`f64` without `OpCapability Float64`"</span>,
                     ),
-                    <span class="number">32 </span>| <span class="number">64 </span>=&gt; (),
+                    <span class="number">16 </span>| <span class="number">32 </span>| <span class="number">64 </span>=&gt; (),
                     other =&gt; cx.zombie_with_span(
                         result,
                         def_span,
-                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;`f{other}` unsupported in SPIR-V&quot;</span>),
+                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"`f{other}` unsupported in SPIR-V"</span>),
                     ),
                 };
                 result
@@ -991,7 +1001,7 @@
                 </span><span class="kw">let </span>element_size = cx
                     .lookup_type(element)
                     .sizeof(cx)
-                    .expect(<span class="string">&quot;Element of sized array must be sized&quot;</span>)
+                    .expect(<span class="string">"Element of sized array must be sized"</span>)
                     .bytes();
                 <span class="kw">let </span><span class="kw-2">mut </span>emit = cx.emit_global();
                 <span class="kw">let </span>result = emit.type_array_id(id, element, count.def_cx(cx));
@@ -1009,7 +1019,7 @@
                 </span><span class="kw">let </span>element_size = cx
                     .lookup_type(element)
                     .sizeof(cx)
-                    .expect(<span class="string">&quot;Element of sized array must be sized&quot;</span>)
+                    .expect(<span class="string">"Element of sized array must be sized"</span>)
                     .bytes();
                 emit.decorate(
                     result,
@@ -1028,7 +1038,7 @@
                 <span class="comment">// no pointers to functions
                 </span><span class="kw">if let </span>SpirvType::Function { .. } = cx.lookup_type(pointee) {
                     <span class="comment">// FIXME(eddyb) use the `SPV_INTEL_function_pointers` extension.
-                    </span>cx.zombie_with_span(result, def_span, <span class="string">&quot;function pointer types are not allowed&quot;</span>);
+                    </span>cx.zombie_with_span(result, def_span, <span class="string">"function pointer types are not allowed"</span>);
                 }
                 result
             }
@@ -1085,7 +1095,7 @@
 
     <span class="doccomment">/// `def_with_id` is used by the `RecursivePointeeCache` to handle `OpTypeForwardPointer`: when
     /// emitting the subsequent `OpTypePointer`, the ID is already known and must be re-used.
-    </span><span class="kw">pub fn </span>def_with_id(<span class="self">self</span>, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;_</span>&gt;, def_span: Span, id: Word) -&gt; Word {
+    </span><span class="kw">pub fn </span>def_with_id(<span class="self">self</span>, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'_</span>&gt;, def_span: Span, id: Word) -&gt; Word {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(cached) = cx.type_cache.get(<span class="kw-2">&amp;</span><span class="self">self</span>) {
             <span class="macro">assert_eq!</span>(cached, id);
             <span class="kw">return </span>cached;
@@ -1101,25 +1111,25 @@
                 <span class="comment">// no pointers to functions
                 </span><span class="kw">if let </span>SpirvType::Function { .. } = cx.lookup_type(pointee) {
                     <span class="comment">// FIXME(eddyb) use the `SPV_INTEL_function_pointers` extension.
-                    </span>cx.zombie_with_span(result, def_span, <span class="string">&quot;function pointer types are not allowed&quot;</span>);
+                    </span>cx.zombie_with_span(result, def_span, <span class="string">"function pointer types are not allowed"</span>);
                 }
                 result
             }
             <span class="kw-2">ref </span>other =&gt; cx
                 .tcx
-                .sess
-                .fatal(<span class="macro">format!</span>(<span class="string">&quot;def_with_id invalid for type {other:?}&quot;</span>)),
+                .dcx()
+                .fatal(<span class="macro">format!</span>(<span class="string">"def_with_id invalid for type {other:?}"</span>)),
         };
         cx.type_cache_def(result, <span class="self">self</span>.tcx_arena_alloc_slices(cx), def_span);
         result
     }
 
     <span class="doccomment">/// In addition to `SpirvType::def`, also name the resulting type (with `OpName`).
-    </span><span class="kw">pub fn </span>def_with_name&lt;<span class="lifetime">&#39;tcx</span>&gt;(
+    </span><span class="kw">pub fn </span>def_with_name&lt;<span class="lifetime">'tcx</span>&gt;(
         <span class="self">self</span>,
-        cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+        cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
         def_span: Span,
-        name_key: TyLayoutNameKey&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+        name_key: TyLayoutNameKey&lt;<span class="lifetime">'tcx</span>&gt;,
     ) -&gt; Word {
         <span class="kw">let </span>id = <span class="self">self</span>.def(def_span, cx);
 
@@ -1132,7 +1142,7 @@
         id
     }
 
-    <span class="kw">pub fn </span>sizeof(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Size&gt; {
+    <span class="kw">pub fn </span>sizeof(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Size&gt; {
         <span class="kw">let </span>result = <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             <span class="comment">// Types that have a dynamic size, or no concept of size at all.
             </span><span class="self">Self</span>::Void | <span class="self">Self</span>::RuntimeArray { .. } | <span class="self">Self</span>::Function { .. } =&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
@@ -1159,7 +1169,7 @@
         <span class="prelude-val">Some</span>(result)
     }
 
-    <span class="kw">pub fn </span>alignof(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Align {
+    <span class="kw">pub fn </span>alignof(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'_</span>&gt;) -&gt; Align {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             <span class="comment">// Types that have no concept of size or alignment.
             </span><span class="self">Self</span>::Void | <span class="self">Self</span>::Function { .. } =&gt; Align::from_bytes(<span class="number">0</span>).unwrap(),
@@ -1170,10 +1180,10 @@
             <span class="comment">// Vectors have size==align
             </span><span class="self">Self</span>::Vector { .. } =&gt; Align::from_bytes(
                 <span class="self">self</span>.sizeof(cx)
-                    .expect(<span class="string">&quot;alignof: Vectors must be sized&quot;</span>)
+                    .expect(<span class="string">"alignof: Vectors must be sized"</span>)
                     .bytes(),
             )
-            .expect(<span class="string">&quot;alignof: Vectors must have power-of-2 size&quot;</span>),
+            .expect(<span class="string">"alignof: Vectors must have power-of-2 size"</span>),
             <span class="self">Self</span>::Array { element, .. }
             | <span class="self">Self</span>::RuntimeArray { element }
             | <span class="self">Self</span>::Matrix { element, .. } =&gt; cx.lookup_type(element).alignof(cx),
@@ -1188,15 +1198,15 @@
         }
     }
 
-    <span class="doccomment">/// Replace `&amp;[T]` fields with `&amp;&#39;tcx [T]` ones produced by calling
+    <span class="doccomment">/// Replace `&amp;[T]` fields with `&amp;'tcx [T]` ones produced by calling
     /// `tcx.arena.dropless.alloc_slice(...)` - this is done late for two reasons:
     /// 1. it avoids allocating in the arena when the cache would be hit anyway,
-    ///    which would create &quot;garbage&quot; (as in, unreachable allocations)
-    ///    (ideally these would also be interned, but that&#39;s even more refactors)
-    /// 2. an empty slice is disallowed (as it&#39;s usually handled as a special
-    ///    case elsewhere, e.g. `rustc`&#39;s `ty::List` - sadly we can&#39;t use that)
-    </span><span class="kw">fn </span>tcx_arena_alloc_slices&lt;<span class="lifetime">&#39;tcx</span>&gt;(<span class="self">self</span>, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; SpirvType&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-        <span class="kw">fn </span>arena_alloc_slice&lt;<span class="lifetime">&#39;tcx</span>, T: Copy&gt;(cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;, xs: <span class="kw-2">&amp;</span>[T]) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;tcx </span>[T] {
+    ///    which would create "garbage" (as in, unreachable allocations)
+    ///    (ideally these would also be interned, but that's even more refactors)
+    /// 2. an empty slice is disallowed (as it's usually handled as a special
+    ///    case elsewhere, e.g. `rustc`'s `ty::List` - sadly we can't use that)
+    </span><span class="kw">fn </span>tcx_arena_alloc_slices&lt;<span class="lifetime">'tcx</span>&gt;(<span class="self">self</span>, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; SpirvType&lt;<span class="lifetime">'tcx</span>&gt; {
+        <span class="kw">fn </span>arena_alloc_slice&lt;<span class="lifetime">'tcx</span>, T: Copy&gt;(cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;, xs: <span class="kw-2">&amp;</span>[T]) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>[T] {
             <span class="kw">if </span>xs.is_empty() {
                 <span class="kw-2">&amp;</span>[]
             } <span class="kw">else </span>{
@@ -1265,47 +1275,47 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; SpirvType&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; SpirvType&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Use this if you want a pretty type printing that recursively prints the types within (e.g. struct fields)
-    </span><span class="kw">pub fn </span>debug&lt;<span class="lifetime">&#39;tcx</span>&gt;(<span class="self">self</span>, id: Word, cx: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;) -&gt; SpirvTypePrinter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;tcx</span>&gt; {
+    </span><span class="kw">pub fn </span>debug&lt;<span class="lifetime">'tcx</span>&gt;(<span class="self">self</span>, id: Word, cx: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;) -&gt; SpirvTypePrinter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; {
         SpirvTypePrinter { ty: <span class="self">self</span>, id, cx }
     }
 }
 
-<span class="kw">pub struct </span>SpirvTypePrinter&lt;<span class="lifetime">&#39;a</span>, <span class="lifetime">&#39;tcx</span>&gt; {
+<span class="kw">pub struct </span>SpirvTypePrinter&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; {
     id: Word,
-    ty: SpirvType&lt;<span class="lifetime">&#39;a</span>&gt;,
-    cx: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+    ty: SpirvType&lt;<span class="lifetime">'a</span>&gt;,
+    cx: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
 }
 
 <span class="doccomment">/// Types can be recursive, e.g. a struct can contain a pointer to itself. So, we need to keep
 /// track of a stack of what types are currently being printed, to not infinitely loop.
-/// Unfortunately, unlike `fmt::Display`, we can&#39;t easily pass down the &quot;stack&quot; of
+/// Unfortunately, unlike `fmt::Display`, we can't easily pass down the "stack" of
 /// currently-being-printed types, so we use a global static.
 </span><span class="kw">static </span>DEBUG_STACK: LazyLock&lt;Mutex&lt;Vec&lt;Word&gt;&gt;&gt; = LazyLock::new(|| Mutex::new(Vec::new()));
 
-<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>SpirvTypePrinter&lt;<span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span>&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+<span class="kw">impl </span>fmt::Debug <span class="kw">for </span>SpirvTypePrinter&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         {
             <span class="kw">let </span><span class="kw-2">mut </span>debug_stack = DEBUG_STACK.lock().unwrap();
             <span class="kw">if </span>debug_stack.contains(<span class="kw-2">&amp;</span><span class="self">self</span>.id) {
-                <span class="kw">return </span><span class="macro">write!</span>(f, <span class="string">&quot;&lt;recursive type id={}&gt;&quot;</span>, <span class="self">self</span>.id);
+                <span class="kw">return </span><span class="macro">write!</span>(f, <span class="string">"&lt;recursive type id={}&gt;"</span>, <span class="self">self</span>.id);
             }
             debug_stack.push(<span class="self">self</span>.id);
         }
         <span class="kw">let </span>res = <span class="kw">match </span><span class="self">self</span>.ty {
-            SpirvType::Void =&gt; f.debug_struct(<span class="string">&quot;Void&quot;</span>).field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id).finish(),
-            SpirvType::Bool =&gt; f.debug_struct(<span class="string">&quot;Bool&quot;</span>).field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id).finish(),
+            SpirvType::Void =&gt; f.debug_struct(<span class="string">"Void"</span>).field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id).finish(),
+            SpirvType::Bool =&gt; f.debug_struct(<span class="string">"Bool"</span>).field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id).finish(),
             SpirvType::Integer(width, signedness) =&gt; f
-                .debug_struct(<span class="string">&quot;Integer&quot;</span>)
-                .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                .field(<span class="string">&quot;width&quot;</span>, <span class="kw-2">&amp;</span>width)
-                .field(<span class="string">&quot;signedness&quot;</span>, <span class="kw-2">&amp;</span>signedness)
+                .debug_struct(<span class="string">"Integer"</span>)
+                .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                .field(<span class="string">"width"</span>, <span class="kw-2">&amp;</span>width)
+                .field(<span class="string">"signedness"</span>, <span class="kw-2">&amp;</span>signedness)
                 .finish(),
             SpirvType::Float(width) =&gt; f
-                .debug_struct(<span class="string">&quot;Float&quot;</span>)
-                .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                .field(<span class="string">&quot;width&quot;</span>, <span class="kw-2">&amp;</span>width)
+                .debug_struct(<span class="string">"Float"</span>)
+                .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                .field(<span class="string">"width"</span>, <span class="kw-2">&amp;</span>width)
                 .finish(),
             SpirvType::Adt {
                 def_id,
@@ -1319,50 +1329,50 @@
                     .iter()
                     .map(|<span class="kw-2">&amp;</span>f| <span class="self">self</span>.cx.debug_type(f))
                     .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-                f.debug_struct(<span class="string">&quot;Adt&quot;</span>)
-                    .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                    .field(<span class="string">&quot;def_id&quot;</span>, <span class="kw-2">&amp;</span>def_id)
-                    .field(<span class="string">&quot;align&quot;</span>, <span class="kw-2">&amp;</span>align)
-                    .field(<span class="string">&quot;size&quot;</span>, <span class="kw-2">&amp;</span>size)
-                    .field(<span class="string">&quot;field_types&quot;</span>, <span class="kw-2">&amp;</span>fields)
-                    .field(<span class="string">&quot;field_offsets&quot;</span>, <span class="kw-2">&amp;</span>field_offsets)
-                    .field(<span class="string">&quot;field_names&quot;</span>, <span class="kw-2">&amp;</span>field_names)
+                f.debug_struct(<span class="string">"Adt"</span>)
+                    .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                    .field(<span class="string">"def_id"</span>, <span class="kw-2">&amp;</span>def_id)
+                    .field(<span class="string">"align"</span>, <span class="kw-2">&amp;</span>align)
+                    .field(<span class="string">"size"</span>, <span class="kw-2">&amp;</span>size)
+                    .field(<span class="string">"field_types"</span>, <span class="kw-2">&amp;</span>fields)
+                    .field(<span class="string">"field_offsets"</span>, <span class="kw-2">&amp;</span>field_offsets)
+                    .field(<span class="string">"field_names"</span>, <span class="kw-2">&amp;</span>field_names)
                     .finish()
             }
             SpirvType::Vector { element, count } =&gt; f
-                .debug_struct(<span class="string">&quot;Vector&quot;</span>)
-                .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                .field(<span class="string">&quot;element&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(element))
-                .field(<span class="string">&quot;count&quot;</span>, <span class="kw-2">&amp;</span>count)
+                .debug_struct(<span class="string">"Vector"</span>)
+                .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                .field(<span class="string">"element"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(element))
+                .field(<span class="string">"count"</span>, <span class="kw-2">&amp;</span>count)
                 .finish(),
             SpirvType::Matrix { element, count } =&gt; f
-                .debug_struct(<span class="string">&quot;Matrix&quot;</span>)
-                .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                .field(<span class="string">&quot;element&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(element))
-                .field(<span class="string">&quot;count&quot;</span>, <span class="kw-2">&amp;</span>count)
+                .debug_struct(<span class="string">"Matrix"</span>)
+                .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                .field(<span class="string">"element"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(element))
+                .field(<span class="string">"count"</span>, <span class="kw-2">&amp;</span>count)
                 .finish(),
             SpirvType::Array { element, count } =&gt; f
-                .debug_struct(<span class="string">&quot;Array&quot;</span>)
-                .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                .field(<span class="string">&quot;element&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(element))
+                .debug_struct(<span class="string">"Array"</span>)
+                .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                .field(<span class="string">"element"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(element))
                 .field(
-                    <span class="string">&quot;count&quot;</span>,
+                    <span class="string">"count"</span>,
                     <span class="kw-2">&amp;</span><span class="self">self
                         </span>.cx
                         .builder
                         .lookup_const_u64(count)
-                        .expect(<span class="string">&quot;Array type has invalid count value&quot;</span>),
+                        .expect(<span class="string">"Array type has invalid count value"</span>),
                 )
                 .finish(),
             SpirvType::RuntimeArray { element } =&gt; f
-                .debug_struct(<span class="string">&quot;RuntimeArray&quot;</span>)
-                .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                .field(<span class="string">&quot;element&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(element))
+                .debug_struct(<span class="string">"RuntimeArray"</span>)
+                .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                .field(<span class="string">"element"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(element))
                 .finish(),
             SpirvType::Pointer { pointee } =&gt; f
-                .debug_struct(<span class="string">&quot;Pointer&quot;</span>)
-                .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                .field(<span class="string">&quot;pointee&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(pointee))
+                .debug_struct(<span class="string">"Pointer"</span>)
+                .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                .field(<span class="string">"pointee"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(pointee))
                 .finish(),
             SpirvType::Function {
                 return_type,
@@ -1372,10 +1382,10 @@
                     .iter()
                     .map(|<span class="kw-2">&amp;</span>a| <span class="self">self</span>.cx.debug_type(a))
                     .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-                f.debug_struct(<span class="string">&quot;Function&quot;</span>)
-                    .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                    .field(<span class="string">&quot;return_type&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.lookup_type(return_type))
-                    .field(<span class="string">&quot;arguments&quot;</span>, <span class="kw-2">&amp;</span>args)
+                f.debug_struct(<span class="string">"Function"</span>)
+                    .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                    .field(<span class="string">"return_type"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.lookup_type(return_type))
+                    .field(<span class="string">"arguments"</span>, <span class="kw-2">&amp;</span>args)
                     .finish()
             }
             SpirvType::Image {
@@ -1387,29 +1397,29 @@
                 sampled,
                 image_format,
             } =&gt; f
-                .debug_struct(<span class="string">&quot;Image&quot;</span>)
-                .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                .field(<span class="string">&quot;sampled_type&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(sampled_type))
-                .field(<span class="string">&quot;dim&quot;</span>, <span class="kw-2">&amp;</span>dim)
-                .field(<span class="string">&quot;depth&quot;</span>, <span class="kw-2">&amp;</span>depth)
-                .field(<span class="string">&quot;arrayed&quot;</span>, <span class="kw-2">&amp;</span>arrayed)
-                .field(<span class="string">&quot;multisampled&quot;</span>, <span class="kw-2">&amp;</span>multisampled)
-                .field(<span class="string">&quot;sampled&quot;</span>, <span class="kw-2">&amp;</span>sampled)
-                .field(<span class="string">&quot;image_format&quot;</span>, <span class="kw-2">&amp;</span>image_format)
+                .debug_struct(<span class="string">"Image"</span>)
+                .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                .field(<span class="string">"sampled_type"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(sampled_type))
+                .field(<span class="string">"dim"</span>, <span class="kw-2">&amp;</span>dim)
+                .field(<span class="string">"depth"</span>, <span class="kw-2">&amp;</span>depth)
+                .field(<span class="string">"arrayed"</span>, <span class="kw-2">&amp;</span>arrayed)
+                .field(<span class="string">"multisampled"</span>, <span class="kw-2">&amp;</span>multisampled)
+                .field(<span class="string">"sampled"</span>, <span class="kw-2">&amp;</span>sampled)
+                .field(<span class="string">"image_format"</span>, <span class="kw-2">&amp;</span>image_format)
                 .finish(),
-            SpirvType::Sampler =&gt; f.debug_struct(<span class="string">&quot;Sampler&quot;</span>).field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id).finish(),
+            SpirvType::Sampler =&gt; f.debug_struct(<span class="string">"Sampler"</span>).field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id).finish(),
             SpirvType::SampledImage { image_type } =&gt; f
-                .debug_struct(<span class="string">&quot;SampledImage&quot;</span>)
-                .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                .field(<span class="string">&quot;image_type&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(image_type))
+                .debug_struct(<span class="string">"SampledImage"</span>)
+                .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                .field(<span class="string">"image_type"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(image_type))
                 .finish(),
             SpirvType::InterfaceBlock { inner_type } =&gt; f
-                .debug_struct(<span class="string">&quot;InterfaceBlock&quot;</span>)
-                .field(<span class="string">&quot;id&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
-                .field(<span class="string">&quot;inner_type&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(inner_type))
+                .debug_struct(<span class="string">"InterfaceBlock"</span>)
+                .field(<span class="string">"id"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.id)
+                .field(<span class="string">"inner_type"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(inner_type))
                 .finish(),
-            SpirvType::AccelerationStructureKhr =&gt; f.debug_struct(<span class="string">&quot;AccelerationStructure&quot;</span>).finish(),
-            SpirvType::RayQueryKhr =&gt; f.debug_struct(<span class="string">&quot;RayQuery&quot;</span>).finish(),
+            SpirvType::AccelerationStructureKhr =&gt; f.debug_struct(<span class="string">"AccelerationStructure"</span>).finish(),
+            SpirvType::RayQueryKhr =&gt; f.debug_struct(<span class="string">"RayQuery"</span>).finish(),
         };
         {
             <span class="kw">let </span><span class="kw-2">mut </span>debug_stack = DEBUG_STACK.lock().unwrap();
@@ -1421,25 +1431,25 @@
 
 <span class="doccomment">/// Types can be recursive, e.g. a struct can contain a pointer to itself. So, we need to keep
 /// track of a stack of what types are currently being printed, to not infinitely loop. So, we only
-/// use `fmt::Display::fmt` as an &quot;entry point&quot;, and then call through to our own (recursive)
+/// use `fmt::Display::fmt` as an "entry point", and then call through to our own (recursive)
 /// custom function that has a parameter for the current stack. Make sure to not call Display on a
 /// type inside the custom function!
-</span><span class="kw">impl </span>fmt::Display <span class="kw">for </span>SpirvTypePrinter&lt;<span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span>&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+</span><span class="kw">impl </span>fmt::Display <span class="kw">for </span>SpirvTypePrinter&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="self">self</span>.display(<span class="kw-2">&amp;mut </span>Vec::new(), f)
     }
 }
 
-<span class="kw">impl </span>SpirvTypePrinter&lt;<span class="lifetime">&#39;_</span>, <span class="lifetime">&#39;_</span>&gt; {
-    <span class="kw">fn </span>display(<span class="kw-2">&amp;</span><span class="self">self</span>, stack: <span class="kw-2">&amp;mut </span>Vec&lt;Word&gt;, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+<span class="kw">impl </span>SpirvTypePrinter&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt; {
+    <span class="kw">fn </span>display(<span class="kw-2">&amp;</span><span class="self">self</span>, stack: <span class="kw-2">&amp;mut </span>Vec&lt;Word&gt;, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">fn </span>ty(
-            cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">&#39;_</span>&gt;,
+            cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'_</span>&gt;,
             stack: <span class="kw-2">&amp;mut </span>Vec&lt;Word&gt;,
-            f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;,
+            f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;,
             ty: Word,
         ) -&gt; fmt::Result {
             <span class="kw">if </span>stack.contains(<span class="kw-2">&amp;</span>ty) {
-                f.write_str(<span class="string">&quot;&lt;recursive type&gt;&quot;</span>)
+                f.write_str(<span class="string">"&lt;recursive type&gt;"</span>)
             } <span class="kw">else </span>{
                 stack.push(ty);
                 <span class="kw">let </span>result = cx.debug_type(ty).display(stack, f);
@@ -1448,13 +1458,13 @@
             }
         }
         <span class="kw">match </span><span class="self">self</span>.ty {
-            SpirvType::Void =&gt; f.write_str(<span class="string">&quot;void&quot;</span>),
-            SpirvType::Bool =&gt; f.write_str(<span class="string">&quot;bool&quot;</span>),
+            SpirvType::Void =&gt; f.write_str(<span class="string">"void"</span>),
+            SpirvType::Bool =&gt; f.write_str(<span class="string">"bool"</span>),
             SpirvType::Integer(width, signedness) =&gt; {
-                <span class="kw">let </span>prefix = <span class="kw">if </span>signedness { <span class="string">&quot;i&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;u&quot; </span>};
-                <span class="macro">write!</span>(f, <span class="string">&quot;{prefix}{width}&quot;</span>)
+                <span class="kw">let </span>prefix = <span class="kw">if </span>signedness { <span class="string">"i" </span>} <span class="kw">else </span>{ <span class="string">"u" </span>};
+                <span class="macro">write!</span>(f, <span class="string">"{prefix}{width}"</span>)
             }
-            SpirvType::Float(width) =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;f{width}&quot;</span>),
+            SpirvType::Float(width) =&gt; <span class="macro">write!</span>(f, <span class="string">"f{width}"</span>),
             SpirvType::Adt {
                 def_id: <span class="kw">_</span>,
                 align: <span class="kw">_</span>,
@@ -1463,7 +1473,7 @@
                 field_offsets: <span class="kw">_</span>,
                 <span class="kw-2">ref </span>field_names,
             } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;struct&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"struct"</span>)<span class="question-mark">?</span>;
 
                 <span class="comment">// HACK(eddyb) use the first name (in insertion order, i.e.
                 // from the first invocation of `def_with_name` for this type)
@@ -1478,59 +1488,59 @@
                 };
 
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = first_name {
-                    <span class="macro">write!</span>(f, <span class="string">&quot; {name}&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">" {name}"</span>)<span class="question-mark">?</span>;
                 }
 
-                f.write_str(<span class="string">&quot; { &quot;</span>)<span class="question-mark">?</span>;
+                f.write_str(<span class="string">" { "</span>)<span class="question-mark">?</span>;
                 <span class="kw">for </span>(index, <span class="kw-2">&amp;</span>field) <span class="kw">in </span>field_types.iter().enumerate() {
                     <span class="kw">let </span>suffix = <span class="kw">if </span>index + <span class="number">1 </span>== field_types.len() {
-                        <span class="string">&quot;&quot;
+                        <span class="string">""
                     </span>} <span class="kw">else </span>{
-                        <span class="string">&quot;, &quot;
+                        <span class="string">", "
                     </span>};
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(field_names) = field_names {
-                        <span class="macro">write!</span>(f, <span class="string">&quot;{}: &quot;</span>, field_names[index])<span class="question-mark">?</span>;
+                        <span class="macro">write!</span>(f, <span class="string">"{}: "</span>, field_names[index])<span class="question-mark">?</span>;
                     }
                     ty(<span class="self">self</span>.cx, stack, f, field)<span class="question-mark">?</span>;
-                    <span class="macro">write!</span>(f, <span class="string">&quot;{suffix}&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">"{suffix}"</span>)<span class="question-mark">?</span>;
                 }
-                f.write_str(<span class="string">&quot; }&quot;</span>)
+                f.write_str(<span class="string">" }"</span>)
             }
             SpirvType::Vector { element, count } | SpirvType::Matrix { element, count } =&gt; {
                 ty(<span class="self">self</span>.cx, stack, f, element)<span class="question-mark">?</span>;
-                <span class="macro">write!</span>(f, <span class="string">&quot;x{count}&quot;</span>)
+                <span class="macro">write!</span>(f, <span class="string">"x{count}"</span>)
             }
             SpirvType::Array { element, count } =&gt; {
                 <span class="kw">let </span>len = <span class="self">self</span>.cx.builder.lookup_const_u64(count);
-                <span class="kw">let </span>len = len.expect(<span class="string">&quot;Array type has invalid count value&quot;</span>);
-                f.write_str(<span class="string">&quot;[&quot;</span>)<span class="question-mark">?</span>;
+                <span class="kw">let </span>len = len.expect(<span class="string">"Array type has invalid count value"</span>);
+                f.write_str(<span class="string">"["</span>)<span class="question-mark">?</span>;
                 ty(<span class="self">self</span>.cx, stack, f, element)<span class="question-mark">?</span>;
-                <span class="macro">write!</span>(f, <span class="string">&quot;; {len}]&quot;</span>)
+                <span class="macro">write!</span>(f, <span class="string">"; {len}]"</span>)
             }
             SpirvType::RuntimeArray { element } =&gt; {
-                f.write_str(<span class="string">&quot;[&quot;</span>)<span class="question-mark">?</span>;
+                f.write_str(<span class="string">"["</span>)<span class="question-mark">?</span>;
                 ty(<span class="self">self</span>.cx, stack, f, element)<span class="question-mark">?</span>;
-                f.write_str(<span class="string">&quot;]&quot;</span>)
+                f.write_str(<span class="string">"]"</span>)
             }
             SpirvType::Pointer { pointee } =&gt; {
-                f.write_str(<span class="string">&quot;*&quot;</span>)<span class="question-mark">?</span>;
+                f.write_str(<span class="string">"*"</span>)<span class="question-mark">?</span>;
                 ty(<span class="self">self</span>.cx, stack, f, pointee)
             }
             SpirvType::Function {
                 return_type,
                 arguments,
             } =&gt; {
-                f.write_str(<span class="string">&quot;fn(&quot;</span>)<span class="question-mark">?</span>;
+                f.write_str(<span class="string">"fn("</span>)<span class="question-mark">?</span>;
                 <span class="kw">for </span>(index, <span class="kw-2">&amp;</span>arg) <span class="kw">in </span>arguments.iter().enumerate() {
                     <span class="kw">let </span>suffix = <span class="kw">if </span>index + <span class="number">1 </span>== arguments.len() {
-                        <span class="string">&quot;&quot;
+                        <span class="string">""
                     </span>} <span class="kw">else </span>{
-                        <span class="string">&quot;, &quot;
+                        <span class="string">", "
                     </span>};
                     ty(<span class="self">self</span>.cx, stack, f, arg)<span class="question-mark">?</span>;
-                    <span class="macro">write!</span>(f, <span class="string">&quot;{suffix}&quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">"{suffix}"</span>)<span class="question-mark">?</span>;
                 }
-                f.write_str(<span class="string">&quot;) -&gt; &quot;</span>)<span class="question-mark">?</span>;
+                f.write_str(<span class="string">") -&gt; "</span>)<span class="question-mark">?</span>;
                 ty(<span class="self">self</span>.cx, stack, f, return_type)
             }
             SpirvType::Image {
@@ -1542,67 +1552,67 @@
                 sampled,
                 image_format,
             } =&gt; f
-                .debug_struct(<span class="string">&quot;Image&quot;</span>)
-                .field(<span class="string">&quot;sampled_type&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(sampled_type))
-                .field(<span class="string">&quot;dim&quot;</span>, <span class="kw-2">&amp;</span>dim)
-                .field(<span class="string">&quot;depth&quot;</span>, <span class="kw-2">&amp;</span>depth)
-                .field(<span class="string">&quot;arrayed&quot;</span>, <span class="kw-2">&amp;</span>arrayed)
-                .field(<span class="string">&quot;multisampled&quot;</span>, <span class="kw-2">&amp;</span>multisampled)
-                .field(<span class="string">&quot;sampled&quot;</span>, <span class="kw-2">&amp;</span>sampled)
-                .field(<span class="string">&quot;image_format&quot;</span>, <span class="kw-2">&amp;</span>image_format)
+                .debug_struct(<span class="string">"Image"</span>)
+                .field(<span class="string">"sampled_type"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(sampled_type))
+                .field(<span class="string">"dim"</span>, <span class="kw-2">&amp;</span>dim)
+                .field(<span class="string">"depth"</span>, <span class="kw-2">&amp;</span>depth)
+                .field(<span class="string">"arrayed"</span>, <span class="kw-2">&amp;</span>arrayed)
+                .field(<span class="string">"multisampled"</span>, <span class="kw-2">&amp;</span>multisampled)
+                .field(<span class="string">"sampled"</span>, <span class="kw-2">&amp;</span>sampled)
+                .field(<span class="string">"image_format"</span>, <span class="kw-2">&amp;</span>image_format)
                 .finish(),
-            SpirvType::Sampler =&gt; f.write_str(<span class="string">&quot;Sampler&quot;</span>),
+            SpirvType::Sampler =&gt; f.write_str(<span class="string">"Sampler"</span>),
             SpirvType::SampledImage { image_type } =&gt; f
-                .debug_struct(<span class="string">&quot;SampledImage&quot;</span>)
-                .field(<span class="string">&quot;image_type&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(image_type))
+                .debug_struct(<span class="string">"SampledImage"</span>)
+                .field(<span class="string">"image_type"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.cx.debug_type(image_type))
                 .finish(),
             SpirvType::InterfaceBlock { inner_type } =&gt; {
-                f.write_str(<span class="string">&quot;interface block { &quot;</span>)<span class="question-mark">?</span>;
+                f.write_str(<span class="string">"interface block { "</span>)<span class="question-mark">?</span>;
                 ty(<span class="self">self</span>.cx, stack, f, inner_type)<span class="question-mark">?</span>;
-                f.write_str(<span class="string">&quot; }&quot;</span>)
+                f.write_str(<span class="string">" }"</span>)
             }
-            SpirvType::AccelerationStructureKhr =&gt; f.write_str(<span class="string">&quot;AccelerationStructureKhr&quot;</span>),
-            SpirvType::RayQueryKhr =&gt; f.write_str(<span class="string">&quot;RayQuery&quot;</span>),
+            SpirvType::AccelerationStructureKhr =&gt; f.write_str(<span class="string">"AccelerationStructureKhr"</span>),
+            SpirvType::RayQueryKhr =&gt; f.write_str(<span class="string">"RayQuery"</span>),
         }
     }
 }
 
 <span class="attr">#[derive(Default)]
-</span><span class="kw">pub struct </span>TypeCache&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">pub </span>id_to_spirv_type: RefCell&lt;FxHashMap&lt;Word, SpirvType&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt;&gt;,
-    <span class="kw">pub </span>spirv_type_to_id: RefCell&lt;FxHashMap&lt;SpirvType&lt;<span class="lifetime">&#39;tcx</span>&gt;, Word&gt;&gt;,
+</span><span class="kw">pub struct </span>TypeCache&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">pub </span>id_to_spirv_type: RefCell&lt;FxHashMap&lt;Word, SpirvType&lt;<span class="lifetime">'tcx</span>&gt;&gt;&gt;,
+    <span class="kw">pub </span>spirv_type_to_id: RefCell&lt;FxHashMap&lt;SpirvType&lt;<span class="lifetime">'tcx</span>&gt;, Word&gt;&gt;,
 
     <span class="doccomment">/// Recursive pointer breaking
-    </span><span class="kw">pub </span>recursive_pointee_cache: RecursivePointeeCache&lt;<span class="lifetime">&#39;tcx</span>&gt;,
+    </span><span class="kw">pub </span>recursive_pointee_cache: RecursivePointeeCache&lt;<span class="lifetime">'tcx</span>&gt;,
     <span class="doccomment">/// Set of names for a type (only `SpirvType::Adt` currently).
-    /// The same `OpType*` may have multiple names if it&#39;s e.g. a generic
+    /// The same `OpType*` may have multiple names if it's e.g. a generic
     /// `struct` where the generic parameters result in the same field types.
-    </span>type_names: RefCell&lt;FxHashMap&lt;Word, IndexSet&lt;TyLayoutNameKey&lt;<span class="lifetime">&#39;tcx</span>&gt;&gt;&gt;&gt;,
+    </span>type_names: RefCell&lt;FxHashMap&lt;Word, IndexSet&lt;TyLayoutNameKey&lt;<span class="lifetime">'tcx</span>&gt;&gt;&gt;&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; TypeCache&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: <span class="kw-2">&amp;</span>SpirvType&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Word&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; TypeCache&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: <span class="kw-2">&amp;</span>SpirvType&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Word&gt; {
         <span class="self">self</span>.spirv_type_to_id.borrow().get(ty).copied()
     }
 
     <span class="attr">#[track_caller]
-    </span><span class="kw">pub fn </span>lookup(<span class="kw-2">&amp;</span><span class="self">self</span>, id: Word) -&gt; SpirvType&lt;<span class="lifetime">&#39;tcx</span>&gt; {
+    </span><span class="kw">pub fn </span>lookup(<span class="kw-2">&amp;</span><span class="self">self</span>, id: Word) -&gt; SpirvType&lt;<span class="lifetime">'tcx</span>&gt; {
         <span class="kw-2">*</span><span class="self">self
             </span>.id_to_spirv_type
             .borrow()
             .get(<span class="kw-2">&amp;</span>id)
-            .expect(<span class="string">&quot;tried to lookup ID that wasn&#39;t a type, or has no definition&quot;</span>)
+            .expect(<span class="string">"tried to lookup ID that wasn't a type, or has no definition"</span>)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;tcx</span>&gt; CodegenCx&lt;<span class="lifetime">&#39;tcx</span>&gt; {
-    <span class="kw">fn </span>type_cache_def(<span class="kw-2">&amp;</span><span class="self">self</span>, id: Word, ty: SpirvType&lt;<span class="lifetime">&#39;tcx</span>&gt;, def_span: Span) {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">fn </span>type_cache_def(<span class="kw-2">&amp;</span><span class="self">self</span>, id: Word, ty: SpirvType&lt;<span class="lifetime">'tcx</span>&gt;, def_span: Span) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(old_ty) = <span class="self">self</span>.type_cache.id_to_spirv_type.borrow_mut().insert(id, ty) {
             <span class="macro">span_bug!</span>(
                 def_span,
-                <span class="string">&quot;SPIR-V type with ID %{id} is being redefined\n\
+                <span class="string">"SPIR-V type with ID %{id} is being redefined\n\
                 old type: {old_ty}\n\
-                new type: {ty}&quot;</span>,
+                new type: {ty}"</span>,
                 old_ty = old_ty.debug(id, <span class="self">self</span>),
                 ty = ty.debug(id, <span class="self">self</span>)
             );
@@ -1611,8 +1621,8 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(old_id) = <span class="self">self</span>.type_cache.spirv_type_to_id.borrow_mut().insert(ty, id) {
             <span class="macro">span_bug!</span>(
                 def_span,
-                <span class="string">&quot;SPIR-V type is changing IDs (%{old_id} -&gt; %{id}):\n\
-                {ty}&quot;</span>,
+                <span class="string">"SPIR-V type is changing IDs (%{old_id} -&gt; %{id}):\n\
+                {ty}"</span>,
                 ty = ty.debug(id, <span class="self">self</span>)
             );
         }

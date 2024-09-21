@@ -1,0 +1,1 @@
+searchState.loadedDescShard("rustc_hash", 0, "Fast, non-cryptographic hash used by rustc and Firefox.\nType alias for a hashmap using the <code>fx</code> hash algorithm.\nType alias for a hashmap using the <code>fx</code> hash algorithm.\nA speedy hash algorithm for use within rustc. The hashmap …\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.")

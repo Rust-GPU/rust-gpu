@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/nfa/thompson/nfa.rs`."><title>nfa.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../regex_automata/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/nfa/thompson/nfa.rs`."><title>nfa.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2101,7 +2101,7 @@
 
 <span class="kw">use </span>alloc::{boxed::Box, format, string::String, sync::Arc, vec, vec::Vec};
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::nfa::thompson::{
     compiler::{Compiler, Config},
     error::BuildError,
@@ -2139,7 +2139,7 @@
 ///
 /// Using an NFA for searching via the
 /// [`PikeVM`](crate::nfa::thompson::pikevm::PikeVM) provides the most amount
-/// of &quot;power&quot; of any regex engine in this crate. Namely, it supports the
+/// of "power" of any regex engine in this crate. Namely, it supports the
 /// following in all cases:
 ///
 /// 1. Detection of a match.
@@ -2185,7 +2185,7 @@
 /// So if we do have a codepoint oriented NFA, then we also need to generate
 /// byte oriented NFA in order to build an hybrid NFA/DFA. Thus, by only
 /// generating byte oriented NFAs, we can produce one less NFA. In other words,
-/// if we made our NFA codepoint oriented, we&#39;d need to *also* make it support
+/// if we made our NFA codepoint oriented, we'd need to *also* make it support
 /// a byte oriented mode, which is more complicated. But a byte oriented mode
 /// can support everything.
 ///
@@ -2228,12 +2228,12 @@
 /// ```
 /// use regex_automata::{nfa::thompson::pikevm::PikeVM, Match};
 ///
-/// let re = PikeVM::new(r&quot;foo[0-9]+&quot;)?;
+/// let re = PikeVM::new(r"foo[0-9]+")?;
 /// let mut cache = re.create_cache();
 /// let mut caps = re.create_captures();
 ///
 /// let expected = Some(Match::must(0, 0..8));
-/// re.captures(&amp;mut cache, b&quot;foo12345&quot;, &amp;mut caps);
+/// re.captures(&amp;mut cache, b"foo12345", &amp;mut caps);
 /// assert_eq!(expected, caps.get_match());
 ///
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2251,18 +2251,18 @@
 ///     util::captures::Captures,
 /// };
 ///
-/// let vm = PikeVM::new(r&quot;(?P&lt;y&gt;\d{4})-(?P&lt;m&gt;\d{2})-(?P&lt;d&gt;\d{2})&quot;)?;
+/// let vm = PikeVM::new(r"(?P&lt;y&gt;\d{4})-(?P&lt;m&gt;\d{2})-(?P&lt;d&gt;\d{2})")?;
 /// let mut cache = vm.create_cache();
 ///
-/// let haystack = &quot;2012-03-14, 2013-01-01 and 2014-07-05&quot;;
+/// let haystack = "2012-03-14, 2013-01-01 and 2014-07-05";
 /// let all: Vec&lt;Captures&gt; = vm.captures_iter(
 ///     &amp;mut cache, haystack.as_bytes()
 /// ).collect();
 /// // There should be a total of 3 matches.
 /// assert_eq!(3, all.len());
-/// // The year from the second match is &#39;2013&#39;.
-/// let span = all[1].get_group_by_name(&quot;y&quot;).unwrap();
-/// assert_eq!(&quot;2013&quot;, &amp;haystack[span]);
+/// // The year from the second match is '2013'.
+/// let span = all[1].get_group_by_name("y").unwrap();
+/// assert_eq!("2013", &amp;haystack[span]);
 ///
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
 /// ```
@@ -2274,11 +2274,11 @@
 /// ```
 /// use regex_automata::{nfa::thompson::pikevm::PikeVM, Span};
 ///
-/// let re = PikeVM::new(r&quot;([a-z]){4}&quot;)?;
+/// let re = PikeVM::new(r"([a-z]){4}")?;
 /// let mut cache = re.create_cache();
 /// let mut caps = re.create_captures();
 ///
-/// let haystack = b&quot;quux&quot;;
+/// let haystack = b"quux";
 /// re.captures(&amp;mut cache, haystack, &amp;mut caps);
 /// assert!(caps.is_match());
 /// assert_eq!(Some(Span::from(3..4)), caps.get_group(1));
@@ -2312,16 +2312,16 @@
     /// ```
     /// use regex_automata::{nfa::thompson::pikevm::PikeVM, Match};
     ///
-    /// let re = PikeVM::new(r&quot;foo[0-9]+&quot;)?;
+    /// let re = PikeVM::new(r"foo[0-9]+")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
     /// let expected = Some(Match::must(0, 0..8));
-    /// re.captures(&amp;mut cache, b&quot;foo12345&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, b"foo12345", &amp;mut caps);
     /// assert_eq!(expected, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>new(pattern: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;NFA, BuildError&gt; {
         NFA::compiler().build(pattern)
     }
@@ -2337,16 +2337,16 @@
     /// ```
     /// use regex_automata::{nfa::thompson::pikevm::PikeVM, Match};
     ///
-    /// let re = PikeVM::new_many(&amp;[&quot;[0-9]+&quot;, &quot;[a-z]+&quot;])?;
+    /// let re = PikeVM::new_many(&amp;["[0-9]+", "[a-z]+"])?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
     /// let expected = Some(Match::must(1, 0..3));
-    /// re.captures(&amp;mut cache, b&quot;foo12345bar&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, b"foo12345bar", &amp;mut caps);
     /// assert_eq!(expected, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>new_many&lt;P: AsRef&lt;str&gt;&gt;(patterns: <span class="kw-2">&amp;</span>[P]) -&gt; <span class="prelude-ty">Result</span>&lt;NFA, BuildError&gt; {
         NFA::compiler().build_many(patterns)
     }
@@ -2363,21 +2363,21 @@
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
     /// let expected = Some(Match::must(0, 0..0));
-    /// re.captures(&amp;mut cache, b&quot;&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, b"", &amp;mut caps);
     /// assert_eq!(expected, caps.get_match());
-    /// re.captures(&amp;mut cache, b&quot;foo&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, b"foo", &amp;mut caps);
     /// assert_eq!(expected, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
     </span><span class="kw">pub fn </span>always_match() -&gt; NFA {
-        <span class="comment">// We could use NFA::new(&quot;&quot;) here and we&#39;d get the same semantics, but
+        <span class="comment">// We could use NFA::new("") here and we'd get the same semantics, but
         // hand-assembling the NFA (as below) does the same thing with a fewer
-        // number of states. It also avoids needing the &#39;syntax&#39; feature
+        // number of states. It also avoids needing the 'syntax' feature
         // enabled.
         //
-        // Technically all we need is the &quot;match&quot; state, but we add the
-        // &quot;capture&quot; states so that the PikeVM can use this NFA.
+        // Technically all we need is the "match" state, but we add the
+        // "capture" states so that the PikeVM can use this NFA.
         //
         // The unwraps below are OK because we add so few states that they will
         // never exhaust any default limits in any environment.
@@ -2407,9 +2407,9 @@
     /// let re = PikeVM::new_from_nfa(NFA::never_match())?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
-    /// re.captures(&amp;mut cache, b&quot;&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, b"", &amp;mut caps);
     /// assert!(!caps.is_match());
-    /// re.captures(&amp;mut cache, b&quot;foo&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, b"foo", &amp;mut caps);
     /// assert!(!caps.is_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2439,10 +2439,10 @@
     /// let result = PikeVM::builder()
     ///     .thompson(NFA::config().nfa_size_limit(Some(1_000)))
     ///     // Remember, \w is Unicode-aware by default and thus huge.
-    ///     .build(r&quot;\w+&quot;);
+    ///     .build(r"\w+");
     /// assert!(result.is_err());
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>config() -&gt; Config {
         Config::new()
     }
@@ -2467,16 +2467,16 @@
     ///
     /// let re = PikeVM::builder()
     ///     .syntax(syntax::Config::new().utf8(false))
-    ///     .build(r&quot;[a-z]+(?-u:.)&quot;)?;
+    ///     .build(r"[a-z]+(?-u:.)")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
     /// let expected = Some(Match::must(0, 1..5));
-    /// re.captures(&amp;mut cache, b&quot;\xFFabc\xFF&quot;, &amp;mut caps);
+    /// re.captures(&amp;mut cache, b"\xFFabc\xFF", &amp;mut caps);
     /// assert_eq!(expected, caps.get_match());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>compiler() -&gt; Compiler {
         Compiler::new()
     }
@@ -2492,7 +2492,7 @@
     /// ```
     /// use regex_automata::{nfa::thompson::NFA, PatternID};
     ///
-    /// let nfa = NFA::new_many(&amp;[&quot;[0-9]+&quot;, &quot;[a-z]+&quot;, &quot;[A-Z]+&quot;])?;
+    /// let nfa = NFA::new_many(&amp;["[0-9]+", "[a-z]+", "[A-Z]+"])?;
     /// let pids: Vec&lt;PatternID&gt; = nfa.patterns().collect();
     /// assert_eq!(pids, vec![
     ///     PatternID::must(0),
@@ -2502,7 +2502,7 @@
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="kw">pub fn </span>patterns(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PatternIter&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub fn </span>patterns(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PatternIter&lt;<span class="lifetime">'_</span>&gt; {
         PatternIter {
             it: PatternID::iter(<span class="self">self</span>.pattern_len()),
             _marker: core::marker::PhantomData,
@@ -2524,7 +2524,7 @@
     /// ```
     /// use regex_automata::nfa::thompson::NFA;
     ///
-    /// let nfa = NFA::new_many(&amp;[&quot;[0-9]+&quot;, &quot;[a-z]+&quot;, &quot;[A-Z]+&quot;])?;
+    /// let nfa = NFA::new_many(&amp;["[0-9]+", "[a-z]+", "[A-Z]+"])?;
     /// assert_eq!(3, nfa.pattern_len());
     ///
     /// let nfa = NFA::never_match();
@@ -2556,14 +2556,14 @@
     ///
     /// let nfa = NFA::compiler()
     ///     .configure(NFA::config().which_captures(WhichCaptures::None))
-    ///     .build(&quot;a&quot;)?;
+    ///     .build("a")?;
     /// let state = nfa.state(nfa.start_anchored());
     /// match *state {
     ///     State::ByteRange { trans } =&gt; {
-    ///         assert_eq!(b&#39;a&#39;, trans.start);
-    ///         assert_eq!(b&#39;a&#39;, trans.end);
+    ///         assert_eq!(b'a', trans.start);
+    ///         assert_eq!(b'a', trans.end);
     ///     }
-    ///     _ =&gt; unreachable!(&quot;unexpected state&quot;),
+    ///     _ =&gt; unreachable!("unexpected state"),
     /// }
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2591,7 +2591,7 @@
     /// ```
     /// use regex_automata::nfa::thompson::NFA;
     ///
-    /// let nfa = NFA::new(&quot;^a&quot;)?;
+    /// let nfa = NFA::new("^a")?;
     /// assert_eq!(nfa.start_anchored(), nfa.start_unanchored());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2614,7 +2614,7 @@
     ///
     /// # Errors
     ///
-    /// If the pattern doesn&#39;t exist in this NFA, then this returns an error.
+    /// If the pattern doesn't exist in this NFA, then this returns an error.
     /// This occurs when `pid.as_usize() &gt;= nfa.pattern_len()`.
     ///
     /// # Example
@@ -2625,7 +2625,7 @@
     /// ```
     /// use regex_automata::{nfa::thompson::NFA, PatternID};
     ///
-    /// let nfa = NFA::new_many(&amp;[&quot;^a&quot;, &quot;^b&quot;])?;
+    /// let nfa = NFA::new_many(&amp;["^a", "^b"])?;
     /// // The anchored and unanchored states for the entire NFA are the same,
     /// // since all of the patterns are anchored.
     /// assert_eq!(nfa.start_anchored(), nfa.start_unanchored());
@@ -2647,14 +2647,14 @@
 
     <span class="doccomment">/// Get the byte class set for this NFA.
     ///
-    /// A byte class set is a partitioning of this NFA&#39;s alphabet into
+    /// A byte class set is a partitioning of this NFA's alphabet into
     /// equivalence classes. Any two bytes in the same equivalence class are
     /// guaranteed to never discriminate between a match or a non-match. (The
     /// partitioning may not be minimal.)
     ///
     /// Byte classes are used internally by this crate when building DFAs.
     /// Namely, among other optimizations, they enable a space optimization
-    /// where the DFA&#39;s internal alphabet is defined over the equivalence
+    /// where the DFA's internal alphabet is defined over the equivalence
     /// classes of bytes instead of all possible byte values. The former is
     /// often quite a bit smaller than the latter, which permits the DFA to use
     /// less space for its transition table.
@@ -2665,14 +2665,14 @@
 
     <span class="doccomment">/// Get the byte classes for this NFA.
     ///
-    /// Byte classes represent a partitioning of this NFA&#39;s alphabet into
+    /// Byte classes represent a partitioning of this NFA's alphabet into
     /// equivalence classes. Any two bytes in the same equivalence class are
     /// guaranteed to never discriminate between a match or a non-match. (The
     /// partitioning may not be minimal.)
     ///
     /// Byte classes are used internally by this crate when building DFAs.
     /// Namely, among other optimizations, they enable a space optimization
-    /// where the DFA&#39;s internal alphabet is defined over the equivalence
+    /// where the DFA's internal alphabet is defined over the equivalence
     /// classes of bytes instead of all possible byte values. The former is
     /// often quite a bit smaller than the latter, which permits the DFA to use
     /// less space for its transition table.
@@ -2684,12 +2684,12 @@
     /// ```
     /// use regex_automata::nfa::thompson::NFA;
     ///
-    /// let nfa = NFA::new(&quot;[a-z]+&quot;)?;
+    /// let nfa = NFA::new("[a-z]+")?;
     /// let classes = nfa.byte_classes();
-    /// // &#39;a&#39; and &#39;z&#39; are in the same class for this regex.
-    /// assert_eq!(classes.get(b&#39;a&#39;), classes.get(b&#39;z&#39;));
-    /// // But &#39;a&#39; and &#39;A&#39; are not.
-    /// assert_ne!(classes.get(b&#39;a&#39;), classes.get(b&#39;A&#39;));
+    /// // 'a' and 'z' are in the same class for this regex.
+    /// assert_eq!(classes.get(b'a'), classes.get(b'z'));
+    /// // But 'a' and 'A' are not.
+    /// assert_ne!(classes.get(b'a'), classes.get(b'A'));
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -2716,13 +2716,13 @@
     /// ```
     /// use regex_automata::{nfa::thompson::{NFA, State}, PatternID};
     ///
-    /// let nfa = NFA::new(&quot;a&quot;)?;
+    /// let nfa = NFA::new("a")?;
     /// let state = nfa.state(nfa.start_pattern(PatternID::ZERO).unwrap());
     /// match *state {
     ///     State::Capture { slot, .. } =&gt; {
     ///         assert_eq!(0, slot.as_usize());
     ///     }
-    ///     _ =&gt; unreachable!(&quot;unexpected state&quot;),
+    ///     _ =&gt; unreachable!("unexpected state"),
     /// }
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2747,8 +2747,8 @@
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::nfa::thompson::NFA;
     ///
-    /// let nfa_unicode = NFA::new(r&quot;\w&quot;)?;
-    /// let nfa_ascii = NFA::new(r&quot;(?-u)\w&quot;)?;
+    /// let nfa_unicode = NFA::new(r"\w")?;
+    /// let nfa_ascii = NFA::new(r"(?-u)\w")?;
     /// // Yes, a factor of 45 difference. No lie.
     /// assert!(40 * nfa_ascii.states().len() &lt; nfa_unicode.states().len());
     ///
@@ -2777,10 +2777,10 @@
     /// ```
     /// use regex_automata::{nfa::thompson::NFA, PatternID};
     ///
-    /// let nfa = NFA::new(r&quot;(a)(?P&lt;foo&gt;b)(c)(d)(?P&lt;bar&gt;e)&quot;)?;
+    /// let nfa = NFA::new(r"(a)(?P&lt;foo&gt;b)(c)(d)(?P&lt;bar&gt;e)")?;
     /// // The first is the implicit group that is always unnammed. The next
     /// // 5 groups are the explicit groups found in the concrete syntax above.
-    /// let expected = vec![None, None, Some(&quot;foo&quot;), None, None, Some(&quot;bar&quot;)];
+    /// let expected = vec![None, None, Some("foo"), None, None, Some("bar")];
     /// let got: Vec&lt;Option&lt;&amp;str&gt;&gt; =
     ///     nfa.group_info().pattern_names(PatternID::ZERO).collect();
     /// assert_eq!(expected, got);
@@ -2813,27 +2813,27 @@
     /// use regex_automata::nfa::thompson::{NFA, WhichCaptures};
     ///
     /// // Obviously has capture states.
-    /// let nfa = NFA::new(&quot;(a)&quot;)?;
+    /// let nfa = NFA::new("(a)")?;
     /// assert!(nfa.has_capture());
     ///
     /// // Less obviously has capture states, because every pattern has at
     /// // least one anonymous capture group corresponding to the match for the
     /// // entire pattern.
-    /// let nfa = NFA::new(&quot;a&quot;)?;
+    /// let nfa = NFA::new("a")?;
     /// assert!(nfa.has_capture());
     ///
     /// // Other than hand building your own NFA, this is the only way to build
     /// // an NFA without capturing groups. In general, you should only do this
-    /// // if you don&#39;t intend to use any of the NFA-oriented regex engines.
-    /// // Overall, capturing groups don&#39;t have many downsides. Although they
+    /// // if you don't intend to use any of the NFA-oriented regex engines.
+    /// // Overall, capturing groups don't have many downsides. Although they
     /// // can add a bit of noise to simple NFAs, so it can be nice to disable
     /// // them for debugging purposes.
     /// //
-    /// // Notice that &#39;has_capture&#39; is false here even when we have an
+    /// // Notice that 'has_capture' is false here even when we have an
     /// // explicit capture group in the pattern.
     /// let nfa = NFA::compiler()
     ///     .configure(NFA::config().which_captures(WhichCaptures::None))
-    ///     .build(&quot;(a)&quot;)?;
+    ///     .build("(a)")?;
     /// assert!(!nfa.has_capture());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2857,7 +2857,7 @@
     /// # Example
     ///
     /// This example shows a few different NFAs and whether they match the
-    /// empty string or not. Notice the empty string isn&#39;t merely a matter
+    /// empty string or not. Notice the empty string isn't merely a matter
     /// of a string of length literally `0`, but rather, whether a match can
     /// occur between specific pairs of bytes.
     ///
@@ -2865,19 +2865,19 @@
     /// use regex_automata::{nfa::thompson::NFA, util::syntax};
     ///
     /// // The empty regex matches the empty string.
-    /// let nfa = NFA::new(&quot;&quot;)?;
-    /// assert!(nfa.has_empty(), &quot;empty matches empty&quot;);
-    /// // The &#39;+&#39; repetition operator requires at least one match, and so
+    /// let nfa = NFA::new("")?;
+    /// assert!(nfa.has_empty(), "empty matches empty");
+    /// // The '+' repetition operator requires at least one match, and so
     /// // does not match the empty string.
-    /// let nfa = NFA::new(&quot;a+&quot;)?;
-    /// assert!(!nfa.has_empty(), &quot;+ does not match empty&quot;);
-    /// // But the &#39;*&#39; repetition operator does.
-    /// let nfa = NFA::new(&quot;a*&quot;)?;
-    /// assert!(nfa.has_empty(), &quot;* does match empty&quot;);
-    /// // And wrapping &#39;+&#39; in an operator that can match an empty string also
+    /// let nfa = NFA::new("a+")?;
+    /// assert!(!nfa.has_empty(), "+ does not match empty");
+    /// // But the '*' repetition operator does.
+    /// let nfa = NFA::new("a*")?;
+    /// assert!(nfa.has_empty(), "* does match empty");
+    /// // And wrapping '+' in an operator that can match an empty string also
     /// // causes it to match the empty string too.
-    /// let nfa = NFA::new(&quot;(a+)*&quot;)?;
-    /// assert!(nfa.has_empty(), &quot;+ inside of * matches empty&quot;);
+    /// let nfa = NFA::new("(a+)*")?;
+    /// assert!(nfa.has_empty(), "+ inside of * matches empty");
     ///
     /// // If a regex is just made of a look-around assertion, even if the
     /// // assertion requires some kind of non-empty string around it (such as
@@ -2886,30 +2886,30 @@
     /// // match returned is empty.
     /// let nfa = NFA::compiler()
     ///     .syntax(syntax::Config::new().utf8(false))
-    ///     .build(r&quot;^$\A\z\b\B(?-u:\b\B)&quot;)?;
-    /// assert!(nfa.has_empty(), &quot;assertions match empty&quot;);
-    /// // Even when an assertion is wrapped in a &#39;+&#39;, it still matches the
+    ///     .build(r"^$\A\z\b\B(?-u:\b\B)")?;
+    /// assert!(nfa.has_empty(), "assertions match empty");
+    /// // Even when an assertion is wrapped in a '+', it still matches the
     /// // empty string.
-    /// let nfa = NFA::new(r&quot;\b+&quot;)?;
-    /// assert!(nfa.has_empty(), &quot;+ of an assertion matches empty&quot;);
+    /// let nfa = NFA::new(r"\b+")?;
+    /// assert!(nfa.has_empty(), "+ of an assertion matches empty");
     ///
     /// // An alternation with even one branch that can match the empty string
     /// // is also said to match the empty string overall.
-    /// let nfa = NFA::new(&quot;foo|(bar)?|quux&quot;)?;
-    /// assert!(nfa.has_empty(), &quot;alternations can match empty&quot;);
+    /// let nfa = NFA::new("foo|(bar)?|quux")?;
+    /// assert!(nfa.has_empty(), "alternations can match empty");
     ///
     /// // An NFA that matches nothing does not match the empty string.
-    /// let nfa = NFA::new(&quot;[a&amp;&amp;b]&quot;)?;
-    /// assert!(!nfa.has_empty(), &quot;never matching means not matching empty&quot;);
-    /// // But if it&#39;s wrapped in something that doesn&#39;t require a match at
+    /// let nfa = NFA::new("[a&amp;&amp;b]")?;
+    /// assert!(!nfa.has_empty(), "never matching means not matching empty");
+    /// // But if it's wrapped in something that doesn't require a match at
     /// // all, then it can match the empty string!
-    /// let nfa = NFA::new(&quot;[a&amp;&amp;b]*&quot;)?;
-    /// assert!(nfa.has_empty(), &quot;* on never-match still matches empty&quot;);
-    /// // Since a &#39;+&#39; requires a match, using it on something that can never
+    /// let nfa = NFA::new("[a&amp;&amp;b]*")?;
+    /// assert!(nfa.has_empty(), "* on never-match still matches empty");
+    /// // Since a '+' requires a match, using it on something that can never
     /// // match will itself produce a regex that can never match anything,
     /// // and thus does not match the empty string.
-    /// let nfa = NFA::new(&quot;[a&amp;&amp;b]+&quot;)?;
-    /// assert!(!nfa.has_empty(), &quot;+ on never-match still matches nothing&quot;);
+    /// let nfa = NFA::new("[a&amp;&amp;b]+")?;
+    /// assert!(!nfa.has_empty(), "+ on never-match still matches nothing");
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -2941,11 +2941,11 @@
     ///     Match, Input,
     /// };
     ///
-    /// let re = PikeVM::new(&quot;&quot;)?;
+    /// let re = PikeVM::new("")?;
     /// let (mut cache, mut caps) = (re.create_cache(), re.create_captures());
     ///
     /// // UTF-8 mode is enabled by default.
-    /// let mut input = Input::new(&quot;☃&quot;);
+    /// let mut input = Input::new("☃");
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 0..0)), caps.get_match());
     ///
@@ -2956,10 +2956,10 @@
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 3..3)), caps.get_match());
     ///
-    /// // But if we disable UTF-8, then we&#39;ll get matches at 1..1 and 2..2:
+    /// // But if we disable UTF-8, then we'll get matches at 1..1 and 2..2:
     /// let re = PikeVM::builder()
     ///     .thompson(thompson::Config::new().utf8(false))
-    ///     .build(&quot;&quot;)?;
+    ///     .build("")?;
     /// re.search(&amp;mut cache, &amp;input, &amp;mut caps);
     /// assert_eq!(Some(Match::must(0, 1..1)), caps.get_match());
     ///
@@ -2989,7 +2989,7 @@
     /// is, from a higher memory address to a lower memory address.
     ///
     /// It is often the case that lower level routines dealing with an NFA
-    /// don&#39;t need to care about whether it is &quot;meant&quot; to be matched in reverse
+    /// don't need to care about whether it is "meant" to be matched in reverse
     /// or not. However, there are some specific cases where it matters. For
     /// example, the implementation of CRLF-aware `^` and `$` line anchors
     /// needs to know whether the search is in the forward or reverse
@@ -3001,7 +3001,7 @@
     /// based on the direction of the search.
     ///
     /// This is automatically set when using a [`Compiler`] with a configuration
-    /// where [`Config::reverse`] is enabled. If you&#39;re building your own NFA
+    /// where [`Config::reverse`] is enabled. If you're building your own NFA
     /// by hand via a [`Builder`]
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>is_reverse(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
@@ -3016,11 +3016,11 @@
     /// of having an unanchored starting state is almost zero (for an NFA).
     /// However, if all patterns in the NFA are themselves anchored, then even
     /// the unanchored starting state will correspond to an anchored search
-    /// since the pattern doesn&#39;t permit anything else.
+    /// since the pattern doesn't permit anything else.
     ///
     /// # Example
     ///
-    /// This example shows a few different scenarios where this method&#39;s
+    /// This example shows a few different scenarios where this method's
     /// return value varies.
     ///
     /// ```
@@ -3028,33 +3028,33 @@
     ///
     /// // The unanchored starting state permits matching this pattern anywhere
     /// // in a haystack, instead of just at the beginning.
-    /// let nfa = NFA::new(&quot;a&quot;)?;
+    /// let nfa = NFA::new("a")?;
     /// assert!(!nfa.is_always_start_anchored());
     ///
     /// // In this case, the pattern is itself anchored, so there is no way
     /// // to run an unanchored search.
-    /// let nfa = NFA::new(&quot;^a&quot;)?;
+    /// let nfa = NFA::new("^a")?;
     /// assert!(nfa.is_always_start_anchored());
     ///
-    /// // When multiline mode is enabled, &#39;^&#39; can match at the start of a line
+    /// // When multiline mode is enabled, '^' can match at the start of a line
     /// // in addition to the start of a haystack, so an unanchored search is
     /// // actually possible.
-    /// let nfa = NFA::new(&quot;(?m)^a&quot;)?;
+    /// let nfa = NFA::new("(?m)^a")?;
     /// assert!(!nfa.is_always_start_anchored());
     ///
     /// // Weird cases also work. A pattern is only considered anchored if all
     /// // matches may only occur at the start of a haystack.
-    /// let nfa = NFA::new(&quot;(^a)|a&quot;)?;
+    /// let nfa = NFA::new("(^a)|a")?;
     /// assert!(!nfa.is_always_start_anchored());
     ///
     /// // When multiple patterns are present, if they are all anchored, then
     /// // the NFA is always anchored too.
-    /// let nfa = NFA::new_many(&amp;[&quot;^a&quot;, &quot;^b&quot;, &quot;^c&quot;])?;
+    /// let nfa = NFA::new_many(&amp;["^a", "^b", "^c"])?;
     /// assert!(nfa.is_always_start_anchored());
     ///
     /// // But if one pattern is unanchored, then the NFA must permit an
     /// // unanchored search.
-    /// let nfa = NFA::new_many(&amp;[&quot;^a&quot;, &quot;b&quot;, &quot;^c&quot;])?;
+    /// let nfa = NFA::new_many(&amp;["^a", "b", "^c"])?;
     /// assert!(!nfa.is_always_start_anchored());
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -3073,7 +3073,7 @@
     ///
     /// If the NFA was built using a [`Compiler`], then this matcher
     /// can be set via the [`Config::look_matcher`] configuration
-    /// knob. Otherwise, if you&#39;ve built an NFA by hand, it is set via
+    /// knob. Otherwise, if you've built an NFA by hand, it is set via
     /// [`Builder::set_look_matcher`].
     ///
     /// # Example
@@ -3088,22 +3088,22 @@
     /// };
     ///
     /// let mut lookm = LookMatcher::new();
-    /// lookm.set_line_terminator(b&#39;\x00&#39;);
+    /// lookm.set_line_terminator(b'\x00');
     ///
     /// let re = PikeVM::builder()
     ///     .thompson(thompson::Config::new().look_matcher(lookm))
-    ///     .build(r&quot;(?m)^[a-z]+$&quot;)?;
+    ///     .build(r"(?m)^[a-z]+$")?;
     /// let mut cache = re.create_cache();
     ///
     /// // Multi-line assertions now use NUL as a terminator.
     /// assert_eq!(
     ///     Some(Match::must(0, 1..4)),
-    ///     re.find(&amp;mut cache, b&quot;\x00abc\x00&quot;),
+    ///     re.find(&amp;mut cache, b"\x00abc\x00"),
     /// );
     /// // ... and \n is no longer recognized as a terminator.
     /// assert_eq!(
     ///     None,
-    ///     re.find(&amp;mut cache, b&quot;\nabc\n&quot;),
+    ///     re.find(&amp;mut cache, b"\nabc\n"),
     /// );
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -3118,13 +3118,13 @@
     /// look-around assertions and thus zero conditional epsilon transitions.
     ///
     /// This is useful in some cases enabling optimizations. It is not
-    /// unusual, for example, for optimizations to be of the form, &quot;for any
-    /// regex with zero conditional epsilon transitions, do ...&quot; where &quot;...&quot;
+    /// unusual, for example, for optimizations to be of the form, "for any
+    /// regex with zero conditional epsilon transitions, do ..." where "..."
     /// is some kind of optimization.
     ///
-    /// This isn&#39;t only helpful for optimizations either. Sometimes look-around
+    /// This isn't only helpful for optimizations either. Sometimes look-around
     /// assertions are difficult to support. For example, many of the DFAs in
-    /// this crate don&#39;t support Unicode word boundaries or handle them using
+    /// this crate don't support Unicode word boundaries or handle them using
     /// heuristics. Handling that correctly typically requires some kind of
     /// cheap check of whether the NFA has a Unicode word boundary in the first
     /// place.
@@ -3137,17 +3137,17 @@
     /// use regex_automata::{nfa::thompson::NFA, util::look::Look};
     ///
     /// // No look-around at all.
-    /// let nfa = NFA::new(&quot;a&quot;)?;
+    /// let nfa = NFA::new("a")?;
     /// assert!(nfa.look_set_any().is_empty());
     ///
     /// // When multiple patterns are present, since this returns the union,
     /// // it will include look-around assertions that only appear in one
     /// // pattern.
-    /// let nfa = NFA::new_many(&amp;[&quot;a&quot;, &quot;b&quot;, &quot;a^b&quot;, &quot;c&quot;])?;
+    /// let nfa = NFA::new_many(&amp;["a", "b", "a^b", "c"])?;
     /// assert!(nfa.look_set_any().contains(Look::Start));
     ///
     /// // Some groups of assertions have various shortcuts. For example:
-    /// let nfa = NFA::new(r&quot;(?-u:\b)&quot;)?;
+    /// let nfa = NFA::new(r"(?-u:\b)")?;
     /// assert!(nfa.look_set_any().contains_word());
     /// assert!(!nfa.look_set_any().contains_word_unicode());
     /// assert!(nfa.look_set_any().contains_word_ascii());
@@ -3180,15 +3180,15 @@
     /// use regex_automata::{nfa::thompson::NFA, util::look::Look};
     ///
     /// // No look-around at all.
-    /// let nfa = NFA::new(&quot;a&quot;)?;
+    /// let nfa = NFA::new("a")?;
     /// assert!(nfa.look_set_prefix_any().is_empty());
     ///
     /// // When multiple patterns are present, since this returns the union,
     /// // it will include look-around assertions that only appear in one
     /// // pattern. But it will only include assertions that are in the prefix
-    /// // of a pattern. For example, this includes &#39;^&#39; but not &#39;$&#39; even though
-    /// // &#39;$&#39; does appear.
-    /// let nfa = NFA::new_many(&amp;[&quot;a&quot;, &quot;b&quot;, &quot;^ab$&quot;, &quot;c&quot;])?;
+    /// // of a pattern. For example, this includes '^' but not '$' even though
+    /// // '$' does appear.
+    /// let nfa = NFA::new_many(&amp;["a", "b", "^ab$", "c"])?;
     /// assert!(nfa.look_set_prefix_any().contains(Look::Start));
     /// assert!(!nfa.look_set_prefix_any().contains(Look::End));
     ///
@@ -3200,7 +3200,7 @@
     }
 
     <span class="comment">// FIXME: The `look_set_prefix_all` computation was not correct, and it
-    // seemed a little tricky to fix it. Since I wasn&#39;t actually using it for
+    // seemed a little tricky to fix it. Since I wasn't actually using it for
     // anything, I just decided to remove it in the run up to the regex 1.9
     // release. If you need this, please file an issue.
     /*
@@ -3225,13 +3225,13 @@
     /// use regex_automata::{nfa::thompson::NFA, util::look::Look};
     ///
     /// // No look-around at all.
-    /// let nfa = NFA::new(&quot;a&quot;)?;
+    /// let nfa = NFA::new("a")?;
     /// assert!(nfa.look_set_prefix_all().is_empty());
     ///
     /// // When multiple patterns are present, since this returns the
     /// // intersection, it will only include assertions present in every
     /// // prefix, and only the prefix.
-    /// let nfa = NFA::new_many(&amp;[&quot;^a$&quot;, &quot;^b$&quot;, &quot;$^ab$&quot;, &quot;^c$&quot;])?;
+    /// let nfa = NFA::new_many(&amp;["^a$", "^b$", "$^ab$", "^c$"])?;
     /// assert!(nfa.look_set_prefix_all().contains(Look::Start));
     /// assert!(!nfa.look_set_prefix_all().contains(Look::End));
     ///
@@ -3257,8 +3257,8 @@
     /// # if cfg!(miri) { return Ok(()); } // miri takes too long
     /// use regex_automata::nfa::thompson::NFA;
     ///
-    /// let nfa_unicode = NFA::new(r&quot;\w&quot;)?;
-    /// let nfa_ascii = NFA::new(r&quot;(?-u:\w)&quot;)?;
+    /// let nfa_unicode = NFA::new(r"\w")?;
+    /// let nfa_ascii = NFA::new(r"(?-u:\w)")?;
     ///
     /// assert!(10 * nfa_ascii.memory_usage() &lt; nfa_unicode.memory_usage());
     ///
@@ -3277,12 +3277,12 @@
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>NFA {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="self">self</span>.<span class="number">0</span>.fmt(f)
     }
 }
 
-<span class="doccomment">/// The &quot;inner&quot; part of the NFA. We split this part out so that we can easily
+<span class="doccomment">/// The "inner" part of the NFA. We split this part out so that we can easily
 /// wrap it in an `Arc` above in the definition of `NFA`.
 ///
 /// See builder.rs for the code that actually builds this type. This module
@@ -3314,11 +3314,11 @@
     <span class="doccomment">/// A representation of equivalence classes over the transitions in this
     /// NFA. Two bytes in the same equivalence class must not discriminate
     /// between a match or a non-match. This map can be used to shrink the
-    /// total size of a DFA&#39;s transition table with a small match-time cost.
+    /// total size of a DFA's transition table with a small match-time cost.
     ///
-    /// Note that the NFA&#39;s transitions are *not* defined in terms of these
-    /// equivalence classes. The NFA&#39;s transitions are defined on the original
-    /// byte values. For the most part, this is because they wouldn&#39;t really
+    /// Note that the NFA's transitions are *not* defined in terms of these
+    /// equivalence classes. The NFA's transitions are defined on the original
+    /// byte values. For the most part, this is because they wouldn't really
     /// help the NFA much since the NFA already uses a sparse representation
     /// to represent transitions. Byte classes are most effective in a dense
     /// representation.
@@ -3391,14 +3391,14 @@
                     State::Sparse(<span class="kw">_</span>) =&gt; {
                         <span class="comment">// This snippet below will rewrite this sparse state
                         // as a dense state. By doing it here, we apply this
-                        // optimization to all hot &quot;sparse&quot; states since these
+                        // optimization to all hot "sparse" states since these
                         // are the states that are reachable from the start
                         // state via an epsilon closure.
                         //
                         // Unfortunately, this optimization did not seem to
                         // help much in some very limited ad hoc benchmarking.
                         //
-                        // I left the &#39;Dense&#39; state type in place in case we
+                        // I left the 'Dense' state type in place in case we
                         // want to revisit this, but I suspect the real way
                         // to make forward progress is a more fundamental
                         // rearchitecting of how data in the NFA is laid out.
@@ -3419,7 +3419,7 @@
                         stack.push(next);
                     }
                     State::Union { <span class="kw-2">ref </span>alternates } =&gt; {
-                        <span class="comment">// Order doesn&#39;t matter here, since we&#39;re just dealing
+                        <span class="comment">// Order doesn't matter here, since we're just dealing
                         // with look-around sets. But if we do richer analysis
                         // here that needs to care about preference order, then
                         // this should be done in reverse.
@@ -3540,8 +3540,8 @@
     ///
     /// This is particularly useful to the NFA builder, since it is convenient
     /// to add NFA states in order to produce their final IDs. Then, after all
-    /// of the intermediate &quot;empty&quot; states (unconditional epsilon transitions)
-    /// have been removed from the builder&#39;s representation, we can re-map all
+    /// of the intermediate "empty" states (unconditional epsilon transitions)
+    /// have been removed from the builder's representation, we can re-map all
     /// of the transitions in the states already added to their final IDs.
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>remap(<span class="kw-2">&amp;mut </span><span class="self">self</span>, old_to_new: <span class="kw-2">&amp;</span>[StateID]) {
         <span class="kw">for </span>state <span class="kw">in </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.states {
@@ -3556,33 +3556,33 @@
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Inner {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;thompson::NFA(&quot;</span>)<span class="question-mark">?</span>;
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">writeln!</span>(f, <span class="string">"thompson::NFA("</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>(sid, state) <span class="kw">in </span><span class="self">self</span>.states.iter().with_state_ids() {
             <span class="kw">let </span>status = <span class="kw">if </span>sid == <span class="self">self</span>.start_anchored {
-                <span class="string">&#39;^&#39;
+                <span class="string">'^'
             </span>} <span class="kw">else if </span>sid == <span class="self">self</span>.start_unanchored {
-                <span class="string">&#39;&gt;&#39;
+                <span class="string">'&gt;'
             </span>} <span class="kw">else </span>{
-                <span class="string">&#39; &#39;
+                <span class="string">' '
             </span>};
-            <span class="macro">writeln!</span>(f, <span class="string">&quot;{}{:06?}: {:?}&quot;</span>, status, sid.as_usize(), state)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(f, <span class="string">"{}{:06?}: {:?}"</span>, status, sid.as_usize(), state)<span class="question-mark">?</span>;
         }
         <span class="kw">let </span>pattern_len = <span class="self">self</span>.start_pattern.len();
         <span class="kw">if </span>pattern_len &gt; <span class="number">1 </span>{
-            <span class="macro">writeln!</span>(f, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(f, <span class="string">""</span>)<span class="question-mark">?</span>;
             <span class="kw">for </span>pid <span class="kw">in </span><span class="number">0</span>..pattern_len {
                 <span class="kw">let </span>sid = <span class="self">self</span>.start_pattern[pid];
-                <span class="macro">writeln!</span>(f, <span class="string">&quot;START({:06?}): {:?}&quot;</span>, pid, sid.as_usize())<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(f, <span class="string">"START({:06?}): {:?}"</span>, pid, sid.as_usize())<span class="question-mark">?</span>;
             }
         }
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">""</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             f,
-            <span class="string">&quot;transition equivalence classes: {:?}&quot;</span>,
+            <span class="string">"transition equivalence classes: {:?}"</span>,
             <span class="self">self</span>.byte_classes,
         )<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;)&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">")"</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -3634,7 +3634,7 @@
     /// Look-around states are meant to be evaluated while performing epsilon
     /// closure (computing the set of states reachable from a particular state
     /// via only epsilon transitions). If the current position in the haystack
-    /// satisfies the look-around assertion, then you&#39;re permitted to follow
+    /// satisfies the look-around assertion, then you're permitted to follow
     /// that epsilon transition.
     </span>Look {
         <span class="doccomment">/// The look-around assertion that must be satisfied before moving
@@ -3658,7 +3658,7 @@
     /// matches found via `alt2`.
     ///
     /// This state exists as a common special case of Union where there are
-    /// only two alternates. In this case, we don&#39;t need any allocations to
+    /// only two alternates. In this case, we don't need any allocations to
     /// represent the state. This saves a bit of memory and also saves an
     /// additional memory access when traversing the NFA.
     </span>BinaryUnion {
@@ -3683,7 +3683,7 @@
     /// group.
     ///
     /// The pattern ID and capture group index are also included in this state
-    /// in case they are useful. But mostly, all you&#39;ll need is `next` and
+    /// in case they are useful. But mostly, all you'll need is `next` and
     /// `slot`.
     </span>Capture {
         <span class="doccomment">/// The state to transition to, unconditionally.
@@ -3744,7 +3744,7 @@
     ///
     /// // ByteRange states are not.
     /// let state = State::ByteRange {
-    ///     trans: Transition { start: b&#39;a&#39;, end: b&#39;z&#39;, next: StateID::ZERO },
+    ///     trans: Transition { start: b'a', end: b'z', next: StateID::ZERO },
     /// };
     /// assert!(!state.is_epsilon());
     ///
@@ -3823,42 +3823,42 @@
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>State {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             State::ByteRange { <span class="kw-2">ref </span>trans } =&gt; trans.fmt(f),
             State::Sparse(SparseTransitions { <span class="kw-2">ref </span>transitions }) =&gt; {
                 <span class="kw">let </span>rs = transitions
                     .iter()
-                    .map(|t| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, t))
+                    .map(|t| <span class="macro">format!</span>(<span class="string">"{:?}"</span>, t))
                     .collect::&lt;Vec&lt;String&gt;&gt;()
-                    .join(<span class="string">&quot;, &quot;</span>);
-                <span class="macro">write!</span>(f, <span class="string">&quot;sparse({})&quot;</span>, rs)
+                    .join(<span class="string">", "</span>);
+                <span class="macro">write!</span>(f, <span class="string">"sparse({})"</span>, rs)
             }
             State::Dense(<span class="kw-2">ref </span>dense) =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;dense(&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"dense("</span>)<span class="question-mark">?</span>;
                 <span class="kw">for </span>(i, t) <span class="kw">in </span>dense.iter().enumerate() {
                     <span class="kw">if </span>i &gt; <span class="number">0 </span>{
-                        <span class="macro">write!</span>(f, <span class="string">&quot;, &quot;</span>)<span class="question-mark">?</span>;
+                        <span class="macro">write!</span>(f, <span class="string">", "</span>)<span class="question-mark">?</span>;
                     }
-                    <span class="macro">write!</span>(f, <span class="string">&quot;{:?}&quot;</span>, t)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">"{:?}"</span>, t)<span class="question-mark">?</span>;
                 }
-                <span class="macro">write!</span>(f, <span class="string">&quot;)&quot;</span>)
+                <span class="macro">write!</span>(f, <span class="string">")"</span>)
             }
             State::Look { <span class="kw-2">ref </span>look, next } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;{:?} =&gt; {:?}&quot;</span>, look, next.as_usize())
+                <span class="macro">write!</span>(f, <span class="string">"{:?} =&gt; {:?}"</span>, look, next.as_usize())
             }
             State::Union { <span class="kw-2">ref </span>alternates } =&gt; {
                 <span class="kw">let </span>alts = alternates
                     .iter()
-                    .map(|id| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, id.as_usize()))
+                    .map(|id| <span class="macro">format!</span>(<span class="string">"{:?}"</span>, id.as_usize()))
                     .collect::&lt;Vec&lt;String&gt;&gt;()
-                    .join(<span class="string">&quot;, &quot;</span>);
-                <span class="macro">write!</span>(f, <span class="string">&quot;union({})&quot;</span>, alts)
+                    .join(<span class="string">", "</span>);
+                <span class="macro">write!</span>(f, <span class="string">"union({})"</span>, alts)
             }
             State::BinaryUnion { alt1, alt2 } =&gt; {
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;binary-union({}, {})&quot;</span>,
+                    <span class="string">"binary-union({}, {})"</span>,
                     alt1.as_usize(),
                     alt2.as_usize()
                 )
@@ -3866,16 +3866,16 @@
             State::Capture { next, pattern_id, group_index, slot } =&gt; {
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;capture(pid={:?}, group={:?}, slot={:?}) =&gt; {:?}&quot;</span>,
+                    <span class="string">"capture(pid={:?}, group={:?}, slot={:?}) =&gt; {:?}"</span>,
                     pattern_id.as_usize(),
                     group_index.as_usize(),
                     slot.as_usize(),
                     next.as_usize(),
                 )
             }
-            State::Fail =&gt; <span class="macro">write!</span>(f, <span class="string">&quot;FAIL&quot;</span>),
+            State::Fail =&gt; <span class="macro">write!</span>(f, <span class="string">"FAIL"</span>),
             State::Match { pattern_id } =&gt; {
-                <span class="macro">write!</span>(f, <span class="string">&quot;MATCH({:?})&quot;</span>, pattern_id.as_usize())
+                <span class="macro">write!</span>(f, <span class="string">"MATCH({:?})"</span>, pattern_id.as_usize())
             }
         }
     }
@@ -3940,12 +3940,12 @@
         // This is an alternative implementation that uses binary search. In
         // some ad hoc experiments, like
         //
-        //   regex-cli find match pikevm -b -p &#39;\b\w+\b&#39; non-ascii-file
+        //   regex-cli find match pikevm -b -p '\b\w+\b' non-ascii-file
         //
         // I could not observe any improvement, and in fact, things seemed to
         // be a bit slower. I can see an improvement in at least one benchmark:
         //
-        //   regex-cli find match pikevm -b -p &#39;\pL{100}&#39; all-codepoints-utf8
+        //   regex-cli find match pikevm -b -p '\pL{100}' all-codepoints-utf8
         //
         // Where total search time goes from 3.2s to 2.4s when using binary
         // search.
@@ -3977,7 +3977,7 @@
 /// usually requires (much) more heap memory.
 </span><span class="attr">#[derive(Clone, Debug, Eq, PartialEq)]
 </span><span class="kw">pub struct </span>DenseTransitions {
-    <span class="doccomment">/// A dense representation of this state&#39;s transitions on the heap. This
+    <span class="doccomment">/// A dense representation of this state's transitions on the heap. This
     /// always has length 256.
     </span><span class="kw">pub </span>transitions: Box&lt;[StateID]&gt;,
 }
@@ -3986,7 +3986,7 @@
     <span class="doccomment">/// This follows the matching transition for a particular byte.
     ///
     /// The matching transition is found by looking for a transition that
-    /// doesn&#39;t correspond to `StateID::ZERO` for the byte `at` the given
+    /// doesn't correspond to `StateID::ZERO` for the byte `at` the given
     /// position in `haystack`.
     ///
     /// If `at &gt;= haystack.len()`, then this returns `None`.
@@ -3998,7 +3998,7 @@
     <span class="doccomment">/// This follows the matching transition for any member of the alphabet.
     ///
     /// The matching transition is found by looking for a transition that
-    /// doesn&#39;t correspond to `StateID::ZERO` for the byte `at` the given
+    /// doesn't correspond to `StateID::ZERO` for the byte `at` the given
     /// position in `haystack`.
     ///
     /// If `at &gt;= haystack.len()` or if the given alphabet unit is
@@ -4014,7 +4014,7 @@
     <span class="doccomment">/// This follows the matching transition for a particular byte.
     ///
     /// The matching transition is found by looking for a transition that
-    /// doesn&#39;t correspond to `StateID::ZERO` for the given `byte`.
+    /// doesn't correspond to `StateID::ZERO` for the given `byte`.
     ///
     /// If `at &gt;= haystack.len()`, then this returns `None`.
     </span><span class="attr">#[inline]
@@ -4028,7 +4028,7 @@
     }
 
     <span class="comment">/*
-    /// The dense state optimization isn&#39;t currently enabled, so permit a
+    /// The dense state optimization isn't currently enabled, so permit a
     /// little bit of dead code.
     pub(crate) fn from_sparse(sparse: &amp;SparseTransitions) -&gt; DenseTransitions {
         let mut dense = vec![StateID::ZERO; 256];
@@ -4041,9 +4041,9 @@
     }
     */
 
-    </span><span class="doccomment">/// Returns an iterator over all transitions that don&#39;t point to
+    </span><span class="doccomment">/// Returns an iterator over all transitions that don't point to
     /// `StateID::ZERO`.
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Transition&gt; + <span class="lifetime">&#39;_ </span>{
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Transition&gt; + <span class="lifetime">'_ </span>{
         <span class="kw">use </span><span class="kw">crate</span>::util::int::Usize;
         <span class="self">self</span>.transitions
             .iter()
@@ -4073,21 +4073,21 @@
 
 <span class="kw">impl </span>Transition {
     <span class="doccomment">/// Returns true if the position `at` in `haystack` falls in this
-    /// transition&#39;s range of bytes.
+    /// transition's range of bytes.
     ///
     /// If `at &gt;= haystack.len()`, then this returns `false`.
     </span><span class="kw">pub fn </span>matches(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], at: usize) -&gt; bool {
         haystack.get(at).map_or(<span class="bool-val">false</span>, |<span class="kw-2">&amp;</span>b| <span class="self">self</span>.matches_byte(b))
     }
 
-    <span class="doccomment">/// Returns true if the given alphabet unit falls in this transition&#39;s
+    <span class="doccomment">/// Returns true if the given alphabet unit falls in this transition's
     /// range of bytes. If the given unit is [`EOI`](alphabet::Unit::eoi), then
     /// this returns `false`.
     </span><span class="kw">pub fn </span>matches_unit(<span class="kw-2">&amp;</span><span class="self">self</span>, unit: alphabet::Unit) -&gt; bool {
         unit.as_u8().map_or(<span class="bool-val">false</span>, |byte| <span class="self">self</span>.matches_byte(byte))
     }
 
-    <span class="doccomment">/// Returns true if the given byte falls in this transition&#39;s range of
+    <span class="doccomment">/// Returns true if the given byte falls in this transition's range of
     /// bytes.
     </span><span class="kw">pub fn </span>matches_byte(<span class="kw-2">&amp;</span><span class="self">self</span>, byte: u8) -&gt; bool {
         <span class="self">self</span>.start &lt;= byte &amp;&amp; byte &lt;= <span class="self">self</span>.end
@@ -4095,16 +4095,16 @@
 }
 
 <span class="kw">impl </span>fmt::Debug <span class="kw">for </span>Transition {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">use </span><span class="kw">crate</span>::util::escape::DebugByte;
 
         <span class="kw">let </span>Transition { start, end, next } = <span class="kw-2">*</span><span class="self">self</span>;
         <span class="kw">if </span><span class="self">self</span>.start == <span class="self">self</span>.end {
-            <span class="macro">write!</span>(f, <span class="string">&quot;{:?} =&gt; {:?}&quot;</span>, DebugByte(start), next.as_usize())
+            <span class="macro">write!</span>(f, <span class="string">"{:?} =&gt; {:?}"</span>, DebugByte(start), next.as_usize())
         } <span class="kw">else </span>{
             <span class="macro">write!</span>(
                 f,
-                <span class="string">&quot;{:?}-{:?} =&gt; {:?}&quot;</span>,
+                <span class="string">"{:?}-{:?} =&gt; {:?}"</span>,
                 DebugByte(start),
                 DebugByte(end),
                 next.as_usize(),
@@ -4117,20 +4117,20 @@
 ///
 /// This iterator is created by [`NFA::patterns`].
 ///
-/// The lifetime parameter `&#39;a` refers to the lifetime of the NFA from which
+/// The lifetime parameter `'a` refers to the lifetime of the NFA from which
 /// this pattern iterator was created.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>PatternIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+</span><span class="kw">pub struct </span>PatternIter&lt;<span class="lifetime">'a</span>&gt; {
     it: PatternIDIter,
     <span class="doccomment">/// We explicitly associate a lifetime with this iterator even though we
-    /// don&#39;t actually borrow anything from the NFA. We do this for backward
+    /// don't actually borrow anything from the NFA. We do this for backward
     /// compatibility purposes. If we ever do need to borrow something from
     /// the NFA, then we can and just get rid of this marker without breaking
     /// the public API.
-    </span>_marker: core::marker::PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>()&gt;,
+    </span>_marker: core::marker::PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>()&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>PatternIter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Iterator <span class="kw">for </span>PatternIter&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">type </span>Item = PatternID;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;PatternID&gt; {
@@ -4138,23 +4138,23 @@
     }
 }
 
-<span class="attr">#[cfg(all(test, feature = <span class="string">&quot;nfa-pikevm&quot;</span>))]
+<span class="attr">#[cfg(all(test, feature = <span class="string">"nfa-pikevm"</span>))]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use crate</span>::{nfa::thompson::pikevm::PikeVM, Input};
 
-    <span class="comment">// This asserts that an NFA state doesn&#39;t have its size changed. It is
+    <span class="comment">// This asserts that an NFA state doesn't have its size changed. It is
     // *really* easy to accidentally increase the size, and thus potentially
     // dramatically increase the memory usage of every NFA.
     //
-    // This assert doesn&#39;t mean we absolutely cannot increase the size of an
-    // NFA state. We can. It&#39;s just here to make sure we do it knowingly and
+    // This assert doesn't mean we absolutely cannot increase the size of an
+    // NFA state. We can. It's just here to make sure we do it knowingly and
     // intentionally.
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>state_has_small_size() {
-        <span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;64&quot;</span>)]
+        <span class="attr">#[cfg(target_pointer_width = <span class="string">"64"</span>)]
         </span><span class="macro">assert_eq!</span>(<span class="number">24</span>, core::mem::size_of::&lt;State&gt;());
-        <span class="attr">#[cfg(target_pointer_width = <span class="string">&quot;32&quot;</span>)]
+        <span class="attr">#[cfg(target_pointer_width = <span class="string">"32"</span>)]
         </span><span class="macro">assert_eq!</span>(<span class="number">20</span>, core::mem::size_of::&lt;State&gt;());
     }
 
@@ -4169,12 +4169,12 @@
             caps.get_match().map(|m| m.end())
         };
 
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">0</span>), find(<span class="string">&quot;&quot;</span>, <span class="number">0</span>, <span class="number">0</span>));
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">0</span>), find(<span class="string">&quot;a&quot;</span>, <span class="number">0</span>, <span class="number">1</span>));
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">1</span>), find(<span class="string">&quot;a&quot;</span>, <span class="number">1</span>, <span class="number">1</span>));
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">0</span>), find(<span class="string">&quot;ab&quot;</span>, <span class="number">0</span>, <span class="number">2</span>));
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">1</span>), find(<span class="string">&quot;ab&quot;</span>, <span class="number">1</span>, <span class="number">2</span>));
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">2</span>), find(<span class="string">&quot;ab&quot;</span>, <span class="number">2</span>, <span class="number">2</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">0</span>), find(<span class="string">""</span>, <span class="number">0</span>, <span class="number">0</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">0</span>), find(<span class="string">"a"</span>, <span class="number">0</span>, <span class="number">1</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">1</span>), find(<span class="string">"a"</span>, <span class="number">1</span>, <span class="number">1</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">0</span>), find(<span class="string">"ab"</span>, <span class="number">0</span>, <span class="number">2</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">1</span>), find(<span class="string">"ab"</span>, <span class="number">1</span>, <span class="number">2</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">2</span>), find(<span class="string">"ab"</span>, <span class="number">2</span>, <span class="number">2</span>));
     }
 
     <span class="attr">#[test]
@@ -4188,12 +4188,12 @@
             caps.get_match().map(|m| m.end())
         };
 
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">&quot;&quot;</span>, <span class="number">0</span>, <span class="number">0</span>));
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">&quot;a&quot;</span>, <span class="number">0</span>, <span class="number">1</span>));
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">&quot;a&quot;</span>, <span class="number">1</span>, <span class="number">1</span>));
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">&quot;ab&quot;</span>, <span class="number">0</span>, <span class="number">2</span>));
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">&quot;ab&quot;</span>, <span class="number">1</span>, <span class="number">2</span>));
-        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">&quot;ab&quot;</span>, <span class="number">2</span>, <span class="number">2</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">""</span>, <span class="number">0</span>, <span class="number">0</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">"a"</span>, <span class="number">0</span>, <span class="number">1</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">"a"</span>, <span class="number">1</span>, <span class="number">1</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">"ab"</span>, <span class="number">0</span>, <span class="number">2</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">"ab"</span>, <span class="number">1</span>, <span class="number">2</span>));
+        <span class="macro">assert_eq!</span>(<span class="prelude-val">None</span>, find(<span class="string">"ab"</span>, <span class="number">2</span>, <span class="number">2</span>));
     }
 }
 </code></pre></div></section></main></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/util/prefilter.rs`."><title>prefilter.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../aho_corasick/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/util/prefilter.rs`."><title>prefilter.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -945,7 +945,7 @@
 /// common cases. They typically only apply to cases where there are a small
 /// number of patterns (less than 100 or so), but when they do, thoughput can
 /// be boosted considerably, perhaps by an order of magnitude. When a prefilter
-/// is active, it is used whenever a search enters an automaton&#39;s start state.
+/// is active, it is used whenever a search enters an automaton's start state.
 ///
 /// Currently, prefilters cannot be constructed by
 /// callers. A `Prefilter` can only be accessed via the
@@ -987,7 +987,7 @@
 /// all correct prefilters must never report false negatives.
 ///
 /// In some cases, a prefilter can confirm a match very quickly, in which case,
-/// the caller may use this to stop what it&#39;s doing and report the match. In
+/// the caller may use this to stop what it's doing and report the match. In
 /// this case, prefilter implementations must never report a false positive.
 /// In other cases, the prefilter can only report a potential match, in which
 /// case the callers must attempt to confirm the match. In this case, prefilter
@@ -1021,7 +1021,7 @@
 /// skipping past bytes in the haystack that we know cannot possibly
 /// participate in a match.
 </span><span class="kw">trait </span>PrefilterI:
-    Send + Sync + RefUnwindSafe + UnwindSafe + Debug + <span class="lifetime">&#39;static
+    Send + Sync + RefUnwindSafe + UnwindSafe + Debug + <span class="lifetime">'static
 </span>{
     <span class="doccomment">/// Returns the next possible match candidate. This may yield false
     /// positives, so callers must confirm a match starting at the position
@@ -1049,7 +1049,7 @@
     rare_bytes: RareBytesBuilder,
     memmem: MemmemBuilder,
     packed: <span class="prelude-ty">Option</span>&lt;packed::Builder&gt;,
-    <span class="comment">// If we run across a condition that suggests we shouldn&#39;t use a prefilter
+    <span class="comment">// If we run across a condition that suggests we shouldn't use a prefilter
     // at all (like an empty pattern), then disable prefilters entirely.
     </span>enabled: bool,
 }
@@ -1086,19 +1086,19 @@
     /// builder before attempting to construct the prefilter.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
         <span class="kw">if </span>!<span class="self">self</span>.enabled {
-            <span class="macro">debug!</span>(<span class="string">&quot;prefilter not enabled, skipping&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"prefilter not enabled, skipping"</span>);
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="comment">// If we only have one pattern, then deferring to memmem is always
         // the best choice. This is kind of a weird case, because, well, why
-        // use Aho-Corasick if you only have one pattern? But maybe you don&#39;t
-        // know exactly how many patterns you&#39;ll get up front, and you need to
+        // use Aho-Corasick if you only have one pattern? But maybe you don't
+        // know exactly how many patterns you'll get up front, and you need to
         // support the option of multiple patterns. So instead of relying on
         // the caller to branch and use memmem explicitly, we just do it for
         // them.
         </span><span class="kw">if </span>!<span class="self">self</span>.ascii_case_insensitive {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(pre) = <span class="self">self</span>.memmem.build() {
-                <span class="macro">debug!</span>(<span class="string">&quot;using memmem prefilter&quot;</span>);
+                <span class="macro">debug!</span>(<span class="string">"using memmem prefilter"</span>);
                 <span class="kw">return </span><span class="prelude-val">Some</span>(pre);
             }
         }
@@ -1111,9 +1111,9 @@
                 <span class="self">self</span>.packed.as_ref().and_then(|b| b.build()).map(|s| {
                     <span class="kw">let </span>memory_usage = s.memory_usage();
                     <span class="macro">debug!</span>(
-                        <span class="string">&quot;built packed prefilter (len: {}, \
+                        <span class="string">"built packed prefilter (len: {}, \
                          minimum pattern len: {}, memory usage: {}) \
-                         for consideration&quot;</span>,
+                         for consideration"</span>,
                         patlen, minlen, memory_usage,
                     );
                     Prefilter { finder: Arc::new(Packed(s)), memory_usage }
@@ -1122,14 +1122,14 @@
         };
         <span class="kw">match </span>(<span class="self">self</span>.start_bytes.build(), <span class="self">self</span>.rare_bytes.build()) {
             <span class="comment">// If we could build both start and rare prefilters, then there are
-            // a few cases in which we&#39;d want to use the start-byte prefilter
+            // a few cases in which we'd want to use the start-byte prefilter
             // over the rare-byte prefilter, since the former has lower
             // overhead.
             </span>(prestart @ <span class="prelude-val">Some</span>(<span class="kw">_</span>), prerare @ <span class="prelude-val">Some</span>(<span class="kw">_</span>)) =&gt; {
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;both start (len={}, rank={}) and \
+                    <span class="string">"both start (len={}, rank={}) and \
                      rare (len={}, rank={}) byte prefilters \
-                     are available&quot;</span>,
+                     are available"</span>,
                     <span class="self">self</span>.start_bytes.count,
                     <span class="self">self</span>.start_bytes.rank_sum,
                     <span class="self">self</span>.rare_bytes.count,
@@ -1141,19 +1141,19 @@
                     </span>&amp;&amp; <span class="self">self</span>.rare_bytes.count &gt;= <span class="number">3
                 </span>{
                     <span class="macro">debug!</span>(
-                        <span class="string">&quot;start and rare byte prefilters available, but \
-                             they&#39;re probably slower than packed so using \
-                             packed&quot;
+                        <span class="string">"start and rare byte prefilters available, but \
+                             they're probably slower than packed so using \
+                             packed"
                     </span>);
                     <span class="kw">return </span>packed;
                 }
                 <span class="comment">// If the start-byte prefilter can scan for a smaller number
-                // of bytes than the rare-byte prefilter, then it&#39;s probably
+                // of bytes than the rare-byte prefilter, then it's probably
                 // faster.
                 </span><span class="kw">let </span>has_fewer_bytes =
                     <span class="self">self</span>.start_bytes.count &lt; <span class="self">self</span>.rare_bytes.count;
                 <span class="comment">// Otherwise, if the combined frequency rank of the detected
-                // bytes in the start-byte prefilter is &quot;close&quot; to the combined
+                // bytes in the start-byte prefilter is "close" to the combined
                 // frequency rank of the rare-byte prefilter, then we pick
                 // the start-byte prefilter even if the rare-byte prefilter
                 // heuristically searches for rare bytes. This is because the
@@ -1163,65 +1163,65 @@
                     <span class="self">self</span>.start_bytes.rank_sum &lt;= <span class="self">self</span>.rare_bytes.rank_sum + <span class="number">50</span>;
                 <span class="kw">if </span>has_fewer_bytes {
                     <span class="macro">debug!</span>(
-                        <span class="string">&quot;using start byte prefilter because it has fewer
-                         bytes to search for than the rare byte prefilter&quot;</span>,
+                        <span class="string">"using start byte prefilter because it has fewer
+                         bytes to search for than the rare byte prefilter"</span>,
                     );
                     prestart
                 } <span class="kw">else if </span>has_rarer_bytes {
                     <span class="macro">debug!</span>(
-                        <span class="string">&quot;using start byte prefilter because its byte \
+                        <span class="string">"using start byte prefilter because its byte \
                          frequency rank was determined to be \
-                         \&quot;good enough\&quot; relative to the rare byte prefilter \
-                         byte frequency rank&quot;</span>,
+                         \"good enough\" relative to the rare byte prefilter \
+                         byte frequency rank"</span>,
                     );
                     prestart
                 } <span class="kw">else </span>{
-                    <span class="macro">debug!</span>(<span class="string">&quot;using rare byte prefilter&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"using rare byte prefilter"</span>);
                     prerare
                 }
             }
             (prestart @ <span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="prelude-val">None</span>) =&gt; {
                 <span class="kw">if </span>patlen &lt;= <span class="number">16 </span>&amp;&amp; minlen &gt;= <span class="number">2 </span>&amp;&amp; <span class="self">self</span>.start_bytes.count &gt;= <span class="number">3 </span>{
                     <span class="macro">debug!</span>(
-                        <span class="string">&quot;start byte prefilter available, but \
-                         it&#39;s probably slower than packed so using \
-                         packed&quot;
+                        <span class="string">"start byte prefilter available, but \
+                         it's probably slower than packed so using \
+                         packed"
                     </span>);
                     <span class="kw">return </span>packed;
                 }
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;have start byte prefilter but not rare byte prefilter, \
-                     so using start byte prefilter&quot;</span>,
+                    <span class="string">"have start byte prefilter but not rare byte prefilter, \
+                     so using start byte prefilter"</span>,
                 );
                 prestart
             }
             (<span class="prelude-val">None</span>, prerare @ <span class="prelude-val">Some</span>(<span class="kw">_</span>)) =&gt; {
                 <span class="kw">if </span>patlen &lt;= <span class="number">16 </span>&amp;&amp; minlen &gt;= <span class="number">2 </span>&amp;&amp; <span class="self">self</span>.rare_bytes.count &gt;= <span class="number">3 </span>{
                     <span class="macro">debug!</span>(
-                        <span class="string">&quot;rare byte prefilter available, but \
-                         it&#39;s probably slower than packed so using \
-                         packed&quot;
+                        <span class="string">"rare byte prefilter available, but \
+                         it's probably slower than packed so using \
+                         packed"
                     </span>);
                     <span class="kw">return </span>packed;
                 }
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;have rare byte prefilter but not start byte prefilter, \
-                     so using rare byte prefilter&quot;</span>,
+                    <span class="string">"have rare byte prefilter but not start byte prefilter, \
+                     so using rare byte prefilter"</span>,
                 );
                 prerare
             }
             (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) <span class="kw">if </span><span class="self">self</span>.ascii_case_insensitive =&gt; {
                 <span class="macro">debug!</span>(
-                    <span class="string">&quot;no start or rare byte prefilter and ASCII case \
-                     insensitivity was enabled, so skipping prefilter&quot;</span>,
+                    <span class="string">"no start or rare byte prefilter and ASCII case \
+                     insensitivity was enabled, so skipping prefilter"</span>,
                 );
                 <span class="prelude-val">None
             </span>}
             (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; {
                 <span class="kw">if </span>packed.is_some() {
-                    <span class="macro">debug!</span>(<span class="string">&quot;falling back to packed prefilter&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"falling back to packed prefilter"</span>);
                 } <span class="kw">else </span>{
-                    <span class="macro">debug!</span>(<span class="string">&quot;no prefilter available&quot;</span>);
+                    <span class="macro">debug!</span>(<span class="string">"no prefilter available"</span>);
                 }
                 packed
             }
@@ -1270,7 +1270,7 @@
 
 <span class="kw">impl </span>MemmemBuilder {
     <span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
-        <span class="attr">#[cfg(all(feature = <span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;perf-literal&quot;</span>))]
+        <span class="attr">#[cfg(all(feature = <span class="string">"std"</span>, feature = <span class="string">"perf-literal"</span>))]
         </span><span class="kw">fn </span>imp(builder: <span class="kw-2">&amp;</span>MemmemBuilder) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
             <span class="kw">let </span>pattern = builder.one.as_ref()<span class="question-mark">?</span>;
             <span class="macro">assert_eq!</span>(<span class="number">1</span>, builder.count);
@@ -1281,7 +1281,7 @@
             <span class="prelude-val">Some</span>(Prefilter { finder, memory_usage })
         }
 
-        <span class="attr">#[cfg(not(all(feature = <span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;perf-literal&quot;</span>)))]
+        <span class="attr">#[cfg(not(all(feature = <span class="string">"std"</span>, feature = <span class="string">"perf-literal"</span>)))]
         </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span>MemmemBuilder) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
             <span class="prelude-val">None
         </span>}
@@ -1305,19 +1305,19 @@
 /// Currently, this prefilter is only active for Aho-Corasick searchers with
 /// a single pattern. In theory, this could be extended to support searchers
 /// that have a common prefix of more than one byte (for one byte, we would use
-/// memchr), but it&#39;s not clear if it&#39;s worth it or not.
+/// memchr), but it's not clear if it's worth it or not.
 ///
-/// Also, unfortunately, this currently also requires the &#39;std&#39; feature to
-/// be enabled. That&#39;s because memchr doesn&#39;t have a no-std-but-with-alloc
-/// mode, and so APIs like Finder::into_owned aren&#39;t available when &#39;std&#39; is
-/// disabled. But there should be an &#39;alloc&#39; feature that brings in APIs like
-/// Finder::into_owned but doesn&#39;t use std-only features like runtime CPU
+/// Also, unfortunately, this currently also requires the 'std' feature to
+/// be enabled. That's because memchr doesn't have a no-std-but-with-alloc
+/// mode, and so APIs like Finder::into_owned aren't available when 'std' is
+/// disabled. But there should be an 'alloc' feature that brings in APIs like
+/// Finder::into_owned but doesn't use std-only features like runtime CPU
 /// feature detection.
-</span><span class="attr">#[cfg(all(feature = <span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;perf-literal&quot;</span>))]
+</span><span class="attr">#[cfg(all(feature = <span class="string">"std"</span>, feature = <span class="string">"perf-literal"</span>))]
 #[derive(Clone, Debug)]
-</span><span class="kw">struct </span>Memmem(memchr::memmem::Finder&lt;<span class="lifetime">&#39;static</span>&gt;);
+</span><span class="kw">struct </span>Memmem(memchr::memmem::Finder&lt;<span class="lifetime">'static</span>&gt;);
 
-<span class="attr">#[cfg(all(feature = <span class="string">&quot;std&quot;</span>, feature = <span class="string">&quot;perf-literal&quot;</span>))]
+<span class="attr">#[cfg(all(feature = <span class="string">"std"</span>, feature = <span class="string">"perf-literal"</span>))]
 </span><span class="kw">impl </span>PrefilterI <span class="kw">for </span>Memmem {
     <span class="kw">fn </span>find_in(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; Candidate {
         <span class="kw">use </span><span class="kw">crate</span>::util::primitives::PatternID;
@@ -1350,7 +1350,7 @@
     /// corresponds to a particular bytes (its index) and is only non-zero if
     /// the byte occurred at an offset greater than 0 in at least one pattern.
     ///
-    /// If a byte&#39;s offset is not representable in 8 bits, then the rare bytes
+    /// If a byte's offset is not representable in 8 bits, then the rare bytes
     /// prefilter becomes inert.
     </span>byte_offsets: RareByteOffsets,
     <span class="doccomment">/// Whether this is available as a prefilter or not. This can be set to
@@ -1389,18 +1389,18 @@
 }
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>RareByteOffsets {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
         <span class="kw">let </span><span class="kw-2">mut </span>offsets = <span class="macro">vec!</span>[];
         <span class="kw">for </span>off <span class="kw">in </span><span class="self">self</span>.set.iter() {
             <span class="kw">if </span>off.max &gt; <span class="number">0 </span>{
                 offsets.push(off);
             }
         }
-        f.debug_struct(<span class="string">&quot;RareByteOffsets&quot;</span>).field(<span class="string">&quot;set&quot;</span>, <span class="kw-2">&amp;</span>offsets).finish()
+        f.debug_struct(<span class="string">"RareByteOffsets"</span>).field(<span class="string">"set"</span>, <span class="kw-2">&amp;</span>offsets).finish()
     }
 }
 
-<span class="doccomment">/// Offsets associated with an occurrence of a &quot;rare&quot; byte in any of the
+<span class="doccomment">/// Offsets associated with an occurrence of a "rare" byte in any of the
 /// patterns used to construct a single Aho-Corasick automaton.
 </span><span class="attr">#[derive(Clone, Copy, Debug)]
 </span><span class="kw">struct </span>RareByteOffset {
@@ -1415,7 +1415,7 @@
     /// ineffective when it is asked to start scanning from a position that it
     /// has already scanned past.
     ///
-    /// Using a `u8` here means that if we ever see a pattern that&#39;s longer
+    /// Using a `u8` here means that if we ever see a pattern that's longer
     /// than 255 bytes, then the entire rare byte prefilter is disabled.
     </span>max: u8,
 }
@@ -1465,7 +1465,7 @@
     /// otherwise determine that this prefilter should not be used, then `None`
     /// is returned.
     </span><span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
-        <span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
         </span><span class="kw">fn </span>imp(builder: <span class="kw-2">&amp;</span>RareBytesBuilder) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
             <span class="kw">if </span>!builder.available || builder.count &gt; <span class="number">3 </span>{
                 <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -1499,7 +1499,7 @@
             <span class="prelude-val">Some</span>(Prefilter { finder, memory_usage: <span class="number">0 </span>})
         }
 
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;perf-literal&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"perf-literal"</span>))]
         </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span>RareBytesBuilder) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
             <span class="prelude-val">None
         </span>}
@@ -1512,11 +1512,11 @@
     /// All patterns added to an Aho-Corasick automaton should be added to this
     /// builder before attempting to construct the prefilter.
     </span><span class="kw">fn </span>add(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bytes: <span class="kw-2">&amp;</span>[u8]) {
-        <span class="comment">// If we&#39;ve already given up, then do nothing.
+        <span class="comment">// If we've already given up, then do nothing.
         </span><span class="kw">if </span>!<span class="self">self</span>.available {
             <span class="kw">return</span>;
         }
-        <span class="comment">// If we&#39;ve already blown our budget, then don&#39;t waste time looking
+        <span class="comment">// If we've already blown our budget, then don't waste time looking
         // for more rare bytes.
         </span><span class="kw">if </span><span class="self">self</span>.count &gt; <span class="number">3 </span>{
             <span class="self">self</span>.available = <span class="bool-val">false</span>;
@@ -1534,8 +1534,8 @@
         };
         <span class="comment">// The idea here is to look for the rarest byte in each pattern, and
         // add that to our set. As a special exception, if we see a byte that
-        // we&#39;ve already added, then we immediately stop and choose that byte,
-        // even if there&#39;s another rare byte in the pattern. This helps us
+        // we've already added, then we immediately stop and choose that byte,
+        // even if there's another rare byte in the pattern. This helps us
         // apply the rare byte optimization in more cases by attempting to pick
         // bytes that are in common between patterns. So for example, if we
         // were searching for `Sherlock` and `lockjaw`, then this would pick
@@ -1586,15 +1586,15 @@
     }
 }
 
-<span class="doccomment">/// A prefilter for scanning for a single &quot;rare&quot; byte.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+<span class="doccomment">/// A prefilter for scanning for a single "rare" byte.
+</span><span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 #[derive(Clone, Debug)]
 </span><span class="kw">struct </span>RareBytesOne {
     byte1: u8,
     offset: RareByteOffset,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 </span><span class="kw">impl </span>PrefilterI <span class="kw">for </span>RareBytesOne {
     <span class="kw">fn </span>find_in(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; Candidate {
         memchr::memchr(<span class="self">self</span>.byte1, <span class="kw-2">&amp;</span>haystack[span])
@@ -1609,8 +1609,8 @@
     }
 }
 
-<span class="doccomment">/// A prefilter for scanning for two &quot;rare&quot; bytes.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+<span class="doccomment">/// A prefilter for scanning for two "rare" bytes.
+</span><span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 #[derive(Clone, Debug)]
 </span><span class="kw">struct </span>RareBytesTwo {
     offsets: RareByteOffsets,
@@ -1618,7 +1618,7 @@
     byte2: u8,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 </span><span class="kw">impl </span>PrefilterI <span class="kw">for </span>RareBytesTwo {
     <span class="kw">fn </span>find_in(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; Candidate {
         memchr::memchr2(<span class="self">self</span>.byte1, <span class="self">self</span>.byte2, <span class="kw-2">&amp;</span>haystack[span])
@@ -1631,8 +1631,8 @@
     }
 }
 
-<span class="doccomment">/// A prefilter for scanning for three &quot;rare&quot; bytes.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+<span class="doccomment">/// A prefilter for scanning for three "rare" bytes.
+</span><span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 #[derive(Clone, Debug)]
 </span><span class="kw">struct </span>RareBytesThree {
     offsets: RareByteOffsets,
@@ -1641,7 +1641,7 @@
     byte3: u8,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 </span><span class="kw">impl </span>PrefilterI <span class="kw">for </span>RareBytesThree {
     <span class="kw">fn </span>find_in(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; Candidate {
         memchr::memchr3(<span class="self">self</span>.byte1, <span class="self">self</span>.byte2, <span class="self">self</span>.byte3, <span class="kw-2">&amp;</span>haystack[span])
@@ -1704,7 +1704,7 @@
     /// otherwise determine that this prefilter should not be used, then `None`
     /// is returned.
     </span><span class="kw">fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
-        <span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
         </span><span class="kw">fn </span>imp(builder: <span class="kw-2">&amp;</span>StartBytesBuilder) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
             <span class="kw">if </span>builder.count &gt; <span class="number">3 </span>{
                 <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -1714,9 +1714,9 @@
                 <span class="kw">if </span>!builder.byteset[b] {
                     <span class="kw">continue</span>;
                 }
-                <span class="comment">// We don&#39;t handle non-ASCII bytes for now. Getting non-ASCII
-                // bytes right is trickier, since we generally don&#39;t want to put
-                // a leading UTF-8 code unit into a prefilter that isn&#39;t ASCII,
+                <span class="comment">// We don't handle non-ASCII bytes for now. Getting non-ASCII
+                // bytes right is trickier, since we generally don't want to put
+                // a leading UTF-8 code unit into a prefilter that isn't ASCII,
                 // since they can frequently. Instead, it would be better to use a
                 // continuation byte, but this requires more sophisticated analysis
                 // of the automaton and a richer prefilter API.
@@ -1743,7 +1743,7 @@
             <span class="prelude-val">Some</span>(Prefilter { finder, memory_usage: <span class="number">0 </span>})
         }
 
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;perf-literal&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"perf-literal"</span>))]
         </span><span class="kw">fn </span>imp(<span class="kw">_</span>: <span class="kw-2">&amp;</span>StartBytesBuilder) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
             <span class="prelude-val">None
         </span>}
@@ -1777,13 +1777,13 @@
 }
 
 <span class="doccomment">/// A prefilter for scanning for a single starting byte.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 #[derive(Clone, Debug)]
 </span><span class="kw">struct </span>StartBytesOne {
     byte1: u8,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 </span><span class="kw">impl </span>PrefilterI <span class="kw">for </span>StartBytesOne {
     <span class="kw">fn </span>find_in(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; Candidate {
         memchr::memchr(<span class="self">self</span>.byte1, <span class="kw-2">&amp;</span>haystack[span])
@@ -1793,14 +1793,14 @@
 }
 
 <span class="doccomment">/// A prefilter for scanning for two starting bytes.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 #[derive(Clone, Debug)]
 </span><span class="kw">struct </span>StartBytesTwo {
     byte1: u8,
     byte2: u8,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 </span><span class="kw">impl </span>PrefilterI <span class="kw">for </span>StartBytesTwo {
     <span class="kw">fn </span>find_in(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; Candidate {
         memchr::memchr2(<span class="self">self</span>.byte1, <span class="self">self</span>.byte2, <span class="kw-2">&amp;</span>haystack[span])
@@ -1810,7 +1810,7 @@
 }
 
 <span class="doccomment">/// A prefilter for scanning for three starting bytes.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 #[derive(Clone, Debug)]
 </span><span class="kw">struct </span>StartBytesThree {
     byte1: u8,
@@ -1818,7 +1818,7 @@
     byte3: u8,
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;perf-literal&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"perf-literal"</span>)]
 </span><span class="kw">impl </span>PrefilterI <span class="kw">for </span>StartBytesThree {
     <span class="kw">fn </span>find_in(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; Candidate {
         memchr::memchr3(<span class="self">self</span>.byte1, <span class="self">self</span>.byte2, <span class="self">self</span>.byte3, <span class="kw-2">&amp;</span>haystack[span])
@@ -1828,12 +1828,12 @@
 }
 
 <span class="doccomment">/// If the given byte is an ASCII letter, then return it in the opposite case.
-/// e.g., Given `b&#39;A&#39;`, this returns `b&#39;a&#39;`, and given `b&#39;a&#39;`, this returns
-/// `b&#39;A&#39;`. If a non-ASCII letter is given, then the given byte is returned.
+/// e.g., Given `b'A'`, this returns `b'a'`, and given `b'a'`, this returns
+/// `b'A'`. If a non-ASCII letter is given, then the given byte is returned.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>opposite_ascii_case(b: u8) -&gt; u8 {
-    <span class="kw">if </span><span class="string">b&#39;A&#39; </span>&lt;= b &amp;&amp; b &lt;= <span class="string">b&#39;Z&#39; </span>{
+    <span class="kw">if </span><span class="string">b'A' </span>&lt;= b &amp;&amp; b &lt;= <span class="string">b'Z' </span>{
         b.to_ascii_lowercase()
-    } <span class="kw">else if </span><span class="string">b&#39;a&#39; </span>&lt;= b &amp;&amp; b &lt;= <span class="string">b&#39;z&#39; </span>{
+    } <span class="kw">else if </span><span class="string">b'a' </span>&lt;= b &amp;&amp; b &lt;= <span class="string">b'z' </span>{
         b.to_ascii_uppercase()
     } <span class="kw">else </span>{
         b

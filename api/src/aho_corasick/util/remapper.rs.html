@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/util/remapper.rs`."><title>remapper.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../aho_corasick/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/util/remapper.rs`."><title>remapper.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -220,13 +220,13 @@
 /// state identifiers in DFAs.
 ///
 /// The main idea behind remapping state IDs is that DFAs often need to check
-/// if a certain state is a &quot;special&quot; state of some kind (like a match state)
+/// if a certain state is a "special" state of some kind (like a match state)
 /// during a search. Since this is extremely perf critical code, we want this
 /// check to be as fast as possible. Partitioning state IDs into, for example,
-/// into &quot;non-match&quot; and &quot;match&quot; states means one can tell if a state is a
+/// into "non-match" and "match" states means one can tell if a state is a
 /// match state via a simple comparison of the state ID.
 ///
-/// The issue is that during the DFA construction process, it&#39;s not
+/// The issue is that during the DFA construction process, it's not
 /// particularly easy to partition the states. Instead, the simplest thing is
 /// to often just do a pass over all of the states and shuffle them into their
 /// desired partitionings. To do that, we need a mechanism for swapping states.
@@ -249,14 +249,14 @@
     /// were, and all of the transitions in `id2` are now in the memory region
     /// where the transitions for `id1` were.
     ///
-    /// Essentially, this &quot;moves&quot; `id1` to `id2` and `id2` to `id1`.
+    /// Essentially, this "moves" `id1` to `id2` and `id2` to `id1`.
     ///
     /// It is expected that, after calling this, the underlying state machine
     /// will be left in an inconsistent state, since any other transitions
     /// pointing to, e.g., `id1` need to be updated to point to `id2`, since
-    /// that&#39;s where `id1` moved to.
+    /// that's where `id1` moved to.
     ///
-    /// In order to &quot;fix&quot; the underlying inconsistent state, a `Remapper`
+    /// In order to "fix" the underlying inconsistent state, a `Remapper`
     /// should be used to guarantee that `remap` is called at the appropriate
     /// time.
     </span><span class="kw">fn </span>swap_states(<span class="kw-2">&amp;mut </span><span class="self">self</span>, id1: StateID, id2: StateID);
@@ -286,7 +286,7 @@
     /// still point to its old pre-multiplied StateID.
     ///
     /// While there is a bit more to it, this then allows us to rewrite the
-    /// state IDs in a DFA&#39;s transition table in a single pass. This is done
+    /// state IDs in a DFA's transition table in a single pass. This is done
     /// by iterating over every ID in this map, then iterating over each
     /// transition for the state at that ID and re-mapping the transition from
     /// `old_id` to `map[dfa.to_index(old_id)]`. That is, we find the position
@@ -313,7 +313,7 @@
     }
 
     <span class="doccomment">/// Swap two states. Once this is called, callers must follow through to
-    /// call `remap`, or else it&#39;s possible for the underlying remappable
+    /// call `remap`, or else it's possible for the underlying remappable
     /// value to be in a corrupt state.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>swap(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
@@ -334,7 +334,7 @@
         <span class="comment">// Update the map to account for states that have been swapped
         // multiple times. For example, if (A, C) and (C, G) are swapped, then
         // transitions previously pointing to A should now point to G. But if
-        // we don&#39;t update our map, they will erroneously be set to C. All we
+        // we don't update our map, they will erroneously be set to C. All we
         // do is follow the swaps in our map until we see our original state
         // ID.
         //
@@ -370,13 +370,13 @@
 
 <span class="doccomment">/// A simple type for mapping between state indices and state IDs.
 ///
-/// The reason why this exists is because state IDs are &quot;premultiplied&quot; in a
+/// The reason why this exists is because state IDs are "premultiplied" in a
 /// DFA. That is, in order to get to the transitions for a particular state,
 /// one need only use the state ID as-is, instead of having to multiply it by
-/// transition table&#39;s stride.
+/// transition table's stride.
 ///
-/// The downside of this is that it&#39;s inconvenient to map between state IDs
-/// using a dense map, e.g., Vec&lt;StateID&gt;. That&#39;s because state IDs look like
+/// The downside of this is that it's inconvenient to map between state IDs
+/// using a dense map, e.g., Vec&lt;StateID&gt;. That's because state IDs look like
 /// `0`, `stride`, `2*stride`, `3*stride`, etc., instead of `0`, `1`, `2`, `3`,
 /// etc.
 ///
@@ -390,8 +390,8 @@
 </span><span class="attr">#[derive(Debug)]
 </span><span class="kw">struct </span>IndexMapper {
     <span class="doccomment">/// The power of 2 corresponding to the stride of the corresponding
-    /// transition table. &#39;id &gt;&gt; stride2&#39; de-multiplies an ID while &#39;index &lt;&lt;
-    /// stride2&#39; pre-multiplies an index to an ID.
+    /// transition table. 'id &gt;&gt; stride2' de-multiplies an ID while 'index &lt;&lt;
+    /// stride2' pre-multiplies an index to an ID.
     </span>stride2: usize,
 }
 
@@ -404,10 +404,10 @@
     <span class="doccomment">/// Convert a state index to a state ID.
     </span><span class="kw">fn </span>to_state_id(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; StateID {
         <span class="comment">// CORRECTNESS: If the given index is not valid, then it is not
-        // required for this to panic or return a valid state ID. We&#39;ll &quot;just&quot;
+        // required for this to panic or return a valid state ID. We'll "just"
         // wind up with panics or silent logic errors at some other point. But
         // this is OK because if Remappable::state_len is correct and so is
-        // &#39;to_index&#39;, then all inputs to &#39;to_state_id&#39; should be valid indices
+        // 'to_index', then all inputs to 'to_state_id' should be valid indices
         // and thus transform into valid state IDs.
         </span>StateID::new_unchecked(index &lt;&lt; <span class="self">self</span>.stride2)
     }

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["Speculative"]};
+window.SIDEBAR_ITEMS = {"trait":["AnyDelimiter","Speculative"]};

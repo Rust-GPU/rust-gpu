@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-1.10.3/src/regex/bytes.rs`."><title>bytes.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../regex/index.html"><img class="rust-logo" src="../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-1.10.6/src/regex/bytes.rs`."><title>bytes.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../regex/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2603,6 +2603,103 @@
 <a href="#2603" id="2603">2603</a>
 <a href="#2604" id="2604">2604</a>
 <a href="#2605" id="2605">2605</a>
+<a href="#2606" id="2606">2606</a>
+<a href="#2607" id="2607">2607</a>
+<a href="#2608" id="2608">2608</a>
+<a href="#2609" id="2609">2609</a>
+<a href="#2610" id="2610">2610</a>
+<a href="#2611" id="2611">2611</a>
+<a href="#2612" id="2612">2612</a>
+<a href="#2613" id="2613">2613</a>
+<a href="#2614" id="2614">2614</a>
+<a href="#2615" id="2615">2615</a>
+<a href="#2616" id="2616">2616</a>
+<a href="#2617" id="2617">2617</a>
+<a href="#2618" id="2618">2618</a>
+<a href="#2619" id="2619">2619</a>
+<a href="#2620" id="2620">2620</a>
+<a href="#2621" id="2621">2621</a>
+<a href="#2622" id="2622">2622</a>
+<a href="#2623" id="2623">2623</a>
+<a href="#2624" id="2624">2624</a>
+<a href="#2625" id="2625">2625</a>
+<a href="#2626" id="2626">2626</a>
+<a href="#2627" id="2627">2627</a>
+<a href="#2628" id="2628">2628</a>
+<a href="#2629" id="2629">2629</a>
+<a href="#2630" id="2630">2630</a>
+<a href="#2631" id="2631">2631</a>
+<a href="#2632" id="2632">2632</a>
+<a href="#2633" id="2633">2633</a>
+<a href="#2634" id="2634">2634</a>
+<a href="#2635" id="2635">2635</a>
+<a href="#2636" id="2636">2636</a>
+<a href="#2637" id="2637">2637</a>
+<a href="#2638" id="2638">2638</a>
+<a href="#2639" id="2639">2639</a>
+<a href="#2640" id="2640">2640</a>
+<a href="#2641" id="2641">2641</a>
+<a href="#2642" id="2642">2642</a>
+<a href="#2643" id="2643">2643</a>
+<a href="#2644" id="2644">2644</a>
+<a href="#2645" id="2645">2645</a>
+<a href="#2646" id="2646">2646</a>
+<a href="#2647" id="2647">2647</a>
+<a href="#2648" id="2648">2648</a>
+<a href="#2649" id="2649">2649</a>
+<a href="#2650" id="2650">2650</a>
+<a href="#2651" id="2651">2651</a>
+<a href="#2652" id="2652">2652</a>
+<a href="#2653" id="2653">2653</a>
+<a href="#2654" id="2654">2654</a>
+<a href="#2655" id="2655">2655</a>
+<a href="#2656" id="2656">2656</a>
+<a href="#2657" id="2657">2657</a>
+<a href="#2658" id="2658">2658</a>
+<a href="#2659" id="2659">2659</a>
+<a href="#2660" id="2660">2660</a>
+<a href="#2661" id="2661">2661</a>
+<a href="#2662" id="2662">2662</a>
+<a href="#2663" id="2663">2663</a>
+<a href="#2664" id="2664">2664</a>
+<a href="#2665" id="2665">2665</a>
+<a href="#2666" id="2666">2666</a>
+<a href="#2667" id="2667">2667</a>
+<a href="#2668" id="2668">2668</a>
+<a href="#2669" id="2669">2669</a>
+<a href="#2670" id="2670">2670</a>
+<a href="#2671" id="2671">2671</a>
+<a href="#2672" id="2672">2672</a>
+<a href="#2673" id="2673">2673</a>
+<a href="#2674" id="2674">2674</a>
+<a href="#2675" id="2675">2675</a>
+<a href="#2676" id="2676">2676</a>
+<a href="#2677" id="2677">2677</a>
+<a href="#2678" id="2678">2678</a>
+<a href="#2679" id="2679">2679</a>
+<a href="#2680" id="2680">2680</a>
+<a href="#2681" id="2681">2681</a>
+<a href="#2682" id="2682">2682</a>
+<a href="#2683" id="2683">2683</a>
+<a href="#2684" id="2684">2684</a>
+<a href="#2685" id="2685">2685</a>
+<a href="#2686" id="2686">2686</a>
+<a href="#2687" id="2687">2687</a>
+<a href="#2688" id="2688">2688</a>
+<a href="#2689" id="2689">2689</a>
+<a href="#2690" id="2690">2690</a>
+<a href="#2691" id="2691">2691</a>
+<a href="#2692" id="2692">2692</a>
+<a href="#2693" id="2693">2693</a>
+<a href="#2694" id="2694">2694</a>
+<a href="#2695" id="2695">2695</a>
+<a href="#2696" id="2696">2696</a>
+<a href="#2697" id="2697">2697</a>
+<a href="#2698" id="2698">2698</a>
+<a href="#2699" id="2699">2699</a>
+<a href="#2700" id="2700">2700</a>
+<a href="#2701" id="2701">2701</a>
+<a href="#2702" id="2702">2702</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>alloc::{borrow::Cow, string::String, sync::Arc, vec::Vec};
 
 <span class="kw">use </span>regex_automata::{meta, util::captures, Input, PatternID};
@@ -2633,8 +2730,8 @@
 /// ```
 /// use regex::bytes::Regex;
 ///
-/// let re = Regex::new(&quot;[0-9]{3}-[0-9]{3}-[0-9]{4}&quot;).unwrap();
-/// let m = re.find(b&quot;phone: 111-222-3333&quot;).unwrap();
+/// let re = Regex::new("[0-9]{3}-[0-9]{3}-[0-9]{4}").unwrap();
+/// let m = re.find(b"phone: 111-222-3333").unwrap();
 /// assert_eq!(7..19, m.range());
 /// ```
 ///
@@ -2653,13 +2750,13 @@
 /// ```
 /// use regex::bytes::Regex;
 ///
-/// let hay = b&quot;
+/// let hay = b"
 /// rabbit         54 true
 /// groundhog 2 true
 /// does not match
 /// fox   109    false
-/// &quot;;
-/// let re = Regex::new(r&quot;(?m)^\s*(\S+)\s+([0-9]+)\s+(true|false)\s*$&quot;).unwrap();
+/// ";
+/// let re = Regex::new(r"(?m)^\s*(\S+)\s+([0-9]+)\s+(true|false)\s*$").unwrap();
 /// let mut fields: Vec&lt;(&amp;[u8], i64, bool)&gt; = vec![];
 /// for (_, [f1, f2, f3]) in re.captures_iter(hay).map(|caps| caps.extract()) {
 ///     // These unwraps are OK because our pattern is written in a way where
@@ -2669,9 +2766,9 @@
 ///     fields.push((f1, f2.parse()?, f3.parse()?));
 /// }
 /// assert_eq!(fields, vec![
-///     (&amp;b&quot;rabbit&quot;[..], 54, true),
-///     (&amp;b&quot;groundhog&quot;[..], 2, true),
-///     (&amp;b&quot;fox&quot;[..], 109, false),
+///     (&amp;b"rabbit"[..], 54, true),
+///     (&amp;b"groundhog"[..], 2, true),
+///     (&amp;b"fox"[..], 109, false),
 /// ]);
 ///
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
@@ -2681,7 +2778,7 @@
 ///
 /// One of the reasons for searching `&amp;[u8]` haystacks is that the `&amp;[u8]`
 /// might not be valid UTF-8. Indeed, with a `bytes::Regex`, patterns that
-/// match invalid UTF-8 are explicitly allowed. Here&#39;s one example that looks
+/// match invalid UTF-8 are explicitly allowed. Here's one example that looks
 /// for valid UTF-8 fields that might be separated by invalid UTF-8. In this
 /// case, we use `(?s-u:.)`, which matches any byte. Attempting to use it in a
 /// top-level `Regex` will result in the regex failing to compile. Notice also
@@ -2693,12 +2790,12 @@
 /// use regex::bytes::Regex;
 ///
 /// // F0 9F 92 A9 is the UTF-8 encoding for a Pile of Poo.
-/// let hay = b&quot;\xFF\xFFfoo\xFF\xFF\xFF\xF0\x9F\x92\xA9\xFF&quot;;
-/// // An equivalent to &#39;(?s-u:.)&#39; is &#39;(?-u:[\x00-\xFF])&#39;.
-/// let re = Regex::new(r&quot;(?s)(?-u:.)*?(?&lt;f1&gt;.+)(?-u:.)*?(?&lt;f2&gt;.+)&quot;).unwrap();
+/// let hay = b"\xFF\xFFfoo\xFF\xFF\xFF\xF0\x9F\x92\xA9\xFF";
+/// // An equivalent to '(?s-u:.)' is '(?-u:[\x00-\xFF])'.
+/// let re = Regex::new(r"(?s)(?-u:.)*?(?&lt;f1&gt;.+)(?-u:.)*?(?&lt;f2&gt;.+)").unwrap();
 /// let caps = re.captures(hay).unwrap();
-/// assert_eq!(&amp;caps[&quot;f1&quot;], &amp;b&quot;foo&quot;[..]);
-/// assert_eq!(&amp;caps[&quot;f2&quot;], &quot;💩&quot;.as_bytes());
+/// assert_eq!(&amp;caps["f1"], &amp;b"foo"[..]);
+/// assert_eq!(&amp;caps["f2"], "💩".as_bytes());
 /// ```
 </span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>Regex {
@@ -2708,15 +2805,15 @@
 
 <span class="kw">impl </span>core::fmt::Display <span class="kw">for </span>Regex {
     <span class="doccomment">/// Shows the original regular expression.
-    </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.as_str())
+    </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.as_str())
     }
 }
 
 <span class="kw">impl </span>core::fmt::Debug <span class="kw">for </span>Regex {
     <span class="doccomment">/// Shows the original regular expression.
-    </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
-        f.debug_tuple(<span class="string">&quot;Regex&quot;</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.as_str()).finish()
+    </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
+        f.debug_tuple(<span class="string">"Regex"</span>).field(<span class="kw-2">&amp;</span><span class="self">self</span>.as_str()).finish()
     }
 }
 
@@ -2755,7 +2852,7 @@
     /// Note that regex compilation tends to be a somewhat expensive process,
     /// and unlike higher level environments, compilation is not automatically
     /// cached for you. One should endeavor to compile a regex once and then
-    /// reuse it. For example, it&#39;s a bad idea to compile the same regex
+    /// reuse it. For example, it's a bad idea to compile the same regex
     /// repeatedly in a loop.
     ///
     /// # Errors
@@ -2772,13 +2869,13 @@
     /// use regex::bytes::Regex;
     ///
     /// // An Invalid pattern because of an unclosed parenthesis
-    /// assert!(Regex::new(r&quot;foo(bar&quot;).is_err());
+    /// assert!(Regex::new(r"foo(bar").is_err());
     /// // An invalid pattern because the regex would be too big
     /// // because Unicode tends to inflate things.
-    /// assert!(Regex::new(r&quot;\w{1000}&quot;).is_err());
+    /// assert!(Regex::new(r"\w{1000}").is_err());
     /// // Disabling Unicode can make the regex much smaller,
     /// // potentially by up to or more than an order of magnitude.
-    /// assert!(Regex::new(r&quot;(?-u:\w){1000}&quot;).is_ok());
+    /// assert!(Regex::new(r"(?-u:\w){1000}").is_ok());
     /// ```
     </span><span class="kw">pub fn </span>new(re: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Regex, Error&gt; {
         RegexBuilder::new(re).build()
@@ -2799,8 +2896,8 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;\b\w{13}\b&quot;).unwrap();
-    /// let hay = b&quot;I categorically deny having triskaidekaphobia.&quot;;
+    /// let re = Regex::new(r"\b\w{13}\b").unwrap();
+    /// let hay = b"I categorically deny having triskaidekaphobia.";
     /// assert!(re.is_match(hay));
     /// ```
     </span><span class="attr">#[inline]
@@ -2815,7 +2912,7 @@
     ///
     /// Note that this should only be used if you want to find the entire
     /// match. If instead you just want to test the existence of a match,
-    /// it&#39;s potentially faster to use `Regex::is_match(hay)` instead of
+    /// it's potentially faster to use `Regex::is_match(hay)` instead of
     /// `Regex::find(hay).is_some()`.
     ///
     /// # Example
@@ -2825,14 +2922,14 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;\b\w{13}\b&quot;).unwrap();
-    /// let hay = b&quot;I categorically deny having triskaidekaphobia.&quot;;
+    /// let re = Regex::new(r"\b\w{13}\b").unwrap();
+    /// let hay = b"I categorically deny having triskaidekaphobia.";
     /// let mat = re.find(hay).unwrap();
     /// assert_eq!(2..15, mat.range());
-    /// assert_eq!(b&quot;categorically&quot;, mat.as_bytes());
+    /// assert_eq!(b"categorically", mat.as_bytes());
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>find&lt;<span class="lifetime">&#39;h</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt; {
+    </span><span class="kw">pub fn </span>find&lt;<span class="lifetime">'h</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt; {
         <span class="self">self</span>.find_at(haystack, <span class="number">0</span>)
     }
 
@@ -2853,18 +2950,18 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;\b\w{13}\b&quot;).unwrap();
-    /// let hay = b&quot;Retroactively relinquishing remunerations is reprehensible.&quot;;
+    /// let re = Regex::new(r"\b\w{13}\b").unwrap();
+    /// let hay = b"Retroactively relinquishing remunerations is reprehensible.";
     /// let matches: Vec&lt;_&gt; = re.find_iter(hay).map(|m| m.as_bytes()).collect();
     /// assert_eq!(matches, vec![
-    ///     &amp;b&quot;Retroactively&quot;[..],
-    ///     &amp;b&quot;relinquishing&quot;[..],
-    ///     &amp;b&quot;remunerations&quot;[..],
-    ///     &amp;b&quot;reprehensible&quot;[..],
+    ///     &amp;b"Retroactively"[..],
+    ///     &amp;b"relinquishing"[..],
+    ///     &amp;b"remunerations"[..],
+    ///     &amp;b"reprehensible"[..],
     /// ]);
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>find_iter&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8]) -&gt; Matches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>find_iter&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'r </span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8]) -&gt; Matches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
         Matches { haystack, it: <span class="self">self</span>.meta.find_iter(haystack) }
     }
 
@@ -2888,26 +2985,26 @@
     /// # Example
     ///
     /// Say you have some haystack with movie names and their release years,
-    /// like &quot;&#39;Citizen Kane&#39; (1941)&quot;. It&#39;d be nice if we could search for
+    /// like "'Citizen Kane' (1941)". It'd be nice if we could search for
     /// strings looking like that, while also extracting the movie name and its
     /// release year separately. The example below shows how to do that.
     ///
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;&#39;([^&#39;]+)&#39;\s+\((\d{4})\)&quot;).unwrap();
-    /// let hay = b&quot;Not my favorite movie: &#39;Citizen Kane&#39; (1941).&quot;;
+    /// let re = Regex::new(r"'([^']+)'\s+\((\d{4})\)").unwrap();
+    /// let hay = b"Not my favorite movie: 'Citizen Kane' (1941).";
     /// let caps = re.captures(hay).unwrap();
-    /// assert_eq!(caps.get(0).unwrap().as_bytes(), b&quot;&#39;Citizen Kane&#39; (1941)&quot;);
-    /// assert_eq!(caps.get(1).unwrap().as_bytes(), b&quot;Citizen Kane&quot;);
-    /// assert_eq!(caps.get(2).unwrap().as_bytes(), b&quot;1941&quot;);
+    /// assert_eq!(caps.get(0).unwrap().as_bytes(), b"'Citizen Kane' (1941)");
+    /// assert_eq!(caps.get(1).unwrap().as_bytes(), b"Citizen Kane");
+    /// assert_eq!(caps.get(2).unwrap().as_bytes(), b"1941");
     /// // You can also access the groups by index using the Index notation.
     /// // Note that this will panic on an invalid index. In this case, these
     /// // accesses are always correct because the overall regex will only
     /// // match when these capture groups match.
-    /// assert_eq!(&amp;caps[0], b&quot;&#39;Citizen Kane&#39; (1941)&quot;);
-    /// assert_eq!(&amp;caps[1], b&quot;Citizen Kane&quot;);
-    /// assert_eq!(&amp;caps[2], b&quot;1941&quot;);
+    /// assert_eq!(&amp;caps[0], b"'Citizen Kane' (1941)");
+    /// assert_eq!(&amp;caps[1], b"Citizen Kane");
+    /// assert_eq!(&amp;caps[2], b"1941");
     /// ```
     ///
     /// Note that the full match is at capture group `0`. Each subsequent
@@ -2918,19 +3015,19 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;&#39;(?&lt;title&gt;[^&#39;]+)&#39;\s+\((?&lt;year&gt;\d{4})\)&quot;).unwrap();
-    /// let hay = b&quot;Not my favorite movie: &#39;Citizen Kane&#39; (1941).&quot;;
+    /// let re = Regex::new(r"'(?&lt;title&gt;[^']+)'\s+\((?&lt;year&gt;\d{4})\)").unwrap();
+    /// let hay = b"Not my favorite movie: 'Citizen Kane' (1941).";
     /// let caps = re.captures(hay).unwrap();
-    /// assert_eq!(caps.get(0).unwrap().as_bytes(), b&quot;&#39;Citizen Kane&#39; (1941)&quot;);
-    /// assert_eq!(caps.name(&quot;title&quot;).unwrap().as_bytes(), b&quot;Citizen Kane&quot;);
-    /// assert_eq!(caps.name(&quot;year&quot;).unwrap().as_bytes(), b&quot;1941&quot;);
+    /// assert_eq!(caps.get(0).unwrap().as_bytes(), b"'Citizen Kane' (1941)");
+    /// assert_eq!(caps.name("title").unwrap().as_bytes(), b"Citizen Kane");
+    /// assert_eq!(caps.name("year").unwrap().as_bytes(), b"1941");
     /// // You can also access the groups by name using the Index notation.
     /// // Note that this will panic on an invalid group name. In this case,
     /// // these accesses are always correct because the overall regex will
     /// // only match when these capture groups match.
-    /// assert_eq!(&amp;caps[0], b&quot;&#39;Citizen Kane&#39; (1941)&quot;);
-    /// assert_eq!(&amp;caps[&quot;title&quot;], b&quot;Citizen Kane&quot;);
-    /// assert_eq!(&amp;caps[&quot;year&quot;], b&quot;1941&quot;);
+    /// assert_eq!(&amp;caps[0], b"'Citizen Kane' (1941)");
+    /// assert_eq!(&amp;caps["title"], b"Citizen Kane");
+    /// assert_eq!(&amp;caps["year"], b"1941");
     /// ```
     ///
     /// Here we name the capture groups, which we can access with the `name`
@@ -2947,15 +3044,15 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;&#39;([^&#39;]+)&#39;\s+\((\d{4})\)&quot;).unwrap();
-    /// let hay = b&quot;Not my favorite movie: &#39;Citizen Kane&#39; (1941).&quot;;
+    /// let re = Regex::new(r"'([^']+)'\s+\((\d{4})\)").unwrap();
+    /// let hay = b"Not my favorite movie: 'Citizen Kane' (1941).";
     /// let (full, [title, year]) = re.captures(hay).unwrap().extract();
-    /// assert_eq!(full, b&quot;&#39;Citizen Kane&#39; (1941)&quot;);
-    /// assert_eq!(title, b&quot;Citizen Kane&quot;);
-    /// assert_eq!(year, b&quot;1941&quot;);
+    /// assert_eq!(full, b"'Citizen Kane' (1941)");
+    /// assert_eq!(title, b"Citizen Kane");
+    /// assert_eq!(year, b"1941");
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>captures&lt;<span class="lifetime">&#39;h</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;Captures&lt;<span class="lifetime">&#39;h</span>&gt;&gt; {
+    </span><span class="kw">pub fn </span>captures&lt;<span class="lifetime">'h</span>&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8]) -&gt; <span class="prelude-ty">Option</span>&lt;Captures&lt;<span class="lifetime">'h</span>&gt;&gt; {
         <span class="self">self</span>.captures_at(haystack, <span class="number">0</span>)
     }
 
@@ -2979,13 +3076,13 @@
     /// # Example
     ///
     /// We can use this to find all movie titles and their release years in
-    /// some haystack, where the movie is formatted like &quot;&#39;Title&#39; (xxxx)&quot;:
+    /// some haystack, where the movie is formatted like "'Title' (xxxx)":
     ///
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;&#39;([^&#39;]+)&#39;\s+\(([0-9]{4})\)&quot;).unwrap();
-    /// let hay = b&quot;&#39;Citizen Kane&#39; (1941), &#39;The Wizard of Oz&#39; (1939), &#39;M&#39; (1931).&quot;;
+    /// let re = Regex::new(r"'([^']+)'\s+\(([0-9]{4})\)").unwrap();
+    /// let hay = b"'Citizen Kane' (1941), 'The Wizard of Oz' (1939), 'M' (1931).";
     /// let mut movies = vec![];
     /// for (_, [title, year]) in re.captures_iter(hay).map(|c| c.extract()) {
     ///     // OK because [0-9]{4} can only match valid UTF-8.
@@ -2993,9 +3090,9 @@
     ///     movies.push((title, year.parse::&lt;i64&gt;()?));
     /// }
     /// assert_eq!(movies, vec![
-    ///     (&amp;b&quot;Citizen Kane&quot;[..], 1941),
-    ///     (&amp;b&quot;The Wizard of Oz&quot;[..], 1939),
-    ///     (&amp;b&quot;M&quot;[..], 1931),
+    ///     (&amp;b"Citizen Kane"[..], 1941),
+    ///     (&amp;b"The Wizard of Oz"[..], 1939),
+    ///     (&amp;b"M"[..], 1931),
     /// ]);
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -3005,33 +3102,33 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;&#39;(?&lt;title&gt;[^&#39;]+)&#39;\s+\((?&lt;year&gt;[0-9]{4})\)&quot;).unwrap();
-    /// let hay = b&quot;&#39;Citizen Kane&#39; (1941), &#39;The Wizard of Oz&#39; (1939), &#39;M&#39; (1931).&quot;;
+    /// let re = Regex::new(r"'(?&lt;title&gt;[^']+)'\s+\((?&lt;year&gt;[0-9]{4})\)").unwrap();
+    /// let hay = b"'Citizen Kane' (1941), 'The Wizard of Oz' (1939), 'M' (1931).";
     /// let mut it = re.captures_iter(hay);
     ///
     /// let caps = it.next().unwrap();
-    /// assert_eq!(&amp;caps[&quot;title&quot;], b&quot;Citizen Kane&quot;);
-    /// assert_eq!(&amp;caps[&quot;year&quot;], b&quot;1941&quot;);
+    /// assert_eq!(&amp;caps["title"], b"Citizen Kane");
+    /// assert_eq!(&amp;caps["year"], b"1941");
     ///
     /// let caps = it.next().unwrap();
-    /// assert_eq!(&amp;caps[&quot;title&quot;], b&quot;The Wizard of Oz&quot;);
-    /// assert_eq!(&amp;caps[&quot;year&quot;], b&quot;1939&quot;);
+    /// assert_eq!(&amp;caps["title"], b"The Wizard of Oz");
+    /// assert_eq!(&amp;caps["year"], b"1939");
     ///
     /// let caps = it.next().unwrap();
-    /// assert_eq!(&amp;caps[&quot;title&quot;], b&quot;M&quot;);
-    /// assert_eq!(&amp;caps[&quot;year&quot;], b&quot;1931&quot;);
+    /// assert_eq!(&amp;caps["title"], b"M");
+    /// assert_eq!(&amp;caps["year"], b"1931");
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>captures_iter&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span><span class="self">self</span>,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    ) -&gt; CaptureMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>captures_iter&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'r </span><span class="self">self</span>,
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    ) -&gt; CaptureMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
         CaptureMatches { haystack, it: <span class="self">self</span>.meta.captures_iter(haystack) }
     }
 
     <span class="doccomment">/// Returns an iterator of substrings of the haystack given, delimited by a
     /// match of the regex. Namely, each element of the iterator corresponds to
-    /// a part of the haystack that *isn&#39;t* matched by the regular expression.
+    /// a part of the haystack that *isn't* matched by the regular expression.
     ///
     /// # Time complexity
     ///
@@ -3047,11 +3144,11 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;[ \t]+&quot;).unwrap();
-    /// let hay = b&quot;a b \t  c\td    e&quot;;
+    /// let re = Regex::new(r"[ \t]+").unwrap();
+    /// let hay = b"a b \t  c\td    e";
     /// let fields: Vec&lt;&amp;[u8]&gt; = re.split(hay).collect();
     /// assert_eq!(fields, vec![
-    ///     &amp;b&quot;a&quot;[..], &amp;b&quot;b&quot;[..], &amp;b&quot;c&quot;[..], &amp;b&quot;d&quot;[..], &amp;b&quot;e&quot;[..],
+    ///     &amp;b"a"[..], &amp;b"b"[..], &amp;b"c"[..], &amp;b"d"[..], &amp;b"e"[..],
     /// ]);
     /// ```
     ///
@@ -3062,29 +3159,29 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot; &quot;).unwrap();
-    /// let hay = b&quot;Mary had a little lamb&quot;;
+    /// let re = Regex::new(r" ").unwrap();
+    /// let hay = b"Mary had a little lamb";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.split(hay).collect();
     /// assert_eq!(got, vec![
-    ///     &amp;b&quot;Mary&quot;[..], &amp;b&quot;had&quot;[..], &amp;b&quot;a&quot;[..], &amp;b&quot;little&quot;[..], &amp;b&quot;lamb&quot;[..],
+    ///     &amp;b"Mary"[..], &amp;b"had"[..], &amp;b"a"[..], &amp;b"little"[..], &amp;b"lamb"[..],
     /// ]);
     ///
-    /// let re = Regex::new(r&quot;X&quot;).unwrap();
-    /// let hay = b&quot;&quot;;
+    /// let re = Regex::new(r"X").unwrap();
+    /// let hay = b"";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.split(hay).collect();
-    /// assert_eq!(got, vec![&amp;b&quot;&quot;[..]]);
+    /// assert_eq!(got, vec![&amp;b""[..]]);
     ///
-    /// let re = Regex::new(r&quot;X&quot;).unwrap();
-    /// let hay = b&quot;lionXXtigerXleopard&quot;;
+    /// let re = Regex::new(r"X").unwrap();
+    /// let hay = b"lionXXtigerXleopard";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.split(hay).collect();
     /// assert_eq!(got, vec![
-    ///     &amp;b&quot;lion&quot;[..], &amp;b&quot;&quot;[..], &amp;b&quot;tiger&quot;[..], &amp;b&quot;leopard&quot;[..],
+    ///     &amp;b"lion"[..], &amp;b""[..], &amp;b"tiger"[..], &amp;b"leopard"[..],
     /// ]);
     ///
-    /// let re = Regex::new(r&quot;::&quot;).unwrap();
-    /// let hay = b&quot;lion::tiger::leopard&quot;;
+    /// let re = Regex::new(r"::").unwrap();
+    /// let hay = b"lion::tiger::leopard";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.split(hay).collect();
-    /// assert_eq!(got, vec![&amp;b&quot;lion&quot;[..], &amp;b&quot;tiger&quot;[..], &amp;b&quot;leopard&quot;[..]]);
+    /// assert_eq!(got, vec![&amp;b"lion"[..], &amp;b"tiger"[..], &amp;b"leopard"[..]]);
     /// ```
     ///
     /// If a haystack contains multiple contiguous matches, you will end up
@@ -3093,18 +3190,18 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;X&quot;).unwrap();
-    /// let hay = b&quot;XXXXaXXbXc&quot;;
+    /// let re = Regex::new(r"X").unwrap();
+    /// let hay = b"XXXXaXXbXc";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.split(hay).collect();
     /// assert_eq!(got, vec![
-    ///     &amp;b&quot;&quot;[..], &amp;b&quot;&quot;[..], &amp;b&quot;&quot;[..], &amp;b&quot;&quot;[..],
-    ///     &amp;b&quot;a&quot;[..], &amp;b&quot;&quot;[..], &amp;b&quot;b&quot;[..], &amp;b&quot;c&quot;[..],
+    ///     &amp;b""[..], &amp;b""[..], &amp;b""[..], &amp;b""[..],
+    ///     &amp;b"a"[..], &amp;b""[..], &amp;b"b"[..], &amp;b"c"[..],
     /// ]);
     ///
-    /// let re = Regex::new(r&quot;/&quot;).unwrap();
-    /// let hay = b&quot;(///)&quot;;
+    /// let re = Regex::new(r"/").unwrap();
+    /// let hay = b"(///)";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.split(hay).collect();
-    /// assert_eq!(got, vec![&amp;b&quot;(&quot;[..], &amp;b&quot;&quot;[..], &amp;b&quot;&quot;[..], &amp;b&quot;)&quot;[..]]);
+    /// assert_eq!(got, vec![&amp;b"("[..], &amp;b""[..], &amp;b""[..], &amp;b")"[..]]);
     /// ```
     ///
     /// Separators at the start or end of a haystack are neighbored by empty
@@ -3113,10 +3210,10 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;0&quot;).unwrap();
-    /// let hay = b&quot;010&quot;;
+    /// let re = Regex::new(r"0").unwrap();
+    /// let hay = b"010";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.split(hay).collect();
-    /// assert_eq!(got, vec![&amp;b&quot;&quot;[..], &amp;b&quot;1&quot;[..], &amp;b&quot;&quot;[..]]);
+    /// assert_eq!(got, vec![&amp;b""[..], &amp;b"1"[..], &amp;b""[..]]);
     /// ```
     ///
     /// When the regex can match the empty string, it splits at every byte
@@ -3127,11 +3224,11 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;&quot;).unwrap();
-    /// let hay = &quot;☃&quot;.as_bytes();
+    /// let re = Regex::new(r"").unwrap();
+    /// let hay = "☃".as_bytes();
     /// let got: Vec&lt;&amp;[u8]&gt; = re.split(hay).collect();
     /// assert_eq!(got, vec![
-    ///     &amp;[][..], &amp;[b&#39;\xE2&#39;][..], &amp;[b&#39;\x98&#39;][..], &amp;[b&#39;\x83&#39;][..], &amp;[][..],
+    ///     &amp;[][..], &amp;[b'\xE2'][..], &amp;[b'\x98'][..], &amp;[b'\x83'][..], &amp;[][..],
     /// ]);
     /// ```
     ///
@@ -3141,37 +3238,37 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot; &quot;).unwrap();
-    /// let hay = b&quot;    a  b c&quot;;
+    /// let re = Regex::new(r" ").unwrap();
+    /// let hay = b"    a  b c";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.split(hay).collect();
     /// assert_eq!(got, vec![
-    ///     &amp;b&quot;&quot;[..], &amp;b&quot;&quot;[..], &amp;b&quot;&quot;[..], &amp;b&quot;&quot;[..],
-    ///     &amp;b&quot;a&quot;[..], &amp;b&quot;&quot;[..], &amp;b&quot;b&quot;[..], &amp;b&quot;c&quot;[..],
+    ///     &amp;b""[..], &amp;b""[..], &amp;b""[..], &amp;b""[..],
+    ///     &amp;b"a"[..], &amp;b""[..], &amp;b"b"[..], &amp;b"c"[..],
     /// ]);
     /// ```
     ///
-    /// It does *not* give you `[&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]`. For that behavior, you&#39;d want
+    /// It does *not* give you `["a", "b", "c"]`. For that behavior, you'd want
     /// to match contiguous space characters:
     ///
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot; +&quot;).unwrap();
-    /// let hay = b&quot;    a  b c&quot;;
+    /// let re = Regex::new(r" +").unwrap();
+    /// let hay = b"    a  b c";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.split(hay).collect();
-    /// // N.B. This does still include a leading empty span because &#39; +&#39;
+    /// // N.B. This does still include a leading empty span because ' +'
     /// // matches at the beginning of the haystack.
-    /// assert_eq!(got, vec![&amp;b&quot;&quot;[..], &amp;b&quot;a&quot;[..], &amp;b&quot;b&quot;[..], &amp;b&quot;c&quot;[..]]);
+    /// assert_eq!(got, vec![&amp;b""[..], &amp;b"a"[..], &amp;b"b"[..], &amp;b"c"[..]]);
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>split&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8]) -&gt; Split&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>split&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'r </span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8]) -&gt; Split&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
         Split { haystack, it: <span class="self">self</span>.meta.split(haystack) }
     }
 
     <span class="doccomment">/// Returns an iterator of at most `limit` substrings of the haystack
     /// given, delimited by a match of the regex. (A `limit` of `0` will return
     /// no substrings.) Namely, each element of the iterator corresponds to a
-    /// part of the haystack that *isn&#39;t* matched by the regular expression.
+    /// part of the haystack that *isn't* matched by the regular expression.
     /// The remainder of the haystack that is not split will be the last
     /// element in the iterator.
     ///
@@ -3192,10 +3289,10 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;\W+&quot;).unwrap();
-    /// let hay = b&quot;Hey! How are you?&quot;;
+    /// let re = Regex::new(r"\W+").unwrap();
+    /// let hay = b"Hey! How are you?";
     /// let fields: Vec&lt;&amp;[u8]&gt; = re.splitn(hay, 3).collect();
-    /// assert_eq!(fields, vec![&amp;b&quot;Hey&quot;[..], &amp;b&quot;How&quot;[..], &amp;b&quot;are you?&quot;[..]]);
+    /// assert_eq!(fields, vec![&amp;b"Hey"[..], &amp;b"How"[..], &amp;b"are you?"[..]]);
     /// ```
     ///
     /// # Examples: more cases
@@ -3203,47 +3300,47 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot; &quot;).unwrap();
-    /// let hay = b&quot;Mary had a little lamb&quot;;
+    /// let re = Regex::new(r" ").unwrap();
+    /// let hay = b"Mary had a little lamb";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.splitn(hay, 3).collect();
-    /// assert_eq!(got, vec![&amp;b&quot;Mary&quot;[..], &amp;b&quot;had&quot;[..], &amp;b&quot;a little lamb&quot;[..]]);
+    /// assert_eq!(got, vec![&amp;b"Mary"[..], &amp;b"had"[..], &amp;b"a little lamb"[..]]);
     ///
-    /// let re = Regex::new(r&quot;X&quot;).unwrap();
-    /// let hay = b&quot;&quot;;
+    /// let re = Regex::new(r"X").unwrap();
+    /// let hay = b"";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.splitn(hay, 3).collect();
-    /// assert_eq!(got, vec![&amp;b&quot;&quot;[..]]);
+    /// assert_eq!(got, vec![&amp;b""[..]]);
     ///
-    /// let re = Regex::new(r&quot;X&quot;).unwrap();
-    /// let hay = b&quot;lionXXtigerXleopard&quot;;
+    /// let re = Regex::new(r"X").unwrap();
+    /// let hay = b"lionXXtigerXleopard";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.splitn(hay, 3).collect();
-    /// assert_eq!(got, vec![&amp;b&quot;lion&quot;[..], &amp;b&quot;&quot;[..], &amp;b&quot;tigerXleopard&quot;[..]]);
+    /// assert_eq!(got, vec![&amp;b"lion"[..], &amp;b""[..], &amp;b"tigerXleopard"[..]]);
     ///
-    /// let re = Regex::new(r&quot;::&quot;).unwrap();
-    /// let hay = b&quot;lion::tiger::leopard&quot;;
+    /// let re = Regex::new(r"::").unwrap();
+    /// let hay = b"lion::tiger::leopard";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.splitn(hay, 2).collect();
-    /// assert_eq!(got, vec![&amp;b&quot;lion&quot;[..], &amp;b&quot;tiger::leopard&quot;[..]]);
+    /// assert_eq!(got, vec![&amp;b"lion"[..], &amp;b"tiger::leopard"[..]]);
     ///
-    /// let re = Regex::new(r&quot;X&quot;).unwrap();
-    /// let hay = b&quot;abcXdef&quot;;
+    /// let re = Regex::new(r"X").unwrap();
+    /// let hay = b"abcXdef";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.splitn(hay, 1).collect();
-    /// assert_eq!(got, vec![&amp;b&quot;abcXdef&quot;[..]]);
+    /// assert_eq!(got, vec![&amp;b"abcXdef"[..]]);
     ///
-    /// let re = Regex::new(r&quot;X&quot;).unwrap();
-    /// let hay = b&quot;abcdef&quot;;
+    /// let re = Regex::new(r"X").unwrap();
+    /// let hay = b"abcdef";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.splitn(hay, 2).collect();
-    /// assert_eq!(got, vec![&amp;b&quot;abcdef&quot;[..]]);
+    /// assert_eq!(got, vec![&amp;b"abcdef"[..]]);
     ///
-    /// let re = Regex::new(r&quot;X&quot;).unwrap();
-    /// let hay = b&quot;abcXdef&quot;;
+    /// let re = Regex::new(r"X").unwrap();
+    /// let hay = b"abcXdef";
     /// let got: Vec&lt;&amp;[u8]&gt; = re.splitn(hay, 0).collect();
     /// assert!(got.is_empty());
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>splitn&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span><span class="self">self</span>,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+    </span><span class="kw">pub fn </span>splitn&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'r </span><span class="self">self</span>,
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
         limit: usize,
-    ) -&gt; SplitN&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
+    ) -&gt; SplitN&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
         SplitN { haystack, it: <span class="self">self</span>.meta.splitn(haystack, limit) }
     }
 
@@ -3256,6 +3353,9 @@
     /// case, this implementation will likely return a `Cow::Borrowed` value
     /// such that no allocation is performed.
     ///
+    /// When a `Cow::Borrowed` is returned, the value returned is guaranteed
+    /// to be equivalent to the `haystack` given.
+    ///
     /// # Replacement string syntax
     ///
     /// All instances of `$ref` in the replacement string are replaced with
@@ -3266,8 +3366,8 @@
     /// or it can be a name (consisting of letters, digits or underscores)
     /// corresponding to a named capture group.
     ///
-    /// If `ref` isn&#39;t a valid capture group (whether the name doesn&#39;t exist or
-    /// isn&#39;t a valid index), then it is replaced with the empty string.
+    /// If `ref` isn't a valid capture group (whether the name doesn't exist or
+    /// isn't a valid index), then it is replaced with the empty string.
     ///
     /// The longest possible name is used. For example, `$1a` looks up the
     /// capture group named `1a` and not the capture group at index `1`. To
@@ -3283,8 +3383,8 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;[^01]+&quot;).unwrap();
-    /// assert_eq!(re.replace(b&quot;1078910&quot;, b&quot;&quot;), &amp;b&quot;1010&quot;[..]);
+    /// let re = Regex::new(r"[^01]+").unwrap();
+    /// assert_eq!(re.replace(b"1078910", b""), &amp;b"1010"[..]);
     /// ```
     ///
     /// But anything satisfying the [`Replacer`] trait will work. For example,
@@ -3295,28 +3395,28 @@
     /// ```
     /// use regex::bytes::{Captures, Regex};
     ///
-    /// let re = Regex::new(r&quot;([^,\s]+),\s+(\S+)&quot;).unwrap();
-    /// let result = re.replace(b&quot;Springsteen, Bruce&quot;, |caps: &amp;Captures| {
+    /// let re = Regex::new(r"([^,\s]+),\s+(\S+)").unwrap();
+    /// let result = re.replace(b"Springsteen, Bruce", |caps: &amp;Captures| {
     ///     let mut buf = vec![];
     ///     buf.extend_from_slice(&amp;caps[2]);
-    ///     buf.push(b&#39; &#39;);
+    ///     buf.push(b' ');
     ///     buf.extend_from_slice(&amp;caps[1]);
     ///     buf
     /// });
-    /// assert_eq!(result, &amp;b&quot;Bruce Springsteen&quot;[..]);
+    /// assert_eq!(result, &amp;b"Bruce Springsteen"[..]);
     /// ```
     ///
     /// But this is a bit cumbersome to use all the time. Instead, a simple
     /// syntax is supported (as described above) that expands `$name` into the
-    /// corresponding capture group. Here&#39;s the last example, but using this
+    /// corresponding capture group. Here's the last example, but using this
     /// expansion technique with named capture groups:
     ///
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;(?&lt;last&gt;[^,\s]+),\s+(?&lt;first&gt;\S+)&quot;).unwrap();
-    /// let result = re.replace(b&quot;Springsteen, Bruce&quot;, b&quot;$first $last&quot;);
-    /// assert_eq!(result, &amp;b&quot;Bruce Springsteen&quot;[..]);
+    /// let re = Regex::new(r"(?&lt;last&gt;[^,\s]+),\s+(?&lt;first&gt;\S+)").unwrap();
+    /// let result = re.replace(b"Springsteen, Bruce", b"$first $last");
+    /// assert_eq!(result, &amp;b"Bruce Springsteen"[..]);
     /// ```
     ///
     /// Note that using `$2` instead of `$first` or `$1` instead of `$last`
@@ -3330,13 +3430,13 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;(?&lt;first&gt;\w+)\s+(?&lt;second&gt;\w+)&quot;).unwrap();
-    /// let result = re.replace(b&quot;deep fried&quot;, b&quot;${first}_$second&quot;);
-    /// assert_eq!(result, &amp;b&quot;deep_fried&quot;[..]);
+    /// let re = Regex::new(r"(?&lt;first&gt;\w+)\s+(?&lt;second&gt;\w+)").unwrap();
+    /// let result = re.replace(b"deep fried", b"${first}_$second");
+    /// assert_eq!(result, &amp;b"deep_fried"[..]);
     /// ```
     ///
     /// Without the curly braces, the capture group name `first_` would be
-    /// used, and since it doesn&#39;t exist, it would be replaced with the empty
+    /// used, and since it doesn't exist, it would be replaced with the empty
     /// string.
     ///
     /// Finally, sometimes you just want to replace a literal string with no
@@ -3346,25 +3446,32 @@
     /// ```
     /// use regex::bytes::{NoExpand, Regex};
     ///
-    /// let re = Regex::new(r&quot;(?&lt;last&gt;[^,\s]+),\s+(\S+)&quot;).unwrap();
-    /// let result = re.replace(b&quot;Springsteen, Bruce&quot;, NoExpand(b&quot;$2 $last&quot;));
-    /// assert_eq!(result, &amp;b&quot;$2 $last&quot;[..]);
+    /// let re = Regex::new(r"(?&lt;last&gt;[^,\s]+),\s+(\S+)").unwrap();
+    /// let result = re.replace(b"Springsteen, Bruce", NoExpand(b"$2 $last"));
+    /// assert_eq!(result, &amp;b"$2 $last"[..]);
     /// ```
     ///
-    /// Using `NoExpand` may also be faster, since the replacement string won&#39;t
+    /// Using `NoExpand` may also be faster, since the replacement string won't
     /// need to be parsed for the `$` syntax.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>replace&lt;<span class="lifetime">&#39;h</span>, R: Replacer&gt;(
+    </span><span class="kw">pub fn </span>replace&lt;<span class="lifetime">'h</span>, R: Replacer&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
         rep: R,
-    ) -&gt; Cow&lt;<span class="lifetime">&#39;h</span>, [u8]&gt; {
+    ) -&gt; Cow&lt;<span class="lifetime">'h</span>, [u8]&gt; {
         <span class="self">self</span>.replacen(haystack, <span class="number">1</span>, rep)
     }
 
     <span class="doccomment">/// Replaces all non-overlapping matches in the haystack with the
     /// replacement provided. This is the same as calling `replacen` with
     /// `limit` set to `0`.
+    ///
+    /// If no match is found, then the haystack is returned unchanged. In that
+    /// case, this implementation will likely return a `Cow::Borrowed` value
+    /// such that no allocation is performed.
+    ///
+    /// When a `Cow::Borrowed` is returned, the value returned is guaranteed
+    /// to be equivalent to the `haystack` given.
     ///
     /// The documentation for [`Regex::replace`] goes into more detail about
     /// what kinds of replacement strings are supported.
@@ -3379,8 +3486,8 @@
     /// # Fallibility
     ///
     /// If you need to write a replacement routine where any individual
-    /// replacement might &quot;fail,&quot; doing so with this API isn&#39;t really feasible
-    /// because there&#39;s no way to stop the search process if a replacement
+    /// replacement might "fail," doing so with this API isn't really feasible
+    /// because there's no way to stop the search process if a replacement
     /// fails. Instead, if you need this functionality, you should consider
     /// implementing your own replacement routine:
     ///
@@ -3404,20 +3511,20 @@
     ///     Ok(new)
     /// }
     ///
-    /// // Let&#39;s replace each word with the number of bytes in that word.
-    /// // But if we see a word that is &quot;too long,&quot; we&#39;ll give up.
-    /// let re = Regex::new(r&quot;\w+&quot;).unwrap();
-    /// let replacement = |caps: &amp;Captures| -&gt; Result&lt;Vec&lt;u8&gt;, &amp;&#39;static str&gt; {
+    /// // Let's replace each word with the number of bytes in that word.
+    /// // But if we see a word that is "too long," we'll give up.
+    /// let re = Regex::new(r"\w+").unwrap();
+    /// let replacement = |caps: &amp;Captures| -&gt; Result&lt;Vec&lt;u8&gt;, &amp;'static str&gt; {
     ///     if caps[0].len() &gt;= 5 {
-    ///         return Err(&quot;word too long&quot;);
+    ///         return Err("word too long");
     ///     }
     ///     Ok(caps[0].len().to_string().into_bytes())
     /// };
     /// assert_eq!(
-    ///     Ok(b&quot;2 3 3 3?&quot;.to_vec()),
-    ///     replace_all(&amp;re, b&quot;hi how are you?&quot;, &amp;replacement),
+    ///     Ok(b"2 3 3 3?".to_vec()),
+    ///     replace_all(&amp;re, b"hi how are you?", &amp;replacement),
     /// );
-    /// assert!(replace_all(&amp;re, b&quot;hi there&quot;, &amp;replacement).is_err());
+    /// assert!(replace_all(&amp;re, b"hi there", &amp;replacement).is_err());
     /// ```
     ///
     /// # Example
@@ -3429,29 +3536,29 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;(?m)^(\S+)[\s--\r\n]+(\S+)$&quot;).unwrap();
-    /// let hay = b&quot;
+    /// let re = Regex::new(r"(?m)^(\S+)[\s--\r\n]+(\S+)$").unwrap();
+    /// let hay = b"
     /// Greetings  1973
     /// Wild\t1973
     /// BornToRun\t\t\t\t1975
     /// Darkness                    1978
     /// TheRiver 1980
-    /// &quot;;
-    /// let new = re.replace_all(hay, b&quot;$2 $1&quot;);
-    /// assert_eq!(new, &amp;b&quot;
+    /// ";
+    /// let new = re.replace_all(hay, b"$2 $1");
+    /// assert_eq!(new, &amp;b"
     /// 1973 Greetings
     /// 1973 Wild
     /// 1975 BornToRun
     /// 1978 Darkness
     /// 1980 TheRiver
-    /// &quot;[..]);
+    /// "[..]);
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>replace_all&lt;<span class="lifetime">&#39;h</span>, R: Replacer&gt;(
+    </span><span class="kw">pub fn </span>replace_all&lt;<span class="lifetime">'h</span>, R: Replacer&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
         rep: R,
-    ) -&gt; Cow&lt;<span class="lifetime">&#39;h</span>, [u8]&gt; {
+    ) -&gt; Cow&lt;<span class="lifetime">'h</span>, [u8]&gt; {
         <span class="self">self</span>.replacen(haystack, <span class="number">0</span>, rep)
     }
 
@@ -3459,6 +3566,13 @@
     /// the replacement provided. If `limit` is `0`, then all non-overlapping
     /// matches are replaced. That is, `Regex::replace_all(hay, rep)` is
     /// equivalent to `Regex::replacen(hay, 0, rep)`.
+    ///
+    /// If no match is found, then the haystack is returned unchanged. In that
+    /// case, this implementation will likely return a `Cow::Borrowed` value
+    /// such that no allocation is performed.
+    ///
+    /// When a `Cow::Borrowed` is returned, the value returned is guaranteed
+    /// to be equivalent to the `haystack` given.
     ///
     /// The documentation for [`Regex::replace`] goes into more detail about
     /// what kinds of replacement strings are supported.
@@ -3487,37 +3601,37 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;(?m)^(\S+)[\s--\r\n]+(\S+)$&quot;).unwrap();
-    /// let hay = b&quot;
+    /// let re = Regex::new(r"(?m)^(\S+)[\s--\r\n]+(\S+)$").unwrap();
+    /// let hay = b"
     /// Greetings  1973
     /// Wild\t1973
     /// BornToRun\t\t\t\t1975
     /// Darkness                    1978
     /// TheRiver 1980
-    /// &quot;;
-    /// let new = re.replacen(hay, 2, b&quot;$2 $1&quot;);
-    /// assert_eq!(new, &amp;b&quot;
+    /// ";
+    /// let new = re.replacen(hay, 2, b"$2 $1");
+    /// assert_eq!(new, &amp;b"
     /// 1973 Greetings
     /// 1973 Wild
     /// BornToRun\t\t\t\t1975
     /// Darkness                    1978
     /// TheRiver 1980
-    /// &quot;[..]);
+    /// "[..]);
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>replacen&lt;<span class="lifetime">&#39;h</span>, R: Replacer&gt;(
+    </span><span class="kw">pub fn </span>replacen&lt;<span class="lifetime">'h</span>, R: Replacer&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
         limit: usize,
         <span class="kw-2">mut </span>rep: R,
-    ) -&gt; Cow&lt;<span class="lifetime">&#39;h</span>, [u8]&gt; {
-        <span class="comment">// If we know that the replacement doesn&#39;t have any capture expansions,
+    ) -&gt; Cow&lt;<span class="lifetime">'h</span>, [u8]&gt; {
+        <span class="comment">// If we know that the replacement doesn't have any capture expansions,
         // then we can use the fast path. The fast path can make a tremendous
         // difference:
         //
         //   1) We use `find_iter` instead of `captures_iter`. Not asking for
         //      captures generally makes the regex engines faster.
-        //   2) We don&#39;t need to look up all of the capture groups and do
+        //   2) We don't need to look up all of the capture groups and do
         //      replacements inside the replacement string. We just push it
         //      at each match and be done with it.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(rep) = rep.no_expansion() {
@@ -3562,7 +3676,7 @@
     }
 }
 
-<span class="doccomment">/// A group of advanced or &quot;lower level&quot; search methods. Some methods permit
+<span class="doccomment">/// A group of advanced or "lower level" search methods. Some methods permit
 /// starting the search at a position greater than `0` in the haystack. Other
 /// methods permit reusing allocations, for example, when extracting the
 /// matches for capture groups.
@@ -3570,13 +3684,13 @@
     <span class="doccomment">/// Returns the end byte offset of the first match in the haystack given.
     ///
     /// This method may have the same performance characteristics as
-    /// `is_match`. Behaviorlly, it doesn&#39;t just report whether it match
+    /// `is_match`. Behaviorlly, it doesn't just report whether it match
     /// occurs, but also the end offset for a match. In particular, the offset
     /// returned *may be shorter* than the proper end of the leftmost-first
     /// match that you would find via [`Regex::find`].
     ///
     /// Note that it is not guaranteed that this routine finds the shortest or
-    /// &quot;earliest&quot; possible match. Instead, the main idea of this API is that
+    /// "earliest" possible match. Instead, the main idea of this API is that
     /// it returns the offset at the point at which the internal regex engine
     /// has determined that a match has occurred. This may vary depending on
     /// which internal regex engine is used, and thus, the offset itself may
@@ -3591,8 +3705,8 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;a+&quot;).unwrap();
-    /// let offset = re.shortest_match(b&quot;aaaaa&quot;).unwrap();
+    /// let re = Regex::new(r"a+").unwrap();
+    /// let offset = re.shortest_match(b"aaaaa").unwrap();
     /// assert_eq!(offset, 1);
     /// ```
     </span><span class="attr">#[inline]
@@ -3623,9 +3737,9 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;\bchew\b&quot;).unwrap();
-    /// let hay = b&quot;eschew&quot;;
-    /// // We get a match here, but it&#39;s probably not intended.
+    /// let re = Regex::new(r"\bchew\b").unwrap();
+    /// let hay = b"eschew";
+    /// // We get a match here, but it's probably not intended.
     /// assert_eq!(re.shortest_match(&amp;hay[2..]), Some(4));
     /// // No match because the  assertions take the context into account.
     /// assert_eq!(re.shortest_match_at(hay, 2), None);
@@ -3661,9 +3775,9 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;\bchew\b&quot;).unwrap();
-    /// let hay = b&quot;eschew&quot;;
-    /// // We get a match here, but it&#39;s probably not intended.
+    /// let re = Regex::new(r"\bchew\b").unwrap();
+    /// let hay = b"eschew";
+    /// // We get a match here, but it's probably not intended.
     /// assert!(re.is_match(&amp;hay[2..]));
     /// // No match because the  assertions take the context into account.
     /// assert!(!re.is_match_at(hay, 2));
@@ -3693,19 +3807,19 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;\bchew\b&quot;).unwrap();
-    /// let hay = b&quot;eschew&quot;;
-    /// // We get a match here, but it&#39;s probably not intended.
+    /// let re = Regex::new(r"\bchew\b").unwrap();
+    /// let hay = b"eschew";
+    /// // We get a match here, but it's probably not intended.
     /// assert_eq!(re.find(&amp;hay[2..]).map(|m| m.range()), Some(0..4));
     /// // No match because the  assertions take the context into account.
     /// assert_eq!(re.find_at(hay, 2), None);
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>find_at&lt;<span class="lifetime">&#39;h</span>&gt;(
+    </span><span class="kw">pub fn </span>find_at&lt;<span class="lifetime">'h</span>&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
         start: usize,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt; {
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt; {
         <span class="kw">let </span>input = Input::new(haystack).span(start..haystack.len());
         <span class="self">self</span>.meta.find(input).map(|m| Match::new(haystack, m.start(), m.end()))
     }
@@ -3730,19 +3844,19 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;\bchew\b&quot;).unwrap();
-    /// let hay = b&quot;eschew&quot;;
-    /// // We get a match here, but it&#39;s probably not intended.
-    /// assert_eq!(&amp;re.captures(&amp;hay[2..]).unwrap()[0], b&quot;chew&quot;);
+    /// let re = Regex::new(r"\bchew\b").unwrap();
+    /// let hay = b"eschew";
+    /// // We get a match here, but it's probably not intended.
+    /// assert_eq!(&amp;re.captures(&amp;hay[2..]).unwrap()[0], b"chew");
     /// // No match because the  assertions take the context into account.
     /// assert!(re.captures_at(hay, 2).is_none());
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>captures_at&lt;<span class="lifetime">&#39;h</span>&gt;(
+    </span><span class="kw">pub fn </span>captures_at&lt;<span class="lifetime">'h</span>&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
         start: usize,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;Captures&lt;<span class="lifetime">&#39;h</span>&gt;&gt; {
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Captures&lt;<span class="lifetime">'h</span>&gt;&gt; {
         <span class="kw">let </span>input = Input::new(haystack).span(start..haystack.len());
         <span class="kw">let </span><span class="kw-2">mut </span>caps = <span class="self">self</span>.meta.create_captures();
         <span class="self">self</span>.meta.captures(input, <span class="kw-2">&amp;mut </span>caps);
@@ -3775,19 +3889,19 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;^([a-z]+)=(\S*)$&quot;).unwrap();
+    /// let re = Regex::new(r"^([a-z]+)=(\S*)$").unwrap();
     /// let mut locs = re.capture_locations();
-    /// assert!(re.captures_read(&amp;mut locs, b&quot;id=foo123&quot;).is_some());
+    /// assert!(re.captures_read(&amp;mut locs, b"id=foo123").is_some());
     /// assert_eq!(Some((0, 9)), locs.get(0));
     /// assert_eq!(Some((0, 2)), locs.get(1));
     /// assert_eq!(Some((3, 9)), locs.get(2));
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>captures_read&lt;<span class="lifetime">&#39;h</span>&gt;(
+    </span><span class="kw">pub fn </span>captures_read&lt;<span class="lifetime">'h</span>&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         locs: <span class="kw-2">&amp;mut </span>CaptureLocations,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt; {
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt; {
         <span class="self">self</span>.captures_read_at(locs, haystack, <span class="number">0</span>)
     }
 
@@ -3811,21 +3925,21 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;\bchew\b&quot;).unwrap();
-    /// let hay = b&quot;eschew&quot;;
+    /// let re = Regex::new(r"\bchew\b").unwrap();
+    /// let hay = b"eschew";
     /// let mut locs = re.capture_locations();
-    /// // We get a match here, but it&#39;s probably not intended.
+    /// // We get a match here, but it's probably not intended.
     /// assert!(re.captures_read(&amp;mut locs, &amp;hay[2..]).is_some());
     /// // No match because the  assertions take the context into account.
     /// assert!(re.captures_read_at(&amp;mut locs, hay, 2).is_none());
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>captures_read_at&lt;<span class="lifetime">&#39;h</span>&gt;(
+    </span><span class="kw">pub fn </span>captures_read_at&lt;<span class="lifetime">'h</span>&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         locs: <span class="kw-2">&amp;mut </span>CaptureLocations,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
         start: usize,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt; {
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt; {
         <span class="kw">let </span>input = Input::new(haystack).span(start..haystack.len());
         <span class="self">self</span>.meta.search_captures(<span class="kw-2">&amp;</span>input, <span class="kw-2">&amp;mut </span>locs.<span class="number">0</span>);
         locs.<span class="number">0</span>.get_match().map(|m| Match::new(haystack, m.start(), m.end()))
@@ -3838,12 +3952,12 @@
     /// alias.
     </span><span class="attr">#[doc(hidden)]
     #[inline]
-    </span><span class="kw">pub fn </span>read_captures_at&lt;<span class="lifetime">&#39;h</span>&gt;(
+    </span><span class="kw">pub fn </span>read_captures_at&lt;<span class="lifetime">'h</span>&gt;(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         locs: <span class="kw-2">&amp;mut </span>CaptureLocations,
-        haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+        haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
         start: usize,
-    ) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt; {
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt; {
         <span class="self">self</span>.captures_read_at(locs, haystack, start)
     }
 }
@@ -3857,8 +3971,8 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;foo\w+bar&quot;).unwrap();
-    /// assert_eq!(re.as_str(), r&quot;foo\w+bar&quot;);
+    /// let re = Regex::new(r"foo\w+bar").unwrap();
+    /// assert_eq!(re.as_str(), r"foo\w+bar");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>as_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
@@ -3869,7 +3983,7 @@
     ///
     /// The iterator returned yields elements of type `Option&lt;&amp;str&gt;`. That is,
     /// the iterator yields values for all capture groups, even ones that are
-    /// unnamed. The order of the groups corresponds to the order of the group&#39;s
+    /// unnamed. The order of the groups corresponds to the order of the group's
     /// corresponding opening parenthesis.
     ///
     /// The first element of the iterator always yields the group corresponding
@@ -3883,14 +3997,14 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;(?&lt;a&gt;.(?&lt;b&gt;.))(.)(?:.)(?&lt;c&gt;.)&quot;).unwrap();
+    /// let re = Regex::new(r"(?&lt;a&gt;.(?&lt;b&gt;.))(.)(?:.)(?&lt;c&gt;.)").unwrap();
     /// let mut names = re.capture_names();
     /// assert_eq!(names.next(), Some(None));
-    /// assert_eq!(names.next(), Some(Some(&quot;a&quot;)));
-    /// assert_eq!(names.next(), Some(Some(&quot;b&quot;)));
+    /// assert_eq!(names.next(), Some(Some("a")));
+    /// assert_eq!(names.next(), Some(Some("b")));
     /// assert_eq!(names.next(), Some(None));
-    /// // the &#39;(?:.)&#39; group is non-capturing and so doesn&#39;t appear here!
-    /// assert_eq!(names.next(), Some(Some(&quot;c&quot;)));
+    /// // the '(?:.)' group is non-capturing and so doesn't appear here!
+    /// assert_eq!(names.next(), Some(Some("c")));
     /// assert_eq!(names.next(), None);
     /// ```
     ///
@@ -3900,18 +4014,18 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;&quot;).unwrap();
+    /// let re = Regex::new(r"").unwrap();
     /// let mut names = re.capture_names();
     /// assert_eq!(names.next(), Some(None));
     /// assert_eq!(names.next(), None);
     ///
-    /// let re = Regex::new(r&quot;[a&amp;&amp;b]&quot;).unwrap();
+    /// let re = Regex::new(r"[a&amp;&amp;b]").unwrap();
     /// let mut names = re.capture_names();
     /// assert_eq!(names.next(), Some(None));
     /// assert_eq!(names.next(), None);
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>capture_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CaptureNames&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub fn </span>capture_names(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; CaptureNames&lt;<span class="lifetime">'_</span>&gt; {
         CaptureNames(<span class="self">self</span>.meta.group_info().pattern_names(PatternID::ZERO))
     }
 
@@ -3929,16 +4043,16 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;foo&quot;).unwrap();
+    /// let re = Regex::new(r"foo").unwrap();
     /// assert_eq!(1, re.captures_len());
     ///
-    /// let re = Regex::new(r&quot;(foo)&quot;).unwrap();
+    /// let re = Regex::new(r"(foo)").unwrap();
     /// assert_eq!(2, re.captures_len());
     ///
-    /// let re = Regex::new(r&quot;(?&lt;a&gt;.(?&lt;b&gt;.))(.)(?:.)(?&lt;c&gt;.)&quot;).unwrap();
+    /// let re = Regex::new(r"(?&lt;a&gt;.(?&lt;b&gt;.))(.)(?:.)(?&lt;c&gt;.)").unwrap();
     /// assert_eq!(5, re.captures_len());
     ///
-    /// let re = Regex::new(r&quot;[a&amp;&amp;b]&quot;).unwrap();
+    /// let re = Regex::new(r"[a&amp;&amp;b]").unwrap();
     /// assert_eq!(1, re.captures_len());
     /// ```
     </span><span class="attr">#[inline]
@@ -3951,7 +4065,7 @@
     ///
     /// If the number of capture groups can vary depending on the match, then
     /// this returns `None`. That is, a value is only returned when the number
-    /// of matching groups is invariant or &quot;static.&quot;
+    /// of matching groups is invariant or "static."
     ///
     /// Note that like [`Regex::captures_len`], this **does** include the
     /// implicit capturing group corresponding to the entire match. Therefore,
@@ -3970,14 +4084,14 @@
     ///     Regex::new(pattern).map(|re| re.static_captures_len())
     /// };
     ///
-    /// assert_eq!(Some(1), len(&quot;a&quot;)?);
-    /// assert_eq!(Some(2), len(&quot;(a)&quot;)?);
-    /// assert_eq!(Some(2), len(&quot;(a)|(b)&quot;)?);
-    /// assert_eq!(Some(3), len(&quot;(a)(b)|(c)(d)&quot;)?);
-    /// assert_eq!(None, len(&quot;(a)|b&quot;)?);
-    /// assert_eq!(None, len(&quot;a|(b)&quot;)?);
-    /// assert_eq!(None, len(&quot;(b)*&quot;)?);
-    /// assert_eq!(Some(2), len(&quot;(b)+&quot;)?);
+    /// assert_eq!(Some(1), len("a")?);
+    /// assert_eq!(Some(2), len("(a)")?);
+    /// assert_eq!(Some(2), len("(a)|(b)")?);
+    /// assert_eq!(Some(3), len("(a)(b)|(c)(d)")?);
+    /// assert_eq!(None, len("(a)|b")?);
+    /// assert_eq!(None, len("a|(b)")?);
+    /// assert_eq!(None, len("(b)*")?);
+    /// assert_eq!(Some(2), len("(b)+")?);
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
@@ -3995,9 +4109,9 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;(.)(.)(\w+)&quot;).unwrap();
+    /// let re = Regex::new(r"(.)(.)(\w+)").unwrap();
     /// let mut locs = re.capture_locations();
-    /// assert!(re.captures_read(&amp;mut locs, b&quot;Padron&quot;).is_some());
+    /// assert!(re.captures_read(&amp;mut locs, b"Padron").is_some());
     /// assert_eq!(locs.get(0), Some((0, 6)));
     /// assert_eq!(locs.get(1), Some((0, 1)));
     /// assert_eq!(locs.get(2), Some((1, 2)));
@@ -4030,7 +4144,7 @@
 /// point to anywhere in the haystack, including in a place that splits the
 /// UTF-8 encoding of a Unicode scalar value.
 ///
-/// The lifetime parameter `&#39;h` refers to the lifetime of the matched of the
+/// The lifetime parameter `'h` refers to the lifetime of the matched of the
 /// haystack that this match was produced from.
 ///
 /// # Numbering
@@ -4044,7 +4158,7 @@
 ///
 /// For more on why this was chosen over other schemes (aside from being
 /// consistent with how Rust the language works), see [this discussion] and
-/// [Dijkstra&#39;s note on a related topic][note].
+/// [Dijkstra's note on a related topic][note].
 ///
 /// [this discussion]: https://github.com/rust-lang/regex/discussions/866
 /// [note]: https://www.cs.utexas.edu/users/EWD/transcriptions/EWD08xx/EWD831.html
@@ -4057,24 +4171,24 @@
 /// ```
 /// use regex::bytes::Regex;
 ///
-/// let re = Regex::new(r&quot;\p{Greek}+&quot;).unwrap();
-/// let hay = &quot;Greek: αβγδ&quot;.as_bytes();
+/// let re = Regex::new(r"\p{Greek}+").unwrap();
+/// let hay = "Greek: αβγδ".as_bytes();
 /// let m = re.find(hay).unwrap();
 /// assert_eq!(7, m.start());
 /// assert_eq!(15, m.end());
 /// assert!(!m.is_empty());
 /// assert_eq!(8, m.len());
 /// assert_eq!(7..15, m.range());
-/// assert_eq!(&quot;αβγδ&quot;.as_bytes(), m.as_bytes());
+/// assert_eq!("αβγδ".as_bytes(), m.as_bytes());
 /// ```
 </span><span class="attr">#[derive(Copy, Clone, Eq, PartialEq)]
-</span><span class="kw">pub struct </span>Match&lt;<span class="lifetime">&#39;h</span>&gt; {
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+</span><span class="kw">pub struct </span>Match&lt;<span class="lifetime">'h</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
     start: usize,
     end: usize,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; Match&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; Match&lt;<span class="lifetime">'h</span>&gt; {
     <span class="doccomment">/// Returns the byte offset of the start of the match in the haystack. The
     /// start of the match corresponds to the position where the match begins
     /// and includes the first byte in the match.
@@ -4130,43 +4244,38 @@
 
     <span class="doccomment">/// Returns the substring of the haystack that matched.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>as_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8] {
+    </span><span class="kw">pub fn </span>as_bytes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8] {
         <span class="kw-2">&amp;</span><span class="self">self</span>.haystack[<span class="self">self</span>.range()]
     }
 
     <span class="doccomment">/// Creates a new match from the given haystack and byte offsets.
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>new(haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8], start: usize, end: usize) -&gt; Match&lt;<span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">fn </span>new(haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8], start: usize, end: usize) -&gt; Match&lt;<span class="lifetime">'h</span>&gt; {
         Match { haystack, start, end }
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; core::fmt::Debug <span class="kw">for </span>Match&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; core::fmt::Debug <span class="kw">for </span>Match&lt;<span class="lifetime">'h</span>&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-        <span class="kw">let </span><span class="kw-2">mut </span>fmt = f.debug_struct(<span class="string">&quot;Match&quot;</span>);
-        fmt.field(<span class="string">&quot;start&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.start).field(<span class="string">&quot;end&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.end);
-        <span class="kw">if let </span><span class="prelude-val">Ok</span>(s) = core::str::from_utf8(<span class="self">self</span>.as_bytes()) {
-            fmt.field(<span class="string">&quot;bytes&quot;</span>, <span class="kw-2">&amp;</span>s);
-        } <span class="kw">else </span>{
-            <span class="comment">// FIXME: It would be nice if this could be printed as a string
-            // with invalid UTF-8 replaced with hex escapes. A alloc would
-            // probably okay if that makes it easier, but regex-automata does
-            // (at time of writing) have internal routines that do this. So
-            // maybe we should expose them.
-            </span>fmt.field(<span class="string">&quot;bytes&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.as_bytes());
-        }
+        <span class="kw">use </span>regex_automata::util::escape::DebugHaystack;
+
+        <span class="kw">let </span><span class="kw-2">mut </span>fmt = f.debug_struct(<span class="string">"Match"</span>);
+        fmt.field(<span class="string">"start"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.start)
+            .field(<span class="string">"end"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.end)
+            .field(<span class="string">"bytes"</span>, <span class="kw-2">&amp;</span>DebugHaystack(<span class="kw-2">&amp;</span><span class="self">self</span>.as_bytes()));
+
         fmt.finish()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; From&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8] {
-    <span class="kw">fn </span>from(m: Match&lt;<span class="lifetime">&#39;h</span>&gt;) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8] {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; From&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8] {
+    <span class="kw">fn </span>from(m: Match&lt;<span class="lifetime">'h</span>&gt;) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8] {
         m.as_bytes()
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; From&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt; <span class="kw">for </span>core::ops::Range&lt;usize&gt; {
-    <span class="kw">fn </span>from(m: Match&lt;<span class="lifetime">&#39;h</span>&gt;) -&gt; core::ops::Range&lt;usize&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; From&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt; <span class="kw">for </span>core::ops::Range&lt;usize&gt; {
+    <span class="kw">fn </span>from(m: Match&lt;<span class="lifetime">'h</span>&gt;) -&gt; core::ops::Range&lt;usize&gt; {
         m.range()
     }
 }
@@ -4198,7 +4307,7 @@
 /// last letter.
 ///
 /// Notice that `(?:\w)` was not listed above as a capture group despite it
-/// being enclosed in parentheses. That&#39;s because `(?:pattern)` is a special
+/// being enclosed in parentheses. That's because `(?:pattern)` is a special
 /// syntax that permits grouping but *without* capturing. The reason for not
 /// treating it as a capture is that tracking and reporting capture groups
 /// requires additional state that may lead to slower searches. So using as few
@@ -4208,27 +4317,27 @@
 /// Values with this type are created by [`Regex::captures`] or
 /// [`Regex::captures_iter`].
 ///
-/// `&#39;h` is the lifetime of the haystack that these captures were matched from.
+/// `'h` is the lifetime of the haystack that these captures were matched from.
 ///
 /// # Example
 ///
 /// ```
 /// use regex::bytes::Regex;
 ///
-/// let re = Regex::new(r&quot;(?&lt;first&gt;\w)(\w)(?:\w)\w(?&lt;last&gt;\w)&quot;).unwrap();
-/// let caps = re.captures(b&quot;toady&quot;).unwrap();
-/// assert_eq!(b&quot;toady&quot;, &amp;caps[0]);
-/// assert_eq!(b&quot;t&quot;, &amp;caps[&quot;first&quot;]);
-/// assert_eq!(b&quot;o&quot;, &amp;caps[2]);
-/// assert_eq!(b&quot;y&quot;, &amp;caps[&quot;last&quot;]);
+/// let re = Regex::new(r"(?&lt;first&gt;\w)(\w)(?:\w)\w(?&lt;last&gt;\w)").unwrap();
+/// let caps = re.captures(b"toady").unwrap();
+/// assert_eq!(b"toady", &amp;caps[0]);
+/// assert_eq!(b"t", &amp;caps["first"]);
+/// assert_eq!(b"o", &amp;caps[2]);
+/// assert_eq!(b"y", &amp;caps["last"]);
 /// ```
-</span><span class="kw">pub struct </span>Captures&lt;<span class="lifetime">&#39;h</span>&gt; {
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
+</span><span class="kw">pub struct </span>Captures&lt;<span class="lifetime">'h</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
     caps: captures::Captures,
     static_captures_len: <span class="prelude-ty">Option</span>&lt;usize&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; Captures&lt;<span class="lifetime">&#39;h</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; Captures&lt;<span class="lifetime">'h</span>&gt; {
     <span class="doccomment">/// Returns the `Match` associated with the capture group at index `i`. If
     /// `i` does not correspond to a capture group, or if the capture group did
     /// not participate in the match, then `None` is returned.
@@ -4238,57 +4347,57 @@
     /// # Examples
     ///
     /// Get the substring that matched with a default of an empty string if the
-    /// group didn&#39;t participate in the match:
+    /// group didn't participate in the match:
     ///
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;[a-z]+(?:([0-9]+)|([A-Z]+))&quot;).unwrap();
-    /// let caps = re.captures(b&quot;abc123&quot;).unwrap();
+    /// let re = Regex::new(r"[a-z]+(?:([0-9]+)|([A-Z]+))").unwrap();
+    /// let caps = re.captures(b"abc123").unwrap();
     ///
-    /// let substr1 = caps.get(1).map_or(&amp;b&quot;&quot;[..], |m| m.as_bytes());
-    /// let substr2 = caps.get(2).map_or(&amp;b&quot;&quot;[..], |m| m.as_bytes());
-    /// assert_eq!(substr1, b&quot;123&quot;);
-    /// assert_eq!(substr2, b&quot;&quot;);
+    /// let substr1 = caps.get(1).map_or(&amp;b""[..], |m| m.as_bytes());
+    /// let substr2 = caps.get(2).map_or(&amp;b""[..], |m| m.as_bytes());
+    /// assert_eq!(substr1, b"123");
+    /// assert_eq!(substr2, b"");
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt; {
+    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt; {
         <span class="self">self</span>.caps
             .get_group(i)
             .map(|sp| Match::new(<span class="self">self</span>.haystack, sp.start, sp.end))
     }
 
     <span class="doccomment">/// Returns the `Match` associated with the capture group named `name`. If
-    /// `name` isn&#39;t a valid capture group or it refers to a group that didn&#39;t
+    /// `name` isn't a valid capture group or it refers to a group that didn't
     /// match, then `None` is returned.
     ///
-    /// Note that unlike `caps[&quot;name&quot;]`, this returns a `Match` whose lifetime
+    /// Note that unlike `caps["name"]`, this returns a `Match` whose lifetime
     /// matches the lifetime of the haystack in this `Captures` value.
-    /// Conversely, the substring returned by `caps[&quot;name&quot;]` has a lifetime
+    /// Conversely, the substring returned by `caps["name"]` has a lifetime
     /// of the `Captures` value, which is likely shorter than the lifetime of
     /// the haystack. In some cases, it may be necessary to use this method to
-    /// access the matching substring instead of the `caps[&quot;name&quot;]` notation.
+    /// access the matching substring instead of the `caps["name"]` notation.
     ///
     /// # Examples
     ///
     /// Get the substring that matched with a default of an empty string if the
-    /// group didn&#39;t participate in the match:
+    /// group didn't participate in the match:
     ///
     /// ```
     /// use regex::bytes::Regex;
     ///
     /// let re = Regex::new(
-    ///     r&quot;[a-z]+(?:(?&lt;numbers&gt;[0-9]+)|(?&lt;letters&gt;[A-Z]+))&quot;,
+    ///     r"[a-z]+(?:(?&lt;numbers&gt;[0-9]+)|(?&lt;letters&gt;[A-Z]+))",
     /// ).unwrap();
-    /// let caps = re.captures(b&quot;abc123&quot;).unwrap();
+    /// let caps = re.captures(b"abc123").unwrap();
     ///
-    /// let numbers = caps.name(&quot;numbers&quot;).map_or(&amp;b&quot;&quot;[..], |m| m.as_bytes());
-    /// let letters = caps.name(&quot;letters&quot;).map_or(&amp;b&quot;&quot;[..], |m| m.as_bytes());
-    /// assert_eq!(numbers, b&quot;123&quot;);
-    /// assert_eq!(letters, b&quot;&quot;);
+    /// let numbers = caps.name("numbers").map_or(&amp;b""[..], |m| m.as_bytes());
+    /// let letters = caps.name("letters").map_or(&amp;b""[..], |m| m.as_bytes());
+    /// assert_eq!(numbers, b"123");
+    /// assert_eq!(letters, b"");
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt; {
+    </span><span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt; {
         <span class="self">self</span>.caps
             .get_group_by_name(name)
             .map(|sp| Match::new(<span class="self">self</span>.haystack, sp.start, sp.end))
@@ -4299,8 +4408,8 @@
     ///
     /// This returns a tuple where the first element corresponds to the full
     /// substring of the haystack that matched the regex. The second element is
-    /// an array of substrings, with each corresponding to the to the substring
-    /// that matched for a particular capture group.
+    /// an array of substrings, with each corresponding to the substring that
+    /// matched for a particular capture group.
     ///
     /// # Panics
     ///
@@ -4325,14 +4434,14 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;([0-9]{4})-([0-9]{2})-([0-9]{2})&quot;).unwrap();
-    /// let hay = b&quot;On 2010-03-14, I became a Tenneessee lamb.&quot;;
+    /// let re = Regex::new(r"([0-9]{4})-([0-9]{2})-([0-9]{2})").unwrap();
+    /// let hay = b"On 2010-03-14, I became a Tenneessee lamb.";
     /// let Some((full, [year, month, day])) =
     ///     re.captures(hay).map(|caps| caps.extract()) else { return };
-    /// assert_eq!(b&quot;2010-03-14&quot;, full);
-    /// assert_eq!(b&quot;2010&quot;, year);
-    /// assert_eq!(b&quot;03&quot;, month);
-    /// assert_eq!(b&quot;14&quot;, day);
+    /// assert_eq!(b"2010-03-14", full);
+    /// assert_eq!(b"2010", year);
+    /// assert_eq!(b"03", month);
+    /// assert_eq!(b"14", day);
     /// ```
     ///
     /// # Example: iteration
@@ -4343,17 +4452,17 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;([0-9]{4})-([0-9]{2})-([0-9]{2})&quot;).unwrap();
-    /// let hay = b&quot;1973-01-05, 1975-08-25 and 1980-10-18&quot;;
+    /// let re = Regex::new(r"([0-9]{4})-([0-9]{2})-([0-9]{2})").unwrap();
+    /// let hay = b"1973-01-05, 1975-08-25 and 1980-10-18";
     ///
     /// let mut dates: Vec&lt;(&amp;[u8], &amp;[u8], &amp;[u8])&gt; = vec![];
     /// for (_, [y, m, d]) in re.captures_iter(hay).map(|c| c.extract()) {
     ///     dates.push((y, m, d));
     /// }
     /// assert_eq!(dates, vec![
-    ///     (&amp;b&quot;1973&quot;[..], &amp;b&quot;01&quot;[..], &amp;b&quot;05&quot;[..]),
-    ///     (&amp;b&quot;1975&quot;[..], &amp;b&quot;08&quot;[..], &amp;b&quot;25&quot;[..]),
-    ///     (&amp;b&quot;1980&quot;[..], &amp;b&quot;10&quot;[..], &amp;b&quot;18&quot;[..]),
+    ///     (&amp;b"1973"[..], &amp;b"01"[..], &amp;b"05"[..]),
+    ///     (&amp;b"1975"[..], &amp;b"08"[..], &amp;b"25"[..]),
+    ///     (&amp;b"1980"[..], &amp;b"10"[..], &amp;b"18"[..]),
     /// ]);
     /// ```
     ///
@@ -4366,25 +4475,25 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r#&quot;id:(?:&quot;([^&quot;]+)&quot;|&#39;([^&#39;]+)&#39;)&quot;#).unwrap();
-    /// let hay = br#&quot;The first is id:&quot;foo&quot; and the second is id:&#39;bar&#39;.&quot;#;
+    /// let re = Regex::new(r#"id:(?:"([^"]+)"|'([^']+)')"#).unwrap();
+    /// let hay = br#"The first is id:"foo" and the second is id:'bar'."#;
     /// let mut ids = vec![];
     /// for (_, [id]) in re.captures_iter(hay).map(|c| c.extract()) {
     ///     ids.push(id);
     /// }
-    /// assert_eq!(ids, vec![b&quot;foo&quot;, b&quot;bar&quot;]);
+    /// assert_eq!(ids, vec![b"foo", b"bar"]);
     /// ```
-    </span><span class="kw">pub fn </span>extract&lt;<span class="kw">const </span>N: usize&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8], [<span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8]; N]) {
+    </span><span class="kw">pub fn </span>extract&lt;<span class="kw">const </span>N: usize&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8], [<span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8]; N]) {
         <span class="kw">let </span>len = <span class="self">self
             </span>.static_captures_len
-            .expect(<span class="string">&quot;number of capture groups can vary in a match&quot;</span>)
+            .expect(<span class="string">"number of capture groups can vary in a match"</span>)
             .checked_sub(<span class="number">1</span>)
-            .expect(<span class="string">&quot;number of groups is always greater than zero&quot;</span>);
-        <span class="macro">assert_eq!</span>(N, len, <span class="string">&quot;asked for {} groups, but must ask for {}&quot;</span>, N, len);
+            .expect(<span class="string">"number of groups is always greater than zero"</span>);
+        <span class="macro">assert_eq!</span>(N, len, <span class="string">"asked for {} groups, but must ask for {}"</span>, N, len);
         <span class="comment">// The regex-automata variant of extract is a bit more permissive.
-        // It doesn&#39;t require the number of matching capturing groups to be
-        // static, and you can even request fewer groups than what&#39;s there. So
-        // this is guaranteed to never panic because we&#39;ve asserted above that
+        // It doesn't require the number of matching capturing groups to be
+        // static, and you can even request fewer groups than what's there. So
+        // this is guaranteed to never panic because we've asserted above that
         // the user has requested precisely the number of groups that must be
         // present in any match for this regex.
         </span><span class="self">self</span>.caps.extract_bytes(<span class="self">self</span>.haystack)
@@ -4392,7 +4501,7 @@
 
     <span class="doccomment">/// Expands all instances of `$ref` in `replacement` to the corresponding
     /// capture group, and writes them to the `dst` buffer given. A `ref` can
-    /// be a capture group index or a name. If `ref` doesn&#39;t refer to a capture
+    /// be a capture group index or a name. If `ref` doesn't refer to a capture
     /// group that participated in the match, then it is replaced with the
     /// empty string.
     ///
@@ -4433,14 +4542,14 @@
     /// use regex::bytes::Regex;
     ///
     /// let re = Regex::new(
-    ///     r&quot;(?&lt;day&gt;[0-9]{2})-(?&lt;month&gt;[0-9]{2})-(?&lt;year&gt;[0-9]{4})&quot;,
+    ///     r"(?&lt;day&gt;[0-9]{2})-(?&lt;month&gt;[0-9]{2})-(?&lt;year&gt;[0-9]{4})",
     /// ).unwrap();
-    /// let hay = b&quot;On 14-03-2010, I became a Tenneessee lamb.&quot;;
+    /// let hay = b"On 14-03-2010, I became a Tenneessee lamb.";
     /// let caps = re.captures(hay).unwrap();
     ///
     /// let mut dst = vec![];
-    /// caps.expand(b&quot;year=$year, month=$month, day=$day&quot;, &amp;mut dst);
-    /// assert_eq!(dst, b&quot;year=2010, month=03, day=14&quot;);
+    /// caps.expand(b"year=$year, month=$month, day=$day", &amp;mut dst);
+    /// assert_eq!(dst, b"year=2010, month=03, day=14");
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>expand(<span class="kw-2">&amp;</span><span class="self">self</span>, replacement: <span class="kw-2">&amp;</span>[u8], dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
@@ -4454,7 +4563,7 @@
     /// (at index `0`) with no name. Subsequent groups are returned in the order
     /// of their opening parenthesis in the regex.
     ///
-    /// The elements yielded have type `Option&lt;Match&lt;&#39;h&gt;&gt;`, where a non-`None`
+    /// The elements yielded have type `Option&lt;Match&lt;'h&gt;&gt;`, where a non-`None`
     /// value is present if the capture group matches.
     ///
     /// # Example
@@ -4462,18 +4571,18 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;(\w)(\d)?(\w)&quot;).unwrap();
-    /// let caps = re.captures(b&quot;AZ&quot;).unwrap();
+    /// let re = Regex::new(r"(\w)(\d)?(\w)").unwrap();
+    /// let caps = re.captures(b"AZ").unwrap();
     ///
     /// let mut it = caps.iter();
-    /// assert_eq!(it.next().unwrap().map(|m| m.as_bytes()), Some(&amp;b&quot;AZ&quot;[..]));
-    /// assert_eq!(it.next().unwrap().map(|m| m.as_bytes()), Some(&amp;b&quot;A&quot;[..]));
+    /// assert_eq!(it.next().unwrap().map(|m| m.as_bytes()), Some(&amp;b"AZ"[..]));
+    /// assert_eq!(it.next().unwrap().map(|m| m.as_bytes()), Some(&amp;b"A"[..]));
     /// assert_eq!(it.next().unwrap().map(|m| m.as_bytes()), None);
-    /// assert_eq!(it.next().unwrap().map(|m| m.as_bytes()), Some(&amp;b&quot;Z&quot;[..]));
+    /// assert_eq!(it.next().unwrap().map(|m| m.as_bytes()), Some(&amp;b"Z"[..]));
     /// assert_eq!(it.next(), None);
     /// ```
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub fn </span>iter&lt;<span class="lifetime">&#39;c</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;c </span><span class="self">self</span>) -&gt; SubCaptureMatches&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; {
+    </span><span class="kw">pub fn </span>iter&lt;<span class="lifetime">'c</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'c </span><span class="self">self</span>) -&gt; SubCaptureMatches&lt;<span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; {
         SubCaptureMatches { haystack: <span class="self">self</span>.haystack, it: <span class="self">self</span>.caps.iter() }
     }
 
@@ -4490,8 +4599,8 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;(\w)(\d)?(\w)&quot;).unwrap();
-    /// let caps = re.captures(b&quot;AZ&quot;).unwrap();
+    /// let re = Regex::new(r"(\w)(\d)?(\w)").unwrap();
+    /// let caps = re.captures(b"AZ").unwrap();
     /// assert_eq!(caps.len(), 4);
     /// ```
     </span><span class="attr">#[inline]
@@ -4500,20 +4609,20 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; core::fmt::Debug <span class="kw">for </span>Captures&lt;<span class="lifetime">&#39;h</span>&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; core::fmt::Result {
+<span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; core::fmt::Debug <span class="kw">for </span>Captures&lt;<span class="lifetime">'h</span>&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
         <span class="doccomment">/// A little helper type to provide a nice map-like debug
         /// representation for our capturing group spans.
         ///
         /// regex-automata has something similar, but it includes the pattern
-        /// ID in its debug output, which is confusing. It also doesn&#39;t include
-        /// that strings that match because a regex-automata `Captures` doesn&#39;t
+        /// ID in its debug output, which is confusing. It also doesn't include
+        /// that strings that match because a regex-automata `Captures` doesn't
         /// borrow the haystack.
-        </span><span class="kw">struct </span>CapturesDebugMap&lt;<span class="lifetime">&#39;a</span>&gt; {
-            caps: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Captures&lt;<span class="lifetime">&#39;a</span>&gt;,
+        </span><span class="kw">struct </span>CapturesDebugMap&lt;<span class="lifetime">'a</span>&gt; {
+            caps: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Captures&lt;<span class="lifetime">'a</span>&gt;,
         }
 
-        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; core::fmt::Debug <span class="kw">for </span>CapturesDebugMap&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; core::fmt::Debug <span class="kw">for </span>CapturesDebugMap&lt;<span class="lifetime">'a</span>&gt; {
             <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
                 <span class="kw">let </span><span class="kw-2">mut </span>map = f.debug_map();
                 <span class="kw">let </span>names =
@@ -4529,27 +4638,27 @@
             }
         }
 
-        <span class="kw">struct </span>Key&lt;<span class="lifetime">&#39;a</span>&gt;(usize, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;);
+        <span class="kw">struct </span>Key&lt;<span class="lifetime">'a</span>&gt;(usize, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt;);
 
-        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; core::fmt::Debug <span class="kw">for </span>Key&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; core::fmt::Debug <span class="kw">for </span>Key&lt;<span class="lifetime">'a</span>&gt; {
             <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
-                <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = <span class="self">self</span>.<span class="number">1 </span>{
-                    <span class="macro">write!</span>(f, <span class="string">&quot;/{:?}&quot;</span>, name)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">"/{:?}"</span>, name)<span class="question-mark">?</span>;
                 }
                 <span class="prelude-val">Ok</span>(())
             }
         }
 
-        <span class="kw">struct </span>Value&lt;<span class="lifetime">&#39;a</span>&gt;(Match&lt;<span class="lifetime">&#39;a</span>&gt;);
+        <span class="kw">struct </span>Value&lt;<span class="lifetime">'a</span>&gt;(Match&lt;<span class="lifetime">'a</span>&gt;);
 
-        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; core::fmt::Debug <span class="kw">for </span>Value&lt;<span class="lifetime">&#39;a</span>&gt; {
+        <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; core::fmt::Debug <span class="kw">for </span>Value&lt;<span class="lifetime">'a</span>&gt; {
             <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
                 <span class="kw">use </span>regex_automata::util::escape::DebugHaystack;
 
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">&quot;{}..{}/{:?}&quot;</span>,
+                    <span class="string">"{}..{}/{:?}"</span>,
                     <span class="self">self</span>.<span class="number">0</span>.start(),
                     <span class="self">self</span>.<span class="number">0</span>.end(),
                     DebugHaystack(<span class="self">self</span>.<span class="number">0</span>.as_bytes())
@@ -4557,61 +4666,61 @@
             }
         }
 
-        f.debug_tuple(<span class="string">&quot;Captures&quot;</span>)
+        f.debug_tuple(<span class="string">"Captures"</span>)
             .field(<span class="kw-2">&amp;</span>CapturesDebugMap { caps: <span class="self">self </span>})
             .finish()
     }
 }
 
-<span class="doccomment">/// Get a matching capture group&#39;s haystack substring by index.
+<span class="doccomment">/// Get a matching capture group's haystack substring by index.
 ///
-/// The haystack substring returned can&#39;t outlive the `Captures` object if this
+/// The haystack substring returned can't outlive the `Captures` object if this
 /// method is used, because of how `Index` is defined (normally `a[i]` is part
-/// of `a` and can&#39;t outlive it). To work around this limitation, do that, use
+/// of `a` and can't outlive it). To work around this limitation, do that, use
 /// [`Captures::get`] instead.
 ///
-/// `&#39;h` is the lifetime of the matched haystack, but the lifetime of the
+/// `'h` is the lifetime of the matched haystack, but the lifetime of the
 /// `&amp;str` returned by this implementation is the lifetime of the `Captures`
 /// value itself.
 ///
 /// # Panics
 ///
 /// If there is no matching group at the given index.
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>&gt; core::ops::Index&lt;usize&gt; <span class="kw">for </span>Captures&lt;<span class="lifetime">&#39;h</span>&gt; {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'h</span>&gt; core::ops::Index&lt;usize&gt; <span class="kw">for </span>Captures&lt;<span class="lifetime">'h</span>&gt; {
     <span class="kw">type </span>Output = [u8];
 
     <span class="comment">// The lifetime is written out to make it clear that the &amp;str returned
-    // does NOT have a lifetime equivalent to &#39;h.
-    </span><span class="kw">fn </span>index&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, i: usize) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8] {
+    // does NOT have a lifetime equivalent to 'h.
+    </span><span class="kw">fn </span>index&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, i: usize) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8] {
         <span class="self">self</span>.get(i)
             .map(|m| m.as_bytes())
-            .unwrap_or_else(|| <span class="macro">panic!</span>(<span class="string">&quot;no group at index &#39;{}&#39;&quot;</span>, i))
+            .unwrap_or_else(|| <span class="macro">panic!</span>(<span class="string">"no group at index '{}'"</span>, i))
     }
 }
 
-<span class="doccomment">/// Get a matching capture group&#39;s haystack substring by name.
+<span class="doccomment">/// Get a matching capture group's haystack substring by name.
 ///
-/// The haystack substring returned can&#39;t outlive the `Captures` object if this
+/// The haystack substring returned can't outlive the `Captures` object if this
 /// method is used, because of how `Index` is defined (normally `a[i]` is part
-/// of `a` and can&#39;t outlive it). To work around this limitation, do that, use
+/// of `a` and can't outlive it). To work around this limitation, do that, use
 /// [`Captures::name`] instead.
 ///
-/// `&#39;h` is the lifetime of the matched haystack, but the lifetime of the
+/// `'h` is the lifetime of the matched haystack, but the lifetime of the
 /// `&amp;str` returned by this implementation is the lifetime of the `Captures`
 /// value itself.
 ///
-/// `&#39;n` is the lifetime of the group name used to index the `Captures` value.
+/// `'n` is the lifetime of the group name used to index the `Captures` value.
 ///
 /// # Panics
 ///
 /// If there is no matching group at the given name.
-</span><span class="kw">impl</span>&lt;<span class="lifetime">&#39;h</span>, <span class="lifetime">&#39;n</span>&gt; core::ops::Index&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;n </span>str&gt; <span class="kw">for </span>Captures&lt;<span class="lifetime">&#39;h</span>&gt; {
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'h</span>, <span class="lifetime">'n</span>&gt; core::ops::Index&lt;<span class="kw-2">&amp;</span><span class="lifetime">'n </span>str&gt; <span class="kw">for </span>Captures&lt;<span class="lifetime">'h</span>&gt; {
     <span class="kw">type </span>Output = [u8];
 
-    <span class="kw">fn </span>index&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">&#39;n </span>str) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8] {
+    <span class="kw">fn </span>index&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, name: <span class="kw-2">&amp;</span><span class="lifetime">'n </span>str) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8] {
         <span class="self">self</span>.name(name)
             .map(|m| m.as_bytes())
-            .unwrap_or_else(|| <span class="macro">panic!</span>(<span class="string">&quot;no group named &#39;{}&#39;&quot;</span>, name))
+            .unwrap_or_else(|| <span class="macro">panic!</span>(<span class="string">"no group named '{}'"</span>, name))
     }
 }
 
@@ -4625,7 +4734,7 @@
 /// as [`Regex::captures_read`], which permits amortizing the allocation in
 /// which capture match offsets are stored.
 ///
-/// In order to build a value of this type, you&#39;ll need to call the
+/// In order to build a value of this type, you'll need to call the
 /// [`Regex::capture_locations`] method. The value returned can then be reused
 /// in subsequent searches for that regex. Using it for other regexes may
 /// result in a panic or otherwise incorrect results.
@@ -4637,9 +4746,9 @@
 /// ```
 /// use regex::bytes::Regex;
 ///
-/// let re = Regex::new(r&quot;(?&lt;first&gt;\w+)\s+(?&lt;last&gt;\w+)&quot;).unwrap();
+/// let re = Regex::new(r"(?&lt;first&gt;\w+)\s+(?&lt;last&gt;\w+)").unwrap();
 /// let mut locs = re.capture_locations();
-/// let m = re.captures_read(&amp;mut locs, b&quot;Bruce Springsteen&quot;).unwrap();
+/// let m = re.captures_read(&amp;mut locs, b"Bruce Springsteen").unwrap();
 /// assert_eq!(0..17, m.range());
 /// assert_eq!(Some((0, 17)), locs.get(0));
 /// assert_eq!(Some((0, 5)), locs.get(1));
@@ -4648,9 +4757,9 @@
 /// // Asking for an invalid capture group always returns None.
 /// assert_eq!(None, locs.get(3));
 /// # // literals are too big for 32-bit usize: #1041
-/// # #[cfg(target_pointer_width = &quot;64&quot;)]
+/// # #[cfg(target_pointer_width = "64")]
 /// assert_eq!(None, locs.get(34973498648));
-/// # #[cfg(target_pointer_width = &quot;64&quot;)]
+/// # #[cfg(target_pointer_width = "64")]
 /// assert_eq!(None, locs.get(9944060567225171988));
 /// ```
 </span><span class="attr">#[derive(Clone, Debug)]
@@ -4674,9 +4783,9 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;(?&lt;first&gt;\w+)\s+(?&lt;last&gt;\w+)&quot;).unwrap();
+    /// let re = Regex::new(r"(?&lt;first&gt;\w+)\s+(?&lt;last&gt;\w+)").unwrap();
     /// let mut locs = re.capture_locations();
-    /// re.captures_read(&amp;mut locs, b&quot;Bruce Springsteen&quot;).unwrap();
+    /// re.captures_read(&amp;mut locs, b"Bruce Springsteen").unwrap();
     /// assert_eq!(Some((0, 17)), locs.get(0));
     /// assert_eq!(Some((0, 5)), locs.get(1));
     /// assert_eq!(Some((6, 17)), locs.get(2));
@@ -4686,7 +4795,7 @@
         <span class="self">self</span>.<span class="number">0</span>.get_group(i).map(|sp| (sp.start, sp.end))
     }
 
-    <span class="doccomment">/// Returns the total number of capture groups (even if they didn&#39;t match).
+    <span class="doccomment">/// Returns the total number of capture groups (even if they didn't match).
     /// That is, the length returned is unaffected by the result of a search.
     ///
     /// This is always at least `1` since every regex has at least `1`
@@ -4697,10 +4806,10 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;(?&lt;first&gt;\w+)\s+(?&lt;last&gt;\w+)&quot;).unwrap();
+    /// let re = Regex::new(r"(?&lt;first&gt;\w+)\s+(?&lt;last&gt;\w+)").unwrap();
     /// let mut locs = re.capture_locations();
     /// assert_eq!(3, locs.len());
-    /// re.captures_read(&amp;mut locs, b&quot;Bruce Springsteen&quot;).unwrap();
+    /// re.captures_read(&amp;mut locs, b"Bruce Springsteen").unwrap();
     /// assert_eq!(3, locs.len());
     /// ```
     ///
@@ -4709,20 +4818,20 @@
     /// ```
     /// use regex::bytes::Regex;
     ///
-    /// let re = Regex::new(r&quot;&quot;).unwrap();
+    /// let re = Regex::new(r"").unwrap();
     /// let locs = re.capture_locations();
     /// assert_eq!(1, locs.len());
     ///
     /// // [a&amp;&amp;b] is a regex that never matches anything.
-    /// let re = Regex::new(r&quot;[a&amp;&amp;b]&quot;).unwrap();
+    /// let re = Regex::new(r"[a&amp;&amp;b]").unwrap();
     /// let locs = re.capture_locations();
     /// assert_eq!(1, locs.len());
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="comment">// self.0.group_len() returns 0 if the underlying captures doesn&#39;t
+        <span class="comment">// self.0.group_len() returns 0 if the underlying captures doesn't
         // represent a match, but the behavior guaranteed for this method is
-        // that the length doesn&#39;t change based on a match or not.
+        // that the length doesn't change based on a match or not.
         </span><span class="self">self</span>.<span class="number">0</span>.group_info().group_len(PatternID::ZERO)
     }
 
@@ -4743,7 +4852,7 @@
 /// This iterator yields [`Match`] values. The iterator stops when no more
 /// matches can be found.
 ///
-/// `&#39;r` is the lifetime of the compiled regular expression and `&#39;h` is the
+/// `'r` is the lifetime of the compiled regular expression and `'h` is the
 /// lifetime of the haystack.
 ///
 /// This iterator is created by [`Regex::find_iter`].
@@ -4754,16 +4863,16 @@
 /// and since each search has worst case `O(m * n)` time complexity, the
 /// overall worst case time complexity for iteration is `O(m * n^2)`.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>Matches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    it: meta::FindMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt;,
+</span><span class="kw">pub struct </span>Matches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    it: meta::FindMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; Iterator <span class="kw">for </span>Matches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
-    <span class="kw">type </span>Item = Match&lt;<span class="lifetime">&#39;h</span>&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; Iterator <span class="kw">for </span>Matches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
+    <span class="kw">type </span>Item = Match&lt;<span class="lifetime">'h</span>&gt;;
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt; {
+    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt; {
         <span class="self">self</span>.it
             .next()
             .map(|sp| Match::new(<span class="self">self</span>.haystack, sp.start(), sp.end()))
@@ -4780,14 +4889,14 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>Matches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>Matches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {}
 
 <span class="doccomment">/// An iterator over all non-overlapping capture matches in a haystack.
 ///
 /// This iterator yields [`Captures`] values. The iterator stops when no more
 /// matches can be found.
 ///
-/// `&#39;r` is the lifetime of the compiled regular expression and `&#39;h` is the
+/// `'r` is the lifetime of the compiled regular expression and `'h` is the
 /// lifetime of the matched string.
 ///
 /// This iterator is created by [`Regex::captures_iter`].
@@ -4798,16 +4907,16 @@
 /// and since each search has worst case `O(m * n)` time complexity, the
 /// overall worst case time complexity for iteration is `O(m * n^2)`.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>CaptureMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    it: meta::CapturesMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt;,
+</span><span class="kw">pub struct </span>CaptureMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    it: meta::CapturesMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; Iterator <span class="kw">for </span>CaptureMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
-    <span class="kw">type </span>Item = Captures&lt;<span class="lifetime">&#39;h</span>&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; Iterator <span class="kw">for </span>CaptureMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
+    <span class="kw">type </span>Item = Captures&lt;<span class="lifetime">'h</span>&gt;;
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Captures&lt;<span class="lifetime">&#39;h</span>&gt;&gt; {
+    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Captures&lt;<span class="lifetime">'h</span>&gt;&gt; {
         <span class="kw">let </span>static_captures_len = <span class="self">self</span>.it.regex().static_captures_len();
         <span class="self">self</span>.it.next().map(|caps| Captures {
             haystack: <span class="self">self</span>.haystack,
@@ -4827,11 +4936,11 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>CaptureMatches&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>CaptureMatches&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {}
 
 <span class="doccomment">/// An iterator over all substrings delimited by a regex match.
 ///
-/// `&#39;r` is the lifetime of the compiled regular expression and `&#39;h` is the
+/// `'r` is the lifetime of the compiled regular expression and `'h` is the
 /// lifetime of the byte string being split.
 ///
 /// This iterator is created by [`Regex::split`].
@@ -4842,28 +4951,28 @@
 /// and since each search has worst case `O(m * n)` time complexity, the
 /// overall worst case time complexity for iteration is `O(m * n^2)`.
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>Split&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    it: meta::Split&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt;,
+</span><span class="kw">pub struct </span>Split&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    it: meta::Split&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; Iterator <span class="kw">for </span>Split&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8];
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; Iterator <span class="kw">for </span>Split&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8];
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8]&gt; {
+    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8]&gt; {
         <span class="self">self</span>.it.next().map(|span| <span class="kw-2">&amp;</span><span class="self">self</span>.haystack[span])
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>Split&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>Split&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {}
 
 <span class="doccomment">/// An iterator over at most `N` substrings delimited by a regex match.
 ///
 /// The last substring yielded by this iterator will be whatever remains after
 /// `N-1` splits.
 ///
-/// `&#39;r` is the lifetime of the compiled regular expression and `&#39;h` is the
+/// `'r` is the lifetime of the compiled regular expression and `'h` is the
 /// lifetime of the byte string being split.
 ///
 /// This iterator is created by [`Regex::splitn`].
@@ -4877,16 +4986,16 @@
 /// Although note that the worst case time here has an upper bound given
 /// by the `limit` parameter to [`Regex::splitn`].
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>SplitN&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    it: meta::SplitN&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt;,
+</span><span class="kw">pub struct </span>SplitN&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    it: meta::SplitN&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; Iterator <span class="kw">for </span>SplitN&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8];
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; Iterator <span class="kw">for </span>SplitN&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8];
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8]&gt; {
+    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8]&gt; {
         <span class="self">self</span>.it.next().map(|span| <span class="kw-2">&amp;</span><span class="self">self</span>.haystack[span])
     }
 
@@ -4896,7 +5005,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>SplitN&lt;<span class="lifetime">&#39;r</span>, <span class="lifetime">&#39;h</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>SplitN&lt;<span class="lifetime">'r</span>, <span class="lifetime">'h</span>&gt; {}
 
 <span class="doccomment">/// An iterator over the names of all capture groups in a regex.
 ///
@@ -4905,17 +5014,17 @@
 /// groups with no name. The first element always corresponds to the implicit
 /// and unnamed group for the overall match.
 ///
-/// `&#39;r` is the lifetime of the compiled regular expression.
+/// `'r` is the lifetime of the compiled regular expression.
 ///
 /// This iterator is created by [`Regex::capture_names`].
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>CaptureNames&lt;<span class="lifetime">&#39;r</span>&gt;(captures::GroupInfoPatternNames&lt;<span class="lifetime">&#39;r</span>&gt;);
+</span><span class="kw">pub struct </span>CaptureNames&lt;<span class="lifetime">'r</span>&gt;(captures::GroupInfoPatternNames&lt;<span class="lifetime">'r</span>&gt;);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>&gt; Iterator <span class="kw">for </span>CaptureNames&lt;<span class="lifetime">&#39;r</span>&gt; {
-    <span class="kw">type </span>Item = <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span>str&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>&gt; Iterator <span class="kw">for </span>CaptureNames&lt;<span class="lifetime">'r</span>&gt; {
+    <span class="kw">type </span>Item = <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'r </span>str&gt;;
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span>str&gt;&gt; {
+    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'r </span>str&gt;&gt; {
         <span class="self">self</span>.<span class="number">0</span>.next()
     }
 
@@ -4930,13 +5039,13 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>&gt; ExactSizeIterator <span class="kw">for </span>CaptureNames&lt;<span class="lifetime">&#39;r</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>&gt; ExactSizeIterator <span class="kw">for </span>CaptureNames&lt;<span class="lifetime">'r</span>&gt; {}
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;r</span>&gt; core::iter::FusedIterator <span class="kw">for </span>CaptureNames&lt;<span class="lifetime">&#39;r</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'r</span>&gt; core::iter::FusedIterator <span class="kw">for </span>CaptureNames&lt;<span class="lifetime">'r</span>&gt; {}
 
 <span class="doccomment">/// An iterator over all group matches in a [`Captures`] value.
 ///
-/// This iterator yields values of type `Option&lt;Match&lt;&#39;h&gt;&gt;`, where `&#39;h` is the
+/// This iterator yields values of type `Option&lt;Match&lt;'h&gt;&gt;`, where `'h` is the
 /// lifetime of the haystack that the matches are for. The order of elements
 /// yielded corresponds to the order of the opening parenthesis for the group
 /// in the regex pattern. `None` is yielded for groups that did not participate
@@ -4947,20 +5056,20 @@
 /// `Captures` value is only created when a match occurs, it follows that the
 /// first element yielded by this iterator is guaranteed to be non-`None`.
 ///
-/// The lifetime `&#39;c` corresponds to the lifetime of the `Captures` value that
-/// created this iterator, and the lifetime `&#39;h` corresponds to the originally
+/// The lifetime `'c` corresponds to the lifetime of the `Captures` value that
+/// created this iterator, and the lifetime `'h` corresponds to the originally
 /// matched haystack.
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>SubCaptureMatches&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; {
-    haystack: <span class="kw-2">&amp;</span><span class="lifetime">&#39;h </span>[u8],
-    it: captures::CapturesPatternIter&lt;<span class="lifetime">&#39;c</span>&gt;,
+</span><span class="kw">pub struct </span>SubCaptureMatches&lt;<span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; {
+    haystack: <span class="kw-2">&amp;</span><span class="lifetime">'h </span>[u8],
+    it: captures::CapturesPatternIter&lt;<span class="lifetime">'c</span>&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; Iterator <span class="kw">for </span>SubCaptureMatches&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; {
-    <span class="kw">type </span>Item = <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; Iterator <span class="kw">for </span>SubCaptureMatches&lt;<span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; {
+    <span class="kw">type </span>Item = <span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt;;
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">&#39;h</span>&gt;&gt;&gt; {
+    </span><span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Option</span>&lt;Match&lt;<span class="lifetime">'h</span>&gt;&gt;&gt; {
         <span class="self">self</span>.it.next().map(|group| {
             group.map(|sp| Match::new(<span class="self">self</span>.haystack, sp.start, sp.end))
         })
@@ -4977,13 +5086,13 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; ExactSizeIterator <span class="kw">for </span>SubCaptureMatches&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; ExactSizeIterator <span class="kw">for </span>SubCaptureMatches&lt;<span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; {}
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>SubCaptureMatches&lt;<span class="lifetime">&#39;c</span>, <span class="lifetime">&#39;h</span>&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; core::iter::FusedIterator <span class="kw">for </span>SubCaptureMatches&lt;<span class="lifetime">'c</span>, <span class="lifetime">'h</span>&gt; {}
 
 <span class="doccomment">/// A trait for types that can be used to replace matches in a haystack.
 ///
-/// In general, users of this crate shouldn&#39;t need to implement this trait,
+/// In general, users of this crate shouldn't need to implement this trait,
 /// since implementations are already provided for `&amp;[u8]` along with other
 /// variants of byte string types, as well as `FnMut(&amp;Captures) -&gt; Vec&lt;u8&gt;` (or
 /// any `FnMut(&amp;Captures) -&gt; T` where `T: AsRef&lt;[u8]&gt;`). Those cover most use
@@ -5002,16 +5111,16 @@
 /// struct NameSwapper;
 ///
 /// impl Replacer for NameSwapper {
-///     fn replace_append(&amp;mut self, caps: &amp;Captures&lt;&#39;_&gt;, dst: &amp;mut Vec&lt;u8&gt;) {
-///         dst.extend_from_slice(&amp;caps[&quot;first&quot;]);
-///         dst.extend_from_slice(b&quot; &quot;);
-///         dst.extend_from_slice(&amp;caps[&quot;last&quot;]);
+///     fn replace_append(&amp;mut self, caps: &amp;Captures&lt;'_&gt;, dst: &amp;mut Vec&lt;u8&gt;) {
+///         dst.extend_from_slice(&amp;caps["first"]);
+///         dst.extend_from_slice(b" ");
+///         dst.extend_from_slice(&amp;caps["last"]);
 ///     }
 /// }
 ///
-/// let re = Regex::new(r&quot;(?&lt;last&gt;[^,\s]+),\s+(?&lt;first&gt;\S+)&quot;).unwrap();
-/// let result = re.replace(b&quot;Springsteen, Bruce&quot;, NameSwapper);
-/// assert_eq!(result, &amp;b&quot;Bruce Springsteen&quot;[..]);
+/// let re = Regex::new(r"(?&lt;last&gt;[^,\s]+),\s+(?&lt;first&gt;\S+)").unwrap();
+/// let result = re.replace(b"Springsteen, Bruce", NameSwapper);
+/// assert_eq!(result, &amp;b"Bruce Springsteen"[..]);
 /// ```
 </span><span class="kw">pub trait </span>Replacer {
     <span class="doccomment">/// Appends possibly empty data to `dst` to replace the current match.
@@ -5021,7 +5130,7 @@
     ///
     /// For example, a no-op replacement would be
     /// `dst.extend_from_slice(&amp;caps[0])`.
-    </span><span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;);
+    </span><span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;);
 
     <span class="doccomment">/// Return a fixed unchanging replacement byte string.
     ///
@@ -5031,7 +5140,7 @@
     ///
     /// In general, this is called once for every call to a replacement routine
     /// such as [`Regex::replace_all`].
-    </span><span class="kw">fn </span>no_expansion&lt;<span class="lifetime">&#39;r</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span><span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">&#39;r</span>, [u8]&gt;&gt; {
+    </span><span class="kw">fn </span>no_expansion&lt;<span class="lifetime">'r</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'r </span><span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'r</span>, [u8]&gt;&gt; {
         <span class="prelude-val">None
     </span>}
 
@@ -5057,87 +5166,87 @@
     ///     dst.into_owned()
     /// }
     /// ```
-    </span><span class="kw">fn </span>by_ref&lt;<span class="lifetime">&#39;r</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span><span class="kw-2">mut </span><span class="self">self</span>) -&gt; ReplacerRef&lt;<span class="lifetime">&#39;r</span>, <span class="self">Self</span>&gt; {
+    </span><span class="kw">fn </span>by_ref&lt;<span class="lifetime">'r</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'r </span><span class="kw-2">mut </span><span class="self">self</span>) -&gt; ReplacerRef&lt;<span class="lifetime">'r</span>, <span class="self">Self</span>&gt; {
         ReplacerRef(<span class="self">self</span>)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, <span class="kw">const </span>N: usize&gt; Replacer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8; N] {
-    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="kw">const </span>N: usize&gt; Replacer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8; N] {
+    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
         caps.expand(<span class="kw-2">&amp;**</span><span class="self">self</span>, dst);
     }
 
-    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">&#39;_</span>, [u8]&gt;&gt; {
+    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'_</span>, [u8]&gt;&gt; {
         no_expansion(<span class="self">self</span>)
     }
 }
 
 <span class="kw">impl</span>&lt;<span class="kw">const </span>N: usize&gt; Replacer <span class="kw">for </span>[u8; N] {
-    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
+    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
         caps.expand(<span class="kw-2">&amp;*</span><span class="self">self</span>, dst);
     }
 
-    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">&#39;_</span>, [u8]&gt;&gt; {
+    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'_</span>, [u8]&gt;&gt; {
         no_expansion(<span class="self">self</span>)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Replacer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[u8] {
-    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Replacer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>[u8] {
+    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
         caps.expand(<span class="kw-2">*</span><span class="self">self</span>, dst);
     }
 
-    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">&#39;_</span>, [u8]&gt;&gt; {
+    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'_</span>, [u8]&gt;&gt; {
         no_expansion(<span class="self">self</span>)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Replacer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Vec&lt;u8&gt; {
-    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Replacer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>Vec&lt;u8&gt; {
+    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
         caps.expand(<span class="kw-2">*</span><span class="self">self</span>, dst);
     }
 
-    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">&#39;_</span>, [u8]&gt;&gt; {
+    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'_</span>, [u8]&gt;&gt; {
         no_expansion(<span class="self">self</span>)
     }
 }
 
 <span class="kw">impl </span>Replacer <span class="kw">for </span>Vec&lt;u8&gt; {
-    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
+    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
         caps.expand(<span class="self">self</span>, dst);
     }
 
-    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">&#39;_</span>, [u8]&gt;&gt; {
+    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'_</span>, [u8]&gt;&gt; {
         no_expansion(<span class="self">self</span>)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Replacer <span class="kw">for </span>Cow&lt;<span class="lifetime">&#39;a</span>, [u8]&gt; {
-    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Replacer <span class="kw">for </span>Cow&lt;<span class="lifetime">'a</span>, [u8]&gt; {
+    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
         caps.expand(<span class="self">self</span>.as_ref(), dst);
     }
 
-    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">&#39;_</span>, [u8]&gt;&gt; {
+    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'_</span>, [u8]&gt;&gt; {
         no_expansion(<span class="self">self</span>)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Replacer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Cow&lt;<span class="lifetime">&#39;a</span>, [u8]&gt; {
-    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Replacer <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>Cow&lt;<span class="lifetime">'a</span>, [u8]&gt; {
+    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
         caps.expand(<span class="self">self</span>.as_ref(), dst);
     }
 
-    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">&#39;_</span>, [u8]&gt;&gt; {
+    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'_</span>, [u8]&gt;&gt; {
         no_expansion(<span class="self">self</span>)
     }
 }
 
 <span class="kw">impl</span>&lt;F, T&gt; Replacer <span class="kw">for </span>F
 <span class="kw">where
-    </span>F: FnMut(<span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; T,
+    </span>F: FnMut(<span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;) -&gt; T,
     T: AsRef&lt;[u8]&gt;,
 {
-    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
+    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
         dst.extend_from_slice((<span class="kw-2">*</span><span class="self">self</span>)(caps).as_ref());
     }
 }
@@ -5149,14 +5258,14 @@
 ///
 /// This type is created by [`Replacer::by_ref`].
 </span><span class="attr">#[derive(Debug)]
-</span><span class="kw">pub struct </span>ReplacerRef&lt;<span class="lifetime">&#39;a</span>, R: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>R);
+</span><span class="kw">pub struct </span>ReplacerRef&lt;<span class="lifetime">'a</span>, R: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>R);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, R: Replacer + <span class="question-mark">?</span>Sized + <span class="lifetime">&#39;a</span>&gt; Replacer <span class="kw">for </span>ReplacerRef&lt;<span class="lifetime">&#39;a</span>, R&gt; {
-    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, R: Replacer + <span class="question-mark">?</span>Sized + <span class="lifetime">'a</span>&gt; Replacer <span class="kw">for </span>ReplacerRef&lt;<span class="lifetime">'a</span>, R&gt; {
+    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
         <span class="self">self</span>.<span class="number">0</span>.replace_append(caps, dst)
     }
 
-    <span class="kw">fn </span>no_expansion&lt;<span class="lifetime">&#39;r</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;r </span><span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">&#39;r</span>, [u8]&gt;&gt; {
+    <span class="kw">fn </span>no_expansion&lt;<span class="lifetime">'r</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'r </span><span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'r</span>, [u8]&gt;&gt; {
         <span class="self">self</span>.<span class="number">0</span>.no_expansion()
     }
 }
@@ -5167,45 +5276,130 @@
 /// [`Regex::replace_all`] to do a literal string replacement without expanding
 /// `$name` to their corresponding capture groups. This can be both convenient
 /// (to avoid escaping `$`, for example) and faster (since capture groups
-/// don&#39;t need to be found).
+/// don't need to be found).
 ///
-/// `&#39;s` is the lifetime of the literal string to use.
+/// `'s` is the lifetime of the literal string to use.
 ///
 /// # Example
 ///
 /// ```
 /// use regex::bytes::{NoExpand, Regex};
 ///
-/// let re = Regex::new(r&quot;(?&lt;last&gt;[^,\s]+),\s+(\S+)&quot;).unwrap();
-/// let result = re.replace(b&quot;Springsteen, Bruce&quot;, NoExpand(b&quot;$2 $last&quot;));
-/// assert_eq!(result, &amp;b&quot;$2 $last&quot;[..]);
+/// let re = Regex::new(r"(?&lt;last&gt;[^,\s]+),\s+(\S+)").unwrap();
+/// let result = re.replace(b"Springsteen, Bruce", NoExpand(b"$2 $last"));
+/// assert_eq!(result, &amp;b"$2 $last"[..]);
 /// ```
 </span><span class="attr">#[derive(Clone, Debug)]
-</span><span class="kw">pub struct </span>NoExpand&lt;<span class="lifetime">&#39;s</span>&gt;(<span class="kw">pub </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;s </span>[u8]);
+</span><span class="kw">pub struct </span>NoExpand&lt;<span class="lifetime">'s</span>&gt;(<span class="kw">pub </span><span class="kw-2">&amp;</span><span class="lifetime">'s </span>[u8]);
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;s</span>&gt; Replacer <span class="kw">for </span>NoExpand&lt;<span class="lifetime">&#39;s</span>&gt; {
-    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
+<span class="kw">impl</span>&lt;<span class="lifetime">'s</span>&gt; Replacer <span class="kw">for </span>NoExpand&lt;<span class="lifetime">'s</span>&gt; {
+    <span class="kw">fn </span>replace_append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;, dst: <span class="kw-2">&amp;mut </span>Vec&lt;u8&gt;) {
         dst.extend_from_slice(<span class="self">self</span>.<span class="number">0</span>);
     }
 
-    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">&#39;_</span>, [u8]&gt;&gt; {
+    <span class="kw">fn </span>no_expansion(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'_</span>, [u8]&gt;&gt; {
         <span class="prelude-val">Some</span>(Cow::Borrowed(<span class="self">self</span>.<span class="number">0</span>))
     }
 }
 
 <span class="doccomment">/// Quickly checks the given replacement string for whether interpolation
 /// should be done on it. It returns `None` if a `$` was found anywhere in the
-/// given string, which suggests interpolation needs to be done. But if there&#39;s
+/// given string, which suggests interpolation needs to be done. But if there's
 /// no `$` anywhere, then interpolation definitely does not need to be done. In
 /// that case, the given string is returned as a borrowed `Cow`.
 ///
 /// This is meant to be used to implement the `Replacer::no_expandsion` method
 /// in its various trait impls.
-</span><span class="kw">fn </span>no_expansion&lt;T: AsRef&lt;[u8]&gt;&gt;(replacement: <span class="kw-2">&amp;</span>T) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">&#39;_</span>, [u8]&gt;&gt; {
+</span><span class="kw">fn </span>no_expansion&lt;T: AsRef&lt;[u8]&gt;&gt;(replacement: <span class="kw-2">&amp;</span>T) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'_</span>, [u8]&gt;&gt; {
     <span class="kw">let </span>replacement = replacement.as_ref();
-    <span class="kw">match </span><span class="kw">crate</span>::find_byte::find_byte(<span class="string">b&#39;$&#39;</span>, replacement) {
+    <span class="kw">match </span><span class="kw">crate</span>::find_byte::find_byte(<span class="string">b'$'</span>, replacement) {
         <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
         <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Some</span>(Cow::Borrowed(replacement)),
+    }
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>tests {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>alloc::format;
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_match_properties() {
+        <span class="kw">let </span>haystack = <span class="string">b"Hello, world!"</span>;
+        <span class="kw">let </span>m = Match::new(haystack, <span class="number">7</span>, <span class="number">12</span>);
+
+        <span class="macro">assert_eq!</span>(m.start(), <span class="number">7</span>);
+        <span class="macro">assert_eq!</span>(m.end(), <span class="number">12</span>);
+        <span class="macro">assert_eq!</span>(m.is_empty(), <span class="bool-val">false</span>);
+        <span class="macro">assert_eq!</span>(m.len(), <span class="number">5</span>);
+        <span class="macro">assert_eq!</span>(m.as_bytes(), <span class="string">b"world"</span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_empty_match() {
+        <span class="kw">let </span>haystack = <span class="string">b""</span>;
+        <span class="kw">let </span>m = Match::new(haystack, <span class="number">0</span>, <span class="number">0</span>);
+
+        <span class="macro">assert_eq!</span>(m.is_empty(), <span class="bool-val">true</span>);
+        <span class="macro">assert_eq!</span>(m.len(), <span class="number">0</span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_debug_output_valid_utf8() {
+        <span class="kw">let </span>haystack = <span class="string">b"Hello, world!"</span>;
+        <span class="kw">let </span>m = Match::new(haystack, <span class="number">7</span>, <span class="number">12</span>);
+        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, m);
+
+        <span class="macro">assert_eq!</span>(
+            debug_str,
+            <span class="string">r#"Match { start: 7, end: 12, bytes: "world" }"#
+        </span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_debug_output_invalid_utf8() {
+        <span class="kw">let </span>haystack = <span class="string">b"Hello, \xFFworld!"</span>;
+        <span class="kw">let </span>m = Match::new(haystack, <span class="number">7</span>, <span class="number">13</span>);
+        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, m);
+
+        <span class="macro">assert_eq!</span>(
+            debug_str,
+            <span class="string">r#"Match { start: 7, end: 13, bytes: "\xffworld" }"#
+        </span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_debug_output_various_unicode() {
+        <span class="kw">let </span>haystack =
+            <span class="string">"Hello, 😊 world! 안녕하세요? مرحبا بالعالم!"</span>.as_bytes();
+        <span class="kw">let </span>m = Match::new(haystack, <span class="number">0</span>, haystack.len());
+        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, m);
+
+        <span class="macro">assert_eq!</span>(
+            debug_str,
+            <span class="string">r#"Match { start: 0, end: 62, bytes: "Hello, 😊 world! 안녕하세요? مرحبا بالعالم!" }"#
+        </span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_debug_output_ascii_escape() {
+        <span class="kw">let </span>haystack = <span class="string">b"Hello,\tworld!\nThis is a \x1b[31mtest\x1b[0m."</span>;
+        <span class="kw">let </span>m = Match::new(haystack, <span class="number">0</span>, haystack.len());
+        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, m);
+
+        <span class="macro">assert_eq!</span>(
+            debug_str,
+            <span class="string">r#"Match { start: 0, end: 38, bytes: "Hello,\tworld!\nThis is a \u{1b}[31mtest\u{1b}[0m." }"#
+        </span>);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_debug_output_match_in_middle() {
+        <span class="kw">let </span>haystack = <span class="string">b"The quick brown fox jumps over the lazy dog."</span>;
+        <span class="kw">let </span>m = Match::new(haystack, <span class="number">16</span>, <span class="number">19</span>);
+        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, m);
+
+        <span class="macro">assert_eq!</span>(debug_str, <span class="string">r#"Match { start: 16, end: 19, bytes: "fox" }"#</span>);
     }
 }
 </code></pre></div></section></main></body></html>

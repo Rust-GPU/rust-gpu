@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.4/src/util/prefilter/mod.rs`."><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../../../regex_automata/index.html"><img class="rust-logo" src="../../../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/regex-automata-0.4.7/src/util/prefilter/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../regex_automata/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -694,6 +694,29 @@
 <a href="#694" id="694">694</a>
 <a href="#695" id="695">695</a>
 <a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/*!
 Defines a prefilter for accelerating regex searches.
 
@@ -719,13 +742,13 @@ uncommon for prefilter optimizations to improve throughput by one or two orders
 of magnitude.)
 
 Typically a prefilter is used to find occurrences of literal prefixes from a
-regex pattern, but this isn&#39;t required. A prefilter can be used to look for
+regex pattern, but this isn't required. A prefilter can be used to look for
 suffixes or even inner literals.
 
 Note that as of now, prefilters throw away information about which pattern
 each literal comes from. In other words, when a prefilter finds a match,
-there&#39;s no way to know which pattern (or patterns) it came from. Therefore,
-in order to confirm a match, you&#39;ll have to check all of the patterns by
+there's no way to know which pattern (or patterns) it came from. Therefore,
+in order to confirm a match, you'll have to check all of the patterns by
 running the full regex engine.
 */
 
@@ -741,10 +764,10 @@ running the full regex engine.
     panic::{RefUnwindSafe, UnwindSafe},
 };
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">use </span>alloc::sync::Arc;
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
 </span><span class="kw">use </span>regex_syntax::hir::{literal, Hir};
 
 <span class="kw">use </span><span class="kw">crate</span>::util::search::{MatchKind, Span};
@@ -797,15 +820,15 @@ running the full regex engine.
 ///     Match, MatchKind,
 /// };
 ///
-/// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;[&quot;Bruce &quot;])
-///     .expect(&quot;a prefilter&quot;);
+/// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;["Bruce "])
+///     .expect("a prefilter");
 /// let re = PikeVM::builder()
 ///     .configure(PikeVM::config().prefilter(Some(pre)))
-///     .build(r&quot;Bruce \w+&quot;)?;
+///     .build(r"Bruce \w+")?;
 /// let mut cache = re.create_cache();
 /// assert_eq!(
 ///     Some(Match::must(0, 6..23)),
-///     re.find(&amp;mut cache, &quot;Hello Bruce Springsteen!&quot;),
+///     re.find(&amp;mut cache, "Hello Bruce Springsteen!"),
 /// );
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
 /// ```
@@ -821,27 +844,29 @@ running the full regex engine.
 /// };
 ///
 /// // This prefilter is wrong!
-/// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;[&quot;Patti &quot;])
-///     .expect(&quot;a prefilter&quot;);
+/// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;["Patti "])
+///     .expect("a prefilter");
 /// let re = PikeVM::builder()
 ///     .configure(PikeVM::config().prefilter(Some(pre)))
-///     .build(r&quot;Bruce \w+&quot;)?;
+///     .build(r"Bruce \w+")?;
 /// let mut cache = re.create_cache();
 /// // We find no match even though the regex does match.
 /// assert_eq!(
 ///     None,
-///     re.find(&amp;mut cache, &quot;Hello Bruce Springsteen!&quot;),
+///     re.find(&amp;mut cache, "Hello Bruce Springsteen!"),
 /// );
 /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
 /// ```
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>Prefilter {
-    <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+    <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
     </span>_unused: (),
-    <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     </span>pre: Arc&lt;<span class="kw">dyn </span>PrefilterI&gt;,
-    <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
     </span>is_fast: bool,
+    <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+    </span>max_needle_len: usize,
 }
 
 <span class="kw">impl </span>Prefilter {
@@ -851,7 +876,7 @@ running the full regex engine.
     /// This may return `None` for a variety of reasons, for example, if
     /// a suitable prefilter could not be constructed. That might occur
     /// if they are unavailable (e.g., the `perf-literal-substring` and
-    /// `perf-literal-multisubstring` features aren&#39;t enabled), or it might
+    /// `perf-literal-multisubstring` features aren't enabled), or it might
     /// occur because of heuristics or other artifacts of how the prefilter
     /// works.
     ///
@@ -873,20 +898,20 @@ running the full regex engine.
     ///     MatchKind, Span,
     /// };
     ///
-    /// let hay = &quot;Hello samwise&quot;;
+    /// let hay = "Hello samwise";
     ///
-    /// // With leftmost-first, we find &#39;samwise&#39; here because it comes
-    /// // before &#39;sam&#39; in the sequence we give it..
-    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;[&quot;samwise&quot;, &quot;sam&quot;])
-    ///     .expect(&quot;a prefilter&quot;);
+    /// // With leftmost-first, we find 'samwise' here because it comes
+    /// // before 'sam' in the sequence we give it..
+    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;["samwise", "sam"])
+    ///     .expect("a prefilter");
     /// assert_eq!(
     ///     Some(Span::from(6..13)),
     ///     pre.find(hay.as_bytes(), Span::from(0..hay.len())),
     /// );
-    /// // Still with leftmost-first but with the literals reverse, now &#39;sam&#39;
+    /// // Still with leftmost-first but with the literals reverse, now 'sam'
     /// // will match instead!
-    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;[&quot;sam&quot;, &quot;samwise&quot;])
-    ///     .expect(&quot;a prefilter&quot;);
+    /// let pre = Prefilter::new(MatchKind::LeftmostFirst, &amp;["sam", "samwise"])
+    ///     .expect("a prefilter");
     /// assert_eq!(
     ///     Some(Span::from(6..9)),
     ///     pre.find(hay.as_bytes(), Span::from(0..hay.len())),
@@ -898,17 +923,24 @@ running the full regex engine.
         kind: MatchKind,
         needles: <span class="kw-2">&amp;</span>[B],
     ) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
-        Choice::new(kind, needles).and_then(Prefilter::from_choice)
+        Choice::new(kind, needles).and_then(|choice| {
+            <span class="kw">let </span>max_needle_len =
+                needles.iter().map(|b| b.as_ref().len()).max().unwrap_or(<span class="number">0</span>);
+            Prefilter::from_choice(choice, max_needle_len)
+        })
     }
 
     <span class="doccomment">/// This turns a prefilter selection into a `Prefilter`. That is, in turns
     /// the enum given into a trait object.
-    </span><span class="kw">fn </span>from_choice(choice: Choice) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+    </span><span class="kw">fn </span>from_choice(
+        choice: Choice,
+        max_needle_len: usize,
+    ) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
+        <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
         </span>{
             <span class="prelude-val">None
         </span>}
-        <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
         </span>{
             <span class="kw">let </span>pre: Arc&lt;<span class="kw">dyn </span>PrefilterI&gt; = <span class="kw">match </span>choice {
                 Choice::Memchr(p) =&gt; Arc::new(p),
@@ -920,7 +952,7 @@ running the full regex engine.
                 Choice::AhoCorasick(p) =&gt; Arc::new(p),
             };
             <span class="kw">let </span>is_fast = pre.is_fast();
-            <span class="prelude-val">Some</span>(Prefilter { pre, is_fast })
+            <span class="prelude-val">Some</span>(Prefilter { pre, is_fast, max_needle_len })
         }
     }
 
@@ -940,10 +972,10 @@ running the full regex engine.
     ///     MatchKind, Span,
     /// };
     ///
-    /// let hir = syntax::parse(r&quot;(Bruce|Patti) \w+&quot;)?;
+    /// let hir = syntax::parse(r"(Bruce|Patti) \w+")?;
     /// let pre = Prefilter::from_hir_prefix(MatchKind::LeftmostFirst, &amp;hir)
-    ///     .expect(&quot;a prefilter&quot;);
-    /// let hay = &quot;Hello Patti Scialfa!&quot;;
+    ///     .expect("a prefilter");
+    /// let hay = "Hello Patti Scialfa!";
     /// assert_eq!(
     ///     Some(Span::from(6..12)),
     ///     pre.find(hay.as_bytes(), Span::from(0..hay.len())),
@@ -951,7 +983,7 @@ running the full regex engine.
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>from_hir_prefix(kind: MatchKind, hir: <span class="kw-2">&amp;</span>Hir) -&gt; <span class="prelude-ty">Option</span>&lt;Prefilter&gt; {
         Prefilter::from_hirs_prefix(kind, <span class="kw-2">&amp;</span>[hir])
     }
@@ -962,8 +994,8 @@ running the full regex engine.
     ///
     /// Note that as of now, prefilters throw away information about which
     /// pattern each literal comes from. In other words, when a prefilter finds
-    /// a match, there&#39;s no way to know which pattern (or patterns) it came
-    /// from. Therefore, in order to confirm a match, you&#39;ll have to check all
+    /// a match, there's no way to know which pattern (or patterns) it came
+    /// from. Therefore, in order to confirm a match, you'll have to check all
     /// of the patterns by running the full regex engine.
     ///
     /// # Example
@@ -979,12 +1011,12 @@ running the full regex engine.
     /// };
     ///
     /// let hirs = syntax::parse_many(&amp;[
-    ///     r&quot;(Bruce|Patti) \w+&quot;,
-    ///     r&quot;Mrs?\. Doubtfire&quot;,
+    ///     r"(Bruce|Patti) \w+",
+    ///     r"Mrs?\. Doubtfire",
     /// ])?;
     /// let pre = Prefilter::from_hirs_prefix(MatchKind::LeftmostFirst, &amp;hirs)
-    ///     .expect(&quot;a prefilter&quot;);
-    /// let hay = &quot;Hello Mrs. Doubtfire&quot;;
+    ///     .expect("a prefilter");
+    /// let hay = "Hello Mrs. Doubtfire";
     /// assert_eq!(
     ///     Some(Span::from(6..20)),
     ///     pre.find(hay.as_bytes(), Span::from(0..hay.len())),
@@ -992,7 +1024,7 @@ running the full regex engine.
     ///
     /// # Ok::&lt;(), Box&lt;dyn std::error::Error&gt;&gt;(())
     /// ```
-    </span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+    </span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
     </span><span class="kw">pub fn </span>from_hirs_prefix&lt;H: Borrow&lt;Hir&gt;&gt;(
         kind: MatchKind,
         hirs: <span class="kw-2">&amp;</span>[H],
@@ -1021,10 +1053,10 @@ running the full regex engine.
     ///     MatchKind, Span,
     /// };
     ///
-    /// let hir = syntax::parse(r&quot;Bruce \w+&quot;)?;
+    /// let hir = syntax::parse(r"Bruce \w+")?;
     /// let pre = Prefilter::from_hir_prefix(MatchKind::LeftmostFirst, &amp;hir)
-    ///     .expect(&quot;a prefilter&quot;);
-    /// let hay = &quot;Hello Bruce Springsteen!&quot;;
+    ///     .expect("a prefilter");
+    /// let hay = "Hello Bruce Springsteen!";
     /// assert_eq!(
     ///     Some(Span::from(6..12)),
     ///     pre.find(hay.as_bytes(), Span::from(0..hay.len())),
@@ -1034,11 +1066,11 @@ running the full regex engine.
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>find(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; <span class="prelude-ty">Option</span>&lt;Span&gt; {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
         </span>{
             <span class="macro">unreachable!</span>()
         }
-        <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
         </span>{
             <span class="self">self</span>.pre.find(haystack, span)
         }
@@ -1062,18 +1094,18 @@ running the full regex engine.
     ///     MatchKind, Span,
     /// };
     ///
-    /// let hir = syntax::parse(r&quot;Bruce \w+&quot;)?;
+    /// let hir = syntax::parse(r"Bruce \w+")?;
     /// let pre = Prefilter::from_hir_prefix(MatchKind::LeftmostFirst, &amp;hir)
-    ///     .expect(&quot;a prefilter&quot;);
-    /// let hay = &quot;Hello Bruce Springsteen!&quot;;
-    /// // Nothing is found here because &#39;Bruce&#39; does
+    ///     .expect("a prefilter");
+    /// let hay = "Hello Bruce Springsteen!";
+    /// // Nothing is found here because 'Bruce' does
     /// // not occur at the beginning of our search.
     /// assert_eq!(
     ///     None,
     ///     pre.prefix(hay.as_bytes(), Span::from(0..hay.len())),
     /// );
     /// // But if we change where we start the search
-    /// // to begin where &#39;Bruce &#39; begins, then a
+    /// // to begin where 'Bruce ' begins, then a
     /// // match will be found.
     /// assert_eq!(
     ///     Some(Span::from(6..12)),
@@ -1084,11 +1116,11 @@ running the full regex engine.
     /// ```
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>prefix(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; <span class="prelude-ty">Option</span>&lt;Span&gt; {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
         </span>{
             <span class="macro">unreachable!</span>()
         }
-        <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
         </span>{
             <span class="self">self</span>.pre.prefix(haystack, span)
         }
@@ -1097,40 +1129,54 @@ running the full regex engine.
     <span class="doccomment">/// Returns the heap memory, in bytes, used by the underlying prefilter.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>memory_usage(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+        <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
         </span>{
             <span class="macro">unreachable!</span>()
         }
-        <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
         </span>{
             <span class="self">self</span>.pre.memory_usage()
         }
     }
 
+    <span class="doccomment">/// Return the length of the longest needle
+    /// in this Prefilter
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>max_needle_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
+        </span>{
+            <span class="macro">unreachable!</span>()
+        }
+        <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
+        </span>{
+            <span class="self">self</span>.max_needle_len
+        }
+    }
+
     <span class="doccomment">/// Implementations might return true here if they believe themselves to
-    /// be &quot;fast.&quot; The concept of &quot;fast&quot; is deliberately left vague, but in
-    /// practice this usually corresponds to whether it&#39;s believed that SIMD
+    /// be "fast." The concept of "fast" is deliberately left vague, but in
+    /// practice this usually corresponds to whether it's believed that SIMD
     /// will be used.
     ///
     /// Why do we care about this? Well, some prefilter tricks tend to come
     /// with their own bits of overhead, and so might only make sense if we
     /// know that a scan will be *much* faster than the regex engine itself.
     /// Otherwise, the trick may not be worth doing. Whether something is
-    /// &quot;much&quot; faster than the regex engine generally boils down to whether
+    /// "much" faster than the regex engine generally boils down to whether
     /// SIMD is used. (But not always. Even a SIMD matcher with a high false
     /// positive rate can become quite slow.)
     ///
     /// Even if this returns true, it is still possible for the prefilter to
-    /// be &quot;slow.&quot; Remember, prefilters are just heuristics. We can&#39;t really
+    /// be "slow." Remember, prefilters are just heuristics. We can't really
     /// *know* a prefilter will be fast without actually trying the prefilter.
     /// (Which of course we cannot afford to do.)
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_fast(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="attr">#[cfg(not(feature = <span class="string">&quot;alloc&quot;</span>))]
+    </span><span class="kw">pub fn </span>is_fast(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="attr">#[cfg(not(feature = <span class="string">"alloc"</span>))]
         </span>{
             <span class="macro">unreachable!</span>()
         }
-        <span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+        <span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
         </span>{
             <span class="self">self</span>.is_fast
         }
@@ -1143,9 +1189,9 @@ running the full regex engine.
 ///
 /// This exists pretty much only so that we can use prefilters as a trait
 /// object (which is what `Prefilter` is). If we ever move off of trait objects
-/// and to an enum, then it&#39;s likely this trait could be removed.
+/// and to an enum, then it's likely this trait could be removed.
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>PrefilterI:
-    Debug + Send + Sync + RefUnwindSafe + UnwindSafe + <span class="lifetime">&#39;static
+    Debug + Send + Sync + RefUnwindSafe + UnwindSafe + <span class="lifetime">'static
 </span>{
     <span class="doccomment">/// Run this prefilter on `haystack[span.start..end]` and return a matching
     /// span if one exists.
@@ -1166,28 +1212,28 @@ running the full regex engine.
     </span><span class="kw">fn </span>memory_usage(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize;
 
     <span class="doccomment">/// Implementations might return true here if they believe themselves to
-    /// be &quot;fast.&quot; See [`Prefilter::is_fast`] for more details.
+    /// be "fast." See [`Prefilter::is_fast`] for more details.
     </span><span class="kw">fn </span>is_fast(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;alloc&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"alloc"</span>)]
 </span><span class="kw">impl</span>&lt;P: PrefilterI + <span class="question-mark">?</span>Sized&gt; PrefilterI <span class="kw">for </span>Arc&lt;P&gt; {
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>find(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; <span class="prelude-ty">Option</span>&lt;Span&gt; {
         (<span class="kw-2">&amp;**</span><span class="self">self</span>).find(haystack, span)
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>prefix(<span class="kw-2">&amp;</span><span class="self">self</span>, haystack: <span class="kw-2">&amp;</span>[u8], span: Span) -&gt; <span class="prelude-ty">Option</span>&lt;Span&gt; {
         (<span class="kw-2">&amp;**</span><span class="self">self</span>).prefix(haystack, span)
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>memory_usage(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         (<span class="kw-2">&amp;**</span><span class="self">self</span>).memory_usage()
     }
 
-    <span class="attr">#[cfg_attr(feature = <span class="string">&quot;perf-inline&quot;</span>, inline(always))]
+    <span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
     </span><span class="kw">fn </span>is_fast(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         (<span class="kw-2">&amp;**</span><span class="self">self</span>).is_fast()
     }
@@ -1196,7 +1242,7 @@ running the full regex engine.
 <span class="doccomment">/// A type that encapsulates the selection of a prefilter algorithm from a
 /// sequence of needles.
 ///
-/// The existence of this type is a little tricky, because we don&#39;t (currently)
+/// The existence of this type is a little tricky, because we don't (currently)
 /// use it for performing a search. Instead, we really only consume it by
 /// converting the underlying prefilter into a trait object, whether that be
 /// `dyn PrefilterI` or `dyn Strategy` (for the meta regex engine). In order
@@ -1206,14 +1252,14 @@ running the full regex engine.
 ///
 /// One wonders whether we *should* use an enum instead of a trait object.
 /// At time of writing, I chose trait objects based on instinct because 1) I
-/// knew I wasn&#39;t going to inline anything and 2) there would potentially be
-/// many different choices. However, as of time of writing, I haven&#39;t actually
+/// knew I wasn't going to inline anything and 2) there would potentially be
+/// many different choices. However, as of time of writing, I haven't actually
 /// compared the trait object approach to the enum approach. That probably
 /// should be litigated, but I ran out of steam.
 ///
 /// Note that if the `alloc` feature is disabled, then values of this type
 /// are (and should) never be constructed. Also, in practice, for any of the
-/// prefilters to be selected, you&#39;ll need at least one of the `perf-literal-*`
+/// prefilters to be selected, you'll need at least one of the `perf-literal-*`
 /// features enabled.
 </span><span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>Choice {
@@ -1231,7 +1277,7 @@ running the full regex engine.
     /// match semantics and sequence of needles given.
     ///
     /// This selection algorithm uses the needles as given without any
-    /// modification. For example, if `[bar]` is given, then this doesn&#39;t
+    /// modification. For example, if `[bar]` is given, then this doesn't
     /// try to select `memchr` for `b`. Instead, it would select `memmem`
     /// for `bar`. If callers would want `memchr` selected for `[bar]`, then
     /// callers should massages the literals themselves. That is, callers are
@@ -1243,9 +1289,9 @@ running the full regex engine.
     /// then `memchr2` is selected.
     ///
     /// Of course, which prefilter is selected is also subject to what
-    /// is available. For example, if `alloc` isn&#39;t enabled, then
+    /// is available. For example, if `alloc` isn't enabled, then
     /// that limits which prefilters can be selected. Similarly, if
-    /// `perf-literal-substring` isn&#39;t enabled, then nothing from the `memchr`
+    /// `perf-literal-substring` isn't enabled, then nothing from the `memchr`
     /// crate can be returned.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new&lt;B: AsRef&lt;[u8]&gt;&gt;(
         kind: MatchKind,
@@ -1254,50 +1300,50 @@ running the full regex engine.
         <span class="comment">// An empty set means the regex matches nothing, so no sense in
         // building a prefilter.
         </span><span class="kw">if </span>needles.len() == <span class="number">0 </span>{
-            <span class="macro">debug!</span>(<span class="string">&quot;prefilter building failed: found empty set of literals&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"prefilter building failed: found empty set of literals"</span>);
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="comment">// If the regex can match the empty string, then the prefilter
         // will by definition match at every position. This is obviously
         // completely ineffective.
         </span><span class="kw">if </span>needles.iter().any(|n| n.as_ref().is_empty()) {
-            <span class="macro">debug!</span>(<span class="string">&quot;prefilter building failed: literals match empty string&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"prefilter building failed: literals match empty string"</span>);
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="comment">// BREADCRUMBS: Perhaps the literal optimizer should special case
         // sequences of length two or three if the leading bytes of each are
-        // &quot;rare&quot;? Or perhaps, if there are two or three total possible leading
+        // "rare"? Or perhaps, if there are two or three total possible leading
         // bytes, regardless of the number of literals, and all are rare...
         // Then well, perhaps we should use memchr2 or memchr3 in those cases?
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(pre) = Memchr::new(kind, needles) {
-            <span class="macro">debug!</span>(<span class="string">&quot;prefilter built: memchr&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"prefilter built: memchr"</span>);
             <span class="kw">return </span><span class="prelude-val">Some</span>(Choice::Memchr(pre));
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pre) = Memchr2::new(kind, needles) {
-            <span class="macro">debug!</span>(<span class="string">&quot;prefilter built: memchr2&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"prefilter built: memchr2"</span>);
             <span class="kw">return </span><span class="prelude-val">Some</span>(Choice::Memchr2(pre));
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pre) = Memchr3::new(kind, needles) {
-            <span class="macro">debug!</span>(<span class="string">&quot;prefilter built: memchr3&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"prefilter built: memchr3"</span>);
             <span class="kw">return </span><span class="prelude-val">Some</span>(Choice::Memchr3(pre));
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pre) = Memmem::new(kind, needles) {
-            <span class="macro">debug!</span>(<span class="string">&quot;prefilter built: memmem&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"prefilter built: memmem"</span>);
             <span class="kw">return </span><span class="prelude-val">Some</span>(Choice::Memmem(pre));
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pre) = Teddy::new(kind, needles) {
-            <span class="macro">debug!</span>(<span class="string">&quot;prefilter built: teddy&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"prefilter built: teddy"</span>);
             <span class="kw">return </span><span class="prelude-val">Some</span>(Choice::Teddy(pre));
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pre) = ByteSet::new(kind, needles) {
-            <span class="macro">debug!</span>(<span class="string">&quot;prefilter built: byteset&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"prefilter built: byteset"</span>);
             <span class="kw">return </span><span class="prelude-val">Some</span>(Choice::ByteSet(pre));
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pre) = AhoCorasick::new(kind, needles) {
-            <span class="macro">debug!</span>(<span class="string">&quot;prefilter built: aho-corasick&quot;</span>);
+            <span class="macro">debug!</span>(<span class="string">"prefilter built: aho-corasick"</span>);
             <span class="kw">return </span><span class="prelude-val">Some</span>(Choice::AhoCorasick(pre));
         }
-        <span class="macro">debug!</span>(<span class="string">&quot;prefilter building failed: no strategy could be found&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">"prefilter building failed: no strategy could be found"</span>);
         <span class="prelude-val">None
     </span>}
 }
@@ -1307,7 +1353,7 @@ running the full regex engine.
 /// order of the given HIR expressions and consistent with the match semantics
 /// given.
 ///
-/// The sequence returned is &quot;optimized.&quot; That is, they may be shrunk or even
+/// The sequence returned is "optimized." That is, they may be shrunk or even
 /// truncated according to heuristics with the intent of making them more
 /// useful as a prefilter. (Which translates to both using faster algorithms
 /// and minimizing the false positive rate.)
@@ -1318,7 +1364,7 @@ running the full regex engine.
 /// The match kind given must correspond to the match semantics of the regex
 /// that is represented by the HIRs given. The match semantics may change the
 /// literal sequence returned.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>prefixes&lt;H&gt;(kind: MatchKind, hirs: <span class="kw-2">&amp;</span>[H]) -&gt; literal::Seq
 <span class="kw">where
     </span>H: core::borrow::Borrow&lt;Hir&gt;,
@@ -1331,7 +1377,7 @@ running the full regex engine.
         prefixes.union(<span class="kw-2">&amp;mut </span>extractor.extract(hir.borrow()));
     }
     <span class="macro">debug!</span>(
-        <span class="string">&quot;prefixes (len={:?}, exact={:?}) extracted before optimization: {:?}&quot;</span>,
+        <span class="string">"prefixes (len={:?}, exact={:?}) extracted before optimization: {:?}"</span>,
         prefixes.len(),
         prefixes.is_exact(),
         prefixes
@@ -1346,7 +1392,7 @@ running the full regex engine.
         }
     }
     <span class="macro">debug!</span>(
-        <span class="string">&quot;prefixes (len={:?}, exact={:?}) extracted after optimization: {:?}&quot;</span>,
+        <span class="string">"prefixes (len={:?}, exact={:?}) extracted after optimization: {:?}"</span>,
         prefixes.len(),
         prefixes.is_exact(),
         prefixes
@@ -1355,7 +1401,7 @@ running the full regex engine.
 }
 
 <span class="doccomment">/// Like `prefixes`, but for all suffixes of all matches for the given HIRs.
-</span><span class="attr">#[cfg(feature = <span class="string">&quot;syntax&quot;</span>)]
+</span><span class="attr">#[cfg(feature = <span class="string">"syntax"</span>)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>suffixes&lt;H&gt;(kind: MatchKind, hirs: <span class="kw-2">&amp;</span>[H]) -&gt; literal::Seq
 <span class="kw">where
     </span>H: core::borrow::Borrow&lt;Hir&gt;,
@@ -1368,7 +1414,7 @@ running the full regex engine.
         suffixes.union(<span class="kw-2">&amp;mut </span>extractor.extract(hir.borrow()));
     }
     <span class="macro">debug!</span>(
-        <span class="string">&quot;suffixes (len={:?}, exact={:?}) extracted before optimization: {:?}&quot;</span>,
+        <span class="string">"suffixes (len={:?}, exact={:?}) extracted before optimization: {:?}"</span>,
         suffixes.len(),
         suffixes.is_exact(),
         suffixes
@@ -1383,7 +1429,7 @@ running the full regex engine.
         }
     }
     <span class="macro">debug!</span>(
-        <span class="string">&quot;suffixes (len={:?}, exact={:?}) extracted after optimization: {:?}&quot;</span>,
+        <span class="string">"suffixes (len={:?}, exact={:?}) extracted after optimization: {:?}"</span>,
         suffixes.len(),
         suffixes.is_exact(),
         suffixes

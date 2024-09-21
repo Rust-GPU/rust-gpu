@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.2/src/dfa.rs`."><title>dfa.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-fa3bb1812debf86c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.74.0-nightly (8ce4540bd 2023-09-29)" data-channel="nightly" data-search-js="search-8be46b629f5f14a8.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-c5bd66d33317d69f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../aho_corasick/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/aho-corasick-1.1.3/src/dfa.rs`."><title>dfa.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="aho_corasick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../aho_corasick/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -893,7 +893,7 @@ when one needs access to the [`Automaton`] trait implementation.
 /// making the memory usage of such a DFA ever bigger. (The NFAs in this crate
 /// unconditionally support both anchored and unanchored searches because there
 /// is essentially no added cost for doing so.) It is for this reason that
-/// a DFA&#39;s support for anchored and unanchored searches can be configured
+/// a DFA's support for anchored and unanchored searches can be configured
 /// via [`Builder::start_kind`]. By default, a DFA only supports unanchored
 /// searches.
 ///
@@ -909,8 +909,8 @@ when one needs access to the [`Automaton`] trait implementation.
 ///     Input, Match,
 /// };
 ///
-/// let patterns = &amp;[&quot;b&quot;, &quot;abc&quot;, &quot;abcd&quot;];
-/// let haystack = &quot;abcd&quot;;
+/// let patterns = &amp;["b", "abc", "abcd"];
+/// let haystack = "abcd";
 ///
 /// let nfa = DFA::new(patterns).unwrap();
 /// assert_eq!(
@@ -929,11 +929,11 @@ when one needs access to the [`Automaton`] trait implementation.
     /// 2*stride, 3*stride, ...
     </span>trans: Vec&lt;StateID&gt;,
     <span class="doccomment">/// The matches for every match state in this DFA. This is first indexed by
-    /// state index (so that&#39;s `sid &gt;&gt; stride2`) and then by order in which the
+    /// state index (so that's `sid &gt;&gt; stride2`) and then by order in which the
     /// matches are meant to occur.
     </span>matches: Vec&lt;Vec&lt;PatternID&gt;&gt;,
     <span class="doccomment">/// The amount of heap memory used, in bytes, by the inner Vecs of
-    /// &#39;matches&#39;.
+    /// 'matches'.
     </span>matches_memory_usage: usize,
     <span class="doccomment">/// The length of each pattern. This is used to compute the start offset
     /// of a match.
@@ -948,11 +948,11 @@ when one needs access to the [`Automaton`] trait implementation.
     /// DFA. Note that the actual number of transitions in each state is
     /// stride=2^stride2, where stride is the smallest power of 2 greater than
     /// or equal to alphabet_len. We do things this way so that we can use
-    /// bitshifting to go from a state ID to an index into &#39;matches&#39;.
+    /// bitshifting to go from a state ID to an index into 'matches'.
     </span>alphabet_len: usize,
     <span class="doccomment">/// The exponent with a base 2, such that stride=2^stride2. Given a state
-    /// index &#39;i&#39;, its state identifier is &#39;i &lt;&lt; stride2&#39;. Given a state
-    /// identifier &#39;sid&#39;, its state index is &#39;sid &gt;&gt; stride2&#39;.
+    /// index 'i', its state identifier is 'i &lt;&lt; stride2'. Given a state
+    /// identifier 'sid', its state index is 'sid &gt;&gt; stride2'.
     </span>stride2: usize,
     <span class="doccomment">/// The equivalence classes for this DFA. All transitions are defined on
     /// equivalence classes and not on the 256 distinct byte values.
@@ -961,7 +961,7 @@ when one needs access to the [`Automaton`] trait implementation.
     </span>min_pattern_len: usize,
     <span class="doccomment">/// The length of the longest pattern in this automaton.
     </span>max_pattern_len: usize,
-    <span class="doccomment">/// The information required to deduce which states are &quot;special&quot; in this
+    <span class="doccomment">/// The information required to deduce which states are "special" in this
     /// DFA.
     </span>special: Special,
 }
@@ -997,7 +997,7 @@ when one needs access to the [`Automaton`] trait implementation.
     /// compiled away. That is, DFA construction involves pre-computing the
     /// failure transitions everywhere, such that failure transitions are no
     /// longer used at search time. This, combined with its uniformly dense
-    /// representation, are the two most important factors in why it&#39;s faster
+    /// representation, are the two most important factors in why it's faster
     /// than the NFAs in this crate.
     </span><span class="kw">const </span>DEAD: StateID = StateID::new_unchecked(<span class="number">0</span>);
 
@@ -1015,11 +1015,11 @@ when one needs access to the [`Automaton`] trait implementation.
             <span class="self">self</span>.matches_memory_usage += PatternID::SIZE;
             at_least_one = <span class="bool-val">true</span>;
         }
-        <span class="macro">assert!</span>(at_least_one, <span class="string">&quot;match state must have non-empty pids&quot;</span>);
+        <span class="macro">assert!</span>(at_least_one, <span class="string">"match state must have non-empty pids"</span>);
     }
 }
 
-<span class="comment">// SAFETY: &#39;start_state&#39; always returns a valid state ID, &#39;next_state&#39; always
+<span class="comment">// SAFETY: 'start_state' always returns a valid state ID, 'next_state' always
 // returns a valid state ID given a valid state ID. We otherwise claim that
 // all other methods are correct as well.
 </span><span class="kw">unsafe impl </span>Automaton <span class="kw">for </span>DFA {
@@ -1027,7 +1027,7 @@ when one needs access to the [`Automaton`] trait implementation.
     </span><span class="kw">fn </span>start_state(<span class="kw-2">&amp;</span><span class="self">self</span>, anchored: Anchored) -&gt; <span class="prelude-ty">Result</span>&lt;StateID, MatchError&gt; {
         <span class="comment">// Either of the start state IDs can be DEAD, in which case, support
         // for that type of search is not provided by this DFA. Which start
-        // state IDs are inactive depends on the &#39;StartKind&#39; configuration at
+        // state IDs are inactive depends on the 'StartKind' configuration at
         // DFA construction time.
         </span><span class="kw">match </span>anchored {
             Anchored::No =&gt; {
@@ -1144,7 +1144,7 @@ when one needs access to the [`Automaton`] trait implementation.
             util::debug::DebugByte,
         };
 
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;dfa::DFA(&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"dfa::DFA("</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.state_len {
             <span class="kw">let </span>sid = StateID::new_unchecked(index &lt;&lt; <span class="self">self</span>.stride2);
             <span class="comment">// While we do currently include the FAIL state in the transition
@@ -1157,60 +1157,60 @@ when one needs access to the [`Automaton`] trait implementation.
             // If the construction is changed to remove the fail state (it
             // probably should be), then this special case should be updated.
             </span><span class="kw">if </span>index == <span class="number">1 </span>{
-                <span class="macro">writeln!</span>(f, <span class="string">&quot;F {:06}:&quot;</span>, sid.as_usize())<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(f, <span class="string">"F {:06}:"</span>, sid.as_usize())<span class="question-mark">?</span>;
                 <span class="kw">continue</span>;
             }
             fmt_state_indicator(f, <span class="self">self</span>, sid)<span class="question-mark">?</span>;
-            <span class="macro">write!</span>(f, <span class="string">&quot;{:06}: &quot;</span>, sid.as_usize())<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"{:06}: "</span>, sid.as_usize())<span class="question-mark">?</span>;
 
             <span class="kw">let </span>it = (<span class="number">0</span>..<span class="self">self</span>.byte_classes.alphabet_len()).map(|class| {
                 (class.as_u8(), <span class="self">self</span>.trans[sid.as_usize() + class])
             });
             <span class="kw">for </span>(i, (start, end, next)) <span class="kw">in </span>sparse_transitions(it).enumerate() {
                 <span class="kw">if </span>i &gt; <span class="number">0 </span>{
-                    <span class="macro">write!</span>(f, <span class="string">&quot;, &quot;</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">", "</span>)<span class="question-mark">?</span>;
                 }
                 <span class="kw">if </span>start == end {
                     <span class="macro">write!</span>(
                         f,
-                        <span class="string">&quot;{:?} =&gt; {:?}&quot;</span>,
+                        <span class="string">"{:?} =&gt; {:?}"</span>,
                         DebugByte(start),
                         next.as_usize()
                     )<span class="question-mark">?</span>;
                 } <span class="kw">else </span>{
                     <span class="macro">write!</span>(
                         f,
-                        <span class="string">&quot;{:?}-{:?} =&gt; {:?}&quot;</span>,
+                        <span class="string">"{:?}-{:?} =&gt; {:?}"</span>,
                         DebugByte(start),
                         DebugByte(end),
                         next.as_usize()
                     )<span class="question-mark">?</span>;
                 }
             }
-            <span class="macro">write!</span>(f, <span class="string">&quot;\n&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"\n"</span>)<span class="question-mark">?</span>;
             <span class="kw">if </span><span class="self">self</span>.is_match(sid) {
-                <span class="macro">write!</span>(f, <span class="string">&quot; matches: &quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">" matches: "</span>)<span class="question-mark">?</span>;
                 <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.match_len(sid) {
                     <span class="kw">if </span>i &gt; <span class="number">0 </span>{
-                        <span class="macro">write!</span>(f, <span class="string">&quot;, &quot;</span>)<span class="question-mark">?</span>;
+                        <span class="macro">write!</span>(f, <span class="string">", "</span>)<span class="question-mark">?</span>;
                     }
                     <span class="kw">let </span>pid = <span class="self">self</span>.match_pattern(sid, i);
-                    <span class="macro">write!</span>(f, <span class="string">&quot;{}&quot;</span>, pid.as_usize())<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">"{}"</span>, pid.as_usize())<span class="question-mark">?</span>;
                 }
-                <span class="macro">write!</span>(f, <span class="string">&quot;\n&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">"\n"</span>)<span class="question-mark">?</span>;
             }
         }
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;match kind: {:?}&quot;</span>, <span class="self">self</span>.match_kind)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;prefilter: {:?}&quot;</span>, <span class="self">self</span>.prefilter.is_some())<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;state length: {:?}&quot;</span>, <span class="self">self</span>.state_len)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;pattern length: {:?}&quot;</span>, <span class="self">self</span>.patterns_len())<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;shortest pattern length: {:?}&quot;</span>, <span class="self">self</span>.min_pattern_len)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;longest pattern length: {:?}&quot;</span>, <span class="self">self</span>.max_pattern_len)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;alphabet length: {:?}&quot;</span>, <span class="self">self</span>.alphabet_len)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;stride: {:?}&quot;</span>, <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.stride2)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;byte classes: {:?}&quot;</span>, <span class="self">self</span>.byte_classes)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;memory usage: {:?}&quot;</span>, <span class="self">self</span>.memory_usage())<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;)&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"match kind: {:?}"</span>, <span class="self">self</span>.match_kind)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"prefilter: {:?}"</span>, <span class="self">self</span>.prefilter.is_some())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"state length: {:?}"</span>, <span class="self">self</span>.state_len)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"pattern length: {:?}"</span>, <span class="self">self</span>.patterns_len())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"shortest pattern length: {:?}"</span>, <span class="self">self</span>.min_pattern_len)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"longest pattern length: {:?}"</span>, <span class="self">self</span>.max_pattern_len)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"alphabet length: {:?}"</span>, <span class="self">self</span>.alphabet_len)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"stride: {:?}"</span>, <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.stride2)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"byte classes: {:?}"</span>, <span class="self">self</span>.byte_classes)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">"memory usage: {:?}"</span>, <span class="self">self</span>.memory_usage())<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">")"</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 }
@@ -1267,7 +1267,7 @@ when one needs access to the [`Automaton`] trait implementation.
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         nnfa: <span class="kw-2">&amp;</span>noncontiguous::NFA,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;DFA, BuildError&gt; {
-        <span class="macro">debug!</span>(<span class="string">&quot;building DFA&quot;</span>);
+        <span class="macro">debug!</span>(<span class="string">"building DFA"</span>);
         <span class="kw">let </span>byte_classes = <span class="kw">if </span><span class="self">self</span>.byte_classes {
             nnfa.byte_classes().clone()
         } <span class="kw">else </span>{
@@ -1283,7 +1283,7 @@ when one needs access to the [`Automaton`] trait implementation.
                 // NFA (DEAD, FAIL, START-UNANCHORED, START-ANCHORED), so the
                 // subtraction of 4 is okay.
                 //
-                // Note that we subtract 4 because the &quot;anchored&quot; part of
+                // Note that we subtract 4 because the "anchored" part of
                 // the DFA duplicates the unanchored part (without failure
                 // transitions), but reuses the DEAD, FAIL and START states.
                 </span>nnfa.states()
@@ -1352,24 +1352,24 @@ when one needs access to the [`Automaton`] trait implementation.
             }
         }
         <span class="macro">debug!</span>(
-            <span class="string">&quot;DFA built, &lt;states: {:?}, size: {:?}, \
-             alphabet len: {:?}, stride: {:?}&gt;&quot;</span>,
+            <span class="string">"DFA built, &lt;states: {:?}, size: {:?}, \
+             alphabet len: {:?}, stride: {:?}&gt;"</span>,
             dfa.state_len,
             dfa.memory_usage(),
             dfa.byte_classes.alphabet_len(),
             dfa.byte_classes.stride(),
         );
         <span class="comment">// The vectors can grow ~twice as big during construction because a
-        // Vec amortizes growth. But here, let&#39;s shrink things back down to
-        // what we actually need since we&#39;re never going to add more to it.
+        // Vec amortizes growth. But here, let's shrink things back down to
+        // what we actually need since we're never going to add more to it.
         </span>dfa.trans.shrink_to_fit();
         dfa.pattern_lens.shrink_to_fit();
         dfa.matches.shrink_to_fit();
         <span class="comment">// TODO: We might also want to shrink each Vec inside of `dfa.matches`,
         // or even better, convert it to one contiguous allocation. But I think
-        // I went with nested allocs for good reason (can&#39;t remember), so this
+        // I went with nested allocs for good reason (can't remember), so this
         // may be tricky to do. I decided not to shrink them here because it
-        // might require a fair bit of work to do. It&#39;s unclear whether it&#39;s
+        // might require a fair bit of work to do. It's unclear whether it's
         // worth it.
         </span><span class="prelude-val">Ok</span>(dfa)
     }
@@ -1426,7 +1426,7 @@ when one needs access to the [`Automaton`] trait implementation.
                 },
             );
         }
-        <span class="comment">// Now that we&#39;ve remapped all the IDs in our states, all that&#39;s left
+        <span class="comment">// Now that we've remapped all the IDs in our states, all that's left
         // is remapping the special state IDs.
         </span><span class="kw">let </span>old = nnfa.special();
         <span class="kw">let </span>new = <span class="kw-2">&amp;mut </span>dfa.special;
@@ -1548,7 +1548,7 @@ when one needs access to the [`Automaton`] trait implementation.
                 }
             }
         }
-        <span class="comment">// Now that we&#39;ve remapped all the IDs in our states, all that&#39;s left
+        <span class="comment">// Now that we've remapped all the IDs in our states, all that's left
         // is remapping the special state IDs.
         </span><span class="kw">let </span>old = nnfa.special();
         <span class="kw">let </span>new = <span class="kw-2">&amp;mut </span>dfa.special;
@@ -1608,9 +1608,9 @@ when one needs access to the [`Automaton`] trait implementation.
     </span>}
 
     <span class="doccomment">/// A debug setting for whether to attempt to shrink the size of the
-    /// automaton&#39;s alphabet or not.
+    /// automaton's alphabet or not.
     ///
-    /// This should never be enabled unless you&#39;re debugging an automaton.
+    /// This should never be enabled unless you're debugging an automaton.
     /// Namely, disabling byte classes makes transitions easier to reason
     /// about, since they use the actual bytes instead of equivalence classes.
     /// Disabling this confers no performance benefit at search time.
