@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Signed for loops like `for _ in 0..4i32 {}` no longer compile. We recommend switching to unsigned for loops and casting back to signed integers in the meanwhile.
 
 ### Changed 🛠
+- [PR#13](https://github.com/Rust-GPU/rust-gpu/pull/13) allow cargo features to be passed to the shader crate
 - [PR#12](https://github.com/rust-gpu/rust-gpu/pull/12) updated toolchain to `nightly-2024-04-24`
 - [PR#9](https://github.com/Rust-GPU/rust-gpu/pull/9) relaxed `glam` version requirements (`>=0.22, <=0.29`)
 - [PR#1127](https://github.com/EmbarkStudios/rust-gpu/pull/1127) updated `spirv-tools` to `0.10.0`, which follows `vulkan-sdk-1.3.275`
