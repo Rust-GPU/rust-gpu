@@ -9,9 +9,9 @@ whether it should succeed compilation, or fail. If it is expected to fail, there
 The `src` folder here is the tool that iterates over every file in the `ui` folder. It uses the
 `compiletests` library, taken from rustc's own compiletest framework.
 
-You can run compiletests via `cargo compiletests`. This is an alias set up in `.cargo/config` for
+You can run compiletests via `cargo compiletest`. This is an alias set up in `.cargo/config` for
 `cargo run --release -p compiletests --`. You can filter to run specific tests by passing the
-(partial) filenames to `cargo compiletests some_file_name`, and update the `.stderr` files to
+(partial) filenames to `cargo compiletest some_file_name`, and update the `.stderr` files to
 contain new output via the `--bless` flag (with `--bless`, make sure you're actually supposed to be
 changing the .stderr files due to an intentional change, and hand-validate the output is correct
 afterwards).
