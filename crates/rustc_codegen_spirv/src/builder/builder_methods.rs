@@ -1318,28 +1318,80 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     fn checked_binop(
         &mut self,
         oop: OverflowOp,
-        _ty: Ty<'_>,
+        ty: Ty<'_>,
         lhs: Self::Value,
         rhs: Self::Value,
     ) -> (Self::Value, Self::Value) {
-        // NOTE(eddyb) this needs to be `undef`, not `false`/`true`, because
-        // we don't want the user's boolean constants to keep the zombie alive.
-        let bool = SpirvType::Bool.def(self.span(), self);
-        let overflowed = self.undef(bool);
-        let result = match oop {
-            OverflowOp::Add => (self.add(lhs, rhs), overflowed),
-            OverflowOp::Sub => (self.sub(lhs, rhs), overflowed),
-            OverflowOp::Mul => (self.mul(lhs, rhs), overflowed),
+        // adopted partially from https://github.com/ziglang/zig/blob/master/src/codegen/spirv.zig
+        let is_add = match oop {
+            OverflowOp::Add => true,
+            OverflowOp::Sub => false,
+            OverflowOp::Mul => {
+                // NOTE(eddyb) this needs to be `undef`, not `false`/`true`, because
+                // we don't want the user's boolean constants to keep the zombie alive.
+                let bool = SpirvType::Bool.def(self.span(), self);
+                let overflowed = self.undef(bool);
+
+                let result = (self.mul(lhs, rhs), overflowed);
+                self.zombie(result.1.def(self), "checked mul is not supported yet");
+                return result;
+            }
         };
-        self.zombie(
-            result.1.def(self),
-            match oop {
-                OverflowOp::Add => "checked add is not supported yet",
-                OverflowOp::Sub => "checked sub is not supported yet",
-                OverflowOp::Mul => "checked mul is not supported yet",
-            },
-        );
-        result
+        let signed = match ty.kind() {
+            ty::Int(_) => true,
+            ty::Uint(_) => false,
+            other => self.fatal(format!(
+                "Unexpected {} type: {other:#?}",
+                match oop {
+                    OverflowOp::Add => "checked add",
+                    OverflowOp::Sub => "checked sub",
+                    OverflowOp::Mul => "checked mul",
+                }
+            )),
+        };
+
+        let result = if is_add {
+            self.add(lhs, rhs)
+        } else {
+            self.sub(lhs, rhs)
+        };
+
+        let overflowed = if signed {
+            // when adding, overflow could happen if
+            // - rhs is positive and result < lhs; or
+            // - rhs is negative and result > lhs
+            // this is equivalent to (rhs < 0) == (result > lhs)
+            //
+            // when subtracting, overflow happens if
+            // - rhs is positive and result > lhs; or
+            // - rhs is negative and result < lhs
+            // this is equivalent to (rhs < 0) == (result < lhs)
+            let rhs_lt_zero = self.icmp(IntPredicate::IntSLT, rhs, self.constant_int(rhs.ty, 0));
+            let result_gt_lhs = self.icmp(
+                if is_add {
+                    IntPredicate::IntSGT
+                } else {
+                    IntPredicate::IntSLT
+                },
+                result,
+                lhs,
+            );
+            self.icmp(IntPredicate::IntEQ, rhs_lt_zero, result_gt_lhs)
+        } else {
+            // for unsigned addition, overflow occured if the result is less than any of the operands.
+            // for subtraction, overflow occured if the result is greater.
+            self.icmp(
+                if is_add {
+                    IntPredicate::IntULT
+                } else {
+                    IntPredicate::IntUGT
+                },
+                result,
+                lhs,
+            )
+        };
+        
+        (result, overflowed)
     }
 
     // rustc has the concept of an immediate vs. memory type - bools are compiled to LLVM bools as
