@@ -1390,7 +1390,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 lhs,
             )
         };
-        
+
         (result, overflowed)
     }
 
@@ -2818,8 +2818,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         kind: SpirvValueKind::Def(b_id),
                         ..
                     },
-                    _, // `&'static panic::Location<'static>`
-                ] = args[..]
+                    // NOTE(fee1-dead): the standard `panic` takes in a `Location` due to `track_caller`.
+                    // but for `panic_nounwind` it does not, therefore we only look at the first two arguments.
+                ] = args[..2]
                 {
                     if let Some(const_msg) = const_str_as_utf8(&[a_id, b_id]) {
                         decoded_format_args.const_pieces = Some([const_msg].into_iter().collect());
