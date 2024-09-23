@@ -932,6 +932,31 @@
 <a href="#932" id="932">932</a>
 <a href="#933" id="933">933</a>
 <a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::CodegenCx;
 <span class="kw">use </span><span class="kw">crate</span>::abi::ConvSpirvType;
 <span class="kw">use </span><span class="kw">crate</span>::attr::{AggregatedSpirvAttributes, Entry, Spanned, SpecConstant};
@@ -1429,71 +1454,98 @@
                 .dcx()
                 .span_fatal(hir_param.ty_span, <span class="string">"pair type not supported yet"</span>)
         }
+        <span class="comment">// FIXME(eddyb) should this talk about "typed buffers" instead of "interface blocks"?
+        // FIXME(eddyb) should we talk about "descriptor indexing" or
+        // actually use more reasonable terms like "resource arrays"?
+        </span><span class="kw">let </span>needs_interface_block_and_supports_descriptor_indexing = <span class="macro">matches!</span>(
+            storage_class,
+            <span class="prelude-val">Ok</span>(StorageClass::Uniform | StorageClass::StorageBuffer)
+        );
+        <span class="kw">let </span>needs_interface_block = needs_interface_block_and_supports_descriptor_indexing
+            || storage_class == <span class="prelude-val">Ok</span>(StorageClass::PushConstant);
+        <span class="comment">// NOTE(eddyb) `#[spirv(typed_buffer)]` adds `SpirvType::InterfaceBlock`s
+        // which must bypass the automated ones (i.e. the user is taking control).
+        </span><span class="kw">let </span>has_explicit_interface_block = needs_interface_block_and_supports_descriptor_indexing
+            &amp;&amp; {
+                <span class="comment">// Peel off arrays first (used for "descriptor indexing").
+                </span><span class="kw">let </span>outermost_or_array_element = <span class="kw">match </span><span class="self">self</span>.lookup_type(value_spirv_type) {
+                    SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element } =&gt; {
+                        element
+                    }
+                    <span class="kw">_ </span>=&gt; value_spirv_type,
+                };
+                <span class="macro">matches!</span>(
+                    <span class="self">self</span>.lookup_type(outermost_or_array_element),
+                    SpirvType::InterfaceBlock { .. }
+                )
+            };
         <span class="kw">let </span>var_ptr_spirv_type;
-        <span class="kw">let </span>(value_ptr, value_len) = <span class="kw">match </span>storage_class {
-            <span class="prelude-val">Ok</span>(
-                StorageClass::PushConstant | StorageClass::Uniform | StorageClass::StorageBuffer,
-            ) =&gt; {
-                <span class="kw">let </span>var_spirv_type = SpirvType::InterfaceBlock {
-                    inner_type: value_spirv_type,
-                }
-                .def(hir_param.span, <span class="self">self</span>);
-                var_ptr_spirv_type = <span class="self">self</span>.type_ptr_to(var_spirv_type);
-
-                <span class="kw">let </span>zero_u32 = <span class="self">self</span>.constant_u32(hir_param.span, <span class="number">0</span>).def_cx(<span class="self">self</span>);
-                <span class="kw">let </span>value_ptr_spirv_type = <span class="self">self</span>.type_ptr_to(value_spirv_type);
-                <span class="kw">let </span>value_ptr = bx
-                    .emit()
-                    .in_bounds_access_chain(
-                        value_ptr_spirv_type,
-                        <span class="prelude-val">None</span>,
-                        var_id.unwrap(),
-                        [zero_u32].iter().cloned(),
-                    )
-                    .unwrap()
-                    .with_type(value_ptr_spirv_type);
-
-                <span class="kw">let </span>value_len = <span class="kw">if </span>is_unsized_with_len {
-                    <span class="kw">match </span><span class="self">self</span>.lookup_type(value_spirv_type) {
-                        SpirvType::RuntimeArray { .. } =&gt; {}
-                        <span class="kw">_ </span>=&gt; {
-                            <span class="self">self</span>.tcx.dcx().span_err(
-                                hir_param.ty_span,
-                                <span class="string">"only plain slices are supported as unsized types"</span>,
-                            );
-                        }
-                    }
-
-                    <span class="comment">// FIXME(eddyb) shouldn't this be `usize`?
-                    </span><span class="kw">let </span>len_spirv_type = <span class="self">self</span>.type_isize();
-                    <span class="kw">let </span>len = bx
-                        .emit()
-                        .array_length(len_spirv_type, <span class="prelude-val">None</span>, var_id.unwrap(), <span class="number">0</span>)
-                        .unwrap();
-
-                    <span class="prelude-val">Some</span>(len.with_type(len_spirv_type))
-                } <span class="kw">else </span>{
-                    <span class="kw">if </span>is_unsized {
-                        <span class="comment">// It's OK to use a RuntimeArray&lt;u32&gt; and not have a length parameter, but
-                        // it's just nicer ergonomics to use a slice.
-                        </span><span class="self">self</span>.tcx
-                            .dcx()
-                            .span_warn(hir_param.ty_span, <span class="string">"use &amp;[T] instead of &amp;RuntimeArray&lt;T&gt;"</span>);
-                    }
-                    <span class="prelude-val">None
-                </span>};
-
-                (<span class="prelude-val">Ok</span>(value_ptr), value_len)
+        <span class="kw">let </span>(value_ptr, value_len) = <span class="kw">if </span>needs_interface_block &amp;&amp; !has_explicit_interface_block {
+            <span class="kw">let </span>var_spirv_type = SpirvType::InterfaceBlock {
+                inner_type: value_spirv_type,
             }
-            <span class="prelude-val">Ok</span>(StorageClass::UniformConstant) =&gt; {
-                var_ptr_spirv_type = <span class="self">self</span>.type_ptr_to(value_spirv_type);
+            .def(hir_param.span, <span class="self">self</span>);
+            var_ptr_spirv_type = <span class="self">self</span>.type_ptr_to(var_spirv_type);
 
+            <span class="kw">let </span>zero_u32 = <span class="self">self</span>.constant_u32(hir_param.span, <span class="number">0</span>).def_cx(<span class="self">self</span>);
+            <span class="kw">let </span>value_ptr_spirv_type = <span class="self">self</span>.type_ptr_to(value_spirv_type);
+            <span class="kw">let </span>value_ptr = bx
+                .emit()
+                .in_bounds_access_chain(
+                    value_ptr_spirv_type,
+                    <span class="prelude-val">None</span>,
+                    var_id.unwrap(),
+                    [zero_u32].iter().cloned(),
+                )
+                .unwrap()
+                .with_type(value_ptr_spirv_type);
+
+            <span class="kw">let </span>value_len = <span class="kw">if </span>is_unsized_with_len {
+                <span class="kw">match </span><span class="self">self</span>.lookup_type(value_spirv_type) {
+                    SpirvType::RuntimeArray { .. } =&gt; {}
+                    <span class="kw">_ </span>=&gt; {
+                        <span class="self">self</span>.tcx.dcx().span_err(
+                            hir_param.ty_span,
+                            <span class="string">"only plain slices are supported as unsized types"</span>,
+                        );
+                    }
+                }
+
+                <span class="comment">// FIXME(eddyb) shouldn't this be `usize`?
+                </span><span class="kw">let </span>len_spirv_type = <span class="self">self</span>.type_isize();
+                <span class="kw">let </span>len = bx
+                    .emit()
+                    .array_length(len_spirv_type, <span class="prelude-val">None</span>, var_id.unwrap(), <span class="number">0</span>)
+                    .unwrap();
+
+                <span class="prelude-val">Some</span>(len.with_type(len_spirv_type))
+            } <span class="kw">else </span>{
+                <span class="kw">if </span>is_unsized {
+                    <span class="comment">// It's OK to use a RuntimeArray&lt;u32&gt; and not have a length parameter, but
+                    // it's just nicer ergonomics to use a slice.
+                    </span><span class="self">self</span>.tcx
+                        .dcx()
+                        .span_warn(hir_param.ty_span, <span class="string">"use &amp;[T] instead of &amp;RuntimeArray&lt;T&gt;"</span>);
+                }
+                <span class="prelude-val">None
+            </span>};
+
+            (<span class="prelude-val">Ok</span>(value_ptr), value_len)
+        } <span class="kw">else </span>{
+            var_ptr_spirv_type = <span class="self">self</span>.type_ptr_to(value_spirv_type);
+
+            <span class="comment">// FIXME(eddyb) should we talk about "descriptor indexing" or
+            // actually use more reasonable terms like "resource arrays"?
+            </span><span class="kw">let </span>unsized_is_descriptor_indexing =
+                needs_interface_block_and_supports_descriptor_indexing
+                    || storage_class == <span class="prelude-val">Ok</span>(StorageClass::UniformConstant);
+            <span class="kw">if </span>unsized_is_descriptor_indexing {
                 <span class="kw">match </span><span class="self">self</span>.lookup_type(value_spirv_type) {
                     SpirvType::RuntimeArray { .. } =&gt; {
                         <span class="kw">if </span>is_unsized_with_len {
                             <span class="self">self</span>.tcx.dcx().span_err(
                                 hir_param.ty_span,
-                                <span class="string">"uniform_constant must use &amp;RuntimeArray&lt;T&gt;, not &amp;[T]"</span>,
+                                <span class="string">"descriptor indexing must use &amp;RuntimeArray&lt;T&gt;, not &amp;[T]"</span>,
                             );
                         }
                     }
@@ -1501,25 +1553,16 @@
                         <span class="kw">if </span>is_unsized {
                             <span class="self">self</span>.tcx.dcx().span_err(
                                 hir_param.ty_span,
-                                <span class="string">"only plain slices are supported as unsized types"</span>,
+                                <span class="string">"only RuntimeArray is supported, not other unsized types"</span>,
                             );
                         }
                     }
                 }
-
-                <span class="kw">let </span>value_len = <span class="kw">if </span>is_pair {
-                    <span class="comment">// We've already emitted an error, fill in a placeholder value
-                    </span><span class="prelude-val">Some</span>(bx.undef(<span class="self">self</span>.type_isize()))
-                } <span class="kw">else </span>{
-                    <span class="prelude-val">None
-                </span>};
-
-                (<span class="prelude-val">Ok</span>(var_id.unwrap().with_type(var_ptr_spirv_type)), value_len)
-            }
-            <span class="kw">_ </span>=&gt; {
-                var_ptr_spirv_type = <span class="self">self</span>.type_ptr_to(value_spirv_type);
-
-                <span class="kw">if </span>is_unsized {
+            } <span class="kw">else </span>{
+                <span class="comment">// FIXME(eddyb) determine, based on the type, what kind of type
+                // this is, to narrow it further to e.g. "buffer in a non-buffer
+                // storage class" or "storage class expects fixed data sizes".
+                </span><span class="kw">if </span>is_unsized {
                     <span class="self">self</span>.tcx.dcx().span_fatal(
                         hir_param.ty_span,
                         <span class="macro">format!</span>(
@@ -1531,12 +1574,19 @@
                         ),
                     );
                 }
-
-                (
-                    var_id.map(|var_id| var_id.with_type(var_ptr_spirv_type)),
-                    <span class="prelude-val">None</span>,
-                )
             }
+
+            <span class="kw">let </span>value_len = <span class="kw">if </span>is_pair {
+                <span class="comment">// We've already emitted an error, fill in a placeholder value
+                </span><span class="prelude-val">Some</span>(bx.undef(<span class="self">self</span>.type_isize()))
+            } <span class="kw">else </span>{
+                <span class="prelude-val">None
+            </span>};
+
+            (
+                var_id.map(|var_id| var_id.with_type(var_ptr_spirv_type)),
+                value_len,
+            )
         };
 
         <span class="comment">// Compute call argument(s) to match what the Rust entry `fn` expects,

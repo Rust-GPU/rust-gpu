@@ -1570,6 +1570,10 @@
 <a href="#1570" id="1570">1570</a>
 <a href="#1571" id="1571">1571</a>
 <a href="#1572" id="1572">1572</a>
+<a href="#1573" id="1573">1573</a>
+<a href="#1574" id="1574">1574</a>
+<a href="#1575" id="1575">1575</a>
+<a href="#1576" id="1576">1576</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Builder;
 <span class="kw">use </span><span class="kw">crate</span>::builder_spirv::{BuilderCursor, SpirvValue};
 <span class="kw">use </span><span class="kw">crate</span>::codegen_cx::CodegenCx;
@@ -2274,7 +2278,11 @@
                         };
                         ty = <span class="kw">match </span>cx.lookup_type(ty) {
                             SpirvType::Array { element, .. }
-                            | SpirvType::RuntimeArray { element } =&gt; element,
+                            | SpirvType::RuntimeArray { element }
+                            <span class="comment">// HACK(eddyb) this is pretty bad because it's not
+                            // checking that the index is an `OpConstant 0`, but
+                            // there's no other valid choice anyway.
+                            </span>| SpirvType::InterfaceBlock { inner_type: element } =&gt; element,
 
                             SpirvType::Adt { field_types, .. } =&gt; <span class="kw-2">*</span>index_to_usize()
                                 .and_then(|i| field_types.get(i))
