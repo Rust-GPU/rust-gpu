@@ -437,7 +437,7 @@ impl<'tcx> CodegenCx<'tcx> {
         // println!(
         //     "Creating const alloc of type {} with {} bytes",
         //     self.debug_type(ty),
-        //     alloc.len()
+        //     alloc.inner().len()
         // );
         let mut offset = Size::ZERO;
         let result = self.read_from_const_alloc(alloc, &mut offset, ty);

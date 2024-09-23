@@ -122,7 +122,7 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
 
             sym::saturating_add => {
                 assert_eq!(arg_tys[0], arg_tys[1]);
-                let result = match &arg_tys[0].kind() {
+                let result = match arg_tys[0].kind() {
                     TyKind::Int(_) | TyKind::Uint(_) => {
                         self.add(args[0].immediate(), args[1].immediate())
                     }

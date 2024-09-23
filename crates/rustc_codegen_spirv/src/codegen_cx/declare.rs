@@ -181,6 +181,7 @@ impl<'tcx> CodegenCx<'tcx> {
         if [
             self.tcx.lang_items().panic_fn(),
             self.tcx.lang_items().panic_fmt(),
+            self.tcx.lang_items().panic_nounwind(),
         ]
         .contains(&Some(def_id))
         {
