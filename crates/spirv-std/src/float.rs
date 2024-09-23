@@ -61,30 +61,18 @@ pub fn f16x2_to_vec2<V: Vector<f32, 2>>(int: u32) -> V {
     result
 }
 
-// We don't have access to a concrete vector type (cfg(feature = "glam") might not be enabled), so
-// synth up one manually.
-#[cfg_attr(target_arch = "spirv", repr(simd))]
-// sometimes dead because on cpu, the `gpu_only` macro nukes the method bodies
-#[allow(dead_code)]
-#[derive(Default)]
-struct F32x2 {
-    x: f32,
-    y: f32,
-}
-unsafe impl Vector<f32, 2> for F32x2 {}
-
 /// Converts an f32 (float) into an f16 (half). The result is a u32, not a u16, due to GPU support
 /// for u16 not being universal - the upper 16 bits will always be zero.
 #[spirv_std_macros::gpu_only]
 pub fn f32_to_f16(float: f32) -> u32 {
-    vec2_to_f16x2(F32x2 { x: float, y: 0.0 })
+    vec2_to_f16x2(glam::Vec2::new(float, 0.))
 }
 
 /// Converts an f16 (half) into an f32 (float). The parameter is a u32, due to GPU support for u16
 /// not being universal - the upper 16 bits are ignored.
 #[spirv_std_macros::gpu_only]
 pub fn f16_to_f32(packed: u32) -> f32 {
-    f16x2_to_vec2::<F32x2>(packed).x
+    f16x2_to_vec2::<glam::Vec2>(packed).x
 }
 
 /// Packs a vec4 into 4 8-bit signed integers. See
