@@ -1,7 +1,7 @@
 // build-pass
 
 use spirv_std::spirv;
-use spirv_std::{glam::Vec2, ByteAddressableBuffer};
+use spirv_std::{glam::Vec2, ByteAddressableBuffer, MutByteAddressableBuffer};
 
 pub struct Complex {
     x: u32,
@@ -35,7 +35,7 @@ pub fn store(
     val: Nesty,
 ) {
     unsafe {
-        let mut buf = ByteAddressableBuffer::new(buf);
+        let mut buf = MutByteAddressableBuffer::new(buf);
         buf.store(5, val);
     }
 }

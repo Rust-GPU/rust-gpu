@@ -1,7 +1,7 @@
 // build-pass
 
 use spirv_std::spirv;
-use spirv_std::{glam::Vec4, ByteAddressableBuffer};
+use spirv_std::{glam::Vec4, ByteAddressableBuffer, MutByteAddressableBuffer};
 
 #[spirv(matrix)]
 pub struct Mat4 {
@@ -31,7 +31,7 @@ pub fn store(
     valmat: Mat4,
 ) {
     unsafe {
-        let mut buf = ByteAddressableBuffer::new(buf);
+        let mut buf = MutByteAddressableBuffer::new(buf);
         buf.store(5, val);
         buf.store(5, valmat);
     }
