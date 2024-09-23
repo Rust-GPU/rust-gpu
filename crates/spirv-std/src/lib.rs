@@ -112,10 +112,13 @@ pub mod vector;
 
 pub use self::sampler::Sampler;
 pub use crate::macros::Image;
-pub use byte_addressable_buffer::ByteAddressableBuffer;
 pub use num_traits;
 pub use runtime_array::*;
 pub use typed_buffer::*;
+pub use {
+    byte_addressable_buffer::ByteAddressableBuffer,
+    byte_addressable_buffer::MutByteAddressableBuffer,
+};
 
 pub use glam;
 
