@@ -1,48 +1,7 @@
 //! Traits related to scalars.
 
-/// Abstract trait representing either a vector or a scalar type.
-///
-/// # Safety
-/// Implementing this trait on non-scalar or non-vector types may break assumptions about other
-/// unsafe code, and should not be done.
-pub unsafe trait VectorOrScalar: Default {
-    /// Either the scalar component type of the vector or the scalar itself.
-    type Scalar: Scalar;
-}
-
-unsafe impl VectorOrScalar for bool {
-    type Scalar = bool;
-}
-unsafe impl VectorOrScalar for f32 {
-    type Scalar = f32;
-}
-unsafe impl VectorOrScalar for f64 {
-    type Scalar = f64;
-}
-unsafe impl VectorOrScalar for u8 {
-    type Scalar = u8;
-}
-unsafe impl VectorOrScalar for u16 {
-    type Scalar = u16;
-}
-unsafe impl VectorOrScalar for u32 {
-    type Scalar = u32;
-}
-unsafe impl VectorOrScalar for u64 {
-    type Scalar = u64;
-}
-unsafe impl VectorOrScalar for i8 {
-    type Scalar = i8;
-}
-unsafe impl VectorOrScalar for i16 {
-    type Scalar = i16;
-}
-unsafe impl VectorOrScalar for i32 {
-    type Scalar = i32;
-}
-unsafe impl VectorOrScalar for i64 {
-    type Scalar = i64;
-}
+use crate::vector::{create_dim, VectorOrScalar};
+use core::num::NonZeroUsize;
 
 /// Abstract trait representing a SPIR-V scalar type.
 ///
@@ -54,14 +13,16 @@ pub unsafe trait Scalar:
 {
 }
 
-unsafe impl Scalar for bool {}
-unsafe impl Scalar for f32 {}
-unsafe impl Scalar for f64 {}
-unsafe impl Scalar for u8 {}
-unsafe impl Scalar for u16 {}
-unsafe impl Scalar for u32 {}
-unsafe impl Scalar for u64 {}
-unsafe impl Scalar for i8 {}
-unsafe impl Scalar for i16 {}
-unsafe impl Scalar for i32 {}
-unsafe impl Scalar for i64 {}
+macro_rules! impl_scalar {
+    ($($ty:ty),+) => {
+        $(
+            unsafe impl VectorOrScalar for $ty {
+                type Scalar = Self;
+                const DIM: NonZeroUsize = create_dim(1);
+            }
+            unsafe impl Scalar for $ty {}
+        )+
+    };
+}
+
+impl_scalar!(bool, f32, f64, u8, u16, u32, u64, i8, i16, i32, i64);

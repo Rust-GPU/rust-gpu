@@ -1,9 +1,10 @@
 //! Traits and helper functions related to floats.
 
-use crate::scalar::VectorOrScalar;
 use crate::vector::Vector;
+use crate::vector::{create_dim, VectorOrScalar};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
+use core::num::NonZeroUsize;
 
 /// Abstract trait representing a SPIR-V floating point type.
 ///
@@ -74,6 +75,7 @@ struct F32x2 {
 }
 unsafe impl VectorOrScalar for F32x2 {
     type Scalar = f32;
+    const DIM: NonZeroUsize = create_dim(2);
 }
 unsafe impl Vector<f32, 2> for F32x2 {}
 

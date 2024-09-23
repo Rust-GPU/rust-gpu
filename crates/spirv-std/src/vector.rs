@@ -1,49 +1,28 @@
 //! Traits related to vectors.
 
-use crate::scalar::{Scalar, VectorOrScalar};
+use crate::scalar::Scalar;
+use core::num::NonZeroUsize;
 use glam::{Vec3Swizzles, Vec4Swizzles};
 
-unsafe impl VectorOrScalar for glam::Vec2 {
-    type Scalar = f32;
-}
-unsafe impl VectorOrScalar for glam::Vec3 {
-    type Scalar = f32;
-}
-unsafe impl VectorOrScalar for glam::Vec3A {
-    type Scalar = f32;
-}
-unsafe impl VectorOrScalar for glam::Vec4 {
-    type Scalar = f32;
+/// Abstract trait representing either a vector or a scalar type.
+///
+/// # Safety
+/// Implementing this trait on non-scalar or non-vector types may break assumptions about other
+/// unsafe code, and should not be done.
+pub unsafe trait VectorOrScalar: Default {
+    /// Either the scalar component type of the vector or the scalar itself.
+    type Scalar: Scalar;
+
+    /// The dimension of the vector, or 1 if it is a scalar
+    const DIM: NonZeroUsize;
 }
 
-unsafe impl VectorOrScalar for glam::DVec2 {
-    type Scalar = f64;
-}
-unsafe impl VectorOrScalar for glam::DVec3 {
-    type Scalar = f64;
-}
-unsafe impl VectorOrScalar for glam::DVec4 {
-    type Scalar = f64;
-}
-
-unsafe impl VectorOrScalar for glam::UVec2 {
-    type Scalar = u32;
-}
-unsafe impl VectorOrScalar for glam::UVec3 {
-    type Scalar = u32;
-}
-unsafe impl VectorOrScalar for glam::UVec4 {
-    type Scalar = u32;
-}
-
-unsafe impl VectorOrScalar for glam::IVec2 {
-    type Scalar = i32;
-}
-unsafe impl VectorOrScalar for glam::IVec3 {
-    type Scalar = i32;
-}
-unsafe impl VectorOrScalar for glam::IVec4 {
-    type Scalar = i32;
+/// replace with `NonZeroUsize::new(n).unwrap()` once `unwrap()` is const stabilized
+pub(crate) const fn create_dim(n: usize) -> NonZeroUsize {
+    match NonZeroUsize::new(n) {
+        None => panic!("dim must not be 0"),
+        Some(n) => n,
+    }
 }
 
 /// Abstract trait representing a SPIR-V vector type.
@@ -53,22 +32,24 @@ unsafe impl VectorOrScalar for glam::IVec4 {
 /// should not be done.
 pub unsafe trait Vector<T: Scalar, const N: usize>: VectorOrScalar<Scalar = T> {}
 
-unsafe impl Vector<f32, 2> for glam::Vec2 {}
-unsafe impl Vector<f32, 3> for glam::Vec3 {}
-unsafe impl Vector<f32, 3> for glam::Vec3A {}
-unsafe impl Vector<f32, 4> for glam::Vec4 {}
+macro_rules! impl_vector {
+    ($($scalar:ty: $($vec:ty => $dim:literal),+;)+) => {
+        $($(
+            unsafe impl VectorOrScalar for $vec {
+                type Scalar = $scalar;
+                const DIM: NonZeroUsize = create_dim($dim);
+            }
+            unsafe impl Vector<$scalar, $dim> for $vec {}
+        )+)+
+    };
+}
 
-unsafe impl Vector<f64, 2> for glam::DVec2 {}
-unsafe impl Vector<f64, 3> for glam::DVec3 {}
-unsafe impl Vector<f64, 4> for glam::DVec4 {}
-
-unsafe impl Vector<u32, 2> for glam::UVec2 {}
-unsafe impl Vector<u32, 3> for glam::UVec3 {}
-unsafe impl Vector<u32, 4> for glam::UVec4 {}
-
-unsafe impl Vector<i32, 2> for glam::IVec2 {}
-unsafe impl Vector<i32, 3> for glam::IVec3 {}
-unsafe impl Vector<i32, 4> for glam::IVec4 {}
+impl_vector! {
+    f32: glam::Vec2 => 2, glam::Vec3 => 3, glam::Vec3A => 3, glam::Vec4 => 4;
+    f64: glam::DVec2 => 2, glam::DVec3 => 3, glam::DVec4 => 4;
+    u32: glam::UVec2 => 2, glam::UVec3 => 3, glam::UVec4 => 4;
+    i32: glam::IVec2 => 2, glam::IVec3 => 3, glam::IVec4 => 4;
+}
 
 /// Trait that implements slicing of a vector into a scalar or vector of lower dimensions, by
 /// ignoring the higher dimensions

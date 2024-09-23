@@ -4,7 +4,7 @@ use crate::float::Float;
 use crate::integer::{Integer, SignedInteger, UnsignedInteger};
 #[cfg(target_arch = "spirv")]
 use crate::memory::{Scope, Semantics};
-use crate::scalar::VectorOrScalar;
+use crate::vector::VectorOrScalar;
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 
