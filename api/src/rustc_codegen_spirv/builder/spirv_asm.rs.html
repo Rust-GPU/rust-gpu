@@ -1563,15 +1563,24 @@
 <a href="#1563" id="1563">1563</a>
 <a href="#1564" id="1564">1564</a>
 <a href="#1565" id="1565">1565</a>
+<a href="#1566" id="1566">1566</a>
+<a href="#1567" id="1567">1567</a>
+<a href="#1568" id="1568">1568</a>
+<a href="#1569" id="1569">1569</a>
+<a href="#1570" id="1570">1570</a>
+<a href="#1571" id="1571">1571</a>
+<a href="#1572" id="1572">1572</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Builder;
 <span class="kw">use </span><span class="kw">crate</span>::builder_spirv::{BuilderCursor, SpirvValue};
 <span class="kw">use </span><span class="kw">crate</span>::codegen_cx::CodegenCx;
 <span class="kw">use </span><span class="kw">crate</span>::spirv_type::SpirvType;
+<span class="kw">use </span>num_traits::FromPrimitive;
 <span class="kw">use </span>rspirv::dr;
 <span class="kw">use </span>rspirv::grammar::{reflect, LogicalOperand, OperandKind, OperandQuantifier};
 <span class="kw">use </span>rspirv::spirv::{
-    FPFastMathMode, FragmentShadingRate, FunctionControl, ImageOperands, KernelProfilingInfo,
-    LoopControl, MemoryAccess, MemorySemantics, Op, RayFlags, SelectionControl, StorageClass, Word,
+    FPFastMathMode, FragmentShadingRate, FunctionControl, GroupOperation, ImageOperands,
+    KernelProfilingInfo, LoopControl, MemoryAccess, MemorySemantics, Op, RayFlags,
+    SelectionControl, StorageClass, Word,
 };
 <span class="kw">use </span>rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
 <span class="kw">use </span>rustc_codegen_ssa::mir::place::PlaceRef;
@@ -2912,10 +2921,15 @@
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::Scope(x)),
                 <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown Scope {word}"</span>)),
             },
-            (OperandKind::GroupOperation, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
-                <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::GroupOperation(x)),
-                <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown GroupOperation {word}"</span>)),
-            },
+            (OperandKind::GroupOperation, <span class="prelude-val">Some</span>(word)) =&gt; {
+                <span class="kw">match </span>word.parse::&lt;u32&gt;().ok().and_then(GroupOperation::from_u32) {
+                    <span class="prelude-val">Some</span>(id) =&gt; inst.operands.push(dr::Operand::GroupOperation(id)),
+                    <span class="prelude-val">None </span>=&gt; <span class="kw">match </span>word.parse() {
+                        <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::GroupOperation(x)),
+                        <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown GroupOperation {word}"</span>)),
+                    },
+                }
+            }
             (OperandKind::KernelEnqueueFlags, <span class="prelude-val">Some</span>(word)) =&gt; <span class="kw">match </span>word.parse() {
                 <span class="prelude-val">Ok</span>(x) =&gt; inst.operands.push(dr::Operand::KernelEnqueueFlags(x)),
                 <span class="prelude-val">Err</span>(()) =&gt; <span class="self">self</span>.err(<span class="macro">format!</span>(<span class="string">"unknown KernelEnqueueFlags {word}"</span>)),

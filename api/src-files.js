@@ -47,7 +47,7 @@ var srcIndex = new Map(JSON.parse('[\
 ["spirt",["",[["passes",[],["legalize.rs","link.rs","qptr.rs"]],["print",[],["mod.rs","multiversion.rs","pretty.rs"]],["qptr",[],["analyze.rs","layout.rs","lift.rs","lower.rs","mod.rs","shapes.rs"]],["spv",[],["lift.rs","lower.rs","mod.rs","print.rs","read.rs","spec.rs","write.rs"]]],["cfg.rs","context.rs","func_at.rs","lib.rs","transform.rs","visit.rs"]]],\
 ["spirv",["",[],["autogen_spirv.rs","lib.rs"]]],\
 ["spirv_builder",["",[],["depfile.rs","lib.rs"]]],\
-["spirv_std",["",[["arch",[],["atomics.rs","barrier.rs","demote_to_helper_invocation_ext.rs","derivative.rs","primitive.rs","ray_tracing.rs"]],["image",[],["params.rs","sample_with.rs"]]],["arch.rs","byte_addressable_buffer.rs","float.rs","image.rs","integer.rs","lib.rs","memory.rs","number.rs","ray_tracing.rs","runtime_array.rs","sampler.rs","scalar.rs","sealed.rs","vector.rs"]]],\
+["spirv_std",["",[["arch",[],["atomics.rs","barrier.rs","demote_to_helper_invocation_ext.rs","derivative.rs","primitive.rs","ray_tracing.rs","subgroup.rs"]],["image",[],["params.rs","sample_with.rs"]]],["arch.rs","byte_addressable_buffer.rs","float.rs","image.rs","integer.rs","lib.rs","memory.rs","number.rs","ray_tracing.rs","runtime_array.rs","sampler.rs","scalar.rs","sealed.rs","vector.rs"]]],\
 ["spirv_std_macros",["",[],["image.rs","lib.rs"]]],\
 ["spirv_std_types",["",[],["image_params.rs","lib.rs"]]],\
 ["spirv_tools",["",[["assembler",[],["tool.rs"]],["opt",[],["tool.rs"]],["val",[],["tool.rs"]]],["assembler.rs","binary.rs","cmd.rs","error.rs","lib.rs","opt.rs","val.rs"]]],\

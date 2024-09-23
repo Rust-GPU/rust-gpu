@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["Vector","VectorTruncateInto"]};
+window.SIDEBAR_ITEMS = {"trait":["Vector","VectorOrScalar","VectorTruncateInto"]};

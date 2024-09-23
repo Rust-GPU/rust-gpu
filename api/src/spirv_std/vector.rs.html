@@ -64,36 +64,86 @@
 <a href="#64" id="64">64</a>
 <a href="#65" id="65">65</a>
 <a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Traits related to vectors.
 
-</span><span class="kw">use </span>glam::{Vec3Swizzles, Vec4Swizzles};
+</span><span class="kw">use </span><span class="kw">crate</span>::scalar::Scalar;
+<span class="kw">use </span>core::num::NonZeroUsize;
+<span class="kw">use </span>glam::{Vec3Swizzles, Vec4Swizzles};
+
+<span class="doccomment">/// Abstract trait representing either a vector or a scalar type.
+///
+/// # Safety
+/// Implementing this trait on non-scalar or non-vector types may break assumptions about other
+/// unsafe code, and should not be done.
+</span><span class="kw">pub unsafe trait </span>VectorOrScalar: Default {
+    <span class="doccomment">/// Either the scalar component type of the vector or the scalar itself.
+    </span><span class="kw">type </span>Scalar: Scalar;
+
+    <span class="doccomment">/// The dimension of the vector, or 1 if it is a scalar
+    </span><span class="kw">const </span>DIM: NonZeroUsize;
+}
+
+<span class="doccomment">/// replace with `NonZeroUsize::new(n).unwrap()` once `unwrap()` is const stabilized
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const fn </span>create_dim(n: usize) -&gt; NonZeroUsize {
+    <span class="kw">match </span>NonZeroUsize::new(n) {
+        <span class="prelude-val">None </span>=&gt; <span class="macro">panic!</span>(<span class="string">"dim must not be 0"</span>),
+        <span class="prelude-val">Some</span>(n) =&gt; n,
+    }
+}
 
 <span class="doccomment">/// Abstract trait representing a SPIR-V vector type.
 ///
 /// # Safety
 /// Implementing this trait on non-simd-vector types breaks assumptions of other unsafe code, and
 /// should not be done.
-</span><span class="kw">pub unsafe trait </span>Vector&lt;T: <span class="kw">crate</span>::scalar::Scalar, <span class="kw">const </span>N: usize&gt;: Default {}
+</span><span class="kw">pub unsafe trait </span>Vector&lt;T: Scalar, <span class="kw">const </span>N: usize&gt;: VectorOrScalar&lt;Scalar = T&gt; {}
 
-<span class="kw">unsafe impl </span>Vector&lt;f32, <span class="number">2</span>&gt; <span class="kw">for </span>glam::Vec2 {}
-<span class="kw">unsafe impl </span>Vector&lt;f32, <span class="number">3</span>&gt; <span class="kw">for </span>glam::Vec3 {}
-<span class="kw">unsafe impl </span>Vector&lt;f32, <span class="number">3</span>&gt; <span class="kw">for </span>glam::Vec3A {}
-<span class="kw">unsafe impl </span>Vector&lt;f32, <span class="number">4</span>&gt; <span class="kw">for </span>glam::Vec4 {}
+<span class="macro">macro_rules!</span> impl_vector {
+    ($(<span class="macro-nonterminal">$scalar</span>:ty: $(<span class="macro-nonterminal">$vec</span>:ty =&gt; <span class="macro-nonterminal">$dim</span>:literal),+;)+) =&gt; {
+        $($(
+            <span class="kw">unsafe impl </span>VectorOrScalar <span class="kw">for </span><span class="macro-nonterminal">$vec </span>{
+                <span class="kw">type </span>Scalar = <span class="macro-nonterminal">$scalar</span>;
+                <span class="kw">const </span>DIM: NonZeroUsize = create_dim(<span class="macro-nonterminal">$dim</span>);
+            }
+            <span class="kw">unsafe impl </span>Vector&lt;<span class="macro-nonterminal">$scalar</span>, <span class="macro-nonterminal">$dim</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$vec </span>{}
+        )+)+
+    };
+}
 
-<span class="kw">unsafe impl </span>Vector&lt;f64, <span class="number">2</span>&gt; <span class="kw">for </span>glam::DVec2 {}
-<span class="kw">unsafe impl </span>Vector&lt;f64, <span class="number">3</span>&gt; <span class="kw">for </span>glam::DVec3 {}
-<span class="kw">unsafe impl </span>Vector&lt;f64, <span class="number">4</span>&gt; <span class="kw">for </span>glam::DVec4 {}
-
-<span class="kw">unsafe impl </span>Vector&lt;u32, <span class="number">2</span>&gt; <span class="kw">for </span>glam::UVec2 {}
-<span class="kw">unsafe impl </span>Vector&lt;u32, <span class="number">3</span>&gt; <span class="kw">for </span>glam::UVec3 {}
-<span class="kw">unsafe impl </span>Vector&lt;u32, <span class="number">4</span>&gt; <span class="kw">for </span>glam::UVec4 {}
-
-<span class="kw">unsafe impl </span>Vector&lt;i32, <span class="number">2</span>&gt; <span class="kw">for </span>glam::IVec2 {}
-<span class="kw">unsafe impl </span>Vector&lt;i32, <span class="number">3</span>&gt; <span class="kw">for </span>glam::IVec3 {}
-<span class="kw">unsafe impl </span>Vector&lt;i32, <span class="number">4</span>&gt; <span class="kw">for </span>glam::IVec4 {}
+<span class="macro">impl_vector!</span> {
+    f32: glam::Vec2 =&gt; <span class="number">2</span>, glam::Vec3 =&gt; <span class="number">3</span>, glam::Vec3A =&gt; <span class="number">3</span>, glam::Vec4 =&gt; <span class="number">4</span>;
+    f64: glam::DVec2 =&gt; <span class="number">2</span>, glam::DVec3 =&gt; <span class="number">3</span>, glam::DVec4 =&gt; <span class="number">4</span>;
+    u32: glam::UVec2 =&gt; <span class="number">2</span>, glam::UVec3 =&gt; <span class="number">3</span>, glam::UVec4 =&gt; <span class="number">4</span>;
+    i32: glam::IVec2 =&gt; <span class="number">2</span>, glam::IVec3 =&gt; <span class="number">3</span>, glam::IVec4 =&gt; <span class="number">4</span>;
+}
 
 <span class="doccomment">/// Trait that implements slicing of a vector into a scalar or vector of lower dimensions, by
-/// ignoring the highter dimensions
+/// ignoring the higher dimensions
 </span><span class="kw">pub trait </span>VectorTruncateInto&lt;T&gt; {
     <span class="doccomment">/// Slices the vector into a lower dimensional type by ignoring the higher components
     </span><span class="kw">fn </span>truncate_into(<span class="self">self</span>) -&gt; T;
