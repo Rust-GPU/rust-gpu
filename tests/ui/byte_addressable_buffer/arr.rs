@@ -1,7 +1,7 @@
 // build-pass
 
 use spirv_std::spirv;
-use spirv_std::{glam::Vec4, ByteAddressableBuffer};
+use spirv_std::{glam::Vec4, ByteAddressableBuffer, MutByteAddressableBuffer};
 
 #[spirv(fragment)]
 pub fn load(
@@ -20,7 +20,7 @@ pub fn store(
     #[spirv(flat)] val: [i32; 4],
 ) {
     unsafe {
-        let mut buf = ByteAddressableBuffer::new(buf);
+        let mut buf = MutByteAddressableBuffer::new(buf);
         buf.store(5, val);
     }
 }

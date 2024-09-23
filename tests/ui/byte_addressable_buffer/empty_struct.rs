@@ -1,7 +1,7 @@
 // build-pass
 
 use spirv_std::spirv;
-use spirv_std::ByteAddressableBuffer;
+use spirv_std::{ByteAddressableBuffer, MutByteAddressableBuffer};
 
 pub struct EmptyStruct {}
 
@@ -20,7 +20,7 @@ pub fn load(
 pub fn store(#[spirv(descriptor_set = 0, binding = 0, storage_buffer)] buf: &mut [u32]) {
     let val = EmptyStruct {};
     unsafe {
-        let mut buf = ByteAddressableBuffer::new(buf);
+        let mut buf = MutByteAddressableBuffer::new(buf);
         buf.store(5, val);
     }
 }
