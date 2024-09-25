@@ -141,12 +141,12 @@ pub fn main() {
         )],
     );
 
-    let (compiler_sender, compiler_reciever) = sync_channel(1);
+    let (compiler_sender, compiler_receiver) = sync_channel(1);
 
     event_loop
         .run(move |event, event_loop_window_target| match event {
             Event::AboutToWait { .. } => {
-                match compiler_reciever.try_recv() {
+                match compiler_receiver.try_recv() {
                     Err(TryRecvError::Empty) => {
                         if ctx.rendering_paused {
                             let vk::Extent2D { width, height } = ctx.base.surface_resolution();
@@ -166,7 +166,7 @@ pub fn main() {
                         ctx.rebuild_pipelines(vk::PipelineCache::null());
                     }
                     Err(TryRecvError::Disconnected) => {
-                        panic!("compiler reciever disconnected unexpectedly");
+                        panic!("compiler receiver disconnected unexpectedly");
                     }
                 };
             }

@@ -36,7 +36,7 @@ If you're writing a bigger application and you want to integrate SPIR-V shader
 crates to display, it's recommended to use `spirv-builder` in a build script.
 
 1. Copy the [`rust-toolchain.toml`] file to your project. (You must use the same
-   version of Rust as `rust-gpu`. Utimately, the build will fail with a nice
+   version of Rust as `rust-gpu`. Ultimately, the build will fail with a nice
    error message when you don't use the exact same version)
 2. Reference `spirv-builder` in your Cargo.toml:
     ```toml
@@ -156,7 +156,7 @@ crate-type = ["dylib"]
 spirv-std = { version = "0.9" }
 ```
 
-Make sure your shader code uses the `no_std` attribute and makes the `spirv` attribute visibile in the global scope. Then, you're ready to write your first shader. Here's a very simple fragment shader called `main_fs` as an example that outputs the color red:
+Make sure your shader code uses the `no_std` attribute and makes the `spirv` attribute visible in the global scope. Then, you're ready to write your first shader. Here's a very simple fragment shader called `main_fs` as an example that outputs the color red:
 
 ```rust,norun
 #![no_std]

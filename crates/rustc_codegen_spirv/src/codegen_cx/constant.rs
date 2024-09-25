@@ -503,8 +503,8 @@ impl<'tcx> CodegenCx<'tcx> {
                     ),
                 };
                 // alloc_id is not needed by read_scalar, so we just use 0. If the context
-                // refers to a pointer, read_scalar will find the the actual alloc_id. It
-                // only uses the input alloc_id in the case that the scalar is uninitilized
+                // refers to a pointer, read_scalar will find the actual alloc_id. It
+                // only uses the input alloc_id in the case that the scalar is uninitialized
                 // as part of the error output
                 // tldr, the pointer here is only needed for the offset
                 let value = match alloc.inner().read_scalar(

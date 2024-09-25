@@ -121,7 +121,7 @@ used to override them later ("specializing" the shader):
   * note: WebGPU calls them ["pipeline-overridable constants"](https://gpuweb.github.io/gpuweb/wgsl/#pipeline-overridable)
 * in OpenCL: [via `clSetProgramSpecializationConstant()` calls, before `clBuildProgram()`](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/clSetProgramSpecializationConstant.html)
 
-If a "specialization constant" is not overriden, it falls back to its *default*
+If a "specialization constant" is not overridden, it falls back to its *default*
 value, which is either user-specified (via `default = ...`), or `0` otherwise.
 
 While only "specialization constants" of type `u32` are currently supported, it's

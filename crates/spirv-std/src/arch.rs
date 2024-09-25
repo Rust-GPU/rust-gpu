@@ -1,4 +1,4 @@
-//! SPIR-V Instrinics
+//! SPIR-V Intrinsics
 //!
 //! This module is intended as a low level abstraction over SPIR-V instructions.
 //! These functions will typically map to a single instruction, and will perform

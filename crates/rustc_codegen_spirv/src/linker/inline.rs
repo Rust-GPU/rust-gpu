@@ -125,7 +125,7 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
     }
 
     let header = module.header.as_mut().unwrap();
-    // FIXME(eddyb) clippy false positive (seperate `map` required for borrowck).
+    // FIXME(eddyb) clippy false positive (separate `map` required for borrowck).
     #[allow(clippy::map_unwrap_or)]
     let mut inliner = Inliner {
         op_type_void_id: module
@@ -807,7 +807,7 @@ impl Inliner<'_, '_> {
             ..
         } = *self;
 
-        // HACK(eddyb) this is terrible, but we have to deal with it becasue of
+        // HACK(eddyb) this is terrible, but we have to deal with it because of
         // how this inliner is outside-in, instead of inside-out, meaning that
         // context builds up "outside" of the callee blocks, inside the caller.
         let mut enclosing_inlined_frames = SmallVec::<[_; 8]>::new();

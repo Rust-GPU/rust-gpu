@@ -17,7 +17,7 @@ how to configure it, and add new tests.
 
 ### Blessing Tests
 
-You will occassionally need to "bless" the output from UI tests to update the
+You will occasionally need to "bless" the output from UI tests to update the
 normalised output, you can do this by passing a `--bless` flag to
 `cargo compiletest`.
 

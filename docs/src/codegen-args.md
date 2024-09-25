@@ -53,7 +53,7 @@ While most of those flags are usually only exposed through higher-level `spirv-b
 
 ## Debugging "codegen args" flags/options
 
-As mentioned above, these form the bulk of "codegen args", but keep in mind the list is not exhaustive and you will want to cehck the full list with e.g. `RUSTGPU_CODEGEN_ARGS="--help"`.
+As mentioned above, these form the bulk of "codegen args", but keep in mind the list is not exhaustive and you will want to check the full list with e.g. `RUSTGPU_CODEGEN_ARGS="--help"`.
 
 ### `--dump-mir DIR`
 

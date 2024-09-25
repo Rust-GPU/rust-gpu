@@ -22,7 +22,7 @@ In recent years most Desktop platforms have switched to loading resource descrip
 | Maximum number of Samplers in all descriptor tables per shader stage|	16|	full heap|	full heap
 
 ### Vulkan
-On the other hand in Vulkan resource descriptor binding is designed in such a way that it can accomodate hardware that still relies on descriptor slots instead of memory, because still a lot of such hardware exists in the wild. Especially in the Mobile space.
+On the other hand in Vulkan resource descriptor binding is designed in such a way that it can accommodate hardware that still relies on descriptor slots instead of memory, because still a lot of such hardware exists in the wild. Especially in the Mobile space.
 
 There are some constraints that currently exist when it comes to binding resources to shaders that we may need to take into account, Vulkan has `maxBoundDescriptorSets` for example (between 4 and 32). However for the sake of argument we'll ignore these practical limitations for now.
 </details>
@@ -163,7 +163,7 @@ fn main(inputs: &ShadingInputs, indirect_lighting: &IndirectLighting) {
 
 # Suggestion
 
-I think the most ergonomic and future proof binding method would be to have descriptors in structs, bound to the entrypoint. This allows us some nice, even more ergonomic upsides later on (when support is more widely available) where we can put data members in these structs as well. And along with this, we can have very egonomic CPU side code as well, where we can keep shader invocation looking like a function call for a large part, instead of having to manually bind to slots again.
+I think the most ergonomic and future proof binding method would be to have descriptors in structs, bound to the entrypoint. This allows us some nice, even more ergonomic upsides later on (when support is more widely available) where we can put data members in these structs as well. And along with this, we can have very ergonomic CPU side code as well, where we can keep shader invocation looking like a function call for a large part, instead of having to manually bind to slots again.
 
 # Prior art
 
@@ -186,7 +186,7 @@ ConstantBuffer<myConstants>   c[10000] : register(b0);
 
 In DirectX12 the feature of Root Signatures got added that is essentially a new domain specific language to set up the layout / calling convention of the shader; specified in a string.
 
-Note the the two examples don't match necessarily. 
+Note the two examples don't match necessarily.
 
 ```hlsl
 #define MyRS1 "RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | " \

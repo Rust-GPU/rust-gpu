@@ -4,7 +4,7 @@ use crate::{integer::Integer, scalar::Scalar, vector::Vector, vector::VectorTrun
 /// Marker trait for arguments that accept single scalar values or vectors
 /// of scalars. Defines 2-, 3- and 4-component vector types based on the sample type.
 pub trait SampleType<const FORMAT: u32, const COMPONENTS: u32>: Scalar {
-    /// The default vector/scalar of ths sample type
+    /// The default vector/scalar of this sample type
     type SampleResult: Default;
 
     /// A 2-component vector of this sample type

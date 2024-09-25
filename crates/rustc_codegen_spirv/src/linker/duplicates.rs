@@ -20,7 +20,7 @@ pub fn remove_duplicate_extensions(module: &mut Module) {
     });
 }
 
-pub fn remove_duplicate_capablities(module: &mut Module) {
+pub fn remove_duplicate_capabilities(module: &mut Module) {
     let mut set = FxHashSet::default();
     module.capabilities.retain(|inst| {
         inst.class.opcode != Op::Capability || set.insert(inst.operands[0].unwrap_capability())
