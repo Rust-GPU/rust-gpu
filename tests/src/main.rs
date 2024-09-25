@@ -387,7 +387,7 @@ fn rust_flags(codegen_backend_path: &Path) -> String {
     .join(" ")
 }
 
-/// Convience function to map process failure to results in Rust.
+/// Convenience function to map process failure to results in Rust.
 fn map_status_to_result(status: std::process::ExitStatus) -> io::Result<()> {
     match status.success() {
         true => Ok(()),

@@ -257,7 +257,7 @@ impl UseOrigin<'_> {
                             inst: ext_inst,
                         } => {
                             // FIXME(eddyb) inefficient (ideally the `InternedStr`
-                            // shoudl be available), but this is the error case.
+                            // should be available), but this is the error case.
                             assert_eq!(&cx[ext_set], &custom_insts::CUSTOM_EXT_INST_SET[..]);
 
                             CustomOp::decode(ext_inst)

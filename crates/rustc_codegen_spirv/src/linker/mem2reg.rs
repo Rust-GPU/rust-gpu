@@ -229,11 +229,11 @@ fn collect_access_chains(
         Some(VarInfo {
             ty: *pointer_to_pointee.get(&inst.result_type.unwrap()).unwrap(),
             indices: {
-                let mut base_indicies = base.indices.clone();
+                let mut base_indices = base.indices.clone();
                 for op in inst.operands.iter().skip(1) {
-                    base_indicies.push(*constants.get(&op.id_ref_any().unwrap())?);
+                    base_indices.push(*constants.get(&op.id_ref_any().unwrap())?);
                 }
-                base_indicies
+                base_indices
             },
         })
     }

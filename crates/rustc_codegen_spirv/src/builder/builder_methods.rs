@@ -578,7 +578,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             })
             .collect();
 
-        // Special-case field accesses through a `pointercast`, to accesss the
+        // Special-case field accesses through a `pointercast`, to access the
         // right field in the original type, for the `Logical` addressing model.
         let ptr = ptr.strip_ptrcasts();
         let ptr_id = ptr.def(self);
@@ -1378,8 +1378,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             );
             self.icmp(IntPredicate::IntEQ, rhs_lt_zero, result_gt_lhs)
         } else {
-            // for unsigned addition, overflow occured if the result is less than any of the operands.
-            // for subtraction, overflow occured if the result is greater.
+            // for unsigned addition, overflow occurred if the result is less than any of the operands.
+            // for subtraction, overflow occurred if the result is greater.
             self.icmp(
                 if is_add {
                     IntPredicate::IntULT

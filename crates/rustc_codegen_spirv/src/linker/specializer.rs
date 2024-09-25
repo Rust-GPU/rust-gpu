@@ -77,7 +77,7 @@ impl<F: Fn(&mut fmt::Formatter<'_>) -> fmt::Result> fmt::Display for FmtBy<F> {
 }
 
 pub trait Specialization {
-    /// Return `true` if the specializer should replace every occurence of
+    /// Return `true` if the specializer should replace every occurrence of
     /// `operand` with some other inferred `Operand`.
     fn specialize_operand(&self, operand: &Operand) -> bool;
 
@@ -1903,7 +1903,7 @@ impl<'a, S: Specialization> InferCx<'a, S> {
             );
         }
 
-        // HACK(eddyb) workaround for `OpFunction`, see earlier HACK commment.
+        // HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
         if let Some(ret_ty) = record_fn_ret_ty {
             let (ret_ty, _) = InferOperand::from_operand_and_generic_args(
                 &Operand::IdRef(ret_ty),
@@ -1929,7 +1929,7 @@ impl<'a, S: Specialization> InferCx<'a, S> {
                 );
                 (
                     Some(type_of_result),
-                    // HACK(eddyb) workaround for `OpFunction`, see earlier HACK commment.
+                    // HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
                     match inst.class.opcode {
                         Op::Function => all_generic_args,
                         _ => rest,
@@ -1942,7 +1942,7 @@ impl<'a, S: Specialization> InferCx<'a, S> {
         let debug_dump_if_enabled = |cx: &Self, prefix| {
             if cx.specializer.debug {
                 let result_type = match inst.class.opcode {
-                    // HACK(eddyb) workaround for `OpFunction`, see earlier HACK commment.
+                    // HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
                     Op::Function => Some(
                         InferOperand::from_operand_and_generic_args(
                             &Operand::IdRef(inst.result_type.unwrap()),
@@ -1976,7 +1976,7 @@ impl<'a, S: Specialization> InferCx<'a, S> {
 
         // If we have some instruction signatures for `inst`, enforce them.
         if let Some(sigs) = spirv_type_constraints::instruction_signatures(inst.class.opcode) {
-            // HACK(eddyb) workaround for `OpFunction`, see earlier HACK commment.
+            // HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
             // (specifically, `type_of_result` isn't *Result Type* for `OpFunction`)
             assert_ne!(inst.class.opcode, Op::Function);
 

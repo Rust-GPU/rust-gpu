@@ -280,7 +280,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [PR#612](https://github.com/EmbarkStudios/rust-gpu/pull/612) added `is_helper_invocation` to `spirv-std`
 - [PR#624](https://github.com/EmbarkStudios/rust-gpu/pull/624) added `OpTypeSampler` and `OpTypeAccelerationStructureKHR` support to inline `asm!`
 - [PR#622](https://github.com/EmbarkStudios/rust-gpu/pull/622) added the ability to query entry-point names from `spirv-builder`
-- [PR#630](https://github.com/EmbarkStudios/rust-gpu/pull/630) added a more convenient API to `spirv-builder`, for requesting extensions and/or capabilties
+- [PR#630](https://github.com/EmbarkStudios/rust-gpu/pull/630) added a more convenient API to `spirv-builder`, for requesting extensions and/or capabilities
 - [PR#629](https://github.com/EmbarkStudios/rust-gpu/pull/629) added an optimization to convert N identical scalar (e.g. arithmetic) ops, into one N-wide vector op (as e.g. `glam` only emits the former)
 - [PR#596](https://github.com/EmbarkStudios/rust-gpu/pull/596) added a `RuntimeArray` type to `spirv-val`, to represent SPIR-V `OpRuntimeArray`s
 - [PR#635](https://github.com/EmbarkStudios/rust-gpu/pull/635) added several `spirv-builder` options for controlling `spirv-val` flags

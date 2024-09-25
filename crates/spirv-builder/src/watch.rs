@@ -25,7 +25,7 @@ impl SpirvBuilder {
             path
         } else {
             let (tx, rx) = sync_channel(0);
-            // Fall back to watching from the crate root if the inital compilation fails
+            // Fall back to watching from the crate root if the initial compilation fails
             let mut watcher =
                 notify::recommended_watcher(move |event: notify::Result<Event>| match event {
                     Ok(e) => match e.kind {

@@ -663,7 +663,7 @@ impl<'tcx> CodegenCx<'tcx> {
         // (e.g. Vulkan has specific rules for builtin storage classes).
 
         // Emit `OpName` in the simple case of a pattern that's just a variable
-        // name (e.g. "foo" for `foo: Vec3`). While `OpName` is *not* suppposed
+        // name (e.g. "foo" for `foo: Vec3`). While `OpName` is *not* supposed
         // to be semantic, OpenGL and some tooling rely on it for reflection.
         if let hir::PatKind::Binding(_, _, ident, _) = &hir_param.pat.kind {
             self.emit_global()

@@ -211,7 +211,7 @@ const EXECUTION_MODES: &[(&str, ExecutionMode, ExecutionModeExtraDim)] = {
         ("vertex_order_cw", VertexOrderCw, None),
         ("vertex_order_ccw", VertexOrderCcw, None),
         ("pixel_center_integer", PixelCenterInteger, None),
-        ("orgin_upper_left", OriginUpperLeft, None),
+        ("origin_upper_left", OriginUpperLeft, None),
         ("origin_lower_left", OriginLowerLeft, None),
         ("early_fragment_tests", EarlyFragmentTests, None),
         ("point_mode", PointMode, None),

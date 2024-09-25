@@ -9,7 +9,7 @@ use spirv_std::{scalar::Scalar, vector::Vector, vector::VectorOrScalar};
 /// HACK(shesp). Rust doesn't allow us to declare regular (tuple-)structs containing `bool` members
 /// as `#[repl(simd)]`. But we need this for `spirv_std::arch::any()` and `spirv_std::arch::all()`
 /// to work.
-/// Fortunaly, this requirement isn't checked on generic structs, so we have a way to work around
+/// Fortunately, this requirement isn't checked on generic structs, so we have a way to work around
 /// it (for now at least)
 #[repr(simd)]
 struct Vec2<T>(T, T);

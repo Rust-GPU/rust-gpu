@@ -70,7 +70,7 @@ pub fn composite_construct(types: &FxHashMap<Word, Instruction>, function: &mut 
                 let index = cur_inst.operands[2].unwrap_literal_int32() as usize;
                 if index >= components.len() {
                     // Theoretically shouldn't happen, as it's invalid SPIR-V if the index is out
-                    // of bounds, but just stop optimizing instead of panicing here.
+                    // of bounds, but just stop optimizing instead of panicking here.
                     break;
                 }
                 if components[index].is_none() {

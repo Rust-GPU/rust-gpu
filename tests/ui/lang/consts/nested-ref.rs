@@ -1,5 +1,5 @@
 // Test `&'static &'static T` constants where the `T` values don't themselves
-// contain references, and where the `T` values aren't immediatelly loaded from.
+// contain references, and where the `T` values aren't immediately loaded from.
 
 // build-pass
 // compile-flags: -C target-feature=+VariablePointers

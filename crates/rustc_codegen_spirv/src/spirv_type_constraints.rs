@@ -109,7 +109,7 @@ pub enum TyPat<'a> {
     /// Index the composite type matched by the inner pattern (like a `Var`)
     /// by all of the value operands of the instruction which don't have their
     /// types consumed explicitly, i.e. the indices operands correspond to
-    /// the `TyListPat::Any` part of the the `inputs` of the `InstSig`,
+    /// the `TyListPat::Any` part of the `inputs` of the `InstSig`,
     /// e.g. in `sig! { (_, T, _, ..) -> IndexComposite(T) }`, the output type
     /// has to be identical to the result of indexing `T` by all the value
     /// operands *other than* the first 3.
@@ -758,7 +758,7 @@ pub fn instruction_signatures(op: Op) -> Option<&'static [InstSig<'static>]> {
         | Op::TraceNV
         | Op::TypeAccelerationStructureNV
         | Op::ExecuteCallableNV => {
-            // NOTE(eddyb) Some KHR variants are aliased to the the NV instructions.
+            // NOTE(eddyb) Some KHR variants are aliased to the NV instructions.
             // reserved!(SPV_NV_ray_tracing)
         }
         // SPV_NV_cooperative_matrix

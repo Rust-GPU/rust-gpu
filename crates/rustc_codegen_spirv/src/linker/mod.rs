@@ -204,7 +204,7 @@ pub fn link(
     {
         let _timer = sess.timer("link_remove_duplicates");
         duplicates::remove_duplicate_extensions(&mut output);
-        duplicates::remove_duplicate_capablities(&mut output);
+        duplicates::remove_duplicate_capabilities(&mut output);
         duplicates::remove_duplicate_ext_inst_imports(&mut output);
         duplicates::remove_duplicate_types(&mut output);
         // jb-todo: strip identical OpDecoration / OpDecorationGroups

@@ -1,4 +1,4 @@
-// Test creating unitialized memory.
+// Test creating uninitialized memory.
 // build-pass
 
 use spirv_std::spirv;

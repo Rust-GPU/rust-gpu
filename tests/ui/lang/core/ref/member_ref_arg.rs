@@ -8,7 +8,7 @@ struct S {
 }
 
 // NOTE(eddyb) `#[inline(never)]` is for blocking inlining at the e.g. MIR level,
-// whereas any Rust-GPU-specific legalization will intentially ignore it.
+// whereas any Rust-GPU-specific legalization will intentionally ignore it.
 
 #[inline(never)]
 fn f(x: &u32) {}
