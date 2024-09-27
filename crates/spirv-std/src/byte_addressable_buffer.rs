@@ -44,9 +44,7 @@ unsafe fn buffer_store_intrinsic<T>(
 }
 
 /// `ByteAddressableBuffer` is a view to an untyped blob of data, allowing
-/// loads and stores of arbitrary basic data types at arbitrary indices. Use
-/// `from_slice()` or `from_mut_slice()` to create the `ByteAddressableBuffer`,
-/// with only the mutable slice allowing stores.
+/// loads and stores of arbitrary basic data types at arbitrary indices.
 ///
 /// # Alignment
 /// All data must be aligned to size 4, each element within the data (e.g.
@@ -58,9 +56,9 @@ unsafe fn buffer_store_intrinsic<T>(
 ///
 /// # Safety
 /// Using these functions allows reading a different type from the buffer than
-/// was originally written (by [`MutByteAddressableBuffer`] or the host API),
-/// allowing all sorts of safety guarantees to be bypassed (effectively a
-/// transmute).
+/// was originally written (by a previous `store()` or the host API), allowing
+/// all sorts of safety guarantees to be bypassed, making it effectively a
+/// transmute.
 #[repr(transparent)]
 pub struct ByteAddressableBuffer<T> {
     /// The underlying array of bytes, able to be directly accessed.
