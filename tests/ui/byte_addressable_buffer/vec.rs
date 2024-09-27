@@ -1,7 +1,7 @@
 // build-pass
 
 use spirv_std::spirv;
-use spirv_std::{glam::Vec4, ByteAddressableBuffer, MutByteAddressableBuffer};
+use spirv_std::{glam::Vec4, ByteAddressableBuffer};
 
 #[spirv(matrix)]
 pub struct Mat4 {
@@ -13,12 +13,25 @@ pub struct Mat4 {
 
 #[spirv(fragment)]
 pub fn load(
+    #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] buf: &[u32],
+    out: &mut Vec4,
+    outmat: &mut Mat4,
+) {
+    unsafe {
+        let buf = ByteAddressableBuffer::from_slice(buf);
+        *out = buf.load(5);
+        *outmat = buf.load(5);
+    }
+}
+
+#[spirv(fragment)]
+pub fn load_mut(
     #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] buf: &mut [u32],
     out: &mut Vec4,
     outmat: &mut Mat4,
 ) {
     unsafe {
-        let buf = ByteAddressableBuffer::new(buf);
+        let buf = ByteAddressableBuffer::from_mut_slice(buf);
         *out = buf.load(5);
         *outmat = buf.load(5);
     }
@@ -31,7 +44,7 @@ pub fn store(
     valmat: Mat4,
 ) {
     unsafe {
-        let mut buf = MutByteAddressableBuffer::new(buf);
+        let mut buf = ByteAddressableBuffer::from_mut_slice(buf);
         buf.store(5, val);
         buf.store(5, valmat);
     }

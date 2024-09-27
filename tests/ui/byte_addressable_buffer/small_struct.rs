@@ -1,7 +1,7 @@
 // build-pass
 
 use spirv_std::spirv;
-use spirv_std::{ByteAddressableBuffer, MutByteAddressableBuffer};
+use spirv_std::ByteAddressableBuffer;
 
 pub struct SmallStruct {
     a: u32,
@@ -10,11 +10,22 @@ pub struct SmallStruct {
 
 #[spirv(fragment)]
 pub fn load(
+    #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] buf: &[u32],
+    out: &mut SmallStruct,
+) {
+    unsafe {
+        let buf = ByteAddressableBuffer::from_slice(buf);
+        *out = buf.load(5);
+    }
+}
+
+#[spirv(fragment)]
+pub fn load_mut(
     #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] buf: &mut [u32],
     out: &mut SmallStruct,
 ) {
     unsafe {
-        let buf = ByteAddressableBuffer::new(buf);
+        let buf = ByteAddressableBuffer::from_mut_slice(buf);
         *out = buf.load(5);
     }
 }
@@ -27,7 +38,7 @@ pub fn store(
 ) {
     let val = SmallStruct { a, b };
     unsafe {
-        let mut buf = MutByteAddressableBuffer::new(buf);
+        let mut buf = ByteAddressableBuffer::from_mut_slice(buf);
         buf.store(5, val);
     }
 }
