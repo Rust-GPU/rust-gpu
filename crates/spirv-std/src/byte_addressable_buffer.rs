@@ -67,6 +67,23 @@ pub struct ByteAddressableBuffer<T> {
     pub data: T,
 }
 
+fn bounds_check<T>(data: &[u32], byte_index: u32) {
+    let sizeof = mem::size_of::<T>() as u32;
+    if byte_index % 4 != 0 {
+        panic!("`byte_index` should be a multiple of 4");
+    }
+    if byte_index + sizeof > data.len() as u32 {
+        let last_byte = byte_index + sizeof;
+        panic!(
+            "index out of bounds: the len is {} but loading {} bytes at `byte_index` {} reads until {} (exclusive)",
+            data.len(),
+            sizeof,
+            byte_index,
+            last_byte,
+        );
+    }
+}
+
 impl<'a> ByteAddressableBuffer<&'a [u32]> {
     /// Creates a `ByteAddressableBuffer` from the untyped blob of data.
     #[inline]
@@ -80,16 +97,7 @@ impl<'a> ByteAddressableBuffer<&'a [u32]> {
     /// # Safety
     /// See [`Self`].
     pub unsafe fn load<T>(&self, byte_index: u32) -> T {
-        if byte_index % 4 != 0 {
-            panic!("`byte_index` should be a multiple of 4");
-        }
-        if byte_index + mem::size_of::<T>() as u32 > self.data.len() as u32 {
-            panic!(
-                "index out of bounds: the len is {} but the `byte_index` is {}",
-                self.data.len(),
-                byte_index
-            );
-        }
+        bounds_check::<T>(self.data, byte_index);
         buffer_load_intrinsic(self.data, byte_index)
     }
 
@@ -116,16 +124,7 @@ impl<'a> ByteAddressableBuffer<&'a mut [u32]> {
     /// # Safety
     /// See [`Self`].
     pub unsafe fn load<T>(&self, byte_index: u32) -> T {
-        if byte_index % 4 != 0 {
-            panic!("`byte_index` should be a multiple of 4");
-        }
-        if byte_index + mem::size_of::<T>() as u32 > self.data.len() as u32 {
-            panic!(
-                "index out of bounds: the len is {} but the `byte_index` is {}",
-                self.data.len(),
-                byte_index
-            );
-        }
+        bounds_check::<T>(self.data, byte_index);
         buffer_load_intrinsic(self.data, byte_index)
     }
 
@@ -144,9 +143,7 @@ impl<'a> ByteAddressableBuffer<&'a mut [u32]> {
     /// # Safety
     /// See [`Self`].
     pub unsafe fn store<T>(&mut self, byte_index: u32, value: T) {
-        if byte_index + mem::size_of::<T>() as u32 > self.data.len() as u32 {
-            panic!("Index out of range");
-        }
+        bounds_check::<T>(self.data, byte_index);
         buffer_store_intrinsic(self.data, byte_index, value);
     }
 
