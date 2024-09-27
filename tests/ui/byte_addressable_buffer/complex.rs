@@ -1,7 +1,7 @@
 // build-pass
 
 use spirv_std::spirv;
-use spirv_std::{glam::Vec2, ByteAddressableBuffer, MutByteAddressableBuffer};
+use spirv_std::{glam::Vec2, ByteAddressableBuffer};
 
 pub struct Complex {
     x: u32,
@@ -20,11 +20,22 @@ pub struct Nesty {
 
 #[spirv(fragment)]
 pub fn load(
+    #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] buf: &[u32],
+    out: &mut Nesty,
+) {
+    unsafe {
+        let buf = ByteAddressableBuffer::from_slice(buf);
+        *out = buf.load(5);
+    }
+}
+
+#[spirv(fragment)]
+pub fn load_mut(
     #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] buf: &mut [u32],
     out: &mut Nesty,
 ) {
     unsafe {
-        let buf = ByteAddressableBuffer::new(buf);
+        let buf = ByteAddressableBuffer::from_mut_slice(buf);
         *out = buf.load(5);
     }
 }
@@ -35,7 +46,7 @@ pub fn store(
     val: Nesty,
 ) {
     unsafe {
-        let mut buf = MutByteAddressableBuffer::new(buf);
+        let mut buf = ByteAddressableBuffer::from_mut_slice(buf);
         buf.store(5, val);
     }
 }

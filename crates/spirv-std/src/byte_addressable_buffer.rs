@@ -43,15 +43,16 @@ unsafe fn buffer_store_intrinsic<T>(
         .write(value);
 }
 
-/// `ByteAddressableBuffer` is a read-only untyped blob of data, allowing loads
-/// of arbitrary basic data types at arbitrary indices. See
-/// [`MutByteAddressableBuffer`] for a writeable variant.
+/// `ByteAddressableBuffer` is a view to an untyped blob of data, allowing
+/// loads and stores of arbitrary basic data types at arbitrary indices. Use
+/// `from_slice()` or `from_mut_slice()` to create the `ByteAddressableBuffer`,
+/// with only the mutable slice allowing stores.
 ///
 /// # Alignment
 /// All data must be aligned to size 4, each element within the data (e.g.
 /// struct fields) must have a size and alignment of a multiple of 4, and the
 /// `byte_index` passed to load and store must be a multiple of 4. Technically
-/// it's not a *byte* addressable buffer, but rather a *word* buffer, but this
+/// it is not a *byte* addressable buffer, but rather a *word* buffer, but this
 /// naming and behavior was inherited from HLSL (where it's UB to pass in an
 /// index not a multiple of 4).
 ///
@@ -61,15 +62,15 @@ unsafe fn buffer_store_intrinsic<T>(
 /// allowing all sorts of safety guarantees to be bypassed (effectively a
 /// transmute).
 #[repr(transparent)]
-pub struct ByteAddressableBuffer<'a> {
+pub struct ByteAddressableBuffer<T> {
     /// The underlying array of bytes, able to be directly accessed.
-    pub data: &'a [u32],
+    pub data: T,
 }
 
-impl<'a> ByteAddressableBuffer<'a> {
+impl<'a> ByteAddressableBuffer<&'a [u32]> {
     /// Creates a `ByteAddressableBuffer` from the untyped blob of data.
     #[inline]
-    pub fn new(data: &'a [u32]) -> Self {
+    pub fn from_slice(data: &'a [u32]) -> Self {
         Self { data }
     }
 
@@ -102,19 +103,10 @@ impl<'a> ByteAddressableBuffer<'a> {
     }
 }
 
-/// `MutByteAddressableBuffer` is a mutable untyped blob of data, allowing
-/// loads and stores of arbitrary basic data types at arbitrary indices. See
-/// [`ByteAddressableBuffer`] for details.
-#[repr(transparent)]
-pub struct MutByteAddressableBuffer<'a> {
-    /// The underlying array of bytes, able to be directly accessed.
-    pub data: &'a mut [u32],
-}
-
-impl<'a> MutByteAddressableBuffer<'a> {
+impl<'a> ByteAddressableBuffer<&'a mut [u32]> {
     /// Creates a `ByteAddressableBuffer` from the untyped blob of data.
     #[inline]
-    pub fn new(data: &'a mut [u32]) -> Self {
+    pub fn from_mut_slice(data: &'a mut [u32]) -> Self {
         Self { data }
     }
 
