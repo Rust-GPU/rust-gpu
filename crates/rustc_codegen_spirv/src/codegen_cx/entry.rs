@@ -529,7 +529,7 @@ impl<'tcx> CodegenCx<'tcx> {
             .def(hir_param.span, self);
             var_ptr_spirv_type = self.type_ptr_to(var_spirv_type);
 
-            let zero_u32 = self.constant_bit32(hir_param.span, 0).def_cx(self);
+            let zero_u32 = self.constant_u32(hir_param.span, 0).def_cx(self);
             let value_ptr_spirv_type = self.type_ptr_to(value_spirv_type);
             let value_ptr = bx
                 .emit()
