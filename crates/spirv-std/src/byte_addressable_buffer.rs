@@ -116,14 +116,20 @@ impl<'a> ByteAddressableBuffer<&'a mut [u32]> {
         Self { data }
     }
 
+    /// Create a non-mutable `ByteAddressableBuffer` from this mutable one.
+    #[inline]
+    pub fn as_ref(&self) -> ByteAddressableBuffer<&[u32]> {
+        ByteAddressableBuffer { data: self.data }
+    }
+
     /// Loads an arbitrary type from the buffer. `byte_index` must be a
     /// multiple of 4.
     ///
     /// # Safety
     /// See [`Self`].
+    #[inline]
     pub unsafe fn load<T>(&self, byte_index: u32) -> T {
-        bounds_check::<T>(self.data, byte_index);
-        buffer_load_intrinsic(self.data, byte_index)
+        self.as_ref().load(byte_index)
     }
 
     /// Loads an arbitrary type from the buffer. `byte_index` must be a
@@ -131,8 +137,9 @@ impl<'a> ByteAddressableBuffer<&'a mut [u32]> {
     ///
     /// # Safety
     /// See [`Self`]. Additionally, bounds or alignment checking is not performed.
+    #[inline]
     pub unsafe fn load_unchecked<T>(&self, byte_index: u32) -> T {
-        buffer_load_intrinsic(self.data, byte_index)
+        self.as_ref().load_unchecked(byte_index)
     }
 
     /// Stores an arbitrary type into the buffer. `byte_index` must be a
