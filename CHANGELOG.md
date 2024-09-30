@@ -29,10 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### 🚨BREAKING🚨
-- Signed for loops like `for _ in 0..4i32 {}` no longer compile. We recommend switching to unsigned for loops and casting back to signed integers in the meanwhile.
-
 ### Changed 🛠
+- [PR#17](https://github.com/Rust-GPU/rust-gpu/pull/17) refactor ByteAddressableBuffer to allow reading from read-only buffers
 - [PR#14](https://github.com/Rust-GPU/rust-gpu/pull/14) add subgroup intrinsics matching glsl's [`GL_KHR_shader_subgroup`](https://github.com/KhronosGroup/GLSL/blob/main/extensions/khr/GL_KHR_shader_subgroup.txt)
 - [PR#13](https://github.com/Rust-GPU/rust-gpu/pull/13) allow cargo features to be passed to the shader crate
 - [PR#12](https://github.com/rust-gpu/rust-gpu/pull/12) updated toolchain to `nightly-2024-04-24`
