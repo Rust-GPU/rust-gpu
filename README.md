@@ -66,6 +66,10 @@ Experiment with rust-gpu shaders in-browser at [SHADERed][shadered].
 [gpu-guide]: https://rust-gpu.github.io/rust-gpu/book/
 [shadered]: https://shadered.org/shaders?language=rust&sort=hot
 
+## Getting help
+
+For questions and comments, we use [GitHub discussions](https://github.com/Rust-GPU/rust-gpu/discussions) to keep conversations organized and searchable. This also makes it easy to escalate relevant topics to GitHub issues if needed. We do not have an official chat room.
+
 ## Background
 
 Historically in games GPU programming has been done through writing either HLSL, or to a lesser extent GLSL and WGSL. These are simple programming languages that have evolved along with rendering APIs over the years. However, these languages have failed to provide mechanisms for dealing with large codebases, and have generally stayed behind the curve compared to other programming languages.
