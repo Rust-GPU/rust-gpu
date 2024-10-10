@@ -440,6 +440,18 @@ impl CodegenArgs {
             );
             opts.optopt(
                 "",
+                "dump-pre-inline",
+                "dump the module immediately before inlining, to a file in DIR",
+                "DIR",
+            );
+            opts.optopt(
+                "",
+                "dump-post-inline",
+                "dump the module immediately after inlining, to a file in DIR",
+                "DIR",
+            );
+            opts.optopt(
+                "",
                 "dump-post-split",
                 "dump modules immediately after multimodule splitting, to files in DIR",
                 "DIR",
@@ -459,6 +471,11 @@ impl CodegenArgs {
                 "",
                 "spirt-keep-debug-sources-in-dumps",
                 "keep file contents debuginfo when dumping SPIR-T",
+            );
+            opts.optflag(
+                "",
+                "spirt-keep-unstructured-cfg-in-dumps",
+                "include initial unstructured CFG when dumping SPIR-T",
             );
             opts.optflag(
                 "",
@@ -623,12 +640,16 @@ impl CodegenArgs {
             // NOTE(eddyb) these are debugging options that used to be env vars
             // (for more information see `docs/src/codegen-args.md`).
             dump_post_merge: matches_opt_dump_dir_path("dump-post-merge"),
+            dump_pre_inline: matches_opt_dump_dir_path("dump-pre-inline"),
+            dump_post_inline: matches_opt_dump_dir_path("dump-post-inline"),
             dump_post_split: matches_opt_dump_dir_path("dump-post-split"),
             dump_spirt_passes: matches_opt_dump_dir_path("dump-spirt-passes"),
             spirt_strip_custom_debuginfo_from_dumps: matches
                 .opt_present("spirt-strip-custom-debuginfo-from-dumps"),
             spirt_keep_debug_sources_in_dumps: matches
                 .opt_present("spirt-keep-debug-sources-in-dumps"),
+            spirt_keep_unstructured_cfg_in_dumps: matches
+                .opt_present("spirt-keep-unstructured-cfg-in-dumps"),
             specializer_debug: matches.opt_present("specializer-debug"),
             specializer_dump_instances: matches_opt_path("specializer-dump-instances"),
             print_all_zombie: matches.opt_present("print-all-zombie"),

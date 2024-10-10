@@ -79,6 +79,14 @@ Dumps the merged module, to a file in `DIR`, immediately after merging, but befo
 similar to `--dump-pre-link`, except it outputs only a single file, which might make grepping through
 for stuff easier.
 
+### `--dump-pre-inline DIR`
+
+Dumps the module, to a file in `DIR`, immediately before the inliner pass runs.
+
+### `--dump-post-inline DIR`
+
+Dumps the module, to a file in `DIR`, immediately after the inliner pass runs.
+
 ### `--dump-post-split DIR`
 
 Dumps the modules, to files in `DIR`, immediately after multimodule splitting, but before final cleanup passes (e.g.
@@ -208,3 +216,11 @@ all the "file contents debuginfo" (i.e. from SPIR-V `OpSource` instructions),
 which will end up being included, in full, at the start of the dump.
 
 The default (of hiding the file contents) is less verbose, but (arguably) lossier.
+
+### `--spirt-keep-unstructured-cfg-in-dumps`
+
+When dumping (pretty-printed) `SPIR-🇹` (e.g. with `--dump-spirt-passes`), include
+the initial unstructured state, as well (i.e. just after lowering from SPIR-V).
+
+The default (of only dumping structured SPIR-T) can have far less noisy dataflow,
+but unstructured SPIR-T may be needed for e.g. debugging the structurizer itself.
