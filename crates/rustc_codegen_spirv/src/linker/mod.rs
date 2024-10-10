@@ -62,6 +62,7 @@ pub struct Options {
     pub dump_spirt_passes: Option<PathBuf>,
     pub spirt_strip_custom_debuginfo_from_dumps: bool,
     pub spirt_keep_debug_sources_in_dumps: bool,
+    pub spirt_keep_unstructured_cfg_in_dumps: bool,
     pub specializer_debug: bool,
     pub specializer_dump_instances: Option<PathBuf>,
     pub print_all_zombie: bool,
@@ -434,9 +435,16 @@ pub fn link(
                 }
             }
         };
-        after_pass("lower_from_spv", &module);
+        // HACK(eddyb) don't dump the unstructured state if not requested, as
+        // after SPIR-T 0.4.0 it's extremely verbose (due to def-use hermeticity).
+        if opts.spirt_keep_unstructured_cfg_in_dumps || !opts.structurize {
+            after_pass("lower_from_spv", &module);
+        }
 
         // NOTE(eddyb) this *must* run on unstructured CFGs, to do its job.
+        // FIXME(eddyb) no longer relying on structurization, try porting this
+        // to replace custom aborts in `Block`s and inject `ExitInvocation`s
+        // after them (truncating the `Block` and/or parent region if necessary).
         {
             let _timer = sess.timer("spirt_passes::controlflow::convert_custom_aborts_to_unstructured_returns_in_entry_points");
             spirt_passes::controlflow::convert_custom_aborts_to_unstructured_returns_in_entry_points(opts, &mut module);
