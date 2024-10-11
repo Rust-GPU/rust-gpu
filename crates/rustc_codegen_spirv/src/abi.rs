@@ -883,25 +883,17 @@ fn trans_intrinsic_type<'tcx>(
             let multisampled = const_int_value(cx, args.const_at(4))?;
             let sampled = const_int_value(cx, args.const_at(5))?;
             let image_format = const_int_value(cx, args.const_at(6))?;
-
-            let access_qualifier_ty = args.type_at(8);
-            let access_qualifier: Option<AccessQualifier> = if let TyKind::Adt(def, _) =
-                access_qualifier_ty.kind()
-            {
-                match cx.tcx.def_path_str(def.did()).as_str() {
-                    "spirv_std::image::ImageAccessReadOnly" => Some(AccessQualifier::ReadOnly),
-                    "spirv_std::image::ImageAccessWriteOnly" => Some(AccessQualifier::WriteOnly),
-                    "spirv_std::image::ImageAccessReadWrite" => Some(AccessQualifier::ReadWrite),
-                    "spirv_std::image::ImageAccessUnknown" => None,
-                    s => {
-                        return Err(cx
-                            .tcx
-                            .dcx()
-                            .err(format!("Invalid image access qualifier: '{s}'")));
-                    }
+            let access_qualifier = match const_int_value(cx, args.const_at(8))? {
+                0u32 => Some(AccessQualifier::ReadOnly),
+                1u32 => Some(AccessQualifier::WriteOnly),
+                2u32 => Some(AccessQualifier::ReadWrite),
+                3u32 => None,
+                n => {
+                    return Err(cx
+                        .tcx
+                        .dcx()
+                        .err(format!("Invalid value for Image access qualifier: {n}")));
                 }
-            } else {
-                return Err(cx.tcx.dcx().err("Invalid image access qualifier"));
             };
 
             let ty = SpirvType::Image {

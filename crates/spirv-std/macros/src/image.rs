@@ -413,7 +413,7 @@ impl quote::ToTokens for ImageType {
         let sampled = params::sampled_to_tokens(&self.sampled);
         let sampled_type = &self.sampled_type;
         let components = self.components;
-        let access = params::image_access_to_tokens(self.access);
+        let access = params::image_access_to_const_u32(self.access);
 
         tokens.append_all(quote::quote! {
             #crate_root::image::Image<
@@ -425,7 +425,7 @@ impl quote::ToTokens for ImageType {
                 { #crate_root::image::#sampled as u32 },
                 { #crate_root::image::#format as u32 },
                 { #components as u32 },
-                #crate_root::image::__private::#access
+                #access
             >
         });
     }
@@ -573,12 +573,12 @@ mod params {
         }
     }
 
-    pub fn image_access_to_tokens(access: Option<AccessQualifier>) -> proc_macro2::TokenStream {
+    pub fn image_access_to_const_u32(access: Option<AccessQualifier>) -> proc_macro2::TokenStream {
         match access {
-            Some(AccessQualifier::ReadOnly) => quote!(ImageAccessReadOnly),
-            Some(AccessQualifier::WriteOnly) => quote!(ImageAccessWriteOnly),
-            Some(AccessQualifier::ReadWrite) => quote!(ImageAccessReadWrite),
-            None => quote!(ImageAccessUnknown),
+            Some(AccessQualifier::ReadOnly) => quote!(AccessQualifier::ReadOnly as u32),
+            Some(AccessQualifier::WriteOnly) => quote!(AccessQualifier::WriteOnly as u32),
+            Some(AccessQualifier::ReadWrite) => quote!(AccessQualifier::ReadWrite as u32),
+            None => quote!(3),
         }
     }
 
