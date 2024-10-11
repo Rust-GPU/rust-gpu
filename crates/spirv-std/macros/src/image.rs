@@ -574,11 +574,11 @@ mod params {
     }
 
     pub fn image_access_to_const_u32(access: Option<AccessQualifier>) -> proc_macro2::TokenStream {
-        match access {
-            Some(AccessQualifier::ReadOnly) => quote!(AccessQualifier::ReadOnly as u32),
-            Some(AccessQualifier::WriteOnly) => quote!(AccessQualifier::WriteOnly as u32),
-            Some(AccessQualifier::ReadWrite) => quote!(AccessQualifier::ReadWrite as u32),
-            None => quote!(3),
+        if let Some(aq) = access {
+            let n = aq as u32;
+            quote!(#n)
+        } else {
+            quote!(3)
         }
     }
 

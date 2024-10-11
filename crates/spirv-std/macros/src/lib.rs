@@ -123,6 +123,8 @@ use std::fmt::Write;
 ///    Accepted values: `true` or `false`. Default: `false`.
 /// - `depth` — Whether it is known that the image is a depth image.
 ///    Accepted values: `true` or `false`. Default: `unknown`.
+/// - `access` — The access qualifier of the image, if known.
+///    Accepted values: `readonly`, `writeonly` or `readwrite`.
 ///
 /// [`ImageFormat`]: spirv_std_types::image_params::ImageFormat
 ///
