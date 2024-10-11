@@ -1,6 +1,29 @@
 use super::{Arrayed, Dimensionality, ImageFormat};
 use crate::{integer::Integer, scalar::Scalar, vector::Vector, vector::VectorTruncateInto};
 
+/// Marker trait for image access type.
+pub trait ImageAccessQualifier: Clone + Copy {}
+
+/// Denotes a read-only image.
+#[derive(Clone, Copy)]
+pub struct ImageAccessReadOnly;
+impl ImageAccessQualifier for ImageAccessReadOnly {}
+
+/// Denotes a write-only image.
+#[derive(Clone, Copy)]
+pub struct ImageAccessWriteOnly;
+impl ImageAccessQualifier for ImageAccessWriteOnly {}
+
+/// Denotes a read+write image.
+#[derive(Clone, Copy)]
+pub struct ImageAccessReadWrite;
+impl ImageAccessQualifier for ImageAccessReadWrite {}
+
+/// Denotes that an image has an unknown access qualifier.
+#[derive(Clone, Copy)]
+pub struct ImageAccessUnknown;
+impl ImageAccessQualifier for ImageAccessUnknown {}
+
 /// Marker trait for arguments that accept single scalar values or vectors
 /// of scalars. Defines 2-, 3- and 4-component vector types based on the sample type.
 pub trait SampleType<const FORMAT: u32, const COMPONENTS: u32>: Scalar {

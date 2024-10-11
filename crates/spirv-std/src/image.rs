@@ -10,7 +10,10 @@ mod params;
 /// Contains extra image operands
 pub mod sample_with;
 
-pub use self::params::{ImageCoordinate, ImageCoordinateSubpassData, SampleType};
+pub use self::params::{
+    ImageAccessQualifier, ImageAccessReadOnly, ImageAccessReadWrite, ImageAccessUnknown,
+    ImageAccessWriteOnly, ImageCoordinate, ImageCoordinateSubpassData, SampleType,
+};
 pub use crate::macros::Image;
 pub use spirv_std_types::image_params::{
     AccessQualifier, Arrayed, Dimensionality, ImageDepth, ImageFormat, Multisampled, Sampled,
@@ -24,7 +27,10 @@ use crate::{float::Float, integer::Integer, vector::Vector, Sampler};
 /// to the right type.
 #[doc(hidden)]
 pub mod __private {
-    pub use {f32, f64, i16, i32, i64, i8, u16, u32, u64, u8};
+    pub use {
+        super::ImageAccessReadOnly, super::ImageAccessReadWrite, super::ImageAccessUnknown, f32,
+        f64, i16, i32, i64, i8, u16, u32, u64, u8,
+    };
 }
 
 /// A 1d image used with a sampler.
@@ -109,11 +115,12 @@ pub struct Image<
     const SAMPLED: u32,      // Sampled,
     const FORMAT: u32,       // ImageFormat,
     const COMPONENTS: u32,   // NumberOfComponents,
+    Access: ImageAccessQualifier,
 > {
     // HACK(eddyb) avoids the layout becoming ZST (and being elided in one way
     // or another, before `#[spirv(generic_image_type)]` can special-case it).
     _anti_zst_padding: core::mem::MaybeUninit<u32>,
-    _marker: core::marker::PhantomData<SampledType>,
+    _marker: core::marker::PhantomData<(SampledType, Access)>,
 }
 
 impl<
@@ -124,6 +131,7 @@ impl<
     const MULTISAMPLED: u32,
     const FORMAT: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 >
     Image<
         SampledType,
@@ -134,6 +142,7 @@ impl<
         { Sampled::Yes as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
     /// Fetch a single texel with a sampler set at compile time
@@ -170,6 +179,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 >
     Image<
         SampledType,
@@ -180,6 +190,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
     // Note: #[inline] is needed because in vulkan, the component must be a constant expression.
@@ -461,6 +472,7 @@ impl<
     const SAMPLED: u32,
     const FORMAT: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 >
     Image<
         SampledType,
@@ -471,6 +483,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
     /// Sample the image with a project coordinate
@@ -684,6 +697,7 @@ impl<
     const MULTISAMPLED: u32,
     const FORMAT: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 >
     Image<
         SampledType,
@@ -694,6 +708,7 @@ impl<
         { Sampled::No as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
     /// Read a texel from an image without a sampler.
@@ -753,6 +768,7 @@ impl<
     const ARRAYED: u32,
     const MULTISAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 >
     Image<
         SampledType,
@@ -763,6 +779,7 @@ impl<
         { Sampled::Unknown as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
     /// Read a texel from an image without a sampler.
@@ -821,6 +838,7 @@ impl<
     const MULTISAMPLED: u32,
     const FORMAT: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 >
     Image<
         SampledType,
@@ -831,6 +849,7 @@ impl<
         { Sampled::No as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
     /// Read a texel from subpass input attachment.
@@ -871,7 +890,8 @@ impl<
     const SAMPLED: u32,
     const FORMAT: u32,
     const COMPONENTS: u32,
-> Image<SampledType, DIM, DEPTH, ARRAYED, MULTISAMPLED, SAMPLED, FORMAT, COMPONENTS>
+    Access: ImageAccessQualifier,
+> Image<SampledType, DIM, DEPTH, ARRAYED, MULTISAMPLED, SAMPLED, FORMAT, COMPONENTS, Access>
 {
     /// Query the number of mipmap levels.
     #[crate::macros::gpu_only]
@@ -959,6 +979,7 @@ impl<
     const SAMPLED: u32,
     const FORMAT: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 >
     Image<
         SampledType,
@@ -969,6 +990,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
     /// Query the dimensions of Image, with no level of detail.
@@ -1003,6 +1025,7 @@ impl<
     const SAMPLED: u32,
     const FORMAT: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 >
     Image<
         SampledType,
@@ -1013,6 +1036,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
     /// Query the number of samples available per texel fetch in a multisample image.
@@ -1051,6 +1075,7 @@ impl<
     const SAMPLED: u32,
     const FORMAT: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 >
     SampledImage<
         Image<
@@ -1062,6 +1087,7 @@ impl<
             SAMPLED,
             FORMAT,
             COMPONENTS,
+            Access,
         >,
     >
 {
@@ -1210,6 +1236,7 @@ impl<
     const SAMPLED: u32,
     const FORMAT: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 >
     ImageWithMethods<
         SampledType,
@@ -1221,7 +1248,8 @@ impl<
         FORMAT,
         COMPONENTS,
         SampleParams,
-    > for Image<SampledType, DIM, DEPTH, ARRAYED, MULTISAMPLED, SAMPLED, FORMAT, COMPONENTS>
+    >
+    for Image<SampledType, DIM, DEPTH, ARRAYED, MULTISAMPLED, SAMPLED, FORMAT, COMPONENTS, Access>
 {
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageFetch")]
@@ -1423,6 +1451,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasGather
     for Image<
         SampledType,
@@ -1433,6 +1462,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1443,6 +1473,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasGather
     for Image<
         SampledType,
@@ -1453,6 +1484,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1463,6 +1495,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasGather
     for Image<
         SampledType,
@@ -1473,6 +1506,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1490,6 +1524,7 @@ impl<
     const MULTISAMPLED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQueryLevels
     for Image<
         SampledType,
@@ -1500,6 +1535,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1511,6 +1547,7 @@ impl<
     const MULTISAMPLED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQueryLevels
     for Image<
         SampledType,
@@ -1521,6 +1558,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1532,6 +1570,7 @@ impl<
     const MULTISAMPLED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQueryLevels
     for Image<
         SampledType,
@@ -1542,6 +1581,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1553,6 +1593,7 @@ impl<
     const MULTISAMPLED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQueryLevels
     for Image<
         SampledType,
@@ -1563,6 +1604,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1580,6 +1622,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1590,6 +1633,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1599,6 +1643,7 @@ impl<
     const FORMAT: u32,
     const ARRAYED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1609,6 +1654,7 @@ impl<
         { Sampled::Unknown as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1618,6 +1664,7 @@ impl<
     const FORMAT: u32,
     const ARRAYED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1628,6 +1675,7 @@ impl<
         { Sampled::No as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1638,6 +1686,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1648,6 +1697,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1657,6 +1707,7 @@ impl<
     const FORMAT: u32,
     const ARRAYED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1667,6 +1718,7 @@ impl<
         { Sampled::Unknown as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1676,6 +1728,7 @@ impl<
     const FORMAT: u32,
     const ARRAYED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1686,6 +1739,7 @@ impl<
         { Sampled::No as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1696,6 +1750,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1706,6 +1761,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1715,6 +1771,7 @@ impl<
     const FORMAT: u32,
     const ARRAYED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1725,6 +1782,7 @@ impl<
         { Sampled::Unknown as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1734,6 +1792,7 @@ impl<
     const FORMAT: u32,
     const ARRAYED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1744,6 +1803,7 @@ impl<
         { Sampled::No as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1754,6 +1814,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1764,6 +1825,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1773,6 +1835,7 @@ impl<
     const FORMAT: u32,
     const ARRAYED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1783,6 +1846,7 @@ impl<
         { Sampled::Unknown as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1792,6 +1856,7 @@ impl<
     const FORMAT: u32,
     const ARRAYED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1802,6 +1867,7 @@ impl<
         { Sampled::No as u32 },
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1813,6 +1879,7 @@ impl<
     const MULTISAMPLED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1823,6 +1890,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1834,6 +1902,7 @@ impl<
     const MULTISAMPLED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySize
     for Image<
         SampledType,
@@ -1844,6 +1913,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1860,6 +1930,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySizeLod
     for Image<
         SampledType,
@@ -1870,6 +1941,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1880,6 +1952,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySizeLod
     for Image<
         SampledType,
@@ -1890,6 +1963,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1900,6 +1974,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySizeLod
     for Image<
         SampledType,
@@ -1910,6 +1985,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }
@@ -1920,6 +1996,7 @@ impl<
     const ARRAYED: u32,
     const SAMPLED: u32,
     const COMPONENTS: u32,
+    Access: ImageAccessQualifier,
 > HasQuerySizeLod
     for Image<
         SampledType,
@@ -1930,6 +2007,7 @@ impl<
         SAMPLED,
         FORMAT,
         COMPONENTS,
+        Access,
     >
 {
 }

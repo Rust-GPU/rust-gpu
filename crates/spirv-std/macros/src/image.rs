@@ -34,6 +34,7 @@ pub struct ImageType {
     sampled: Sampled,
     sampled_type: SampledType,
     components: u32,
+    access: Option<AccessQualifier>,
 }
 
 impl Parse for ImageType {
@@ -47,6 +48,7 @@ impl Parse for ImageType {
         let mut sampled: Option<Sampled> = None;
         let mut crate_root = None;
         let mut components = None;
+        let mut access = None;
 
         let starting_span = input.span();
 
@@ -122,6 +124,16 @@ impl Parse for ImageType {
                             .map(syn::LitBool::value)
                             .map_or(ImageDepth::True, From::from)
                     );
+                } else if ident == "access" {
+                    let value = peek_and_eat_value!(syn::Ident);
+                    let value = params::image_access_from_str(
+                        value
+                            .map(|id| id.to_string())
+                            .as_deref()
+                            .unwrap_or("unknown"),
+                    )
+                    .map_err(|e| syn::Error::new(ident.span(), e))?;
+                    access = Some(value);
                 } else if ident == "format" {
                     let value = peek_and_eat_value!(syn::Ident);
 
@@ -377,6 +389,7 @@ impl Parse for ImageType {
             sampled,
             sampled_type,
             components,
+            access,
         })
     }
 }
@@ -400,6 +413,7 @@ impl quote::ToTokens for ImageType {
         let sampled = params::sampled_to_tokens(&self.sampled);
         let sampled_type = &self.sampled_type;
         let components = self.components;
+        let access = params::image_access_to_tokens(self.access);
 
         tokens.append_all(quote::quote! {
             #crate_root::image::Image<
@@ -411,6 +425,7 @@ impl quote::ToTokens for ImageType {
                 { #crate_root::image::#sampled as u32 },
                 { #crate_root::image::#format as u32 },
                 { #components as u32 },
+                #crate_root::image::__private::#access
             >
         });
     }
@@ -419,6 +434,20 @@ impl quote::ToTokens for ImageType {
 mod params {
     use super::*;
     use proc_macro2::TokenStream;
+
+    pub fn image_access_from_str(s: &str) -> Result<AccessQualifier, &'static str> {
+        Ok(match s {
+            "readonly" => AccessQualifier::ReadOnly,
+            "writeonly" => AccessQualifier::WriteOnly,
+            "readwrite" => AccessQualifier::ReadWrite,
+            _ => {
+                return Err(
+                    "Unknown specified image access. Must be `readonly`, `writeonly`, \
+                    `readwrite`, or must be omitted.",
+                );
+            }
+        })
+    }
 
     pub fn image_format_from_str(s: &str) -> Result<ImageFormat, &'static str> {
         Ok(match s {
@@ -541,6 +570,15 @@ mod params {
             Sampled::Yes => quote!(Sampled::Yes),
             Sampled::No => quote!(Sampled::No),
             Sampled::Unknown => quote!(Sampled::Unknown),
+        }
+    }
+
+    pub fn image_access_to_tokens(access: Option<AccessQualifier>) -> proc_macro2::TokenStream {
+        match access {
+            Some(AccessQualifier::ReadOnly) => quote!(ImageAccessReadOnly),
+            Some(AccessQualifier::WriteOnly) => quote!(ImageAccessWriteOnly),
+            Some(AccessQualifier::ReadWrite) => quote!(ImageAccessReadWrite),
+            None => quote!(ImageAccessUnknown),
         }
     }
 
