@@ -4,7 +4,7 @@
 use crate::attr::{AggregatedSpirvAttributes, IntrinsicType};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
-use rspirv::spirv::{StorageClass, Word};
+use rspirv::spirv::{AccessQualifier, StorageClass, Word};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
 use rustc_index::Idx;
@@ -883,7 +883,26 @@ fn trans_intrinsic_type<'tcx>(
             let multisampled = const_int_value(cx, args.const_at(4))?;
             let sampled = const_int_value(cx, args.const_at(5))?;
             let image_format = const_int_value(cx, args.const_at(6))?;
-            let access_qualifier = const_int_value(cx, args.const_at(7)).ok();
+
+            let access_qualifier_ty = args.type_at(8);
+            let access_qualifier: Option<AccessQualifier> = if let TyKind::Adt(def, _) =
+                access_qualifier_ty.kind()
+            {
+                match cx.tcx.def_path_str(def.did()).as_str() {
+                    "spirv_std::image::ImageAccessReadOnly" => Some(AccessQualifier::ReadOnly),
+                    "spirv_std::image::ImageAccessWriteOnly" => Some(AccessQualifier::WriteOnly),
+                    "spirv_std::image::ImageAccessReadWrite" => Some(AccessQualifier::ReadWrite),
+                    "spirv_std::image::ImageAccessUnknown" => None,
+                    s => {
+                        return Err(cx
+                            .tcx
+                            .dcx()
+                            .err(format!("Invalid image access qualifier: '{s}'")));
+                    }
+                }
+            } else {
+                return Err(cx.tcx.dcx().err("Invalid image access qualifier"));
+            };
 
             let ty = SpirvType::Image {
                 sampled_type,

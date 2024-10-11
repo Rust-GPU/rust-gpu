@@ -94,6 +94,7 @@ use std::fmt::Write;
 ///     [multisampled[=<true|false>],]
 ///     [arrayed[=<true|false>],]
 ///     [depth[=<true|false>],]
+///     [access[=<readonly|writeonly|readwrite>],]
 /// )
 /// ```
 ///
