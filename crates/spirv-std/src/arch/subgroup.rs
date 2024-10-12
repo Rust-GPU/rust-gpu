@@ -1,3 +1,5 @@
+#![allow(clippy::missing_safety_doc)]
+
 #[cfg(target_arch = "spirv")]
 use crate::arch::barrier;
 use crate::float::Float;
