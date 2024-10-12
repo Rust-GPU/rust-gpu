@@ -30,8 +30,14 @@ pub enum GroupOperation {
     /// A binary operation with an identity I and n (where n is the size of the workgroup)
     /// elements[a0, a1, … an-1] resulting in [I, a0, (a0 op a1), … (a0 op a1 op … op an-2)].
     ExclusiveScan = 2,
-    // /// See [`GROUP_OPERATION_CLUSTERED_REDUCE`]
-    // ClusteredReduce = 3,
+    /// The [`GroupOperation`] `ClusteredReduce`.
+    ///
+    /// All instructions with a [`GroupOperation`] require an additional `ClusterSize` parameter when [`GroupOperation`] is
+    /// `ClusteredReduce`. To map this requirement into rust, all function have a base version accepting [`GroupOperation`]
+    /// as a const generic, and a `_clustered` variant that is fixed to `ClusteredReduce` and takes the additional
+    /// `ClusterSize` parameter as a const generic. To not accidentally use a `ClusteredReduce` in the base variant of the
+    /// function, it was removed from the [`GroupOperation`] enum and instead resides individually.
+    ClusteredReduce = 3,
     /// Reserved.
     ///
     /// Requires Capability `GroupNonUniformPartitionedNV`.
@@ -45,15 +51,6 @@ pub enum GroupOperation {
     /// Requires Capability `GroupNonUniformPartitionedNV`.
     PartitionedExclusiveScanNV = 8,
 }
-
-/// The [`GroupOperation`] `ClusteredReduce`.
-///
-/// All instructions with a [`GroupOperation`] require an additional `ClusterSize` parameter when [`GroupOperation`] is
-/// `ClusteredReduce`. To map this requirement into rust, all function have a base version accepting [`GroupOperation`]
-/// as a const generic, and a `_clustered` variant that is fixed to `ClusteredReduce` and takes the additional
-/// `ClusterSize` parameter as a const generic. To not accidentally use a `ClusteredReduce` in the base variant of the
-/// function, it was removed from the [`GroupOperation`] enum and instead resides individually.
-pub const GROUP_OPERATION_CLUSTERED_REDUCE: u32 = 3;
 
 /// Only usable if the extension GL_KHR_shader_subgroup_basic is enabled.
 ///
@@ -782,7 +779,7 @@ macro_rules! macro_subgroup_op_clustered {
                     concat!("%result = ", $asm_op, " _ %subgroup {groupop} %value %clustersize"),
                     "OpStore {result} %result",
                     subgroup = const SUBGROUP,
-                    groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
+                    groupop = const (GroupOperation::ClusteredReduce as u32),
                     clustersize = const CLUSTER_SIZE,
                     value = in(reg) &value,
                     result = in(reg) &mut result,
