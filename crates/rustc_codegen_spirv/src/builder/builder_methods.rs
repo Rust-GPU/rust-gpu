@@ -337,7 +337,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let exit_bb = self.append_sibling_block("memset_exit");
 
         let count = self.udiv(size_bytes, size_elem_const);
-        let index = self.alloca(count.ty, zero_align);
+        let index = self.alloca(Size::from_bytes(size_bytes.ty), zero_align);
         self.store(zero, index, zero_align);
         self.br(header_bb);
 
@@ -1413,8 +1413,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         val
     }
 
-    fn alloca(&mut self, ty: Self::Type, _align: Align) -> Self::Value {
-        let ptr_ty = self.type_ptr_to(ty);
+    fn alloca(&mut self, ty: Size, _align: Align) -> Self::Value {
+        let ptr_ty = self.type_ptr_to(ty.bits_usize() as u32);
         // "All OpVariable instructions in a function must be the first instructions in the first block."
         let mut builder = self.emit();
         builder.select_block(Some(0)).unwrap();
@@ -1446,7 +1446,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         result_id.with_type(ptr_ty)
     }
 
-    fn byte_array_alloca(&mut self, _len: Self::Value, _align: Align) -> Self::Value {
+    fn dynamic_alloca(&mut self, _size: Self::Value, _align: Align) -> Self::Value {
         self.fatal("array alloca not supported yet")
     }
 

@@ -20,7 +20,8 @@ use rustc_span::DUMMY_SP;
 use rustc_span::{Span, Symbol};
 use rustc_target::abi::call::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 use rustc_target::abi::{
-    Abi, Align, FieldsShape, LayoutS, Primitive, Scalar, Size, TagEncoding, VariantIdx, Variants,
+    Abi, Align, FieldsShape, Float, LayoutS, Primitive, Scalar, Size, TagEncoding, VariantIdx,
+    Variants,
 };
 use rustc_target::spec::abi::Abi as SpecAbi;
 use std::cell::RefCell;
@@ -504,10 +505,10 @@ fn trans_scalar<'tcx>(
         Primitive::Int(width, signedness) => {
             SpirvType::Integer(width.size().bits() as u32, signedness).def(span, cx)
         }
-        Primitive::F16 => SpirvType::Float(16).def(span, cx),
-        Primitive::F32 => SpirvType::Float(32).def(span, cx),
-        Primitive::F64 => SpirvType::Float(64).def(span, cx),
-        Primitive::F128 => SpirvType::Float(128).def(span, cx),
+        Primitive::Float(Float::F16) => SpirvType::Float(16).def(span, cx),
+        Primitive::Float(Float::F32) => SpirvType::Float(32).def(span, cx),
+        Primitive::Float(Float::F64) => SpirvType::Float(64).def(span, cx),
+        Primitive::Float(Float::F128) => SpirvType::Float(128).def(span, cx),
         Primitive::Pointer(_) => {
             let pointee_ty = dig_scalar_pointee(cx, ty, offset);
             // Pointers can be recursive. So, record what we're currently translating, and if we're already translating

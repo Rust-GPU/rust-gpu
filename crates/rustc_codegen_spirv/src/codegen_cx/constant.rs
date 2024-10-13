@@ -8,7 +8,7 @@ use rustc_middle::bug;
 use rustc_middle::mir::interpret::{alloc_range, ConstAllocation, GlobalAlloc, Scalar};
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_span::{Span, DUMMY_SP};
-use rustc_target::abi::{self, AddressSpace, HasDataLayout, Integer, Primitive, Size};
+use rustc_target::abi::{self, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
 
 impl<'tcx> CodegenCx<'tcx> {
     pub fn def_constant(&self, ty: Word, val: SpirvConst<'_, 'tcx>) -> SpirvValue {
@@ -273,21 +273,21 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
                             other.debug(ty, self)
                         )),
                     },
-                    Primitive::F16 => self
+                    Primitive::Float(Float::F16) => self
                         .tcx
                         .dcx()
                         .fatal("scalar_to_backend Primitive::F16 not supported"),
-                    Primitive::F32 => {
+                    Primitive::Float(Float::F32) => {
                         let res = self.constant_f32(DUMMY_SP, f32::from_bits(data as u32));
                         assert_eq!(res.ty, ty);
                         res
                     }
-                    Primitive::F64 => {
+                    Primitive::Float(Float::F64) => {
                         let res = self.constant_f64(DUMMY_SP, f64::from_bits(data as u64));
                         assert_eq!(res.ty, ty);
                         res
                     }
-                    Primitive::F128 => self
+                    Primitive::Float(Float::F128) => self
                         .tcx
                         .dcx()
                         .fatal("scalar_to_backend Primitive::F128 not supported"),
@@ -488,8 +488,8 @@ impl<'tcx> CodegenCx<'tcx> {
                         Primitive::Int(integer, int_signedness)
                     }
                     SpirvType::Float(float_size) => match float_size {
-                        32 => Primitive::F32,
-                        64 => Primitive::F64,
+                        32 => Primitive::Float(Float::F32),
+                        64 => Primitive::Float(Float::F64),
                         other => {
                             self.tcx
                                 .dcx()
