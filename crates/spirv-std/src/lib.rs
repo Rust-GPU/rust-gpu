@@ -99,6 +99,7 @@ pub mod arch;
 pub mod byte_addressable_buffer;
 pub mod float;
 pub mod image;
+pub mod indirect_command;
 pub mod integer;
 pub mod memory;
 pub mod number;
