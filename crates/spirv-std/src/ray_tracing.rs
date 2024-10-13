@@ -141,6 +141,8 @@ bitflags::bitflags! {
     /// `NO_OPAQUE`, `CULL_OPAQUE`, `CULL_NO_OPAQUE`, only one of
     /// `CULL_BACK_FACING_TRIANGLES` and `CULL_FRONT_FACING_TRIANGLES` may
     /// be set.
+    #[repr(transparent)]
+    #[cfg_attr(feature = "bytemuck", derive(bytemuck::Zeroable, bytemuck::Pod))]
     pub struct RayFlags: u32 {
         /// No flags specified.
         const NONE = 0;

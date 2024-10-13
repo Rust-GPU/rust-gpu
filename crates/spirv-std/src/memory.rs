@@ -29,6 +29,8 @@ pub enum Scope {
 bitflags::bitflags! {
     /// Memory semantics to determine how some operations should function - used when calling such
     /// configurable operations.
+    #[repr(transparent)]
+    #[cfg_attr(feature = "bytemuck", derive(bytemuck::Zeroable, bytemuck::Pod))]
     pub struct Semantics: u32 {
         /// No memory semantics.
         const NONE = 0;

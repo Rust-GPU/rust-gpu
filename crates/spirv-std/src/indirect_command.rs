@@ -13,6 +13,7 @@ pub type DeviceAddress = u64;
 /// <https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDrawIndirectCommand.html>
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default)]
+#[cfg_attr(feature = "bytemuck", derive(bytemuck::Zeroable, bytemuck::Pod))]
 pub struct DrawIndirectCommand {
     /// vertexCount is the number of vertices to draw.
     pub vertex_count: u32,
@@ -29,6 +30,7 @@ pub struct DrawIndirectCommand {
 /// <https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDrawIndexedIndirectCommand.html>
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default)]
+#[cfg_attr(feature = "bytemuck", derive(bytemuck::Zeroable, bytemuck::Pod))]
 pub struct DrawIndexedIndirectCommand {
     /// indexCount is the number of vertices to draw.
     pub index_count: u32,
@@ -47,6 +49,7 @@ pub struct DrawIndexedIndirectCommand {
 /// <https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDispatchIndirectCommand.html>
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default)]
+#[cfg_attr(feature = "bytemuck", derive(bytemuck::Zeroable, bytemuck::Pod))]
 pub struct DispatchIndirectCommand {
     /// x is the number of local workgroups to dispatch in the X dimension.
     pub x: u32,
@@ -81,6 +84,7 @@ impl From<DispatchIndirectCommand> for UVec3 {
 /// <https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkDrawMeshTasksIndirectCommandEXT.html>
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default)]
+#[cfg_attr(feature = "bytemuck", derive(bytemuck::Zeroable, bytemuck::Pod))]
 pub struct DrawMeshTasksIndirectCommandEXT {
     /// groupCountX is the number of local workgroups to dispatch in the X dimension.
     pub group_count_x: u32,
@@ -115,6 +119,7 @@ impl From<DrawMeshTasksIndirectCommandEXT> for UVec3 {
 /// <https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkTraceRaysIndirectCommandKHR.html>
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default)]
+#[cfg_attr(feature = "bytemuck", derive(bytemuck::Zeroable, bytemuck::Pod))]
 pub struct TraceRaysIndirectCommandKHR {
     /// width is the width of the ray trace query dimensions.
     pub width: u32,
@@ -149,7 +154,7 @@ impl From<TraceRaysIndirectCommandKHR> for UVec3 {
 /// <https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkTraceRaysIndirectCommand2KHR.html>
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Default)]
-#[must_use]
+#[cfg_attr(feature = "bytemuck", derive(bytemuck::AnyBitPattern))]
 pub struct TraceRaysIndirectCommand2KHR {
     /// raygenShaderRecordAddress is a `VkDeviceAddress` of the ray generation shader binding table record used by this command.
     pub raygen_shader_record_address: DeviceAddress,
