@@ -1,6 +1,6 @@
 #![cfg_attr(target_arch = "spirv", no_std)]
 // HACK(eddyb) can't easily see warnings otherwise from `spirv-builder` builds.
-//#![deny(warnings)]
+#![deny(warnings)]
 
 use glam::UVec3;
 use spirv_std::{glam, spirv};

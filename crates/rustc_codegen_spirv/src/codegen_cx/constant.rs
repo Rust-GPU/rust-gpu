@@ -251,7 +251,7 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
         match scalar {
             Scalar::Int(int) => {
                 assert_eq!(int.size(), layout.primitive().size(self));
-                let data = int.assert_uint(int.size());
+                let data = int.to_uint(int.size());
 
                 match layout.primitive() {
                     Primitive::Int(int_size, int_signedness) => match self.lookup_type(ty) {

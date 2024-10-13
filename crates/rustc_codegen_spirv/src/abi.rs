@@ -12,7 +12,8 @@ use rustc_middle::query::Providers;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
 use rustc_middle::ty::GenericArgsRef;
 use rustc_middle::ty::{
-    self, Const, CoroutineArgs, FloatTy, IntTy, ParamEnv, PolyFnSig, Ty, TyCtxt, TyKind, UintTy,
+    self, Const, CoroutineArgs, CoroutineArgsExt, FloatTy, IntTy, ParamEnv, PolyFnSig, Ty, TyCtxt,
+    TyKind, UintTy,
 };
 use rustc_middle::{bug, span_bug};
 use rustc_span::def_id::DefId;
@@ -867,7 +868,10 @@ fn trans_intrinsic_type<'tcx>(
                 cx: &CodegenCx<'tcx>,
                 const_: Const<'tcx>,
             ) -> Result<P, ErrorGuaranteed> {
-                assert!(const_.ty().is_integral());
+                assert!(
+                    matches!(const_.kind(), ty::ConstKind::Value(ty, _) if ty.is_integral()),
+                    "Expected an integral type"
+                );
                 let value = const_.eval_bits(cx.tcx, ParamEnv::reveal_all());
                 match P::from_u128(value) {
                     Some(v) => Ok(v),

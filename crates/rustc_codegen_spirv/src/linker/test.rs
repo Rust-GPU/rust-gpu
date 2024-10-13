@@ -2,6 +2,7 @@ use super::{link, LinkResult};
 use rspirv::dr::{Loader, Module};
 use rustc_errors::registry::Registry;
 use rustc_session::config::{Input, OutputFilenames, OutputTypes};
+use rustc_session::parse::ParseSess;
 use rustc_session::CompilerIO;
 use rustc_span::FileName;
 use std::io::Write;
@@ -169,7 +170,11 @@ fn link_with_linker_opts(
 
             // HACK(eddyb) inject `write_diags` into `sess`, to work around
             // the removals in https://github.com/rust-lang/rust/pull/102992.
-            sess.psess.dcx = {
+            // HACK(legneato): This can be simplified to use `set_dcx()` when updating
+            // to a rustc version containing
+            // https://github.com/rust-lang/rust/commit/bde1f4dd57abd8e86dd7d7b325640558c4437d1f.
+            let source_map = sess.psess.clone_source_map();
+            let dcx = {
                 let fallback_bundle = {
                     extern crate rustc_error_messages;
                     rustc_error_messages::fallback_fluent_bundle(
@@ -184,6 +189,8 @@ fn link_with_linker_opts(
                 rustc_errors::DiagCtxt::new(Box::new(emitter))
                     .with_flags(sess.opts.unstable_opts.dcx_flags(true))
             };
+
+            sess.psess = ParseSess::with_dcx(dcx, source_map);
 
             let res = link(
                 &sess,
