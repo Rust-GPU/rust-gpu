@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Derive the `Zeroable` trait for a struct"><title>Zeroable in bytemuck_derive - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="bytemuck_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-e32f0c247825364d.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc derive"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../bytemuck_derive/index.html">bytemuck_derive</a><span class="version">1.7.1</span></h2></div><div class="sidebar-elems"></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../bytemuck_derive/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Derive Macro <a href="index.html">bytemuck_derive</a>::<wbr><a class="derive" href="#">Zeroable</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/bytemuck_derive/lib.rs.html#196-203">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><pre class="rust item-decl"><code>#[derive(Zeroable)]
+{
+    <span class="comment">// Attributes available to this derive:</span>
+    #[bytemuck]
+    #[zeroable]
+}
+</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Derive the <code>Zeroable</code> trait for a struct</p>
+<p>The macro ensures that the struct follows all the the safety requirements
+for the <code>Zeroable</code> trait.</p>
+<p>The following constraints need to be satisfied for the macro to succeed</p>
+<ul>
+<li>All fields in the struct must to implement <code>Zeroable</code></li>
+</ul>
+<h3 id="example"><a class="doc-anchor" href="#example">§</a>Example</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(Copy, Clone, Zeroable)]
+#[repr(C)]
+</span><span class="kw">struct </span>Test {
+  a: u16,
+  b: u16,
+}</code></pre></div>
+<h2 id="custom-bounds"><a class="doc-anchor" href="#custom-bounds">§</a>Custom bounds</h2>
+<p>Custom bounds for the derived <code>Zeroable</code> impl can be given using the
+<code>#[zeroable(bound = &quot;&quot;)]</code> helper attribute.</p>
+<p>Using this attribute additionally opts-in to “perfect derive” semantics,
+where instead of adding bounds for each generic type parameter, bounds are
+added for each field’s type.</p>
+<h3 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(Clone, Zeroable)]
+#[zeroable(bound = <span class="string">""</span>)]
+</span><span class="kw">struct </span>AlwaysZeroable&lt;T&gt; {
+  a: PhantomData&lt;T&gt;,
+}
+
+AlwaysZeroable::&lt;std::num::NonZeroU8&gt;::zeroed();</code></pre></div>
+
+<div class="example-wrap compile_fail"><a href="#" class="tooltip" title="This example deliberately fails to compile">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(Clone, Zeroable)]
+#[zeroable(bound = <span class="string">"T: Copy"</span>)]
+</span><span class="kw">struct </span>ZeroableWhenTIsCopy&lt;T&gt; {
+  a: PhantomData&lt;T&gt;,
+}
+
+ZeroableWhenTIsCopy::&lt;String&gt;::zeroed();</code></pre></div>
+<p>The restriction that all fields must be Zeroable is still applied, and this
+is enforced using the mentioned “perfect derive” semantics.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[derive(Clone, Zeroable)]
+#[zeroable(bound = <span class="string">""</span>)]
+</span><span class="kw">struct </span>ZeroableWhenTIsZeroable&lt;T&gt; {
+  a: T,
+}
+ZeroableWhenTIsZeroable::&lt;u32&gt;::zeroed();</code></pre></div>
+
+<div class="example-wrap compile_fail"><a href="#" class="tooltip" title="This example deliberately fails to compile">ⓘ</a><pre class="rust rust-example-rendered"><code>ZeroableWhenTIsZeroable::&lt;String&gt;::zeroed();</code></pre></div>
+</div></details></section></div></main></body></html>

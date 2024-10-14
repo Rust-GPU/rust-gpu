@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"derive":["AnyBitPattern","ByteEq","ByteHash","CheckedBitPattern","Contiguous","NoUninit","Pod","TransparentWrapper","Zeroable"]};

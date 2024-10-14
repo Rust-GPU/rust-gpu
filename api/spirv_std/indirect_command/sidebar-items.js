@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["DispatchIndirectCommand","DrawIndexedIndirectCommand","DrawIndirectCommand","DrawMeshTasksIndirectCommandEXT","TraceRaysIndirectCommand2KHR","TraceRaysIndirectCommandKHR"],"type":["DeviceAddress","DeviceSize"]};
