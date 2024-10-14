@@ -120,6 +120,7 @@ There are a few different components to this repo:
 
 Historical and other related projects for compiling Rust code to GPUs.
 
+- [SPIR-V LLVM backend](https://llvm.org/docs/SPIRVUsage.html) compiles to OpenCL SPIR-V, which is not the same subset of capabilities as the Vulkan ones supported here
 - 2016: [glassful](https://github.com/kmcallister/glassful) Compiles a subset of Rust to GLSL.
 - 2017: [inspirv-rust](https://github.com/msiglreith/inspirv-rust) Experimental Rust to SPIR-V compiler.
 - 2018: [nvptx](https://github.com/japaric-archived/nvptx) Rust to PTX compiler.
