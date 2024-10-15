@@ -7,7 +7,7 @@ use spirv_std::arch::{GroupOperation, SubgroupMask};
 use spirv_std::spirv;
 
 unsafe fn subgroup_i_add_clustered(value: u32) -> u32 {
-    spirv_std::arch::subgroup_i_add_clustered::<8, _>(value)
+    spirv_std::arch::subgroup_clustered_add_i::<8, _>(value)
 }
 
 #[spirv(compute(threads(32, 1, 1)))]
