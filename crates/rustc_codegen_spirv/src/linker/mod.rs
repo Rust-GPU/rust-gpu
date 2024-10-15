@@ -58,10 +58,13 @@ pub struct Options {
     // NOTE(eddyb) these are debugging options that used to be env vars
     // (for more information see `docs/src/codegen-args.md`).
     pub dump_post_merge: Option<PathBuf>,
+    pub dump_pre_inline: Option<PathBuf>,
+    pub dump_post_inline: Option<PathBuf>,
     pub dump_post_split: Option<PathBuf>,
     pub dump_spirt_passes: Option<PathBuf>,
     pub spirt_strip_custom_debuginfo_from_dumps: bool,
     pub spirt_keep_debug_sources_in_dumps: bool,
+    pub spirt_keep_unstructured_cfg_in_dumps: bool,
     pub specializer_debug: bool,
     pub specializer_dump_instances: Option<PathBuf>,
     pub print_all_zombie: bool,
@@ -85,7 +88,10 @@ fn id(header: &mut ModuleHeader) -> Word {
     result
 }
 
-fn apply_rewrite_rules(rewrite_rules: &FxHashMap<Word, Word>, blocks: &mut [Block]) {
+fn apply_rewrite_rules<'a>(
+    rewrite_rules: &FxHashMap<Word, Word>,
+    blocks: impl IntoIterator<Item = &'a mut Block>,
+) {
     let apply = |inst: &mut Instruction| {
         if let Some(ref mut id) = &mut inst.result_id {
             if let Some(&rewrite) = rewrite_rules.get(id) {
@@ -149,6 +155,31 @@ fn get_name<'a>(names: &FxHashMap<Word, &'a str>, id: Word) -> Cow<'a, str> {
     )
 }
 
+impl Options {
+    // FIXME(eddyb) using a method on this type seems a bit sketchy.
+    fn spirt_cleanup_for_dumping(&self, module: &mut spirt::Module) {
+        if self.spirt_strip_custom_debuginfo_from_dumps {
+            spirt_passes::debuginfo::convert_custom_debuginfo_to_spv(module);
+        }
+        if !self.spirt_keep_debug_sources_in_dumps {
+            const DOTS: &str = "⋯";
+            let dots_interned_str = module.cx().intern(DOTS);
+            let spirt::ModuleDebugInfo::Spv(debuginfo) = &mut module.debug_info;
+            for sources in debuginfo.source_languages.values_mut() {
+                for file in sources.file_contents.values_mut() {
+                    *file = DOTS.into();
+                }
+                sources.file_contents.insert(
+                    dots_interned_str,
+                    "sources hidden, to show them use \
+                     `RUSTGPU_CODEGEN_ARGS=--spirt-keep-debug-sources-in-dumps`"
+                        .into(),
+                );
+            }
+        }
+    }
+}
+
 pub fn link(
     sess: &Session,
     mut inputs: Vec<Module>,
@@ -156,6 +187,66 @@ pub fn link(
     outputs: &OutputFilenames,
     disambiguated_crate_name_for_dumps: &OsStr,
 ) -> Result<LinkResult> {
+    // HACK(eddyb) this is defined here to allow SPIR-T pretty-printing to apply
+    // to SPIR-V being dumped, outside of e.g. `--dump-spirt-passes`.
+    // FIXME(eddyb) this isn't used everywhere, sadly - to find those, search
+    // elsewhere for `.assemble()` and/or `spirv_tools::binary::from_binary`.
+    let spv_module_to_spv_words_and_spirt_module = |spv_module: &Module| {
+        let spv_words;
+        let spv_bytes = {
+            let _timer = sess.timer("assemble-to-spv_bytes-for-spirt");
+            spv_words = spv_module.assemble();
+            // FIXME(eddyb) this is wastefully cloning all the bytes, but also
+            // `spirt::Module` should have a method that takes `Vec<u32>`.
+            spirv_tools::binary::from_binary(&spv_words).to_vec()
+        };
+
+        // FIXME(eddyb) should've really been "spirt::Module::lower_from_spv_bytes".
+        let _timer = sess.timer("spirt::Module::lower_from_spv_file");
+        let cx = std::rc::Rc::new(spirt::Context::new());
+        crate::custom_insts::register_to_spirt_context(&cx);
+        (
+            spv_words,
+            spirt::Module::lower_from_spv_bytes(cx, spv_bytes),
+        )
+    };
+
+    let dump_spv_and_spirt = |spv_module: &Module, dump_file_path_stem: PathBuf| {
+        let (spv_words, spirt_module_or_err) = spv_module_to_spv_words_and_spirt_module(spv_module);
+        std::fs::write(
+            dump_file_path_stem.with_extension("spv"),
+            spirv_tools::binary::from_binary(&spv_words),
+        )
+        .unwrap();
+
+        // FIXME(eddyb) reify SPIR-V -> SPIR-T errors so they're easier to debug.
+        if let Ok(mut module) = spirt_module_or_err {
+            // HACK(eddyb) avoid pretty-printing massive amounts of unused SPIR-T.
+            spirt::passes::link::minimize_exports(&mut module, |export_key| {
+                matches!(export_key, spirt::ExportKey::SpvEntryPoint { .. })
+            });
+
+            opts.spirt_cleanup_for_dumping(&mut module);
+
+            let pretty = spirt::print::Plan::for_module(&module).pretty_print();
+
+            // FIXME(eddyb) don't allocate whole `String`s here.
+            std::fs::write(
+                dump_file_path_stem.with_extension("spirt"),
+                pretty.to_string(),
+            )
+            .unwrap();
+            std::fs::write(
+                dump_file_path_stem.with_extension("spirt.html"),
+                pretty
+                    .render_to_html()
+                    .with_dark_mode_support()
+                    .to_html_doc(),
+            )
+            .unwrap();
+        }
+    };
+
     let mut output = {
         let _timer = sess.timer("link_merge");
         // shift all the ids
@@ -192,12 +283,7 @@ pub fn link(
     };
 
     if let Some(dir) = &opts.dump_post_merge {
-        std::fs::write(
-            dir.join(disambiguated_crate_name_for_dumps)
-                .with_extension("spv"),
-            spirv_tools::binary::from_binary(&output.assemble()),
-        )
-        .unwrap();
+        dump_spv_and_spirt(&output, dir.join(disambiguated_crate_name_for_dumps));
     }
 
     // remove duplicates (https://github.com/KhronosGroup/SPIRV-Tools/blob/e7866de4b1dc2a7e8672867caeb0bdca49f458d3/source/opt/remove_duplicates_pass.cpp)
@@ -335,6 +421,10 @@ pub fn link(
         duplicates::remove_duplicate_debuginfo(&mut output);
     }
 
+    if let Some(dir) = &opts.dump_pre_inline {
+        dump_spv_and_spirt(&output, dir.join(disambiguated_crate_name_for_dumps));
+    }
+
     {
         let _timer = sess.timer("link_inline");
         inline::inline(sess, &mut output)?;
@@ -343,6 +433,11 @@ pub fn link(
     if opts.dce {
         let _timer = sess.timer("link_dce-after-inlining");
         dce::dce(&mut output);
+    }
+
+    // HACK(eddyb) this has to be after DCE, to not break SPIR-T w/ dead decorations.
+    if let Some(dir) = &opts.dump_post_inline {
+        dump_spv_and_spirt(&output, dir.join(disambiguated_crate_name_for_dumps));
     }
 
     {
@@ -400,43 +495,32 @@ pub fn link(
             }
         };
 
-        let spv_words;
-        let spv_bytes = {
-            let _timer = sess.timer("assemble-to-spv_bytes-for-spirt");
-            spv_words = output.assemble();
-            // FIXME(eddyb) this is wastefully cloning all the bytes, but also
-            // `spirt::Module` should have a method that takes `Vec<u32>`.
-            spirv_tools::binary::from_binary(&spv_words).to_vec()
-        };
-        let cx = std::rc::Rc::new(spirt::Context::new());
-        crate::custom_insts::register_to_spirt_context(&cx);
-        let mut module = {
-            let _timer = sess.timer("spirt::Module::lower_from_spv_file");
-            match spirt::Module::lower_from_spv_bytes(cx.clone(), spv_bytes) {
-                Ok(module) => module,
-                Err(e) => {
-                    let spv_path = outputs.temp_path_ext("spirt-lower-from-spv-input.spv", None);
+        let (spv_words, module_or_err) = spv_module_to_spv_words_and_spirt_module(&output);
+        let mut module = module_or_err.map_err(|e| {
+            let spv_path = outputs.temp_path_ext("spirt-lower-from-spv-input.spv", None);
 
-                    let was_saved_msg = match std::fs::write(
-                        &spv_path,
-                        spirv_tools::binary::from_binary(&spv_words),
-                    ) {
-                        Ok(()) => format!("was saved to {}", spv_path.display()),
-                        Err(e) => format!("could not be saved: {e}"),
-                    };
+            let was_saved_msg =
+                match std::fs::write(&spv_path, spirv_tools::binary::from_binary(&spv_words)) {
+                    Ok(()) => format!("was saved to {}", spv_path.display()),
+                    Err(e) => format!("could not be saved: {e}"),
+                };
 
-                    return Err(sess
-                        .dcx()
-                        .struct_err(format!("{e}"))
-                        .with_note("while lowering SPIR-V module to SPIR-T (spirt::spv::lower)")
-                        .with_note(format!("input SPIR-V module {was_saved_msg}"))
-                        .emit());
-                }
-            }
-        };
-        after_pass("lower_from_spv", &module);
+            sess.dcx()
+                .struct_err(format!("{e}"))
+                .with_note("while lowering SPIR-V module to SPIR-T (spirt::spv::lower)")
+                .with_note(format!("input SPIR-V module {was_saved_msg}"))
+                .emit()
+        })?;
+        // HACK(eddyb) don't dump the unstructured state if not requested, as
+        // after SPIR-T 0.4.0 it's extremely verbose (due to def-use hermeticity).
+        if opts.spirt_keep_unstructured_cfg_in_dumps || !opts.structurize {
+            after_pass("lower_from_spv", &module);
+        }
 
         // NOTE(eddyb) this *must* run on unstructured CFGs, to do its job.
+        // FIXME(eddyb) no longer relying on structurization, try porting this
+        // to replace custom aborts in `Block`s and inject `ExitInvocation`s
+        // after them (truncating the `Block` and/or parent region if necessary).
         {
             let _timer = sess.timer("spirt_passes::controlflow::convert_custom_aborts_to_unstructured_returns_in_entry_points");
             spirt_passes::controlflow::convert_custom_aborts_to_unstructured_returns_in_entry_points(opts, &mut module);
@@ -491,31 +575,12 @@ pub fn link(
         // NOTE(eddyb) this should be *before* `lift_to_spv` below,
         // so if that fails, the dump could be used to debug it.
         if let Some(dump_spirt_file_path) = &dump_spirt_file_path {
-            if opts.spirt_strip_custom_debuginfo_from_dumps {
-                for (_, module) in &mut per_pass_module_for_dumping {
-                    spirt_passes::debuginfo::convert_custom_debuginfo_to_spv(module);
-                }
-            }
-            if !opts.spirt_keep_debug_sources_in_dumps {
-                for (_, module) in &mut per_pass_module_for_dumping {
-                    let spirt::ModuleDebugInfo::Spv(debuginfo) = &mut module.debug_info;
-                    for sources in debuginfo.source_languages.values_mut() {
-                        const DOTS: &str = "⋯";
-                        for file in sources.file_contents.values_mut() {
-                            *file = DOTS.into();
-                        }
-                        sources.file_contents.insert(
-                            cx.intern(DOTS),
-                            "sources hidden, to show them use \
-                             `RUSTGPU_CODEGEN_ARGS=--spirt-keep-debug-sources-in-dumps`"
-                                .into(),
-                        );
-                    }
-                }
+            for (_, module) in &mut per_pass_module_for_dumping {
+                opts.spirt_cleanup_for_dumping(module);
             }
 
             let plan = spirt::print::Plan::for_versions(
-                &cx,
+                module.cx_ref(),
                 per_pass_module_for_dumping
                     .iter()
                     .map(|(pass, module)| (format!("after {pass}"), module)),
@@ -687,13 +752,8 @@ pub fn link(
                 file_name.push(".");
                 file_name.push(file_stem);
             }
-            file_name.push(".spv");
 
-            std::fs::write(
-                dir.join(file_name),
-                spirv_tools::binary::from_binary(&output.assemble()),
-            )
-            .unwrap();
+            dump_spv_and_spirt(output, dir.join(file_name));
         }
         // Run DCE again, even if module_output_type == ModuleOutputType::Multiple - the first DCE ran before
         // structurization and mem2reg (for perf reasons), and mem2reg may remove references to

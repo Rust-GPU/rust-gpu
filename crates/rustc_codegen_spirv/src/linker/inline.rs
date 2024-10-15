@@ -8,16 +8,16 @@ use super::apply_rewrite_rules;
 use super::ipo::CallGraph;
 use super::simple_passes::outgoing_edges;
 use super::{get_name, get_names};
+use crate::custom_decorations::SpanRegenerator;
 use crate::custom_insts::{self, CustomInst, CustomOp};
 use rspirv::dr::{Block, Function, Instruction, Module, ModuleHeader, Operand};
 use rspirv::spirv::{FunctionControl, Op, StorageClass, Word};
-use rustc_data_structures::fx::{FxHashMap, FxHashSet};
+use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexMap, FxIndexSet};
 use rustc_errors::ErrorGuaranteed;
 use rustc_session::Session;
 use smallvec::SmallVec;
-use std::mem::{self, take};
-
-type FunctionMap = FxHashMap<Word, Function>;
+use std::cmp::Ordering;
+use std::mem;
 
 // FIXME(eddyb) this is a bit silly, but this keeps being repeated everywhere.
 fn next_id(header: &mut ModuleHeader) -> Word {
@@ -30,6 +30,9 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
     // This algorithm gets real sad if there's recursion - but, good news, SPIR-V bans recursion
     deny_recursion_in_module(sess, module)?;
 
+    // Compute the call-graph that will drive (inside-out, aka bottom-up) inlining.
+    let (call_graph, func_id_to_idx) = CallGraph::collect_with_func_id_to_idx(module);
+
     let custom_ext_inst_set_import = module
         .ext_inst_imports
         .iter()
@@ -39,92 +42,10 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
         })
         .map(|inst| inst.result_id.unwrap());
 
-    // HACK(eddyb) compute the set of functions that may `Abort` *transitively*,
-    // which is only needed because of how we inline (sometimes it's outside-in,
-    // aka top-down, instead of always being inside-out, aka bottom-up).
-    //
-    // (inlining is needed in the first place because our custom `Abort`
-    // instructions get lowered to a simple `OpReturn` in entry-points, but
-    // that requires that they get inlined all the way up to the entry-points)
-    let functions_that_may_abort = custom_ext_inst_set_import
-        .map(|custom_ext_inst_set_import| {
-            let mut may_abort_by_id = FxHashSet::default();
-
-            // FIXME(eddyb) use this `CallGraph` abstraction more during inlining.
-            let call_graph = CallGraph::collect(module);
-            for func_idx in call_graph.post_order() {
-                let func_id = module.functions[func_idx].def_id().unwrap();
-
-                let any_callee_may_abort = call_graph.callees[func_idx].iter().any(|&callee_idx| {
-                    may_abort_by_id.contains(&module.functions[callee_idx].def_id().unwrap())
-                });
-                if any_callee_may_abort {
-                    may_abort_by_id.insert(func_id);
-                    continue;
-                }
-
-                let may_abort_directly = module.functions[func_idx].blocks.iter().any(|block| {
-                    match &block.instructions[..] {
-                        [.., last_normal_inst, terminator_inst]
-                            if last_normal_inst.class.opcode == Op::ExtInst
-                                && last_normal_inst.operands[0].unwrap_id_ref()
-                                    == custom_ext_inst_set_import
-                                && CustomOp::decode_from_ext_inst(last_normal_inst)
-                                    == CustomOp::Abort =>
-                        {
-                            assert_eq!(terminator_inst.class.opcode, Op::Unreachable);
-                            true
-                        }
-
-                        _ => false,
-                    }
-                });
-                if may_abort_directly {
-                    may_abort_by_id.insert(func_id);
-                }
-            }
-
-            may_abort_by_id
-        })
-        .unwrap_or_default();
-
-    let functions = module
-        .functions
-        .iter()
-        .map(|f| (f.def_id().unwrap(), f.clone()))
-        .collect();
     let legal_globals = LegalGlobal::gather_from_module(module);
 
-    // Drop all the functions we'll be inlining. (This also means we won't waste time processing
-    // inlines in functions that will get inlined)
-    let mut dropped_ids = FxHashSet::default();
-    let mut inlined_to_legalize_dont_inlines = Vec::new();
-    module.functions.retain(|f| {
-        let should_inline_f = should_inline(&legal_globals, &functions_that_may_abort, f, None);
-        if should_inline_f != Ok(false) {
-            if should_inline_f == Err(MustInlineToLegalize) && has_dont_inline(f) {
-                inlined_to_legalize_dont_inlines.push(f.def_id().unwrap());
-            }
-            // TODO: We should insert all defined IDs in this function.
-            dropped_ids.insert(f.def_id().unwrap());
-            false
-        } else {
-            true
-        }
-    });
-
-    if !inlined_to_legalize_dont_inlines.is_empty() {
-        let names = get_names(module);
-        for f in inlined_to_legalize_dont_inlines {
-            sess.dcx().warn(format!(
-                "`#[inline(never)]` function `{}` needs to be inlined \
-                 because it has illegal argument or return types",
-                get_name(&names, f)
-            ));
-        }
-    }
-
     let header = module.header.as_mut().unwrap();
+
     // FIXME(eddyb) clippy false positive (separate `map` required for borrowck).
     #[allow(clippy::map_unwrap_or)]
     let mut inliner = Inliner {
@@ -154,6 +75,8 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
             id
         }),
 
+        func_id_to_idx,
+
         id_to_name: module
             .debug_names
             .iter()
@@ -171,24 +94,102 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
         header,
         debug_string_source: &mut module.debug_string_source,
         annotations: &mut module.annotations,
-        types_global_values: &mut module.types_global_values,
 
-        functions: &functions,
-        legal_globals: &legal_globals,
-        functions_that_may_abort: &functions_that_may_abort,
+        legal_globals,
+
+        // NOTE(eddyb) this is needed because our custom `Abort` instructions get
+        // lowered to a simple `OpReturn` in entry-points, but that requires that
+        // they get inlined all the way up to the entry-points in the first place.
+        functions_that_may_abort: module
+            .functions
+            .iter()
+            .filter_map(|func| {
+                let custom_ext_inst_set_import = custom_ext_inst_set_import?;
+                func.blocks
+                    .iter()
+                    .any(|block| match &block.instructions[..] {
+                        [.., last_normal_inst, terminator_inst]
+                            if last_normal_inst.class.opcode == Op::ExtInst
+                                && last_normal_inst.operands[0].unwrap_id_ref()
+                                    == custom_ext_inst_set_import
+                                && CustomOp::decode_from_ext_inst(last_normal_inst)
+                                    == CustomOp::Abort =>
+                        {
+                            assert_eq!(terminator_inst.class.opcode, Op::Unreachable);
+                            true
+                        }
+
+                        _ => false,
+                    })
+                    .then_some(func.def_id().unwrap())
+            })
+            .collect(),
+
+        inlined_dont_inlines_to_cause_and_callers: FxIndexMap::default(),
     };
-    for function in &mut module.functions {
-        inliner.inline_fn(function);
-        fuse_trivial_branches(function);
+
+    let mut functions: Vec<_> = mem::take(&mut module.functions)
+        .into_iter()
+        .map(Ok)
+        .collect();
+
+    // Inline functions in post-order (aka inside-out aka bottom-out) - that is,
+    // callees are processed before their callers, to avoid duplicating work.
+    for func_idx in call_graph.post_order() {
+        let mut function = mem::replace(&mut functions[func_idx], Err(FuncIsBeingInlined)).unwrap();
+        inliner.inline_fn(&mut function, &functions);
+        fuse_trivial_branches(&mut function);
+        functions[func_idx] = Ok(function);
     }
 
-    // Drop OpName etc. for inlined functions
-    module.debug_names.retain(|inst| {
-        !inst.operands.iter().any(|op| {
-            op.id_ref_any()
-                .map_or(false, |id| dropped_ids.contains(&id))
-        })
-    });
+    module.functions = functions.into_iter().map(|func| func.unwrap()).collect();
+
+    let Inliner {
+        id_to_name,
+        inlined_dont_inlines_to_cause_and_callers,
+        ..
+    } = inliner;
+
+    let mut span_regen = SpanRegenerator::new(sess.source_map(), module);
+    for (callee_id, (cause, callers)) in inlined_dont_inlines_to_cause_and_callers {
+        let callee_name = get_name(&id_to_name, callee_id);
+
+        // HACK(eddyb) `libcore` hides panics behind `#[inline(never)]` `fn`s,
+        // making this too noisy and useless (since it's an impl detail).
+        if cause == "panicking" && callee_name.starts_with("core::") {
+            continue;
+        }
+
+        let callee_span = span_regen
+            .src_loc_for_id(callee_id)
+            .and_then(|src_loc| span_regen.src_loc_to_rustc(src_loc))
+            .unwrap_or_default();
+        sess.dcx()
+            .struct_span_warn(
+                callee_span,
+                format!("`#[inline(never)]` function `{callee_name}` has been inlined"),
+            )
+            .with_note(format!("inlining was required due to {cause}"))
+            .with_note(format!(
+                "called from {}",
+                callers
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(i, &caller_id)| {
+                        // HACK(eddyb) avoid showing too many names.
+                        match i.cmp(&4) {
+                            Ordering::Less => {
+                                Some(format!("`{}`", get_name(&id_to_name, caller_id)))
+                            }
+                            Ordering::Equal => Some(format!("and {} more", callers.len() - i)),
+                            Ordering::Greater => None,
+                        }
+                    })
+                    .collect::<SmallVec<[_; 5]>>()
+                    .join(", ")
+            ))
+            .emit();
+    }
 
     Ok(())
 }
@@ -371,42 +372,42 @@ fn has_dont_inline(function: &Function) -> bool {
 
 /// Helper error type for `should_inline` (see its doc comment).
 #[derive(Copy, Clone, PartialEq, Eq)]
-struct MustInlineToLegalize;
+struct MustInlineToLegalize(&'static str);
 
-/// Returns `Ok(true)`/`Err(MustInlineToLegalize)` if `callee` should/must be
+/// Returns `Ok(true)`/`Err(MustInlineToLegalize(_))` if `callee` should/must be
 /// inlined (either in general, or specifically from `call_site`, if provided).
 ///
-/// The distinction made is that `Err(MustInlineToLegalize)` is not a heuristic,
-/// and inlining is *mandatory* due to an illegal signature/arguments.
+/// The distinction made here is that `Err(MustInlineToLegalize(cause))` is
+/// very much *not* a heuristic, and inlining is *mandatory* due to `cause`
+/// (usually illegal signature/arguments, but also the panicking mechanism).
+//
+// FIXME(eddyb) the causes here are not fine-grained enough.
 fn should_inline(
     legal_globals: &FxHashMap<Word, LegalGlobal>,
     functions_that_may_abort: &FxHashSet<Word>,
     callee: &Function,
-    call_site: Option<CallSite<'_>>,
+    call_site: CallSite<'_>,
 ) -> Result<bool, MustInlineToLegalize> {
     let callee_def = callee.def.as_ref().unwrap();
     let callee_control = callee_def.operands[0].unwrap_function_control();
 
-    // HACK(eddyb) this "has a call-site" check ensures entry-points don't get
-    // accidentally removed as "must inline to legalize" function, but can still
-    // be inlined into other entry-points (if such an unusual situation arises).
-    if call_site.is_some() && functions_that_may_abort.contains(&callee.def_id().unwrap()) {
-        return Err(MustInlineToLegalize);
+    if functions_that_may_abort.contains(&callee.def_id().unwrap()) {
+        return Err(MustInlineToLegalize("panicking"));
     }
 
     let ret_ty = legal_globals
         .get(&callee_def.result_type.unwrap())
-        .ok_or(MustInlineToLegalize)?;
+        .ok_or(MustInlineToLegalize("illegal return type"))?;
     if !ret_ty.legal_as_fn_ret_ty() {
-        return Err(MustInlineToLegalize);
+        return Err(MustInlineToLegalize("illegal (pointer) return type"));
     }
 
     for (i, param) in callee.parameters.iter().enumerate() {
         let param_ty = legal_globals
             .get(param.result_type.as_ref().unwrap())
-            .ok_or(MustInlineToLegalize)?;
+            .ok_or(MustInlineToLegalize("illegal parameter type"))?;
         if !param_ty.legal_as_fn_param_ty() {
-            return Err(MustInlineToLegalize);
+            return Err(MustInlineToLegalize("illegal (pointer) parameter type"));
         }
 
         // If the call isn't passing a legal pointer argument (a "memory object",
@@ -414,13 +415,13 @@ fn should_inline(
         // then inlining is required to have a chance at producing legal SPIR-V.
         //
         // FIXME(eddyb) rewriting away the pointer could be another alternative.
-        if let (LegalGlobal::TypePointer(_), Some(call_site)) = (param_ty, call_site) {
+        if let LegalGlobal::TypePointer(_) = param_ty {
             let ptr_arg = call_site.call_inst.operands[i + 1].unwrap_id_ref();
             match legal_globals.get(&ptr_arg) {
                 Some(LegalGlobal::Variable) => {}
 
                 // FIXME(eddyb) should some constants (undef/null) be allowed?
-                Some(_) => return Err(MustInlineToLegalize),
+                Some(_) => return Err(MustInlineToLegalize("illegal (pointer) argument")),
 
                 None => {
                     let mut caller_param_and_var_ids = call_site
@@ -446,7 +447,7 @@ fn should_inline(
                         .map(|caller_inst| caller_inst.result_id.unwrap());
 
                     if !caller_param_and_var_ids.any(|id| ptr_arg == id) {
-                        return Err(MustInlineToLegalize);
+                        return Err(MustInlineToLegalize("illegal (pointer) argument"));
                     }
                 }
             }
@@ -456,38 +457,45 @@ fn should_inline(
     Ok(callee_control.contains(FunctionControl::INLINE))
 }
 
+/// Helper error type for `Inliner`'s `functions` field, indicating a `Function`
+/// was taken out of its slot because it's being inlined.
+#[derive(Debug)]
+struct FuncIsBeingInlined;
+
 // Steps:
 // Move OpVariable decls
 // Rewrite return
 // Renumber IDs
 // Insert blocks
 
-struct Inliner<'m, 'map> {
+struct Inliner<'a, 'b> {
     /// ID of `OpExtInstImport` for our custom "extended instruction set"
     /// (see `crate::custom_insts` for more details).
     custom_ext_inst_set_import: Word,
 
     op_type_void_id: Word,
 
+    /// Map from each function's ID to its index in `functions`.
+    func_id_to_idx: FxHashMap<Word, usize>,
+
     /// Pre-collected `OpName`s, that can be used to find any function's name
     /// during inlining (to be able to generate debuginfo that uses names).
-    id_to_name: FxHashMap<Word, &'m str>,
+    id_to_name: FxHashMap<Word, &'a str>,
 
     /// `OpString` cache (for deduplicating `OpString`s for the same string).
     //
     // FIXME(eddyb) currently this doesn't reuse existing `OpString`s, but since
     // this is mostly for inlined callee names, it's expected almost no overlap
     // exists between existing `OpString`s and new ones, anyway.
-    cached_op_strings: FxHashMap<&'m str, Word>,
+    cached_op_strings: FxHashMap<&'a str, Word>,
 
-    header: &'m mut ModuleHeader,
-    debug_string_source: &'m mut Vec<Instruction>,
-    annotations: &'m mut Vec<Instruction>,
-    types_global_values: &'m mut Vec<Instruction>,
+    header: &'b mut ModuleHeader,
+    debug_string_source: &'b mut Vec<Instruction>,
+    annotations: &'b mut Vec<Instruction>,
 
-    functions: &'map FunctionMap,
-    legal_globals: &'map FxHashMap<Word, LegalGlobal>,
-    functions_that_may_abort: &'map FxHashSet<Word>,
+    legal_globals: FxHashMap<Word, LegalGlobal>,
+    functions_that_may_abort: FxHashSet<Word>,
+    inlined_dont_inlines_to_cause_and_callers: FxIndexMap<Word, (&'static str, FxIndexSet<Word>)>,
     // rewrite_rules: FxHashMap<Word, Word>,
 }
 
@@ -513,42 +521,29 @@ impl Inliner<'_, '_> {
         }
     }
 
-    fn ptr_ty(&mut self, pointee: Word) -> Word {
-        // TODO: This is horribly slow, fix this
-        let existing = self.types_global_values.iter().find(|inst| {
-            inst.class.opcode == Op::TypePointer
-                && inst.operands[0].unwrap_storage_class() == StorageClass::Function
-                && inst.operands[1].unwrap_id_ref() == pointee
-        });
-        if let Some(existing) = existing {
-            return existing.result_id.unwrap();
-        }
-        let inst_id = self.id();
-        self.types_global_values.push(Instruction::new(
-            Op::TypePointer,
-            None,
-            Some(inst_id),
-            vec![
-                Operand::StorageClass(StorageClass::Function),
-                Operand::IdRef(pointee),
-            ],
-        ));
-        inst_id
-    }
-
-    fn inline_fn(&mut self, function: &mut Function) {
+    fn inline_fn(
+        &mut self,
+        function: &mut Function,
+        functions: &[Result<Function, FuncIsBeingInlined>],
+    ) {
         let mut block_idx = 0;
         while block_idx < function.blocks.len() {
             // If we successfully inlined a block, then repeat processing on the same block, in
             // case the newly inlined block has more inlined calls.
             // TODO: This is quadratic
-            if !self.inline_block(function, block_idx) {
+            if !self.inline_block(function, block_idx, functions) {
+                // TODO(eddyb) skip past the inlined callee without rescanning it.
                 block_idx += 1;
             }
         }
     }
 
-    fn inline_block(&mut self, caller: &mut Function, block_idx: usize) -> bool {
+    fn inline_block(
+        &mut self,
+        caller: &mut Function,
+        block_idx: usize,
+        functions: &[Result<Function, FuncIsBeingInlined>],
+    ) -> bool {
         // Find the first inlined OpFunctionCall
         let call = caller.blocks[block_idx]
             .instructions
@@ -559,8 +554,8 @@ impl Inliner<'_, '_> {
                 (
                     index,
                     inst,
-                    self.functions
-                        .get(&inst.operands[0].id_ref_any().unwrap())
+                    functions[self.func_id_to_idx[&inst.operands[0].id_ref_any().unwrap()]]
+                        .as_ref()
                         .unwrap(),
                 )
             })
@@ -570,40 +565,74 @@ impl Inliner<'_, '_> {
                     call_inst: inst,
                 };
                 match should_inline(
-                    self.legal_globals,
-                    self.functions_that_may_abort,
+                    &self.legal_globals,
+                    &self.functions_that_may_abort,
                     f,
-                    Some(call_site),
+                    call_site,
                 ) {
                     Ok(inline) => inline,
-                    Err(MustInlineToLegalize) => true,
+                    Err(MustInlineToLegalize(cause)) => {
+                        if has_dont_inline(f) {
+                            self.inlined_dont_inlines_to_cause_and_callers
+                                .entry(f.def_id().unwrap())
+                                .or_insert_with(|| (cause, Default::default()))
+                                .1
+                                .insert(caller.def_id().unwrap());
+                        }
+                        true
+                    }
                 }
             });
         let (call_index, call_inst, callee) = match call {
             None => return false,
             Some(call) => call,
         };
-        let call_result_type = {
+
+        // Propagate "may abort" from callee to caller (i.e. as aborts get inlined).
+        if self
+            .functions_that_may_abort
+            .contains(&callee.def_id().unwrap())
+        {
+            self.functions_that_may_abort
+                .insert(caller.def_id().unwrap());
+        }
+
+        let mut maybe_call_result_phi = {
             let ty = call_inst.result_type.unwrap();
             if ty == self.op_type_void_id {
                 None
             } else {
-                Some(ty)
+                Some(Instruction::new(
+                    Op::Phi,
+                    Some(ty),
+                    Some(call_inst.result_id.unwrap()),
+                    vec![],
+                ))
             }
         };
-        let call_result_id = call_inst.result_id.unwrap();
 
-        // Get the debuginfo instructions that apply to the call.
+        // Get the debug "source location" instruction that applies to the call.
         let custom_ext_inst_set_import = self.custom_ext_inst_set_import;
-        let call_debug_insts = caller.blocks[block_idx].instructions[..call_index]
+        let call_debug_src_loc_inst = caller.blocks[block_idx].instructions[..call_index]
             .iter()
-            .filter(|inst| match inst.class.opcode {
-                Op::Line | Op::NoLine => true,
-                Op::ExtInst if inst.operands[0].unwrap_id_ref() == custom_ext_inst_set_import => {
-                    CustomOp::decode_from_ext_inst(inst).is_debuginfo()
-                }
-                _ => false,
-            });
+            .rev()
+            .find_map(|inst| {
+                Some(match inst.class.opcode {
+                    Op::Line => Some(inst),
+                    Op::NoLine => None,
+                    Op::ExtInst
+                        if inst.operands[0].unwrap_id_ref() == custom_ext_inst_set_import =>
+                    {
+                        match CustomOp::decode_from_ext_inst(inst) {
+                            CustomOp::SetDebugSrcLoc => Some(inst),
+                            CustomOp::ClearDebugSrcLoc => None,
+                            _ => return None,
+                        }
+                    }
+                    _ => return None,
+                })
+            })
+            .flatten();
 
         // Rewrite parameters to arguments
         let call_arguments = call_inst
@@ -617,21 +646,68 @@ impl Inliner<'_, '_> {
         });
         let mut rewrite_rules = callee_parameters.zip(call_arguments).collect();
 
-        let return_variable = if call_result_type.is_some() {
-            Some(self.id())
-        } else {
-            None
-        };
         let return_jump = self.id();
         // Rewrite OpReturns of the callee.
-        #[allow(clippy::needless_borrow)]
-        let (mut inlined_callee_blocks, extra_debug_insts_pre_call, extra_debug_insts_post_call) =
-            self.get_inlined_blocks(&callee, call_debug_insts, return_variable, return_jump);
+        let mut inlined_callee_blocks = self.get_inlined_blocks(
+            callee,
+            call_debug_src_loc_inst,
+            maybe_call_result_phi.as_mut(),
+            return_jump,
+        );
         // Clone the IDs of the callee, because otherwise they'd be defined multiple times if the
         // fn is inlined multiple times.
         self.add_clone_id_rules(&mut rewrite_rules, &inlined_callee_blocks);
         apply_rewrite_rules(&rewrite_rules, &mut inlined_callee_blocks);
         self.apply_rewrite_for_decorations(&rewrite_rules);
+
+        if let Some(call_result_phi) = &mut maybe_call_result_phi {
+            // HACK(eddyb) new IDs should be generated earlier, to avoid pushing
+            // callee IDs to `call_result_phi.operands` only to rewrite them here.
+            for op in &mut call_result_phi.operands {
+                if let Some(id) = op.id_ref_any_mut() {
+                    if let Some(&rewrite) = rewrite_rules.get(id) {
+                        *id = rewrite;
+                    }
+                }
+            }
+
+            // HACK(eddyb) this special-casing of the single-return case is
+            // really necessary for passes like `mem2reg` which are not capable
+            // of skipping through the extraneous `OpPhi`s on their own.
+            if let [returned_value, _return_block] = &call_result_phi.operands[..] {
+                let call_result_id = call_result_phi.result_id.unwrap();
+                let returned_value_id = returned_value.unwrap_id_ref();
+
+                maybe_call_result_phi = None;
+
+                // HACK(eddyb) this is a conservative approximation of all the
+                // instructions that could potentially reference the call result.
+                let reaching_insts = {
+                    let (pre_call_blocks, call_and_post_call_blocks) =
+                        caller.blocks.split_at_mut(block_idx);
+                    (pre_call_blocks.iter_mut().flat_map(|block| {
+                        block
+                            .instructions
+                            .iter_mut()
+                            .take_while(|inst| inst.class.opcode == Op::Phi)
+                    }))
+                    .chain(
+                        call_and_post_call_blocks
+                            .iter_mut()
+                            .flat_map(|block| &mut block.instructions),
+                    )
+                };
+                for reaching_inst in reaching_insts {
+                    for op in &mut reaching_inst.operands {
+                        if let Some(id) = op.id_ref_any_mut() {
+                            if *id == call_result_id {
+                                *id = returned_value_id;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         // Split the block containing the `OpFunctionCall` into pre-call vs post-call.
         let pre_call_block_idx = block_idx;
@@ -648,27 +724,6 @@ impl Inliner<'_, '_> {
             .unwrap();
         assert!(call.class.opcode == Op::FunctionCall);
 
-        // HACK(eddyb) inject the additional debuginfo instructions generated by
-        // `get_inlined_blocks`, so the inlined call frame "stack" isn't corrupted.
-        caller.blocks[pre_call_block_idx]
-            .instructions
-            .extend(extra_debug_insts_pre_call);
-        post_call_block_insts.splice(0..0, extra_debug_insts_post_call);
-
-        if let Some(call_result_type) = call_result_type {
-            // Generate the storage space for the return value: Do this *after* the split above,
-            // because if block_idx=0, inserting a variable here shifts call_index.
-            insert_opvariables(
-                &mut caller.blocks[0],
-                [Instruction::new(
-                    Op::Variable,
-                    Some(self.ptr_ty(call_result_type)),
-                    Some(return_variable.unwrap()),
-                    vec![Operand::StorageClass(StorageClass::Function)],
-                )],
-            );
-        }
-
         // Insert non-entry inlined callee blocks just after the pre-call block.
         let non_entry_inlined_callee_blocks = inlined_callee_blocks.drain(1..);
         let num_non_entry_inlined_callee_blocks = non_entry_inlined_callee_blocks.len();
@@ -677,18 +732,9 @@ impl Inliner<'_, '_> {
             non_entry_inlined_callee_blocks,
         );
 
-        if let Some(call_result_type) = call_result_type {
-            // Add the load of the result value after the inlined function. Note there's guaranteed no
-            // OpPhi instructions since we just split this block.
-            post_call_block_insts.insert(
-                0,
-                Instruction::new(
-                    Op::Load,
-                    Some(call_result_type),
-                    Some(call_result_id),
-                    vec![Operand::IdRef(return_variable.unwrap())],
-                ),
-            );
+        if let Some(call_result_phi) = maybe_call_result_phi {
+            // Add the `OpPhi` for the call result value, after the inlined function.
+            post_call_block_insts.insert(0, call_result_phi);
         }
 
         // Insert the post-call block, after all the inlined callee blocks.
@@ -712,52 +758,115 @@ impl Inliner<'_, '_> {
         // Fuse the inlined callee entry block into the pre-call block.
         // This is okay because it's illegal to branch to the first BB in a function.
         {
+            // NOTE(eddyb) `OpExtInst`s have a result ID, even if unused, and
+            // it has to be unique, so this allocates new IDs as-needed.
+            let instantiate_debuginfo = |this: &mut Self, inst: &Instruction| {
+                let mut inst = inst.clone();
+                if let Some(id) = &mut inst.result_id {
+                    *id = this.id();
+                }
+                inst
+            };
+
+            let custom_inst_to_inst = |this: &mut Self, inst: CustomInst<_>| {
+                Instruction::new(
+                    Op::ExtInst,
+                    Some(this.op_type_void_id),
+                    Some(this.id()),
+                    [
+                        Operand::IdRef(this.custom_ext_inst_set_import),
+                        Operand::LiteralExtInstInteger(inst.op() as u32),
+                    ]
+                    .into_iter()
+                    .chain(inst.into_operands())
+                    .collect(),
+                )
+            };
+
             // Return the subsequence of `insts` made from `OpVariable`s, and any
             // debuginfo instructions (which may apply to them), while removing
             // *only* `OpVariable`s from `insts` (and keeping debuginfo in both).
             let mut steal_vars = |insts: &mut Vec<Instruction>| {
-                let mut vars_and_debuginfo = vec![];
-                insts.retain_mut(|inst| {
-                    let is_debuginfo = match inst.class.opcode {
-                        Op::Line | Op::NoLine => true,
-                        Op::ExtInst => {
-                            inst.operands[0].unwrap_id_ref() == self.custom_ext_inst_set_import
-                                && CustomOp::decode_from_ext_inst(inst).is_debuginfo()
+                // HACK(eddyb) this duplicates some code from `get_inlined_blocks`,
+                // but that will be removed once the inliner is refactored to be
+                // inside-out instead of outside-in (already finished in a branch).
+                let mut enclosing_inlined_frames = SmallVec::<[_; 8]>::new();
+                let mut current_debug_src_loc_inst = None;
+                let mut vars_and_debuginfo_range = 0..0;
+                while vars_and_debuginfo_range.end < insts.len() {
+                    let inst = &insts[vars_and_debuginfo_range.end];
+                    match inst.class.opcode {
+                        Op::Line => current_debug_src_loc_inst = Some(inst),
+                        Op::NoLine => current_debug_src_loc_inst = None,
+                        Op::ExtInst
+                            if inst.operands[0].unwrap_id_ref()
+                                == self.custom_ext_inst_set_import =>
+                        {
+                            match CustomOp::decode_from_ext_inst(inst) {
+                                CustomOp::SetDebugSrcLoc => current_debug_src_loc_inst = Some(inst),
+                                CustomOp::ClearDebugSrcLoc => current_debug_src_loc_inst = None,
+                                CustomOp::PushInlinedCallFrame => {
+                                    enclosing_inlined_frames
+                                        .push((current_debug_src_loc_inst.take(), inst));
+                                }
+                                CustomOp::PopInlinedCallFrame => {
+                                    if let Some((callsite_debug_src_loc_inst, _)) =
+                                        enclosing_inlined_frames.pop()
+                                    {
+                                        current_debug_src_loc_inst = callsite_debug_src_loc_inst;
+                                    }
+                                }
+                                CustomOp::Abort => break,
+                            }
                         }
-                        _ => false,
-                    };
-                    if is_debuginfo {
-                        // NOTE(eddyb) `OpExtInst`s have a result ID,
-                        // even if unused, and it has to be unique.
-                        let mut inst = inst.clone();
-                        if let Some(id) = &mut inst.result_id {
-                            *id = self.id();
-                        }
-                        vars_and_debuginfo.push(inst);
-                        true
-                    } else if inst.class.opcode == Op::Variable {
-                        // HACK(eddyb) we're removing this `Instruction` from
-                        // `inst`, so it doesn't really matter what we use here.
-                        vars_and_debuginfo.push(mem::replace(
-                            inst,
-                            Instruction::new(Op::Nop, None, None, vec![]),
-                        ));
-                        false
-                    } else {
-                        true
+                        Op::Variable => {}
+                        _ => break,
                     }
-                });
-                vars_and_debuginfo
+                    vars_and_debuginfo_range.end += 1;
+                }
+
+                // `vars_and_debuginfo_range.end` indicates where `OpVariable`s
+                // end and other instructions start (module debuginfo), but to
+                // split the block in two, both sides of the "cut" need "repair":
+                // - the variables are missing "inlined call frames" pops, that
+                //   may happen later in the block, and have to be synthesized
+                // - the non-variables are missing "inlined call frames" pushes,
+                //   that must be recreated to avoid ending up with dangling pops
+                //
+                // FIXME(eddyb) this only collects to avoid borrow conflicts,
+                // between e.g. `enclosing_inlined_frames` and mutating `insts`,
+                // but also between different uses of `self`.
+                let all_pops_after_vars: SmallVec<[_; 8]> = enclosing_inlined_frames
+                    .iter()
+                    .map(|_| custom_inst_to_inst(self, CustomInst::PopInlinedCallFrame))
+                    .collect();
+                let all_repushes_before_non_vars: SmallVec<[_; 8]> =
+                    (enclosing_inlined_frames.into_iter().flat_map(
+                        |(callsite_debug_src_loc_inst, push_inlined_call_frame_inst)| {
+                            (callsite_debug_src_loc_inst.into_iter())
+                                .chain([push_inlined_call_frame_inst])
+                        },
+                    ))
+                    .chain(current_debug_src_loc_inst)
+                    .map(|inst| instantiate_debuginfo(self, inst))
+                    .collect();
+
+                let vars_and_debuginfo =
+                    insts.splice(vars_and_debuginfo_range, all_repushes_before_non_vars);
+                let repaired_vars_and_debuginfo = vars_and_debuginfo.chain(all_pops_after_vars);
+
+                // FIXME(eddyb) collecting shouldn't be necessary but this is
+                // nested in a closure, and `splice` borrows the original `Vec`.
+                repaired_vars_and_debuginfo.collect::<SmallVec<[_; 8]>>()
             };
 
             let [mut inlined_callee_entry_block]: [_; 1] =
                 inlined_callee_blocks.try_into().unwrap();
 
             // Move the `OpVariable`s of the callee to the caller.
-            insert_opvariables(
-                &mut caller.blocks[0],
-                steal_vars(&mut inlined_callee_entry_block.instructions),
-            );
+            let callee_vars_and_debuginfo =
+                steal_vars(&mut inlined_callee_entry_block.instructions);
+            self.insert_opvariables(&mut caller.blocks[0], callee_vars_and_debuginfo);
 
             caller.blocks[pre_call_block_idx]
                 .instructions
@@ -788,57 +897,18 @@ impl Inliner<'_, '_> {
         }
     }
 
-    // HACK(eddyb) the second and third return values are additional debuginfo
-    // instructions that need to be inserted just before/after the callsite.
-    fn get_inlined_blocks<'a>(
+    fn get_inlined_blocks(
         &mut self,
         callee: &Function,
-        call_debug_insts: impl Iterator<Item = &'a Instruction>,
-        return_variable: Option<Word>,
+        call_debug_src_loc_inst: Option<&Instruction>,
+        mut maybe_call_result_phi: Option<&mut Instruction>,
         return_jump: Word,
-    ) -> (
-        Vec<Block>,
-        SmallVec<[Instruction; 8]>,
-        SmallVec<[Instruction; 8]>,
-    ) {
+    ) -> Vec<Block> {
         let Self {
             custom_ext_inst_set_import,
             op_type_void_id,
             ..
         } = *self;
-
-        // HACK(eddyb) this is terrible, but we have to deal with it because of
-        // how this inliner is outside-in, instead of inside-out, meaning that
-        // context builds up "outside" of the callee blocks, inside the caller.
-        let mut enclosing_inlined_frames = SmallVec::<[_; 8]>::new();
-        let mut current_debug_src_loc_inst = None;
-        for inst in call_debug_insts {
-            match inst.class.opcode {
-                Op::Line => current_debug_src_loc_inst = Some(inst),
-                Op::NoLine => current_debug_src_loc_inst = None,
-                Op::ExtInst
-                    if inst.operands[0].unwrap_id_ref() == self.custom_ext_inst_set_import =>
-                {
-                    match CustomOp::decode_from_ext_inst(inst) {
-                        CustomOp::SetDebugSrcLoc => current_debug_src_loc_inst = Some(inst),
-                        CustomOp::ClearDebugSrcLoc => current_debug_src_loc_inst = None,
-                        CustomOp::PushInlinedCallFrame => {
-                            enclosing_inlined_frames
-                                .push((current_debug_src_loc_inst.take(), inst));
-                        }
-                        CustomOp::PopInlinedCallFrame => {
-                            if let Some((callsite_debug_src_loc_inst, _)) =
-                                enclosing_inlined_frames.pop()
-                            {
-                                current_debug_src_loc_inst = callsite_debug_src_loc_inst;
-                            }
-                        }
-                        CustomOp::Abort => {}
-                    }
-                }
-                _ => {}
-            }
-        }
 
         // Prepare the debuginfo insts to prepend/append to every block.
         // FIXME(eddyb) this could be more efficient if we only used one pair of
@@ -864,7 +934,7 @@ impl Inliner<'_, '_> {
                 ));
                 id
             });
-        let mut mk_debuginfo_prefix_and_suffix = |include_callee_frame| {
+        let mut mk_debuginfo_prefix_and_suffix = || {
             // NOTE(eddyb) `OpExtInst`s have a result ID, even if unused, and
             // it has to be unique (same goes for the other instructions below).
             let instantiate_debuginfo = |this: &mut Self, inst: &Instruction| {
@@ -888,33 +958,18 @@ impl Inliner<'_, '_> {
                     .collect(),
                 )
             };
-            // FIXME(eddyb) this only allocates to avoid borrow conflicts.
-            let mut prefix = SmallVec::<[_; 8]>::new();
-            let mut suffix = SmallVec::<[_; 8]>::new();
-            for &(callsite_debug_src_loc_inst, push_inlined_call_frame_inst) in
-                &enclosing_inlined_frames
-            {
-                prefix.extend(
-                    callsite_debug_src_loc_inst
-                        .into_iter()
-                        .chain([push_inlined_call_frame_inst])
-                        .map(|inst| instantiate_debuginfo(self, inst)),
-                );
-                suffix.push(custom_inst_to_inst(self, CustomInst::PopInlinedCallFrame));
-            }
-            prefix.extend(current_debug_src_loc_inst.map(|inst| instantiate_debuginfo(self, inst)));
 
-            if include_callee_frame {
-                prefix.push(custom_inst_to_inst(
-                    self,
-                    CustomInst::PushInlinedCallFrame {
-                        callee_name: Operand::IdRef(callee_name_id),
-                    },
-                ));
-                suffix.push(custom_inst_to_inst(self, CustomInst::PopInlinedCallFrame));
-            }
-
-            (prefix, suffix)
+            (
+                (call_debug_src_loc_inst.map(|inst| instantiate_debuginfo(self, inst)))
+                    .into_iter()
+                    .chain([custom_inst_to_inst(
+                        self,
+                        CustomInst::PushInlinedCallFrame {
+                            callee_name: Operand::IdRef(callee_name_id),
+                        },
+                    )]),
+                [custom_inst_to_inst(self, CustomInst::PopInlinedCallFrame)],
+            )
         };
 
         let mut blocks = callee.blocks.clone();
@@ -944,17 +999,13 @@ impl Inliner<'_, '_> {
             if let Op::Return | Op::ReturnValue = terminator.class.opcode {
                 if Op::ReturnValue == terminator.class.opcode {
                     let return_value = terminator.operands[0].id_ref_any().unwrap();
-                    block.instructions.push(Instruction::new(
-                        Op::Store,
-                        None,
-                        None,
-                        vec![
-                            Operand::IdRef(return_variable.unwrap()),
-                            Operand::IdRef(return_value),
-                        ],
-                    ));
+                    let call_result_phi = maybe_call_result_phi.as_deref_mut().unwrap();
+                    call_result_phi.operands.extend([
+                        Operand::IdRef(return_value),
+                        Operand::IdRef(block.label_id().unwrap()),
+                    ]);
                 } else {
-                    assert!(return_variable.is_none());
+                    assert!(maybe_call_result_phi.is_none());
                 }
                 terminator =
                     Instruction::new(Op::Branch, None, None, vec![Operand::IdRef(return_jump)]);
@@ -968,7 +1019,7 @@ impl Inliner<'_, '_> {
 
             // HACK(eddyb) avoid adding debuginfo to otherwise-empty blocks.
             if block.instructions.len() > num_phis {
-                let (debuginfo_prefix, debuginfo_suffix) = mk_debuginfo_prefix_and_suffix(true);
+                let (debuginfo_prefix, debuginfo_suffix) = mk_debuginfo_prefix_and_suffix();
                 // Insert the prefix debuginfo instructions after `OpPhi`s,
                 // which sadly can't be covered by them.
                 block
@@ -982,23 +1033,54 @@ impl Inliner<'_, '_> {
             block.instructions.push(terminator);
         }
 
-        let (caller_restore_debuginfo_after_call, calleer_reset_debuginfo_before_call) =
-            mk_debuginfo_prefix_and_suffix(false);
-        (
-            blocks,
-            calleer_reset_debuginfo_before_call,
-            caller_restore_debuginfo_after_call,
-        )
+        blocks
     }
-}
 
-fn insert_opvariables(block: &mut Block, insts: impl IntoIterator<Item = Instruction>) {
-    let first_non_variable = block
-        .instructions
-        .iter()
-        .position(|inst| inst.class.opcode != Op::Variable);
-    let i = first_non_variable.unwrap_or(block.instructions.len());
-    block.instructions.splice(i..i, insts);
+    fn insert_opvariables(&self, block: &mut Block, insts: impl IntoIterator<Item = Instruction>) {
+        // HACK(eddyb) this isn't as efficient as it could be in theory, but it's
+        // very important to make sure sure to never insert new instructions in
+        // the middle of debuginfo (as it would be affected by it).
+        let mut inlined_frames_depth = 0usize;
+        let mut outermost_has_debug_src_loc = false;
+        let mut last_debugless_var_insertion_point_candidate = None;
+        for (i, inst) in block.instructions.iter().enumerate() {
+            last_debugless_var_insertion_point_candidate =
+                (inlined_frames_depth == 0 && !outermost_has_debug_src_loc).then_some(i);
+
+            let changed_has_debug_src_loc = match inst.class.opcode {
+                Op::Line => true,
+                Op::NoLine => false,
+                Op::ExtInst
+                    if inst.operands[0].unwrap_id_ref() == self.custom_ext_inst_set_import =>
+                {
+                    match CustomOp::decode_from_ext_inst(inst) {
+                        CustomOp::SetDebugSrcLoc => true,
+                        CustomOp::ClearDebugSrcLoc => false,
+                        CustomOp::PushInlinedCallFrame => {
+                            inlined_frames_depth += 1;
+                            continue;
+                        }
+                        CustomOp::PopInlinedCallFrame => {
+                            inlined_frames_depth = inlined_frames_depth.saturating_sub(1);
+                            continue;
+                        }
+                        CustomOp::Abort => break,
+                    }
+                }
+                Op::Variable => continue,
+                _ => break,
+            };
+
+            if inlined_frames_depth == 0 {
+                outermost_has_debug_src_loc = changed_has_debug_src_loc;
+            }
+        }
+
+        // HACK(eddyb) fallback to inserting at the start, which should be correct.
+        // FIXME(eddyb) some level of debuginfo repair could prevent needing this.
+        let i = last_debugless_var_insertion_point_candidate.unwrap_or(0);
+        block.instructions.splice(i..i, insts);
+    }
 }
 
 fn fuse_trivial_branches(function: &mut Function) {
@@ -1033,7 +1115,7 @@ fn fuse_trivial_branches(function: &mut Function) {
         };
         let pred_insts = &function.blocks[pred].instructions;
         if pred_insts.last().unwrap().class.opcode == Op::Branch {
-            let mut dest_insts = take(&mut function.blocks[dest_block].instructions);
+            let mut dest_insts = mem::take(&mut function.blocks[dest_block].instructions);
             let pred_insts = &mut function.blocks[pred].instructions;
             pred_insts.pop(); // pop the branch
             pred_insts.append(&mut dest_insts);
