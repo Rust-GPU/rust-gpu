@@ -2,6 +2,7 @@
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::Builder;
+use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{BuilderCursor, SpirvValue};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
@@ -12,13 +13,18 @@ use rspirv::spirv::{
     GroupOperation, ImageOperands, KernelProfilingInfo, LoopControl, MemoryAccess, MemorySemantics,
     Op, RayFlags, SelectionControl, StorageClass, Word,
 };
+use rustc_abi::{BackendRepr, Primitive};
 use rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
+use rustc_codegen_ssa::mir::operand::OperandValue;
 use rustc_codegen_ssa::mir::place::PlaceRef;
-use rustc_codegen_ssa::traits::{AsmBuilderMethods, InlineAsmOperandRef};
+use rustc_codegen_ssa::traits::{
+    AsmBuilderMethods, BackendTypes, BuilderMethods, InlineAsmOperandRef,
+};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_middle::{bug, ty::Instance};
 use rustc_span::{DUMMY_SP, Span};
 use rustc_target::asm::{InlineAsmRegClass, InlineAsmRegOrRegClass, SpirVInlineAsmRegClass};
+use smallvec::SmallVec;
 
 pub struct InstructionTable {
     table: FxHashMap<&'static str, &'static rspirv::grammar::Instruction<'static>>,
@@ -30,6 +36,35 @@ impl InstructionTable {
             .map(|inst| (inst.opname, inst))
             .collect();
         Self { table }
+    }
+}
+
+// HACK(eddyb) `InlineAsmOperandRef` lacks `#[derive(Clone)]`
+fn inline_asm_operand_ref_clone<'tcx, B: BackendTypes + ?Sized>(
+    operand: &InlineAsmOperandRef<'tcx, B>,
+) -> InlineAsmOperandRef<'tcx, B> {
+    use InlineAsmOperandRef::*;
+
+    match operand {
+        &In { reg, value } => In { reg, value },
+        &Out { reg, late, place } => Out { reg, late, place },
+        &InOut {
+            reg,
+            late,
+            in_value,
+            out_place,
+        } => InOut {
+            reg,
+            late,
+            in_value,
+            out_place,
+        },
+        Const { string } => Const {
+            string: string.clone(),
+        },
+        &SymFn { instance } => SymFn { instance },
+        &SymStatic { def_id } => SymStatic { def_id },
+        &Label { label } => Label { label },
     }
 }
 
@@ -70,6 +105,45 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         if !unsupported_options.is_empty() {
             self.err(format!("asm flags not supported: {unsupported_options:?}"));
         }
+
+        // HACK(eddyb) get more accurate pointers types, for pointer operands,
+        // from the Rust types available in their respective `OperandRef`s.
+        let mut operands: SmallVec<[_; 8]> =
+            operands.iter().map(inline_asm_operand_ref_clone).collect();
+        for operand in &mut operands {
+            let (in_value, out_place) = match operand {
+                InlineAsmOperandRef::In { value, .. } => (Some(value), None),
+                InlineAsmOperandRef::InOut {
+                    in_value,
+                    out_place,
+                    ..
+                } => (Some(in_value), out_place.as_mut()),
+                InlineAsmOperandRef::Out { place, .. } => (None, place.as_mut()),
+
+                InlineAsmOperandRef::Const { .. }
+                | InlineAsmOperandRef::SymFn { .. }
+                | InlineAsmOperandRef::SymStatic { .. }
+                | InlineAsmOperandRef::Label { .. } => (None, None),
+            };
+
+            if let Some(in_value) = in_value {
+                if let (BackendRepr::Scalar(scalar), OperandValue::Immediate(in_value_spv)) =
+                    (in_value.layout.backend_repr, &mut in_value.val)
+                {
+                    if let Primitive::Pointer(_) = scalar.primitive() {
+                        let in_value_precise_type = in_value.layout.spirv_type(self.span(), self);
+                        *in_value_spv = self.pointercast(*in_value_spv, in_value_precise_type);
+                    }
+                }
+            }
+            if let Some(out_place) = out_place {
+                let out_place_precise_type = out_place.layout.spirv_type(self.span(), self);
+                let out_place_precise_ptr_type = self.type_ptr_to(out_place_precise_type);
+                out_place.val.llval =
+                    self.pointercast(out_place.val.llval, out_place_precise_ptr_type);
+            }
+        }
+
         // vec of lines, and each line is vec of tokens
         let mut tokens = vec![vec![]];
         for piece in template {
@@ -131,7 +205,7 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         let mut id_map = FxHashMap::default();
         let mut defined_ids = FxHashSet::default();
         let mut id_to_type_map = FxHashMap::default();
-        for operand in operands {
+        for operand in &operands {
             if let InlineAsmOperandRef::In { reg: _, value } = operand {
                 let value = value.immediate();
                 id_to_type_map.insert(value.def(self), value.ty);
