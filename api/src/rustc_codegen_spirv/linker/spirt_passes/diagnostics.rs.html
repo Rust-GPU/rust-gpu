@@ -706,6 +706,9 @@
 <a href="#706" id="706">706</a>
 <a href="#707" id="707">707</a>
 <a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::custom_decorations::{
     CustomDecoration, SpanRegenerator, SrcLocDecoration, ZombieDecoration,
 };
@@ -718,7 +721,7 @@
 <span class="kw">use </span>spirt::func_at::FuncAt;
 <span class="kw">use </span>spirt::visit::{InnerVisit, Visitor};
 <span class="kw">use </span>spirt::{
-    spv, Attr, AttrSet, AttrSetDef, Const, ConstCtor, Context, ControlNode, ControlNodeKind,
+    spv, Attr, AttrSet, AttrSetDef, Const, ConstKind, Context, ControlNode, ControlNodeKind,
     DataInstDef, DataInstForm, DataInstKind, Diag, DiagLevel, ExportKey, Exportee, Func, FuncDecl,
     GlobalVar, InternedStr, Module, Type, Value,
 };
@@ -983,16 +986,19 @@
                             } =&gt; (file, line_start, line_end, col_start, col_end),
                             <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                         };
-                    <span class="kw">let </span>const_ctor = |v: Value| <span class="kw">match </span>v {
-                        Value::Const(ct) =&gt; <span class="kw-2">&amp;</span>cx[ct].ctor,
+                    <span class="kw">let </span>const_kind = |v: Value| <span class="kw">match </span>v {
+                        Value::Const(ct) =&gt; <span class="kw-2">&amp;</span>cx[ct].kind,
                         <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                     };
-                    <span class="kw">let </span>const_str = |v: Value| <span class="kw">match </span>const_ctor(v) {
-                        <span class="kw-2">&amp;</span>ConstCtor::SpvStringLiteralForExtInst(s) =&gt; s,
+                    <span class="kw">let </span>const_str = |v: Value| <span class="kw">match </span>const_kind(v) {
+                        <span class="kw-2">&amp;</span>ConstKind::SpvStringLiteralForExtInst(s) =&gt; s,
                         <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                     };
-                    <span class="kw">let </span>const_u32 = |v: Value| <span class="kw">match </span>const_ctor(v) {
-                        ConstCtor::SpvInst(spv_inst) =&gt; {
+                    <span class="kw">let </span>const_u32 = |v: Value| <span class="kw">match </span>const_kind(v) {
+                        ConstKind::SpvInst {
+                            spv_inst_and_const_inputs,
+                        } =&gt; {
+                            <span class="kw">let </span>(spv_inst, _const_inputs) = <span class="kw-2">&amp;**</span>spv_inst_and_const_inputs;
                             <span class="macro">assert!</span>(spv_inst.opcode == wk.OpConstant);
                             <span class="kw">match </span>spv_inst.imms[..] {
                                 [spv::Imm::Short(<span class="kw">_</span>, x)] =&gt; x,
@@ -1213,9 +1219,9 @@
     <span class="kw">fn </span>visit_const_use(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ct: Const) {
         <span class="kw">if </span><span class="self">self</span>.seen_consts.insert(ct) {
             <span class="kw">let </span>ct_def = <span class="kw-2">&amp;</span><span class="self">self</span>.cx[ct];
-            <span class="kw">match </span>ct_def.ctor {
+            <span class="kw">match </span>ct_def.kind {
                 <span class="comment">// HACK(eddyb) don't push an `UseOrigin` for `GlobalVar` pointers.
-                </span>ConstCtor::PtrToGlobalVar(<span class="kw">_</span>) <span class="kw">if </span>ct_def.attrs == AttrSet::default() =&gt; {
+                </span>ConstKind::PtrToGlobalVar(<span class="kw">_</span>) <span class="kw">if </span>ct_def.attrs == AttrSet::default() =&gt; {
                     <span class="self">self</span>.visit_const_def(ct_def);
                 }
                 <span class="kw">_ </span>=&gt; {
@@ -1350,12 +1356,12 @@
                                     <span class="comment">// Treat this like a call, in the caller.
                                     </span>replace_origin(<span class="self">self</span>, IntraFuncUseOrigin::CallCallee);
 
-                                    <span class="kw">let </span>const_ctor = |v: Value| <span class="kw">match </span>v {
-                                        Value::Const(ct) =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.cx[ct].ctor,
+                                    <span class="kw">let </span>const_kind = |v: Value| <span class="kw">match </span>v {
+                                        Value::Const(ct) =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.cx[ct].kind,
                                         <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                                     };
-                                    <span class="kw">let </span>const_str = |v: Value| <span class="kw">match </span>const_ctor(v) {
-                                        <span class="kw-2">&amp;</span>ConstCtor::SpvStringLiteralForExtInst(s) =&gt; s,
+                                    <span class="kw">let </span>const_str = |v: Value| <span class="kw">match </span>const_kind(v) {
+                                        <span class="kw-2">&amp;</span>ConstKind::SpvStringLiteralForExtInst(s) =&gt; s,
                                         <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                                     };
                                     <span class="self">self</span>.use_stack.push(UseOrigin::IntraFunc {

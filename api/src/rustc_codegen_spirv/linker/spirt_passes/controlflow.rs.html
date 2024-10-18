@@ -426,19 +426,32 @@
 <a href="#426" id="426">426</a>
 <a href="#427" id="427">427</a>
 <a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! SPIR-T passes related to control-flow.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::custom_insts::{<span class="self">self</span>, CustomInst, CustomOp};
 <span class="kw">use </span>smallvec::SmallVec;
 <span class="kw">use </span>spirt::func_at::FuncAt;
 <span class="kw">use </span>spirt::{
-    cfg, spv, Attr, AttrSet, ConstCtor, ConstDef, ControlNodeKind, DataInstFormDef, DataInstKind,
-    DeclDef, EntityDefs, ExportKey, Exportee, Module, Type, TypeCtor, TypeCtorArg, TypeDef, Value,
+    cfg, spv, Attr, AttrSet, ConstDef, ConstKind, ControlNodeKind, DataInstFormDef, DataInstKind,
+    DeclDef, EntityDefs, ExportKey, Exportee, Module, Type, TypeDef, TypeKind, TypeOrConst, Value,
 };
 <span class="kw">use </span>std::fmt::Write <span class="kw">as _</span>;
 
 <span class="doccomment">/// Replace our custom extended instruction `Abort`s with standard `OpReturn`s,
 /// but only in entry-points (and only before CFG structurization).
+</span><span class="comment">//
+// FIXME(eddyb) no longer relying on structurization, try porting this
+// to replace custom aborts in `Block`s and inject `ExitInvocation`s
+// after them (truncating the `Block` and/or parent region if necessary).
 </span><span class="kw">pub fn </span>convert_custom_aborts_to_unstructured_returns_in_entry_points(
     linker_options: <span class="kw-2">&amp;</span><span class="kw">crate</span>::linker::Options,
     module: <span class="kw-2">&amp;mut </span>Module,
@@ -494,8 +507,8 @@
         };
 
         <span class="kw">let </span>func_decl = <span class="kw-2">&amp;mut </span>module.funcs[func];
-        <span class="macro">assert!</span>(<span class="kw">match </span><span class="kw-2">&amp;</span>cx[func_decl.ret_type].ctor {
-            TypeCtor::SpvInst(spv_inst) =&gt; spv_inst.opcode == wk.OpTypeVoid,
+        <span class="macro">assert!</span>(<span class="kw">match </span><span class="kw-2">&amp;</span>cx[func_decl.ret_type].kind {
+            TypeKind::SpvInst { spv_inst, .. } =&gt; spv_inst.opcode == wk.OpTypeVoid,
             <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
         });
 
@@ -540,7 +553,7 @@
                     <span class="kw">if let </span>DataInstKind::SpvInst(spv_inst) = <span class="kw-2">&amp;</span>data_inst_form_def.kind {
                         <span class="kw">if </span>spv_inst.opcode == wk.OpLoad {
                             <span class="kw">if let </span>Value::Const(ct) = data_inst_def.inputs[<span class="number">0</span>] {
-                                <span class="kw">if let </span>ConstCtor::PtrToGlobalVar(gv) = cx[ct].ctor {
+                                <span class="kw">if let </span>ConstKind::PtrToGlobalVar(gv) = cx[ct].kind {
                                     <span class="kw">if </span>interface_global_vars.contains(<span class="kw-2">&amp;</span>gv) {
                                         <span class="kw">return </span><span class="prelude-val">Some</span>((
                                             gv,
@@ -557,8 +570,8 @@
             <span class="kw">if </span>inputs {
                 <span class="kw">let </span><span class="kw-2">mut </span>first_input = <span class="bool-val">true</span>;
                 <span class="kw">for </span>(gv, ty, value) <span class="kw">in </span>loaded_inputs {
-                    <span class="kw">let </span>scalar_type = |ty: Type| <span class="kw">match </span><span class="kw-2">&amp;</span>cx[ty].ctor {
-                        TypeCtor::SpvInst(spv_inst) =&gt; <span class="kw">match </span>spv_inst.imms[..] {
+                    <span class="kw">let </span>scalar_type = |ty: Type| <span class="kw">match </span><span class="kw-2">&amp;</span>cx[ty].kind {
+                        TypeKind::SpvInst { spv_inst, .. } =&gt; <span class="kw">match </span>spv_inst.imms[..] {
                             [spv::Imm::Short(<span class="kw">_</span>, <span class="number">32</span>), spv::Imm::Short(<span class="kw">_</span>, signedness)]
                                 <span class="kw">if </span>spv_inst.opcode == wk.OpTypeInt =&gt;
                             {
@@ -573,14 +586,16 @@
                     };
                     <span class="kw">let </span>vector_or_scalar_type = |ty: Type| {
                         <span class="kw">let </span>ty_def = <span class="kw-2">&amp;</span>cx[ty];
-                        <span class="kw">match </span>(<span class="kw-2">&amp;</span>ty_def.ctor, <span class="kw-2">&amp;</span>ty_def.ctor_args[..]) {
-                            (TypeCtor::SpvInst(spv_inst), <span class="kw-2">&amp;</span>[TypeCtorArg::Type(elem)])
-                                <span class="kw">if </span>spv_inst.opcode == wk.OpTypeVector =&gt;
-                            {
-                                <span class="kw">match </span>spv_inst.imms[..] {
-                                    [spv::Imm::Short(<span class="kw">_</span>, vlen @ <span class="number">2</span>..=<span class="number">4</span>)] =&gt; {
-                                        <span class="prelude-val">Some</span>((scalar_type(elem)<span class="question-mark">?</span>, <span class="prelude-val">Some</span>(vlen)))
-                                    }
+                        <span class="kw">match </span><span class="kw-2">&amp;</span>ty_def.kind {
+                            TypeKind::SpvInst {
+                                spv_inst,
+                                type_and_const_inputs,
+                            } <span class="kw">if </span>spv_inst.opcode == wk.OpTypeVector =&gt; {
+                                <span class="kw">match </span>(<span class="kw-2">&amp;</span>type_and_const_inputs[..], <span class="kw-2">&amp;</span>spv_inst.imms[..]) {
+                                    (
+                                        <span class="kw-2">&amp;</span>[TypeOrConst::Type(elem)],
+                                        <span class="kw-2">&amp;</span>[spv::Imm::Short(<span class="kw">_</span>, vlen @ <span class="number">2</span>..=<span class="number">4</span>)],
+                                    ) =&gt; <span class="prelude-val">Some</span>((scalar_type(elem)<span class="question-mark">?</span>, <span class="prelude-val">Some</span>(vlen))),
                                     <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                                 }
                             }
@@ -678,7 +693,9 @@
             )) = custom_terminator_inst
             {
                 <span class="kw">let </span>abort_inst = func_at_abort_inst.position;
-                terminator.kind = cfg::ControlInstKind::Return;
+                terminator.kind = cfg::ControlInstKind::ExitInvocation(
+                    cfg::ExitInvocationKind::SpvInst(wk.OpReturn.into()),
+                );
 
                 <span class="kw">match </span>abort_strategy {
                     <span class="prelude-val">Some</span>(Strategy::Unreachable) =&gt; {
@@ -688,16 +705,19 @@
                         inputs: <span class="kw">_</span>,
                         backtrace,
                     }) =&gt; {
-                        <span class="kw">let </span>const_ctor = |v: Value| <span class="kw">match </span>v {
-                            Value::Const(ct) =&gt; <span class="kw-2">&amp;</span>cx[ct].ctor,
+                        <span class="kw">let </span>const_kind = |v: Value| <span class="kw">match </span>v {
+                            Value::Const(ct) =&gt; <span class="kw-2">&amp;</span>cx[ct].kind,
                             <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                         };
-                        <span class="kw">let </span>const_str = |v: Value| <span class="kw">match </span>const_ctor(v) {
-                            <span class="kw-2">&amp;</span>ConstCtor::SpvStringLiteralForExtInst(s) =&gt; s,
+                        <span class="kw">let </span>const_str = |v: Value| <span class="kw">match </span>const_kind(v) {
+                            <span class="kw-2">&amp;</span>ConstKind::SpvStringLiteralForExtInst(s) =&gt; s,
                             <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                         };
-                        <span class="kw">let </span>const_u32 = |v: Value| <span class="kw">match </span>const_ctor(v) {
-                            ConstCtor::SpvInst(spv_inst) =&gt; {
+                        <span class="kw">let </span>const_u32 = |v: Value| <span class="kw">match </span>const_kind(v) {
+                            ConstKind::SpvInst {
+                                spv_inst_and_const_inputs,
+                            } =&gt; {
+                                <span class="kw">let </span>(spv_inst, _const_inputs) = <span class="kw-2">&amp;**</span>spv_inst_and_const_inputs;
                                 <span class="macro">assert!</span>(spv_inst.opcode == wk.OpConstant);
                                 <span class="kw">match </span>spv_inst.imms[..] {
                                     [spv::Imm::Short(<span class="kw">_</span>, x)] =&gt; x,
@@ -711,11 +731,9 @@
                                 attrs: Default::default(),
                                 ty: cx.intern(TypeDef {
                                     attrs: Default::default(),
-                                    ctor: TypeCtor::SpvStringLiteralForExtInst,
-                                    ctor_args: Default::default(),
+                                    kind: TypeKind::SpvStringLiteralForExtInst,
                                 }),
-                                ctor: ConstCtor::SpvStringLiteralForExtInst(s),
-                                ctor_args: Default::default(),
+                                kind: ConstKind::SpvStringLiteralForExtInst(s),
                             })
                         };
 

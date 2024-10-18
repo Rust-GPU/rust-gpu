@@ -900,22 +900,41 @@
 <a href="#900" id="900">900</a>
 <a href="#901" id="901">901</a>
 <a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>rustc_data_structures::fx::FxHashMap;
 <span class="kw">use </span>smallvec::SmallVec;
 <span class="kw">use </span>spirt::func_at::{FuncAt, FuncAtMut};
 <span class="kw">use </span>spirt::transform::InnerInPlaceTransform;
 <span class="kw">use </span>spirt::visit::InnerVisit;
 <span class="kw">use </span>spirt::{
-    spv, Const, ConstCtor, ConstDef, Context, ControlNode, ControlNodeDef, ControlNodeKind,
+    spv, Const, ConstDef, ConstKind, Context, ControlNode, ControlNodeDef, ControlNodeKind,
     ControlNodeOutputDecl, ControlRegion, ControlRegionInputDecl, DataInst, DataInstDef,
     DataInstFormDef, DataInstKind, EntityOrientedDenseMap, FuncDefBody, SelectionKind, Type,
-    TypeCtor, TypeDef, Value,
+    TypeDef, TypeKind, Value,
 };
 <span class="kw">use </span>std::collections::hash_map::Entry;
-<span class="kw">use </span>std::hash::Hash;
 <span class="kw">use </span>std::{iter, slice};
 
-<span class="kw">use super</span>::{HashableValue, ReplaceValueWith, VisitAllControlRegionsAndNodes};
+<span class="kw">use super</span>::{ReplaceValueWith, VisitAllControlRegionsAndNodes};
+<span class="kw">use </span>std::rc::Rc;
 
 <span class="doccomment">/// Apply "reduction rules" to `func_def_body`, replacing (pure) computations
 /// with one of their inputs or a constant (e.g. `x + 0 =&gt; x` or `1 + 2 =&gt; 3`),
@@ -989,9 +1008,7 @@
                             control_node: func_at_control_node.position,
                             output_idx: i,
                         };
-                        <span class="kw">if let </span>Entry::Vacant(entry) =
-                            value_replacements.entry(HashableValue(output))
-                        {
+                        <span class="kw">if let </span>Entry::Vacant(entry) = value_replacements.entry(output) {
                             <span class="kw">let </span>per_case_value = cases.iter().map(|<span class="kw-2">&amp;</span>case| {
                                 func_at_control_node.at(case).def().outputs[i <span class="kw">as </span>usize]
                             });
@@ -1034,8 +1051,10 @@
                                     op: PureOp::IntToBool,
                                     output_type: cx.intern(TypeDef {
                                         attrs: Default::default(),
-                                        ctor: TypeCtor::SpvInst(wk.OpTypeBool.into()),
-                                        ctor_args: iter::empty().collect(),
+                                        kind: TypeKind::SpvInst {
+                                            spv_inst: wk.OpTypeBool.into(),
+                                            type_and_const_inputs: iter::empty().collect(),
+                                        },
                                     }),
                                     input: <span class="kw-2">*</span>scrutinee,
                                 };
@@ -1068,11 +1087,16 @@
                         };
                         <span class="kw">if </span>body_output == body_input {
                             value_replacements
-                                .entry(HashableValue(body_input))
+                                .entry(body_input)
                                 .or_insert(initial_input);
                         }
                     }
                 }
+
+                <span class="kw-2">&amp;</span>ControlNodeDef {
+                    kind: ControlNodeKind::ExitInvocation { .. },
+                    ..
+                } =&gt; {}
             };
         func_def_body.inner_visit_with(<span class="kw-2">&amp;mut </span>VisitAllControlRegionsAndNodes {
             state: (),
@@ -1099,7 +1123,7 @@
                 any_changes = <span class="bool-val">true</span>;
                 <span class="kw">match </span>redu_target {
                     ReductionTarget::DataInst(inst) =&gt; {
-                        value_replacements.insert(HashableValue(Value::DataInstOutput(inst)), v);
+                        value_replacements.insert(Value::DataInstOutput(inst), v);
 
                         <span class="comment">// Replace the reduced `DataInstDef` itself with `OpNop`,
                         // removing the ability to use its "name" as a value.
@@ -1145,7 +1169,7 @@
             <span class="kw">loop </span>{
                 <span class="kw">match </span>v {
                     Value::Const(<span class="kw">_</span>) =&gt; <span class="kw">break</span>,
-                    <span class="kw">_ </span>=&gt; <span class="kw">match </span>value_replacements.get(<span class="kw-2">&amp;</span>HashableValue(v)) {
+                    <span class="kw">_ </span>=&gt; <span class="kw">match </span>value_replacements.get(<span class="kw-2">&amp;</span>v) {
                         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>new) =&gt; v = new,
                         <span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
                     },
@@ -1194,6 +1218,7 @@
 
                     ControlNodeKind::Select { cases, .. } =&gt; cases,
                     ControlNodeKind::Loop { body, .. } =&gt; slice::from_ref(body),
+                    ControlNodeKind::ExitInvocation { .. } =&gt; <span class="kw-2">&amp;</span>[][..],
                 };
                 <span class="kw">for </span><span class="kw-2">&amp;</span>child_region <span class="kw">in </span>child_regions {
                     this.control_region_parent
@@ -1221,8 +1246,13 @@
     <span class="kw">let </span>wk = <span class="kw-2">&amp;</span><span class="kw">super</span>::SpvSpecWithExtras::get().well_known;
 
     <span class="kw">let </span>as_spv_const = |v: Value| <span class="kw">match </span>v {
-        Value::Const(ct) =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>cx[ct].ctor {
-            ConstCtor::SpvInst(spv_inst) =&gt; <span class="prelude-val">Some</span>(spv_inst.opcode),
+        Value::Const(ct) =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>cx[ct].kind {
+            ConstKind::SpvInst {
+                spv_inst_and_const_inputs,
+            } =&gt; {
+                <span class="kw">let </span>(spv_inst, _const_inputs) = <span class="kw-2">&amp;**</span>spv_inst_and_const_inputs;
+                <span class="prelude-val">Some</span>(spv_inst.opcode)
+            }
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         },
         <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
@@ -1378,20 +1408,11 @@
 }
 
 <span class="doccomment">/// Potentially-reducible application of a `PureOp` (`op`) to `input`.
-</span><span class="attr">#[derive(Copy, Clone, PartialEq, Eq)]
+</span><span class="attr">#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 </span><span class="kw">struct </span>Reducible&lt;V = Value&gt; {
     op: PureOp,
     output_type: Type,
     input: V,
-}
-
-<span class="comment">// HACK(eddyb) this works around the accidental lack of `spirt::Value: Hash`.
-</span><span class="kw">impl </span>Hash <span class="kw">for </span>Reducible&lt;Value&gt; {
-    <span class="kw">fn </span>hash&lt;H: std::hash::Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, state: <span class="kw-2">&amp;mut </span>H) {
-        <span class="self">self</span>.op.hash(state);
-        <span class="self">self</span>.output_type.hash(state);
-        HashableValue(<span class="self">self</span>.input).hash(state);
-    }
 }
 
 <span class="kw">impl</span>&lt;V&gt; Reducible&lt;V&gt; {
@@ -1467,20 +1488,27 @@
         <span class="kw">let </span>wk = <span class="kw-2">&amp;</span><span class="kw">super</span>::SpvSpecWithExtras::get().well_known;
 
         <span class="kw">let </span>ct_def = <span class="kw-2">&amp;</span>cx[<span class="self">self</span>.input];
-        <span class="kw">match </span>(<span class="self">self</span>.op, <span class="kw-2">&amp;</span>ct_def.ctor) {
-            (<span class="kw">_</span>, ConstCtor::SpvInst(spv_inst)) <span class="kw">if </span>spv_inst.opcode == wk.OpUndef =&gt; {
-                <span class="prelude-val">Some</span>(cx.intern(ConstDef {
-                    attrs: ct_def.attrs,
-                    ty: <span class="self">self</span>.output_type,
-                    ctor: ct_def.ctor.clone(),
-                    ctor_args: iter::empty().collect(),
-                }))
-            }
+        <span class="kw">match </span>(<span class="self">self</span>.op, <span class="kw-2">&amp;</span>ct_def.kind) {
+            (
+                <span class="kw">_</span>,
+                ConstKind::SpvInst {
+                    spv_inst_and_const_inputs,
+                },
+            ) <span class="kw">if </span>spv_inst_and_const_inputs.<span class="number">0</span>.opcode == wk.OpUndef =&gt; <span class="prelude-val">Some</span>(cx.intern(ConstDef {
+                attrs: ct_def.attrs,
+                ty: <span class="self">self</span>.output_type,
+                kind: ct_def.kind.clone(),
+            })),
 
-            (PureOp::BitCast, ConstCtor::SpvInst(spv_inst)) <span class="kw">if </span>spv_inst.opcode == wk.OpConstant =&gt; {
+            (
+                PureOp::BitCast,
+                ConstKind::SpvInst {
+                    spv_inst_and_const_inputs,
+                },
+            ) <span class="kw">if </span>spv_inst_and_const_inputs.<span class="number">0</span>.opcode == wk.OpConstant =&gt; {
                 <span class="comment">// `OpTypeInt`/`OpTypeFloat` bit width.
-                </span><span class="kw">let </span>scalar_width = |ty: Type| <span class="kw">match </span><span class="kw-2">&amp;</span>cx[ty].ctor {
-                    TypeCtor::SpvInst(spv_inst)
+                </span><span class="kw">let </span>scalar_width = |ty: Type| <span class="kw">match </span><span class="kw-2">&amp;</span>cx[ty].kind {
+                    TypeKind::SpvInst { spv_inst, .. }
                         <span class="kw">if </span>[wk.OpTypeInt, wk.OpTypeFloat].contains(<span class="kw-2">&amp;</span>spv_inst.opcode) =&gt;
                     {
                         <span class="prelude-val">Some</span>(spv_inst.imms[<span class="number">0</span>])
@@ -1492,8 +1520,7 @@
                     (<span class="prelude-val">Some</span>(from), <span class="prelude-val">Some</span>(to)) <span class="kw">if </span>from == to =&gt; <span class="prelude-val">Some</span>(cx.intern(ConstDef {
                         attrs: ct_def.attrs,
                         ty: <span class="self">self</span>.output_type,
-                        ctor: ct_def.ctor.clone(),
-                        ctor_args: ct_def.ctor_args.clone(),
+                        kind: ct_def.kind.clone(),
                     })),
                     <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                 }
@@ -1503,14 +1530,21 @@
                 PureOp::CompositeExtract {
                     elem_idx: spv::Imm::Short(<span class="kw">_</span>, elem_idx),
                 },
-                ConstCtor::SpvInst(spv_inst),
-            ) <span class="kw">if </span>spv_inst.opcode == wk.OpConstantComposite =&gt; {
-                <span class="prelude-val">Some</span>(ct_def.ctor_args[elem_idx <span class="kw">as </span>usize])
+                ConstKind::SpvInst {
+                    spv_inst_and_const_inputs,
+                },
+            ) <span class="kw">if </span>spv_inst_and_const_inputs.<span class="number">0</span>.opcode == wk.OpConstantComposite =&gt; {
+                <span class="kw">let </span>(_spv_inst, const_inputs) = <span class="kw-2">&amp;**</span>spv_inst_and_const_inputs;
+                <span class="prelude-val">Some</span>(const_inputs[elem_idx <span class="kw">as </span>usize])
             }
 
-            (PureOp::IntToBool, ConstCtor::SpvInst(spv_inst))
-                <span class="kw">if </span>spv_inst.opcode == wk.OpConstant =&gt;
-            {
+            (
+                PureOp::IntToBool,
+                ConstKind::SpvInst {
+                    spv_inst_and_const_inputs,
+                },
+            ) <span class="kw">if </span>spv_inst_and_const_inputs.<span class="number">0</span>.opcode == wk.OpConstant =&gt; {
+                <span class="kw">let </span>(spv_inst, _const_inputs) = <span class="kw-2">&amp;**</span>spv_inst_and_const_inputs;
                 <span class="kw">let </span>bool_const_op = <span class="kw">match </span>spv_imm_checked_trunc32(<span class="kw-2">&amp;</span>spv_inst.imms[..]) {
                     <span class="prelude-val">Some</span>(<span class="number">0</span>) =&gt; wk.OpConstantFalse,
                     <span class="prelude-val">Some</span>(<span class="number">1</span>) =&gt; wk.OpConstantTrue,
@@ -1519,8 +1553,12 @@
                 <span class="prelude-val">Some</span>(cx.intern(ConstDef {
                     attrs: Default::default(),
                     ty: <span class="self">self</span>.output_type,
-                    ctor: ConstCtor::SpvInst(bool_const_op.into()),
-                    ctor_args: iter::empty().collect(),
+                    kind: ConstKind::SpvInst {
+                        spv_inst_and_const_inputs: Rc::new((
+                            bool_const_op.into(),
+                            iter::empty().collect(),
+                        )),
+                    },
                 }))
             }
 
@@ -1582,7 +1620,7 @@
         <span class="comment">// FIXME(eddyb) come up with a better convention for this!
         </span>func: FuncAtMut&lt;<span class="lifetime">'_</span>, ()&gt;,
 
-        value_replacements: <span class="kw-2">&amp;</span>FxHashMap&lt;HashableValue, Value&gt;,
+        value_replacements: <span class="kw-2">&amp;</span>FxHashMap&lt;Value, Value&gt;,
 
         parent_map: <span class="kw-2">&amp;</span>ParentMap,
 
@@ -1595,7 +1633,7 @@
         // the first time they're encountered, but also, if this process was more
         // "demand-driven" (recursing into use-&gt;def, instead of processing defs),
         // it might not require any of this complication.
-        </span><span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>replacement) = value_replacements.get(<span class="kw-2">&amp;</span>HashableValue(<span class="self">self</span>.input)) {
+        </span><span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>replacement) = value_replacements.get(<span class="kw-2">&amp;</span><span class="self">self</span>.input) {
             <span class="self">self</span>.input = replacement;
         }
 
@@ -1617,7 +1655,7 @@
         <span class="comment">// FIXME(eddyb) come up with a better convention for this!
         </span><span class="kw-2">mut </span>func: FuncAtMut&lt;<span class="lifetime">'_</span>, ()&gt;,
 
-        value_replacements: <span class="kw-2">&amp;</span>FxHashMap&lt;HashableValue, Value&gt;,
+        value_replacements: <span class="kw-2">&amp;</span>FxHashMap&lt;Value, Value&gt;,
 
         parent_map: <span class="kw-2">&amp;</span>ParentMap,
 

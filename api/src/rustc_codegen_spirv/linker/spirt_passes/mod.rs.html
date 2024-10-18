@@ -579,74 +579,6 @@
 <a href="#579" id="579">579</a>
 <a href="#580" id="580">580</a>
 <a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
-<a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
-<a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
-<a href="#594" id="594">594</a>
-<a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
-<a href="#597" id="597">597</a>
-<a href="#598" id="598">598</a>
-<a href="#599" id="599">599</a>
-<a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
-<a href="#607" id="607">607</a>
-<a href="#608" id="608">608</a>
-<a href="#609" id="609">609</a>
-<a href="#610" id="610">610</a>
-<a href="#611" id="611">611</a>
-<a href="#612" id="612">612</a>
-<a href="#613" id="613">613</a>
-<a href="#614" id="614">614</a>
-<a href="#615" id="615">615</a>
-<a href="#616" id="616">616</a>
-<a href="#617" id="617">617</a>
-<a href="#618" id="618">618</a>
-<a href="#619" id="619">619</a>
-<a href="#620" id="620">620</a>
-<a href="#621" id="621">621</a>
-<a href="#622" id="622">622</a>
-<a href="#623" id="623">623</a>
-<a href="#624" id="624">624</a>
-<a href="#625" id="625">625</a>
-<a href="#626" id="626">626</a>
-<a href="#627" id="627">627</a>
-<a href="#628" id="628">628</a>
-<a href="#629" id="629">629</a>
-<a href="#630" id="630">630</a>
-<a href="#631" id="631">631</a>
-<a href="#632" id="632">632</a>
-<a href="#633" id="633">633</a>
-<a href="#634" id="634">634</a>
-<a href="#635" id="635">635</a>
-<a href="#636" id="636">636</a>
-<a href="#637" id="637">637</a>
-<a href="#638" id="638">638</a>
-<a href="#639" id="639">639</a>
-<a href="#640" id="640">640</a>
-<a href="#641" id="641">641</a>
-<a href="#642" id="642">642</a>
-<a href="#643" id="643">643</a>
-<a href="#644" id="644">644</a>
-<a href="#645" id="645">645</a>
-<a href="#646" id="646">646</a>
-<a href="#647" id="647">647</a>
-<a href="#648" id="648">648</a>
-<a href="#649" id="649">649</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! SPIR-T pass infrastructure and supporting utilities.
 
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>controlflow;
@@ -666,7 +598,6 @@
     FuncDefBody, GlobalVar, Module, Type, Value,
 };
 <span class="kw">use </span>std::collections::VecDeque;
-<span class="kw">use </span>std::hash::Hash;
 <span class="kw">use </span>std::iter;
 
 <span class="comment">// HACK(eddyb) `spv::spec::Spec` with extra `WellKnown`s (that should be upstreamed).
@@ -913,87 +844,10 @@
         }
         <span class="kw">fn </span>visit_control_node_def(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func_at_control_node: FuncAt&lt;<span class="lifetime">'a</span>, ControlNode&gt;) {
             (<span class="self">self</span>.visit_control_node)(<span class="kw-2">&amp;mut </span><span class="self">self</span>.state, func_at_control_node);
-            <span class="comment">// HACK(eddyb) accidentally private `inner_visit_with` method.
-            </span><span class="kw">fn </span>control_node_inner_visit_with&lt;<span class="lifetime">'a</span>&gt;(
-                self_: FuncAt&lt;<span class="lifetime">'a</span>, ControlNode&gt;,
-                visitor: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Visitor&lt;<span class="lifetime">'a</span>&gt;,
-            ) {
-                <span class="kw">let </span>ControlNodeDef { kind, outputs } = self_.def();
-
-                <span class="kw">match </span>kind {
-                    ControlNodeKind::Block { insts } =&gt; {
-                        <span class="kw">for </span>func_at_inst <span class="kw">in </span>self_.at(<span class="kw-2">*</span>insts) {
-                            visitor.visit_data_inst_def(func_at_inst.def());
-                        }
-                    }
-                    ControlNodeKind::Select {
-                        kind: SelectionKind::BoolCond | SelectionKind::SpvInst(<span class="kw">_</span>),
-                        scrutinee,
-                        cases,
-                    } =&gt; {
-                        visitor.visit_value_use(scrutinee);
-                        <span class="kw">for </span><span class="kw-2">&amp;</span>case <span class="kw">in </span>cases {
-                            visitor.visit_control_region_def(self_.at(case));
-                        }
-                    }
-                    ControlNodeKind::Loop {
-                        initial_inputs,
-                        body,
-                        repeat_condition,
-                    } =&gt; {
-                        <span class="kw">for </span>v <span class="kw">in </span>initial_inputs {
-                            visitor.visit_value_use(v);
-                        }
-                        visitor.visit_control_region_def(self_.at(<span class="kw-2">*</span>body));
-                        visitor.visit_value_use(repeat_condition);
-                    }
-                }
-                <span class="kw">for </span>output <span class="kw">in </span>outputs {
-                    output.inner_visit_with(visitor);
-                }
-            }
-            control_node_inner_visit_with(func_at_control_node, <span class="self">self</span>);
+            func_at_control_node.inner_visit_with(<span class="self">self</span>);
         }
     }
 };
-
-<span class="comment">// HACK(eddyb) this works around the accidental lack of `spirt::Value: Hash`.
-</span><span class="attr">#[derive(Copy, Clone, PartialEq, Eq)]
-</span><span class="kw">struct </span>HashableValue(Value);
-<span class="attr">#[allow(clippy::derived_hash_with_manual_eq)]
-</span><span class="kw">impl </span>Hash <span class="kw">for </span>HashableValue {
-    <span class="kw">fn </span>hash&lt;H: std::hash::Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, state: <span class="kw-2">&amp;mut </span>H) {
-        <span class="kw">use </span>spirt::<span class="kw-2">*</span>;
-        <span class="attr">#[derive(Hash)]
-        </span><span class="kw">enum </span>ValueH {
-            Const(Const),
-            ControlRegionInput {
-                region: ControlRegion,
-                input_idx: u32,
-            },
-            ControlNodeOutput {
-                control_node: ControlNode,
-                output_idx: u32,
-            },
-            DataInstOutput(DataInst),
-        }
-        <span class="kw">match </span><span class="self">self</span>.<span class="number">0 </span>{
-            Value::Const(ct) =&gt; ValueH::Const(ct),
-            Value::ControlRegionInput { region, input_idx } =&gt; {
-                ValueH::ControlRegionInput { region, input_idx }
-            }
-            Value::ControlNodeOutput {
-                control_node,
-                output_idx,
-            } =&gt; ValueH::ControlNodeOutput {
-                control_node,
-                output_idx,
-            },
-            Value::DataInstOutput(inst) =&gt; ValueH::DataInstOutput(inst),
-        }
-        .hash(state);
-    }
-}
 
 <span class="comment">// FIXME(eddyb) maybe this should be provided by `spirt::transform`.
 </span><span class="kw">struct </span>ReplaceValueWith&lt;F&gt;(F);
@@ -1027,7 +881,7 @@
 
         <span class="comment">// FIXME(eddyb) entity-keyed dense sets might be better for performance,
         // but would require separate sets/maps for separate `Value` cases.
-        </span>used: FxHashSet&lt;HashableValue&gt;,
+        </span>used: FxHashSet&lt;Value&gt;,
 
         queue: VecDeque&lt;Value&gt;,
     }
@@ -1045,7 +899,7 @@
                     <span class="kw">return</span>;
                 }
             }
-            <span class="kw">if </span><span class="self">self</span>.used.insert(HashableValue(v)) {
+            <span class="kw">if </span><span class="self">self</span>.used.insert(v) {
                 <span class="self">self</span>.queue.push_back(v);
             }
         }
@@ -1125,8 +979,8 @@
                         propagator.mark_used(v);
                         propagator.propagate_used(func_at_control_node.at(()));
                     };
-                    <span class="kw">match </span>func_at_control_node.def().kind {
-                        ControlNodeKind::Block { insts } =&gt; {
+                    <span class="kw">match </span><span class="kw-2">&amp;</span>func_at_control_node.def().kind {
+                        <span class="kw-2">&amp;</span>ControlNodeKind::Block { insts } =&gt; {
                             <span class="kw">for </span>func_at_inst <span class="kw">in </span>func_at_control_node.at(insts) {
                                 <span class="comment">// Ignore pure instructions (i.e. they're only used
                                 // if their output value is used, from somewhere else).
@@ -1145,11 +999,20 @@
                             }
                         }
 
-                        ControlNodeKind::Select { scrutinee: v, .. }
-                        | ControlNodeKind::Loop {
+                        <span class="kw-2">&amp;</span>ControlNodeKind::Select { scrutinee: v, .. }
+                        | <span class="kw-2">&amp;</span>ControlNodeKind::Loop {
                             repeat_condition: v,
                             ..
                         } =&gt; mark_used_and_propagate(v),
+
+                        ControlNodeKind::ExitInvocation {
+                            kind: spirt::cfg::ExitInvocationKind::SpvInst(<span class="kw">_</span>),
+                            inputs,
+                        } =&gt; {
+                            <span class="kw">for </span><span class="kw-2">&amp;</span>v <span class="kw">in </span>inputs {
+                                mark_used_and_propagate(v);
+                            }
+                        }
                     }
                 },
         };
@@ -1184,9 +1047,7 @@
                             <span class="kw">continue</span>;
                         }
                     }
-                    <span class="kw">if </span>!used_values
-                        .contains(<span class="kw-2">&amp;</span>HashableValue(Value::DataInstOutput(func_at_inst.position)))
-                    {
+                    <span class="kw">if </span>!used_values.contains(<span class="kw-2">&amp;</span>Value::DataInstOutput(func_at_inst.position)) {
                         <span class="comment">// Replace the removed `DataInstDef` itself with `OpNop`,
                         // removing the ability to use its "name" as a value.
                         //
@@ -1223,7 +1084,7 @@
                         output_idx: original_idx <span class="kw">as </span>u32,
                     };
 
-                    <span class="kw">if </span>!used_values.contains(<span class="kw-2">&amp;</span>HashableValue(original_output)) {
+                    <span class="kw">if </span>!used_values.contains(<span class="kw-2">&amp;</span>original_output) {
                         <span class="comment">// Remove the output definition and corresponding value from all cases.
                         </span>func_def_body
                             .at_mut(control_node)
@@ -1242,11 +1103,12 @@
                             control_node,
                             output_idx: new_idx <span class="kw">as </span>u32,
                         };
-                        value_replacements.insert(HashableValue(original_output), new_output);
+                        value_replacements.insert(original_output, new_output);
                     }
                     new_idx += <span class="number">1</span>;
                 }
             }
+
             ControlNodeKind::Loop {
                 body,
                 initial_inputs,
@@ -1261,7 +1123,7 @@
                         input_idx: original_idx <span class="kw">as </span>u32,
                     };
 
-                    <span class="kw">if </span>!used_values.contains(<span class="kw-2">&amp;</span>HashableValue(original_input)) {
+                    <span class="kw">if </span>!used_values.contains(<span class="kw-2">&amp;</span>original_input) {
                         <span class="comment">// Remove the input definition and corresponding values.
                         </span><span class="kw">match </span><span class="kw-2">&amp;mut </span>func_def_body.at_mut(control_node).def().kind {
                             ControlNodeKind::Loop { initial_inputs, .. } =&gt; {
@@ -1281,18 +1143,20 @@
                             region: body,
                             input_idx: new_idx <span class="kw">as </span>u32,
                         };
-                        value_replacements.insert(HashableValue(original_input), new_input);
+                        value_replacements.insert(original_input, new_input);
                     }
                     new_idx += <span class="number">1</span>;
                 }
             }
+
+            ControlNodeKind::ExitInvocation { .. } =&gt; {}
         }
     }
 
     <span class="kw">if </span>!value_replacements.is_empty() {
         func_def_body.inner_in_place_transform_with(<span class="kw-2">&amp;mut </span>ReplaceValueWith(|v| <span class="kw">match </span>v {
             Value::Const(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
-            <span class="kw">_ </span>=&gt; value_replacements.get(<span class="kw-2">&amp;</span>HashableValue(v)).copied(),
+            <span class="kw">_ </span>=&gt; value_replacements.get(<span class="kw-2">&amp;</span>v).copied(),
         }));
     }
 }

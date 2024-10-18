@@ -167,6 +167,10 @@
 <a href="#167" id="167">167</a>
 <a href="#168" id="168">168</a>
 <a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! SPIR-T passes related to debuginfo.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::custom_insts::{<span class="self">self</span>, CustomInst, CustomOp};
@@ -175,7 +179,7 @@
 <span class="kw">use </span>spirt::transform::{InnerInPlaceTransform, Transformer};
 <span class="kw">use </span>spirt::visit::InnerVisit;
 <span class="kw">use </span>spirt::{
-    spv, Attr, AttrSetDef, ConstCtor, Context, ControlNode, ControlNodeKind, DataInstKind,
+    spv, Attr, AttrSetDef, ConstKind, Context, ControlNode, ControlNodeKind, DataInstKind,
     InternedStr, Module, OrdAssertEq, Value,
 };
 
@@ -264,16 +268,20 @@
                                 col_start: col,
                                 col_end: <span class="kw">_</span>,
                             } =&gt; {
-                                <span class="kw">let </span>const_ctor = |v: Value| <span class="kw">match </span>v {
-                                    Value::Const(ct) =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.cx[ct].ctor,
+                                <span class="kw">let </span>const_kind = |v: Value| <span class="kw">match </span>v {
+                                    Value::Const(ct) =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.cx[ct].kind,
                                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                                 };
-                                <span class="kw">let </span>const_str = |v: Value| <span class="kw">match </span>const_ctor(v) {
-                                    <span class="kw-2">&amp;</span>ConstCtor::SpvStringLiteralForExtInst(s) =&gt; s,
+                                <span class="kw">let </span>const_str = |v: Value| <span class="kw">match </span>const_kind(v) {
+                                    <span class="kw-2">&amp;</span>ConstKind::SpvStringLiteralForExtInst(s) =&gt; s,
                                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                                 };
-                                <span class="kw">let </span>const_u32 = |v: Value| <span class="kw">match </span>const_ctor(v) {
-                                    ConstCtor::SpvInst(spv_inst) =&gt; {
+                                <span class="kw">let </span>const_u32 = |v: Value| <span class="kw">match </span>const_kind(v) {
+                                    ConstKind::SpvInst {
+                                        spv_inst_and_const_inputs,
+                                    } =&gt; {
+                                        <span class="kw">let </span>(spv_inst, _const_inputs) =
+                                            <span class="kw-2">&amp;**</span>spv_inst_and_const_inputs;
                                         <span class="macro">assert!</span>(spv_inst.opcode == <span class="self">self</span>.wk.OpConstant);
                                         <span class="kw">match </span>spv_inst.imms[..] {
                                             [spv::Imm::Short(<span class="kw">_</span>, x)] =&gt; x,
