@@ -1,3 +1,5 @@
+#![allow(clippy::missing_safety_doc)]
+
 #[cfg(target_arch = "spirv")]
 use crate::arch::barrier;
 use crate::float::Float;
@@ -30,8 +32,14 @@ pub enum GroupOperation {
     /// A binary operation with an identity I and n (where n is the size of the workgroup)
     /// elements[a0, a1, … an-1] resulting in [I, a0, (a0 op a1), … (a0 op a1 op … op an-2)].
     ExclusiveScan = 2,
-    // /// See [`GROUP_OPERATION_CLUSTERED_REDUCE`]
-    // ClusteredReduce = 3,
+    /// The [`GroupOperation`] `ClusteredReduce`.
+    ///
+    /// All instructions with a [`GroupOperation`] require an additional `ClusterSize` parameter when [`GroupOperation`] is
+    /// `ClusteredReduce`. To map this requirement into rust, all function have a base version accepting [`GroupOperation`]
+    /// as a const generic, and a `_clustered` variant that is fixed to `ClusteredReduce` and takes the additional
+    /// `ClusterSize` parameter as a const generic. To not accidentally use a `ClusteredReduce` in the base variant of the
+    /// function, it was removed from the [`GroupOperation`] enum and instead resides individually.
+    ClusteredReduce = 3,
     /// Reserved.
     ///
     /// Requires Capability `GroupNonUniformPartitionedNV`.
@@ -45,15 +53,6 @@ pub enum GroupOperation {
     /// Requires Capability `GroupNonUniformPartitionedNV`.
     PartitionedExclusiveScanNV = 8,
 }
-
-/// The [`GroupOperation`] `ClusteredReduce`.
-///
-/// All instructions with a [`GroupOperation`] require an additional `ClusterSize` parameter when [`GroupOperation`] is
-/// `ClusteredReduce`. To map this requirement into rust, all function have a base version accepting [`GroupOperation`]
-/// as a const generic, and a `_clustered` variant that is fixed to `ClusteredReduce` and takes the additional
-/// `ClusterSize` parameter as a const generic. To not accidentally use a `ClusteredReduce` in the base variant of the
-/// function, it was removed from the [`GroupOperation`] enum and instead resides individually.
-pub const GROUP_OPERATION_CLUSTERED_REDUCE: u32 = 3;
 
 /// Only usable if the extension GL_KHR_shader_subgroup_basic is enabled.
 ///
@@ -470,41 +469,55 @@ pub unsafe fn subgroup_ballot_bit_extract(subgroup_mask: SubgroupMask, id: u32) 
     result
 }
 
-/// Result is the number of bits that are set to 1 in Value, considering only the bits in Value required to represent all bits of the group's invocations.
-///
-/// Result Type must be a scalar of integer type, whose Signedness operand is 0.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0.
-///
-/// Value must be a vector of four components of integer type scalar, whose Width operand is 32 and whose Signedness operand is 0.
-///
-/// Value is a set of bitfields where the first invocation is represented in the lowest bit of the first vector component and the last (up to the size of the group) is the higher bit number of the last bitmask needed to represent all bits of the group invocations.
-///
-/// Requires Capability `GroupNonUniformBallot`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformBallotBitCount")]
-#[inline]
-pub unsafe fn subgroup_ballot_bit_count<const GROUP_OP: u32>(subgroup_mask: SubgroupMask) -> u32 {
-    let mut result = 0;
+macro_rules! macro_subgroup_ballot_bit_count {
+    ($name:ident, $group_op:expr) => {
+        /// Result is the number of bits that are set to 1 in Value, considering only the bits in Value required to represent all bits of the group's invocations.
+        ///
+        /// Result Type must be a scalar of integer type, whose Signedness operand is 0.
+        ///
+        /// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+        ///
+        /// The identity I for Operation is 0.
+        ///
+        /// Value must be a vector of four components of integer type scalar, whose Width operand is 32 and whose Signedness operand is 0.
+        ///
+        /// Value is a set of bitfields where the first invocation is represented in the lowest bit of the first vector component and the last (up to the size of the group) is the higher bit number of the last bitmask needed to represent all bits of the group invocations.
+        ///
+        /// Requires Capability `GroupNonUniformBallot`.
+        #[spirv_std_macros::gpu_only]
+        #[doc(alias = "OpGroupNonUniformBallotBitCount")]
+        #[inline]
+        pub unsafe fn $name(subgroup_mask: SubgroupMask) -> u32 {
+            let mut result = 0;
 
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%subgroup_mask = OpLoad _ {subgroup_mask}",
-            "%result = OpGroupNonUniformBallotBitCount %u32 %subgroup {groupop} %subgroup_mask",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            subgroup_mask = in(reg) &subgroup_mask,
-            result = in(reg) &mut result,
+            unsafe {
+                asm! {
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%subgroup_mask = OpLoad _ {subgroup_mask}",
+                    "%result = OpGroupNonUniformBallotBitCount %u32 %subgroup {groupop} %subgroup_mask",
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    groupop = const ($group_op as u32),
+                    subgroup_mask = in(reg) &subgroup_mask,
+                    result = in(reg) &mut result,
+                }
+            }
+
+            result
         }
-    }
-
-    result
+    };
 }
+
+macro_subgroup_ballot_bit_count!(subgroup_ballot_bit_count, GroupOperation::Reduce);
+macro_subgroup_ballot_bit_count!(
+    subgroup_ballot_inclusive_bit_count,
+    GroupOperation::InclusiveScan
+);
+macro_subgroup_ballot_bit_count!(
+    subgroup_ballot_exclusive_bit_count,
+    GroupOperation::ExclusiveScan
+);
 
 /// Find the least significant bit set to 1 in Value, considering only the bits in Value required to represent all bits of the group's invocations. If none of the considered bits is set to 1, the resulting value is undefined.
 ///
@@ -720,1285 +733,531 @@ pub unsafe fn subgroup_shuffle_down<T: VectorOrScalar>(value: T, delta: u32) -> 
     result
 }
 
-/// An integer add group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformIAdd")]
-#[inline]
-pub unsafe fn subgroup_i_add<const GROUP_OP: u32, I: VectorOrScalar<Scalar = impl Integer>>(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformIAdd _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
+macro_rules! macro_subgroup_op {
+    ($scalar:ty, $asm_op:literal, $($name:ident, $group_op:expr),+; $docs:literal) => { $(
+        #[doc = $docs]
+        #[spirv_std_macros::gpu_only]
+        #[doc(alias = $asm_op)]
+        #[inline]
+        pub unsafe fn $name<I: VectorOrScalar<Scalar = $scalar>>(
+            value: I,
+        ) -> I {
+            let mut result = I::default();
+            unsafe {
+                asm! {
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%value = OpLoad _ {value}",
+                    concat!("%result = ", $asm_op, " _ %subgroup {groupop} %value"),
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    groupop = const ($group_op as u32),
+                    value = in(reg) &value,
+                    result = in(reg) &mut result,
+                }
+            }
+            result
         }
-    }
-
-    result
+    )+ };
 }
 
-/// An integer add group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformIAdd")]
-#[inline]
-pub unsafe fn subgroup_i_add_clustered<
-    const CLUSTER_SIZE: u32,
-    I: VectorOrScalar<Scalar = impl Integer>,
->(
-    value: I,
-) -> I {
-    let mut result = I::default();
+macro_rules! macro_subgroup_op_clustered {
+    ($scalar:ty, $asm_op:literal, $name:ident; $docs:literal) => {
+        #[doc = $docs]
+        #[spirv_std_macros::gpu_only]
+        #[doc(alias = $asm_op)]
+        #[inline]
+        pub unsafe fn $name<const CLUSTER_SIZE: u32, I: VectorOrScalar<Scalar = $scalar>>(
+            value: I,
+        ) -> I {
+            let mut result = I::default();
 
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformIAdd _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
+            unsafe {
+                asm! {
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%value = OpLoad _ {value}",
+                    "%clustersize = OpConstant %u32 {clustersize}",
+                    concat!("%result = ", $asm_op, " _ %subgroup {groupop} %value %clustersize"),
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    groupop = const (GroupOperation::ClusteredReduce as u32),
+                    clustersize = const CLUSTER_SIZE,
+                    value = in(reg) &value,
+                    result = in(reg) &mut result,
+                }
+            }
+
+            result
         }
-    }
-
-    result
+    };
 }
 
-/// A floating point add group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of floating-point type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0.
-///
-/// The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformFAdd")]
-#[inline]
-pub unsafe fn subgroup_f_add<const GROUP_OP: u32, F: VectorOrScalar<Scalar = impl Float>>(
-    value: F,
-) -> F {
-    let mut result = F::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformFAdd _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A floating point add group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of floating-point type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformFAdd")]
-#[inline]
-pub unsafe fn subgroup_f_add_clustered<
-    const CLUSTER_SIZE: u32,
-    F: VectorOrScalar<Scalar = impl Float>,
->(
-    value: F,
-) -> F {
-    let mut result = F::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformFAdd _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// An integer multiply group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 1.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformIMul")]
-#[inline]
-pub unsafe fn subgroup_i_mul<const GROUP_OP: u32, I: VectorOrScalar<Scalar = impl Integer>>(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformIMul _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// An integer multiply group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 1. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformIMul")]
-#[inline]
-pub unsafe fn subgroup_i_mul_clustered<
-    const CLUSTER_SIZE: u32,
-    I: VectorOrScalar<Scalar = impl Integer>,
->(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformIMul _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A floating point multiply group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of floating-point type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 1.
-///
-/// The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformFMul")]
-#[inline]
-pub unsafe fn subgroup_f_mul<const GROUP_OP: u32, F: VectorOrScalar<Scalar = impl Float>>(
-    value: F,
-) -> F {
-    let mut result = F::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformFMul _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A floating point multiply group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of floating-point type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 1. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformFMul")]
-#[inline]
-pub unsafe fn subgroup_f_mul_clustered<
-    const CLUSTER_SIZE: u32,
-    F: VectorOrScalar<Scalar = impl Float>,
->(
-    value: F,
-) -> F {
-    let mut result = F::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformFMul _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A signed integer minimum group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is INT_MAX.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformSMin")]
-#[inline]
-pub unsafe fn subgroup_s_min<
-    const GROUP_OP: u32,
-    S: VectorOrScalar<Scalar = impl SignedInteger>,
->(
-    value: S,
-) -> S {
-    let mut result = S::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformSMin _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A signed integer minimum group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is INT_MAX. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformSMin")]
-#[inline]
-pub unsafe fn subgroup_s_min_clustered<
-    const CLUSTER_SIZE: u32,
-    S: VectorOrScalar<Scalar = impl SignedInteger>,
->(
-    value: S,
-) -> S {
-    let mut result = S::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformSMin _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// An unsigned integer minimum group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type, whose Signedness operand is 0.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is UINT_MAX.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformUMin")]
-#[inline]
-pub unsafe fn subgroup_u_min<
-    const GROUP_OP: u32,
-    U: VectorOrScalar<Scalar = impl UnsignedInteger>,
->(
-    value: U,
-) -> U {
-    let mut result = U::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformUMin _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// An unsigned integer minimum group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type, whose Signedness operand is 0.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is UINT_MAX. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformUMin")]
-#[inline]
-pub unsafe fn subgroup_u_min_clustered<
-    const CLUSTER_SIZE: u32,
-    U: VectorOrScalar<Scalar = impl UnsignedInteger>,
->(
-    value: U,
-) -> U {
-    let mut result = U::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformUMin _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A floating point minimum group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of floating-point type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is +INF.
-///
-/// The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformFMin")]
-#[inline]
-pub unsafe fn subgroup_f_min<const GROUP_OP: u32, F: VectorOrScalar<Scalar = impl Float>>(
-    value: F,
-) -> F {
-    let mut result = F::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformFMin _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A floating point minimum group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of floating-point type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is +INF. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformFMin")]
-#[inline]
-pub unsafe fn subgroup_f_min_clustered<
-    const CLUSTER_SIZE: u32,
-    F: VectorOrScalar<Scalar = impl Float>,
->(
-    value: F,
-) -> F {
-    let mut result = F::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformFMin _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A signed integer maximum group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is INT_MIN.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformSMax")]
-#[inline]
-pub unsafe fn subgroup_s_max<
-    const GROUP_OP: u32,
-    S: VectorOrScalar<Scalar = impl SignedInteger>,
->(
-    value: S,
-) -> S {
-    let mut result = S::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformSMax _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A signed integer maximum group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is INT_MIN. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformSMax")]
-#[inline]
-pub unsafe fn subgroup_s_max_clustered<
-    const CLUSTER_SIZE: u32,
-    S: VectorOrScalar<Scalar = impl SignedInteger>,
->(
-    value: S,
-) -> S {
-    let mut result = S::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformSMax _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// An unsigned integer maximum group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type, whose Signedness operand is 0.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformUMax")]
-#[inline]
-pub unsafe fn subgroup_u_max<
-    const GROUP_OP: u32,
-    U: VectorOrScalar<Scalar = impl UnsignedInteger>,
->(
-    value: U,
-) -> U {
-    let mut result = U::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformUMax _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// An unsigned integer maximum group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type, whose Signedness operand is 0.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformUMax")]
-#[inline]
-pub unsafe fn subgroup_u_max_clustered<
-    const CLUSTER_SIZE: u32,
-    U: VectorOrScalar<Scalar = impl UnsignedInteger>,
->(
-    value: U,
-) -> U {
-    let mut result = U::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformUMax _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A floating point maximum group operation of all Value operands contributed by active invocations in by group.
-///
-/// Result Type must be a scalar or vector of floating-point type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is -INF.
-///
-/// The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformFMax")]
-#[inline]
-pub unsafe fn subgroup_f_max<const GROUP_OP: u32, F: VectorOrScalar<Scalar = impl Float>>(
-    value: F,
-) -> F {
-    let mut result = F::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformFMax _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A floating point maximum group operation of all Value operands contributed by active invocations in by group.
-///
-/// Result Type must be a scalar or vector of floating-point type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is -INF.
-///
-/// The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformFMax")]
-#[inline]
-pub unsafe fn subgroup_f_max_clustered<
-    const CLUSTER_SIZE: u32,
-    F: VectorOrScalar<Scalar = impl Float>,
->(
-    value: F,
-) -> F {
-    let mut result = F::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformFMax _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A bitwise and group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is ~0.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformBitwiseAnd")]
-#[inline]
-pub unsafe fn subgroup_bitwise_and<
-    const GROUP_OP: u32,
-    I: VectorOrScalar<Scalar = impl Integer>,
->(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformBitwiseAnd _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A bitwise and group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is ~0. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformBitwiseAnd")]
-#[inline]
-pub unsafe fn subgroup_bitwise_and_clustered<
-    const CLUSTER_SIZE: u32,
-    I: VectorOrScalar<Scalar = impl Integer>,
->(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformBitwiseAnd _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A bitwise or group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformBitwiseOr")]
-#[inline]
-pub unsafe fn subgroup_bitwise_or<const GROUP_OP: u32, I: VectorOrScalar<Scalar = impl Integer>>(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformBitwiseOr _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A bitwise or group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformBitwiseOr")]
-#[inline]
-pub unsafe fn subgroup_bitwise_or_clustered<
-    const CLUSTER_SIZE: u32,
-    I: VectorOrScalar<Scalar = impl Integer>,
->(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformBitwiseOr _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A bitwise xor group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformBitwiseXor")]
-#[inline]
-pub unsafe fn subgroup_bitwise_xor<
-    const GROUP_OP: u32,
-    I: VectorOrScalar<Scalar = impl Integer>,
->(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformBitwiseXor _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A bitwise xor group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of integer type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformBitwiseXor")]
-#[inline]
-pub unsafe fn subgroup_bitwise_xor_clustered<
-    const CLUSTER_SIZE: u32,
-    I: VectorOrScalar<Scalar = impl Integer>,
->(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformBitwiseXor _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A logical and group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of Boolean type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is ~0.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformLogicalAnd")]
-#[inline]
-pub unsafe fn subgroup_logical_and<const GROUP_OP: u32, I: VectorOrScalar<Scalar = bool>>(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformLogicalAnd _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A logical and group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of Boolean type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is ~0. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformLogicalAnd")]
-#[inline]
-pub unsafe fn subgroup_logical_and_clustered<
-    const CLUSTER_SIZE: u32,
-    I: VectorOrScalar<Scalar = bool>,
->(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformLogicalAnd _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A logical or group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of Boolean type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformLogicalOr")]
-#[inline]
-pub unsafe fn subgroup_logical_or<const GROUP_OP: u32, I: VectorOrScalar<Scalar = bool>>(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformLogicalOr _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A logical or group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of Boolean type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformLogicalOr")]
-#[inline]
-pub unsafe fn subgroup_logical_or_clustered<
-    const CLUSTER_SIZE: u32,
-    I: VectorOrScalar<Scalar = bool>,
->(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformLogicalOr _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A logical xor group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of Boolean type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// Requires Capability `GroupNonUniformArithmetic`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformLogicalXor")]
-#[inline]
-pub unsafe fn subgroup_logical_xor<const GROUP_OP: u32, I: VectorOrScalar<Scalar = bool>>(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformLogicalXor _ %subgroup {groupop} %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
-
-/// A logical xor group operation of all Value operands contributed by active invocations in the group.
-///
-/// Result Type must be a scalar or vector of Boolean type.
-///
-/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
-///
-/// The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
-///
-/// The type of Value must be the same as Result Type.
-///
-/// ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
-///
-/// Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
-#[spirv_std_macros::gpu_only]
-#[doc(alias = "OpGroupNonUniformLogicalXor")]
-#[inline]
-pub unsafe fn subgroup_logical_xor_clustered<
-    const CLUSTER_SIZE: u32,
-    I: VectorOrScalar<Scalar = bool>,
->(
-    value: I,
-) -> I {
-    let mut result = I::default();
-
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%clustersize = OpConstant %u32 {clustersize}",
-            "%result = OpGroupNonUniformLogicalXor _ %subgroup {groupop} %value %clustersize",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            groupop = const GROUP_OPERATION_CLUSTERED_REDUCE,
-            clustersize = const CLUSTER_SIZE,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
-        }
-    }
-
-    result
-}
+// add
+macro_subgroup_op!(impl Integer, "OpGroupNonUniformIAdd", subgroup_add_i, GroupOperation::Reduce, subgroup_inclusive_add_i, GroupOperation::InclusiveScan, subgroup_exclusive_add_i, GroupOperation::ExclusiveScan; r"
+An integer add group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl Integer, "OpGroupNonUniformIAdd", subgroup_clustered_add_i; r"
+An integer add group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+macro_subgroup_op!(impl Float, "OpGroupNonUniformFAdd", subgroup_add_f, GroupOperation::Reduce, subgroup_inclusive_add_f, GroupOperation::InclusiveScan, subgroup_exclusive_add_f, GroupOperation::ExclusiveScan; r"
+A floating point add group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of floating-point type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0.
+
+The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl Float, "OpGroupNonUniformFAdd", subgroup_clustered_add_f; r"
+A floating point add group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of floating-point type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+
+// mul
+macro_subgroup_op!(impl Integer, "OpGroupNonUniformIMul", subgroup_mul_i, GroupOperation::Reduce, subgroup_inclusive_mul_i, GroupOperation::InclusiveScan, subgroup_exclusive_mul_i, GroupOperation::ExclusiveScan; r"
+An integer multiply group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 1.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl Integer, "OpGroupNonUniformIMul", subgroup_clustered_mul_i; r"
+An integer multiply group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 1. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+macro_subgroup_op!(impl Float, "OpGroupNonUniformFMul", subgroup_mul_f, GroupOperation::Reduce, subgroup_inclusive_mul_f, GroupOperation::InclusiveScan, subgroup_exclusive_mul_f, GroupOperation::ExclusiveScan; r"
+A floating point multiply group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of floating-point type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 1.
+
+The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl Float, "OpGroupNonUniformFMul", subgroup_clustered_mul_f; r"
+A floating point multiply group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of floating-point type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 1. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+
+// min
+macro_subgroup_op!(impl SignedInteger, "OpGroupNonUniformSMin", subgroup_min_s, GroupOperation::Reduce, subgroup_inclusive_min_s, GroupOperation::InclusiveScan, subgroup_exclusive_min_s, GroupOperation::ExclusiveScan; r"
+A signed integer minimum group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is INT_MAX.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl SignedInteger, "OpGroupNonUniformSMin", subgroup_clustered_min_s; r"
+A signed integer minimum group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is INT_MAX. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+macro_subgroup_op!(impl UnsignedInteger, "OpGroupNonUniformUMin", subgroup_min_u, GroupOperation::Reduce, subgroup_inclusive_min_u, GroupOperation::InclusiveScan, subgroup_exclusive_min_u, GroupOperation::ExclusiveScan; r"
+An unsigned integer minimum group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type, whose Signedness operand is 0.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is UINT_MAX.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl UnsignedInteger, "OpGroupNonUniformUMin", subgroup_clustered_min_u; r"
+An unsigned integer minimum group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type, whose Signedness operand is 0.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is UINT_MAX. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+macro_subgroup_op!(impl Float, "OpGroupNonUniformFMin", subgroup_min_f, GroupOperation::Reduce, subgroup_inclusive_min_f, GroupOperation::InclusiveScan, subgroup_exclusive_min_f, GroupOperation::ExclusiveScan; r"
+A floating point minimum group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of floating-point type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is +INF.
+
+The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl Float, "OpGroupNonUniformFMin", subgroup_clustered_min_f; r"
+A floating point minimum group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of floating-point type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is +INF. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+
+// max
+macro_subgroup_op!(impl SignedInteger, "OpGroupNonUniformSMax", subgroup_max_s, GroupOperation::Reduce, subgroup_inclusive_max_s, GroupOperation::InclusiveScan, subgroup_exclusive_max_s, GroupOperation::ExclusiveScan; r"
+A signed integer maximum group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is INT_MIN.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl SignedInteger, "OpGroupNonUniformSMax", subgroup_clustered_max_s; r"
+A signed integer maximum group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is INT_MIN. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+macro_subgroup_op!(impl UnsignedInteger, "OpGroupNonUniformUMax", subgroup_max_u, GroupOperation::Reduce, subgroup_inclusive_max_u, GroupOperation::InclusiveScan, subgroup_exclusive_max_u, GroupOperation::ExclusiveScan; r"
+An unsigned integer maximum group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type, whose Signedness operand is 0.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl UnsignedInteger, "OpGroupNonUniformUMax", subgroup_clustered_max_u; r"
+An unsigned integer maximum group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type, whose Signedness operand is 0.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+macro_subgroup_op!(impl Float, "OpGroupNonUniformFMax", subgroup_max_f, GroupOperation::Reduce, subgroup_inclusive_max_f, GroupOperation::InclusiveScan, subgroup_exclusive_max_f, GroupOperation::ExclusiveScan; r"
+A floating point maximum group operation of all Value operands contributed by active invocations in by group.
+
+Result Type must be a scalar or vector of floating-point type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is -INF.
+
+The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl Float, "OpGroupNonUniformFMax", subgroup_clustered_max_f; r"
+A floating point maximum group operation of all Value operands contributed by active invocations in by group.
+
+Result Type must be a scalar or vector of floating-point type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is -INF.
+
+The type of Value must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+
+// and
+macro_subgroup_op!(impl Integer, "OpGroupNonUniformBitwiseAnd", subgroup_and, GroupOperation::Reduce, subgroup_inclusive_and, GroupOperation::InclusiveScan, subgroup_exclusive_and, GroupOperation::ExclusiveScan; r"
+A bitwise and group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is ~0.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl Integer, "OpGroupNonUniformBitwiseAnd", subgroup_clustered_and; r"
+A bitwise and group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is ~0. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+
+// or
+macro_subgroup_op!(impl Integer, "OpGroupNonUniformBitwiseOr", subgroup_or, GroupOperation::Reduce, subgroup_inclusive_or, GroupOperation::InclusiveScan, subgroup_exclusive_or, GroupOperation::ExclusiveScan; r"
+A bitwise or group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl Integer, "OpGroupNonUniformBitwiseOr", subgroup_clustered_or; r"
+A bitwise or group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+
+// xor
+macro_subgroup_op!(impl Integer, "OpGroupNonUniformBitwiseXor", subgroup_xor, GroupOperation::Reduce, subgroup_inclusive_xor, GroupOperation::InclusiveScan, subgroup_exclusive_xor, GroupOperation::ExclusiveScan; r"
+A bitwise xor group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(impl Integer, "OpGroupNonUniformBitwiseXor", subgroup_clustered_xor; r"
+A bitwise xor group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of integer type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+
+// logical and
+macro_subgroup_op!(bool, "OpGroupNonUniformLogicalAnd", subgroup_logical_and, GroupOperation::Reduce, subgroup_inclusive_logical_and, GroupOperation::InclusiveScan, subgroup_exclusive_logical_and, GroupOperation::ExclusiveScan; r"
+A logical and group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of Boolean type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is ~0.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(bool, "OpGroupNonUniformLogicalAnd", subgroup_clustered_logical_and; r"
+A logical and group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of Boolean type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is ~0. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+
+// logical or
+macro_subgroup_op!(bool, "OpGroupNonUniformLogicalOr", subgroup_logical_or, GroupOperation::Reduce, subgroup_inclusive_logical_or, GroupOperation::InclusiveScan, subgroup_exclusive_logical_or, GroupOperation::ExclusiveScan; r"
+A logical or group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of Boolean type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(bool, "OpGroupNonUniformLogicalOr", subgroup_clustered_logical_or; r"
+A logical or group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of Boolean type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
+
+// logical xor
+macro_subgroup_op!(bool, "OpGroupNonUniformLogicalXor", subgroup_logical_xor, GroupOperation::Reduce, subgroup_inclusive_logical_xor, GroupOperation::InclusiveScan, subgroup_exclusive_logical_xor, GroupOperation::ExclusiveScan; r"
+A logical xor group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of Boolean type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0.
+
+The type of Value must be the same as Result Type.
+
+Requires Capability `GroupNonUniformArithmetic`.
+");
+macro_subgroup_op_clustered!(bool, "OpGroupNonUniformLogicalXor", subgroup_clustered_logical_xor; r"
+A logical xor group operation of all Value operands contributed by active invocations in the group.
+
+Result Type must be a scalar or vector of Boolean type.
+
+Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+
+The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+
+The type of Value must be the same as Result Type.
+
+ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+
+Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+");
 
 /// Result is the Value of the invocation within the quad with a quad index equal to Index.
 ///

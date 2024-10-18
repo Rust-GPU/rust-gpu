@@ -6,7 +6,7 @@ use spirv_std::arch::{GroupOperation, SubgroupMask};
 use spirv_std::spirv;
 
 unsafe fn subgroup_ballot_bit_count(ballot: SubgroupMask) -> u32 {
-    spirv_std::arch::subgroup_ballot_bit_count::<{ GroupOperation::Reduce as u32 }>(ballot)
+    spirv_std::arch::subgroup_ballot_bit_count(ballot)
 }
 
 #[spirv(compute(threads(1, 1, 1)))]

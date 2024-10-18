@@ -7,7 +7,7 @@ use spirv_std::arch::{GroupOperation, SubgroupMask};
 use spirv_std::spirv;
 
 unsafe fn subgroup_i_add_inclusive_scan(value: u32) -> u32 {
-    spirv_std::arch::subgroup_i_add::<{ GroupOperation::InclusiveScan as u32 }, _>(value)
+    spirv_std::arch::subgroup_inclusive_add_i(value)
 }
 
 #[spirv(compute(threads(32, 1, 1)))]
