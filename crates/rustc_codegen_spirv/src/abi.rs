@@ -12,7 +12,8 @@ use rustc_middle::query::Providers;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
 use rustc_middle::ty::GenericArgsRef;
 use rustc_middle::ty::{
-    self, Const, CoroutineArgs, FloatTy, IntTy, ParamEnv, PolyFnSig, Ty, TyCtxt, TyKind, UintTy,
+    self, Const, CoroutineArgs, CoroutineArgsExt, FloatTy, IntTy, ParamEnv, PolyFnSig, Ty, TyCtxt,
+    TyKind, UintTy,
 };
 use rustc_middle::{bug, span_bug};
 use rustc_span::def_id::DefId;
@@ -20,7 +21,8 @@ use rustc_span::DUMMY_SP;
 use rustc_span::{Span, Symbol};
 use rustc_target::abi::call::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 use rustc_target::abi::{
-    Abi, Align, FieldsShape, LayoutS, Primitive, Scalar, Size, TagEncoding, VariantIdx, Variants,
+    Abi, Align, FieldsShape, Float, LayoutS, Primitive, Scalar, Size, TagEncoding, VariantIdx,
+    Variants,
 };
 use rustc_target::spec::abi::Abi as SpecAbi;
 use std::cell::RefCell;
@@ -504,10 +506,10 @@ fn trans_scalar<'tcx>(
         Primitive::Int(width, signedness) => {
             SpirvType::Integer(width.size().bits() as u32, signedness).def(span, cx)
         }
-        Primitive::F16 => SpirvType::Float(16).def(span, cx),
-        Primitive::F32 => SpirvType::Float(32).def(span, cx),
-        Primitive::F64 => SpirvType::Float(64).def(span, cx),
-        Primitive::F128 => SpirvType::Float(128).def(span, cx),
+        Primitive::Float(Float::F16) => SpirvType::Float(16).def(span, cx),
+        Primitive::Float(Float::F32) => SpirvType::Float(32).def(span, cx),
+        Primitive::Float(Float::F64) => SpirvType::Float(64).def(span, cx),
+        Primitive::Float(Float::F128) => SpirvType::Float(128).def(span, cx),
         Primitive::Pointer(_) => {
             let pointee_ty = dig_scalar_pointee(cx, ty, offset);
             // Pointers can be recursive. So, record what we're currently translating, and if we're already translating
@@ -866,7 +868,10 @@ fn trans_intrinsic_type<'tcx>(
                 cx: &CodegenCx<'tcx>,
                 const_: Const<'tcx>,
             ) -> Result<P, ErrorGuaranteed> {
-                assert!(const_.ty().is_integral());
+                assert!(
+                    matches!(const_.kind(), ty::ConstKind::Value(ty, _) if ty.is_integral()),
+                    "Expected an integral type"
+                );
                 let value = const_.eval_bits(cx.tcx, ParamEnv::reveal_all());
                 match P::from_u128(value) {
                     Some(v) => Ok(v),
