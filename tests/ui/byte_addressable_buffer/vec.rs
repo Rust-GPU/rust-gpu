@@ -1,7 +1,8 @@
 // build-pass
+// compile-flags: -Ctarget-feature=+ShaderNonUniform,+ext:SPV_EXT_descriptor_indexing
 
 use spirv_std::spirv;
-use spirv_std::{glam::Vec4, ByteAddressableBuffer};
+use spirv_std::{ByteAddressableBuffer, glam::Vec4};
 
 #[spirv(matrix)]
 pub struct Mat4 {

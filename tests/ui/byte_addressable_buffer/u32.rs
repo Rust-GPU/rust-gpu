@@ -1,7 +1,8 @@
 // build-pass
+// compile-flags: -Ctarget-feature=+ShaderNonUniform,+ext:SPV_EXT_descriptor_indexing
 
-use spirv_std::spirv;
 use spirv_std::ByteAddressableBuffer;
+use spirv_std::spirv;
 
 #[spirv(fragment)]
 pub fn load(#[spirv(descriptor_set = 0, binding = 0, storage_buffer)] buf: &[u32], out: &mut u32) {
