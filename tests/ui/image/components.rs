@@ -1,5 +1,5 @@
 // build-pass
-// compile-flags: -Ctarget-feature=+StorageImageExtendedFormats
+// compile-flags: -Ctarget-feature=+StorageImageExtendedFormats,+ShaderNonUniform,+ext:SPV_EXT_descriptor_indexing
 
 use glam::{Vec2, Vec3, Vec4};
 use spirv_std::spirv;
