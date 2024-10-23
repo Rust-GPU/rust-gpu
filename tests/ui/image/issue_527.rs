@@ -1,5 +1,5 @@
 // build-pass
-// compile-flags: -C target-feature=+StorageImageWriteWithoutFormat
+// compile-flags: -C target-feature=+StorageImageWriteWithoutFormat,+ShaderNonUniform,+ext:SPV_EXT_descriptor_indexing
 
 use glam::*;
 use spirv_std::spirv;

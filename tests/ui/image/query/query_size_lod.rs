@@ -1,5 +1,5 @@
 // build-pass
-// compile-flags: -C target-feature=+ImageQuery
+// compile-flags: -C target-feature=+ImageQuery,+ShaderNonUniform,+ext:SPV_EXT_descriptor_indexing
 
 use spirv_std::spirv;
 use spirv_std::{Image, arch};
