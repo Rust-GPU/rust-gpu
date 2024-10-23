@@ -1,9 +1,9 @@
 // Test `OpImageRead`
 // build-pass
-// compile-flags: -C target-feature=+StorageImageReadWithoutFormat
+// compile-flags: -C target-feature=+StorageImageReadWithoutFormat,+ShaderNonUniform,+ext:SPV_EXT_descriptor_indexing
 
 use spirv_std::spirv;
-use spirv_std::{arch, Image};
+use spirv_std::{Image, arch};
 
 #[spirv(fragment)]
 pub fn main(
