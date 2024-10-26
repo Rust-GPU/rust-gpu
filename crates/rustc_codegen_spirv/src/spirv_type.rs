@@ -340,7 +340,12 @@ impl SpirvType<'_> {
             }
             Self::Matrix { element, count } => cx.lookup_type(element).sizeof(cx)? * count as u64,
             Self::Array { element, count } => {
-                cx.lookup_type(element).sizeof(cx)? * cx.builder.lookup_const_u64(count).unwrap()
+                cx.lookup_type(element).sizeof(cx)?
+                    * cx.builder
+                        .lookup_const_scalar(count)
+                        .unwrap()
+                        .try_into()
+                        .unwrap()
             }
             Self::Pointer { .. } => cx.tcx.data_layout.pointer_size,
             Self::Image { .. }
@@ -543,7 +548,7 @@ impl fmt::Debug for SpirvTypePrinter<'_, '_> {
                     &self
                         .cx
                         .builder
-                        .lookup_const_u64(count)
+                        .lookup_const_scalar(count)
                         .expect("Array type has invalid count value"),
                 )
                 .finish(),
@@ -694,7 +699,7 @@ impl SpirvTypePrinter<'_, '_> {
                 write!(f, "x{count}")
             }
             SpirvType::Array { element, count } => {
-                let len = self.cx.builder.lookup_const_u64(count);
+                let len = self.cx.builder.lookup_const_scalar(count);
                 let len = len.expect("Array type has invalid count value");
                 f.write_str("[")?;
                 ty(self.cx, stack, f, element)?;
