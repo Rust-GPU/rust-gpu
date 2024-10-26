@@ -49,8 +49,7 @@ macro_rules! simple_op {
                             let size = Size::from_bits(bits);
                             let as_u128 = |const_val| {
                                 let x = match const_val {
-                                    SpirvConst::U32(x) => x as u128,
-                                    SpirvConst::U64(x) => x as u128,
+                                    SpirvConst::Scalar(x) => x,
                                     _ => return None,
                                 };
                                 Some(if signed {
@@ -225,7 +224,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             }
             SpirvType::Array { element, count } => {
                 let elem_pat = self.memset_const_pattern(&self.lookup_type(element), fill_byte);
-                let count = self.builder.lookup_const_u64(count).unwrap() as usize;
+                let count = self.builder.lookup_const_scalar(count).unwrap() as usize;
                 self.constant_composite(
                     ty.def(self.span(), self),
                     iter::repeat(elem_pat).take(count),
@@ -269,7 +268,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             SpirvType::Adt { .. } => self.fatal("memset on structs not implemented yet"),
             SpirvType::Array { element, count } => {
                 let elem_pat = self.memset_dynamic_pattern(&self.lookup_type(element), fill_var);
-                let count = self.builder.lookup_const_u64(count).unwrap() as usize;
+                let count = self.builder.lookup_const_scalar(count).unwrap() as usize;
                 self.emit()
                     .composite_construct(
                         ty.def(self.span(), self),
@@ -327,7 +326,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             .lookup_type(pat.ty)
             .sizeof(self)
             .expect("Unable to memset a dynamic sized object");
-        let size_elem_const = self.constant_int(size_bytes.ty, size_elem.bytes());
+        let size_elem_const = self.constant_int(size_bytes.ty, size_elem.bytes().into());
         let zero = self.constant_int(size_bytes.ty, 0);
         let one = self.constant_int(size_bytes.ty, 1);
         let zero_align = Align::from_bytes(0).unwrap();
@@ -595,8 +594,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // - dynamic indexing of a single array
         let const_ptr_offset = self
             .builder
-            .lookup_const_u64(ptr_base_index)
-            .and_then(|idx| Some(idx * self.lookup_type(ty).sizeof(self)?));
+            .lookup_const_scalar(ptr_base_index)
+            .and_then(|idx| Some(u64::try_from(idx).ok()? * self.lookup_type(ty).sizeof(self)?));
         if let Some(const_ptr_offset) = const_ptr_offset {
             if let Some((base_indices, base_pointee_ty)) = self.recover_access_chain_from_offset(
                 original_pointee_ty,
@@ -707,7 +706,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let mut emit = self.emit();
 
         let non_zero_ptr_base_index =
-            ptr_base_index.filter(|&idx| self.builder.lookup_const_u64(idx) != Some(0));
+            ptr_base_index.filter(|&idx| self.builder.lookup_const_scalar(idx) != Some(0));
         if let Some(ptr_base_index) = non_zero_ptr_base_index {
             let result = if is_inbounds {
                 emit.in_bounds_ptr_access_chain(
@@ -1083,8 +1082,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // HACK(eddyb) constant-fold branches early on, as the `core` library is
         // starting to get a lot of `if cfg!(debug_assertions)` added to it.
         match self.builder.lookup_const_by_id(cond) {
-            Some(SpirvConst::Bool(true)) => self.br(then_llbb),
-            Some(SpirvConst::Bool(false)) => self.br(else_llbb),
+            Some(SpirvConst::Scalar(1)) => self.br(then_llbb),
+            Some(SpirvConst::Scalar(0)) => self.br(else_llbb),
             _ => {
                 self.emit()
                     .branch_conditional(cond, then_llbb, else_llbb, empty())
@@ -2232,7 +2231,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 "memcpy with mem flags is not supported yet: {flags:?}"
             ));
         }
-        let const_size = self.builder.lookup_const_u64(size).map(Size::from_bytes);
+        let const_size = self
+            .builder
+            .lookup_const_scalar(size)
+            .and_then(|size| Some(Size::from_bytes(u64::try_from(size).ok()?)));
         if const_size == Some(Size::ZERO) {
             // Nothing to do!
             return;
@@ -2306,6 +2308,12 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 "memset with mem flags is not supported yet: {flags:?}"
             ));
         }
+
+        let const_size = self
+            .builder
+            .lookup_const_scalar(size)
+            .and_then(|size| Some(Size::from_bytes(u64::try_from(size).ok()?)));
+
         let elem_ty = match self.lookup_type(ptr.ty) {
             SpirvType::Pointer { pointee } => pointee,
             _ => self.fatal(format!(
@@ -2314,13 +2322,13 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             )),
         };
         let elem_ty_spv = self.lookup_type(elem_ty);
-        let pat = match self.builder.lookup_const_u64(fill_byte) {
+        let pat = match self.builder.lookup_const_scalar(fill_byte) {
             Some(fill_byte) => self.memset_const_pattern(&elem_ty_spv, fill_byte as u8),
             None => self.memset_dynamic_pattern(&elem_ty_spv, fill_byte.def(self)),
         }
         .with_type(elem_ty);
-        match self.builder.lookup_const_u64(size) {
-            Some(size) => self.memset_constant_size(ptr, pat, size),
+        match const_size {
+            Some(size) => self.memset_constant_size(ptr, pat, size.bytes()),
             None => self.memset_dynamic_size(ptr, pat, size),
         }
     }
@@ -2354,7 +2362,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             SpirvType::Vector { element, .. } => element,
             other => self.fatal(format!("extract_element not implemented on type {other:?}")),
         };
-        match self.builder.lookup_const_u64(idx) {
+        match self.builder.lookup_const_scalar(idx) {
             Some(const_index) => self.emit().composite_extract(
                 result_type,
                 None,
@@ -2781,7 +2789,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 let mut decoded_format_args = DecodedFormatArgs::default();
 
                 let const_u32_as_usize = |ct_id| match self.builder.lookup_const_by_id(ct_id)? {
-                    SpirvConst::U32(x) => Some(x as usize),
+                    SpirvConst::Scalar(x) => Some(u32::try_from(x).ok()? as usize),
                     _ => None,
                 };
                 let const_slice_as_elem_ids = |slice_ptr_and_len_ids: &[Word]| {
@@ -2948,10 +2956,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                             match (inst.class.opcode, inst.result_id, &id_operands[..]) {
                                 (Op::Bitcast, Some(r), &[x]) => Inst::Bitcast(r, x),
                                 (Op::InBoundsAccessChain, Some(r), &[p, i]) => {
-                                    if let Some(SpirvConst::U32(i)) =
+                                    if let Some(SpirvConst::Scalar(i)) =
                                         self.builder.lookup_const_by_id(i)
                                     {
-                                        Inst::InBoundsAccessChain(r, p, i)
+                                        Inst::InBoundsAccessChain(r, p, i as u32)
                                     } else {
                                         Inst::Unsupported(inst.class.opcode)
                                     }

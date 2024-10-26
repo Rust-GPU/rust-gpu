@@ -4,12 +4,13 @@ use crate::spirv_type::SpirvType;
 use crate::symbols::Symbols;
 use crate::target::SpirvTarget;
 use crate::target_feature::TargetFeature;
-use rspirv::dr::{Block, Builder, Module, Operand};
+use rspirv::dr::{Block, Builder, Instruction, Module, Operand};
 use rspirv::spirv::{
     AddressingModel, Capability, MemoryModel, Op, SourceLanguage, StorageClass, Word,
 };
 use rspirv::{binary::Assemble, binary::Disassemble};
 use rustc_arena::DroplessArena;
+use rustc_codegen_ssa::traits::ConstMethods as _;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_data_structures::sync::Lrc;
 use rustc_middle::bug;
@@ -18,6 +19,7 @@ use rustc_middle::ty::TyCtxt;
 use rustc_span::source_map::SourceMap;
 use rustc_span::symbol::Symbol;
 use rustc_span::{FileName, FileNameDisplayPreference, SourceFile, Span, DUMMY_SP};
+use rustc_target::abi::Size;
 use std::assert_matches::assert_matches;
 use std::cell::{RefCell, RefMut};
 use std::hash::{Hash, Hasher};
@@ -221,13 +223,8 @@ impl SpirvValueExt for Word {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum SpirvConst<'a, 'tcx> {
-    U32(u32),
-    U64(u64),
-    /// f32 isn't hash, so store bits
-    F32(u32),
-    /// f64 isn't hash, so store bits
-    F64(u64),
-    Bool(bool),
+    /// Constants of boolean, integer or floating-point type (up to 128-bit).
+    Scalar(u128),
 
     Null,
     Undef,
@@ -273,11 +270,7 @@ impl<'tcx> SpirvConst<'_, 'tcx> {
 
         match self {
             // FIXME(eddyb) these are all noop cases, could they be automated?
-            SpirvConst::U32(v) => SpirvConst::U32(v),
-            SpirvConst::U64(v) => SpirvConst::U64(v),
-            SpirvConst::F32(v) => SpirvConst::F32(v),
-            SpirvConst::F64(v) => SpirvConst::F64(v),
-            SpirvConst::Bool(v) => SpirvConst::Bool(v),
+            SpirvConst::Scalar(v) => SpirvConst::Scalar(v),
             SpirvConst::Null => SpirvConst::Null,
             SpirvConst::Undef => SpirvConst::Undef,
             SpirvConst::ZombieUndefForFnAddr => SpirvConst::ZombieUndefForFnAddr,
@@ -570,8 +563,26 @@ impl<'tcx> BuilderSpirv<'tcx> {
         val: SpirvConst<'_, 'tcx>,
         cx: &CodegenCx<'tcx>,
     ) -> SpirvValue {
+        let scalar_ty = match val {
+            SpirvConst::Scalar(_) => Some(cx.lookup_type(ty)),
+            _ => None,
+        };
+
+        // HACK(eddyb) this is done so late (just before interning `val`) to
+        // minimize any potential misuse from direct `def_constant` calls.
+        let val = match (val, scalar_ty) {
+            (SpirvConst::Scalar(val), Some(SpirvType::Integer(bits, signed))) => {
+                let size = Size::from_bits(bits);
+                SpirvConst::Scalar(if signed {
+                    size.sign_extend(val)
+                } else {
+                    size.truncate(val)
+                })
+            }
+            _ => val,
+        };
+
         let val_with_type = WithType { ty, val };
-        let mut builder = self.builder(BuilderCursor::default());
         if let Some(entry) = self.const_to_id.borrow().get(&val_with_type) {
             // FIXME(eddyb) deduplicate this `if`-`else` and its other copies.
             let kind = if entry.legal.is_ok() {
@@ -582,16 +593,99 @@ impl<'tcx> BuilderSpirv<'tcx> {
             return SpirvValue { kind, ty };
         }
         let val = val_with_type.val;
-        let id = match val {
-            SpirvConst::U32(v) | SpirvConst::F32(v) => builder.constant_bit32(ty, v),
-            SpirvConst::U64(v) | SpirvConst::F64(v) => builder.constant_bit64(ty, v),
-            SpirvConst::Bool(v) => {
-                if v {
-                    builder.constant_true(ty)
-                } else {
-                    builder.constant_false(ty)
-                }
+
+        // FIXME(eddyb) make this an extension method on `rspirv::dr::Builder`?
+        let const_op = |builder: &mut Builder, op, lhs, maybe_rhs: Option<_>| {
+            // HACK(eddyb) remove after `OpSpecConstantOp` support gets added to SPIR-T.
+            let spirt_has_const_op = false;
+
+            if !spirt_has_const_op {
+                let zombie = builder.undef(ty, None);
+                cx.zombie_with_span(
+                    zombie,
+                    DUMMY_SP,
+                    &format!("unsupported constant of type `{}`", cx.debug_type(ty)),
+                );
+                return zombie;
             }
+
+            let id = builder.id();
+            builder
+                .module_mut()
+                .types_global_values
+                .push(Instruction::new(
+                    Op::SpecConstantOp,
+                    Some(ty),
+                    Some(id),
+                    [
+                        Operand::LiteralSpecConstantOpInteger(op),
+                        Operand::IdRef(lhs),
+                    ]
+                    .into_iter()
+                    .chain(maybe_rhs.map(Operand::IdRef))
+                    .collect(),
+                ));
+            id
+        };
+
+        let mut builder = self.builder(BuilderCursor::default());
+        let id = match val {
+            SpirvConst::Scalar(v) => match scalar_ty.unwrap() {
+                SpirvType::Integer(..=32, _) | SpirvType::Float(..=32) => {
+                    builder.constant_bit32(ty, v as u32)
+                }
+                SpirvType::Integer(64, _) | SpirvType::Float(64) => {
+                    builder.constant_bit64(ty, v as u64)
+                }
+                SpirvType::Integer(128, false) => {
+                    // HACK(eddyb) avoid borrow conflicts.
+                    drop(builder);
+
+                    let const_64_u32_id = cx.const_u32(64).def_cx(cx);
+                    let [lo_id, hi_id] =
+                        [v as u64, (v >> 64) as u64].map(|half| cx.const_u64(half).def_cx(cx));
+
+                    builder = self.builder(BuilderCursor::default());
+                    let mut const_op =
+                        |op, lhs, maybe_rhs| const_op(&mut builder, op, lhs, maybe_rhs);
+                    let [lo_u128_id, hi_shifted_u128_id] =
+                        [(lo_id, None), (hi_id, Some(const_64_u32_id))].map(
+                            |(half_u64_id, shift)| {
+                                let mut half_u128_id = const_op(Op::UConvert, half_u64_id, None);
+                                if let Some(shift_amount_id) = shift {
+                                    half_u128_id = const_op(
+                                        Op::ShiftLeftLogical,
+                                        half_u128_id,
+                                        Some(shift_amount_id),
+                                    );
+                                }
+                                half_u128_id
+                            },
+                        );
+                    const_op(Op::BitwiseOr, lo_u128_id, Some(hi_shifted_u128_id))
+                }
+                SpirvType::Integer(128, true) | SpirvType::Float(128) => {
+                    // HACK(eddyb) avoid borrow conflicts.
+                    drop(builder);
+
+                    let v_u128_id = cx.const_u128(v).def_cx(cx);
+
+                    builder = self.builder(BuilderCursor::default());
+                    const_op(&mut builder, Op::Bitcast, v_u128_id, None)
+                }
+                SpirvType::Bool => match v {
+                    0 => builder.constant_false(ty),
+                    1 => builder.constant_true(ty),
+                    _ => cx
+                        .tcx
+                        .dcx()
+                        .fatal(format!("invalid constant value for bool: {v}")),
+                },
+                other => cx.tcx.dcx().fatal(format!(
+                    "SpirvConst::Scalar does not support type {}",
+                    other.debug(ty, cx)
+                )),
+            },
 
             SpirvConst::Null => builder.constant_null(ty),
             SpirvConst::Undef
@@ -606,11 +700,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
         };
         #[allow(clippy::match_same_arms)]
         let legal = match val {
-            SpirvConst::U32(_)
-            | SpirvConst::U64(_)
-            | SpirvConst::F32(_)
-            | SpirvConst::F64(_)
-            | SpirvConst::Bool(_) => Ok(()),
+            SpirvConst::Scalar(_) => Ok(()),
 
             SpirvConst::Null => {
                 // FIXME(eddyb) check that the type supports `OpConstantNull`.
@@ -712,10 +802,9 @@ impl<'tcx> BuilderSpirv<'tcx> {
         }
     }
 
-    pub fn lookup_const_u64(&self, def: SpirvValue) -> Option<u64> {
+    pub fn lookup_const_scalar(&self, def: SpirvValue) -> Option<u128> {
         match self.lookup_const(def)? {
-            SpirvConst::U32(v) => Some(v as u64),
-            SpirvConst::U64(v) => Some(v),
+            SpirvConst::Scalar(v) => Some(v),
             _ => None,
         }
     }

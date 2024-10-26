@@ -113,8 +113,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 other.debug(shift.ty, self)
             )),
         };
-        let int_size = self.constant_int(shift.ty, width as u64);
-        let mask = self.constant_int(shift.ty, (width - 1) as u64);
+        let int_size = self.constant_int(shift.ty, width.into());
+        let mask = self.constant_int(shift.ty, (width - 1).into());
         let zero = self.constant_int(shift.ty, 0);
         let bool = SpirvType::Bool.def(self.span(), self);
         // https://stackoverflow.com/a/10134877
