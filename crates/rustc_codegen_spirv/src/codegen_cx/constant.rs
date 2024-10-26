@@ -16,90 +16,68 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 
     pub fn constant_u8(&self, span: Span, val: u8) -> SpirvValue {
-        let ty = SpirvType::Integer(8, false).def(span, self);
-        self.def_constant(ty, SpirvConst::U32(val as u32))
+        self.constant_int_from_native_unsigned(span, val)
     }
 
     pub fn constant_i8(&self, span: Span, val: i8) -> SpirvValue {
-        let ty = SpirvType::Integer(8, true).def(span, self);
-        self.def_constant(ty, SpirvConst::U32(val as u32))
+        self.constant_int_from_native_signed(span, val)
     }
 
     pub fn constant_i16(&self, span: Span, val: i16) -> SpirvValue {
-        let ty = SpirvType::Integer(16, true).def(span, self);
-        self.def_constant(ty, SpirvConst::U32(val as u32))
+        self.constant_int_from_native_signed(span, val)
     }
 
     pub fn constant_u16(&self, span: Span, val: u16) -> SpirvValue {
-        let ty = SpirvType::Integer(16, false).def(span, self);
-        self.def_constant(ty, SpirvConst::U32(val as u32))
+        self.constant_int_from_native_unsigned(span, val)
     }
 
     pub fn constant_i32(&self, span: Span, val: i32) -> SpirvValue {
-        let ty = SpirvType::Integer(32, true).def(span, self);
-        self.def_constant(ty, SpirvConst::U32(val as u32))
+        self.constant_int_from_native_signed(span, val)
     }
 
     pub fn constant_u32(&self, span: Span, val: u32) -> SpirvValue {
-        let ty = SpirvType::Integer(32, false).def(span, self);
-        self.def_constant(ty, SpirvConst::U32(val))
+        self.constant_int_from_native_unsigned(span, val)
     }
 
     pub fn constant_u64(&self, span: Span, val: u64) -> SpirvValue {
-        let ty = SpirvType::Integer(64, false).def(span, self);
-        self.def_constant(ty, SpirvConst::U64(val))
+        self.constant_int_from_native_unsigned(span, val)
     }
 
-    pub fn constant_int(&self, ty: Word, val: u64) -> SpirvValue {
-        match self.lookup_type(ty) {
-            SpirvType::Integer(bits @ 8..=32, signed) => {
-                let size = Size::from_bits(bits);
-                let val = val as u128;
-                self.def_constant(
-                    ty,
-                    SpirvConst::U32(if signed {
-                        size.sign_extend(val)
-                    } else {
-                        size.truncate(val)
-                    } as u32),
-                )
-            }
-            SpirvType::Integer(64, _) => self.def_constant(ty, SpirvConst::U64(val)),
-            SpirvType::Bool => match val {
-                0 | 1 => self.def_constant(ty, SpirvConst::Bool(val != 0)),
-                _ => self
-                    .tcx
-                    .dcx()
-                    .fatal(format!("Invalid constant value for bool: {val}")),
-            },
-            SpirvType::Integer(128, _) => {
-                let result = self.undef(ty);
-                self.zombie_no_span(result.def_cx(self), "u128 constant");
-                result
-            }
-            other => self.tcx.dcx().fatal(format!(
-                "constant_int invalid on type {}",
-                other.debug(ty, self)
-            )),
-        }
+    fn constant_int_from_native_unsigned(&self, span: Span, val: impl Into<u128>) -> SpirvValue {
+        let size = Size::from_bytes(std::mem::size_of_val(&val));
+        let ty = SpirvType::Integer(size.bits() as u32, false).def(span, self);
+        self.constant_int(ty, val.into())
+    }
+
+    fn constant_int_from_native_signed(&self, span: Span, val: impl Into<i128>) -> SpirvValue {
+        let size = Size::from_bytes(std::mem::size_of_val(&val));
+        let ty = SpirvType::Integer(size.bits() as u32, false).def(span, self);
+        self.constant_int(ty, val.into() as u128)
+    }
+
+    pub fn constant_int(&self, ty: Word, val: u128) -> SpirvValue {
+        self.def_constant(ty, SpirvConst::Scalar(val))
     }
 
     pub fn constant_f32(&self, span: Span, val: f32) -> SpirvValue {
         let ty = SpirvType::Float(32).def(span, self);
-        self.def_constant(ty, SpirvConst::F32(val.to_bits()))
+        self.def_constant(ty, SpirvConst::Scalar(val.to_bits().into()))
     }
 
     pub fn constant_f64(&self, span: Span, val: f64) -> SpirvValue {
         let ty = SpirvType::Float(64).def(span, self);
-        self.def_constant(ty, SpirvConst::F64(val.to_bits()))
+        self.def_constant(ty, SpirvConst::Scalar(val.to_bits().into()))
     }
 
     pub fn constant_float(&self, ty: Word, val: f64) -> SpirvValue {
         match self.lookup_type(ty) {
-            SpirvType::Float(32) => self.def_constant(ty, SpirvConst::F32((val as f32).to_bits())),
-            SpirvType::Float(64) => self.def_constant(ty, SpirvConst::F64(val.to_bits())),
+            // FIXME(eddyb) use `rustc_apfloat` to support all float sizes.
+            SpirvType::Float(32) => {
+                self.def_constant(ty, SpirvConst::Scalar((val as f32).to_bits().into()))
+            }
+            SpirvType::Float(64) => self.def_constant(ty, SpirvConst::Scalar(val.to_bits().into())),
             other => self.tcx.dcx().fatal(format!(
-                "constant_float invalid on type {}",
+                "constant_float does not support type {}",
                 other.debug(ty, self)
             )),
         }
@@ -107,7 +85,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
     pub fn constant_bool(&self, span: Span, val: bool) -> SpirvValue {
         let ty = SpirvType::Bool.def(span, self);
-        self.def_constant(ty, SpirvConst::Bool(val))
+        self.def_constant(ty, SpirvConst::Scalar(val as u128))
     }
 
     pub fn constant_composite(&self, ty: Word, fields: impl Iterator<Item = Word>) -> SpirvValue {
@@ -136,27 +114,13 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
         self.const_undef(ty)
     }
     fn const_int(&self, t: Self::Type, i: i64) -> Self::Value {
-        self.constant_int(t, i as u64)
+        self.constant_int(t, i as u128)
     }
     fn const_uint(&self, t: Self::Type, i: u64) -> Self::Value {
-        self.constant_int(t, i)
+        self.constant_int(t, i.into())
     }
-    // FIXME(eddyb) support `u128`.
     fn const_uint_big(&self, t: Self::Type, i: u128) -> Self::Value {
-        let i_as_u64 = i as u64;
-        let c = self.constant_int(t, i_as_u64);
-        match self.lookup_type(t) {
-            SpirvType::Integer(width, _) if width > 64 => {
-                if u128::from(i_as_u64) != i {
-                    self.zombie_no_span(
-                        c.def_cx(self),
-                        "const_uint_big truncated a 128-bit constant to 64 bits",
-                    );
-                }
-            }
-            _ => {}
-        }
-        c
+        self.constant_int(t, i)
     }
     fn const_bool(&self, val: bool) -> Self::Value {
         self.constant_bool(DUMMY_SP, val)
@@ -183,7 +147,7 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
     fn const_usize(&self, i: u64) -> Self::Value {
         let ptr_size = self.tcx.data_layout.pointer_size.bits() as u32;
         let t = SpirvType::Integer(ptr_size, false).def(DUMMY_SP, self);
-        self.constant_int(t, i)
+        self.constant_int(t, i.into())
     }
     fn const_u8(&self, i: u8) -> Self::Value {
         self.constant_u8(DUMMY_SP, i)
@@ -230,16 +194,12 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
     }
 
     fn const_to_opt_uint(&self, v: Self::Value) -> Option<u64> {
-        self.builder.lookup_const_u64(v)
+        self.builder.lookup_const_scalar(v)?.try_into().ok()
     }
-    fn const_to_opt_u128(&self, v: Self::Value, sign_ext: bool) -> Option<u128> {
-        self.builder.lookup_const_u64(v).map(|v| {
-            if sign_ext {
-                v as i64 as i128 as u128
-            } else {
-                v as u128
-            }
-        })
+    // FIXME(eddyb) what's the purpose of the `sign_ext` argument, and can it
+    // differ from the signedness of `v`?
+    fn const_to_opt_u128(&self, v: Self::Value, _sign_ext: bool) -> Option<u128> {
+        self.builder.lookup_const_scalar(v)
     }
 
     fn scalar_to_backend(
@@ -253,56 +213,19 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
                 assert_eq!(int.size(), layout.primitive().size(self));
                 let data = int.assert_uint(int.size());
 
-                match layout.primitive() {
-                    Primitive::Int(int_size, int_signedness) => match self.lookup_type(ty) {
-                        SpirvType::Integer(width, spirv_signedness) => {
-                            assert_eq!(width as u64, int_size.size().bits());
-                            assert_eq!(spirv_signedness, int_signedness);
-                            self.constant_int(ty, data as u64)
-                        }
-                        SpirvType::Bool => match data {
-                            0 => self.constant_bool(DUMMY_SP, false),
-                            1 => self.constant_bool(DUMMY_SP, true),
-                            _ => self
-                                .tcx
-                                .dcx()
-                                .fatal(format!("Invalid constant value for bool: {data}")),
-                        },
-                        other => self.tcx.dcx().fatal(format!(
-                            "scalar_to_backend Primitive::Int not supported on type {}",
-                            other.debug(ty, self)
-                        )),
-                    },
-                    Primitive::F16 => self
-                        .tcx
-                        .dcx()
-                        .fatal("scalar_to_backend Primitive::F16 not supported"),
-                    Primitive::F32 => {
-                        let res = self.constant_f32(DUMMY_SP, f32::from_bits(data as u32));
-                        assert_eq!(res.ty, ty);
-                        res
+                if let Primitive::Pointer(_) = layout.primitive() {
+                    if data == 0 {
+                        self.constant_null(ty)
+                    } else {
+                        let result = self.undef(ty);
+                        self.zombie_no_span(
+                            result.def_cx(self),
+                            "pointer has non-null integer address",
+                        );
+                        result
                     }
-                    Primitive::F64 => {
-                        let res = self.constant_f64(DUMMY_SP, f64::from_bits(data as u64));
-                        assert_eq!(res.ty, ty);
-                        res
-                    }
-                    Primitive::F128 => self
-                        .tcx
-                        .dcx()
-                        .fatal("scalar_to_backend Primitive::F128 not supported"),
-                    Primitive::Pointer(_) => {
-                        if data == 0 {
-                            self.constant_null(ty)
-                        } else {
-                            let result = self.undef(ty);
-                            self.zombie_no_span(
-                                result.def_cx(self),
-                                "pointer has non-null integer address",
-                            );
-                            result
-                        }
-                    }
+                } else {
+                    self.def_constant(ty, SpirvConst::Scalar(data))
                 }
             }
             Scalar::Ptr(ptr, _) => {
@@ -550,7 +473,7 @@ impl<'tcx> CodegenCx<'tcx> {
                 self.constant_composite(ty, values.into_iter())
             }
             SpirvType::Array { element, count } => {
-                let count = self.builder.lookup_const_u64(count).unwrap() as usize;
+                let count = self.builder.lookup_const_scalar(count).unwrap() as usize;
                 let values = (0..count).map(|_| {
                     self.read_from_const_alloc(alloc, offset, element)
                         .def_cx(self)
