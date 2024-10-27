@@ -169,7 +169,9 @@ fn link_with_linker_opts(
 
             // HACK(eddyb) inject `write_diags` into `sess`, to work around
             // the removals in https://github.com/rust-lang/rust/pull/102992.
-            sess.psess.dcx = {
+            sess.psess = {
+                let source_map = sess.psess.clone_source_map();
+
                 let fallback_bundle = {
                     extern crate rustc_error_messages;
                     rustc_error_messages::fallback_fluent_bundle(
@@ -179,10 +181,13 @@ fn link_with_linker_opts(
                 };
                 let emitter =
                     rustc_errors::emitter::HumanEmitter::new(Box::new(buf), fallback_bundle)
-                        .sm(Some(sess.psess.clone_source_map()));
+                        .sm(Some(source_map.clone()));
 
-                rustc_errors::DiagCtxt::new(Box::new(emitter))
-                    .with_flags(sess.opts.unstable_opts.dcx_flags(true))
+                rustc_session::parse::ParseSess::with_dcx(
+                    rustc_errors::DiagCtxt::new(Box::new(emitter))
+                        .with_flags(sess.opts.unstable_opts.dcx_flags(true)),
+                    source_map,
+                )
             };
 
             let res = link(

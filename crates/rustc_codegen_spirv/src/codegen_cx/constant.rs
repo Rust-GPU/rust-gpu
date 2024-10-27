@@ -214,7 +214,7 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
         match scalar {
             Scalar::Int(int) => {
                 assert_eq!(int.size(), layout.primitive().size(self));
-                let data = int.assert_uint(int.size());
+                let data = int.to_uint(int.size());
 
                 if let Primitive::Pointer(_) = layout.primitive() {
                     if data == 0 {
@@ -247,8 +247,11 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
                         let value = self.static_addr_of(init, alloc.inner().align, None);
                         (value, AddressSpace::DATA)
                     }
-                    GlobalAlloc::Function(fn_instance) => (
-                        self.get_fn_addr(fn_instance.polymorphize(self.tcx)),
+                    GlobalAlloc::Function {
+                        instance,
+                        unique: _,
+                    } => (
+                        self.get_fn_addr(instance.polymorphize(self.tcx)),
                         self.data_layout().instruction_address_space,
                     ),
                     GlobalAlloc::VTable(vty, trait_ref) => {
@@ -304,7 +307,21 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
         self.def_constant(void_type, SpirvConst::ConstDataFromAlloc(alloc))
     }
 
-    fn const_bitcast(&self, val: Self::Value, ty: Self::Type) -> Self::Value {
+    fn const_ptr_byte_offset(&self, val: Self::Value, offset: Size) -> Self::Value {
+        if offset == Size::ZERO {
+            val
+        } else {
+            // FIXME(eddyb) implement via `OpSpecConstantOp`.
+            // FIXME(eddyb) this zombies the original value without creating a new one.
+            let result = val;
+            self.zombie_no_span(result.def_cx(self), "const_ptr_byte_offset");
+            result
+        }
+    }
+}
+
+impl<'tcx> CodegenCx<'tcx> {
+    pub fn const_bitcast(&self, val: SpirvValue, ty: Word) -> SpirvValue {
         // HACK(eddyb) special-case `const_data_from_alloc` + `static_addr_of`
         // as the old `from_const_alloc` (now `OperandRef::from_const_alloc`).
         if let SpirvValueKind::IllegalConst(_) = val.kind {
@@ -331,20 +348,7 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
             result
         }
     }
-    fn const_ptr_byte_offset(&self, val: Self::Value, offset: Size) -> Self::Value {
-        if offset == Size::ZERO {
-            val
-        } else {
-            // FIXME(eddyb) implement via `OpSpecConstantOp`.
-            // FIXME(eddyb) this zombies the original value without creating a new one.
-            let result = val;
-            self.zombie_no_span(result.def_cx(self), "const_ptr_byte_offset");
-            result
-        }
-    }
-}
 
-impl<'tcx> CodegenCx<'tcx> {
     // This function comes from `ty::layout`'s `layout_of_uncached`,
     // where it's named `scalar_unit`.
     pub fn primitive_to_scalar(&self, value: Primitive) -> abi::Scalar {

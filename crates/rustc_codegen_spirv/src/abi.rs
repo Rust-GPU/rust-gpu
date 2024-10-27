@@ -867,7 +867,7 @@ fn trans_intrinsic_type<'tcx>(
 
             impl FromScalarInt for u32 {
                 fn from_scalar_int(n: ScalarInt) -> Option<Self> {
-                    n.try_to_u32().ok()
+                    Some(n.try_to_bits(Size::from_bits(32)).ok()?.try_into().unwrap())
                 }
             }
 
