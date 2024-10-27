@@ -598,12 +598,11 @@ impl CodegenArgs {
 
         let matches_opt_path = |name| matches.opt_str(name).map(PathBuf::from);
         let matches_opt_dump_dir_path = |name| {
-            matches_opt_path(name).map(|path| {
+            matches_opt_path(name).inspect(|path| {
                 if path.is_file() {
-                    std::fs::remove_file(&path).unwrap();
+                    std::fs::remove_file(path).unwrap();
                 }
-                std::fs::create_dir_all(&path).unwrap();
-                path
+                std::fs::create_dir_all(path).unwrap();
             })
         };
         // FIXME(eddyb) should these be handled as `-C linker-args="..."` instead?
@@ -850,10 +849,6 @@ impl<'tcx> MiscMethods<'tcx> for CodegenCx<'tcx> {
         &self,
     ) -> &RefCell<FxHashMap<(Ty<'tcx>, Option<PolyExistentialTraitRef<'tcx>>), Self::Value>> {
         &self.vtables
-    }
-
-    fn check_overflow(&self) -> bool {
-        self.tcx.sess.overflow_checks()
     }
 
     fn get_fn(&self, instance: Instance<'tcx>) -> Self::Function {
