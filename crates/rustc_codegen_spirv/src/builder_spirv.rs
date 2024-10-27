@@ -577,7 +577,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
             (SpirvConst::Scalar(val), Some(SpirvType::Integer(bits, signed))) => {
                 let size = Size::from_bits(bits);
                 SpirvConst::Scalar(if signed {
-                    size.sign_extend(val)
+                    size.sign_extend(val) as u128
                 } else {
                     size.truncate(val)
                 })

@@ -2,10 +2,10 @@
 use core::arch::asm;
 use core::marker::PhantomData;
 
+/// SPIR-V "runtime array", similar to `[T]`, but with no way of knowing its length.
+///
 /// Dynamically-sized arrays in Rust carry around their length as the second half of a tuple.
 /// Unfortunately, sometimes SPIR-V provides an unsized array with no way of obtaining its length.
-/// Hence, this type represents something very similar to a slice, but with no way of knowing its
-/// length.
 #[spirv(runtime_array)]
 // HACK(eddyb) avoids "transparent newtype of `_anti_zst_padding`" misinterpretation.
 #[repr(C)]

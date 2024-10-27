@@ -56,7 +56,7 @@ macro_rules! simple_op {
                                     _ => return None,
                                 };
                                 Some(if signed {
-                                    size.sign_extend(x)
+                                    size.sign_extend(x) as u128
                                 } else {
                                     size.truncate(x)
                                 })
