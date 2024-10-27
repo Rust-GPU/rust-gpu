@@ -19,7 +19,8 @@ use rspirv::spirv::{Decoration, LinkageType, Op, Word};
 use rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_codegen_ssa::mir::debuginfo::{FunctionDebugContext, VariableKind};
 use rustc_codegen_ssa::traits::{
-    AsmMethods, BackendTypes, DebugInfoMethods, GlobalAsmOperandRef, MiscMethods,
+    AsmCodegenMethods, BackendTypes, DebugInfoCodegenMethods, GlobalAsmOperandRef,
+    MiscCodegenMethods,
 };
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
@@ -806,6 +807,7 @@ impl FromStr for ModuleOutputType {
 
 impl<'tcx> BackendTypes for CodegenCx<'tcx> {
     type Value = SpirvValue;
+    type Metadata = ();
     type Function = SpirvValue;
 
     type BasicBlock = Word;
@@ -843,7 +845,7 @@ impl<'tcx> HasParamEnv<'tcx> for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> MiscMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
     #[allow(clippy::type_complexity)]
     fn vtables(
         &self,
@@ -904,7 +906,7 @@ impl<'tcx> MiscMethods<'tcx> for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> DebugInfoMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> DebugInfoCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn create_vtable_debuginfo(
         &self,
         _ty: Ty<'tcx>,
@@ -962,7 +964,7 @@ impl<'tcx> DebugInfoMethods<'tcx> for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> AsmMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> AsmCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn codegen_global_asm(
         &self,
         _template: &[InlineAsmTemplatePiece],
