@@ -15,9 +15,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2024-07-20"
+channel = "nightly-2024-09-01"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = 9057c3ffec44926d5e149dc13ff3ce1613b69cce"#;
+# commit_hash = a7399ba69d37b019677a9c47fe89ceb8dd82db2d"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -145,7 +145,7 @@ fn generate_pqp_cg_ssa() -> Result<(), Box<dyn Error>> {
                 for line in mem::take(&mut src).lines() {
                     if line.starts_with("#!") {
                         src += "// ";
-                        if !line.starts_with("#![doc(") {
+                        if !line.starts_with("#![doc(") && line != "#![warn(unreachable_pub)]" {
                             writeln(&mut cg_ssa_lib_rc_attrs, line);
                         }
                     } else if line == "#[macro_use]" || line.starts_with("extern crate ") {

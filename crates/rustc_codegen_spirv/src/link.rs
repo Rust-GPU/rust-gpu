@@ -604,12 +604,11 @@ fn do_link(
         disambiguated_crate_name_for_dumps,
     );
 
-    match link_result {
-        Ok(v) => v,
-        Err(rustc_errors::ErrorGuaranteed { .. }) => {
-            sess.dcx().abort_if_errors();
-            bug!("Linker errored, but no error reported");
-        }
+    if let Ok(v) = link_result {
+        v
+    } else {
+        sess.dcx().abort_if_errors();
+        bug!("Linker errored, but no error reported");
     }
 }
 

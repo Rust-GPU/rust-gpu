@@ -4,7 +4,6 @@
 use crate::builder_spirv::BuilderSpirv;
 use crate::custom_insts::{self, CustomInst};
 use either::Either;
-use itertools::Itertools;
 use rspirv::dr::{Instruction, Module, Operand};
 use rspirv::spirv::{Decoration, Op, Word};
 use rustc_data_structures::fx::FxIndexMap;
@@ -14,7 +13,6 @@ use rustc_span::{FileName, SourceFile};
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::marker::PhantomData;
-use std::ops::Range;
 use std::path::PathBuf;
 use std::{fmt, iter, slice, str};
 
@@ -495,61 +493,18 @@ impl<'a> SpanRegenerator<'a> {
         // called with `line`/`col` values that are near eachother - thankfully,
         // this code should only be hit on the error reporting path anyway.
         let line_col_to_bpos = |line: u32, col: u32| {
-            let line_bpos_range = file.line_bounds(line.checked_sub(1)? as usize);
+            let line_idx_in_file = line.checked_sub(1)? as usize;
+            let line_bpos_range = file.line_bounds(line_idx_in_file);
+            let line_contents = file.get_line(line_idx_in_file)?;
 
-            // Find the special cases (`MultiByteChar`s/`NonNarrowChar`s) in the line.
-            let multibyte_chars = {
-                let find = |bpos| {
-                    file.multibyte_chars
-                        .binary_search_by_key(&file.relative_position(bpos), |mbc| mbc.pos)
-                        .unwrap_or_else(|x| x)
-                };
-                let Range { start, end } = line_bpos_range;
-                file.multibyte_chars[find(start)..find(end)].iter()
-            };
-            let non_narrow_chars = {
-                let find = |bpos| {
-                    file.non_narrow_chars
-                        .binary_search_by_key(&file.relative_position(bpos), |nnc| nnc.pos())
-                        .unwrap_or_else(|x| x)
-                };
-                let Range { start, end } = line_bpos_range;
-                file.non_narrow_chars[find(start)..find(end)].iter()
-            };
-            let mut special_chars = multibyte_chars
-                .merge_join_by(non_narrow_chars, |mbc, nnc| mbc.pos.cmp(&nnc.pos()))
-                .peekable();
-
-            // Increment the `BytePos` until we reach the right `col_display`, using
-            // `MultiByteChar`s/`NonNarrowChar`s to track non-trivial contributions
-            // (this may look inefficient, but lines tend to be short, and `rustc`
-            // itself is even worse than this, when it comes to `BytePos` lookups).
+            // Increment the `BytePos` until we reach the right `col_display`.
             let (mut cur_bpos, mut cur_col_display) = (line_bpos_range.start, 0);
+            let mut line_chars = line_contents.chars();
             while cur_bpos < line_bpos_range.end && cur_col_display < col {
-                let next_special_bpos = special_chars
-                    .peek()
-                    .map(|special| {
-                        special
-                            .as_ref()
-                            .map_any(|mbc| mbc.pos, |nnc| nnc.pos())
-                            .reduce(|x, _| x)
-                    })
-                    .map(|rel_bpos| file.absolute_position(rel_bpos));
-
-                // Batch trivial chars (i.e. chars 1:1 wrt `BytePos` vs `col_display`).
-                let following_trivial_chars =
-                    next_special_bpos.unwrap_or(line_bpos_range.end).0 - cur_bpos.0;
-                if following_trivial_chars > 0 {
-                    let wanted_trivial_chars = following_trivial_chars.min(col - cur_col_display);
-                    cur_bpos.0 += wanted_trivial_chars;
-                    cur_col_display += wanted_trivial_chars;
-                    continue;
-                }
-
-                // Add a special char's `BytePos` and `col_display` contributions.
-                let mbc_nnc = special_chars.next().unwrap();
-                cur_bpos.0 += mbc_nnc.as_ref().left().map_or(1, |mbc| mbc.bytes as u32);
-                cur_col_display += mbc_nnc.as_ref().right().map_or(1, |nnc| nnc.width() as u32);
+                // Add each char's `BytePos` and `col_display` contributions.
+                let ch = line_chars.next()?;
+                cur_bpos.0 += ch.len_utf8() as u32;
+                cur_col_display += rustc_span::char_width(ch) as u32;
             }
             Some(cur_bpos)
         };
