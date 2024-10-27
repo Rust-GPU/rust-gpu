@@ -4,6 +4,7 @@
 use crate::attr::{AggregatedSpirvAttributes, IntrinsicType};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
+use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
@@ -22,7 +23,8 @@ use rustc_span::def_id::DefId;
 use rustc_span::{Span, Symbol};
 use rustc_target::abi::call::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 use rustc_target::abi::{
-    Abi, Align, FieldsShape, LayoutS, Primitive, Scalar, Size, TagEncoding, VariantIdx, Variants,
+    Abi, Align, FieldsShape, LayoutS, Primitive, ReprFlags, ReprOptions, Scalar, Size, TagEncoding,
+    VariantIdx, Variants,
 };
 use rustc_target::spec::abi::Abi as SpecAbi;
 use std::cell::RefCell;
@@ -157,6 +159,7 @@ pub(crate) fn provide(providers: &mut Providers) {
             unadjusted_abi_align,
         }
     }
+
     providers.layout_of = |tcx, key| {
         let TyAndLayout { ty, mut layout } =
             (rustc_interface::DEFAULT_QUERY_PROVIDERS.layout_of)(tcx, key)?;
@@ -175,6 +178,90 @@ pub(crate) fn provide(providers: &mut Providers) {
         }
 
         Ok(TyAndLayout { ty, layout })
+    };
+
+    // HACK(eddyb) work around https://github.com/rust-lang/rust/pull/129403
+    // banning "struct-style" `#[repr(simd)]` (in favor of "array-newtype-style"),
+    // by simply bypassing "type definition WF checks" for affected types, which:
+    // - can only really be sound for types with trivial field types, that are
+    //   either completely non-generic (covering most `#[repr(simd)]` `struct`s),
+    //   or *at most* one generic type parameter with no bounds/where clause
+    // - relies on upstream `layout_of` not having had the non-array logic removed
+    //
+    // FIXME(eddyb) remove this once migrating beyond `#[repr(simd)]` becomes
+    // an option (may require Rust-GPU distinguishing between "SPIR-V interface"
+    // and "Rust-facing" types, which is even worse when the `OpTypeVector`s
+    // may be e.g. nested in `struct`s/arrays/etc. - at least buffers are easy).
+    providers.check_well_formed = |tcx, def_id| {
+        let trivial_struct = match tcx.hir_node_by_def_id(def_id) {
+            rustc_hir::Node::Item(item) => match item.kind {
+                rustc_hir::ItemKind::Struct(
+                    _,
+                    &rustc_hir::Generics {
+                        params:
+                            &[]
+                            | &[
+                                rustc_hir::GenericParam {
+                                    kind:
+                                        rustc_hir::GenericParamKind::Type {
+                                            default: None,
+                                            synthetic: false,
+                                        },
+                                    ..
+                                },
+                            ],
+                        predicates: &[],
+                        has_where_clause_predicates: false,
+                        where_clause_span: _,
+                        span: _,
+                    },
+                ) => Some(tcx.adt_def(def_id)),
+                _ => None,
+            },
+            _ => None,
+        };
+        let valid_non_array_simd_struct = trivial_struct.is_some_and(|adt_def| {
+            let ReprOptions {
+                int: None,
+                align: None,
+                pack: None,
+                flags: ReprFlags::IS_SIMD,
+                field_shuffle_seed: _,
+            } = adt_def.repr()
+            else {
+                return false;
+            };
+            if adt_def.destructor(tcx).is_some() {
+                return false;
+            }
+
+            let field_types = adt_def
+                .non_enum_variant()
+                .fields
+                .iter()
+                .map(|f| tcx.type_of(f.did).instantiate_identity());
+            field_types.dedup().exactly_one().is_ok_and(|elem_ty| {
+                matches!(
+                    elem_ty.kind(),
+                    ty::Bool | ty::Int(_) | ty::Uint(_) | ty::Float(_) | ty::Param(_)
+                )
+            })
+        });
+
+        if valid_non_array_simd_struct {
+            tcx.dcx()
+                .struct_span_warn(
+                    tcx.def_span(def_id),
+                    "[Rust-GPU] temporarily re-allowing old-style `#[repr(simd)]` (with fields)",
+                )
+                .with_note("removed upstream by https://github.com/rust-lang/rust/pull/129403")
+                .with_note("in favor of the new `#[repr(simd)] struct TxN([T; N]);` style")
+                .with_note("(taking effect since `nightly-2024-09-12` / `1.83.0` stable)")
+                .emit();
+            return Ok(());
+        }
+
+        (rustc_interface::DEFAULT_QUERY_PROVIDERS.check_well_formed)(tcx, def_id)
     };
 }
 
@@ -458,7 +545,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
     }
 }
 
-/// Only pub for `LayoutTypeMethods::scalar_pair_element_backend_type`. Think about what you're
+/// Only pub for `LayoutTypeCodegenMethods::scalar_pair_element_backend_type`. Think about what you're
 /// doing before calling this.
 pub fn scalar_pair_element_backend_type<'tcx>(
     cx: &CodegenCx<'tcx>,

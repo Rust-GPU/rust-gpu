@@ -1,7 +1,7 @@
 use crate::attr::{Entry, ExecutionModeExtra, IntrinsicType, SpecConstant, SpirvAttribute};
 use crate::builder::libm_intrinsics;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
-use rustc_ast::ast::{AttrKind, Attribute, LitIntType, LitKind, MetaItemLit, NestedMetaItem};
+use rustc_ast::ast::{AttrKind, Attribute, LitIntType, LitKind, MetaItemInner, MetaItemLit};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_span::Span;
 use rustc_span::symbol::{Ident, Symbol};
@@ -508,7 +508,7 @@ pub(crate) fn parse_attrs_for_checking<'a>(
 
 fn parse_spec_constant_attr(
     sym: &Symbols,
-    arg: &NestedMetaItem,
+    arg: &MetaItemInner,
 ) -> Result<SpecConstant, ParseAttrError> {
     let mut id = None;
     let mut default = None;
@@ -538,7 +538,7 @@ fn parse_spec_constant_attr(
     })
 }
 
-fn parse_attr_int_value(arg: &NestedMetaItem) -> Result<u32, ParseAttrError> {
+fn parse_attr_int_value(arg: &MetaItemInner) -> Result<u32, ParseAttrError> {
     let arg = match arg.meta_item() {
         Some(arg) => arg,
         None => return Err((arg.span(), "attribute must have value".to_string())),
@@ -552,7 +552,7 @@ fn parse_attr_int_value(arg: &NestedMetaItem) -> Result<u32, ParseAttrError> {
     }
 }
 
-fn parse_local_size_attr(arg: &NestedMetaItem) -> Result<[u32; 3], ParseAttrError> {
+fn parse_local_size_attr(arg: &MetaItemInner) -> Result<[u32; 3], ParseAttrError> {
     let arg = match arg.meta_item() {
         Some(arg) => arg,
         None => return Err((arg.span(), "attribute must have value".to_string())),
@@ -562,7 +562,7 @@ fn parse_local_size_attr(arg: &NestedMetaItem) -> Result<[u32; 3], ParseAttrErro
             let mut local_size = [1; 3];
             for (idx, lit) in tuple.iter().enumerate() {
                 match lit {
-                    NestedMetaItem::Lit(MetaItemLit {
+                    MetaItemInner::Lit(MetaItemLit {
                         kind: LitKind::Int(x, LitIntType::Unsuffixed),
                         ..
                     }) if *x <= u32::MAX as u128 => local_size[idx] = x.get() as u32,
@@ -592,7 +592,7 @@ fn parse_local_size_attr(arg: &NestedMetaItem) -> Result<[u32; 3], ParseAttrErro
 // ie #[spirv(fragment(origin_lower_left))] or #[spirv(gl_compute(local_size_x=64, local_size_y=8))]
 fn parse_entry_attrs(
     sym: &Symbols,
-    arg: &NestedMetaItem,
+    arg: &MetaItemInner,
     name: &Ident,
     execution_model: ExecutionModel,
 ) -> Result<Entry, ParseAttrError> {

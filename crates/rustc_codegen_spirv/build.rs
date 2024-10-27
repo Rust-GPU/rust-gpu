@@ -15,9 +15,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2024-09-01"
+channel = "nightly-2024-10-12"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = a7399ba69d37b019677a9c47fe89ceb8dd82db2d"#;
+# commit_hash = 1bc403daadbebb553ccc211a0a8eebb73989665f"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -194,6 +194,9 @@ mod win {",
                 );
             } else if relative_path == Path::new("src/mir/operand.rs") {
                 src = src.replace("alloca(field.size,", "typed_alloca(llfield_ty,");
+
+                // HACK(eddyb) non-array `#[repr(simd)]` workaround (see `src/abi.rs`).
+                src = src.replace("if constant_ty.is_simd() {", "if false {");
             }
 
             fs::write(out_path, src)?;

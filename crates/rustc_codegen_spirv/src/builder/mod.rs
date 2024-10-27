@@ -20,8 +20,9 @@ use rspirv::spirv::Word;
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{
-    AbiBuilderMethods, ArgAbiMethods, BackendTypes, BuilderMethods, CoverageInfoBuilderMethods,
-    DebugInfoBuilderMethods, HasCodegen, StaticBuilderMethods, TypeMembershipMethods,
+    AbiBuilderMethods, ArgAbiBuilderMethods, BackendTypes, BuilderMethods,
+    CoverageInfoBuilderMethods, DebugInfoBuilderMethods, StaticBuilderMethods,
+    TypeMembershipCodegenMethods,
 };
 use rustc_errors::{Diag, DiagMessage};
 use rustc_middle::mir::coverage::CoverageKind;
@@ -170,6 +171,10 @@ impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
         todo!()
     }
 
+    fn clear_dbg_loc(&mut self) {
+        todo!()
+    }
+
     fn insert_reference_to_gdb_debug_scripts_section_global(&mut self) {
         todo!()
     }
@@ -179,7 +184,7 @@ impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> ArgAbiMethods<'tcx> for Builder<'a, 'tcx> {
+impl<'a, 'tcx> ArgAbiBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     fn store_fn_arg(
         &mut self,
         arg_abi: &ArgAbi<'tcx, Ty<'tcx>>,
@@ -247,7 +252,9 @@ impl<'a, 'tcx> StaticBuilderMethods for Builder<'a, 'tcx> {
 
 impl<'a, 'tcx> BackendTypes for Builder<'a, 'tcx> {
     type Value = <CodegenCx<'tcx> as BackendTypes>::Value;
+    type Metadata = <CodegenCx<'tcx> as BackendTypes>::Metadata;
     type Function = <CodegenCx<'tcx> as BackendTypes>::Function;
+
     type BasicBlock = <CodegenCx<'tcx> as BackendTypes>::BasicBlock;
     type Type = <CodegenCx<'tcx> as BackendTypes>::Type;
     type Funclet = <CodegenCx<'tcx> as BackendTypes>::Funclet;
@@ -255,10 +262,6 @@ impl<'a, 'tcx> BackendTypes for Builder<'a, 'tcx> {
     type DIScope = <CodegenCx<'tcx> as BackendTypes>::DIScope;
     type DIVariable = <CodegenCx<'tcx> as BackendTypes>::DIVariable;
     type DILocation = <CodegenCx<'tcx> as BackendTypes>::DILocation;
-}
-
-impl<'a, 'tcx> HasCodegen<'tcx> for Builder<'a, 'tcx> {
-    type CodegenCx = CodegenCx<'tcx>;
 }
 
 impl<'a, 'tcx> HasParamEnv<'tcx> for Builder<'a, 'tcx> {
@@ -308,4 +311,4 @@ impl<'tcx> FnAbiOfHelpers<'tcx> for Builder<'_, 'tcx> {
     }
 }
 
-impl<'tcx> TypeMembershipMethods<'tcx> for CodegenCx<'tcx> {}
+impl<'tcx> TypeMembershipCodegenMethods<'tcx> for CodegenCx<'tcx> {}
