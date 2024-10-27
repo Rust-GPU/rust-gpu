@@ -138,6 +138,7 @@ fn link_with_linker_opts(
             file_loader: Box::new(rustc_span::source_map::RealFileLoader),
             path_mapping: sopts.file_path_mapping(),
             hash_kind: sopts.unstable_opts.src_hash_algorithm(&target),
+            checksum_hash_kind: None,
         };
         rustc_span::create_session_globals_then(sopts.edition, Some(sm_inputs), || {
             let mut sess = rustc_session::build_session(

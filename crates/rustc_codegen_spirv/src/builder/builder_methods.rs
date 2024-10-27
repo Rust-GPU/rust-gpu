@@ -4,6 +4,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 use super::Builder;
 use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{BuilderCursor, SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
+use crate::codegen_cx::CodegenCx;
 use crate::custom_insts::{CustomInst, CustomOp};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
@@ -16,9 +17,9 @@ use rustc_codegen_ssa::common::{
 };
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
-use rustc_codegen_ssa::traits::BaseTypeMethods;
 use rustc_codegen_ssa::traits::{
-    BackendTypes, BuilderMethods, ConstMethods, LayoutTypeMethods, OverflowOp,
+    BackendTypes, BaseTypeCodegenMethods, BuilderMethods, ConstCodegenMethods,
+    LayoutTypeCodegenMethods, OverflowOp,
 };
 use rustc_data_structures::fx::FxHashSet;
 use rustc_middle::bug;
@@ -958,6 +959,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 }
 
 impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
+    type CodegenCx = CodegenCx<'tcx>;
+
     fn build(cx: &'a Self::CodegenCx, llbb: Self::BasicBlock) -> Self {
         let cursor = cx.builder.select_block_by_id(llbb);
         // FIXME(eddyb) change `Self::Function` to be more like a function index.
