@@ -182,15 +182,14 @@ impl AggregatedSpirvAttributes {
             span: Span,
             category: &'static str,
         ) -> Result<(), MultipleAttrs> {
-            match slot {
-                Some(prev) => Err(MultipleAttrs {
+            if let Some(prev) = slot {
+                Err(MultipleAttrs {
                     prev_span: prev.span,
                     category,
-                }),
-                None => {
-                    *slot = Some(Spanned { value, span });
-                    Ok(())
-                }
+                })
+            } else {
+                *slot = Some(Spanned { value, span });
+                Ok(())
             }
         }
 
