@@ -2,6 +2,7 @@
 #![allow(internal_features)]
 #![allow(rustc::diagnostic_outside_of_impl)]
 #![allow(rustc::untranslatable_diagnostic)]
+#![feature(assert_matches)]
 #![feature(box_patterns)]
 #![feature(if_let_guard)]
 #![feature(let_chains)]
@@ -29,7 +30,6 @@
 //! [`spirv-tools`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools
 //! [`spirv-tools-sys`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools_sys
 #![feature(rustc_private)]
-#![feature(assert_matches)]
 #![feature(result_flattening)]
 // crate-specific exceptions:
 #![allow(

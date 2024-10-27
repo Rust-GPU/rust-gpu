@@ -857,12 +857,11 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                     place,
                 } => {
                     self.check_reg(span, reg);
-                    match place {
-                        Some(place) => Some(OutRegister::Place(*place)),
-                        None => {
-                            self.tcx.dcx().span_err(span, "missing place for register");
-                            None
-                        }
+                    if let Some(place) = place {
+                        Some(OutRegister::Place(*place))
+                    } else {
+                        self.tcx.dcx().span_err(span, "missing place for register");
+                        None
                     }
                 }
                 InlineAsmOperandRef::InOut {
@@ -872,12 +871,11 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                     out_place,
                 } => {
                     self.check_reg(span, reg);
-                    match out_place {
-                        Some(out_place) => Some(OutRegister::Place(*out_place)),
-                        None => {
-                            self.tcx.dcx().span_err(span, "missing place for register");
-                            None
-                        }
+                    if let Some(out_place) = out_place {
+                        Some(OutRegister::Place(*out_place))
+                    } else {
+                        self.tcx.dcx().span_err(span, "missing place for register");
+                        None
                     }
                 }
                 InlineAsmOperandRef::Const { string: _ } => {
@@ -953,8 +951,8 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                     place,
                 } => {
                     self.check_reg(span, reg);
-                    match place {
-                        Some(place) => match self.lookup_type(place.val.llval.ty) {
+                    if let Some(place) = place {
+                        match self.lookup_type(place.val.llval.ty) {
                             SpirvType::Pointer { pointee } => Some(pointee),
                             other => {
                                 self.tcx.dcx().span_err(
@@ -966,13 +964,12 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                                 );
                                 None
                             }
-                        },
-                        None => {
-                            self.tcx
-                                .dcx()
-                                .span_err(span, "missing place for out register typeof");
-                            None
                         }
+                    } else {
+                        self.tcx
+                            .dcx()
+                            .span_err(span, "missing place for out register typeof");
+                        None
                     }
                 }
                 InlineAsmOperandRef::InOut {

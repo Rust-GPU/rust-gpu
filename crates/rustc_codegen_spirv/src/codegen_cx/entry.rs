@@ -831,8 +831,10 @@ impl<'tcx> CodegenCx<'tcx> {
                     }
                 }
             }
-            // Emitted earlier.
-            Err(SpecConstant { .. }) => {}
+            Err(not_var) => {
+                // Emitted earlier.
+                let SpecConstant { .. } = not_var;
+            }
         }
     }
 
