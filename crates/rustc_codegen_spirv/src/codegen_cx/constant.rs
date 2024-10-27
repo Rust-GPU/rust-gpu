@@ -195,6 +195,14 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
         .def(DUMMY_SP, self);
         self.constant_composite(struct_ty, elts.iter().map(|f| f.def_cx(self)))
     }
+    fn const_vector(&self, elts: &[Self::Value]) -> Self::Value {
+        let vector_ty = SpirvType::Vector {
+            element: elts[0].ty,
+            count: elts.len() as u32,
+        }
+        .def(DUMMY_SP, self);
+        self.constant_composite(vector_ty, elts.iter().map(|elt| elt.def_cx(self)))
+    }
 
     fn const_to_opt_uint(&self, v: Self::Value) -> Option<u64> {
         self.builder.lookup_const_scalar(v)?.try_into().ok()
@@ -247,10 +255,7 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
                         let value = self.static_addr_of(init, alloc.inner().align, None);
                         (value, AddressSpace::DATA)
                     }
-                    GlobalAlloc::Function {
-                        instance,
-                        unique: _,
-                    } => (
+                    GlobalAlloc::Function { instance } => (
                         self.get_fn_addr(instance.polymorphize(self.tcx)),
                         self.data_layout().instruction_address_space,
                     ),

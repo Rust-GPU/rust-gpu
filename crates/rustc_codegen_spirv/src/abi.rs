@@ -548,7 +548,7 @@ fn dig_scalar_pointee<'tcx>(
             TyKind::Ref(_, pointee_ty, _) | TyKind::RawPtr(pointee_ty, _) => {
                 PointeeTy::Ty(cx.layout_of(pointee_ty))
             }
-            TyKind::FnPtr(sig) => PointeeTy::Fn(sig),
+            TyKind::FnPtr(sig_tys, hdr) => PointeeTy::Fn(sig_tys.with(hdr)),
             _ => bug!("Pointer is not `&T`, `*T` or `fn` pointer: {:#?}", layout),
         };
         return pointee;

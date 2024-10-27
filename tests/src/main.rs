@@ -122,7 +122,7 @@ impl Runner {
                 "--crate-type dylib",
                 "-Zunstable-options",
                 "-Zcrate-attr=no_std",
-                "-Zcrate-attr=feature(asm_const,asm_experimental_arch)",
+                "-Zcrate-attr=feature(asm_experimental_arch)",
             ]
             .join(" ")
         }
