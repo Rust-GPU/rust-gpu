@@ -1,5 +1,4 @@
 // HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
-#![feature(rustdoc_internals)]
 #![allow(internal_features)]
 #![allow(rustc::diagnostic_outside_of_impl)]
 #![allow(rustc::untranslatable_diagnostic)]
@@ -7,6 +6,7 @@
 #![feature(if_let_guard)]
 #![feature(let_chains)]
 #![feature(negative_impls)]
+#![feature(rustdoc_internals)]
 #![feature(strict_provenance)]
 #![feature(try_blocks)]
 // HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
@@ -31,7 +31,6 @@
 #![feature(rustc_private)]
 #![feature(assert_matches)]
 #![feature(result_flattening)]
-#![feature(lint_reasons)]
 // crate-specific exceptions:
 #![allow(
     unsafe_code,                // rustc_codegen_ssa requires unsafe functions in traits to be impl'd
@@ -146,13 +145,13 @@ use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind
 use rspirv::binary::Assemble;
 use rustc_ast::expand::allocator::AllocatorKind;
 use rustc_data_structures::fx::FxIndexMap;
-use rustc_errors::{DiagCtxt, ErrorGuaranteed, FatalError};
+use rustc_errors::{DiagCtxtHandle, ErrorGuaranteed, FatalError};
 use rustc_metadata::EncodedMetadata;
 use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
 use rustc_middle::mir::mono::{MonoItem, MonoItemData};
 use rustc_middle::mir::pretty::write_mir_pretty;
 use rustc_middle::ty::print::with_no_trimmed_paths;
-use rustc_middle::ty::{self, Instance, InstanceDef, TyCtxt};
+use rustc_middle::ty::{self, Instance, InstanceKind, TyCtxt};
 use rustc_session::config::{self, OutputFilenames, OutputType};
 use rustc_session::Session;
 use rustc_span::symbol::{sym, Symbol};
@@ -168,7 +167,7 @@ fn dump_mir(tcx: TyCtxt<'_>, mono_items: &[(MonoItem<'_>, MonoItemData)], path: 
     let mut file = File::create(path).unwrap();
     for &(mono_item, _) in mono_items {
         if let MonoItem::Fn(instance) = mono_item {
-            if matches!(instance.def, InstanceDef::Item(_)) {
+            if matches!(instance.def, InstanceKind::Item(_)) {
                 let mut mir = Cursor::new(Vec::new());
                 if write_mir_pretty(tcx, Some(instance.def_id()), &mut mir).is_ok() {
                     writeln!(file, "{}", String::from_utf8(mir.into_inner()).unwrap()).unwrap();
@@ -184,7 +183,7 @@ fn is_blocklisted_fn<'tcx>(
     instance: Instance<'tcx>,
 ) -> bool {
     // TODO: These sometimes have a constant value of an enum variant with a hole
-    if let InstanceDef::Item(def_id) = instance.def {
+    if let InstanceKind::Item(def_id) = instance.def {
         if let Some(debug_trait_def_id) = tcx.get_diagnostic_item(sym::Debug) {
             // Helper for detecting `<_ as core::fmt::Debug>::fmt` (in impls).
             let is_debug_fmt_method = |def_id| match tcx.opt_associated_item(def_id) {
@@ -328,7 +327,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     fn run_link(
         _cgcx: &CodegenContext<Self>,
-        _diag_handler: &DiagCtxt,
+        _diag_handler: DiagCtxtHandle<'_>,
         _modules: Vec<ModuleCodegen<Self::Module>>,
     ) -> Result<ModuleCodegen<Self::Module>, FatalError> {
         todo!()
@@ -360,7 +359,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     unsafe fn optimize(
         _: &CodegenContext<Self>,
-        _: &DiagCtxt,
+        _: DiagCtxtHandle<'_>,
         _: &ModuleCodegen<Self::Module>,
         _: &ModuleConfig,
     ) -> Result<(), FatalError> {
@@ -391,7 +390,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     unsafe fn codegen(
         cgcx: &CodegenContext<Self>,
-        _diag_handler: &DiagCtxt,
+        _diag_handler: DiagCtxtHandle<'_>,
         module: ModuleCodegen<Self::Module>,
         _config: &ModuleConfig,
     ) -> Result<CompiledModule, FatalError> {
@@ -536,16 +535,13 @@ impl Drop for DumpModuleOnPanic<'_, '_, '_> {
 #[no_mangle]
 pub fn __rustc_codegen_backend() -> Box<dyn CodegenBackend> {
     // Tweak rustc's default ICE panic hook, to direct people to `rust-gpu`.
-    rustc_driver::install_ice_hook(
-        "https://github.com/rust-gpu/rust-gpu/issues/new",
-        |handler| {
-            handler.note(concat!(
-                "`rust-gpu` version `",
-                env!("CARGO_PKG_VERSION"),
-                "`"
-            ));
-        },
-    );
+    rustc_driver::install_ice_hook("https://github.com/rust-gpu/rust-gpu/issues/new", |dcx| {
+        dcx.handle().note(concat!(
+            "`rust-gpu` version `",
+            env!("CARGO_PKG_VERSION"),
+            "`"
+        ));
+    });
 
     Box::new(SpirvCodegenBackend)
 }
