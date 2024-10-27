@@ -11,7 +11,7 @@ use rspirv::dr::Operand;
 use rspirv::spirv::{
     Capability, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
 };
-use rustc_codegen_ssa::traits::{BaseTypeMethods, BuilderMethods};
+use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::MultiSpan;
 use rustc_hir as hir;

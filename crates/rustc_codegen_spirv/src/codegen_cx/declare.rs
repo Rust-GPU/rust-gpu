@@ -10,7 +10,7 @@ use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
 use rustc_attr::InlineAttr;
-use rustc_codegen_ssa::traits::{PreDefineMethods, StaticMethods};
+use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
 use rustc_hir::def::DefKind;
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
@@ -58,9 +58,9 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 
     // The call graph of how this is reachable is a little tangled, so:
-    // MiscMethods::get_fn -> get_fn_ext -> declare_fn_ext
-    // MiscMethods::get_fn_addr -> get_fn_ext -> declare_fn_ext
-    // PreDefineMethods::predefine_fn -> declare_fn_ext
+    // MiscCodegenMethods::get_fn -> get_fn_ext -> declare_fn_ext
+    // MiscCodegenMethods::get_fn_addr -> get_fn_ext -> declare_fn_ext
+    // PreDefineCodegenMethods::predefine_fn -> declare_fn_ext
     fn declare_fn_ext(&self, instance: Instance<'tcx>, linkage: Option<LinkageType>) -> SpirvValue {
         let def_id = instance.def_id();
 
@@ -280,7 +280,7 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> PreDefineMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn predefine_static(
         &self,
         def_id: DefId,
@@ -337,7 +337,7 @@ impl<'tcx> PreDefineMethods<'tcx> for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> StaticMethods for CodegenCx<'tcx> {
+impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
     fn static_addr_of(&self, cv: Self::Value, _align: Align, _kind: Option<&str>) -> Self::Value {
         self.def_constant(self.type_ptr_to(cv.ty), SpirvConst::PtrTo {
             pointee: cv.def_cx(self),

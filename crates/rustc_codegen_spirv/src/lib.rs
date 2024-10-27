@@ -4,11 +4,13 @@
 #![allow(rustc::untranslatable_diagnostic)]
 #![feature(assert_matches)]
 #![feature(box_patterns)]
+#![feature(file_buffered)]
 #![feature(if_let_guard)]
 #![feature(let_chains)]
 #![feature(negative_impls)]
 #![feature(rustdoc_internals)]
 #![feature(strict_provenance)]
+#![feature(trait_alias)]
 #![feature(try_blocks)]
 // HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
 
@@ -37,6 +39,10 @@
     clippy::match_on_vec_items, // rustc_codegen_spirv has less strict panic requirements than other embark projects
     clippy::enum_glob_use,      // pretty useful pattern with some codegen'd enums (e.g. rspirv::spirv::Op)
     clippy::todo,               // still lots to implement :)
+
+    // FIXME(eddyb) new warnings from 1.83 rustup, apply their suggested changes.
+    elided_named_lifetimes,
+    clippy::needless_lifetimes,
 )]
 
 // Unfortunately, this will not fail fast when compiling, but rather will wait for
