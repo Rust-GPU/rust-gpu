@@ -6,7 +6,7 @@ use crate::abi::ConvSpirvType;
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
 use rustc_codegen_ssa::common::TypeKind;
-use rustc_codegen_ssa::traits::{BaseTypeMethods, LayoutTypeMethods};
+use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, LayoutTypeCodegenMethods};
 use rustc_middle::ty::Ty;
 use rustc_middle::ty::layout::{
     FnAbiError, FnAbiOfHelpers, FnAbiRequest, LayoutError, LayoutOfHelpers, TyAndLayout,
@@ -64,7 +64,7 @@ impl<'tcx> FnAbiOfHelpers<'tcx> for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> LayoutTypeMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn backend_type(&self, layout: TyAndLayout<'tcx>) -> Self::Type {
         layout.spirv_type(DUMMY_SP, self)
     }
@@ -127,7 +127,7 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> BaseTypeMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> BaseTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn type_i8(&self) -> Self::Type {
         SpirvType::Integer(8, false).def(DUMMY_SP, self)
     }

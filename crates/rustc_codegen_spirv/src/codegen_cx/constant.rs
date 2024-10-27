@@ -6,7 +6,7 @@ use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
-use rustc_codegen_ssa::traits::{ConstMethods, MiscMethods, StaticMethods};
+use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods};
 use rustc_middle::bug;
 use rustc_middle::mir::interpret::{ConstAllocation, GlobalAlloc, Scalar, alloc_range};
 use rustc_middle::ty::layout::LayoutOf;
@@ -105,7 +105,7 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn const_null(&self, t: Self::Type) -> Self::Value {
         self.constant_null(t)
     }
@@ -253,10 +253,10 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
                         self.get_fn_addr(instance.polymorphize(self.tcx)),
                         self.data_layout().instruction_address_space,
                     ),
-                    GlobalAlloc::VTable(vty, trait_ref) => {
+                    GlobalAlloc::VTable(vty, dyn_ty) => {
                         let alloc = self
                             .tcx
-                            .global_alloc(self.tcx.vtable_allocation((vty, trait_ref)))
+                            .global_alloc(self.tcx.vtable_allocation((vty, dyn_ty.principal())))
                             .unwrap_memory();
                         let pointee = match self.lookup_type(ty) {
                             SpirvType::Pointer { pointee } => pointee,

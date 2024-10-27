@@ -13,7 +13,7 @@ use rspirv::spirv::{
 };
 use rspirv::{binary::Assemble, binary::Disassemble};
 use rustc_arena::DroplessArena;
-use rustc_codegen_ssa::traits::ConstMethods as _;
+use rustc_codegen_ssa::traits::ConstCodegenMethods as _;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_data_structures::sync::Lrc;
 use rustc_middle::bug;
