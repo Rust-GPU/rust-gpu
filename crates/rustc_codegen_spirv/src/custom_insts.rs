@@ -43,13 +43,12 @@ lazy_static! {
     ///   achieved by hashing the `SCHEMA` constant from `def_custom_insts!` below
     pub static ref CUSTOM_EXT_INST_SET: String = {
         let schema_hash = {
-            use rustc_data_structures::stable_hasher::StableHasher;
+            use rustc_data_structures::stable_hasher::{Hash128, StableHasher};
             use std::hash::Hash;
 
             let mut hasher = StableHasher::new();
             SCHEMA.hash(&mut hasher);
-            let (lo, hi) = hasher.finalize();
-            (lo as u128) | ((hi as u128) << 64)
+            hasher.finish::<Hash128>().as_u128()
         };
         let version = join_cargo_pkg_version_major_minor_patch!("_");
         format!("{CUSTOM_EXT_INST_SET_PREFIX}{version}.{schema_hash:x}")

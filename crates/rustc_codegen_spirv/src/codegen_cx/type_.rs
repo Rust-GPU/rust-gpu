@@ -128,9 +128,6 @@ impl<'tcx> CodegenCx<'tcx> {
 }
 
 impl<'tcx> BaseTypeMethods<'tcx> for CodegenCx<'tcx> {
-    fn type_i1(&self) -> Self::Type {
-        SpirvType::Bool.def(DUMMY_SP, self)
-    }
     fn type_i8(&self) -> Self::Type {
         SpirvType::Integer(8, false).def(DUMMY_SP, self)
     }
@@ -176,19 +173,6 @@ impl<'tcx> BaseTypeMethods<'tcx> for CodegenCx<'tcx> {
         SpirvType::Function {
             return_type: ret,
             arguments: args,
-        }
-        .def(DUMMY_SP, self)
-    }
-    fn type_struct(&self, els: &[Self::Type], _packed: bool) -> Self::Type {
-        // FIXME(eddyb) use `AccumulateVec`s just like `rustc` itself does.
-        let (field_offsets, size, align) = crate::abi::auto_struct_layout(self, els);
-        SpirvType::Adt {
-            def_id: None,
-            align,
-            size,
-            field_types: els,
-            field_offsets: &field_offsets,
-            field_names: None,
         }
         .def(DUMMY_SP, self)
     }

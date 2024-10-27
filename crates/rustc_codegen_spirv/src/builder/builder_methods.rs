@@ -2020,13 +2020,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             SpirvType::Pointer { .. } => match op {
                 IntEQ => {
                     if self.emit().version().unwrap() > (1, 3) {
-                        let ptr_equal =
-                            self.emit().ptr_equal(b, None, lhs.def(self), rhs.def(self));
-
-                        ptr_equal.map(|result| {
-                            self.zombie_ptr_equal(result, "OpPtrEqual");
-                            result
-                        })
+                        self.emit()
+                            .ptr_equal(b, None, lhs.def(self), rhs.def(self))
+                            .inspect(|&result| {
+                                self.zombie_ptr_equal(result, "OpPtrEqual");
+                            })
                     } else {
                         let int_ty = self.type_usize();
                         let lhs = self
@@ -2039,16 +2037,15 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                             .convert_ptr_to_u(int_ty, None, rhs.def(self))
                             .unwrap();
                         self.zombie_convert_ptr_to_u(rhs);
-                        self.emit().i_not_equal(b, None, lhs, rhs)
+                        self.emit().i_equal(b, None, lhs, rhs)
                     }
                 }
                 IntNE => {
                     if self.emit().version().unwrap() > (1, 3) {
                         self.emit()
                             .ptr_not_equal(b, None, lhs.def(self), rhs.def(self))
-                            .map(|result| {
+                            .inspect(|&result| {
                                 self.zombie_ptr_equal(result, "OpPtrNotEqual");
-                                result
                             })
                     } else {
                         let int_ty = self.type_usize();
