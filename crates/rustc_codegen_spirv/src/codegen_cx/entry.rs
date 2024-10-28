@@ -739,20 +739,31 @@ impl<'tcx> CodegenCx<'tcx> {
                 .decorate(var_id.unwrap(), Decoration::Invariant, std::iter::empty());
         }
         if let Some(per_primitive_ext) = attrs.per_primitive_ext {
-            if storage_class != Ok(StorageClass::Output) {
-                self.tcx.dcx().span_fatal(
-                    per_primitive_ext.span,
-                    "`#[spirv(per_primitive_ext)]` is only valid on Output variables",
-                );
+            match execution_model {
+                ExecutionModel::Fragment => {
+                    if storage_class != Ok(StorageClass::Input) {
+                        self.tcx.dcx().span_fatal(
+                            per_primitive_ext.span,
+                            "`#[spirv(per_primitive_ext)]` in fragment shaders is only valid on Input variables",
+                        );
+                    }
+                }
+                ExecutionModel::MeshNV | ExecutionModel::MeshEXT => {
+                    if storage_class != Ok(StorageClass::Output) {
+                        self.tcx.dcx().span_fatal(
+                            per_primitive_ext.span,
+                            "`#[spirv(per_primitive_ext)]` in mesh shaders is only valid on Output variables",
+                        );
+                    }
+                }
+                _ => {
+                    self.tcx.dcx().span_fatal(
+                        per_primitive_ext.span,
+                        "`#[spirv(per_primitive_ext)]` is only valid in fragment or mesh shaders",
+                    );
+                }
             }
-            if !(execution_model == ExecutionModel::MeshEXT
-                || execution_model == ExecutionModel::MeshNV)
-            {
-                self.tcx.dcx().span_fatal(
-                    per_primitive_ext.span,
-                    "`#[spirv(per_primitive_ext)]` is only valid in mesh shaders",
-                );
-            }
+
             self.emit_global().decorate(
                 var_id.unwrap(),
                 Decoration::PerPrimitiveEXT,
