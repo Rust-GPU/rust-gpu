@@ -3664,7 +3664,16 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
                 Err(FormatArgsNotRecognized(step)) => {
                     if let Some(current_span) = self.current_span {
-                        let mut warn = self.tcx.dcx().struct_span_warn(
+                        // HACK(eddyb) Cargo silences warnings in dependencies.
+                        let force_warn = |span, msg| -> rustc_errors::Diag<'_, ()> {
+                            rustc_errors::Diag::new(
+                                self.tcx.dcx(),
+                                rustc_errors::Level::ForceWarning(None),
+                                msg,
+                            )
+                            .with_span(span)
+                        };
+                        let mut warn = force_warn(
                             current_span,
                             "failed to find and remove `format_args!` construction for this `panic!`",
                         );
