@@ -301,6 +301,8 @@ pub struct SpirvBuilder {
     capabilities: Vec<Capability>,
     extensions: Vec<String>,
     extra_args: Vec<String>,
+    // Optional location of a known `rustc_codegen_spirv` dylib
+    rustc_codegen_spirv_location: Option<std::path::PathBuf>,
 
     // `rustc_codegen_spirv::linker` codegen args
     pub shader_panic_strategy: ShaderPanicStrategy,
@@ -330,6 +332,7 @@ impl SpirvBuilder {
             capabilities: Vec::new(),
             extensions: Vec::new(),
             extra_args: Vec::new(),
+            rustc_codegen_spirv_location: None,
 
             shader_panic_strategy: ShaderPanicStrategy::SilentExit,
 
@@ -482,6 +485,21 @@ impl SpirvBuilder {
         self
     }
 
+    #[must_use]
+    pub fn rustc_codegen_spirv_location(
+        mut self,
+        path_to_dylib: impl AsRef<std::path::Path>,
+    ) -> Self {
+        let path_to_dylib = path_to_dylib.as_ref().to_path_buf();
+        assert!(
+            path_to_dylib.is_file(),
+            "Provided path to dylib '{}' is not a file",
+            path_to_dylib.display()
+        );
+        self.rustc_codegen_spirv_location = Some(path_to_dylib);
+        self
+    }
+
     /// Builds the module. If `print_metadata` is [`MetadataPrintout::Full`], you usually don't have to inspect the path
     /// in the result, as the environment variable for the path to the module will already be set.
     pub fn build(mut self) -> Result<CompileResult, SpirvBuilderError> {
@@ -624,7 +642,10 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // alongside build.rs, and cargo will helpfully add it to LD_LIBRARY_PATH for us! However,
     // rustc expects a full path, instead of a filename looked up via LD_LIBRARY_PATH, so we need
     // to copy cargo's understanding of library lookup and find the library and its full path.
-    let rustc_codegen_spirv = find_rustc_codegen_spirv();
+    let rustc_codegen_spirv = builder
+        .rustc_codegen_spirv_location
+        .clone()
+        .unwrap_or_else(find_rustc_codegen_spirv);
 
     let mut rustflags = vec![
         format!("-Zcodegen-backend={}", rustc_codegen_spirv.display()),
