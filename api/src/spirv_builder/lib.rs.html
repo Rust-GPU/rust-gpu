@@ -916,6 +916,27 @@
 <a href="#916" id="916">916</a>
 <a href="#917" id="917">917</a>
 <a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
 </pre></div><pre class="rust"><code><span class="comment">// BEGIN - Embark standard lints v0.4
 // do not change or add/remove here, but one can add exceptions after this section
 // for more info see: &lt;https://github.com/EmbarkStudios/rust-ecosystem/issues/59&gt;
@@ -1219,6 +1240,8 @@
     capabilities: Vec&lt;Capability&gt;,
     extensions: Vec&lt;String&gt;,
     extra_args: Vec&lt;String&gt;,
+    <span class="comment">// Optional location of a known `rustc_codegen_spirv` dylib
+    </span>rustc_codegen_spirv_location: <span class="prelude-ty">Option</span>&lt;std::path::PathBuf&gt;,
 
     <span class="comment">// `rustc_codegen_spirv::linker` codegen args
     </span><span class="kw">pub </span>shader_panic_strategy: ShaderPanicStrategy,
@@ -1248,6 +1271,7 @@
             capabilities: Vec::new(),
             extensions: Vec::new(),
             extra_args: Vec::new(),
+            rustc_codegen_spirv_location: <span class="prelude-val">None</span>,
 
             shader_panic_strategy: ShaderPanicStrategy::SilentExit,
 
@@ -1400,6 +1424,21 @@
         <span class="self">self
     </span>}
 
+    <span class="attr">#[must_use]
+    </span><span class="kw">pub fn </span>rustc_codegen_spirv_location(
+        <span class="kw-2">mut </span><span class="self">self</span>,
+        path_to_dylib: <span class="kw">impl </span>AsRef&lt;std::path::Path&gt;,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>path_to_dylib = path_to_dylib.as_ref().to_path_buf();
+        <span class="macro">assert!</span>(
+            path_to_dylib.is_file(),
+            <span class="string">"Provided path to dylib '{}' is not a file"</span>,
+            path_to_dylib.display()
+        );
+        <span class="self">self</span>.rustc_codegen_spirv_location = <span class="prelude-val">Some</span>(path_to_dylib);
+        <span class="self">self
+    </span>}
+
     <span class="doccomment">/// Builds the module. If `print_metadata` is [`MetadataPrintout::Full`], you usually don't have to inspect the path
     /// in the result, as the environment variable for the path to the module will already be set.
     </span><span class="kw">pub fn </span>build(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;CompileResult, SpirvBuilderError&gt; {
@@ -1542,7 +1581,10 @@
     // alongside build.rs, and cargo will helpfully add it to LD_LIBRARY_PATH for us! However,
     // rustc expects a full path, instead of a filename looked up via LD_LIBRARY_PATH, so we need
     // to copy cargo's understanding of library lookup and find the library and its full path.
-    </span><span class="kw">let </span>rustc_codegen_spirv = find_rustc_codegen_spirv();
+    </span><span class="kw">let </span>rustc_codegen_spirv = builder
+        .rustc_codegen_spirv_location
+        .clone()
+        .unwrap_or_else(find_rustc_codegen_spirv);
 
     <span class="kw">let </span><span class="kw-2">mut </span>rustflags = <span class="macro">vec!</span>[
         <span class="macro">format!</span>(<span class="string">"-Zcodegen-backend={}"</span>, rustc_codegen_spirv.display()),
