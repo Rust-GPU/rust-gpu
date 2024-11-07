@@ -631,7 +631,7 @@
     <span class="kw">let </span>ty = types.get(<span class="kw-2">&amp;</span>ty_id)<span class="question-mark">?</span>;
     <span class="kw">match </span>ty.class.opcode {
         Op::TypeStruct =&gt; <span class="prelude-val">Some</span>(ty.operands.len()),
-        Op::TypeVector =&gt; <span class="prelude-val">Some</span>(ty.operands[<span class="number">1</span>].unwrap_literal_int32() <span class="kw">as </span>usize),
+        Op::TypeVector =&gt; <span class="prelude-val">Some</span>(ty.operands[<span class="number">1</span>].unwrap_literal_bit32() <span class="kw">as </span>usize),
         Op::TypeArray =&gt; {
             <span class="kw">let </span>length_id = ty.operands[<span class="number">1</span>].unwrap_id_ref();
             <span class="kw">let </span>const_inst = types.get(<span class="kw-2">&amp;</span>length_id)<span class="question-mark">?</span>;
@@ -643,8 +643,8 @@
                 <span class="kw">return </span><span class="prelude-val">None</span>;
             }
             <span class="kw">let </span>const_value = <span class="kw">match </span>const_inst.operands[<span class="number">0</span>] {
-                Operand::LiteralInt32(v) =&gt; v <span class="kw">as </span>usize,
-                Operand::LiteralInt64(v) =&gt; v <span class="kw">as </span>usize,
+                Operand::LiteralBit32(v) =&gt; v <span class="kw">as </span>usize,
+                Operand::LiteralBit64(v) =&gt; v <span class="kw">as </span>usize,
                 <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(),
             };
             <span class="prelude-val">Some</span>(const_value)
@@ -682,7 +682,7 @@
                     </span><span class="kw">break</span>;
                 }
                 <span class="kw">let </span>value = cur_inst.operands[<span class="number">0</span>].unwrap_id_ref();
-                <span class="kw">let </span>index = cur_inst.operands[<span class="number">2</span>].unwrap_literal_int32() <span class="kw">as </span>usize;
+                <span class="kw">let </span>index = cur_inst.operands[<span class="number">2</span>].unwrap_literal_bit32() <span class="kw">as </span>usize;
                 <span class="kw">if </span>index &gt;= components.len() {
                     <span class="comment">// Theoretically shouldn't happen, as it's invalid SPIR-V if the index is out
                     // of bounds, but just stop optimizing instead of panicking here.
@@ -746,7 +746,7 @@
         </span><span class="kw">return </span><span class="prelude-val">None</span>;
     }
     <span class="kw">let </span>composite = inst.operands[<span class="number">0</span>].unwrap_id_ref();
-    <span class="kw">let </span>index = inst.operands[<span class="number">1</span>].unwrap_literal_int32();
+    <span class="kw">let </span>index = inst.operands[<span class="number">1</span>].unwrap_literal_bit32();
 
     <span class="kw">let </span>composite_def = defs.get(<span class="kw-2">&amp;</span>composite).or_else(|| types.get(<span class="kw-2">&amp;</span>composite))<span class="question-mark">?</span>;
     <span class="kw">let </span>vector_def = types.get(<span class="kw-2">&amp;</span>composite_def.result_type.unwrap())<span class="question-mark">?</span>;
@@ -755,7 +755,7 @@
     // Width mismatch would be doing something like `vec2(a.x + b.x, a.y + b.y)` where `a` is a
     // vec4 - if we optimized it to just `a + b`, it'd be incorrect.
     </span><span class="kw">if </span>vector_def.class.opcode != Op::TypeVector
-        || vector_width != vector_def.operands[<span class="number">1</span>].unwrap_literal_int32()
+        || vector_width != vector_def.operands[<span class="number">1</span>].unwrap_literal_bit32()
     {
         <span class="kw">return </span><span class="prelude-val">None</span>;
     }
@@ -945,7 +945,7 @@
     <span class="kw">if </span>vector_ty_inst.class.opcode != Op::TypeVector {
         <span class="kw">return </span><span class="prelude-val">None</span>;
     }
-    <span class="kw">let </span>vector_width = vector_ty_inst.operands[<span class="number">1</span>].unwrap_literal_int32();
+    <span class="kw">let </span>vector_width = vector_ty_inst.operands[<span class="number">1</span>].unwrap_literal_bit32();
     <span class="comment">// `results` is the defining instruction for each scalar component of the final result.
     </span><span class="kw">let </span>results = <span class="kw">match </span>inst
         .operands
@@ -1078,7 +1078,7 @@
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="kw">match </span>inst.operands[<span class="number">0</span>] {
-            Operand::LiteralInt32(v) =&gt; <span class="prelude-val">Some</span>(v),
+            Operand::LiteralBit32(v) =&gt; <span class="prelude-val">Some</span>(v),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
     }

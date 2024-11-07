@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rspirv-0.11.0+1.5.4/binary/parser.rs`."><title>parser.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rspirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rspirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rspirv-0.12.0+sdk-1.3.268.0/binary/parser.rs`."><title>parser.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rspirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rspirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1185,6 +1185,10 @@
 <a href="#1185" id="1185">1185</a>
 <a href="#1186" id="1186">1186</a>
 <a href="#1187" id="1187">1187</a>
+<a href="#1188" id="1188">1188</a>
+<a href="#1189" id="1189">1189</a>
+<a href="#1190" id="1190">1190</a>
+<a href="#1191" id="1191">1191</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::dr;
 <span class="kw">use </span><span class="kw">crate</span>::grammar;
 <span class="kw">use </span><span class="kw">crate</span>::spirv;
@@ -1217,7 +1221,7 @@
     <span class="doccomment">/// Consumer requested to stop parse
     </span>ConsumerStopRequested,
     <span class="doccomment">/// Consumer errored out with the given error
-    </span>ConsumerError(Box&lt;<span class="kw">dyn </span>error::Error + Send&gt;),
+    </span>ConsumerError(Box&lt;<span class="kw">dyn </span>error::Error + Send + Sync&gt;),
     <span class="doccomment">/// Incomplete module header
     </span>HeaderIncomplete(DecodeError),
     <span class="doccomment">/// Incorrect module header
@@ -1304,7 +1308,7 @@
     <span class="doccomment">/// Normally stop the parsing
     </span>Stop,
     <span class="doccomment">/// Error out with the given error
-    </span>Error(Box&lt;<span class="kw">dyn </span>error::Error + Send&gt;),
+    </span>Error(Box&lt;<span class="kw">dyn </span>error::Error + Send + Sync&gt;),
 }
 
 <span class="kw">impl </span>Action {
@@ -1371,32 +1375,30 @@
 /// use rspirv::binary::Parser;
 /// use rspirv::dr::{Loader, Operand};
 ///
-/// fn main() {
-///     let bin = vec![
-///         // Magic number.           Version number: 1.0.
-///         0x03, 0x02, 0x23, 0x07,    0x00, 0x00, 0x01, 0x00,
-///         // Generator number: 0.    Bound: 0.
-///         0x00, 0x00, 0x00, 0x00,    0x00, 0x00, 0x00, 0x00,
-///         // Reserved word: 0.
-///         0x00, 0x00, 0x00, 0x00,
-///         // OpMemoryModel.          Logical.
-///         0x0e, 0x00, 0x03, 0x00,    0x00, 0x00, 0x00, 0x00,
-///         // GLSL450.
-///         0x01, 0x00, 0x00, 0x00];
-///     let mut loader = Loader::new();  // You can use your own consumer here.
-///     {
-///         let p = Parser::new(&amp;bin, &amp;mut loader);
-///         p.parse().unwrap();
-///     }
-///     let module = loader.module();
-///
-///     assert_eq!((1, 0), module.header.unwrap().version());
-///     let m = module.memory_model.as_ref().unwrap();
-///     assert_eq!(Operand::AddressingModel(AddressingModel::Logical),
-///                m.operands[0]);
-///     assert_eq!(Operand::MemoryModel(MemoryModel::GLSL450),
-///                m.operands[1]);
+/// let bin = vec![
+///     // Magic number.           Version number: 1.0.
+///     0x03, 0x02, 0x23, 0x07,    0x00, 0x00, 0x01, 0x00,
+///     // Generator number: 0.    Bound: 0.
+///     0x00, 0x00, 0x00, 0x00,    0x00, 0x00, 0x00, 0x00,
+///     // Reserved word: 0.
+///     0x00, 0x00, 0x00, 0x00,
+///     // OpMemoryModel.          Logical.
+///     0x0e, 0x00, 0x03, 0x00,    0x00, 0x00, 0x00, 0x00,
+///     // GLSL450.
+///     0x01, 0x00, 0x00, 0x00];
+/// let mut loader = Loader::new();  // You can use your own consumer here.
+/// {
+///     let p = Parser::new(&amp;bin, &amp;mut loader);
+///     p.parse().unwrap();
 /// }
+/// let module = loader.module();
+///
+/// assert_eq!((1, 0), module.header.unwrap().version());
+/// let m = module.memory_model.as_ref().unwrap();
+/// assert_eq!(Operand::AddressingModel(AddressingModel::Logical),
+///            m.operands[0]);
+/// assert_eq!(Operand::MemoryModel(MemoryModel::GLSL450),
+///            m.operands[1]);
 /// ```
 </span><span class="kw">pub struct </span>Parser&lt;<span class="lifetime">'c</span>, <span class="lifetime">'d</span>&gt; {
     decoder: decoder::Decoder&lt;<span class="lifetime">'d</span>&gt;,
@@ -1504,19 +1506,19 @@
             <span class="prelude-val">Some</span>(t) =&gt; <span class="kw">match </span>t {
                 Type::Integer(size, <span class="kw">_</span>) =&gt; <span class="kw">match </span>size {
                     <span class="comment">// "Value is the bit pattern for the constant. Types 32 bits wide or smaller take one word."
-                    </span><span class="number">8 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralInt32(<span class="self">self</span>.decoder.int32()<span class="question-mark">?</span>)),
-                    <span class="number">16 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralInt32(<span class="self">self</span>.decoder.int32()<span class="question-mark">?</span>)),
-                    <span class="number">32 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralInt32(<span class="self">self</span>.decoder.int32()<span class="question-mark">?</span>)),
-                    <span class="number">64 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralInt64(<span class="self">self</span>.decoder.int64()<span class="question-mark">?</span>)),
+                    </span><span class="number">8 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralBit32(<span class="self">self</span>.decoder.bit32()<span class="question-mark">?</span>)),
+                    <span class="number">16 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralBit32(<span class="self">self</span>.decoder.bit32()<span class="question-mark">?</span>)),
+                    <span class="number">32 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralBit32(<span class="self">self</span>.decoder.bit32()<span class="question-mark">?</span>)),
+                    <span class="number">64 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralBit64(<span class="self">self</span>.decoder.bit64()<span class="question-mark">?</span>)),
                     <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(State::TypeUnsupported(
                         <span class="self">self</span>.decoder.offset(),
                         <span class="self">self</span>.inst_index,
                     )),
                 },
                 Type::Float(size) =&gt; <span class="kw">match </span>size {
-                    <span class="number">16 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralFloat32(<span class="self">self</span>.decoder.float32()<span class="question-mark">?</span>)),
-                    <span class="number">32 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralFloat32(<span class="self">self</span>.decoder.float32()<span class="question-mark">?</span>)),
-                    <span class="number">64 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralFloat64(<span class="self">self</span>.decoder.float64()<span class="question-mark">?</span>)),
+                    <span class="number">16 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralBit32(<span class="self">self</span>.decoder.bit32()<span class="question-mark">?</span>)),
+                    <span class="number">32 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralBit32(<span class="self">self</span>.decoder.bit32()<span class="question-mark">?</span>)),
+                    <span class="number">64 </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralBit64(<span class="self">self</span>.decoder.bit64()<span class="question-mark">?</span>)),
                     <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(State::TypeUnsupported(
                         <span class="self">self</span>.decoder.offset(),
                         <span class="self">self</span>.inst_index,
@@ -1525,14 +1527,14 @@
             },
             <span class="comment">// Treat as a normal SPIR-V word if we don't know the type.
             // TODO: find a better way to handle this.
-            </span><span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralInt32(<span class="self">self</span>.decoder.int32()<span class="question-mark">?</span>)),
+            </span><span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(dr::Operand::LiteralBit32(<span class="self">self</span>.decoder.bit32()<span class="question-mark">?</span>)),
         }
     }
 
     <span class="kw">fn </span>parse_spec_constant_op(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;dr::Operand&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>operands = <span class="macro">vec!</span>[];
 
-        <span class="kw">let </span>number = <span class="self">self</span>.decoder.int32()<span class="question-mark">?</span>;
+        <span class="kw">let </span>number = <span class="self">self</span>.decoder.bit32()<span class="question-mark">?</span>;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(g) = GInstTable::lookup_opcode(number <span class="kw">as </span>u16) {
             <span class="comment">// TODO: check whether this opcode is allowed here.
             </span>operands.push(dr::Operand::LiteralSpecConstantOpInteger(g.opcode));
@@ -1901,7 +1903,7 @@
         <span class="macro">assert_eq!</span>(
             <span class="macro">vec!</span>[
                 dr::Operand::SourceLanguage(spirv::SourceLanguage::GLSL),
-                dr::Operand::LiteralInt32(<span class="number">450</span>),
+                dr::Operand::LiteralBit32(<span class="number">450</span>),
                 dr::Operand::IdRef(<span class="number">6</span>),
                 dr::Operand::from(<span class="string">"wow"</span>)
             ],
@@ -1929,7 +1931,7 @@
         <span class="macro">assert_eq!</span>(
             <span class="macro">vec!</span>[
                 dr::Operand::SourceLanguage(spirv::SourceLanguage::GLSL),
-                dr::Operand::LiteralInt32(<span class="number">450</span>),
+                dr::Operand::LiteralBit32(<span class="number">450</span>),
                 dr::Operand::IdRef(<span class="number">6</span>)
             ],
             inst.operands
@@ -1955,7 +1957,7 @@
         <span class="macro">assert_eq!</span>(
             <span class="macro">vec!</span>[
                 dr::Operand::SourceLanguage(spirv::SourceLanguage::GLSL),
-                dr::Operand::LiteralInt32(<span class="number">450</span>)
+                dr::Operand::LiteralBit32(<span class="number">450</span>)
             ],
             inst.operands
         );
@@ -1966,7 +1968,7 @@
     <span class="kw">impl </span>error::Error <span class="kw">for </span>ErrorString {}
     <span class="kw">impl </span>fmt::Display <span class="kw">for </span>ErrorString {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
-            <span class="kw">let </span><span class="kw-2">&amp;</span>ErrorString(<span class="kw-2">ref </span>s) = <span class="self">self</span>;
+            <span class="kw">let </span>ErrorString(s) = <span class="self">self</span>;
             <span class="macro">write!</span>(f, <span class="string">"{}"</span>, s)
         }
     }
@@ -2084,7 +2086,7 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_parsing_int32() {
+    </span><span class="kw">fn </span>test_parsing_bit32_int() {
         <span class="kw">let </span><span class="kw-2">mut </span>v = ZERO_BOUND_HEADER.to_vec();
         v.append(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="number">0x15</span>, <span class="number">0x00</span>, <span class="number">0x04</span>, <span class="number">0x00</span>]); <span class="comment">// OpTypeInt
         </span>v.append(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="number">0x01</span>, <span class="number">0x00</span>, <span class="number">0x00</span>, <span class="number">0x00</span>]); <span class="comment">// result id: 1
@@ -2105,11 +2107,11 @@
         <span class="macro">assert_eq!</span>(<span class="string">"Constant"</span>, inst.class.opname);
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">1</span>), inst.result_type);
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">2</span>), inst.result_id);
-        <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[dr::Operand::LiteralInt32(<span class="number">0x78563412</span>)], inst.operands);
+        <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[dr::Operand::LiteralBit32(<span class="number">0x78563412</span>)], inst.operands);
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_parsing_int64() {
+    </span><span class="kw">fn </span>test_parsing_bit64_int() {
         <span class="kw">let </span><span class="kw-2">mut </span>v = ZERO_BOUND_HEADER.to_vec();
         v.append(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="number">0x15</span>, <span class="number">0x00</span>, <span class="number">0x04</span>, <span class="number">0x00</span>]); <span class="comment">// OpTypeInt
         </span>v.append(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="number">0x01</span>, <span class="number">0x00</span>, <span class="number">0x00</span>, <span class="number">0x00</span>]); <span class="comment">// result id: 1
@@ -2132,13 +2134,13 @@
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">1</span>), inst.result_type);
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">2</span>), inst.result_id);
         <span class="macro">assert_eq!</span>(
-            <span class="macro">vec!</span>[dr::Operand::LiteralInt64(<span class="number">0xefcdab9078563412</span>)],
+            <span class="macro">vec!</span>[dr::Operand::LiteralBit64(<span class="number">0xefcdab9078563412</span>)],
             inst.operands
         );
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_parsing_float32() {
+    </span><span class="kw">fn </span>test_parsing_bit32_float() {
         <span class="kw">let </span><span class="kw-2">mut </span>v = ZERO_BOUND_HEADER.to_vec();
         v.append(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="number">0x16</span>, <span class="number">0x00</span>, <span class="number">0x03</span>, <span class="number">0x00</span>]); <span class="comment">// OpTypeFloat
         </span>v.append(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="number">0x01</span>, <span class="number">0x00</span>, <span class="number">0x00</span>, <span class="number">0x00</span>]); <span class="comment">// result id: 1
@@ -2158,11 +2160,14 @@
         <span class="macro">assert_eq!</span>(<span class="string">"Constant"</span>, inst.class.opname);
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">1</span>), inst.result_type);
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">2</span>), inst.result_id);
-        <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[dr::Operand::LiteralFloat32(<span class="number">42.42</span>)], inst.operands);
+        <span class="macro">assert_eq!</span>(
+            <span class="macro">vec!</span>[dr::Operand::LiteralBit32(<span class="number">42.42f32</span>.to_bits())],
+            inst.operands
+        );
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_parsing_float64() {
+    </span><span class="kw">fn </span>test_parsing_bit64_float() {
         <span class="kw">let </span><span class="kw-2">mut </span>v = ZERO_BOUND_HEADER.to_vec();
         v.append(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="number">0x16</span>, <span class="number">0x00</span>, <span class="number">0x03</span>, <span class="number">0x00</span>]); <span class="comment">// OpTypeFloat
         </span>v.append(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[<span class="number">0x01</span>, <span class="number">0x00</span>, <span class="number">0x00</span>, <span class="number">0x00</span>]); <span class="comment">// result id: 1
@@ -2182,7 +2187,10 @@
         <span class="macro">assert_eq!</span>(<span class="string">"Constant"</span>, inst.class.opname);
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">1</span>), inst.result_type);
         <span class="macro">assert_eq!</span>(<span class="prelude-val">Some</span>(<span class="number">2</span>), inst.result_id);
-        <span class="macro">assert_eq!</span>(<span class="macro">vec!</span>[dr::Operand::LiteralFloat64(-<span class="number">12.34</span>)], inst.operands);
+        <span class="macro">assert_eq!</span>(
+            <span class="macro">vec!</span>[dr::Operand::LiteralBit64((-<span class="number">12.34f64</span>).to_bits())],
+            inst.operands
+        );
     }
 
     <span class="attr">#[test]
@@ -2300,7 +2308,7 @@
                 dr::Operand::IdRef(<span class="number">1</span>),
                 dr::Operand::IdRef(<span class="number">2</span>),
                 dr::Operand::MemoryAccess(spirv::MemoryAccess::from_bits(<span class="number">3</span>).unwrap()),
-                dr::Operand::LiteralInt32(<span class="number">4</span>)
+                dr::Operand::LiteralBit32(<span class="number">4</span>)
             ],
             inst.operands
         );

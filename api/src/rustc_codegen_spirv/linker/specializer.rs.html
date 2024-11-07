@@ -3131,7 +3131,7 @@
     <span class="comment">// FIXME(eddyb) compact SPIR-V IDs to allow flatter maps.
     </span>generics: IndexMap&lt;Word, Generic&gt;,
 
-    <span class="doccomment">/// Integer `OpConstant`s (i.e. containing a `LiteralInt32`), to be used
+    <span class="doccomment">/// Integer `OpConstant`s (i.e. containing a `LiteralBit32`), to be used
     /// for interpreting `TyPat::IndexComposite` (such as for `OpAccessChain`).
     </span>int_consts: FxHashMap&lt;Word, u32&gt;,
 }
@@ -3188,7 +3188,7 @@
 
             <span class="comment">// Record all integer `OpConstant`s (used for `IndexComposite`).
             </span><span class="kw">if </span>inst.class.opcode == Op::Constant {
-                <span class="kw">if let </span>Operand::LiteralInt32(x) = inst.operands[<span class="number">0</span>] {
+                <span class="kw">if let </span>Operand::LiteralBit32(x) = inst.operands[<span class="number">0</span>] {
                     <span class="self">self</span>.int_consts.insert(result_id, x);
                 }
             }
@@ -3779,7 +3779,7 @@
                                 // known `OpConstant`s (e.g. struct field indices).
                                 </span><span class="kw">let </span>maybe_idx = <span class="kw">match </span>operand {
                                     Operand::IdRef(id) =&gt; cx.specializer.int_consts.get(id),
-                                    Operand::LiteralInt32(idx) =&gt; <span class="prelude-val">Some</span>(idx),
+                                    Operand::LiteralBit32(idx) =&gt; <span class="prelude-val">Some</span>(idx),
                                     <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                                 };
                                 <span class="kw">match </span>maybe_idx {
@@ -3904,7 +3904,7 @@
                     TyPat::Array(pat) =&gt; simple(Op::TypeArray, pat),
                     TyPat::Vector(pat) =&gt; simple(Op::TypeVector, pat),
                     TyPat::Vector4(pat) =&gt; <span class="kw">match </span>ty_operands.operands {
-                        [<span class="kw">_</span>, Operand::LiteralInt32(<span class="number">4</span>)] =&gt; simple(Op::TypeVector, pat),
+                        [<span class="kw">_</span>, Operand::LiteralBit32(<span class="number">4</span>)] =&gt; simple(Op::TypeVector, pat),
                         <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Unapplicable),
                     },
                     TyPat::Matrix(pat) =&gt; simple(Op::TypeMatrix, pat),
@@ -4311,7 +4311,7 @@
                             <span class="macro">unreachable!</span>(<span class="string">"non-constant `OpTypeStruct` field index {}"</span>, id);
                         })
                     }
-                    <span class="kw-2">&amp;</span>Operand::LiteralInt32(i) =&gt; i,
+                    <span class="kw-2">&amp;</span>Operand::LiteralBit32(i) =&gt; i,
                     <span class="kw">_ </span>=&gt; {
                         <span class="macro">unreachable!</span>(<span class="string">"invalid `OpTypeStruct` field index operand {:?}"</span>, idx);
                     }

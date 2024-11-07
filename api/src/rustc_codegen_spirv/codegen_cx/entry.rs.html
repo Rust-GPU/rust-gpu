@@ -957,6 +957,7 @@
 <a href="#957" id="957">957</a>
 <a href="#958" id="958">958</a>
 <a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::CodegenCx;
 <span class="kw">use </span><span class="kw">crate</span>::abi::ConvSpirvType;
 <span class="kw">use </span><span class="kw">crate</span>::attr::{AggregatedSpirvAttributes, Entry, Spanned, SpecConstant};
@@ -1406,11 +1407,12 @@
             ),
             <span class="prelude-val">Err</span>(SpecConstant { id, default }) =&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>emit = <span class="self">self</span>.emit_global();
-                <span class="kw">let </span>spec_const_id = emit.spec_constant_u32(value_spirv_type, default.unwrap_or(<span class="number">0</span>));
+                <span class="kw">let </span>spec_const_id =
+                    emit.spec_constant_bit32(value_spirv_type, default.unwrap_or(<span class="number">0</span>));
                 emit.decorate(
                     spec_const_id,
                     Decoration::SpecId,
-                    [Operand::LiteralInt32(id)],
+                    [Operand::LiteralBit32(id)],
                 );
                 (
                     <span class="prelude-val">Err</span>(<span class="string">"`#[spirv(spec_constant)]` is not an entry-point interface variable"</span>),
@@ -1658,7 +1660,7 @@
             <span class="self">self</span>.emit_global().decorate(
                 var_id.unwrap(),
                 Decoration::DescriptorSet,
-                std::iter::once(Operand::LiteralInt32(descriptor_set.value)),
+                std::iter::once(Operand::LiteralBit32(descriptor_set.value)),
             );
             decoration_supersedes_location = <span class="bool-val">true</span>;
         }
@@ -1672,7 +1674,7 @@
             <span class="self">self</span>.emit_global().decorate(
                 var_id.unwrap(),
                 Decoration::Binding,
-                std::iter::once(Operand::LiteralInt32(binding.value)),
+                std::iter::once(Operand::LiteralBit32(binding.value)),
             );
             decoration_supersedes_location = <span class="bool-val">true</span>;
         }
@@ -1717,7 +1719,7 @@
                 <span class="self">self</span>.emit_global().decorate(
                     var_id.unwrap(),
                     Decoration::InputAttachmentIndex,
-                    std::iter::once(Operand::LiteralInt32(attachment_index.value)),
+                    std::iter::once(Operand::LiteralBit32(attachment_index.value)),
                 );
             } <span class="kw">else if </span>is_subpass_input {
                 <span class="self">self</span>.tcx
@@ -1764,7 +1766,7 @@
             <span class="self">self</span>.emit_global().decorate(
                 var_id.unwrap(),
                 Decoration::Location,
-                std::iter::once(Operand::LiteralInt32(<span class="kw-2">*</span>location)),
+                std::iter::once(Operand::LiteralBit32(<span class="kw-2">*</span>location)),
             );
             <span class="kw-2">*</span>location += <span class="number">1</span>;
         }
