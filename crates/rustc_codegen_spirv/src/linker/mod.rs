@@ -548,7 +548,7 @@ pub fn link(
                 module,
                 &opts.spirt_passes,
                 |name, _module| before_pass(name),
-                |name, module, timer| after_pass(name, module, timer),
+                after_pass,
             );
         }
 
