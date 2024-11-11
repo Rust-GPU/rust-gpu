@@ -303,6 +303,8 @@ pub struct SpirvBuilder {
     extra_args: Vec<String>,
     // Optional location of a known `rustc_codegen_spirv` dylib
     rustc_codegen_spirv_location: Option<std::path::PathBuf>,
+    // Optional location of a known "target-spec" file
+    path_to_target_spec: Option<PathBuf>,
 
     // `rustc_codegen_spirv::linker` codegen args
     pub shader_panic_strategy: ShaderPanicStrategy,
@@ -333,6 +335,7 @@ impl SpirvBuilder {
             extensions: Vec::new(),
             extra_args: Vec::new(),
             rustc_codegen_spirv_location: None,
+            path_to_target_spec: None,
 
             shader_panic_strategy: ShaderPanicStrategy::SilentExit,
 
@@ -346,6 +349,16 @@ impl SpirvBuilder {
             preserve_bindings: false,
             shader_crate_features: ShaderCrateFeatures::default(),
         }
+    }
+
+    /// Sets the path of the "target specification" file.
+    /// 
+    /// For more info on "target specification" see 
+    /// [this RFC](https://rust-lang.github.io/rfcs/0131-target-specification.html).
+    #[must_use]
+    pub fn target_spec(mut self, p: impl AsRef<Path>) -> Self {
+        self.path_to_target_spec = Some(p.as_ref().to_path_buf());
+        self
     }
 
     /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::Full`].
@@ -794,9 +807,11 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // FIXME(eddyb) consider moving `target-specs` into `rustc_codegen_spirv_types`.
     // FIXME(eddyb) consider the `RUST_TARGET_PATH` env var alternative.
     cargo.arg("--target").arg(
-        Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join("target-specs")
-            .join(format!("{}.json", builder.target)),
+        builder.path_to_target_spec.clone().unwrap_or_else(|| {
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("target-specs")
+                .join(format!("{}.json", builder.target))
+        }),
     );
 
     if let Some(default_features) = builder.shader_crate_features.default_features {
