@@ -937,6 +937,21 @@
 <a href="#937" id="937">937</a>
 <a href="#938" id="938">938</a>
 <a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
 </pre></div><pre class="rust"><code><span class="comment">// BEGIN - Embark standard lints v0.4
 // do not change or add/remove here, but one can add exceptions after this section
 // for more info see: &lt;https://github.com/EmbarkStudios/rust-ecosystem/issues/59&gt;
@@ -1242,6 +1257,8 @@
     extra_args: Vec&lt;String&gt;,
     <span class="comment">// Optional location of a known `rustc_codegen_spirv` dylib
     </span>rustc_codegen_spirv_location: <span class="prelude-ty">Option</span>&lt;std::path::PathBuf&gt;,
+    <span class="comment">// Optional location of a known "target-spec" file
+    </span>path_to_target_spec: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
 
     <span class="comment">// `rustc_codegen_spirv::linker` codegen args
     </span><span class="kw">pub </span>shader_panic_strategy: ShaderPanicStrategy,
@@ -1272,6 +1289,7 @@
             extensions: Vec::new(),
             extra_args: Vec::new(),
             rustc_codegen_spirv_location: <span class="prelude-val">None</span>,
+            path_to_target_spec: <span class="prelude-val">None</span>,
 
             shader_panic_strategy: ShaderPanicStrategy::SilentExit,
 
@@ -1286,6 +1304,16 @@
             shader_crate_features: ShaderCrateFeatures::default(),
         }
     }
+
+    <span class="doccomment">/// Sets the path of the "target specification" file.
+    ///
+    /// For more info on "target specification" see
+    /// [this RFC](https://rust-lang.github.io/rfcs/0131-target-specification.html).
+    </span><span class="attr">#[must_use]
+    </span><span class="kw">pub fn </span>target_spec(<span class="kw-2">mut </span><span class="self">self</span>, p: <span class="kw">impl </span>AsRef&lt;Path&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.path_to_target_spec = <span class="prelude-val">Some</span>(p.as_ref().to_path_buf());
+        <span class="self">self
+    </span>}
 
     <span class="doccomment">/// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::Full`].
     </span><span class="attr">#[must_use]
@@ -1732,11 +1760,13 @@
 
     <span class="comment">// FIXME(eddyb) consider moving `target-specs` into `rustc_codegen_spirv_types`.
     // FIXME(eddyb) consider the `RUST_TARGET_PATH` env var alternative.
-    </span>cargo.arg(<span class="string">"--target"</span>).arg(
-        Path::new(<span class="macro">env!</span>(<span class="string">"CARGO_MANIFEST_DIR"</span>))
-            .join(<span class="string">"target-specs"</span>)
-            .join(<span class="macro">format!</span>(<span class="string">"{}.json"</span>, builder.target)),
-    );
+    </span>cargo
+        .arg(<span class="string">"--target"</span>)
+        .arg(builder.path_to_target_spec.clone().unwrap_or_else(|| {
+            PathBuf::from(<span class="macro">env!</span>(<span class="string">"CARGO_MANIFEST_DIR"</span>))
+                .join(<span class="string">"target-specs"</span>)
+                .join(<span class="macro">format!</span>(<span class="string">"{}.json"</span>, builder.target))
+        }));
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(default_features) = builder.shader_crate_features.default_features {
         <span class="kw">if </span>!default_features {
