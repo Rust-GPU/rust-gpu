@@ -352,8 +352,8 @@ impl SpirvBuilder {
     }
 
     /// Sets the path of the "target specification" file.
-    /// 
-    /// For more info on "target specification" see 
+    ///
+    /// For more info on "target specification" see
     /// [this RFC](https://rust-lang.github.io/rfcs/0131-target-specification.html).
     #[must_use]
     pub fn target_spec(mut self, p: impl AsRef<Path>) -> Self {
@@ -806,13 +806,13 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
 
     // FIXME(eddyb) consider moving `target-specs` into `rustc_codegen_spirv_types`.
     // FIXME(eddyb) consider the `RUST_TARGET_PATH` env var alternative.
-    cargo.arg("--target").arg(
-        builder.path_to_target_spec.clone().unwrap_or_else(|| {
+    cargo
+        .arg("--target")
+        .arg(builder.path_to_target_spec.clone().unwrap_or_else(|| {
             PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                 .join("target-specs")
                 .join(format!("{}.json", builder.target))
-        }),
-    );
+        }));
 
     if let Some(default_features) = builder.shader_crate_features.default_features {
         if !default_features {
