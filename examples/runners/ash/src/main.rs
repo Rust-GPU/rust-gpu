@@ -242,25 +242,28 @@ pub fn compile_shaders() -> Vec<SpvFile> {
     std::env::set_var("OUT_DIR", env!("OUT_DIR"));
     std::env::set_var("PROFILE", env!("PROFILE"));
 
-    SpirvBuilder::new("examples/shaders/sky-shader", "spirv-unknown-vulkan1.1")
-        .print_metadata(MetadataPrintout::None)
-        .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::DebugPrintfThenExit {
-            print_inputs: true,
-            print_backtrace: true,
-        })
-        // HACK(eddyb) needed because of `debugPrintf` instrumentation limitations
-        // (see https://github.com/KhronosGroup/SPIRV-Tools/issues/4892).
-        .multimodule(true)
-        .build()
-        .unwrap()
-        .module
-        .unwrap_multi()
-        .iter()
-        .map(|(name, path)| SpvFile {
-            name: format!("sky_shader::{name}"),
-            data: read_spv(&mut File::open(path).unwrap()).unwrap(),
-        })
-        .collect()
+    SpirvBuilder::new(
+        concat!(env!("CARGO_MANIFEST_DIR"), "/../../shaders/sky-shader"),
+        "spirv-unknown-vulkan1.1",
+    )
+    .print_metadata(MetadataPrintout::None)
+    .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::DebugPrintfThenExit {
+        print_inputs: true,
+        print_backtrace: true,
+    })
+    // HACK(eddyb) needed because of `debugPrintf` instrumentation limitations
+    // (see https://github.com/KhronosGroup/SPIRV-Tools/issues/4892).
+    .multimodule(true)
+    .build()
+    .unwrap()
+    .module
+    .unwrap_multi()
+    .iter()
+    .map(|(name, path)| SpvFile {
+        name: format!("sky_shader::{name}"),
+        data: read_spv(&mut File::open(path).unwrap()).unwrap(),
+    })
+    .collect()
 }
 
 #[derive(Debug)]
