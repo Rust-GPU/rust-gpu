@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.5.0/src/map/core.rs`."><title>core.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../indexmap/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.6.0/src/map/core.rs`."><title>core.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../indexmap/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -640,6 +640,82 @@
 <a href="#640" id="640">640</a>
 <a href="#641" id="641">641</a>
 <a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a>
+<a href="#664" id="664">664</a>
+<a href="#665" id="665">665</a>
+<a href="#666" id="666">666</a>
+<a href="#667" id="667">667</a>
+<a href="#668" id="668">668</a>
+<a href="#669" id="669">669</a>
+<a href="#670" id="670">670</a>
+<a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This is the core implementation that doesn't depend on the hasher at all.
 //!
 //! The methods of `IndexMapCore` don't use any Hash properties of K.
@@ -650,11 +726,10 @@
 //! However, we should probably not let this show in the public API or docs.
 
 </span><span class="kw">mod </span>entry;
-<span class="kw">mod </span>raw;
 
 <span class="kw">pub mod </span>raw_entry_v1;
 
-<span class="kw">use </span>hashbrown::raw::RawTable;
+<span class="kw">use </span>hashbrown::hash_table;
 
 <span class="kw">use </span><span class="kw">crate</span>::vec::{<span class="self">self</span>, Vec};
 <span class="kw">use </span><span class="kw">crate</span>::TryReserveError;
@@ -662,16 +737,31 @@
 <span class="kw">use </span>core::ops::RangeBounds;
 
 <span class="kw">use </span><span class="kw">crate</span>::util::simplify_range;
-<span class="kw">use crate</span>::{Bucket, Entries, Equivalent, HashValue};
+<span class="kw">use crate</span>::{Bucket, Equivalent, HashValue};
+
+<span class="kw">type </span>Indices = hash_table::HashTable&lt;usize&gt;;
+<span class="kw">type </span>Entries&lt;K, V&gt; = Vec&lt;Bucket&lt;K, V&gt;&gt;;
 
 <span class="kw">pub use </span>entry::{Entry, IndexedEntry, OccupiedEntry, VacantEntry};
 
 <span class="doccomment">/// Core of the map that does not depend on S
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>IndexMapCore&lt;K, V&gt; {
     <span class="doccomment">/// indices mapping from the entry hash to its index.
-    </span>indices: RawTable&lt;usize&gt;,
-    <span class="doccomment">/// entries is a dense vec of entries in their order.
-    </span>entries: Vec&lt;Bucket&lt;K, V&gt;&gt;,
+    </span>indices: Indices,
+    <span class="doccomment">/// entries is a dense vec maintaining entry order.
+    </span>entries: Entries&lt;K, V&gt;,
+}
+
+<span class="doccomment">/// Mutable references to the parts of an `IndexMapCore`.
+///
+/// When using `HashTable::find_entry`, that takes hold of `&amp;mut indices`, so we have to borrow our
+/// `&amp;mut entries` separately, and there's no way to go back to a `&amp;mut IndexMapCore`. So this type
+/// is used to implement methods on the split references, and `IndexMapCore` can also call those to
+/// avoid duplication.
+</span><span class="kw">struct </span>RefMut&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    indices: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Indices,
+    entries: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Entries&lt;K, V&gt;,
 }
 
 <span class="attr">#[inline(always)]
@@ -688,17 +778,31 @@
 }
 
 <span class="attr">#[inline]
-</span><span class="kw">fn </span>erase_index(table: <span class="kw-2">&amp;mut </span>RawTable&lt;usize&gt;, hash: HashValue, index: usize) {
-    <span class="kw">let </span>erased = table.erase_entry(hash.get(), <span class="kw">move </span>|<span class="kw-2">&amp;</span>i| i == index);
-    <span class="macro">debug_assert!</span>(erased);
+</span><span class="kw">fn </span>erase_index(table: <span class="kw-2">&amp;mut </span>Indices, hash: HashValue, index: usize) {
+    <span class="kw">if let </span><span class="prelude-val">Ok</span>(entry) = table.find_entry(hash.get(), <span class="kw">move </span>|<span class="kw-2">&amp;</span>i| i == index) {
+        entry.remove();
+    } <span class="kw">else if </span><span class="macro">cfg!</span>(debug_assertions) {
+        <span class="macro">panic!</span>(<span class="string">"index not found"</span>);
+    }
 }
 
 <span class="attr">#[inline]
-</span><span class="kw">fn </span>update_index(table: <span class="kw-2">&amp;mut </span>RawTable&lt;usize&gt;, hash: HashValue, old: usize, new: usize) {
+</span><span class="kw">fn </span>update_index(table: <span class="kw-2">&amp;mut </span>Indices, hash: HashValue, old: usize, new: usize) {
     <span class="kw">let </span>index = table
-        .get_mut(hash.get(), <span class="kw">move </span>|<span class="kw-2">&amp;</span>i| i == old)
+        .find_mut(hash.get(), <span class="kw">move </span>|<span class="kw-2">&amp;</span>i| i == old)
         .expect(<span class="string">"index not found"</span>);
     <span class="kw-2">*</span>index = new;
+}
+
+<span class="doccomment">/// Inserts many entries into the indices table without reallocating,
+/// and without regard for duplication.
+///
+/// ***Panics*** if there is not sufficient capacity already.
+</span><span class="kw">fn </span>insert_bulk_no_grow&lt;K, V&gt;(indices: <span class="kw-2">&amp;mut </span>Indices, entries: <span class="kw-2">&amp;</span>[Bucket&lt;K, V&gt;]) {
+    <span class="macro">assert!</span>(indices.capacity() - indices.len() &gt;= entries.len());
+    <span class="kw">for </span>entry <span class="kw">in </span>entries {
+        indices.insert_unique(entry.hash.get(), indices.len(), |<span class="kw">_</span>| <span class="macro">unreachable!</span>());
+    }
 }
 
 <span class="kw">impl</span>&lt;K, V&gt; Clone <span class="kw">for </span>IndexMapCore&lt;K, V&gt;
@@ -713,32 +817,17 @@
     }
 
     <span class="kw">fn </span>clone_from(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) {
-        <span class="kw">let </span>hasher = get_hash(<span class="kw-2">&amp;</span>other.entries);
-        <span class="self">self</span>.indices.clone_from_with_hasher(<span class="kw-2">&amp;</span>other.indices, hasher);
+        <span class="self">self</span>.indices.clone_from(<span class="kw-2">&amp;</span>other.indices);
         <span class="kw">if </span><span class="self">self</span>.entries.capacity() &lt; other.entries.len() {
             <span class="comment">// If we must resize, match the indices capacity.
             </span><span class="kw">let </span>additional = other.entries.len() - <span class="self">self</span>.entries.len();
-            <span class="self">self</span>.reserve_entries(additional);
+            <span class="self">self</span>.borrow_mut().reserve_entries(additional);
         }
         <span class="self">self</span>.entries.clone_from(<span class="kw-2">&amp;</span>other.entries);
     }
 }
 
-<span class="attr">#[cfg(feature = <span class="string">"test_debug"</span>)]
-</span><span class="kw">impl</span>&lt;K, V&gt; core::fmt::Debug <span class="kw">for </span>IndexMapCore&lt;K, V&gt;
-<span class="kw">where
-    </span>K: core::fmt::Debug,
-    V: core::fmt::Debug,
-{
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; core::fmt::Result {
-        f.debug_struct(<span class="string">"IndexMapCore"</span>)
-            .field(<span class="string">"indices"</span>, <span class="kw-2">&amp;</span>raw::DebugIndices(<span class="kw-2">&amp;</span><span class="self">self</span>.indices))
-            .field(<span class="string">"entries"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.entries)
-            .finish()
-    }
-}
-
-<span class="kw">impl</span>&lt;K, V&gt; Entries <span class="kw">for </span>IndexMapCore&lt;K, V&gt; {
+<span class="kw">impl</span>&lt;K, V&gt; <span class="kw">crate</span>::Entries <span class="kw">for </span>IndexMapCore&lt;K, V&gt; {
     <span class="kw">type </span>Entry = Bucket&lt;K, V&gt;;
 
     <span class="attr">#[inline]
@@ -772,15 +861,20 @@
     <span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const fn </span>new() -&gt; <span class="self">Self </span>{
         IndexMapCore {
-            indices: RawTable::new(),
+            indices: Indices::new(),
             entries: Vec::new(),
         }
     }
 
     <span class="attr">#[inline]
+    </span><span class="kw">fn </span>borrow_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; RefMut&lt;<span class="lifetime">'_</span>, K, V&gt; {
+        RefMut::new(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, <span class="kw-2">&amp;mut </span><span class="self">self</span>.entries)
+    }
+
+    <span class="attr">#[inline]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>with_capacity(n: usize) -&gt; <span class="self">Self </span>{
         IndexMapCore {
-            indices: RawTable::with_capacity(n),
+            indices: Indices::with_capacity(n),
             entries: Vec::with_capacity(n),
         }
     }
@@ -834,8 +928,8 @@
         <span class="self">self</span>.erase_indices(at, <span class="self">self</span>.entries.len());
         <span class="kw">let </span>entries = <span class="self">self</span>.entries.split_off(at);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>indices = RawTable::with_capacity(entries.len());
-        raw::insert_bulk_no_grow(<span class="kw-2">&amp;mut </span>indices, <span class="kw-2">&amp;</span>entries);
+        <span class="kw">let </span><span class="kw-2">mut </span>indices = Indices::with_capacity(entries.len());
+        insert_bulk_no_grow(<span class="kw-2">&amp;mut </span>indices, <span class="kw-2">&amp;</span>entries);
         <span class="self">Self </span>{ indices, entries }
     }
 
@@ -848,15 +942,15 @@
         <span class="kw">let </span>entries = <span class="self">self</span>.entries.split_off(range.end);
         <span class="kw">let </span>drained = <span class="self">self</span>.entries.split_off(range.start);
 
-        <span class="kw">let </span><span class="kw-2">mut </span>indices = RawTable::with_capacity(entries.len());
-        raw::insert_bulk_no_grow(<span class="kw-2">&amp;mut </span>indices, <span class="kw-2">&amp;</span>entries);
+        <span class="kw">let </span><span class="kw-2">mut </span>indices = Indices::with_capacity(entries.len());
+        insert_bulk_no_grow(<span class="kw-2">&amp;mut </span>indices, <span class="kw-2">&amp;</span>entries);
         (<span class="self">Self </span>{ indices, entries }, drained.into_iter())
     }
 
     <span class="doccomment">/// Append from another map without checking whether items already exist.
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>append_unchecked(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="kw-2">&amp;mut </span><span class="self">Self</span>) {
         <span class="self">self</span>.reserve(other.len());
-        raw::insert_bulk_no_grow(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, <span class="kw-2">&amp;</span>other.entries);
+        insert_bulk_no_grow(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, <span class="kw-2">&amp;</span>other.entries);
         <span class="self">self</span>.entries.append(<span class="kw-2">&amp;mut </span>other.entries);
         other.indices.clear();
     }
@@ -866,20 +960,8 @@
         <span class="self">self</span>.indices.reserve(additional, get_hash(<span class="kw-2">&amp;</span><span class="self">self</span>.entries));
         <span class="comment">// Only grow entries if necessary, since we also round up capacity.
         </span><span class="kw">if </span>additional &gt; <span class="self">self</span>.entries.capacity() - <span class="self">self</span>.entries.len() {
-            <span class="self">self</span>.reserve_entries(additional);
+            <span class="self">self</span>.borrow_mut().reserve_entries(additional);
         }
-    }
-
-    <span class="doccomment">/// Reserve entries capacity, rounded up to match the indices
-    </span><span class="kw">fn </span>reserve_entries(<span class="kw-2">&amp;mut </span><span class="self">self</span>, additional: usize) {
-        <span class="comment">// Use a soft-limit on the maximum capacity, but if the caller explicitly
-        // requested more, do it and let them have the resulting panic.
-        </span><span class="kw">let </span>new_capacity = Ord::min(<span class="self">self</span>.indices.capacity(), <span class="self">Self</span>::MAX_ENTRIES_CAPACITY);
-        <span class="kw">let </span>try_add = new_capacity - <span class="self">self</span>.entries.len();
-        <span class="kw">if </span>try_add &gt; additional &amp;&amp; <span class="self">self</span>.entries.try_reserve_exact(try_add).is_ok() {
-            <span class="kw">return</span>;
-        }
-        <span class="self">self</span>.entries.reserve_exact(additional);
     }
 
     <span class="doccomment">/// Reserve capacity for `additional` more key-value pairs, without over-allocating.
@@ -943,7 +1025,223 @@
         </span>}
     }
 
-    <span class="doccomment">/// Append a key-value pair to `entries`, *without* checking whether it already exists.
+    <span class="doccomment">/// Return the index in `entries` where an equivalent key can be found
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get_index_of&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: HashValue, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt;
+    <span class="kw">where
+        </span>Q: <span class="question-mark">?</span>Sized + Equivalent&lt;K&gt;,
+    {
+        <span class="kw">let </span>eq = equivalent(key, <span class="kw-2">&amp;</span><span class="self">self</span>.entries);
+        <span class="self">self</span>.indices.find(hash.get(), eq).copied()
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>insert_full(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: HashValue, key: K, value: V) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;V&gt;)
+    <span class="kw">where
+        </span>K: Eq,
+    {
+        <span class="kw">let </span>eq = equivalent(<span class="kw-2">&amp;</span>key, <span class="kw-2">&amp;</span><span class="self">self</span>.entries);
+        <span class="kw">let </span>hasher = get_hash(<span class="kw-2">&amp;</span><span class="self">self</span>.entries);
+        <span class="kw">match </span><span class="self">self</span>.indices.entry(hash.get(), eq, hasher) {
+            hash_table::Entry::Occupied(entry) =&gt; {
+                <span class="kw">let </span>i = <span class="kw-2">*</span>entry.get();
+                (i, <span class="prelude-val">Some</span>(mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.entries[i].value, value)))
+            }
+            hash_table::Entry::Vacant(entry) =&gt; {
+                <span class="kw">let </span>i = <span class="self">self</span>.entries.len();
+                entry.insert(i);
+                <span class="self">self</span>.borrow_mut().push_entry(hash, key, value);
+                <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.indices.len(), <span class="self">self</span>.entries.len());
+                (i, <span class="prelude-val">None</span>)
+            }
+        }
+    }
+
+    <span class="doccomment">/// Same as `insert_full`, except it also replaces the key
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>replace_full(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        hash: HashValue,
+        key: K,
+        value: V,
+    ) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;(K, V)&gt;)
+    <span class="kw">where
+        </span>K: Eq,
+    {
+        <span class="kw">let </span>eq = equivalent(<span class="kw-2">&amp;</span>key, <span class="kw-2">&amp;</span><span class="self">self</span>.entries);
+        <span class="kw">let </span>hasher = get_hash(<span class="kw-2">&amp;</span><span class="self">self</span>.entries);
+        <span class="kw">match </span><span class="self">self</span>.indices.entry(hash.get(), eq, hasher) {
+            hash_table::Entry::Occupied(entry) =&gt; {
+                <span class="kw">let </span>i = <span class="kw-2">*</span>entry.get();
+                <span class="kw">let </span>entry = <span class="kw-2">&amp;mut </span><span class="self">self</span>.entries[i];
+                <span class="kw">let </span>kv = (
+                    mem::replace(<span class="kw-2">&amp;mut </span>entry.key, key),
+                    mem::replace(<span class="kw-2">&amp;mut </span>entry.value, value),
+                );
+                (i, <span class="prelude-val">Some</span>(kv))
+            }
+            hash_table::Entry::Vacant(entry) =&gt; {
+                <span class="kw">let </span>i = <span class="self">self</span>.entries.len();
+                entry.insert(i);
+                <span class="self">self</span>.borrow_mut().push_entry(hash, key, value);
+                <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.indices.len(), <span class="self">self</span>.entries.len());
+                (i, <span class="prelude-val">None</span>)
+            }
+        }
+    }
+
+    <span class="doccomment">/// Remove an entry by shifting all entries that follow it
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>shift_remove_full&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: HashValue, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, K, V)&gt;
+    <span class="kw">where
+        </span>Q: <span class="question-mark">?</span>Sized + Equivalent&lt;K&gt;,
+    {
+        <span class="kw">let </span>eq = equivalent(key, <span class="kw-2">&amp;</span><span class="self">self</span>.entries);
+        <span class="kw">match </span><span class="self">self</span>.indices.find_entry(hash.get(), eq) {
+            <span class="prelude-val">Ok</span>(entry) =&gt; {
+                <span class="kw">let </span>(index, <span class="kw">_</span>) = entry.remove();
+                <span class="kw">let </span>(key, value) = <span class="self">self</span>.borrow_mut().shift_remove_finish(index);
+                <span class="prelude-val">Some</span>((index, key, value))
+            }
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+        }
+    }
+
+    <span class="doccomment">/// Remove an entry by shifting all entries that follow it
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>shift_remove_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(K, V)&gt; {
+        <span class="self">self</span>.borrow_mut().shift_remove_index(index)
+    }
+
+    <span class="attr">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>move_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, from: usize, to: usize) {
+        <span class="self">self</span>.borrow_mut().move_index(from, to);
+    }
+
+    <span class="attr">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>swap_indices(<span class="kw-2">&amp;mut </span><span class="self">self</span>, a: usize, b: usize) {
+        <span class="self">self</span>.borrow_mut().swap_indices(a, b);
+    }
+
+    <span class="doccomment">/// Remove an entry by swapping it with the last
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>swap_remove_full&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: HashValue, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, K, V)&gt;
+    <span class="kw">where
+        </span>Q: <span class="question-mark">?</span>Sized + Equivalent&lt;K&gt;,
+    {
+        <span class="kw">let </span>eq = equivalent(key, <span class="kw-2">&amp;</span><span class="self">self</span>.entries);
+        <span class="kw">match </span><span class="self">self</span>.indices.find_entry(hash.get(), eq) {
+            <span class="prelude-val">Ok</span>(entry) =&gt; {
+                <span class="kw">let </span>(index, <span class="kw">_</span>) = entry.remove();
+                <span class="kw">let </span>(key, value) = <span class="self">self</span>.borrow_mut().swap_remove_finish(index);
+                <span class="prelude-val">Some</span>((index, key, value))
+            }
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+        }
+    }
+
+    <span class="doccomment">/// Remove an entry by swapping it with the last
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>swap_remove_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(K, V)&gt; {
+        <span class="self">self</span>.borrow_mut().swap_remove_index(index)
+    }
+
+    <span class="doccomment">/// Erase `start..end` from `indices`, and shift `end..` indices down to `start..`
+    ///
+    /// All of these items should still be at their original location in `entries`.
+    /// This is used by `drain`, which will let `Vec::drain` do the work on `entries`.
+    </span><span class="kw">fn </span>erase_indices(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: usize, end: usize) {
+        <span class="kw">let </span>(init, shifted_entries) = <span class="self">self</span>.entries.split_at(end);
+        <span class="kw">let </span>(start_entries, erased_entries) = init.split_at(start);
+
+        <span class="kw">let </span>erased = erased_entries.len();
+        <span class="kw">let </span>shifted = shifted_entries.len();
+        <span class="kw">let </span>half_capacity = <span class="self">self</span>.indices.capacity() / <span class="number">2</span>;
+
+        <span class="comment">// Use a heuristic between different strategies
+        </span><span class="kw">if </span>erased == <span class="number">0 </span>{
+            <span class="comment">// Degenerate case, nothing to do
+        </span>} <span class="kw">else if </span>start + shifted &lt; half_capacity &amp;&amp; start &lt; erased {
+            <span class="comment">// Reinsert everything, as there are few kept indices
+            </span><span class="self">self</span>.indices.clear();
+
+            <span class="comment">// Reinsert stable indices, then shifted indices
+            </span>insert_bulk_no_grow(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, start_entries);
+            insert_bulk_no_grow(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, shifted_entries);
+        } <span class="kw">else if </span>erased + shifted &lt; half_capacity {
+            <span class="comment">// Find each affected index, as there are few to adjust
+
+            // Find erased indices
+            </span><span class="kw">for </span>(i, entry) <span class="kw">in </span>(start..).zip(erased_entries) {
+                erase_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, entry.hash, i);
+            }
+
+            <span class="comment">// Find shifted indices
+            </span><span class="kw">for </span>((new, old), entry) <span class="kw">in </span>(start..).zip(end..).zip(shifted_entries) {
+                update_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, entry.hash, old, new);
+            }
+        } <span class="kw">else </span>{
+            <span class="comment">// Sweep the whole table for adjustments
+            </span><span class="kw">let </span>offset = end - start;
+            <span class="self">self</span>.indices.retain(<span class="kw">move </span>|i| {
+                <span class="kw">if </span><span class="kw-2">*</span>i &gt;= end {
+                    <span class="kw-2">*</span>i -= offset;
+                    <span class="bool-val">true
+                </span>} <span class="kw">else </span>{
+                    <span class="kw-2">*</span>i &lt; start
+                }
+            });
+        }
+
+        <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.indices.len(), start + shifted);
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>retain_in_order&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>keep: F)
+    <span class="kw">where
+        </span>F: FnMut(<span class="kw-2">&amp;mut </span>K, <span class="kw-2">&amp;mut </span>V) -&gt; bool,
+    {
+        <span class="self">self</span>.entries
+            .retain_mut(|entry| keep(<span class="kw-2">&amp;mut </span>entry.key, <span class="kw-2">&amp;mut </span>entry.value));
+        <span class="kw">if </span><span class="self">self</span>.entries.len() &lt; <span class="self">self</span>.indices.len() {
+            <span class="self">self</span>.rebuild_hash_table();
+        }
+    }
+
+    <span class="kw">fn </span>rebuild_hash_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.indices.clear();
+        insert_bulk_no_grow(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, <span class="kw-2">&amp;</span><span class="self">self</span>.entries);
+    }
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>reverse(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.entries.reverse();
+
+        <span class="comment">// No need to save hash indices, can easily calculate what they should
+        // be, given that this is an in-place reversal.
+        </span><span class="kw">let </span>len = <span class="self">self</span>.entries.len();
+        <span class="kw">for </span>i <span class="kw">in </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.indices {
+            <span class="kw-2">*</span>i = len - <span class="kw-2">*</span>i - <span class="number">1</span>;
+        }
+    }
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; RefMut&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    <span class="attr">#[inline]
+    </span><span class="kw">fn </span>new(indices: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Indices, entries: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Entries&lt;K, V&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ indices, entries }
+    }
+
+    <span class="doccomment">/// Reserve entries capacity, rounded up to match the indices
+    </span><span class="kw">fn </span>reserve_entries(<span class="kw-2">&amp;mut </span><span class="self">self</span>, additional: usize) {
+        <span class="comment">// Use a soft-limit on the maximum capacity, but if the caller explicitly
+        // requested more, do it and let them have the resulting panic.
+        </span><span class="kw">let </span>new_capacity = Ord::min(
+            <span class="self">self</span>.indices.capacity(),
+            IndexMapCore::&lt;K, V&gt;::MAX_ENTRIES_CAPACITY,
+        );
+        <span class="kw">let </span>try_add = new_capacity - <span class="self">self</span>.entries.len();
+        <span class="kw">if </span>try_add &gt; additional &amp;&amp; <span class="self">self</span>.entries.try_reserve_exact(try_add).is_ok() {
+            <span class="kw">return</span>;
+        }
+        <span class="self">self</span>.entries.reserve_exact(additional);
+    }
+
+    <span class="doccomment">/// Append a key-value pair to `entries`,
+    /// *without* checking whether it already exists.
     </span><span class="kw">fn </span>push_entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: HashValue, key: K, value: V) {
         <span class="kw">if </span><span class="self">self</span>.entries.len() == <span class="self">self</span>.entries.capacity() {
             <span class="comment">// Reserve our own capacity synced to the indices,
@@ -964,59 +1262,10 @@
         <span class="self">self</span>.entries.insert(index, Bucket { hash, key, value });
     }
 
-    <span class="doccomment">/// Return the index in `entries` where an equivalent key can be found
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get_index_of&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, hash: HashValue, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt;
-    <span class="kw">where
-        </span>Q: <span class="question-mark">?</span>Sized + Equivalent&lt;K&gt;,
-    {
-        <span class="kw">let </span>eq = equivalent(key, <span class="kw-2">&amp;</span><span class="self">self</span>.entries);
-        <span class="self">self</span>.indices.get(hash.get(), eq).copied()
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>insert_full(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: HashValue, key: K, value: V) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;V&gt;)
-    <span class="kw">where
-        </span>K: Eq,
-    {
-        <span class="kw">match </span><span class="self">self</span>.find_or_insert(hash, <span class="kw-2">&amp;</span>key) {
-            <span class="prelude-val">Ok</span>(i) =&gt; (i, <span class="prelude-val">Some</span>(mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.entries[i].value, value))),
-            <span class="prelude-val">Err</span>(i) =&gt; {
-                <span class="macro">debug_assert_eq!</span>(i, <span class="self">self</span>.entries.len());
-                <span class="self">self</span>.push_entry(hash, key, value);
-                (i, <span class="prelude-val">None</span>)
-            }
-        }
-    }
-
-    <span class="doccomment">/// Same as `insert_full`, except it also replaces the key
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>replace_full(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        hash: HashValue,
-        key: K,
-        value: V,
-    ) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;(K, V)&gt;)
-    <span class="kw">where
-        </span>K: Eq,
-    {
-        <span class="kw">match </span><span class="self">self</span>.find_or_insert(hash, <span class="kw-2">&amp;</span>key) {
-            <span class="prelude-val">Ok</span>(i) =&gt; {
-                <span class="kw">let </span>entry = <span class="kw-2">&amp;mut </span><span class="self">self</span>.entries[i];
-                <span class="kw">let </span>kv = (
-                    mem::replace(<span class="kw-2">&amp;mut </span>entry.key, key),
-                    mem::replace(<span class="kw-2">&amp;mut </span>entry.value, value),
-                );
-                (i, <span class="prelude-val">Some</span>(kv))
-            }
-            <span class="prelude-val">Err</span>(i) =&gt; {
-                <span class="macro">debug_assert_eq!</span>(i, <span class="self">self</span>.entries.len());
-                <span class="self">self</span>.push_entry(hash, key, value);
-                (i, <span class="prelude-val">None</span>)
-            }
-        }
-    }
-
     <span class="kw">fn </span>insert_unique(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: HashValue, key: K, value: V) -&gt; usize {
         <span class="kw">let </span>i = <span class="self">self</span>.indices.len();
-        <span class="self">self</span>.indices.insert(hash.get(), i, get_hash(<span class="kw-2">&amp;</span><span class="self">self</span>.entries));
+        <span class="self">self</span>.indices
+            .insert_unique(hash.get(), i, get_hash(<span class="self">self</span>.entries));
         <span class="macro">debug_assert_eq!</span>(i, <span class="self">self</span>.entries.len());
         <span class="self">self</span>.push_entry(hash, key, value);
         i
@@ -1028,7 +1277,7 @@
         <span class="comment">// Increment others first so we don't have duplicate indices.
         </span><span class="self">self</span>.increment_indices(index, end);
         <span class="kw">let </span>entries = <span class="kw-2">&amp;*</span><span class="self">self</span>.entries;
-        <span class="self">self</span>.indices.insert(hash.get(), index, <span class="kw">move </span>|<span class="kw-2">&amp;</span>i| {
+        <span class="self">self</span>.indices.insert_unique(hash.get(), index, <span class="kw">move </span>|<span class="kw-2">&amp;</span>i| {
             <span class="comment">// Adjust for the incremented indices to find hashes.
             </span><span class="macro">debug_assert_ne!</span>(i, index);
             <span class="kw">let </span>i = <span class="kw">if </span>i &lt; index { i } <span class="kw">else </span>{ i - <span class="number">1 </span>};
@@ -1038,25 +1287,10 @@
     }
 
     <span class="doccomment">/// Remove an entry by shifting all entries that follow it
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>shift_remove_full&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: HashValue, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, K, V)&gt;
-    <span class="kw">where
-        </span>Q: <span class="question-mark">?</span>Sized + Equivalent&lt;K&gt;,
-    {
-        <span class="kw">let </span>eq = equivalent(key, <span class="kw-2">&amp;</span><span class="self">self</span>.entries);
-        <span class="kw">match </span><span class="self">self</span>.indices.remove_entry(hash.get(), eq) {
-            <span class="prelude-val">Some</span>(index) =&gt; {
-                <span class="kw">let </span>(key, value) = <span class="self">self</span>.shift_remove_finish(index);
-                <span class="prelude-val">Some</span>((index, key, value))
-            }
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
-        }
-    }
-
-    <span class="doccomment">/// Remove an entry by shifting all entries that follow it
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>shift_remove_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(K, V)&gt; {
+    </span><span class="kw">fn </span>shift_remove_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(K, V)&gt; {
         <span class="kw">match </span><span class="self">self</span>.entries.get(index) {
             <span class="prelude-val">Some</span>(entry) =&gt; {
-                erase_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, entry.hash, index);
+                erase_index(<span class="self">self</span>.indices, entry.hash, index);
                 <span class="prelude-val">Some</span>(<span class="self">self</span>.shift_remove_finish(index))
             }
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
@@ -1075,111 +1309,11 @@
         (entry.key, entry.value)
     }
 
-    <span class="doccomment">/// Decrement all indices in the range `start..end`.
-    ///
-    /// The index `start - 1` should not exist in `self.indices`.
-    /// All entries should still be in their original positions.
-    </span><span class="kw">fn </span>decrement_indices(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: usize, end: usize) {
-        <span class="comment">// Use a heuristic between a full sweep vs. a `find()` for every shifted item.
-        </span><span class="kw">let </span>shifted_entries = <span class="kw-2">&amp;</span><span class="self">self</span>.entries[start..end];
-        <span class="kw">if </span>shifted_entries.len() &gt; <span class="self">self</span>.indices.buckets() / <span class="number">2 </span>{
-            <span class="comment">// Shift all indices in range.
-            </span><span class="kw">for </span>i <span class="kw">in </span><span class="self">self</span>.indices_mut() {
-                <span class="kw">if </span>start &lt;= <span class="kw-2">*</span>i &amp;&amp; <span class="kw-2">*</span>i &lt; end {
-                    <span class="kw-2">*</span>i -= <span class="number">1</span>;
-                }
-            }
-        } <span class="kw">else </span>{
-            <span class="comment">// Find each entry in range to shift its index.
-            </span><span class="kw">for </span>(i, entry) <span class="kw">in </span>(start..end).zip(shifted_entries) {
-                update_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, entry.hash, i, i - <span class="number">1</span>);
-            }
-        }
-    }
-
-    <span class="doccomment">/// Increment all indices in the range `start..end`.
-    ///
-    /// The index `end` should not exist in `self.indices`.
-    /// All entries should still be in their original positions.
-    </span><span class="kw">fn </span>increment_indices(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: usize, end: usize) {
-        <span class="comment">// Use a heuristic between a full sweep vs. a `find()` for every shifted item.
-        </span><span class="kw">let </span>shifted_entries = <span class="kw-2">&amp;</span><span class="self">self</span>.entries[start..end];
-        <span class="kw">if </span>shifted_entries.len() &gt; <span class="self">self</span>.indices.buckets() / <span class="number">2 </span>{
-            <span class="comment">// Shift all indices in range.
-            </span><span class="kw">for </span>i <span class="kw">in </span><span class="self">self</span>.indices_mut() {
-                <span class="kw">if </span>start &lt;= <span class="kw-2">*</span>i &amp;&amp; <span class="kw-2">*</span>i &lt; end {
-                    <span class="kw-2">*</span>i += <span class="number">1</span>;
-                }
-            }
-        } <span class="kw">else </span>{
-            <span class="comment">// Find each entry in range to shift its index, updated in reverse so
-            // we never have duplicated indices that might have a hash collision.
-            </span><span class="kw">for </span>(i, entry) <span class="kw">in </span>(start..end).zip(shifted_entries).rev() {
-                update_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, entry.hash, i, i + <span class="number">1</span>);
-            }
-        }
-    }
-
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>move_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, from: usize, to: usize) {
-        <span class="kw">let </span>from_hash = <span class="self">self</span>.entries[from].hash;
-        <span class="kw">if </span>from != to {
-            <span class="comment">// Use a sentinel index so other indices don't collide.
-            </span>update_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, from_hash, from, usize::MAX);
-
-            <span class="comment">// Update all other indices and rotate the entry positions.
-            </span><span class="kw">if </span>from &lt; to {
-                <span class="self">self</span>.decrement_indices(from + <span class="number">1</span>, to + <span class="number">1</span>);
-                <span class="self">self</span>.entries[from..=to].rotate_left(<span class="number">1</span>);
-            } <span class="kw">else if </span>to &lt; from {
-                <span class="self">self</span>.increment_indices(to, from);
-                <span class="self">self</span>.entries[to..=from].rotate_right(<span class="number">1</span>);
-            }
-
-            <span class="comment">// Change the sentinel index to its final position.
-            </span>update_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, from_hash, usize::MAX, to);
-        }
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>swap_indices(<span class="kw-2">&amp;mut </span><span class="self">self</span>, a: usize, b: usize) {
-        <span class="comment">// If they're equal and in-bounds, there's nothing to do.
-        </span><span class="kw">if </span>a == b &amp;&amp; a &lt; <span class="self">self</span>.entries.len() {
-            <span class="kw">return</span>;
-        }
-
-        <span class="comment">// We'll get a "nice" bounds-check from indexing `self.entries`,
-        // and then we expect to find it in the table as well.
-        </span><span class="kw">let </span>[ref_a, ref_b] = <span class="self">self
-            </span>.indices
-            .get_many_mut(
-                [<span class="self">self</span>.entries[a].hash.get(), <span class="self">self</span>.entries[b].hash.get()],
-                <span class="kw">move </span>|i, <span class="kw-2">&amp;</span>x| <span class="kw">if </span>i == <span class="number">0 </span>{ x == a } <span class="kw">else </span>{ x == b },
-            )
-            .expect(<span class="string">"indices not found"</span>);
-
-        mem::swap(ref_a, ref_b);
-        <span class="self">self</span>.entries.swap(a, b);
-    }
-
     <span class="doccomment">/// Remove an entry by swapping it with the last
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>swap_remove_full&lt;Q&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, hash: HashValue, key: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, K, V)&gt;
-    <span class="kw">where
-        </span>Q: <span class="question-mark">?</span>Sized + Equivalent&lt;K&gt;,
-    {
-        <span class="kw">let </span>eq = equivalent(key, <span class="kw-2">&amp;</span><span class="self">self</span>.entries);
-        <span class="kw">match </span><span class="self">self</span>.indices.remove_entry(hash.get(), eq) {
-            <span class="prelude-val">Some</span>(index) =&gt; {
-                <span class="kw">let </span>(key, value) = <span class="self">self</span>.swap_remove_finish(index);
-                <span class="prelude-val">Some</span>((index, key, value))
-            }
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
-        }
-    }
-
-    <span class="doccomment">/// Remove an entry by swapping it with the last
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>swap_remove_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(K, V)&gt; {
+    </span><span class="kw">fn </span>swap_remove_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(K, V)&gt; {
         <span class="kw">match </span><span class="self">self</span>.entries.get(index) {
             <span class="prelude-val">Some</span>(entry) =&gt; {
-                erase_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, entry.hash, index);
+                erase_index(<span class="self">self</span>.indices, entry.hash, index);
                 <span class="prelude-val">Some</span>(<span class="self">self</span>.swap_remove_finish(index))
             }
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
@@ -1199,78 +1333,95 @@
             <span class="comment">// was not last element
             // examine new element in `index` and find it in indices
             </span><span class="kw">let </span>last = <span class="self">self</span>.entries.len();
-            update_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, entry.hash, last, index);
+            update_index(<span class="self">self</span>.indices, entry.hash, last, index);
         }
 
         (entry.key, entry.value)
     }
 
-    <span class="doccomment">/// Erase `start..end` from `indices`, and shift `end..` indices down to `start..`
+    <span class="doccomment">/// Decrement all indices in the range `start..end`.
     ///
-    /// All of these items should still be at their original location in `entries`.
-    /// This is used by `drain`, which will let `Vec::drain` do the work on `entries`.
-    </span><span class="kw">fn </span>erase_indices(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: usize, end: usize) {
-        <span class="kw">let </span>(init, shifted_entries) = <span class="self">self</span>.entries.split_at(end);
-        <span class="kw">let </span>(start_entries, erased_entries) = init.split_at(start);
-
-        <span class="kw">let </span>erased = erased_entries.len();
-        <span class="kw">let </span>shifted = shifted_entries.len();
-        <span class="kw">let </span>half_capacity = <span class="self">self</span>.indices.buckets() / <span class="number">2</span>;
-
-        <span class="comment">// Use a heuristic between different strategies
-        </span><span class="kw">if </span>erased == <span class="number">0 </span>{
-            <span class="comment">// Degenerate case, nothing to do
-        </span>} <span class="kw">else if </span>start + shifted &lt; half_capacity &amp;&amp; start &lt; erased {
-            <span class="comment">// Reinsert everything, as there are few kept indices
-            </span><span class="self">self</span>.indices.clear();
-
-            <span class="comment">// Reinsert stable indices, then shifted indices
-            </span>raw::insert_bulk_no_grow(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, start_entries);
-            raw::insert_bulk_no_grow(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, shifted_entries);
-        } <span class="kw">else if </span>erased + shifted &lt; half_capacity {
-            <span class="comment">// Find each affected index, as there are few to adjust
-
-            // Find erased indices
-            </span><span class="kw">for </span>(i, entry) <span class="kw">in </span>(start..).zip(erased_entries) {
-                erase_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, entry.hash, i);
-            }
-
-            <span class="comment">// Find shifted indices
-            </span><span class="kw">for </span>((new, old), entry) <span class="kw">in </span>(start..).zip(end..).zip(shifted_entries) {
-                update_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, entry.hash, old, new);
+    /// The index `start - 1` should not exist in `self.indices`.
+    /// All entries should still be in their original positions.
+    </span><span class="kw">fn </span>decrement_indices(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: usize, end: usize) {
+        <span class="comment">// Use a heuristic between a full sweep vs. a `find()` for every shifted item.
+        </span><span class="kw">let </span>shifted_entries = <span class="kw-2">&amp;</span><span class="self">self</span>.entries[start..end];
+        <span class="kw">if </span>shifted_entries.len() &gt; <span class="self">self</span>.indices.capacity() / <span class="number">2 </span>{
+            <span class="comment">// Shift all indices in range.
+            </span><span class="kw">for </span>i <span class="kw">in </span><span class="kw-2">&amp;mut *</span><span class="self">self</span>.indices {
+                <span class="kw">if </span>start &lt;= <span class="kw-2">*</span>i &amp;&amp; <span class="kw-2">*</span>i &lt; end {
+                    <span class="kw-2">*</span>i -= <span class="number">1</span>;
+                }
             }
         } <span class="kw">else </span>{
-            <span class="comment">// Sweep the whole table for adjustments
-            </span><span class="self">self</span>.erase_indices_sweep(start, end);
-        }
-
-        <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.indices.len(), start + shifted);
-    }
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>retain_in_order&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>keep: F)
-    <span class="kw">where
-        </span>F: FnMut(<span class="kw-2">&amp;mut </span>K, <span class="kw-2">&amp;mut </span>V) -&gt; bool,
-    {
-        <span class="self">self</span>.entries
-            .retain_mut(|entry| keep(<span class="kw-2">&amp;mut </span>entry.key, <span class="kw-2">&amp;mut </span>entry.value));
-        <span class="kw">if </span><span class="self">self</span>.entries.len() &lt; <span class="self">self</span>.indices.len() {
-            <span class="self">self</span>.rebuild_hash_table();
+            <span class="comment">// Find each entry in range to shift its index.
+            </span><span class="kw">for </span>(i, entry) <span class="kw">in </span>(start..end).zip(shifted_entries) {
+                update_index(<span class="self">self</span>.indices, entry.hash, i, i - <span class="number">1</span>);
+            }
         }
     }
 
-    <span class="kw">fn </span>rebuild_hash_table(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.indices.clear();
-        raw::insert_bulk_no_grow(<span class="kw-2">&amp;mut </span><span class="self">self</span>.indices, <span class="kw-2">&amp;</span><span class="self">self</span>.entries);
+    <span class="doccomment">/// Increment all indices in the range `start..end`.
+    ///
+    /// The index `end` should not exist in `self.indices`.
+    /// All entries should still be in their original positions.
+    </span><span class="kw">fn </span>increment_indices(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: usize, end: usize) {
+        <span class="comment">// Use a heuristic between a full sweep vs. a `find()` for every shifted item.
+        </span><span class="kw">let </span>shifted_entries = <span class="kw-2">&amp;</span><span class="self">self</span>.entries[start..end];
+        <span class="kw">if </span>shifted_entries.len() &gt; <span class="self">self</span>.indices.capacity() / <span class="number">2 </span>{
+            <span class="comment">// Shift all indices in range.
+            </span><span class="kw">for </span>i <span class="kw">in </span><span class="kw-2">&amp;mut *</span><span class="self">self</span>.indices {
+                <span class="kw">if </span>start &lt;= <span class="kw-2">*</span>i &amp;&amp; <span class="kw-2">*</span>i &lt; end {
+                    <span class="kw-2">*</span>i += <span class="number">1</span>;
+                }
+            }
+        } <span class="kw">else </span>{
+            <span class="comment">// Find each entry in range to shift its index, updated in reverse so
+            // we never have duplicated indices that might have a hash collision.
+            </span><span class="kw">for </span>(i, entry) <span class="kw">in </span>(start..end).zip(shifted_entries).rev() {
+                update_index(<span class="self">self</span>.indices, entry.hash, i, i + <span class="number">1</span>);
+            }
+        }
     }
 
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>reverse(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="self">self</span>.entries.reverse();
+    <span class="kw">fn </span>move_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, from: usize, to: usize) {
+        <span class="kw">let </span>from_hash = <span class="self">self</span>.entries[from].hash;
+        <span class="kw">let _ </span>= <span class="self">self</span>.entries[to]; <span class="comment">// explicit bounds check
+        </span><span class="kw">if </span>from != to {
+            <span class="comment">// Use a sentinel index so other indices don't collide.
+            </span>update_index(<span class="self">self</span>.indices, from_hash, from, usize::MAX);
 
-        <span class="comment">// No need to save hash indices, can easily calculate what they should
-        // be, given that this is an in-place reversal.
-        </span><span class="kw">let </span>len = <span class="self">self</span>.entries.len();
-        <span class="kw">for </span>i <span class="kw">in </span><span class="self">self</span>.indices_mut() {
-            <span class="kw-2">*</span>i = len - <span class="kw-2">*</span>i - <span class="number">1</span>;
+            <span class="comment">// Update all other indices and rotate the entry positions.
+            </span><span class="kw">if </span>from &lt; to {
+                <span class="self">self</span>.decrement_indices(from + <span class="number">1</span>, to + <span class="number">1</span>);
+                <span class="self">self</span>.entries[from..=to].rotate_left(<span class="number">1</span>);
+            } <span class="kw">else if </span>to &lt; from {
+                <span class="self">self</span>.increment_indices(to, from);
+                <span class="self">self</span>.entries[to..=from].rotate_right(<span class="number">1</span>);
+            }
+
+            <span class="comment">// Change the sentinel index to its final position.
+            </span>update_index(<span class="self">self</span>.indices, from_hash, usize::MAX, to);
+        }
+    }
+
+    <span class="kw">fn </span>swap_indices(<span class="kw-2">&amp;mut </span><span class="self">self</span>, a: usize, b: usize) {
+        <span class="comment">// If they're equal and in-bounds, there's nothing to do.
+        </span><span class="kw">if </span>a == b &amp;&amp; a &lt; <span class="self">self</span>.entries.len() {
+            <span class="kw">return</span>;
+        }
+
+        <span class="comment">// We'll get a "nice" bounds-check from indexing `entries`,
+        // and then we expect to find it in the table as well.
+        </span><span class="kw">match </span><span class="self">self</span>.indices.get_many_mut(
+            [<span class="self">self</span>.entries[a].hash.get(), <span class="self">self</span>.entries[b].hash.get()],
+            <span class="kw">move </span>|i, <span class="kw-2">&amp;</span>x| <span class="kw">if </span>i == <span class="number">0 </span>{ x == a } <span class="kw">else </span>{ x == b },
+        ) {
+            [<span class="prelude-val">Some</span>(ref_a), <span class="prelude-val">Some</span>(ref_b)] =&gt; {
+                mem::swap(ref_a, ref_b);
+                <span class="self">self</span>.entries.swap(a, b);
+            }
+            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"indices not found"</span>),
         }
     }
 }
@@ -1281,5 +1432,6 @@
     assert_send_sync::&lt;IndexMapCore&lt;i32, i32&gt;&gt;();
     assert_send_sync::&lt;Entry&lt;<span class="lifetime">'_</span>, i32, i32&gt;&gt;();
     assert_send_sync::&lt;IndexedEntry&lt;<span class="lifetime">'_</span>, i32, i32&gt;&gt;();
+    assert_send_sync::&lt;raw_entry_v1::RawEntryMut&lt;<span class="lifetime">'_</span>, i32, i32, ()&gt;&gt;();
 }
 </code></pre></div></section></main></body></html>

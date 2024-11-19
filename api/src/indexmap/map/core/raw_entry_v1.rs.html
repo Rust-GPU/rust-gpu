@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.5.0/src/map/core/raw_entry_v1.rs`."><title>raw_entry_v1.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../indexmap/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.6.0/src/map/core/raw_entry_v1.rs`."><title>raw_entry_v1.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../indexmap/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -650,6 +650,20 @@
 <a href="#650" id="650">650</a>
 <a href="#651" id="651">651</a>
 <a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a>
+<a href="#664" id="664">664</a>
+<a href="#665" id="665">665</a>
+<a href="#666" id="666">666</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Opt-in access to the experimental raw entry API.
 //!
 //! This module is designed to mimic the raw entry API of [`HashMap`][std::collections::hash_map],
@@ -661,13 +675,13 @@
 //! `hash_raw_entry` feature (or some replacement), matching *inherent* methods will be added to
 //! `IndexMap` without such an opt-in trait.
 
-</span><span class="kw">use </span><span class="kw">super</span>::raw::RawTableEntry;
-<span class="kw">use </span><span class="kw">super</span>::IndexMapCore;
+</span><span class="kw">use super</span>::{Entries, RefMut};
 <span class="kw">use crate</span>::{Equivalent, HashValue, IndexMap};
 <span class="kw">use </span>core::fmt;
 <span class="kw">use </span>core::hash::{BuildHasher, Hash, Hasher};
 <span class="kw">use </span>core::marker::PhantomData;
 <span class="kw">use </span>core::mem;
+<span class="kw">use </span>hashbrown::hash_table;
 
 <span class="doccomment">/// Opt-in access to the experimental raw entry API.
 ///
@@ -897,7 +911,7 @@
         <span class="kw">let </span>hash = HashValue(hash <span class="kw">as </span>usize);
         <span class="kw">let </span>entries = <span class="kw-2">&amp;*</span><span class="self">self</span>.map.core.entries;
         <span class="kw">let </span>eq = <span class="kw">move </span>|<span class="kw-2">&amp;</span>i: <span class="kw-2">&amp;</span>usize| is_match(<span class="kw-2">&amp;</span>entries[i].key);
-        <span class="self">self</span>.map.core.indices.get(hash.get(), eq).copied()
+        <span class="self">self</span>.map.core.indices.find(hash.get(), eq).copied()
     }
 }
 
@@ -935,18 +949,20 @@
     }
 
     <span class="doccomment">/// Access an entry by hash.
-    </span><span class="kw">pub fn </span>from_hash&lt;F&gt;(<span class="self">self</span>, hash: u64, is_match: F) -&gt; RawEntryMut&lt;<span class="lifetime">'a</span>, K, V, S&gt;
+    </span><span class="kw">pub fn </span>from_hash&lt;F&gt;(<span class="self">self</span>, hash: u64, <span class="kw-2">mut </span>is_match: F) -&gt; RawEntryMut&lt;<span class="lifetime">'a</span>, K, V, S&gt;
     <span class="kw">where
         </span>F: FnMut(<span class="kw-2">&amp;</span>K) -&gt; bool,
     {
-        <span class="kw">let </span>hash = HashValue(hash <span class="kw">as </span>usize);
-        <span class="kw">match </span><span class="self">self</span>.map.core.raw_entry(hash, is_match) {
-            <span class="prelude-val">Ok</span>(raw) =&gt; RawEntryMut::Occupied(RawOccupiedEntryMut {
-                raw,
+        <span class="kw">let </span>ref_entries = <span class="kw-2">&amp;*</span><span class="self">self</span>.map.core.entries;
+        <span class="kw">let </span>eq = <span class="kw">move </span>|<span class="kw-2">&amp;</span>i: <span class="kw-2">&amp;</span>usize| is_match(<span class="kw-2">&amp;</span>ref_entries[i].key);
+        <span class="kw">match </span><span class="self">self</span>.map.core.indices.find_entry(hash, eq) {
+            <span class="prelude-val">Ok</span>(index) =&gt; RawEntryMut::Occupied(RawOccupiedEntryMut {
+                entries: <span class="kw-2">&amp;mut </span><span class="self">self</span>.map.core.entries,
+                index,
                 hash_builder: PhantomData,
             }),
-            <span class="prelude-val">Err</span>(map) =&gt; RawEntryMut::Vacant(RawVacantEntryMut {
-                map,
+            <span class="prelude-val">Err</span>(absent) =&gt; RawEntryMut::Vacant(RawVacantEntryMut {
+                map: RefMut::new(absent.into_table(), <span class="kw-2">&amp;mut </span><span class="self">self</span>.map.core.entries),
                 hash_builder: <span class="kw-2">&amp;</span><span class="self">self</span>.map.hash_builder,
             }),
         }
@@ -1029,7 +1045,8 @@
 <span class="doccomment">/// A raw view into an occupied entry in an [`IndexMap`].
 /// It is part of the [`RawEntryMut`] enum.
 </span><span class="kw">pub struct </span>RawOccupiedEntryMut&lt;<span class="lifetime">'a</span>, K, V, S&gt; {
-    raw: RawTableEntry&lt;<span class="lifetime">'a</span>, K, V&gt;,
+    entries: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Entries&lt;K, V&gt;,
+    index: hash_table::OccupiedEntry&lt;<span class="lifetime">'a</span>, usize&gt;,
     hash_builder: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>S&gt;,
 }
 
@@ -1046,7 +1063,12 @@
     <span class="doccomment">/// Return the index of the key-value pair
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.raw.index()
+        <span class="kw-2">*</span><span class="self">self</span>.index.get()
+    }
+
+    <span class="attr">#[inline]
+    </span><span class="kw">fn </span>into_ref_mut(<span class="self">self</span>) -&gt; RefMut&lt;<span class="lifetime">'a</span>, K, V&gt; {
+        RefMut::new(<span class="self">self</span>.index.into_table(), <span class="self">self</span>.entries)
     }
 
     <span class="doccomment">/// Gets a reference to the entry's key in the map.
@@ -1055,7 +1077,7 @@
     /// difference if the key type has any distinguishing features outside of `Hash` and `Eq`, like
     /// extra fields or the memory address of an allocation.
     </span><span class="kw">pub fn </span>key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>K {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.raw.bucket().key
+        <span class="kw-2">&amp;</span><span class="self">self</span>.entries[<span class="self">self</span>.index()].key
     }
 
     <span class="doccomment">/// Gets a mutable reference to the entry's key in the map.
@@ -1064,7 +1086,8 @@
     /// difference if the key type has any distinguishing features outside of `Hash` and `Eq`, like
     /// extra fields or the memory address of an allocation.
     </span><span class="kw">pub fn </span>key_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>K {
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>.raw.bucket_mut().key
+        <span class="kw">let </span>index = <span class="self">self</span>.index();
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>.entries[index].key
     }
 
     <span class="doccomment">/// Converts into a mutable reference to the entry's key in the map,
@@ -1074,12 +1097,13 @@
     /// difference if the key type has any distinguishing features outside of `Hash` and `Eq`, like
     /// extra fields or the memory address of an allocation.
     </span><span class="kw">pub fn </span>into_key(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>K {
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>.raw.into_bucket().key
+        <span class="kw">let </span>index = <span class="self">self</span>.index();
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>.entries[index].key
     }
 
     <span class="doccomment">/// Gets a reference to the entry's value in the map.
     </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>V {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.raw.bucket().value
+        <span class="kw-2">&amp;</span><span class="self">self</span>.entries[<span class="self">self</span>.index()].value
     }
 
     <span class="doccomment">/// Gets a mutable reference to the entry's value in the map.
@@ -1087,29 +1111,33 @@
     /// If you need a reference which may outlive the destruction of the
     /// [`RawEntryMut`] value, see [`into_mut`][Self::into_mut].
     </span><span class="kw">pub fn </span>get_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>V {
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>.raw.bucket_mut().value
+        <span class="kw">let </span>index = <span class="self">self</span>.index();
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>.entries[index].value
     }
 
     <span class="doccomment">/// Converts into a mutable reference to the entry's value in the map,
     /// with a lifetime bound to the map itself.
     </span><span class="kw">pub fn </span>into_mut(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V {
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>.raw.into_bucket().value
+        <span class="kw">let </span>index = <span class="self">self</span>.index();
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>.entries[index].value
     }
 
     <span class="doccomment">/// Gets a reference to the entry's key and value in the map.
     </span><span class="kw">pub fn </span>get_key_value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>V) {
-        <span class="self">self</span>.raw.bucket().refs()
+        <span class="self">self</span>.entries[<span class="self">self</span>.index()].refs()
     }
 
     <span class="doccomment">/// Gets a reference to the entry's key and value in the map.
     </span><span class="kw">pub fn </span>get_key_value_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; (<span class="kw-2">&amp;mut </span>K, <span class="kw-2">&amp;mut </span>V) {
-        <span class="self">self</span>.raw.bucket_mut().muts()
+        <span class="kw">let </span>index = <span class="self">self</span>.index();
+        <span class="self">self</span>.entries[index].muts()
     }
 
     <span class="doccomment">/// Converts into a mutable reference to the entry's key and value in the map,
     /// with a lifetime bound to the map itself.
     </span><span class="kw">pub fn </span>into_key_value_mut(<span class="self">self</span>) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V) {
-        <span class="self">self</span>.raw.into_bucket().muts()
+        <span class="kw">let </span>index = <span class="self">self</span>.index();
+        <span class="self">self</span>.entries[index].muts()
     }
 
     <span class="doccomment">/// Sets the value of the entry, and returns the entry's old value.
@@ -1176,8 +1204,8 @@
     ///
     /// Computes in **O(1)** time (average).
     </span><span class="kw">pub fn </span>swap_remove_entry(<span class="self">self</span>) -&gt; (K, V) {
-        <span class="kw">let </span>(map, index) = <span class="self">self</span>.raw.remove_index();
-        map.swap_remove_finish(index)
+        <span class="kw">let </span>(index, entry) = <span class="self">self</span>.index.remove();
+        RefMut::new(entry.into_table(), <span class="self">self</span>.entries).swap_remove_finish(index)
     }
 
     <span class="doccomment">/// Remove and return the key, value pair stored in the map for this entry
@@ -1188,8 +1216,8 @@
     ///
     /// Computes in **O(n)** time (average).
     </span><span class="kw">pub fn </span>shift_remove_entry(<span class="self">self</span>) -&gt; (K, V) {
-        <span class="kw">let </span>(map, index) = <span class="self">self</span>.raw.remove_index();
-        map.shift_remove_finish(index)
+        <span class="kw">let </span>(index, entry) = <span class="self">self</span>.index.remove();
+        RefMut::new(entry.into_table(), <span class="self">self</span>.entries).shift_remove_finish(index)
     }
 
     <span class="doccomment">/// Moves the position of the entry to a new index
@@ -1205,8 +1233,8 @@
     ///
     /// Computes in **O(n)** time (average).
     </span><span class="kw">pub fn </span>move_index(<span class="self">self</span>, to: usize) {
-        <span class="kw">let </span>(map, index) = <span class="self">self</span>.raw.into_inner();
-        map.move_index(index, to);
+        <span class="kw">let </span>index = <span class="self">self</span>.index();
+        <span class="self">self</span>.into_ref_mut().move_index(index, to);
     }
 
     <span class="doccomment">/// Swaps the position of entry with another.
@@ -1218,15 +1246,15 @@
     ///
     /// Computes in **O(1)** time (average).
     </span><span class="kw">pub fn </span>swap_indices(<span class="self">self</span>, other: usize) {
-        <span class="kw">let </span>(map, index) = <span class="self">self</span>.raw.into_inner();
-        map.swap_indices(index, other)
+        <span class="kw">let </span>index = <span class="self">self</span>.index();
+        <span class="self">self</span>.into_ref_mut().swap_indices(index, other);
     }
 }
 
 <span class="doccomment">/// A view into a vacant raw entry in an [`IndexMap`].
 /// It is part of the [`RawEntryMut`] enum.
 </span><span class="kw">pub struct </span>RawVacantEntryMut&lt;<span class="lifetime">'a</span>, K, V, S&gt; {
-    map: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>IndexMapCore&lt;K, V&gt;,
+    map: RefMut&lt;<span class="lifetime">'a</span>, K, V&gt;,
     hash_builder: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>S,
 }
 
@@ -1256,7 +1284,7 @@
 
     <span class="doccomment">/// Inserts the given key and value into the map with the provided hash,
     /// and returns mutable references to them.
-    </span><span class="kw">pub fn </span>insert_hashed_nocheck(<span class="self">self</span>, hash: u64, key: K, value: V) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V) {
+    </span><span class="kw">pub fn </span>insert_hashed_nocheck(<span class="kw-2">mut </span><span class="self">self</span>, hash: u64, key: K, value: V) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V) {
         <span class="kw">let </span>hash = HashValue(hash <span class="kw">as </span>usize);
         <span class="kw">let </span>i = <span class="self">self</span>.map.insert_unique(hash, key, value);
         <span class="self">self</span>.map.entries[i].muts()
@@ -1285,7 +1313,7 @@
     ///
     /// Computes in **O(n)** time (average).
     </span><span class="kw">pub fn </span>shift_insert_hashed_nocheck(
-        <span class="self">self</span>,
+        <span class="kw-2">mut </span><span class="self">self</span>,
         index: usize,
         hash: u64,
         key: K,
