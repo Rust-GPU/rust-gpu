@@ -2,7 +2,9 @@
 name: Enhancement
 about: Propose a minor improvement or feature to the project.
 title: "(My enhancement)"
-labels: "t: enhancement"
+labels: enhancement
+assignees: ''
+
 ---
 
 <!--
@@ -15,4 +17,3 @@ Existing Issues: https://github.com/rust-gpu/rust-gpu/issues?q=is%3Aopen+is%3Ais
 Closed Issues: https://github.com/rust-gpu/rust-gpu/labels/s%3A%20wontfix
 
 -->
-
