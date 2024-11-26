@@ -597,13 +597,13 @@ opt-level = 3
 which may slow down full rebuilds a bit. Please read <a href="https://github.com/EmbarkStudios/rust-gpu/issues/448">this
 issue</a> for more
 information, there's a few important caveats to know about this.</p>
-<h3 id="using-cargoconfig"><a class="header" href="#using-cargoconfig">Using <code>.cargo/config</code></a></h3>
+<h3 id="using-cargoconfigtoml"><a class="header" href="#using-cargoconfigtoml">Using <code>.cargo/config.toml</code></a></h3>
 <blockquote>
 <p><strong>Note</strong> This method will require manually rebuilding <code>rust-gpu</code> each
 time there has been changes to the repository.</p>
 </blockquote>
 <p>If you just want to build a shader crate, and don't need to automatically
-compile the SPIR-V binary at build time, you can use <code>.cargo/config</code> to set the
+compile the SPIR-V binary at build time, you can use <code>.cargo/config.toml</code> to set the
 necessary flags. Before you can do that however you need to do a couple of steps
 first to build the compiler backend.</p>
 <ol>
@@ -613,15 +613,21 @@ first to build the compiler backend.</p>
 <p>Now you should have a <code>librustc_codegen_spirv</code> dynamic library available in
 <code>target/release</code>. You'll need to keep this somewhere stable that you can
 reference from your shader project.</p>
-<p>Now we need to add our <code>.cargo/config</code> file. This is a configuration file that
-tells cargo how to build for SPIR-V. You need provide the target you're
-compiling for (see <a href="./platform-support.html">platform support</a>) and provide a path
-to your built <code>rustc_codegen_spirv</code> dynamic library. We have to also provide
-some additional options.</p>
+<p>Copy the <code>rust-gpu/rust-toolchain.toml</code> file to your project. You must use the same
+version of Rust as <code>rust-gpu</code> so that dynamic codegen library can be loaded by <code>rustc</code>.</p>
+<p>Now we need to add our <code>.cargo/config.toml</code> file that can be used to teach <code>cargo</code>
+how to build SPIR-V. Here are a few things we need to mention there.</p>
+<ul>
+<li>Path to a spec of a target you're compiling for (see <a href="./platform-support.html">platform support</a>).
+These specs reside in a directory inside the <code>spirv-builder</code> crate and an example relative path
+could look like <code>../rust-gpu/crates/spirv-builder/target-specs/spirv-unknown-spv1.3.json</code>.</li>
+<li>Absolute path to the <code>rustc_codegen_spirv</code> dynamic library that we built above.</li>
+<li>Some additional options.</li>
+</ul>
 <pre><code class="language-toml">[build]
-target = "spirv-unknown-spv1.3"
+target = "&lt;path_to_target_spec&gt;"
 rustflags = [
-    "-Zcodegen-backend=&lt;path_to_librustc_codegen_spirv&gt;",
+    "-Zcodegen-backend=&lt;absolute_path_to_librustc_codegen_spirv&gt;",
     "-Zbinary-dep-depinfo",
     "-Csymbol-mangling-version=v0",
     "-Zcrate-attr=feature(register_tool)",
