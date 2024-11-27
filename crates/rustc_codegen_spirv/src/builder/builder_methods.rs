@@ -1,8 +1,10 @@
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use super::Builder;
 use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{BuilderCursor, SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
 use crate::custom_insts::{CustomInst, CustomOp};
-use crate::rustc_codegen_ssa::traits::BaseTypeMethods;
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::dr::{InsertPoint, Instruction, Operand};
@@ -13,6 +15,7 @@ use rustc_codegen_ssa::common::{
 };
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
+use rustc_codegen_ssa::traits::BaseTypeMethods;
 use rustc_codegen_ssa::traits::{
     BackendTypes, BuilderMethods, ConstMethods, LayoutTypeMethods, OverflowOp,
 };
@@ -1412,6 +1415,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         val
     }
 
+    // HACK(eddyb) new method patched into `pqp_cg_ssa` (see `build.rs`).
+    #[cfg(not(rustc_codegen_spirv_disable_pqp_cg_ssa))]
+    fn typed_alloca(&mut self, ty: Self::Type, align: Align) -> Self::Value {
+        self.alloca(ty, align)
+    }
     fn alloca(&mut self, ty: Self::Type, _align: Align) -> Self::Value {
         let ptr_ty = self.type_ptr_to(ty);
         // "All OpVariable instructions in a function must be the first instructions in the first block."

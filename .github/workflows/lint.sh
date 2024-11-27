@@ -87,3 +87,16 @@ function version_test() {
 # FIXME(eddyb) try to get this working for `spirv-builder`, which has a larger
 # dependency graph, with too much imprecision in upstream `Cargo.toml` files.
 version_test crates/spirv-std
+
+# 3. Ensure `rustc_codegen_spirv` still compiles with `rustc_codegen_ssa`.
+
+# HACK(eddyb) see `crates/rustc_codegen_spirv/build.rs` for more on `pqp_cg_ssa`
+# (a patched copy of `rustc_codegen_ssa`).
+echo ::group::rustc_codegen_spirv_disable_pqp_cg_ssa
+cargo clippy \
+    --manifest-path "crates/rustc_codegen_spirv/Cargo.toml" \
+    --no-default-features \
+    --features "$FEAT" \
+    --all-targets \
+    -- -D warnings --cfg rustc_codegen_spirv_disable_pqp_cg_ssa
+echo ::endgroup::

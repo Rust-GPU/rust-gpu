@@ -1,3 +1,8 @@
+# HACK(eddyb) meant for `[profile.dev]` `rustflags` overrides below, but sadly
+# not configurable w/o breaking `Cargo.toml` parsing from non-nightly Cargo.
+#
+# cargo-features = ["profile-rustflags"]
+
 [workspace]
 resolver = "2"
 members = [
@@ -60,3 +65,15 @@ codegen-units = 256
 opt-level = 3
 incremental = true
 codegen-units = 256
+
+# HACK(eddyb) reduce the number of linker exports and/or imports, by avoiding
+# inter-CGU linkage, to stay under the 64Ki MSVC limit for `rustc_codegen_spirv`
+# when building it in "debug mode" (only relevant to CI for now, realistically),
+# i.e. working around this issue: https://github.com/rust-lang/rust/issues/53014.
+[profile.dev]
+# HACK(eddyb) fewer inter-crate exports/imports (not just inter-CGU), but sadly
+# not configurable w/o breaking `Cargo.toml` parsing from non-nightly Cargo
+# (moved to `.github/workflows/ci.yaml` as `RUSTFLAGS: -Zshare-generics=off`).
+#
+# rustflags = ["-Zshare-generics=off"]
+codegen-units = 1

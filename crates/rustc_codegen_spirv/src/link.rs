@@ -1,3 +1,6 @@
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use crate::codegen_cx::{CodegenArgs, SpirvMetadata};
 use crate::{linker, SpirvCodegenBackend, SpirvModuleBuffer, SpirvThinBuffer};
 use ar::{Archive, GnuBuilder, Header};
