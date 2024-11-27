@@ -76,7 +76,9 @@ mod image;
 use proc_macro::TokenStream;
 use proc_macro2::{Delimiter, Group, Ident, Span, TokenTree};
 
-use syn::{punctuated::Punctuated, spanned::Spanned, visit_mut::VisitMut, ItemFn, Token, Visibility};
+use syn::{
+    punctuated::Punctuated, spanned::Spanned, visit_mut::VisitMut, ItemFn, Token, Visibility,
+};
 
 use quote::{quote, ToTokens};
 use std::fmt::Write;
