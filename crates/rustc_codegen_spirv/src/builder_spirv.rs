@@ -1,3 +1,6 @@
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use crate::builder;
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
