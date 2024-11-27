@@ -9,6 +9,9 @@ pub use ext_inst::ExtInst;
 use rustc_span::DUMMY_SP;
 pub use spirv_asm::InstructionTable;
 
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{BuilderCursor, SpirvValue, SpirvValueExt};
 use crate::codegen_cx::CodegenCx;

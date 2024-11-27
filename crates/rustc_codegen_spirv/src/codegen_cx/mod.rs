@@ -10,6 +10,9 @@ use crate::spirv_type::{SpirvType, SpirvTypePrinter, TypeCache};
 use crate::symbols::Symbols;
 use crate::target::SpirvTarget;
 
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use itertools::Itertools as _;
 use rspirv::dr::{Module, Operand};
 use rspirv::spirv::{Decoration, LinkageType, Op, Word};

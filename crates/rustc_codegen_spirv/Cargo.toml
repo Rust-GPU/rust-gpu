@@ -39,6 +39,11 @@ num-traits = { workspace = true, default-features = true }
 once_cell = "1"
 regex = { version = "1", features = ["perf"] }
 
+# HACK(eddyb) deps of `rustc_codegen_ssa`, for `pqp_cg_ssa` (see `build.rs`),
+# that cannot be handled with just `extern crate` pulling out of the sysroot.
+object = { version = "0.32.1",  default-features = false, features = ["read_core", "elf", "macho", "pe", "xcoff", "unaligned", "archive", "write", "wasm"] }
+thorin-dwp = "0.7"
+
 # Normal dependencies.
 ar = "0.9.0"
 either = "1.8.0"
@@ -56,7 +61,10 @@ itertools = "0.10.5"
 [dev-dependencies]
 pipe = "0.4"
 pretty_assertions = "1.0"
-tempfile = "3.4"
+
+# HACK(eddyb) can't re-introduce deps of `rustc_codegen_ssa`, for `pqp_cg_ssa`
+# (see `build.rs`).
+# tempfile = "3.4"
 
 # Note that in order to use RA and have access to `rustc_*` crates, you also
 # need to set `"rust-analyzer.rustcSource": "discover"` in e.g. VSCode.

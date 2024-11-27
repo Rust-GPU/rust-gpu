@@ -1,3 +1,17 @@
+// HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
+#![feature(rustdoc_internals)]
+#![allow(internal_features)]
+#![allow(rustc::diagnostic_outside_of_impl)]
+#![allow(rustc::untranslatable_diagnostic)]
+#![cfg_attr(bootstrap, feature(associated_type_bounds))]
+#![feature(box_patterns)]
+#![feature(if_let_guard)]
+#![feature(let_chains)]
+#![feature(negative_impls)]
+#![feature(strict_provenance)]
+#![feature(try_blocks)]
+// HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
+
 //! Welcome to the API documentation for the `rust-gpu` project, this API is
 //! unstable and mainly intended for developing on the project itself. This is
 //! the API documentation for `rustc_codegen_spirv` which is not that useful on
@@ -39,21 +53,57 @@ compile_error!(
     "Either \"use-compiled-tools\" (enabled by default) or \"use-installed-tools\" may be enabled."
 );
 
+// HACK(eddyb) `build.rs` copies `rustc_codegen_ssa` (from the `rustc-dev` component)
+// and patches it to produce a "pqp" ("pre-`qptr`-patched") version that maintains
+// compatibility with "legacy" Rust-GPU pointer handling (mainly typed `alloca`s).
+//
+// FIXME(eddyb) get rid of this as soon as it's not needed anymore.
+#[cfg(not(rustc_codegen_spirv_disable_pqp_cg_ssa))]
+include!(concat!(env!("OUT_DIR"), "/pqp_cg_ssa.rs"));
+
+// HACK(eddyb) guide `rustc` to finding the right deps in the sysroot, which
+// (sadly) has to be outside `include!` to have any effect whatsoever.
+// FIXME(eddyb) this only really handles `bitflags`, not `object`.
+#[cfg(not(rustc_codegen_spirv_disable_pqp_cg_ssa))]
+mod _rustc_codegen_ssa_transitive_deps_hack {
+    extern crate rustc_codegen_ssa as _;
+}
+
+// NOTE(eddyb) `mod maybe_pqp_cg_ssa` is defined by the above `include`, when
+// in the (default for now) `pqp_cg_ssa` mode (see `build.rs`).
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
+use rustc_codegen_ssa as maybe_pqp_cg_ssa;
+
+// FIXME(eddyb) remove all `#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]`
+// as soon as they're not needed anymore (i.e. using `rustc_codegen_ssa` again).
 extern crate rustc_apfloat;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_arena;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_ast;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_attr;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_codegen_ssa;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_data_structures;
 extern crate rustc_driver;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_errors;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_hir;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_index;
 extern crate rustc_interface;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_metadata;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_middle;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_session;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_span;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_target;
 
 macro_rules! assert_ty_eq {
@@ -84,19 +134,19 @@ mod target_feature;
 
 use builder::Builder;
 use codegen_cx::CodegenCx;
-use rspirv::binary::Assemble;
-use rustc_ast::expand::allocator::AllocatorKind;
-use rustc_codegen_ssa::back::lto::{LtoModuleCodegen, SerializedModule, ThinModule};
-use rustc_codegen_ssa::back::write::{
+use maybe_pqp_cg_ssa::back::lto::{LtoModuleCodegen, SerializedModule, ThinModule};
+use maybe_pqp_cg_ssa::back::write::{
     CodegenContext, FatLtoInput, ModuleConfig, OngoingCodegen, TargetMachineFactoryConfig,
 };
-use rustc_codegen_ssa::base::maybe_create_entry_wrapper;
-use rustc_codegen_ssa::mono_item::MonoItemExt;
-use rustc_codegen_ssa::traits::{
+use maybe_pqp_cg_ssa::base::maybe_create_entry_wrapper;
+use maybe_pqp_cg_ssa::mono_item::MonoItemExt;
+use maybe_pqp_cg_ssa::traits::{
     CodegenBackend, ExtraBackendMethods, ModuleBufferMethods, ThinBufferMethods,
     WriteBackendMethods,
 };
-use rustc_codegen_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind};
+use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind};
+use rspirv::binary::Assemble;
+use rustc_ast::expand::allocator::AllocatorKind;
 use rustc_data_structures::fx::FxIndexMap;
 use rustc_errors::{DiagCtxt, ErrorGuaranteed, FatalError};
 use rustc_metadata::EncodedMetadata;
@@ -222,7 +272,7 @@ impl CodegenBackend for SpirvCodegenBackend {
         metadata: EncodedMetadata,
         need_metadata_module: bool,
     ) -> Box<dyn Any> {
-        Box::new(rustc_codegen_ssa::base::codegen_crate(
+        Box::new(maybe_pqp_cg_ssa::base::codegen_crate(
             Self,
             tcx,
             tcx.sess
