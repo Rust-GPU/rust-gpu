@@ -151,10 +151,8 @@ pub fn spirv(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr: proc_macro2::TokenStream = attr.into();
     tokens.extend(quote! { #[cfg_attr(target_arch="spirv", rust_gpu::spirv(#attr))] });
 
-    if attr.to_string().trim() == "fragment" {
-        let item_clone = item.clone();
-        let input = syn::parse_macro_input!(item_clone as ItemFn);
-        if !matches!(input.vis, Visibility::Public(_)) {
+    if let Ok(item_fn) = syn::parse::<ItemFn>(item.clone()) {
+        if !matches!(item_fn.vis, Visibility::Public(_)) {
             panic!("The `spirv` macro can only be applied to public functions.");
         }
     }
