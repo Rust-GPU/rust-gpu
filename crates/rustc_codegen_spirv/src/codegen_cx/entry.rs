@@ -82,7 +82,7 @@ impl<'tcx> CodegenCx<'tcx> {
             let body = self
                 .tcx
                 .hir()
-                .body(self.tcx.hir().body_owned_by(fn_local_def_id));
+                .body(self.tcx.hir().body_owned_by(fn_local_def_id).id());
             body.params
         };
         for (arg_abi, hir_param) in fn_abi.args.iter().zip(hir_params) {
