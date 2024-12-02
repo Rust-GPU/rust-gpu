@@ -613,6 +613,10 @@ fn debug_printf_inner(input: DebugPrintfInput) -> TokenStream {
         .into_iter()
         .collect::<proc_macro2::TokenStream>();
     let op_loads = op_loads.into_iter().collect::<proc_macro2::TokenStream>();
+    // Escapes the '{' and '}' characters in the format string.
+    // Since the `asm!` macro expects '{' '}' to surround its arguments, we have to use '{{' and '}}' instead.
+    // The `asm!` macro will then later turn them back into '{' and '}'.
+    let format_string = format_string.replace('{', "{{").replace('}', "}}");
 
     let op_string = format!("%string = OpString {format_string:?}");
 
