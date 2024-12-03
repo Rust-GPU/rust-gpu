@@ -103,7 +103,7 @@ fn is_rooted(inst: &Instruction, rooted: &FxIndexSet<Word>) -> bool {
         // referenced by roots
         inst.operands
             .iter()
-            .any(|op| op.id_ref_any().map_or(false, |w| rooted.contains(&w)))
+            .any(|op| op.id_ref_any().is_some_and(|w| rooted.contains(&w)))
     }
 }
 

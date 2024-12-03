@@ -28,10 +28,10 @@ use rustc_errors::{Diag, DiagMessage};
 use rustc_middle::mir::coverage::CoverageKind;
 use rustc_middle::span_bug;
 use rustc_middle::ty::layout::{
-    FnAbiError, FnAbiOfHelpers, FnAbiRequest, HasParamEnv, HasTyCtxt, LayoutError, LayoutOfHelpers,
-    TyAndLayout,
+    FnAbiError, FnAbiOfHelpers, FnAbiRequest, HasTyCtxt, HasTypingEnv, LayoutError,
+    LayoutOfHelpers, TyAndLayout,
 };
-use rustc_middle::ty::{Instance, ParamEnv, Ty, TyCtxt};
+use rustc_middle::ty::{Instance, Ty, TyCtxt, TypingEnv};
 use rustc_span::Span;
 use rustc_span::def_id::DefId;
 use rustc_target::abi::call::{ArgAbi, FnAbi, PassMode};
@@ -175,6 +175,10 @@ impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
         todo!()
     }
 
+    fn get_dbg_loc(&self) -> Option<Self::DILocation> {
+        None
+    }
+
     fn insert_reference_to_gdb_debug_scripts_section_global(&mut self) {
         todo!()
     }
@@ -264,9 +268,9 @@ impl<'a, 'tcx> BackendTypes for Builder<'a, 'tcx> {
     type DILocation = <CodegenCx<'tcx> as BackendTypes>::DILocation;
 }
 
-impl<'a, 'tcx> HasParamEnv<'tcx> for Builder<'a, 'tcx> {
-    fn param_env(&self) -> ParamEnv<'tcx> {
-        self.cx.param_env()
+impl<'a, 'tcx> HasTypingEnv<'tcx> for Builder<'a, 'tcx> {
+    fn typing_env(&self) -> TypingEnv<'tcx> {
+        self.cx.typing_env()
     }
 }
 
