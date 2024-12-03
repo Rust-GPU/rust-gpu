@@ -8,7 +8,7 @@ use rspirv::spirv::{Op, Word};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexMap};
 use rustc_errors::Diag;
 use rustc_session::Session;
-use rustc_span::{Span, DUMMY_SP};
+use rustc_span::{DUMMY_SP, Span};
 use smallvec::SmallVec;
 
 #[derive(Copy, Clone)]

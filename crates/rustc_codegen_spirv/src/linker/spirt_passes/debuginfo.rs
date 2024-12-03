@@ -6,8 +6,8 @@ use smallvec::SmallVec;
 use spirt::transform::{InnerInPlaceTransform, Transformer};
 use spirt::visit::InnerVisit;
 use spirt::{
-    spv, Attr, AttrSetDef, ConstKind, Context, ControlNode, ControlNodeKind, DataInstKind,
-    InternedStr, Module, OrdAssertEq, Value,
+    Attr, AttrSetDef, ConstKind, Context, ControlNode, ControlNodeKind, DataInstKind, InternedStr,
+    Module, OrdAssertEq, Value, spv,
 };
 
 /// Replace our custom extended instruction debuginfo with standard SPIR-V ones.

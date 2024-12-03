@@ -4,10 +4,10 @@ use spirt::func_at::{FuncAt, FuncAtMut};
 use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::InnerVisit;
 use spirt::{
-    spv, Const, ConstDef, ConstKind, Context, ControlNode, ControlNodeDef, ControlNodeKind,
+    Const, ConstDef, ConstKind, Context, ControlNode, ControlNodeDef, ControlNodeKind,
     ControlNodeOutputDecl, ControlRegion, ControlRegionInputDecl, DataInst, DataInstDef,
     DataInstFormDef, DataInstKind, EntityOrientedDenseMap, FuncDefBody, SelectionKind, Type,
-    TypeDef, TypeKind, Value,
+    TypeDef, TypeKind, Value, spv,
 };
 use std::collections::hash_map::Entry;
 use std::{iter, slice};

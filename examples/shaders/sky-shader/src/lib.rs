@@ -5,7 +5,7 @@
 #![deny(warnings)]
 
 use core::f32::consts::PI;
-use glam::{vec2, vec3, Vec2, Vec3, Vec4};
+use glam::{Vec2, Vec3, Vec4, vec2, vec3};
 use shared::*;
 use spirv_std::spirv;
 

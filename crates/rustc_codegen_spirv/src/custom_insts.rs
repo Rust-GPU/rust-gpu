@@ -57,38 +57,31 @@ lazy_static! {
 
 pub fn register_to_spirt_context(cx: &spirt::Context) {
     use spirt::spv::spec::{ExtInstSetDesc, ExtInstSetInstructionDesc};
-    cx.register_custom_ext_inst_set(
-        &CUSTOM_EXT_INST_SET,
-        ExtInstSetDesc {
-            // HACK(eddyb) this is the most compact form I've found, that isn't
-            // outright lossy by omitting "Rust vs Rust-GPU" or the version.
-            short_alias: Some(
-                concat!("Rust-GPU ", join_cargo_pkg_version_major_minor_patch!(".")).into(),
-            ),
-            instructions: SCHEMA
-                .iter()
-                .map(|&(i, name, operand_names)| {
-                    (
-                        i,
-                        ExtInstSetInstructionDesc {
-                            name: name.into(),
-                            operand_names: operand_names
-                                .iter()
-                                .map(|name| {
-                                    name.strip_prefix("..")
-                                        .unwrap_or(name)
-                                        .replace('_', " ")
-                                        .into()
-                                })
-                                .collect(),
-                            is_debuginfo: name.contains("Debug")
-                                || name.contains("InlinedCallFrame"),
-                        },
-                    )
+    cx.register_custom_ext_inst_set(&CUSTOM_EXT_INST_SET, ExtInstSetDesc {
+        // HACK(eddyb) this is the most compact form I've found, that isn't
+        // outright lossy by omitting "Rust vs Rust-GPU" or the version.
+        short_alias: Some(
+            concat!("Rust-GPU ", join_cargo_pkg_version_major_minor_patch!(".")).into(),
+        ),
+        instructions: SCHEMA
+            .iter()
+            .map(|&(i, name, operand_names)| {
+                (i, ExtInstSetInstructionDesc {
+                    name: name.into(),
+                    operand_names: operand_names
+                        .iter()
+                        .map(|name| {
+                            name.strip_prefix("..")
+                                .unwrap_or(name)
+                                .replace('_', " ")
+                                .into()
+                        })
+                        .collect(),
+                    is_debuginfo: name.contains("Debug") || name.contains("InlinedCallFrame"),
                 })
-                .collect(),
-        },
-    );
+            })
+            .collect(),
+    });
 }
 
 macro_rules! def_custom_insts {

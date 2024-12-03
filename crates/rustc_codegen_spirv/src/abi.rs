@@ -17,8 +17,8 @@ use rustc_middle::ty::{
 };
 use rustc_middle::ty::{GenericArgsRef, ScalarInt};
 use rustc_middle::{bug, span_bug};
-use rustc_span::def_id::DefId;
 use rustc_span::DUMMY_SP;
+use rustc_span::def_id::DefId;
 use rustc_span::{Span, Symbol};
 use rustc_target::abi::call::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 use rustc_target::abi::{

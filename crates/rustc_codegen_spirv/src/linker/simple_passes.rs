@@ -1,4 +1,4 @@
-use super::{get_name, get_names, Result};
+use super::{Result, get_name, get_names};
 use rspirv::dr::{Block, Function, Module};
 use rspirv::spirv::{ExecutionModel, Op, Word};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};

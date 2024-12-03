@@ -6,7 +6,7 @@ use crate::builder_spirv::{BuilderCursor, SpirvValue};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use rspirv::dr;
-use rspirv::grammar::{reflect, LogicalOperand, OperandKind, OperandQuantifier};
+use rspirv::grammar::{LogicalOperand, OperandKind, OperandQuantifier, reflect};
 use rspirv::spirv::{
     CooperativeMatrixOperands, FPFastMathMode, FragmentShadingRate, FunctionControl,
     GroupOperation, ImageOperands, KernelProfilingInfo, LoopControl, MemoryAccess, MemorySemantics,
@@ -17,7 +17,7 @@ use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{AsmBuilderMethods, InlineAsmOperandRef};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_middle::{bug, ty::Instance};
-use rustc_span::{Span, DUMMY_SP};
+use rustc_span::{DUMMY_SP, Span};
 use rustc_target::asm::{InlineAsmRegClass, InlineAsmRegOrRegClass, SpirVInlineAsmRegClass};
 
 pub struct InstructionTable {
@@ -610,7 +610,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
         id_to_type_map: &FxHashMap<Word, Word>,
         instruction: &dr::Instruction,
     ) -> Option<Word> {
-        use crate::spirv_type_constraints::{instruction_signatures, InstSig, TyListPat, TyPat};
+        use crate::spirv_type_constraints::{InstSig, TyListPat, TyPat, instruction_signatures};
 
         #[derive(Debug)]
         struct Unapplicable;

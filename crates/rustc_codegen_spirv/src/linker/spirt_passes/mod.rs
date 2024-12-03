@@ -12,9 +12,9 @@ use spirt::func_at::FuncAt;
 use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::{InnerVisit, Visitor};
 use spirt::{
-    spv, AttrSet, Const, Context, ControlNode, ControlNodeKind, ControlRegion, DataInstDef,
+    AttrSet, Const, Context, ControlNode, ControlNodeKind, ControlRegion, DataInstDef,
     DataInstForm, DataInstFormDef, DataInstKind, DeclDef, EntityOrientedDenseMap, Func,
-    FuncDefBody, GlobalVar, Module, Type, Value,
+    FuncDefBody, GlobalVar, Module, Type, Value, spv,
 };
 use std::collections::VecDeque;
 use std::iter;
