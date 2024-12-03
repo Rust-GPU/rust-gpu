@@ -1,8 +1,8 @@
 // build-pass
 
 use glam::Vec4;
-use spirv_std::spirv;
 use spirv_std::TypedBuffer;
+use spirv_std::spirv;
 
 #[spirv(fragment)]
 pub fn main(

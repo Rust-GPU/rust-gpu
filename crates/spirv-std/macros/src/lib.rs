@@ -78,10 +78,10 @@ use proc_macro::TokenStream;
 use proc_macro2::{Delimiter, Group, Ident, Span, TokenTree};
 
 use syn::{
-    punctuated::Punctuated, spanned::Spanned, visit_mut::VisitMut, ImplItemFn, ItemFn, Token,
+    ImplItemFn, ItemFn, Token, punctuated::Punctuated, spanned::Spanned, visit_mut::VisitMut,
 };
 
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use std::fmt::Write;
 
 /// A macro for creating SPIR-V `OpTypeImage` types. Always produces a

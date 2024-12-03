@@ -73,8 +73,8 @@
 
 use minifb::{Key, Window, WindowOptions};
 use rayon::prelude::*;
-use shared::glam::{vec2, Vec2, Vec4};
 use shared::ShaderConstants;
+use shared::glam::{Vec2, Vec4, vec2};
 use std::time::Instant;
 
 use sky_shader as shader_module;

@@ -354,13 +354,10 @@ impl<'tcx> CodegenCx<'tcx> {
             if !ref_is_read_only && storage_class_requires_read_only {
                 let mut err = self.tcx.dcx().struct_span_err(
                     hir_param.ty_span,
-                    format!(
-                        "entry-point requires {}...",
-                        match explicit_mutbl {
-                            hir::Mutability::Not => "interior mutability",
-                            hir::Mutability::Mut => "a mutable reference",
-                        }
-                    ),
+                    format!("entry-point requires {}...", match explicit_mutbl {
+                        hir::Mutability::Not => "interior mutability",
+                        hir::Mutability::Mut => "a mutable reference",
+                    }),
                 );
                 {
                     let note_message =
@@ -448,11 +445,9 @@ impl<'tcx> CodegenCx<'tcx> {
                 let mut emit = self.emit_global();
                 let spec_const_id =
                     emit.spec_constant_bit32(value_spirv_type, default.unwrap_or(0));
-                emit.decorate(
-                    spec_const_id,
-                    Decoration::SpecId,
-                    [Operand::LiteralBit32(id)],
-                );
+                emit.decorate(spec_const_id, Decoration::SpecId, [Operand::LiteralBit32(
+                    id,
+                )]);
                 (
                     Err("`#[spirv(spec_constant)]` is not an entry-point interface variable"),
                     Ok(spec_const_id),
@@ -744,13 +739,12 @@ impl<'tcx> CodegenCx<'tcx> {
                 ..
             } => true,
             SpirvType::RuntimeArray { element: elt, .. }
-            | SpirvType::Array { element: elt, .. } => matches!(
-                self.lookup_type(elt),
-                SpirvType::Image {
+            | SpirvType::Array { element: elt, .. } => {
+                matches!(self.lookup_type(elt), SpirvType::Image {
                     dim: Dim::DimSubpassData,
                     ..
-                }
-            ),
+                })
+            }
             _ => false,
         };
         if let Some(attachment_index) = attrs.input_attachment_index {

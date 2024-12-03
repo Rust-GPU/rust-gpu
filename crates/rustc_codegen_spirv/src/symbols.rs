@@ -3,8 +3,8 @@ use crate::builder::libm_intrinsics;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
 use rustc_ast::ast::{AttrKind, Attribute, LitIntType, LitKind, MetaItemLit, NestedMetaItem};
 use rustc_data_structures::fx::FxHashMap;
-use rustc_span::symbol::{Ident, Symbol};
 use rustc_span::Span;
+use rustc_span::symbol::{Ident, Symbol};
 use std::rc::Rc;
 
 /// Various places in the codebase (mostly attribute parsing) need to compare rustc Symbols to particular keywords.

@@ -1,6 +1,6 @@
 use proc_macro2::Ident;
 
-use quote::{quote, TokenStreamExt};
+use quote::{TokenStreamExt, quote};
 use spirv_std_types::image_params::*;
 use syn::parse::{Parse, ParseStream};
 

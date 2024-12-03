@@ -2,7 +2,7 @@
 // compile-flags: -C target-feature=+InputAttachment
 
 use spirv_std::spirv;
-use spirv_std::{arch, Image};
+use spirv_std::{Image, arch};
 
 #[spirv(fragment)]
 pub fn main(

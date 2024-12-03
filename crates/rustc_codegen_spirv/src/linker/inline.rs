@@ -142,14 +142,9 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
 
         custom_ext_inst_set_import: custom_ext_inst_set_import.unwrap_or_else(|| {
             let id = next_id(header);
-            let inst = Instruction::new(
-                Op::ExtInstImport,
-                None,
-                Some(id),
-                vec![Operand::LiteralString(
-                    custom_insts::CUSTOM_EXT_INST_SET.to_string(),
-                )],
-            );
+            let inst = Instruction::new(Op::ExtInstImport, None, Some(id), vec![
+                Operand::LiteralString(custom_insts::CUSTOM_EXT_INST_SET.to_string()),
+            ]);
             module.ext_inst_imports.push(inst);
             id
         }),
@@ -658,15 +653,12 @@ impl Inliner<'_, '_> {
         if let Some(call_result_type) = call_result_type {
             // Generate the storage space for the return value: Do this *after* the split above,
             // because if block_idx=0, inserting a variable here shifts call_index.
-            insert_opvariables(
-                &mut caller.blocks[0],
-                [Instruction::new(
-                    Op::Variable,
-                    Some(self.ptr_ty(call_result_type)),
-                    Some(return_variable.unwrap()),
-                    vec![Operand::StorageClass(StorageClass::Function)],
-                )],
-            );
+            insert_opvariables(&mut caller.blocks[0], [Instruction::new(
+                Op::Variable,
+                Some(self.ptr_ty(call_result_type)),
+                Some(return_variable.unwrap()),
+                vec![Operand::StorageClass(StorageClass::Function)],
+            )]);
         }
 
         // Insert non-entry inlined callee blocks just after the pre-call block.
@@ -856,12 +848,10 @@ impl Inliner<'_, '_> {
             .entry(callee_name)
             .or_insert_with(|| {
                 let id = next_id(self.header);
-                self.debug_string_source.push(Instruction::new(
-                    Op::String,
-                    None,
-                    Some(id),
-                    vec![Operand::LiteralString(callee_name.to_string())],
-                ));
+                self.debug_string_source
+                    .push(Instruction::new(Op::String, None, Some(id), vec![
+                        Operand::LiteralString(callee_name.to_string()),
+                    ]));
                 id
             });
         let mut mk_debuginfo_prefix_and_suffix = |include_callee_frame| {
@@ -944,15 +934,12 @@ impl Inliner<'_, '_> {
             if let Op::Return | Op::ReturnValue = terminator.class.opcode {
                 if Op::ReturnValue == terminator.class.opcode {
                     let return_value = terminator.operands[0].id_ref_any().unwrap();
-                    block.instructions.push(Instruction::new(
-                        Op::Store,
-                        None,
-                        None,
-                        vec![
+                    block
+                        .instructions
+                        .push(Instruction::new(Op::Store, None, None, vec![
                             Operand::IdRef(return_variable.unwrap()),
                             Operand::IdRef(return_value),
-                        ],
-                    ));
+                        ]));
                 } else {
                     assert!(return_variable.is_none());
                 }
