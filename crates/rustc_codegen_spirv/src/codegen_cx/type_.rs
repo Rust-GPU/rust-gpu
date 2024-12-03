@@ -15,7 +15,7 @@ use rustc_middle::{bug, span_bug};
 use rustc_span::source_map::Spanned;
 use rustc_span::{DUMMY_SP, Span};
 use rustc_target::abi::call::{CastTarget, FnAbi, Reg};
-use rustc_target::abi::{Abi, AddressSpace};
+use rustc_target::abi::{AddressSpace, BackendRepr};
 
 impl<'tcx> LayoutOfHelpers<'tcx> for CodegenCx<'tcx> {
     type LayoutOfResult = TyAndLayout<'tcx>;
@@ -96,17 +96,20 @@ impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
     }
 
     fn is_backend_immediate(&self, layout: TyAndLayout<'tcx>) -> bool {
-        match layout.abi {
-            Abi::Scalar(_) | Abi::Vector { .. } => true,
-            Abi::ScalarPair(..) => false,
-            Abi::Uninhabited | Abi::Aggregate { .. } => layout.is_zst(),
+        match layout.backend_repr {
+            BackendRepr::Scalar(_) | BackendRepr::Vector { .. } => true,
+            BackendRepr::ScalarPair(..) => false,
+            BackendRepr::Uninhabited | BackendRepr::Memory { .. } => layout.is_zst(),
         }
     }
 
     fn is_backend_scalar_pair(&self, layout: TyAndLayout<'tcx>) -> bool {
-        match layout.abi {
-            Abi::ScalarPair(..) => true,
-            Abi::Uninhabited | Abi::Scalar(_) | Abi::Vector { .. } | Abi::Aggregate { .. } => false,
+        match layout.backend_repr {
+            BackendRepr::ScalarPair(..) => true,
+            BackendRepr::Uninhabited
+            | BackendRepr::Scalar(_)
+            | BackendRepr::Vector { .. }
+            | BackendRepr::Memory { .. } => false,
         }
     }
 

@@ -13,7 +13,7 @@ use rustc_codegen_ssa::mir::operand::OperandRef;
 use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallBuilderMethods};
 use rustc_middle::ty::layout::LayoutOf;
-use rustc_middle::ty::{FnDef, Instance, ParamEnv, Ty, TyKind};
+use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
 use rustc_middle::{bug, ty};
 use rustc_span::Span;
 use rustc_span::sym;
@@ -75,7 +75,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         llresult: Self::Value,
         _span: Span,
     ) -> Result<(), ty::Instance<'tcx>> {
-        let callee_ty = instance.ty(self.tcx, ParamEnv::reveal_all());
+        let callee_ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
 
         let (def_id, fn_args) = match *callee_ty.kind() {
             FnDef(def_id, fn_args) => (def_id, fn_args),
@@ -85,7 +85,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         let sig = callee_ty.fn_sig(self.tcx);
         let sig = self
             .tcx
-            .normalize_erasing_late_bound_regions(ParamEnv::reveal_all(), sig);
+            .normalize_erasing_late_bound_regions(TypingEnv::fully_monomorphized(), sig);
         let arg_tys = sig.inputs();
         let name = self.tcx.item_name(def_id);
 

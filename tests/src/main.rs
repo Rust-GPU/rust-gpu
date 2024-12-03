@@ -304,7 +304,7 @@ fn find_lib(
                 && ends_with_dash_hash(name.to_str().unwrap());
             let extension_matches = path
                 .extension()
-                .map_or(false, |ext| ext == expected_extension);
+                .is_some_and(|ext| ext == expected_extension);
 
             name_matches && extension_matches
         })
