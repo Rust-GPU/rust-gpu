@@ -1,7 +1,7 @@
 // build-pass
 
 use spirv_std::spirv;
-use spirv_std::{glam::Vec4, ByteAddressableBuffer};
+use spirv_std::{ByteAddressableBuffer, glam::Vec4};
 
 #[spirv(matrix)]
 pub struct Mat4 {

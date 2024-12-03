@@ -88,7 +88,7 @@ use std::{
     collections::HashMap,
     ffi::{CStr, CString},
     fs::File,
-    sync::mpsc::{sync_channel, TryRecvError, TrySendError},
+    sync::mpsc::{TryRecvError, TrySendError, sync_channel},
     thread,
 };
 
@@ -126,21 +126,18 @@ pub fn main() {
     for SpvFile { name, data } in shaders {
         ctx.insert_shader_module(name, &data);
     }
-    ctx.build_pipelines(
-        vk::PipelineCache::null(),
-        vec![(
-            // HACK(eddyb) used to be `module: "sky_shader"` but we need `multimodule`
-            // for `debugPrintf` instrumentation to work (see `compile_shaders`).
-            VertexShaderEntryPoint {
-                module: "sky_shader::main_vs".into(),
-                entry_point: "main_vs".into(),
-            },
-            FragmentShaderEntryPoint {
-                module: "sky_shader::main_fs".into(),
-                entry_point: "main_fs".into(),
-            },
-        )],
-    );
+    ctx.build_pipelines(vk::PipelineCache::null(), vec![(
+        // HACK(eddyb) used to be `module: "sky_shader"` but we need `multimodule`
+        // for `debugPrintf` instrumentation to work (see `compile_shaders`).
+        VertexShaderEntryPoint {
+            module: "sky_shader::main_vs".into(),
+            entry_point: "main_vs".into(),
+        },
+        FragmentShaderEntryPoint {
+            module: "sky_shader::main_fs".into(),
+            entry_point: "main_fs".into(),
+        },
+    )]);
 
     let (compiler_sender, compiler_receiver) = sync_channel(1);
 

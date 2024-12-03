@@ -1,7 +1,7 @@
 // Tests that storage class deduction (from entry-point signature) fails correctly
 // build-fail
 
-use spirv_std::{spirv, Image};
+use spirv_std::{Image, spirv};
 
 #[spirv(vertex)]
 pub fn main(

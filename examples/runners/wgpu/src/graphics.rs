@@ -1,4 +1,4 @@
-use crate::{maybe_watch, CompiledShaderModules, Options};
+use crate::{CompiledShaderModules, Options, maybe_watch};
 
 use shared::ShaderConstants;
 use winit::{

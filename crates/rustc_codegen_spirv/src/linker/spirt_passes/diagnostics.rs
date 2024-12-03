@@ -5,14 +5,14 @@ use crate::custom_insts::{self, CustomInst, CustomOp};
 use rustc_data_structures::fx::FxIndexSet;
 use rustc_errors::EmissionGuarantee;
 use rustc_session::Session;
-use rustc_span::{Span, DUMMY_SP};
+use rustc_span::{DUMMY_SP, Span};
 use smallvec::SmallVec;
 use spirt::func_at::FuncAt;
 use spirt::visit::{InnerVisit, Visitor};
 use spirt::{
-    spv, Attr, AttrSet, AttrSetDef, Const, ConstKind, Context, ControlNode, ControlNodeKind,
+    Attr, AttrSet, AttrSetDef, Const, ConstKind, Context, ControlNode, ControlNodeKind,
     DataInstDef, DataInstForm, DataInstKind, Diag, DiagLevel, ExportKey, Exportee, Func, FuncDecl,
-    GlobalVar, InternedStr, Module, Type, Value,
+    GlobalVar, InternedStr, Module, Type, Value, spv,
 };
 use std::marker::PhantomData;
 use std::{mem, str};

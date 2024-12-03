@@ -2,7 +2,7 @@
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use crate::codegen_cx::{CodegenArgs, SpirvMetadata};
-use crate::{linker, SpirvCodegenBackend, SpirvModuleBuffer, SpirvThinBuffer};
+use crate::{SpirvCodegenBackend, SpirvModuleBuffer, SpirvThinBuffer, linker};
 use ar::{Archive, GnuBuilder, Header};
 use rspirv::binary::Assemble;
 use rspirv::dr::Module;
@@ -17,12 +17,12 @@ use rustc_metadata::fs::METADATA_FILENAME;
 use rustc_middle::bug;
 use rustc_middle::dep_graph::WorkProduct;
 use rustc_middle::middle::dependency_format::Linkage;
+use rustc_session::Session;
 use rustc_session::config::{
     CrateType, DebugInfo, Lto, OptLevel, OutFileName, OutputFilenames, OutputType,
 };
 use rustc_session::output::{check_file_is_writeable, invalid_output_for_target, out_filename};
 use rustc_session::utils::NativeLibKind;
-use rustc_session::Session;
 use rustc_span::Symbol;
 use std::collections::BTreeMap;
 use std::ffi::{CString, OsStr};
