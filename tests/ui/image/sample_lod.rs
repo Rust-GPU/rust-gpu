@@ -2,7 +2,7 @@
 // build-pass
 
 use spirv_std::spirv;
-use spirv_std::{arch, image::SampledImage, Image, Sampler};
+use spirv_std::{Image, Sampler, arch, image::SampledImage};
 
 #[spirv(fragment)]
 pub fn main(

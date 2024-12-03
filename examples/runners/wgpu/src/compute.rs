@@ -1,4 +1,4 @@
-use crate::{maybe_watch, CompiledShaderModules, Options};
+use crate::{CompiledShaderModules, Options, maybe_watch};
 
 use std::time::Duration;
 use wgpu::util::DeviceExt;
