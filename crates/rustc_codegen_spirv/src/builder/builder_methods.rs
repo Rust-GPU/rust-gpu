@@ -28,7 +28,7 @@ use rustc_middle::ty::layout::LayoutOf;
 use rustc_middle::ty::{self, Ty};
 use rustc_span::Span;
 use rustc_target::abi::call::FnAbi;
-use rustc_target::abi::{Abi, Align, Scalar, Size, WrappingRange};
+use rustc_target::abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::cell::Cell;
@@ -1523,7 +1523,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 place.val.align,
             );
             OperandValue::Immediate(self.to_immediate(llval, place.layout))
-        } else if let Abi::ScalarPair(a, b) = place.layout.abi {
+        } else if let BackendRepr::ScalarPair(a, b) = place.layout.backend_repr {
             let b_offset = a
                 .primitive()
                 .size(self)
@@ -2668,16 +2668,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // ignore
     }
 
-    fn instrprof_increment(
-        &mut self,
-        _fn_name: Self::Value,
-        _hash: Self::Value,
-        _num_counters: Self::Value,
-        _index: Self::Value,
-    ) {
-        todo!()
-    }
-
     fn call(
         &mut self,
         callee_ty: Self::Type,
@@ -3176,8 +3166,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
                                         let layout = self.layout_of(ty);
 
-                                        let scalar = match layout.abi {
-                                            Abi::Scalar(scalar) => Some(scalar.primitive()),
+                                        let scalar = match layout.backend_repr {
+                                            BackendRepr::Scalar(scalar) => Some(scalar.primitive()),
                                             _ => None,
                                         };
                                         let debug_printf_fmt = match (spec, scalar) {

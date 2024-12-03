@@ -332,15 +332,11 @@ fn process_instruction(
     }
     let vector_width = vector_ty_inst.operands[1].unwrap_literal_bit32();
     // `results` is the defining instruction for each scalar component of the final result.
-    let results = match inst
+    let results = inst
         .operands
         .iter()
         .map(|op| defs.get(&op.unwrap_id_ref()))
-        .collect::<Option<Vec<_>>>()
-    {
-        Some(r) => r,
-        None => return None,
-    };
+        .collect::<Option<Vec<_>>>()?;
 
     let operation_opcode = results[0].class.opcode;
     // Figure out the operands for the vectorized instruction.
@@ -455,10 +451,7 @@ fn can_fuse_bool(
     inst: &Instruction,
 ) -> bool {
     fn constant_value(types: &FxHashMap<Word, Instruction>, val: Word) -> Option<u32> {
-        let inst = match types.get(&val) {
-            None => return None,
-            Some(inst) => inst,
-        };
+        let inst = types.get(&val)?;
         if inst.class.opcode != Op::Constant {
             return None;
         }

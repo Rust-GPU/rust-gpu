@@ -16,7 +16,7 @@ use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
 use rustc_middle::mir::mono::{Linkage, MonoItem, Visibility};
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
-use rustc_middle::ty::{self, Instance, ParamEnv, TypeVisitableExt};
+use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
 use rustc_span::Span;
 use rustc_span::def_id::DefId;
 use rustc_target::abi::Align;
@@ -257,7 +257,7 @@ impl<'tcx> CodegenCx<'tcx> {
             "get_static() should always hit the cache for statics defined in the same CGU, but did not for `{def_id:?}`"
         );
 
-        let ty = instance.ty(self.tcx, ParamEnv::reveal_all());
+        let ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
         let sym = self.tcx.symbol_name(instance).name;
         let span = self.tcx.def_span(def_id);
         let g = self.declare_global(span, self.layout_of(ty).spirv_type(span, self));
@@ -289,7 +289,7 @@ impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
         symbol_name: &str,
     ) {
         let instance = Instance::mono(self.tcx, def_id);
-        let ty = instance.ty(self.tcx, ParamEnv::reveal_all());
+        let ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
         let span = self.tcx.def_span(def_id);
         let spvty = self.layout_of(ty).spirv_type(span, self);
         let linkage = match linkage {

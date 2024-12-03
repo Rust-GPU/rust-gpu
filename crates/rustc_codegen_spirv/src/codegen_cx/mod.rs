@@ -26,14 +26,14 @@ use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir;
 use rustc_middle::mir::mono::CodegenUnit;
-use rustc_middle::ty::layout::{HasParamEnv, HasTyCtxt};
-use rustc_middle::ty::{Instance, ParamEnv, PolyExistentialTraitRef, Ty, TyCtxt};
+use rustc_middle::ty::layout::{HasTyCtxt, HasTypingEnv};
+use rustc_middle::ty::{Instance, PolyExistentialTraitRef, Ty, TyCtxt, TypingEnv};
 use rustc_session::Session;
 use rustc_span::symbol::Symbol;
 use rustc_span::{DUMMY_SP, SourceFile, Span};
 use rustc_target::abi::call::{FnAbi, PassMode};
 use rustc_target::abi::{AddressSpace, HasDataLayout, TargetDataLayout};
-use rustc_target::spec::{HasTargetSpec, Target, TargetTriple};
+use rustc_target::spec::{HasTargetSpec, Target, TargetTuple};
 use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::iter::once;
@@ -94,15 +94,15 @@ pub struct CodegenCx<'tcx> {
 impl<'tcx> CodegenCx<'tcx> {
     pub fn new(tcx: TyCtxt<'tcx>, codegen_unit: &'tcx CodegenUnit<'tcx>) -> Self {
         // Validate the target spec, as the backend doesn't control `--target`.
-        let target_triple = tcx.sess.opts.target_triple.triple();
-        let target: SpirvTarget = target_triple.parse().unwrap_or_else(|_| {
-            let qualifier = if !target_triple.starts_with("spirv-") {
+        let target_tuple = tcx.sess.opts.target_triple.tuple();
+        let target: SpirvTarget = target_tuple.parse().unwrap_or_else(|_| {
+            let qualifier = if !target_tuple.starts_with("spirv-") {
                 "non-SPIR-V "
             } else {
                 ""
             };
             tcx.dcx().fatal(format!(
-                "{qualifier}target `{target_triple}` not supported by `rustc_codegen_spirv`",
+                "{qualifier}target `{target_tuple}` not supported by `rustc_codegen_spirv`",
             ))
         });
         let target_spec_mismatched_jsons = {
@@ -119,12 +119,12 @@ impl<'tcx> CodegenCx<'tcx> {
                 // ideally `spirv-builder` can be forced to pass an exact match.
                 //
                 // FIXME(eddyb) consider the `RUST_TARGET_PATH` env var alternative.
-                TargetTriple::TargetTriple(_) => {
+                TargetTuple::TargetTuple(_) => {
                     // FIXME(eddyb) this case should be impossible as upstream
                     // `rustc` doesn't support `spirv-*` targets!
                     (expected != found).then(|| [expected, found].map(|spec| spec.to_json()))
                 }
-                TargetTriple::TargetJson { contents, .. } => {
+                TargetTuple::TargetJson { contents, .. } => {
                     let expected = expected.to_json();
                     let found = serde_json::from_str(contents).unwrap();
                     (expected != found).then_some([expected, found])
@@ -139,12 +139,12 @@ impl<'tcx> CodegenCx<'tcx> {
                 .filter(|k| expected.get(k) != found.get(k));
 
             tcx.dcx()
-                .struct_fatal(format!("mismatched `{target_triple}` target spec"))
+                .struct_fatal(format!("mismatched `{target_tuple}` target spec"))
                 .with_note(format!(
                     "expected (built into `rustc_codegen_spirv`):\n{expected:#}"
                 ))
                 .with_note(match &tcx.sess.opts.target_triple {
-                    TargetTriple::TargetJson {
+                    TargetTuple::TargetJson {
                         path_for_rustdoc,
                         contents,
                         ..
@@ -839,9 +839,9 @@ impl<'tcx> HasTargetSpec for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> HasParamEnv<'tcx> for CodegenCx<'tcx> {
-    fn param_env(&self) -> ParamEnv<'tcx> {
-        ParamEnv::reveal_all()
+impl<'tcx> HasTypingEnv<'tcx> for CodegenCx<'tcx> {
+    fn typing_env(&self) -> TypingEnv<'tcx> {
+        TypingEnv::fully_monomorphized()
     }
 }
 
