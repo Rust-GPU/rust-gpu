@@ -9,12 +9,11 @@ use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
 use rustc_index::Idx;
-use rustc_middle::mir::interpret::ErrorHandled;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
 use rustc_middle::ty::{
-    self, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, ParamEnv, PolyFnSig, Ty,
-    TyCtxt, TyKind, UintTy,
+    self, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, PolyFnSig, Ty, TyCtxt,
+    TyKind, UintTy,
 };
 use rustc_middle::ty::{GenericArgsRef, ScalarInt};
 use rustc_middle::{bug, span_bug};
@@ -23,10 +22,10 @@ use rustc_span::def_id::DefId;
 use rustc_span::{Span, Symbol};
 use rustc_target::abi::call::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 use rustc_target::abi::{
-    Abi, Align, FieldsShape, LayoutS, Primitive, ReprFlags, ReprOptions, Scalar, Size, TagEncoding,
-    VariantIdx, Variants,
+    Align, BackendRepr, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions, Scalar, Size,
+    TagEncoding, VariantIdx, Variants,
 };
-use rustc_target::spec::abi::Abi as SpecAbi;
+use rustc_target::spec::abi::Abi;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::fmt;
@@ -47,8 +46,8 @@ pub(crate) fn provide(providers: &mut Providers) {
         let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS.fn_sig)(tcx, def_id);
         result.map_bound(|outer| {
             outer.map_bound(|mut inner| {
-                if let SpecAbi::C { .. } = inner.abi {
-                    inner.abi = SpecAbi::Unadjusted;
+                if let Abi::C { .. } = inner.abi {
+                    inner.abi = Abi::Unadjusted;
                 }
                 inner
             })
@@ -98,22 +97,21 @@ pub(crate) fn provide(providers: &mut Providers) {
         Ok(readjust_fn_abi(tcx, result?))
     };
 
-    // FIXME(eddyb) remove this by deriving `Clone` for `LayoutS` upstream.
-    // FIXME(eddyb) the `S` suffix is a naming antipattern, rename upstream.
+    // FIXME(eddyb) remove this by deriving `Clone` for `LayoutData` upstream.
     fn clone_layout<FieldIdx: Idx, VariantIdx: Idx>(
-        layout: &LayoutS<FieldIdx, VariantIdx>,
-    ) -> LayoutS<FieldIdx, VariantIdx> {
-        let LayoutS {
+        layout: &LayoutData<FieldIdx, VariantIdx>,
+    ) -> LayoutData<FieldIdx, VariantIdx> {
+        let LayoutData {
             ref fields,
             ref variants,
-            abi,
+            backend_repr,
             largest_niche,
             align,
             size,
             max_repr_align,
             unadjusted_abi_align,
         } = *layout;
-        LayoutS {
+        LayoutData {
             fields: match *fields {
                 FieldsShape::Primitive => FieldsShape::Primitive,
                 FieldsShape::Union(count) => FieldsShape::Union(count),
@@ -151,7 +149,7 @@ pub(crate) fn provide(providers: &mut Providers) {
                     variants: variants.clone(),
                 },
             },
-            abi,
+            backend_repr,
             largest_niche,
             align,
             size,
@@ -171,7 +169,7 @@ pub(crate) fn provide(providers: &mut Providers) {
         };
 
         if hide_niche {
-            layout = tcx.mk_layout(LayoutS {
+            layout = tcx.mk_layout(LayoutData {
                 largest_niche: None,
                 ..clone_layout(layout.0.0)
             });
@@ -192,6 +190,10 @@ pub(crate) fn provide(providers: &mut Providers) {
     // an option (may require Rust-GPU distinguishing between "SPIR-V interface"
     // and "Rust-facing" types, which is even worse when the `OpTypeVector`s
     // may be e.g. nested in `struct`s/arrays/etc. - at least buffers are easy).
+    //
+    // FIXME(eddyb) maybe using `#[spirv(vector)]` and `BackendRepr::Memory`,
+    // no claims at `rustc`-understood SIMD whatsoever, would be enough?
+    // (i.e. only SPIR-V caring about such a type vs a struct/array)
     providers.check_well_formed = |tcx, def_id| {
         let trivial_struct = match tcx.hir_node_by_def_id(def_id) {
             rustc_hir::Node::Item(item) => match item.kind {
@@ -263,6 +265,14 @@ pub(crate) fn provide(providers: &mut Providers) {
 
         (rustc_interface::DEFAULT_QUERY_PROVIDERS.check_well_formed)(tcx, def_id)
     };
+
+    // HACK(eddyb) work around https://github.com/rust-lang/rust/pull/132173
+    // (and further changes from https://github.com/rust-lang/rust/pull/132843)
+    // starting to ban SIMD ABI misuse (or at least starting to warn about it).
+    //
+    // FIXME(eddyb) same as the FIXME comment on `check_well_formed`:
+    // need to migrate away from `#[repr(simd)]` ASAP.
+    providers.check_mono_item = |_, _| {};
 }
 
 /// If a struct contains a pointer to itself, even indirectly, then doing a naiive recursive walk
@@ -450,9 +460,9 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
 
         // Note: ty.layout is orthogonal to ty.ty, e.g. `ManuallyDrop<Result<isize, isize>>` has abi
         // `ScalarPair`.
-        // There's a few layers that we go through here. First we inspect layout.abi, then if relevant, layout.fields, etc.
-        match self.abi {
-            Abi::Uninhabited => SpirvType::Adt {
+        // There's a few layers that we go through here. First we inspect layout.backend_repr, then if relevant, layout.fields, etc.
+        match self.backend_repr {
+            BackendRepr::Uninhabited => SpirvType::Adt {
                 def_id: def_id_for_spirv_type_adt(*self),
                 size: Some(Size::ZERO),
                 align: Align::from_bytes(0).unwrap(),
@@ -461,13 +471,13 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 field_names: None,
             }
             .def_with_name(cx, span, TyLayoutNameKey::from(*self)),
-            Abi::Scalar(scalar) => trans_scalar(cx, span, *self, scalar, Size::ZERO),
-            Abi::ScalarPair(a, b) => {
-                // NOTE(eddyb) unlike `Abi::Scalar`'s simpler newtype-unpacking
-                // behavior, `Abi::ScalarPair` can be composed in two ways:
-                // * two `Abi::Scalar` fields (and any number of ZST fields),
+            BackendRepr::Scalar(scalar) => trans_scalar(cx, span, *self, scalar, Size::ZERO),
+            BackendRepr::ScalarPair(a, b) => {
+                // NOTE(eddyb) unlike `BackendRepr::Scalar`'s simpler newtype-unpacking
+                // behavior, `BackendRepr::ScalarPair` can be composed in two ways:
+                // * two `BackendRepr::Scalar` fields (and any number of ZST fields),
                 //   gets handled the same as a `struct { a, b }`, further below
-                // * an `Abi::ScalarPair` field (and any number of ZST fields),
+                // * an `BackendRepr::ScalarPair` field (and any number of ZST fields),
                 //   which requires more work to allow taking a reference to
                 //   that field, and there are two potential approaches:
                 //   1. wrapping that field's SPIR-V type in a single-field
@@ -477,7 +487,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 //   2. reusing that field's SPIR-V type, instead of defining
                 //      a new one, offering the `(a, b)` shape `rustc_codegen_ssa`
                 //      expects, while letting noop pointercasts access the sole
-                //      `Abi::ScalarPair` field - this is the approach taken here
+                //      `BackendRepr::ScalarPair` field - this is the approach taken here
                 let mut non_zst_fields = (0..self.fields.count())
                     .map(|i| (i, self.field(cx, i)))
                     .filter(|(_, field)| !field.is_zst());
@@ -491,7 +501,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                     if self.fields.offset(i) == Size::ZERO
                         && field.size == self.size
                         && field.align == self.align
-                        && field.abi == self.abi
+                        && field.backend_repr == self.backend_repr
                     {
                         return field.spirv_type(span, cx);
                     }
@@ -532,7 +542,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 }
                 .def_with_name(cx, span, TyLayoutNameKey::from(*self))
             }
-            Abi::Vector { element, count } => {
+            BackendRepr::Vector { element, count } => {
                 let elem_spirv = trans_scalar(cx, span, *self, element, Size::ZERO);
                 SpirvType::Vector {
                     element: elem_spirv,
@@ -540,7 +550,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 }
                 .def(span, cx)
             }
-            Abi::Aggregate { sized: _ } => trans_aggregate(cx, span, *self),
+            BackendRepr::Memory { sized: _ } => trans_aggregate(cx, span, *self),
         }
     }
 }
@@ -553,8 +563,8 @@ pub fn scalar_pair_element_backend_type<'tcx>(
     ty: TyAndLayout<'tcx>,
     index: usize,
 ) -> Word {
-    let [a, b] = match ty.layout.abi() {
-        Abi::ScalarPair(a, b) => [a, b],
+    let [a, b] = match ty.layout.backend_repr() {
+        BackendRepr::ScalarPair(a, b) => [a, b],
         other => span_bug!(
             span,
             "scalar_pair_element_backend_type invalid abi: {:?}",
@@ -901,7 +911,7 @@ fn trans_intrinsic_type<'tcx>(
             // ) -> P {
             //     let adt_def = const_.ty.ty_adt_def().unwrap();
             //     assert!(adt_def.is_enum());
-            //     let destructured = cx.tcx.destructure_const(ParamEnv::reveal_all().and(const_));
+            //     let destructured = cx.tcx.destructure_const(TypingEnv::fully_monomorphized().and(const_));
             //     let idx = destructured.variant.unwrap();
             //     let value = const_.ty.discriminant_for_variant(cx.tcx, idx).unwrap().val as u64;
             //     <_>::from_u64(value).unwrap()
@@ -974,24 +984,17 @@ fn trans_intrinsic_type<'tcx>(
                 cx: &CodegenCx<'tcx>,
                 const_: Const<'tcx>,
             ) -> Result<P, ErrorGuaranteed> {
-                const_
-                    .eval(cx.tcx, ParamEnv::reveal_all(), DUMMY_SP)
-                    .map_err(|e| match e {
-                        ErrorHandled::Reported(reported_error_info, _) => {
-                            Some(reported_error_info.into())
-                        }
-                        ErrorHandled::TooGeneric(_) => None,
-                    })
-                    .and_then(|(const_ty, const_val)| {
-                        assert!(const_ty.is_integral());
-                        P::from_scalar_int(const_val.try_to_scalar_int().ok_or(None)?).ok_or(None)
-                    })
-                    .map_err(|already_reported| {
-                        already_reported.unwrap_or_else(|| {
-                            cx.tcx
-                                .dcx()
-                                .err(format!("invalid value for Image const generic: {const_}"))
-                        })
+                let (const_val, const_ty) = const_
+                    .try_to_valtree()
+                    .expect("expected monomorphic const in codegen");
+                assert!(const_ty.is_integral());
+                const_val
+                    .try_to_scalar_int()
+                    .and_then(P::from_scalar_int)
+                    .ok_or_else(|| {
+                        cx.tcx
+                            .dcx()
+                            .err(format!("invalid value for Image const generic: {const_}"))
                     })
             }
 

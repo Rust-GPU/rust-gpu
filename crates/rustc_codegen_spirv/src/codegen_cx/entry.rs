@@ -240,7 +240,7 @@ impl<'tcx> CodegenCx<'tcx> {
                 if is_ref
                     && !value_layout
                         .ty
-                        .is_freeze(self.tcx, ty::ParamEnv::reveal_all()) =>
+                        .is_freeze(self.tcx, ty::TypingEnv::fully_monomorphized()) =>
             {
                 hir::Mutability::Mut
             }

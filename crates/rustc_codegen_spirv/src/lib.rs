@@ -4,12 +4,12 @@
 #![allow(rustc::untranslatable_diagnostic)]
 #![feature(assert_matches)]
 #![feature(box_patterns)]
+#![feature(debug_closure_helpers)]
 #![feature(file_buffered)]
 #![feature(if_let_guard)]
 #![feature(let_chains)]
 #![feature(negative_impls)]
 #![feature(rustdoc_internals)]
-#![feature(strict_provenance)]
 #![feature(trait_alias)]
 #![feature(try_blocks)]
 // HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
@@ -194,13 +194,13 @@ fn is_blocklisted_fn<'tcx>(
             // Helper for detecting `<_ as core::fmt::Debug>::fmt` (in impls).
             let is_debug_fmt_method = |def_id| match tcx.opt_associated_item(def_id) {
                 Some(assoc) if assoc.ident(tcx).name == sym::fmt => match assoc.container {
-                    ty::ImplContainer => {
+                    ty::AssocItemContainer::Impl => {
                         let impl_def_id = assoc.container_id(tcx);
                         tcx.impl_trait_ref(impl_def_id)
                             .map(|tr| tr.skip_binder().def_id)
                             == Some(debug_trait_def_id)
                     }
-                    ty::TraitContainer => false,
+                    ty::AssocItemContainer::Trait => false,
                 },
                 _ => false,
             };

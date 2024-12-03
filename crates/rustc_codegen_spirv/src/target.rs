@@ -113,7 +113,7 @@ impl std::str::FromStr for SpirvTarget {
         let mut iter = target.split('-');
         let error = || InvalidTarget(target.into());
 
-        if iter.next().map_or(true, |arch| arch != ARCH) {
+        if iter.next() != Some(ARCH) {
             return Err(error());
         }
 

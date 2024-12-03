@@ -836,9 +836,9 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // inner invocation of Cargo (because e.g. build scripts might read them),
     // before we set any of our own below.
     for (key, _) in env::vars_os() {
-        let remove = key.to_str().map_or(false, |s| {
-            s.starts_with("CARGO_FEATURES_") || s.starts_with("CARGO_CFG_")
-        });
+        let remove = key
+            .to_str()
+            .is_some_and(|s| s.starts_with("CARGO_FEATURES_") || s.starts_with("CARGO_CFG_"));
         if remove {
             cargo.env_remove(key);
         }
