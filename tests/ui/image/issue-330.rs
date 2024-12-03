@@ -1,6 +1,6 @@
 use spirv_std::glam::Vec4;
 use spirv_std::spirv;
-use spirv_std::{image::Image2dArray, Sampler};
+use spirv_std::{Sampler, image::Image2dArray};
 
 #[spirv(fragment)]
 pub fn ps_main_stereo(

@@ -1,7 +1,7 @@
 // build-pass
 
 use spirv_std::spirv;
-use spirv_std::{glam::Vec2, ByteAddressableBuffer};
+use spirv_std::{ByteAddressableBuffer, glam::Vec2};
 
 pub struct Complex {
     x: u32,

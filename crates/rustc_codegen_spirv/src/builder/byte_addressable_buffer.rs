@@ -1,3 +1,6 @@
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use super::Builder;
 use crate::builder_spirv::{SpirvValue, SpirvValueExt, SpirvValueKind};
 use crate::spirv_type::SpirvType;
@@ -111,7 +114,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     count,
                 ),
             SpirvType::Array { element, count } => {
-                let count = match self.builder.lookup_const_u64(count) {
+                let count = match self.builder.lookup_const_scalar(count) {
                     Some(count) => count as u32,
                     None => return self.load_err(original_type, result_type),
                 };
@@ -301,7 +304,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     count,
                 ),
             SpirvType::Array { element, count } => {
-                let count = match self.builder.lookup_const_u64(count) {
+                let count = match self.builder.lookup_const_scalar(count) {
                     Some(count) => count as u32,
                     None => return self.store_err(original_type, value),
                 };

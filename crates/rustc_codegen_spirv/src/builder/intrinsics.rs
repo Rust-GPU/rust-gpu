@@ -1,3 +1,6 @@
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use super::Builder;
 use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{SpirvValue, SpirvValueExt};
@@ -8,12 +11,12 @@ use rspirv::dr::Operand;
 use rspirv::spirv::GLOp;
 use rustc_codegen_ssa::mir::operand::OperandRef;
 use rustc_codegen_ssa::mir::place::PlaceRef;
-use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallMethods};
+use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallBuilderMethods};
 use rustc_middle::ty::layout::LayoutOf;
-use rustc_middle::ty::{FnDef, Instance, ParamEnv, Ty, TyKind};
+use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
 use rustc_middle::{bug, ty};
-use rustc_span::sym;
 use rustc_span::Span;
+use rustc_span::sym;
 use rustc_target::abi::call::{FnAbi, PassMode};
 use std::assert_matches::assert_matches;
 
@@ -63,7 +66,7 @@ impl Builder<'_, '_> {
     }
 }
 
-impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
+impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     fn codegen_intrinsic_call(
         &mut self,
         instance: Instance<'tcx>,
@@ -72,7 +75,7 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
         llresult: Self::Value,
         _span: Span,
     ) -> Result<(), ty::Instance<'tcx>> {
-        let callee_ty = instance.ty(self.tcx, ParamEnv::reveal_all());
+        let callee_ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
 
         let (def_id, fn_args) = match *callee_ty.kind() {
             FnDef(def_id, fn_args) => (def_id, fn_args),
@@ -82,7 +85,7 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
         let sig = callee_ty.fn_sig(self.tcx);
         let sig = self
             .tcx
-            .normalize_erasing_late_bound_regions(ParamEnv::reveal_all(), sig);
+            .normalize_erasing_late_bound_regions(TypingEnv::fully_monomorphized(), sig);
         let arg_tys = sig.inputs();
         let name = self.tcx.item_name(def_id);
 
@@ -158,11 +161,10 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
             }
             sym::sinf32 | sym::sinf64 => self.gl_op(GLOp::Sin, ret_ty, [args[0].immediate()]),
             sym::cosf32 | sym::cosf64 => self.gl_op(GLOp::Cos, ret_ty, [args[0].immediate()]),
-            sym::powf32 | sym::powf64 => self.gl_op(
-                GLOp::Pow,
-                ret_ty,
-                [args[0].immediate(), args[1].immediate()],
-            ),
+            sym::powf32 | sym::powf64 => self.gl_op(GLOp::Pow, ret_ty, [
+                args[0].immediate(),
+                args[1].immediate(),
+            ]),
             sym::expf32 | sym::expf64 => self.gl_op(GLOp::Exp, ret_ty, [args[0].immediate()]),
             sym::exp2f32 | sym::exp2f64 => self.gl_op(GLOp::Exp2, ret_ty, [args[0].immediate()]),
             sym::logf32 | sym::logf64 => self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()]),
@@ -174,26 +176,20 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
                 let ln = self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()]);
                 self.mul(mul, ln)
             }
-            sym::fmaf32 | sym::fmaf64 => self.gl_op(
-                GLOp::Fma,
-                ret_ty,
-                [
-                    args[0].immediate(),
-                    args[1].immediate(),
-                    args[2].immediate(),
-                ],
-            ),
+            sym::fmaf32 | sym::fmaf64 => self.gl_op(GLOp::Fma, ret_ty, [
+                args[0].immediate(),
+                args[1].immediate(),
+                args[2].immediate(),
+            ]),
             sym::fabsf32 | sym::fabsf64 => self.gl_op(GLOp::FAbs, ret_ty, [args[0].immediate()]),
-            sym::minnumf32 | sym::minnumf64 => self.gl_op(
-                GLOp::FMin,
-                ret_ty,
-                [args[0].immediate(), args[1].immediate()],
-            ),
-            sym::maxnumf32 | sym::maxnumf64 => self.gl_op(
-                GLOp::FMax,
-                ret_ty,
-                [args[0].immediate(), args[1].immediate()],
-            ),
+            sym::minnumf32 | sym::minnumf64 => self.gl_op(GLOp::FMin, ret_ty, [
+                args[0].immediate(),
+                args[1].immediate(),
+            ]),
+            sym::maxnumf32 | sym::maxnumf64 => self.gl_op(GLOp::FMax, ret_ty, [
+                args[0].immediate(),
+                args[1].immediate(),
+            ]),
             sym::copysignf32 | sym::copysignf64 => {
                 let val = args[0].immediate();
                 let sign = args[1].immediate();
@@ -364,7 +360,7 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
         cond
     }
 
-    fn type_test(&mut self, _pointer: Self::Value, _typeid: Self::Value) -> Self::Value {
+    fn type_test(&mut self, _pointer: Self::Value, _typeid: Self::Metadata) -> Self::Value {
         todo!()
     }
 
@@ -372,7 +368,7 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
         &mut self,
         _llvtable: Self::Value,
         _vtable_byte_offset: u64,
-        _typeid: Self::Value,
+        _typeid: Self::Metadata,
     ) -> Self::Value {
         todo!()
     }
@@ -400,21 +396,18 @@ impl Builder<'_, '_> {
         // so the best thing we can do is use our own custom instruction.
         let kind_id = self.emit().string(kind);
         let message_debug_printf_fmt_str_id = self.emit().string(message_debug_printf_fmt_str);
-        self.custom_inst(
-            void_ty,
-            CustomInst::Abort {
-                kind: Operand::IdRef(kind_id),
-                message_debug_printf: [message_debug_printf_fmt_str_id]
-                    .into_iter()
-                    .chain(
-                        message_debug_printf_args
-                            .into_iter()
-                            .map(|arg| arg.def(self)),
-                    )
-                    .map(Operand::IdRef)
-                    .collect(),
-            },
-        );
+        self.custom_inst(void_ty, CustomInst::Abort {
+            kind: Operand::IdRef(kind_id),
+            message_debug_printf: [message_debug_printf_fmt_str_id]
+                .into_iter()
+                .chain(
+                    message_debug_printf_args
+                        .into_iter()
+                        .map(|arg| arg.def(self)),
+                )
+                .map(Operand::IdRef)
+                .collect(),
+        });
         self.unreachable();
 
         // HACK(eddyb) we still need an active block in case the user of this

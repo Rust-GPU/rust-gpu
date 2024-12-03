@@ -1,6 +1,6 @@
 //! Traits related to scalars.
 
-use crate::vector::{create_dim, VectorOrScalar};
+use crate::vector::{VectorOrScalar, create_dim};
 use core::num::NonZeroUsize;
 
 /// Abstract trait representing a SPIR-V scalar type.

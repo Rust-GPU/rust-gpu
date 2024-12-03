@@ -1,3 +1,6 @@
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use super::Builder;
 use crate::builder_spirv::{SpirvValue, SpirvValueExt};
 use rspirv::spirv::{GLOp, Word};
@@ -227,11 +230,10 @@ impl Builder<'_, '_> {
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Cbrt) => {
                 assert_eq!(args.len(), 1);
-                self.gl_op(
-                    GLOp::Pow,
-                    result_type,
-                    [args[0], self.constant_float(args[0].ty, 1.0 / 3.0)],
-                )
+                self.gl_op(GLOp::Pow, result_type, [
+                    args[0],
+                    self.constant_float(args[0].ty, 1.0 / 3.0),
+                ])
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Log10) => {
                 assert_eq!(args.len(), 1);

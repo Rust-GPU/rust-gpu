@@ -1,3 +1,6 @@
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use super::CodegenCx;
 use crate::abi::ConvSpirvType;
 use crate::attr::AggregatedSpirvAttributes;
@@ -7,15 +10,15 @@ use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
 use rustc_attr::InlineAttr;
-use rustc_codegen_ssa::traits::{PreDefineMethods, StaticMethods};
+use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
 use rustc_hir::def::DefKind;
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
 use rustc_middle::mir::mono::{Linkage, MonoItem, Visibility};
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
-use rustc_middle::ty::{self, Instance, ParamEnv, TypeVisitableExt};
-use rustc_span::def_id::DefId;
+use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
 use rustc_span::Span;
+use rustc_span::def_id::DefId;
 use rustc_target::abi::Align;
 
 fn attrs_to_spirv(attrs: &CodegenFnAttrs) -> FunctionControl {
@@ -55,9 +58,9 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 
     // The call graph of how this is reachable is a little tangled, so:
-    // MiscMethods::get_fn -> get_fn_ext -> declare_fn_ext
-    // MiscMethods::get_fn_addr -> get_fn_ext -> declare_fn_ext
-    // PreDefineMethods::predefine_fn -> declare_fn_ext
+    // MiscCodegenMethods::get_fn -> get_fn_ext -> declare_fn_ext
+    // MiscCodegenMethods::get_fn_addr -> get_fn_ext -> declare_fn_ext
+    // PreDefineCodegenMethods::predefine_fn -> declare_fn_ext
     fn declare_fn_ext(&self, instance: Instance<'tcx>, linkage: Option<LinkageType>) -> SpirvValue {
         let def_id = instance.def_id();
 
@@ -128,16 +131,13 @@ impl<'tcx> CodegenCx<'tcx> {
 
         let declared = fn_id.with_type(function_type);
 
-        let attrs = AggregatedSpirvAttributes::parse(
-            self,
-            match self.tcx.def_kind(def_id) {
-                // This was made to ICE cross-crate at some point, but then got
-                // reverted in https://github.com/rust-lang/rust/pull/111381.
-                // FIXME(eddyb) remove this workaround once we rustup past that.
-                DefKind::Closure => &[],
-                _ => self.tcx.get_attrs_unchecked(def_id),
-            },
-        );
+        let attrs = AggregatedSpirvAttributes::parse(self, match self.tcx.def_kind(def_id) {
+            // This was made to ICE cross-crate at some point, but then got
+            // reverted in https://github.com/rust-lang/rust/pull/111381.
+            // FIXME(eddyb) remove this workaround once we rustup past that.
+            DefKind::Closure => &[],
+            _ => self.tcx.get_attrs_unchecked(def_id),
+        });
         if let Some(entry) = attrs.entry.map(|attr| attr.value) {
             let entry_name = entry
                 .name
@@ -190,13 +190,26 @@ impl<'tcx> CodegenCx<'tcx> {
 
         // HACK(eddyb) there is no good way to identify these definitions
         // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
-        if [
-            "<core::fmt::Arguments>::new_v1",
-            "<core::fmt::Arguments>::new_const",
-        ]
-        .contains(&&demangled_symbol_name[..])
+        if demangled_symbol_name == "core::panicking::panic_nounwind_fmt" {
+            self.panic_entry_points.borrow_mut().insert(def_id);
+        }
+        if let Some(pieces_len) = demangled_symbol_name
+            .strip_prefix("<core::fmt::Arguments>::new_const::<")
+            .and_then(|s| s.strip_suffix(">"))
         {
-            self.fmt_args_new_fn_ids.borrow_mut().insert(fn_id);
+            self.fmt_args_new_fn_ids
+                .borrow_mut()
+                .insert(fn_id, (pieces_len.parse().unwrap(), 0));
+        }
+        if let Some(generics) = demangled_symbol_name
+            .strip_prefix("<core::fmt::Arguments>::new_v1::<")
+            .and_then(|s| s.strip_suffix(">"))
+        {
+            let (pieces_len, rt_args_len) = generics.split_once(", ").unwrap();
+            self.fmt_args_new_fn_ids.borrow_mut().insert(
+                fn_id,
+                (pieces_len.parse().unwrap(), rt_args_len.parse().unwrap()),
+            );
         }
 
         // HACK(eddyb) there is no good way to identify these definitions
@@ -244,7 +257,7 @@ impl<'tcx> CodegenCx<'tcx> {
             "get_static() should always hit the cache for statics defined in the same CGU, but did not for `{def_id:?}`"
         );
 
-        let ty = instance.ty(self.tcx, ParamEnv::reveal_all());
+        let ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
         let sym = self.tcx.symbol_name(instance).name;
         let span = self.tcx.def_span(def_id);
         let g = self.declare_global(span, self.layout_of(ty).spirv_type(span, self));
@@ -267,7 +280,7 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> PreDefineMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn predefine_static(
         &self,
         def_id: DefId,
@@ -276,7 +289,7 @@ impl<'tcx> PreDefineMethods<'tcx> for CodegenCx<'tcx> {
         symbol_name: &str,
     ) {
         let instance = Instance::mono(self.tcx, def_id);
-        let ty = instance.ty(self.tcx, ParamEnv::reveal_all());
+        let ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
         let span = self.tcx.def_span(def_id);
         let spvty = self.layout_of(ty).spirv_type(span, self);
         let linkage = match linkage {
@@ -324,14 +337,11 @@ impl<'tcx> PreDefineMethods<'tcx> for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> StaticMethods for CodegenCx<'tcx> {
+impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
     fn static_addr_of(&self, cv: Self::Value, _align: Align, _kind: Option<&str>) -> Self::Value {
-        self.def_constant(
-            self.type_ptr_to(cv.ty),
-            SpirvConst::PtrTo {
-                pointee: cv.def_cx(self),
-            },
-        )
+        self.def_constant(self.type_ptr_to(cv.ty), SpirvConst::PtrTo {
+            pointee: cv.def_cx(self),
+        })
     }
 
     fn codegen_static(&self, def_id: DefId) {

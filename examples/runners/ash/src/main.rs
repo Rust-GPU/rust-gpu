@@ -1,3 +1,5 @@
+// FIXME(eddyb) update/review these lints.
+//
 // BEGIN - Embark standard lints v0.4
 // do not change or add/remove here, but one can add exceptions after this section
 // for more info see: <https://github.com/EmbarkStudios/rust-ecosystem/issues/59>
@@ -38,7 +40,6 @@
     clippy::match_same_arms,
     clippy::match_wildcard_for_single_variants,
     clippy::mem_forget,
-    clippy::mismatched_target_os,
     clippy::mut_mut,
     clippy::mutex_integer,
     clippy::needless_borrow,
@@ -87,7 +88,7 @@ use std::{
     collections::HashMap,
     ffi::{CStr, CString},
     fs::File,
-    sync::mpsc::{sync_channel, TryRecvError, TrySendError},
+    sync::mpsc::{TryRecvError, TrySendError, sync_channel},
     thread,
 };
 
@@ -125,21 +126,18 @@ pub fn main() {
     for SpvFile { name, data } in shaders {
         ctx.insert_shader_module(name, &data);
     }
-    ctx.build_pipelines(
-        vk::PipelineCache::null(),
-        vec![(
-            // HACK(eddyb) used to be `module: "sky_shader"` but we need `multimodule`
-            // for `debugPrintf` instrumentation to work (see `compile_shaders`).
-            VertexShaderEntryPoint {
-                module: "sky_shader::main_vs".into(),
-                entry_point: "main_vs".into(),
-            },
-            FragmentShaderEntryPoint {
-                module: "sky_shader::main_fs".into(),
-                entry_point: "main_fs".into(),
-            },
-        )],
-    );
+    ctx.build_pipelines(vk::PipelineCache::null(), vec![(
+        // HACK(eddyb) used to be `module: "sky_shader"` but we need `multimodule`
+        // for `debugPrintf` instrumentation to work (see `compile_shaders`).
+        VertexShaderEntryPoint {
+            module: "sky_shader::main_vs".into(),
+            entry_point: "main_vs".into(),
+        },
+        FragmentShaderEntryPoint {
+            module: "sky_shader::main_fs".into(),
+            entry_point: "main_fs".into(),
+        },
+    )]);
 
     let (compiler_sender, compiler_receiver) = sync_channel(1);
 
