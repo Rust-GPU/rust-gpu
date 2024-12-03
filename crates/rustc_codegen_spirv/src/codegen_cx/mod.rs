@@ -29,7 +29,7 @@ use rustc_middle::ty::layout::{HasParamEnv, HasTyCtxt};
 use rustc_middle::ty::{Instance, ParamEnv, PolyExistentialTraitRef, Ty, TyCtxt};
 use rustc_session::Session;
 use rustc_span::symbol::Symbol;
-use rustc_span::{SourceFile, Span, DUMMY_SP};
+use rustc_span::{DUMMY_SP, SourceFile, Span};
 use rustc_target::abi::call::{FnAbi, PassMode};
 use rustc_target::abi::{AddressSpace, HasDataLayout, TargetDataLayout};
 use rustc_target::spec::{HasTargetSpec, Target, TargetTriple};

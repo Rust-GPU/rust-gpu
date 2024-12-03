@@ -21,7 +21,7 @@ use rustc_middle::mir::interpret::ConstAllocation;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::source_map::SourceMap;
 use rustc_span::symbol::Symbol;
-use rustc_span::{FileName, FileNameDisplayPreference, SourceFile, Span, DUMMY_SP};
+use rustc_span::{DUMMY_SP, FileName, FileNameDisplayPreference, SourceFile, Span};
 use rustc_target::abi::Size;
 use std::assert_matches::assert_matches;
 use std::cell::{RefCell, RefMut};

@@ -8,9 +8,9 @@ use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
 use rustc_codegen_ssa::traits::{ConstMethods, MiscMethods, StaticMethods};
 use rustc_middle::bug;
-use rustc_middle::mir::interpret::{alloc_range, ConstAllocation, GlobalAlloc, Scalar};
+use rustc_middle::mir::interpret::{ConstAllocation, GlobalAlloc, Scalar, alloc_range};
 use rustc_middle::ty::layout::LayoutOf;
-use rustc_span::{Span, DUMMY_SP};
+use rustc_span::{DUMMY_SP, Span};
 use rustc_target::abi::{self, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
 
 impl<'tcx> CodegenCx<'tcx> {
@@ -165,17 +165,11 @@ impl<'tcx> ConstMethods<'tcx> for CodegenCx<'tcx> {
             .layout_of(self.tcx.types.str_)
             .spirv_type(DUMMY_SP, self);
         (
-            self.def_constant(
-                self.type_ptr_to(str_ty),
-                SpirvConst::PtrTo {
-                    pointee: self
-                        .constant_composite(
-                            str_ty,
-                            s.bytes().map(|b| self.const_u8(b).def_cx(self)),
-                        )
-                        .def_cx(self),
-                },
-            ),
+            self.def_constant(self.type_ptr_to(str_ty), SpirvConst::PtrTo {
+                pointee: self
+                    .constant_composite(str_ty, s.bytes().map(|b| self.const_u8(b).def_cx(self)))
+                    .def_cx(self),
+            }),
             self.const_usize(len as u64),
         )
     }
