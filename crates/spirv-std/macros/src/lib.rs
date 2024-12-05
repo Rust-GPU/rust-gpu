@@ -76,7 +76,9 @@ mod image;
 use proc_macro::TokenStream;
 use proc_macro2::{Delimiter, Group, Ident, Span, TokenTree};
 
-use syn::{punctuated::Punctuated, spanned::Spanned, visit_mut::VisitMut, ItemFn, Token};
+use syn::{
+    punctuated::Punctuated, spanned::Spanned, visit_mut::VisitMut, ItemFn, Token, Visibility,
+};
 
 use quote::{quote, ToTokens};
 use std::fmt::Write;
@@ -148,6 +150,12 @@ pub fn spirv(attr: TokenStream, item: TokenStream) -> TokenStream {
     // prepend with #[rust_gpu::spirv(..)]
     let attr: proc_macro2::TokenStream = attr.into();
     tokens.extend(quote! { #[cfg_attr(target_arch="spirv", rust_gpu::spirv(#attr))] });
+
+    if let Ok(item_fn) = syn::parse::<ItemFn>(item.clone()) {
+        if !matches!(item_fn.vis, Visibility::Public(_)) {
+            panic!("The `spirv` macro can only be applied to public functions.");
+        }
+    }
 
     let item: proc_macro2::TokenStream = item.into();
     for tt in item {
