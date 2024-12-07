@@ -528,8 +528,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     let stride = ty_kind.sizeof(self)?;
                     ty_size = MaybeSized::Sized(stride);
 
-                    indices.push((offset.bytes() / stride.bytes()).try_into().ok()?);
-                    offset = Size::from_bytes(offset.bytes() % stride.bytes());
+                    if stride.bytes() == 0 {
+                        indices.push(0);
+                        offset = Size::from_bytes(0);
+                    } else {
+                        indices.push((offset.bytes() / stride.bytes()).try_into().ok()?);
+                        offset = Size::from_bytes(offset.bytes() % stride.bytes());
+                    }
                 }
                 _ => return None,
             }
@@ -566,9 +571,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             .iter()
             .map(|index| {
                 result_pointee_type = match self.lookup_type(result_pointee_type) {
-                    SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element } => {
-                        element
-                    }
+                    SpirvType::Array { element, .. }
+                    | SpirvType::RuntimeArray { element } => element,
                     _ => self.fatal(format!(
                         "GEP not implemented for type {}",
                         self.debug_type(result_pointee_type)
