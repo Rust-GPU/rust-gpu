@@ -21,3 +21,5 @@ the resulting binary with spirv-val). Because of this, there might be some stran
 the point isn't to make a fully functional shader every time (that would take an annoying amount of
 effort), but rather validate that specific parts of the compiler are doing their job correctly
 (either succeeding as they should, or erroring as they should).
+
+For more docs on compiletests, check the [rustc docs](https://rustc-dev-guide.rust-lang.org/tests/compiletest.html).
