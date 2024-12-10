@@ -1,7 +1,7 @@
 // build-fail
 
 use spirv_std::spirv;
-use spirv_std::{arch, Image, Sampler};
+use spirv_std::{Image, Sampler, arch};
 
 fn deeper_stack(image2d: &Image!(2D, type=f32, sampled), sampler: &Sampler) -> glam::Vec4 {
     let v2 = glam::Vec2::new(0.0, 1.0);

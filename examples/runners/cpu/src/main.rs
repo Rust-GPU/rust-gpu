@@ -1,3 +1,5 @@
+// FIXME(eddyb) update/review these lints.
+//
 // BEGIN - Embark standard lints v0.4
 // do not change or add/remove here, but one can add exceptions after this section
 // for more info see: <https://github.com/EmbarkStudios/rust-ecosystem/issues/59>
@@ -38,7 +40,6 @@
     clippy::match_same_arms,
     clippy::match_wildcard_for_single_variants,
     clippy::mem_forget,
-    clippy::mismatched_target_os,
     clippy::mut_mut,
     clippy::mutex_integer,
     clippy::needless_borrow,
@@ -72,8 +73,8 @@
 
 use minifb::{Key, Window, WindowOptions};
 use rayon::prelude::*;
-use shared::glam::{vec2, Vec2, Vec4};
 use shared::ShaderConstants;
+use shared::glam::{Vec2, Vec4, vec2};
 use std::time::Instant;
 
 use sky_shader as shader_module;

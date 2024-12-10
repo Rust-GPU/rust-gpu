@@ -60,3 +60,11 @@ codegen-units = 256
 opt-level = 3
 incremental = true
 codegen-units = 256
+
+# HACK(eddyb) reduce the number of linker exports and/or imports, by avoiding
+# inter-CGU linkage, to stay under the 64Ki MSVC limit for `rustc_codegen_spirv`
+# when building it in "debug mode" (only relevant to CI for now, realistically),
+# i.e. working around this issue: https://github.com/rust-lang/rust/issues/53014
+# (see also `crates/spirv-builder/Cargo.toml`).
+[profile.dev]
+codegen-units = 1

@@ -5,6 +5,16 @@
 ignore = [
     # safemem transitive dependency, old and unmaintained but not critical and stable
     "RUSTSEC-2023-0081",
+
+    # HACK(eddyb) temporary downgrade of tempfile to `3.3` (last version which
+    # uses `winapi` instead of `windows`, see `crates/spirv-builder/Cargo.toml`),
+    # runs into unmainted `instant` and TOCTOU-vulnerable `remove_dir_all`, but
+    # the latter could only pose an issue if Rust-GPU shader builds ran as the
+    # `root`/Administrator user, and somehow were being attacked by *another*
+    # user on the same machine - such an attack may be a serious concern for
+    # e.g. system services written in Rust, but seems irrelevant to compilers.
+    "RUSTSEC-2024-0384",
+    "RUSTSEC-2023-0018",
 ]
 
 # This section is considered when running `cargo deny check bans`.
