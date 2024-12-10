@@ -1,8 +1,8 @@
-use super::{link, LinkResult};
+use super::{LinkResult, link};
 use rspirv::dr::{Loader, Module};
 use rustc_errors::registry::Registry;
-use rustc_session::config::{Input, OutputFilenames, OutputTypes};
 use rustc_session::CompilerIO;
+use rustc_session::config::{Input, OutputFilenames, OutputTypes};
 use rustc_span::FileName;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
@@ -66,15 +66,12 @@ fn load(bytes: &[u8]) -> Module {
 
 // FIXME(eddyb) shouldn't this be named just `link`? (`assemble_spirv` is separate)
 fn assemble_and_link(binaries: &[&[u8]]) -> Result<Module, PrettyString> {
-    link_with_linker_opts(
-        binaries,
-        &crate::linker::Options {
-            compact_ids: true,
-            dce: true,
-            keep_link_exports: true,
-            ..Default::default()
-        },
-    )
+    link_with_linker_opts(binaries, &crate::linker::Options {
+        compact_ids: true,
+        dce: true,
+        keep_link_exports: true,
+        ..Default::default()
+    })
 }
 
 fn link_with_linker_opts(
@@ -141,6 +138,7 @@ fn link_with_linker_opts(
             file_loader: Box::new(rustc_span::source_map::RealFileLoader),
             path_mapping: sopts.file_path_mapping(),
             hash_kind: sopts.unstable_opts.src_hash_algorithm(&target),
+            checksum_hash_kind: None,
         };
         rustc_span::create_session_globals_then(sopts.edition, Some(sm_inputs), || {
             let mut sess = rustc_session::build_session(
@@ -169,7 +167,9 @@ fn link_with_linker_opts(
 
             // HACK(eddyb) inject `write_diags` into `sess`, to work around
             // the removals in https://github.com/rust-lang/rust/pull/102992.
-            sess.psess.dcx = {
+            sess.psess = {
+                let source_map = sess.psess.clone_source_map();
+
                 let fallback_bundle = {
                     extern crate rustc_error_messages;
                     rustc_error_messages::fallback_fluent_bundle(
@@ -179,10 +179,13 @@ fn link_with_linker_opts(
                 };
                 let emitter =
                     rustc_errors::emitter::HumanEmitter::new(Box::new(buf), fallback_bundle)
-                        .sm(Some(sess.psess.clone_source_map()));
+                        .sm(Some(source_map.clone()));
 
-                rustc_errors::DiagCtxt::new(Box::new(emitter))
-                    .with_flags(sess.opts.unstable_opts.dcx_flags(true))
+                rustc_session::parse::ParseSess::with_dcx(
+                    rustc_errors::DiagCtxt::new(Box::new(emitter))
+                        .with_flags(sess.opts.unstable_opts.dcx_flags(true)),
+                    source_map,
+                )
             };
 
             let res = link(

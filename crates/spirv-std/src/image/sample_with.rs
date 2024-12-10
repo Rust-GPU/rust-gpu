@@ -17,9 +17,10 @@ pub struct NoneTy;
 /// Helper struct that denotes that the type does exist and is of type T, analog to `Option::Some(T)`
 pub struct SomeTy<T>(pub T);
 
-/// Helper struct that allows building image operands. Start with a global function that returns this
-/// struct, and then chain additional calls. No care is taken to avoid stating multiple operands that,
-/// together, make no sense, such as Lod and Grad.
+/// Helper struct that allows building image operands.
+///
+/// Start with a global function that returns this struct, and then chain additional calls.
+/// No care is taken to avoid stating multiple operands that, together, make no sense, such as Lod and Grad.
 /// Example: `image.sample_with(coords, sample_with::bias(3.0).sample_index(1))`
 pub struct SampleParams<B: OptionTy, L: OptionTy, G: OptionTy, S: OptionTy> {
     /// 'Bias' image operand

@@ -3,7 +3,7 @@ use std::{collections::HashSet, sync::mpsc::sync_channel};
 use notify::{Event, RecursiveMode, Watcher};
 use rustc_codegen_spirv_types::CompileResult;
 
-use crate::{leaf_deps, SpirvBuilder, SpirvBuilderError};
+use crate::{SpirvBuilder, SpirvBuilderError, leaf_deps};
 
 impl SpirvBuilder {
     /// Watches the module for changes using [`notify`](https://crates.io/crates/notify),

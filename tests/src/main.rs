@@ -122,7 +122,7 @@ impl Runner {
                 "--crate-type dylib",
                 "-Zunstable-options",
                 "-Zcrate-attr=no_std",
-                "-Zcrate-attr=feature(asm_const,asm_experimental_arch)",
+                "-Zcrate-attr=feature(asm_experimental_arch)",
             ]
             .join(" ")
         }
@@ -155,18 +155,14 @@ impl Runner {
 
             let target = format!("{SPIRV_TARGET_PREFIX}{env}");
             let libs = build_deps(&self.deps_target_dir, &self.codegen_backend_path, &target);
-            let mut flags = test_rustc_flags(
-                &self.codegen_backend_path,
-                &libs,
-                &[
-                    &self
-                        .deps_target_dir
-                        .join(DepKind::SpirvLib.target_dir_suffix(&target)),
-                    &self
-                        .deps_target_dir
-                        .join(DepKind::ProcMacro.target_dir_suffix(&target)),
-                ],
-            );
+            let mut flags = test_rustc_flags(&self.codegen_backend_path, &libs, &[
+                &self
+                    .deps_target_dir
+                    .join(DepKind::SpirvLib.target_dir_suffix(&target)),
+                &self
+                    .deps_target_dir
+                    .join(DepKind::ProcMacro.target_dir_suffix(&target)),
+            ]);
             flags += variation.extra_flags;
 
             let config = compiletest::Config {
@@ -308,7 +304,7 @@ fn find_lib(
                 && ends_with_dash_hash(name.to_str().unwrap());
             let extension_matches = path
                 .extension()
-                .map_or(false, |ext| ext == expected_extension);
+                .is_some_and(|ext| ext == expected_extension);
 
             name_matches && extension_matches
         })

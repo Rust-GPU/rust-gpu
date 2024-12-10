@@ -1,18 +1,21 @@
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use super::CodegenCx;
 use crate::abi::ConvSpirvType;
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
 use rustc_codegen_ssa::common::TypeKind;
-use rustc_codegen_ssa::traits::{BaseTypeMethods, LayoutTypeMethods};
+use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, LayoutTypeCodegenMethods};
+use rustc_middle::ty::Ty;
 use rustc_middle::ty::layout::{
     FnAbiError, FnAbiOfHelpers, FnAbiRequest, LayoutError, LayoutOfHelpers, TyAndLayout,
 };
-use rustc_middle::ty::Ty;
 use rustc_middle::{bug, span_bug};
 use rustc_span::source_map::Spanned;
-use rustc_span::{Span, DUMMY_SP};
+use rustc_span::{DUMMY_SP, Span};
 use rustc_target::abi::call::{CastTarget, FnAbi, Reg};
-use rustc_target::abi::{Abi, AddressSpace};
+use rustc_target::abi::{AddressSpace, BackendRepr};
 
 impl<'tcx> LayoutOfHelpers<'tcx> for CodegenCx<'tcx> {
     type LayoutOfResult = TyAndLayout<'tcx>;
@@ -61,7 +64,7 @@ impl<'tcx> FnAbiOfHelpers<'tcx> for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> LayoutTypeMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn backend_type(&self, layout: TyAndLayout<'tcx>) -> Self::Type {
         layout.spirv_type(DUMMY_SP, self)
     }
@@ -93,17 +96,20 @@ impl<'tcx> LayoutTypeMethods<'tcx> for CodegenCx<'tcx> {
     }
 
     fn is_backend_immediate(&self, layout: TyAndLayout<'tcx>) -> bool {
-        match layout.abi {
-            Abi::Scalar(_) | Abi::Vector { .. } => true,
-            Abi::ScalarPair(..) => false,
-            Abi::Uninhabited | Abi::Aggregate { .. } => layout.is_zst(),
+        match layout.backend_repr {
+            BackendRepr::Scalar(_) | BackendRepr::Vector { .. } => true,
+            BackendRepr::ScalarPair(..) => false,
+            BackendRepr::Uninhabited | BackendRepr::Memory { .. } => layout.is_zst(),
         }
     }
 
     fn is_backend_scalar_pair(&self, layout: TyAndLayout<'tcx>) -> bool {
-        match layout.abi {
-            Abi::ScalarPair(..) => true,
-            Abi::Uninhabited | Abi::Scalar(_) | Abi::Vector { .. } | Abi::Aggregate { .. } => false,
+        match layout.backend_repr {
+            BackendRepr::ScalarPair(..) => true,
+            BackendRepr::Uninhabited
+            | BackendRepr::Scalar(_)
+            | BackendRepr::Vector { .. }
+            | BackendRepr::Memory { .. } => false,
         }
     }
 
@@ -124,10 +130,7 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> BaseTypeMethods<'tcx> for CodegenCx<'tcx> {
-    fn type_i1(&self) -> Self::Type {
-        SpirvType::Bool.def(DUMMY_SP, self)
-    }
+impl<'tcx> BaseTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn type_i8(&self) -> Self::Type {
         SpirvType::Integer(8, false).def(DUMMY_SP, self)
     }
@@ -173,19 +176,6 @@ impl<'tcx> BaseTypeMethods<'tcx> for CodegenCx<'tcx> {
         SpirvType::Function {
             return_type: ret,
             arguments: args,
-        }
-        .def(DUMMY_SP, self)
-    }
-    fn type_struct(&self, els: &[Self::Type], _packed: bool) -> Self::Type {
-        // FIXME(eddyb) use `AccumulateVec`s just like `rustc` itself does.
-        let (field_offsets, size, align) = crate::abi::auto_struct_layout(self, els);
-        SpirvType::Adt {
-            def_id: None,
-            align,
-            size,
-            field_types: els,
-            field_offsets: &field_offsets,
-            field_names: None,
         }
         .def(DUMMY_SP, self)
     }

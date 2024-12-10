@@ -637,15 +637,12 @@ impl<S: Specialization> Specializer<S> {
 
             // Inference variables become "generic" parameters.
             if param_count > 0 {
-                self.generics.insert(
-                    result_id,
-                    Generic {
-                        param_count,
-                        def: inst.clone(),
-                        param_values,
-                        replacements,
-                    },
-                );
+                self.generics.insert(result_id, Generic {
+                    param_count,
+                    def: inst.clone(),
+                    param_values,
+                    replacements,
+                });
             }
         }
     }
@@ -2128,13 +2125,10 @@ impl<'a, S: Specialization> InferCx<'a, S> {
 
                     Op::Return => {}
 
-                    _ => self.instantiate_instruction(
-                        inst,
-                        InstructionLocation::FnBody {
-                            block_idx,
-                            inst_idx,
-                        },
-                    ),
+                    _ => self.instantiate_instruction(inst, InstructionLocation::FnBody {
+                        block_idx,
+                        inst_idx,
+                    }),
                 }
             }
         }

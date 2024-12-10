@@ -9,6 +9,9 @@ pub use ext_inst::ExtInst;
 use rustc_span::DUMMY_SP;
 pub use spirv_asm::InstructionTable;
 
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{BuilderCursor, SpirvValue, SpirvValueExt};
 use crate::codegen_cx::CodegenCx;
@@ -17,19 +20,20 @@ use rspirv::spirv::Word;
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{
-    AbiBuilderMethods, ArgAbiMethods, BackendTypes, BuilderMethods, CoverageInfoBuilderMethods,
-    DebugInfoBuilderMethods, HasCodegen, StaticBuilderMethods, TypeMembershipMethods,
+    AbiBuilderMethods, ArgAbiBuilderMethods, BackendTypes, BuilderMethods,
+    CoverageInfoBuilderMethods, DebugInfoBuilderMethods, StaticBuilderMethods,
+    TypeMembershipCodegenMethods,
 };
 use rustc_errors::{Diag, DiagMessage};
 use rustc_middle::mir::coverage::CoverageKind;
 use rustc_middle::span_bug;
 use rustc_middle::ty::layout::{
-    FnAbiError, FnAbiOfHelpers, FnAbiRequest, HasParamEnv, HasTyCtxt, LayoutError, LayoutOfHelpers,
-    TyAndLayout,
+    FnAbiError, FnAbiOfHelpers, FnAbiRequest, HasTyCtxt, HasTypingEnv, LayoutError,
+    LayoutOfHelpers, TyAndLayout,
 };
-use rustc_middle::ty::{Instance, ParamEnv, Ty, TyCtxt};
-use rustc_span::def_id::DefId;
+use rustc_middle::ty::{Instance, Ty, TyCtxt, TypingEnv};
 use rustc_span::Span;
+use rustc_span::def_id::DefId;
 use rustc_target::abi::call::{ArgAbi, FnAbi, PassMode};
 use rustc_target::abi::{HasDataLayout, Size, TargetDataLayout};
 use rustc_target::spec::{HasTargetSpec, Target};
@@ -39,7 +43,6 @@ pub struct Builder<'a, 'tcx> {
     cx: &'a CodegenCx<'tcx>,
     cursor: BuilderCursor,
     current_fn: <Self as BackendTypes>::Function,
-    basic_block: <Self as BackendTypes>::BasicBlock,
     current_span: Option<Span>,
 }
 
@@ -113,8 +116,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 other.debug(shift.ty, self)
             )),
         };
-        let int_size = self.constant_int(shift.ty, width as u64);
-        let mask = self.constant_int(shift.ty, (width - 1) as u64);
+        let int_size = self.constant_int(shift.ty, width.into());
+        let mask = self.constant_int(shift.ty, (width - 1).into());
         let zero = self.constant_int(shift.ty, 0);
         let bool = SpirvType::Bool.def(self.span(), self);
         // https://stackoverflow.com/a/10134877
@@ -168,6 +171,14 @@ impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
         todo!()
     }
 
+    fn clear_dbg_loc(&mut self) {
+        todo!()
+    }
+
+    fn get_dbg_loc(&self) -> Option<Self::DILocation> {
+        None
+    }
+
     fn insert_reference_to_gdb_debug_scripts_section_global(&mut self) {
         todo!()
     }
@@ -177,7 +188,7 @@ impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> ArgAbiMethods<'tcx> for Builder<'a, 'tcx> {
+impl<'a, 'tcx> ArgAbiBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     fn store_fn_arg(
         &mut self,
         arg_abi: &ArgAbi<'tcx, Ty<'tcx>>,
@@ -245,7 +256,9 @@ impl<'a, 'tcx> StaticBuilderMethods for Builder<'a, 'tcx> {
 
 impl<'a, 'tcx> BackendTypes for Builder<'a, 'tcx> {
     type Value = <CodegenCx<'tcx> as BackendTypes>::Value;
+    type Metadata = <CodegenCx<'tcx> as BackendTypes>::Metadata;
     type Function = <CodegenCx<'tcx> as BackendTypes>::Function;
+
     type BasicBlock = <CodegenCx<'tcx> as BackendTypes>::BasicBlock;
     type Type = <CodegenCx<'tcx> as BackendTypes>::Type;
     type Funclet = <CodegenCx<'tcx> as BackendTypes>::Funclet;
@@ -255,13 +268,9 @@ impl<'a, 'tcx> BackendTypes for Builder<'a, 'tcx> {
     type DILocation = <CodegenCx<'tcx> as BackendTypes>::DILocation;
 }
 
-impl<'a, 'tcx> HasCodegen<'tcx> for Builder<'a, 'tcx> {
-    type CodegenCx = CodegenCx<'tcx>;
-}
-
-impl<'a, 'tcx> HasParamEnv<'tcx> for Builder<'a, 'tcx> {
-    fn param_env(&self) -> ParamEnv<'tcx> {
-        self.cx.param_env()
+impl<'a, 'tcx> HasTypingEnv<'tcx> for Builder<'a, 'tcx> {
+    fn typing_env(&self) -> TypingEnv<'tcx> {
+        self.cx.typing_env()
     }
 }
 
@@ -306,4 +315,4 @@ impl<'tcx> FnAbiOfHelpers<'tcx> for Builder<'_, 'tcx> {
     }
 }
 
-impl<'tcx> TypeMembershipMethods<'tcx> for CodegenCx<'tcx> {}
+impl<'tcx> TypeMembershipCodegenMethods<'tcx> for CodegenCx<'tcx> {}

@@ -239,13 +239,10 @@ fn collect_access_chains(
     }
 
     let mut variables = FxHashMap::default();
-    variables.insert(
-        base_var,
-        VarInfo {
-            ty: base_var_ty,
-            indices: vec![],
-        },
-    );
+    variables.insert(base_var, VarInfo {
+        ty: base_var_ty,
+        indices: vec![],
+    });
     // Loop in case a previous block references a later AccessChain
     loop {
         let mut changed = false;
@@ -334,21 +331,17 @@ fn split_copy_memory(
                     }
                 };
                 let temp_id = id(header);
-                block.instructions[inst_index] = Instruction::new(
-                    Op::Load,
-                    Some(ty),
-                    Some(temp_id),
-                    vec![Operand::IdRef(source)],
-                );
+                block.instructions[inst_index] =
+                    Instruction::new(Op::Load, Some(ty), Some(temp_id), vec![Operand::IdRef(
+                        source,
+                    )]);
                 inst_index += 1;
                 block.instructions.insert(
                     inst_index,
-                    Instruction::new(
-                        Op::Store,
-                        None,
-                        None,
-                        vec![Operand::IdRef(target), Operand::IdRef(temp_id)],
-                    ),
+                    Instruction::new(Op::Store, None, None, vec![
+                        Operand::IdRef(target),
+                        Operand::IdRef(temp_id),
+                    ]),
                 );
             }
             inst_index += 1;
@@ -455,12 +448,10 @@ impl Renamer<'_> {
                 let new_id = id(self.header);
                 self.blocks[block].instructions.insert(
                     0,
-                    Instruction::new(
-                        Op::Phi,
-                        Some(self.base_var_type),
-                        Some(new_id),
-                        vec![Operand::IdRef(top_def), Operand::IdRef(from_block_label)],
-                    ),
+                    Instruction::new(Op::Phi, Some(self.base_var_type), Some(new_id), vec![
+                        Operand::IdRef(top_def),
+                        Operand::IdRef(from_block_label),
+                    ]),
                 );
                 self.phi_defs.insert(new_id);
                 new_id

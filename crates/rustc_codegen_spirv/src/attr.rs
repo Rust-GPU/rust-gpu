@@ -9,7 +9,7 @@ use rustc_ast::Attribute;
 use rustc_hir as hir;
 use rustc_hir::def_id::LocalModDefId;
 use rustc_hir::intravisit::{self, Visitor};
-use rustc_hir::{HirId, MethodKind, Target, CRATE_HIR_ID};
+use rustc_hir::{CRATE_HIR_ID, HirId, MethodKind, Target};
 use rustc_middle::hir::nested_filter;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::TyCtxt;
@@ -182,15 +182,14 @@ impl AggregatedSpirvAttributes {
             span: Span,
             category: &'static str,
         ) -> Result<(), MultipleAttrs> {
-            match slot {
-                Some(prev) => Err(MultipleAttrs {
+            if let Some(prev) = slot {
+                Err(MultipleAttrs {
                     prev_span: prev.span,
                     category,
-                }),
-                None => {
-                    *slot = Some(Spanned { value, span });
-                    Ok(())
-                }
+                })
+            } else {
+                *slot = Some(Spanned { value, span });
+                Ok(())
             }
         }
 
