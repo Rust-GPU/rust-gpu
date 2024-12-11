@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_derive-1.0.210/src/ser.rs`."><title>ser.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="serde_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../serde_derive/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_derive-1.0.216/src/ser.rs`."><title>ser.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="serde_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../serde_derive/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1348,8 +1348,25 @@
 <a href="#1348" id="1348">1348</a>
 <a href="#1349" id="1349">1349</a>
 <a href="#1350" id="1350">1350</a>
+<a href="#1351" id="1351">1351</a>
+<a href="#1352" id="1352">1352</a>
+<a href="#1353" id="1353">1353</a>
+<a href="#1354" id="1354">1354</a>
+<a href="#1355" id="1355">1355</a>
+<a href="#1356" id="1356">1356</a>
+<a href="#1357" id="1357">1357</a>
+<a href="#1358" id="1358">1358</a>
+<a href="#1359" id="1359">1359</a>
+<a href="#1360" id="1360">1360</a>
+<a href="#1361" id="1361">1361</a>
+<a href="#1362" id="1362">1362</a>
+<a href="#1363" id="1363">1363</a>
+<a href="#1364" id="1364">1364</a>
+<a href="#1365" id="1365">1365</a>
+<a href="#1366" id="1366">1366</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::fragment::{Fragment, Match, Stmts};
 <span class="kw">use </span><span class="kw">crate</span>::internals::ast::{Container, Data, Field, Style, Variant};
+<span class="kw">use </span><span class="kw">crate</span>::internals::name::Name;
 <span class="kw">use </span><span class="kw">crate</span>::internals::{attr, replace_receiver, Ctxt, Derive};
 <span class="kw">use crate</span>::{bound, dummy, pretend, this};
 <span class="kw">use </span>proc_macro2::{Span, TokenStream};
@@ -1378,7 +1395,8 @@
         <span class="kw">let </span>vis = <span class="kw-2">&amp;</span>input.vis;
         <span class="kw">let </span>used = pretend::pretend_used(<span class="kw-2">&amp;</span>cont, params.is_packed);
         <span class="macro">quote!</span> {
-            <span class="kw">impl </span>#impl_generics #ident #ty_generics #where_clause {
+            <span class="attr">#[automatically_derived]
+            </span><span class="kw">impl </span>#impl_generics #ident #ty_generics #where_clause {
                 #vis <span class="kw">fn </span>serialize&lt;__S&gt;(__self: <span class="kw-2">&amp;</span>#remote #ty_generics, __serializer: __S) -&gt; #serde::__private::Result&lt;__S::Ok, __S::Error&gt;
                 <span class="kw">where
                     </span>__S: #serde::Serializer,
@@ -2082,7 +2100,8 @@
             phantom: _serde::__private::PhantomData&lt;#this_type #ty_generics&gt;,
         }
 
-        <span class="kw">impl </span>#wrapper_impl_generics _serde::Serialize <span class="kw">for </span>__AdjacentlyTagged #wrapper_ty_generics #where_clause {
+        <span class="attr">#[automatically_derived]
+        </span><span class="kw">impl </span>#wrapper_impl_generics _serde::Serialize <span class="kw">for </span>__AdjacentlyTagged #wrapper_ty_generics #where_clause {
             <span class="kw">fn </span>serialize&lt;__S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, __serializer: __S) -&gt; _serde::__private::Result&lt;__S::Ok, __S::Error&gt;
             <span class="kw">where
                 </span>__S: _serde::Serializer,
@@ -2148,9 +2167,9 @@
 
 <span class="kw">enum </span>TupleVariant&lt;<span class="lifetime">'a</span>&gt; {
     ExternallyTagged {
-        type_name: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
+        type_name: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Name,
         variant_index: u32,
-        variant_name: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
+        variant_name: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Name,
     },
     Untagged,
 }
@@ -2217,11 +2236,11 @@
 <span class="kw">enum </span>StructVariant&lt;<span class="lifetime">'a</span>&gt; {
     ExternallyTagged {
         variant_index: u32,
-        variant_name: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
+        variant_name: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Name,
     },
     InternallyTagged {
         tag: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
-        variant_name: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
+        variant_name: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Name,
     },
     Untagged,
 }
@@ -2230,7 +2249,7 @@
     context: StructVariant,
     params: <span class="kw-2">&amp;</span>Parameters,
     fields: <span class="kw-2">&amp;</span>[Field],
-    name: <span class="kw-2">&amp;</span>str,
+    name: <span class="kw-2">&amp;</span>Name,
 ) -&gt; Fragment {
     <span class="kw">if </span>fields.iter().any(|field| field.attrs.flatten()) {
         <span class="kw">return </span>serialize_struct_variant_with_flatten(context, params, fields, name);
@@ -2314,7 +2333,7 @@
     context: StructVariant,
     params: <span class="kw-2">&amp;</span>Parameters,
     fields: <span class="kw-2">&amp;</span>[Field],
-    name: <span class="kw-2">&amp;</span>str,
+    name: <span class="kw-2">&amp;</span>Name,
 ) -&gt; Fragment {
     <span class="kw">let </span>struct_trait = StructTrait::SerializeMap;
     <span class="kw">let </span>serialize_fields = serialize_struct_visitor(fields, params, <span class="bool-val">true</span>, <span class="kw-2">&amp;</span>struct_trait);
@@ -2346,7 +2365,8 @@
                     phantom: _serde::__private::PhantomData&lt;#this_type #ty_generics&gt;,
                 }
 
-                <span class="kw">impl </span>#wrapper_impl_generics _serde::Serialize <span class="kw">for </span>__EnumFlatten #wrapper_ty_generics #where_clause {
+                <span class="attr">#[automatically_derived]
+                </span><span class="kw">impl </span>#wrapper_impl_generics _serde::Serialize <span class="kw">for </span>__EnumFlatten #wrapper_ty_generics #where_clause {
                     <span class="kw">fn </span>serialize&lt;__S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, __serializer: __S) -&gt; _serde::__private::Result&lt;__S::Ok, __S::Error&gt;
                     <span class="kw">where
                         </span>__S: _serde::Serializer,
@@ -2570,6 +2590,17 @@
         })
     });
 
+    <span class="kw">let </span>self_var = <span class="macro">quote!</span>(<span class="self">self</span>);
+    <span class="kw">let </span>serializer_var = <span class="macro">quote!</span>(__s);
+
+    <span class="comment">// If #serialize_with returns wrong type, error will be reported on here.
+    // We attach span of the path to this piece so error will be reported
+    // on the #[serde(with = "...")]
+    //                       ^^^^^
+    </span><span class="kw">let </span>wrapper_serialize = <span class="macro">quote_spanned!</span> {serialize_with.span()=&gt;
+        #serialize_with(#(#self_var.values.#field_access, )* #serializer_var)
+    };
+
     <span class="macro">quote!</span>({
         <span class="attr">#[doc(hidden)]
         </span><span class="kw">struct </span>__SerializeWith #wrapper_impl_generics #where_clause {
@@ -2577,12 +2608,13 @@
             phantom: _serde::__private::PhantomData&lt;#this_type #ty_generics&gt;,
         }
 
-        <span class="kw">impl </span>#wrapper_impl_generics _serde::Serialize <span class="kw">for </span>__SerializeWith #wrapper_ty_generics #where_clause {
-            <span class="kw">fn </span>serialize&lt;__S&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, __s: __S) -&gt; _serde::__private::Result&lt;__S::Ok, __S::Error&gt;
+        <span class="attr">#[automatically_derived]
+        </span><span class="kw">impl </span>#wrapper_impl_generics _serde::Serialize <span class="kw">for </span>__SerializeWith #wrapper_ty_generics #where_clause {
+            <span class="kw">fn </span>serialize&lt;__S&gt;(<span class="kw-2">&amp;</span>#self_var, #serializer_var: __S) -&gt; _serde::__private::Result&lt;__S::Ok, __S::Error&gt;
             <span class="kw">where
                 </span>__S: _serde::Serializer,
             {
-                #serialize_with(#(<span class="self">self</span>.values.#field_access, )* __s)
+                #wrapper_serialize
             }
         }
 

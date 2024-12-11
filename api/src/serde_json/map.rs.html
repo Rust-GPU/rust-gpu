@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_json-1.0.128/src/map.rs`."><title>map.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="serde_json" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../serde_json/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_json-1.0.133/src/map.rs`."><title>map.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="serde_json" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../serde_json/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1115,6 +1115,46 @@
 <a href="#1115" id="1115">1115</a>
 <a href="#1116" id="1116">1116</a>
 <a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
+<a href="#1147" id="1147">1147</a>
+<a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
+<a href="#1152" id="1152">1152</a>
+<a href="#1153" id="1153">1153</a>
+<a href="#1154" id="1154">1154</a>
+<a href="#1155" id="1155">1155</a>
+<a href="#1156" id="1156">1156</a>
+<a href="#1157" id="1157">1157</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A map of String to serde_json::Value.
 //!
 //! By default the map is backed by a [`BTreeMap`]. Enable the `preserve_order`
@@ -1123,7 +1163,8 @@
 //! [`BTreeMap`]: https://doc.rust-lang.org/std/collections/struct.BTreeMap.html
 //! [`IndexMap`]: https://docs.rs/indexmap/*/indexmap/map/struct.IndexMap.html
 
-</span><span class="kw">use </span><span class="kw">crate</span>::value::Value;
+</span><span class="kw">use </span><span class="kw">crate</span>::error::Error;
+<span class="kw">use </span><span class="kw">crate</span>::value::Value;
 <span class="kw">use </span>alloc::string::String;
 <span class="attr">#[cfg(feature = <span class="string">"preserve_order"</span>)]
 </span><span class="kw">use </span>alloc::vec::Vec;
@@ -1465,6 +1506,29 @@
     {
         <span class="self">self</span>.map.retain(f);
     }
+
+    <span class="doccomment">/// Sorts this map's entries in-place using `str`'s usual ordering.
+    ///
+    /// If serde_json's "preserve_order" feature is not enabled, this method
+    /// does no work because all JSON maps are always kept in a sorted state.
+    ///
+    /// If serde_json's "preserve_order" feature is enabled, this method
+    /// destroys the original source order or insertion order of this map in
+    /// favor of an alphanumerical order that matches how a BTreeMap with the
+    /// same contents would be ordered. This takes **O(n log n + c)** time where
+    /// _n_ is the length of the map and _c_ is the capacity.
+    ///
+    /// Other maps nested within the values of this map are not sorted. If you
+    /// need the entire data structure to be sorted at all levels, you must also
+    /// call
+    /// &lt;code&gt;map.[values_mut]\().for_each([Value::sort_all_objects])&lt;/code&gt;.
+    ///
+    /// [values_mut]: Map::values_mut
+    </span><span class="attr">#[inline]
+    </span><span class="kw">pub fn </span>sort_keys(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="attr">#[cfg(feature = <span class="string">"preserve_order"</span>)]
+        </span><span class="self">self</span>.map.sort_unstable_keys();
+    }
 }
 
 <span class="attr">#[allow(clippy::derivable_impls)] </span><span class="comment">// clippy bug: https://github.com/rust-lang/rust-clippy/issues/7655
@@ -1532,7 +1596,7 @@
 /// }
 /// # ;
 /// ```
-</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, Q&gt; ops::Index&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Q&gt; <span class="kw">for </span>Map&lt;String, Value&gt;
+</span><span class="kw">impl</span>&lt;Q&gt; ops::Index&lt;<span class="kw-2">&amp;</span>Q&gt; <span class="kw">for </span>Map&lt;String, Value&gt;
 <span class="kw">where
     </span>String: Borrow&lt;Q&gt;,
     Q: <span class="question-mark">?</span>Sized + Ord + Eq + Hash,
@@ -1555,7 +1619,7 @@
 /// #
 /// map["key"] = json!("value");
 /// ```
-</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, Q&gt; ops::IndexMut&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Q&gt; <span class="kw">for </span>Map&lt;String, Value&gt;
+</span><span class="kw">impl</span>&lt;Q&gt; ops::IndexMut&lt;<span class="kw-2">&amp;</span>Q&gt; <span class="kw">for </span>Map&lt;String, Value&gt;
 <span class="kw">where
     </span>String: Borrow&lt;Q&gt;,
     Q: <span class="question-mark">?</span>Sized + Ord + Eq + Hash,
@@ -1681,6 +1745,22 @@
 
         <span class="kw">impl </span>$(<span class="macro-nonterminal">$generics</span>)* FusedIterator <span class="kw">for </span><span class="macro-nonterminal">$name </span>$(<span class="macro-nonterminal">$generics</span>)* {}
     }
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; de::IntoDeserializer&lt;<span class="lifetime">'de</span>, Error&gt; <span class="kw">for </span>Map&lt;String, Value&gt; {
+    <span class="kw">type </span>Deserializer = <span class="self">Self</span>;
+
+    <span class="kw">fn </span>into_deserializer(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Deserializer {
+        <span class="self">self
+    </span>}
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; de::IntoDeserializer&lt;<span class="lifetime">'de</span>, Error&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'de </span>Map&lt;String, Value&gt; {
+    <span class="kw">type </span>Deserializer = <span class="self">Self</span>;
+
+    <span class="kw">fn </span>into_deserializer(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Deserializer {
+        <span class="self">self
+    </span>}
 }
 
 <span class="comment">//////////////////////////////////////////////////////////////////////////////

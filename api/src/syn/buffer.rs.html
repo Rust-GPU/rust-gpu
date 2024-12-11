@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-2.0.77/src/buffer.rs`."><title>buffer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../syn/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-2.0.90/src/buffer.rs`."><title>buffer.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../syn/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -429,6 +429,8 @@
 <a href="#429" id="429">429</a>
 <a href="#430" id="430">430</a>
 <a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A stably addressed token buffer supporting efficient traversal based on a
 //! cheaply copyable cursor.
 
@@ -614,52 +616,6 @@
         </span><span class="self">self</span>.ptr == <span class="self">self</span>.scope
     }
 
-    <span class="doccomment">/// If the cursor is pointing at a `Group` with the given delimiter, returns
-    /// a cursor into that group and one pointing to the next `TokenTree`.
-    </span><span class="kw">pub fn </span>group(<span class="kw-2">mut </span><span class="self">self</span>, delim: Delimiter) -&gt; <span class="prelude-ty">Option</span>&lt;(Cursor&lt;<span class="lifetime">'a</span>&gt;, DelimSpan, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
-        <span class="comment">// If we're not trying to enter a none-delimited group, we want to
-        // ignore them. We have to make sure to _not_ ignore them when we want
-        // to enter them, of course. For obvious reasons.
-        </span><span class="kw">if </span>delim != Delimiter::None {
-            <span class="self">self</span>.ignore_none();
-        }
-
-        <span class="kw">if let </span>Entry::Group(group, end_offset) = <span class="self">self</span>.entry() {
-            <span class="kw">if </span>group.delimiter() == delim {
-                <span class="kw">let </span>span = group.delim_span();
-                <span class="kw">let </span>end_of_group = <span class="kw">unsafe </span>{ <span class="self">self</span>.ptr.add(<span class="kw-2">*</span>end_offset) };
-                <span class="kw">let </span>inside_of_group = <span class="kw">unsafe </span>{ Cursor::create(<span class="self">self</span>.ptr.add(<span class="number">1</span>), end_of_group) };
-                <span class="kw">let </span>after_group = <span class="kw">unsafe </span>{ Cursor::create(end_of_group, <span class="self">self</span>.scope) };
-                <span class="kw">return </span><span class="prelude-val">Some</span>((inside_of_group, span, after_group));
-            }
-        }
-
-        <span class="prelude-val">None
-    </span>}
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>any_group(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Cursor&lt;<span class="lifetime">'a</span>&gt;, Delimiter, DelimSpan, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
-        <span class="kw">if let </span>Entry::Group(group, end_offset) = <span class="self">self</span>.entry() {
-            <span class="kw">let </span>delimiter = group.delimiter();
-            <span class="kw">let </span>span = group.delim_span();
-            <span class="kw">let </span>end_of_group = <span class="kw">unsafe </span>{ <span class="self">self</span>.ptr.add(<span class="kw-2">*</span>end_offset) };
-            <span class="kw">let </span>inside_of_group = <span class="kw">unsafe </span>{ Cursor::create(<span class="self">self</span>.ptr.add(<span class="number">1</span>), end_of_group) };
-            <span class="kw">let </span>after_group = <span class="kw">unsafe </span>{ Cursor::create(end_of_group, <span class="self">self</span>.scope) };
-            <span class="kw">return </span><span class="prelude-val">Some</span>((inside_of_group, delimiter, span, after_group));
-        }
-
-        <span class="prelude-val">None
-    </span>}
-
-    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>any_group_token(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Group, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
-        <span class="kw">if let </span>Entry::Group(group, end_offset) = <span class="self">self</span>.entry() {
-            <span class="kw">let </span>end_of_group = <span class="kw">unsafe </span>{ <span class="self">self</span>.ptr.add(<span class="kw-2">*</span>end_offset) };
-            <span class="kw">let </span>after_group = <span class="kw">unsafe </span>{ Cursor::create(end_of_group, <span class="self">self</span>.scope) };
-            <span class="kw">return </span><span class="prelude-val">Some</span>((group.clone(), after_group));
-        }
-
-        <span class="prelude-val">None
-    </span>}
-
     <span class="doccomment">/// If the cursor is pointing at a `Ident`, returns it along with a cursor
     /// pointing at the next `TokenTree`.
     </span><span class="kw">pub fn </span>ident(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Ident, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
@@ -709,6 +665,54 @@
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
     }
+
+    <span class="doccomment">/// If the cursor is pointing at a `Group` with the given delimiter, returns
+    /// a cursor into that group and one pointing to the next `TokenTree`.
+    </span><span class="kw">pub fn </span>group(<span class="kw-2">mut </span><span class="self">self</span>, delim: Delimiter) -&gt; <span class="prelude-ty">Option</span>&lt;(Cursor&lt;<span class="lifetime">'a</span>&gt;, DelimSpan, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
+        <span class="comment">// If we're not trying to enter a none-delimited group, we want to
+        // ignore them. We have to make sure to _not_ ignore them when we want
+        // to enter them, of course. For obvious reasons.
+        </span><span class="kw">if </span>delim != Delimiter::None {
+            <span class="self">self</span>.ignore_none();
+        }
+
+        <span class="kw">if let </span>Entry::Group(group, end_offset) = <span class="self">self</span>.entry() {
+            <span class="kw">if </span>group.delimiter() == delim {
+                <span class="kw">let </span>span = group.delim_span();
+                <span class="kw">let </span>end_of_group = <span class="kw">unsafe </span>{ <span class="self">self</span>.ptr.add(<span class="kw-2">*</span>end_offset) };
+                <span class="kw">let </span>inside_of_group = <span class="kw">unsafe </span>{ Cursor::create(<span class="self">self</span>.ptr.add(<span class="number">1</span>), end_of_group) };
+                <span class="kw">let </span>after_group = <span class="kw">unsafe </span>{ Cursor::create(end_of_group, <span class="self">self</span>.scope) };
+                <span class="kw">return </span><span class="prelude-val">Some</span>((inside_of_group, span, after_group));
+            }
+        }
+
+        <span class="prelude-val">None
+    </span>}
+
+    <span class="doccomment">/// If the cursor is pointing at a `Group`, returns a cursor into the group
+    /// and one pointing to the next `TokenTree`.
+    </span><span class="kw">pub fn </span>any_group(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Cursor&lt;<span class="lifetime">'a</span>&gt;, Delimiter, DelimSpan, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
+        <span class="kw">if let </span>Entry::Group(group, end_offset) = <span class="self">self</span>.entry() {
+            <span class="kw">let </span>delimiter = group.delimiter();
+            <span class="kw">let </span>span = group.delim_span();
+            <span class="kw">let </span>end_of_group = <span class="kw">unsafe </span>{ <span class="self">self</span>.ptr.add(<span class="kw-2">*</span>end_offset) };
+            <span class="kw">let </span>inside_of_group = <span class="kw">unsafe </span>{ Cursor::create(<span class="self">self</span>.ptr.add(<span class="number">1</span>), end_of_group) };
+            <span class="kw">let </span>after_group = <span class="kw">unsafe </span>{ Cursor::create(end_of_group, <span class="self">self</span>.scope) };
+            <span class="kw">return </span><span class="prelude-val">Some</span>((inside_of_group, delimiter, span, after_group));
+        }
+
+        <span class="prelude-val">None
+    </span>}
+
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>any_group_token(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(Group, Cursor&lt;<span class="lifetime">'a</span>&gt;)&gt; {
+        <span class="kw">if let </span>Entry::Group(group, end_offset) = <span class="self">self</span>.entry() {
+            <span class="kw">let </span>end_of_group = <span class="kw">unsafe </span>{ <span class="self">self</span>.ptr.add(<span class="kw-2">*</span>end_offset) };
+            <span class="kw">let </span>after_group = <span class="kw">unsafe </span>{ Cursor::create(end_of_group, <span class="self">self</span>.scope) };
+            <span class="kw">return </span><span class="prelude-val">Some</span>((group.clone(), after_group));
+        }
+
+        <span class="prelude-val">None
+    </span>}
 
     <span class="doccomment">/// Copies all remaining tokens visible from this cursor into a
     /// `TokenStream`.

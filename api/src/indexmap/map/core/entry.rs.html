@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.6.0/src/map/core/entry.rs`."><title>entry.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../indexmap/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/indexmap-2.7.0/src/map/core/entry.rs`."><title>entry.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="indexmap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../indexmap/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -533,6 +533,40 @@
 <a href="#533" id="533">533</a>
 <a href="#534" id="534">534</a>
 <a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
 </pre></div><pre class="rust"><code><span class="kw">use super</span>::{equivalent, Entries, IndexMapCore, RefMut};
 <span class="kw">use </span><span class="kw">crate</span>::HashValue;
 <span class="kw">use </span>core::{fmt, mem};
@@ -571,6 +605,19 @@
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             Entry::Occupied(<span class="kw-2">ref </span>entry) =&gt; entry.index(),
             Entry::Vacant(<span class="kw-2">ref </span>entry) =&gt; entry.index(),
+        }
+    }
+
+    <span class="doccomment">/// Sets the value of the entry (after inserting if vacant), and returns an `OccupiedEntry`.
+    ///
+    /// Computes in **O(1)** time (amortized average).
+    </span><span class="kw">pub fn </span>insert_entry(<span class="self">self</span>, value: V) -&gt; OccupiedEntry&lt;<span class="lifetime">'a</span>, K, V&gt; {
+        <span class="kw">match </span><span class="self">self </span>{
+            Entry::Occupied(<span class="kw-2">mut </span>entry) =&gt; {
+                entry.insert(value);
+                entry
+            }
+            Entry::Vacant(entry) =&gt; entry.insert_entry(value),
         }
     }
 
@@ -671,6 +718,13 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; OccupiedEntry&lt;<span class="lifetime">'a</span>, K, V&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>new(
+        entries: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Entries&lt;K, V&gt;,
+        index: hash_table::OccupiedEntry&lt;<span class="lifetime">'a</span>, usize&gt;,
+    ) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ entries, index }
+    }
+
     <span class="doccomment">/// Return the index of the key-value pair
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
@@ -715,6 +769,11 @@
     </span><span class="kw">pub fn </span>into_mut(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V {
         <span class="kw">let </span>index = <span class="self">self</span>.index();
         <span class="kw-2">&amp;mut </span><span class="self">self</span>.entries[index].value
+    }
+
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>into_muts(<span class="self">self</span>) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>K, <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V) {
+        <span class="kw">let </span>index = <span class="self">self</span>.index();
+        <span class="self">self</span>.entries[index].muts()
     }
 
     <span class="doccomment">/// Sets the value of the entry to `value`, and returns the entry's old value.
@@ -878,9 +937,18 @@
 
     <span class="doccomment">/// Inserts the entry's key and the given value into the map, and returns a mutable reference
     /// to the value.
-    </span><span class="kw">pub fn </span>insert(<span class="kw-2">mut </span><span class="self">self</span>, value: V) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V {
-        <span class="kw">let </span>i = <span class="self">self</span>.map.insert_unique(<span class="self">self</span>.hash, <span class="self">self</span>.key, value);
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>.map.entries[i].value
+    ///
+    /// Computes in **O(1)** time (amortized average).
+    </span><span class="kw">pub fn </span>insert(<span class="self">self</span>, value: V) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>V {
+        <span class="self">self</span>.insert_entry(value).into_mut()
+    }
+
+    <span class="doccomment">/// Inserts the entry's key and the given value into the map, and returns an `OccupiedEntry`.
+    ///
+    /// Computes in **O(1)** time (amortized average).
+    </span><span class="kw">pub fn </span>insert_entry(<span class="self">self</span>, value: V) -&gt; OccupiedEntry&lt;<span class="lifetime">'a</span>, K, V&gt; {
+        <span class="kw">let </span><span class="self">Self </span>{ map, hash, key } = <span class="self">self</span>;
+        map.insert_unique(hash, key, value)
     }
 
     <span class="doccomment">/// Inserts the entry's key and the given value into the map at its ordered

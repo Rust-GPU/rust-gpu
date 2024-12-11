@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bytemuck-1.18.0/src/checked.rs`."><title>checked.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bytemuck" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../bytemuck/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/bytemuck-1.20.0/src/checked.rs`."><title>checked.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bytemuck" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../bytemuck/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -519,6 +519,14 @@
 <a href="#519" id="519">519</a>
 <a href="#520" id="520">520</a>
 <a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Checked versions of the casting functions exposed in crate root
 //! that support [`CheckedBitPattern`] types.
 
@@ -813,7 +821,7 @@
   }
 }
 
-<span class="doccomment">/// Try to cast `T` into `U`.
+<span class="doccomment">/// Try to cast `A` into `B`.
 ///
 /// Note that for this particular type of cast, alignment isn't a factor. The
 /// input value is semantically copied into the function and then returned to a
@@ -837,7 +845,7 @@
   }
 }
 
-<span class="doccomment">/// Try to convert a `&amp;T` into `&amp;U`.
+<span class="doccomment">/// Try to convert a `&amp;A` into `&amp;B`.
 ///
 /// ## Failure
 ///
@@ -857,7 +865,7 @@
   }
 }
 
-<span class="doccomment">/// Try to convert a `&amp;mut T` into `&amp;mut U`.
+<span class="doccomment">/// Try to convert a `&amp;mut A` into `&amp;mut B`.
 ///
 /// As [`try_cast_ref`], but `mut`.
 </span><span class="attr">#[inline]
@@ -934,6 +942,7 @@
 ///
 /// This is [`try_from_bytes`] but will panic on error.
 </span><span class="attr">#[inline]
+#[cfg_attr(feature = <span class="string">"track_caller"</span>, track_caller)]
 </span><span class="kw">pub fn </span>from_bytes&lt;T: CheckedBitPattern&gt;(s: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="kw-2">&amp;</span>T {
   <span class="kw">match </span>try_from_bytes(s) {
     <span class="prelude-val">Ok</span>(t) =&gt; t,
@@ -947,6 +956,7 @@
 ///
 /// This is [`try_from_bytes_mut`] but will panic on error.
 </span><span class="attr">#[inline]
+#[cfg_attr(feature = <span class="string">"track_caller"</span>, track_caller)]
 </span><span class="kw">pub fn </span>from_bytes_mut&lt;T: NoUninit + CheckedBitPattern&gt;(s: <span class="kw-2">&amp;mut </span>[u8]) -&gt; <span class="kw-2">&amp;mut </span>T {
   <span class="kw">match </span>try_from_bytes_mut(s) {
     <span class="prelude-val">Ok</span>(t) =&gt; t,
@@ -959,6 +969,7 @@
 /// ## Panics
 /// * This is like `try_pod_read_unaligned` but will panic on failure.
 </span><span class="attr">#[inline]
+#[cfg_attr(feature = <span class="string">"track_caller"</span>, track_caller)]
 </span><span class="kw">pub fn </span>pod_read_unaligned&lt;T: CheckedBitPattern&gt;(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; T {
   <span class="kw">match </span>try_pod_read_unaligned(bytes) {
     <span class="prelude-val">Ok</span>(t) =&gt; t,
@@ -966,12 +977,13 @@
   }
 }
 
-<span class="doccomment">/// Cast `T` into `U`
+<span class="doccomment">/// Cast `A` into `B`
 ///
 /// ## Panics
 ///
 /// * This is like [`try_cast`], but will panic on a size mismatch.
 </span><span class="attr">#[inline]
+#[cfg_attr(feature = <span class="string">"track_caller"</span>, track_caller)]
 </span><span class="kw">pub fn </span>cast&lt;A: NoUninit, B: CheckedBitPattern&gt;(a: A) -&gt; B {
   <span class="kw">match </span>try_cast(a) {
     <span class="prelude-val">Ok</span>(t) =&gt; t,
@@ -979,12 +991,13 @@
   }
 }
 
-<span class="doccomment">/// Cast `&amp;mut T` into `&amp;mut U`.
+<span class="doccomment">/// Cast `&amp;mut A` into `&amp;mut B`.
 ///
 /// ## Panics
 ///
 /// This is [`try_cast_mut`] but will panic on error.
 </span><span class="attr">#[inline]
+#[cfg_attr(feature = <span class="string">"track_caller"</span>, track_caller)]
 </span><span class="kw">pub fn </span>cast_mut&lt;
   A: NoUninit + AnyBitPattern,
   B: NoUninit + CheckedBitPattern,
@@ -997,12 +1010,13 @@
   }
 }
 
-<span class="doccomment">/// Cast `&amp;T` into `&amp;U`.
+<span class="doccomment">/// Cast `&amp;A` into `&amp;B`.
 ///
 /// ## Panics
 ///
 /// This is [`try_cast_ref`] but will panic on error.
 </span><span class="attr">#[inline]
+#[cfg_attr(feature = <span class="string">"track_caller"</span>, track_caller)]
 </span><span class="kw">pub fn </span>cast_ref&lt;A: NoUninit, B: CheckedBitPattern&gt;(a: <span class="kw-2">&amp;</span>A) -&gt; <span class="kw-2">&amp;</span>B {
   <span class="kw">match </span>try_cast_ref(a) {
     <span class="prelude-val">Ok</span>(t) =&gt; t,
@@ -1016,6 +1030,7 @@
 ///
 /// This is [`try_cast_slice`] but will panic on error.
 </span><span class="attr">#[inline]
+#[cfg_attr(feature = <span class="string">"track_caller"</span>, track_caller)]
 </span><span class="kw">pub fn </span>cast_slice&lt;A: NoUninit, B: CheckedBitPattern&gt;(a: <span class="kw-2">&amp;</span>[A]) -&gt; <span class="kw-2">&amp;</span>[B] {
   <span class="kw">match </span>try_cast_slice(a) {
     <span class="prelude-val">Ok</span>(t) =&gt; t,
@@ -1023,12 +1038,13 @@
   }
 }
 
-<span class="doccomment">/// Cast `&amp;mut [T]` into `&amp;mut [U]`.
+<span class="doccomment">/// Cast `&amp;mut [A]` into `&amp;mut [B]`.
 ///
 /// ## Panics
 ///
 /// This is [`try_cast_slice_mut`] but will panic on error.
 </span><span class="attr">#[inline]
+#[cfg_attr(feature = <span class="string">"track_caller"</span>, track_caller)]
 </span><span class="kw">pub fn </span>cast_slice_mut&lt;
   A: NoUninit + AnyBitPattern,
   B: NoUninit + CheckedBitPattern,

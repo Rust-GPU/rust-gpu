@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_derive-1.0.210/src/internals/attr.rs`."><title>attr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="serde_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../serde_derive/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_derive-1.0.216/src/internals/attr.rs`."><title>attr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="serde_derive" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../serde_derive/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1834,42 +1834,8 @@
 <a href="#1834" id="1834">1834</a>
 <a href="#1835" id="1835">1835</a>
 <a href="#1836" id="1836">1836</a>
-<a href="#1837" id="1837">1837</a>
-<a href="#1838" id="1838">1838</a>
-<a href="#1839" id="1839">1839</a>
-<a href="#1840" id="1840">1840</a>
-<a href="#1841" id="1841">1841</a>
-<a href="#1842" id="1842">1842</a>
-<a href="#1843" id="1843">1843</a>
-<a href="#1844" id="1844">1844</a>
-<a href="#1845" id="1845">1845</a>
-<a href="#1846" id="1846">1846</a>
-<a href="#1847" id="1847">1847</a>
-<a href="#1848" id="1848">1848</a>
-<a href="#1849" id="1849">1849</a>
-<a href="#1850" id="1850">1850</a>
-<a href="#1851" id="1851">1851</a>
-<a href="#1852" id="1852">1852</a>
-<a href="#1853" id="1853">1853</a>
-<a href="#1854" id="1854">1854</a>
-<a href="#1855" id="1855">1855</a>
-<a href="#1856" id="1856">1856</a>
-<a href="#1857" id="1857">1857</a>
-<a href="#1858" id="1858">1858</a>
-<a href="#1859" id="1859">1859</a>
-<a href="#1860" id="1860">1860</a>
-<a href="#1861" id="1861">1861</a>
-<a href="#1862" id="1862">1862</a>
-<a href="#1863" id="1863">1863</a>
-<a href="#1864" id="1864">1864</a>
-<a href="#1865" id="1865">1865</a>
-<a href="#1866" id="1866">1866</a>
-<a href="#1867" id="1867">1867</a>
-<a href="#1868" id="1868">1868</a>
-<a href="#1869" id="1869">1869</a>
-<a href="#1870" id="1870">1870</a>
-<a href="#1871" id="1871">1871</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::internals::symbol::<span class="kw-2">*</span>;
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::internals::name::{MultiName, Name};
+<span class="kw">use </span><span class="kw">crate</span>::internals::symbol::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::internals::{ungroup, Ctxt};
 <span class="kw">use </span>proc_macro2::{Spacing, Span, TokenStream, TokenTree};
 <span class="kw">use </span>quote::ToTokens;
@@ -1879,6 +1845,7 @@
 <span class="kw">use </span>syn::meta::ParseNestedMeta;
 <span class="kw">use </span>syn::parse::ParseStream;
 <span class="kw">use </span>syn::punctuated::Punctuated;
+<span class="kw">use </span>syn::spanned::Spanned;
 <span class="kw">use </span>syn::{parse_quote, token, Ident, Lifetime, Token};
 
 <span class="comment">// This module handles parsing of `#[serde(...)]` attributes. The entrypoints
@@ -1891,7 +1858,7 @@
 
 </span><span class="kw">pub use </span><span class="kw">crate</span>::internals::case::RenameRule;
 
-<span class="kw">struct </span>Attr&lt;<span class="lifetime">'c</span>, T&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Attr&lt;<span class="lifetime">'c</span>, T&gt; {
     cx: <span class="kw-2">&amp;</span><span class="lifetime">'c </span>Ctxt,
     name: Symbol,
     tokens: TokenStream,
@@ -1932,7 +1899,7 @@
         }
     }
 
-    <span class="kw">fn </span>get(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
         <span class="self">self</span>.value
     }
 
@@ -1960,7 +1927,7 @@
     }
 }
 
-<span class="kw">struct </span>VecAttr&lt;<span class="lifetime">'c</span>, T&gt; {
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>VecAttr&lt;<span class="lifetime">'c</span>, T&gt; {
     cx: <span class="kw-2">&amp;</span><span class="lifetime">'c </span>Ctxt,
     name: Symbol,
     first_dup_tokens: TokenStream,
@@ -1995,63 +1962,13 @@
         }
     }
 
-    <span class="kw">fn </span>get(<span class="self">self</span>) -&gt; Vec&lt;T&gt; {
+    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get(<span class="self">self</span>) -&gt; Vec&lt;T&gt; {
         <span class="self">self</span>.values
     }
 }
 
-<span class="kw">pub struct </span>Name {
-    serialize: String,
-    serialize_renamed: bool,
-    deserialize: String,
-    deserialize_renamed: bool,
-    deserialize_aliases: BTreeSet&lt;String&gt;,
-}
-
-<span class="kw">fn </span>unraw(ident: <span class="kw-2">&amp;</span>Ident) -&gt; String {
-    ident.to_string().trim_start_matches(<span class="string">"r#"</span>).to_owned()
-}
-
-<span class="kw">impl </span>Name {
-    <span class="kw">fn </span>from_attrs(
-        source_name: String,
-        ser_name: Attr&lt;String&gt;,
-        de_name: Attr&lt;String&gt;,
-        de_aliases: <span class="prelude-ty">Option</span>&lt;VecAttr&lt;String&gt;&gt;,
-    ) -&gt; Name {
-        <span class="kw">let </span><span class="kw-2">mut </span>alias_set = BTreeSet::new();
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(de_aliases) = de_aliases {
-            <span class="kw">for </span>alias_name <span class="kw">in </span>de_aliases.get() {
-                alias_set.insert(alias_name);
-            }
-        }
-
-        <span class="kw">let </span>ser_name = ser_name.get();
-        <span class="kw">let </span>ser_renamed = ser_name.is_some();
-        <span class="kw">let </span>de_name = de_name.get();
-        <span class="kw">let </span>de_renamed = de_name.is_some();
-        Name {
-            serialize: ser_name.unwrap_or_else(|| source_name.clone()),
-            serialize_renamed: ser_renamed,
-            deserialize: de_name.unwrap_or(source_name),
-            deserialize_renamed: de_renamed,
-            deserialize_aliases: alias_set,
-        }
-    }
-
-    <span class="doccomment">/// Return the container name for the container when serializing.
-    </span><span class="kw">pub fn </span>serialize_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.serialize
-    }
-
-    <span class="doccomment">/// Return the container name for the container when deserializing.
-    </span><span class="kw">pub fn </span>deserialize_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.deserialize
-    }
-
-    <span class="kw">fn </span>deserialize_aliases(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>BTreeSet&lt;String&gt; {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.deserialize_aliases
-    }
+<span class="kw">fn </span>unraw(ident: <span class="kw-2">&amp;</span>Ident) -&gt; Ident {
+    Ident::new(ident.to_string().trim_start_matches(<span class="string">"r#"</span>), ident.span())
 }
 
 <span class="attr">#[derive(Copy, Clone)]
@@ -2073,7 +1990,7 @@
 
 <span class="doccomment">/// Represents struct or enum attribute information.
 </span><span class="kw">pub struct </span>Container {
-    name: Name,
+    name: MultiName,
     transparent: bool,
     deny_unknown_fields: bool,
     default: Default,
@@ -2197,8 +2114,8 @@
                     <span class="comment">// #[serde(rename = "foo")]
                     // #[serde(rename(serialize = "foo", deserialize = "bar"))]
                     </span><span class="kw">let </span>(ser, de) = get_renames(cx, RENAME, <span class="kw-2">&amp;</span>meta)<span class="question-mark">?</span>;
-                    ser_name.set_opt(<span class="kw-2">&amp;</span>meta.path, ser.as_ref().map(syn::LitStr::value));
-                    de_name.set_opt(<span class="kw-2">&amp;</span>meta.path, de.as_ref().map(syn::LitStr::value));
+                    ser_name.set_opt(<span class="kw-2">&amp;</span>meta.path, ser.as_ref().map(Name::from));
+                    de_name.set_opt(<span class="kw-2">&amp;</span>meta.path, de.as_ref().map(Name::from));
                 } <span class="kw">else if </span>meta.path == RENAME_ALL {
                     <span class="comment">// #[serde(rename_all = "foo")]
                     // #[serde(rename_all(serialize = "foo", deserialize = "bar"))]
@@ -2437,7 +2354,7 @@
         }
 
         Container {
-            name: Name::from_attrs(unraw(<span class="kw-2">&amp;</span>item.ident), ser_name, de_name, <span class="prelude-val">None</span>),
+            name: MultiName::from_attrs(Name::from(<span class="kw-2">&amp;</span>unraw(<span class="kw-2">&amp;</span>item.ident)), ser_name, de_name, <span class="prelude-val">None</span>),
             transparent: transparent.get(),
             deny_unknown_fields: deny_unknown_fields.get(),
             default: default.get().unwrap_or(Default::None),
@@ -2464,7 +2381,7 @@
         }
     }
 
-    <span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Name {
+    <span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>MultiName {
         <span class="kw-2">&amp;</span><span class="self">self</span>.name
     }
 
@@ -2651,7 +2568,7 @@
 
 <span class="doccomment">/// Represents variant attribute information
 </span><span class="kw">pub struct </span>Variant {
-    name: Name,
+    name: MultiName,
     rename_all_rules: RenameAllRules,
     ser_bound: <span class="prelude-ty">Option</span>&lt;Vec&lt;syn::WherePredicate&gt;&gt;,
     de_bound: <span class="prelude-ty">Option</span>&lt;Vec&lt;syn::WherePredicate&gt;&gt;,
@@ -2702,15 +2619,15 @@
                     <span class="comment">// #[serde(rename = "foo")]
                     // #[serde(rename(serialize = "foo", deserialize = "bar"))]
                     </span><span class="kw">let </span>(ser, de) = get_multiple_renames(cx, <span class="kw-2">&amp;</span>meta)<span class="question-mark">?</span>;
-                    ser_name.set_opt(<span class="kw-2">&amp;</span>meta.path, ser.as_ref().map(syn::LitStr::value));
+                    ser_name.set_opt(<span class="kw-2">&amp;</span>meta.path, ser.as_ref().map(Name::from));
                     <span class="kw">for </span>de_value <span class="kw">in </span>de {
-                        de_name.set_if_none(de_value.value());
-                        de_aliases.insert(<span class="kw-2">&amp;</span>meta.path, de_value.value());
+                        de_name.set_if_none(Name::from(<span class="kw-2">&amp;</span>de_value));
+                        de_aliases.insert(<span class="kw-2">&amp;</span>meta.path, Name::from(<span class="kw-2">&amp;</span>de_value));
                     }
                 } <span class="kw">else if </span>meta.path == ALIAS {
                     <span class="comment">// #[serde(alias = "foo")]
                     </span><span class="kw">if let </span><span class="prelude-val">Some</span>(s) = get_lit_str(cx, ALIAS, <span class="kw-2">&amp;</span>meta)<span class="question-mark">? </span>{
-                        de_aliases.insert(<span class="kw-2">&amp;</span>meta.path, s.value());
+                        de_aliases.insert(<span class="kw-2">&amp;</span>meta.path, Name::from(<span class="kw-2">&amp;</span>s));
                     }
                 } <span class="kw">else if </span>meta.path == RENAME_ALL {
                     <span class="comment">// #[serde(rename_all = "foo")]
@@ -2759,13 +2676,13 @@
                         ser_path
                             .path
                             .segments
-                            .push(Ident::new(<span class="string">"serialize"</span>, Span::call_site()).into());
+                            .push(Ident::new(<span class="string">"serialize"</span>, ser_path.span()).into());
                         serialize_with.set(<span class="kw-2">&amp;</span>meta.path, ser_path);
                         <span class="kw">let </span><span class="kw-2">mut </span>de_path = path;
                         de_path
                             .path
                             .segments
-                            .push(Ident::new(<span class="string">"deserialize"</span>, Span::call_site()).into());
+                            .push(Ident::new(<span class="string">"deserialize"</span>, de_path.span()).into());
                         deserialize_with.set(<span class="kw-2">&amp;</span>meta.path, de_path);
                     }
                 } <span class="kw">else if </span>meta.path == SERIALIZE_WITH {
@@ -2817,7 +2734,12 @@
         }
 
         Variant {
-            name: Name::from_attrs(unraw(<span class="kw-2">&amp;</span>variant.ident), ser_name, de_name, <span class="prelude-val">Some</span>(de_aliases)),
+            name: MultiName::from_attrs(
+                Name::from(<span class="kw-2">&amp;</span>unraw(<span class="kw-2">&amp;</span>variant.ident)),
+                ser_name,
+                de_name,
+                <span class="prelude-val">Some</span>(de_aliases),
+            ),
             rename_all_rules: RenameAllRules {
                 serialize: rename_all_ser_rule.get().unwrap_or(RenameRule::None),
                 deserialize: rename_all_de_rule.get().unwrap_or(RenameRule::None),
@@ -2834,20 +2756,23 @@
         }
     }
 
-    <span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Name {
+    <span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>MultiName {
         <span class="kw-2">&amp;</span><span class="self">self</span>.name
     }
 
-    <span class="kw">pub fn </span>aliases(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>BTreeSet&lt;String&gt; {
+    <span class="kw">pub fn </span>aliases(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>BTreeSet&lt;Name&gt; {
         <span class="self">self</span>.name.deserialize_aliases()
     }
 
     <span class="kw">pub fn </span>rename_by_rules(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rules: RenameAllRules) {
         <span class="kw">if </span>!<span class="self">self</span>.name.serialize_renamed {
-            <span class="self">self</span>.name.serialize = rules.serialize.apply_to_variant(<span class="kw-2">&amp;</span><span class="self">self</span>.name.serialize);
+            <span class="self">self</span>.name.serialize.value =
+                rules.serialize.apply_to_variant(<span class="kw-2">&amp;</span><span class="self">self</span>.name.serialize.value);
         }
         <span class="kw">if </span>!<span class="self">self</span>.name.deserialize_renamed {
-            <span class="self">self</span>.name.deserialize = rules.deserialize.apply_to_variant(<span class="kw-2">&amp;</span><span class="self">self</span>.name.deserialize);
+            <span class="self">self</span>.name.deserialize.value = rules
+                .deserialize
+                .apply_to_variant(<span class="kw-2">&amp;</span><span class="self">self</span>.name.deserialize.value);
         }
         <span class="self">self</span>.name
             .deserialize_aliases
@@ -2893,7 +2818,7 @@
 
 <span class="doccomment">/// Represents field attribute information
 </span><span class="kw">pub struct </span>Field {
-    name: Name,
+    name: MultiName,
     skip_serializing: bool,
     skip_deserializing: bool,
     skip_serializing_if: <span class="prelude-ty">Option</span>&lt;syn::ExprPath&gt;,
@@ -2952,8 +2877,11 @@
         <span class="kw">let </span><span class="kw-2">mut </span>flatten = BoolAttr::none(cx, FLATTEN);
 
         <span class="kw">let </span>ident = <span class="kw">match </span><span class="kw-2">&amp;</span>field.ident {
-            <span class="prelude-val">Some</span>(ident) =&gt; unraw(ident),
-            <span class="prelude-val">None </span>=&gt; index.to_string(),
+            <span class="prelude-val">Some</span>(ident) =&gt; Name::from(<span class="kw-2">&amp;</span>unraw(ident)),
+            <span class="prelude-val">None </span>=&gt; Name {
+                value: index.to_string(),
+                span: Span::call_site(),
+            },
         };
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(borrow_attribute) = attrs.and_then(|variant| variant.borrow.as_ref()) {
@@ -2989,15 +2917,15 @@
                     <span class="comment">// #[serde(rename = "foo")]
                     // #[serde(rename(serialize = "foo", deserialize = "bar"))]
                     </span><span class="kw">let </span>(ser, de) = get_multiple_renames(cx, <span class="kw-2">&amp;</span>meta)<span class="question-mark">?</span>;
-                    ser_name.set_opt(<span class="kw-2">&amp;</span>meta.path, ser.as_ref().map(syn::LitStr::value));
+                    ser_name.set_opt(<span class="kw-2">&amp;</span>meta.path, ser.as_ref().map(Name::from));
                     <span class="kw">for </span>de_value <span class="kw">in </span>de {
-                        de_name.set_if_none(de_value.value());
-                        de_aliases.insert(<span class="kw-2">&amp;</span>meta.path, de_value.value());
+                        de_name.set_if_none(Name::from(<span class="kw-2">&amp;</span>de_value));
+                        de_aliases.insert(<span class="kw-2">&amp;</span>meta.path, Name::from(<span class="kw-2">&amp;</span>de_value));
                     }
                 } <span class="kw">else if </span>meta.path == ALIAS {
                     <span class="comment">// #[serde(alias = "foo")]
                     </span><span class="kw">if let </span><span class="prelude-val">Some</span>(s) = get_lit_str(cx, ALIAS, <span class="kw-2">&amp;</span>meta)<span class="question-mark">? </span>{
-                        de_aliases.insert(<span class="kw-2">&amp;</span>meta.path, s.value());
+                        de_aliases.insert(<span class="kw-2">&amp;</span>meta.path, Name::from(<span class="kw-2">&amp;</span>s));
                     }
                 } <span class="kw">else if </span>meta.path == DEFAULT {
                     <span class="kw">if </span>meta.input.peek(<span class="macro">Token!</span>[=]) {
@@ -3041,13 +2969,13 @@
                         ser_path
                             .path
                             .segments
-                            .push(Ident::new(<span class="string">"serialize"</span>, Span::call_site()).into());
+                            .push(Ident::new(<span class="string">"serialize"</span>, ser_path.span()).into());
                         serialize_with.set(<span class="kw-2">&amp;</span>meta.path, ser_path);
                         <span class="kw">let </span><span class="kw-2">mut </span>de_path = path;
                         de_path
                             .path
                             .segments
-                            .push(Ident::new(<span class="string">"deserialize"</span>, Span::call_site()).into());
+                            .push(Ident::new(<span class="string">"deserialize"</span>, de_path.span()).into());
                         deserialize_with.set(<span class="kw-2">&amp;</span>meta.path, de_path);
                     }
                 } <span class="kw">else if </span>meta.path == BOUND {
@@ -3160,7 +3088,7 @@
         }
 
         Field {
-            name: Name::from_attrs(ident, ser_name, de_name, <span class="prelude-val">Some</span>(de_aliases)),
+            name: MultiName::from_attrs(ident, ser_name, de_name, <span class="prelude-val">Some</span>(de_aliases)),
             skip_serializing: skip_serializing.get(),
             skip_deserializing: skip_deserializing.get(),
             skip_serializing_if: skip_serializing_if.get(),
@@ -3176,20 +3104,22 @@
         }
     }
 
-    <span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Name {
+    <span class="kw">pub fn </span>name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>MultiName {
         <span class="kw-2">&amp;</span><span class="self">self</span>.name
     }
 
-    <span class="kw">pub fn </span>aliases(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>BTreeSet&lt;String&gt; {
+    <span class="kw">pub fn </span>aliases(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>BTreeSet&lt;Name&gt; {
         <span class="self">self</span>.name.deserialize_aliases()
     }
 
     <span class="kw">pub fn </span>rename_by_rules(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rules: RenameAllRules) {
         <span class="kw">if </span>!<span class="self">self</span>.name.serialize_renamed {
-            <span class="self">self</span>.name.serialize = rules.serialize.apply_to_field(<span class="kw-2">&amp;</span><span class="self">self</span>.name.serialize);
+            <span class="self">self</span>.name.serialize.value = rules.serialize.apply_to_field(<span class="kw-2">&amp;</span><span class="self">self</span>.name.serialize.value);
         }
         <span class="kw">if </span>!<span class="self">self</span>.name.deserialize_renamed {
-            <span class="self">self</span>.name.deserialize = rules.deserialize.apply_to_field(<span class="kw-2">&amp;</span><span class="self">self</span>.name.deserialize);
+            <span class="self">self</span>.name.deserialize.value = rules
+                .deserialize
+                .apply_to_field(<span class="kw-2">&amp;</span><span class="self">self</span>.name.deserialize.value);
         }
         <span class="self">self</span>.name
             .deserialize_aliases
@@ -3639,7 +3569,7 @@
 // attribute on the field so there must be at least one borrowable lifetime.
 </span><span class="kw">fn </span>borrowable_lifetimes(
     cx: <span class="kw-2">&amp;</span>Ctxt,
-    name: <span class="kw-2">&amp;</span>str,
+    name: <span class="kw-2">&amp;</span>Name,
     field: <span class="kw-2">&amp;</span>syn::Field,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;BTreeSet&lt;syn::Lifetime&gt;, ()&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>lifetimes = BTreeSet::new();

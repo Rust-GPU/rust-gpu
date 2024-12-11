@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.210/src/private/de.rs`."><title>de.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="serde" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../serde/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.216/src/private/de.rs`."><title>de.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="serde" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../serde/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -2793,6 +2793,15 @@
 <a href="#2793" id="2793">2793</a>
 <a href="#2794" id="2794">2794</a>
 <a href="#2795" id="2795">2795</a>
+<a href="#2796" id="2796">2796</a>
+<a href="#2797" id="2797">2797</a>
+<a href="#2798" id="2798">2798</a>
+<a href="#2799" id="2799">2799</a>
+<a href="#2800" id="2800">2800</a>
+<a href="#2801" id="2801">2801</a>
+<a href="#2802" id="2802">2802</a>
+<a href="#2803" id="2803">2803</a>
+<a href="#2804" id="2804">2804</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::lib::<span class="kw-2">*</span>;
 
 <span class="kw">use </span><span class="kw">crate</span>::de::value::{BorrowedBytesDeserializer, BytesDeserializer};
@@ -3108,6 +3117,17 @@
         }
     }
 
+    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'de</span>, E&gt; de::IntoDeserializer&lt;<span class="lifetime">'de</span>, E&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>Content&lt;<span class="lifetime">'de</span>&gt;
+    <span class="kw">where
+        </span>E: de::Error,
+    {
+        <span class="kw">type </span>Deserializer = ContentRefDeserializer&lt;<span class="lifetime">'a</span>, <span class="lifetime">'de</span>, E&gt;;
+
+        <span class="kw">fn </span>into_deserializer(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Deserializer {
+            ContentRefDeserializer::new(<span class="self">self</span>)
+        }
+    }
+
     <span class="doccomment">/// Used to capture data in [`Content`] from other deserializers.
     /// Cannot capture externally tagged enums, `i128` and `u128`.
     </span><span class="kw">struct </span>ContentVisitor&lt;<span class="lifetime">'de</span>&gt; {
@@ -3271,14 +3291,16 @@
         <span class="kw">where
             </span>D: Deserializer&lt;<span class="lifetime">'de</span>&gt;,
         {
-            Deserialize::deserialize(deserializer).map(|v| Content::Some(Box::new(v)))
+            <span class="kw">let </span>v = <span class="macro">tri!</span>(Deserialize::deserialize(deserializer));
+            <span class="prelude-val">Ok</span>(Content::Some(Box::new(v)))
         }
 
         <span class="kw">fn </span>visit_newtype_struct&lt;D&gt;(<span class="self">self</span>, deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Value, D::Error&gt;
         <span class="kw">where
             </span>D: Deserializer&lt;<span class="lifetime">'de</span>&gt;,
         {
-            Deserialize::deserialize(deserializer).map(|v| Content::Newtype(Box::new(v)))
+            <span class="kw">let </span>v = <span class="macro">tri!</span>(Deserialize::deserialize(deserializer));
+            <span class="prelude-val">Ok</span>(Content::Newtype(Box::new(v)))
         }
 
         <span class="kw">fn </span>visit_seq&lt;V&gt;(<span class="self">self</span>, <span class="kw-2">mut </span>visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Value, V::Error&gt;
@@ -3893,8 +3915,7 @@
         </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
         E: de::Error,
     {
-        <span class="kw">let </span>seq = content.into_iter().map(ContentDeserializer::new);
-        <span class="kw">let </span><span class="kw-2">mut </span>seq_visitor = SeqDeserializer::new(seq);
+        <span class="kw">let </span><span class="kw-2">mut </span>seq_visitor = SeqDeserializer::new(content.into_iter());
         <span class="kw">let </span>value = <span class="macro">tri!</span>(visitor.visit_seq(<span class="kw-2">&amp;mut </span>seq_visitor));
         <span class="macro">tri!</span>(seq_visitor.end());
         <span class="prelude-val">Ok</span>(value)
@@ -3908,10 +3929,7 @@
         </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
         E: de::Error,
     {
-        <span class="kw">let </span>map = content
-            .into_iter()
-            .map(|(k, v)| (ContentDeserializer::new(k), ContentDeserializer::new(v)));
-        <span class="kw">let </span><span class="kw-2">mut </span>map_visitor = MapDeserializer::new(map);
+        <span class="kw">let </span><span class="kw-2">mut </span>map_visitor = MapDeserializer::new(content.into_iter());
         <span class="kw">let </span>value = <span class="macro">tri!</span>(visitor.visit_map(<span class="kw-2">&amp;mut </span>map_visitor));
         <span class="macro">tri!</span>(map_visitor.end());
         <span class="prelude-val">Ok</span>(value)
@@ -4489,8 +4507,7 @@
         </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
         E: de::Error,
     {
-        <span class="kw">let </span>seq = content.iter().map(ContentRefDeserializer::new);
-        <span class="kw">let </span><span class="kw-2">mut </span>seq_visitor = SeqDeserializer::new(seq);
+        <span class="kw">let </span><span class="kw-2">mut </span>seq_visitor = SeqDeserializer::new(content.iter());
         <span class="kw">let </span>value = <span class="macro">tri!</span>(visitor.visit_seq(<span class="kw-2">&amp;mut </span>seq_visitor));
         <span class="macro">tri!</span>(seq_visitor.end());
         <span class="prelude-val">Ok</span>(value)
@@ -4504,12 +4521,13 @@
         </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
         E: de::Error,
     {
-        <span class="kw">let </span>map = content.iter().map(|(k, v)| {
-            (
-                ContentRefDeserializer::new(k),
-                ContentRefDeserializer::new(v),
-            )
-        });
+        <span class="kw">fn </span>content_ref_deserializer_pair&lt;<span class="lifetime">'a</span>, <span class="lifetime">'de</span>&gt;(
+            (k, v): <span class="kw-2">&amp;</span><span class="lifetime">'a </span>(Content&lt;<span class="lifetime">'de</span>&gt;, Content&lt;<span class="lifetime">'de</span>&gt;),
+        ) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Content&lt;<span class="lifetime">'de</span>&gt;, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Content&lt;<span class="lifetime">'de</span>&gt;) {
+            (k, v)
+        }
+
+        <span class="kw">let </span>map = content.iter().map(content_ref_deserializer_pair);
         <span class="kw">let </span><span class="kw-2">mut </span>map_visitor = MapDeserializer::new(map);
         <span class="kw">let </span>value = <span class="macro">tri!</span>(visitor.visit_map(<span class="kw-2">&amp;mut </span>map_visitor));
         <span class="macro">tri!</span>(map_visitor.end());

@@ -841,6 +841,8 @@
 <a href="#841" id="841">841</a>
 <a href="#842" id="842">842</a>
 <a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
 </pre></div><pre class="rust"><code><span class="comment">// BEGIN - Embark standard lints v0.4
 // do not change or add/remove here, but one can add exceptions after this section
 // for more info see: &lt;https://github.com/EmbarkStudios/rust-ecosystem/issues/59&gt;
@@ -919,7 +921,9 @@
 <span class="kw">use </span>proc_macro::TokenStream;
 <span class="kw">use </span>proc_macro2::{Delimiter, Group, Ident, Span, TokenTree};
 
-<span class="kw">use </span>syn::{punctuated::Punctuated, spanned::Spanned, visit_mut::VisitMut, ItemFn, Token};
+<span class="kw">use </span>syn::{
+    punctuated::Punctuated, spanned::Spanned, visit_mut::VisitMut, ImplItemFn, ItemFn, Token,
+};
 
 <span class="kw">use </span>quote::{quote, ToTokens};
 <span class="kw">use </span>std::fmt::Write;
@@ -1604,12 +1608,12 @@
 }
 
 <span class="kw">impl </span>VisitMut <span class="kw">for </span>SampleImplRewriter {
-    <span class="kw">fn </span>visit_impl_item_method_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, item: <span class="kw-2">&amp;mut </span>syn::ImplItemMethod) {
+    <span class="kw">fn </span>visit_impl_item_fn_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, item: <span class="kw-2">&amp;mut </span>ImplItemFn) {
         <span class="comment">// rewrite the last parameter of this method to be of type `SampleParams&lt;...&gt;` we generated earlier
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(syn::FnArg::Typed(p)) = item.sig.inputs.last_mut() {
             <span class="kw-2">*</span>p.ty.as_mut() = <span class="self">self</span>.<span class="number">1</span>.clone();
         }
-        syn::visit_mut::visit_impl_item_method_mut(<span class="self">self</span>, item);
+        syn::visit_mut::visit_impl_item_fn_mut(<span class="self">self</span>, item);
     }
 
     <span class="kw">fn </span>visit_macro_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, m: <span class="kw-2">&amp;mut </span>syn::Macro) {

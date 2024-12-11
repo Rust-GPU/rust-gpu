@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_json-1.0.128/src/value/de.rs`."><title>de.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="serde_json" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../serde_json/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/serde_json-1.0.133/src/value/de.rs`."><title>de.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="serde_json" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../serde_json/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1421,6 +1421,83 @@
 <a href="#1421" id="1421">1421</a>
 <a href="#1422" id="1422">1422</a>
 <a href="#1423" id="1423">1423</a>
+<a href="#1424" id="1424">1424</a>
+<a href="#1425" id="1425">1425</a>
+<a href="#1426" id="1426">1426</a>
+<a href="#1427" id="1427">1427</a>
+<a href="#1428" id="1428">1428</a>
+<a href="#1429" id="1429">1429</a>
+<a href="#1430" id="1430">1430</a>
+<a href="#1431" id="1431">1431</a>
+<a href="#1432" id="1432">1432</a>
+<a href="#1433" id="1433">1433</a>
+<a href="#1434" id="1434">1434</a>
+<a href="#1435" id="1435">1435</a>
+<a href="#1436" id="1436">1436</a>
+<a href="#1437" id="1437">1437</a>
+<a href="#1438" id="1438">1438</a>
+<a href="#1439" id="1439">1439</a>
+<a href="#1440" id="1440">1440</a>
+<a href="#1441" id="1441">1441</a>
+<a href="#1442" id="1442">1442</a>
+<a href="#1443" id="1443">1443</a>
+<a href="#1444" id="1444">1444</a>
+<a href="#1445" id="1445">1445</a>
+<a href="#1446" id="1446">1446</a>
+<a href="#1447" id="1447">1447</a>
+<a href="#1448" id="1448">1448</a>
+<a href="#1449" id="1449">1449</a>
+<a href="#1450" id="1450">1450</a>
+<a href="#1451" id="1451">1451</a>
+<a href="#1452" id="1452">1452</a>
+<a href="#1453" id="1453">1453</a>
+<a href="#1454" id="1454">1454</a>
+<a href="#1455" id="1455">1455</a>
+<a href="#1456" id="1456">1456</a>
+<a href="#1457" id="1457">1457</a>
+<a href="#1458" id="1458">1458</a>
+<a href="#1459" id="1459">1459</a>
+<a href="#1460" id="1460">1460</a>
+<a href="#1461" id="1461">1461</a>
+<a href="#1462" id="1462">1462</a>
+<a href="#1463" id="1463">1463</a>
+<a href="#1464" id="1464">1464</a>
+<a href="#1465" id="1465">1465</a>
+<a href="#1466" id="1466">1466</a>
+<a href="#1467" id="1467">1467</a>
+<a href="#1468" id="1468">1468</a>
+<a href="#1469" id="1469">1469</a>
+<a href="#1470" id="1470">1470</a>
+<a href="#1471" id="1471">1471</a>
+<a href="#1472" id="1472">1472</a>
+<a href="#1473" id="1473">1473</a>
+<a href="#1474" id="1474">1474</a>
+<a href="#1475" id="1475">1475</a>
+<a href="#1476" id="1476">1476</a>
+<a href="#1477" id="1477">1477</a>
+<a href="#1478" id="1478">1478</a>
+<a href="#1479" id="1479">1479</a>
+<a href="#1480" id="1480">1480</a>
+<a href="#1481" id="1481">1481</a>
+<a href="#1482" id="1482">1482</a>
+<a href="#1483" id="1483">1483</a>
+<a href="#1484" id="1484">1484</a>
+<a href="#1485" id="1485">1485</a>
+<a href="#1486" id="1486">1486</a>
+<a href="#1487" id="1487">1487</a>
+<a href="#1488" id="1488">1488</a>
+<a href="#1489" id="1489">1489</a>
+<a href="#1490" id="1490">1490</a>
+<a href="#1491" id="1491">1491</a>
+<a href="#1492" id="1492">1492</a>
+<a href="#1493" id="1493">1493</a>
+<a href="#1494" id="1494">1494</a>
+<a href="#1495" id="1495">1495</a>
+<a href="#1496" id="1496">1496</a>
+<a href="#1497" id="1497">1497</a>
+<a href="#1498" id="1498">1498</a>
+<a href="#1499" id="1499">1499</a>
+<a href="#1500" id="1500">1500</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::error::{Error, ErrorCode};
 <span class="kw">use </span><span class="kw">crate</span>::map::Map;
 <span class="kw">use </span><span class="kw">crate</span>::number::Number;
@@ -1434,8 +1511,8 @@
 <span class="kw">use </span>core::slice;
 <span class="kw">use </span>core::str::FromStr;
 <span class="kw">use </span>serde::de::{
-    <span class="self">self</span>, Deserialize, DeserializeSeed, EnumAccess, Expected, IntoDeserializer, MapAccess,
-    SeqAccess, Unexpected, VariantAccess, Visitor,
+    <span class="self">self</span>, Deserialize, DeserializeSeed, Deserializer <span class="kw">as _</span>, EnumAccess, Expected, IntoDeserializer,
+    MapAccess, SeqAccess, Unexpected, VariantAccess, Visitor,
 };
 <span class="kw">use </span>serde::forward_to_deserialize_any;
 
@@ -1467,9 +1544,25 @@
                 <span class="prelude-val">Ok</span>(Value::Number(value.into()))
             }
 
+            <span class="kw">fn </span>visit_i128&lt;E&gt;(<span class="self">self</span>, value: i128) -&gt; <span class="prelude-ty">Result</span>&lt;Value, E&gt;
+            <span class="kw">where
+                </span>E: serde::de::Error,
+            {
+                <span class="kw">let </span>de = serde::de::value::I128Deserializer::new(value);
+                Number::deserialize(de).map(Value::Number)
+            }
+
             <span class="attr">#[inline]
             </span><span class="kw">fn </span>visit_u64&lt;E&gt;(<span class="self">self</span>, value: u64) -&gt; <span class="prelude-ty">Result</span>&lt;Value, E&gt; {
                 <span class="prelude-val">Ok</span>(Value::Number(value.into()))
+            }
+
+            <span class="kw">fn </span>visit_u128&lt;E&gt;(<span class="self">self</span>, value: u128) -&gt; <span class="prelude-ty">Result</span>&lt;Value, E&gt;
+            <span class="kw">where
+                </span>E: serde::de::Error,
+            {
+                <span class="kw">let </span>de = serde::de::value::U128Deserializer::new(value);
+                Number::deserialize(de).map(Value::Number)
             }
 
             <span class="attr">#[inline]
@@ -1610,21 +1703,72 @@
     }
 }
 
-<span class="kw">fn </span>visit_object&lt;<span class="lifetime">'de</span>, V&gt;(object: Map&lt;String, Value&gt;, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
-<span class="kw">where
-    </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
-{
-    <span class="kw">let </span>len = object.len();
-    <span class="kw">let </span><span class="kw-2">mut </span>deserializer = MapDeserializer::new(object);
-    <span class="kw">let </span>map = <span class="macro">tri!</span>(visitor.visit_map(<span class="kw-2">&amp;mut </span>deserializer));
-    <span class="kw">let </span>remaining = deserializer.iter.len();
-    <span class="kw">if </span>remaining == <span class="number">0 </span>{
-        <span class="prelude-val">Ok</span>(map)
-    } <span class="kw">else </span>{
-        <span class="prelude-val">Err</span>(serde::de::Error::invalid_length(
-            len,
-            <span class="kw-2">&amp;</span><span class="string">"fewer elements in map"</span>,
-        ))
+<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; serde::Deserializer&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>Map&lt;String, Value&gt; {
+    <span class="kw">type </span>Error = Error;
+
+    <span class="kw">fn </span>deserialize_any&lt;V&gt;(<span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, <span class="self">Self</span>::Error&gt;
+    <span class="kw">where
+        </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
+    {
+        <span class="kw">let </span>len = <span class="self">self</span>.len();
+        <span class="kw">let </span><span class="kw-2">mut </span>deserializer = MapDeserializer::new(<span class="self">self</span>);
+        <span class="kw">let </span>map = <span class="macro">tri!</span>(visitor.visit_map(<span class="kw-2">&amp;mut </span>deserializer));
+        <span class="kw">let </span>remaining = deserializer.iter.len();
+        <span class="kw">if </span>remaining == <span class="number">0 </span>{
+            <span class="prelude-val">Ok</span>(map)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(serde::de::Error::invalid_length(
+                len,
+                <span class="kw-2">&amp;</span><span class="string">"fewer elements in map"</span>,
+            ))
+        }
+    }
+
+    <span class="kw">fn </span>deserialize_enum&lt;V&gt;(
+        <span class="self">self</span>,
+        _name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+        _variants: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str],
+        visitor: V,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, <span class="self">Self</span>::Error&gt;
+    <span class="kw">where
+        </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
+    {
+        <span class="kw">let </span><span class="kw-2">mut </span>iter = <span class="self">self</span>.into_iter();
+        <span class="kw">let </span>(variant, value) = <span class="kw">match </span>iter.next() {
+            <span class="prelude-val">Some</span>(v) =&gt; v,
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(serde::de::Error::invalid_value(
+                    Unexpected::Map,
+                    <span class="kw-2">&amp;</span><span class="string">"map with a single key"</span>,
+                ));
+            }
+        };
+        <span class="comment">// enums are encoded in json as maps with a single key:value pair
+        </span><span class="kw">if </span>iter.next().is_some() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(serde::de::Error::invalid_value(
+                Unexpected::Map,
+                <span class="kw-2">&amp;</span><span class="string">"map with a single key"</span>,
+            ));
+        }
+
+        visitor.visit_enum(EnumDeserializer {
+            variant,
+            value: <span class="prelude-val">Some</span>(value),
+        })
+    }
+
+    <span class="kw">fn </span>deserialize_ignored_any&lt;V&gt;(<span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, <span class="self">Self</span>::Error&gt;
+    <span class="kw">where
+        </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
+    {
+        drop(<span class="self">self</span>);
+        visitor.visit_unit()
+    }
+
+    <span class="macro">forward_to_deserialize_any!</span> {
+        bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
+        bytes byte_buf option unit unit_struct newtype_struct seq tuple
+        tuple_struct map <span class="kw">struct </span>identifier
     }
 }
 
@@ -1645,7 +1789,7 @@
             <span class="attr">#[cfg(not(any(feature = <span class="string">"std"</span>, feature = <span class="string">"alloc"</span>)))]
             </span>Value::String(<span class="kw">_</span>) =&gt; <span class="macro">unreachable!</span>(),
             Value::Array(v) =&gt; visit_array(v, visitor),
-            Value::Object(v) =&gt; visit_object(v, visitor),
+            Value::Object(v) =&gt; v.deserialize_any(visitor),
         }
     }
 
@@ -1676,44 +1820,24 @@
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>deserialize_enum&lt;V&gt;(
         <span class="self">self</span>,
-        _name: <span class="kw-2">&amp;</span>str,
-        _variants: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str],
+        name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+        variants: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str],
         visitor: V,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
     <span class="kw">where
         </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
     {
-        <span class="kw">let </span>(variant, value) = <span class="kw">match </span><span class="self">self </span>{
-            Value::Object(value) =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>iter = value.into_iter();
-                <span class="kw">let </span>(variant, value) = <span class="kw">match </span>iter.next() {
-                    <span class="prelude-val">Some</span>(v) =&gt; v,
-                    <span class="prelude-val">None </span>=&gt; {
-                        <span class="kw">return </span><span class="prelude-val">Err</span>(serde::de::Error::invalid_value(
-                            Unexpected::Map,
-                            <span class="kw-2">&amp;</span><span class="string">"map with a single key"</span>,
-                        ));
-                    }
-                };
-                <span class="comment">// enums are encoded in json as maps with a single key:value pair
-                </span><span class="kw">if </span>iter.next().is_some() {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(serde::de::Error::invalid_value(
-                        Unexpected::Map,
-                        <span class="kw-2">&amp;</span><span class="string">"map with a single key"</span>,
-                    ));
-                }
-                (variant, <span class="prelude-val">Some</span>(value))
-            }
-            Value::String(variant) =&gt; (variant, <span class="prelude-val">None</span>),
-            other =&gt; {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(serde::de::Error::invalid_type(
-                    other.unexpected(),
-                    <span class="kw-2">&amp;</span><span class="string">"string or map"</span>,
-                ));
-            }
-        };
-
-        visitor.visit_enum(EnumDeserializer { variant, value })
+        <span class="kw">match </span><span class="self">self </span>{
+            Value::Object(value) =&gt; value.deserialize_enum(name, variants, visitor),
+            Value::String(variant) =&gt; visitor.visit_enum(EnumDeserializer {
+                variant,
+                value: <span class="prelude-val">None</span>,
+            }),
+            other =&gt; <span class="prelude-val">Err</span>(serde::de::Error::invalid_type(
+                other.unexpected(),
+                <span class="kw-2">&amp;</span><span class="string">"string or map"</span>,
+            )),
+        }
     }
 
     <span class="attr">#[inline]
@@ -1843,7 +1967,7 @@
         </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
     {
         <span class="kw">match </span><span class="self">self </span>{
-            Value::Object(v) =&gt; visit_object(v, visitor),
+            Value::Object(v) =&gt; v.deserialize_any(visitor),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.invalid_type(<span class="kw-2">&amp;</span>visitor)),
         }
     }
@@ -1859,7 +1983,7 @@
     {
         <span class="kw">match </span><span class="self">self </span>{
             Value::Array(v) =&gt; visit_array(v, visitor),
-            Value::Object(v) =&gt; visit_object(v, visitor),
+            Value::Object(v) =&gt; v.deserialize_any(visitor),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.invalid_type(<span class="kw-2">&amp;</span>visitor)),
         }
     }
@@ -1974,7 +2098,7 @@
         </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
     {
         <span class="kw">match </span><span class="self">self</span>.value {
-            <span class="prelude-val">Some</span>(Value::Object(v)) =&gt; visit_object(v, visitor),
+            <span class="prelude-val">Some</span>(Value::Object(v)) =&gt; v.deserialize_any(visitor),
             <span class="prelude-val">Some</span>(other) =&gt; <span class="prelude-val">Err</span>(serde::de::Error::invalid_type(
                 other.unexpected(),
                 <span class="kw-2">&amp;</span><span class="string">"struct variant"</span>,
@@ -2115,21 +2239,71 @@
     }
 }
 
-<span class="kw">fn </span>visit_object_ref&lt;<span class="lifetime">'de</span>, V&gt;(object: <span class="kw-2">&amp;</span><span class="lifetime">'de </span>Map&lt;String, Value&gt;, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
-<span class="kw">where
-    </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
-{
-    <span class="kw">let </span>len = object.len();
-    <span class="kw">let </span><span class="kw-2">mut </span>deserializer = MapRefDeserializer::new(object);
-    <span class="kw">let </span>map = <span class="macro">tri!</span>(visitor.visit_map(<span class="kw-2">&amp;mut </span>deserializer));
-    <span class="kw">let </span>remaining = deserializer.iter.len();
-    <span class="kw">if </span>remaining == <span class="number">0 </span>{
-        <span class="prelude-val">Ok</span>(map)
-    } <span class="kw">else </span>{
-        <span class="prelude-val">Err</span>(serde::de::Error::invalid_length(
-            len,
-            <span class="kw-2">&amp;</span><span class="string">"fewer elements in map"</span>,
-        ))
+<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; serde::Deserializer&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'de </span>Map&lt;String, Value&gt; {
+    <span class="kw">type </span>Error = Error;
+
+    <span class="kw">fn </span>deserialize_any&lt;V&gt;(<span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, <span class="self">Self</span>::Error&gt;
+    <span class="kw">where
+        </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
+    {
+        <span class="kw">let </span>len = <span class="self">self</span>.len();
+        <span class="kw">let </span><span class="kw-2">mut </span>deserializer = MapRefDeserializer::new(<span class="self">self</span>);
+        <span class="kw">let </span>map = <span class="macro">tri!</span>(visitor.visit_map(<span class="kw-2">&amp;mut </span>deserializer));
+        <span class="kw">let </span>remaining = deserializer.iter.len();
+        <span class="kw">if </span>remaining == <span class="number">0 </span>{
+            <span class="prelude-val">Ok</span>(map)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">Err</span>(serde::de::Error::invalid_length(
+                len,
+                <span class="kw-2">&amp;</span><span class="string">"fewer elements in map"</span>,
+            ))
+        }
+    }
+
+    <span class="kw">fn </span>deserialize_enum&lt;V&gt;(
+        <span class="self">self</span>,
+        _name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+        _variants: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str],
+        visitor: V,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, <span class="self">Self</span>::Error&gt;
+    <span class="kw">where
+        </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
+    {
+        <span class="kw">let </span><span class="kw-2">mut </span>iter = <span class="self">self</span>.into_iter();
+        <span class="kw">let </span>(variant, value) = <span class="kw">match </span>iter.next() {
+            <span class="prelude-val">Some</span>(v) =&gt; v,
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(serde::de::Error::invalid_value(
+                    Unexpected::Map,
+                    <span class="kw-2">&amp;</span><span class="string">"map with a single key"</span>,
+                ));
+            }
+        };
+        <span class="comment">// enums are encoded in json as maps with a single key:value pair
+        </span><span class="kw">if </span>iter.next().is_some() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(serde::de::Error::invalid_value(
+                Unexpected::Map,
+                <span class="kw-2">&amp;</span><span class="string">"map with a single key"</span>,
+            ));
+        }
+
+        visitor.visit_enum(EnumRefDeserializer {
+            variant,
+            value: <span class="prelude-val">Some</span>(value),
+        })
+    }
+
+    <span class="kw">fn </span>deserialize_ignored_any&lt;V&gt;(<span class="self">self</span>, visitor: V) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
+    <span class="kw">where
+        </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
+    {
+        visitor.visit_unit()
+    }
+
+    <span class="macro">forward_to_deserialize_any!</span> {
+        bool i8 i16 i32 i64 i128 u8 u16 u32 u64 u128 f32 f64 char str string
+        bytes byte_buf option unit unit_struct newtype_struct seq tuple
+        tuple_struct map <span class="kw">struct </span>identifier
     }
 }
 
@@ -2146,7 +2320,7 @@
             Value::Number(n) =&gt; n.deserialize_any(visitor),
             Value::String(v) =&gt; visitor.visit_borrowed_str(v),
             Value::Array(v) =&gt; visit_array_ref(v, visitor),
-            Value::Object(v) =&gt; visit_object_ref(v, visitor),
+            Value::Object(v) =&gt; v.deserialize_any(visitor),
         }
     }
 
@@ -2175,44 +2349,24 @@
 
     <span class="kw">fn </span>deserialize_enum&lt;V&gt;(
         <span class="self">self</span>,
-        _name: <span class="kw-2">&amp;</span>str,
-        _variants: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str],
+        name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+        variants: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str],
         visitor: V,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;V::Value, Error&gt;
     <span class="kw">where
         </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
     {
-        <span class="kw">let </span>(variant, value) = <span class="kw">match </span><span class="self">self </span>{
-            Value::Object(value) =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>iter = value.into_iter();
-                <span class="kw">let </span>(variant, value) = <span class="kw">match </span>iter.next() {
-                    <span class="prelude-val">Some</span>(v) =&gt; v,
-                    <span class="prelude-val">None </span>=&gt; {
-                        <span class="kw">return </span><span class="prelude-val">Err</span>(serde::de::Error::invalid_value(
-                            Unexpected::Map,
-                            <span class="kw-2">&amp;</span><span class="string">"map with a single key"</span>,
-                        ));
-                    }
-                };
-                <span class="comment">// enums are encoded in json as maps with a single key:value pair
-                </span><span class="kw">if </span>iter.next().is_some() {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(serde::de::Error::invalid_value(
-                        Unexpected::Map,
-                        <span class="kw-2">&amp;</span><span class="string">"map with a single key"</span>,
-                    ));
-                }
-                (variant, <span class="prelude-val">Some</span>(value))
-            }
-            Value::String(variant) =&gt; (variant, <span class="prelude-val">None</span>),
-            other =&gt; {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(serde::de::Error::invalid_type(
-                    other.unexpected(),
-                    <span class="kw-2">&amp;</span><span class="string">"string or map"</span>,
-                ));
-            }
-        };
-
-        visitor.visit_enum(EnumRefDeserializer { variant, value })
+        <span class="kw">match </span><span class="self">self </span>{
+            Value::Object(value) =&gt; value.deserialize_enum(name, variants, visitor),
+            Value::String(variant) =&gt; visitor.visit_enum(EnumRefDeserializer {
+                variant,
+                value: <span class="prelude-val">None</span>,
+            }),
+            other =&gt; <span class="prelude-val">Err</span>(serde::de::Error::invalid_type(
+                other.unexpected(),
+                <span class="kw-2">&amp;</span><span class="string">"string or map"</span>,
+            )),
+        }
     }
 
     <span class="attr">#[inline]
@@ -2340,7 +2494,7 @@
         </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
     {
         <span class="kw">match </span><span class="self">self </span>{
-            Value::Object(v) =&gt; visit_object_ref(v, visitor),
+            Value::Object(v) =&gt; v.deserialize_any(visitor),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.invalid_type(<span class="kw-2">&amp;</span>visitor)),
         }
     }
@@ -2356,7 +2510,7 @@
     {
         <span class="kw">match </span><span class="self">self </span>{
             Value::Array(v) =&gt; visit_array_ref(v, visitor),
-            Value::Object(v) =&gt; visit_object_ref(v, visitor),
+            Value::Object(v) =&gt; v.deserialize_any(visitor),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="self">self</span>.invalid_type(<span class="kw-2">&amp;</span>visitor)),
         }
     }
@@ -2454,7 +2608,7 @@
         </span>V: Visitor&lt;<span class="lifetime">'de</span>&gt;,
     {
         <span class="kw">match </span><span class="self">self</span>.value {
-            <span class="prelude-val">Some</span>(Value::Object(v)) =&gt; visit_object_ref(v, visitor),
+            <span class="prelude-val">Some</span>(Value::Object(v)) =&gt; v.deserialize_any(visitor),
             <span class="prelude-val">Some</span>(other) =&gt; <span class="prelude-val">Err</span>(serde::de::Error::invalid_type(
                 other.unexpected(),
                 <span class="kw-2">&amp;</span><span class="string">"struct variant"</span>,

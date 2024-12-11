@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.37/src/io/read_write.rs`."><title>read_write.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustix/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/rustix-0.38.42/src/io/read_write.rs`."><title>read_write.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustix/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -319,6 +319,22 @@
 <a href="#319" id="319">319</a>
 <a href="#320" id="320">320</a>
 <a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! `read` and `write`, optionally positioned, optionally vectored.
 
 </span><span class="attr">#![allow(unsafe_code)]
@@ -359,7 +375,7 @@
 /// [OpenBSD]: https://man.openbsd.org/read.2
 /// [DragonFly BSD]: https://man.dragonflybsd.org/?command=read&amp;section=2
 /// [illumos]: https://illumos.org/man/2/read
-/// [glibc]: https://www.gnu.org/software/libc/manual/html_node/I_002fO-Primitives.html#index-reading-from-a-file-descriptor
+/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/I_002fO-Primitives.html#index-reading-from-a-file-descriptor
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>read&lt;Fd: AsFd&gt;(fd: Fd, buf: <span class="kw-2">&amp;mut </span>[u8]) -&gt; io::Result&lt;usize&gt; {
     <span class="kw">unsafe </span>{ backend::io::syscalls::read(fd.as_fd(), buf.as_mut_ptr(), buf.len()) }
@@ -405,7 +421,7 @@
 /// [OpenBSD]: https://man.openbsd.org/write.2
 /// [DragonFly BSD]: https://man.dragonflybsd.org/?command=write&amp;section=2
 /// [illumos]: https://illumos.org/man/2/write
-/// [glibc]: https://www.gnu.org/software/libc/manual/html_node/I_002fO-Primitives.html#index-writing-to-a-file-descriptor
+/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/I_002fO-Primitives.html#index-writing-to-a-file-descriptor
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>write&lt;Fd: AsFd&gt;(fd: Fd, buf: <span class="kw-2">&amp;</span>[u8]) -&gt; io::Result&lt;usize&gt; {
     backend::io::syscalls::write(fd.as_fd(), buf)
@@ -425,6 +441,7 @@
 ///  - [OpenBSD]
 ///  - [DragonFly BSD]
 ///  - [illumos]
+///  - [glibc]
 ///
 /// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/pread.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/pread.2.html
@@ -434,6 +451,7 @@
 /// [OpenBSD]: https://man.openbsd.org/pread.2
 /// [DragonFly BSD]: https://man.dragonflybsd.org/?command=pread&amp;section=2
 /// [illumos]: https://illumos.org/man/2/pread
+/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/I_002fO-Primitives.html#index-pread64
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>pread&lt;Fd: AsFd&gt;(fd: Fd, buf: <span class="kw-2">&amp;mut </span>[u8], offset: u64) -&gt; io::Result&lt;usize&gt; {
     <span class="kw">unsafe </span>{ backend::io::syscalls::pread(fd.as_fd(), buf.as_mut_ptr(), buf.len(), offset) }
@@ -471,6 +489,7 @@
 ///  - [OpenBSD]
 ///  - [DragonFly BSD]
 ///  - [illumos]
+///  - [glibc]
 ///
 /// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/pwrite.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/pwrite.2.html
@@ -480,6 +499,7 @@
 /// [OpenBSD]: https://man.openbsd.org/pwrite.2
 /// [DragonFly BSD]: https://man.dragonflybsd.org/?command=pwrite&amp;section=2
 /// [illumos]: https://illumos.org/man/2/pwrite
+/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/I_002fO-Primitives.html#index-pwrite64
 </span><span class="attr">#[inline]
 </span><span class="kw">pub fn </span>pwrite&lt;Fd: AsFd&gt;(fd: Fd, buf: <span class="kw-2">&amp;</span>[u8], offset: u64) -&gt; io::Result&lt;usize&gt; {
     backend::io::syscalls::pwrite(fd.as_fd(), buf, offset)
@@ -496,6 +516,7 @@
 ///  - [OpenBSD]
 ///  - [DragonFly BSD]
 ///  - [illumos]
+///  - [glibc]
 ///
 /// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/readv.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/readv.2.html
@@ -505,6 +526,7 @@
 /// [OpenBSD]: https://man.openbsd.org/readv.2
 /// [DragonFly BSD]: https://man.dragonflybsd.org/?command=readv&amp;section=2
 /// [illumos]: https://illumos.org/man/2/readv
+/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/Scatter_002dGather.html#index-readv
 </span><span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"horizon"</span>)))]
 #[inline]
 </span><span class="kw">pub fn </span>readv&lt;Fd: AsFd&gt;(fd: Fd, bufs: <span class="kw-2">&amp;mut </span>[IoSliceMut&lt;<span class="lifetime">'_</span>&gt;]) -&gt; io::Result&lt;usize&gt; {
@@ -522,6 +544,7 @@
 ///  - [OpenBSD]
 ///  - [DragonFly BSD]
 ///  - [illumos]
+///  - [glibc]
 ///
 /// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/writev.html
 /// [Linux]: https://man7.org/linux/man-pages/man2/writev.2.html
@@ -531,6 +554,7 @@
 /// [OpenBSD]: https://man.openbsd.org/writev.2
 /// [DragonFly BSD]: https://man.dragonflybsd.org/?command=writev&amp;section=2
 /// [illumos]: https://illumos.org/man/2/writev
+/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/Scatter_002dGather.html#index-writev
 </span><span class="attr">#[cfg(not(any(target_os = <span class="string">"espidf"</span>, target_os = <span class="string">"horizon"</span>)))]
 #[inline]
 </span><span class="kw">pub fn </span>writev&lt;Fd: AsFd&gt;(fd: Fd, bufs: <span class="kw-2">&amp;</span>[IoSlice&lt;<span class="lifetime">'_</span>&gt;]) -&gt; io::Result&lt;usize&gt; {
@@ -547,6 +571,7 @@
 ///  - [OpenBSD]
 ///  - [DragonFly BSD]
 ///  - [illumos]
+///  - [glibc]
 ///
 /// [Linux]: https://man7.org/linux/man-pages/man2/preadv.2.html
 /// [FreeBSD]: https://man.freebsd.org/cgi/man.cgi?query=preadv&amp;sektion=2
@@ -554,6 +579,7 @@
 /// [OpenBSD]: https://man.openbsd.org/preadv.2
 /// [DragonFly BSD]: https://man.dragonflybsd.org/?command=preadv&amp;section=2
 /// [illumos]: https://illumos.org/man/2/preadv
+/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/Scatter_002dGather.html#index-preadv64
 </span><span class="attr">#[cfg(not(any(
     target_os = <span class="string">"espidf"</span>,
     target_os = <span class="string">"haiku"</span>,
@@ -582,6 +608,7 @@
 ///  - [OpenBSD]
 ///  - [DragonFly BSD]
 ///  - [illumos]
+///  - [glibc]
 ///
 /// [Linux]: https://man7.org/linux/man-pages/man2/pwritev.2.html
 /// [FreeBSD]: https://man.freebsd.org/cgi/man.cgi?query=pwritev&amp;sektion=2
@@ -589,6 +616,7 @@
 /// [OpenBSD]: https://man.openbsd.org/pwritev.2
 /// [DragonFly BSD]: https://man.dragonflybsd.org/?command=pwritev&amp;section=2
 /// [illumos]: https://illumos.org/man/2/pwritev
+/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/I_002fO-Primitives.html#index-pwrite64
 </span><span class="attr">#[cfg(not(any(
     target_os = <span class="string">"espidf"</span>,
     target_os = <span class="string">"haiku"</span>,
@@ -609,8 +637,10 @@
 ///
 /// # References
 ///  - [Linux]
+///  - [glibc]
 ///
 /// [Linux]: https://man7.org/linux/man-pages/man2/preadv2.2.html
+/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/Scatter_002dGather.html#index-preadv64v2
 </span><span class="attr">#[cfg(linux_kernel)]
 #[inline]
 </span><span class="kw">pub fn </span>preadv2&lt;Fd: AsFd&gt;(
@@ -628,8 +658,10 @@
 ///
 /// # References
 ///  - [Linux]
+///  - [glibc]
 ///
 /// [Linux]: https://man7.org/linux/man-pages/man2/pwritev2.2.html
+/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/Scatter_002dGather.html#index-pwritev64v2
 </span><span class="attr">#[cfg(linux_kernel)]
 #[inline]
 </span><span class="kw">pub fn </span>pwritev2&lt;Fd: AsFd&gt;(
