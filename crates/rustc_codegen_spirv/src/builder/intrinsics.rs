@@ -255,20 +255,28 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
                 .bit_reverse(args[0].immediate().ty, None, args[0].immediate().def(self))
                 .unwrap()
                 .with_type(args[0].immediate().ty),
-
             sym::bswap => {
                 // https://github.com/KhronosGroup/SPIRV-LLVM/pull/221/files
                 // TODO: Definitely add tests to make sure this impl is right.
                 let arg = args[0].immediate();
-                match int_type_width_signed(arg_tys[0], self)
-                    .expect("bswap must have integer argument")
-                    .0
-                {
-                    8 => arg,
+                let (width, is_signed) = int_type_width_signed(arg_tys[0], self)
+                    .expect("bswap must have an integer argument");
+
+                // Cast to unsigned type for byte-swapping
+                let unsigned_ty: u32 =
+                    SpirvType::Integer(width.try_into().unwrap(), false).def(self.span(), self);
+                let unsigned_arg = if is_signed {
+                    self.bitcast(arg, unsigned_ty)
+                } else {
+                    arg
+                };
+
+                let swapped = match width {
+                    8 => unsigned_arg,
                     16 => {
                         let offset8 = self.constant_u16(self.span(), 8);
-                        let tmp1 = self.shl(arg, offset8);
-                        let tmp2 = self.lshr(arg, offset8);
+                        let tmp1 = self.shl(unsigned_arg, offset8);
+                        let tmp2 = self.lshr(unsigned_arg, offset8);
                         self.or(tmp1, tmp2)
                     }
                     32 => {
@@ -276,10 +284,10 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
                         let offset24 = self.constant_u32(self.span(), 24);
                         let mask16 = self.constant_u32(self.span(), 0xFF00);
                         let mask24 = self.constant_u32(self.span(), 0xFF0000);
-                        let tmp4 = self.shl(arg, offset24);
-                        let tmp3 = self.shl(arg, offset8);
-                        let tmp2 = self.lshr(arg, offset8);
-                        let tmp1 = self.lshr(arg, offset24);
+                        let tmp4 = self.shl(unsigned_arg, offset24);
+                        let tmp3 = self.shl(unsigned_arg, offset8);
+                        let tmp2 = self.lshr(unsigned_arg, offset8);
+                        let tmp1 = self.lshr(unsigned_arg, offset24);
                         let tmp3 = self.and(tmp3, mask24);
                         let tmp2 = self.and(tmp2, mask16);
                         let res1 = self.or(tmp1, tmp2);
@@ -297,14 +305,14 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
                         let mask40 = self.constant_u64(self.span(), 0xff00000000);
                         let mask48 = self.constant_u64(self.span(), 0xff0000000000);
                         let mask56 = self.constant_u64(self.span(), 0xff000000000000);
-                        let tmp8 = self.shl(arg, offset56);
-                        let tmp7 = self.shl(arg, offset40);
-                        let tmp6 = self.shl(arg, offset24);
-                        let tmp5 = self.shl(arg, offset8);
-                        let tmp4 = self.lshr(arg, offset8);
-                        let tmp3 = self.lshr(arg, offset24);
-                        let tmp2 = self.lshr(arg, offset40);
-                        let tmp1 = self.lshr(arg, offset56);
+                        let tmp8 = self.shl(unsigned_arg, offset56);
+                        let tmp7 = self.shl(unsigned_arg, offset40);
+                        let tmp6 = self.shl(unsigned_arg, offset24);
+                        let tmp5 = self.shl(unsigned_arg, offset8);
+                        let tmp4 = self.lshr(unsigned_arg, offset8);
+                        let tmp3 = self.lshr(unsigned_arg, offset24);
+                        let tmp2 = self.lshr(unsigned_arg, offset40);
+                        let tmp1 = self.lshr(unsigned_arg, offset56);
                         let tmp7 = self.and(tmp7, mask56);
                         let tmp6 = self.and(tmp6, mask48);
                         let tmp5 = self.and(tmp5, mask40);
@@ -327,6 +335,13 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
                         );
                         undef
                     }
+                };
+
+                // Cast back to the original signed type if necessary
+                if is_signed {
+                    self.bitcast(swapped, arg.ty)
+                } else {
+                    swapped
                 }
             }
 
