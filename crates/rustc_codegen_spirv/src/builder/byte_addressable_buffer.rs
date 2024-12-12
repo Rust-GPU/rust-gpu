@@ -1,7 +1,7 @@
 use super::Builder;
 use crate::builder_spirv::{SpirvValue, SpirvValueExt, SpirvValueKind};
 use crate::spirv_type::SpirvType;
-use rspirv::spirv::Word;
+use rspirv::spirv::{Decoration, Word};
 use rustc_codegen_ssa::traits::BuilderMethods;
 use rustc_errors::ErrorGuaranteed;
 use rustc_span::DUMMY_SP;
@@ -38,9 +38,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         };
         let u32_ty = SpirvType::Integer(32, false).def(DUMMY_SP, self);
         let u32_ptr = self.type_ptr_to(u32_ty);
+        let array = array.def(self);
+        let actual_index = actual_index.def(self);
+        self.emit().decorate(array, Decoration::NonUniform, []);
+        self.emit()
+            .decorate(actual_index, Decoration::NonUniform, []);
         let ptr = self
             .emit()
-            .in_bounds_access_chain(u32_ptr, None, array.def(self), [actual_index.def(self)])
+            .in_bounds_access_chain(u32_ptr, None, array, [actual_index])
             .unwrap()
             .with_type(u32_ptr);
         self.load(u32_ty, ptr, Align::ONE)

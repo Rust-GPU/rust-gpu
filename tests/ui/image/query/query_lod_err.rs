@@ -1,8 +1,8 @@
 // build-fail
 // normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"
-// compile-flags: -C target-feature=+ImageQuery
+// compile-flags: -C target-feature=+ImageQuery,+ShaderNonUniform,+ext:SPV_EXT_descriptor_indexing
 
-use spirv_std::{arch, spirv, Image, Sampler};
+use spirv_std::{Image, Sampler, arch, spirv};
 
 #[spirv(fragment)]
 pub fn main(

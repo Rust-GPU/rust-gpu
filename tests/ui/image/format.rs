@@ -1,7 +1,8 @@
 // build-pass
+// compile-flags: -Ctarget-feature=+ShaderNonUniform,+ext:SPV_EXT_descriptor_indexing
 
 use spirv_std::spirv;
-use spirv_std::{arch, Image};
+use spirv_std::{Image, arch};
 
 #[spirv(fragment)]
 pub fn main(
