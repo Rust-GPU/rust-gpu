@@ -406,7 +406,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let ptr = ptr.strip_ptrcasts();
         let mut leaf_ty = match self.lookup_type(ptr.ty) {
             SpirvType::Pointer { pointee } => pointee,
-            other => self.fatal(format!("non-pointer type: {other:?}")),
+            SpirvType::Adt { .. } => return None,
+            other => self.fatal(format!("adjust_pointer for non-pointer type: {other:?}")),
         };
 
         // FIXME(eddyb) this isn't efficient, `recover_access_chain_from_offset`
@@ -528,8 +529,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     let stride = ty_kind.sizeof(self)?;
                     ty_size = MaybeSized::Sized(stride);
 
-                    indices.push((offset.bytes() / stride.bytes()).try_into().ok()?);
-                    offset = Size::from_bytes(offset.bytes() % stride.bytes());
+                    if stride.bytes() == 0 {
+                        indices.push(0);
+                        offset = Size::from_bytes(0);
+                    } else {
+                        indices.push((offset.bytes() / stride.bytes()).try_into().ok()?);
+                        offset = Size::from_bytes(offset.bytes() % stride.bytes());
+                    }
                 }
                 _ => return None,
             }
@@ -566,6 +572,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             .iter()
             .map(|index| {
                 result_pointee_type = match self.lookup_type(result_pointee_type) {
+                    SpirvType::Array { count, element }
+                        if self.builder.lookup_const_u64(count) == Some(0) =>
+                    {
+                        self.fatal(format!(
+                            "evaluation of constant value failed: cannot index into [{}; 0]",
+                            self.debug_type(element)
+                        ))
+                    }
                     SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element } => {
                         element
                     }

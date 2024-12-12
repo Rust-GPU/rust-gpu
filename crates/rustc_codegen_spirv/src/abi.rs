@@ -649,9 +649,6 @@ fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>
                     element: element_type,
                 }
                 .def(span, cx)
-            } else if count == 0 {
-                // spir-v doesn't support zero-sized arrays
-                create_zst(cx, span, ty)
             } else {
                 let count_const = cx.constant_u32(span, count as u32);
                 let element_spv = cx.lookup_type(element_type);

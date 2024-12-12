@@ -549,6 +549,9 @@ impl<'tcx> CodegenCx<'tcx> {
                 }
                 self.constant_composite(ty, values.into_iter())
             }
+            SpirvType::Array { count, .. } if self.builder.lookup_const_u64(count) == Some(0) => {
+                self.undef(ty)
+            }
             SpirvType::Array { element, count } => {
                 let count = self.builder.lookup_const_u64(count).unwrap() as usize;
                 let values = (0..count).map(|_| {
