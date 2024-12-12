@@ -954,9 +954,7 @@ pub fn instruction_signatures(op: Op) -> Option<&'static [InstSig<'static>]> {
             reserved!(SPV_INTEL_device_side_avc_motion_estimation);
         }
         // SPV_EXT_mesh_shader
-        Op::EmitMeshTasksEXT | Op::SetMeshOutputsEXT => {
-            reserved!(SPV_EXT_mesh_shader)
-        }
+        Op::EmitMeshTasksEXT | Op::SetMeshOutputsEXT => {}
         // SPV_NV_ray_tracing_motion_blur
         Op::TraceMotionNV | Op::TraceRayMotionNV => reserved!(SPV_NV_ray_tracing_motion_blur),
         // SPV_NV_bindless_texture
