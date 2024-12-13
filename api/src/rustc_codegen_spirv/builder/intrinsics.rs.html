@@ -423,6 +423,21 @@
 <a href="#423" id="423">423</a>
 <a href="#424" id="424">424</a>
 <a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Builder;
 <span class="kw">use </span><span class="kw">crate</span>::abi::ConvSpirvType;
 <span class="kw">use </span><span class="kw">crate</span>::builder_spirv::{SpirvValue, SpirvValueExt};
@@ -680,20 +695,28 @@
                 .bit_reverse(args[<span class="number">0</span>].immediate().ty, <span class="prelude-val">None</span>, args[<span class="number">0</span>].immediate().def(<span class="self">self</span>))
                 .unwrap()
                 .with_type(args[<span class="number">0</span>].immediate().ty),
-
             sym::bswap =&gt; {
                 <span class="comment">// https://github.com/KhronosGroup/SPIRV-LLVM/pull/221/files
                 // TODO: Definitely add tests to make sure this impl is right.
                 </span><span class="kw">let </span>arg = args[<span class="number">0</span>].immediate();
-                <span class="kw">match </span>int_type_width_signed(arg_tys[<span class="number">0</span>], <span class="self">self</span>)
-                    .expect(<span class="string">"bswap must have integer argument"</span>)
-                    .<span class="number">0
-                </span>{
-                    <span class="number">8 </span>=&gt; arg,
+                <span class="kw">let </span>(width, is_signed) = int_type_width_signed(arg_tys[<span class="number">0</span>], <span class="self">self</span>)
+                    .expect(<span class="string">"bswap must have an integer argument"</span>);
+
+                <span class="comment">// Cast to unsigned type for byte-swapping
+                </span><span class="kw">let </span>unsigned_ty: u32 =
+                    SpirvType::Integer(width.try_into().unwrap(), <span class="bool-val">false</span>).def(<span class="self">self</span>.span(), <span class="self">self</span>);
+                <span class="kw">let </span>unsigned_arg = <span class="kw">if </span>is_signed {
+                    <span class="self">self</span>.bitcast(arg, unsigned_ty)
+                } <span class="kw">else </span>{
+                    arg
+                };
+
+                <span class="kw">let </span>swapped = <span class="kw">match </span>width {
+                    <span class="number">8 </span>=&gt; unsigned_arg,
                     <span class="number">16 </span>=&gt; {
                         <span class="kw">let </span>offset8 = <span class="self">self</span>.constant_u16(<span class="self">self</span>.span(), <span class="number">8</span>);
-                        <span class="kw">let </span>tmp1 = <span class="self">self</span>.shl(arg, offset8);
-                        <span class="kw">let </span>tmp2 = <span class="self">self</span>.lshr(arg, offset8);
+                        <span class="kw">let </span>tmp1 = <span class="self">self</span>.shl(unsigned_arg, offset8);
+                        <span class="kw">let </span>tmp2 = <span class="self">self</span>.lshr(unsigned_arg, offset8);
                         <span class="self">self</span>.or(tmp1, tmp2)
                     }
                     <span class="number">32 </span>=&gt; {
@@ -701,10 +724,10 @@
                         <span class="kw">let </span>offset24 = <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), <span class="number">24</span>);
                         <span class="kw">let </span>mask16 = <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), <span class="number">0xFF00</span>);
                         <span class="kw">let </span>mask24 = <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), <span class="number">0xFF0000</span>);
-                        <span class="kw">let </span>tmp4 = <span class="self">self</span>.shl(arg, offset24);
-                        <span class="kw">let </span>tmp3 = <span class="self">self</span>.shl(arg, offset8);
-                        <span class="kw">let </span>tmp2 = <span class="self">self</span>.lshr(arg, offset8);
-                        <span class="kw">let </span>tmp1 = <span class="self">self</span>.lshr(arg, offset24);
+                        <span class="kw">let </span>tmp4 = <span class="self">self</span>.shl(unsigned_arg, offset24);
+                        <span class="kw">let </span>tmp3 = <span class="self">self</span>.shl(unsigned_arg, offset8);
+                        <span class="kw">let </span>tmp2 = <span class="self">self</span>.lshr(unsigned_arg, offset8);
+                        <span class="kw">let </span>tmp1 = <span class="self">self</span>.lshr(unsigned_arg, offset24);
                         <span class="kw">let </span>tmp3 = <span class="self">self</span>.and(tmp3, mask24);
                         <span class="kw">let </span>tmp2 = <span class="self">self</span>.and(tmp2, mask16);
                         <span class="kw">let </span>res1 = <span class="self">self</span>.or(tmp1, tmp2);
@@ -722,14 +745,14 @@
                         <span class="kw">let </span>mask40 = <span class="self">self</span>.constant_u64(<span class="self">self</span>.span(), <span class="number">0xff00000000</span>);
                         <span class="kw">let </span>mask48 = <span class="self">self</span>.constant_u64(<span class="self">self</span>.span(), <span class="number">0xff0000000000</span>);
                         <span class="kw">let </span>mask56 = <span class="self">self</span>.constant_u64(<span class="self">self</span>.span(), <span class="number">0xff000000000000</span>);
-                        <span class="kw">let </span>tmp8 = <span class="self">self</span>.shl(arg, offset56);
-                        <span class="kw">let </span>tmp7 = <span class="self">self</span>.shl(arg, offset40);
-                        <span class="kw">let </span>tmp6 = <span class="self">self</span>.shl(arg, offset24);
-                        <span class="kw">let </span>tmp5 = <span class="self">self</span>.shl(arg, offset8);
-                        <span class="kw">let </span>tmp4 = <span class="self">self</span>.lshr(arg, offset8);
-                        <span class="kw">let </span>tmp3 = <span class="self">self</span>.lshr(arg, offset24);
-                        <span class="kw">let </span>tmp2 = <span class="self">self</span>.lshr(arg, offset40);
-                        <span class="kw">let </span>tmp1 = <span class="self">self</span>.lshr(arg, offset56);
+                        <span class="kw">let </span>tmp8 = <span class="self">self</span>.shl(unsigned_arg, offset56);
+                        <span class="kw">let </span>tmp7 = <span class="self">self</span>.shl(unsigned_arg, offset40);
+                        <span class="kw">let </span>tmp6 = <span class="self">self</span>.shl(unsigned_arg, offset24);
+                        <span class="kw">let </span>tmp5 = <span class="self">self</span>.shl(unsigned_arg, offset8);
+                        <span class="kw">let </span>tmp4 = <span class="self">self</span>.lshr(unsigned_arg, offset8);
+                        <span class="kw">let </span>tmp3 = <span class="self">self</span>.lshr(unsigned_arg, offset24);
+                        <span class="kw">let </span>tmp2 = <span class="self">self</span>.lshr(unsigned_arg, offset40);
+                        <span class="kw">let </span>tmp1 = <span class="self">self</span>.lshr(unsigned_arg, offset56);
                         <span class="kw">let </span>tmp7 = <span class="self">self</span>.and(tmp7, mask56);
                         <span class="kw">let </span>tmp6 = <span class="self">self</span>.and(tmp6, mask48);
                         <span class="kw">let </span>tmp5 = <span class="self">self</span>.and(tmp5, mask40);
@@ -752,6 +775,13 @@
                         );
                         undef
                     }
+                };
+
+                <span class="comment">// Cast back to the original signed type if necessary
+                </span><span class="kw">if </span>is_signed {
+                    <span class="self">self</span>.bitcast(swapped, arg.ty)
+                } <span class="kw">else </span>{
+                    swapped
                 }
             }
 
