@@ -108,13 +108,18 @@ pub fn main() {
 
     // runtime setup
     let event_loop = EventLoop::new().unwrap();
-    let window = winit::window::WindowBuilder::new()
-        .with_title("Rust GPU - ash")
-        .with_inner_size(winit::dpi::LogicalSize::new(
-            f64::from(1280),
-            f64::from(720),
-        ))
-        .build(&event_loop)
+    // FIXME(eddyb) incomplete `winit` upgrade, follow the guides in:
+    // https://github.com/rust-windowing/winit/releases/tag/v0.30.0
+    #[allow(deprecated)]
+    let window = event_loop
+        .create_window(
+            winit::window::Window::default_attributes()
+                .with_title("Rust GPU - ash")
+                .with_inner_size(winit::dpi::LogicalSize::new(
+                    f64::from(1280),
+                    f64::from(720),
+                )),
+        )
         .unwrap();
     let mut ctx = RenderBase::new(window, &options).into_ctx();
 
@@ -137,6 +142,9 @@ pub fn main() {
 
     let (compiler_sender, compiler_receiver) = sync_channel(1);
 
+    // FIXME(eddyb) incomplete `winit` upgrade, follow the guides in:
+    // https://github.com/rust-windowing/winit/releases/tag/v0.30.0
+    #[allow(deprecated)]
     event_loop
         .run(move |event, event_loop_window_target| match event {
             Event::AboutToWait { .. } => {

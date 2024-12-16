@@ -3,7 +3,7 @@ use crate::{CompiledShaderModules, Options, maybe_watch};
 use shared::ShaderConstants;
 use winit::{
     event::{ElementState, Event, MouseButton, WindowEvent},
-    event_loop::{ControlFlow, EventLoop, EventLoopBuilder},
+    event_loop::{ControlFlow, EventLoop},
     window::Window,
 };
 
@@ -154,6 +154,9 @@ async fn run(
     let mut mouse_button_press_since_last_frame = 0;
     let mut mouse_button_press_time = [f32::NEG_INFINITY; 3];
 
+    // FIXME(eddyb) incomplete `winit` upgrade, follow the guides in:
+    // https://github.com/rust-windowing/winit/releases/tag/v0.30.0
+    #[allow(deprecated)]
     event_loop.run(|event, event_loop_window_target| {
         // Have the closure take ownership of the resources.
         // `event_loop.run` never returns, therefore we must do this to ensure
@@ -442,7 +445,7 @@ pub fn start(
     #[cfg(target_os = "android")] android_app: winit::platform::android::activity::AndroidApp,
     options: &Options,
 ) {
-    let mut event_loop_builder = EventLoopBuilder::with_user_event();
+    let mut event_loop_builder = EventLoop::with_user_event();
     cfg_if::cfg_if! {
         if #[cfg(target_os = "android")] {
             android_logger::init_once(
@@ -475,10 +478,15 @@ pub fn start(
         },
     );
 
-    let window = winit::window::WindowBuilder::new()
-        .with_title("Rust GPU - wgpu")
-        .with_inner_size(winit::dpi::LogicalSize::new(1280.0, 720.0))
-        .build(&event_loop)
+    // FIXME(eddyb) incomplete `winit` upgrade, follow the guides in:
+    // https://github.com/rust-windowing/winit/releases/tag/v0.30.0
+    #[allow(deprecated)]
+    let window = event_loop
+        .create_window(
+            winit::window::Window::default_attributes()
+                .with_title("Rust GPU - wgpu")
+                .with_inner_size(winit::dpi::LogicalSize::new(1280.0, 720.0)),
+        )
         .unwrap();
 
     cfg_if::cfg_if! {
