@@ -164,6 +164,25 @@ async fn run(
         event_loop_window_target.set_control_flow(ControlFlow::Wait);
         match event {
             Event::Resumed => {
+                // Avoid holding onto to multiple surfaces at the same time
+                // (as it's undetected and can confusingly break e.g. Wayland).
+                //
+                // FIXME(eddyb) create the window and `wgpu::Surface` on either
+                // `Event::NewEvents(StartCause::Init)`, or `Event::Resumed`,
+                // which is becoming recommended on (almost) all platforms, see:
+                // - https://github.com/rust-windowing/winit/releases/tag/v0.30.0
+                // - https://github.com/gfx-rs/wgpu/blob/v23/examples/src/framework.rs#L139-L161
+                //   (note wasm being handled differently due to its `<canvas>`)
+                if let Ok((_, surface_config)) = &surface_with_config {
+                    // HACK(eddyb) can't move out of `surface_with_config` as
+                    // it's a closure capture, and also the `Err(_)` variant
+                    // has a payload so that needs to be filled with something.
+                    let filler = Err(SurfaceCreationPending {
+                        preferred_format: surface_config.format,
+                    });
+                    drop(std::mem::replace(&mut surface_with_config, filler));
+                }
+
                 let new_surface = instance.create_surface(&window)
                     .expect("Failed to create surface from window (after resume)");
                 surface_with_config = Ok(auto_configure_surface(
