@@ -26,18 +26,31 @@ deny = [
 # Certain crates/versions that will be skipped when doing duplicate detection.
 skip = [
     #{ name = "ansi_term", version = "=0.11.0" },
+
+    # HACK(eddyb) two versions coexist for interop, for the time being.
+    { name = "raw-window-handle", version = "=0.5.2" },
+    { name = "raw-window-handle", version = "=0.6.2" },
 ]
 # Similarly to `skip` allows you to skip certain crates during duplicate
 # detection. Unlike skip, it also includes the entire tree of transitive
 # dependencies starting at the specified crate, up to a certain depth, which is
 # by default infinite
 skip-tree = [
-    # we don't really care if our example brings in some duplicate dependencies, for now
-    { name = "example-runner-ash", version = "0.0.0", depth = 20 },
-    { name = "example-runner-cpu", version = "0.0.0", depth = 20 },
-    { name = "example-runner-wgpu", version = "0.0.0", depth = 20 },
-    { name = "compiletests", version = "0.0.0", depth = 20 },
-    { name = "compiletests-deps-helper", version = "0.0.0", depth = 20 },
+    # HACK(eddyb) `jni` (an `android-activity` dep) uses older `windows-*`.
+    { name = "jni", version = "=0.21.1", depth = 4 },
+    # HACK(eddyb) `plist` (an `ash-molten` build dep) uses older `quick-xml`.
+    { name = "plist", version = "=1.7.0", depth = 2 },
+    # HACK(eddyb) `minifb` (an `example-runner-cpu` dep) uses older `wayland-*`.
+    { name = "minifb", version = "=0.25.0", depth = 3 },
+    # HACK(eddyb) `num_cpus` (a `tester` dep) uses older `hermit-abi`.
+    { name = "num_cpus", version = "=1.16.0", depth = 2 },
+
+    # FIXME(eddyb) outdated `winit` version uses older `windows-*`,
+    # requires an upgrade to `winit 0.30` to resolve.
+    { name = "winit", version = "=0.29.15", depth = 4 },
+
+    # FIXME(eddyb) resolve everything hidden by this.
+    { name = "rustc_codegen_spirv", depth = 2 },
 ]
 
 
@@ -65,7 +78,7 @@ exceptions = [
     # CC0 is a permissive license but somewhat unclear status for source code
     # so we prefer to not have dependencies using it
     # https://tldrlegal.com/license/creative-commons-cc0-1.0-universal
-    { allow = ["CC0-1.0"], name = "notify", version = "5.0.0-pre.13" },
+    { allow = ["CC0-1.0"], name = "notify", version = "7.0.0" },
     { allow = ["CC0-1.0"], name = "hexf-parse" },
 ]
 
