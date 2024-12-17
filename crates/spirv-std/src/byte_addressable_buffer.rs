@@ -70,14 +70,12 @@ fn bounds_check<T>(data: &[u32], byte_index: u32) {
     if byte_index % 4 != 0 {
         panic!("`byte_index` should be a multiple of 4");
     }
-    if byte_index + sizeof > data.len() as u32 {
-        let last_byte = byte_index + sizeof;
+    let last_byte = byte_index + sizeof;
+    let len = data.len() as u32;
+    if byte_index + sizeof > len {
         panic!(
             "index out of bounds: the len is {} but loading {} bytes at `byte_index` {} reads until {} (exclusive)",
-            data.len(),
-            sizeof,
-            byte_index,
-            last_byte,
+            len, sizeof, byte_index, last_byte,
         );
     }
 }
