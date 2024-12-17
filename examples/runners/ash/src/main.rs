@@ -71,13 +71,9 @@
 // crate-specific exceptions:
 // #![allow()]
 
-use ash::{
-    extensions::{ext, khr},
-    util::read_spv,
-    vk,
-};
+use ash::{ext, khr, util::read_spv, vk};
 
-use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle};
+use raw_window_handle::{HasDisplayHandle as _, HasWindowHandle as _};
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -277,9 +273,9 @@ pub struct RenderBase {
 
     pub instance: ash::Instance,
     pub device: ash::Device,
-    pub swapchain_loader: khr::Swapchain,
+    pub swapchain_loader: khr::swapchain::Device,
 
-    pub debug_utils_loader: Option<ext::DebugUtils>,
+    pub debug_utils_loader: Option<ext::debug_utils::Instance>,
     pub debug_call_back: Option<vk::DebugUtilsMessengerEXT>,
 
     pub pdevice: vk::PhysicalDevice,
@@ -287,7 +283,7 @@ pub struct RenderBase {
     pub present_queue: vk::Queue,
 
     pub surface: vk::SurfaceKHR,
-    pub surface_loader: khr::Surface,
+    pub surface_loader: khr::surface::Instance,
     pub surface_format: vk::SurfaceFormatKHR,
 }
 
@@ -315,21 +311,21 @@ impl RenderBase {
                 .collect();
 
             let mut extension_names_raw =
-                ash_window::enumerate_required_extensions(window.raw_display_handle())
+                ash_window::enumerate_required_extensions(window.display_handle().unwrap().into())
                     .unwrap()
                     .to_vec();
             if options.debug_layer {
-                extension_names_raw.push(ext::DebugUtils::name().as_ptr());
+                extension_names_raw.push(ext::debug_utils::NAME.as_ptr());
             }
 
-            let appinfo = vk::ApplicationInfo::builder()
+            let appinfo = vk::ApplicationInfo::default()
                 .application_name(&app_name)
                 .application_version(0)
                 .engine_name(&app_name)
                 .engine_version(0)
                 .api_version(vk::make_api_version(0, 1, 2, 0));
 
-            let instance_create_info = vk::InstanceCreateInfo::builder()
+            let instance_create_info = vk::InstanceCreateInfo::default()
                 .application_info(&appinfo)
                 .enabled_layer_names(&layers_names_raw)
                 .enabled_extension_names(&extension_names_raw);
@@ -345,17 +341,17 @@ impl RenderBase {
             ash_window::create_surface(
                 &entry,
                 &instance,
-                window.raw_display_handle(),
-                window.raw_window_handle(),
+                window.display_handle().unwrap().into(),
+                window.window_handle().unwrap().into(),
                 None,
             )
             .unwrap()
         };
 
         let (debug_utils_loader, debug_call_back) = if options.debug_layer {
-            let debug_utils_loader = ext::DebugUtils::new(&entry, &instance);
+            let debug_utils_loader = ext::debug_utils::Instance::new(&entry, &instance);
             let debug_call_back = {
-                let debug_info = vk::DebugUtilsMessengerCreateInfoEXT::builder()
+                let debug_info = vk::DebugUtilsMessengerCreateInfoEXT::default()
                     .message_severity(
                         vk::DebugUtilsMessageSeverityFlagsEXT::ERROR
                             | vk::DebugUtilsMessageSeverityFlagsEXT::WARNING
@@ -380,7 +376,7 @@ impl RenderBase {
             (None, None)
         };
 
-        let surface_loader = khr::Surface::new(&entry, &instance);
+        let surface_loader = khr::surface::Instance::new(&entry, &instance);
 
         let (pdevice, queue_family_index) = unsafe {
             instance
@@ -413,25 +409,22 @@ impl RenderBase {
 
         let device: ash::Device = {
             let device_extension_names_raw = [
-                khr::Swapchain::name().as_ptr(),
-                vk::KhrShaderNonSemanticInfoFn::name().as_ptr(),
+                khr::swapchain::NAME.as_ptr(),
+                khr::shader_non_semantic_info::NAME.as_ptr(),
             ];
             let features = vk::PhysicalDeviceFeatures {
                 shader_clip_distance: 1,
                 ..Default::default()
             };
             let priorities = [1.0];
-            let queue_info = [vk::DeviceQueueCreateInfo::builder()
+            let queue_info = [vk::DeviceQueueCreateInfo::default()
                 .queue_family_index(queue_family_index)
-                .queue_priorities(&priorities)
-                .build()];
+                .queue_priorities(&priorities)];
 
             let mut vulkan_memory_model_features =
-                vk::PhysicalDeviceVulkanMemoryModelFeatures::builder()
-                    .vulkan_memory_model(true)
-                    .build();
+                vk::PhysicalDeviceVulkanMemoryModelFeatures::default().vulkan_memory_model(true);
 
-            let device_create_info = vk::DeviceCreateInfo::builder()
+            let device_create_info = vk::DeviceCreateInfo::default()
                 .push_next(&mut vulkan_memory_model_features)
                 .queue_create_infos(&queue_info)
                 .enabled_extension_names(&device_extension_names_raw)
@@ -443,7 +436,7 @@ impl RenderBase {
             }
         };
 
-        let swapchain_loader = khr::Swapchain::new(&instance, &device);
+        let swapchain_loader = khr::swapchain::Device::new(&instance, &device);
 
         let present_queue = unsafe { device.get_device_queue(queue_family_index, 0) };
 
@@ -532,7 +525,7 @@ impl RenderBase {
                 .unwrap_or(vk::PresentModeKHR::FIFO)
         };
         let extent = self.surface_resolution();
-        let swapchain_create_info = vk::SwapchainCreateInfoKHR::builder()
+        let swapchain_create_info = vk::SwapchainCreateInfoKHR::default()
             .surface(self.surface)
             .min_image_count(desired_image_count)
             .image_color_space(self.surface_format.color_space)
@@ -560,7 +553,7 @@ impl RenderBase {
                 .unwrap()
                 .iter()
                 .map(|&image| {
-                    let create_view_info = vk::ImageViewCreateInfo::builder()
+                    let create_view_info = vk::ImageViewCreateInfo::default()
                         .view_type(vk::ImageViewType::TYPE_2D)
                         .format(self.surface_format.format)
                         .components(vk::ComponentMapping {
@@ -598,7 +591,7 @@ impl RenderBase {
                 unsafe {
                     self.device
                         .create_framebuffer(
-                            &vk::FramebufferCreateInfo::builder()
+                            &vk::FramebufferCreateInfo::default()
                                 .render_pass(render_pass)
                                 .attachments(&framebuffer_attachments)
                                 .width(extent.width)
@@ -633,11 +626,10 @@ impl RenderBase {
             dst_stage_mask: vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT,
             ..Default::default()
         }];
-        let subpasses = [vk::SubpassDescription::builder()
+        let subpasses = [vk::SubpassDescription::default()
             .color_attachments(&color_attachment_refs)
-            .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS)
-            .build()];
-        let renderpass_create_info = vk::RenderPassCreateInfo::builder()
+            .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS)];
+        let renderpass_create_info = vk::RenderPassCreateInfo::default()
             .attachments(&renderpass_attachments)
             .subpasses(&subpasses)
             .dependencies(&dependencies);
@@ -745,38 +737,37 @@ impl RenderCtx {
     }
 
     pub fn create_pipeline_layout(&self) -> vk::PipelineLayout {
-        let push_constant_range = vk::PushConstantRange::builder()
+        let push_constant_range = vk::PushConstantRange::default()
             .offset(0)
             .size(std::mem::size_of::<ShaderConstants>() as u32)
-            .stage_flags(vk::ShaderStageFlags::ALL)
-            .build();
-        let layout_create_info = vk::PipelineLayoutCreateInfo::builder()
-            .push_constant_ranges(&[push_constant_range])
-            .build();
+            .stage_flags(vk::ShaderStageFlags::ALL);
         unsafe {
             self.base
                 .device
-                .create_pipeline_layout(&layout_create_info, None)
+                .create_pipeline_layout(
+                    &vk::PipelineLayoutCreateInfo::default()
+                        .push_constant_ranges(&[push_constant_range]),
+                    None,
+                )
                 .unwrap()
         }
     }
 
     pub fn rebuild_pipelines(&mut self, pipeline_cache: vk::PipelineCache) {
         // NOTE(eddyb) this acts like an integration test for specialization constants.
-        let spec_const_entries = [vk::SpecializationMapEntry::builder()
+        let spec_const_entries = [vk::SpecializationMapEntry::default()
             .constant_id(0x5007)
             .offset(0)
-            .size(4)
-            .build()];
+            .size(4)];
         let spec_const_data =
             u32::to_le_bytes(self.sky_fs_spec_id_0x5007_sun_intensity_extra_spec_const_factor);
-        let specialization_info = vk::SpecializationInfo::builder()
+        let specialization_info = vk::SpecializationInfo::default()
             .map_entries(&spec_const_entries)
             .data(&spec_const_data);
 
         self.cleanup_pipelines();
         let pipeline_layout = self.create_pipeline_layout();
-        let viewport = vk::PipelineViewportStateCreateInfo::builder()
+        let viewport = vk::PipelineViewportStateCreateInfo::default()
             .scissor_count(1)
             .viewport_count(1);
         let modules_names = self
@@ -805,28 +796,32 @@ impl RenderCtx {
                         module: *frag_module,
                         p_name: (*frag_name).as_ptr(),
                         stage: vk::ShaderStageFlags::FRAGMENT,
-                        p_specialization_info: &*specialization_info,
+                        p_specialization_info: &specialization_info,
                         ..Default::default()
                     },
                 ]))
             })
             .collect::<Vec<_>>();
+        let descs_indirect_parts = descs
+            .iter()
+            .map(|desc| desc.indirect_parts())
+            .collect::<Vec<_>>();
         let pipeline_info = descs
             .iter()
-            .map(|desc| {
-                vk::GraphicsPipelineCreateInfo::builder()
+            .zip(&descs_indirect_parts)
+            .map(|(desc, desc_indirect_parts)| {
+                vk::GraphicsPipelineCreateInfo::default()
                     .stages(&desc.shader_stages)
                     .vertex_input_state(&desc.vertex_input)
                     .input_assembly_state(&desc.input_assembly)
                     .rasterization_state(&desc.rasterization)
                     .multisample_state(&desc.multisample)
                     .depth_stencil_state(&desc.depth_stencil)
-                    .color_blend_state(&desc.color_blend)
-                    .dynamic_state(&desc.dynamic_state_info)
+                    .color_blend_state(&desc_indirect_parts.color_blend)
+                    .dynamic_state(&desc_indirect_parts.dynamic_state_info)
                     .viewport_state(&viewport)
                     .layout(pipeline_layout)
                     .render_pass(self.render_pass)
-                    .build()
             })
             .collect::<Vec<_>>();
         self.pipelines = unsafe {
@@ -835,13 +830,10 @@ impl RenderCtx {
                 .create_graphics_pipelines(pipeline_cache, &pipeline_info, None)
                 .expect("Unable to create graphics pipeline")
         }
-        .iter()
-        .zip(descs)
-        .map(|(&pipeline, desc)| Pipeline {
+        .into_iter()
+        .map(|pipeline| Pipeline {
             pipeline,
             pipeline_layout,
-            color_blend_attachments: desc.color_blend_attachments,
-            dynamic_state: desc.dynamic_state,
         })
         .collect();
     }
@@ -871,7 +863,7 @@ impl RenderCtx {
     /// old shader module if there was one with the same name already.  Does not rebuild pipelines
     /// that may be using the shader module, nor does it invalidate them.
     pub fn insert_shader_module(&mut self, name: String, spirv: &[u32]) {
-        let shader_info = vk::ShaderModuleCreateInfo::builder().code(spirv);
+        let shader_info = vk::ShaderModuleCreateInfo::default().code(spirv);
         let shader_module = unsafe {
             self.base
                 .device
@@ -971,7 +963,7 @@ impl RenderCtx {
         let wait_semaphors = [self.sync.rendering_complete_semaphore];
         let swapchains = [self.swapchain];
         let image_indices = [present_index];
-        let present_info = vk::PresentInfoKHR::builder()
+        let present_info = vk::PresentInfoKHR::default()
             .wait_semaphores(&wait_semaphors)
             .swapchains(&swapchains)
             .image_indices(&image_indices);
@@ -994,15 +986,14 @@ impl RenderCtx {
         framebuffer: vk::Framebuffer,
         clear_values: &[vk::ClearValue],
     ) {
-        let render_pass_begin_info = vk::RenderPassBeginInfo::builder()
+        let render_pass_begin_info = vk::RenderPassBeginInfo::default()
             .render_pass(self.render_pass)
             .framebuffer(framebuffer)
             .render_area(vk::Rect2D {
                 offset: vk::Offset2D { x: 0, y: 0 },
                 extent: self.scissors[0].extent,
             })
-            .clear_values(clear_values)
-            .build();
+            .clear_values(clear_values);
         self.record_submit_commandbuffer(
             &[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT],
             |device, draw_command_buffer| unsafe {
@@ -1075,7 +1066,7 @@ impl RenderCtx {
                 .reset_command_pool(self.commands.pool, vk::CommandPoolResetFlags::empty())
                 .expect("Reset command pool failed.");
 
-            let command_buffer_begin_info = vk::CommandBufferBeginInfo::builder()
+            let command_buffer_begin_info = vk::CommandBufferBeginInfo::default()
                 .flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT);
 
             self.base
@@ -1096,7 +1087,7 @@ impl RenderCtx {
             let command_buffers = vec![self.commands.draw_command_buffer];
             let wait_semaphores = &[self.sync.present_complete_semaphore];
             let signal_semaphores = &[self.sync.rendering_complete_semaphore];
-            let submit_info = vk::SubmitInfo::builder()
+            let submit_info = vk::SubmitInfo::default()
                 .wait_semaphores(wait_semaphores)
                 .wait_dst_stage_mask(wait_mask)
                 .command_buffers(&command_buffers)
@@ -1106,7 +1097,7 @@ impl RenderCtx {
                 .device
                 .queue_submit(
                     self.base.present_queue,
-                    &[submit_info.build()],
+                    &[submit_info],
                     self.sync.draw_commands_reuse_fence,
                 )
                 .expect("queue submit failed.");
@@ -1152,7 +1143,7 @@ pub struct RenderSync {
 impl RenderSync {
     pub fn new(base: &RenderBase) -> Self {
         let fence_create_info =
-            vk::FenceCreateInfo::builder().flags(vk::FenceCreateFlags::SIGNALED);
+            vk::FenceCreateInfo::default().flags(vk::FenceCreateFlags::SIGNALED);
 
         let semaphore_create_info = vk::SemaphoreCreateInfo::default();
 
@@ -1188,7 +1179,7 @@ impl RenderCommandPool {
     pub fn new(base: &RenderBase) -> Self {
         let pool = {
             let pool_create_info =
-                vk::CommandPoolCreateInfo::builder().queue_family_index(base.queue_family_index);
+                vk::CommandPoolCreateInfo::default().queue_family_index(base.queue_family_index);
 
             unsafe {
                 base.device
@@ -1198,7 +1189,7 @@ impl RenderCommandPool {
         };
 
         let command_buffers = {
-            let command_buffer_allocate_info = vk::CommandBufferAllocateInfo::builder()
+            let command_buffer_allocate_info = vk::CommandBufferAllocateInfo::default()
                 .command_buffer_count(1)
                 .command_pool(pool)
                 .level(vk::CommandBufferLevel::PRIMARY);
@@ -1220,25 +1211,27 @@ impl RenderCommandPool {
 pub struct Pipeline {
     pub pipeline: vk::Pipeline,
     pub pipeline_layout: vk::PipelineLayout,
-    pub color_blend_attachments: Box<[vk::PipelineColorBlendAttachmentState]>,
-    pub dynamic_state: Box<[vk::DynamicState]>,
 }
 
-pub struct PipelineDescriptor {
+pub struct PipelineDescriptor<'a> {
     pub color_blend_attachments: Box<[vk::PipelineColorBlendAttachmentState]>,
     pub dynamic_state: Box<[vk::DynamicState]>,
-    pub shader_stages: Box<[vk::PipelineShaderStageCreateInfo]>,
-    pub vertex_input: vk::PipelineVertexInputStateCreateInfo,
-    pub input_assembly: vk::PipelineInputAssemblyStateCreateInfo,
-    pub rasterization: vk::PipelineRasterizationStateCreateInfo,
-    pub multisample: vk::PipelineMultisampleStateCreateInfo,
-    pub depth_stencil: vk::PipelineDepthStencilStateCreateInfo,
-    pub color_blend: vk::PipelineColorBlendStateCreateInfo,
-    pub dynamic_state_info: vk::PipelineDynamicStateCreateInfo,
+    pub shader_stages: Box<[vk::PipelineShaderStageCreateInfo<'a>]>,
+    pub vertex_input: vk::PipelineVertexInputStateCreateInfo<'static>,
+    pub input_assembly: vk::PipelineInputAssemblyStateCreateInfo<'static>,
+    pub rasterization: vk::PipelineRasterizationStateCreateInfo<'static>,
+    pub multisample: vk::PipelineMultisampleStateCreateInfo<'static>,
+    pub depth_stencil: vk::PipelineDepthStencilStateCreateInfo<'static>,
 }
 
-impl PipelineDescriptor {
-    fn new(shader_stages: Box<[vk::PipelineShaderStageCreateInfo]>) -> Self {
+// HACK(eddyb) these fields need to borrow from `PipelineDescriptor` itself.
+pub struct PipelineDescriptorIndirectParts<'a> {
+    pub color_blend: vk::PipelineColorBlendStateCreateInfo<'a>,
+    pub dynamic_state_info: vk::PipelineDynamicStateCreateInfo<'a>,
+}
+
+impl<'a> PipelineDescriptor<'a> {
+    fn new(shader_stages: Box<[vk::PipelineShaderStageCreateInfo<'a>]>) -> Self {
         let vertex_input = vk::PipelineVertexInputStateCreateInfo {
             vertex_attribute_description_count: 0,
             vertex_binding_description_count: 0,
@@ -1288,15 +1281,7 @@ impl PipelineDescriptor {
                 | vk::ColorComponentFlags::B
                 | vk::ColorComponentFlags::A,
         }]);
-        let color_blend = vk::PipelineColorBlendStateCreateInfo::builder()
-            .logic_op(vk::LogicOp::CLEAR)
-            .attachments(color_blend_attachments.as_ref())
-            .build();
-
         let dynamic_state = Box::new([vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR]);
-        let dynamic_state_info = vk::PipelineDynamicStateCreateInfo::builder()
-            .dynamic_states(dynamic_state.as_ref())
-            .build();
 
         Self {
             color_blend_attachments,
@@ -1307,8 +1292,16 @@ impl PipelineDescriptor {
             rasterization,
             multisample,
             depth_stencil,
-            color_blend,
-            dynamic_state_info,
+        }
+    }
+
+    fn indirect_parts(&self) -> PipelineDescriptorIndirectParts<'_> {
+        PipelineDescriptorIndirectParts {
+            color_blend: vk::PipelineColorBlendStateCreateInfo::default()
+                .logic_op(vk::LogicOp::CLEAR)
+                .attachments(&self.color_blend_attachments),
+            dynamic_state_info: vk::PipelineDynamicStateCreateInfo::default()
+                .dynamic_states(&self.dynamic_state),
         }
     }
 }
@@ -1330,7 +1323,7 @@ unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
 unsafe extern "system" fn vulkan_debug_callback(
     message_severity: vk::DebugUtilsMessageSeverityFlagsEXT,
     message_type: vk::DebugUtilsMessageTypeFlagsEXT,
-    p_callback_data: *const vk::DebugUtilsMessengerCallbackDataEXT,
+    p_callback_data: *const vk::DebugUtilsMessengerCallbackDataEXT<'_>,
     _user_data: *mut std::os::raw::c_void,
 ) -> vk::Bool32 {
     let callback_data = *p_callback_data;
