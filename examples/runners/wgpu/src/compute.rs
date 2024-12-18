@@ -110,7 +110,7 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
         label: None,
         layout: Some(&pipeline_layout),
         module: &module,
-        entry_point,
+        entry_point: Some(entry_point),
     });
 
     let readback_buffer = device.create_buffer(&wgpu::BufferDescriptor {
