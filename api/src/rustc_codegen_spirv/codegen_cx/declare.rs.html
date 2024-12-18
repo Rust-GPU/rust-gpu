@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/declare.rs`."><title>declare.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/declare.rs`."><title>declare.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/codegen_cx/</div>declare.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -369,7 +370,19 @@
 <a href="#369" id="369">369</a>
 <a href="#370" id="370">370</a>
 <a href="#371" id="371">371</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::CodegenCx;
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+</span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
+
+<span class="kw">use </span><span class="kw">super</span>::CodegenCx;
 <span class="kw">use </span><span class="kw">crate</span>::abi::ConvSpirvType;
 <span class="kw">use </span><span class="kw">crate</span>::attr::AggregatedSpirvAttributes;
 <span class="kw">use </span><span class="kw">crate</span>::builder_spirv::{SpirvConst, SpirvValue, SpirvValueExt};
@@ -378,15 +391,15 @@
 <span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
 <span class="kw">use </span>rustc_attr::InlineAttr;
-<span class="kw">use </span>rustc_codegen_ssa::traits::{PreDefineMethods, StaticMethods};
+<span class="kw">use </span>rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
 <span class="kw">use </span>rustc_hir::def::DefKind;
 <span class="kw">use </span>rustc_middle::bug;
 <span class="kw">use </span>rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
 <span class="kw">use </span>rustc_middle::mir::mono::{Linkage, MonoItem, Visibility};
 <span class="kw">use </span>rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
-<span class="kw">use </span>rustc_middle::ty::{<span class="self">self</span>, Instance, ParamEnv, TypeVisitableExt};
-<span class="kw">use </span>rustc_span::def_id::DefId;
+<span class="kw">use </span>rustc_middle::ty::{<span class="self">self</span>, Instance, TypeVisitableExt, TypingEnv};
 <span class="kw">use </span>rustc_span::Span;
+<span class="kw">use </span>rustc_span::def_id::DefId;
 <span class="kw">use </span>rustc_target::abi::Align;
 
 <span class="kw">fn </span>attrs_to_spirv(attrs: <span class="kw-2">&amp;</span>CodegenFnAttrs) -&gt; FunctionControl {
@@ -426,9 +439,9 @@
     }
 
     <span class="comment">// The call graph of how this is reachable is a little tangled, so:
-    // MiscMethods::get_fn -&gt; get_fn_ext -&gt; declare_fn_ext
-    // MiscMethods::get_fn_addr -&gt; get_fn_ext -&gt; declare_fn_ext
-    // PreDefineMethods::predefine_fn -&gt; declare_fn_ext
+    // MiscCodegenMethods::get_fn -&gt; get_fn_ext -&gt; declare_fn_ext
+    // MiscCodegenMethods::get_fn_addr -&gt; get_fn_ext -&gt; declare_fn_ext
+    // PreDefineCodegenMethods::predefine_fn -&gt; declare_fn_ext
     </span><span class="kw">fn </span>declare_fn_ext(<span class="kw-2">&amp;</span><span class="self">self</span>, instance: Instance&lt;<span class="lifetime">'tcx</span>&gt;, linkage: <span class="prelude-ty">Option</span>&lt;LinkageType&gt;) -&gt; SpirvValue {
         <span class="kw">let </span>def_id = instance.def_id();
 
@@ -499,16 +512,13 @@
 
         <span class="kw">let </span>declared = fn_id.with_type(function_type);
 
-        <span class="kw">let </span>attrs = AggregatedSpirvAttributes::parse(
-            <span class="self">self</span>,
-            <span class="kw">match </span><span class="self">self</span>.tcx.def_kind(def_id) {
-                <span class="comment">// This was made to ICE cross-crate at some point, but then got
-                // reverted in https://github.com/rust-lang/rust/pull/111381.
-                // FIXME(eddyb) remove this workaround once we rustup past that.
-                </span>DefKind::Closure =&gt; <span class="kw-2">&amp;</span>[],
-                <span class="kw">_ </span>=&gt; <span class="self">self</span>.tcx.get_attrs_unchecked(def_id),
-            },
-        );
+        <span class="kw">let </span>attrs = AggregatedSpirvAttributes::parse(<span class="self">self</span>, <span class="kw">match </span><span class="self">self</span>.tcx.def_kind(def_id) {
+            <span class="comment">// This was made to ICE cross-crate at some point, but then got
+            // reverted in https://github.com/rust-lang/rust/pull/111381.
+            // FIXME(eddyb) remove this workaround once we rustup past that.
+            </span>DefKind::Closure =&gt; <span class="kw-2">&amp;</span>[],
+            <span class="kw">_ </span>=&gt; <span class="self">self</span>.tcx.get_attrs_unchecked(def_id),
+        });
         <span class="kw">if let </span><span class="prelude-val">Some</span>(entry) = attrs.entry.map(|attr| attr.value) {
             <span class="kw">let </span>entry_name = entry
                 .name
@@ -561,13 +571,26 @@
 
         <span class="comment">// HACK(eddyb) there is no good way to identify these definitions
         // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
-        </span><span class="kw">if </span>[
-            <span class="string">"&lt;core::fmt::Arguments&gt;::new_v1"</span>,
-            <span class="string">"&lt;core::fmt::Arguments&gt;::new_const"</span>,
-        ]
-        .contains(&amp;&amp;demangled_symbol_name[..])
+        </span><span class="kw">if </span>demangled_symbol_name == <span class="string">"core::panicking::panic_nounwind_fmt" </span>{
+            <span class="self">self</span>.panic_entry_points.borrow_mut().insert(def_id);
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(pieces_len) = demangled_symbol_name
+            .strip_prefix(<span class="string">"&lt;core::fmt::Arguments&gt;::new_const::&lt;"</span>)
+            .and_then(|s| s.strip_suffix(<span class="string">"&gt;"</span>))
         {
-            <span class="self">self</span>.fmt_args_new_fn_ids.borrow_mut().insert(fn_id);
+            <span class="self">self</span>.fmt_args_new_fn_ids
+                .borrow_mut()
+                .insert(fn_id, (pieces_len.parse().unwrap(), <span class="number">0</span>));
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(generics) = demangled_symbol_name
+            .strip_prefix(<span class="string">"&lt;core::fmt::Arguments&gt;::new_v1::&lt;"</span>)
+            .and_then(|s| s.strip_suffix(<span class="string">"&gt;"</span>))
+        {
+            <span class="kw">let </span>(pieces_len, rt_args_len) = generics.split_once(<span class="string">", "</span>).unwrap();
+            <span class="self">self</span>.fmt_args_new_fn_ids.borrow_mut().insert(
+                fn_id,
+                (pieces_len.parse().unwrap(), rt_args_len.parse().unwrap()),
+            );
         }
 
         <span class="comment">// HACK(eddyb) there is no good way to identify these definitions
@@ -615,7 +638,7 @@
             <span class="string">"get_static() should always hit the cache for statics defined in the same CGU, but did not for `{def_id:?}`"
         </span>);
 
-        <span class="kw">let </span>ty = instance.ty(<span class="self">self</span>.tcx, ParamEnv::reveal_all());
+        <span class="kw">let </span>ty = instance.ty(<span class="self">self</span>.tcx, TypingEnv::fully_monomorphized());
         <span class="kw">let </span>sym = <span class="self">self</span>.tcx.symbol_name(instance).name;
         <span class="kw">let </span>span = <span class="self">self</span>.tcx.def_span(def_id);
         <span class="kw">let </span>g = <span class="self">self</span>.declare_global(span, <span class="self">self</span>.layout_of(ty).spirv_type(span, <span class="self">self</span>));
@@ -638,7 +661,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; PreDefineMethods&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; PreDefineCodegenMethods&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">fn </span>predefine_static(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         def_id: DefId,
@@ -647,7 +670,7 @@
         symbol_name: <span class="kw-2">&amp;</span>str,
     ) {
         <span class="kw">let </span>instance = Instance::mono(<span class="self">self</span>.tcx, def_id);
-        <span class="kw">let </span>ty = instance.ty(<span class="self">self</span>.tcx, ParamEnv::reveal_all());
+        <span class="kw">let </span>ty = instance.ty(<span class="self">self</span>.tcx, TypingEnv::fully_monomorphized());
         <span class="kw">let </span>span = <span class="self">self</span>.tcx.def_span(def_id);
         <span class="kw">let </span>spvty = <span class="self">self</span>.layout_of(ty).spirv_type(span, <span class="self">self</span>);
         <span class="kw">let </span>linkage = <span class="kw">match </span>linkage {
@@ -695,14 +718,11 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; StaticMethods <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; StaticCodegenMethods <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
     <span class="kw">fn </span>static_addr_of(<span class="kw-2">&amp;</span><span class="self">self</span>, cv: <span class="self">Self</span>::Value, _align: Align, _kind: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="self">Self</span>::Value {
-        <span class="self">self</span>.def_constant(
-            <span class="self">self</span>.type_ptr_to(cv.ty),
-            SpirvConst::PtrTo {
-                pointee: cv.def_cx(<span class="self">self</span>),
-            },
-        )
+        <span class="self">self</span>.def_constant(<span class="self">self</span>.type_ptr_to(cv.ty), SpirvConst::PtrTo {
+            pointee: cv.def_cx(<span class="self">self</span>),
+        })
     }
 
     <span class="kw">fn </span>codegen_static(<span class="kw-2">&amp;</span><span class="self">self</span>, def_id: DefId) {

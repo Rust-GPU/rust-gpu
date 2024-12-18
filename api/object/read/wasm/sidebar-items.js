@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["WasmComdat","WasmComdatIterator","WasmComdatSectionIterator","WasmFile","WasmRelocationIterator","WasmSection","WasmSectionIterator","WasmSegment","WasmSegmentIterator","WasmSymbol","WasmSymbolIterator","WasmSymbolTable"]};

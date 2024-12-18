@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder_spirv.rs`."><title>builder_spirv.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder_spirv.rs`."><title>builder_spirv.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/</div>builder_spirv.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -925,18 +926,113 @@
 <a href="#925" id="925">925</a>
 <a href="#926" id="926">926</a>
 <a href="#927" id="927">927</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::builder;
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
+<a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
+<a href="#1006" id="1006">1006</a>
+<a href="#1007" id="1007">1007</a>
+<a href="#1008" id="1008">1008</a>
+<a href="#1009" id="1009">1009</a>
+<a href="#1010" id="1010">1010</a>
+<a href="#1011" id="1011">1011</a>
+<a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+</span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
+
+<span class="kw">use </span><span class="kw">crate</span>::builder;
 <span class="kw">use </span><span class="kw">crate</span>::codegen_cx::CodegenCx;
 <span class="kw">use </span><span class="kw">crate</span>::spirv_type::SpirvType;
 <span class="kw">use </span><span class="kw">crate</span>::symbols::Symbols;
 <span class="kw">use </span><span class="kw">crate</span>::target::SpirvTarget;
 <span class="kw">use </span><span class="kw">crate</span>::target_feature::TargetFeature;
-<span class="kw">use </span>rspirv::dr::{Block, Builder, Module, Operand};
+<span class="kw">use </span>rspirv::dr::{Block, Builder, Instruction, Module, Operand};
 <span class="kw">use </span>rspirv::spirv::{
     AddressingModel, Capability, MemoryModel, Op, SourceLanguage, StorageClass, Word,
 };
 <span class="kw">use </span>rspirv::{binary::Assemble, binary::Disassemble};
 <span class="kw">use </span>rustc_arena::DroplessArena;
+<span class="kw">use </span>rustc_codegen_ssa::traits::ConstCodegenMethods <span class="kw">as _</span>;
 <span class="kw">use </span>rustc_data_structures::fx::{FxHashMap, FxHashSet};
 <span class="kw">use </span>rustc_data_structures::sync::Lrc;
 <span class="kw">use </span>rustc_middle::bug;
@@ -944,7 +1040,8 @@
 <span class="kw">use </span>rustc_middle::ty::TyCtxt;
 <span class="kw">use </span>rustc_span::source_map::SourceMap;
 <span class="kw">use </span>rustc_span::symbol::Symbol;
-<span class="kw">use </span>rustc_span::{FileName, FileNameDisplayPreference, SourceFile, Span, DUMMY_SP};
+<span class="kw">use </span>rustc_span::{DUMMY_SP, FileName, FileNameDisplayPreference, SourceFile, Span};
+<span class="kw">use </span>rustc_target::abi::Size;
 <span class="kw">use </span>std::assert_matches::assert_matches;
 <span class="kw">use </span>std::cell::{RefCell, RefMut};
 <span class="kw">use </span>std::hash::{Hash, Hasher};
@@ -1148,13 +1245,8 @@
 
 <span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 </span><span class="kw">pub enum </span>SpirvConst&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; {
-    U32(u32),
-    U64(u64),
-    <span class="doccomment">/// f32 isn't hash, so store bits
-    </span>F32(u32),
-    <span class="doccomment">/// f64 isn't hash, so store bits
-    </span>F64(u64),
-    Bool(bool),
+    <span class="doccomment">/// Constants of boolean, integer or floating-point type (up to 128-bit).
+    </span>Scalar(u128),
 
     Null,
     Undef,
@@ -1200,11 +1292,7 @@
 
         <span class="kw">match </span><span class="self">self </span>{
             <span class="comment">// FIXME(eddyb) these are all noop cases, could they be automated?
-            </span>SpirvConst::U32(v) =&gt; SpirvConst::U32(v),
-            SpirvConst::U64(v) =&gt; SpirvConst::U64(v),
-            SpirvConst::F32(v) =&gt; SpirvConst::F32(v),
-            SpirvConst::F64(v) =&gt; SpirvConst::F64(v),
-            SpirvConst::Bool(v) =&gt; SpirvConst::Bool(v),
+            </span>SpirvConst::Scalar(v) =&gt; SpirvConst::Scalar(v),
             SpirvConst::Null =&gt; SpirvConst::Null,
             SpirvConst::Undef =&gt; SpirvConst::Undef,
             SpirvConst::ZombieUndefForFnAddr =&gt; SpirvConst::ZombieUndefForFnAddr,
@@ -1497,8 +1585,26 @@
         val: SpirvConst&lt;<span class="lifetime">'_</span>, <span class="lifetime">'tcx</span>&gt;,
         cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
     ) -&gt; SpirvValue {
+        <span class="kw">let </span>scalar_ty = <span class="kw">match </span>val {
+            SpirvConst::Scalar(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(cx.lookup_type(ty)),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+        };
+
+        <span class="comment">// HACK(eddyb) this is done so late (just before interning `val`) to
+        // minimize any potential misuse from direct `def_constant` calls.
+        </span><span class="kw">let </span>val = <span class="kw">match </span>(val, scalar_ty) {
+            (SpirvConst::Scalar(val), <span class="prelude-val">Some</span>(SpirvType::Integer(bits, signed))) =&gt; {
+                <span class="kw">let </span>size = Size::from_bits(bits);
+                SpirvConst::Scalar(<span class="kw">if </span>signed {
+                    size.sign_extend(val) <span class="kw">as </span>u128
+                } <span class="kw">else </span>{
+                    size.truncate(val)
+                })
+            }
+            <span class="kw">_ </span>=&gt; val,
+        };
+
         <span class="kw">let </span>val_with_type = WithType { ty, val };
-        <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder(BuilderCursor::default());
         <span class="kw">if let </span><span class="prelude-val">Some</span>(entry) = <span class="self">self</span>.const_to_id.borrow().get(<span class="kw-2">&amp;</span>val_with_type) {
             <span class="comment">// FIXME(eddyb) deduplicate this `if`-`else` and its other copies.
             </span><span class="kw">let </span>kind = <span class="kw">if </span>entry.legal.is_ok() {
@@ -1509,16 +1615,99 @@
             <span class="kw">return </span>SpirvValue { kind, ty };
         }
         <span class="kw">let </span>val = val_with_type.val;
-        <span class="kw">let </span>id = <span class="kw">match </span>val {
-            SpirvConst::U32(v) | SpirvConst::F32(v) =&gt; builder.constant_bit32(ty, v),
-            SpirvConst::U64(v) | SpirvConst::F64(v) =&gt; builder.constant_bit64(ty, v),
-            SpirvConst::Bool(v) =&gt; {
-                <span class="kw">if </span>v {
-                    builder.constant_true(ty)
-                } <span class="kw">else </span>{
-                    builder.constant_false(ty)
-                }
+
+        <span class="comment">// FIXME(eddyb) make this an extension method on `rspirv::dr::Builder`?
+        </span><span class="kw">let </span>const_op = |builder: <span class="kw-2">&amp;mut </span>Builder, op, lhs, maybe_rhs: <span class="prelude-ty">Option</span>&lt;<span class="kw">_</span>&gt;| {
+            <span class="comment">// HACK(eddyb) remove after `OpSpecConstantOp` support gets added to SPIR-T.
+            </span><span class="kw">let </span>spirt_has_const_op = <span class="bool-val">false</span>;
+
+            <span class="kw">if </span>!spirt_has_const_op {
+                <span class="kw">let </span>zombie = builder.undef(ty, <span class="prelude-val">None</span>);
+                cx.zombie_with_span(
+                    zombie,
+                    DUMMY_SP,
+                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"unsupported constant of type `{}`"</span>, cx.debug_type(ty)),
+                );
+                <span class="kw">return </span>zombie;
             }
+
+            <span class="kw">let </span>id = builder.id();
+            builder
+                .module_mut()
+                .types_global_values
+                .push(Instruction::new(
+                    Op::SpecConstantOp,
+                    <span class="prelude-val">Some</span>(ty),
+                    <span class="prelude-val">Some</span>(id),
+                    [
+                        Operand::LiteralSpecConstantOpInteger(op),
+                        Operand::IdRef(lhs),
+                    ]
+                    .into_iter()
+                    .chain(maybe_rhs.map(Operand::IdRef))
+                    .collect(),
+                ));
+            id
+        };
+
+        <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder(BuilderCursor::default());
+        <span class="kw">let </span>id = <span class="kw">match </span>val {
+            SpirvConst::Scalar(v) =&gt; <span class="kw">match </span>scalar_ty.unwrap() {
+                SpirvType::Integer(..=<span class="number">32</span>, <span class="kw">_</span>) | SpirvType::Float(..=<span class="number">32</span>) =&gt; {
+                    builder.constant_bit32(ty, v <span class="kw">as </span>u32)
+                }
+                SpirvType::Integer(<span class="number">64</span>, <span class="kw">_</span>) | SpirvType::Float(<span class="number">64</span>) =&gt; {
+                    builder.constant_bit64(ty, v <span class="kw">as </span>u64)
+                }
+                SpirvType::Integer(<span class="number">128</span>, <span class="bool-val">false</span>) =&gt; {
+                    <span class="comment">// HACK(eddyb) avoid borrow conflicts.
+                    </span>drop(builder);
+
+                    <span class="kw">let </span>const_64_u32_id = cx.const_u32(<span class="number">64</span>).def_cx(cx);
+                    <span class="kw">let </span>[lo_id, hi_id] =
+                        [v <span class="kw">as </span>u64, (v &gt;&gt; <span class="number">64</span>) <span class="kw">as </span>u64].map(|half| cx.const_u64(half).def_cx(cx));
+
+                    builder = <span class="self">self</span>.builder(BuilderCursor::default());
+                    <span class="kw">let </span><span class="kw-2">mut </span>const_op =
+                        |op, lhs, maybe_rhs| const_op(<span class="kw-2">&amp;mut </span>builder, op, lhs, maybe_rhs);
+                    <span class="kw">let </span>[lo_u128_id, hi_shifted_u128_id] =
+                        [(lo_id, <span class="prelude-val">None</span>), (hi_id, <span class="prelude-val">Some</span>(const_64_u32_id))].map(
+                            |(half_u64_id, shift)| {
+                                <span class="kw">let </span><span class="kw-2">mut </span>half_u128_id = const_op(Op::UConvert, half_u64_id, <span class="prelude-val">None</span>);
+                                <span class="kw">if let </span><span class="prelude-val">Some</span>(shift_amount_id) = shift {
+                                    half_u128_id = const_op(
+                                        Op::ShiftLeftLogical,
+                                        half_u128_id,
+                                        <span class="prelude-val">Some</span>(shift_amount_id),
+                                    );
+                                }
+                                half_u128_id
+                            },
+                        );
+                    const_op(Op::BitwiseOr, lo_u128_id, <span class="prelude-val">Some</span>(hi_shifted_u128_id))
+                }
+                SpirvType::Integer(<span class="number">128</span>, <span class="bool-val">true</span>) | SpirvType::Float(<span class="number">128</span>) =&gt; {
+                    <span class="comment">// HACK(eddyb) avoid borrow conflicts.
+                    </span>drop(builder);
+
+                    <span class="kw">let </span>v_u128_id = cx.const_u128(v).def_cx(cx);
+
+                    builder = <span class="self">self</span>.builder(BuilderCursor::default());
+                    const_op(<span class="kw-2">&amp;mut </span>builder, Op::Bitcast, v_u128_id, <span class="prelude-val">None</span>)
+                }
+                SpirvType::Bool =&gt; <span class="kw">match </span>v {
+                    <span class="number">0 </span>=&gt; builder.constant_false(ty),
+                    <span class="number">1 </span>=&gt; builder.constant_true(ty),
+                    <span class="kw">_ </span>=&gt; cx
+                        .tcx
+                        .dcx()
+                        .fatal(<span class="macro">format!</span>(<span class="string">"invalid constant value for bool: {v}"</span>)),
+                },
+                other =&gt; cx.tcx.dcx().fatal(<span class="macro">format!</span>(
+                    <span class="string">"SpirvConst::Scalar does not support type {}"</span>,
+                    other.debug(ty, cx)
+                )),
+            },
 
             SpirvConst::Null =&gt; builder.constant_null(ty),
             SpirvConst::Undef
@@ -1533,11 +1722,7 @@
         };
         <span class="attr">#[allow(clippy::match_same_arms)]
         </span><span class="kw">let </span>legal = <span class="kw">match </span>val {
-            SpirvConst::U32(<span class="kw">_</span>)
-            | SpirvConst::U64(<span class="kw">_</span>)
-            | SpirvConst::F32(<span class="kw">_</span>)
-            | SpirvConst::F64(<span class="kw">_</span>)
-            | SpirvConst::Bool(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
+            SpirvConst::Scalar(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
 
             SpirvConst::Null =&gt; {
                 <span class="comment">// FIXME(eddyb) check that the type supports `OpConstantNull`.
@@ -1639,10 +1824,9 @@
         }
     }
 
-    <span class="kw">pub fn </span>lookup_const_u64(<span class="kw-2">&amp;</span><span class="self">self</span>, def: SpirvValue) -&gt; <span class="prelude-ty">Option</span>&lt;u64&gt; {
+    <span class="kw">pub fn </span>lookup_const_scalar(<span class="kw-2">&amp;</span><span class="self">self</span>, def: SpirvValue) -&gt; <span class="prelude-ty">Option</span>&lt;u128&gt; {
         <span class="kw">match </span><span class="self">self</span>.lookup_const(def)<span class="question-mark">? </span>{
-            SpirvConst::U32(v) =&gt; <span class="prelude-val">Some</span>(v <span class="kw">as </span>u64),
-            SpirvConst::U64(v) =&gt; <span class="prelude-val">Some</span>(v),
+            SpirvConst::Scalar(v) =&gt; <span class="prelude-val">Some</span>(v),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
     }

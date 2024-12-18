@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/builder_methods.rs`."><title>builder_methods.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder/builder_methods.rs`."><title>builder_methods.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/builder/</div>builder_methods.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -3258,25 +3259,30 @@
 <a href="#3258" id="3258">3258</a>
 <a href="#3259" id="3259">3259</a>
 <a href="#3260" id="3260">3260</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Builder;
+<a href="#3261" id="3261">3261</a>
+<a href="#3262" id="3262">3262</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+</span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
+
+<span class="kw">use </span><span class="kw">super</span>::Builder;
 <span class="kw">use </span><span class="kw">crate</span>::abi::ConvSpirvType;
 <span class="kw">use </span><span class="kw">crate</span>::builder_spirv::{BuilderCursor, SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
+<span class="kw">use </span><span class="kw">crate</span>::codegen_cx::CodegenCx;
 <span class="kw">use </span><span class="kw">crate</span>::custom_insts::{CustomInst, CustomOp};
-<span class="kw">use </span><span class="kw">crate</span>::rustc_codegen_ssa::traits::BaseTypeMethods;
 <span class="kw">use </span><span class="kw">crate</span>::spirv_type::SpirvType;
 <span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>rspirv::dr::{InsertPoint, Instruction, Operand};
 <span class="kw">use </span>rspirv::spirv::{Capability, MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
-<span class="kw">use </span>rustc_apfloat::{ieee, Float, Round, Status};
+<span class="kw">use </span>rustc_apfloat::{Float, Round, Status, ieee};
+<span class="kw">use </span>rustc_codegen_ssa::MemFlags;
 <span class="kw">use </span>rustc_codegen_ssa::common::{
     AtomicOrdering, AtomicRmwBinOp, IntPredicate, RealPredicate, SynchronizationScope, TypeKind,
 };
 <span class="kw">use </span>rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 <span class="kw">use </span>rustc_codegen_ssa::mir::place::PlaceRef;
 <span class="kw">use </span>rustc_codegen_ssa::traits::{
-    BackendTypes, BuilderMethods, ConstMethods, LayoutTypeMethods, OverflowOp,
+    BackendTypes, BaseTypeCodegenMethods, BuilderMethods, ConstCodegenMethods,
+    LayoutTypeCodegenMethods, OverflowOp,
 };
-<span class="kw">use </span>rustc_codegen_ssa::MemFlags;
 <span class="kw">use </span>rustc_data_structures::fx::FxHashSet;
 <span class="kw">use </span>rustc_middle::bug;
 <span class="kw">use </span>rustc_middle::middle::codegen_fn_attrs::CodegenFnAttrs;
@@ -3284,7 +3290,7 @@
 <span class="kw">use </span>rustc_middle::ty::{<span class="self">self</span>, Ty};
 <span class="kw">use </span>rustc_span::Span;
 <span class="kw">use </span>rustc_target::abi::call::FnAbi;
-<span class="kw">use </span>rustc_target::abi::{Abi, Align, Scalar, Size, WrappingRange};
+<span class="kw">use </span>rustc_target::abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
 <span class="kw">use </span>smallvec::SmallVec;
 <span class="kw">use </span>std::borrow::Cow;
 <span class="kw">use </span>std::cell::Cell;
@@ -3309,12 +3315,11 @@
                             <span class="kw">let </span>size = Size::from_bits(bits);
                             <span class="kw">let </span>as_u128 = |const_val| {
                                 <span class="kw">let </span>x = <span class="kw">match </span>const_val {
-                                    SpirvConst::U32(x) =&gt; x <span class="kw">as </span>u128,
-                                    SpirvConst::U64(x) =&gt; x <span class="kw">as </span>u128,
+                                    SpirvConst::Scalar(x) =&gt; x,
                                     <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
                                 };
                                 <span class="prelude-val">Some</span>(<span class="kw">if </span>signed {
-                                    size.sign_extend(x)
+                                    size.sign_extend(x) <span class="kw">as </span>u128
                                 } <span class="kw">else </span>{
                                     size.truncate(x)
                                 })
@@ -3485,7 +3490,7 @@
             }
             SpirvType::Array { element, count } =&gt; {
                 <span class="kw">let </span>elem_pat = <span class="self">self</span>.memset_const_pattern(<span class="kw-2">&amp;</span><span class="self">self</span>.lookup_type(element), fill_byte);
-                <span class="kw">let </span>count = <span class="self">self</span>.builder.lookup_const_u64(count).unwrap() <span class="kw">as </span>usize;
+                <span class="kw">let </span>count = <span class="self">self</span>.builder.lookup_const_scalar(count).unwrap() <span class="kw">as </span>usize;
                 <span class="self">self</span>.constant_composite(
                     ty.def(<span class="self">self</span>.span(), <span class="self">self</span>),
                     iter::repeat(elem_pat).take(count),
@@ -3529,7 +3534,7 @@
             SpirvType::Adt { .. } =&gt; <span class="self">self</span>.fatal(<span class="string">"memset on structs not implemented yet"</span>),
             SpirvType::Array { element, count } =&gt; {
                 <span class="kw">let </span>elem_pat = <span class="self">self</span>.memset_dynamic_pattern(<span class="kw-2">&amp;</span><span class="self">self</span>.lookup_type(element), fill_var);
-                <span class="kw">let </span>count = <span class="self">self</span>.builder.lookup_const_u64(count).unwrap() <span class="kw">as </span>usize;
+                <span class="kw">let </span>count = <span class="self">self</span>.builder.lookup_const_scalar(count).unwrap() <span class="kw">as </span>usize;
                 <span class="self">self</span>.emit()
                     .composite_construct(
                         ty.def(<span class="self">self</span>.span(), <span class="self">self</span>),
@@ -3587,7 +3592,7 @@
             </span>.lookup_type(pat.ty)
             .sizeof(<span class="self">self</span>)
             .expect(<span class="string">"Unable to memset a dynamic sized object"</span>);
-        <span class="kw">let </span>size_elem_const = <span class="self">self</span>.constant_int(size_bytes.ty, size_elem.bytes());
+        <span class="kw">let </span>size_elem_const = <span class="self">self</span>.constant_int(size_bytes.ty, size_elem.bytes().into());
         <span class="kw">let </span>zero = <span class="self">self</span>.constant_int(size_bytes.ty, <span class="number">0</span>);
         <span class="kw">let </span>one = <span class="self">self</span>.constant_int(size_bytes.ty, <span class="number">1</span>);
         <span class="kw">let </span>zero_align = Align::from_bytes(<span class="number">0</span>).unwrap();
@@ -3597,7 +3602,7 @@
         <span class="kw">let </span>exit_bb = <span class="self">self</span>.append_sibling_block(<span class="string">"memset_exit"</span>);
 
         <span class="kw">let </span>count = <span class="self">self</span>.udiv(size_bytes, size_elem_const);
-        <span class="kw">let </span>index = <span class="self">self</span>.alloca(count.ty, zero_align);
+        <span class="kw">let </span>index = <span class="self">self</span>.alloca(<span class="self">self</span>.lookup_type(count.ty).sizeof(<span class="self">self</span>).unwrap(), zero_align);
         <span class="self">self</span>.store(zero, index, zero_align);
         <span class="self">self</span>.br(header_bb);
 
@@ -3855,8 +3860,8 @@
         // - dynamic indexing of a single array
         </span><span class="kw">let </span>const_ptr_offset = <span class="self">self
             </span>.builder
-            .lookup_const_u64(ptr_base_index)
-            .and_then(|idx| <span class="prelude-val">Some</span>(idx * <span class="self">self</span>.lookup_type(ty).sizeof(<span class="self">self</span>)<span class="question-mark">?</span>));
+            .lookup_const_scalar(ptr_base_index)
+            .and_then(|idx| <span class="prelude-val">Some</span>(u64::try_from(idx).ok()<span class="question-mark">? </span>* <span class="self">self</span>.lookup_type(ty).sizeof(<span class="self">self</span>)<span class="question-mark">?</span>));
         <span class="kw">if let </span><span class="prelude-val">Some</span>(const_ptr_offset) = const_ptr_offset {
             <span class="kw">if let </span><span class="prelude-val">Some</span>((base_indices, base_pointee_ty)) = <span class="self">self</span>.recover_access_chain_from_offset(
                 original_pointee_ty,
@@ -3967,7 +3972,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>emit = <span class="self">self</span>.emit();
 
         <span class="kw">let </span>non_zero_ptr_base_index =
-            ptr_base_index.filter(|<span class="kw-2">&amp;</span>idx| <span class="self">self</span>.builder.lookup_const_u64(idx) != <span class="prelude-val">Some</span>(<span class="number">0</span>));
+            ptr_base_index.filter(|<span class="kw-2">&amp;</span>idx| <span class="self">self</span>.builder.lookup_const_scalar(idx) != <span class="prelude-val">Some</span>(<span class="number">0</span>));
         <span class="kw">if let </span><span class="prelude-val">Some</span>(ptr_base_index) = non_zero_ptr_base_index {
             <span class="kw">let </span>result = <span class="kw">if </span>is_inbounds {
                 emit.in_bounds_ptr_access_chain(
@@ -4177,9 +4182,47 @@
             s1
         }
     }
+
+    <span class="comment">// HACK(eddyb) helper shared by `typed_alloca` and `alloca`.
+    </span><span class="kw">fn </span>declare_func_local_var(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        ty: &lt;<span class="self">Self </span><span class="kw">as </span>BackendTypes&gt;::Type,
+        _align: Align,
+    ) -&gt; SpirvValue {
+        <span class="kw">let </span>ptr_ty = <span class="self">self</span>.type_ptr_to(ty);
+
+        <span class="comment">// "All OpVariable instructions in a function must be the first instructions in the first block."
+        </span><span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.emit();
+        builder.select_block(<span class="prelude-val">Some</span>(<span class="number">0</span>)).unwrap();
+        <span class="kw">let </span>index = {
+            <span class="kw">let </span>block = <span class="kw-2">&amp;</span>builder.module_ref().functions[builder.selected_function().unwrap()]
+                .blocks[builder.selected_block().unwrap()];
+            block
+                .instructions
+                .iter()
+                .enumerate()
+                .find_map(|(index, inst)| {
+                    <span class="kw">if </span>inst.class.opcode != Op::Variable {
+                        <span class="prelude-val">Some</span>(InsertPoint::FromBegin(index))
+                    } <span class="kw">else </span>{
+                        <span class="prelude-val">None
+                    </span>}
+                })
+                .unwrap_or(InsertPoint::End)
+        };
+        <span class="comment">// TODO: rspirv doesn't have insert_variable function
+        </span><span class="kw">let </span>result_id = builder.id();
+        <span class="kw">let </span>inst = Instruction::new(Op::Variable, <span class="prelude-val">Some</span>(ptr_ty), <span class="prelude-val">Some</span>(result_id), <span class="macro">vec!</span>[
+            Operand::StorageClass(StorageClass::Function),
+        ]);
+        builder.insert_into_block(index, inst).unwrap();
+        result_id.with_type(ptr_ty)
+    }
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>Builder&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; {
+    <span class="kw">type </span>CodegenCx = CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;;
+
     <span class="kw">fn </span>build(cx: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>::CodegenCx, llbb: <span class="self">Self</span>::BasicBlock) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>cursor = cx.builder.select_block_by_id(llbb);
         <span class="comment">// FIXME(eddyb) change `Self::Function` to be more like a function index.
@@ -4196,7 +4239,6 @@
             cx,
             cursor,
             current_fn,
-            basic_block: llbb,
             current_span: Default::default(),
         }
     }
@@ -4206,7 +4248,8 @@
     }
 
     <span class="kw">fn </span>llbb(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self</span>::BasicBlock {
-        <span class="self">self</span>.basic_block
+        <span class="comment">// FIXME(eddyb) `llbb` should be removed from `rustc_codegen_ssa::traits`.
+        </span><span class="macro">unreachable!</span>(<span class="string">"dead code within `rustc_codegen_ssa`"</span>)
     }
 
     <span class="kw">fn </span>set_span(<span class="kw-2">&amp;mut </span><span class="self">self</span>, span: Span) {
@@ -4243,16 +4286,13 @@
                 <span class="kw">let </span>((line_start, col_start), (line_end, col_end)) =
                     (line_col_range.start, line_col_range.end);
 
-                <span class="self">self</span>.custom_inst(
-                    void_ty,
-                    CustomInst::SetDebugSrcLoc {
-                        file: Operand::IdRef(file.file_name_op_string_id),
-                        line_start: Operand::IdRef(<span class="self">self</span>.const_u32(line_start).def(<span class="self">self</span>)),
-                        line_end: Operand::IdRef(<span class="self">self</span>.const_u32(line_end).def(<span class="self">self</span>)),
-                        col_start: Operand::IdRef(<span class="self">self</span>.const_u32(col_start).def(<span class="self">self</span>)),
-                        col_end: Operand::IdRef(<span class="self">self</span>.const_u32(col_end).def(<span class="self">self</span>)),
-                    },
-                );
+                <span class="self">self</span>.custom_inst(void_ty, CustomInst::SetDebugSrcLoc {
+                    file: Operand::IdRef(file.file_name_op_string_id),
+                    line_start: Operand::IdRef(<span class="self">self</span>.const_u32(line_start).def(<span class="self">self</span>)),
+                    line_end: Operand::IdRef(<span class="self">self</span>.const_u32(line_end).def(<span class="self">self</span>)),
+                    col_start: Operand::IdRef(<span class="self">self</span>.const_u32(col_start).def(<span class="self">self</span>)),
+                    col_end: Operand::IdRef(<span class="self">self</span>.const_u32(col_end).def(<span class="self">self</span>)),
+                });
             }
 
             <span class="comment">// HACK(eddyb) remove the previous instruction if made irrelevant.
@@ -4343,8 +4383,8 @@
         <span class="comment">// HACK(eddyb) constant-fold branches early on, as the `core` library is
         // starting to get a lot of `if cfg!(debug_assertions)` added to it.
         </span><span class="kw">match </span><span class="self">self</span>.builder.lookup_const_by_id(cond) {
-            <span class="prelude-val">Some</span>(SpirvConst::Bool(<span class="bool-val">true</span>)) =&gt; <span class="self">self</span>.br(then_llbb),
-            <span class="prelude-val">Some</span>(SpirvConst::Bool(<span class="bool-val">false</span>)) =&gt; <span class="self">self</span>.br(else_llbb),
+            <span class="prelude-val">Some</span>(SpirvConst::Scalar(<span class="number">1</span>)) =&gt; <span class="self">self</span>.br(then_llbb),
+            <span class="prelude-val">Some</span>(SpirvConst::Scalar(<span class="number">0</span>)) =&gt; <span class="self">self</span>.br(else_llbb),
             <span class="kw">_ </span>=&gt; {
                 <span class="self">self</span>.emit()
                     .branch_conditional(cond, then_llbb, else_llbb, empty())
@@ -4600,14 +4640,11 @@
         <span class="kw">let </span>signed = <span class="kw">match </span>ty.kind() {
             ty::Int(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
             ty::Uint(<span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
-            other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(
-                <span class="string">"Unexpected {} type: {other:#?}"</span>,
-                <span class="kw">match </span>oop {
-                    OverflowOp::Add =&gt; <span class="string">"checked add"</span>,
-                    OverflowOp::Sub =&gt; <span class="string">"checked sub"</span>,
-                    OverflowOp::Mul =&gt; <span class="string">"checked mul"</span>,
-                }
-            )),
+            other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(<span class="string">"Unexpected {} type: {other:#?}"</span>, <span class="kw">match </span>oop {
+                OverflowOp::Add =&gt; <span class="string">"checked add"</span>,
+                OverflowOp::Sub =&gt; <span class="string">"checked sub"</span>,
+                OverflowOp::Mul =&gt; <span class="string">"checked mul"</span>,
+            })),
         };
 
         <span class="kw">let </span>result = <span class="kw">if </span>is_add {
@@ -4673,41 +4710,17 @@
         val
     }
 
-    <span class="kw">fn </span>alloca(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty: <span class="self">Self</span>::Type, _align: Align) -&gt; <span class="self">Self</span>::Value {
-        <span class="kw">let </span>ptr_ty = <span class="self">self</span>.type_ptr_to(ty);
-        <span class="comment">// "All OpVariable instructions in a function must be the first instructions in the first block."
-        </span><span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.emit();
-        builder.select_block(<span class="prelude-val">Some</span>(<span class="number">0</span>)).unwrap();
-        <span class="kw">let </span>index = {
-            <span class="kw">let </span>block = <span class="kw-2">&amp;</span>builder.module_ref().functions[builder.selected_function().unwrap()]
-                .blocks[builder.selected_block().unwrap()];
-            block
-                .instructions
-                .iter()
-                .enumerate()
-                .find_map(|(index, inst)| {
-                    <span class="kw">if </span>inst.class.opcode != Op::Variable {
-                        <span class="prelude-val">Some</span>(InsertPoint::FromBegin(index))
-                    } <span class="kw">else </span>{
-                        <span class="prelude-val">None
-                    </span>}
-                })
-                .unwrap_or(InsertPoint::End)
-        };
-        <span class="comment">// TODO: rspirv doesn't have insert_variable function
-        </span><span class="kw">let </span>result_id = builder.id();
-        <span class="kw">let </span>inst = Instruction::new(
-            Op::Variable,
-            <span class="prelude-val">Some</span>(ptr_ty),
-            <span class="prelude-val">Some</span>(result_id),
-            <span class="macro">vec!</span>[Operand::StorageClass(StorageClass::Function)],
-        );
-        builder.insert_into_block(index, inst).unwrap();
-        result_id.with_type(ptr_ty)
+    <span class="comment">// HACK(eddyb) new method patched into `pqp_cg_ssa` (see `build.rs`).
+    </span><span class="attr">#[cfg(not(rustc_codegen_spirv_disable_pqp_cg_ssa))]
+    </span><span class="kw">fn </span>typed_alloca(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty: <span class="self">Self</span>::Type, align: Align) -&gt; <span class="self">Self</span>::Value {
+        <span class="self">self</span>.declare_func_local_var(ty, align)
+    }
+    <span class="kw">fn </span>alloca(<span class="kw-2">&amp;mut </span><span class="self">self</span>, size: Size, align: Align) -&gt; <span class="self">Self</span>::Value {
+        <span class="self">self</span>.declare_func_local_var(<span class="self">self</span>.type_array(<span class="self">self</span>.type_i8(), size.bytes()), align)
     }
 
-    <span class="kw">fn </span>byte_array_alloca(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _len: <span class="self">Self</span>::Value, _align: Align) -&gt; <span class="self">Self</span>::Value {
-        <span class="self">self</span>.fatal(<span class="string">"array alloca not supported yet"</span>)
+    <span class="kw">fn </span>dynamic_alloca(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _len: <span class="self">Self</span>::Value, _align: Align) -&gt; <span class="self">Self</span>::Value {
+        <span class="self">self</span>.fatal(<span class="string">"dynamic alloca not supported yet"</span>)
     }
 
     <span class="kw">fn </span>load(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ty: <span class="self">Self</span>::Type, ptr: <span class="self">Self</span>::Value, _align: Align) -&gt; <span class="self">Self</span>::Value {
@@ -4772,7 +4785,7 @@
                 place.val.align,
             );
             OperandValue::Immediate(<span class="self">self</span>.to_immediate(llval, place.layout))
-        } <span class="kw">else if let </span>Abi::ScalarPair(a, b) = place.layout.abi {
+        } <span class="kw">else if let </span>BackendRepr::ScalarPair(a, b) = place.layout.backend_repr {
             <span class="kw">let </span>b_offset = a
                 .primitive()
                 .size(<span class="self">self</span>)
@@ -5263,13 +5276,11 @@
             SpirvType::Pointer { .. } =&gt; <span class="kw">match </span>op {
                 IntEQ =&gt; {
                     <span class="kw">if </span><span class="self">self</span>.emit().version().unwrap() &gt; (<span class="number">1</span>, <span class="number">3</span>) {
-                        <span class="kw">let </span>ptr_equal =
-                            <span class="self">self</span>.emit().ptr_equal(b, <span class="prelude-val">None</span>, lhs.def(<span class="self">self</span>), rhs.def(<span class="self">self</span>));
-
-                        ptr_equal.map(|result| {
-                            <span class="self">self</span>.zombie_ptr_equal(result, <span class="string">"OpPtrEqual"</span>);
-                            result
-                        })
+                        <span class="self">self</span>.emit()
+                            .ptr_equal(b, <span class="prelude-val">None</span>, lhs.def(<span class="self">self</span>), rhs.def(<span class="self">self</span>))
+                            .inspect(|<span class="kw-2">&amp;</span>result| {
+                                <span class="self">self</span>.zombie_ptr_equal(result, <span class="string">"OpPtrEqual"</span>);
+                            })
                     } <span class="kw">else </span>{
                         <span class="kw">let </span>int_ty = <span class="self">self</span>.type_usize();
                         <span class="kw">let </span>lhs = <span class="self">self
@@ -5282,16 +5293,15 @@
                             .convert_ptr_to_u(int_ty, <span class="prelude-val">None</span>, rhs.def(<span class="self">self</span>))
                             .unwrap();
                         <span class="self">self</span>.zombie_convert_ptr_to_u(rhs);
-                        <span class="self">self</span>.emit().i_not_equal(b, <span class="prelude-val">None</span>, lhs, rhs)
+                        <span class="self">self</span>.emit().i_equal(b, <span class="prelude-val">None</span>, lhs, rhs)
                     }
                 }
                 IntNE =&gt; {
                     <span class="kw">if </span><span class="self">self</span>.emit().version().unwrap() &gt; (<span class="number">1</span>, <span class="number">3</span>) {
                         <span class="self">self</span>.emit()
                             .ptr_not_equal(b, <span class="prelude-val">None</span>, lhs.def(<span class="self">self</span>), rhs.def(<span class="self">self</span>))
-                            .map(|result| {
+                            .inspect(|<span class="kw-2">&amp;</span>result| {
                                 <span class="self">self</span>.zombie_ptr_equal(result, <span class="string">"OpPtrNotEqual"</span>);
-                                result
                             })
                     } <span class="kw">else </span>{
                         <span class="kw">let </span>int_ty = <span class="self">self</span>.type_usize();
@@ -5492,7 +5502,10 @@
                 <span class="string">"memcpy with mem flags is not supported yet: {flags:?}"
             </span>));
         }
-        <span class="kw">let </span>const_size = <span class="self">self</span>.builder.lookup_const_u64(size).map(Size::from_bytes);
+        <span class="kw">let </span>const_size = <span class="self">self
+            </span>.builder
+            .lookup_const_scalar(size)
+            .and_then(|size| <span class="prelude-val">Some</span>(Size::from_bytes(u64::try_from(size).ok()<span class="question-mark">?</span>)));
         <span class="kw">if </span>const_size == <span class="prelude-val">Some</span>(Size::ZERO) {
             <span class="comment">// Nothing to do!
             </span><span class="kw">return</span>;
@@ -5566,6 +5579,12 @@
                 <span class="string">"memset with mem flags is not supported yet: {flags:?}"
             </span>));
         }
+
+        <span class="kw">let </span>const_size = <span class="self">self
+            </span>.builder
+            .lookup_const_scalar(size)
+            .and_then(|size| <span class="prelude-val">Some</span>(Size::from_bytes(u64::try_from(size).ok()<span class="question-mark">?</span>)));
+
         <span class="kw">let </span>elem_ty = <span class="kw">match </span><span class="self">self</span>.lookup_type(ptr.ty) {
             SpirvType::Pointer { pointee } =&gt; pointee,
             <span class="kw">_ </span>=&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(
@@ -5574,13 +5593,13 @@
             )),
         };
         <span class="kw">let </span>elem_ty_spv = <span class="self">self</span>.lookup_type(elem_ty);
-        <span class="kw">let </span>pat = <span class="kw">match </span><span class="self">self</span>.builder.lookup_const_u64(fill_byte) {
+        <span class="kw">let </span>pat = <span class="kw">match </span><span class="self">self</span>.builder.lookup_const_scalar(fill_byte) {
             <span class="prelude-val">Some</span>(fill_byte) =&gt; <span class="self">self</span>.memset_const_pattern(<span class="kw-2">&amp;</span>elem_ty_spv, fill_byte <span class="kw">as </span>u8),
             <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.memset_dynamic_pattern(<span class="kw-2">&amp;</span>elem_ty_spv, fill_byte.def(<span class="self">self</span>)),
         }
         .with_type(elem_ty);
-        <span class="kw">match </span><span class="self">self</span>.builder.lookup_const_u64(size) {
-            <span class="prelude-val">Some</span>(size) =&gt; <span class="self">self</span>.memset_constant_size(ptr, pat, size),
+        <span class="kw">match </span>const_size {
+            <span class="prelude-val">Some</span>(size) =&gt; <span class="self">self</span>.memset_constant_size(ptr, pat, size.bytes()),
             <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.memset_dynamic_size(ptr, pat, size),
         }
     }
@@ -5614,7 +5633,7 @@
             SpirvType::Vector { element, .. } =&gt; element,
             other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(<span class="string">"extract_element not implemented on type {other:?}"</span>)),
         };
-        <span class="kw">match </span><span class="self">self</span>.builder.lookup_const_u64(idx) {
+        <span class="kw">match </span><span class="self">self</span>.builder.lookup_const_scalar(idx) {
             <span class="prelude-val">Some</span>(const_index) =&gt; <span class="self">self</span>.emit().composite_extract(
                 result_type,
                 <span class="prelude-val">None</span>,
@@ -5911,16 +5930,6 @@
         <span class="comment">// ignore
     </span>}
 
-    <span class="kw">fn </span>instrprof_increment(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        _fn_name: <span class="self">Self</span>::Value,
-        _hash: <span class="self">Self</span>::Value,
-        _num_counters: <span class="self">Self</span>::Value,
-        _index: <span class="self">Self</span>::Value,
-    ) {
-        <span class="macro">todo!</span>()
-    }
-
     <span class="kw">fn </span>call(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         callee_ty: <span class="self">Self</span>::Type,
@@ -6031,7 +6040,7 @@
                 ///
                 /// E.g. for `format_args!("{a} {b:x}")` they'll be:
                 /// * `&amp;a` with `typeof a` and ' ',
-                ///  *`&amp;b` with `typeof b` and 'x'
+                /// * `&amp;b` with `typeof b` and 'x'
                 </span>ref_arg_ids_with_ty_and_spec: SmallVec&lt;[(Word, Ty&lt;<span class="lifetime">'tcx</span>&gt;, char); <span class="number">2</span>]&gt;,
             }
             <span class="kw">struct </span>FormatArgsNotRecognized(String);
@@ -6041,27 +6050,26 @@
                 <span class="kw">let </span><span class="kw-2">mut </span>decoded_format_args = DecodedFormatArgs::default();
 
                 <span class="kw">let </span>const_u32_as_usize = |ct_id| <span class="kw">match </span><span class="self">self</span>.builder.lookup_const_by_id(ct_id)<span class="question-mark">? </span>{
-                    SpirvConst::U32(x) =&gt; <span class="prelude-val">Some</span>(x <span class="kw">as </span>usize),
+                    SpirvConst::Scalar(x) =&gt; <span class="prelude-val">Some</span>(u32::try_from(x).ok()<span class="question-mark">? </span><span class="kw">as </span>usize),
                     <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                 };
-                <span class="kw">let </span>const_slice_as_elem_ids = |slice_ptr_and_len_ids: <span class="kw-2">&amp;</span>[Word]| {
-                    <span class="kw">if let </span>[ptr_id, len_id] = slice_ptr_and_len_ids[..] {
-                        <span class="kw">if let </span>SpirvConst::PtrTo { pointee } =
-                            <span class="self">self</span>.builder.lookup_const_by_id(ptr_id)<span class="question-mark">?
+                <span class="kw">let </span>const_slice_as_elem_ids = |ptr_id: Word, len: usize| {
+                    <span class="kw">if let </span>SpirvConst::PtrTo { pointee } =
+                        <span class="self">self</span>.builder.lookup_const_by_id(ptr_id)<span class="question-mark">?
+                    </span>{
+                        <span class="kw">if let </span>SpirvConst::Composite(elems) =
+                            <span class="self">self</span>.builder.lookup_const_by_id(pointee)<span class="question-mark">?
                         </span>{
-                            <span class="kw">if let </span>SpirvConst::Composite(elems) =
-                                <span class="self">self</span>.builder.lookup_const_by_id(pointee)<span class="question-mark">?
-                            </span>{
-                                <span class="kw">if </span>elems.len() == const_u32_as_usize(len_id)<span class="question-mark">? </span>{
-                                    <span class="kw">return </span><span class="prelude-val">Some</span>(elems);
-                                }
+                            <span class="kw">if </span>elems.len() == len {
+                                <span class="kw">return </span><span class="prelude-val">Some</span>(elems);
                             }
                         }
                     }
                     <span class="prelude-val">None
                 </span>};
-                <span class="kw">let </span>const_str_as_utf8 = |str_ptr_and_len_ids: <span class="kw-2">&amp;</span>[Word]| {
-                    <span class="kw">let </span>piece_str_bytes = const_slice_as_elem_ids(str_ptr_and_len_ids)<span class="question-mark">?
+                <span class="kw">let </span>const_str_as_utf8 = |<span class="kw-2">&amp;</span>[str_ptr_id, str_len_id]: <span class="kw-2">&amp;</span>[Word; <span class="number">2</span>]| {
+                    <span class="kw">let </span>str_len = const_u32_as_usize(str_len_id)<span class="question-mark">?</span>;
+                    <span class="kw">let </span>piece_str_bytes = const_slice_as_elem_ids(str_ptr_id, str_len)<span class="question-mark">?
                         </span>.iter()
                         .map(|<span class="kw-2">&amp;</span>id| u8::try_from(const_u32_as_usize(id)<span class="question-mark">?</span>).ok())
                         .collect::&lt;<span class="prelude-ty">Option</span>&lt;Vec&lt;u8&gt;&gt;&gt;()<span class="question-mark">?</span>;
@@ -6078,23 +6086,35 @@
                         kind: SpirvValueKind::Def(b_id),
                         ..
                     },
-                    <span class="comment">// NOTE(fee1-dead): the standard `panic` takes in a `Location` due to `track_caller`.
-                    // but for `panic_nounwind` it does not, therefore we only look at the first two arguments.
-                </span>] = args[..<span class="number">2</span>]
+                    <span class="kw-2">ref </span>other_args @ ..,
+                ] = args[..]
                 {
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(const_msg) = const_str_as_utf8(<span class="kw-2">&amp;</span>[a_id, b_id]) {
-                        decoded_format_args.const_pieces = <span class="prelude-val">Some</span>([const_msg].into_iter().collect());
-                        <span class="kw">return </span><span class="prelude-val">Ok</span>(decoded_format_args);
+                    <span class="comment">// Optional `&amp;'static panic::Location&lt;'static&gt;`.
+                    </span><span class="kw">if </span>other_args.len() &lt;= <span class="number">1 </span>{
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(const_msg) = const_str_as_utf8(<span class="kw-2">&amp;</span>[a_id, b_id]) {
+                            decoded_format_args.const_pieces =
+                                <span class="prelude-val">Some</span>([const_msg].into_iter().collect());
+                            <span class="kw">return </span><span class="prelude-val">Ok</span>(decoded_format_args);
+                        }
                     }
                 }
 
-                <span class="kw">let </span>format_args_id = <span class="kw">match </span>args {
-                    <span class="kw-2">&amp;</span>[
+                <span class="kw">let </span>format_args_id = <span class="kw">match </span><span class="kw-2">*</span>args {
+                    <span class="comment">// HACK(eddyb) `panic_nounwind_fmt` takes an extra argument.
+                    </span>[
                         SpirvValue {
                             kind: SpirvValueKind::Def(format_args_id),
                             ..
                         },
                         <span class="kw">_</span>, <span class="comment">// `&amp;'static panic::Location&lt;'static&gt;`
+                    </span>]
+                    | [
+                        SpirvValue {
+                            kind: SpirvValueKind::Def(format_args_id),
+                            ..
+                        },
+                        <span class="kw">_</span>, <span class="comment">// `force_no_backtrace: bool`
+                        </span><span class="kw">_</span>, <span class="comment">// `&amp;'static panic::Location&lt;'static&gt;`
                     </span>] =&gt; format_args_id,
 
                     <span class="kw">_ </span>=&gt; {
@@ -6196,10 +6216,10 @@
                             <span class="kw">match </span>(inst.class.opcode, inst.result_id, <span class="kw-2">&amp;</span>id_operands[..]) {
                                 (Op::Bitcast, <span class="prelude-val">Some</span>(r), <span class="kw-2">&amp;</span>[x]) =&gt; Inst::Bitcast(r, x),
                                 (Op::InBoundsAccessChain, <span class="prelude-val">Some</span>(r), <span class="kw-2">&amp;</span>[p, i]) =&gt; {
-                                    <span class="kw">if let </span><span class="prelude-val">Some</span>(SpirvConst::U32(i)) =
+                                    <span class="kw">if let </span><span class="prelude-val">Some</span>(SpirvConst::Scalar(i)) =
                                         <span class="self">self</span>.builder.lookup_const_by_id(i)
                                     {
-                                        Inst::InBoundsAccessChain(r, p, i)
+                                        Inst::InBoundsAccessChain(r, p, i <span class="kw">as </span>u32)
                                     } <span class="kw">else </span>{
                                         Inst::Unsupported(inst.class.opcode)
                                     }
@@ -6223,42 +6243,36 @@
                         <span class="string">"fmt::Arguments::new call: ran out of instructions"</span>.into(),
                     )
                 })<span class="question-mark">?</span>;
-                <span class="kw">let </span>((pieces_slice_ptr_id, pieces_len_id), (rt_args_slice_ptr_id, rt_args_count)) =
+                <span class="kw">let </span>((pieces_slice_ptr_id, pieces_len), (rt_args_slice_ptr_id, rt_args_count)) =
                     <span class="kw">match </span>fmt_args_new_call_insts[..] {
                         [
                             Inst::Call(call_ret_id, callee_id, <span class="kw-2">ref </span>call_args),
                             Inst::Store(st_dst_id, st_val_id),
                             Inst::Load(ld_val_id, ld_src_id),
-                        ] <span class="kw">if </span><span class="self">self</span>.fmt_args_new_fn_ids.borrow().contains(<span class="kw-2">&amp;</span>callee_id)
-                            &amp;&amp; call_ret_id == st_val_id
+                        ] <span class="kw">if </span>call_ret_id == st_val_id
                             &amp;&amp; st_dst_id == ld_src_id
                             &amp;&amp; ld_val_id == format_args_id =&gt;
                         {
                             require_local_var(st_dst_id, <span class="string">"fmt::Arguments::new destination"</span>)<span class="question-mark">?</span>;
 
+                            <span class="kw">let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>(pieces_len, rt_args_count)) =
+                                <span class="self">self</span>.fmt_args_new_fn_ids.borrow().get(<span class="kw-2">&amp;</span>callee_id)
+                            <span class="kw">else </span>{
+                                <span class="kw">return </span><span class="prelude-val">Err</span>(FormatArgsNotRecognized(
+                                    <span class="string">"fmt::Arguments::new callee not registered"</span>.into(),
+                                ));
+                            };
+
                             <span class="kw">match </span>call_args[..] {
                                 <span class="comment">// `&lt;core::fmt::Arguments&gt;::new_v1`
-                                </span>[
-                                    pieces_slice_ptr_id,
-                                    pieces_len_id,
-                                    rt_args_slice_ptr_id,
-                                    rt_args_len_id,
-                                ] =&gt; (
-                                    (pieces_slice_ptr_id, pieces_len_id),
-                                    (
-                                        <span class="prelude-val">Some</span>(rt_args_slice_ptr_id),
-                                        const_u32_as_usize(rt_args_len_id).ok_or_else(|| {
-                                            FormatArgsNotRecognized(
-                                                <span class="string">"fmt::Arguments::new: args.len() not constant"
-                                                    </span>.into(),
-                                            )
-                                        })<span class="question-mark">?</span>,
-                                    ),
+                                </span>[pieces_slice_ptr_id, rt_args_slice_ptr_id] =&gt; (
+                                    (pieces_slice_ptr_id, pieces_len),
+                                    (<span class="prelude-val">Some</span>(rt_args_slice_ptr_id), rt_args_count),
                                 ),
 
                                 <span class="comment">// `&lt;core::fmt::Arguments&gt;::new_const`
-                                </span>[pieces_slice_ptr_id, pieces_len_id] =&gt; {
-                                    ((pieces_slice_ptr_id, pieces_len_id), (<span class="prelude-val">None</span>, <span class="number">0</span>))
+                                </span>[pieces_slice_ptr_id] <span class="kw">if </span>rt_args_count == <span class="number">0 </span>=&gt; {
+                                    ((pieces_slice_ptr_id, pieces_len), (<span class="prelude-val">None</span>, rt_args_count))
                                 }
 
                                 <span class="kw">_ </span>=&gt; {
@@ -6290,21 +6304,7 @@
                 // arguments (from e.g. new `assert!`s being added to `core`),
                 // we have to confirm their many instructions for removal.
                 </span><span class="kw">if </span>rt_args_count &gt; <span class="number">0 </span>{
-                    <span class="kw">let </span>rt_args_slice_ptr_id = rt_args_slice_ptr_id.unwrap();
-                    <span class="kw">let </span>rt_args_array_ptr_id = <span class="kw">match </span>try_rev_take(<span class="number">1</span>).ok_or_else(|| {
-                        FormatArgsNotRecognized(
-                            <span class="string">"&amp;[fmt::rt::Argument] bitcast: ran out of instructions"</span>.into(),
-                        )
-                    })<span class="question-mark">?</span>[..]
-                    {
-                        [Inst::Bitcast(out_id, in_id)] <span class="kw">if </span>out_id == rt_args_slice_ptr_id =&gt; in_id,
-                        <span class="kw">_ </span>=&gt; {
-                            <span class="kw">return </span><span class="prelude-val">Err</span>(FormatArgsNotRecognized(
-                                <span class="string">"&amp;[fmt::rt::Argument] bitcast"</span>.into(),
-                            ));
-                        }
-                    };
-                    require_local_var(rt_args_array_ptr_id, <span class="string">"[fmt::rt::Argument; N]"</span>)<span class="question-mark">?</span>;
+                    <span class="kw">let </span>rt_args_array_ptr_id = rt_args_slice_ptr_id.unwrap();
 
                     <span class="comment">// Each runtime argument has 4 instructions to call one of
                     // the `fmt::rt::Argument::new_*` functions (and temporarily
@@ -6384,13 +6384,15 @@
                     <span class="kw">_ </span>=&gt; pieces_slice_ptr_id,
                 };
                 decoded_format_args.const_pieces =
-                    const_slice_as_elem_ids(<span class="kw-2">&amp;</span>[pieces_slice_ptr_id, pieces_len_id]).and_then(
+                    const_slice_as_elem_ids(pieces_slice_ptr_id, pieces_len).and_then(
                         |piece_ids| {
                             piece_ids
                                 .iter()
                                 .map(|<span class="kw-2">&amp;</span>piece_id| {
                                     <span class="kw">match </span><span class="self">self</span>.builder.lookup_const_by_id(piece_id)<span class="question-mark">? </span>{
-                                        SpirvConst::Composite(piece) =&gt; const_str_as_utf8(piece),
+                                        SpirvConst::Composite(piece) =&gt; {
+                                            const_str_as_utf8(piece.try_into().ok()<span class="question-mark">?</span>)
+                                        }
                                         <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                                     }
                                 })
@@ -6420,12 +6422,14 @@
                                 .map(|s| Cow::Owned(s.replace(<span class="string">'%'</span>, <span class="string">"%%"</span>)))
                                 .interleave(ref_arg_ids_with_ty_and_spec.iter().map(
                                     |<span class="kw-2">&amp;</span>(ref_id, ty, spec)| {
-                                        <span class="kw">use </span>rustc_target::abi::{Integer::<span class="kw-2">*</span>, Primitive::<span class="kw-2">*</span>};
+                                        <span class="kw">use </span>rustc_target::abi::{
+                                            Float::<span class="kw-2">*</span>, Integer::<span class="kw-2">*</span>, Primitive::<span class="kw-2">*</span>,
+                                        };
 
                                         <span class="kw">let </span>layout = <span class="self">self</span>.layout_of(ty);
 
-                                        <span class="kw">let </span>scalar = <span class="kw">match </span>layout.abi {
-                                            Abi::Scalar(scalar) =&gt; <span class="prelude-val">Some</span>(scalar.primitive()),
+                                        <span class="kw">let </span>scalar = <span class="kw">match </span>layout.backend_repr {
+                                            BackendRepr::Scalar(scalar) =&gt; <span class="prelude-val">Some</span>(scalar.primitive()),
                                             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                                         };
                                         <span class="kw">let </span>debug_printf_fmt = <span class="kw">match </span>(spec, scalar) {
@@ -6434,7 +6438,7 @@
                                             </span>(<span class="string">' ' </span>| <span class="string">'?'</span>, <span class="prelude-val">Some</span>(Int(I32, <span class="bool-val">false</span>))) =&gt; <span class="string">"%u"</span>,
                                             (<span class="string">'x'</span>, <span class="prelude-val">Some</span>(Int(I32, <span class="bool-val">false</span>))) =&gt; <span class="string">"%x"</span>,
                                             (<span class="string">' ' </span>| <span class="string">'?'</span>, <span class="prelude-val">Some</span>(Int(I32, <span class="bool-val">true</span>))) =&gt; <span class="string">"%i"</span>,
-                                            (<span class="string">' ' </span>| <span class="string">'?'</span>, <span class="prelude-val">Some</span>(F32)) =&gt; <span class="string">"%f"</span>,
+                                            (<span class="string">' ' </span>| <span class="string">'?'</span>, <span class="prelude-val">Some</span>(Float(F32))) =&gt; <span class="string">"%f"</span>,
 
                                             <span class="kw">_ </span>=&gt; <span class="string">""</span>,
                                         };

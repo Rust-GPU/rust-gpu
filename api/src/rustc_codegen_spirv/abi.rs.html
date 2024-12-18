@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/abi.rs`."><title>abi.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/abi.rs`."><title>abi.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/</div>abi.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1041,36 +1042,135 @@
 <a href="#1041" id="1041">1041</a>
 <a href="#1042" id="1042">1042</a>
 <a href="#1043" id="1043">1043</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! This file is responsible for translation from rustc tys (`TyAndLayout`) to spir-v types. It's
+<a href="#1044" id="1044">1044</a>
+<a href="#1045" id="1045">1045</a>
+<a href="#1046" id="1046">1046</a>
+<a href="#1047" id="1047">1047</a>
+<a href="#1048" id="1048">1048</a>
+<a href="#1049" id="1049">1049</a>
+<a href="#1050" id="1050">1050</a>
+<a href="#1051" id="1051">1051</a>
+<a href="#1052" id="1052">1052</a>
+<a href="#1053" id="1053">1053</a>
+<a href="#1054" id="1054">1054</a>
+<a href="#1055" id="1055">1055</a>
+<a href="#1056" id="1056">1056</a>
+<a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
+<a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
+<a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a></pre></div><pre class="rust"><code><span class="doccomment">//! This file is responsible for translation from rustc tys (`TyAndLayout`) to spir-v types. It's
 //! surprisingly difficult.
 
 </span><span class="kw">use </span><span class="kw">crate</span>::attr::{AggregatedSpirvAttributes, IntrinsicType};
 <span class="kw">use </span><span class="kw">crate</span>::codegen_cx::CodegenCx;
 <span class="kw">use </span><span class="kw">crate</span>::spirv_type::SpirvType;
+<span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 <span class="kw">use </span>rustc_data_structures::fx::FxHashMap;
 <span class="kw">use </span>rustc_errors::ErrorGuaranteed;
 <span class="kw">use </span>rustc_index::Idx;
 <span class="kw">use </span>rustc_middle::query::Providers;
 <span class="kw">use </span>rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
-<span class="kw">use </span>rustc_middle::ty::GenericArgsRef;
 <span class="kw">use </span>rustc_middle::ty::{
-    <span class="self">self</span>, Const, CoroutineArgs, FloatTy, IntTy, ParamEnv, PolyFnSig, Ty, TyCtxt, TyKind, UintTy,
+    <span class="self">self</span>, Const, CoroutineArgs, CoroutineArgsExt <span class="kw">as _</span>, FloatTy, IntTy, PolyFnSig, Ty, TyCtxt,
+    TyKind, UintTy,
 };
+<span class="kw">use </span>rustc_middle::ty::{GenericArgsRef, ScalarInt};
 <span class="kw">use </span>rustc_middle::{bug, span_bug};
-<span class="kw">use </span>rustc_span::def_id::DefId;
 <span class="kw">use </span>rustc_span::DUMMY_SP;
+<span class="kw">use </span>rustc_span::def_id::DefId;
 <span class="kw">use </span>rustc_span::{Span, Symbol};
 <span class="kw">use </span>rustc_target::abi::call::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 <span class="kw">use </span>rustc_target::abi::{
-    Abi, Align, FieldsShape, LayoutS, Primitive, Scalar, Size, TagEncoding, VariantIdx, Variants,
+    Align, BackendRepr, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions, Scalar, Size,
+    TagEncoding, VariantIdx, Variants,
 };
-<span class="kw">use </span>rustc_target::spec::abi::Abi <span class="kw">as </span>SpecAbi;
+<span class="kw">use </span>rustc_target::spec::abi::Abi;
 <span class="kw">use </span>std::cell::RefCell;
 <span class="kw">use </span>std::collections::hash_map::Entry;
 <span class="kw">use </span>std::fmt;
-
-<span class="kw">use </span>num_traits::cast::FromPrimitive;
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>provide(providers: <span class="kw-2">&amp;mut </span>Providers) {
     <span class="comment">// This is a lil weird: so, we obviously don't support C ABIs at all. However, libcore does declare some extern
@@ -1088,8 +1188,8 @@
         </span><span class="kw">let </span>result = (rustc_interface::DEFAULT_QUERY_PROVIDERS.fn_sig)(tcx, def_id);
         result.map_bound(|outer| {
             outer.map_bound(|<span class="kw-2">mut </span>inner| {
-                <span class="kw">if let </span>SpecAbi::C { .. } = inner.abi {
-                    inner.abi = SpecAbi::Unadjusted;
+                <span class="kw">if let </span>Abi::C { .. } = inner.abi {
+                    inner.abi = Abi::Unadjusted;
                 }
                 inner
             })
@@ -1139,22 +1239,21 @@
         <span class="prelude-val">Ok</span>(readjust_fn_abi(tcx, result<span class="question-mark">?</span>))
     };
 
-    <span class="comment">// FIXME(eddyb) remove this by deriving `Clone` for `LayoutS` upstream.
-    // FIXME(eddyb) the `S` suffix is a naming antipattern, rename upstream.
+    <span class="comment">// FIXME(eddyb) remove this by deriving `Clone` for `LayoutData` upstream.
     </span><span class="kw">fn </span>clone_layout&lt;FieldIdx: Idx, VariantIdx: Idx&gt;(
-        layout: <span class="kw-2">&amp;</span>LayoutS&lt;FieldIdx, VariantIdx&gt;,
-    ) -&gt; LayoutS&lt;FieldIdx, VariantIdx&gt; {
-        <span class="kw">let </span>LayoutS {
+        layout: <span class="kw-2">&amp;</span>LayoutData&lt;FieldIdx, VariantIdx&gt;,
+    ) -&gt; LayoutData&lt;FieldIdx, VariantIdx&gt; {
+        <span class="kw">let </span>LayoutData {
             <span class="kw-2">ref </span>fields,
             <span class="kw-2">ref </span>variants,
-            abi,
+            backend_repr,
             largest_niche,
             align,
             size,
             max_repr_align,
             unadjusted_abi_align,
         } = <span class="kw-2">*</span>layout;
-        LayoutS {
+        LayoutData {
             fields: <span class="kw">match </span><span class="kw-2">*</span>fields {
                 FieldsShape::Primitive =&gt; FieldsShape::Primitive,
                 FieldsShape::Union(count) =&gt; FieldsShape::Union(count),
@@ -1192,7 +1291,7 @@
                     variants: variants.clone(),
                 },
             },
-            abi,
+            backend_repr,
             largest_niche,
             align,
             size,
@@ -1200,6 +1299,7 @@
             unadjusted_abi_align,
         }
     }
+
     providers.layout_of = |tcx, key| {
         <span class="kw">let </span>TyAndLayout { ty, <span class="kw-2">mut </span>layout } =
             (rustc_interface::DEFAULT_QUERY_PROVIDERS.layout_of)(tcx, key)<span class="question-mark">?</span>;
@@ -1211,7 +1311,7 @@
         };
 
         <span class="kw">if </span>hide_niche {
-            layout = tcx.mk_layout(LayoutS {
+            layout = tcx.mk_layout(LayoutData {
                 largest_niche: <span class="prelude-val">None</span>,
                 ..clone_layout(layout.<span class="number">0.0</span>)
             });
@@ -1219,6 +1319,102 @@
 
         <span class="prelude-val">Ok</span>(TyAndLayout { ty, layout })
     };
+
+    <span class="comment">// HACK(eddyb) work around https://github.com/rust-lang/rust/pull/129403
+    // banning "struct-style" `#[repr(simd)]` (in favor of "array-newtype-style"),
+    // by simply bypassing "type definition WF checks" for affected types, which:
+    // - can only really be sound for types with trivial field types, that are
+    //   either completely non-generic (covering most `#[repr(simd)]` `struct`s),
+    //   or *at most* one generic type parameter with no bounds/where clause
+    // - relies on upstream `layout_of` not having had the non-array logic removed
+    //
+    // FIXME(eddyb) remove this once migrating beyond `#[repr(simd)]` becomes
+    // an option (may require Rust-GPU distinguishing between "SPIR-V interface"
+    // and "Rust-facing" types, which is even worse when the `OpTypeVector`s
+    // may be e.g. nested in `struct`s/arrays/etc. - at least buffers are easy).
+    //
+    // FIXME(eddyb) maybe using `#[spirv(vector)]` and `BackendRepr::Memory`,
+    // no claims at `rustc`-understood SIMD whatsoever, would be enough?
+    // (i.e. only SPIR-V caring about such a type vs a struct/array)
+    </span>providers.check_well_formed = |tcx, def_id| {
+        <span class="kw">let </span>trivial_struct = <span class="kw">match </span>tcx.hir_node_by_def_id(def_id) {
+            rustc_hir::Node::Item(item) =&gt; <span class="kw">match </span>item.kind {
+                rustc_hir::ItemKind::Struct(
+                    <span class="kw">_</span>,
+                    <span class="kw-2">&amp;</span>rustc_hir::Generics {
+                        params:
+                            <span class="kw-2">&amp;</span>[]
+                            | <span class="kw-2">&amp;</span>[
+                                rustc_hir::GenericParam {
+                                    kind:
+                                        rustc_hir::GenericParamKind::Type {
+                                            default: <span class="prelude-val">None</span>,
+                                            synthetic: <span class="bool-val">false</span>,
+                                        },
+                                    ..
+                                },
+                            ],
+                        predicates: <span class="kw-2">&amp;</span>[],
+                        has_where_clause_predicates: <span class="bool-val">false</span>,
+                        where_clause_span: <span class="kw">_</span>,
+                        span: <span class="kw">_</span>,
+                    },
+                ) =&gt; <span class="prelude-val">Some</span>(tcx.adt_def(def_id)),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+            },
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+        };
+        <span class="kw">let </span>valid_non_array_simd_struct = trivial_struct.is_some_and(|adt_def| {
+            <span class="kw">let </span>ReprOptions {
+                int: <span class="prelude-val">None</span>,
+                align: <span class="prelude-val">None</span>,
+                pack: <span class="prelude-val">None</span>,
+                flags: ReprFlags::IS_SIMD,
+                field_shuffle_seed: <span class="kw">_</span>,
+            } = adt_def.repr()
+            <span class="kw">else </span>{
+                <span class="kw">return </span><span class="bool-val">false</span>;
+            };
+            <span class="kw">if </span>adt_def.destructor(tcx).is_some() {
+                <span class="kw">return </span><span class="bool-val">false</span>;
+            }
+
+            <span class="kw">let </span>field_types = adt_def
+                .non_enum_variant()
+                .fields
+                .iter()
+                .map(|f| tcx.type_of(f.did).instantiate_identity());
+            field_types.dedup().exactly_one().is_ok_and(|elem_ty| {
+                <span class="macro">matches!</span>(
+                    elem_ty.kind(),
+                    ty::Bool | ty::Int(<span class="kw">_</span>) | ty::Uint(<span class="kw">_</span>) | ty::Float(<span class="kw">_</span>) | ty::Param(<span class="kw">_</span>)
+                )
+            })
+        });
+
+        <span class="kw">if </span>valid_non_array_simd_struct {
+            tcx.dcx()
+                .struct_span_warn(
+                    tcx.def_span(def_id),
+                    <span class="string">"[Rust-GPU] temporarily re-allowing old-style `#[repr(simd)]` (with fields)"</span>,
+                )
+                .with_note(<span class="string">"removed upstream by https://github.com/rust-lang/rust/pull/129403"</span>)
+                .with_note(<span class="string">"in favor of the new `#[repr(simd)] struct TxN([T; N]);` style"</span>)
+                .with_note(<span class="string">"(taking effect since `nightly-2024-09-12` / `1.83.0` stable)"</span>)
+                .emit();
+            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+        }
+
+        (rustc_interface::DEFAULT_QUERY_PROVIDERS.check_well_formed)(tcx, def_id)
+    };
+
+    <span class="comment">// HACK(eddyb) work around https://github.com/rust-lang/rust/pull/132173
+    // (and further changes from https://github.com/rust-lang/rust/pull/132843)
+    // starting to ban SIMD ABI misuse (or at least starting to warn about it).
+    //
+    // FIXME(eddyb) same as the FIXME comment on `check_well_formed`:
+    // need to migrate away from `#[repr(simd)]` ASAP.
+    </span>providers.check_mono_item = |<span class="kw">_</span>, <span class="kw">_</span>| {};
 }
 
 <span class="doccomment">/// If a struct contains a pointer to itself, even indirectly, then doing a naiive recursive walk
@@ -1406,9 +1602,9 @@
 
         <span class="comment">// Note: ty.layout is orthogonal to ty.ty, e.g. `ManuallyDrop&lt;Result&lt;isize, isize&gt;&gt;` has abi
         // `ScalarPair`.
-        // There's a few layers that we go through here. First we inspect layout.abi, then if relevant, layout.fields, etc.
-        </span><span class="kw">match </span><span class="self">self</span>.abi {
-            Abi::Uninhabited =&gt; SpirvType::Adt {
+        // There's a few layers that we go through here. First we inspect layout.backend_repr, then if relevant, layout.fields, etc.
+        </span><span class="kw">match </span><span class="self">self</span>.backend_repr {
+            BackendRepr::Uninhabited =&gt; SpirvType::Adt {
                 def_id: def_id_for_spirv_type_adt(<span class="kw-2">*</span><span class="self">self</span>),
                 size: <span class="prelude-val">Some</span>(Size::ZERO),
                 align: Align::from_bytes(<span class="number">0</span>).unwrap(),
@@ -1417,13 +1613,13 @@
                 field_names: <span class="prelude-val">None</span>,
             }
             .def_with_name(cx, span, TyLayoutNameKey::from(<span class="kw-2">*</span><span class="self">self</span>)),
-            Abi::Scalar(scalar) =&gt; trans_scalar(cx, span, <span class="kw-2">*</span><span class="self">self</span>, scalar, Size::ZERO),
-            Abi::ScalarPair(a, b) =&gt; {
-                <span class="comment">// NOTE(eddyb) unlike `Abi::Scalar`'s simpler newtype-unpacking
-                // behavior, `Abi::ScalarPair` can be composed in two ways:
-                // * two `Abi::Scalar` fields (and any number of ZST fields),
+            BackendRepr::Scalar(scalar) =&gt; trans_scalar(cx, span, <span class="kw-2">*</span><span class="self">self</span>, scalar, Size::ZERO),
+            BackendRepr::ScalarPair(a, b) =&gt; {
+                <span class="comment">// NOTE(eddyb) unlike `BackendRepr::Scalar`'s simpler newtype-unpacking
+                // behavior, `BackendRepr::ScalarPair` can be composed in two ways:
+                // * two `BackendRepr::Scalar` fields (and any number of ZST fields),
                 //   gets handled the same as a `struct { a, b }`, further below
-                // * an `Abi::ScalarPair` field (and any number of ZST fields),
+                // * an `BackendRepr::ScalarPair` field (and any number of ZST fields),
                 //   which requires more work to allow taking a reference to
                 //   that field, and there are two potential approaches:
                 //   1. wrapping that field's SPIR-V type in a single-field
@@ -1433,7 +1629,7 @@
                 //   2. reusing that field's SPIR-V type, instead of defining
                 //      a new one, offering the `(a, b)` shape `rustc_codegen_ssa`
                 //      expects, while letting noop pointercasts access the sole
-                //      `Abi::ScalarPair` field - this is the approach taken here
+                //      `BackendRepr::ScalarPair` field - this is the approach taken here
                 </span><span class="kw">let </span><span class="kw-2">mut </span>non_zst_fields = (<span class="number">0</span>..<span class="self">self</span>.fields.count())
                     .map(|i| (i, <span class="self">self</span>.field(cx, i)))
                     .filter(|(<span class="kw">_</span>, field)| !field.is_zst());
@@ -1447,7 +1643,7 @@
                     </span><span class="kw">if </span><span class="self">self</span>.fields.offset(i) == Size::ZERO
                         &amp;&amp; field.size == <span class="self">self</span>.size
                         &amp;&amp; field.align == <span class="self">self</span>.align
-                        &amp;&amp; field.abi == <span class="self">self</span>.abi
+                        &amp;&amp; field.backend_repr == <span class="self">self</span>.backend_repr
                     {
                         <span class="kw">return </span>field.spirv_type(span, cx);
                     }
@@ -1488,7 +1684,7 @@
                 }
                 .def_with_name(cx, span, TyLayoutNameKey::from(<span class="kw-2">*</span><span class="self">self</span>))
             }
-            Abi::Vector { element, count } =&gt; {
+            BackendRepr::Vector { element, count } =&gt; {
                 <span class="kw">let </span>elem_spirv = trans_scalar(cx, span, <span class="kw-2">*</span><span class="self">self</span>, element, Size::ZERO);
                 SpirvType::Vector {
                     element: elem_spirv,
@@ -1496,12 +1692,12 @@
                 }
                 .def(span, cx)
             }
-            Abi::Aggregate { sized: <span class="kw">_ </span>} =&gt; trans_aggregate(cx, span, <span class="kw-2">*</span><span class="self">self</span>),
+            BackendRepr::Memory { sized: <span class="kw">_ </span>} =&gt; trans_aggregate(cx, span, <span class="kw-2">*</span><span class="self">self</span>),
         }
     }
 }
 
-<span class="doccomment">/// Only pub for `LayoutTypeMethods::scalar_pair_element_backend_type`. Think about what you're
+<span class="doccomment">/// Only pub for `LayoutTypeCodegenMethods::scalar_pair_element_backend_type`. Think about what you're
 /// doing before calling this.
 </span><span class="kw">pub fn </span>scalar_pair_element_backend_type&lt;<span class="lifetime">'tcx</span>&gt;(
     cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
@@ -1509,8 +1705,8 @@
     ty: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;,
     index: usize,
 ) -&gt; Word {
-    <span class="kw">let </span>[a, b] = <span class="kw">match </span>ty.layout.abi() {
-        Abi::ScalarPair(a, b) =&gt; [a, b],
+    <span class="kw">let </span>[a, b] = <span class="kw">match </span>ty.layout.backend_repr() {
+        BackendRepr::ScalarPair(a, b) =&gt; [a, b],
         other =&gt; <span class="macro">span_bug!</span>(
             span,
             <span class="string">"scalar_pair_element_backend_type invalid abi: {:?}"</span>,
@@ -1544,13 +1740,12 @@
     }
 
     <span class="kw">match </span>scalar.primitive() {
-        Primitive::Int(width, signedness) =&gt; {
-            SpirvType::Integer(width.size().bits() <span class="kw">as </span>u32, signedness).def(span, cx)
+        Primitive::Int(int_kind, signedness) =&gt; {
+            SpirvType::Integer(int_kind.size().bits() <span class="kw">as </span>u32, signedness).def(span, cx)
         }
-        Primitive::F16 =&gt; SpirvType::Float(<span class="number">16</span>).def(span, cx),
-        Primitive::F32 =&gt; SpirvType::Float(<span class="number">32</span>).def(span, cx),
-        Primitive::F64 =&gt; SpirvType::Float(<span class="number">64</span>).def(span, cx),
-        Primitive::F128 =&gt; SpirvType::Float(<span class="number">128</span>).def(span, cx),
+        Primitive::Float(float_kind) =&gt; {
+            SpirvType::Float(float_kind.size().bits() <span class="kw">as </span>u32).def(span, cx)
+        }
         Primitive::Pointer(<span class="kw">_</span>) =&gt; {
             <span class="kw">let </span>pointee_ty = dig_scalar_pointee(cx, ty, offset);
             <span class="comment">// Pointers can be recursive. So, record what we're currently translating, and if we're already translating
@@ -1592,7 +1787,7 @@
             TyKind::Ref(<span class="kw">_</span>, pointee_ty, <span class="kw">_</span>) | TyKind::RawPtr(pointee_ty, <span class="kw">_</span>) =&gt; {
                 PointeeTy::Ty(cx.layout_of(pointee_ty))
             }
-            TyKind::FnPtr(sig) =&gt; PointeeTy::Fn(sig),
+            TyKind::FnPtr(sig_tys, hdr) =&gt; PointeeTy::Fn(sig_tys.with(hdr)),
             <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(<span class="string">"Pointer is not `&amp;T`, `*T` or `fn` pointer: {:#?}"</span>, layout),
         };
         <span class="kw">return </span>pointee;
@@ -1858,7 +2053,7 @@
             // ) -&gt; P {
             //     let adt_def = const_.ty.ty_adt_def().unwrap();
             //     assert!(adt_def.is_enum());
-            //     let destructured = cx.tcx.destructure_const(ParamEnv::reveal_all().and(const_));
+            //     let destructured = cx.tcx.destructure_const(TypingEnv::fully_monomorphized().and(const_));
             //     let idx = destructured.variant.unwrap();
             //     let value = const_.ty.discriminant_for_variant(cx.tcx, idx).unwrap().val as u64;
             //     &lt;_&gt;::from_u64(value).unwrap()
@@ -1905,41 +2100,44 @@
             // let image_format: spirv::ImageFormat =
             //     type_from_variant_discriminant(cx, args.const_at(6));
 
-            </span><span class="kw">trait </span>FromU128Const: Sized {
-                <span class="kw">fn </span>from_u128_const(n: u128) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt;;
+            </span><span class="kw">trait </span>FromScalarInt: Sized {
+                <span class="kw">fn </span>from_scalar_int(n: ScalarInt) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt;;
             }
 
-            <span class="kw">impl </span>FromU128Const <span class="kw">for </span>u32 {
-                <span class="kw">fn </span>from_u128_const(n: u128) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-                    u32::from_u128(n)
+            <span class="kw">impl </span>FromScalarInt <span class="kw">for </span>u32 {
+                <span class="kw">fn </span>from_scalar_int(n: ScalarInt) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+                    <span class="prelude-val">Some</span>(n.try_to_bits(Size::from_bits(<span class="number">32</span>)).ok()<span class="question-mark">?</span>.try_into().unwrap())
                 }
             }
 
-            <span class="kw">impl </span>FromU128Const <span class="kw">for </span>Dim {
-                <span class="kw">fn </span>from_u128_const(n: u128) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-                    Dim::from_u32(u32::from_u128(n)<span class="question-mark">?</span>)
+            <span class="kw">impl </span>FromScalarInt <span class="kw">for </span>Dim {
+                <span class="kw">fn </span>from_scalar_int(n: ScalarInt) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+                    Dim::from_u32(u32::from_scalar_int(n)<span class="question-mark">?</span>)
                 }
             }
 
-            <span class="kw">impl </span>FromU128Const <span class="kw">for </span>ImageFormat {
-                <span class="kw">fn </span>from_u128_const(n: u128) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-                    ImageFormat::from_u32(u32::from_u128(n)<span class="question-mark">?</span>)
+            <span class="kw">impl </span>FromScalarInt <span class="kw">for </span>ImageFormat {
+                <span class="kw">fn </span>from_scalar_int(n: ScalarInt) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+                    ImageFormat::from_u32(u32::from_scalar_int(n)<span class="question-mark">?</span>)
                 }
             }
 
-            <span class="kw">fn </span>const_int_value&lt;<span class="lifetime">'tcx</span>, P: FromU128Const&gt;(
+            <span class="kw">fn </span>const_int_value&lt;<span class="lifetime">'tcx</span>, P: FromScalarInt&gt;(
                 cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
                 const_: Const&lt;<span class="lifetime">'tcx</span>&gt;,
             ) -&gt; <span class="prelude-ty">Result</span>&lt;P, ErrorGuaranteed&gt; {
-                <span class="macro">assert!</span>(const_.ty().is_integral());
-                <span class="kw">let </span>value = const_.eval_bits(cx.tcx, ParamEnv::reveal_all());
-                <span class="kw">match </span>P::from_u128_const(value) {
-                    <span class="prelude-val">Some</span>(v) =&gt; <span class="prelude-val">Ok</span>(v),
-                    <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(cx
-                        .tcx
-                        .dcx()
-                        .err(<span class="macro">format!</span>(<span class="string">"Invalid value for Image const generic: {value}"</span>))),
-                }
+                <span class="kw">let </span>(const_val, const_ty) = const_
+                    .try_to_valtree()
+                    .expect(<span class="string">"expected monomorphic const in codegen"</span>);
+                <span class="macro">assert!</span>(const_ty.is_integral());
+                const_val
+                    .try_to_scalar_int()
+                    .and_then(P::from_scalar_int)
+                    .ok_or_else(|| {
+                        cx.tcx
+                            .dcx()
+                            .err(<span class="macro">format!</span>(<span class="string">"invalid value for Image const generic: {const_}"</span>))
+                    })
             }
 
             <span class="kw">let </span>dim = const_int_value(cx, args.const_at(<span class="number">1</span>))<span class="question-mark">?</span>;

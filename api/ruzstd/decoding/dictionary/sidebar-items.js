@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAGIC_NUM"],"enum":["DictionaryDecodeError"],"struct":["Dictionary"]};

@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/inline.rs`."><title>inline.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-081576b923113409.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.79.0-nightly (244da22fa 2024-04-23)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../rustc_codegen_spirv/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/inline.rs`."><title>inline.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/linker/</div>inline.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1082,21 +1083,7 @@
 <a href="#1082" id="1082">1082</a>
 <a href="#1083" id="1083">1083</a>
 <a href="#1084" id="1084">1084</a>
-<a href="#1085" id="1085">1085</a>
-<a href="#1086" id="1086">1086</a>
-<a href="#1087" id="1087">1087</a>
-<a href="#1088" id="1088">1088</a>
-<a href="#1089" id="1089">1089</a>
-<a href="#1090" id="1090">1090</a>
-<a href="#1091" id="1091">1091</a>
-<a href="#1092" id="1092">1092</a>
-<a href="#1093" id="1093">1093</a>
-<a href="#1094" id="1094">1094</a>
-<a href="#1095" id="1095">1095</a>
-<a href="#1096" id="1096">1096</a>
-<a href="#1097" id="1097">1097</a>
-<a href="#1098" id="1098">1098</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! This algorithm is not intended to be an optimization, it is rather for legalization.
+<a href="#1085" id="1085">1085</a></pre></div><pre class="rust"><code><span class="doccomment">//! This algorithm is not intended to be an optimization, it is rather for legalization.
 //! Specifically, spir-v disallows things like a `StorageClass::Function` pointer to a
 //! `StorageClass::Input` pointer. Our frontend definitely allows it, though, this is like taking a
 //! `&amp;Input&lt;T&gt;` in a function! So, we inline all functions that take these "illegal" pointers, then
@@ -1240,14 +1227,9 @@
 
         custom_ext_inst_set_import: custom_ext_inst_set_import.unwrap_or_else(|| {
             <span class="kw">let </span>id = next_id(header);
-            <span class="kw">let </span>inst = Instruction::new(
-                Op::ExtInstImport,
-                <span class="prelude-val">None</span>,
-                <span class="prelude-val">Some</span>(id),
-                <span class="macro">vec!</span>[Operand::LiteralString(
-                    custom_insts::CUSTOM_EXT_INST_SET.to_string(),
-                )],
-            );
+            <span class="kw">let </span>inst = Instruction::new(Op::ExtInstImport, <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(id), <span class="macro">vec!</span>[
+                Operand::LiteralString(custom_insts::CUSTOM_EXT_INST_SET.to_string()),
+            ]);
             module.ext_inst_imports.push(inst);
             id
         }),
@@ -1282,10 +1264,10 @@
 
     <span class="comment">// Drop OpName etc. for inlined functions
     </span>module.debug_names.retain(|inst| {
-        !inst.operands.iter().any(|op| {
-            op.id_ref_any()
-                .map_or(<span class="bool-val">false</span>, |id| dropped_ids.contains(<span class="kw-2">&amp;</span>id))
-        })
+        !inst
+            .operands
+            .iter()
+            .any(|op| op.id_ref_any().is_some_and(|id| dropped_ids.contains(<span class="kw-2">&amp;</span>id)))
     });
 
     <span class="prelude-val">Ok</span>(())
@@ -1756,15 +1738,12 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(call_result_type) = call_result_type {
             <span class="comment">// Generate the storage space for the return value: Do this *after* the split above,
             // because if block_idx=0, inserting a variable here shifts call_index.
-            </span>insert_opvariables(
-                <span class="kw-2">&amp;mut </span>caller.blocks[<span class="number">0</span>],
-                [Instruction::new(
-                    Op::Variable,
-                    <span class="prelude-val">Some</span>(<span class="self">self</span>.ptr_ty(call_result_type)),
-                    <span class="prelude-val">Some</span>(return_variable.unwrap()),
-                    <span class="macro">vec!</span>[Operand::StorageClass(StorageClass::Function)],
-                )],
-            );
+            </span>insert_opvariables(<span class="kw-2">&amp;mut </span>caller.blocks[<span class="number">0</span>], [Instruction::new(
+                Op::Variable,
+                <span class="prelude-val">Some</span>(<span class="self">self</span>.ptr_ty(call_result_type)),
+                <span class="prelude-val">Some</span>(return_variable.unwrap()),
+                <span class="macro">vec!</span>[Operand::StorageClass(StorageClass::Function)],
+            )]);
         }
 
         <span class="comment">// Insert non-entry inlined callee blocks just after the pre-call block.
@@ -1954,12 +1933,10 @@
             .entry(callee_name)
             .or_insert_with(|| {
                 <span class="kw">let </span>id = next_id(<span class="self">self</span>.header);
-                <span class="self">self</span>.debug_string_source.push(Instruction::new(
-                    Op::String,
-                    <span class="prelude-val">None</span>,
-                    <span class="prelude-val">Some</span>(id),
-                    <span class="macro">vec!</span>[Operand::LiteralString(callee_name.to_string())],
-                ));
+                <span class="self">self</span>.debug_string_source
+                    .push(Instruction::new(Op::String, <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(id), <span class="macro">vec!</span>[
+                        Operand::LiteralString(callee_name.to_string()),
+                    ]));
                 id
             });
         <span class="kw">let </span><span class="kw-2">mut </span>mk_debuginfo_prefix_and_suffix = |include_callee_frame| {
@@ -2042,15 +2019,12 @@
             <span class="kw">if let </span>Op::Return | Op::ReturnValue = terminator.class.opcode {
                 <span class="kw">if </span>Op::ReturnValue == terminator.class.opcode {
                     <span class="kw">let </span>return_value = terminator.operands[<span class="number">0</span>].id_ref_any().unwrap();
-                    block.instructions.push(Instruction::new(
-                        Op::Store,
-                        <span class="prelude-val">None</span>,
-                        <span class="prelude-val">None</span>,
-                        <span class="macro">vec!</span>[
+                    block
+                        .instructions
+                        .push(Instruction::new(Op::Store, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="macro">vec!</span>[
                             Operand::IdRef(return_variable.unwrap()),
                             Operand::IdRef(return_value),
-                        ],
-                    ));
+                        ]));
                 } <span class="kw">else </span>{
                     <span class="macro">assert!</span>(return_variable.is_none());
                 }
