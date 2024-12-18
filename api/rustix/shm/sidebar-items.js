@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["open","unlink"],"struct":["Mode","OFlags"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["grantpt","openpt","ptsname","unlockpt"],"struct":["OpenptFlags"]};

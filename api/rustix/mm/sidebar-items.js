@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Advice"],"fn":["madvise","mlock","mmap","mmap_anonymous","mprotect","msync","munlock","munmap"],"struct":["MapFlags","MprotectFlags","MsyncFlags","ProtFlags"]};

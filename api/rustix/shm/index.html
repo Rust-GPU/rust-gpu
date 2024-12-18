@@ -1,0 +1,46 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="POSIX shared memory"><title>rustix::shm - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../rustix/index.html">rustix</a><span class="version">0.38.42</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module shm</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate rustix</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><span class="rustdoc-breadcrumbs"><a href="../index.html">rustix</a></span><h1>Module <span>shm</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/rustix/shm.rs.html#1-105">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>POSIX shared memory</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>rustix::fs::{ftruncate, Mode};
+<span class="kw">use </span>rustix::mm::{mmap, MapFlags, ProtFlags};
+<span class="kw">use </span>rustix::{io, shm};
+<span class="kw">use </span>std::mem::size_of;
+<span class="kw">use </span>std::ptr::null_mut;
+
+<span class="comment">// A type describing the data to be shared.
+</span><span class="attr">#[repr(C)]
+</span><span class="kw">struct </span>MyBufferType {
+    <span class="comment">// …
+</span>}
+
+<span class="comment">// Create the shared memory object.
+</span><span class="kw">let </span>shm_path = <span class="string">"/rustix-shm-example"</span>;
+<span class="kw">let </span>fd = shm::open(
+    shm_path,
+    shm::OFlags::CREATE | shm::OFlags::EXCL | shm::OFlags::RDWR,
+    Mode::RUSR | Mode::WUSR,
+)<span class="question-mark">?</span>;
+
+<span class="comment">// Resize the shared memory object to the size of our data.
+</span>ftruncate(<span class="kw-2">&amp;</span>fd, size_of::&lt;MyBufferType&gt;() <span class="kw">as </span>u64)<span class="question-mark">?</span>;
+
+<span class="comment">// Map the shared memory object into our address space.
+//
+// SAFETY: We're creating a new mapping that's independent of any existing
+// memory allocations. There are interesting things to say about *using*
+// `ptr`, but that's for another safety comment.
+</span><span class="kw">let </span>ptr = <span class="kw">unsafe </span>{
+    mmap(
+        null_mut(),
+        size_of::&lt;MyBufferType&gt;(),
+        ProtFlags::READ | ProtFlags::WRITE,
+        MapFlags::SHARED,
+        <span class="kw-2">&amp;</span>fd,
+        <span class="number">0</span>,
+    )<span class="question-mark">?
+</span>};
+
+<span class="comment">// Use `ptr`…
+
+// Remove the shared memory object name.
+</span>shm::unlink(shm_path)<span class="question-mark">?</span>;</code></pre></div>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Mode.html" title="struct rustix::shm::Mode">Mode</a></div><div class="desc docblock-short"><code>S_I*</code> constants for use with <a href="../fs/fn.openat.html" title="fn rustix::fs::openat"><code>openat</code></a>, <a href="../fs/fn.chmodat.html" title="fn rustix::fs::chmodat"><code>chmodat</code></a>, and <a href="../fs/fn.fchmod.html" title="fn rustix::fs::fchmod"><code>fchmod</code></a>.</div></li><li><div class="item-name"><a class="struct" href="struct.OFlags.html" title="struct rustix::shm::OFlags">OFlags</a></div><div class="desc docblock-short"><code>O_*</code> constants for use with <a href="crate:shm::open"><code>shm::open</code></a>.</div></li></ul><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="fn" href="fn.open.html" title="fn rustix::shm::open">open</a></div><div class="desc docblock-short"><code>shm_open(name, oflags, mode)</code>—Opens a shared memory object.</div></li><li><div class="item-name"><a class="fn" href="fn.unlink.html" title="fn rustix::shm::unlink">unlink</a></div><div class="desc docblock-short"><code>shm_unlink(name)</code>—Unlinks a shared memory object.</div></li></ul></section></div></main></body></html>

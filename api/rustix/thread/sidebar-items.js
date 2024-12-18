@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["NanosleepRelativeResult"],"fn":["nanosleep"],"type":["Nsecs","Secs","Timespec"]};
