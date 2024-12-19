@@ -84,6 +84,7 @@ use std::{
     collections::HashMap,
     ffi::{CStr, CString},
     fs::File,
+    os::raw::c_char,
     sync::mpsc::{TryRecvError, TrySendError, sync_channel},
     thread,
 };
@@ -313,7 +314,7 @@ impl RenderBase {
             } else {
                 vec![]
             };
-            let layers_names_raw: Vec<*const i8> = layer_names
+            let layers_names_raw: Vec<*const c_char> = layer_names
                 .iter()
                 .map(|raw_name| raw_name.as_ptr())
                 .collect();
