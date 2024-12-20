@@ -9,7 +9,7 @@ use glam::{Vec3Swizzles, Vec4Swizzles};
 /// # Safety
 /// Implementing this trait on non-scalar or non-vector types may break assumptions about other
 /// unsafe code, and should not be done.
-pub unsafe trait VectorOrScalar: Default {
+pub unsafe trait VectorOrScalar: Default + Send + Sync + 'static {
     /// Either the scalar component type of the vector or the scalar itself.
     type Scalar: Scalar;
 
