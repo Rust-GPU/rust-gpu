@@ -8,10 +8,7 @@ use core::num::NonZeroUsize;
 /// # Safety
 /// Implementing this trait on non-scalar types breaks assumptions of other unsafe code, and should
 /// not be done.
-pub unsafe trait Scalar:
-    VectorOrScalar<Scalar = Self> + Copy + Default + crate::sealed::Sealed
-{
-}
+pub unsafe trait Scalar: VectorOrScalar<Scalar = Self> + crate::sealed::Sealed {}
 
 macro_rules! impl_scalar {
     ($($ty:ty),+) => {
