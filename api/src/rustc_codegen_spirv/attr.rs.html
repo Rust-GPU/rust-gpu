@@ -506,7 +506,16 @@
 <a href="#505" id="505">505</a>
 <a href="#506" id="506">506</a>
 <a href="#507" id="507">507</a>
-<a href="#508" id="508">508</a></pre></div><pre class="rust"><code><span class="doccomment">//! `#[spirv(...)]` attribute support.
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a></pre></div><pre class="rust"><code><span class="doccomment">//! `#[spirv(...)]` attribute support.
 //!
 //! The attribute-checking parts of this try to follow `rustc_passes::check_attr`.
 
@@ -600,6 +609,7 @@
     DescriptorSet(u32),
     Binding(u32),
     Flat,
+    PerPrimitiveExt,
     Invariant,
     InputAttachmentIndex(u32),
     SpecConstant(SpecConstant),
@@ -636,6 +646,7 @@
     <span class="kw">pub </span>binding: <span class="prelude-ty">Option</span>&lt;Spanned&lt;u32&gt;&gt;,
     <span class="kw">pub </span>flat: <span class="prelude-ty">Option</span>&lt;Spanned&lt;()&gt;&gt;,
     <span class="kw">pub </span>invariant: <span class="prelude-ty">Option</span>&lt;Spanned&lt;()&gt;&gt;,
+    <span class="kw">pub </span>per_primitive_ext: <span class="prelude-ty">Option</span>&lt;Spanned&lt;()&gt;&gt;,
     <span class="kw">pub </span>input_attachment_index: <span class="prelude-ty">Option</span>&lt;Spanned&lt;u32&gt;&gt;,
     <span class="kw">pub </span>spec_constant: <span class="prelude-ty">Option</span>&lt;Spanned&lt;SpecConstant&gt;&gt;,
 
@@ -721,6 +732,12 @@
             Binding(value) =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.binding, value, span, <span class="string">"#[spirv(binding)]"</span>),
             Flat =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.flat, (), span, <span class="string">"#[spirv(flat)]"</span>),
             Invariant =&gt; try_insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>.invariant, (), span, <span class="string">"#[spirv(invariant)]"</span>),
+            PerPrimitiveExt =&gt; try_insert(
+                <span class="kw-2">&amp;mut </span><span class="self">self</span>.per_primitive_ext,
+                (),
+                span,
+                <span class="string">"#[spirv(per_primitive_ext)]"</span>,
+            ),
             InputAttachmentIndex(value) =&gt; try_insert(
                 <span class="kw-2">&amp;mut </span><span class="self">self</span>.input_attachment_index,
                 value,
@@ -822,6 +839,7 @@
                 | SpirvAttribute::Binding(<span class="kw">_</span>)
                 | SpirvAttribute::Flat
                 | SpirvAttribute::Invariant
+                | SpirvAttribute::PerPrimitiveExt
                 | SpirvAttribute::InputAttachmentIndex(<span class="kw">_</span>)
                 | SpirvAttribute::SpecConstant(<span class="kw">_</span>) =&gt; <span class="kw">match </span>target {
                     Target::Param =&gt; {

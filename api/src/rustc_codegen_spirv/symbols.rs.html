@@ -736,7 +736,29 @@
 <a href="#735" id="735">735</a>
 <a href="#736" id="736">736</a>
 <a href="#737" id="737">737</a>
-<a href="#738" id="738">738</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::attr::{Entry, ExecutionModeExtra, IntrinsicType, SpecConstant, SpirvAttribute};
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::attr::{Entry, ExecutionModeExtra, IntrinsicType, SpecConstant, SpirvAttribute};
 <span class="kw">use </span><span class="kw">crate</span>::builder::libm_intrinsics;
 <span class="kw">use </span>rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
 <span class="kw">use </span>rustc_ast::ast::{AttrKind, Attribute, LitIntType, LitKind, MetaItemInner, MetaItemLit};
@@ -858,6 +880,13 @@
         (<span class="string">"bary_coord_no_persp_nv"</span>, BuiltIn::BaryCoordNoPerspNV),
         (<span class="string">"bary_coord"</span>, BaryCoordKHR),
         (<span class="string">"bary_coord_no_persp"</span>, BaryCoordNoPerspKHR),
+        (<span class="string">"primitive_point_indices_ext"</span>, PrimitivePointIndicesEXT),
+        (<span class="string">"primitive_line_indices_ext"</span>, PrimitiveLineIndicesEXT),
+        (
+            <span class="string">"primitive_triangle_indices_ext"</span>,
+            PrimitiveTriangleIndicesEXT,
+        ),
+        (<span class="string">"cull_primitive_ext"</span>, CullPrimitiveEXT),
         (<span class="string">"frag_size_ext"</span>, FragSizeEXT),
         (<span class="string">"frag_invocation_count_ext"</span>, FragInvocationCountEXT),
         (<span class="string">"launch_id"</span>, BuiltIn::LaunchIdKHR),
@@ -907,6 +936,7 @@
         (<span class="string">"incoming_ray_payload"</span>, StorageClass::IncomingRayPayloadKHR),
         (<span class="string">"shader_record_buffer"</span>, StorageClass::ShaderRecordBufferKHR),
         (<span class="string">"physical_storage_buffer"</span>, PhysicalStorageBuffer),
+        (<span class="string">"task_payload_workgroup_ext"</span>, TaskPayloadWorkgroupEXT),
     ]
 };
 
@@ -921,6 +951,8 @@
         (<span class="string">"compute"</span>, GLCompute),
         (<span class="string">"task_nv"</span>, TaskNV),
         (<span class="string">"mesh_nv"</span>, MeshNV),
+        (<span class="string">"task_ext"</span>, TaskEXT),
+        (<span class="string">"mesh_ext"</span>, MeshEXT),
         (<span class="string">"ray_generation"</span>, ExecutionModel::RayGenerationKHR),
         (<span class="string">"intersection"</span>, ExecutionModel::IntersectionKHR),
         (<span class="string">"any_hit"</span>, ExecutionModel::AnyHitKHR),
@@ -1001,6 +1033,17 @@
         (<span class="string">"output_primitives_nv"</span>, OutputPrimitivesNV, Value),
         (<span class="string">"derivative_group_quads_nv"</span>, DerivativeGroupQuadsNV, <span class="prelude-val">None</span>),
         (<span class="string">"output_triangles_nv"</span>, OutputTrianglesNV, <span class="prelude-val">None</span>),
+        (<span class="string">"output_lines_ext"</span>, ExecutionMode::OutputLinesEXT, <span class="prelude-val">None</span>),
+        (
+            <span class="string">"output_triangles_ext"</span>,
+            ExecutionMode::OutputTrianglesEXT,
+            <span class="prelude-val">None</span>,
+        ),
+        (
+            <span class="string">"output_primitives_ext"</span>,
+            ExecutionMode::OutputPrimitivesEXT,
+            Value,
+        ),
         (
             <span class="string">"pixel_interlock_ordered_ext"</span>,
             PixelInterlockOrderedEXT,
@@ -1072,6 +1115,7 @@
             (<span class="string">"block"</span>, SpirvAttribute::Block),
             (<span class="string">"flat"</span>, SpirvAttribute::Flat),
             (<span class="string">"invariant"</span>, SpirvAttribute::Invariant),
+            (<span class="string">"per_primitive_ext"</span>, SpirvAttribute::PerPrimitiveExt),
             (
                 <span class="string">"sampled_image"</span>,
                 SpirvAttribute::IntrinsicType(IntrinsicType::SampledImage),
@@ -1455,7 +1499,7 @@
                 .execution_modes
                 .push((origin_mode, ExecutionModeExtra::new([])));
         }
-        GLCompute | MeshNV | TaskNV =&gt; {
+        GLCompute | MeshNV | TaskNV | TaskEXT | MeshEXT =&gt; {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(local_size) = local_size {
                 entry
                     .execution_modes
@@ -1464,7 +1508,7 @@
                 <span class="kw">return </span><span class="prelude-val">Err</span>((
                     arg.span(),
                     String::from(
-                        <span class="string">"The `threads` argument must be specified when using `#[spirv(compute)]`, `#[spirv(mesh_nv)]` or `#[spirv(task_nv)]`"</span>,
+                        <span class="string">"The `threads` argument must be specified when using `#[spirv(compute)]`, `#[spirv(mesh_nv)]`, `#[spirv(task_nv)]`, `#[spirv(task_ext)]` or `#[spirv(mesh_ext)]`"</span>,
                     ),
                 ));
             }
