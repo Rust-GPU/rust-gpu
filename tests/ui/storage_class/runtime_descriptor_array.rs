@@ -1,5 +1,5 @@
 // build-pass
-// compile-flags: -C target-feature=+RuntimeDescriptorArray,+ext:SPV_EXT_descriptor_indexing
+// compile-flags: -C target-feature=+RuntimeDescriptorArray,+ShaderNonUniform,+ext:SPV_EXT_descriptor_indexing
 
 use spirv_std::spirv;
 use spirv_std::{Image, RuntimeArray, Sampler};
