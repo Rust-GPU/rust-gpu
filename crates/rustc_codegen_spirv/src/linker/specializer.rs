@@ -60,6 +60,7 @@ use smallvec::SmallVec;
 use std::collections::{BTreeMap, VecDeque};
 use std::ops::{Range, RangeTo};
 use std::{fmt, io, iter, mem, slice};
+use tracing::{debug, error};
 
 // FIXME(eddyb) move this elsewhere.
 struct FmtBy<F: Fn(&mut fmt::Formatter<'_>) -> fmt::Result>(F);
@@ -110,12 +111,10 @@ pub fn specialize(
     module: Module,
     specialization: impl Specialization,
 ) -> Module {
-    // FIXME(eddyb) use `log`/`tracing` instead.
-    let debug = opts.specializer_debug;
     let dump_instances = &opts.specializer_dump_instances;
 
     let mut debug_names = FxHashMap::default();
-    if debug || dump_instances.is_some() {
+    if dump_instances.is_some() {
         debug_names = module
             .debug_names
             .iter()
@@ -131,10 +130,7 @@ pub fn specialize(
 
     let mut specializer = Specializer {
         specialization,
-
-        debug,
         debug_names,
-
         generics: IndexMap::new(),
         int_consts: FxHashMap::default(),
     };
@@ -188,27 +184,21 @@ pub fn specialize(
     // For non-"generic" functions, we can apply `replacements` right away,
     // though not before finishing inference for all functions first
     // (because `expander` needs to borrow `specializer` immutably).
-    if debug {
-        eprintln!("non-generic replacements:");
-    }
+    debug!("non-generic replacements:");
     for (func_idx, replacements) in non_generic_replacements {
         let mut func = mem::replace(
             &mut expander.builder.module_mut().functions[func_idx],
             Function::new(),
         );
-        if debug {
-            let empty = replacements.with_instance.is_empty()
-                && replacements.with_concrete_or_param.is_empty();
-            if !empty {
-                eprintln!("    in %{}:", func.def_id().unwrap());
-            }
+        let empty =
+            replacements.with_instance.is_empty() && replacements.with_concrete_or_param.is_empty();
+        if !empty {
+            debug!("    in %{}:", func.def_id().unwrap());
         }
         for (loc, operand) in
             replacements.to_concrete(&[], |instance| expander.alloc_instance_id(instance))
         {
-            if debug {
-                eprintln!("        {operand} -> {loc:?}");
-            }
+            debug!("        {operand} -> {loc:?}");
             func.index_set(loc, operand.into());
         }
         expander.builder.module_mut().functions[func_idx] = func;
@@ -536,9 +526,6 @@ struct Generic {
 
 struct Specializer<S: Specialization> {
     specialization: S,
-
-    // FIXME(eddyb) use `log`/`tracing` instead.
-    debug: bool,
 
     // HACK(eddyb) if debugging is requested, this is used to quickly get `OpName`s.
     debug_names: FxHashMap<Word, String>,
@@ -1512,24 +1499,24 @@ impl InferError {
         // FIXME(eddyb) better error reporting than this.
         match self {
             Self::Conflict(a, b) => {
-                eprintln!("inference conflict: {a:?} vs {b:?}");
+                error!("inference conflict: {a:?} vs {b:?}");
             }
         }
-        eprint!("    in ");
+        error!("    in ");
         // FIXME(eddyb) deduplicate this with other instruction printing logic.
         if let Some(result_id) = inst.result_id {
-            eprint!("%{result_id} = ");
+            error!("%{result_id} = ");
         }
-        eprint!("Op{:?}", inst.class.opcode);
+        error!("Op{:?}", inst.class.opcode);
         for operand in inst
             .result_type
             .map(Operand::IdRef)
             .iter()
             .chain(inst.operands.iter())
         {
-            eprint!(" {operand}");
+            error!(" {operand}");
         }
-        eprintln!();
+        error!("");
 
         std::process::exit(1);
     }
@@ -1937,38 +1924,36 @@ impl<'a, S: Specialization> InferCx<'a, S> {
         };
 
         let debug_dump_if_enabled = |cx: &Self, prefix| {
-            if cx.specializer.debug {
-                let result_type = match inst.class.opcode {
-                    // HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
-                    Op::Function => Some(
-                        InferOperand::from_operand_and_generic_args(
-                            &Operand::IdRef(inst.result_type.unwrap()),
-                            inputs_generic_args.clone(),
-                            cx,
-                        )
-                        .0,
-                    ),
-                    _ => type_of_result.clone(),
-                };
-                let inputs = InferOperandList {
-                    operands: &inst.operands,
-                    all_generic_args: inputs_generic_args.clone(),
-                    transform: None,
-                };
+            let result_type = match inst.class.opcode {
+                // HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
+                Op::Function => Some(
+                    InferOperand::from_operand_and_generic_args(
+                        &Operand::IdRef(inst.result_type.unwrap()),
+                        inputs_generic_args.clone(),
+                        cx,
+                    )
+                    .0,
+                ),
+                _ => type_of_result.clone(),
+            };
+            let inputs = InferOperandList {
+                operands: &inst.operands,
+                all_generic_args: inputs_generic_args.clone(),
+                transform: None,
+            };
 
-                if inst_loc != InstructionLocation::Module {
-                    eprint!("    ");
-                }
-                eprint!("{prefix}");
-                if let Some(result_id) = inst.result_id {
-                    eprint!("%{result_id} = ");
-                }
-                eprint!("Op{:?}", inst.class.opcode);
-                for operand in result_type.into_iter().chain(inputs.iter(cx)) {
-                    eprint!(" {}", operand.display_with_infer_cx(cx));
-                }
-                eprintln!();
+            if inst_loc != InstructionLocation::Module {
+                debug!("    ");
             }
+            debug!("{prefix}");
+            if let Some(result_id) = inst.result_id {
+                debug!("%{result_id} = ");
+            }
+            debug!("Op{:?}", inst.class.opcode);
+            for operand in result_type.into_iter().chain(inputs.iter(cx)) {
+                debug!(" {}", operand.display_with_infer_cx(cx));
+            }
+            debug!("");
         };
 
         // If we have some instruction signatures for `inst`, enforce them.
@@ -1998,12 +1983,10 @@ impl<'a, S: Specialization> InferCx<'a, S> {
                 ),
             };
 
-            if self.specializer.debug {
-                if inst_loc != InstructionLocation::Module {
-                    eprint!("    ");
-                }
-                eprintln!("    found {:?}", m.debug_with_infer_cx(self));
+            if inst_loc != InstructionLocation::Module {
+                debug!("    ");
             }
+            debug!("    found {:?}", m.debug_with_infer_cx(self));
 
             if let Err(e) = self.equate_match_findings(m) {
                 e.report(inst);
@@ -2032,14 +2015,12 @@ impl<'a, S: Specialization> InferCx<'a, S> {
     fn instantiate_function(&mut self, func: &'a Function) {
         let func_id = func.def_id().unwrap();
 
-        if self.specializer.debug {
-            eprintln!();
-            eprint!("specializer::instantiate_function(%{func_id}");
-            if let Some(name) = self.specializer.debug_names.get(&func_id) {
-                eprint!(" {name}");
-            }
-            eprintln!("):");
+        debug!("");
+        debug!("specializer::instantiate_function(%{func_id}");
+        if let Some(name) = self.specializer.debug_names.get(&func_id) {
+            debug!(" {name}");
         }
+        debug!("):");
 
         // Instantiate the defining `OpFunction` first, so that the first
         // inference variables match the parameters from the `Generic`
@@ -2047,9 +2028,7 @@ impl<'a, S: Specialization> InferCx<'a, S> {
         assert!(self.infer_var_values.is_empty());
         self.instantiate_instruction(func.def.as_ref().unwrap(), InstructionLocation::Module);
 
-        if self.specializer.debug {
-            eprintln!("infer body {{");
-        }
+        debug!("infer body {{");
 
         // If the `OpTypeFunction` is indeed "generic", we have to extract the
         // return / parameter types for `OpReturnValue` and `OpFunctionParameter`.
@@ -2074,14 +2053,12 @@ impl<'a, S: Specialization> InferCx<'a, S> {
                     let (i, param) = params.next().unwrap();
                     assert_eq!(param.class.opcode, Op::FunctionParameter);
 
-                    if self.specializer.debug {
-                        eprintln!(
-                            "    %{} = Op{:?} {}",
-                            param.result_id.unwrap(),
-                            param.class.opcode,
-                            param_ty.display_with_infer_cx(self)
-                        );
-                    }
+                    debug!(
+                        "    %{} = Op{:?} {}",
+                        param.result_id.unwrap(),
+                        param.class.opcode,
+                        param_ty.display_with_infer_cx(self)
+                    );
 
                     self.record_instantiated_operand(
                         OperandLocation {
@@ -2133,13 +2110,11 @@ impl<'a, S: Specialization> InferCx<'a, S> {
             }
         }
 
-        if self.specializer.debug {
-            eprint!("}}");
-            if let Some(func_ty) = self.type_of_result.get(&func_id) {
-                eprint!(" -> %{}: {}", func_id, func_ty.display_with_infer_cx(self));
-            }
-            eprintln!();
+        debug!("}}");
+        if let Some(func_ty) = self.type_of_result.get(&func_id) {
+            debug!(" -> %{}: {}", func_id, func_ty.display_with_infer_cx(self));
         }
+        debug!("");
     }
 
     /// Helper for `into_replacements`, that computes a single `ConcreteOrParam`.
