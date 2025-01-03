@@ -10,6 +10,7 @@ use rustc_errors::Diag;
 use rustc_session::Session;
 use rustc_span::{DUMMY_SP, Span};
 use smallvec::SmallVec;
+use tracing::{Level, debug};
 
 #[derive(Copy, Clone)]
 struct Zombie<'a> {
@@ -321,11 +322,7 @@ impl<'a> ZombieReporter<'a> {
     }
 }
 
-pub fn report_and_remove_zombies(
-    sess: &Session,
-    opts: &super::Options,
-    module: &mut Module,
-) -> super::Result<()> {
+pub fn report_and_remove_zombies(sess: &Session, module: &mut Module) -> super::Result<()> {
     let mut zombies = Zombies {
         // FIXME(eddyb) avoid repeating this across different passes/helpers.
         custom_ext_inst_set_import: module
@@ -345,9 +342,7 @@ pub fn report_and_remove_zombies(
     while zombies.spread(module) {}
 
     let result = ZombieReporter::new(sess, module, &zombies).report_all();
-
-    // FIXME(eddyb) use `log`/`tracing` instead.
-    if opts.print_all_zombie {
+    if tracing::enabled!(target: "print_all_zombie", Level::DEBUG) {
         let mut span_regen = SpanRegenerator::new(sess.source_map(), module);
         for &zombie_id in zombies.id_to_zombie_kind.keys() {
             let mut zombie_leaf_id = zombie_id;
@@ -362,15 +357,21 @@ pub fn report_and_remove_zombies(
             }
 
             let reason = span_regen.zombie_for_id(zombie_leaf_id).unwrap().reason;
-            eprint!("zombie'd %{zombie_id} because {reason}");
+            debug!(
+                target: "print_all_zombie",
+                "zombie'd %{zombie_id} because {reason}"
+            );
             if !infection_chain.is_empty() {
-                eprint!(" (infected via {:?})", infection_chain);
+                debug!(
+                    target: "print_all_zombie",
+                    " (infected via {:?})", infection_chain
+                );
             }
-            eprintln!();
+            debug!(target: "print_all_zombie", "");
         }
     }
 
-    if opts.print_zombie {
+    if tracing::enabled!(target: "print_zombie", Level::DEBUG) {
         let mut span_regen = SpanRegenerator::new(sess.source_map(), module);
         let names = get_names(module);
         for f in &module.functions {
@@ -386,7 +387,10 @@ pub fn report_and_remove_zombies(
 
                 let name = get_name(&names, f.def_id().unwrap());
                 let reason = span_regen.zombie_for_id(zombie_leaf_id).unwrap().reason;
-                eprintln!("function removed {name:?} because {reason:?}");
+                debug!(
+                    target: "print_zombie",
+                    "function removed {name:?} because {reason:?}"
+                );
             }
         }
     }
