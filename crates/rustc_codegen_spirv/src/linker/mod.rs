@@ -63,10 +63,7 @@ pub struct Options {
     pub spirt_strip_custom_debuginfo_from_dumps: bool,
     pub spirt_keep_debug_sources_in_dumps: bool,
     pub spirt_keep_unstructured_cfg_in_dumps: bool,
-    pub specializer_debug: bool,
     pub specializer_dump_instances: Option<PathBuf>,
-    pub print_all_zombie: bool,
-    pub print_zombie: bool,
 }
 
 pub enum LinkResult {
@@ -316,7 +313,7 @@ pub fn link(
         }
 
         let _timer = sess.timer("link_report_and_remove_zombies");
-        zombies::report_and_remove_zombies(sess, opts, &mut output)?;
+        zombies::report_and_remove_zombies(sess, &mut output)?;
     }
 
     if opts.infer_storage_classes {

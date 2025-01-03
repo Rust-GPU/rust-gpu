@@ -469,22 +469,11 @@ impl CodegenArgs {
                 "spirt-keep-unstructured-cfg-in-dumps",
                 "include initial unstructured CFG when dumping SPIR-T",
             );
-            opts.optflag(
-                "",
-                "specializer-debug",
-                "enable debug logging for the specializer",
-            );
             opts.optopt(
                 "",
                 "specializer-dump-instances",
                 "dump all instances inferred by the specializer, to FILE",
                 "FILE",
-            );
-            opts.optflag("", "print-all-zombie", "prints all removed zombies");
-            opts.optflag(
-                "",
-                "print-zombie",
-                "prints everything removed (even transitively) due to zombies",
             );
         }
 
@@ -639,10 +628,7 @@ impl CodegenArgs {
                 .opt_present("spirt-keep-debug-sources-in-dumps"),
             spirt_keep_unstructured_cfg_in_dumps: matches
                 .opt_present("spirt-keep-unstructured-cfg-in-dumps"),
-            specializer_debug: matches.opt_present("specializer-debug"),
             specializer_dump_instances: matches_opt_path("specializer-dump-instances"),
-            print_all_zombie: matches.opt_present("print-all-zombie"),
-            print_zombie: matches.opt_present("print-zombie"),
         };
 
         Ok(Self {
