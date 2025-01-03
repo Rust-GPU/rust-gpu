@@ -49,10 +49,16 @@ clippy_no_features examples/shaders/simplest-shader
 # which could be disastrous because env vars access can't be tracked by
 # `rustc`, unlike its CLI flags (which are integrated with incremental).
 if (
-    egrep -r '::\s*env|env\s*::' crates/rustc_codegen_spirv/src/ |
+    egrep -r '::\s*env|env\s*::' crates/rustc_codegen_spirv/src |
     # HACK(eddyb) exclude the one place in `rustc_codegen_spirv`
     # needing access to an env var (only for codegen args `--help`).
-    egrep -v '^crates/rustc_codegen_spirv/src/codegen_cx/mod.rs:            let help_flag_comes_from_spirv_builder_env_var = std::env::var\(spirv_builder_env_var\)$'
+    egrep -v '^crates/rustc_codegen_spirv/src/codegen_cx/mod.rs:            let help_flag_comes_from_spirv_builder_env_var = std::env::var\(spirv_builder_env_var\)$' |
+    # HACK(LegNeato) exclude logging. This mirrors `rustc` (`RUSTC_LOG`) and 
+    #`rustdoc` (`RUSTDOC_LOG`).
+    # There is not a risk of this being disastrous as it does not change the build settings.
+    egrep -v '^crates/rustc_codegen_spirv/src/lib.rs:.*(RUSTGPU_LOG|RUSTGPU_LOG_FORMAT|RUSTGPU_LOG_COLOR).*$' |
+    egrep -v '^crates/rustc_codegen_spirv/src/lib.rs:    use std::env::{self, VarError};$'
+
 ); then
     echo '^^^'
     echo '!!! Found disallowed `std::env` usage in `rustc_codegen_spirv` !!!'

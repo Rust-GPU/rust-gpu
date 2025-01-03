@@ -247,6 +247,11 @@ impl ThinBufferMethods for SpirvThinBuffer {
 struct SpirvCodegenBackend;
 
 impl CodegenBackend for SpirvCodegenBackend {
+    fn init(&self, sess: &Session) {
+        // Set up logging/tracing. See https://github.com/Rust-GPU/rust-gpu/issues/192.
+        init_logging(sess);
+    }
+
     fn locale_resource(&self) -> &'static str {
         rustc_errors::DEFAULT_LOCALE_RESOURCE
     }
@@ -550,4 +555,73 @@ pub fn __rustc_codegen_backend() -> Box<dyn CodegenBackend> {
     });
 
     Box::new(SpirvCodegenBackend)
+}
+
+// Set up logging/tracing. See https://github.com/Rust-GPU/rust-gpu/issues/192.
+fn init_logging(sess: &Session) {
+    use std::env::{self, VarError};
+    use std::io::{self, IsTerminal};
+    use tracing_subscriber::layer::SubscriberExt;
+
+    // Set up the default subscriber with optional filtering.
+    let filter = tracing_subscriber::EnvFilter::from_env("RUSTGPU_LOG");
+    #[cfg(not(rustc_codegen_spirv_disable_pqp_cg_ssa))]
+    let filter = filter.add_directive("rustc_codegen_spirv::maybe_pqp_cg_ssa=off".parse().unwrap());
+    let subscriber = tracing_subscriber::Registry::default().with(filter);
+
+    #[derive(Debug, Default)]
+    enum OutputFormat {
+        #[default]
+        Tree,
+        Flat,
+        Json,
+    }
+
+    let output_format = match env::var("RUSTGPU_LOG_FORMAT").as_deref() {
+        Ok("tree") | Err(VarError::NotPresent) => OutputFormat::Tree,
+        Ok("flat") => OutputFormat::Flat,
+        Ok("json") => OutputFormat::Json,
+        Ok(value) => sess.dcx().fatal(format!(
+            "invalid output format value '{value}': expected one of tree, flat, or json",
+        )),
+        Err(VarError::NotUnicode(value)) => sess.dcx().fatal(format!(
+            "invalid output format value '{}': expected one of tree, flat, or json",
+            value.to_string_lossy()
+        )),
+    };
+
+    let subscriber: Box<dyn tracing::Subscriber + Send + Sync> = match output_format {
+        OutputFormat::Tree => {
+            // TODO(@LegNeato): Query dcx color support when rustc exposes it.
+            let color_logs = match env::var("RUSTGPU_LOG_COLOR").as_deref() {
+                Ok("always") => true,
+                Ok("never") => false,
+                Ok("auto") | Err(VarError::NotPresent) => io::stderr().is_terminal(),
+                Ok(value) => sess.dcx().fatal(format!(
+                    "invalid log color value '{value}': expected one of always, never, or auto",
+                )),
+                Err(VarError::NotUnicode(value)) => sess.dcx().fatal(format!(
+                    "invalid log color value '{}': expected one of always, never, or auto",
+                    value.to_string_lossy()
+                )),
+            };
+
+            let tree_layer = tracing_tree::HierarchicalLayer::default()
+                .with_writer(io::stderr)
+                .with_ansi(color_logs)
+                .with_targets(true)
+                .with_wraparound(10)
+                .with_verbose_exit(true)
+                .with_verbose_entry(true)
+                .with_indent_amount(2);
+
+            #[cfg(debug_assertions)]
+            let tree_layer = tree_layer.with_thread_ids(true).with_thread_names(true);
+
+            Box::new(subscriber.with(tree_layer))
+        }
+        OutputFormat::Flat => Box::new(subscriber),
+        OutputFormat::Json => Box::new(subscriber.with(tracing_subscriber::fmt::layer().json())),
+    };
+    tracing::subscriber::set_global_default(subscriber).unwrap();
 }
