@@ -174,7 +174,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 // log10(x) == (1 / ln(10)) * ln(x)
                 let mul = self.constant_float(args[0].immediate().ty, 1.0 / 10.0f64.ln());
                 let ln = self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()]);
-                self.mul(mul, ln)
+                self.fmul(mul, ln)
             }
             sym::fmaf32 | sym::fmaf64 => self.gl_op(GLOp::Fma, ret_ty, [
                 args[0].immediate(),

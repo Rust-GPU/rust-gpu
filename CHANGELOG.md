@@ -48,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed 🩹
 
+- [PR#200](https://github.com/Rust-GPU/rust-gpu/pull/200) fixed [#199](https://github.com/Rust-GPU/rust-gpu/issues/199) by correctly generating an `fmul` in the `log10` intrinsic
 - [PR#174](https://github.com/Rust-GPU/rust-gpu/pull/174) fixed [#169](https://github.com/Rust-GPU/rust-gpu/issues/169) by handling signed integers in the `bswap` intrinsic
 - [PR#1129](https://github.com/EmbarkStudios/rust-gpu/pull/1129) fixed [#1062](https://github.com/EmbarkStudios/rust-gpu/issues/1062) by not flipping the comparison of the rotate amount with zero
 

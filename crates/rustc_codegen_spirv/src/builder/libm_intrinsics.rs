@@ -240,7 +240,7 @@ impl Builder<'_, '_> {
                 // log10(x) == (1 / ln(10)) * ln(x)
                 let mul = self.constant_float(args[0].ty, 1.0 / 10.0f64.ln());
                 let ln = self.gl_op(GLOp::Log, result_type, [args[0]]);
-                self.mul(mul, ln)
+                self.fmul(mul, ln)
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Log1p) => {
                 assert_eq!(args.len(), 1);
