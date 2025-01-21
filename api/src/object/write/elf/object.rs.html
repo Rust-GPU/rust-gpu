@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/object-0.36.5/src/write/elf/object.rs`."><title>object.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../../static.files/storage-59e33391.js"></script><script defer src="../../../../static.files/src-script-56102188.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">object/write/elf/</div>object.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/object-0.36.7/src/write/elf/object.rs`."><title>object.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../../static.files/storage-59e33391.js"></script><script defer src="../../../../static.files/src-script-56102188.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">object/write/elf/</div>object.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -808,7 +808,38 @@
 <a href="#807" id="807">807</a>
 <a href="#808" id="808">808</a>
 <a href="#809" id="809">809</a>
-<a href="#810" id="810">810</a></pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a></pre></div><pre class="rust"><code><span class="kw">use </span>alloc::vec::Vec;
 
 <span class="kw">use </span><span class="kw">crate</span>::write::elf::writer::<span class="kw-2">*</span>;
 <span class="kw">use </span><span class="kw">crate</span>::write::string::StringId;
@@ -923,8 +954,10 @@
 
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>elf_subsection_name(<span class="kw-2">&amp;</span><span class="self">self</span>, section: <span class="kw-2">&amp;</span>[u8], value: <span class="kw-2">&amp;</span>[u8]) -&gt; Vec&lt;u8&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>name = section.to_vec();
-        name.push(<span class="string">b'.'</span>);
-        name.extend_from_slice(value);
+        <span class="kw">if </span>!value.is_empty() {
+            name.push(<span class="string">b'.'</span>);
+            name.extend_from_slice(value);
+        }
         name
     }
 
@@ -943,8 +976,10 @@
             Architecture::X86_64_X32 =&gt; <span class="bool-val">true</span>,
             Architecture::Hexagon =&gt; <span class="bool-val">true</span>,
             Architecture::LoongArch64 =&gt; <span class="bool-val">true</span>,
+            Architecture::M68k =&gt; <span class="bool-val">true</span>,
             Architecture::Mips =&gt; <span class="bool-val">false</span>,
             Architecture::Mips64 =&gt; <span class="bool-val">true</span>,
+            Architecture::Mips64_N32 =&gt; <span class="bool-val">true</span>,
             Architecture::Msp430 =&gt; <span class="bool-val">true</span>,
             Architecture::PowerPc =&gt; <span class="bool-val">true</span>,
             Architecture::PowerPc64 =&gt; <span class="bool-val">true</span>,
@@ -1070,12 +1105,32 @@
                 (K::PltRelative, E::LoongArchBranch, <span class="number">26</span>) =&gt; elf::R_LARCH_B26,
                 <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
             },
-            Architecture::Mips | Architecture::Mips64 =&gt; <span class="kw">match </span>(kind, encoding, size) {
-                (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_MIPS_16,
-                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_MIPS_32,
-                (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_MIPS_64,
+            Architecture::M68k =&gt; <span class="kw">match </span>(kind, encoding, size) {
+                (K::Absolute, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_8,
+                (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_16,
+                (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_32,
+                (K::Relative, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_PC8,
+                (K::Relative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_PC16,
+                (K::Relative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_PC32,
+                (K::GotRelative, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_GOT8,
+                (K::GotRelative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_GOT16,
+                (K::GotRelative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_GOT32,
+                (K::Got, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_GOT8O,
+                (K::Got, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_GOT16O,
+                (K::Got, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_GOT32O,
+                (K::PltRelative, <span class="kw">_</span>, <span class="number">8</span>) =&gt; elf::R_68K_PLT8,
+                (K::PltRelative, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_68K_PLT16,
+                (K::PltRelative, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_68K_PLT32,
                 <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
             },
+            Architecture::Mips | Architecture::Mips64 | Architecture::Mips64_N32 =&gt; {
+                <span class="kw">match </span>(kind, encoding, size) {
+                    (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_MIPS_16,
+                    (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_MIPS_32,
+                    (K::Absolute, <span class="kw">_</span>, <span class="number">64</span>) =&gt; elf::R_MIPS_64,
+                    <span class="kw">_ </span>=&gt; <span class="kw">return </span>unsupported_reloc(),
+                }
+            }
             Architecture::Msp430 =&gt; <span class="kw">match </span>(kind, encoding, size) {
                 (K::Absolute, <span class="kw">_</span>, <span class="number">32</span>) =&gt; elf::R_MSP430_32,
                 (K::Absolute, <span class="kw">_</span>, <span class="number">16</span>) =&gt; elf::R_MSP430_16_BYTE,
@@ -1353,8 +1408,10 @@
             (Architecture::X86_64_X32, <span class="prelude-val">None</span>) =&gt; elf::EM_X86_64,
             (Architecture::Hexagon, <span class="prelude-val">None</span>) =&gt; elf::EM_HEXAGON,
             (Architecture::LoongArch64, <span class="prelude-val">None</span>) =&gt; elf::EM_LOONGARCH,
+            (Architecture::M68k, <span class="prelude-val">None</span>) =&gt; elf::EM_68K,
             (Architecture::Mips, <span class="prelude-val">None</span>) =&gt; elf::EM_MIPS,
             (Architecture::Mips64, <span class="prelude-val">None</span>) =&gt; elf::EM_MIPS,
+            (Architecture::Mips64_N32, <span class="prelude-val">None</span>) =&gt; elf::EM_MIPS,
             (Architecture::Msp430, <span class="prelude-val">None</span>) =&gt; elf::EM_MSP430,
             (Architecture::PowerPc, <span class="prelude-val">None</span>) =&gt; elf::EM_PPC,
             (Architecture::PowerPc64, <span class="prelude-val">None</span>) =&gt; elf::EM_PPC64,
@@ -1374,7 +1431,7 @@
                 )));
             }
         };
-        <span class="kw">let </span>(os_abi, abi_version, e_flags) = <span class="kw">if let </span>FileFlags::Elf {
+        <span class="kw">let </span>(os_abi, abi_version, <span class="kw-2">mut </span>e_flags) = <span class="kw">if let </span>FileFlags::Elf {
             os_abi,
             abi_version,
             e_flags,
@@ -1384,6 +1441,11 @@
         } <span class="kw">else </span>{
             (elf::ELFOSABI_NONE, <span class="number">0</span>, <span class="number">0</span>)
         };
+
+        <span class="kw">if </span><span class="self">self</span>.architecture == Architecture::Mips64_N32 {
+            e_flags |= elf::EF_MIPS_ABI2;
+        }
+
         writer.write_file_header(<span class="kw-2">&amp;</span>FileHeader {
             os_abi,
             abi_version,

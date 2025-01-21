@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/object-0.36.5/src/read/xcoff/file.rs`."><title>file.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../../static.files/storage-59e33391.js"></script><script defer src="../../../../static.files/src-script-56102188.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">object/read/xcoff/</div>file.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/object-0.36.7/src/read/xcoff/file.rs`."><title>file.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../../static.files/storage-59e33391.js"></script><script defer src="../../../../static.files/src-script-56102188.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">object/read/xcoff/</div>file.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -714,7 +714,47 @@
 <a href="#713" id="713">713</a>
 <a href="#714" id="714">714</a>
 <a href="#715" id="715">715</a>
-<a href="#716" id="716">716</a></pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt::Debug;
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a></pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt::Debug;
 <span class="kw">use </span>core::mem;
 
 <span class="kw">use </span>alloc::vec::Vec;
@@ -826,16 +866,56 @@
     </span>Xcoff: FileHeader,
     R: ReadRef&lt;<span class="lifetime">'data</span>&gt;,
 {
-    <span class="kw">type </span>Segment&lt;<span class="lifetime">'file</span>&gt; = XcoffSegment&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt; <span class="kw">where </span><span class="self">Self</span>: <span class="lifetime">'file</span>, <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
-    <span class="kw">type </span>SegmentIterator&lt;<span class="lifetime">'file</span>&gt; = XcoffSegmentIterator&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt; <span class="kw">where </span><span class="self">Self</span>: <span class="lifetime">'file</span>, <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
-    <span class="kw">type </span>Section&lt;<span class="lifetime">'file</span>&gt; = XcoffSection&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt; <span class="kw">where </span><span class="self">Self</span>: <span class="lifetime">'file</span>, <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
-    <span class="kw">type </span>SectionIterator&lt;<span class="lifetime">'file</span>&gt; = XcoffSectionIterator&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt; <span class="kw">where </span><span class="self">Self</span>: <span class="lifetime">'file</span>, <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
-    <span class="kw">type </span>Comdat&lt;<span class="lifetime">'file</span>&gt; = XcoffComdat&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt; <span class="kw">where </span><span class="self">Self</span>: <span class="lifetime">'file</span>, <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
-    <span class="kw">type </span>ComdatIterator&lt;<span class="lifetime">'file</span>&gt; = XcoffComdatIterator&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt; <span class="kw">where </span><span class="self">Self</span>: <span class="lifetime">'file</span>, <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
-    <span class="kw">type </span>Symbol&lt;<span class="lifetime">'file</span>&gt; = XcoffSymbol&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt; <span class="kw">where </span><span class="self">Self</span>: <span class="lifetime">'file</span>, <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
-    <span class="kw">type </span>SymbolIterator&lt;<span class="lifetime">'file</span>&gt; = XcoffSymbolIterator&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt; <span class="kw">where </span><span class="self">Self</span>: <span class="lifetime">'file</span>, <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
-    <span class="kw">type </span>SymbolTable&lt;<span class="lifetime">'file</span>&gt; = XcoffSymbolTable&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt; <span class="kw">where </span><span class="self">Self</span>: <span class="lifetime">'file</span>, <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
-    <span class="kw">type </span>DynamicRelocationIterator&lt;<span class="lifetime">'file</span>&gt; = NoDynamicRelocationIterator <span class="kw">where </span><span class="self">Self</span>: <span class="lifetime">'file</span>, <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
+    <span class="kw">type </span>Segment&lt;<span class="lifetime">'file</span>&gt;
+        = XcoffSegment&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt;
+    <span class="kw">where
+        </span><span class="self">Self</span>: <span class="lifetime">'file</span>,
+        <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
+    <span class="kw">type </span>SegmentIterator&lt;<span class="lifetime">'file</span>&gt;
+        = XcoffSegmentIterator&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt;
+    <span class="kw">where
+        </span><span class="self">Self</span>: <span class="lifetime">'file</span>,
+        <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
+    <span class="kw">type </span>Section&lt;<span class="lifetime">'file</span>&gt;
+        = XcoffSection&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt;
+    <span class="kw">where
+        </span><span class="self">Self</span>: <span class="lifetime">'file</span>,
+        <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
+    <span class="kw">type </span>SectionIterator&lt;<span class="lifetime">'file</span>&gt;
+        = XcoffSectionIterator&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt;
+    <span class="kw">where
+        </span><span class="self">Self</span>: <span class="lifetime">'file</span>,
+        <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
+    <span class="kw">type </span>Comdat&lt;<span class="lifetime">'file</span>&gt;
+        = XcoffComdat&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt;
+    <span class="kw">where
+        </span><span class="self">Self</span>: <span class="lifetime">'file</span>,
+        <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
+    <span class="kw">type </span>ComdatIterator&lt;<span class="lifetime">'file</span>&gt;
+        = XcoffComdatIterator&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt;
+    <span class="kw">where
+        </span><span class="self">Self</span>: <span class="lifetime">'file</span>,
+        <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
+    <span class="kw">type </span>Symbol&lt;<span class="lifetime">'file</span>&gt;
+        = XcoffSymbol&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt;
+    <span class="kw">where
+        </span><span class="self">Self</span>: <span class="lifetime">'file</span>,
+        <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
+    <span class="kw">type </span>SymbolIterator&lt;<span class="lifetime">'file</span>&gt;
+        = XcoffSymbolIterator&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt;
+    <span class="kw">where
+        </span><span class="self">Self</span>: <span class="lifetime">'file</span>,
+        <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
+    <span class="kw">type </span>SymbolTable&lt;<span class="lifetime">'file</span>&gt;
+        = XcoffSymbolTable&lt;<span class="lifetime">'data</span>, <span class="lifetime">'file</span>, Xcoff, R&gt;
+    <span class="kw">where
+        </span><span class="self">Self</span>: <span class="lifetime">'file</span>,
+        <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
+    <span class="kw">type </span>DynamicRelocationIterator&lt;<span class="lifetime">'file</span>&gt;
+        = NoDynamicRelocationIterator
+    <span class="kw">where
+        </span><span class="self">Self</span>: <span class="lifetime">'file</span>,
+        <span class="lifetime">'data</span>: <span class="lifetime">'file</span>;
 
     <span class="kw">fn </span>architecture(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Architecture {
         <span class="kw">if </span><span class="self">self</span>.is_64() {

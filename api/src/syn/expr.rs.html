@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-2.0.90/src/expr.rs`."><title>expr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>expr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-2.0.94/src/expr.rs`."><title>expr.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>expr.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -4036,7 +4036,81 @@
 <a href="#4035" id="4035">4035</a>
 <a href="#4036" id="4036">4036</a>
 <a href="#4037" id="4037">4037</a>
-<a href="#4038" id="4038">4038</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::attr::Attribute;
+<a href="#4038" id="4038">4038</a>
+<a href="#4039" id="4039">4039</a>
+<a href="#4040" id="4040">4040</a>
+<a href="#4041" id="4041">4041</a>
+<a href="#4042" id="4042">4042</a>
+<a href="#4043" id="4043">4043</a>
+<a href="#4044" id="4044">4044</a>
+<a href="#4045" id="4045">4045</a>
+<a href="#4046" id="4046">4046</a>
+<a href="#4047" id="4047">4047</a>
+<a href="#4048" id="4048">4048</a>
+<a href="#4049" id="4049">4049</a>
+<a href="#4050" id="4050">4050</a>
+<a href="#4051" id="4051">4051</a>
+<a href="#4052" id="4052">4052</a>
+<a href="#4053" id="4053">4053</a>
+<a href="#4054" id="4054">4054</a>
+<a href="#4055" id="4055">4055</a>
+<a href="#4056" id="4056">4056</a>
+<a href="#4057" id="4057">4057</a>
+<a href="#4058" id="4058">4058</a>
+<a href="#4059" id="4059">4059</a>
+<a href="#4060" id="4060">4060</a>
+<a href="#4061" id="4061">4061</a>
+<a href="#4062" id="4062">4062</a>
+<a href="#4063" id="4063">4063</a>
+<a href="#4064" id="4064">4064</a>
+<a href="#4065" id="4065">4065</a>
+<a href="#4066" id="4066">4066</a>
+<a href="#4067" id="4067">4067</a>
+<a href="#4068" id="4068">4068</a>
+<a href="#4069" id="4069">4069</a>
+<a href="#4070" id="4070">4070</a>
+<a href="#4071" id="4071">4071</a>
+<a href="#4072" id="4072">4072</a>
+<a href="#4073" id="4073">4073</a>
+<a href="#4074" id="4074">4074</a>
+<a href="#4075" id="4075">4075</a>
+<a href="#4076" id="4076">4076</a>
+<a href="#4077" id="4077">4077</a>
+<a href="#4078" id="4078">4078</a>
+<a href="#4079" id="4079">4079</a>
+<a href="#4080" id="4080">4080</a>
+<a href="#4081" id="4081">4081</a>
+<a href="#4082" id="4082">4082</a>
+<a href="#4083" id="4083">4083</a>
+<a href="#4084" id="4084">4084</a>
+<a href="#4085" id="4085">4085</a>
+<a href="#4086" id="4086">4086</a>
+<a href="#4087" id="4087">4087</a>
+<a href="#4088" id="4088">4088</a>
+<a href="#4089" id="4089">4089</a>
+<a href="#4090" id="4090">4090</a>
+<a href="#4091" id="4091">4091</a>
+<a href="#4092" id="4092">4092</a>
+<a href="#4093" id="4093">4093</a>
+<a href="#4094" id="4094">4094</a>
+<a href="#4095" id="4095">4095</a>
+<a href="#4096" id="4096">4096</a>
+<a href="#4097" id="4097">4097</a>
+<a href="#4098" id="4098">4098</a>
+<a href="#4099" id="4099">4099</a>
+<a href="#4100" id="4100">4100</a>
+<a href="#4101" id="4101">4101</a>
+<a href="#4102" id="4102">4102</a>
+<a href="#4103" id="4103">4103</a>
+<a href="#4104" id="4104">4104</a>
+<a href="#4105" id="4105">4105</a>
+<a href="#4106" id="4106">4106</a>
+<a href="#4107" id="4107">4107</a>
+<a href="#4108" id="4108">4108</a>
+<a href="#4109" id="4109">4109</a>
+<a href="#4110" id="4110">4110</a>
+<a href="#4111" id="4111">4111</a>
+<a href="#4112" id="4112">4112</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::attr::Attribute;
 <span class="attr">#[cfg(all(feature = <span class="string">"parsing"</span>, feature = <span class="string">"full"</span>))]
 </span><span class="kw">use </span><span class="kw">crate</span>::error::Result;
 <span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
@@ -4942,7 +5016,7 @@
     </span><span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
     #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"parsing"</span>)))]
     </span><span class="kw">pub fn </span>peek(input: ParseStream) -&gt; bool {
-        input.peek(Ident::peek_any) <span class="comment">// value name or keyword
+        input.peek(Ident::peek_any) &amp;&amp; !input.peek(<span class="macro">Token!</span>[<span class="kw">as</span>]) <span class="comment">// value name or keyword
             </span>|| input.peek(token::Paren) <span class="comment">// tuple
             </span>|| input.peek(token::Bracket) <span class="comment">// array
             </span>|| input.peek(token::Brace) <span class="comment">// block
@@ -5353,14 +5427,18 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Expr&gt; {
         <span class="kw">loop </span>{
             <span class="kw">let </span>ahead = input.fork();
-            <span class="kw">if let </span>Expr::Range(ExprRange { end: <span class="prelude-val">Some</span>(<span class="kw">_</span>), .. }) = lhs {
-                <span class="comment">// A range with an upper bound cannot be the left-hand side of
-                // another binary operator.
+            <span class="kw">if let </span>Expr::Range(<span class="kw">_</span>) = lhs {
+                <span class="comment">// A range cannot be the left-hand side of another binary operator.
                 </span><span class="kw">break</span>;
             } <span class="kw">else if let </span><span class="prelude-val">Ok</span>(op) = ahead.parse::&lt;BinOp&gt;() {
                 <span class="kw">let </span>precedence = Precedence::of_binop(<span class="kw-2">&amp;</span>op);
                 <span class="kw">if </span>precedence &lt; base {
                     <span class="kw">break</span>;
+                }
+                <span class="kw">if </span>precedence == Precedence::Assign {
+                    <span class="kw">if let </span>Expr::Range(<span class="kw">_</span>) = lhs {
+                        <span class="kw">break</span>;
+                    }
                 }
                 <span class="kw">if </span>precedence == Precedence::Compare {
                     <span class="kw">if let </span>Expr::Binary(lhs) = <span class="kw-2">&amp;</span>lhs {
@@ -5377,7 +5455,13 @@
                     op,
                     right,
                 });
-            } <span class="kw">else if </span>Precedence::Assign &gt;= base &amp;&amp; input.peek(<span class="macro">Token!</span>[=]) &amp;&amp; !input.peek(<span class="macro">Token!</span>[=&gt;])
+            } <span class="kw">else if </span>Precedence::Assign &gt;= base
+                &amp;&amp; input.peek(<span class="macro">Token!</span>[=])
+                &amp;&amp; !input.peek(<span class="macro">Token!</span>[=&gt;])
+                &amp;&amp; <span class="kw">match </span>lhs {
+                    Expr::Range(<span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
+                    <span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
+                }
             {
                 <span class="kw">let </span>eq_token: <span class="macro">Token!</span>[=] = input.parse()<span class="question-mark">?</span>;
                 <span class="kw">let </span>right = parse_binop_rhs(input, allow_struct, Precedence::Assign)<span class="question-mark">?</span>;
@@ -5711,7 +5795,12 @@
                     bracket_token: <span class="macro">bracketed!</span>(content <span class="kw">in </span>input),
                     index: content.parse()<span class="question-mark">?</span>,
                 });
-            } <span class="kw">else if </span>input.peek(<span class="macro">Token!</span>[<span class="question-mark">?</span>]) {
+            } <span class="kw">else if </span>input.peek(<span class="macro">Token!</span>[<span class="question-mark">?</span>])
+                &amp;&amp; <span class="kw">match </span>e {
+                    Expr::Range(<span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
+                    <span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
+                }
+            {
                 e = Expr::Try(ExprTry {
                     attrs: Vec::new(),
                     expr: Box::new(e),
@@ -6366,10 +6455,7 @@
             <span class="kw">let </span>brace_token = <span class="macro">braced!</span>(content <span class="kw">in </span>input);
             attr::parsing::parse_inner(<span class="kw-2">&amp;</span>content, <span class="kw-2">&amp;mut </span>attrs)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span><span class="kw-2">mut </span>arms = Vec::new();
-            <span class="kw">while </span>!content.is_empty() {
-                arms.push(content.call(Arm::parse)<span class="question-mark">?</span>);
-            }
+            <span class="kw">let </span>arms = Arm::parse_multiple(<span class="kw-2">&amp;</span>content)<span class="question-mark">?</span>;
 
             <span class="prelude-val">Ok</span>(ExprMatch {
                 attrs,
@@ -6908,7 +6994,23 @@
                 || input.peek(<span class="macro">Token!</span>[,])
                 || input.peek(<span class="macro">Token!</span>[;])
                 || input.peek(<span class="macro">Token!</span>[.]) &amp;&amp; !input.peek(<span class="macro">Token!</span>[..])
-                || !allow_struct.<span class="number">0 </span>&amp;&amp; input.peek(token::Brace))
+                || input.peek(<span class="macro">Token!</span>[<span class="question-mark">?</span>])
+                || input.peek(<span class="macro">Token!</span>[=&gt;])
+                || !allow_struct.<span class="number">0 </span>&amp;&amp; input.peek(token::Brace)
+                || input.peek(<span class="macro">Token!</span>[=])
+                || input.peek(<span class="macro">Token!</span>[+])
+                || input.peek(<span class="macro">Token!</span>[/])
+                || input.peek(<span class="macro">Token!</span>[%])
+                || input.peek(<span class="macro">Token!</span>[^])
+                || input.peek(<span class="macro">Token!</span>[&gt;])
+                || input.peek(<span class="macro">Token!</span>[&lt;=])
+                || input.peek(<span class="macro">Token!</span>[!=])
+                || input.peek(<span class="macro">Token!</span>[-=])
+                || input.peek(<span class="macro">Token!</span>[<span class="kw-2">*</span>=])
+                || input.peek(<span class="macro">Token!</span>[&amp;=])
+                || input.peek(<span class="macro">Token!</span>[|=])
+                || input.peek(<span class="macro">Token!</span>[&lt;&lt;=])
+                || input.peek(<span class="macro">Token!</span>[<span class="kw">as</span>]))
         {
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         } <span class="kw">else </span>{
@@ -6980,6 +7082,17 @@
             } <span class="kw">else </span>{
                 <span class="prelude-val">Err</span>(input.error(<span class="string">"expected identifier or integer"</span>))
             }
+        }
+    }
+
+    <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+    </span><span class="kw">impl </span>Arm {
+        <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_multiple(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;<span class="self">Self</span>&gt;&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>arms = Vec::new();
+            <span class="kw">while </span>!input.is_empty() {
+                arms.push(input.call(Arm::parse)<span class="question-mark">?</span>);
+            }
+            <span class="prelude-val">Ok</span>(arms)
         }
     }
 
@@ -7217,7 +7330,7 @@
             Expr::Call(e) =&gt; print_expr_call(e, tokens, fixup),
             Expr::Cast(e) =&gt; print_expr_cast(e, tokens, fixup),
             <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
-            </span>Expr::Closure(e) =&gt; e.to_tokens(tokens),
+            </span>Expr::Closure(e) =&gt; print_expr_closure(e, tokens, fixup),
             <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
             </span>Expr::Const(e) =&gt; e.to_tokens(tokens),
             <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
@@ -7301,18 +7414,16 @@
     <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
     </span><span class="kw">fn </span>print_expr_assign(e: <span class="kw-2">&amp;</span>ExprAssign, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
-        print_subexpression(
-            <span class="kw-2">&amp;</span>e.left,
-            Precedence::of(<span class="kw-2">&amp;</span>e.left) &lt;= Precedence::Range,
-            tokens,
-            fixup.leftmost_subexpression(),
-        );
+        <span class="kw">let </span>(left_prec, left_fixup) =
+            fixup.leftmost_subexpression_with_operator(<span class="kw-2">&amp;</span>e.left, <span class="bool-val">false</span>, <span class="bool-val">false</span>, Precedence::Assign);
+        print_subexpression(<span class="kw-2">&amp;</span>e.left, left_prec &lt;= Precedence::Range, tokens, left_fixup);
         e.eq_token.to_tokens(tokens);
+        <span class="kw">let </span>(right_prec, right_fixup) = fixup.rightmost_subexpression(<span class="kw-2">&amp;</span>e.right, Precedence::Assign);
         print_subexpression(
             <span class="kw-2">&amp;</span>e.right,
-            fixup.trailing_precedence(<span class="kw-2">&amp;</span>e.right) &lt; Precedence::Assign,
+            right_prec &lt; Precedence::Assign,
             tokens,
-            fixup.subsequent_subexpression(),
+            right_fixup,
         );
     }
 
@@ -7338,11 +7449,12 @@
     <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
     </span><span class="kw">fn </span>print_expr_await(e: <span class="kw-2">&amp;</span>ExprAwait, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
+        <span class="kw">let </span>(left_prec, left_fixup) = fixup.leftmost_subexpression_with_dot(<span class="kw-2">&amp;</span>e.base);
         print_subexpression(
             <span class="kw-2">&amp;</span>e.base,
-            Precedence::of(<span class="kw-2">&amp;</span>e.base) &lt; Precedence::Unambiguous,
+            left_prec &lt; Precedence::Unambiguous,
             tokens,
-            fixup.leftmost_subexpression_with_dot(),
+            left_fixup,
         );
         e.dot_token.to_tokens(tokens);
         e.await_token.to_tokens(tokens);
@@ -7358,7 +7470,9 @@
     <span class="kw">fn </span>print_expr_binary(e: <span class="kw-2">&amp;</span>ExprBinary, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
 
-        <span class="kw">let </span>left_fixup = fixup.leftmost_subexpression_with_begin_operator(
+        <span class="kw">let </span>binop_prec = Precedence::of_binop(<span class="kw-2">&amp;</span>e.op);
+        <span class="kw">let </span>(left_prec, left_fixup) = fixup.leftmost_subexpression_with_operator(
+            <span class="kw-2">&amp;</span>e.left,
             <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
             </span><span class="kw">match </span><span class="kw-2">&amp;</span>e.op {
                 BinOp::Sub(<span class="kw">_</span>)
@@ -7375,11 +7489,15 @@
                 BinOp::Shl(<span class="kw">_</span>) | BinOp::Lt(<span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
                 <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
             },
+            <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+            </span>binop_prec,
         );
 
-        <span class="kw">let </span>binop_prec = Precedence::of_binop(<span class="kw-2">&amp;</span>e.op);
-        <span class="kw">let </span>left_prec = left_fixup.leading_precedence(<span class="kw-2">&amp;</span>e.left);
-        <span class="kw">let </span>right_prec = fixup.trailing_precedence(<span class="kw-2">&amp;</span>e.right);
+        <span class="kw">let </span>(right_prec, right_fixup) = fixup.rightmost_subexpression(
+            <span class="kw-2">&amp;</span>e.right,
+            <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+            </span>binop_prec,
+        );
         <span class="kw">let </span>(left_needs_group, right_needs_group) = <span class="kw">match </span>binop_prec {
             Precedence::Assign =&gt; (left_prec &lt;= Precedence::Range, right_prec &lt; binop_prec),
             Precedence::Compare =&gt; (left_prec &lt;= binop_prec, right_prec &lt;= binop_prec),
@@ -7388,12 +7506,7 @@
 
         print_subexpression(<span class="kw-2">&amp;</span>e.left, left_needs_group, tokens, left_fixup);
         e.op.to_tokens(tokens);
-        print_subexpression(
-            <span class="kw-2">&amp;</span>e.right,
-            right_needs_group,
-            tokens,
-            fixup.subsequent_subexpression(),
-        );
+        print_subexpression(<span class="kw-2">&amp;</span>e.right, right_needs_group, tokens, right_fixup);
     }
 
     <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
@@ -7429,7 +7542,7 @@
                 //                     ^---------------------------------^
                 </span>e.label.is_none() &amp;&amp; classify::expr_leading_label(value),
                 tokens,
-                fixup.subsequent_subexpression(),
+                fixup.rightmost_subexpression_fixup(Precedence::Jump),
             );
         }
     }
@@ -7444,17 +7557,20 @@
     <span class="kw">fn </span>print_expr_call(e: <span class="kw-2">&amp;</span>ExprCall, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
 
-        <span class="kw">let </span>func_fixup = fixup.leftmost_subexpression_with_begin_operator(
+        <span class="kw">let </span>(left_prec, left_fixup) = fixup.leftmost_subexpression_with_operator(
+            <span class="kw-2">&amp;</span>e.func,
             <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
             </span><span class="bool-val">true</span>,
             <span class="bool-val">false</span>,
+            <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+            </span>Precedence::Unambiguous,
         );
         <span class="kw">let </span>needs_group = <span class="kw">if let </span>Expr::Field(func) = <span class="kw-2">&amp;*</span>e.func {
             func.member.is_named()
         } <span class="kw">else </span>{
-            func_fixup.leading_precedence(<span class="kw-2">&amp;</span>e.func) &lt; Precedence::Unambiguous
+            left_prec &lt; Precedence::Unambiguous
         };
-        print_subexpression(<span class="kw-2">&amp;</span>e.func, needs_group, tokens, func_fixup);
+        print_subexpression(<span class="kw-2">&amp;</span>e.func, needs_group, tokens, left_fixup);
 
         e.paren_token.surround(tokens, |tokens| {
             e.args.to_tokens(tokens);
@@ -7470,12 +7586,15 @@
 
     <span class="kw">fn </span>print_expr_cast(e: <span class="kw-2">&amp;</span>ExprCast, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
-        print_subexpression(
+        <span class="kw">let </span>(left_prec, left_fixup) = fixup.leftmost_subexpression_with_operator(
             <span class="kw-2">&amp;</span>e.expr,
-            Precedence::of(<span class="kw-2">&amp;</span>e.expr) &lt; Precedence::Cast,
-            tokens,
-            fixup.leftmost_subexpression(),
+            <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+            </span><span class="bool-val">false</span>,
+            <span class="bool-val">false</span>,
+            <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+            </span>Precedence::Cast,
         );
+        print_subexpression(<span class="kw-2">&amp;</span>e.expr, left_prec &lt; Precedence::Cast, tokens, left_fixup);
         e.as_token.to_tokens(tokens);
         e.ty.to_tokens(tokens);
     }
@@ -7484,23 +7603,34 @@
     #[cfg_attr(docsrs, doc(cfg(feature = <span class="string">"printing"</span>)))]
     </span><span class="kw">impl </span>ToTokens <span class="kw">for </span>ExprClosure {
         <span class="kw">fn </span>to_tokens(<span class="kw-2">&amp;</span><span class="self">self</span>, tokens: <span class="kw-2">&amp;mut </span>TokenStream) {
-            outer_attrs_to_tokens(<span class="kw-2">&amp;</span><span class="self">self</span>.attrs, tokens);
-            <span class="self">self</span>.lifetimes.to_tokens(tokens);
-            <span class="self">self</span>.constness.to_tokens(tokens);
-            <span class="self">self</span>.movability.to_tokens(tokens);
-            <span class="self">self</span>.asyncness.to_tokens(tokens);
-            <span class="self">self</span>.capture.to_tokens(tokens);
-            <span class="self">self</span>.or1_token.to_tokens(tokens);
-            <span class="self">self</span>.inputs.to_tokens(tokens);
-            <span class="self">self</span>.or2_token.to_tokens(tokens);
-            <span class="self">self</span>.output.to_tokens(tokens);
-            <span class="kw">if </span><span class="macro">matches!</span>(<span class="self">self</span>.output, ReturnType::Default) || <span class="macro">matches!</span>(<span class="kw-2">*</span><span class="self">self</span>.body, Expr::Block(<span class="kw">_</span>)) {
-                <span class="self">self</span>.body.to_tokens(tokens);
-            } <span class="kw">else </span>{
-                token::Brace::default().surround(tokens, |tokens| {
-                    print_expr(<span class="kw-2">&amp;</span><span class="self">self</span>.body, tokens, FixupContext::new_stmt());
-                });
-            }
+            print_expr_closure(<span class="self">self</span>, tokens, FixupContext::NONE);
+        }
+    }
+
+    <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+    </span><span class="kw">fn </span>print_expr_closure(e: <span class="kw-2">&amp;</span>ExprClosure, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
+        outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
+        e.lifetimes.to_tokens(tokens);
+        e.constness.to_tokens(tokens);
+        e.movability.to_tokens(tokens);
+        e.asyncness.to_tokens(tokens);
+        e.capture.to_tokens(tokens);
+        e.or1_token.to_tokens(tokens);
+        e.inputs.to_tokens(tokens);
+        e.or2_token.to_tokens(tokens);
+        e.output.to_tokens(tokens);
+        <span class="kw">if </span><span class="macro">matches!</span>(e.output, ReturnType::Default)
+            || <span class="macro">matches!</span>(<span class="kw-2">&amp;*</span>e.body, Expr::Block(body) <span class="kw">if </span>body.attrs.is_empty() &amp;&amp; body.label.is_none())
+        {
+            print_expr(
+                <span class="kw-2">&amp;</span>e.body,
+                tokens,
+                fixup.rightmost_subexpression_fixup(Precedence::Jump),
+            );
+        } <span class="kw">else </span>{
+            token::Brace::default().surround(tokens, |tokens| {
+                print_expr(<span class="kw-2">&amp;</span>e.body, tokens, FixupContext::new_stmt());
+            });
         }
     }
 
@@ -7536,11 +7666,12 @@
 
     <span class="kw">fn </span>print_expr_field(e: <span class="kw-2">&amp;</span>ExprField, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
+        <span class="kw">let </span>(left_prec, left_fixup) = fixup.leftmost_subexpression_with_dot(<span class="kw-2">&amp;</span>e.base);
         print_subexpression(
             <span class="kw-2">&amp;</span>e.base,
-            Precedence::of(<span class="kw-2">&amp;</span>e.base) &lt; Precedence::Unambiguous,
+            left_prec &lt; Precedence::Unambiguous,
             tokens,
-            fixup.leftmost_subexpression_with_dot(),
+            left_fixup,
         );
         e.dot_token.to_tokens(tokens);
         e.member.to_tokens(tokens);
@@ -7621,16 +7752,19 @@
 
     <span class="kw">fn </span>print_expr_index(e: <span class="kw-2">&amp;</span>ExprIndex, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
-        <span class="kw">let </span>obj_fixup = fixup.leftmost_subexpression_with_begin_operator(
+        <span class="kw">let </span>(left_prec, left_fixup) = fixup.leftmost_subexpression_with_operator(
+            <span class="kw-2">&amp;</span>e.expr,
             <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
             </span><span class="bool-val">true</span>,
             <span class="bool-val">false</span>,
+            <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+            </span>Precedence::Unambiguous,
         );
         print_subexpression(
             <span class="kw-2">&amp;</span>e.expr,
-            obj_fixup.leading_precedence(<span class="kw-2">&amp;</span>e.expr) &lt; Precedence::Unambiguous,
+            left_prec &lt; Precedence::Unambiguous,
             tokens,
-            obj_fixup,
+            left_fixup,
         );
         e.bracket_token.surround(tokens, |tokens| {
             e.index.to_tokens(tokens);
@@ -7732,11 +7866,12 @@
 
     <span class="kw">fn </span>print_expr_method_call(e: <span class="kw-2">&amp;</span>ExprMethodCall, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
+        <span class="kw">let </span>(left_prec, left_fixup) = fixup.leftmost_subexpression_with_dot(<span class="kw-2">&amp;</span>e.receiver);
         print_subexpression(
             <span class="kw-2">&amp;</span>e.receiver,
-            Precedence::of(<span class="kw-2">&amp;</span>e.receiver) &lt; Precedence::Unambiguous,
+            left_prec &lt; Precedence::Unambiguous,
             tokens,
-            fixup.leftmost_subexpression_with_dot(),
+            left_fixup,
         );
         e.dot_token.to_tokens(tokens);
         e.method.to_tokens(tokens);
@@ -7782,21 +7917,14 @@
     </span><span class="kw">fn </span>print_expr_range(e: <span class="kw-2">&amp;</span>ExprRange, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(start) = <span class="kw-2">&amp;</span>e.start {
-            print_subexpression(
-                start,
-                Precedence::of(start) &lt;= Precedence::Range,
-                tokens,
-                fixup.leftmost_subexpression(),
-            );
+            <span class="kw">let </span>(left_prec, left_fixup) =
+                fixup.leftmost_subexpression_with_operator(start, <span class="bool-val">true</span>, <span class="bool-val">false</span>, Precedence::Range);
+            print_subexpression(start, left_prec &lt;= Precedence::Range, tokens, left_fixup);
         }
         e.limits.to_tokens(tokens);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(end) = <span class="kw-2">&amp;</span>e.end {
-            print_subexpression(
-                end,
-                fixup.trailing_precedence(end) &lt;= Precedence::Range,
-                tokens,
-                fixup.subsequent_subexpression(),
-            );
+            <span class="kw">let </span>(right_prec, right_fixup) = fixup.rightmost_subexpression(end, Precedence::Range);
+            print_subexpression(end, right_prec &lt;= Precedence::Range, tokens, right_fixup);
         }
     }
 
@@ -7814,11 +7942,12 @@
         e.and_token.to_tokens(tokens);
         e.raw.to_tokens(tokens);
         e.mutability.to_tokens(tokens);
+        <span class="kw">let </span>(right_prec, right_fixup) = fixup.rightmost_subexpression(<span class="kw-2">&amp;</span>e.expr, Precedence::Prefix);
         print_subexpression(
             <span class="kw-2">&amp;</span>e.expr,
-            fixup.trailing_precedence(<span class="kw-2">&amp;</span>e.expr) &lt; Precedence::Prefix,
+            right_prec &lt; Precedence::Prefix,
             tokens,
-            fixup.subsequent_subexpression(),
+            right_fixup,
         );
     }
 
@@ -7833,11 +7962,16 @@
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
         e.and_token.to_tokens(tokens);
         e.mutability.to_tokens(tokens);
+        <span class="kw">let </span>(right_prec, right_fixup) = fixup.rightmost_subexpression(
+            <span class="kw-2">&amp;</span>e.expr,
+            <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+            </span>Precedence::Prefix,
+        );
         print_subexpression(
             <span class="kw-2">&amp;</span>e.expr,
-            fixup.trailing_precedence(<span class="kw-2">&amp;</span>e.expr) &lt; Precedence::Prefix,
+            right_prec &lt; Precedence::Prefix,
             tokens,
-            fixup.subsequent_subexpression(),
+            right_fixup,
         );
     }
 
@@ -7867,7 +8001,11 @@
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
         e.return_token.to_tokens(tokens);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(expr) = <span class="kw-2">&amp;</span>e.expr {
-            print_expr(expr, tokens, fixup.subsequent_subexpression());
+            print_expr(
+                expr,
+                tokens,
+                fixup.rightmost_subexpression_fixup(Precedence::Jump),
+            );
         }
     }
 
@@ -7899,11 +8037,12 @@
     <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
     </span><span class="kw">fn </span>print_expr_try(e: <span class="kw-2">&amp;</span>ExprTry, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
+        <span class="kw">let </span>(left_prec, left_fixup) = fixup.leftmost_subexpression_with_dot(<span class="kw-2">&amp;</span>e.expr);
         print_subexpression(
             <span class="kw-2">&amp;</span>e.expr,
-            Precedence::of(<span class="kw-2">&amp;</span>e.expr) &lt; Precedence::Unambiguous,
+            left_prec &lt; Precedence::Unambiguous,
             tokens,
-            fixup.leftmost_subexpression_with_dot(),
+            left_fixup,
         );
         e.question_token.to_tokens(tokens);
     }
@@ -7943,11 +8082,16 @@
     <span class="kw">fn </span>print_expr_unary(e: <span class="kw-2">&amp;</span>ExprUnary, tokens: <span class="kw-2">&amp;mut </span>TokenStream, fixup: FixupContext) {
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
         e.op.to_tokens(tokens);
+        <span class="kw">let </span>(right_prec, right_fixup) = fixup.rightmost_subexpression(
+            <span class="kw-2">&amp;</span>e.expr,
+            <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+            </span>Precedence::Prefix,
+        );
         print_subexpression(
             <span class="kw-2">&amp;</span>e.expr,
-            fixup.trailing_precedence(<span class="kw-2">&amp;</span>e.expr) &lt; Precedence::Prefix,
+            right_prec &lt; Precedence::Prefix,
             tokens,
-            fixup.subsequent_subexpression(),
+            right_fixup,
         );
     }
 
@@ -7992,7 +8136,11 @@
         outer_attrs_to_tokens(<span class="kw-2">&amp;</span>e.attrs, tokens);
         e.yield_token.to_tokens(tokens);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(expr) = <span class="kw-2">&amp;</span>e.expr {
-            print_expr(expr, tokens, fixup.subsequent_subexpression());
+            print_expr(
+                expr,
+                tokens,
+                fixup.rightmost_subexpression_fixup(Precedence::Jump),
+            );
         }
     }
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-2.0.90/src/parse_quote.rs`."><title>parse_quote.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>parse_quote.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/syn-2.0.94/src/parse_quote.rs`."><title>parse_quote.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>parse_quote.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -220,7 +220,25 @@
 <a href="#219" id="219">219</a>
 <a href="#220" id="220">220</a>
 <a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a></pre></div><pre class="rust"><code><span class="doccomment">/// Quasi-quotation macro that accepts input like the [`quote!`] macro but uses
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a></pre></div><pre class="rust"><code><span class="doccomment">/// Quasi-quotation macro that accepts input like the [`quote!`] macro but uses
 /// type inference to figure out a return type for those tokens.
 ///
 /// [`quote!`]: https://docs.rs/quote/1.0/quote/index.html
@@ -275,11 +293,22 @@
 ///
 /// - [`Attribute`] — parses one attribute, allowing either outer like `#[...]`
 ///   or inner like `#![...]`
+/// - [`Vec&lt;Attribute&gt;`] — parses multiple attributes, including mixed kinds in
+///   any order
 /// - [`Punctuated&lt;T, P&gt;`] — parses zero or more `T` separated by punctuation
 ///   `P` with optional trailing punctuation
+/// - [`Vec&lt;Arm&gt;`] — parses arms separated by optional commas according to the
+///   same grammar as the inside of a `match` expression
 /// - [`Vec&lt;Stmt&gt;`] — parses the same as `Block::parse_within`
+/// - [`Pat`], [`Box&lt;Pat&gt;`] — parses the same as
+///   `Pat::parse_multi_with_leading_vert`
+/// - [`Field`] — parses a named or unnamed struct field
 ///
+/// [`Vec&lt;Attribute&gt;`]: Attribute
+/// [`Vec&lt;Arm&gt;`]: Arm
 /// [`Vec&lt;Stmt&gt;`]: Block::parse_within
+/// [`Pat`]: Pat::parse_multi_with_leading_vert
+/// [`Box&lt;Pat&gt;`]: Pat::parse_multi_with_leading_vert
 ///
 /// # Panics
 ///
@@ -362,7 +391,7 @@
 <span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
 </span><span class="kw">use crate</span>::{attr, Attribute, Field, FieldMutability, Ident, Type, Visibility};
 <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
-</span><span class="kw">use crate</span>::{Block, Pat, Stmt};
+</span><span class="kw">use crate</span>::{Arm, Block, Pat, Stmt};
 
 <span class="attr">#[cfg(any(feature = <span class="string">"full"</span>, feature = <span class="string">"derive"</span>))]
 </span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Attribute {
@@ -440,6 +469,13 @@
 </span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Vec&lt;Stmt&gt; {
     <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
         Block::parse_within(input)
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+</span><span class="kw">impl </span>ParseQuote <span class="kw">for </span>Vec&lt;Arm&gt; {
+    <span class="kw">fn </span>parse(input: ParseStream) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+        Arm::parse_multiple(input)
     }
 }
 </code></pre></div></section></main></body></html>

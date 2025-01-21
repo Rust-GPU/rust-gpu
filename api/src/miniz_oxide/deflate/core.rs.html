@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/miniz_oxide-0.8.0/src/deflate/core.rs`."><title>core.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="miniz_oxide" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">miniz_oxide/deflate/</div>core.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/miniz_oxide-0.8.2/src/deflate/core.rs`."><title>core.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="miniz_oxide" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">miniz_oxide/deflate/</div>core.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -2467,7 +2467,66 @@
 <a href="#2466" id="2466">2466</a>
 <a href="#2467" id="2467">2467</a>
 <a href="#2468" id="2468">2468</a>
-<a href="#2469" id="2469">2469</a></pre></div><pre class="rust"><code><span class="doccomment">//! Streaming compression functionality.
+<a href="#2469" id="2469">2469</a>
+<a href="#2470" id="2470">2470</a>
+<a href="#2471" id="2471">2471</a>
+<a href="#2472" id="2472">2472</a>
+<a href="#2473" id="2473">2473</a>
+<a href="#2474" id="2474">2474</a>
+<a href="#2475" id="2475">2475</a>
+<a href="#2476" id="2476">2476</a>
+<a href="#2477" id="2477">2477</a>
+<a href="#2478" id="2478">2478</a>
+<a href="#2479" id="2479">2479</a>
+<a href="#2480" id="2480">2480</a>
+<a href="#2481" id="2481">2481</a>
+<a href="#2482" id="2482">2482</a>
+<a href="#2483" id="2483">2483</a>
+<a href="#2484" id="2484">2484</a>
+<a href="#2485" id="2485">2485</a>
+<a href="#2486" id="2486">2486</a>
+<a href="#2487" id="2487">2487</a>
+<a href="#2488" id="2488">2488</a>
+<a href="#2489" id="2489">2489</a>
+<a href="#2490" id="2490">2490</a>
+<a href="#2491" id="2491">2491</a>
+<a href="#2492" id="2492">2492</a>
+<a href="#2493" id="2493">2493</a>
+<a href="#2494" id="2494">2494</a>
+<a href="#2495" id="2495">2495</a>
+<a href="#2496" id="2496">2496</a>
+<a href="#2497" id="2497">2497</a>
+<a href="#2498" id="2498">2498</a>
+<a href="#2499" id="2499">2499</a>
+<a href="#2500" id="2500">2500</a>
+<a href="#2501" id="2501">2501</a>
+<a href="#2502" id="2502">2502</a>
+<a href="#2503" id="2503">2503</a>
+<a href="#2504" id="2504">2504</a>
+<a href="#2505" id="2505">2505</a>
+<a href="#2506" id="2506">2506</a>
+<a href="#2507" id="2507">2507</a>
+<a href="#2508" id="2508">2508</a>
+<a href="#2509" id="2509">2509</a>
+<a href="#2510" id="2510">2510</a>
+<a href="#2511" id="2511">2511</a>
+<a href="#2512" id="2512">2512</a>
+<a href="#2513" id="2513">2513</a>
+<a href="#2514" id="2514">2514</a>
+<a href="#2515" id="2515">2515</a>
+<a href="#2516" id="2516">2516</a>
+<a href="#2517" id="2517">2517</a>
+<a href="#2518" id="2518">2518</a>
+<a href="#2519" id="2519">2519</a>
+<a href="#2520" id="2520">2520</a>
+<a href="#2521" id="2521">2521</a>
+<a href="#2522" id="2522">2522</a>
+<a href="#2523" id="2523">2523</a>
+<a href="#2524" id="2524">2524</a>
+<a href="#2525" id="2525">2525</a>
+<a href="#2526" id="2526">2526</a>
+<a href="#2527" id="2527">2527</a>
+<a href="#2528" id="2528">2528</a></pre></div><pre class="rust"><code><span class="doccomment">//! Streaming compression functionality.
 
 </span><span class="kw">use </span>alloc::boxed::Box;
 <span class="kw">use </span>core::convert::TryInto;
@@ -2675,6 +2734,13 @@
     </span>Fixed = <span class="number">4</span>,
 }
 
+<span class="kw">impl </span>From&lt;CompressionStrategy&gt; <span class="kw">for </span>i32 {
+    <span class="attr">#[inline(always)]
+    </span><span class="kw">fn </span>from(value: CompressionStrategy) -&gt; <span class="self">Self </span>{
+        value <span class="kw">as </span>i32
+    }
+}
+
 <span class="doccomment">/// A list of deflate flush types.
 </span><span class="attr">#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 </span><span class="kw">pub enum </span>TDEFLFlush {
@@ -2768,11 +2834,16 @@
 <span class="kw">const </span>DEFAULT_FLAGS: u32 = NUM_PROBES[<span class="number">4</span>] | TDEFL_WRITE_ZLIB_HEADER;
 
 <span class="kw">mod </span>zlib {
+    <span class="kw">use super</span>::{TDEFL_FORCE_ALL_RAW_BLOCKS, TDEFL_RLE_MATCHES};
+
     <span class="kw">const </span>DEFAULT_CM: u8 = <span class="number">8</span>;
     <span class="kw">const </span>DEFAULT_CINFO: u8 = <span class="number">7 </span>&lt;&lt; <span class="number">4</span>;
     <span class="kw">const </span>_DEFAULT_FDICT: u8 = <span class="number">0</span>;
     <span class="kw">const </span>DEFAULT_CMF: u8 = DEFAULT_CM | DEFAULT_CINFO;
-    <span class="doccomment">/// The 16-bit value consisting of CMF and FLG must be divisible by this to be valid.
+    <span class="comment">// CMF used for RLE (technically it uses a window size of 0 but the lowest that can
+    // be specified in the header corresponds to a window size of 1 &lt;&lt; (0 + 8) aka 256.
+    </span><span class="kw">const </span>MIN_CMF: u8 = DEFAULT_CM; <span class="comment">// | 0
+    </span><span class="doccomment">/// The 16-bit value consisting of CMF and FLG must be divisible by this to be valid.
     </span><span class="kw">const </span>FCHECK_DIVISOR: u8 = <span class="number">31</span>;
 
     <span class="doccomment">/// Generate FCHECK from CMF and FLG (without FCKECH )so that they are correct according to the
@@ -2793,7 +2864,9 @@
         <span class="kw">use </span><span class="kw">super</span>::NUM_PROBES;
 
         <span class="kw">let </span>num_probes = flags &amp; (<span class="kw">super</span>::MAX_PROBES_MASK <span class="kw">as </span>u32);
-        <span class="kw">if </span>flags &amp; <span class="kw">super</span>::TDEFL_GREEDY_PARSING_FLAG != <span class="number">0 </span>{
+        <span class="kw">if </span>(flags &amp; <span class="kw">super</span>::TDEFL_GREEDY_PARSING_FLAG != <span class="number">0</span>)
+            || (flags &amp; <span class="kw">super</span>::TDEFL_RLE_MATCHES != <span class="number">0</span>)
+        {
             <span class="kw">if </span>num_probes &lt;= <span class="number">1 </span>{
                 <span class="number">0
             </span>} <span class="kw">else </span>{
@@ -2806,10 +2879,20 @@
         </span>}
     }
 
+    <span class="kw">const fn </span>cmf_from_flags(flags: u32) -&gt; u8 {
+        <span class="kw">if </span>(flags &amp; TDEFL_RLE_MATCHES == <span class="number">0</span>) &amp;&amp; (flags &amp; TDEFL_FORCE_ALL_RAW_BLOCKS == <span class="number">0</span>) {
+            DEFAULT_CMF
+        <span class="comment">// If we are using RLE encoding or no compression the window bits can be set as the
+        // minimum.
+        </span>} <span class="kw">else </span>{
+            MIN_CMF
+        }
+    }
+
     <span class="doccomment">/// Get the zlib header for the level using the default window size and no
     /// dictionary.
-    </span><span class="kw">fn </span>header_from_level(level: u8) -&gt; [u8; <span class="number">2</span>] {
-        <span class="kw">let </span>cmf = DEFAULT_CMF;
+    </span><span class="kw">fn </span>header_from_level(level: u8, flags: u32) -&gt; [u8; <span class="number">2</span>] {
+        <span class="kw">let </span>cmf = cmf_from_flags(flags);
         [cmf, add_fcheck(cmf, level &lt;&lt; <span class="number">6</span>)]
     }
 
@@ -2817,7 +2900,7 @@
     /// Only level is considered.
     </span><span class="kw">pub fn </span>header_from_flags(flags: u32) -&gt; [u8; <span class="number">2</span>] {
         <span class="kw">let </span>level = zlib_level_from_flags(flags);
-        header_from_level(level)
+        header_from_level(level, flags)
     }
 
     <span class="attr">#[cfg(test)]
@@ -2850,18 +2933,12 @@
 
         <span class="attr">#[test]
         </span><span class="kw">fn </span>test_header() {
-            <span class="kw">let </span>header = <span class="kw">super</span>::header_from_level(<span class="number">3</span>);
+            <span class="kw">let </span>header = <span class="kw">super</span>::header_from_level(<span class="number">3</span>, <span class="number">0</span>);
             <span class="macro">assert_eq!</span>(
                 ((usize::from(header[<span class="number">0</span>]) * <span class="number">256</span>) + usize::from(header[<span class="number">1</span>])) % <span class="number">31</span>,
                 <span class="number">0
             </span>);
         }
-    }
-}
-
-<span class="kw">fn </span>memset&lt;T: Copy&gt;(slice: <span class="kw-2">&amp;mut </span>[T], val: T) {
-    <span class="kw">for </span>x <span class="kw">in </span>slice {
-        <span class="kw-2">*</span>x = val
     }
 }
 
@@ -3001,7 +3078,7 @@
     <span class="kw">pub </span>put_buf_func: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="kw">dyn </span>FnMut(<span class="kw-2">&amp;</span>[u8]) -&gt; bool,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; CallbackFunc&lt;<span class="lifetime">'a</span>&gt; {
+<span class="kw">impl </span>CallbackFunc&lt;<span class="lifetime">'_</span>&gt; {
     <span class="kw">fn </span>flush_output(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         saved_output: SavedOutputBufferOxide,
@@ -3025,7 +3102,7 @@
     <span class="kw">pub </span>out_buf: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[u8],
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; CallbackBuf&lt;<span class="lifetime">'a</span>&gt; {
+<span class="kw">impl </span>CallbackBuf&lt;<span class="lifetime">'_</span>&gt; {
     <span class="kw">fn </span>flush_output(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         saved_output: SavedOutputBufferOxide,
@@ -3054,7 +3131,7 @@
     Buf(CallbackBuf&lt;<span class="lifetime">'a</span>&gt;),
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; CallbackOut&lt;<span class="lifetime">'a</span>&gt; {
+<span class="kw">impl </span>CallbackOut&lt;<span class="lifetime">'_</span>&gt; {
     <span class="kw">fn </span>new_output_buffer&lt;<span class="lifetime">'b</span>&gt;(
         <span class="kw-2">&amp;</span><span class="lifetime">'b </span><span class="kw-2">mut </span><span class="self">self</span>,
         local_buf: <span class="kw-2">&amp;</span><span class="lifetime">'b </span><span class="kw-2">mut </span>[u8],
@@ -3145,7 +3222,7 @@
     <span class="kw">pub </span>bits_in: u32,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; OutputBufferOxide&lt;<span class="lifetime">'a</span>&gt; {
+<span class="kw">impl </span>OutputBufferOxide&lt;<span class="lifetime">'_</span>&gt; {
     <span class="kw">fn </span>put_bits(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bits: u32, len: u32) {
         <span class="comment">// TODO: Removing this assertion worsens performance
         // Need to figure out why
@@ -3245,7 +3322,7 @@
 <span class="doccomment">/// Status of RLE encoding of huffman code lengths.
 </span><span class="kw">struct </span>Rle {
     <span class="kw">pub </span>z_count: u32,
-    <span class="kw">pub </span>repeat_count: u32,
+    <span class="kw">pub </span>repeat_count: u16,
     <span class="kw">pub </span>prev_code_size: u8,
 }
 
@@ -3261,7 +3338,7 @@
         <span class="kw">if </span><span class="self">self</span>.repeat_count != <span class="number">0 </span>{
             <span class="kw">if </span><span class="self">self</span>.repeat_count &lt; <span class="number">3 </span>{
                 counts[<span class="self">self</span>.prev_code_size <span class="kw">as </span>usize] =
-                    counts[<span class="self">self</span>.prev_code_size <span class="kw">as </span>usize].wrapping_add(<span class="self">self</span>.repeat_count <span class="kw">as </span>u16);
+                    counts[<span class="self">self</span>.prev_code_size <span class="kw">as </span>usize].wrapping_add(<span class="self">self</span>.repeat_count);
                 <span class="kw">let </span>code = <span class="self">self</span>.prev_code_size;
                 write(<span class="kw-2">&amp;</span>[code, code, code][..<span class="self">self</span>.repeat_count <span class="kw">as </span>usize])<span class="question-mark">?</span>;
             } <span class="kw">else </span>{
@@ -3486,8 +3563,8 @@
 
             <span class="self">Self</span>::enforce_max_code_size(<span class="kw-2">&amp;mut </span>num_codes, num_used_symbols, code_size_limit);
 
-            memset(<span class="kw-2">&amp;mut </span><span class="self">self</span>.code_sizes[table_num][..], <span class="number">0</span>);
-            memset(<span class="kw-2">&amp;mut </span><span class="self">self</span>.codes[table_num][..], <span class="number">0</span>);
+            <span class="self">self</span>.code_sizes[table_num].fill(<span class="number">0</span>);
+            <span class="self">self</span>.codes[table_num].fill(<span class="number">0</span>);
 
             <span class="kw">let </span><span class="kw-2">mut </span>last = num_used_symbols;
             <span class="kw">for </span>(i, <span class="kw-2">&amp;</span>num_item) <span class="kw">in </span>num_codes
@@ -3533,12 +3610,12 @@
     }
 
     <span class="kw">fn </span>start_static_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, output: <span class="kw-2">&amp;mut </span>OutputBufferOxide) {
-        memset(<span class="kw-2">&amp;mut </span><span class="self">self</span>.code_sizes[LITLEN_TABLE][<span class="number">0</span>..<span class="number">144</span>], <span class="number">8</span>);
-        memset(<span class="kw-2">&amp;mut </span><span class="self">self</span>.code_sizes[LITLEN_TABLE][<span class="number">144</span>..<span class="number">256</span>], <span class="number">9</span>);
-        memset(<span class="kw-2">&amp;mut </span><span class="self">self</span>.code_sizes[LITLEN_TABLE][<span class="number">256</span>..<span class="number">280</span>], <span class="number">7</span>);
-        memset(<span class="kw-2">&amp;mut </span><span class="self">self</span>.code_sizes[LITLEN_TABLE][<span class="number">280</span>..<span class="number">288</span>], <span class="number">8</span>);
+        <span class="self">self</span>.code_sizes[LITLEN_TABLE][<span class="number">0</span>..<span class="number">144</span>].fill(<span class="number">8</span>);
+        <span class="self">self</span>.code_sizes[LITLEN_TABLE][<span class="number">144</span>..<span class="number">256</span>].fill(<span class="number">9</span>);
+        <span class="self">self</span>.code_sizes[LITLEN_TABLE][<span class="number">256</span>..<span class="number">280</span>].fill(<span class="number">7</span>);
+        <span class="self">self</span>.code_sizes[LITLEN_TABLE][<span class="number">280</span>..<span class="number">288</span>].fill(<span class="number">8</span>);
 
-        memset(<span class="kw-2">&amp;mut </span><span class="self">self</span>.code_sizes[DIST_TABLE][..<span class="number">32</span>], <span class="number">5</span>);
+        <span class="self">self</span>.code_sizes[DIST_TABLE][..<span class="number">32</span>].fill(<span class="number">5</span>);
 
         <span class="self">self</span>.optimize_table(LITLEN_TABLE, <span class="number">288</span>, <span class="number">15</span>, <span class="bool-val">true</span>);
         <span class="self">self</span>.optimize_table(DIST_TABLE, <span class="number">32</span>, <span class="number">15</span>, <span class="bool-val">true</span>);
@@ -3583,7 +3660,7 @@
             prev_code_size: <span class="number">0xFF</span>,
         };
 
-        memset(<span class="kw-2">&amp;mut </span><span class="self">self</span>.count[HUFF_CODES_TABLE][..MAX_HUFF_SYMBOLS_2], <span class="number">0</span>);
+        <span class="self">self</span>.count[HUFF_CODES_TABLE][..MAX_HUFF_SYMBOLS_2].fill(<span class="number">0</span>);
 
         <span class="kw">let </span><span class="kw-2">mut </span>packed_pos = <span class="number">0</span>;
         <span class="kw">for </span><span class="kw-2">&amp;</span>code_size <span class="kw">in </span><span class="kw-2">&amp;</span>code_sizes_to_pack[..total_code_sizes_to_pack] {
@@ -4198,8 +4275,8 @@
             }
         }
 
-        memset(<span class="kw-2">&amp;mut </span>d.huff.count[<span class="number">0</span>][..MAX_HUFF_SYMBOLS_0], <span class="number">0</span>);
-        memset(<span class="kw-2">&amp;mut </span>d.huff.count[<span class="number">1</span>][..MAX_HUFF_SYMBOLS_1], <span class="number">0</span>);
+        d.huff.count[<span class="number">0</span>][..MAX_HUFF_SYMBOLS_0].fill(<span class="number">0</span>);
+        d.huff.count[<span class="number">1</span>][..MAX_HUFF_SYMBOLS_1].fill(<span class="number">0</span>);
 
         d.lz.code_position = <span class="number">1</span>;
         d.lz.flag_position = <span class="number">0</span>;
@@ -4797,8 +4874,8 @@
             <span class="kw">_ </span>=&gt; {
                 d.params.finished = d.params.flush == TDEFLFlush::Finish;
                 <span class="kw">if </span>d.params.flush == TDEFLFlush::Full {
-                    memset(<span class="kw-2">&amp;mut </span>d.dict.b.hash[..], <span class="number">0</span>);
-                    memset(<span class="kw-2">&amp;mut </span>d.dict.b.next[..], <span class="number">0</span>);
+                    d.dict.b.hash.fill(<span class="number">0</span>);
+                    d.dict.b.next.fill(<span class="number">0</span>);
                     d.dict.size = <span class="number">0</span>;
                 }
             }
@@ -4934,6 +5011,47 @@
 
         <span class="kw">let </span>decoded = decompress_to_vec(<span class="kw-2">&amp;</span>encoded[..]).unwrap();
         <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>decoded[..], <span class="kw-2">&amp;</span>slice[..]);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>zlib_window_bits() {
+        <span class="kw">use </span><span class="kw">crate</span>::inflate::stream::{inflate, InflateState};
+        <span class="kw">use </span><span class="kw">crate</span>::DataFormat;
+        <span class="kw">use </span>alloc::boxed::Box;
+        <span class="kw">let </span>slice = [
+            <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">6</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">35</span>, <span class="number">22</span>, <span class="number">22</span>, <span class="number">2</span>,
+            <span class="number">6</span>, <span class="number">2</span>, <span class="number">6</span>,
+        ];
+        <span class="kw">let </span><span class="kw-2">mut </span>encoded = <span class="macro">vec!</span>[];
+        <span class="kw">let </span>flags = create_comp_flags_from_zip_params(<span class="number">2</span>, <span class="number">1</span>, CompressionStrategy::RLE.into());
+        <span class="kw">let </span><span class="kw-2">mut </span>d = CompressorOxide::new(flags);
+        <span class="kw">let </span>(status, in_consumed) =
+            compress_to_output(<span class="kw-2">&amp;mut </span>d, <span class="kw-2">&amp;</span>slice, TDEFLFlush::Finish, |out: <span class="kw-2">&amp;</span>[u8]| {
+                encoded.extend_from_slice(out);
+                <span class="bool-val">true
+            </span>});
+
+        <span class="macro">assert_eq!</span>(status, TDEFLStatus::Done);
+        <span class="macro">assert_eq!</span>(in_consumed, slice.len());
+
+        <span class="kw">let </span><span class="kw-2">mut </span>output = <span class="macro">vec!</span>[<span class="number">0</span>; slice.len()];
+
+        <span class="kw">let </span><span class="kw-2">mut </span>decompressor = Box::new(InflateState::new(DataFormat::Zlib));
+
+        <span class="kw">let </span><span class="kw-2">mut </span>out_slice = output.as_mut_slice();
+        <span class="comment">// Feed 1 byte at a time and no back buffer to test that RLE encoding has been used.
+        </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..encoded.len() {
+            <span class="kw">let </span>result = inflate(
+                <span class="kw-2">&amp;mut </span>decompressor,
+                <span class="kw-2">&amp;</span>encoded[i..i + <span class="number">1</span>],
+                out_slice,
+                <span class="kw">crate</span>::MZFlush::None,
+            );
+            out_slice = <span class="kw-2">&amp;mut </span>out_slice[result.bytes_written..];
+        }
+        <span class="kw">let </span>cmf = decompressor.decompressor().zlib_header().<span class="number">0</span>;
+        <span class="macro">assert_eq!</span>(cmf, <span class="number">8</span>);
+        <span class="macro">assert_eq!</span>(output, slice)
     }
 }
 </code></pre></div></section></main></body></html>

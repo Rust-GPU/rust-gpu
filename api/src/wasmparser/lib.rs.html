@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/wasmparser-0.218.0/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="wasmparser" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">wasmparser/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/wasmparser-0.222.0/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="wasmparser" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">wasmparser/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -851,7 +851,464 @@
 <a href="#850" id="850">850</a>
 <a href="#851" id="851">851</a>
 <a href="#852" id="852">852</a>
-<a href="#853" id="853">853</a></pre></div><pre class="rust"><code><span class="comment">/* Copyright 2017 Mozilla Foundation
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
+<a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
+<a href="#1006" id="1006">1006</a>
+<a href="#1007" id="1007">1007</a>
+<a href="#1008" id="1008">1008</a>
+<a href="#1009" id="1009">1009</a>
+<a href="#1010" id="1010">1010</a>
+<a href="#1011" id="1011">1011</a>
+<a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a>
+<a href="#1020" id="1020">1020</a>
+<a href="#1021" id="1021">1021</a>
+<a href="#1022" id="1022">1022</a>
+<a href="#1023" id="1023">1023</a>
+<a href="#1024" id="1024">1024</a>
+<a href="#1025" id="1025">1025</a>
+<a href="#1026" id="1026">1026</a>
+<a href="#1027" id="1027">1027</a>
+<a href="#1028" id="1028">1028</a>
+<a href="#1029" id="1029">1029</a>
+<a href="#1030" id="1030">1030</a>
+<a href="#1031" id="1031">1031</a>
+<a href="#1032" id="1032">1032</a>
+<a href="#1033" id="1033">1033</a>
+<a href="#1034" id="1034">1034</a>
+<a href="#1035" id="1035">1035</a>
+<a href="#1036" id="1036">1036</a>
+<a href="#1037" id="1037">1037</a>
+<a href="#1038" id="1038">1038</a>
+<a href="#1039" id="1039">1039</a>
+<a href="#1040" id="1040">1040</a>
+<a href="#1041" id="1041">1041</a>
+<a href="#1042" id="1042">1042</a>
+<a href="#1043" id="1043">1043</a>
+<a href="#1044" id="1044">1044</a>
+<a href="#1045" id="1045">1045</a>
+<a href="#1046" id="1046">1046</a>
+<a href="#1047" id="1047">1047</a>
+<a href="#1048" id="1048">1048</a>
+<a href="#1049" id="1049">1049</a>
+<a href="#1050" id="1050">1050</a>
+<a href="#1051" id="1051">1051</a>
+<a href="#1052" id="1052">1052</a>
+<a href="#1053" id="1053">1053</a>
+<a href="#1054" id="1054">1054</a>
+<a href="#1055" id="1055">1055</a>
+<a href="#1056" id="1056">1056</a>
+<a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
+<a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
+<a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
+<a href="#1073" id="1073">1073</a>
+<a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
+<a href="#1147" id="1147">1147</a>
+<a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
+<a href="#1152" id="1152">1152</a>
+<a href="#1153" id="1153">1153</a>
+<a href="#1154" id="1154">1154</a>
+<a href="#1155" id="1155">1155</a>
+<a href="#1156" id="1156">1156</a>
+<a href="#1157" id="1157">1157</a>
+<a href="#1158" id="1158">1158</a>
+<a href="#1159" id="1159">1159</a>
+<a href="#1160" id="1160">1160</a>
+<a href="#1161" id="1161">1161</a>
+<a href="#1162" id="1162">1162</a>
+<a href="#1163" id="1163">1163</a>
+<a href="#1164" id="1164">1164</a>
+<a href="#1165" id="1165">1165</a>
+<a href="#1166" id="1166">1166</a>
+<a href="#1167" id="1167">1167</a>
+<a href="#1168" id="1168">1168</a>
+<a href="#1169" id="1169">1169</a>
+<a href="#1170" id="1170">1170</a>
+<a href="#1171" id="1171">1171</a>
+<a href="#1172" id="1172">1172</a>
+<a href="#1173" id="1173">1173</a>
+<a href="#1174" id="1174">1174</a>
+<a href="#1175" id="1175">1175</a>
+<a href="#1176" id="1176">1176</a>
+<a href="#1177" id="1177">1177</a>
+<a href="#1178" id="1178">1178</a>
+<a href="#1179" id="1179">1179</a>
+<a href="#1180" id="1180">1180</a>
+<a href="#1181" id="1181">1181</a>
+<a href="#1182" id="1182">1182</a>
+<a href="#1183" id="1183">1183</a>
+<a href="#1184" id="1184">1184</a>
+<a href="#1185" id="1185">1185</a>
+<a href="#1186" id="1186">1186</a>
+<a href="#1187" id="1187">1187</a>
+<a href="#1188" id="1188">1188</a>
+<a href="#1189" id="1189">1189</a>
+<a href="#1190" id="1190">1190</a>
+<a href="#1191" id="1191">1191</a>
+<a href="#1192" id="1192">1192</a>
+<a href="#1193" id="1193">1193</a>
+<a href="#1194" id="1194">1194</a>
+<a href="#1195" id="1195">1195</a>
+<a href="#1196" id="1196">1196</a>
+<a href="#1197" id="1197">1197</a>
+<a href="#1198" id="1198">1198</a>
+<a href="#1199" id="1199">1199</a>
+<a href="#1200" id="1200">1200</a>
+<a href="#1201" id="1201">1201</a>
+<a href="#1202" id="1202">1202</a>
+<a href="#1203" id="1203">1203</a>
+<a href="#1204" id="1204">1204</a>
+<a href="#1205" id="1205">1205</a>
+<a href="#1206" id="1206">1206</a>
+<a href="#1207" id="1207">1207</a>
+<a href="#1208" id="1208">1208</a>
+<a href="#1209" id="1209">1209</a>
+<a href="#1210" id="1210">1210</a>
+<a href="#1211" id="1211">1211</a>
+<a href="#1212" id="1212">1212</a>
+<a href="#1213" id="1213">1213</a>
+<a href="#1214" id="1214">1214</a>
+<a href="#1215" id="1215">1215</a>
+<a href="#1216" id="1216">1216</a>
+<a href="#1217" id="1217">1217</a>
+<a href="#1218" id="1218">1218</a>
+<a href="#1219" id="1219">1219</a>
+<a href="#1220" id="1220">1220</a>
+<a href="#1221" id="1221">1221</a>
+<a href="#1222" id="1222">1222</a>
+<a href="#1223" id="1223">1223</a>
+<a href="#1224" id="1224">1224</a>
+<a href="#1225" id="1225">1225</a>
+<a href="#1226" id="1226">1226</a>
+<a href="#1227" id="1227">1227</a>
+<a href="#1228" id="1228">1228</a>
+<a href="#1229" id="1229">1229</a>
+<a href="#1230" id="1230">1230</a>
+<a href="#1231" id="1231">1231</a>
+<a href="#1232" id="1232">1232</a>
+<a href="#1233" id="1233">1233</a>
+<a href="#1234" id="1234">1234</a>
+<a href="#1235" id="1235">1235</a>
+<a href="#1236" id="1236">1236</a>
+<a href="#1237" id="1237">1237</a>
+<a href="#1238" id="1238">1238</a>
+<a href="#1239" id="1239">1239</a>
+<a href="#1240" id="1240">1240</a>
+<a href="#1241" id="1241">1241</a>
+<a href="#1242" id="1242">1242</a>
+<a href="#1243" id="1243">1243</a>
+<a href="#1244" id="1244">1244</a>
+<a href="#1245" id="1245">1245</a>
+<a href="#1246" id="1246">1246</a>
+<a href="#1247" id="1247">1247</a>
+<a href="#1248" id="1248">1248</a>
+<a href="#1249" id="1249">1249</a>
+<a href="#1250" id="1250">1250</a>
+<a href="#1251" id="1251">1251</a>
+<a href="#1252" id="1252">1252</a>
+<a href="#1253" id="1253">1253</a>
+<a href="#1254" id="1254">1254</a>
+<a href="#1255" id="1255">1255</a>
+<a href="#1256" id="1256">1256</a>
+<a href="#1257" id="1257">1257</a>
+<a href="#1258" id="1258">1258</a>
+<a href="#1259" id="1259">1259</a>
+<a href="#1260" id="1260">1260</a>
+<a href="#1261" id="1261">1261</a>
+<a href="#1262" id="1262">1262</a>
+<a href="#1263" id="1263">1263</a>
+<a href="#1264" id="1264">1264</a>
+<a href="#1265" id="1265">1265</a>
+<a href="#1266" id="1266">1266</a>
+<a href="#1267" id="1267">1267</a>
+<a href="#1268" id="1268">1268</a>
+<a href="#1269" id="1269">1269</a>
+<a href="#1270" id="1270">1270</a>
+<a href="#1271" id="1271">1271</a>
+<a href="#1272" id="1272">1272</a>
+<a href="#1273" id="1273">1273</a>
+<a href="#1274" id="1274">1274</a>
+<a href="#1275" id="1275">1275</a>
+<a href="#1276" id="1276">1276</a>
+<a href="#1277" id="1277">1277</a>
+<a href="#1278" id="1278">1278</a>
+<a href="#1279" id="1279">1279</a>
+<a href="#1280" id="1280">1280</a>
+<a href="#1281" id="1281">1281</a>
+<a href="#1282" id="1282">1282</a>
+<a href="#1283" id="1283">1283</a>
+<a href="#1284" id="1284">1284</a>
+<a href="#1285" id="1285">1285</a>
+<a href="#1286" id="1286">1286</a>
+<a href="#1287" id="1287">1287</a>
+<a href="#1288" id="1288">1288</a>
+<a href="#1289" id="1289">1289</a>
+<a href="#1290" id="1290">1290</a>
+<a href="#1291" id="1291">1291</a>
+<a href="#1292" id="1292">1292</a>
+<a href="#1293" id="1293">1293</a>
+<a href="#1294" id="1294">1294</a>
+<a href="#1295" id="1295">1295</a>
+<a href="#1296" id="1296">1296</a>
+<a href="#1297" id="1297">1297</a>
+<a href="#1298" id="1298">1298</a>
+<a href="#1299" id="1299">1299</a>
+<a href="#1300" id="1300">1300</a>
+<a href="#1301" id="1301">1301</a>
+<a href="#1302" id="1302">1302</a>
+<a href="#1303" id="1303">1303</a>
+<a href="#1304" id="1304">1304</a>
+<a href="#1305" id="1305">1305</a>
+<a href="#1306" id="1306">1306</a>
+<a href="#1307" id="1307">1307</a>
+<a href="#1308" id="1308">1308</a>
+<a href="#1309" id="1309">1309</a>
+<a href="#1310" id="1310">1310</a></pre></div><pre class="rust"><code><span class="comment">/* Copyright 2017 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -902,11 +1359,885 @@
     <span class="kw">pub use </span>alloc::vec;
     <span class="kw">pub use </span>alloc::vec::Vec;
 
+    <span class="attr">#[cfg(all(feature = <span class="string">"validate"</span>, feature = <span class="string">"component-model"</span>))]
+    </span><span class="kw">pub use </span><span class="kw">crate</span>::collections::IndexSet;
     <span class="attr">#[cfg(feature = <span class="string">"validate"</span>)]
-    </span><span class="kw">pub use </span><span class="kw">crate</span>::collections::{IndexMap, IndexSet, Map, Set};
+    </span><span class="kw">pub use </span><span class="kw">crate</span>::collections::{IndexMap, Map, Set};
 }
 
-<span class="doccomment">/// A helper macro to conveniently iterate over all opcodes recognized by this
+<span class="doccomment">/// A helper macro which is used to itself define further macros below.
+///
+/// This is a little complicated, so first off sorry about that. The idea here
+/// though is that there's one source of truth for the listing of instructions
+/// in `wasmparser` and this is the one location. All other locations should be
+/// derivative from this. As this one source of truth it has all instructions
+/// from all proposals all grouped together. Down below though, for compile
+/// time, currently the simd instructions are split out into their own macro.
+/// The structure/syntax of this macro is to facilitate easily splitting out
+/// entire groups of instructions.
+///
+/// This is used below to define more macros.
+</span><span class="macro">macro_rules!</span> _for_each_operator_group {
+    (<span class="macro-nonterminal">$mac</span>:ident) =&gt; {
+        <span class="macro-nonterminal">$</span><span class="macro">mac!</span> {
+            @<span class="macro-nonterminal">mvp </span>{
+                Unreachable =&gt; visit_unreachable (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
+                Nop =&gt; visit_nop (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
+                Block { blockty: <span class="macro-nonterminal">$crate::BlockType </span>} =&gt; visit_block (arity block -&gt; ~block)
+                Loop { blockty: <span class="macro-nonterminal">$crate::BlockType </span>} =&gt; visit_loop (arity block -&gt; ~block)
+                If { blockty: <span class="macro-nonterminal">$crate::BlockType </span>} =&gt; visit_if (arity <span class="number">1 </span>block -&gt; ~block)
+                Else =&gt; visit_else (arity ~end -&gt; ~end)
+                End =&gt; visit_end (arity implicit_else ~end -&gt; implicit_else end)
+                Br { relative_depth: u32 } =&gt; visit_br (arity br -&gt; <span class="number">0</span>)
+                BrIf { relative_depth: u32 } =&gt; visit_br_if (arity <span class="number">1 </span>br -&gt; br)
+                BrTable { targets: <span class="macro-nonterminal">$crate::BrTable</span>&lt;<span class="lifetime">'a</span>&gt; } =&gt; visit_br_table (arity <span class="number">1 </span>br_table -&gt; <span class="number">0</span>)
+                Return =&gt; visit_return (arity ~ret -&gt; <span class="number">0</span>)
+                Call { function_index: u32 } =&gt; visit_call (arity func -&gt; func)
+                CallIndirect { type_index: u32, table_index: u32 } =&gt; visit_call_indirect (arity <span class="number">1 </span><span class="kw">type </span>-&gt; <span class="kw">type</span>)
+                Drop =&gt; visit_drop (arity <span class="number">1 </span>-&gt; <span class="number">0</span>)
+                Select =&gt; visit_select (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
+                LocalGet { local_index: u32 } =&gt; visit_local_get (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
+                LocalSet { local_index: u32 } =&gt; visit_local_set (arity <span class="number">1 </span>-&gt; <span class="number">0</span>)
+                LocalTee { local_index: u32 } =&gt; visit_local_tee (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                GlobalGet { global_index: u32 } =&gt; visit_global_get (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
+                GlobalSet { global_index: u32 } =&gt; visit_global_set (arity <span class="number">1 </span>-&gt; <span class="number">0</span>)
+                I32Load { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_load (load i32)
+                I64Load { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load (load i64)
+                F32Load { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_f32_load (load f32)
+                F64Load { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_f64_load (load f64)
+                I32Load8S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_load8_s (load i32)
+                I32Load8U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_load8_u (load i32)
+                I32Load16S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_load16_s (load i32)
+                I32Load16U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_load16_u (load i32)
+                I64Load8S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load8_s (load i64)
+                I64Load8U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load8_u (load i64)
+                I64Load16S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load16_s (load i64)
+                I64Load16U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load16_u (load i64)
+                I64Load32S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load32_s (load i64)
+                I64Load32U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load32_u (load i64)
+                I32Store { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_store (store i32)
+                I64Store { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_store (store i64)
+                F32Store { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_f32_store (store f32)
+                F64Store { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_f64_store (store f64)
+                I32Store8 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_store8 (store i32)
+                I32Store16 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_store16 (store i32)
+                I64Store8 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_store8 (store i64)
+                I64Store16 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_store16 (store i64)
+                I64Store32 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_store32 (store i64)
+                MemorySize { mem: u32 } =&gt; visit_memory_size (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
+                MemoryGrow { mem: u32 } =&gt; visit_memory_grow (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                I32Const { value: i32 } =&gt; visit_i32_const (push i32)
+                I64Const { value: i64 } =&gt; visit_i64_const (push i64)
+                F32Const { value: <span class="macro-nonterminal">$crate::Ieee32 </span>} =&gt; visit_f32_const (push f32)
+                F64Const { value: <span class="macro-nonterminal">$crate::Ieee64 </span>} =&gt; visit_f64_const (push f64)
+                I32Eqz =&gt; visit_i32_eqz (test i32)
+                I32Eq =&gt; visit_i32_eq (cmp i32)
+                I32Ne =&gt; visit_i32_ne (cmp i32)
+                I32LtS =&gt; visit_i32_lt_s (cmp i32)
+                I32LtU =&gt; visit_i32_lt_u (cmp i32)
+                I32GtS =&gt; visit_i32_gt_s (cmp i32)
+                I32GtU =&gt; visit_i32_gt_u (cmp i32)
+                I32LeS =&gt; visit_i32_le_s (cmp i32)
+                I32LeU =&gt; visit_i32_le_u (cmp i32)
+                I32GeS =&gt; visit_i32_ge_s (cmp i32)
+                I32GeU =&gt; visit_i32_ge_u (cmp i32)
+                I64Eqz =&gt; visit_i64_eqz (test i64)
+                I64Eq =&gt; visit_i64_eq (cmp i64)
+                I64Ne =&gt; visit_i64_ne (cmp i64)
+                I64LtS =&gt; visit_i64_lt_s (cmp i64)
+                I64LtU =&gt; visit_i64_lt_u (cmp i64)
+                I64GtS =&gt; visit_i64_gt_s (cmp i64)
+                I64GtU =&gt; visit_i64_gt_u (cmp i64)
+                I64LeS =&gt; visit_i64_le_s (cmp i64)
+                I64LeU =&gt; visit_i64_le_u (cmp i64)
+                I64GeS =&gt; visit_i64_ge_s (cmp i64)
+                I64GeU =&gt; visit_i64_ge_u (cmp i64)
+                F32Eq =&gt; visit_f32_eq (cmp f32)
+                F32Ne =&gt; visit_f32_ne (cmp f32)
+                F32Lt =&gt; visit_f32_lt (cmp f32)
+                F32Gt =&gt; visit_f32_gt (cmp f32)
+                F32Le =&gt; visit_f32_le (cmp f32)
+                F32Ge =&gt; visit_f32_ge (cmp f32)
+                F64Eq =&gt; visit_f64_eq (cmp f64)
+                F64Ne =&gt; visit_f64_ne (cmp f64)
+                F64Lt =&gt; visit_f64_lt (cmp f64)
+                F64Gt =&gt; visit_f64_gt (cmp f64)
+                F64Le =&gt; visit_f64_le (cmp f64)
+                F64Ge =&gt; visit_f64_ge (cmp f64)
+                I32Clz =&gt; visit_i32_clz (unary i32)
+                I32Ctz =&gt; visit_i32_ctz (unary i32)
+                I32Popcnt =&gt; visit_i32_popcnt (unary i32)
+                I32Add =&gt; visit_i32_add (binary i32)
+                I32Sub =&gt; visit_i32_sub (binary i32)
+                I32Mul =&gt; visit_i32_mul (binary i32)
+                I32DivS =&gt; visit_i32_div_s (binary i32)
+                I32DivU =&gt; visit_i32_div_u (binary i32)
+                I32RemS =&gt; visit_i32_rem_s (binary i32)
+                I32RemU =&gt; visit_i32_rem_u (binary i32)
+                I32And =&gt; visit_i32_and (binary i32)
+                I32Or =&gt; visit_i32_or (binary i32)
+                I32Xor =&gt; visit_i32_xor (binary i32)
+                I32Shl =&gt; visit_i32_shl (binary i32)
+                I32ShrS =&gt; visit_i32_shr_s (binary i32)
+                I32ShrU =&gt; visit_i32_shr_u (binary i32)
+                I32Rotl =&gt; visit_i32_rotl (binary i32)
+                I32Rotr =&gt; visit_i32_rotr (binary i32)
+                I64Clz =&gt; visit_i64_clz (unary i64)
+                I64Ctz =&gt; visit_i64_ctz (unary i64)
+                I64Popcnt =&gt; visit_i64_popcnt (unary i64)
+                I64Add =&gt; visit_i64_add (binary i64)
+                I64Sub =&gt; visit_i64_sub (binary i64)
+                I64Mul =&gt; visit_i64_mul (binary i64)
+                I64DivS =&gt; visit_i64_div_s (binary i64)
+                I64DivU =&gt; visit_i64_div_u (binary i64)
+                I64RemS =&gt; visit_i64_rem_s (binary i64)
+                I64RemU =&gt; visit_i64_rem_u (binary i64)
+                I64And =&gt; visit_i64_and (binary i64)
+                I64Or =&gt; visit_i64_or (binary i64)
+                I64Xor =&gt; visit_i64_xor (binary i64)
+                I64Shl =&gt; visit_i64_shl (binary i64)
+                I64ShrS =&gt; visit_i64_shr_s (binary i64)
+                I64ShrU =&gt; visit_i64_shr_u (binary i64)
+                I64Rotl =&gt; visit_i64_rotl (binary i64)
+                I64Rotr =&gt; visit_i64_rotr (binary i64)
+                F32Abs =&gt; visit_f32_abs (unary f32)
+                F32Neg =&gt; visit_f32_neg (unary f32)
+                F32Ceil =&gt; visit_f32_ceil (unary f32)
+                F32Floor =&gt; visit_f32_floor (unary f32)
+                F32Trunc =&gt; visit_f32_trunc (unary f32)
+                F32Nearest =&gt; visit_f32_nearest (unary f32)
+                F32Sqrt =&gt; visit_f32_sqrt (unary f32)
+                F32Add =&gt; visit_f32_add (binary f32)
+                F32Sub =&gt; visit_f32_sub (binary f32)
+                F32Mul =&gt; visit_f32_mul (binary f32)
+                F32Div =&gt; visit_f32_div (binary f32)
+                F32Min =&gt; visit_f32_min (binary f32)
+                F32Max =&gt; visit_f32_max (binary f32)
+                F32Copysign =&gt; visit_f32_copysign (binary f32)
+                F64Abs =&gt; visit_f64_abs (unary f64)
+                F64Neg =&gt; visit_f64_neg (unary f64)
+                F64Ceil =&gt; visit_f64_ceil (unary f64)
+                F64Floor =&gt; visit_f64_floor (unary f64)
+                F64Trunc =&gt; visit_f64_trunc (unary f64)
+                F64Nearest =&gt; visit_f64_nearest (unary f64)
+                F64Sqrt =&gt; visit_f64_sqrt (unary f64)
+                F64Add =&gt; visit_f64_add (binary f64)
+                F64Sub =&gt; visit_f64_sub (binary f64)
+                F64Mul =&gt; visit_f64_mul (binary f64)
+                F64Div =&gt; visit_f64_div (binary f64)
+                F64Min =&gt; visit_f64_min (binary f64)
+                F64Max =&gt; visit_f64_max (binary f64)
+                F64Copysign =&gt; visit_f64_copysign (binary f64)
+                I32WrapI64 =&gt; visit_i32_wrap_i64 (conversion i32 i64)
+                I32TruncF32S =&gt; visit_i32_trunc_f32_s (conversion i32 f32)
+                I32TruncF32U =&gt; visit_i32_trunc_f32_u (conversion i32 f32)
+                I32TruncF64S =&gt; visit_i32_trunc_f64_s (conversion i32 f64)
+                I32TruncF64U =&gt; visit_i32_trunc_f64_u (conversion i32 f64)
+                I64ExtendI32S =&gt; visit_i64_extend_i32_s (conversion i64 i32)
+                I64ExtendI32U =&gt; visit_i64_extend_i32_u (conversion i64 i32)
+                I64TruncF32S =&gt; visit_i64_trunc_f32_s (conversion i64 f32)
+                I64TruncF32U =&gt; visit_i64_trunc_f32_u (conversion i64 f32)
+                I64TruncF64S =&gt; visit_i64_trunc_f64_s (conversion i64 f64)
+                I64TruncF64U =&gt; visit_i64_trunc_f64_u (conversion i64 f64)
+                F32ConvertI32S =&gt; visit_f32_convert_i32_s (conversion f32 i32)
+                F32ConvertI32U =&gt; visit_f32_convert_i32_u (conversion f32 i32)
+                F32ConvertI64S =&gt; visit_f32_convert_i64_s (conversion f32 i64)
+                F32ConvertI64U =&gt; visit_f32_convert_i64_u (conversion f32 i64)
+                F32DemoteF64 =&gt; visit_f32_demote_f64 (conversion f32 f64)
+                F64ConvertI32S =&gt; visit_f64_convert_i32_s (conversion f64 i32)
+                F64ConvertI32U =&gt; visit_f64_convert_i32_u (conversion f64 i32)
+                F64ConvertI64S =&gt; visit_f64_convert_i64_s (conversion f64 i64)
+                F64ConvertI64U =&gt; visit_f64_convert_i64_u (conversion f64 i64)
+                F64PromoteF32 =&gt; visit_f64_promote_f32 (conversion f64 f32)
+                I32ReinterpretF32 =&gt; visit_i32_reinterpret_f32 (conversion i32 f32)
+                I64ReinterpretF64 =&gt; visit_i64_reinterpret_f64 (conversion i64 f64)
+                F32ReinterpretI32 =&gt; visit_f32_reinterpret_i32 (conversion f32 i32)
+                F64ReinterpretI64 =&gt; visit_f64_reinterpret_i64 (conversion f64 i64)
+            }
+
+            @sign_extension {
+                I32Extend8S =&gt; visit_i32_extend8_s (unary i32)
+                I32Extend16S =&gt; visit_i32_extend16_s (unary i32)
+                I64Extend8S =&gt; visit_i64_extend8_s (unary i64)
+                I64Extend16S =&gt; visit_i64_extend16_s (unary i64)
+                I64Extend32S =&gt; visit_i64_extend32_s (unary i64)
+            }
+
+            <span class="comment">// 0xFB prefixed operators
+            // Garbage Collection
+            // http://github.com/WebAssembly/gc
+            </span>@gc {
+                RefEq =&gt; visit_ref_eq (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                StructNew { struct_type_index: u32 } =&gt; visit_struct_new (arity <span class="kw">type </span>-&gt; <span class="number">1</span>)
+                StructNewDefault { struct_type_index: u32 } =&gt; visit_struct_new_default (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
+                StructGet { struct_type_index: u32, field_index: u32 } =&gt; visit_struct_get (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                StructGetS { struct_type_index: u32, field_index: u32 } =&gt; visit_struct_get_s (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                StructGetU { struct_type_index: u32, field_index: u32 } =&gt; visit_struct_get_u (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                StructSet { struct_type_index: u32, field_index: u32 } =&gt; visit_struct_set (arity <span class="number">2 </span>-&gt; <span class="number">0</span>)
+                ArrayNew { array_type_index: u32 } =&gt; visit_array_new (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                ArrayNewDefault { array_type_index: u32 } =&gt; visit_array_new_default (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                ArrayNewFixed { array_type_index: u32, array_size: u32 } =&gt; visit_array_new_fixed (arity size -&gt; <span class="number">1</span>)
+                ArrayNewData { array_type_index: u32, array_data_index: u32 } =&gt; visit_array_new_data (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                ArrayNewElem { array_type_index: u32, array_elem_index: u32 } =&gt; visit_array_new_elem (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                ArrayGet { array_type_index: u32 } =&gt; visit_array_get (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                ArrayGetS { array_type_index: u32 } =&gt; visit_array_get_s (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                ArrayGetU { array_type_index: u32 } =&gt; visit_array_get_u (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                ArraySet { array_type_index: u32 } =&gt; visit_array_set (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
+                ArrayLen =&gt; visit_array_len (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                ArrayFill { array_type_index: u32 } =&gt; visit_array_fill (arity <span class="number">4 </span>-&gt; <span class="number">0</span>)
+                ArrayCopy { array_type_index_dst: u32, array_type_index_src: u32 } =&gt; visit_array_copy (arity <span class="number">5 </span>-&gt; <span class="number">0</span>)
+                ArrayInitData { array_type_index: u32, array_data_index: u32 } =&gt; visit_array_init_data (arity <span class="number">4 </span>-&gt; <span class="number">0</span>)
+                ArrayInitElem { array_type_index: u32, array_elem_index: u32 } =&gt; visit_array_init_elem (arity <span class="number">4 </span>-&gt; <span class="number">0</span>)
+                RefTestNonNull { hty: <span class="macro-nonterminal">$crate::HeapType </span>} =&gt; visit_ref_test_non_null (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                RefTestNullable { hty: <span class="macro-nonterminal">$crate::HeapType </span>} =&gt; visit_ref_test_nullable (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                RefCastNonNull { hty: <span class="macro-nonterminal">$crate::HeapType </span>} =&gt; visit_ref_cast_non_null (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                RefCastNullable { hty: <span class="macro-nonterminal">$crate::HeapType </span>} =&gt; visit_ref_cast_nullable (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                BrOnCast {
+                    relative_depth: u32,
+                    from_ref_type: <span class="macro-nonterminal">$crate::RefType</span>,
+                    to_ref_type: <span class="macro-nonterminal">$crate::RefType
+                </span>} =&gt; visit_br_on_cast (arity br -&gt; br)
+                BrOnCastFail {
+                    relative_depth: u32,
+                    from_ref_type: <span class="macro-nonterminal">$crate::RefType</span>,
+                    to_ref_type: <span class="macro-nonterminal">$crate::RefType
+                </span>} =&gt; visit_br_on_cast_fail (arity br -&gt; br)
+                AnyConvertExtern =&gt; visit_any_convert_extern  (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                ExternConvertAny =&gt; visit_extern_convert_any (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                RefI31 =&gt; visit_ref_i31 (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                I31GetS =&gt; visit_i31_get_s (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                I31GetU =&gt; visit_i31_get_u (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+            }
+
+            <span class="comment">// 0xFC operators
+            // Non-trapping Float-to-int Conversions
+            // https://github.com/WebAssembly/nontrapping-float-to-int-conversions
+            </span>@saturating_float_to_int {
+                I32TruncSatF32S =&gt; visit_i32_trunc_sat_f32_s (conversion i32 f32)
+                I32TruncSatF32U =&gt; visit_i32_trunc_sat_f32_u (conversion i32 f32)
+                I32TruncSatF64S =&gt; visit_i32_trunc_sat_f64_s (conversion i32 f64)
+                I32TruncSatF64U =&gt; visit_i32_trunc_sat_f64_u (conversion i32 f64)
+                I64TruncSatF32S =&gt; visit_i64_trunc_sat_f32_s (conversion i64 f32)
+                I64TruncSatF32U =&gt; visit_i64_trunc_sat_f32_u (conversion i64 f32)
+                I64TruncSatF64S =&gt; visit_i64_trunc_sat_f64_s (conversion i64 f64)
+                I64TruncSatF64U =&gt; visit_i64_trunc_sat_f64_u (conversion i64 f64)
+            }
+
+            <span class="comment">// 0xFC prefixed operators
+            // bulk memory operations
+            // https://github.com/WebAssembly/bulk-memory-operations
+            </span>@bulk_memory {
+                MemoryInit { data_index: u32, mem: u32 } =&gt; visit_memory_init (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
+                DataDrop { data_index: u32 } =&gt; visit_data_drop (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
+                MemoryCopy { dst_mem: u32, src_mem: u32 } =&gt; visit_memory_copy (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
+                MemoryFill { mem: u32 } =&gt; visit_memory_fill (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
+                TableInit { elem_index: u32, table: u32 } =&gt; visit_table_init (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
+                ElemDrop { elem_index: u32 } =&gt; visit_elem_drop (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
+                TableCopy { dst_table: u32, src_table: u32 } =&gt; visit_table_copy (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
+            }
+
+            <span class="comment">// 0xFC prefixed operators
+            // reference-types
+            // https://github.com/WebAssembly/reference-types
+            </span>@reference_types {
+                TypedSelect { ty: <span class="macro-nonterminal">$crate::ValType </span>} =&gt; visit_typed_select (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
+                RefNull { hty: <span class="macro-nonterminal">$crate::HeapType </span>} =&gt; visit_ref_null (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
+                RefIsNull =&gt; visit_ref_is_null (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                RefFunc { function_index: u32 } =&gt; visit_ref_func (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
+                TableFill { table: u32 } =&gt; visit_table_fill (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
+                TableGet { table: u32 } =&gt; visit_table_get (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                TableSet { table: u32 } =&gt; visit_table_set (arity <span class="number">2 </span>-&gt; <span class="number">0</span>)
+                TableGrow { table: u32 } =&gt; visit_table_grow (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                TableSize { table: u32 } =&gt; visit_table_size (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
+            }
+
+            <span class="comment">// Wasm tail-call proposal
+            // https://github.com/WebAssembly/tail-call
+            </span>@tail_call {
+                ReturnCall { function_index: u32 } =&gt; visit_return_call (arity func -&gt; <span class="number">0</span>)
+                ReturnCallIndirect { type_index: u32, table_index: u32 } =&gt; visit_return_call_indirect (arity <span class="number">1 </span><span class="kw">type </span>-&gt; <span class="number">0</span>)
+            }
+
+            <span class="comment">// OxFC prefixed operators
+            // memory control (experimental)
+            // https://github.com/WebAssembly/design/issues/1439
+            </span>@memory_control {
+                MemoryDiscard { mem: u32 } =&gt; visit_memory_discard (arity <span class="number">2 </span>-&gt; <span class="number">0</span>)
+            }
+
+            <span class="comment">// 0xFE prefixed operators
+            // threads
+            // https://github.com/WebAssembly/threads
+            </span>@threads {
+                MemoryAtomicNotify { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_memory_atomic_notify (atomic rmw i32)
+                MemoryAtomicWait32 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_memory_atomic_wait32 (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
+                MemoryAtomicWait64 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_memory_atomic_wait64 (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
+                AtomicFence =&gt; visit_atomic_fence (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
+                I32AtomicLoad { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_load (load atomic i32)
+                I64AtomicLoad { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_load (load atomic i64)
+                I32AtomicLoad8U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_load8_u (load atomic i32)
+                I32AtomicLoad16U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_load16_u (load atomic i32)
+                I64AtomicLoad8U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_load8_u (load atomic i64)
+                I64AtomicLoad16U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_load16_u (load atomic i64)
+                I64AtomicLoad32U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_load32_u (load atomic i64)
+                I32AtomicStore { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_store (store atomic i32)
+                I64AtomicStore { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_store (store atomic i64)
+                I32AtomicStore8 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_store8 (store atomic i32)
+                I32AtomicStore16 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_store16 (store atomic i32)
+                I64AtomicStore8 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_store8 (store atomic i64)
+                I64AtomicStore16 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_store16 (store atomic i64)
+                I64AtomicStore32 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_store32 (store atomic i64)
+                I32AtomicRmwAdd { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_add (atomic rmw i32)
+                I64AtomicRmwAdd { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_add (atomic rmw i64)
+                I32AtomicRmw8AddU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_add_u (atomic rmw i32)
+                I32AtomicRmw16AddU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_add_u (atomic rmw i32)
+                I64AtomicRmw8AddU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_add_u (atomic rmw i64)
+                I64AtomicRmw16AddU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_add_u (atomic rmw i64)
+                I64AtomicRmw32AddU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_add_u (atomic rmw i64)
+                I32AtomicRmwSub { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_sub (atomic rmw i32)
+                I64AtomicRmwSub { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_sub (atomic rmw i64)
+                I32AtomicRmw8SubU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_sub_u (atomic rmw i32)
+                I32AtomicRmw16SubU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_sub_u (atomic rmw i32)
+                I64AtomicRmw8SubU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_sub_u (atomic rmw i64)
+                I64AtomicRmw16SubU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_sub_u (atomic rmw i64)
+                I64AtomicRmw32SubU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_sub_u (atomic rmw i64)
+                I32AtomicRmwAnd { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_and (atomic rmw i32)
+                I64AtomicRmwAnd { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_and (atomic rmw i64)
+                I32AtomicRmw8AndU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_and_u (atomic rmw i32)
+                I32AtomicRmw16AndU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_and_u (atomic rmw i32)
+                I64AtomicRmw8AndU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_and_u (atomic rmw i64)
+                I64AtomicRmw16AndU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_and_u (atomic rmw i64)
+                I64AtomicRmw32AndU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_and_u (atomic rmw i64)
+                I32AtomicRmwOr { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_or (atomic rmw i32)
+                I64AtomicRmwOr { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_or (atomic rmw i64)
+                I32AtomicRmw8OrU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_or_u (atomic rmw i32)
+                I32AtomicRmw16OrU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_or_u (atomic rmw i32)
+                I64AtomicRmw8OrU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_or_u (atomic rmw i64)
+                I64AtomicRmw16OrU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_or_u (atomic rmw i64)
+                I64AtomicRmw32OrU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_or_u (atomic rmw i64)
+                I32AtomicRmwXor { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_xor (atomic rmw i32)
+                I64AtomicRmwXor { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_xor (atomic rmw i64)
+                I32AtomicRmw8XorU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_xor_u (atomic rmw i32)
+                I32AtomicRmw16XorU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_xor_u (atomic rmw i32)
+                I64AtomicRmw8XorU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_xor_u (atomic rmw i64)
+                I64AtomicRmw16XorU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_xor_u (atomic rmw i64)
+                I64AtomicRmw32XorU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_xor_u (atomic rmw i64)
+                I32AtomicRmwXchg { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_xchg (atomic rmw i32)
+                I64AtomicRmwXchg { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_xchg (atomic rmw i64)
+                I32AtomicRmw8XchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_xchg_u (atomic rmw i32)
+                I32AtomicRmw16XchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_xchg_u (atomic rmw i32)
+                I64AtomicRmw8XchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_xchg_u (atomic rmw i64)
+                I64AtomicRmw16XchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_xchg_u (atomic rmw i64)
+                I64AtomicRmw32XchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_xchg_u (atomic rmw i64)
+                I32AtomicRmwCmpxchg { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_cmpxchg (atomic cmpxchg i32)
+                I64AtomicRmwCmpxchg { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_cmpxchg (atomic cmpxchg i64)
+                I32AtomicRmw8CmpxchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_cmpxchg_u (atomic cmpxchg i32)
+                I32AtomicRmw16CmpxchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_cmpxchg_u (atomic cmpxchg i32)
+                I64AtomicRmw8CmpxchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_cmpxchg_u (atomic cmpxchg i64)
+                I64AtomicRmw16CmpxchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_cmpxchg_u (atomic cmpxchg i64)
+                I64AtomicRmw32CmpxchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_cmpxchg_u (atomic cmpxchg i64)
+            }
+
+            <span class="comment">// 0xFD operators
+            // 128-bit SIMD
+            // - https://github.com/webassembly/simd
+            // - https://webassembly.github.io/simd/core/binary/instructions.html
+            </span>@simd {
+                V128Load { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load (load v128)
+                V128Load8x8S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load8x8_s (load v128)
+                V128Load8x8U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load8x8_u (load v128)
+                V128Load16x4S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load16x4_s (load v128)
+                V128Load16x4U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load16x4_u (load v128)
+                V128Load32x2S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load32x2_s (load v128)
+                V128Load32x2U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load32x2_u (load v128)
+                V128Load8Splat { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load8_splat (load v128)
+                V128Load16Splat { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load16_splat (load v128)
+                V128Load32Splat { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load32_splat (load v128)
+                V128Load64Splat { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load64_splat (load v128)
+                V128Load32Zero { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load32_zero (load v128)
+                V128Load64Zero { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load64_zero (load v128)
+                V128Store { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_store (store v128)
+                V128Load8Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_load8_lane (load lane <span class="number">16</span>)
+                V128Load16Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_load16_lane (load lane <span class="number">8</span>)
+                V128Load32Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_load32_lane (load lane <span class="number">4</span>)
+                V128Load64Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_load64_lane (load lane <span class="number">2</span>)
+                V128Store8Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_store8_lane (store lane <span class="number">16</span>)
+                V128Store16Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_store16_lane (store lane <span class="number">8</span>)
+                V128Store32Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_store32_lane (store lane <span class="number">4</span>)
+                V128Store64Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_store64_lane (store lane <span class="number">2</span>)
+                V128Const { value: <span class="macro-nonterminal">$crate::V128 </span>} =&gt; visit_v128_const (push v128)
+                I8x16Shuffle { lanes: [u8; <span class="number">16</span>] } =&gt; visit_i8x16_shuffle (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                I8x16ExtractLaneS { lane: u8 } =&gt; visit_i8x16_extract_lane_s (extract i32 <span class="number">16</span>)
+                I8x16ExtractLaneU { lane: u8 } =&gt; visit_i8x16_extract_lane_u (extract i32 <span class="number">16</span>)
+                I8x16ReplaceLane { lane: u8 } =&gt; visit_i8x16_replace_lane (replace i32 <span class="number">16</span>)
+                I16x8ExtractLaneS { lane: u8 } =&gt; visit_i16x8_extract_lane_s (extract i32 <span class="number">8</span>)
+                I16x8ExtractLaneU { lane: u8 } =&gt; visit_i16x8_extract_lane_u (extract i32 <span class="number">8</span>)
+                I16x8ReplaceLane { lane: u8 } =&gt; visit_i16x8_replace_lane (replace i32 <span class="number">8</span>)
+                I32x4ExtractLane { lane: u8 } =&gt; visit_i32x4_extract_lane (extract i32 <span class="number">4</span>)
+                I32x4ReplaceLane { lane: u8 } =&gt; visit_i32x4_replace_lane (replace i32 <span class="number">4</span>)
+                I64x2ExtractLane { lane: u8 } =&gt; visit_i64x2_extract_lane (extract i64 <span class="number">2</span>)
+                I64x2ReplaceLane { lane: u8 } =&gt; visit_i64x2_replace_lane (replace i64 <span class="number">2</span>)
+                F32x4ExtractLane { lane: u8 } =&gt; visit_f32x4_extract_lane (extract f32 <span class="number">4</span>)
+                F32x4ReplaceLane { lane: u8 } =&gt; visit_f32x4_replace_lane (replace f32 <span class="number">4</span>)
+                F64x2ExtractLane { lane: u8 } =&gt; visit_f64x2_extract_lane (extract f64 <span class="number">2</span>)
+                F64x2ReplaceLane { lane: u8 } =&gt; visit_f64x2_replace_lane (replace f64 <span class="number">2</span>)
+                I8x16Swizzle =&gt; visit_i8x16_swizzle (binary v128)
+                I8x16Splat =&gt; visit_i8x16_splat (splat i32)
+                I16x8Splat =&gt; visit_i16x8_splat (splat i32)
+                I32x4Splat =&gt; visit_i32x4_splat (splat i32)
+                I64x2Splat =&gt; visit_i64x2_splat (splat i64)
+                F32x4Splat =&gt; visit_f32x4_splat (splat f32)
+                F64x2Splat =&gt; visit_f64x2_splat (splat f64)
+                I8x16Eq =&gt; visit_i8x16_eq (binary v128)
+                I8x16Ne =&gt; visit_i8x16_ne (binary v128)
+                I8x16LtS =&gt; visit_i8x16_lt_s (binary v128)
+                I8x16LtU =&gt; visit_i8x16_lt_u (binary v128)
+                I8x16GtS =&gt; visit_i8x16_gt_s (binary v128)
+                I8x16GtU =&gt; visit_i8x16_gt_u (binary v128)
+                I8x16LeS =&gt; visit_i8x16_le_s (binary v128)
+                I8x16LeU =&gt; visit_i8x16_le_u (binary v128)
+                I8x16GeS =&gt; visit_i8x16_ge_s (binary v128)
+                I8x16GeU =&gt; visit_i8x16_ge_u (binary v128)
+                I16x8Eq =&gt; visit_i16x8_eq (binary v128)
+                I16x8Ne =&gt; visit_i16x8_ne (binary v128)
+                I16x8LtS =&gt; visit_i16x8_lt_s (binary v128)
+                I16x8LtU =&gt; visit_i16x8_lt_u (binary v128)
+                I16x8GtS =&gt; visit_i16x8_gt_s (binary v128)
+                I16x8GtU =&gt; visit_i16x8_gt_u (binary v128)
+                I16x8LeS =&gt; visit_i16x8_le_s (binary v128)
+                I16x8LeU =&gt; visit_i16x8_le_u (binary v128)
+                I16x8GeS =&gt; visit_i16x8_ge_s (binary v128)
+                I16x8GeU =&gt; visit_i16x8_ge_u (binary v128)
+                I32x4Eq =&gt; visit_i32x4_eq (binary v128)
+                I32x4Ne =&gt; visit_i32x4_ne (binary v128)
+                I32x4LtS =&gt; visit_i32x4_lt_s (binary v128)
+                I32x4LtU =&gt; visit_i32x4_lt_u (binary v128)
+                I32x4GtS =&gt; visit_i32x4_gt_s (binary v128)
+                I32x4GtU =&gt; visit_i32x4_gt_u (binary v128)
+                I32x4LeS =&gt; visit_i32x4_le_s (binary v128)
+                I32x4LeU =&gt; visit_i32x4_le_u (binary v128)
+                I32x4GeS =&gt; visit_i32x4_ge_s (binary v128)
+                I32x4GeU =&gt; visit_i32x4_ge_u (binary v128)
+                I64x2Eq =&gt; visit_i64x2_eq (binary v128)
+                I64x2Ne =&gt; visit_i64x2_ne (binary v128)
+                I64x2LtS =&gt; visit_i64x2_lt_s (binary v128)
+                I64x2GtS =&gt; visit_i64x2_gt_s (binary v128)
+                I64x2LeS =&gt; visit_i64x2_le_s (binary v128)
+                I64x2GeS =&gt; visit_i64x2_ge_s (binary v128)
+                F32x4Eq =&gt; visit_f32x4_eq (binary v128f)
+                F32x4Ne =&gt; visit_f32x4_ne (binary v128f)
+                F32x4Lt =&gt; visit_f32x4_lt (binary v128f)
+                F32x4Gt =&gt; visit_f32x4_gt (binary v128f)
+                F32x4Le =&gt; visit_f32x4_le (binary v128f)
+                F32x4Ge =&gt; visit_f32x4_ge (binary v128f)
+                F64x2Eq =&gt; visit_f64x2_eq (binary v128f)
+                F64x2Ne =&gt; visit_f64x2_ne (binary v128f)
+                F64x2Lt =&gt; visit_f64x2_lt (binary v128f)
+                F64x2Gt =&gt; visit_f64x2_gt (binary v128f)
+                F64x2Le =&gt; visit_f64x2_le (binary v128f)
+                F64x2Ge =&gt; visit_f64x2_ge (binary v128f)
+                V128Not =&gt; visit_v128_not (unary v128)
+                V128And =&gt; visit_v128_and (binary v128)
+                V128AndNot =&gt; visit_v128_andnot (binary v128)
+                V128Or =&gt; visit_v128_or (binary v128)
+                V128Xor =&gt; visit_v128_xor (binary v128)
+                V128Bitselect =&gt; visit_v128_bitselect (ternary v128)
+                V128AnyTrue =&gt; visit_v128_any_true (test v128)
+                I8x16Abs =&gt; visit_i8x16_abs (unary v128)
+                I8x16Neg =&gt; visit_i8x16_neg (unary v128)
+                I8x16Popcnt =&gt; visit_i8x16_popcnt (unary v128)
+                I8x16AllTrue =&gt; visit_i8x16_all_true (test v128)
+                I8x16Bitmask =&gt; visit_i8x16_bitmask (test v128)
+                I8x16NarrowI16x8S =&gt; visit_i8x16_narrow_i16x8_s (binary v128)
+                I8x16NarrowI16x8U =&gt; visit_i8x16_narrow_i16x8_u (binary v128)
+                I8x16Shl =&gt; visit_i8x16_shl (shift v128)
+                I8x16ShrS =&gt; visit_i8x16_shr_s (shift v128)
+                I8x16ShrU =&gt; visit_i8x16_shr_u (shift v128)
+                I8x16Add =&gt; visit_i8x16_add (binary v128)
+                I8x16AddSatS =&gt; visit_i8x16_add_sat_s (binary v128)
+                I8x16AddSatU =&gt; visit_i8x16_add_sat_u (binary v128)
+                I8x16Sub =&gt; visit_i8x16_sub (binary v128)
+                I8x16SubSatS =&gt; visit_i8x16_sub_sat_s (binary v128)
+                I8x16SubSatU =&gt; visit_i8x16_sub_sat_u (binary v128)
+                I8x16MinS =&gt; visit_i8x16_min_s (binary v128)
+                I8x16MinU =&gt; visit_i8x16_min_u (binary v128)
+                I8x16MaxS =&gt; visit_i8x16_max_s (binary v128)
+                I8x16MaxU =&gt; visit_i8x16_max_u (binary v128)
+                I8x16AvgrU =&gt; visit_i8x16_avgr_u (binary v128)
+                I16x8ExtAddPairwiseI8x16S =&gt; visit_i16x8_extadd_pairwise_i8x16_s (unary v128)
+                I16x8ExtAddPairwiseI8x16U =&gt; visit_i16x8_extadd_pairwise_i8x16_u (unary v128)
+                I16x8Abs =&gt; visit_i16x8_abs (unary v128)
+                I16x8Neg =&gt; visit_i16x8_neg (unary v128)
+                I16x8Q15MulrSatS =&gt; visit_i16x8_q15mulr_sat_s (binary v128)
+                I16x8AllTrue =&gt; visit_i16x8_all_true (test v128)
+                I16x8Bitmask =&gt; visit_i16x8_bitmask (test v128)
+                I16x8NarrowI32x4S =&gt; visit_i16x8_narrow_i32x4_s (binary v128)
+                I16x8NarrowI32x4U =&gt; visit_i16x8_narrow_i32x4_u (binary v128)
+                I16x8ExtendLowI8x16S =&gt; visit_i16x8_extend_low_i8x16_s (unary v128)
+                I16x8ExtendHighI8x16S =&gt; visit_i16x8_extend_high_i8x16_s (unary v128)
+                I16x8ExtendLowI8x16U =&gt; visit_i16x8_extend_low_i8x16_u (unary v128)
+                I16x8ExtendHighI8x16U =&gt; visit_i16x8_extend_high_i8x16_u (unary v128)
+                I16x8Shl =&gt; visit_i16x8_shl (shift v128)
+                I16x8ShrS =&gt; visit_i16x8_shr_s (shift v128)
+                I16x8ShrU =&gt; visit_i16x8_shr_u (shift v128)
+                I16x8Add =&gt; visit_i16x8_add (binary v128)
+                I16x8AddSatS =&gt; visit_i16x8_add_sat_s (binary v128)
+                I16x8AddSatU =&gt; visit_i16x8_add_sat_u (binary v128)
+                I16x8Sub =&gt; visit_i16x8_sub (binary v128)
+                I16x8SubSatS =&gt; visit_i16x8_sub_sat_s (binary v128)
+                I16x8SubSatU =&gt; visit_i16x8_sub_sat_u (binary v128)
+                I16x8Mul =&gt; visit_i16x8_mul (binary v128)
+                I16x8MinS =&gt; visit_i16x8_min_s (binary v128)
+                I16x8MinU =&gt; visit_i16x8_min_u (binary v128)
+                I16x8MaxS =&gt; visit_i16x8_max_s (binary v128)
+                I16x8MaxU =&gt; visit_i16x8_max_u (binary v128)
+                I16x8AvgrU =&gt; visit_i16x8_avgr_u (binary v128)
+                I16x8ExtMulLowI8x16S =&gt; visit_i16x8_extmul_low_i8x16_s (binary v128)
+                I16x8ExtMulHighI8x16S =&gt; visit_i16x8_extmul_high_i8x16_s (binary v128)
+                I16x8ExtMulLowI8x16U =&gt; visit_i16x8_extmul_low_i8x16_u (binary v128)
+                I16x8ExtMulHighI8x16U =&gt; visit_i16x8_extmul_high_i8x16_u (binary v128)
+                I32x4ExtAddPairwiseI16x8S =&gt; visit_i32x4_extadd_pairwise_i16x8_s (unary v128)
+                I32x4ExtAddPairwiseI16x8U =&gt; visit_i32x4_extadd_pairwise_i16x8_u (unary v128)
+                I32x4Abs =&gt; visit_i32x4_abs (unary v128)
+                I32x4Neg =&gt; visit_i32x4_neg (unary v128)
+                I32x4AllTrue =&gt; visit_i32x4_all_true (test v128)
+                I32x4Bitmask =&gt; visit_i32x4_bitmask (test v128)
+                I32x4ExtendLowI16x8S =&gt; visit_i32x4_extend_low_i16x8_s (unary v128)
+                I32x4ExtendHighI16x8S =&gt; visit_i32x4_extend_high_i16x8_s (unary v128)
+                I32x4ExtendLowI16x8U =&gt; visit_i32x4_extend_low_i16x8_u (unary v128)
+                I32x4ExtendHighI16x8U =&gt; visit_i32x4_extend_high_i16x8_u (unary v128)
+                I32x4Shl =&gt; visit_i32x4_shl (shift v128)
+                I32x4ShrS =&gt; visit_i32x4_shr_s (shift v128)
+                I32x4ShrU =&gt; visit_i32x4_shr_u (shift v128)
+                I32x4Add =&gt; visit_i32x4_add (binary v128)
+                I32x4Sub =&gt; visit_i32x4_sub (binary v128)
+                I32x4Mul =&gt; visit_i32x4_mul (binary v128)
+                I32x4MinS =&gt; visit_i32x4_min_s (binary v128)
+                I32x4MinU =&gt; visit_i32x4_min_u (binary v128)
+                I32x4MaxS =&gt; visit_i32x4_max_s (binary v128)
+                I32x4MaxU =&gt; visit_i32x4_max_u (binary v128)
+                I32x4DotI16x8S =&gt; visit_i32x4_dot_i16x8_s (binary v128)
+                I32x4ExtMulLowI16x8S =&gt; visit_i32x4_extmul_low_i16x8_s (binary v128)
+                I32x4ExtMulHighI16x8S =&gt; visit_i32x4_extmul_high_i16x8_s (binary v128)
+                I32x4ExtMulLowI16x8U =&gt; visit_i32x4_extmul_low_i16x8_u (binary v128)
+                I32x4ExtMulHighI16x8U =&gt; visit_i32x4_extmul_high_i16x8_u (binary v128)
+                I64x2Abs =&gt; visit_i64x2_abs (unary v128)
+                I64x2Neg =&gt; visit_i64x2_neg (unary v128)
+                I64x2AllTrue =&gt; visit_i64x2_all_true (test v128)
+                I64x2Bitmask =&gt; visit_i64x2_bitmask (test v128)
+                I64x2ExtendLowI32x4S =&gt; visit_i64x2_extend_low_i32x4_s (unary v128)
+                I64x2ExtendHighI32x4S =&gt; visit_i64x2_extend_high_i32x4_s (unary v128)
+                I64x2ExtendLowI32x4U =&gt; visit_i64x2_extend_low_i32x4_u (unary v128)
+                I64x2ExtendHighI32x4U =&gt; visit_i64x2_extend_high_i32x4_u (unary v128)
+                I64x2Shl =&gt; visit_i64x2_shl (shift v128)
+                I64x2ShrS =&gt; visit_i64x2_shr_s (shift v128)
+                I64x2ShrU =&gt; visit_i64x2_shr_u (shift v128)
+                I64x2Add =&gt; visit_i64x2_add (binary v128)
+                I64x2Sub =&gt; visit_i64x2_sub (binary v128)
+                I64x2Mul =&gt; visit_i64x2_mul (binary v128)
+                I64x2ExtMulLowI32x4S =&gt; visit_i64x2_extmul_low_i32x4_s (binary v128)
+                I64x2ExtMulHighI32x4S =&gt; visit_i64x2_extmul_high_i32x4_s (binary v128)
+                I64x2ExtMulLowI32x4U =&gt; visit_i64x2_extmul_low_i32x4_u (binary v128)
+                I64x2ExtMulHighI32x4U =&gt; visit_i64x2_extmul_high_i32x4_u (binary v128)
+                F32x4Ceil =&gt; visit_f32x4_ceil (unary v128f)
+                F32x4Floor =&gt; visit_f32x4_floor (unary v128f)
+                F32x4Trunc =&gt; visit_f32x4_trunc (unary v128f)
+                F32x4Nearest =&gt; visit_f32x4_nearest (unary v128f)
+                F32x4Abs =&gt; visit_f32x4_abs (unary v128f)
+                F32x4Neg =&gt; visit_f32x4_neg (unary v128f)
+                F32x4Sqrt =&gt; visit_f32x4_sqrt (unary v128f)
+                F32x4Add =&gt; visit_f32x4_add (binary v128f)
+                F32x4Sub =&gt; visit_f32x4_sub (binary v128f)
+                F32x4Mul =&gt; visit_f32x4_mul (binary v128f)
+                F32x4Div =&gt; visit_f32x4_div (binary v128f)
+                F32x4Min =&gt; visit_f32x4_min (binary v128f)
+                F32x4Max =&gt; visit_f32x4_max (binary v128f)
+                F32x4PMin =&gt; visit_f32x4_pmin (binary v128f)
+                F32x4PMax =&gt; visit_f32x4_pmax (binary v128f)
+                F64x2Ceil =&gt; visit_f64x2_ceil (unary v128f)
+                F64x2Floor =&gt; visit_f64x2_floor (unary v128f)
+                F64x2Trunc =&gt; visit_f64x2_trunc (unary v128f)
+                F64x2Nearest =&gt; visit_f64x2_nearest (unary v128f)
+                F64x2Abs =&gt; visit_f64x2_abs (unary v128f)
+                F64x2Neg =&gt; visit_f64x2_neg (unary v128f)
+                F64x2Sqrt =&gt; visit_f64x2_sqrt (unary v128f)
+                F64x2Add =&gt; visit_f64x2_add (binary v128f)
+                F64x2Sub =&gt; visit_f64x2_sub (binary v128f)
+                F64x2Mul =&gt; visit_f64x2_mul (binary v128f)
+                F64x2Div =&gt; visit_f64x2_div (binary v128f)
+                F64x2Min =&gt; visit_f64x2_min (binary v128f)
+                F64x2Max =&gt; visit_f64x2_max (binary v128f)
+                F64x2PMin =&gt; visit_f64x2_pmin (binary v128f)
+                F64x2PMax =&gt; visit_f64x2_pmax (binary v128f)
+                I32x4TruncSatF32x4S =&gt; visit_i32x4_trunc_sat_f32x4_s (unary v128f)
+                I32x4TruncSatF32x4U =&gt; visit_i32x4_trunc_sat_f32x4_u (unary v128f)
+                F32x4ConvertI32x4S =&gt; visit_f32x4_convert_i32x4_s (unary v128f)
+                F32x4ConvertI32x4U =&gt; visit_f32x4_convert_i32x4_u (unary v128f)
+                I32x4TruncSatF64x2SZero =&gt; visit_i32x4_trunc_sat_f64x2_s_zero (unary v128f)
+                I32x4TruncSatF64x2UZero =&gt; visit_i32x4_trunc_sat_f64x2_u_zero (unary v128f)
+                F64x2ConvertLowI32x4S =&gt; visit_f64x2_convert_low_i32x4_s (unary v128f)
+                F64x2ConvertLowI32x4U =&gt; visit_f64x2_convert_low_i32x4_u (unary v128f)
+                F32x4DemoteF64x2Zero =&gt; visit_f32x4_demote_f64x2_zero (unary v128f)
+                F64x2PromoteLowF32x4 =&gt; visit_f64x2_promote_low_f32x4 (unary v128f)
+            }
+
+            <span class="comment">// Relaxed SIMD operators
+            // https://github.com/WebAssembly/relaxed-simd
+            </span>@relaxed_simd {
+                I8x16RelaxedSwizzle =&gt; visit_i8x16_relaxed_swizzle (binary v128)
+                I32x4RelaxedTruncF32x4S =&gt; visit_i32x4_relaxed_trunc_f32x4_s (unary v128)
+                I32x4RelaxedTruncF32x4U =&gt; visit_i32x4_relaxed_trunc_f32x4_u (unary v128)
+                I32x4RelaxedTruncF64x2SZero =&gt; visit_i32x4_relaxed_trunc_f64x2_s_zero (unary v128)
+                I32x4RelaxedTruncF64x2UZero =&gt; visit_i32x4_relaxed_trunc_f64x2_u_zero (unary v128)
+                F32x4RelaxedMadd =&gt; visit_f32x4_relaxed_madd (ternary v128)
+                F32x4RelaxedNmadd =&gt; visit_f32x4_relaxed_nmadd (ternary v128)
+                F64x2RelaxedMadd =&gt; visit_f64x2_relaxed_madd  (ternary v128)
+                F64x2RelaxedNmadd =&gt; visit_f64x2_relaxed_nmadd (ternary v128)
+                I8x16RelaxedLaneselect =&gt; visit_i8x16_relaxed_laneselect (ternary v128)
+                I16x8RelaxedLaneselect =&gt; visit_i16x8_relaxed_laneselect (ternary v128)
+                I32x4RelaxedLaneselect =&gt; visit_i32x4_relaxed_laneselect (ternary v128)
+                I64x2RelaxedLaneselect =&gt; visit_i64x2_relaxed_laneselect (ternary v128)
+                F32x4RelaxedMin =&gt; visit_f32x4_relaxed_min (binary v128)
+                F32x4RelaxedMax =&gt; visit_f32x4_relaxed_max (binary v128)
+                F64x2RelaxedMin =&gt; visit_f64x2_relaxed_min (binary v128)
+                F64x2RelaxedMax =&gt; visit_f64x2_relaxed_max (binary v128)
+                I16x8RelaxedQ15mulrS =&gt; visit_i16x8_relaxed_q15mulr_s (binary v128)
+                I16x8RelaxedDotI8x16I7x16S =&gt; visit_i16x8_relaxed_dot_i8x16_i7x16_s (binary v128)
+                I32x4RelaxedDotI8x16I7x16AddS =&gt; visit_i32x4_relaxed_dot_i8x16_i7x16_add_s (ternary v128)
+            }
+
+            @exceptions {
+                TryTable { try_table: <span class="macro-nonterminal">$crate::TryTable </span>} =&gt; visit_try_table (arity try_table -&gt; ~try_table)
+                Throw { tag_index: u32 } =&gt; visit_throw (arity tag -&gt; <span class="number">0</span>)
+                ThrowRef =&gt; visit_throw_ref (arity <span class="number">1 </span>-&gt; <span class="number">0</span>)
+            }
+            <span class="comment">// Deprecated old instructions from the exceptions proposal
+            </span>@legacy_exceptions {
+                Try { blockty: <span class="macro-nonterminal">$crate::BlockType </span>} =&gt; visit_try (arity block -&gt; ~block)
+                Catch { tag_index: u32 } =&gt; visit_catch (arity ~end -&gt; ~tag)
+                Rethrow { relative_depth: u32 } =&gt; visit_rethrow (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
+                Delegate { relative_depth: u32 } =&gt; visit_delegate (arity ~end -&gt; end)
+                CatchAll =&gt; visit_catch_all (arity ~end -&gt; <span class="number">0</span>)
+            }
+
+            <span class="comment">// Also 0xFE prefixed operators
+            // shared-everything threads
+            // https://github.com/WebAssembly/shared-everything-threads
+            </span>@shared_everything_threads {
+                GlobalAtomicGet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_get (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
+                GlobalAtomicSet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_set (arity <span class="number">1 </span>-&gt; <span class="number">0</span>)
+                GlobalAtomicRmwAdd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_add (unary atomic global)
+                GlobalAtomicRmwSub { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_sub (unary atomic global)
+                GlobalAtomicRmwAnd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_and (unary atomic global)
+                GlobalAtomicRmwOr { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_or (unary atomic global)
+                GlobalAtomicRmwXor { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_xor (unary atomic global)
+                GlobalAtomicRmwXchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_xchg (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                GlobalAtomicRmwCmpxchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_cmpxchg (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                TableAtomicGet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, table_index: u32 } =&gt; visit_table_atomic_get (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                TableAtomicSet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, table_index: u32 } =&gt; visit_table_atomic_set (arity <span class="number">2 </span>-&gt; <span class="number">0</span>)
+                TableAtomicRmwXchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, table_index: u32 } =&gt; visit_table_atomic_rmw_xchg (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                TableAtomicRmwCmpxchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, table_index: u32 } =&gt; visit_table_atomic_rmw_cmpxchg (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
+                StructAtomicGet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_get (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                StructAtomicGetS { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_get_s (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                StructAtomicGetU { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_get_u (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                StructAtomicSet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_set (arity <span class="number">2 </span>-&gt; <span class="number">0</span>)
+                StructAtomicRmwAdd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_add (atomic rmw <span class="kw">struct </span>add)
+                StructAtomicRmwSub { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_sub (atomic rmw <span class="kw">struct </span>sub)
+                StructAtomicRmwAnd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_and (atomic rmw <span class="kw">struct </span>and)
+                StructAtomicRmwOr { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_or (atomic rmw <span class="kw">struct </span>or)
+                StructAtomicRmwXor { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_xor (atomic rmw <span class="kw">struct </span>xor)
+                StructAtomicRmwXchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_xchg (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                StructAtomicRmwCmpxchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_cmpxchg (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
+                ArrayAtomicGet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_get (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                ArrayAtomicGetS { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_get_s (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                ArrayAtomicGetU { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_get_u (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
+                ArrayAtomicSet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_set (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
+                ArrayAtomicRmwAdd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_add (atomic rmw array add)
+                ArrayAtomicRmwSub { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_sub (atomic rmw array sub)
+                ArrayAtomicRmwAnd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_and (atomic rmw array and)
+                ArrayAtomicRmwOr { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_or (atomic rmw array or)
+                ArrayAtomicRmwXor { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_xor (atomic rmw array xor)
+                ArrayAtomicRmwXchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_xchg (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
+                ArrayAtomicRmwCmpxchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_cmpxchg (arity <span class="number">4 </span>-&gt; <span class="number">1</span>)
+                RefI31Shared =&gt; visit_ref_i31_shared (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+            }
+
+            <span class="comment">// Typed Function references
+            </span>@function_references {
+                CallRef { type_index: u32 } =&gt; visit_call_ref (arity <span class="number">1 </span><span class="kw">type </span>-&gt; <span class="kw">type</span>)
+                ReturnCallRef { type_index: u32 } =&gt; visit_return_call_ref (arity <span class="number">1 </span><span class="kw">type </span>-&gt; <span class="number">0</span>)
+                RefAsNonNull =&gt; visit_ref_as_non_null (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                BrOnNull { relative_depth: u32 } =&gt; visit_br_on_null (arity <span class="number">1 </span>br -&gt; <span class="number">1 </span>br)
+                BrOnNonNull { relative_depth: u32 } =&gt; visit_br_on_non_null (arity br -&gt; br -<span class="number">1</span>)
+            }
+
+            <span class="comment">// Stack switching
+            </span>@stack_switching {
+                ContNew { cont_type_index: u32 } =&gt; visit_cont_new (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                ContBind { argument_index: u32, result_index: u32 } =&gt; visit_cont_bind (arity type_diff <span class="number">1 </span>-&gt; <span class="number">1</span>)
+                Suspend { tag_index: u32 } =&gt; visit_suspend (arity tag -&gt; tag)
+                Resume { cont_type_index: u32, resume_table: <span class="macro-nonterminal">$crate::ResumeTable </span>} =&gt; visit_resume (arity <span class="number">1 </span><span class="kw">type </span>-&gt; <span class="kw">type</span>)
+                ResumeThrow { cont_type_index: u32, tag_index: u32, resume_table: <span class="macro-nonterminal">$crate::ResumeTable </span>} =&gt; visit_resume_throw (arity <span class="number">1 </span>tag -&gt; <span class="kw">type</span>)
+                Switch { cont_type_index: u32, tag_index: u32 } =&gt; visit_switch (arity <span class="kw">type </span>-&gt; ~switch)
+            }
+
+            @wide_arithmetic {
+                I64Add128 =&gt; visit_i64_add128 (arity <span class="number">4 </span>-&gt; <span class="number">2</span>)
+                I64Sub128 =&gt; visit_i64_sub128 (arity <span class="number">4 </span>-&gt; <span class="number">2</span>)
+                I64MulWideS =&gt; visit_i64_mul_wide_s (arity <span class="number">2 </span>-&gt; <span class="number">2</span>)
+                I64MulWideU =&gt; visit_i64_mul_wide_u (arity <span class="number">2 </span>-&gt; <span class="number">2</span>)
+            }
+        }
+    };
+}
+
+<span class="doccomment">/// Helper macro to define a `_for_each_non_simd_operator` which receives
+/// the syntax of each instruction individually, but only the non-simd
+/// operators.
+</span><span class="macro">macro_rules!</span> define_for_each_non_simd_operator {
+    <span class="comment">// Switch from `_for_each_operator_group` syntax to this macro's syntax to
+    // be a "tt muncher macro"
+    </span>(@ $(<span class="macro-nonterminal">$t</span>:tt)<span class="kw-2">*</span>) =&gt; {<span class="macro">define_for_each_non_simd_operator!</span>(filter [] @ $(<span class="macro-nonterminal">$t</span>)<span class="kw-2">*</span>);};
+
+    <span class="comment">// filter out simd/relaxed-simd proposals
+    </span>(filter <span class="macro-nonterminal">$filter</span>:tt @simd <span class="macro-nonterminal">$simd</span>:tt $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; {
+        <span class="macro">define_for_each_non_simd_operator!</span>(filter <span class="macro-nonterminal">$filter </span>$(<span class="macro-nonterminal">$rest</span>)<span class="kw-2">*</span>);
+    };
+    (filter <span class="macro-nonterminal">$filter</span>:tt @relaxed_simd <span class="macro-nonterminal">$simd</span>:tt $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; {
+        <span class="macro">define_for_each_non_simd_operator!</span>(filter <span class="macro-nonterminal">$filter </span>$(<span class="macro-nonterminal">$rest</span>)<span class="kw-2">*</span>);
+    };
+
+    <span class="comment">// For all other proposals add in tokens where the `@proposal` is prepended
+    // before each instruction.
+    </span>(
+        filter [$(<span class="macro-nonterminal">$t</span>:tt)<span class="kw-2">*</span>]
+        @<span class="macro-nonterminal">$proposal</span>:ident {
+            $( <span class="macro-nonterminal">$op</span>:ident $({ $(<span class="macro-nonterminal">$arg</span>:ident: <span class="macro-nonterminal">$argty</span>:ty),* })<span class="question-mark">? </span>=&gt; <span class="macro-nonterminal">$visit</span>:ident ($(<span class="macro-nonterminal">$ann</span>:tt)<span class="kw-2">*</span>) )*
+        }
+        $(<span class="macro-nonterminal">$rest</span>:tt)*
+    ) =&gt; {
+        <span class="macro">define_for_each_non_simd_operator!</span>(
+            filter [
+                $(<span class="macro-nonterminal">$t</span>)*
+                $( @<span class="macro-nonterminal">$proposal $op </span>$({ $(<span class="macro-nonterminal">$arg</span>: <span class="macro-nonterminal">$argty</span>),* })<span class="question-mark">? </span>=&gt; <span class="macro-nonterminal">$visit </span>($(<span class="macro-nonterminal">$ann</span>)<span class="kw-2">*</span>) )*
+            ]
+            $(<span class="macro-nonterminal">$rest</span>)*
+        );
+    };
+
+    <span class="comment">// At the end the `$t` list here is how we want to define
+    // `_for_each_non_simd_operator`, so define the macro with these tokens.
+    </span>(filter [$(<span class="macro-nonterminal">$t</span>:tt)<span class="kw-2">*</span>]) =&gt; {
+        <span class="attr">#[macro_export]
+        #[doc(hidden)]
+        </span><span class="macro">macro_rules!</span> _for_each_visit_operator_impl {
+            (<span class="macro-nonterminal">$m</span>:ident) =&gt; {
+                <span class="macro-nonterminal">$</span><span class="macro">m!</span> { $(<span class="macro-nonterminal">$t</span>)* }
+            }
+        }
+
+        <span class="comment">// When simd is disabled then this macro is additionally the
+        // `for_each_operator!` macro implementation
+        </span><span class="attr">#[cfg(not(feature = <span class="string">"simd"</span>))]
+        #[doc(hidden)]
+        </span><span class="kw">pub use </span>_for_each_visit_operator_impl <span class="kw">as </span>_for_each_operator_impl;
+    };
+}
+<span class="macro">_for_each_operator_group!</span>(define_for_each_non_simd_operator);
+
+<span class="doccomment">/// When the simd feature is enabled then `_for_each_operator_impl` is defined
+/// to be the same as the above `define_for_each_non_simd_operator` macro except
+/// with all proposals thrown in.
+</span><span class="attr">#[cfg(feature = <span class="string">"simd"</span>)]
+</span><span class="macro">macro_rules!</span> define_for_each_operator_impl_with_simd {
+    (
+        $(
+            @<span class="macro-nonterminal">$proposal</span>:ident {
+                $( <span class="macro-nonterminal">$op</span>:ident $({ $(<span class="macro-nonterminal">$arg</span>:ident: <span class="macro-nonterminal">$argty</span>:ty),* })<span class="question-mark">? </span>=&gt; <span class="macro-nonterminal">$visit</span>:ident ($(<span class="macro-nonterminal">$ann</span>:tt)<span class="kw-2">*</span>) )*
+            }
+        )*
+    ) =&gt; {
+        <span class="attr">#[macro_export]
+        #[doc(hidden)]
+        </span><span class="macro">macro_rules!</span> _for_each_operator_impl {
+            (<span class="macro-nonterminal">$m</span>:ident) =&gt; {
+                <span class="macro-nonterminal">$</span><span class="macro">m!</span> {
+                    $(
+                        $(
+                            @<span class="macro-nonterminal">$proposal $op </span>$({$(<span class="macro-nonterminal">$arg</span>: <span class="macro-nonterminal">$argty</span>),<span class="kw-2">*</span>})<span class="question-mark">? </span>=&gt; <span class="macro-nonterminal">$visit </span>($(<span class="macro-nonterminal">$ann</span>)<span class="kw-2">*</span>)
+                        )*
+                    )*
+                }
+            }
+        }
+    };
+}
+<span class="attr">#[cfg(feature = <span class="string">"simd"</span>)]
+</span><span class="macro">_for_each_operator_group!</span>(define_for_each_operator_impl_with_simd);
+
+<span class="doccomment">/// Helper macro to define the `_for_each_simd_operator_impl` macro.
+///
+/// This is basically the same as `define_for_each_non_simd_operator` above
+/// except that it's filtering on different proposals.
+</span><span class="attr">#[cfg(feature = <span class="string">"simd"</span>)]
+</span><span class="macro">macro_rules!</span> define_for_each_simd_operator {
+    <span class="comment">// Switch to "tt muncher" mode
+    </span>(@ $(<span class="macro-nonterminal">$t</span>:tt)<span class="kw-2">*</span>) =&gt; {<span class="macro">define_for_each_simd_operator!</span>(filter [] @ $(<span class="macro-nonterminal">$t</span>)<span class="kw-2">*</span>);};
+
+    <span class="comment">// Collect the `@simd` and `@relaxed_simd` proposals.
+    </span>(
+        filter [$(<span class="macro-nonterminal">$t</span>:tt)<span class="kw-2">*</span>]
+        @simd {
+            $( <span class="macro-nonterminal">$op</span>:ident $({ $(<span class="macro-nonterminal">$arg</span>:ident: <span class="macro-nonterminal">$argty</span>:ty),* })<span class="question-mark">? </span>=&gt; <span class="macro-nonterminal">$visit</span>:ident ($(<span class="macro-nonterminal">$ann</span>:tt)<span class="kw-2">*</span>) )*
+        }
+        $(<span class="macro-nonterminal">$rest</span>:tt)*
+    ) =&gt; {
+        <span class="macro">define_for_each_simd_operator!</span>(
+            filter [
+                $(<span class="macro-nonterminal">$t</span>)*
+                $( @simd <span class="macro-nonterminal">$op </span>$({ $(<span class="macro-nonterminal">$arg</span>: <span class="macro-nonterminal">$argty</span>),* })<span class="question-mark">? </span>=&gt; <span class="macro-nonterminal">$visit </span>($(<span class="macro-nonterminal">$ann</span>)<span class="kw-2">*</span>) )*
+            ]
+            $(<span class="macro-nonterminal">$rest</span>)*
+        );
+    };
+    (
+        filter [$(<span class="macro-nonterminal">$t</span>:tt)<span class="kw-2">*</span>]
+        @relaxed_simd {
+            $( <span class="macro-nonterminal">$op</span>:ident $({ $(<span class="macro-nonterminal">$arg</span>:ident: <span class="macro-nonterminal">$argty</span>:ty),* })<span class="question-mark">? </span>=&gt; <span class="macro-nonterminal">$visit</span>:ident ($(<span class="macro-nonterminal">$ann</span>:tt)<span class="kw-2">*</span>) )*
+        }
+        $(<span class="macro-nonterminal">$rest</span>:tt)*
+    ) =&gt; {
+        <span class="macro">define_for_each_simd_operator!</span>(
+            filter [
+                $(<span class="macro-nonterminal">$t</span>)*
+                $( @relaxed_simd <span class="macro-nonterminal">$op </span>$({ $(<span class="macro-nonterminal">$arg</span>: <span class="macro-nonterminal">$argty</span>),* })<span class="question-mark">? </span>=&gt; <span class="macro-nonterminal">$visit </span>($(<span class="macro-nonterminal">$ann</span>)<span class="kw-2">*</span>) )*
+            ]
+            $(<span class="macro-nonterminal">$rest</span>)*
+        );
+    };
+
+    <span class="comment">// Skip all other proposals.
+    </span>(filter <span class="macro-nonterminal">$filter</span>:tt @<span class="macro-nonterminal">$proposal</span>:ident <span class="macro-nonterminal">$instrs</span>:tt $(<span class="macro-nonterminal">$rest</span>:tt)<span class="kw-2">*</span>) =&gt; {
+        <span class="macro">define_for_each_simd_operator!</span>(filter <span class="macro-nonterminal">$filter </span>$(<span class="macro-nonterminal">$rest</span>)<span class="kw-2">*</span>);
+    };
+
+    <span class="comment">// Base case to define the base macro.
+    </span>(filter [$(<span class="macro-nonterminal">$t</span>:tt)<span class="kw-2">*</span>]) =&gt; {
+        <span class="attr">#[macro_export]
+        #[doc(hidden)]
+        </span><span class="macro">macro_rules!</span> _for_each_visit_simd_operator_impl {
+            (<span class="macro-nonterminal">$m</span>:ident) =&gt; {
+                <span class="macro-nonterminal">$</span><span class="macro">m!</span> { $(<span class="macro-nonterminal">$t</span>)* }
+            }
+        }
+    };
+}
+<span class="attr">#[cfg(feature = <span class="string">"simd"</span>)]
+</span><span class="macro">_for_each_operator_group!</span>(define_for_each_simd_operator);
+
+<span class="doccomment">/// Used to implement routines for the [`Operator`] enum.
+///
+/// A helper macro to conveniently iterate over all opcodes recognized by this
 /// crate. This can be used to work with either the [`Operator`] enumeration or
 /// the [`VisitOperator`] trait if your use case uniformly handles all operators
 /// the same way.
@@ -916,7 +2247,7 @@
 ///
 /// This is an "iterator macro" where this macro is invoked with the name of
 /// another macro, and then that macro is invoked with the list of all
-/// operators. An example invocation of this looks like:
+/// operators.
 ///
 /// The list of specializable Wasm proposals is as follows:
 ///
@@ -927,10 +2258,12 @@
 /// - `@sign_extension`: [Wasm `sign-extension-ops` proposal]
 /// - `@saturating_float_to_int`: [Wasm `non_trapping_float-to-int-conversions` proposal]
 /// - `@bulk_memory `:[Wasm `bulk-memory` proposal]
-/// - `@threads`: [Wasm `threads` proposal]
 /// - `@simd`: [Wasm `simd` proposal]
 /// - `@relaxed_simd`: [Wasm `relaxed-simd` proposal]
+/// - `@threads`: [Wasm `threads` proposal]
 /// - `@gc`: [Wasm `gc` proposal]
+/// - `@stack_switching`: [Wasm `stack-switching` proposal]
+/// - `@wide_arithmetic`: [Wasm `wide-arithmetic` proposal]
 ///
 /// [Wasm `exception-handling` proposal]:
 /// https://github.com/WebAssembly/exception-handling
@@ -950,17 +2283,155 @@
 /// [Wasm `bulk-memory` proposal]:
 /// https://github.com/WebAssembly/bulk-memory-operations
 ///
-/// [Wasm `threads` proposal]:
-/// https://github.com/webassembly/threads
-///
 /// [Wasm `simd` proposal]:
 /// https://github.com/webassembly/simd
 ///
 /// [Wasm `relaxed-simd` proposal]:
 /// https://github.com/WebAssembly/relaxed-simd
 ///
+/// [Wasm `threads` proposal]:
+/// https://github.com/webassembly/threads
+///
 /// [Wasm `gc` proposal]:
 /// https://github.com/WebAssembly/gc
+///
+/// [Wasm `stack-switching` proposal]:
+/// https://github.com/WebAssembly/stack-switching
+///
+/// [Wasm `wide-arithmetic` proposal]:
+/// https://github.com/WebAssembly/wide-arithmetic
+///
+/// ```
+/// fn do_nothing(op: &amp;wasmparser::Operator) {
+///     macro_rules! define_match_operator {
+///         // The outer layer of repetition represents how all operators are
+///         // provided to the macro at the same time.
+///         //
+///         // The `$proposal` identifier indicates the Wasm proposals from which
+///         // the Wasm operator is originating.
+///         // For example to specialize the macro match arm for Wasm SIMD proposal
+///         // operators you could write `@simd` instead of `@$proposal:ident` to
+///         // only catch those operators.
+///         //
+///         // The `$op` name is bound to the `Operator` variant name. The
+///         // payload of the operator is optionally specified (the `$(...)?`
+///         // clause) since not all instructions have payloads. Within the payload
+///         // each argument is named and has its type specified.
+///         //
+///         // The `$visit` name is bound to the corresponding name in the
+///         // `VisitOperator` trait that this corresponds to.
+///         //
+///         // The `$ann` annotations give information about the operator's type (e.g. binary i32 or arity 2 -&gt; 1).
+///         ($( @$proposal:ident $op:ident $({ $($arg:ident: $argty:ty),* })? =&gt; $visit:ident ($($ann:tt)*))*) =&gt; {
+///             match op {
+///                 $(
+///                     wasmparser::Operator::$op $( { $($arg),* } )? =&gt; {
+///                         // do nothing for this example
+///                     }
+///                 )*
+///                 _ =&gt; unreachable!(), // required because `Operator` enum is non-exhaustive
+///             }
+///         }
+///     }
+///     wasmparser::for_each_operator!(define_match_operator);
+/// }
+/// ```
+///
+/// If you only wanted to visit the initial base set of wasm instructions, for
+/// example, you could do:
+///
+/// ```
+/// fn is_mvp_operator(op: &amp;wasmparser::Operator) -&gt; bool {
+///     macro_rules! define_match_operator {
+///         // delegate the macro invocation to sub-invocations of this macro to
+///         // deal with each instruction on a case-by-case basis.
+///         ($( @$proposal:ident $op:ident $({ $($arg:ident: $argty:ty),* })? =&gt; $visit:ident ($($ann:tt)*))*) =&gt; {
+///             match op {
+///                 $(
+///                     wasmparser::Operator::$op $( { $($arg),* } )? =&gt; {
+///                         define_match_operator!(impl_one @$proposal)
+///                     }
+///                 )*
+///                 _ =&gt; unreachable!(), // required because `Operator` enum is non-exhaustive
+///             }
+///         };
+///
+///         (impl_one @mvp) =&gt; { true };
+///         (impl_one @$proposal:ident) =&gt; { false };
+///     }
+///     wasmparser::for_each_operator!(define_match_operator)
+/// }
+/// ```
+</span><span class="attr">#[doc(inline)]
+</span><span class="kw">pub use </span>_for_each_operator_impl <span class="kw">as </span>for_each_operator;
+
+<span class="doccomment">/// Used to implement the [`VisitOperator`] trait.
+///
+/// A helper macro to conveniently iterate over all opcodes recognized by this
+/// crate. This can be used to work with either the [`Operator`] enumeration or
+/// the [`VisitOperator`] trait if your use case uniformly handles all operators
+/// the same way.
+///
+/// It is also possible to specialize handling of operators depending on the
+/// Wasm proposal from which they are originating.
+///
+/// This is an "iterator macro" where this macro is invoked with the name of
+/// another macro, and then that macro is invoked with the list of all
+/// operators.
+///
+/// The list of specializable Wasm proposals is as follows:
+///
+/// - `@mvp`: Denoting a Wasm operator from the initial Wasm MVP version.
+/// - `@exceptions`: [Wasm `exception-handling` proposal]
+/// - `@tail_call`: [Wasm `tail-calls` proposal]
+/// - `@reference_types`: [Wasm `reference-types` proposal]
+/// - `@sign_extension`: [Wasm `sign-extension-ops` proposal]
+/// - `@saturating_float_to_int`: [Wasm `non_trapping_float-to-int-conversions` proposal]
+/// - `@bulk_memory `:[Wasm `bulk-memory` proposal]
+/// - `@threads`: [Wasm `threads` proposal]
+/// - `@gc`: [Wasm `gc` proposal]
+/// - `@stack_switching`: [Wasm `stack-switching` proposal]
+/// - `@wide_arithmetic`: [Wasm `wide-arithmetic` proposal]
+///
+/// Note that this macro does not iterate over the SIMD-related proposals. Those
+/// are provided in [`VisitSimdOperator`] and [`for_each_visit_simd_operator`].
+/// This macro only handles non-SIMD related operators and so users wanting to
+/// handle the SIMD-class of operators need to use that trait/macro as well.
+///
+/// [Wasm `exception-handling` proposal]:
+/// https://github.com/WebAssembly/exception-handling
+///
+/// [Wasm `tail-calls` proposal]:
+/// https://github.com/WebAssembly/tail-call
+///
+/// [Wasm `reference-types` proposal]:
+/// https://github.com/WebAssembly/reference-types
+///
+/// [Wasm `sign-extension-ops` proposal]:
+/// https://github.com/WebAssembly/sign-extension-ops
+///
+/// [Wasm `non_trapping_float-to-int-conversions` proposal]:
+/// https://github.com/WebAssembly/nontrapping-float-to-int-conversions
+///
+/// [Wasm `bulk-memory` proposal]:
+/// https://github.com/WebAssembly/bulk-memory-operations
+/// [Wasm `simd` proposal]:
+/// https://github.com/webassembly/simd
+///
+/// [Wasm `relaxed-simd` proposal]:
+/// https://github.com/WebAssembly/relaxed-simd
+///
+/// [Wasm `threads` proposal]:
+/// https://github.com/webassembly/threads
+///
+/// [Wasm `gc` proposal]:
+/// https://github.com/WebAssembly/gc
+///
+/// [Wasm `stack-switching` proposal]:
+/// https://github.com/WebAssembly/stack-switching
+///
+/// [Wasm `wide-arithmetic` proposal]:
+/// https://github.com/WebAssembly/wide-arithmetic
 ///
 /// ```
 /// macro_rules! define_visit_operator {
@@ -969,8 +2440,8 @@
 ///     //
 ///     // The `$proposal` identifier indicates the Wasm proposals from which
 ///     // the Wasm operator is originating.
-///     // For example to specialize the macro match arm for Wasm SIMD proposal
-///     // operators you could write `@simd` instead of `@$proposal:ident` to
+///     // For example to specialize the macro match arm for Wasm `gc` proposal
+///     // operators you could write `@gc` instead of `@$proposal:ident` to
 ///     // only catch those operators.
 ///     //
 ///     // The `$op` name is bound to the `Operator` variant name. The
@@ -996,679 +2467,122 @@
 /// impl&lt;'a&gt; wasmparser::VisitOperator&lt;'a&gt; for VisitAndDoNothing {
 ///     type Output = ();
 ///
-///     wasmparser::for_each_operator!(define_visit_operator);
+///     wasmparser::for_each_visit_operator!(define_visit_operator);
 /// }
 /// ```
-</span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules!</span> for_each_operator {
-    (<span class="macro-nonterminal">$mac</span>:ident) =&gt; {
-        <span class="macro-nonterminal">$</span><span class="macro">mac!</span> {
-            @<span class="macro-nonterminal">mvp </span>Unreachable =&gt; visit_unreachable (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
-            @mvp Nop =&gt; visit_nop (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
-            @mvp Block { blockty: <span class="macro-nonterminal">$crate::BlockType </span>} =&gt; visit_block (arity block -&gt; ~block)
-            @mvp Loop { blockty: <span class="macro-nonterminal">$crate::BlockType </span>} =&gt; visit_loop (arity block -&gt; ~block)
-            @mvp If { blockty: <span class="macro-nonterminal">$crate::BlockType </span>} =&gt; visit_if (arity <span class="number">1 </span>block -&gt; ~block)
-            @mvp Else =&gt; visit_else (arity ~end -&gt; ~end)
-            @exceptions TryTable { try_table: <span class="macro-nonterminal">$crate::TryTable </span>} =&gt; visit_try_table (arity try_table -&gt; ~try_table)
-            @exceptions Throw { tag_index: u32 } =&gt; visit_throw (arity tag -&gt; <span class="number">0</span>)
-            @exceptions ThrowRef =&gt; visit_throw_ref (arity <span class="number">1 </span>-&gt; <span class="number">0</span>)
-            <span class="comment">// Deprecated old instructions from the exceptions proposal
-            </span>@legacy_exceptions Try { blockty: <span class="macro-nonterminal">$crate::BlockType </span>} =&gt; visit_try (arity block -&gt; ~block)
-            @legacy_exceptions Catch { tag_index: u32 } =&gt; visit_catch (arity ~end -&gt; ~tag)
-            @legacy_exceptions Rethrow { relative_depth: u32 } =&gt; visit_rethrow (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
-            @legacy_exceptions Delegate { relative_depth: u32 } =&gt; visit_delegate (arity ~end -&gt; end)
-            @legacy_exceptions CatchAll =&gt; visit_catch_all (arity ~end -&gt; <span class="number">0</span>)
-            @mvp End =&gt; visit_end (arity implicit_else ~end -&gt; implicit_else end)
-            @mvp Br { relative_depth: u32 } =&gt; visit_br (arity br -&gt; <span class="number">0</span>)
-            @mvp BrIf { relative_depth: u32 } =&gt; visit_br_if (arity <span class="number">1 </span>br -&gt; br)
-            @mvp BrTable { targets: <span class="macro-nonterminal">$crate::BrTable</span>&lt;<span class="lifetime">'a</span>&gt; } =&gt; visit_br_table (arity <span class="number">1 </span>br_table -&gt; <span class="number">0</span>)
-            @mvp Return =&gt; visit_return (arity ~ret -&gt; <span class="number">0</span>)
-            @mvp Call { function_index: u32 } =&gt; visit_call (arity func -&gt; func)
-            @mvp CallIndirect { type_index: u32, table_index: u32 } =&gt; visit_call_indirect (arity <span class="number">1 </span><span class="kw">type </span>-&gt; <span class="kw">type</span>)
-            @tail_call ReturnCall { function_index: u32 } =&gt; visit_return_call (arity func -&gt; <span class="number">0</span>)
-            @tail_call ReturnCallIndirect { type_index: u32, table_index: u32 } =&gt; visit_return_call_indirect (arity <span class="number">1 </span><span class="kw">type </span>-&gt; <span class="number">0</span>)
-            @mvp Drop =&gt; visit_drop (arity <span class="number">1 </span>-&gt; <span class="number">0</span>)
-            @mvp Select =&gt; visit_select (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
-            @reference_types TypedSelect { ty: <span class="macro-nonterminal">$crate::ValType </span>} =&gt; visit_typed_select (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
-            @mvp LocalGet { local_index: u32 } =&gt; visit_local_get (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
-            @mvp LocalSet { local_index: u32 } =&gt; visit_local_set (arity <span class="number">1 </span>-&gt; <span class="number">0</span>)
-            @mvp LocalTee { local_index: u32 } =&gt; visit_local_tee (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @mvp GlobalGet { global_index: u32 } =&gt; visit_global_get (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
-            @mvp GlobalSet { global_index: u32 } =&gt; visit_global_set (arity <span class="number">1 </span>-&gt; <span class="number">0</span>)
-            @mvp I32Load { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_load (load i32)
-            @mvp I64Load { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load (load i64)
-            @mvp F32Load { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_f32_load (load f32)
-            @mvp F64Load { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_f64_load (load f64)
-            @mvp I32Load8S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_load8_s (load i32)
-            @mvp I32Load8U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_load8_u (load i32)
-            @mvp I32Load16S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_load16_s (load i32)
-            @mvp I32Load16U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_load16_u (load i32)
-            @mvp I64Load8S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load8_s (load i64)
-            @mvp I64Load8U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load8_u (load i64)
-            @mvp I64Load16S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load16_s (load i64)
-            @mvp I64Load16U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load16_u (load i64)
-            @mvp I64Load32S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load32_s (load i64)
-            @mvp I64Load32U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_load32_u (load i64)
-            @mvp I32Store { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_store (store i32)
-            @mvp I64Store { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_store (store i64)
-            @mvp F32Store { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_f32_store (store f32)
-            @mvp F64Store { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_f64_store (store f64)
-            @mvp I32Store8 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_store8 (store i32)
-            @mvp I32Store16 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_store16 (store i32)
-            @mvp I64Store8 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_store8 (store i64)
-            @mvp I64Store16 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_store16 (store i64)
-            @mvp I64Store32 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_store32 (store i64)
-            @mvp MemorySize { mem: u32 } =&gt; visit_memory_size (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
-            @mvp MemoryGrow { mem: u32 } =&gt; visit_memory_grow (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @mvp I32Const { value: i32 } =&gt; visit_i32_const (push i32)
-            @mvp I64Const { value: i64 } =&gt; visit_i64_const (push i64)
-            @mvp F32Const { value: <span class="macro-nonterminal">$crate::Ieee32 </span>} =&gt; visit_f32_const (push f32)
-            @mvp F64Const { value: <span class="macro-nonterminal">$crate::Ieee64 </span>} =&gt; visit_f64_const (push f64)
-            @reference_types RefNull { hty: <span class="macro-nonterminal">$crate::HeapType </span>} =&gt; visit_ref_null (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
-            @reference_types RefIsNull =&gt; visit_ref_is_null (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @reference_types RefFunc { function_index: u32 } =&gt; visit_ref_func (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
-            @gc RefEq =&gt; visit_ref_eq (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @mvp I32Eqz =&gt; visit_i32_eqz (test i32)
-            @mvp I32Eq =&gt; visit_i32_eq (cmp i32)
-            @mvp I32Ne =&gt; visit_i32_ne (cmp i32)
-            @mvp I32LtS =&gt; visit_i32_lt_s (cmp i32)
-            @mvp I32LtU =&gt; visit_i32_lt_u (cmp i32)
-            @mvp I32GtS =&gt; visit_i32_gt_s (cmp i32)
-            @mvp I32GtU =&gt; visit_i32_gt_u (cmp i32)
-            @mvp I32LeS =&gt; visit_i32_le_s (cmp i32)
-            @mvp I32LeU =&gt; visit_i32_le_u (cmp i32)
-            @mvp I32GeS =&gt; visit_i32_ge_s (cmp i32)
-            @mvp I32GeU =&gt; visit_i32_ge_u (cmp i32)
-            @mvp I64Eqz =&gt; visit_i64_eqz (test i64)
-            @mvp I64Eq =&gt; visit_i64_eq (cmp i64)
-            @mvp I64Ne =&gt; visit_i64_ne (cmp i64)
-            @mvp I64LtS =&gt; visit_i64_lt_s (cmp i64)
-            @mvp I64LtU =&gt; visit_i64_lt_u (cmp i64)
-            @mvp I64GtS =&gt; visit_i64_gt_s (cmp i64)
-            @mvp I64GtU =&gt; visit_i64_gt_u (cmp i64)
-            @mvp I64LeS =&gt; visit_i64_le_s (cmp i64)
-            @mvp I64LeU =&gt; visit_i64_le_u (cmp i64)
-            @mvp I64GeS =&gt; visit_i64_ge_s (cmp i64)
-            @mvp I64GeU =&gt; visit_i64_ge_u (cmp i64)
-            @mvp F32Eq =&gt; visit_f32_eq (cmp f32)
-            @mvp F32Ne =&gt; visit_f32_ne (cmp f32)
-            @mvp F32Lt =&gt; visit_f32_lt (cmp f32)
-            @mvp F32Gt =&gt; visit_f32_gt (cmp f32)
-            @mvp F32Le =&gt; visit_f32_le (cmp f32)
-            @mvp F32Ge =&gt; visit_f32_ge (cmp f32)
-            @mvp F64Eq =&gt; visit_f64_eq (cmp f64)
-            @mvp F64Ne =&gt; visit_f64_ne (cmp f64)
-            @mvp F64Lt =&gt; visit_f64_lt (cmp f64)
-            @mvp F64Gt =&gt; visit_f64_gt (cmp f64)
-            @mvp F64Le =&gt; visit_f64_le (cmp f64)
-            @mvp F64Ge =&gt; visit_f64_ge (cmp f64)
-            @mvp I32Clz =&gt; visit_i32_clz (unary i32)
-            @mvp I32Ctz =&gt; visit_i32_ctz (unary i32)
-            @mvp I32Popcnt =&gt; visit_i32_popcnt (unary i32)
-            @mvp I32Add =&gt; visit_i32_add (binary i32)
-            @mvp I32Sub =&gt; visit_i32_sub (binary i32)
-            @mvp I32Mul =&gt; visit_i32_mul (binary i32)
-            @mvp I32DivS =&gt; visit_i32_div_s (binary i32)
-            @mvp I32DivU =&gt; visit_i32_div_u (binary i32)
-            @mvp I32RemS =&gt; visit_i32_rem_s (binary i32)
-            @mvp I32RemU =&gt; visit_i32_rem_u (binary i32)
-            @mvp I32And =&gt; visit_i32_and (binary i32)
-            @mvp I32Or =&gt; visit_i32_or (binary i32)
-            @mvp I32Xor =&gt; visit_i32_xor (binary i32)
-            @mvp I32Shl =&gt; visit_i32_shl (binary i32)
-            @mvp I32ShrS =&gt; visit_i32_shr_s (binary i32)
-            @mvp I32ShrU =&gt; visit_i32_shr_u (binary i32)
-            @mvp I32Rotl =&gt; visit_i32_rotl (binary i32)
-            @mvp I32Rotr =&gt; visit_i32_rotr (binary i32)
-            @mvp I64Clz =&gt; visit_i64_clz (unary i64)
-            @mvp I64Ctz =&gt; visit_i64_ctz (unary i64)
-            @mvp I64Popcnt =&gt; visit_i64_popcnt (unary i64)
-            @mvp I64Add =&gt; visit_i64_add (binary i64)
-            @mvp I64Sub =&gt; visit_i64_sub (binary i64)
-            @mvp I64Mul =&gt; visit_i64_mul (binary i64)
-            @mvp I64DivS =&gt; visit_i64_div_s (binary i64)
-            @mvp I64DivU =&gt; visit_i64_div_u (binary i64)
-            @mvp I64RemS =&gt; visit_i64_rem_s (binary i64)
-            @mvp I64RemU =&gt; visit_i64_rem_u (binary i64)
-            @mvp I64And =&gt; visit_i64_and (binary i64)
-            @mvp I64Or =&gt; visit_i64_or (binary i64)
-            @mvp I64Xor =&gt; visit_i64_xor (binary i64)
-            @mvp I64Shl =&gt; visit_i64_shl (binary i64)
-            @mvp I64ShrS =&gt; visit_i64_shr_s (binary i64)
-            @mvp I64ShrU =&gt; visit_i64_shr_u (binary i64)
-            @mvp I64Rotl =&gt; visit_i64_rotl (binary i64)
-            @mvp I64Rotr =&gt; visit_i64_rotr (binary i64)
-            @mvp F32Abs =&gt; visit_f32_abs (unary f32)
-            @mvp F32Neg =&gt; visit_f32_neg (unary f32)
-            @mvp F32Ceil =&gt; visit_f32_ceil (unary f32)
-            @mvp F32Floor =&gt; visit_f32_floor (unary f32)
-            @mvp F32Trunc =&gt; visit_f32_trunc (unary f32)
-            @mvp F32Nearest =&gt; visit_f32_nearest (unary f32)
-            @mvp F32Sqrt =&gt; visit_f32_sqrt (unary f32)
-            @mvp F32Add =&gt; visit_f32_add (binary f32)
-            @mvp F32Sub =&gt; visit_f32_sub (binary f32)
-            @mvp F32Mul =&gt; visit_f32_mul (binary f32)
-            @mvp F32Div =&gt; visit_f32_div (binary f32)
-            @mvp F32Min =&gt; visit_f32_min (binary f32)
-            @mvp F32Max =&gt; visit_f32_max (binary f32)
-            @mvp F32Copysign =&gt; visit_f32_copysign (binary f32)
-            @mvp F64Abs =&gt; visit_f64_abs (unary f64)
-            @mvp F64Neg =&gt; visit_f64_neg (unary f64)
-            @mvp F64Ceil =&gt; visit_f64_ceil (unary f64)
-            @mvp F64Floor =&gt; visit_f64_floor (unary f64)
-            @mvp F64Trunc =&gt; visit_f64_trunc (unary f64)
-            @mvp F64Nearest =&gt; visit_f64_nearest (unary f64)
-            @mvp F64Sqrt =&gt; visit_f64_sqrt (unary f64)
-            @mvp F64Add =&gt; visit_f64_add (binary f64)
-            @mvp F64Sub =&gt; visit_f64_sub (binary f64)
-            @mvp F64Mul =&gt; visit_f64_mul (binary f64)
-            @mvp F64Div =&gt; visit_f64_div (binary f64)
-            @mvp F64Min =&gt; visit_f64_min (binary f64)
-            @mvp F64Max =&gt; visit_f64_max (binary f64)
-            @mvp F64Copysign =&gt; visit_f64_copysign (binary f64)
-            @mvp I32WrapI64 =&gt; visit_i32_wrap_i64 (conversion i32 i64)
-            @mvp I32TruncF32S =&gt; visit_i32_trunc_f32_s (conversion i32 f32)
-            @mvp I32TruncF32U =&gt; visit_i32_trunc_f32_u (conversion i32 f32)
-            @mvp I32TruncF64S =&gt; visit_i32_trunc_f64_s (conversion i32 f64)
-            @mvp I32TruncF64U =&gt; visit_i32_trunc_f64_u (conversion i32 f64)
-            @mvp I64ExtendI32S =&gt; visit_i64_extend_i32_s (conversion i64 i32)
-            @mvp I64ExtendI32U =&gt; visit_i64_extend_i32_u (conversion i64 i32)
-            @mvp I64TruncF32S =&gt; visit_i64_trunc_f32_s (conversion i64 f32)
-            @mvp I64TruncF32U =&gt; visit_i64_trunc_f32_u (conversion i64 f32)
-            @mvp I64TruncF64S =&gt; visit_i64_trunc_f64_s (conversion i64 f64)
-            @mvp I64TruncF64U =&gt; visit_i64_trunc_f64_u (conversion i64 f64)
-            @mvp F32ConvertI32S =&gt; visit_f32_convert_i32_s (conversion f32 i32)
-            @mvp F32ConvertI32U =&gt; visit_f32_convert_i32_u (conversion f32 i32)
-            @mvp F32ConvertI64S =&gt; visit_f32_convert_i64_s (conversion f32 i64)
-            @mvp F32ConvertI64U =&gt; visit_f32_convert_i64_u (conversion f32 i64)
-            @mvp F32DemoteF64 =&gt; visit_f32_demote_f64 (conversion f32 f64)
-            @mvp F64ConvertI32S =&gt; visit_f64_convert_i32_s (conversion f64 i32)
-            @mvp F64ConvertI32U =&gt; visit_f64_convert_i32_u (conversion f64 i32)
-            @mvp F64ConvertI64S =&gt; visit_f64_convert_i64_s (conversion f64 i64)
-            @mvp F64ConvertI64U =&gt; visit_f64_convert_i64_u (conversion f64 i64)
-            @mvp F64PromoteF32 =&gt; visit_f64_promote_f32 (conversion f64 f32)
-            @mvp I32ReinterpretF32 =&gt; visit_i32_reinterpret_f32 (conversion i32 f32)
-            @mvp I64ReinterpretF64 =&gt; visit_i64_reinterpret_f64 (conversion i64 f64)
-            @mvp F32ReinterpretI32 =&gt; visit_f32_reinterpret_i32 (conversion f32 i32)
-            @mvp F64ReinterpretI64 =&gt; visit_f64_reinterpret_i64 (conversion f64 i64)
-            @sign_extension I32Extend8S =&gt; visit_i32_extend8_s (unary i32)
-            @sign_extension I32Extend16S =&gt; visit_i32_extend16_s (unary i32)
-            @sign_extension I64Extend8S =&gt; visit_i64_extend8_s (unary i64)
-            @sign_extension I64Extend16S =&gt; visit_i64_extend16_s (unary i64)
-            @sign_extension I64Extend32S =&gt; visit_i64_extend32_s (unary i64)
+///
+/// If you only wanted to visit the initial base set of wasm instructions, for
+/// example, you could do:
+///
+/// ```
+/// macro_rules! visit_only_mvp {
+///     // delegate the macro invocation to sub-invocations of this macro to
+///     // deal with each instruction on a case-by-case basis.
+///     ($( @$proposal:ident $op:ident $({ $($arg:ident: $argty:ty),* })? =&gt; $visit:ident ($($ann:tt)*))*) =&gt; {
+///         $(
+///             visit_only_mvp!(visit_one @$proposal $op $({ $($arg: $argty),* })? =&gt; $visit);
+///         )*
+///     };
+///
+///     // MVP instructions are defined manually, so do nothing.
+///     (visit_one @mvp $($rest:tt)*) =&gt; {};
+///
+///     // Non-MVP instructions all return `false` here. The exact type depends
+///     // on `type Output` in the trait implementation below. You could change
+///     // it to `Result&lt;()&gt;` for example and return an error here too.
+///     (visit_one @$proposal:ident $op:ident $({ $($arg:ident: $argty:ty),* })? =&gt; $visit:ident) =&gt; {
+///         fn $visit(&amp;mut self $($(,$arg: $argty)*)?) -&gt; bool {
+///             false
+///         }
+///     }
+/// }
+/// # // to get this example to compile another macro is used here to define
+/// # // visit methods for all mvp oeprators.
+/// # macro_rules! visit_mvp {
+/// #     ($( @$proposal:ident $op:ident $({ $($arg:ident: $argty:ty),* })? =&gt; $visit:ident ($($ann:tt)*))*) =&gt; {
+/// #         $(
+/// #             visit_mvp!(visit_one @$proposal $op $({ $($arg: $argty),* })? =&gt; $visit);
+/// #         )*
+/// #     };
+/// #     (visit_one @mvp $op:ident $({ $($arg:ident: $argty:ty),* })? =&gt; $visit:ident) =&gt; {
+/// #         fn $visit(&amp;mut self $($(,$arg: $argty)*)?) -&gt; bool {
+/// #             true
+/// #         }
+/// #     };
+/// #     (visit_one @$proposal:ident $($rest:tt)*) =&gt; {};
+/// # }
+///
+/// pub struct VisitOnlyMvp;
+///
+/// impl&lt;'a&gt; wasmparser::VisitOperator&lt;'a&gt; for VisitOnlyMvp {
+///     type Output = bool;
+///
+///     wasmparser::for_each_visit_operator!(visit_only_mvp);
+/// #   wasmparser::for_each_visit_operator!(visit_mvp);
+///
+///     // manually define `visit_*` for all MVP operators here
+/// }
+/// ```
+</span><span class="attr">#[doc(inline)]
+</span><span class="kw">pub use </span>_for_each_visit_operator_impl <span class="kw">as </span>for_each_visit_operator;
 
-            <span class="comment">// 0xFB prefixed operators
-            // Garbage Collection
-            // http://github.com/WebAssembly/gc
-            </span>@gc StructNew { struct_type_index: u32 } =&gt; visit_struct_new (arity <span class="kw">type </span>-&gt; <span class="number">1</span>)
-            @gc StructNewDefault { struct_type_index: u32 } =&gt; visit_struct_new_default (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
-            @gc StructGet { struct_type_index: u32, field_index: u32 } =&gt; visit_struct_get (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc StructGetS { struct_type_index: u32, field_index: u32 } =&gt; visit_struct_get_s (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc StructGetU { struct_type_index: u32, field_index: u32 } =&gt; visit_struct_get_u (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-                @gc StructSet { struct_type_index: u32, field_index: u32 } =&gt; visit_struct_set (arity <span class="number">2 </span>-&gt; <span class="number">0</span>)
-            @gc ArrayNew { array_type_index: u32 } =&gt; visit_array_new (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @gc ArrayNewDefault { array_type_index: u32 } =&gt; visit_array_new_default (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc ArrayNewFixed { array_type_index: u32, array_size: u32 } =&gt; visit_array_new_fixed (arity size -&gt; <span class="number">1</span>)
-            @gc ArrayNewData { array_type_index: u32, array_data_index: u32 } =&gt; visit_array_new_data (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @gc ArrayNewElem { array_type_index: u32, array_elem_index: u32 } =&gt; visit_array_new_elem (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @gc ArrayGet { array_type_index: u32 } =&gt; visit_array_get (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @gc ArrayGetS { array_type_index: u32 } =&gt; visit_array_get_s (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @gc ArrayGetU { array_type_index: u32 } =&gt; visit_array_get_u (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @gc ArraySet { array_type_index: u32 } =&gt; visit_array_set (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
-            @gc ArrayLen =&gt; visit_array_len (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc ArrayFill { array_type_index: u32 } =&gt; visit_array_fill (arity <span class="number">4 </span>-&gt; <span class="number">0</span>)
-            @gc ArrayCopy { array_type_index_dst: u32, array_type_index_src: u32 } =&gt; visit_array_copy (arity <span class="number">5 </span>-&gt; <span class="number">0</span>)
-            @gc ArrayInitData { array_type_index: u32, array_data_index: u32 } =&gt; visit_array_init_data (arity <span class="number">4 </span>-&gt; <span class="number">0</span>)
-            @gc ArrayInitElem { array_type_index: u32, array_elem_index: u32 } =&gt; visit_array_init_elem (arity <span class="number">4 </span>-&gt; <span class="number">0</span>)
-            @gc RefTestNonNull { hty: <span class="macro-nonterminal">$crate::HeapType </span>} =&gt; visit_ref_test_non_null (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc RefTestNullable { hty: <span class="macro-nonterminal">$crate::HeapType </span>} =&gt; visit_ref_test_nullable (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc RefCastNonNull { hty: <span class="macro-nonterminal">$crate::HeapType </span>} =&gt; visit_ref_cast_non_null (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc RefCastNullable { hty: <span class="macro-nonterminal">$crate::HeapType </span>} =&gt; visit_ref_cast_nullable (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc BrOnCast {
-                relative_depth: u32,
-                from_ref_type: <span class="macro-nonterminal">$crate::RefType</span>,
-                to_ref_type: <span class="macro-nonterminal">$crate::RefType
-            </span>} =&gt; visit_br_on_cast (arity br -&gt; br)
-            @gc BrOnCastFail {
-                relative_depth: u32,
-                from_ref_type: <span class="macro-nonterminal">$crate::RefType</span>,
-                to_ref_type: <span class="macro-nonterminal">$crate::RefType
-            </span>} =&gt; visit_br_on_cast_fail (arity br -&gt; br)
-            @gc AnyConvertExtern =&gt; visit_any_convert_extern  (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc ExternConvertAny =&gt; visit_extern_convert_any (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc RefI31 =&gt; visit_ref_i31 (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc I31GetS =&gt; visit_i31_get_s (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @gc I31GetU =&gt; visit_i31_get_u (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-
-            <span class="comment">// 0xFC operators
-            // Non-trapping Float-to-int Conversions
-            // https://github.com/WebAssembly/nontrapping-float-to-int-conversions
-            </span>@saturating_float_to_int I32TruncSatF32S =&gt; visit_i32_trunc_sat_f32_s (conversion i32 f32)
-            @saturating_float_to_int I32TruncSatF32U =&gt; visit_i32_trunc_sat_f32_u (conversion i32 f32)
-            @saturating_float_to_int I32TruncSatF64S =&gt; visit_i32_trunc_sat_f64_s (conversion i32 f64)
-            @saturating_float_to_int I32TruncSatF64U =&gt; visit_i32_trunc_sat_f64_u (conversion i32 f64)
-            @saturating_float_to_int I64TruncSatF32S =&gt; visit_i64_trunc_sat_f32_s (conversion i64 f32)
-            @saturating_float_to_int I64TruncSatF32U =&gt; visit_i64_trunc_sat_f32_u (conversion i64 f32)
-            @saturating_float_to_int I64TruncSatF64S =&gt; visit_i64_trunc_sat_f64_s (conversion i64 f64)
-            @saturating_float_to_int I64TruncSatF64U =&gt; visit_i64_trunc_sat_f64_u (conversion i64 f64)
-
-            <span class="comment">// 0xFC prefixed operators
-            // bulk memory operations
-            // https://github.com/WebAssembly/bulk-memory-operations
-            </span>@bulk_memory MemoryInit { data_index: u32, mem: u32 } =&gt; visit_memory_init (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
-            @bulk_memory DataDrop { data_index: u32 } =&gt; visit_data_drop (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
-            @bulk_memory MemoryCopy { dst_mem: u32, src_mem: u32 } =&gt; visit_memory_copy (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
-            @bulk_memory MemoryFill { mem: u32 } =&gt; visit_memory_fill (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
-            @bulk_memory TableInit { elem_index: u32, table: u32 } =&gt; visit_table_init (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
-            @bulk_memory ElemDrop { elem_index: u32 } =&gt; visit_elem_drop (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
-            @bulk_memory TableCopy { dst_table: u32, src_table: u32 } =&gt; visit_table_copy (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
-
-            <span class="comment">// 0xFC prefixed operators
-            // reference-types
-            // https://github.com/WebAssembly/reference-types
-            </span>@reference_types TableFill { table: u32 } =&gt; visit_table_fill (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
-            @reference_types TableGet { table: u32 } =&gt; visit_table_get (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @reference_types TableSet { table: u32 } =&gt; visit_table_set (arity <span class="number">2 </span>-&gt; <span class="number">0</span>)
-            @reference_types TableGrow { table: u32 } =&gt; visit_table_grow (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @reference_types TableSize { table: u32 } =&gt; visit_table_size (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
-
-            <span class="comment">// OxFC prefixed operators
-            // memory control (experimental)
-            // https://github.com/WebAssembly/design/issues/1439
-            </span>@memory_control MemoryDiscard { mem: u32 } =&gt; visit_memory_discard (arity <span class="number">2 </span>-&gt; <span class="number">0</span>)
-
-            <span class="comment">// 0xFE prefixed operators
-            // threads
-            // https://github.com/WebAssembly/threads
-            </span>@threads MemoryAtomicNotify { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_memory_atomic_notify (atomic rmw i32)
-            @threads MemoryAtomicWait32 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_memory_atomic_wait32 (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
-            @threads MemoryAtomicWait64 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_memory_atomic_wait64 (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
-            @threads AtomicFence =&gt; visit_atomic_fence (arity <span class="number">0 </span>-&gt; <span class="number">0</span>)
-            @threads I32AtomicLoad { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_load (load atomic i32)
-            @threads I64AtomicLoad { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_load (load atomic i64)
-            @threads I32AtomicLoad8U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_load8_u (load atomic i32)
-            @threads I32AtomicLoad16U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_load16_u (load atomic i32)
-            @threads I64AtomicLoad8U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_load8_u (load atomic i64)
-            @threads I64AtomicLoad16U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_load16_u (load atomic i64)
-            @threads I64AtomicLoad32U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_load32_u (load atomic i64)
-            @threads I32AtomicStore { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_store (store atomic i32)
-            @threads I64AtomicStore { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_store (store atomic i64)
-            @threads I32AtomicStore8 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_store8 (store atomic i32)
-            @threads I32AtomicStore16 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_store16 (store atomic i32)
-            @threads I64AtomicStore8 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_store8 (store atomic i64)
-            @threads I64AtomicStore16 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_store16 (store atomic i64)
-            @threads I64AtomicStore32 { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_store32 (store atomic i64)
-            @threads I32AtomicRmwAdd { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_add (atomic rmw i32)
-            @threads I64AtomicRmwAdd { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_add (atomic rmw i64)
-            @threads I32AtomicRmw8AddU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_add_u (atomic rmw i32)
-            @threads I32AtomicRmw16AddU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_add_u (atomic rmw i32)
-            @threads I64AtomicRmw8AddU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_add_u (atomic rmw i64)
-            @threads I64AtomicRmw16AddU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_add_u (atomic rmw i64)
-            @threads I64AtomicRmw32AddU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_add_u (atomic rmw i64)
-            @threads I32AtomicRmwSub { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_sub (atomic rmw i32)
-            @threads I64AtomicRmwSub { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_sub (atomic rmw i64)
-            @threads I32AtomicRmw8SubU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_sub_u (atomic rmw i32)
-            @threads I32AtomicRmw16SubU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_sub_u (atomic rmw i32)
-            @threads I64AtomicRmw8SubU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_sub_u (atomic rmw i64)
-            @threads I64AtomicRmw16SubU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_sub_u (atomic rmw i64)
-            @threads I64AtomicRmw32SubU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_sub_u (atomic rmw i64)
-            @threads I32AtomicRmwAnd { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_and (atomic rmw i32)
-            @threads I64AtomicRmwAnd { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_and (atomic rmw i64)
-            @threads I32AtomicRmw8AndU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_and_u (atomic rmw i32)
-            @threads I32AtomicRmw16AndU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_and_u (atomic rmw i32)
-            @threads I64AtomicRmw8AndU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_and_u (atomic rmw i64)
-            @threads I64AtomicRmw16AndU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_and_u (atomic rmw i64)
-            @threads I64AtomicRmw32AndU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_and_u (atomic rmw i64)
-            @threads I32AtomicRmwOr { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_or (atomic rmw i32)
-            @threads I64AtomicRmwOr { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_or (atomic rmw i64)
-            @threads I32AtomicRmw8OrU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_or_u (atomic rmw i32)
-            @threads I32AtomicRmw16OrU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_or_u (atomic rmw i32)
-            @threads I64AtomicRmw8OrU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_or_u (atomic rmw i64)
-            @threads I64AtomicRmw16OrU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_or_u (atomic rmw i64)
-            @threads I64AtomicRmw32OrU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_or_u (atomic rmw i64)
-            @threads I32AtomicRmwXor { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_xor (atomic rmw i32)
-            @threads I64AtomicRmwXor { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_xor (atomic rmw i64)
-            @threads I32AtomicRmw8XorU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_xor_u (atomic rmw i32)
-            @threads I32AtomicRmw16XorU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_xor_u (atomic rmw i32)
-            @threads I64AtomicRmw8XorU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_xor_u (atomic rmw i64)
-            @threads I64AtomicRmw16XorU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_xor_u (atomic rmw i64)
-            @threads I64AtomicRmw32XorU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_xor_u (atomic rmw i64)
-            @threads I32AtomicRmwXchg { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_xchg (atomic rmw i32)
-            @threads I64AtomicRmwXchg { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_xchg (atomic rmw i64)
-            @threads I32AtomicRmw8XchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_xchg_u (atomic rmw i32)
-            @threads I32AtomicRmw16XchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_xchg_u (atomic rmw i32)
-            @threads I64AtomicRmw8XchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_xchg_u (atomic rmw i64)
-            @threads I64AtomicRmw16XchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_xchg_u (atomic rmw i64)
-            @threads I64AtomicRmw32XchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_xchg_u (atomic rmw i64)
-            @threads I32AtomicRmwCmpxchg { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw_cmpxchg (atomic cmpxchg i32)
-            @threads I64AtomicRmwCmpxchg { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw_cmpxchg (atomic cmpxchg i64)
-            @threads I32AtomicRmw8CmpxchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw8_cmpxchg_u (atomic cmpxchg i32)
-            @threads I32AtomicRmw16CmpxchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i32_atomic_rmw16_cmpxchg_u (atomic cmpxchg i32)
-            @threads I64AtomicRmw8CmpxchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw8_cmpxchg_u (atomic cmpxchg i64)
-            @threads I64AtomicRmw16CmpxchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw16_cmpxchg_u (atomic cmpxchg i64)
-            @threads I64AtomicRmw32CmpxchgU { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_i64_atomic_rmw32_cmpxchg_u (atomic cmpxchg i64)
-
-            <span class="comment">// Also 0xFE prefixed operators
-            // shared-everything threads
-            // https://github.com/WebAssembly/shared-everything-threads
-            </span>@shared_everything_threads GlobalAtomicGet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_get (arity <span class="number">0 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads GlobalAtomicSet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_set (arity <span class="number">1 </span>-&gt; <span class="number">0</span>)
-            @shared_everything_threads GlobalAtomicRmwAdd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_add (unary atomic global)
-            @shared_everything_threads GlobalAtomicRmwSub { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_sub (unary atomic global)
-            @shared_everything_threads GlobalAtomicRmwAnd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_and (unary atomic global)
-            @shared_everything_threads GlobalAtomicRmwOr { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_or (unary atomic global)
-            @shared_everything_threads GlobalAtomicRmwXor { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_xor (unary atomic global)
-            @shared_everything_threads GlobalAtomicRmwXchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_xchg (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads GlobalAtomicRmwCmpxchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, global_index: u32 } =&gt; visit_global_atomic_rmw_cmpxchg (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads TableAtomicGet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, table_index: u32 } =&gt; visit_table_atomic_get (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads TableAtomicSet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, table_index: u32 } =&gt; visit_table_atomic_set (arity <span class="number">2 </span>-&gt; <span class="number">0</span>)
-            @shared_everything_threads TableAtomicRmwXchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, table_index: u32 } =&gt; visit_table_atomic_rmw_xchg (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads TableAtomicRmwCmpxchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, table_index: u32 } =&gt; visit_table_atomic_rmw_cmpxchg (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads StructAtomicGet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_get (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads StructAtomicGetS { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_get_s (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads StructAtomicGetU { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_get_u (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads StructAtomicSet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_set (arity <span class="number">2 </span>-&gt; <span class="number">0</span>)
-            @shared_everything_threads StructAtomicRmwAdd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_add (atomic rmw <span class="kw">struct </span>add)
-            @shared_everything_threads StructAtomicRmwSub { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_sub (atomic rmw <span class="kw">struct </span>sub)
-            @shared_everything_threads StructAtomicRmwAnd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_and (atomic rmw <span class="kw">struct </span>and)
-            @shared_everything_threads StructAtomicRmwOr { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_or (atomic rmw <span class="kw">struct </span>or)
-            @shared_everything_threads StructAtomicRmwXor { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_xor (atomic rmw <span class="kw">struct </span>xor)
-            @shared_everything_threads StructAtomicRmwXchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_xchg (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads StructAtomicRmwCmpxchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, struct_type_index: u32, field_index: u32  } =&gt; visit_struct_atomic_rmw_cmpxchg (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads ArrayAtomicGet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_get (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads ArrayAtomicGetS { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_get_s (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads ArrayAtomicGetU { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_get_u (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads ArrayAtomicSet { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_set (arity <span class="number">3 </span>-&gt; <span class="number">0</span>)
-            @shared_everything_threads ArrayAtomicRmwAdd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_add (atomic rmw array add)
-            @shared_everything_threads ArrayAtomicRmwSub { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_sub (atomic rmw array sub)
-            @shared_everything_threads ArrayAtomicRmwAnd { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_and (atomic rmw array and)
-            @shared_everything_threads ArrayAtomicRmwOr { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_or (atomic rmw array or)
-            @shared_everything_threads ArrayAtomicRmwXor { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_xor (atomic rmw array xor)
-            @shared_everything_threads ArrayAtomicRmwXchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_xchg (arity <span class="number">3 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads ArrayAtomicRmwCmpxchg { ordering: <span class="macro-nonterminal">$crate::Ordering</span>, array_type_index: u32 } =&gt; visit_array_atomic_rmw_cmpxchg (arity <span class="number">4 </span>-&gt; <span class="number">1</span>)
-            @shared_everything_threads RefI31Shared =&gt; visit_ref_i31_shared (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-
-            <span class="comment">// 0xFD operators
-            // 128-bit SIMD
-            // - https://github.com/webassembly/simd
-            // - https://webassembly.github.io/simd/core/binary/instructions.html
-            </span>@simd V128Load { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load (load v128)
-            @simd V128Load8x8S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load8x8_s (load v128)
-            @simd V128Load8x8U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load8x8_u (load v128)
-            @simd V128Load16x4S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load16x4_s (load v128)
-            @simd V128Load16x4U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load16x4_u (load v128)
-            @simd V128Load32x2S { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load32x2_s (load v128)
-            @simd V128Load32x2U { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load32x2_u (load v128)
-            @simd V128Load8Splat { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load8_splat (load v128)
-            @simd V128Load16Splat { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load16_splat (load v128)
-            @simd V128Load32Splat { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load32_splat (load v128)
-            @simd V128Load64Splat { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load64_splat (load v128)
-            @simd V128Load32Zero { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load32_zero (load v128)
-            @simd V128Load64Zero { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_load64_zero (load v128)
-            @simd V128Store { memarg: <span class="macro-nonterminal">$crate::MemArg </span>} =&gt; visit_v128_store (store v128)
-            @simd V128Load8Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_load8_lane (load lane <span class="number">16</span>)
-            @simd V128Load16Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_load16_lane (load lane <span class="number">8</span>)
-            @simd V128Load32Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_load32_lane (load lane <span class="number">4</span>)
-            @simd V128Load64Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_load64_lane (load lane <span class="number">2</span>)
-            @simd V128Store8Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_store8_lane (store lane <span class="number">16</span>)
-            @simd V128Store16Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_store16_lane (store lane <span class="number">8</span>)
-            @simd V128Store32Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_store32_lane (store lane <span class="number">4</span>)
-            @simd V128Store64Lane { memarg: <span class="macro-nonterminal">$crate::MemArg</span>, lane: u8 } =&gt; visit_v128_store64_lane (store lane <span class="number">2</span>)
-            @simd V128Const { value: <span class="macro-nonterminal">$crate::V128 </span>} =&gt; visit_v128_const (push v128)
-            @simd I8x16Shuffle { lanes: [u8; <span class="number">16</span>] } =&gt; visit_i8x16_shuffle (arity <span class="number">2 </span>-&gt; <span class="number">1</span>)
-            @simd I8x16ExtractLaneS { lane: u8 } =&gt; visit_i8x16_extract_lane_s (extract i32 <span class="number">16</span>)
-            @simd I8x16ExtractLaneU { lane: u8 } =&gt; visit_i8x16_extract_lane_u (extract i32 <span class="number">16</span>)
-            @simd I8x16ReplaceLane { lane: u8 } =&gt; visit_i8x16_replace_lane (replace i32 <span class="number">16</span>)
-            @simd I16x8ExtractLaneS { lane: u8 } =&gt; visit_i16x8_extract_lane_s (extract i32 <span class="number">8</span>)
-            @simd I16x8ExtractLaneU { lane: u8 } =&gt; visit_i16x8_extract_lane_u (extract i32 <span class="number">8</span>)
-            @simd I16x8ReplaceLane { lane: u8 } =&gt; visit_i16x8_replace_lane (replace i32 <span class="number">8</span>)
-            @simd I32x4ExtractLane { lane: u8 } =&gt; visit_i32x4_extract_lane (extract i32 <span class="number">4</span>)
-            @simd I32x4ReplaceLane { lane: u8 } =&gt; visit_i32x4_replace_lane (replace i32 <span class="number">4</span>)
-            @simd I64x2ExtractLane { lane: u8 } =&gt; visit_i64x2_extract_lane (extract i64 <span class="number">2</span>)
-            @simd I64x2ReplaceLane { lane: u8 } =&gt; visit_i64x2_replace_lane (replace i64 <span class="number">2</span>)
-            @simd F32x4ExtractLane { lane: u8 } =&gt; visit_f32x4_extract_lane (extract f32 <span class="number">4</span>)
-            @simd F32x4ReplaceLane { lane: u8 } =&gt; visit_f32x4_replace_lane (replace f32 <span class="number">4</span>)
-            @simd F64x2ExtractLane { lane: u8 } =&gt; visit_f64x2_extract_lane (extract f64 <span class="number">2</span>)
-            @simd F64x2ReplaceLane { lane: u8 } =&gt; visit_f64x2_replace_lane (replace f64 <span class="number">2</span>)
-            @simd I8x16Swizzle =&gt; visit_i8x16_swizzle (binary v128)
-            @simd I8x16Splat =&gt; visit_i8x16_splat (splat i32)
-            @simd I16x8Splat =&gt; visit_i16x8_splat (splat i32)
-            @simd I32x4Splat =&gt; visit_i32x4_splat (splat i32)
-            @simd I64x2Splat =&gt; visit_i64x2_splat (splat i64)
-            @simd F32x4Splat =&gt; visit_f32x4_splat (splat f32)
-            @simd F64x2Splat =&gt; visit_f64x2_splat (splat f64)
-            @simd I8x16Eq =&gt; visit_i8x16_eq (binary v128)
-            @simd I8x16Ne =&gt; visit_i8x16_ne (binary v128)
-            @simd I8x16LtS =&gt; visit_i8x16_lt_s (binary v128)
-            @simd I8x16LtU =&gt; visit_i8x16_lt_u (binary v128)
-            @simd I8x16GtS =&gt; visit_i8x16_gt_s (binary v128)
-            @simd I8x16GtU =&gt; visit_i8x16_gt_u (binary v128)
-            @simd I8x16LeS =&gt; visit_i8x16_le_s (binary v128)
-            @simd I8x16LeU =&gt; visit_i8x16_le_u (binary v128)
-            @simd I8x16GeS =&gt; visit_i8x16_ge_s (binary v128)
-            @simd I8x16GeU =&gt; visit_i8x16_ge_u (binary v128)
-            @simd I16x8Eq =&gt; visit_i16x8_eq (binary v128)
-            @simd I16x8Ne =&gt; visit_i16x8_ne (binary v128)
-            @simd I16x8LtS =&gt; visit_i16x8_lt_s (binary v128)
-            @simd I16x8LtU =&gt; visit_i16x8_lt_u (binary v128)
-            @simd I16x8GtS =&gt; visit_i16x8_gt_s (binary v128)
-            @simd I16x8GtU =&gt; visit_i16x8_gt_u (binary v128)
-            @simd I16x8LeS =&gt; visit_i16x8_le_s (binary v128)
-            @simd I16x8LeU =&gt; visit_i16x8_le_u (binary v128)
-            @simd I16x8GeS =&gt; visit_i16x8_ge_s (binary v128)
-            @simd I16x8GeU =&gt; visit_i16x8_ge_u (binary v128)
-            @simd I32x4Eq =&gt; visit_i32x4_eq (binary v128)
-            @simd I32x4Ne =&gt; visit_i32x4_ne (binary v128)
-            @simd I32x4LtS =&gt; visit_i32x4_lt_s (binary v128)
-            @simd I32x4LtU =&gt; visit_i32x4_lt_u (binary v128)
-            @simd I32x4GtS =&gt; visit_i32x4_gt_s (binary v128)
-            @simd I32x4GtU =&gt; visit_i32x4_gt_u (binary v128)
-            @simd I32x4LeS =&gt; visit_i32x4_le_s (binary v128)
-            @simd I32x4LeU =&gt; visit_i32x4_le_u (binary v128)
-            @simd I32x4GeS =&gt; visit_i32x4_ge_s (binary v128)
-            @simd I32x4GeU =&gt; visit_i32x4_ge_u (binary v128)
-            @simd I64x2Eq =&gt; visit_i64x2_eq (binary v128)
-            @simd I64x2Ne =&gt; visit_i64x2_ne (binary v128)
-            @simd I64x2LtS =&gt; visit_i64x2_lt_s (binary v128)
-            @simd I64x2GtS =&gt; visit_i64x2_gt_s (binary v128)
-            @simd I64x2LeS =&gt; visit_i64x2_le_s (binary v128)
-            @simd I64x2GeS =&gt; visit_i64x2_ge_s (binary v128)
-            @simd F32x4Eq =&gt; visit_f32x4_eq (binary v128f)
-            @simd F32x4Ne =&gt; visit_f32x4_ne (binary v128f)
-            @simd F32x4Lt =&gt; visit_f32x4_lt (binary v128f)
-            @simd F32x4Gt =&gt; visit_f32x4_gt (binary v128f)
-            @simd F32x4Le =&gt; visit_f32x4_le (binary v128f)
-            @simd F32x4Ge =&gt; visit_f32x4_ge (binary v128f)
-            @simd F64x2Eq =&gt; visit_f64x2_eq (binary v128f)
-            @simd F64x2Ne =&gt; visit_f64x2_ne (binary v128f)
-            @simd F64x2Lt =&gt; visit_f64x2_lt (binary v128f)
-            @simd F64x2Gt =&gt; visit_f64x2_gt (binary v128f)
-            @simd F64x2Le =&gt; visit_f64x2_le (binary v128f)
-            @simd F64x2Ge =&gt; visit_f64x2_ge (binary v128f)
-            @simd V128Not =&gt; visit_v128_not (unary v128)
-            @simd V128And =&gt; visit_v128_and (binary v128)
-            @simd V128AndNot =&gt; visit_v128_andnot (binary v128)
-            @simd V128Or =&gt; visit_v128_or (binary v128)
-            @simd V128Xor =&gt; visit_v128_xor (binary v128)
-            @simd V128Bitselect =&gt; visit_v128_bitselect (ternary v128)
-            @simd V128AnyTrue =&gt; visit_v128_any_true (test v128)
-            @simd I8x16Abs =&gt; visit_i8x16_abs (unary v128)
-            @simd I8x16Neg =&gt; visit_i8x16_neg (unary v128)
-            @simd I8x16Popcnt =&gt; visit_i8x16_popcnt (unary v128)
-            @simd I8x16AllTrue =&gt; visit_i8x16_all_true (test v128)
-            @simd I8x16Bitmask =&gt; visit_i8x16_bitmask (test v128)
-            @simd I8x16NarrowI16x8S =&gt; visit_i8x16_narrow_i16x8_s (binary v128)
-            @simd I8x16NarrowI16x8U =&gt; visit_i8x16_narrow_i16x8_u (binary v128)
-            @simd I8x16Shl =&gt; visit_i8x16_shl (shift v128)
-            @simd I8x16ShrS =&gt; visit_i8x16_shr_s (shift v128)
-            @simd I8x16ShrU =&gt; visit_i8x16_shr_u (shift v128)
-            @simd I8x16Add =&gt; visit_i8x16_add (binary v128)
-            @simd I8x16AddSatS =&gt; visit_i8x16_add_sat_s (binary v128)
-            @simd I8x16AddSatU =&gt; visit_i8x16_add_sat_u (binary v128)
-            @simd I8x16Sub =&gt; visit_i8x16_sub (binary v128)
-            @simd I8x16SubSatS =&gt; visit_i8x16_sub_sat_s (binary v128)
-            @simd I8x16SubSatU =&gt; visit_i8x16_sub_sat_u (binary v128)
-            @simd I8x16MinS =&gt; visit_i8x16_min_s (binary v128)
-            @simd I8x16MinU =&gt; visit_i8x16_min_u (binary v128)
-            @simd I8x16MaxS =&gt; visit_i8x16_max_s (binary v128)
-            @simd I8x16MaxU =&gt; visit_i8x16_max_u (binary v128)
-            @simd I8x16AvgrU =&gt; visit_i8x16_avgr_u (binary v128)
-            @simd I16x8ExtAddPairwiseI8x16S =&gt; visit_i16x8_extadd_pairwise_i8x16_s (unary v128)
-            @simd I16x8ExtAddPairwiseI8x16U =&gt; visit_i16x8_extadd_pairwise_i8x16_u (unary v128)
-            @simd I16x8Abs =&gt; visit_i16x8_abs (unary v128)
-            @simd I16x8Neg =&gt; visit_i16x8_neg (unary v128)
-            @simd I16x8Q15MulrSatS =&gt; visit_i16x8_q15mulr_sat_s (binary v128)
-            @simd I16x8AllTrue =&gt; visit_i16x8_all_true (test v128)
-            @simd I16x8Bitmask =&gt; visit_i16x8_bitmask (test v128)
-            @simd I16x8NarrowI32x4S =&gt; visit_i16x8_narrow_i32x4_s (binary v128)
-            @simd I16x8NarrowI32x4U =&gt; visit_i16x8_narrow_i32x4_u (binary v128)
-            @simd I16x8ExtendLowI8x16S =&gt; visit_i16x8_extend_low_i8x16_s (unary v128)
-            @simd I16x8ExtendHighI8x16S =&gt; visit_i16x8_extend_high_i8x16_s (unary v128)
-            @simd I16x8ExtendLowI8x16U =&gt; visit_i16x8_extend_low_i8x16_u (unary v128)
-            @simd I16x8ExtendHighI8x16U =&gt; visit_i16x8_extend_high_i8x16_u (unary v128)
-            @simd I16x8Shl =&gt; visit_i16x8_shl (shift v128)
-            @simd I16x8ShrS =&gt; visit_i16x8_shr_s (shift v128)
-            @simd I16x8ShrU =&gt; visit_i16x8_shr_u (shift v128)
-            @simd I16x8Add =&gt; visit_i16x8_add (binary v128)
-            @simd I16x8AddSatS =&gt; visit_i16x8_add_sat_s (binary v128)
-            @simd I16x8AddSatU =&gt; visit_i16x8_add_sat_u (binary v128)
-            @simd I16x8Sub =&gt; visit_i16x8_sub (binary v128)
-            @simd I16x8SubSatS =&gt; visit_i16x8_sub_sat_s (binary v128)
-            @simd I16x8SubSatU =&gt; visit_i16x8_sub_sat_u (binary v128)
-            @simd I16x8Mul =&gt; visit_i16x8_mul (binary v128)
-            @simd I16x8MinS =&gt; visit_i16x8_min_s (binary v128)
-            @simd I16x8MinU =&gt; visit_i16x8_min_u (binary v128)
-            @simd I16x8MaxS =&gt; visit_i16x8_max_s (binary v128)
-            @simd I16x8MaxU =&gt; visit_i16x8_max_u (binary v128)
-            @simd I16x8AvgrU =&gt; visit_i16x8_avgr_u (binary v128)
-            @simd I16x8ExtMulLowI8x16S =&gt; visit_i16x8_extmul_low_i8x16_s (binary v128)
-            @simd I16x8ExtMulHighI8x16S =&gt; visit_i16x8_extmul_high_i8x16_s (binary v128)
-            @simd I16x8ExtMulLowI8x16U =&gt; visit_i16x8_extmul_low_i8x16_u (binary v128)
-            @simd I16x8ExtMulHighI8x16U =&gt; visit_i16x8_extmul_high_i8x16_u (binary v128)
-            @simd I32x4ExtAddPairwiseI16x8S =&gt; visit_i32x4_extadd_pairwise_i16x8_s (unary v128)
-            @simd I32x4ExtAddPairwiseI16x8U =&gt; visit_i32x4_extadd_pairwise_i16x8_u (unary v128)
-            @simd I32x4Abs =&gt; visit_i32x4_abs (unary v128)
-            @simd I32x4Neg =&gt; visit_i32x4_neg (unary v128)
-            @simd I32x4AllTrue =&gt; visit_i32x4_all_true (test v128)
-            @simd I32x4Bitmask =&gt; visit_i32x4_bitmask (test v128)
-            @simd I32x4ExtendLowI16x8S =&gt; visit_i32x4_extend_low_i16x8_s (unary v128)
-            @simd I32x4ExtendHighI16x8S =&gt; visit_i32x4_extend_high_i16x8_s (unary v128)
-            @simd I32x4ExtendLowI16x8U =&gt; visit_i32x4_extend_low_i16x8_u (unary v128)
-            @simd I32x4ExtendHighI16x8U =&gt; visit_i32x4_extend_high_i16x8_u (unary v128)
-            @simd I32x4Shl =&gt; visit_i32x4_shl (shift v128)
-            @simd I32x4ShrS =&gt; visit_i32x4_shr_s (shift v128)
-            @simd I32x4ShrU =&gt; visit_i32x4_shr_u (shift v128)
-            @simd I32x4Add =&gt; visit_i32x4_add (binary v128)
-            @simd I32x4Sub =&gt; visit_i32x4_sub (binary v128)
-            @simd I32x4Mul =&gt; visit_i32x4_mul (binary v128)
-            @simd I32x4MinS =&gt; visit_i32x4_min_s (binary v128)
-            @simd I32x4MinU =&gt; visit_i32x4_min_u (binary v128)
-            @simd I32x4MaxS =&gt; visit_i32x4_max_s (binary v128)
-            @simd I32x4MaxU =&gt; visit_i32x4_max_u (binary v128)
-            @simd I32x4DotI16x8S =&gt; visit_i32x4_dot_i16x8_s (binary v128)
-            @simd I32x4ExtMulLowI16x8S =&gt; visit_i32x4_extmul_low_i16x8_s (binary v128)
-            @simd I32x4ExtMulHighI16x8S =&gt; visit_i32x4_extmul_high_i16x8_s (binary v128)
-            @simd I32x4ExtMulLowI16x8U =&gt; visit_i32x4_extmul_low_i16x8_u (binary v128)
-            @simd I32x4ExtMulHighI16x8U =&gt; visit_i32x4_extmul_high_i16x8_u (binary v128)
-            @simd I64x2Abs =&gt; visit_i64x2_abs (unary v128)
-            @simd I64x2Neg =&gt; visit_i64x2_neg (unary v128)
-            @simd I64x2AllTrue =&gt; visit_i64x2_all_true (test v128)
-            @simd I64x2Bitmask =&gt; visit_i64x2_bitmask (test v128)
-            @simd I64x2ExtendLowI32x4S =&gt; visit_i64x2_extend_low_i32x4_s (unary v128)
-            @simd I64x2ExtendHighI32x4S =&gt; visit_i64x2_extend_high_i32x4_s (unary v128)
-            @simd I64x2ExtendLowI32x4U =&gt; visit_i64x2_extend_low_i32x4_u (unary v128)
-            @simd I64x2ExtendHighI32x4U =&gt; visit_i64x2_extend_high_i32x4_u (unary v128)
-            @simd I64x2Shl =&gt; visit_i64x2_shl (shift v128)
-            @simd I64x2ShrS =&gt; visit_i64x2_shr_s (shift v128)
-            @simd I64x2ShrU =&gt; visit_i64x2_shr_u (shift v128)
-            @simd I64x2Add =&gt; visit_i64x2_add (binary v128)
-            @simd I64x2Sub =&gt; visit_i64x2_sub (binary v128)
-            @simd I64x2Mul =&gt; visit_i64x2_mul (binary v128)
-            @simd I64x2ExtMulLowI32x4S =&gt; visit_i64x2_extmul_low_i32x4_s (binary v128)
-            @simd I64x2ExtMulHighI32x4S =&gt; visit_i64x2_extmul_high_i32x4_s (binary v128)
-            @simd I64x2ExtMulLowI32x4U =&gt; visit_i64x2_extmul_low_i32x4_u (binary v128)
-            @simd I64x2ExtMulHighI32x4U =&gt; visit_i64x2_extmul_high_i32x4_u (binary v128)
-            @simd F32x4Ceil =&gt; visit_f32x4_ceil (unary v128f)
-            @simd F32x4Floor =&gt; visit_f32x4_floor (unary v128f)
-            @simd F32x4Trunc =&gt; visit_f32x4_trunc (unary v128f)
-            @simd F32x4Nearest =&gt; visit_f32x4_nearest (unary v128f)
-            @simd F32x4Abs =&gt; visit_f32x4_abs (unary v128f)
-            @simd F32x4Neg =&gt; visit_f32x4_neg (unary v128f)
-            @simd F32x4Sqrt =&gt; visit_f32x4_sqrt (unary v128f)
-            @simd F32x4Add =&gt; visit_f32x4_add (binary v128f)
-            @simd F32x4Sub =&gt; visit_f32x4_sub (binary v128f)
-            @simd F32x4Mul =&gt; visit_f32x4_mul (binary v128f)
-            @simd F32x4Div =&gt; visit_f32x4_div (binary v128f)
-            @simd F32x4Min =&gt; visit_f32x4_min (binary v128f)
-            @simd F32x4Max =&gt; visit_f32x4_max (binary v128f)
-            @simd F32x4PMin =&gt; visit_f32x4_pmin (binary v128f)
-            @simd F32x4PMax =&gt; visit_f32x4_pmax (binary v128f)
-            @simd F64x2Ceil =&gt; visit_f64x2_ceil (unary v128f)
-            @simd F64x2Floor =&gt; visit_f64x2_floor (unary v128f)
-            @simd F64x2Trunc =&gt; visit_f64x2_trunc (unary v128f)
-            @simd F64x2Nearest =&gt; visit_f64x2_nearest (unary v128f)
-            @simd F64x2Abs =&gt; visit_f64x2_abs (unary v128f)
-            @simd F64x2Neg =&gt; visit_f64x2_neg (unary v128f)
-            @simd F64x2Sqrt =&gt; visit_f64x2_sqrt (unary v128f)
-            @simd F64x2Add =&gt; visit_f64x2_add (binary v128f)
-            @simd F64x2Sub =&gt; visit_f64x2_sub (binary v128f)
-            @simd F64x2Mul =&gt; visit_f64x2_mul (binary v128f)
-            @simd F64x2Div =&gt; visit_f64x2_div (binary v128f)
-            @simd F64x2Min =&gt; visit_f64x2_min (binary v128f)
-            @simd F64x2Max =&gt; visit_f64x2_max (binary v128f)
-            @simd F64x2PMin =&gt; visit_f64x2_pmin (binary v128f)
-            @simd F64x2PMax =&gt; visit_f64x2_pmax (binary v128f)
-            @simd I32x4TruncSatF32x4S =&gt; visit_i32x4_trunc_sat_f32x4_s (unary v128f)
-            @simd I32x4TruncSatF32x4U =&gt; visit_i32x4_trunc_sat_f32x4_u (unary v128f)
-            @simd F32x4ConvertI32x4S =&gt; visit_f32x4_convert_i32x4_s (unary v128f)
-            @simd F32x4ConvertI32x4U =&gt; visit_f32x4_convert_i32x4_u (unary v128f)
-            @simd I32x4TruncSatF64x2SZero =&gt; visit_i32x4_trunc_sat_f64x2_s_zero (unary v128f)
-            @simd I32x4TruncSatF64x2UZero =&gt; visit_i32x4_trunc_sat_f64x2_u_zero (unary v128f)
-            @simd F64x2ConvertLowI32x4S =&gt; visit_f64x2_convert_low_i32x4_s (unary v128f)
-            @simd F64x2ConvertLowI32x4U =&gt; visit_f64x2_convert_low_i32x4_u (unary v128f)
-            @simd F32x4DemoteF64x2Zero =&gt; visit_f32x4_demote_f64x2_zero (unary v128f)
-            @simd F64x2PromoteLowF32x4 =&gt; visit_f64x2_promote_low_f32x4 (unary v128f)
-
-            <span class="comment">// Relaxed SIMD operators
-            // https://github.com/WebAssembly/relaxed-simd
-            </span>@relaxed_simd I8x16RelaxedSwizzle =&gt; visit_i8x16_relaxed_swizzle (binary v128)
-            @relaxed_simd I32x4RelaxedTruncF32x4S =&gt; visit_i32x4_relaxed_trunc_f32x4_s (unary v128)
-            @relaxed_simd I32x4RelaxedTruncF32x4U =&gt; visit_i32x4_relaxed_trunc_f32x4_u (unary v128)
-            @relaxed_simd I32x4RelaxedTruncF64x2SZero =&gt; visit_i32x4_relaxed_trunc_f64x2_s_zero (unary v128)
-            @relaxed_simd I32x4RelaxedTruncF64x2UZero =&gt; visit_i32x4_relaxed_trunc_f64x2_u_zero (unary v128)
-            @relaxed_simd F32x4RelaxedMadd =&gt; visit_f32x4_relaxed_madd (ternary v128)
-            @relaxed_simd F32x4RelaxedNmadd =&gt; visit_f32x4_relaxed_nmadd (ternary v128)
-            @relaxed_simd F64x2RelaxedMadd =&gt; visit_f64x2_relaxed_madd  (ternary v128)
-            @relaxed_simd F64x2RelaxedNmadd =&gt; visit_f64x2_relaxed_nmadd (ternary v128)
-            @relaxed_simd I8x16RelaxedLaneselect =&gt; visit_i8x16_relaxed_laneselect (ternary v128)
-            @relaxed_simd I16x8RelaxedLaneselect =&gt; visit_i16x8_relaxed_laneselect (ternary v128)
-            @relaxed_simd I32x4RelaxedLaneselect =&gt; visit_i32x4_relaxed_laneselect (ternary v128)
-            @relaxed_simd I64x2RelaxedLaneselect =&gt; visit_i64x2_relaxed_laneselect (ternary v128)
-            @relaxed_simd F32x4RelaxedMin =&gt; visit_f32x4_relaxed_min (binary v128)
-            @relaxed_simd F32x4RelaxedMax =&gt; visit_f32x4_relaxed_max (binary v128)
-            @relaxed_simd F64x2RelaxedMin =&gt; visit_f64x2_relaxed_min (binary v128)
-            @relaxed_simd F64x2RelaxedMax =&gt; visit_f64x2_relaxed_max (binary v128)
-            @relaxed_simd I16x8RelaxedQ15mulrS =&gt; visit_i16x8_relaxed_q15mulr_s (binary v128)
-            @relaxed_simd I16x8RelaxedDotI8x16I7x16S =&gt; visit_i16x8_relaxed_dot_i8x16_i7x16_s (binary v128)
-            @relaxed_simd I32x4RelaxedDotI8x16I7x16AddS =&gt; visit_i32x4_relaxed_dot_i8x16_i7x16_add_s (ternary v128)
-
-            <span class="comment">// Typed Function references
-            </span>@function_references CallRef { type_index: u32 } =&gt; visit_call_ref (arity <span class="number">1 </span><span class="kw">type </span>-&gt; <span class="kw">type</span>)
-            @function_references ReturnCallRef { type_index: u32 } =&gt; visit_return_call_ref (arity <span class="number">1 </span><span class="kw">type </span>-&gt; <span class="number">0</span>)
-            @function_references RefAsNonNull =&gt; visit_ref_as_non_null (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @function_references BrOnNull { relative_depth: u32 } =&gt; visit_br_on_null (arity <span class="number">1 </span>br -&gt; <span class="number">1 </span>br)
-            @function_references BrOnNonNull { relative_depth: u32 } =&gt; visit_br_on_non_null (arity br -&gt; br -<span class="number">1</span>)
-
-            <span class="comment">// Stack switching
-            </span>@stack_switching ContNew { cont_type_index: u32 } =&gt; visit_cont_new (arity <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @stack_switching ContBind { argument_index: u32, result_index: u32 } =&gt; visit_cont_bind (arity type_diff <span class="number">1 </span>-&gt; <span class="number">1</span>)
-            @stack_switching Suspend { tag_index: u32 } =&gt; visit_suspend (arity tag -&gt; tag)
-            @stack_switching Resume { cont_type_index: u32, resume_table: <span class="macro-nonterminal">$crate::ResumeTable </span>} =&gt; visit_resume (arity <span class="number">1 </span><span class="kw">type </span>-&gt; <span class="kw">type</span>)
-            @stack_switching ResumeThrow { cont_type_index: u32, tag_index: u32, resume_table: <span class="macro-nonterminal">$crate::ResumeTable </span>} =&gt; visit_resume_throw (arity <span class="number">1 </span>tag -&gt; <span class="kw">type</span>)
-            @stack_switching Switch { cont_type_index: u32, tag_index: u32 } =&gt; visit_switch (arity <span class="kw">type </span>-&gt; ~switch)
-        }
-    };
-}
+<span class="doccomment">/// Used to implement the [`VisitSimdOperator`] trait.
+///
+/// The list of specializable Wasm proposals is as follows:
+///
+/// - `@simd`: [Wasm `simd` proposal]
+/// - `@relaxed_simd`: [Wasm `relaxed-simd` proposal]
+///
+/// For more information about the structure and use of this macro please
+/// refer to the documentation of the [`for_each_operator`] macro.
+///
+/// [Wasm `simd` proposal]:
+/// https://github.com/webassembly/simd
+///
+/// [Wasm `relaxed-simd` proposal]:
+/// https://github.com/WebAssembly/relaxed-simd
+///
+/// [`VisitSimdOperator`]: crate::VisitSimdOperator
+///
+/// ```
+/// # macro_rules! define_visit_operator {
+/// #     ($( @$proposal:ident $op:ident $({ $($arg:ident: $argty:ty),* })? =&gt; $visit:ident ($($ann:tt)*))*) =&gt; {
+/// #         $( fn $visit(&amp;mut self $($(,$arg: $argty)*)?) {} )*
+/// #     }
+/// # }
+/// pub struct VisitAndDoNothing;
+///
+/// impl&lt;'a&gt; wasmparser::VisitOperator&lt;'a&gt; for VisitAndDoNothing {
+///     type Output = ();
+///
+///     // implement all the visit methods ..
+///     # wasmparser::for_each_visit_operator!(define_visit_operator);
+/// }
+///
+/// macro_rules! define_visit_simd_operator {
+///     // The outer layer of repetition represents how all operators are
+///     // provided to the macro at the same time.
+///     //
+///     // The `$proposal` identifier is either `@simd` or `@relaxed_simd`.
+///     //
+///     // The shape of this macro is identical to [`for_each_visit_operator`].
+///     // Please refer to its documentation if you want to learn more.
+///     ($( @$proposal:ident $op:ident $({ $($arg:ident: $argty:ty),* })? =&gt; $visit:ident ($($ann:tt)*))*) =&gt; {
+///         $(
+///             fn $visit(&amp;mut self $($(,$arg: $argty)*)?) {
+///                 // do nothing for this example
+///             }
+///         )*
+///     }
+/// }
+///
+/// impl&lt;'a&gt; wasmparser::VisitSimdOperator&lt;'a&gt; for VisitAndDoNothing {
+///     wasmparser::for_each_visit_simd_operator!(define_visit_simd_operator);
+/// }
+/// ```
+</span><span class="attr">#[cfg(feature = <span class="string">"simd"</span>)]
+#[doc(inline)]
+</span><span class="kw">pub use </span>_for_each_visit_simd_operator_impl <span class="kw">as </span>for_each_visit_simd_operator;
 
 <span class="macro">macro_rules!</span> format_err {
     (<span class="macro-nonterminal">$offset</span>:expr, $(<span class="macro-nonterminal">$arg</span>:tt)<span class="kw-2">*</span>) =&gt; {

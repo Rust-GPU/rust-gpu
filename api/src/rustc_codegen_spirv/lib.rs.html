@@ -551,7 +551,81 @@
 <a href="#550" id="550">550</a>
 <a href="#551" id="551">551</a>
 <a href="#552" id="552">552</a>
-<a href="#553" id="553">553</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
 </span><span class="attr">#![allow(internal_features)]
 #![allow(rustc::diagnostic_outside_of_impl)]
 #![allow(rustc::untranslatable_diagnostic)]
@@ -800,6 +874,11 @@
 </span><span class="kw">struct </span>SpirvCodegenBackend;
 
 <span class="kw">impl </span>CodegenBackend <span class="kw">for </span>SpirvCodegenBackend {
+    <span class="kw">fn </span>init(<span class="kw-2">&amp;</span><span class="self">self</span>, sess: <span class="kw-2">&amp;</span>Session) {
+        <span class="comment">// Set up logging/tracing. See https://github.com/Rust-GPU/rust-gpu/issues/192.
+        </span>init_logging(sess);
+    }
+
     <span class="kw">fn </span>locale_resource(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
         rustc_errors::DEFAULT_LOCALE_RESOURCE
     }
@@ -1103,5 +1182,74 @@
     });
 
     Box::new(SpirvCodegenBackend)
+}
+
+<span class="comment">// Set up logging/tracing. See https://github.com/Rust-GPU/rust-gpu/issues/192.
+</span><span class="kw">fn </span>init_logging(sess: <span class="kw-2">&amp;</span>Session) {
+    <span class="kw">use </span>std::env::{<span class="self">self</span>, VarError};
+    <span class="kw">use </span>std::io::{<span class="self">self</span>, IsTerminal};
+    <span class="kw">use </span>tracing_subscriber::layer::SubscriberExt;
+
+    <span class="comment">// Set up the default subscriber with optional filtering.
+    </span><span class="kw">let </span>filter = tracing_subscriber::EnvFilter::from_env(<span class="string">"RUSTGPU_LOG"</span>);
+    <span class="attr">#[cfg(not(rustc_codegen_spirv_disable_pqp_cg_ssa))]
+    </span><span class="kw">let </span>filter = filter.add_directive(<span class="string">"rustc_codegen_spirv::maybe_pqp_cg_ssa=off"</span>.parse().unwrap());
+    <span class="kw">let </span>subscriber = tracing_subscriber::Registry::default().with(filter);
+
+    <span class="attr">#[derive(Debug, Default)]
+    </span><span class="kw">enum </span>OutputFormat {
+        <span class="attr">#[default]
+        </span>Tree,
+        Flat,
+        Json,
+    }
+
+    <span class="kw">let </span>output_format = <span class="kw">match </span>env::var(<span class="string">"RUSTGPU_LOG_FORMAT"</span>).as_deref() {
+        <span class="prelude-val">Ok</span>(<span class="string">"tree"</span>) | <span class="prelude-val">Err</span>(VarError::NotPresent) =&gt; OutputFormat::Tree,
+        <span class="prelude-val">Ok</span>(<span class="string">"flat"</span>) =&gt; OutputFormat::Flat,
+        <span class="prelude-val">Ok</span>(<span class="string">"json"</span>) =&gt; OutputFormat::Json,
+        <span class="prelude-val">Ok</span>(value) =&gt; sess.dcx().fatal(<span class="macro">format!</span>(
+            <span class="string">"invalid output format value '{value}': expected one of tree, flat, or json"</span>,
+        )),
+        <span class="prelude-val">Err</span>(VarError::NotUnicode(value)) =&gt; sess.dcx().fatal(<span class="macro">format!</span>(
+            <span class="string">"invalid output format value '{}': expected one of tree, flat, or json"</span>,
+            value.to_string_lossy()
+        )),
+    };
+
+    <span class="kw">let </span>subscriber: Box&lt;<span class="kw">dyn </span>tracing::Subscriber + Send + Sync&gt; = <span class="kw">match </span>output_format {
+        OutputFormat::Tree =&gt; {
+            <span class="comment">// TODO(@LegNeato): Query dcx color support when rustc exposes it.
+            </span><span class="kw">let </span>color_logs = <span class="kw">match </span>env::var(<span class="string">"RUSTGPU_LOG_COLOR"</span>).as_deref() {
+                <span class="prelude-val">Ok</span>(<span class="string">"always"</span>) =&gt; <span class="bool-val">true</span>,
+                <span class="prelude-val">Ok</span>(<span class="string">"never"</span>) =&gt; <span class="bool-val">false</span>,
+                <span class="prelude-val">Ok</span>(<span class="string">"auto"</span>) | <span class="prelude-val">Err</span>(VarError::NotPresent) =&gt; io::stderr().is_terminal(),
+                <span class="prelude-val">Ok</span>(value) =&gt; sess.dcx().fatal(<span class="macro">format!</span>(
+                    <span class="string">"invalid log color value '{value}': expected one of always, never, or auto"</span>,
+                )),
+                <span class="prelude-val">Err</span>(VarError::NotUnicode(value)) =&gt; sess.dcx().fatal(<span class="macro">format!</span>(
+                    <span class="string">"invalid log color value '{}': expected one of always, never, or auto"</span>,
+                    value.to_string_lossy()
+                )),
+            };
+
+            <span class="kw">let </span>tree_layer = tracing_tree::HierarchicalLayer::default()
+                .with_writer(io::stderr)
+                .with_ansi(color_logs)
+                .with_targets(<span class="bool-val">true</span>)
+                .with_wraparound(<span class="number">10</span>)
+                .with_verbose_exit(<span class="bool-val">true</span>)
+                .with_verbose_entry(<span class="bool-val">true</span>)
+                .with_indent_amount(<span class="number">2</span>);
+
+            <span class="attr">#[cfg(debug_assertions)]
+            </span><span class="kw">let </span>tree_layer = tree_layer.with_thread_ids(<span class="bool-val">true</span>).with_thread_names(<span class="bool-val">true</span>);
+
+            Box::new(subscriber.with(tree_layer))
+        }
+        OutputFormat::Flat =&gt; Box::new(subscriber),
+        OutputFormat::Json =&gt; Box::new(subscriber.with(tracing_subscriber::fmt::layer().json())),
+    };
+    tracing::subscriber::set_global_default(subscriber).unwrap();
 }
 </code></pre></div></section></main></body></html>

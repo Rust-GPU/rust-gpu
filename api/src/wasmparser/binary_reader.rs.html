@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/wasmparser-0.218.0/src/binary_reader.rs`."><title>binary_reader.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="wasmparser" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">wasmparser/</div>binary_reader.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/wasmparser-0.222.0/src/binary_reader.rs`."><title>binary_reader.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="wasmparser" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">wasmparser/</div>binary_reader.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -1853,294 +1853,7 @@
 <a href="#1852" id="1852">1852</a>
 <a href="#1853" id="1853">1853</a>
 <a href="#1854" id="1854">1854</a>
-<a href="#1855" id="1855">1855</a>
-<a href="#1856" id="1856">1856</a>
-<a href="#1857" id="1857">1857</a>
-<a href="#1858" id="1858">1858</a>
-<a href="#1859" id="1859">1859</a>
-<a href="#1860" id="1860">1860</a>
-<a href="#1861" id="1861">1861</a>
-<a href="#1862" id="1862">1862</a>
-<a href="#1863" id="1863">1863</a>
-<a href="#1864" id="1864">1864</a>
-<a href="#1865" id="1865">1865</a>
-<a href="#1866" id="1866">1866</a>
-<a href="#1867" id="1867">1867</a>
-<a href="#1868" id="1868">1868</a>
-<a href="#1869" id="1869">1869</a>
-<a href="#1870" id="1870">1870</a>
-<a href="#1871" id="1871">1871</a>
-<a href="#1872" id="1872">1872</a>
-<a href="#1873" id="1873">1873</a>
-<a href="#1874" id="1874">1874</a>
-<a href="#1875" id="1875">1875</a>
-<a href="#1876" id="1876">1876</a>
-<a href="#1877" id="1877">1877</a>
-<a href="#1878" id="1878">1878</a>
-<a href="#1879" id="1879">1879</a>
-<a href="#1880" id="1880">1880</a>
-<a href="#1881" id="1881">1881</a>
-<a href="#1882" id="1882">1882</a>
-<a href="#1883" id="1883">1883</a>
-<a href="#1884" id="1884">1884</a>
-<a href="#1885" id="1885">1885</a>
-<a href="#1886" id="1886">1886</a>
-<a href="#1887" id="1887">1887</a>
-<a href="#1888" id="1888">1888</a>
-<a href="#1889" id="1889">1889</a>
-<a href="#1890" id="1890">1890</a>
-<a href="#1891" id="1891">1891</a>
-<a href="#1892" id="1892">1892</a>
-<a href="#1893" id="1893">1893</a>
-<a href="#1894" id="1894">1894</a>
-<a href="#1895" id="1895">1895</a>
-<a href="#1896" id="1896">1896</a>
-<a href="#1897" id="1897">1897</a>
-<a href="#1898" id="1898">1898</a>
-<a href="#1899" id="1899">1899</a>
-<a href="#1900" id="1900">1900</a>
-<a href="#1901" id="1901">1901</a>
-<a href="#1902" id="1902">1902</a>
-<a href="#1903" id="1903">1903</a>
-<a href="#1904" id="1904">1904</a>
-<a href="#1905" id="1905">1905</a>
-<a href="#1906" id="1906">1906</a>
-<a href="#1907" id="1907">1907</a>
-<a href="#1908" id="1908">1908</a>
-<a href="#1909" id="1909">1909</a>
-<a href="#1910" id="1910">1910</a>
-<a href="#1911" id="1911">1911</a>
-<a href="#1912" id="1912">1912</a>
-<a href="#1913" id="1913">1913</a>
-<a href="#1914" id="1914">1914</a>
-<a href="#1915" id="1915">1915</a>
-<a href="#1916" id="1916">1916</a>
-<a href="#1917" id="1917">1917</a>
-<a href="#1918" id="1918">1918</a>
-<a href="#1919" id="1919">1919</a>
-<a href="#1920" id="1920">1920</a>
-<a href="#1921" id="1921">1921</a>
-<a href="#1922" id="1922">1922</a>
-<a href="#1923" id="1923">1923</a>
-<a href="#1924" id="1924">1924</a>
-<a href="#1925" id="1925">1925</a>
-<a href="#1926" id="1926">1926</a>
-<a href="#1927" id="1927">1927</a>
-<a href="#1928" id="1928">1928</a>
-<a href="#1929" id="1929">1929</a>
-<a href="#1930" id="1930">1930</a>
-<a href="#1931" id="1931">1931</a>
-<a href="#1932" id="1932">1932</a>
-<a href="#1933" id="1933">1933</a>
-<a href="#1934" id="1934">1934</a>
-<a href="#1935" id="1935">1935</a>
-<a href="#1936" id="1936">1936</a>
-<a href="#1937" id="1937">1937</a>
-<a href="#1938" id="1938">1938</a>
-<a href="#1939" id="1939">1939</a>
-<a href="#1940" id="1940">1940</a>
-<a href="#1941" id="1941">1941</a>
-<a href="#1942" id="1942">1942</a>
-<a href="#1943" id="1943">1943</a>
-<a href="#1944" id="1944">1944</a>
-<a href="#1945" id="1945">1945</a>
-<a href="#1946" id="1946">1946</a>
-<a href="#1947" id="1947">1947</a>
-<a href="#1948" id="1948">1948</a>
-<a href="#1949" id="1949">1949</a>
-<a href="#1950" id="1950">1950</a>
-<a href="#1951" id="1951">1951</a>
-<a href="#1952" id="1952">1952</a>
-<a href="#1953" id="1953">1953</a>
-<a href="#1954" id="1954">1954</a>
-<a href="#1955" id="1955">1955</a>
-<a href="#1956" id="1956">1956</a>
-<a href="#1957" id="1957">1957</a>
-<a href="#1958" id="1958">1958</a>
-<a href="#1959" id="1959">1959</a>
-<a href="#1960" id="1960">1960</a>
-<a href="#1961" id="1961">1961</a>
-<a href="#1962" id="1962">1962</a>
-<a href="#1963" id="1963">1963</a>
-<a href="#1964" id="1964">1964</a>
-<a href="#1965" id="1965">1965</a>
-<a href="#1966" id="1966">1966</a>
-<a href="#1967" id="1967">1967</a>
-<a href="#1968" id="1968">1968</a>
-<a href="#1969" id="1969">1969</a>
-<a href="#1970" id="1970">1970</a>
-<a href="#1971" id="1971">1971</a>
-<a href="#1972" id="1972">1972</a>
-<a href="#1973" id="1973">1973</a>
-<a href="#1974" id="1974">1974</a>
-<a href="#1975" id="1975">1975</a>
-<a href="#1976" id="1976">1976</a>
-<a href="#1977" id="1977">1977</a>
-<a href="#1978" id="1978">1978</a>
-<a href="#1979" id="1979">1979</a>
-<a href="#1980" id="1980">1980</a>
-<a href="#1981" id="1981">1981</a>
-<a href="#1982" id="1982">1982</a>
-<a href="#1983" id="1983">1983</a>
-<a href="#1984" id="1984">1984</a>
-<a href="#1985" id="1985">1985</a>
-<a href="#1986" id="1986">1986</a>
-<a href="#1987" id="1987">1987</a>
-<a href="#1988" id="1988">1988</a>
-<a href="#1989" id="1989">1989</a>
-<a href="#1990" id="1990">1990</a>
-<a href="#1991" id="1991">1991</a>
-<a href="#1992" id="1992">1992</a>
-<a href="#1993" id="1993">1993</a>
-<a href="#1994" id="1994">1994</a>
-<a href="#1995" id="1995">1995</a>
-<a href="#1996" id="1996">1996</a>
-<a href="#1997" id="1997">1997</a>
-<a href="#1998" id="1998">1998</a>
-<a href="#1999" id="1999">1999</a>
-<a href="#2000" id="2000">2000</a>
-<a href="#2001" id="2001">2001</a>
-<a href="#2002" id="2002">2002</a>
-<a href="#2003" id="2003">2003</a>
-<a href="#2004" id="2004">2004</a>
-<a href="#2005" id="2005">2005</a>
-<a href="#2006" id="2006">2006</a>
-<a href="#2007" id="2007">2007</a>
-<a href="#2008" id="2008">2008</a>
-<a href="#2009" id="2009">2009</a>
-<a href="#2010" id="2010">2010</a>
-<a href="#2011" id="2011">2011</a>
-<a href="#2012" id="2012">2012</a>
-<a href="#2013" id="2013">2013</a>
-<a href="#2014" id="2014">2014</a>
-<a href="#2015" id="2015">2015</a>
-<a href="#2016" id="2016">2016</a>
-<a href="#2017" id="2017">2017</a>
-<a href="#2018" id="2018">2018</a>
-<a href="#2019" id="2019">2019</a>
-<a href="#2020" id="2020">2020</a>
-<a href="#2021" id="2021">2021</a>
-<a href="#2022" id="2022">2022</a>
-<a href="#2023" id="2023">2023</a>
-<a href="#2024" id="2024">2024</a>
-<a href="#2025" id="2025">2025</a>
-<a href="#2026" id="2026">2026</a>
-<a href="#2027" id="2027">2027</a>
-<a href="#2028" id="2028">2028</a>
-<a href="#2029" id="2029">2029</a>
-<a href="#2030" id="2030">2030</a>
-<a href="#2031" id="2031">2031</a>
-<a href="#2032" id="2032">2032</a>
-<a href="#2033" id="2033">2033</a>
-<a href="#2034" id="2034">2034</a>
-<a href="#2035" id="2035">2035</a>
-<a href="#2036" id="2036">2036</a>
-<a href="#2037" id="2037">2037</a>
-<a href="#2038" id="2038">2038</a>
-<a href="#2039" id="2039">2039</a>
-<a href="#2040" id="2040">2040</a>
-<a href="#2041" id="2041">2041</a>
-<a href="#2042" id="2042">2042</a>
-<a href="#2043" id="2043">2043</a>
-<a href="#2044" id="2044">2044</a>
-<a href="#2045" id="2045">2045</a>
-<a href="#2046" id="2046">2046</a>
-<a href="#2047" id="2047">2047</a>
-<a href="#2048" id="2048">2048</a>
-<a href="#2049" id="2049">2049</a>
-<a href="#2050" id="2050">2050</a>
-<a href="#2051" id="2051">2051</a>
-<a href="#2052" id="2052">2052</a>
-<a href="#2053" id="2053">2053</a>
-<a href="#2054" id="2054">2054</a>
-<a href="#2055" id="2055">2055</a>
-<a href="#2056" id="2056">2056</a>
-<a href="#2057" id="2057">2057</a>
-<a href="#2058" id="2058">2058</a>
-<a href="#2059" id="2059">2059</a>
-<a href="#2060" id="2060">2060</a>
-<a href="#2061" id="2061">2061</a>
-<a href="#2062" id="2062">2062</a>
-<a href="#2063" id="2063">2063</a>
-<a href="#2064" id="2064">2064</a>
-<a href="#2065" id="2065">2065</a>
-<a href="#2066" id="2066">2066</a>
-<a href="#2067" id="2067">2067</a>
-<a href="#2068" id="2068">2068</a>
-<a href="#2069" id="2069">2069</a>
-<a href="#2070" id="2070">2070</a>
-<a href="#2071" id="2071">2071</a>
-<a href="#2072" id="2072">2072</a>
-<a href="#2073" id="2073">2073</a>
-<a href="#2074" id="2074">2074</a>
-<a href="#2075" id="2075">2075</a>
-<a href="#2076" id="2076">2076</a>
-<a href="#2077" id="2077">2077</a>
-<a href="#2078" id="2078">2078</a>
-<a href="#2079" id="2079">2079</a>
-<a href="#2080" id="2080">2080</a>
-<a href="#2081" id="2081">2081</a>
-<a href="#2082" id="2082">2082</a>
-<a href="#2083" id="2083">2083</a>
-<a href="#2084" id="2084">2084</a>
-<a href="#2085" id="2085">2085</a>
-<a href="#2086" id="2086">2086</a>
-<a href="#2087" id="2087">2087</a>
-<a href="#2088" id="2088">2088</a>
-<a href="#2089" id="2089">2089</a>
-<a href="#2090" id="2090">2090</a>
-<a href="#2091" id="2091">2091</a>
-<a href="#2092" id="2092">2092</a>
-<a href="#2093" id="2093">2093</a>
-<a href="#2094" id="2094">2094</a>
-<a href="#2095" id="2095">2095</a>
-<a href="#2096" id="2096">2096</a>
-<a href="#2097" id="2097">2097</a>
-<a href="#2098" id="2098">2098</a>
-<a href="#2099" id="2099">2099</a>
-<a href="#2100" id="2100">2100</a>
-<a href="#2101" id="2101">2101</a>
-<a href="#2102" id="2102">2102</a>
-<a href="#2103" id="2103">2103</a>
-<a href="#2104" id="2104">2104</a>
-<a href="#2105" id="2105">2105</a>
-<a href="#2106" id="2106">2106</a>
-<a href="#2107" id="2107">2107</a>
-<a href="#2108" id="2108">2108</a>
-<a href="#2109" id="2109">2109</a>
-<a href="#2110" id="2110">2110</a>
-<a href="#2111" id="2111">2111</a>
-<a href="#2112" id="2112">2112</a>
-<a href="#2113" id="2113">2113</a>
-<a href="#2114" id="2114">2114</a>
-<a href="#2115" id="2115">2115</a>
-<a href="#2116" id="2116">2116</a>
-<a href="#2117" id="2117">2117</a>
-<a href="#2118" id="2118">2118</a>
-<a href="#2119" id="2119">2119</a>
-<a href="#2120" id="2120">2120</a>
-<a href="#2121" id="2121">2121</a>
-<a href="#2122" id="2122">2122</a>
-<a href="#2123" id="2123">2123</a>
-<a href="#2124" id="2124">2124</a>
-<a href="#2125" id="2125">2125</a>
-<a href="#2126" id="2126">2126</a>
-<a href="#2127" id="2127">2127</a>
-<a href="#2128" id="2128">2128</a>
-<a href="#2129" id="2129">2129</a>
-<a href="#2130" id="2130">2130</a>
-<a href="#2131" id="2131">2131</a>
-<a href="#2132" id="2132">2132</a>
-<a href="#2133" id="2133">2133</a>
-<a href="#2134" id="2134">2134</a>
-<a href="#2135" id="2135">2135</a>
-<a href="#2136" id="2136">2136</a>
-<a href="#2137" id="2137">2137</a>
-<a href="#2138" id="2138">2138</a>
-<a href="#2139" id="2139">2139</a>
-<a href="#2140" id="2140">2140</a>
-<a href="#2141" id="2141">2141</a>
-<a href="#2142" id="2142">2142</a></pre></div><pre class="rust"><code><span class="comment">/* Copyright 2018 Mozilla Foundation
+<a href="#1855" id="1855">1855</a></pre></div><pre class="rust"><code><span class="comment">/* Copyright 2018 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2155,7 +1868,10 @@
  * limitations under the License.
  */
 
-</span><span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
+</span><span class="attr">#[cfg(feature = <span class="string">"simd"</span>)]
+</span><span class="kw">mod </span>simd;
+
+<span class="kw">use </span><span class="kw">crate</span>::prelude::<span class="kw-2">*</span>;
 <span class="kw">use crate</span>::{limits::<span class="kw-2">*</span>, <span class="kw-2">*</span>};
 <span class="kw">use </span>core::fmt;
 <span class="kw">use </span>core::marker;
@@ -2192,6 +1908,9 @@
 
 <span class="attr">#[cfg(feature = <span class="string">"std"</span>)]
 </span><span class="kw">impl </span>std::error::Error <span class="kw">for </span>BinaryReaderError {}
+
+<span class="attr">#[cfg(all(not(feature = <span class="string">"std"</span>), core_error))]
+</span><span class="kw">impl </span>core::error::Error <span class="kw">for </span>BinaryReaderError {}
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>BinaryReaderError {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter) -&gt; fmt::Result {
@@ -2252,7 +1971,7 @@
         <span class="self">self</span>.inner.offset
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">"validate"</span>)]
+    <span class="attr">#[cfg(all(feature = <span class="string">"validate"</span>, feature = <span class="string">"component-model"</span>))]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>add_context(<span class="kw-2">&amp;mut </span><span class="self">self</span>, context: String) {
         <span class="self">self</span>.inner.message = <span class="macro">format!</span>(<span class="string">"{context}\n{}"</span>, <span class="self">self</span>.inner.message);
     }
@@ -2988,7 +2707,7 @@
     /// Store an offset for use in diagnostics or any other purposes:
     ///
     /// ```
-    /// # use wasmparser::{BinaryReader, VisitOperator, Result, for_each_operator};
+    /// # use wasmparser::{BinaryReader, VisitOperator, Result, for_each_visit_operator};
     ///
     /// pub fn dump(mut reader: BinaryReader) -&gt; Result&lt;()&gt; {
     ///     let mut visitor = Dumper { offset: 0 };
@@ -3015,7 +2734,7 @@
     ///
     /// impl&lt;'a&gt; VisitOperator&lt;'a&gt; for Dumper {
     ///     type Output = ();
-    ///     for_each_operator!(define_visit_operator);
+    ///     for_each_visit_operator!(define_visit_operator);
     /// }
     ///
     /// ```
@@ -3262,7 +2981,13 @@
 
             <span class="number">0xfb </span>=&gt; <span class="self">self</span>.visit_0xfb_operator(pos, visitor)<span class="question-mark">?</span>,
             <span class="number">0xfc </span>=&gt; <span class="self">self</span>.visit_0xfc_operator(pos, visitor)<span class="question-mark">?</span>,
-            <span class="number">0xfd </span>=&gt; <span class="self">self</span>.visit_0xfd_operator(pos, visitor)<span class="question-mark">?</span>,
+            <span class="number">0xfd </span>=&gt; {
+                <span class="attr">#[cfg(feature = <span class="string">"simd"</span>)]
+                </span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>visitor) = visitor.simd_visitor() {
+                    <span class="kw">return </span><span class="self">self</span>.visit_0xfd_operator(pos, <span class="kw-2">&amp;mut </span>visitor);
+                }
+                <span class="macro">bail!</span>(pos, <span class="string">"unexpected SIMD opcode: 0x{code:x}"</span>)
+            }
             <span class="number">0xfe </span>=&gt; <span class="self">self</span>.visit_0xfe_operator(pos, visitor)<span class="question-mark">?</span>,
 
             <span class="kw">_ </span>=&gt; <span class="macro">bail!</span>(pos, <span class="string">"illegal opcode: 0x{code:x}"</span>),
@@ -3499,323 +3224,12 @@
                 visitor.visit_memory_discard(mem)
             }
 
+            <span class="number">0x13 </span>=&gt; visitor.visit_i64_add128(),
+            <span class="number">0x14 </span>=&gt; visitor.visit_i64_sub128(),
+            <span class="number">0x15 </span>=&gt; visitor.visit_i64_mul_wide_s(),
+            <span class="number">0x16 </span>=&gt; visitor.visit_i64_mul_wide_u(),
+
             <span class="kw">_ </span>=&gt; <span class="macro">bail!</span>(pos, <span class="string">"unknown 0xfc subopcode: 0x{code:x}"</span>),
-        })
-    }
-
-    <span class="kw">fn </span>visit_0xfd_operator&lt;T&gt;(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        pos: usize,
-        visitor: <span class="kw-2">&amp;mut </span>T,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;&lt;T <span class="kw">as </span>VisitOperator&lt;<span class="lifetime">'a</span>&gt;&gt;::Output&gt;
-    <span class="kw">where
-        </span>T: VisitOperator&lt;<span class="lifetime">'a</span>&gt;,
-    {
-        <span class="kw">let </span>code = <span class="self">self</span>.read_var_u32()<span class="question-mark">?</span>;
-        <span class="prelude-val">Ok</span>(<span class="kw">match </span>code {
-            <span class="number">0x00 </span>=&gt; visitor.visit_v128_load(<span class="self">self</span>.read_memarg(<span class="number">4</span>)<span class="question-mark">?</span>),
-            <span class="number">0x01 </span>=&gt; visitor.visit_v128_load8x8_s(<span class="self">self</span>.read_memarg(<span class="number">3</span>)<span class="question-mark">?</span>),
-            <span class="number">0x02 </span>=&gt; visitor.visit_v128_load8x8_u(<span class="self">self</span>.read_memarg(<span class="number">3</span>)<span class="question-mark">?</span>),
-            <span class="number">0x03 </span>=&gt; visitor.visit_v128_load16x4_s(<span class="self">self</span>.read_memarg(<span class="number">3</span>)<span class="question-mark">?</span>),
-            <span class="number">0x04 </span>=&gt; visitor.visit_v128_load16x4_u(<span class="self">self</span>.read_memarg(<span class="number">3</span>)<span class="question-mark">?</span>),
-            <span class="number">0x05 </span>=&gt; visitor.visit_v128_load32x2_s(<span class="self">self</span>.read_memarg(<span class="number">3</span>)<span class="question-mark">?</span>),
-            <span class="number">0x06 </span>=&gt; visitor.visit_v128_load32x2_u(<span class="self">self</span>.read_memarg(<span class="number">3</span>)<span class="question-mark">?</span>),
-            <span class="number">0x07 </span>=&gt; visitor.visit_v128_load8_splat(<span class="self">self</span>.read_memarg(<span class="number">0</span>)<span class="question-mark">?</span>),
-            <span class="number">0x08 </span>=&gt; visitor.visit_v128_load16_splat(<span class="self">self</span>.read_memarg(<span class="number">1</span>)<span class="question-mark">?</span>),
-            <span class="number">0x09 </span>=&gt; visitor.visit_v128_load32_splat(<span class="self">self</span>.read_memarg(<span class="number">2</span>)<span class="question-mark">?</span>),
-            <span class="number">0x0a </span>=&gt; visitor.visit_v128_load64_splat(<span class="self">self</span>.read_memarg(<span class="number">3</span>)<span class="question-mark">?</span>),
-
-            <span class="number">0x0b </span>=&gt; visitor.visit_v128_store(<span class="self">self</span>.read_memarg(<span class="number">4</span>)<span class="question-mark">?</span>),
-            <span class="number">0x0c </span>=&gt; visitor.visit_v128_const(<span class="self">self</span>.read_v128()<span class="question-mark">?</span>),
-            <span class="number">0x0d </span>=&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>lanes: [u8; <span class="number">16</span>] = [<span class="number">0</span>; <span class="number">16</span>];
-                <span class="kw">for </span>lane <span class="kw">in </span><span class="kw-2">&amp;mut </span>lanes {
-                    <span class="kw-2">*</span>lane = <span class="self">self</span>.read_lane_index(<span class="number">32</span>)<span class="question-mark">?
-                </span>}
-                visitor.visit_i8x16_shuffle(lanes)
-            }
-
-            <span class="number">0x0e </span>=&gt; visitor.visit_i8x16_swizzle(),
-            <span class="number">0x0f </span>=&gt; visitor.visit_i8x16_splat(),
-            <span class="number">0x10 </span>=&gt; visitor.visit_i16x8_splat(),
-            <span class="number">0x11 </span>=&gt; visitor.visit_i32x4_splat(),
-            <span class="number">0x12 </span>=&gt; visitor.visit_i64x2_splat(),
-            <span class="number">0x13 </span>=&gt; visitor.visit_f32x4_splat(),
-            <span class="number">0x14 </span>=&gt; visitor.visit_f64x2_splat(),
-
-            <span class="number">0x15 </span>=&gt; visitor.visit_i8x16_extract_lane_s(<span class="self">self</span>.read_lane_index(<span class="number">16</span>)<span class="question-mark">?</span>),
-            <span class="number">0x16 </span>=&gt; visitor.visit_i8x16_extract_lane_u(<span class="self">self</span>.read_lane_index(<span class="number">16</span>)<span class="question-mark">?</span>),
-            <span class="number">0x17 </span>=&gt; visitor.visit_i8x16_replace_lane(<span class="self">self</span>.read_lane_index(<span class="number">16</span>)<span class="question-mark">?</span>),
-            <span class="number">0x18 </span>=&gt; visitor.visit_i16x8_extract_lane_s(<span class="self">self</span>.read_lane_index(<span class="number">8</span>)<span class="question-mark">?</span>),
-            <span class="number">0x19 </span>=&gt; visitor.visit_i16x8_extract_lane_u(<span class="self">self</span>.read_lane_index(<span class="number">8</span>)<span class="question-mark">?</span>),
-            <span class="number">0x1a </span>=&gt; visitor.visit_i16x8_replace_lane(<span class="self">self</span>.read_lane_index(<span class="number">8</span>)<span class="question-mark">?</span>),
-            <span class="number">0x1b </span>=&gt; visitor.visit_i32x4_extract_lane(<span class="self">self</span>.read_lane_index(<span class="number">4</span>)<span class="question-mark">?</span>),
-
-            <span class="number">0x1c </span>=&gt; visitor.visit_i32x4_replace_lane(<span class="self">self</span>.read_lane_index(<span class="number">4</span>)<span class="question-mark">?</span>),
-            <span class="number">0x1d </span>=&gt; visitor.visit_i64x2_extract_lane(<span class="self">self</span>.read_lane_index(<span class="number">2</span>)<span class="question-mark">?</span>),
-            <span class="number">0x1e </span>=&gt; visitor.visit_i64x2_replace_lane(<span class="self">self</span>.read_lane_index(<span class="number">2</span>)<span class="question-mark">?</span>),
-            <span class="number">0x1f </span>=&gt; visitor.visit_f32x4_extract_lane(<span class="self">self</span>.read_lane_index(<span class="number">4</span>)<span class="question-mark">?</span>),
-            <span class="number">0x20 </span>=&gt; visitor.visit_f32x4_replace_lane(<span class="self">self</span>.read_lane_index(<span class="number">4</span>)<span class="question-mark">?</span>),
-            <span class="number">0x21 </span>=&gt; visitor.visit_f64x2_extract_lane(<span class="self">self</span>.read_lane_index(<span class="number">2</span>)<span class="question-mark">?</span>),
-            <span class="number">0x22 </span>=&gt; visitor.visit_f64x2_replace_lane(<span class="self">self</span>.read_lane_index(<span class="number">2</span>)<span class="question-mark">?</span>),
-
-            <span class="number">0x23 </span>=&gt; visitor.visit_i8x16_eq(),
-            <span class="number">0x24 </span>=&gt; visitor.visit_i8x16_ne(),
-            <span class="number">0x25 </span>=&gt; visitor.visit_i8x16_lt_s(),
-            <span class="number">0x26 </span>=&gt; visitor.visit_i8x16_lt_u(),
-            <span class="number">0x27 </span>=&gt; visitor.visit_i8x16_gt_s(),
-            <span class="number">0x28 </span>=&gt; visitor.visit_i8x16_gt_u(),
-            <span class="number">0x29 </span>=&gt; visitor.visit_i8x16_le_s(),
-            <span class="number">0x2a </span>=&gt; visitor.visit_i8x16_le_u(),
-            <span class="number">0x2b </span>=&gt; visitor.visit_i8x16_ge_s(),
-            <span class="number">0x2c </span>=&gt; visitor.visit_i8x16_ge_u(),
-            <span class="number">0x2d </span>=&gt; visitor.visit_i16x8_eq(),
-            <span class="number">0x2e </span>=&gt; visitor.visit_i16x8_ne(),
-            <span class="number">0x2f </span>=&gt; visitor.visit_i16x8_lt_s(),
-            <span class="number">0x30 </span>=&gt; visitor.visit_i16x8_lt_u(),
-            <span class="number">0x31 </span>=&gt; visitor.visit_i16x8_gt_s(),
-            <span class="number">0x32 </span>=&gt; visitor.visit_i16x8_gt_u(),
-            <span class="number">0x33 </span>=&gt; visitor.visit_i16x8_le_s(),
-            <span class="number">0x34 </span>=&gt; visitor.visit_i16x8_le_u(),
-            <span class="number">0x35 </span>=&gt; visitor.visit_i16x8_ge_s(),
-            <span class="number">0x36 </span>=&gt; visitor.visit_i16x8_ge_u(),
-            <span class="number">0x37 </span>=&gt; visitor.visit_i32x4_eq(),
-            <span class="number">0x38 </span>=&gt; visitor.visit_i32x4_ne(),
-            <span class="number">0x39 </span>=&gt; visitor.visit_i32x4_lt_s(),
-            <span class="number">0x3a </span>=&gt; visitor.visit_i32x4_lt_u(),
-            <span class="number">0x3b </span>=&gt; visitor.visit_i32x4_gt_s(),
-            <span class="number">0x3c </span>=&gt; visitor.visit_i32x4_gt_u(),
-            <span class="number">0x3d </span>=&gt; visitor.visit_i32x4_le_s(),
-            <span class="number">0x3e </span>=&gt; visitor.visit_i32x4_le_u(),
-            <span class="number">0x3f </span>=&gt; visitor.visit_i32x4_ge_s(),
-            <span class="number">0x40 </span>=&gt; visitor.visit_i32x4_ge_u(),
-            <span class="number">0x41 </span>=&gt; visitor.visit_f32x4_eq(),
-            <span class="number">0x42 </span>=&gt; visitor.visit_f32x4_ne(),
-            <span class="number">0x43 </span>=&gt; visitor.visit_f32x4_lt(),
-            <span class="number">0x44 </span>=&gt; visitor.visit_f32x4_gt(),
-            <span class="number">0x45 </span>=&gt; visitor.visit_f32x4_le(),
-            <span class="number">0x46 </span>=&gt; visitor.visit_f32x4_ge(),
-            <span class="number">0x47 </span>=&gt; visitor.visit_f64x2_eq(),
-            <span class="number">0x48 </span>=&gt; visitor.visit_f64x2_ne(),
-            <span class="number">0x49 </span>=&gt; visitor.visit_f64x2_lt(),
-            <span class="number">0x4a </span>=&gt; visitor.visit_f64x2_gt(),
-            <span class="number">0x4b </span>=&gt; visitor.visit_f64x2_le(),
-            <span class="number">0x4c </span>=&gt; visitor.visit_f64x2_ge(),
-            <span class="number">0x4d </span>=&gt; visitor.visit_v128_not(),
-            <span class="number">0x4e </span>=&gt; visitor.visit_v128_and(),
-            <span class="number">0x4f </span>=&gt; visitor.visit_v128_andnot(),
-            <span class="number">0x50 </span>=&gt; visitor.visit_v128_or(),
-            <span class="number">0x51 </span>=&gt; visitor.visit_v128_xor(),
-            <span class="number">0x52 </span>=&gt; visitor.visit_v128_bitselect(),
-            <span class="number">0x53 </span>=&gt; visitor.visit_v128_any_true(),
-
-            <span class="number">0x54 </span>=&gt; {
-                <span class="kw">let </span>memarg = <span class="self">self</span>.read_memarg(<span class="number">0</span>)<span class="question-mark">?</span>;
-                <span class="kw">let </span>lane = <span class="self">self</span>.read_lane_index(<span class="number">16</span>)<span class="question-mark">?</span>;
-                visitor.visit_v128_load8_lane(memarg, lane)
-            }
-            <span class="number">0x55 </span>=&gt; {
-                <span class="kw">let </span>memarg = <span class="self">self</span>.read_memarg(<span class="number">1</span>)<span class="question-mark">?</span>;
-                <span class="kw">let </span>lane = <span class="self">self</span>.read_lane_index(<span class="number">8</span>)<span class="question-mark">?</span>;
-                visitor.visit_v128_load16_lane(memarg, lane)
-            }
-            <span class="number">0x56 </span>=&gt; {
-                <span class="kw">let </span>memarg = <span class="self">self</span>.read_memarg(<span class="number">2</span>)<span class="question-mark">?</span>;
-                <span class="kw">let </span>lane = <span class="self">self</span>.read_lane_index(<span class="number">4</span>)<span class="question-mark">?</span>;
-                visitor.visit_v128_load32_lane(memarg, lane)
-            }
-            <span class="number">0x57 </span>=&gt; {
-                <span class="kw">let </span>memarg = <span class="self">self</span>.read_memarg(<span class="number">3</span>)<span class="question-mark">?</span>;
-                <span class="kw">let </span>lane = <span class="self">self</span>.read_lane_index(<span class="number">2</span>)<span class="question-mark">?</span>;
-                visitor.visit_v128_load64_lane(memarg, lane)
-            }
-            <span class="number">0x58 </span>=&gt; {
-                <span class="kw">let </span>memarg = <span class="self">self</span>.read_memarg(<span class="number">0</span>)<span class="question-mark">?</span>;
-                <span class="kw">let </span>lane = <span class="self">self</span>.read_lane_index(<span class="number">16</span>)<span class="question-mark">?</span>;
-                visitor.visit_v128_store8_lane(memarg, lane)
-            }
-            <span class="number">0x59 </span>=&gt; {
-                <span class="kw">let </span>memarg = <span class="self">self</span>.read_memarg(<span class="number">1</span>)<span class="question-mark">?</span>;
-                <span class="kw">let </span>lane = <span class="self">self</span>.read_lane_index(<span class="number">8</span>)<span class="question-mark">?</span>;
-                visitor.visit_v128_store16_lane(memarg, lane)
-            }
-            <span class="number">0x5a </span>=&gt; {
-                <span class="kw">let </span>memarg = <span class="self">self</span>.read_memarg(<span class="number">2</span>)<span class="question-mark">?</span>;
-                <span class="kw">let </span>lane = <span class="self">self</span>.read_lane_index(<span class="number">4</span>)<span class="question-mark">?</span>;
-                visitor.visit_v128_store32_lane(memarg, lane)
-            }
-            <span class="number">0x5b </span>=&gt; {
-                <span class="kw">let </span>memarg = <span class="self">self</span>.read_memarg(<span class="number">3</span>)<span class="question-mark">?</span>;
-                <span class="kw">let </span>lane = <span class="self">self</span>.read_lane_index(<span class="number">2</span>)<span class="question-mark">?</span>;
-                visitor.visit_v128_store64_lane(memarg, lane)
-            }
-
-            <span class="number">0x5c </span>=&gt; visitor.visit_v128_load32_zero(<span class="self">self</span>.read_memarg(<span class="number">2</span>)<span class="question-mark">?</span>),
-            <span class="number">0x5d </span>=&gt; visitor.visit_v128_load64_zero(<span class="self">self</span>.read_memarg(<span class="number">3</span>)<span class="question-mark">?</span>),
-            <span class="number">0x5e </span>=&gt; visitor.visit_f32x4_demote_f64x2_zero(),
-            <span class="number">0x5f </span>=&gt; visitor.visit_f64x2_promote_low_f32x4(),
-            <span class="number">0x60 </span>=&gt; visitor.visit_i8x16_abs(),
-            <span class="number">0x61 </span>=&gt; visitor.visit_i8x16_neg(),
-            <span class="number">0x62 </span>=&gt; visitor.visit_i8x16_popcnt(),
-            <span class="number">0x63 </span>=&gt; visitor.visit_i8x16_all_true(),
-            <span class="number">0x64 </span>=&gt; visitor.visit_i8x16_bitmask(),
-            <span class="number">0x65 </span>=&gt; visitor.visit_i8x16_narrow_i16x8_s(),
-            <span class="number">0x66 </span>=&gt; visitor.visit_i8x16_narrow_i16x8_u(),
-            <span class="number">0x67 </span>=&gt; visitor.visit_f32x4_ceil(),
-            <span class="number">0x68 </span>=&gt; visitor.visit_f32x4_floor(),
-            <span class="number">0x69 </span>=&gt; visitor.visit_f32x4_trunc(),
-            <span class="number">0x6a </span>=&gt; visitor.visit_f32x4_nearest(),
-            <span class="number">0x6b </span>=&gt; visitor.visit_i8x16_shl(),
-            <span class="number">0x6c </span>=&gt; visitor.visit_i8x16_shr_s(),
-            <span class="number">0x6d </span>=&gt; visitor.visit_i8x16_shr_u(),
-            <span class="number">0x6e </span>=&gt; visitor.visit_i8x16_add(),
-            <span class="number">0x6f </span>=&gt; visitor.visit_i8x16_add_sat_s(),
-            <span class="number">0x70 </span>=&gt; visitor.visit_i8x16_add_sat_u(),
-            <span class="number">0x71 </span>=&gt; visitor.visit_i8x16_sub(),
-            <span class="number">0x72 </span>=&gt; visitor.visit_i8x16_sub_sat_s(),
-            <span class="number">0x73 </span>=&gt; visitor.visit_i8x16_sub_sat_u(),
-            <span class="number">0x74 </span>=&gt; visitor.visit_f64x2_ceil(),
-            <span class="number">0x75 </span>=&gt; visitor.visit_f64x2_floor(),
-            <span class="number">0x76 </span>=&gt; visitor.visit_i8x16_min_s(),
-            <span class="number">0x77 </span>=&gt; visitor.visit_i8x16_min_u(),
-            <span class="number">0x78 </span>=&gt; visitor.visit_i8x16_max_s(),
-            <span class="number">0x79 </span>=&gt; visitor.visit_i8x16_max_u(),
-            <span class="number">0x7a </span>=&gt; visitor.visit_f64x2_trunc(),
-            <span class="number">0x7b </span>=&gt; visitor.visit_i8x16_avgr_u(),
-            <span class="number">0x7c </span>=&gt; visitor.visit_i16x8_extadd_pairwise_i8x16_s(),
-            <span class="number">0x7d </span>=&gt; visitor.visit_i16x8_extadd_pairwise_i8x16_u(),
-            <span class="number">0x7e </span>=&gt; visitor.visit_i32x4_extadd_pairwise_i16x8_s(),
-            <span class="number">0x7f </span>=&gt; visitor.visit_i32x4_extadd_pairwise_i16x8_u(),
-            <span class="number">0x80 </span>=&gt; visitor.visit_i16x8_abs(),
-            <span class="number">0x81 </span>=&gt; visitor.visit_i16x8_neg(),
-            <span class="number">0x82 </span>=&gt; visitor.visit_i16x8_q15mulr_sat_s(),
-            <span class="number">0x83 </span>=&gt; visitor.visit_i16x8_all_true(),
-            <span class="number">0x84 </span>=&gt; visitor.visit_i16x8_bitmask(),
-            <span class="number">0x85 </span>=&gt; visitor.visit_i16x8_narrow_i32x4_s(),
-            <span class="number">0x86 </span>=&gt; visitor.visit_i16x8_narrow_i32x4_u(),
-            <span class="number">0x87 </span>=&gt; visitor.visit_i16x8_extend_low_i8x16_s(),
-            <span class="number">0x88 </span>=&gt; visitor.visit_i16x8_extend_high_i8x16_s(),
-            <span class="number">0x89 </span>=&gt; visitor.visit_i16x8_extend_low_i8x16_u(),
-            <span class="number">0x8a </span>=&gt; visitor.visit_i16x8_extend_high_i8x16_u(),
-            <span class="number">0x8b </span>=&gt; visitor.visit_i16x8_shl(),
-            <span class="number">0x8c </span>=&gt; visitor.visit_i16x8_shr_s(),
-            <span class="number">0x8d </span>=&gt; visitor.visit_i16x8_shr_u(),
-            <span class="number">0x8e </span>=&gt; visitor.visit_i16x8_add(),
-            <span class="number">0x8f </span>=&gt; visitor.visit_i16x8_add_sat_s(),
-            <span class="number">0x90 </span>=&gt; visitor.visit_i16x8_add_sat_u(),
-            <span class="number">0x91 </span>=&gt; visitor.visit_i16x8_sub(),
-            <span class="number">0x92 </span>=&gt; visitor.visit_i16x8_sub_sat_s(),
-            <span class="number">0x93 </span>=&gt; visitor.visit_i16x8_sub_sat_u(),
-            <span class="number">0x94 </span>=&gt; visitor.visit_f64x2_nearest(),
-            <span class="number">0x95 </span>=&gt; visitor.visit_i16x8_mul(),
-            <span class="number">0x96 </span>=&gt; visitor.visit_i16x8_min_s(),
-            <span class="number">0x97 </span>=&gt; visitor.visit_i16x8_min_u(),
-            <span class="number">0x98 </span>=&gt; visitor.visit_i16x8_max_s(),
-            <span class="number">0x99 </span>=&gt; visitor.visit_i16x8_max_u(),
-            <span class="number">0x9b </span>=&gt; visitor.visit_i16x8_avgr_u(),
-            <span class="number">0x9c </span>=&gt; visitor.visit_i16x8_extmul_low_i8x16_s(),
-            <span class="number">0x9d </span>=&gt; visitor.visit_i16x8_extmul_high_i8x16_s(),
-            <span class="number">0x9e </span>=&gt; visitor.visit_i16x8_extmul_low_i8x16_u(),
-            <span class="number">0x9f </span>=&gt; visitor.visit_i16x8_extmul_high_i8x16_u(),
-            <span class="number">0xa0 </span>=&gt; visitor.visit_i32x4_abs(),
-            <span class="number">0xa1 </span>=&gt; visitor.visit_i32x4_neg(),
-            <span class="number">0xa3 </span>=&gt; visitor.visit_i32x4_all_true(),
-            <span class="number">0xa4 </span>=&gt; visitor.visit_i32x4_bitmask(),
-            <span class="number">0xa7 </span>=&gt; visitor.visit_i32x4_extend_low_i16x8_s(),
-            <span class="number">0xa8 </span>=&gt; visitor.visit_i32x4_extend_high_i16x8_s(),
-            <span class="number">0xa9 </span>=&gt; visitor.visit_i32x4_extend_low_i16x8_u(),
-            <span class="number">0xaa </span>=&gt; visitor.visit_i32x4_extend_high_i16x8_u(),
-            <span class="number">0xab </span>=&gt; visitor.visit_i32x4_shl(),
-            <span class="number">0xac </span>=&gt; visitor.visit_i32x4_shr_s(),
-            <span class="number">0xad </span>=&gt; visitor.visit_i32x4_shr_u(),
-            <span class="number">0xae </span>=&gt; visitor.visit_i32x4_add(),
-            <span class="number">0xb1 </span>=&gt; visitor.visit_i32x4_sub(),
-            <span class="number">0xb5 </span>=&gt; visitor.visit_i32x4_mul(),
-            <span class="number">0xb6 </span>=&gt; visitor.visit_i32x4_min_s(),
-            <span class="number">0xb7 </span>=&gt; visitor.visit_i32x4_min_u(),
-            <span class="number">0xb8 </span>=&gt; visitor.visit_i32x4_max_s(),
-            <span class="number">0xb9 </span>=&gt; visitor.visit_i32x4_max_u(),
-            <span class="number">0xba </span>=&gt; visitor.visit_i32x4_dot_i16x8_s(),
-            <span class="number">0xbc </span>=&gt; visitor.visit_i32x4_extmul_low_i16x8_s(),
-            <span class="number">0xbd </span>=&gt; visitor.visit_i32x4_extmul_high_i16x8_s(),
-            <span class="number">0xbe </span>=&gt; visitor.visit_i32x4_extmul_low_i16x8_u(),
-            <span class="number">0xbf </span>=&gt; visitor.visit_i32x4_extmul_high_i16x8_u(),
-            <span class="number">0xc0 </span>=&gt; visitor.visit_i64x2_abs(),
-            <span class="number">0xc1 </span>=&gt; visitor.visit_i64x2_neg(),
-            <span class="number">0xc3 </span>=&gt; visitor.visit_i64x2_all_true(),
-            <span class="number">0xc4 </span>=&gt; visitor.visit_i64x2_bitmask(),
-            <span class="number">0xc7 </span>=&gt; visitor.visit_i64x2_extend_low_i32x4_s(),
-            <span class="number">0xc8 </span>=&gt; visitor.visit_i64x2_extend_high_i32x4_s(),
-            <span class="number">0xc9 </span>=&gt; visitor.visit_i64x2_extend_low_i32x4_u(),
-            <span class="number">0xca </span>=&gt; visitor.visit_i64x2_extend_high_i32x4_u(),
-            <span class="number">0xcb </span>=&gt; visitor.visit_i64x2_shl(),
-            <span class="number">0xcc </span>=&gt; visitor.visit_i64x2_shr_s(),
-            <span class="number">0xcd </span>=&gt; visitor.visit_i64x2_shr_u(),
-            <span class="number">0xce </span>=&gt; visitor.visit_i64x2_add(),
-            <span class="number">0xd1 </span>=&gt; visitor.visit_i64x2_sub(),
-            <span class="number">0xd5 </span>=&gt; visitor.visit_i64x2_mul(),
-            <span class="number">0xd6 </span>=&gt; visitor.visit_i64x2_eq(),
-            <span class="number">0xd7 </span>=&gt; visitor.visit_i64x2_ne(),
-            <span class="number">0xd8 </span>=&gt; visitor.visit_i64x2_lt_s(),
-            <span class="number">0xd9 </span>=&gt; visitor.visit_i64x2_gt_s(),
-            <span class="number">0xda </span>=&gt; visitor.visit_i64x2_le_s(),
-            <span class="number">0xdb </span>=&gt; visitor.visit_i64x2_ge_s(),
-            <span class="number">0xdc </span>=&gt; visitor.visit_i64x2_extmul_low_i32x4_s(),
-            <span class="number">0xdd </span>=&gt; visitor.visit_i64x2_extmul_high_i32x4_s(),
-            <span class="number">0xde </span>=&gt; visitor.visit_i64x2_extmul_low_i32x4_u(),
-            <span class="number">0xdf </span>=&gt; visitor.visit_i64x2_extmul_high_i32x4_u(),
-            <span class="number">0xe0 </span>=&gt; visitor.visit_f32x4_abs(),
-            <span class="number">0xe1 </span>=&gt; visitor.visit_f32x4_neg(),
-            <span class="number">0xe3 </span>=&gt; visitor.visit_f32x4_sqrt(),
-            <span class="number">0xe4 </span>=&gt; visitor.visit_f32x4_add(),
-            <span class="number">0xe5 </span>=&gt; visitor.visit_f32x4_sub(),
-            <span class="number">0xe6 </span>=&gt; visitor.visit_f32x4_mul(),
-            <span class="number">0xe7 </span>=&gt; visitor.visit_f32x4_div(),
-            <span class="number">0xe8 </span>=&gt; visitor.visit_f32x4_min(),
-            <span class="number">0xe9 </span>=&gt; visitor.visit_f32x4_max(),
-            <span class="number">0xea </span>=&gt; visitor.visit_f32x4_pmin(),
-            <span class="number">0xeb </span>=&gt; visitor.visit_f32x4_pmax(),
-            <span class="number">0xec </span>=&gt; visitor.visit_f64x2_abs(),
-            <span class="number">0xed </span>=&gt; visitor.visit_f64x2_neg(),
-            <span class="number">0xef </span>=&gt; visitor.visit_f64x2_sqrt(),
-            <span class="number">0xf0 </span>=&gt; visitor.visit_f64x2_add(),
-            <span class="number">0xf1 </span>=&gt; visitor.visit_f64x2_sub(),
-            <span class="number">0xf2 </span>=&gt; visitor.visit_f64x2_mul(),
-            <span class="number">0xf3 </span>=&gt; visitor.visit_f64x2_div(),
-            <span class="number">0xf4 </span>=&gt; visitor.visit_f64x2_min(),
-            <span class="number">0xf5 </span>=&gt; visitor.visit_f64x2_max(),
-            <span class="number">0xf6 </span>=&gt; visitor.visit_f64x2_pmin(),
-            <span class="number">0xf7 </span>=&gt; visitor.visit_f64x2_pmax(),
-            <span class="number">0xf8 </span>=&gt; visitor.visit_i32x4_trunc_sat_f32x4_s(),
-            <span class="number">0xf9 </span>=&gt; visitor.visit_i32x4_trunc_sat_f32x4_u(),
-            <span class="number">0xfa </span>=&gt; visitor.visit_f32x4_convert_i32x4_s(),
-            <span class="number">0xfb </span>=&gt; visitor.visit_f32x4_convert_i32x4_u(),
-            <span class="number">0xfc </span>=&gt; visitor.visit_i32x4_trunc_sat_f64x2_s_zero(),
-            <span class="number">0xfd </span>=&gt; visitor.visit_i32x4_trunc_sat_f64x2_u_zero(),
-            <span class="number">0xfe </span>=&gt; visitor.visit_f64x2_convert_low_i32x4_s(),
-            <span class="number">0xff </span>=&gt; visitor.visit_f64x2_convert_low_i32x4_u(),
-            <span class="number">0x100 </span>=&gt; visitor.visit_i8x16_relaxed_swizzle(),
-            <span class="number">0x101 </span>=&gt; visitor.visit_i32x4_relaxed_trunc_f32x4_s(),
-            <span class="number">0x102 </span>=&gt; visitor.visit_i32x4_relaxed_trunc_f32x4_u(),
-            <span class="number">0x103 </span>=&gt; visitor.visit_i32x4_relaxed_trunc_f64x2_s_zero(),
-            <span class="number">0x104 </span>=&gt; visitor.visit_i32x4_relaxed_trunc_f64x2_u_zero(),
-            <span class="number">0x105 </span>=&gt; visitor.visit_f32x4_relaxed_madd(),
-            <span class="number">0x106 </span>=&gt; visitor.visit_f32x4_relaxed_nmadd(),
-            <span class="number">0x107 </span>=&gt; visitor.visit_f64x2_relaxed_madd(),
-            <span class="number">0x108 </span>=&gt; visitor.visit_f64x2_relaxed_nmadd(),
-            <span class="number">0x109 </span>=&gt; visitor.visit_i8x16_relaxed_laneselect(),
-            <span class="number">0x10a </span>=&gt; visitor.visit_i16x8_relaxed_laneselect(),
-            <span class="number">0x10b </span>=&gt; visitor.visit_i32x4_relaxed_laneselect(),
-            <span class="number">0x10c </span>=&gt; visitor.visit_i64x2_relaxed_laneselect(),
-            <span class="number">0x10d </span>=&gt; visitor.visit_f32x4_relaxed_min(),
-            <span class="number">0x10e </span>=&gt; visitor.visit_f32x4_relaxed_max(),
-            <span class="number">0x10f </span>=&gt; visitor.visit_f64x2_relaxed_min(),
-            <span class="number">0x110 </span>=&gt; visitor.visit_f64x2_relaxed_max(),
-            <span class="number">0x111 </span>=&gt; visitor.visit_i16x8_relaxed_q15mulr_s(),
-            <span class="number">0x112 </span>=&gt; visitor.visit_i16x8_relaxed_dot_i8x16_i7x16_s(),
-            <span class="number">0x113 </span>=&gt; visitor.visit_i32x4_relaxed_dot_i8x16_i7x16_add_s(),
-
-            <span class="kw">_ </span>=&gt; <span class="macro">bail!</span>(pos, <span class="string">"unknown 0xfd subopcode: 0x{code:x}"</span>),
         })
     }
 
@@ -4024,7 +3438,8 @@
         <span class="self">self</span>.remaining_buffer() == <span class="kw-2">&amp;</span>[<span class="number">0x0b</span>]
     }
 
-    <span class="kw">fn </span>read_lane_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, max: u8) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+    <span class="attr">#[cfg(feature = <span class="string">"simd"</span>)]
+    </span><span class="kw">fn </span>read_lane_index(<span class="kw-2">&amp;mut </span><span class="self">self</span>, max: u8) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
         <span class="kw">let </span>index = <span class="self">self</span>.read_u8()<span class="question-mark">?</span>;
         <span class="kw">if </span>index &gt;= max {
             <span class="kw">return </span><span class="prelude-val">Err</span>(BinaryReaderError::new(
@@ -4035,7 +3450,8 @@
         <span class="prelude-val">Ok</span>(index)
     }
 
-    <span class="kw">fn </span>read_v128(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;V128&gt; {
+    <span class="attr">#[cfg(feature = <span class="string">"simd"</span>)]
+    </span><span class="kw">fn </span>read_v128(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;V128&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>bytes = [<span class="number">0</span>; <span class="number">16</span>];
         bytes.clone_from_slice(<span class="self">self</span>.read_bytes(<span class="number">16</span>)<span class="question-mark">?</span>);
         <span class="prelude-val">Ok</span>(V128(bytes))
@@ -4237,7 +3653,17 @@
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; VisitOperator&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>OperatorFactory&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">type </span>Output = Operator&lt;<span class="lifetime">'a</span>&gt;;
 
-    <span class="macro">for_each_operator!</span>(define_visit_operator);
+    <span class="attr">#[cfg(feature = <span class="string">"simd"</span>)]
+    </span><span class="kw">fn </span>simd_visitor(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span><span class="kw">dyn </span>VisitSimdOperator&lt;<span class="lifetime">'a</span>, Output = <span class="self">Self</span>::Output&gt;&gt; {
+        <span class="prelude-val">Some</span>(<span class="self">self</span>)
+    }
+
+    <span class="macro">crate::for_each_visit_operator!</span>(define_visit_operator);
+}
+
+<span class="attr">#[cfg(feature = <span class="string">"simd"</span>)]
+</span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; VisitSimdOperator&lt;<span class="lifetime">'a</span>&gt; <span class="kw">for </span>OperatorFactory&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="macro">crate::for_each_visit_simd_operator!</span>(define_visit_operator);
 }
 
 <span class="doccomment">/// Iterator returned from [`BinaryReader::read_iter`].
