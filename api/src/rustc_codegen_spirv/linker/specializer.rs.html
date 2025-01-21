@@ -2552,32 +2552,7 @@
 <a href="#2551" id="2551">2551</a>
 <a href="#2552" id="2552">2552</a>
 <a href="#2553" id="2553">2553</a>
-<a href="#2554" id="2554">2554</a>
-<a href="#2555" id="2555">2555</a>
-<a href="#2556" id="2556">2556</a>
-<a href="#2557" id="2557">2557</a>
-<a href="#2558" id="2558">2558</a>
-<a href="#2559" id="2559">2559</a>
-<a href="#2560" id="2560">2560</a>
-<a href="#2561" id="2561">2561</a>
-<a href="#2562" id="2562">2562</a>
-<a href="#2563" id="2563">2563</a>
-<a href="#2564" id="2564">2564</a>
-<a href="#2565" id="2565">2565</a>
-<a href="#2566" id="2566">2566</a>
-<a href="#2567" id="2567">2567</a>
-<a href="#2568" id="2568">2568</a>
-<a href="#2569" id="2569">2569</a>
-<a href="#2570" id="2570">2570</a>
-<a href="#2571" id="2571">2571</a>
-<a href="#2572" id="2572">2572</a>
-<a href="#2573" id="2573">2573</a>
-<a href="#2574" id="2574">2574</a>
-<a href="#2575" id="2575">2575</a>
-<a href="#2576" id="2576">2576</a>
-<a href="#2577" id="2577">2577</a>
-<a href="#2578" id="2578">2578</a>
-<a href="#2579" id="2579">2579</a></pre></div><pre class="rust"><code><span class="doccomment">//! Specialize globals (types, constants and module-scoped variables) and functions,
+<a href="#2554" id="2554">2554</a></pre></div><pre class="rust"><code><span class="doccomment">//! Specialize globals (types, constants and module-scoped variables) and functions,
 //! to legalize a SPIR-V module representing a "family" of types with a single type,
 //! by treating some globals and functions as "generic", inferring minimal sets
 //! of "generic parameters", and "monomorphizing" them (i.e. expanding them into
@@ -2639,6 +2614,7 @@
 <span class="kw">use </span>std::collections::{BTreeMap, VecDeque};
 <span class="kw">use </span>std::ops::{Range, RangeTo};
 <span class="kw">use </span>std::{fmt, io, iter, mem, slice};
+<span class="kw">use </span>tracing::{debug, error};
 
 <span class="comment">// FIXME(eddyb) move this elsewhere.
 </span><span class="kw">struct </span>FmtBy&lt;F: Fn(<span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result&gt;(F);
@@ -2689,12 +2665,10 @@
     module: Module,
     specialization: <span class="kw">impl </span>Specialization,
 ) -&gt; Module {
-    <span class="comment">// FIXME(eddyb) use `log`/`tracing` instead.
-    </span><span class="kw">let </span>debug = opts.specializer_debug;
     <span class="kw">let </span>dump_instances = <span class="kw-2">&amp;</span>opts.specializer_dump_instances;
 
     <span class="kw">let </span><span class="kw-2">mut </span>debug_names = FxHashMap::default();
-    <span class="kw">if </span>debug || dump_instances.is_some() {
+    <span class="kw">if </span>dump_instances.is_some() {
         debug_names = module
             .debug_names
             .iter()
@@ -2710,10 +2684,7 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>specializer = Specializer {
         specialization,
-
-        debug,
         debug_names,
-
         generics: IndexMap::new(),
         int_consts: FxHashMap::default(),
     };
@@ -2767,27 +2738,21 @@
     <span class="comment">// For non-"generic" functions, we can apply `replacements` right away,
     // though not before finishing inference for all functions first
     // (because `expander` needs to borrow `specializer` immutably).
-    </span><span class="kw">if </span>debug {
-        <span class="macro">eprintln!</span>(<span class="string">"non-generic replacements:"</span>);
-    }
+    </span><span class="macro">debug!</span>(<span class="string">"non-generic replacements:"</span>);
     <span class="kw">for </span>(func_idx, replacements) <span class="kw">in </span>non_generic_replacements {
         <span class="kw">let </span><span class="kw-2">mut </span>func = mem::replace(
             <span class="kw-2">&amp;mut </span>expander.builder.module_mut().functions[func_idx],
             Function::new(),
         );
-        <span class="kw">if </span>debug {
-            <span class="kw">let </span>empty = replacements.with_instance.is_empty()
-                &amp;&amp; replacements.with_concrete_or_param.is_empty();
-            <span class="kw">if </span>!empty {
-                <span class="macro">eprintln!</span>(<span class="string">"    in %{}:"</span>, func.def_id().unwrap());
-            }
+        <span class="kw">let </span>empty =
+            replacements.with_instance.is_empty() &amp;&amp; replacements.with_concrete_or_param.is_empty();
+        <span class="kw">if </span>!empty {
+            <span class="macro">debug!</span>(<span class="string">"    in %{}:"</span>, func.def_id().unwrap());
         }
         <span class="kw">for </span>(loc, operand) <span class="kw">in
             </span>replacements.to_concrete(<span class="kw-2">&amp;</span>[], |instance| expander.alloc_instance_id(instance))
         {
-            <span class="kw">if </span>debug {
-                <span class="macro">eprintln!</span>(<span class="string">"        {operand} -&gt; {loc:?}"</span>);
-            }
+            <span class="macro">debug!</span>(<span class="string">"        {operand} -&gt; {loc:?}"</span>);
             func.index_set(loc, operand.into());
         }
         expander.builder.module_mut().functions[func_idx] = func;
@@ -3115,9 +3080,6 @@
 
 <span class="kw">struct </span>Specializer&lt;S: Specialization&gt; {
     specialization: S,
-
-    <span class="comment">// FIXME(eddyb) use `log`/`tracing` instead.
-    </span>debug: bool,
 
     <span class="comment">// HACK(eddyb) if debugging is requested, this is used to quickly get `OpName`s.
     </span>debug_names: FxHashMap&lt;Word, String&gt;,
@@ -4091,24 +4053,24 @@
         <span class="comment">// FIXME(eddyb) better error reporting than this.
         </span><span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Conflict(a, b) =&gt; {
-                <span class="macro">eprintln!</span>(<span class="string">"inference conflict: {a:?} vs {b:?}"</span>);
+                <span class="macro">error!</span>(<span class="string">"inference conflict: {a:?} vs {b:?}"</span>);
             }
         }
-        <span class="macro">eprint!</span>(<span class="string">"    in "</span>);
+        <span class="macro">error!</span>(<span class="string">"    in "</span>);
         <span class="comment">// FIXME(eddyb) deduplicate this with other instruction printing logic.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(result_id) = inst.result_id {
-            <span class="macro">eprint!</span>(<span class="string">"%{result_id} = "</span>);
+            <span class="macro">error!</span>(<span class="string">"%{result_id} = "</span>);
         }
-        <span class="macro">eprint!</span>(<span class="string">"Op{:?}"</span>, inst.class.opcode);
+        <span class="macro">error!</span>(<span class="string">"Op{:?}"</span>, inst.class.opcode);
         <span class="kw">for </span>operand <span class="kw">in </span>inst
             .result_type
             .map(Operand::IdRef)
             .iter()
             .chain(inst.operands.iter())
         {
-            <span class="macro">eprint!</span>(<span class="string">" {operand}"</span>);
+            <span class="macro">error!</span>(<span class="string">" {operand}"</span>);
         }
-        <span class="macro">eprintln!</span>();
+        <span class="macro">error!</span>(<span class="string">""</span>);
 
         std::process::exit(<span class="number">1</span>);
     }
@@ -4516,38 +4478,36 @@
         };
 
         <span class="kw">let </span>debug_dump_if_enabled = |cx: <span class="kw-2">&amp;</span><span class="self">Self</span>, prefix| {
-            <span class="kw">if </span>cx.specializer.debug {
-                <span class="kw">let </span>result_type = <span class="kw">match </span>inst.class.opcode {
-                    <span class="comment">// HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
-                    </span>Op::Function =&gt; <span class="prelude-val">Some</span>(
-                        InferOperand::from_operand_and_generic_args(
-                            <span class="kw-2">&amp;</span>Operand::IdRef(inst.result_type.unwrap()),
-                            inputs_generic_args.clone(),
-                            cx,
-                        )
-                        .<span class="number">0</span>,
-                    ),
-                    <span class="kw">_ </span>=&gt; type_of_result.clone(),
-                };
-                <span class="kw">let </span>inputs = InferOperandList {
-                    operands: <span class="kw-2">&amp;</span>inst.operands,
-                    all_generic_args: inputs_generic_args.clone(),
-                    transform: <span class="prelude-val">None</span>,
-                };
+            <span class="kw">let </span>result_type = <span class="kw">match </span>inst.class.opcode {
+                <span class="comment">// HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
+                </span>Op::Function =&gt; <span class="prelude-val">Some</span>(
+                    InferOperand::from_operand_and_generic_args(
+                        <span class="kw-2">&amp;</span>Operand::IdRef(inst.result_type.unwrap()),
+                        inputs_generic_args.clone(),
+                        cx,
+                    )
+                    .<span class="number">0</span>,
+                ),
+                <span class="kw">_ </span>=&gt; type_of_result.clone(),
+            };
+            <span class="kw">let </span>inputs = InferOperandList {
+                operands: <span class="kw-2">&amp;</span>inst.operands,
+                all_generic_args: inputs_generic_args.clone(),
+                transform: <span class="prelude-val">None</span>,
+            };
 
-                <span class="kw">if </span>inst_loc != InstructionLocation::Module {
-                    <span class="macro">eprint!</span>(<span class="string">"    "</span>);
-                }
-                <span class="macro">eprint!</span>(<span class="string">"{prefix}"</span>);
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(result_id) = inst.result_id {
-                    <span class="macro">eprint!</span>(<span class="string">"%{result_id} = "</span>);
-                }
-                <span class="macro">eprint!</span>(<span class="string">"Op{:?}"</span>, inst.class.opcode);
-                <span class="kw">for </span>operand <span class="kw">in </span>result_type.into_iter().chain(inputs.iter(cx)) {
-                    <span class="macro">eprint!</span>(<span class="string">" {}"</span>, operand.display_with_infer_cx(cx));
-                }
-                <span class="macro">eprintln!</span>();
+            <span class="kw">if </span>inst_loc != InstructionLocation::Module {
+                <span class="macro">debug!</span>(<span class="string">"    "</span>);
             }
+            <span class="macro">debug!</span>(<span class="string">"{prefix}"</span>);
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(result_id) = inst.result_id {
+                <span class="macro">debug!</span>(<span class="string">"%{result_id} = "</span>);
+            }
+            <span class="macro">debug!</span>(<span class="string">"Op{:?}"</span>, inst.class.opcode);
+            <span class="kw">for </span>operand <span class="kw">in </span>result_type.into_iter().chain(inputs.iter(cx)) {
+                <span class="macro">debug!</span>(<span class="string">" {}"</span>, operand.display_with_infer_cx(cx));
+            }
+            <span class="macro">debug!</span>(<span class="string">""</span>);
         };
 
         <span class="comment">// If we have some instruction signatures for `inst`, enforce them.
@@ -4577,12 +4537,10 @@
                 ),
             };
 
-            <span class="kw">if </span><span class="self">self</span>.specializer.debug {
-                <span class="kw">if </span>inst_loc != InstructionLocation::Module {
-                    <span class="macro">eprint!</span>(<span class="string">"    "</span>);
-                }
-                <span class="macro">eprintln!</span>(<span class="string">"    found {:?}"</span>, m.debug_with_infer_cx(<span class="self">self</span>));
+            <span class="kw">if </span>inst_loc != InstructionLocation::Module {
+                <span class="macro">debug!</span>(<span class="string">"    "</span>);
             }
+            <span class="macro">debug!</span>(<span class="string">"    found {:?}"</span>, m.debug_with_infer_cx(<span class="self">self</span>));
 
             <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = <span class="self">self</span>.equate_match_findings(m) {
                 e.report(inst);
@@ -4611,14 +4569,12 @@
     </span><span class="kw">fn </span>instantiate_function(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Function) {
         <span class="kw">let </span>func_id = func.def_id().unwrap();
 
-        <span class="kw">if </span><span class="self">self</span>.specializer.debug {
-            <span class="macro">eprintln!</span>();
-            <span class="macro">eprint!</span>(<span class="string">"specializer::instantiate_function(%{func_id}"</span>);
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = <span class="self">self</span>.specializer.debug_names.get(<span class="kw-2">&amp;</span>func_id) {
-                <span class="macro">eprint!</span>(<span class="string">" {name}"</span>);
-            }
-            <span class="macro">eprintln!</span>(<span class="string">"):"</span>);
+        <span class="macro">debug!</span>(<span class="string">""</span>);
+        <span class="macro">debug!</span>(<span class="string">"specializer::instantiate_function(%{func_id}"</span>);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = <span class="self">self</span>.specializer.debug_names.get(<span class="kw-2">&amp;</span>func_id) {
+            <span class="macro">debug!</span>(<span class="string">" {name}"</span>);
         }
+        <span class="macro">debug!</span>(<span class="string">"):"</span>);
 
         <span class="comment">// Instantiate the defining `OpFunction` first, so that the first
         // inference variables match the parameters from the `Generic`
@@ -4626,9 +4582,7 @@
         </span><span class="macro">assert!</span>(<span class="self">self</span>.infer_var_values.is_empty());
         <span class="self">self</span>.instantiate_instruction(func.def.as_ref().unwrap(), InstructionLocation::Module);
 
-        <span class="kw">if </span><span class="self">self</span>.specializer.debug {
-            <span class="macro">eprintln!</span>(<span class="string">"infer body {{"</span>);
-        }
+        <span class="macro">debug!</span>(<span class="string">"infer body {{"</span>);
 
         <span class="comment">// If the `OpTypeFunction` is indeed "generic", we have to extract the
         // return / parameter types for `OpReturnValue` and `OpFunctionParameter`.
@@ -4653,14 +4607,12 @@
                     <span class="kw">let </span>(i, param) = params.next().unwrap();
                     <span class="macro">assert_eq!</span>(param.class.opcode, Op::FunctionParameter);
 
-                    <span class="kw">if </span><span class="self">self</span>.specializer.debug {
-                        <span class="macro">eprintln!</span>(
-                            <span class="string">"    %{} = Op{:?} {}"</span>,
-                            param.result_id.unwrap(),
-                            param.class.opcode,
-                            param_ty.display_with_infer_cx(<span class="self">self</span>)
-                        );
-                    }
+                    <span class="macro">debug!</span>(
+                        <span class="string">"    %{} = Op{:?} {}"</span>,
+                        param.result_id.unwrap(),
+                        param.class.opcode,
+                        param_ty.display_with_infer_cx(<span class="self">self</span>)
+                    );
 
                     <span class="self">self</span>.record_instantiated_operand(
                         OperandLocation {
@@ -4712,13 +4664,11 @@
             }
         }
 
-        <span class="kw">if </span><span class="self">self</span>.specializer.debug {
-            <span class="macro">eprint!</span>(<span class="string">"}}"</span>);
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(func_ty) = <span class="self">self</span>.type_of_result.get(<span class="kw-2">&amp;</span>func_id) {
-                <span class="macro">eprint!</span>(<span class="string">" -&gt; %{}: {}"</span>, func_id, func_ty.display_with_infer_cx(<span class="self">self</span>));
-            }
-            <span class="macro">eprintln!</span>();
+        <span class="macro">debug!</span>(<span class="string">"}}"</span>);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(func_ty) = <span class="self">self</span>.type_of_result.get(<span class="kw-2">&amp;</span>func_id) {
+            <span class="macro">debug!</span>(<span class="string">" -&gt; %{}: {}"</span>, func_id, func_ty.display_with_infer_cx(<span class="self">self</span>));
         }
+        <span class="macro">debug!</span>(<span class="string">""</span>);
     }
 
     <span class="doccomment">/// Helper for `into_replacements`, that computes a single `ConcreteOrParam`.
