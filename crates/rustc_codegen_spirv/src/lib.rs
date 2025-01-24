@@ -167,6 +167,7 @@ use std::io::Cursor;
 use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
+use tracing::{error, warn};
 
 fn dump_mir(tcx: TyCtxt<'_>, mono_items: &[(MonoItem<'_>, MonoItemData)], path: &Path) {
     create_dir_all(path.parent().unwrap()).unwrap();
@@ -361,11 +362,11 @@ impl WriteBackendMethods for SpirvCodegenBackend {
     }
 
     fn print_pass_timings(&self) {
-        println!("TODO: Implement print_pass_timings");
+        warn!("TODO: Implement print_pass_timings");
     }
 
     fn print_statistics(&self) {
-        println!("TODO: Implement print_statistics");
+        warn!("TODO: Implement print_statistics");
     }
 
     unsafe fn optimize(
@@ -536,7 +537,7 @@ impl Drop for DumpModuleOnPanic<'_, '_, '_> {
             if self.path.has_root() {
                 self.cx.builder.dump_module(self.path);
             } else {
-                println!("{}", self.cx.builder.dump_module_str());
+                error!("{}", self.cx.builder.dump_module_str());
             }
         }
     }
