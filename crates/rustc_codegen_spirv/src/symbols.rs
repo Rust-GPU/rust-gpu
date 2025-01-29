@@ -21,7 +21,6 @@ pub struct Symbols {
     pub spirv: Symbol,
     pub libm: Symbol,
     pub entry_point_name: Symbol,
-    pub spv_intel_shader_integer_functions2: Symbol,
     pub spv_khr_vulkan_memory_model: Symbol,
 
     descriptor_set: Symbol,
@@ -411,9 +410,6 @@ impl Symbols {
             spirv: Symbol::intern("spirv"),
             libm: Symbol::intern("libm"),
             entry_point_name: Symbol::intern("entry_point_name"),
-            spv_intel_shader_integer_functions2: Symbol::intern(
-                "SPV_INTEL_shader_integer_functions2",
-            ),
             spv_khr_vulkan_memory_model: Symbol::intern("SPV_KHR_vulkan_memory_model"),
 
             descriptor_set: Symbol::intern("descriptor_set"),
