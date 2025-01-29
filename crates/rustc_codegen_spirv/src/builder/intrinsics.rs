@@ -211,35 +211,12 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 self.rotate(val, shift, is_left)
             }
 
-            // TODO: Do we want to manually implement these instead of using intel instructions?
-            sym::ctlz | sym::ctlz_nonzero => {
-                let result = self
-                    .emit()
-                    .u_count_leading_zeros_intel(
-                        args[0].immediate().ty,
-                        None,
-                        args[0].immediate().def(self),
-                    )
-                    .unwrap();
-                self.ext_inst
-                    .borrow_mut()
-                    .require_integer_functions_2_intel(self, result);
-                result.with_type(args[0].immediate().ty)
+            sym::ctlz => self.count_leading_trailing_zeros(args[0].immediate(), false, false),
+            sym::ctlz_nonzero => {
+                self.count_leading_trailing_zeros(args[0].immediate(), false, true)
             }
-            sym::cttz | sym::cttz_nonzero => {
-                let result = self
-                    .emit()
-                    .u_count_trailing_zeros_intel(
-                        args[0].immediate().ty,
-                        None,
-                        args[0].immediate().def(self),
-                    )
-                    .unwrap();
-                self.ext_inst
-                    .borrow_mut()
-                    .require_integer_functions_2_intel(self, result);
-                result.with_type(args[0].immediate().ty)
-            }
+            sym::cttz => self.count_leading_trailing_zeros(args[0].immediate(), true, false),
+            sym::cttz_nonzero => self.count_leading_trailing_zeros(args[0].immediate(), true, true),
 
             sym::ctpop => self
                 .emit()
@@ -398,6 +375,50 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 }
 
 impl Builder<'_, '_> {
+    pub fn count_leading_trailing_zeros(
+        &self,
+        arg: SpirvValue,
+        trailing: bool,
+        non_zero: bool,
+    ) -> SpirvValue {
+        let ty = arg.ty;
+        match self.cx.lookup_type(ty) {
+            SpirvType::Integer(bits, _) => {
+                let int_0 = self.constant_int(ty, 0);
+                let int_bits = self.constant_int(ty, bits as u128).def(self);
+                let bool = SpirvType::Bool.def(self.span(), self);
+
+                let gl_op = if trailing {
+                    // rust is always unsigned
+                    GLOp::FindILsb
+                } else {
+                    GLOp::FindUMsb
+                };
+
+                let glsl = self.ext_inst.borrow_mut().import_glsl(self);
+                let find_xsb = self
+                    .emit()
+                    .ext_inst(ty, None, glsl, gl_op as u32, [Operand::IdRef(
+                        arg.def(self),
+                    )])
+                    .unwrap();
+                if non_zero {
+                    find_xsb
+                } else {
+                    let is_0 = self
+                        .emit()
+                        .i_equal(bool, None, arg.def(self), int_0.def(self))
+                        .unwrap();
+                    self.emit()
+                        .select(ty, None, is_0, int_bits, find_xsb)
+                        .unwrap()
+                }
+                .with_type(ty)
+            }
+            _ => self.fatal("counting leading / trailing zeros on a non-integer type"),
+        }
+    }
+
     pub fn abort_with_kind_and_message_debug_printf(
         &mut self,
         kind: &str,
