@@ -1,8 +1,8 @@
 use super::Builder;
 use crate::builder_spirv::{SpirvValue, SpirvValueExt};
 use crate::custom_insts;
+use rspirv::dr::Operand;
 use rspirv::spirv::{GLOp, Word};
-use rspirv::{dr::Operand, spirv::Capability};
 
 const GLSL_STD_450: &str = "GLSL.std.450";
 
@@ -13,7 +13,6 @@ pub struct ExtInst {
     custom: Option<Word>,
 
     glsl: Option<Word>,
-    integer_functions_2_intel: bool,
 }
 
 impl ExtInst {
@@ -38,32 +37,11 @@ impl ExtInst {
             id
         }
     }
-
-    pub fn require_integer_functions_2_intel(&mut self, bx: &Builder<'_, '_>, to_zombie: Word) {
-        if !self.integer_functions_2_intel {
-            self.integer_functions_2_intel = true;
-            if !bx
-                .builder
-                .has_capability(Capability::IntegerFunctions2INTEL)
-            {
-                bx.zombie(to_zombie, "capability IntegerFunctions2INTEL is required");
-            }
-            if !bx
-                .builder
-                .has_extension(bx.sym.spv_intel_shader_integer_functions2)
-            {
-                bx.zombie(
-                    to_zombie,
-                    "extension SPV_INTEL_shader_integer_functions2 is required",
-                );
-            }
-        }
-    }
 }
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
     pub fn custom_inst(
-        &mut self,
+        &self,
         result_type: Word,
         inst: custom_insts::CustomInst<Operand>,
     ) -> SpirvValue {
@@ -80,12 +58,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             .with_type(result_type)
     }
 
-    pub fn gl_op(
-        &mut self,
-        op: GLOp,
-        result_type: Word,
-        args: impl AsRef<[SpirvValue]>,
-    ) -> SpirvValue {
+    pub fn gl_op(&self, op: GLOp, result_type: Word, args: impl AsRef<[SpirvValue]>) -> SpirvValue {
         let args = args.as_ref();
         let glsl = self.ext_inst.borrow_mut().import_glsl(self);
         self.emit()
