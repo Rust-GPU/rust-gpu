@@ -31,7 +31,7 @@ const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
 
 fn target_spec_json(target: &str) -> String {
     format!(
-        "{}/../crates/spirv-builder/target-specs/{target}.json",
+        "{}/../../crates/spirv-builder/target-specs/{target}.json",
         env!("CARGO_MANIFEST_DIR")
     )
 }
