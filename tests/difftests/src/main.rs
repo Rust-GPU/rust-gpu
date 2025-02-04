@@ -1230,7 +1230,7 @@ fn main() {
             run_tests: true,
             bench_benchmarks: false,
             logfile: None,
-            nocapture: true,
+            nocapture: false,
             color: tester::ColorConfig::AutoColor,
             format: tester::OutputFormat::Pretty,
             test_threads: Some(1),
