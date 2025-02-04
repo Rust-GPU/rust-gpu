@@ -9,7 +9,7 @@ use std::{
 };
 use tester::TestOpts;
 use tracing::{debug, error, info};
-use tracing_subscriber::FmtSubscriber;
+use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 // Comment directive parsing.
 static DEFAULT_REGEX_STR: &str = r#"^\s*//\s*default-(vertex|fragment)\s*$"#;
@@ -1091,12 +1091,10 @@ fn find_shader_libraries(
     Ok(libraries)
 }
 
-// --- Main as tester test harness ---
-
 fn main() {
     // Initialize tracing.
     let subscriber = FmtSubscriber::builder()
-        .with_max_level(tracing::Level::INFO)
+        .with_env_filter(EnvFilter::from_default_env())
         .finish();
     let _ = tracing::subscriber::set_global_default(subscriber);
 
