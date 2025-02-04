@@ -7,6 +7,7 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use tester::TestOpts;
 use tracing::{debug, error, info};
 use tracing_subscriber::FmtSubscriber;
 
@@ -1207,12 +1208,15 @@ fn main() {
     }
     // Parse tester options.
     let opts = match tester::test::parse_opts(&args) {
-        Some(Ok(o)) => o,
+        Some(Ok(o)) => TestOpts {
+            test_threads: Some(1),
+            ..o
+        },
         Some(Err(e)) => {
             eprintln!("Error parsing test options: {}", e);
             std::process::exit(1);
         }
-        None => tester::test::TestOpts {
+        None => TestOpts {
             list: false,
             filters: vec![],
             filter_exact: false,
