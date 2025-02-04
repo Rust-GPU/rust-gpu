@@ -542,7 +542,9 @@ mod runners {
                 label: Some("Compute Pipeline"),
                 layout: None,
                 module: &module,
-                entry_point: ShaderType::Compute.entry_point(),
+                entry_point: Some(ShaderType::Compute.entry_point()),
+                cache: Default::default(),
+                compilation_options: Default::default(),
             });
             let buffer_size = config.compute_output.buffer_size();
             let buffer = device.create_buffer(&wgpu::BufferDescriptor {
@@ -565,6 +567,7 @@ mod runners {
             {
                 let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
                     label: Some("Compute Pass"),
+                    timestamp_writes: Default::default(),
                 });
                 pass.set_pipeline(&pipeline);
                 pass.set_bind_group(0, &bind_group, &[]);
@@ -646,22 +649,25 @@ mod runners {
                 layout: Some(&layout),
                 vertex: wgpu::VertexState {
                     module: &vertex_module,
-                    entry_point: ShaderType::Vertex.entry_point(),
+                    entry_point: Some(ShaderType::Vertex.entry_point()),
                     buffers: &[],
+                    compilation_options: Default::default(),
                 },
                 fragment: Some(wgpu::FragmentState {
                     module: &fragment_module,
-                    entry_point: ShaderType::Fragment.entry_point(),
+                    entry_point: Some(ShaderType::Fragment.entry_point()),
                     targets: &[Some(wgpu::ColorTargetState {
                         format: wgpu::TextureFormat::Bgra8UnormSrgb,
                         blend: Some(wgpu::BlendState::REPLACE),
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
+                    compilation_options: Default::default(),
                 }),
                 primitive: wgpu::PrimitiveState::default(),
                 depth_stencil: None,
                 multisample: wgpu::MultisampleState::default(),
                 multiview: None,
+                cache: Default::default(),
             });
             let tex_extent = wgpu::Extent3d {
                 width: 640,
@@ -690,10 +696,12 @@ mod runners {
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(wgpu::Color::BLUE),
-                            store: true,
+                            store: wgpu::StoreOp::Store,
                         },
                     })],
                     depth_stencil_attachment: None,
+                    timestamp_writes: Default::default(),
+                    occlusion_query_set: Default::default(),
                 });
                 pass.set_pipeline(&render_pipeline);
                 pass.draw(0..3, 0..1);
@@ -769,7 +777,9 @@ mod runners {
                     label: Some("Mixed Compute Pipeline"),
                     layout: None,
                     module: &compute_module,
-                    entry_point: ShaderType::Compute.entry_point(),
+                    entry_point: Some(ShaderType::Compute.entry_point()),
+                    compilation_options: Default::default(),
+                    cache: Default::default(),
                 });
             let buffer_size = config.compute_output.buffer_size();
             let compute_buffer = device.create_buffer(&wgpu::BufferDescriptor {
@@ -794,6 +804,7 @@ mod runners {
             {
                 let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
                     label: Some("Mixed Compute Pass"),
+                    timestamp_writes: Default::default(),
                 });
                 compute_pass.set_pipeline(&compute_pipeline);
                 compute_pass.set_bind_group(0, &compute_bind_group, &[]);
@@ -887,22 +898,25 @@ mod runners {
                 layout: Some(&render_pipeline_layout),
                 vertex: wgpu::VertexState {
                     module: &vertex_module,
-                    entry_point: ShaderType::Vertex.entry_point(),
+                    entry_point: Some(ShaderType::Vertex.entry_point()),
                     buffers: &[],
+                    compilation_options: Default::default(),
                 },
                 fragment: Some(wgpu::FragmentState {
                     module: &fragment_module,
-                    entry_point: ShaderType::Fragment.entry_point(),
+                    entry_point: Some(ShaderType::Fragment.entry_point()),
                     targets: &[Some(wgpu::ColorTargetState {
                         format: wgpu::TextureFormat::Bgra8UnormSrgb,
                         blend: Some(wgpu::BlendState::REPLACE),
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
+                    compilation_options: Default::default(),
                 }),
                 primitive: wgpu::PrimitiveState::default(),
                 depth_stencil: None,
                 multisample: wgpu::MultisampleState::default(),
                 multiview: None,
+                cache: Default::default(),
             });
             {
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -912,10 +926,12 @@ mod runners {
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
-                            store: true,
+                            store: wgpu::StoreOp::Store,
                         },
                     })],
                     depth_stencil_attachment: None,
+                    occlusion_query_set: Default::default(),
+                    timestamp_writes: Default::default(),
                 });
                 render_pass.set_bind_group(0, &computed_buffer_bind_group, &[]);
                 render_pass.set_pipeline(&render_pipeline);
@@ -979,6 +995,8 @@ async fn initialize_wgpu_async() -> Result<(wgpu::Device, wgpu::Queue)> {
         #[cfg(not(target_os = "linux"))]
         backends: wgpu::Backends::PRIMARY,
         dx12_shader_compiler: Default::default(),
+        flags: Default::default(),
+        gles_minor_version: Default::default(),
     });
     let adapter = instance
         .request_adapter(&wgpu::RequestAdapterOptions {
@@ -994,11 +1012,12 @@ async fn initialize_wgpu_async() -> Result<(wgpu::Device, wgpu::Queue)> {
                 label: Some("wgpu Device"),
                 // Enable SPIR-V passthrough on Linux
                 #[cfg(target_os = "linux")]
-                features: wgpu::Features::SPIRV_SHADER_PASSTHROUGH,
+                required_features: wgpu::Features::SPIRV_SHADER_PASSTHROUGH,
                 // Default features elsewhere
                 #[cfg(not(target_os = "linux"))]
-                features: wgpu::Features::empty(),
-                limits: wgpu::Limits::default(),
+                required_features: wgpu::Features::empty(),
+                required_limits: wgpu::Limits::default(),
+                memory_hints: Default::default(),
             },
             None,
         )
@@ -1096,8 +1115,10 @@ fn main() {
 
     // Setup regexes and filesystem.
     let fs = RealFs;
-    let pipelines_dir = Path::new("pipelines");
-    if !fs.exists(pipelines_dir) {
+    let base_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+
+    let pipelines_dir = base_dir.join("pipelines");
+    if !fs.exists(&pipelines_dir) {
         eprintln!("The 'pipelines/' directory does not exist.");
         std::process::exit(1);
     }
