@@ -1201,6 +1201,11 @@ fn main() {
                         "Output mismatch for {}:\nWGSL output: {:?}\nRust output: {:?}",
                         test_name, out_wgsl, out_rust
                     );
+                } else {
+                    debug!(
+                        "PASS {}:\nWGSL output: {:?}\nRust output: {:?}",
+                        test_name, out_wgsl, out_rust
+                    )
                 }
             })),
         });
@@ -1225,7 +1230,7 @@ fn main() {
             run_tests: true,
             bench_benchmarks: false,
             logfile: None,
-            nocapture: false,
+            nocapture: true,
             color: tester::ColorConfig::AutoColor,
             format: tester::OutputFormat::Pretty,
             test_threads: Some(1),
