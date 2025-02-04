@@ -22,8 +22,9 @@ static SPIRV_FRAGMENT_REGEX: &str = r#"^\s*#\s*\[\s*spirv\s*\(\s*fragment\s*\)\s
 static SPIRV_COMPUTE_REGEX: &str = r#"^\s*#\s*\[\s*spirv\s*\(\s*compute\s*(\(|\)\s*\))?.*\]\s*$"#;
 
 // Convert a path (e.g. "pipelines/graphics/simple") into a test name with "::"
-fn format_lib_path(path: &Path) -> String {
-    path.to_string_lossy().replace(&['/', '\\'][..], "::")
+fn format_lib_path(path: &Path, base: &Path) -> String {
+    let relative = path.strip_prefix(base).unwrap_or(path);
+    relative.to_string_lossy().replace(&['/', '\\'][..], "::")
 }
 
 /// Filesystem abstraction to enable testing.
@@ -1116,7 +1117,6 @@ fn main() {
     // Setup regexes and filesystem.
     let fs = RealFs;
     let base_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-
     let pipelines_dir = base_dir.join("pipelines");
     if !fs.exists(&pipelines_dir) {
         eprintln!("The 'pipelines/' directory does not exist.");
@@ -1156,7 +1156,7 @@ fn main() {
     // Create tester tests – one test per shader library.
     let mut tests = Vec::new();
     for lib in libraries {
-        let test_name = format_lib_path(&lib.path);
+        let test_name = format_lib_path(&lib.path, &base_dir);
         let lib_clone = lib;
         let device = Arc::clone(&device);
         let queue = Arc::clone(&queue);
@@ -1305,6 +1305,22 @@ mod tests {
         fn exists(&self, path: &Path) -> bool {
             self.files.contains_key(path) || self.dirs.contains(path)
         }
+    }
+
+    #[test]
+    fn test_format_lib_path_with_prefix() {
+        let base = Path::new("pipelines");
+        let path = Path::new("pipelines/graphics/simple");
+        let formatted = format_lib_path(path, base);
+        assert_eq!(formatted, "graphics::simple");
+    }
+
+    #[test]
+    fn test_format_lib_path_without_prefix() {
+        let base = Path::new("pipelines");
+        let path = Path::new("other/dir");
+        let formatted = format_lib_path(path, base);
+        assert_eq!(formatted, "other::dir");
     }
 
     #[test]
