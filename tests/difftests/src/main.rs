@@ -409,7 +409,6 @@ fn compile_spirv_shaders(lib: &ShaderLibrary) -> Result<ShaderCollection> {
         .multimodule(false)
         .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::SilentExit)
         .relax_block_layout(true)
-        .uniform_buffer_standard_layout(true)
         .scalar_block_layout(false)
         .skip_block_layout(false)
         .preserve_bindings(true);
