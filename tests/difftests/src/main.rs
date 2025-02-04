@@ -548,12 +548,20 @@ mod runners {
                 compilation_options: Default::default(),
             });
             let buffer_size = config.compute_output.buffer_size();
+            let initial_data = vec![0u8; buffer_size as usize];
             let buffer = device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some("Result Buffer"),
                 size: buffer_size,
-                usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
-                mapped_at_creation: false,
+                usage: wgpu::BufferUsages::STORAGE
+                    | wgpu::BufferUsages::COPY_SRC
+                    | wgpu::BufferUsages::COPY_DST,
+                mapped_at_creation: true,
             });
+            {
+                let mut mapping = buffer.slice(..).get_mapped_range_mut();
+                mapping.copy_from_slice(&initial_data);
+            }
+            buffer.unmap();
             let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
                 layout: &pipeline.get_bind_group_layout(0),
                 entries: &[wgpu::BindGroupEntry {
