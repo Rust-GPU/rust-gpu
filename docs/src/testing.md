@@ -73,6 +73,9 @@ harness will save the resulting display buffers to images and compare them, fail
 they do not match. If they do not match, their paths will be output so that you can
 determine what is different.
 
+You must currently name your fragment entrypoint `main_fs` and your vertex entry point
+`main_vs`.
+
 ### Compute Kernels / Shaders
 
 Tests in "pipelines/compute/" are used for compute shaders. The test harness will
@@ -85,6 +88,8 @@ The output type is specified by a comment directive:
 ```
 
 Valid values are `[u8]`, `f32`, and `u32`.
+
+You must currently name your compute entrypoint `main_cs`.
 
 ### Fragment and Vertex with Compute Shaders
 
