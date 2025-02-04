@@ -1175,7 +1175,7 @@ fn main() {
                 test_type: tester::TestType::UnitTest,
             },
             testfn: tester::TestFn::DynTestFn(Box::new(move || {
-                // Run WGSL test.
+                // Run WGSL side of the test.
                 let runner = get_runner(lib_clone.pipeline_type);
                 let out_wgsl = runner
                     .run(
@@ -1187,9 +1187,10 @@ fn main() {
                         &lib_clone.path,
                     )
                     .expect("WGSL run failed");
-                // Compile shaders to Rust (formerly spirv).
+                // Compile Rust to SpirV.
                 let rust_shaders =
                     compile_spirv_shaders(&lib_clone).expect("Failed to compile SPIR-V shaders");
+                // Run Rust side of the test.
                 let out_rust = runner
                     .run(
                         &device,
@@ -1202,6 +1203,17 @@ fn main() {
                     .expect("Rust run failed");
                 let data_wgsl = fs::read(&out_wgsl).expect("Failed to read WGSL output file");
                 let data_rust = fs::read(&out_rust).expect("Failed to read Rust output file");
+
+                // Fail if any output is empty.
+                if data_wgsl.is_empty() || data_rust.is_empty() {
+                    panic!(
+                        "Empty output for {}: WGSL: {} bytes, Rust: {} bytes. Likely a bug in the test or harness.",
+                        test_name,
+                        data_wgsl.len(),
+                        data_rust.len()
+                    );
+                }
+
                 if data_wgsl != data_rust {
                     panic!(
                         "Output mismatch for {}:\nWGSL output: {:?}\nRust output: {:?}",
