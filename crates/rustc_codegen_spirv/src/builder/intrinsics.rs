@@ -218,13 +218,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             sym::cttz => self.count_leading_trailing_zeros(args[0].immediate(), true, false),
             sym::cttz_nonzero => self.count_leading_trailing_zeros(args[0].immediate(), true, true),
 
-            sym::ctpop => {
-                let u32 = SpirvType::Integer(32, false).def(self.span(), self);
-                self.emit()
-                    .bit_count(u32, None, args[0].immediate().def(self))
-                    .unwrap()
-                    .with_type(u32)
-            }
+            sym::ctpop => self.count_ones(args[0].immediate()),
             sym::bitreverse => self
                 .emit()
                 .bit_reverse(args[0].immediate().ty, None, args[0].immediate().def(self))
@@ -377,6 +371,54 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 }
 
 impl Builder<'_, '_> {
+    pub fn count_ones(&self, arg: SpirvValue) -> SpirvValue {
+        let ty = arg.ty;
+        match self.cx.lookup_type(ty) {
+            SpirvType::Integer(bits, signed) => {
+                let u32 = SpirvType::Integer(32, false).def(self.span(), self);
+
+                match bits {
+                    8 | 16 => {
+                        let arg = arg.def(self);
+                        let arg = if signed {
+                            let unsigned =
+                                SpirvType::Integer(bits, false).def(self.span(), self);
+                            self.emit().bitcast(unsigned, None, arg).unwrap()
+                        } else {
+                            arg
+                        };
+                        let arg = self.emit().u_convert(u32, None, arg).unwrap();
+                        self.emit().bit_count(u32, None, arg).unwrap()
+                    }
+                    32 => self.emit().bit_count(u32, None, arg.def(self)).unwrap(),
+                    64 => {
+                        let u32_32 = self.constant_u32(self.span(), 32).def(self);
+                        let arg = arg.def(self);
+                        let lower = self.emit().s_convert(u32, None, arg).unwrap();
+                        let higher = self
+                            .emit()
+                            .shift_left_logical(ty, None, arg, u32_32)
+                            .unwrap();
+                        let higher = self.emit().s_convert(u32, None, higher).unwrap();
+
+                        let lower_bits = self.emit().bit_count(u32, None, lower).unwrap();
+                        let higher_bits = self.emit().bit_count(u32, None, higher).unwrap();
+                        self.emit().i_add(u32, None, lower_bits, higher_bits).unwrap()
+                    }
+                    _ => {
+                        let undef = self.undef(ty).def(self);
+                        self.zombie(undef, &format!(
+                            "counting leading / trailing zeros on unsupported {ty:?} bit integer type"
+                        ));
+                        undef
+                    }
+                }
+                    .with_type(u32)
+            }
+            _ => self.fatal("count_ones on a non-integer type"),
+        }
+    }
+
     pub fn count_leading_trailing_zeros(
         &self,
         arg: SpirvValue,
