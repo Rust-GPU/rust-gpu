@@ -425,7 +425,6 @@ pub struct BuilderSpirv<'tcx> {
     debug_file_cache: RefCell<FxHashMap<DebugFileKey, DebugFileSpirv<'tcx>>>,
 
     enabled_capabilities: FxHashSet<Capability>,
-    enabled_extensions: FxHashSet<Symbol>,
 }
 
 impl<'tcx> BuilderSpirv<'tcx> {
@@ -443,7 +442,6 @@ impl<'tcx> BuilderSpirv<'tcx> {
         builder.module_mut().header.as_mut().unwrap().generator = 0x001B_0000;
 
         let mut enabled_capabilities = FxHashSet::default();
-        let mut enabled_extensions = FxHashSet::default();
 
         fn add_cap(
             builder: &mut Builder,
@@ -455,11 +453,10 @@ impl<'tcx> BuilderSpirv<'tcx> {
             builder.capability(cap);
             enabled_capabilities.insert(cap);
         }
-        fn add_ext(builder: &mut Builder, enabled_extensions: &mut FxHashSet<Symbol>, ext: Symbol) {
+        fn add_ext(builder: &mut Builder, ext: Symbol) {
             // This should be the only callsite of Builder::extension (aside from tests), to make
             // sure the hashset stays in sync.
             builder.extension(ext.as_str());
-            enabled_extensions.insert(ext);
         }
 
         for feature in features {
@@ -468,7 +465,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
                     add_cap(&mut builder, &mut enabled_capabilities, cap);
                 }
                 TargetFeature::Extension(ext) => {
-                    add_ext(&mut builder, &mut enabled_extensions, ext);
+                    add_ext(&mut builder, ext);
                 }
             }
         }
@@ -476,11 +473,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
         add_cap(&mut builder, &mut enabled_capabilities, Capability::Shader);
         if memory_model == MemoryModel::Vulkan {
             if version < (1, 5) {
-                add_ext(
-                    &mut builder,
-                    &mut enabled_extensions,
-                    sym.spv_khr_vulkan_memory_model,
-                );
+                add_ext(&mut builder, sym.spv_khr_vulkan_memory_model);
             }
             add_cap(
                 &mut builder,
@@ -502,7 +495,6 @@ impl<'tcx> BuilderSpirv<'tcx> {
             id_to_const: Default::default(),
             debug_file_cache: Default::default(),
             enabled_capabilities,
-            enabled_extensions,
         }
     }
 
@@ -539,10 +531,6 @@ impl<'tcx> BuilderSpirv<'tcx> {
 
     pub fn has_capability(&self, capability: Capability) -> bool {
         self.enabled_capabilities.contains(&capability)
-    }
-
-    pub fn has_extension(&self, extension: Symbol) -> bool {
-        self.enabled_extensions.contains(&extension)
     }
 
     pub fn select_function_by_id(&self, id: Word) -> BuilderCursor {
