@@ -218,11 +218,13 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             sym::cttz => self.count_leading_trailing_zeros(args[0].immediate(), true, false),
             sym::cttz_nonzero => self.count_leading_trailing_zeros(args[0].immediate(), true, true),
 
-            sym::ctpop => self
-                .emit()
-                .bit_count(args[0].immediate().ty, None, args[0].immediate().def(self))
-                .unwrap()
-                .with_type(args[0].immediate().ty),
+            sym::ctpop => {
+                let u32 = SpirvType::Integer(32, false).def(self.span(), self);
+                self.emit()
+                    .bit_count(u32, None, args[0].immediate().def(self))
+                    .unwrap()
+                    .with_type(u32)
+            }
             sym::bitreverse => self
                 .emit()
                 .bit_reverse(args[0].immediate().ty, None, args[0].immediate().def(self))
