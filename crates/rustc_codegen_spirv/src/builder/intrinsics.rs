@@ -377,8 +377,7 @@ impl Builder<'_, '_> {
                     8 | 16 => {
                         let arg = arg.def(self);
                         let arg = if signed {
-                            let unsigned =
-                                SpirvType::Integer(bits, false).def(self.span(), self);
+                            let unsigned = SpirvType::Integer(bits, false).def(self.span(), self);
                             self.emit().bitcast(unsigned, None, arg).unwrap()
                         } else {
                             arg
@@ -399,17 +398,20 @@ impl Builder<'_, '_> {
 
                         let lower_bits = self.emit().bit_count(u32, None, lower).unwrap();
                         let higher_bits = self.emit().bit_count(u32, None, higher).unwrap();
-                        self.emit().i_add(u32, None, lower_bits, higher_bits).unwrap()
+                        self.emit()
+                            .i_add(u32, None, lower_bits, higher_bits)
+                            .unwrap()
                     }
                     _ => {
                         let undef = self.undef(ty).def(self);
-                        self.zombie(undef, &format!(
-                            "count_ones() on unsupported {ty:?} bit integer type"
-                        ));
+                        self.zombie(
+                            undef,
+                            &format!("count_ones() on unsupported {ty:?} bit integer type"),
+                        );
                         undef
                     }
                 }
-                    .with_type(u32)
+                .with_type(u32)
             }
             _ => self.fatal("count_ones() on a non-integer type"),
         }
@@ -434,7 +436,10 @@ impl Builder<'_, '_> {
 
                         let reverse = self.emit().bit_reverse(u32, None, arg).unwrap();
                         let shift = self.constant_u32(self.span(), 32 - bits).def(self);
-                        let reverse = self.emit().shift_right_logical(u32, None, reverse, shift).unwrap();
+                        let reverse = self
+                            .emit()
+                            .shift_right_logical(u32, None, reverse, shift)
+                            .unwrap();
                         let reverse = self.emit().u_convert(uint, None, reverse).unwrap();
                         if signed {
                             self.emit().bitcast(ty, None, reverse).unwrap()
@@ -447,7 +452,7 @@ impl Builder<'_, '_> {
                         let arg = self.emit().bitcast(u32, None, arg.def(self)).unwrap();
                         let reverse = self.emit().bit_reverse(u32, None, arg).unwrap();
                         self.emit().bitcast(ty, None, reverse).unwrap()
-                    },
+                    }
                     (64, signed) => {
                         let u32_32 = self.constant_u32(self.span(), 32).def(self);
                         let arg = arg.def(self);
@@ -464,10 +469,16 @@ impl Builder<'_, '_> {
 
                         let higher_bits = self.emit().u_convert(uint, None, higher_bits).unwrap();
                         let shift = self.constant_u32(self.span(), 32).def(self);
-                        let higher_bits = self.emit().shift_left_logical(uint, None, higher_bits, shift).unwrap();
+                        let higher_bits = self
+                            .emit()
+                            .shift_left_logical(uint, None, higher_bits, shift)
+                            .unwrap();
                         let lower_bits = self.emit().u_convert(uint, None, lower_bits).unwrap();
 
-                        let result = self.emit().bitwise_or(ty, None, lower_bits, higher_bits).unwrap();
+                        let result = self
+                            .emit()
+                            .bitwise_or(ty, None, lower_bits, higher_bits)
+                            .unwrap();
                         if signed {
                             self.emit().bitcast(ty, None, result).unwrap()
                         } else {
@@ -476,13 +487,14 @@ impl Builder<'_, '_> {
                     }
                     _ => {
                         let undef = self.undef(ty).def(self);
-                        self.zombie(undef, &format!(
-                            "bit_reverse() on unsupported {ty:?} bit integer type"
-                        ));
+                        self.zombie(
+                            undef,
+                            &format!("bit_reverse() on unsupported {ty:?} bit integer type"),
+                        );
                         undef
                     }
                 }
-                    .with_type(ty)
+                .with_type(ty)
             }
             _ => self.fatal("bit_reverse() on a non-integer type"),
         }
