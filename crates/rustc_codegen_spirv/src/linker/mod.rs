@@ -23,12 +23,12 @@ use crate::custom_decorations::{CustomDecoration, SrcLocDecoration, ZombieDecora
 use crate::custom_insts;
 use either::Either;
 use rspirv::binary::{Assemble, Consumer};
-use rspirv::dr::{Block, Instruction, Loader, Module, ModuleHeader, Operand};
+use rspirv::dr::{Block, Loader, Module, ModuleHeader, Operand};
 use rspirv::spirv::{Op, StorageClass, Word};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
-use rustc_session::config::OutputFilenames;
 use rustc_session::Session;
+use rustc_session::config::OutputFilenames;
 use std::collections::BTreeMap;
 use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
@@ -65,10 +65,7 @@ pub struct Options {
     pub spirt_strip_custom_debuginfo_from_dumps: bool,
     pub spirt_keep_debug_sources_in_dumps: bool,
     pub spirt_keep_unstructured_cfg_in_dumps: bool,
-    pub specializer_debug: bool,
     pub specializer_dump_instances: Option<PathBuf>,
-    pub print_all_zombie: bool,
-    pub print_zombie: bool,
 }
 
 pub enum LinkResult {
@@ -112,13 +109,9 @@ fn apply_rewrite_rules<'a>(
                 }
             }
         });
-    };
-    for block in blocks {
-        for inst in &mut block.label {
-            apply(inst);
-        }
-        for inst in &mut block.instructions {
-            apply(inst);
+    for id in all_ids_mut {
+        if let Some(&rewrite) = rewrite_rules.get(id) {
+            *id = rewrite;
         }
     }
 }
@@ -332,7 +325,7 @@ pub fn link(
         }
 
         let _timer = sess.timer("link_report_and_remove_zombies");
-        zombies::report_and_remove_zombies(sess, opts, &mut output)?;
+        zombies::report_and_remove_zombies(sess, &mut output)?;
     }
 
     if opts.infer_storage_classes {
@@ -350,27 +343,23 @@ pub fn link(
         for func in &mut output.functions {
             simple_passes::block_ordering_pass(func);
         }
-        output = specializer::specialize(
-            opts,
-            output,
-            specializer::SimpleSpecialization {
-                specialize_operand: |operand| {
-                    matches!(operand, Operand::StorageClass(StorageClass::Generic))
-                },
-
-                // NOTE(eddyb) this can be anything that is guaranteed to pass
-                // validation - there are no constraints so this is either some
-                // unused pointer, or perhaps one created using `OpConstantNull`
-                // and simply never mixed with pointers that have a storage class.
-                // It would be nice to use `Generic` itself here so that we leave
-                // some kind of indication of it being unconstrained, but `Generic`
-                // requires additional capabilities, so we use `Function` instead.
-                // TODO(eddyb) investigate whether this can end up in a pointer
-                // type that's the value of a module-scoped variable, and whether
-                // `Function` is actually invalid! (may need `Private`)
-                concrete_fallback: Operand::StorageClass(StorageClass::Function),
+        output = specializer::specialize(opts, output, specializer::SimpleSpecialization {
+            specialize_operand: |operand| {
+                matches!(operand, Operand::StorageClass(StorageClass::Generic))
             },
-        );
+
+            // NOTE(eddyb) this can be anything that is guaranteed to pass
+            // validation - there are no constraints so this is either some
+            // unused pointer, or perhaps one created using `OpConstantNull`
+            // and simply never mixed with pointers that have a storage class.
+            // It would be nice to use `Generic` itself here so that we leave
+            // some kind of indication of it being unconstrained, but `Generic`
+            // requires additional capabilities, so we use `Function` instead.
+            // TODO(eddyb) investigate whether this can end up in a pointer
+            // type that's the value of a module-scoped variable, and whether
+            // `Function` is actually invalid! (may need `Private`)
+            concrete_fallback: Operand::StorageClass(StorageClass::Function),
+        });
     }
 
     // NOTE(eddyb) with SPIR-T, we can do `mem2reg` before inlining, too!
@@ -656,13 +645,10 @@ pub fn link(
             module.entry_points.push(entry.clone());
             let entry_name = entry.operands[2].unwrap_literal_string().to_string();
             let mut file_stem = OsString::from(
-                sanitize_filename::sanitize_with_options(
-                    &entry_name,
-                    sanitize_filename::Options {
-                        replacement: "-",
-                        ..Default::default()
-                    },
-                )
+                sanitize_filename::sanitize_with_options(&entry_name, sanitize_filename::Options {
+                    replacement: "-",
+                    ..Default::default()
+                })
                 .replace("--", "-"),
             );
             // It's always possible to find an unambiguous `file_stem`, but it

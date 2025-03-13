@@ -9,7 +9,7 @@ use rustc_ast::Attribute;
 use rustc_hir as hir;
 use rustc_hir::def_id::LocalModDefId;
 use rustc_hir::intravisit::{self, Visitor};
-use rustc_hir::{HirId, MethodKind, Target, CRATE_HIR_ID};
+use rustc_hir::{CRATE_HIR_ID, HirId, MethodKind, Target};
 use rustc_middle::hir::nested_filter;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::TyCtxt;
@@ -92,6 +92,7 @@ pub enum SpirvAttribute {
     DescriptorSet(u32),
     Binding(u32),
     Flat,
+    PerPrimitiveExt,
     Invariant,
     InputAttachmentIndex(u32),
     SpecConstant(SpecConstant),
@@ -128,6 +129,7 @@ pub struct AggregatedSpirvAttributes {
     pub binding: Option<Spanned<u32>>,
     pub flat: Option<Spanned<()>>,
     pub invariant: Option<Spanned<()>>,
+    pub per_primitive_ext: Option<Spanned<()>>,
     pub input_attachment_index: Option<Spanned<u32>>,
     pub spec_constant: Option<Spanned<SpecConstant>>,
 
@@ -182,15 +184,14 @@ impl AggregatedSpirvAttributes {
             span: Span,
             category: &'static str,
         ) -> Result<(), MultipleAttrs> {
-            match slot {
-                Some(prev) => Err(MultipleAttrs {
+            if let Some(prev) = slot {
+                Err(MultipleAttrs {
                     prev_span: prev.span,
                     category,
-                }),
-                None => {
-                    *slot = Some(Spanned { value, span });
-                    Ok(())
-                }
+                })
+            } else {
+                *slot = Some(Spanned { value, span });
+                Ok(())
             }
         }
 
@@ -214,6 +215,12 @@ impl AggregatedSpirvAttributes {
             Binding(value) => try_insert(&mut self.binding, value, span, "#[spirv(binding)]"),
             Flat => try_insert(&mut self.flat, (), span, "#[spirv(flat)]"),
             Invariant => try_insert(&mut self.invariant, (), span, "#[spirv(invariant)]"),
+            PerPrimitiveExt => try_insert(
+                &mut self.per_primitive_ext,
+                (),
+                span,
+                "#[spirv(per_primitive_ext)]",
+            ),
             InputAttachmentIndex(value) => try_insert(
                 &mut self.input_attachment_index,
                 value,
@@ -315,6 +322,7 @@ impl CheckSpirvAttrVisitor<'_> {
                 | SpirvAttribute::Binding(_)
                 | SpirvAttribute::Flat
                 | SpirvAttribute::Invariant
+                | SpirvAttribute::PerPrimitiveExt
                 | SpirvAttribute::InputAttachmentIndex(_)
                 | SpirvAttribute::SpecConstant(_) => match target {
                     Target::Param => {

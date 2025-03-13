@@ -1,22 +1,26 @@
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use super::Builder;
 use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{BuilderCursor, SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
+use crate::codegen_cx::CodegenCx;
 use crate::custom_insts::{CustomInst, CustomOp};
-use crate::rustc_codegen_ssa::traits::BaseTypeMethods;
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::dr::{InsertPoint, Instruction, Operand};
 use rspirv::spirv::{Capability, MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
-use rustc_apfloat::{ieee, Float, Round, Status};
+use rustc_apfloat::{Float, Round, Status, ieee};
+use rustc_codegen_ssa::MemFlags;
 use rustc_codegen_ssa::common::{
     AtomicOrdering, AtomicRmwBinOp, IntPredicate, RealPredicate, SynchronizationScope, TypeKind,
 };
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{
-    BackendTypes, BuilderMethods, ConstMethods, LayoutTypeMethods, OverflowOp,
+    BackendTypes, BaseTypeCodegenMethods, BuilderMethods, ConstCodegenMethods,
+    LayoutTypeCodegenMethods, OverflowOp,
 };
-use rustc_codegen_ssa::MemFlags;
 use rustc_data_structures::fx::FxHashSet;
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::CodegenFnAttrs;
@@ -24,7 +28,7 @@ use rustc_middle::ty::layout::LayoutOf;
 use rustc_middle::ty::{self, Ty};
 use rustc_span::Span;
 use rustc_target::abi::call::FnAbi;
-use rustc_target::abi::{Abi, Align, Scalar, Size, WrappingRange};
+use rustc_target::abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::cell::Cell;
@@ -49,12 +53,11 @@ macro_rules! simple_op {
                             let size = Size::from_bits(bits);
                             let as_u128 = |const_val| {
                                 let x = match const_val {
-                                    SpirvConst::U32(x) => x as u128,
-                                    SpirvConst::U64(x) => x as u128,
+                                    SpirvConst::Scalar(x) => x,
                                     _ => return None,
                                 };
                                 Some(if signed {
-                                    size.sign_extend(x)
+                                    size.sign_extend(x) as u128
                                 } else {
                                     size.truncate(x)
                                 })
@@ -225,7 +228,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             }
             SpirvType::Array { element, count } => {
                 let elem_pat = self.memset_const_pattern(&self.lookup_type(element), fill_byte);
-                let count = self.builder.lookup_const_u64(count).unwrap() as usize;
+                let count = self.builder.lookup_const_scalar(count).unwrap() as usize;
                 self.constant_composite(
                     ty.def(self.span(), self),
                     iter::repeat(elem_pat).take(count),
@@ -269,7 +272,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             SpirvType::Adt { .. } => self.fatal("memset on structs not implemented yet"),
             SpirvType::Array { element, count } => {
                 let elem_pat = self.memset_dynamic_pattern(&self.lookup_type(element), fill_var);
-                let count = self.builder.lookup_const_u64(count).unwrap() as usize;
+                let count = self.builder.lookup_const_scalar(count).unwrap() as usize;
                 self.emit()
                     .composite_construct(
                         ty.def(self.span(), self),
@@ -327,7 +330,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             .lookup_type(pat.ty)
             .sizeof(self)
             .expect("Unable to memset a dynamic sized object");
-        let size_elem_const = self.constant_int(size_bytes.ty, size_elem.bytes());
+        let size_elem_const = self.constant_int(size_bytes.ty, size_elem.bytes().into());
         let zero = self.constant_int(size_bytes.ty, 0);
         let one = self.constant_int(size_bytes.ty, 1);
         let zero_align = Align::from_bytes(0).unwrap();
@@ -337,7 +340,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let exit_bb = self.append_sibling_block("memset_exit");
 
         let count = self.udiv(size_bytes, size_elem_const);
-        let index = self.alloca(count.ty, zero_align);
+        let index = self.alloca(self.lookup_type(count.ty).sizeof(self).unwrap(), zero_align);
         self.store(zero, index, zero_align);
         self.br(header_bb);
 
@@ -595,8 +598,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // - dynamic indexing of a single array
         let const_ptr_offset = self
             .builder
-            .lookup_const_u64(ptr_base_index)
-            .and_then(|idx| Some(idx * self.lookup_type(ty).sizeof(self)?));
+            .lookup_const_scalar(ptr_base_index)
+            .and_then(|idx| Some(u64::try_from(idx).ok()? * self.lookup_type(ty).sizeof(self)?));
         if let Some(const_ptr_offset) = const_ptr_offset {
             if let Some((base_indices, base_pointee_ty)) = self.recover_access_chain_from_offset(
                 original_pointee_ty,
@@ -707,7 +710,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let mut emit = self.emit();
 
         let non_zero_ptr_base_index =
-            ptr_base_index.filter(|&idx| self.builder.lookup_const_u64(idx) != Some(0));
+            ptr_base_index.filter(|&idx| self.builder.lookup_const_scalar(idx) != Some(0));
         if let Some(ptr_base_index) = non_zero_ptr_base_index {
             let result = if is_inbounds {
                 emit.in_bounds_ptr_access_chain(
@@ -917,9 +920,47 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             s1
         }
     }
+
+    // HACK(eddyb) helper shared by `typed_alloca` and `alloca`.
+    fn declare_func_local_var(
+        &mut self,
+        ty: <Self as BackendTypes>::Type,
+        _align: Align,
+    ) -> SpirvValue {
+        let ptr_ty = self.type_ptr_to(ty);
+
+        // "All OpVariable instructions in a function must be the first instructions in the first block."
+        let mut builder = self.emit();
+        builder.select_block(Some(0)).unwrap();
+        let index = {
+            let block = &builder.module_ref().functions[builder.selected_function().unwrap()]
+                .blocks[builder.selected_block().unwrap()];
+            block
+                .instructions
+                .iter()
+                .enumerate()
+                .find_map(|(index, inst)| {
+                    if inst.class.opcode != Op::Variable {
+                        Some(InsertPoint::FromBegin(index))
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or(InsertPoint::End)
+        };
+        // TODO: rspirv doesn't have insert_variable function
+        let result_id = builder.id();
+        let inst = Instruction::new(Op::Variable, Some(ptr_ty), Some(result_id), vec![
+            Operand::StorageClass(StorageClass::Function),
+        ]);
+        builder.insert_into_block(index, inst).unwrap();
+        result_id.with_type(ptr_ty)
+    }
 }
 
 impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
+    type CodegenCx = CodegenCx<'tcx>;
+
     fn build(cx: &'a Self::CodegenCx, llbb: Self::BasicBlock) -> Self {
         let cursor = cx.builder.select_block_by_id(llbb);
         // FIXME(eddyb) change `Self::Function` to be more like a function index.
@@ -936,7 +977,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             cx,
             cursor,
             current_fn,
-            basic_block: llbb,
             current_span: Default::default(),
         }
     }
@@ -946,7 +986,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     }
 
     fn llbb(&self) -> Self::BasicBlock {
-        self.basic_block
+        // FIXME(eddyb) `llbb` should be removed from `rustc_codegen_ssa::traits`.
+        unreachable!("dead code within `rustc_codegen_ssa`")
     }
 
     fn set_span(&mut self, span: Span) {
@@ -983,16 +1024,13 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 let ((line_start, col_start), (line_end, col_end)) =
                     (line_col_range.start, line_col_range.end);
 
-                self.custom_inst(
-                    void_ty,
-                    CustomInst::SetDebugSrcLoc {
-                        file: Operand::IdRef(file.file_name_op_string_id),
-                        line_start: Operand::IdRef(self.const_u32(line_start).def(self)),
-                        line_end: Operand::IdRef(self.const_u32(line_end).def(self)),
-                        col_start: Operand::IdRef(self.const_u32(col_start).def(self)),
-                        col_end: Operand::IdRef(self.const_u32(col_end).def(self)),
-                    },
-                );
+                self.custom_inst(void_ty, CustomInst::SetDebugSrcLoc {
+                    file: Operand::IdRef(file.file_name_op_string_id),
+                    line_start: Operand::IdRef(self.const_u32(line_start).def(self)),
+                    line_end: Operand::IdRef(self.const_u32(line_end).def(self)),
+                    col_start: Operand::IdRef(self.const_u32(col_start).def(self)),
+                    col_end: Operand::IdRef(self.const_u32(col_end).def(self)),
+                });
             }
 
             // HACK(eddyb) remove the previous instruction if made irrelevant.
@@ -1083,8 +1121,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // HACK(eddyb) constant-fold branches early on, as the `core` library is
         // starting to get a lot of `if cfg!(debug_assertions)` added to it.
         match self.builder.lookup_const_by_id(cond) {
-            Some(SpirvConst::Bool(true)) => self.br(then_llbb),
-            Some(SpirvConst::Bool(false)) => self.br(else_llbb),
+            Some(SpirvConst::Scalar(1)) => self.br(then_llbb),
+            Some(SpirvConst::Scalar(0)) => self.br(else_llbb),
             _ => {
                 self.emit()
                     .branch_conditional(cond, then_llbb, else_llbb, empty())
@@ -1340,14 +1378,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         let signed = match ty.kind() {
             ty::Int(_) => true,
             ty::Uint(_) => false,
-            other => self.fatal(format!(
-                "Unexpected {} type: {other:#?}",
-                match oop {
-                    OverflowOp::Add => "checked add",
-                    OverflowOp::Sub => "checked sub",
-                    OverflowOp::Mul => "checked mul",
-                }
-            )),
+            other => self.fatal(format!("Unexpected {} type: {other:#?}", match oop {
+                OverflowOp::Add => "checked add",
+                OverflowOp::Sub => "checked sub",
+                OverflowOp::Mul => "checked mul",
+            })),
         };
 
         let result = if is_add {
@@ -1413,41 +1448,17 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         val
     }
 
-    fn alloca(&mut self, ty: Self::Type, _align: Align) -> Self::Value {
-        let ptr_ty = self.type_ptr_to(ty);
-        // "All OpVariable instructions in a function must be the first instructions in the first block."
-        let mut builder = self.emit();
-        builder.select_block(Some(0)).unwrap();
-        let index = {
-            let block = &builder.module_ref().functions[builder.selected_function().unwrap()]
-                .blocks[builder.selected_block().unwrap()];
-            block
-                .instructions
-                .iter()
-                .enumerate()
-                .find_map(|(index, inst)| {
-                    if inst.class.opcode != Op::Variable {
-                        Some(InsertPoint::FromBegin(index))
-                    } else {
-                        None
-                    }
-                })
-                .unwrap_or(InsertPoint::End)
-        };
-        // TODO: rspirv doesn't have insert_variable function
-        let result_id = builder.id();
-        let inst = Instruction::new(
-            Op::Variable,
-            Some(ptr_ty),
-            Some(result_id),
-            vec![Operand::StorageClass(StorageClass::Function)],
-        );
-        builder.insert_into_block(index, inst).unwrap();
-        result_id.with_type(ptr_ty)
+    // HACK(eddyb) new method patched into `pqp_cg_ssa` (see `build.rs`).
+    #[cfg(not(rustc_codegen_spirv_disable_pqp_cg_ssa))]
+    fn typed_alloca(&mut self, ty: Self::Type, align: Align) -> Self::Value {
+        self.declare_func_local_var(ty, align)
+    }
+    fn alloca(&mut self, size: Size, align: Align) -> Self::Value {
+        self.declare_func_local_var(self.type_array(self.type_i8(), size.bytes()), align)
     }
 
-    fn byte_array_alloca(&mut self, _len: Self::Value, _align: Align) -> Self::Value {
-        self.fatal("array alloca not supported yet")
+    fn dynamic_alloca(&mut self, _len: Self::Value, _align: Align) -> Self::Value {
+        self.fatal("dynamic alloca not supported yet")
     }
 
     fn load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
@@ -1512,7 +1523,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 place.val.align,
             );
             OperandValue::Immediate(self.to_immediate(llval, place.layout))
-        } else if let Abi::ScalarPair(a, b) = place.layout.abi {
+        } else if let BackendRepr::ScalarPair(a, b) = place.layout.backend_repr {
             let b_offset = a
                 .primitive()
                 .size(self)
@@ -2003,13 +2014,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             SpirvType::Pointer { .. } => match op {
                 IntEQ => {
                     if self.emit().version().unwrap() > (1, 3) {
-                        let ptr_equal =
-                            self.emit().ptr_equal(b, None, lhs.def(self), rhs.def(self));
-
-                        ptr_equal.map(|result| {
-                            self.zombie_ptr_equal(result, "OpPtrEqual");
-                            result
-                        })
+                        self.emit()
+                            .ptr_equal(b, None, lhs.def(self), rhs.def(self))
+                            .inspect(|&result| {
+                                self.zombie_ptr_equal(result, "OpPtrEqual");
+                            })
                     } else {
                         let int_ty = self.type_usize();
                         let lhs = self
@@ -2022,16 +2031,15 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                             .convert_ptr_to_u(int_ty, None, rhs.def(self))
                             .unwrap();
                         self.zombie_convert_ptr_to_u(rhs);
-                        self.emit().i_not_equal(b, None, lhs, rhs)
+                        self.emit().i_equal(b, None, lhs, rhs)
                     }
                 }
                 IntNE => {
                     if self.emit().version().unwrap() > (1, 3) {
                         self.emit()
                             .ptr_not_equal(b, None, lhs.def(self), rhs.def(self))
-                            .map(|result| {
+                            .inspect(|&result| {
                                 self.zombie_ptr_equal(result, "OpPtrNotEqual");
-                                result
                             })
                     } else {
                         let int_ty = self.type_usize();
@@ -2232,7 +2240,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 "memcpy with mem flags is not supported yet: {flags:?}"
             ));
         }
-        let const_size = self.builder.lookup_const_u64(size).map(Size::from_bytes);
+        let const_size = self
+            .builder
+            .lookup_const_scalar(size)
+            .and_then(|size| Some(Size::from_bytes(u64::try_from(size).ok()?)));
         if const_size == Some(Size::ZERO) {
             // Nothing to do!
             return;
@@ -2306,6 +2317,12 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 "memset with mem flags is not supported yet: {flags:?}"
             ));
         }
+
+        let const_size = self
+            .builder
+            .lookup_const_scalar(size)
+            .and_then(|size| Some(Size::from_bytes(u64::try_from(size).ok()?)));
+
         let elem_ty = match self.lookup_type(ptr.ty) {
             SpirvType::Pointer { pointee } => pointee,
             _ => self.fatal(format!(
@@ -2314,13 +2331,13 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             )),
         };
         let elem_ty_spv = self.lookup_type(elem_ty);
-        let pat = match self.builder.lookup_const_u64(fill_byte) {
+        let pat = match self.builder.lookup_const_scalar(fill_byte) {
             Some(fill_byte) => self.memset_const_pattern(&elem_ty_spv, fill_byte as u8),
             None => self.memset_dynamic_pattern(&elem_ty_spv, fill_byte.def(self)),
         }
         .with_type(elem_ty);
-        match self.builder.lookup_const_u64(size) {
-            Some(size) => self.memset_constant_size(ptr, pat, size),
+        match const_size {
+            Some(size) => self.memset_constant_size(ptr, pat, size.bytes()),
             None => self.memset_dynamic_size(ptr, pat, size),
         }
     }
@@ -2354,7 +2371,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             SpirvType::Vector { element, .. } => element,
             other => self.fatal(format!("extract_element not implemented on type {other:?}")),
         };
-        match self.builder.lookup_const_u64(idx) {
+        match self.builder.lookup_const_scalar(idx) {
             Some(const_index) => self.emit().composite_extract(
                 result_type,
                 None,
@@ -2651,16 +2668,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // ignore
     }
 
-    fn instrprof_increment(
-        &mut self,
-        _fn_name: Self::Value,
-        _hash: Self::Value,
-        _num_counters: Self::Value,
-        _index: Self::Value,
-    ) {
-        todo!()
-    }
-
     fn call(
         &mut self,
         callee_ty: Self::Type,
@@ -2771,7 +2778,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 ///
                 /// E.g. for `format_args!("{a} {b:x}")` they'll be:
                 /// * `&a` with `typeof a` and ' ',
-                ///  *`&b` with `typeof b` and 'x'
+                /// * `&b` with `typeof b` and 'x'
                 ref_arg_ids_with_ty_and_spec: SmallVec<[(Word, Ty<'tcx>, char); 2]>,
             }
             struct FormatArgsNotRecognized(String);
@@ -2781,27 +2788,26 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 let mut decoded_format_args = DecodedFormatArgs::default();
 
                 let const_u32_as_usize = |ct_id| match self.builder.lookup_const_by_id(ct_id)? {
-                    SpirvConst::U32(x) => Some(x as usize),
+                    SpirvConst::Scalar(x) => Some(u32::try_from(x).ok()? as usize),
                     _ => None,
                 };
-                let const_slice_as_elem_ids = |slice_ptr_and_len_ids: &[Word]| {
-                    if let [ptr_id, len_id] = slice_ptr_and_len_ids[..] {
-                        if let SpirvConst::PtrTo { pointee } =
-                            self.builder.lookup_const_by_id(ptr_id)?
+                let const_slice_as_elem_ids = |ptr_id: Word, len: usize| {
+                    if let SpirvConst::PtrTo { pointee } =
+                        self.builder.lookup_const_by_id(ptr_id)?
+                    {
+                        if let SpirvConst::Composite(elems) =
+                            self.builder.lookup_const_by_id(pointee)?
                         {
-                            if let SpirvConst::Composite(elems) =
-                                self.builder.lookup_const_by_id(pointee)?
-                            {
-                                if elems.len() == const_u32_as_usize(len_id)? {
-                                    return Some(elems);
-                                }
+                            if elems.len() == len {
+                                return Some(elems);
                             }
                         }
                     }
                     None
                 };
-                let const_str_as_utf8 = |str_ptr_and_len_ids: &[Word]| {
-                    let piece_str_bytes = const_slice_as_elem_ids(str_ptr_and_len_ids)?
+                let const_str_as_utf8 = |&[str_ptr_id, str_len_id]: &[Word; 2]| {
+                    let str_len = const_u32_as_usize(str_len_id)?;
+                    let piece_str_bytes = const_slice_as_elem_ids(str_ptr_id, str_len)?
                         .iter()
                         .map(|&id| u8::try_from(const_u32_as_usize(id)?).ok())
                         .collect::<Option<Vec<u8>>>()?;
@@ -2818,22 +2824,34 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         kind: SpirvValueKind::Def(b_id),
                         ..
                     },
-                    // NOTE(fee1-dead): the standard `panic` takes in a `Location` due to `track_caller`.
-                    // but for `panic_nounwind` it does not, therefore we only look at the first two arguments.
-                ] = args[..2]
+                    ref other_args @ ..,
+                ] = args[..]
                 {
-                    if let Some(const_msg) = const_str_as_utf8(&[a_id, b_id]) {
-                        decoded_format_args.const_pieces = Some([const_msg].into_iter().collect());
-                        return Ok(decoded_format_args);
+                    // Optional `&'static panic::Location<'static>`.
+                    if other_args.len() <= 1 {
+                        if let Some(const_msg) = const_str_as_utf8(&[a_id, b_id]) {
+                            decoded_format_args.const_pieces =
+                                Some([const_msg].into_iter().collect());
+                            return Ok(decoded_format_args);
+                        }
                     }
                 }
 
-                let format_args_id = match args {
-                    &[
+                let format_args_id = match *args {
+                    // HACK(eddyb) `panic_nounwind_fmt` takes an extra argument.
+                    [
                         SpirvValue {
                             kind: SpirvValueKind::Def(format_args_id),
                             ..
                         },
+                        _, // `&'static panic::Location<'static>`
+                    ]
+                    | [
+                        SpirvValue {
+                            kind: SpirvValueKind::Def(format_args_id),
+                            ..
+                        },
+                        _, // `force_no_backtrace: bool`
                         _, // `&'static panic::Location<'static>`
                     ] => format_args_id,
 
@@ -2936,10 +2954,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                             match (inst.class.opcode, inst.result_id, &id_operands[..]) {
                                 (Op::Bitcast, Some(r), &[x]) => Inst::Bitcast(r, x),
                                 (Op::InBoundsAccessChain, Some(r), &[p, i]) => {
-                                    if let Some(SpirvConst::U32(i)) =
+                                    if let Some(SpirvConst::Scalar(i)) =
                                         self.builder.lookup_const_by_id(i)
                                     {
-                                        Inst::InBoundsAccessChain(r, p, i)
+                                        Inst::InBoundsAccessChain(r, p, i as u32)
                                     } else {
                                         Inst::Unsupported(inst.class.opcode)
                                     }
@@ -2963,42 +2981,36 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         "fmt::Arguments::new call: ran out of instructions".into(),
                     )
                 })?;
-                let ((pieces_slice_ptr_id, pieces_len_id), (rt_args_slice_ptr_id, rt_args_count)) =
+                let ((pieces_slice_ptr_id, pieces_len), (rt_args_slice_ptr_id, rt_args_count)) =
                     match fmt_args_new_call_insts[..] {
                         [
                             Inst::Call(call_ret_id, callee_id, ref call_args),
                             Inst::Store(st_dst_id, st_val_id),
                             Inst::Load(ld_val_id, ld_src_id),
-                        ] if self.fmt_args_new_fn_ids.borrow().contains(&callee_id)
-                            && call_ret_id == st_val_id
+                        ] if call_ret_id == st_val_id
                             && st_dst_id == ld_src_id
                             && ld_val_id == format_args_id =>
                         {
                             require_local_var(st_dst_id, "fmt::Arguments::new destination")?;
 
+                            let Some(&(pieces_len, rt_args_count)) =
+                                self.fmt_args_new_fn_ids.borrow().get(&callee_id)
+                            else {
+                                return Err(FormatArgsNotRecognized(
+                                    "fmt::Arguments::new callee not registered".into(),
+                                ));
+                            };
+
                             match call_args[..] {
                                 // `<core::fmt::Arguments>::new_v1`
-                                [
-                                    pieces_slice_ptr_id,
-                                    pieces_len_id,
-                                    rt_args_slice_ptr_id,
-                                    rt_args_len_id,
-                                ] => (
-                                    (pieces_slice_ptr_id, pieces_len_id),
-                                    (
-                                        Some(rt_args_slice_ptr_id),
-                                        const_u32_as_usize(rt_args_len_id).ok_or_else(|| {
-                                            FormatArgsNotRecognized(
-                                                "fmt::Arguments::new: args.len() not constant"
-                                                    .into(),
-                                            )
-                                        })?,
-                                    ),
+                                [pieces_slice_ptr_id, rt_args_slice_ptr_id] => (
+                                    (pieces_slice_ptr_id, pieces_len),
+                                    (Some(rt_args_slice_ptr_id), rt_args_count),
                                 ),
 
                                 // `<core::fmt::Arguments>::new_const`
-                                [pieces_slice_ptr_id, pieces_len_id] => {
-                                    ((pieces_slice_ptr_id, pieces_len_id), (None, 0))
+                                [pieces_slice_ptr_id] if rt_args_count == 0 => {
+                                    ((pieces_slice_ptr_id, pieces_len), (None, rt_args_count))
                                 }
 
                                 _ => {
@@ -3030,21 +3042,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 // arguments (from e.g. new `assert!`s being added to `core`),
                 // we have to confirm their many instructions for removal.
                 if rt_args_count > 0 {
-                    let rt_args_slice_ptr_id = rt_args_slice_ptr_id.unwrap();
-                    let rt_args_array_ptr_id = match try_rev_take(1).ok_or_else(|| {
-                        FormatArgsNotRecognized(
-                            "&[fmt::rt::Argument] bitcast: ran out of instructions".into(),
-                        )
-                    })?[..]
-                    {
-                        [Inst::Bitcast(out_id, in_id)] if out_id == rt_args_slice_ptr_id => in_id,
-                        _ => {
-                            return Err(FormatArgsNotRecognized(
-                                "&[fmt::rt::Argument] bitcast".into(),
-                            ));
-                        }
-                    };
-                    require_local_var(rt_args_array_ptr_id, "[fmt::rt::Argument; N]")?;
+                    let rt_args_array_ptr_id = rt_args_slice_ptr_id.unwrap();
 
                     // Each runtime argument has 4 instructions to call one of
                     // the `fmt::rt::Argument::new_*` functions (and temporarily
@@ -3124,13 +3122,15 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     _ => pieces_slice_ptr_id,
                 };
                 decoded_format_args.const_pieces =
-                    const_slice_as_elem_ids(&[pieces_slice_ptr_id, pieces_len_id]).and_then(
+                    const_slice_as_elem_ids(pieces_slice_ptr_id, pieces_len).and_then(
                         |piece_ids| {
                             piece_ids
                                 .iter()
                                 .map(|&piece_id| {
                                     match self.builder.lookup_const_by_id(piece_id)? {
-                                        SpirvConst::Composite(piece) => const_str_as_utf8(piece),
+                                        SpirvConst::Composite(piece) => {
+                                            const_str_as_utf8(piece.try_into().ok()?)
+                                        }
                                         _ => None,
                                     }
                                 })
@@ -3160,12 +3160,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                 .map(|s| Cow::Owned(s.replace('%', "%%")))
                                 .interleave(ref_arg_ids_with_ty_and_spec.iter().map(
                                     |&(ref_id, ty, spec)| {
-                                        use rustc_target::abi::{Integer::*, Primitive::*};
+                                        use rustc_target::abi::{
+                                            Float::*, Integer::*, Primitive::*,
+                                        };
 
                                         let layout = self.layout_of(ty);
 
-                                        let scalar = match layout.abi {
-                                            Abi::Scalar(scalar) => Some(scalar.primitive()),
+                                        let scalar = match layout.backend_repr {
+                                            BackendRepr::Scalar(scalar) => Some(scalar.primitive()),
                                             _ => None,
                                         };
                                         let debug_printf_fmt = match (spec, scalar) {
@@ -3174,7 +3176,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                             (' ' | '?', Some(Int(I32, false))) => "%u",
                                             ('x', Some(Int(I32, false))) => "%x",
                                             (' ' | '?', Some(Int(I32, true))) => "%i",
-                                            (' ' | '?', Some(F32)) => "%f",
+                                            (' ' | '?', Some(Float(F32))) => "%f",
 
                                             _ => "",
                                         };

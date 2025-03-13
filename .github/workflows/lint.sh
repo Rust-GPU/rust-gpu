@@ -49,10 +49,16 @@ clippy_no_features examples/shaders/simplest-shader
 # which could be disastrous because env vars access can't be tracked by
 # `rustc`, unlike its CLI flags (which are integrated with incremental).
 if (
-    egrep -r '::\s*env|env\s*::' crates/rustc_codegen_spirv/src/ |
+    egrep -r '::\s*env|env\s*::' crates/rustc_codegen_spirv/src |
     # HACK(eddyb) exclude the one place in `rustc_codegen_spirv`
     # needing access to an env var (only for codegen args `--help`).
-    egrep -v '^crates/rustc_codegen_spirv/src/codegen_cx/mod.rs:            let help_flag_comes_from_spirv_builder_env_var = std::env::var\(spirv_builder_env_var\)$'
+    egrep -v '^crates/rustc_codegen_spirv/src/codegen_cx/mod.rs:            let help_flag_comes_from_spirv_builder_env_var = std::env::var\(spirv_builder_env_var\)$' |
+    # HACK(LegNeato) exclude logging. This mirrors `rustc` (`RUSTC_LOG`) and 
+    #`rustdoc` (`RUSTDOC_LOG`).
+    # There is not a risk of this being disastrous as it does not change the build settings.
+    egrep -v '^crates/rustc_codegen_spirv/src/lib.rs:.*(RUSTGPU_LOG|RUSTGPU_LOG_FORMAT|RUSTGPU_LOG_COLOR).*$' |
+    egrep -v '^crates/rustc_codegen_spirv/src/lib.rs:    use std::env::{self, VarError};$'
+
 ); then
     echo '^^^'
     echo '!!! Found disallowed `std::env` usage in `rustc_codegen_spirv` !!!'
@@ -87,3 +93,16 @@ function version_test() {
 # FIXME(eddyb) try to get this working for `spirv-builder`, which has a larger
 # dependency graph, with too much imprecision in upstream `Cargo.toml` files.
 version_test crates/spirv-std
+
+# 3. Ensure `rustc_codegen_spirv` still compiles with `rustc_codegen_ssa`.
+
+# HACK(eddyb) see `crates/rustc_codegen_spirv/build.rs` for more on `pqp_cg_ssa`
+# (a patched copy of `rustc_codegen_ssa`).
+echo ::group::rustc_codegen_spirv_disable_pqp_cg_ssa
+cargo clippy \
+    --manifest-path "crates/rustc_codegen_spirv/Cargo.toml" \
+    --no-default-features \
+    --features "$FEAT" \
+    --all-targets \
+    -- -D warnings --cfg rustc_codegen_spirv_disable_pqp_cg_ssa
+echo ::endgroup::

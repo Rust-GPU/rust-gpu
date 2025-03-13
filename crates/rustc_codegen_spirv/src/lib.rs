@@ -1,3 +1,19 @@
+// HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
+#![allow(internal_features)]
+#![allow(rustc::diagnostic_outside_of_impl)]
+#![allow(rustc::untranslatable_diagnostic)]
+#![feature(assert_matches)]
+#![feature(box_patterns)]
+#![feature(debug_closure_helpers)]
+#![feature(file_buffered)]
+#![feature(if_let_guard)]
+#![feature(let_chains)]
+#![feature(negative_impls)]
+#![feature(rustdoc_internals)]
+#![feature(trait_alias)]
+#![feature(try_blocks)]
+// HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
+
 //! Welcome to the API documentation for the `rust-gpu` project, this API is
 //! unstable and mainly intended for developing on the project itself. This is
 //! the API documentation for `rustc_codegen_spirv` which is not that useful on
@@ -16,16 +32,17 @@
 //! [`spirv-tools`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools
 //! [`spirv-tools-sys`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools_sys
 #![feature(rustc_private)]
-#![feature(assert_matches)]
 #![feature(result_flattening)]
-#![feature(lint_reasons)]
-#![feature(lazy_cell)]
 // crate-specific exceptions:
 #![allow(
     unsafe_code,                // rustc_codegen_ssa requires unsafe functions in traits to be impl'd
     clippy::match_on_vec_items, // rustc_codegen_spirv has less strict panic requirements than other embark projects
     clippy::enum_glob_use,      // pretty useful pattern with some codegen'd enums (e.g. rspirv::spirv::Op)
     clippy::todo,               // still lots to implement :)
+
+    // FIXME(eddyb) new warnings from 1.83 rustup, apply their suggested changes.
+    elided_named_lifetimes,
+    clippy::needless_lifetimes,
 )]
 
 // Unfortunately, this will not fail fast when compiling, but rather will wait for
@@ -39,21 +56,57 @@ compile_error!(
     "Either \"use-compiled-tools\" (enabled by default) or \"use-installed-tools\" may be enabled."
 );
 
+// HACK(eddyb) `build.rs` copies `rustc_codegen_ssa` (from the `rustc-dev` component)
+// and patches it to produce a "pqp" ("pre-`qptr`-patched") version that maintains
+// compatibility with "legacy" Rust-GPU pointer handling (mainly typed `alloca`s).
+//
+// FIXME(eddyb) get rid of this as soon as it's not needed anymore.
+#[cfg(not(rustc_codegen_spirv_disable_pqp_cg_ssa))]
+include!(concat!(env!("OUT_DIR"), "/pqp_cg_ssa.rs"));
+
+// HACK(eddyb) guide `rustc` to finding the right deps in the sysroot, which
+// (sadly) has to be outside `include!` to have any effect whatsoever.
+// FIXME(eddyb) this only really handles `bitflags`, not `object`.
+#[cfg(not(rustc_codegen_spirv_disable_pqp_cg_ssa))]
+mod _rustc_codegen_ssa_transitive_deps_hack {
+    extern crate rustc_codegen_ssa as _;
+}
+
+// NOTE(eddyb) `mod maybe_pqp_cg_ssa` is defined by the above `include`, when
+// in the (default for now) `pqp_cg_ssa` mode (see `build.rs`).
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
+use rustc_codegen_ssa as maybe_pqp_cg_ssa;
+
+// FIXME(eddyb) remove all `#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]`
+// as soon as they're not needed anymore (i.e. using `rustc_codegen_ssa` again).
 extern crate rustc_apfloat;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_arena;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_ast;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_attr;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_codegen_ssa;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_data_structures;
 extern crate rustc_driver;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_errors;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_hir;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_index;
 extern crate rustc_interface;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_metadata;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_middle;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_session;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_span;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_target;
 
 macro_rules! assert_ty_eq {
@@ -84,32 +137,32 @@ mod target_feature;
 
 use builder::Builder;
 use codegen_cx::CodegenCx;
-use rspirv::binary::Assemble;
-use rustc_ast::expand::allocator::AllocatorKind;
-use rustc_codegen_ssa::back::lto::{LtoModuleCodegen, SerializedModule, ThinModule};
-use rustc_codegen_ssa::back::write::{
+use maybe_pqp_cg_ssa::back::lto::{LtoModuleCodegen, SerializedModule, ThinModule};
+use maybe_pqp_cg_ssa::back::write::{
     CodegenContext, FatLtoInput, ModuleConfig, OngoingCodegen, TargetMachineFactoryConfig,
 };
-use rustc_codegen_ssa::base::maybe_create_entry_wrapper;
-use rustc_codegen_ssa::mono_item::MonoItemExt;
-use rustc_codegen_ssa::traits::{
+use maybe_pqp_cg_ssa::base::maybe_create_entry_wrapper;
+use maybe_pqp_cg_ssa::mono_item::MonoItemExt;
+use maybe_pqp_cg_ssa::traits::{
     CodegenBackend, ExtraBackendMethods, ModuleBufferMethods, ThinBufferMethods,
     WriteBackendMethods,
 };
-use rustc_codegen_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind};
+use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind};
+use rspirv::binary::Assemble;
+use rustc_ast::expand::allocator::AllocatorKind;
 use rustc_data_structures::fx::FxIndexMap;
-use rustc_errors::{DiagCtxt, ErrorGuaranteed, FatalError};
+use rustc_errors::{DiagCtxtHandle, ErrorGuaranteed, FatalError};
 use rustc_metadata::EncodedMetadata;
 use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
 use rustc_middle::mir::mono::{MonoItem, MonoItemData};
 use rustc_middle::mir::pretty::write_mir_pretty;
 use rustc_middle::ty::print::with_no_trimmed_paths;
-use rustc_middle::ty::{self, Instance, InstanceDef, TyCtxt};
-use rustc_session::config::{self, OutputFilenames, OutputType};
+use rustc_middle::ty::{self, Instance, InstanceKind, TyCtxt};
 use rustc_session::Session;
-use rustc_span::symbol::{sym, Symbol};
+use rustc_session::config::{self, OutputFilenames, OutputType};
+use rustc_span::symbol::{Symbol, sym};
 use std::any::Any;
-use std::fs::{create_dir_all, File};
+use std::fs::{File, create_dir_all};
 use std::io::Cursor;
 use std::io::Write;
 use std::path::Path;
@@ -120,7 +173,7 @@ fn dump_mir(tcx: TyCtxt<'_>, mono_items: &[(MonoItem<'_>, MonoItemData)], path: 
     let mut file = File::create(path).unwrap();
     for &(mono_item, _) in mono_items {
         if let MonoItem::Fn(instance) = mono_item {
-            if matches!(instance.def, InstanceDef::Item(_)) {
+            if matches!(instance.def, InstanceKind::Item(_)) {
                 let mut mir = Cursor::new(Vec::new());
                 if write_mir_pretty(tcx, Some(instance.def_id()), &mut mir).is_ok() {
                     writeln!(file, "{}", String::from_utf8(mir.into_inner()).unwrap()).unwrap();
@@ -136,18 +189,18 @@ fn is_blocklisted_fn<'tcx>(
     instance: Instance<'tcx>,
 ) -> bool {
     // TODO: These sometimes have a constant value of an enum variant with a hole
-    if let InstanceDef::Item(def_id) = instance.def {
+    if let InstanceKind::Item(def_id) = instance.def {
         if let Some(debug_trait_def_id) = tcx.get_diagnostic_item(sym::Debug) {
             // Helper for detecting `<_ as core::fmt::Debug>::fmt` (in impls).
             let is_debug_fmt_method = |def_id| match tcx.opt_associated_item(def_id) {
                 Some(assoc) if assoc.ident(tcx).name == sym::fmt => match assoc.container {
-                    ty::ImplContainer => {
+                    ty::AssocItemContainer::Impl => {
                         let impl_def_id = assoc.container_id(tcx);
                         tcx.impl_trait_ref(impl_def_id)
                             .map(|tr| tr.skip_binder().def_id)
                             == Some(debug_trait_def_id)
                     }
-                    ty::TraitContainer => false,
+                    ty::AssocItemContainer::Trait => false,
                 },
                 _ => false,
             };
@@ -185,12 +238,20 @@ impl ThinBufferMethods for SpirvThinBuffer {
     fn data(&self) -> &[u8] {
         spirv_tools::binary::from_binary(&self.0)
     }
+    fn thin_link_data(&self) -> &[u8] {
+        &[]
+    }
 }
 
 #[derive(Clone)]
 struct SpirvCodegenBackend;
 
 impl CodegenBackend for SpirvCodegenBackend {
+    fn init(&self, sess: &Session) {
+        // Set up logging/tracing. See https://github.com/Rust-GPU/rust-gpu/issues/192.
+        init_logging(sess);
+    }
+
     fn locale_resource(&self) -> &'static str {
         rustc_errors::DEFAULT_LOCALE_RESOURCE
     }
@@ -222,7 +283,7 @@ impl CodegenBackend for SpirvCodegenBackend {
         metadata: EncodedMetadata,
         need_metadata_module: bool,
     ) -> Box<dyn Any> {
-        Box::new(rustc_codegen_ssa::base::codegen_crate(
+        Box::new(maybe_pqp_cg_ssa::base::codegen_crate(
             Self,
             tcx,
             tcx.sess
@@ -277,7 +338,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     fn run_link(
         _cgcx: &CodegenContext<Self>,
-        _diag_handler: &DiagCtxt,
+        _diag_handler: DiagCtxtHandle<'_>,
         _modules: Vec<ModuleCodegen<Self::Module>>,
     ) -> Result<ModuleCodegen<Self::Module>, FatalError> {
         todo!()
@@ -309,7 +370,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     unsafe fn optimize(
         _: &CodegenContext<Self>,
-        _: &DiagCtxt,
+        _: DiagCtxtHandle<'_>,
         _: &ModuleCodegen<Self::Module>,
         _: &ModuleConfig,
     ) -> Result<(), FatalError> {
@@ -340,7 +401,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     unsafe fn codegen(
         cgcx: &CodegenContext<Self>,
-        _diag_handler: &DiagCtxt,
+        _diag_handler: DiagCtxtHandle<'_>,
         module: ModuleCodegen<Self::Module>,
         _config: &ModuleConfig,
     ) -> Result<CompiledModule, FatalError> {
@@ -364,7 +425,10 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         })
     }
 
-    fn prepare_thin(module: ModuleCodegen<Self::Module>) -> (String, Self::ThinBuffer) {
+    fn prepare_thin(
+        module: ModuleCodegen<Self::Module>,
+        _want_summary: bool,
+    ) -> (String, Self::ThinBuffer) {
         (module.name, SpirvThinBuffer(module.module_llvm))
     }
 
@@ -482,16 +546,82 @@ impl Drop for DumpModuleOnPanic<'_, '_, '_> {
 #[no_mangle]
 pub fn __rustc_codegen_backend() -> Box<dyn CodegenBackend> {
     // Tweak rustc's default ICE panic hook, to direct people to `rust-gpu`.
-    rustc_driver::install_ice_hook(
-        "https://github.com/rust-gpu/rust-gpu/issues/new",
-        |handler| {
-            handler.note(concat!(
-                "`rust-gpu` version `",
-                env!("CARGO_PKG_VERSION"),
-                "`"
-            ));
-        },
-    );
+    rustc_driver::install_ice_hook("https://github.com/rust-gpu/rust-gpu/issues/new", |dcx| {
+        dcx.handle().note(concat!(
+            "`rust-gpu` version `",
+            env!("CARGO_PKG_VERSION"),
+            "`"
+        ));
+    });
 
     Box::new(SpirvCodegenBackend)
+}
+
+// Set up logging/tracing. See https://github.com/Rust-GPU/rust-gpu/issues/192.
+fn init_logging(sess: &Session) {
+    use std::env::{self, VarError};
+    use std::io::{self, IsTerminal};
+    use tracing_subscriber::layer::SubscriberExt;
+
+    // Set up the default subscriber with optional filtering.
+    let filter = tracing_subscriber::EnvFilter::from_env("RUSTGPU_LOG");
+    #[cfg(not(rustc_codegen_spirv_disable_pqp_cg_ssa))]
+    let filter = filter.add_directive("rustc_codegen_spirv::maybe_pqp_cg_ssa=off".parse().unwrap());
+    let subscriber = tracing_subscriber::Registry::default().with(filter);
+
+    #[derive(Debug, Default)]
+    enum OutputFormat {
+        #[default]
+        Tree,
+        Flat,
+        Json,
+    }
+
+    let output_format = match env::var("RUSTGPU_LOG_FORMAT").as_deref() {
+        Ok("tree") | Err(VarError::NotPresent) => OutputFormat::Tree,
+        Ok("flat") => OutputFormat::Flat,
+        Ok("json") => OutputFormat::Json,
+        Ok(value) => sess.dcx().fatal(format!(
+            "invalid output format value '{value}': expected one of tree, flat, or json",
+        )),
+        Err(VarError::NotUnicode(value)) => sess.dcx().fatal(format!(
+            "invalid output format value '{}': expected one of tree, flat, or json",
+            value.to_string_lossy()
+        )),
+    };
+
+    let subscriber: Box<dyn tracing::Subscriber + Send + Sync> = match output_format {
+        OutputFormat::Tree => {
+            // TODO(@LegNeato): Query dcx color support when rustc exposes it.
+            let color_logs = match env::var("RUSTGPU_LOG_COLOR").as_deref() {
+                Ok("always") => true,
+                Ok("never") => false,
+                Ok("auto") | Err(VarError::NotPresent) => io::stderr().is_terminal(),
+                Ok(value) => sess.dcx().fatal(format!(
+                    "invalid log color value '{value}': expected one of always, never, or auto",
+                )),
+                Err(VarError::NotUnicode(value)) => sess.dcx().fatal(format!(
+                    "invalid log color value '{}': expected one of always, never, or auto",
+                    value.to_string_lossy()
+                )),
+            };
+
+            let tree_layer = tracing_tree::HierarchicalLayer::default()
+                .with_writer(io::stderr)
+                .with_ansi(color_logs)
+                .with_targets(true)
+                .with_wraparound(10)
+                .with_verbose_exit(true)
+                .with_verbose_entry(true)
+                .with_indent_amount(2);
+
+            #[cfg(debug_assertions)]
+            let tree_layer = tree_layer.with_thread_ids(true).with_thread_names(true);
+
+            Box::new(subscriber.with(tree_layer))
+        }
+        OutputFormat::Flat => Box::new(subscriber),
+        OutputFormat::Json => Box::new(subscriber.with(tracing_subscriber::fmt::layer().json())),
+    };
+    tracing::subscriber::set_global_default(subscriber).unwrap();
 }

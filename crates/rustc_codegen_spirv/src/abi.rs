@@ -4,30 +4,31 @@
 use crate::attr::{AggregatedSpirvAttributes, IntrinsicType};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
+use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
 use rustc_index::Idx;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
-use rustc_middle::ty::GenericArgsRef;
 use rustc_middle::ty::{
-    self, Const, CoroutineArgs, FloatTy, IntTy, ParamEnv, PolyFnSig, Ty, TyCtxt, TyKind, UintTy,
+    self, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, PolyFnSig, Ty, TyCtxt,
+    TyKind, UintTy,
 };
+use rustc_middle::ty::{GenericArgsRef, ScalarInt};
 use rustc_middle::{bug, span_bug};
-use rustc_span::def_id::DefId;
 use rustc_span::DUMMY_SP;
+use rustc_span::def_id::DefId;
 use rustc_span::{Span, Symbol};
 use rustc_target::abi::call::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 use rustc_target::abi::{
-    Abi, Align, FieldsShape, LayoutS, Primitive, Scalar, Size, TagEncoding, VariantIdx, Variants,
+    Align, BackendRepr, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions, Scalar, Size,
+    TagEncoding, VariantIdx, Variants,
 };
-use rustc_target::spec::abi::Abi as SpecAbi;
+use rustc_target::spec::abi::Abi;
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::fmt;
-
-use num_traits::cast::FromPrimitive;
 
 pub(crate) fn provide(providers: &mut Providers) {
     // This is a lil weird: so, we obviously don't support C ABIs at all. However, libcore does declare some extern
@@ -45,8 +46,8 @@ pub(crate) fn provide(providers: &mut Providers) {
         let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS.fn_sig)(tcx, def_id);
         result.map_bound(|outer| {
             outer.map_bound(|mut inner| {
-                if let SpecAbi::C { .. } = inner.abi {
-                    inner.abi = SpecAbi::Unadjusted;
+                if let Abi::C { .. } = inner.abi {
+                    inner.abi = Abi::Unadjusted;
                 }
                 inner
             })
@@ -96,22 +97,21 @@ pub(crate) fn provide(providers: &mut Providers) {
         Ok(readjust_fn_abi(tcx, result?))
     };
 
-    // FIXME(eddyb) remove this by deriving `Clone` for `LayoutS` upstream.
-    // FIXME(eddyb) the `S` suffix is a naming antipattern, rename upstream.
+    // FIXME(eddyb) remove this by deriving `Clone` for `LayoutData` upstream.
     fn clone_layout<FieldIdx: Idx, VariantIdx: Idx>(
-        layout: &LayoutS<FieldIdx, VariantIdx>,
-    ) -> LayoutS<FieldIdx, VariantIdx> {
-        let LayoutS {
+        layout: &LayoutData<FieldIdx, VariantIdx>,
+    ) -> LayoutData<FieldIdx, VariantIdx> {
+        let LayoutData {
             ref fields,
             ref variants,
-            abi,
+            backend_repr,
             largest_niche,
             align,
             size,
             max_repr_align,
             unadjusted_abi_align,
         } = *layout;
-        LayoutS {
+        LayoutData {
             fields: match *fields {
                 FieldsShape::Primitive => FieldsShape::Primitive,
                 FieldsShape::Union(count) => FieldsShape::Union(count),
@@ -149,7 +149,7 @@ pub(crate) fn provide(providers: &mut Providers) {
                     variants: variants.clone(),
                 },
             },
-            abi,
+            backend_repr,
             largest_niche,
             align,
             size,
@@ -157,6 +157,7 @@ pub(crate) fn provide(providers: &mut Providers) {
             unadjusted_abi_align,
         }
     }
+
     providers.layout_of = |tcx, key| {
         let TyAndLayout { ty, mut layout } =
             (rustc_interface::DEFAULT_QUERY_PROVIDERS.layout_of)(tcx, key)?;
@@ -168,7 +169,7 @@ pub(crate) fn provide(providers: &mut Providers) {
         };
 
         if hide_niche {
-            layout = tcx.mk_layout(LayoutS {
+            layout = tcx.mk_layout(LayoutData {
                 largest_niche: None,
                 ..clone_layout(layout.0.0)
             });
@@ -176,6 +177,102 @@ pub(crate) fn provide(providers: &mut Providers) {
 
         Ok(TyAndLayout { ty, layout })
     };
+
+    // HACK(eddyb) work around https://github.com/rust-lang/rust/pull/129403
+    // banning "struct-style" `#[repr(simd)]` (in favor of "array-newtype-style"),
+    // by simply bypassing "type definition WF checks" for affected types, which:
+    // - can only really be sound for types with trivial field types, that are
+    //   either completely non-generic (covering most `#[repr(simd)]` `struct`s),
+    //   or *at most* one generic type parameter with no bounds/where clause
+    // - relies on upstream `layout_of` not having had the non-array logic removed
+    //
+    // FIXME(eddyb) remove this once migrating beyond `#[repr(simd)]` becomes
+    // an option (may require Rust-GPU distinguishing between "SPIR-V interface"
+    // and "Rust-facing" types, which is even worse when the `OpTypeVector`s
+    // may be e.g. nested in `struct`s/arrays/etc. - at least buffers are easy).
+    //
+    // FIXME(eddyb) maybe using `#[spirv(vector)]` and `BackendRepr::Memory`,
+    // no claims at `rustc`-understood SIMD whatsoever, would be enough?
+    // (i.e. only SPIR-V caring about such a type vs a struct/array)
+    providers.check_well_formed = |tcx, def_id| {
+        let trivial_struct = match tcx.hir_node_by_def_id(def_id) {
+            rustc_hir::Node::Item(item) => match item.kind {
+                rustc_hir::ItemKind::Struct(
+                    _,
+                    &rustc_hir::Generics {
+                        params:
+                            &[]
+                            | &[
+                                rustc_hir::GenericParam {
+                                    kind:
+                                        rustc_hir::GenericParamKind::Type {
+                                            default: None,
+                                            synthetic: false,
+                                        },
+                                    ..
+                                },
+                            ],
+                        predicates: &[],
+                        has_where_clause_predicates: false,
+                        where_clause_span: _,
+                        span: _,
+                    },
+                ) => Some(tcx.adt_def(def_id)),
+                _ => None,
+            },
+            _ => None,
+        };
+        let valid_non_array_simd_struct = trivial_struct.is_some_and(|adt_def| {
+            let ReprOptions {
+                int: None,
+                align: None,
+                pack: None,
+                flags: ReprFlags::IS_SIMD,
+                field_shuffle_seed: _,
+            } = adt_def.repr()
+            else {
+                return false;
+            };
+            if adt_def.destructor(tcx).is_some() {
+                return false;
+            }
+
+            let field_types = adt_def
+                .non_enum_variant()
+                .fields
+                .iter()
+                .map(|f| tcx.type_of(f.did).instantiate_identity());
+            field_types.dedup().exactly_one().is_ok_and(|elem_ty| {
+                matches!(
+                    elem_ty.kind(),
+                    ty::Bool | ty::Int(_) | ty::Uint(_) | ty::Float(_) | ty::Param(_)
+                )
+            })
+        });
+
+        if valid_non_array_simd_struct {
+            tcx.dcx()
+                .struct_span_warn(
+                    tcx.def_span(def_id),
+                    "[Rust-GPU] temporarily re-allowing old-style `#[repr(simd)]` (with fields)",
+                )
+                .with_note("removed upstream by https://github.com/rust-lang/rust/pull/129403")
+                .with_note("in favor of the new `#[repr(simd)] struct TxN([T; N]);` style")
+                .with_note("(taking effect since `nightly-2024-09-12` / `1.83.0` stable)")
+                .emit();
+            return Ok(());
+        }
+
+        (rustc_interface::DEFAULT_QUERY_PROVIDERS.check_well_formed)(tcx, def_id)
+    };
+
+    // HACK(eddyb) work around https://github.com/rust-lang/rust/pull/132173
+    // (and further changes from https://github.com/rust-lang/rust/pull/132843)
+    // starting to ban SIMD ABI misuse (or at least starting to warn about it).
+    //
+    // FIXME(eddyb) same as the FIXME comment on `check_well_formed`:
+    // need to migrate away from `#[repr(simd)]` ASAP.
+    providers.check_mono_item = |_, _| {};
 }
 
 /// If a struct contains a pointer to itself, even indirectly, then doing a naiive recursive walk
@@ -363,9 +460,9 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
 
         // Note: ty.layout is orthogonal to ty.ty, e.g. `ManuallyDrop<Result<isize, isize>>` has abi
         // `ScalarPair`.
-        // There's a few layers that we go through here. First we inspect layout.abi, then if relevant, layout.fields, etc.
-        match self.abi {
-            Abi::Uninhabited => SpirvType::Adt {
+        // There's a few layers that we go through here. First we inspect layout.backend_repr, then if relevant, layout.fields, etc.
+        match self.backend_repr {
+            BackendRepr::Uninhabited => SpirvType::Adt {
                 def_id: def_id_for_spirv_type_adt(*self),
                 size: Some(Size::ZERO),
                 align: Align::from_bytes(0).unwrap(),
@@ -374,13 +471,13 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 field_names: None,
             }
             .def_with_name(cx, span, TyLayoutNameKey::from(*self)),
-            Abi::Scalar(scalar) => trans_scalar(cx, span, *self, scalar, Size::ZERO),
-            Abi::ScalarPair(a, b) => {
-                // NOTE(eddyb) unlike `Abi::Scalar`'s simpler newtype-unpacking
-                // behavior, `Abi::ScalarPair` can be composed in two ways:
-                // * two `Abi::Scalar` fields (and any number of ZST fields),
+            BackendRepr::Scalar(scalar) => trans_scalar(cx, span, *self, scalar, Size::ZERO),
+            BackendRepr::ScalarPair(a, b) => {
+                // NOTE(eddyb) unlike `BackendRepr::Scalar`'s simpler newtype-unpacking
+                // behavior, `BackendRepr::ScalarPair` can be composed in two ways:
+                // * two `BackendRepr::Scalar` fields (and any number of ZST fields),
                 //   gets handled the same as a `struct { a, b }`, further below
-                // * an `Abi::ScalarPair` field (and any number of ZST fields),
+                // * an `BackendRepr::ScalarPair` field (and any number of ZST fields),
                 //   which requires more work to allow taking a reference to
                 //   that field, and there are two potential approaches:
                 //   1. wrapping that field's SPIR-V type in a single-field
@@ -390,7 +487,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 //   2. reusing that field's SPIR-V type, instead of defining
                 //      a new one, offering the `(a, b)` shape `rustc_codegen_ssa`
                 //      expects, while letting noop pointercasts access the sole
-                //      `Abi::ScalarPair` field - this is the approach taken here
+                //      `BackendRepr::ScalarPair` field - this is the approach taken here
                 let mut non_zst_fields = (0..self.fields.count())
                     .map(|i| (i, self.field(cx, i)))
                     .filter(|(_, field)| !field.is_zst());
@@ -404,7 +501,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                     if self.fields.offset(i) == Size::ZERO
                         && field.size == self.size
                         && field.align == self.align
-                        && field.abi == self.abi
+                        && field.backend_repr == self.backend_repr
                     {
                         return field.spirv_type(span, cx);
                     }
@@ -445,7 +542,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 }
                 .def_with_name(cx, span, TyLayoutNameKey::from(*self))
             }
-            Abi::Vector { element, count } => {
+            BackendRepr::Vector { element, count } => {
                 let elem_spirv = trans_scalar(cx, span, *self, element, Size::ZERO);
                 SpirvType::Vector {
                     element: elem_spirv,
@@ -453,12 +550,12 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 }
                 .def(span, cx)
             }
-            Abi::Aggregate { sized: _ } => trans_aggregate(cx, span, *self),
+            BackendRepr::Memory { sized: _ } => trans_aggregate(cx, span, *self),
         }
     }
 }
 
-/// Only pub for `LayoutTypeMethods::scalar_pair_element_backend_type`. Think about what you're
+/// Only pub for `LayoutTypeCodegenMethods::scalar_pair_element_backend_type`. Think about what you're
 /// doing before calling this.
 pub fn scalar_pair_element_backend_type<'tcx>(
     cx: &CodegenCx<'tcx>,
@@ -466,8 +563,8 @@ pub fn scalar_pair_element_backend_type<'tcx>(
     ty: TyAndLayout<'tcx>,
     index: usize,
 ) -> Word {
-    let [a, b] = match ty.layout.abi() {
-        Abi::ScalarPair(a, b) => [a, b],
+    let [a, b] = match ty.layout.backend_repr() {
+        BackendRepr::ScalarPair(a, b) => [a, b],
         other => span_bug!(
             span,
             "scalar_pair_element_backend_type invalid abi: {:?}",
@@ -501,13 +598,12 @@ fn trans_scalar<'tcx>(
     }
 
     match scalar.primitive() {
-        Primitive::Int(width, signedness) => {
-            SpirvType::Integer(width.size().bits() as u32, signedness).def(span, cx)
+        Primitive::Int(int_kind, signedness) => {
+            SpirvType::Integer(int_kind.size().bits() as u32, signedness).def(span, cx)
         }
-        Primitive::F16 => SpirvType::Float(16).def(span, cx),
-        Primitive::F32 => SpirvType::Float(32).def(span, cx),
-        Primitive::F64 => SpirvType::Float(64).def(span, cx),
-        Primitive::F128 => SpirvType::Float(128).def(span, cx),
+        Primitive::Float(float_kind) => {
+            SpirvType::Float(float_kind.size().bits() as u32).def(span, cx)
+        }
         Primitive::Pointer(_) => {
             let pointee_ty = dig_scalar_pointee(cx, ty, offset);
             // Pointers can be recursive. So, record what we're currently translating, and if we're already translating
@@ -549,7 +645,7 @@ fn dig_scalar_pointee<'tcx>(
             TyKind::Ref(_, pointee_ty, _) | TyKind::RawPtr(pointee_ty, _) => {
                 PointeeTy::Ty(cx.layout_of(pointee_ty))
             }
-            TyKind::FnPtr(sig) => PointeeTy::Fn(sig),
+            TyKind::FnPtr(sig_tys, hdr) => PointeeTy::Fn(sig_tys.with(hdr)),
             _ => bug!("Pointer is not `&T`, `*T` or `fn` pointer: {:#?}", layout),
         };
         return pointee;
@@ -815,7 +911,7 @@ fn trans_intrinsic_type<'tcx>(
             // ) -> P {
             //     let adt_def = const_.ty.ty_adt_def().unwrap();
             //     assert!(adt_def.is_enum());
-            //     let destructured = cx.tcx.destructure_const(ParamEnv::reveal_all().and(const_));
+            //     let destructured = cx.tcx.destructure_const(TypingEnv::fully_monomorphized().and(const_));
             //     let idx = destructured.variant.unwrap();
             //     let value = const_.ty.discriminant_for_variant(cx.tcx, idx).unwrap().val as u64;
             //     <_>::from_u64(value).unwrap()
@@ -862,41 +958,44 @@ fn trans_intrinsic_type<'tcx>(
             // let image_format: spirv::ImageFormat =
             //     type_from_variant_discriminant(cx, args.const_at(6));
 
-            trait FromU128Const: Sized {
-                fn from_u128_const(n: u128) -> Option<Self>;
+            trait FromScalarInt: Sized {
+                fn from_scalar_int(n: ScalarInt) -> Option<Self>;
             }
 
-            impl FromU128Const for u32 {
-                fn from_u128_const(n: u128) -> Option<Self> {
-                    u32::from_u128(n)
+            impl FromScalarInt for u32 {
+                fn from_scalar_int(n: ScalarInt) -> Option<Self> {
+                    Some(n.try_to_bits(Size::from_bits(32)).ok()?.try_into().unwrap())
                 }
             }
 
-            impl FromU128Const for Dim {
-                fn from_u128_const(n: u128) -> Option<Self> {
-                    Dim::from_u32(u32::from_u128(n)?)
+            impl FromScalarInt for Dim {
+                fn from_scalar_int(n: ScalarInt) -> Option<Self> {
+                    Dim::from_u32(u32::from_scalar_int(n)?)
                 }
             }
 
-            impl FromU128Const for ImageFormat {
-                fn from_u128_const(n: u128) -> Option<Self> {
-                    ImageFormat::from_u32(u32::from_u128(n)?)
+            impl FromScalarInt for ImageFormat {
+                fn from_scalar_int(n: ScalarInt) -> Option<Self> {
+                    ImageFormat::from_u32(u32::from_scalar_int(n)?)
                 }
             }
 
-            fn const_int_value<'tcx, P: FromU128Const>(
+            fn const_int_value<'tcx, P: FromScalarInt>(
                 cx: &CodegenCx<'tcx>,
                 const_: Const<'tcx>,
             ) -> Result<P, ErrorGuaranteed> {
-                assert!(const_.ty().is_integral());
-                let value = const_.eval_bits(cx.tcx, ParamEnv::reveal_all());
-                match P::from_u128_const(value) {
-                    Some(v) => Ok(v),
-                    None => Err(cx
-                        .tcx
-                        .dcx()
-                        .err(format!("Invalid value for Image const generic: {value}"))),
-                }
+                let (const_val, const_ty) = const_
+                    .try_to_valtree()
+                    .expect("expected monomorphic const in codegen");
+                assert!(const_ty.is_integral());
+                const_val
+                    .try_to_scalar_int()
+                    .and_then(P::from_scalar_int)
+                    .ok_or_else(|| {
+                        cx.tcx
+                            .dcx()
+                            .err(format!("invalid value for Image const generic: {const_}"))
+                    })
             }
 
             let dim = const_int_value(cx, args.const_at(1))?;

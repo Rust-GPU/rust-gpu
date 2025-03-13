@@ -18,13 +18,13 @@ pub use spirv_std_types::image_params::{
 
 use sample_with::{NoneTy, SampleParams, SomeTy};
 
-use crate::{float::Float, integer::Integer, vector::Vector, Sampler};
+use crate::{Sampler, float::Float, integer::Integer, vector::Vector};
 
 /// Re-export of primitive types to ensure the `Image` proc macro always points
 /// to the right type.
 #[doc(hidden)]
 pub mod __private {
-    pub use {f32, f64, i16, i32, i64, i8, u16, u32, u64, u8};
+    pub use {f32, f64, i8, i16, i32, i64, u8, u16, u32, u64};
 }
 
 /// A 1d image used with a sampler.
@@ -1039,6 +1039,8 @@ impl<
 /// `SampledImage<Image!(...)>`.
 #[spirv(sampled_image)]
 #[derive(Copy, Clone)]
+// HACK(eddyb) false positive due to `rustc` not understanding e.g. entry-points.
+#[allow(dead_code)]
 pub struct SampledImage<I> {
     _image: I,
 }

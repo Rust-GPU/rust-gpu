@@ -1,3 +1,5 @@
+// FIXME(eddyb) update/review these lints.
+//
 // BEGIN - Embark standard lints v0.4
 // do not change or add/remove here, but one can add exceptions after this section
 // for more info see: <https://github.com/EmbarkStudios/rust-ecosystem/issues/59>
@@ -38,7 +40,6 @@
     clippy::match_same_arms,
     clippy::match_wildcard_for_single_variants,
     clippy::mem_forget,
-    clippy::mismatched_target_os,
     clippy::mut_mut,
     clippy::mutex_integer,
     clippy::needless_borrow,
@@ -76,9 +77,11 @@ mod image;
 use proc_macro::TokenStream;
 use proc_macro2::{Delimiter, Group, Ident, Span, TokenTree};
 
-use syn::{punctuated::Punctuated, spanned::Spanned, visit_mut::VisitMut, ItemFn, Token};
+use syn::{
+    ImplItemFn, ItemFn, Token, punctuated::Punctuated, spanned::Spanned, visit_mut::VisitMut,
+};
 
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use std::fmt::Write;
 
 /// A macro for creating SPIR-V `OpTypeImage` types. Always produces a
@@ -613,6 +616,10 @@ fn debug_printf_inner(input: DebugPrintfInput) -> TokenStream {
         .into_iter()
         .collect::<proc_macro2::TokenStream>();
     let op_loads = op_loads.into_iter().collect::<proc_macro2::TokenStream>();
+    // Escapes the '{' and '}' characters in the format string.
+    // Since the `asm!` macro expects '{' '}' to surround its arguments, we have to use '{{' and '}}' instead.
+    // The `asm!` macro will then later turn them back into '{' and '}'.
+    let format_string = format_string.replace('{', "{{").replace('}', "}}");
 
     let op_string = format!("%string = OpString {format_string:?}");
 
@@ -757,12 +764,12 @@ impl SampleImplRewriter {
 }
 
 impl VisitMut for SampleImplRewriter {
-    fn visit_impl_item_method_mut(&mut self, item: &mut syn::ImplItemMethod) {
+    fn visit_impl_item_fn_mut(&mut self, item: &mut ImplItemFn) {
         // rewrite the last parameter of this method to be of type `SampleParams<...>` we generated earlier
         if let Some(syn::FnArg::Typed(p)) = item.sig.inputs.last_mut() {
             *p.ty.as_mut() = self.1.clone();
         }
-        syn::visit_mut::visit_impl_item_method_mut(self, item);
+        syn::visit_mut::visit_impl_item_fn_mut(self, item);
     }
 
     fn visit_macro_mut(&mut self, m: &mut syn::Macro) {

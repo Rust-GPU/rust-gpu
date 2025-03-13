@@ -12,6 +12,7 @@ use spirv_std::{scalar::Scalar, vector::Vector, vector::VectorOrScalar};
 /// Fortunately, this requirement isn't checked on generic structs, so we have a way to work around
 /// it (for now at least)
 #[repr(simd)]
+#[derive(Copy, Clone, Debug)]
 struct Vec2<T>(T, T);
 unsafe impl<T: Scalar> VectorOrScalar for Vec2<T> {
     type Scalar = T;

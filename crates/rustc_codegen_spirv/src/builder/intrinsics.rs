@@ -1,3 +1,6 @@
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use super::Builder;
 use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{SpirvValue, SpirvValueExt};
@@ -8,12 +11,12 @@ use rspirv::dr::Operand;
 use rspirv::spirv::GLOp;
 use rustc_codegen_ssa::mir::operand::OperandRef;
 use rustc_codegen_ssa::mir::place::PlaceRef;
-use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallMethods};
+use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallBuilderMethods};
 use rustc_middle::ty::layout::LayoutOf;
-use rustc_middle::ty::{FnDef, Instance, ParamEnv, Ty, TyKind};
+use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
 use rustc_middle::{bug, ty};
-use rustc_span::sym;
 use rustc_span::Span;
+use rustc_span::sym;
 use rustc_target::abi::call::{FnAbi, PassMode};
 use std::assert_matches::assert_matches;
 
@@ -63,7 +66,7 @@ impl Builder<'_, '_> {
     }
 }
 
-impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
+impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     fn codegen_intrinsic_call(
         &mut self,
         instance: Instance<'tcx>,
@@ -72,7 +75,7 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
         llresult: Self::Value,
         _span: Span,
     ) -> Result<(), ty::Instance<'tcx>> {
-        let callee_ty = instance.ty(self.tcx, ParamEnv::reveal_all());
+        let callee_ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
 
         let (def_id, fn_args) = match *callee_ty.kind() {
             FnDef(def_id, fn_args) => (def_id, fn_args),
@@ -82,7 +85,7 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
         let sig = callee_ty.fn_sig(self.tcx);
         let sig = self
             .tcx
-            .normalize_erasing_late_bound_regions(ParamEnv::reveal_all(), sig);
+            .normalize_erasing_late_bound_regions(TypingEnv::fully_monomorphized(), sig);
         let arg_tys = sig.inputs();
         let name = self.tcx.item_name(def_id);
 
@@ -158,11 +161,10 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
             }
             sym::sinf32 | sym::sinf64 => self.gl_op(GLOp::Sin, ret_ty, [args[0].immediate()]),
             sym::cosf32 | sym::cosf64 => self.gl_op(GLOp::Cos, ret_ty, [args[0].immediate()]),
-            sym::powf32 | sym::powf64 => self.gl_op(
-                GLOp::Pow,
-                ret_ty,
-                [args[0].immediate(), args[1].immediate()],
-            ),
+            sym::powf32 | sym::powf64 => self.gl_op(GLOp::Pow, ret_ty, [
+                args[0].immediate(),
+                args[1].immediate(),
+            ]),
             sym::expf32 | sym::expf64 => self.gl_op(GLOp::Exp, ret_ty, [args[0].immediate()]),
             sym::exp2f32 | sym::exp2f64 => self.gl_op(GLOp::Exp2, ret_ty, [args[0].immediate()]),
             sym::logf32 | sym::logf64 => self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()]),
@@ -172,28 +174,22 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
                 // log10(x) == (1 / ln(10)) * ln(x)
                 let mul = self.constant_float(args[0].immediate().ty, 1.0 / 10.0f64.ln());
                 let ln = self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()]);
-                self.mul(mul, ln)
+                self.fmul(mul, ln)
             }
-            sym::fmaf32 | sym::fmaf64 => self.gl_op(
-                GLOp::Fma,
-                ret_ty,
-                [
-                    args[0].immediate(),
-                    args[1].immediate(),
-                    args[2].immediate(),
-                ],
-            ),
+            sym::fmaf32 | sym::fmaf64 => self.gl_op(GLOp::Fma, ret_ty, [
+                args[0].immediate(),
+                args[1].immediate(),
+                args[2].immediate(),
+            ]),
             sym::fabsf32 | sym::fabsf64 => self.gl_op(GLOp::FAbs, ret_ty, [args[0].immediate()]),
-            sym::minnumf32 | sym::minnumf64 => self.gl_op(
-                GLOp::FMin,
-                ret_ty,
-                [args[0].immediate(), args[1].immediate()],
-            ),
-            sym::maxnumf32 | sym::maxnumf64 => self.gl_op(
-                GLOp::FMax,
-                ret_ty,
-                [args[0].immediate(), args[1].immediate()],
-            ),
+            sym::minnumf32 | sym::minnumf64 => self.gl_op(GLOp::FMin, ret_ty, [
+                args[0].immediate(),
+                args[1].immediate(),
+            ]),
+            sym::maxnumf32 | sym::maxnumf64 => self.gl_op(GLOp::FMax, ret_ty, [
+                args[0].immediate(),
+                args[1].immediate(),
+            ]),
             sym::copysignf32 | sym::copysignf64 => {
                 let val = args[0].immediate();
                 let sign = args[1].immediate();
@@ -255,20 +251,28 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
                 .bit_reverse(args[0].immediate().ty, None, args[0].immediate().def(self))
                 .unwrap()
                 .with_type(args[0].immediate().ty),
-
             sym::bswap => {
                 // https://github.com/KhronosGroup/SPIRV-LLVM/pull/221/files
                 // TODO: Definitely add tests to make sure this impl is right.
                 let arg = args[0].immediate();
-                match int_type_width_signed(arg_tys[0], self)
-                    .expect("bswap must have integer argument")
-                    .0
-                {
-                    8 => arg,
+                let (width, is_signed) = int_type_width_signed(arg_tys[0], self)
+                    .expect("bswap must have an integer argument");
+
+                // Cast to unsigned type for byte-swapping
+                let unsigned_ty: u32 =
+                    SpirvType::Integer(width.try_into().unwrap(), false).def(self.span(), self);
+                let unsigned_arg = if is_signed {
+                    self.bitcast(arg, unsigned_ty)
+                } else {
+                    arg
+                };
+
+                let swapped = match width {
+                    8 => unsigned_arg,
                     16 => {
                         let offset8 = self.constant_u16(self.span(), 8);
-                        let tmp1 = self.shl(arg, offset8);
-                        let tmp2 = self.lshr(arg, offset8);
+                        let tmp1 = self.shl(unsigned_arg, offset8);
+                        let tmp2 = self.lshr(unsigned_arg, offset8);
                         self.or(tmp1, tmp2)
                     }
                     32 => {
@@ -276,10 +280,10 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
                         let offset24 = self.constant_u32(self.span(), 24);
                         let mask16 = self.constant_u32(self.span(), 0xFF00);
                         let mask24 = self.constant_u32(self.span(), 0xFF0000);
-                        let tmp4 = self.shl(arg, offset24);
-                        let tmp3 = self.shl(arg, offset8);
-                        let tmp2 = self.lshr(arg, offset8);
-                        let tmp1 = self.lshr(arg, offset24);
+                        let tmp4 = self.shl(unsigned_arg, offset24);
+                        let tmp3 = self.shl(unsigned_arg, offset8);
+                        let tmp2 = self.lshr(unsigned_arg, offset8);
+                        let tmp1 = self.lshr(unsigned_arg, offset24);
                         let tmp3 = self.and(tmp3, mask24);
                         let tmp2 = self.and(tmp2, mask16);
                         let res1 = self.or(tmp1, tmp2);
@@ -297,14 +301,14 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
                         let mask40 = self.constant_u64(self.span(), 0xff00000000);
                         let mask48 = self.constant_u64(self.span(), 0xff0000000000);
                         let mask56 = self.constant_u64(self.span(), 0xff000000000000);
-                        let tmp8 = self.shl(arg, offset56);
-                        let tmp7 = self.shl(arg, offset40);
-                        let tmp6 = self.shl(arg, offset24);
-                        let tmp5 = self.shl(arg, offset8);
-                        let tmp4 = self.lshr(arg, offset8);
-                        let tmp3 = self.lshr(arg, offset24);
-                        let tmp2 = self.lshr(arg, offset40);
-                        let tmp1 = self.lshr(arg, offset56);
+                        let tmp8 = self.shl(unsigned_arg, offset56);
+                        let tmp7 = self.shl(unsigned_arg, offset40);
+                        let tmp6 = self.shl(unsigned_arg, offset24);
+                        let tmp5 = self.shl(unsigned_arg, offset8);
+                        let tmp4 = self.lshr(unsigned_arg, offset8);
+                        let tmp3 = self.lshr(unsigned_arg, offset24);
+                        let tmp2 = self.lshr(unsigned_arg, offset40);
+                        let tmp1 = self.lshr(unsigned_arg, offset56);
                         let tmp7 = self.and(tmp7, mask56);
                         let tmp6 = self.and(tmp6, mask48);
                         let tmp5 = self.and(tmp5, mask40);
@@ -327,6 +331,13 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
                         );
                         undef
                     }
+                };
+
+                // Cast back to the original signed type if necessary
+                if is_signed {
+                    self.bitcast(swapped, arg.ty)
+                } else {
+                    swapped
                 }
             }
 
@@ -364,7 +375,7 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
         cond
     }
 
-    fn type_test(&mut self, _pointer: Self::Value, _typeid: Self::Value) -> Self::Value {
+    fn type_test(&mut self, _pointer: Self::Value, _typeid: Self::Metadata) -> Self::Value {
         todo!()
     }
 
@@ -372,7 +383,7 @@ impl<'a, 'tcx> IntrinsicCallMethods<'tcx> for Builder<'a, 'tcx> {
         &mut self,
         _llvtable: Self::Value,
         _vtable_byte_offset: u64,
-        _typeid: Self::Value,
+        _typeid: Self::Metadata,
     ) -> Self::Value {
         todo!()
     }
@@ -400,21 +411,18 @@ impl Builder<'_, '_> {
         // so the best thing we can do is use our own custom instruction.
         let kind_id = self.emit().string(kind);
         let message_debug_printf_fmt_str_id = self.emit().string(message_debug_printf_fmt_str);
-        self.custom_inst(
-            void_ty,
-            CustomInst::Abort {
-                kind: Operand::IdRef(kind_id),
-                message_debug_printf: [message_debug_printf_fmt_str_id]
-                    .into_iter()
-                    .chain(
-                        message_debug_printf_args
-                            .into_iter()
-                            .map(|arg| arg.def(self)),
-                    )
-                    .map(Operand::IdRef)
-                    .collect(),
-            },
-        );
+        self.custom_inst(void_ty, CustomInst::Abort {
+            kind: Operand::IdRef(kind_id),
+            message_debug_printf: [message_debug_printf_fmt_str_id]
+                .into_iter()
+                .chain(
+                    message_debug_printf_args
+                        .into_iter()
+                        .map(|arg| arg.def(self)),
+                )
+                .map(Operand::IdRef)
+                .collect(),
+        });
         self.unreachable();
 
         // HACK(eddyb) we still need an active block in case the user of this

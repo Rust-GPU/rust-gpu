@@ -10,26 +10,30 @@ use crate::spirv_type::{SpirvType, SpirvTypePrinter, TypeCache};
 use crate::symbols::Symbols;
 use crate::target::SpirvTarget;
 
+// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
+
 use itertools::Itertools as _;
 use rspirv::dr::{Module, Operand};
 use rspirv::spirv::{Decoration, LinkageType, Op, Word};
 use rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_codegen_ssa::mir::debuginfo::{FunctionDebugContext, VariableKind};
 use rustc_codegen_ssa::traits::{
-    AsmMethods, BackendTypes, DebugInfoMethods, GlobalAsmOperandRef, MiscMethods,
+    AsmCodegenMethods, BackendTypes, DebugInfoCodegenMethods, GlobalAsmOperandRef,
+    MiscCodegenMethods,
 };
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir;
 use rustc_middle::mir::mono::CodegenUnit;
-use rustc_middle::ty::layout::{HasParamEnv, HasTyCtxt};
-use rustc_middle::ty::{Instance, ParamEnv, PolyExistentialTraitRef, Ty, TyCtxt};
+use rustc_middle::ty::layout::{HasTyCtxt, HasTypingEnv};
+use rustc_middle::ty::{Instance, PolyExistentialTraitRef, Ty, TyCtxt, TypingEnv};
 use rustc_session::Session;
 use rustc_span::symbol::Symbol;
-use rustc_span::{SourceFile, Span, DUMMY_SP};
+use rustc_span::{DUMMY_SP, SourceFile, Span};
 use rustc_target::abi::call::{FnAbi, PassMode};
 use rustc_target::abi::{AddressSpace, HasDataLayout, TargetDataLayout};
-use rustc_target::spec::{HasTargetSpec, Target, TargetTriple};
+use rustc_target::spec::{HasTargetSpec, Target, TargetTuple};
 use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::iter::once;
@@ -68,7 +72,7 @@ pub struct CodegenCx<'tcx> {
     pub panic_entry_points: RefCell<FxHashSet<DefId>>,
 
     /// `core::fmt::Arguments::new_{v1,const}` instances (for Rust 2021 panics).
-    pub fmt_args_new_fn_ids: RefCell<FxHashSet<Word>>,
+    pub fmt_args_new_fn_ids: RefCell<FxHashMap<Word, (usize, usize)>>,
 
     /// `core::fmt::rt::Argument::new_*::<T>` instances (for panics' `format_args!`),
     /// with their `T` type (i.e. of the value being formatted), and formatting
@@ -90,15 +94,15 @@ pub struct CodegenCx<'tcx> {
 impl<'tcx> CodegenCx<'tcx> {
     pub fn new(tcx: TyCtxt<'tcx>, codegen_unit: &'tcx CodegenUnit<'tcx>) -> Self {
         // Validate the target spec, as the backend doesn't control `--target`.
-        let target_triple = tcx.sess.opts.target_triple.triple();
-        let target: SpirvTarget = target_triple.parse().unwrap_or_else(|_| {
-            let qualifier = if !target_triple.starts_with("spirv-") {
+        let target_tuple = tcx.sess.opts.target_triple.tuple();
+        let target: SpirvTarget = target_tuple.parse().unwrap_or_else(|_| {
+            let qualifier = if !target_tuple.starts_with("spirv-") {
                 "non-SPIR-V "
             } else {
                 ""
             };
             tcx.dcx().fatal(format!(
-                "{qualifier}target `{target_triple}` not supported by `rustc_codegen_spirv`",
+                "{qualifier}target `{target_tuple}` not supported by `rustc_codegen_spirv`",
             ))
         });
         let target_spec_mismatched_jsons = {
@@ -115,12 +119,12 @@ impl<'tcx> CodegenCx<'tcx> {
                 // ideally `spirv-builder` can be forced to pass an exact match.
                 //
                 // FIXME(eddyb) consider the `RUST_TARGET_PATH` env var alternative.
-                TargetTriple::TargetTriple(_) => {
+                TargetTuple::TargetTuple(_) => {
                     // FIXME(eddyb) this case should be impossible as upstream
                     // `rustc` doesn't support `spirv-*` targets!
                     (expected != found).then(|| [expected, found].map(|spec| spec.to_json()))
                 }
-                TargetTriple::TargetJson { contents, .. } => {
+                TargetTuple::TargetJson { contents, .. } => {
                     let expected = expected.to_json();
                     let found = serde_json::from_str(contents).unwrap();
                     (expected != found).then_some([expected, found])
@@ -135,12 +139,12 @@ impl<'tcx> CodegenCx<'tcx> {
                 .filter(|k| expected.get(k) != found.get(k));
 
             tcx.dcx()
-                .struct_fatal(format!("mismatched `{target_triple}` target spec"))
+                .struct_fatal(format!("mismatched `{target_tuple}` target spec"))
                 .with_note(format!(
                     "expected (built into `rustc_codegen_spirv`):\n{expected:#}"
                 ))
                 .with_note(match &tcx.sess.opts.target_triple {
-                    TargetTriple::TargetJson {
+                    TargetTuple::TargetJson {
                         path_for_rustdoc,
                         contents,
                         ..
@@ -477,22 +481,11 @@ impl CodegenArgs {
                 "spirt-keep-unstructured-cfg-in-dumps",
                 "include initial unstructured CFG when dumping SPIR-T",
             );
-            opts.optflag(
-                "",
-                "specializer-debug",
-                "enable debug logging for the specializer",
-            );
             opts.optopt(
                 "",
                 "specializer-dump-instances",
                 "dump all instances inferred by the specializer, to FILE",
                 "FILE",
-            );
-            opts.optflag("", "print-all-zombie", "prints all removed zombies");
-            opts.optflag(
-                "",
-                "print-zombie",
-                "prints everything removed (even transitively) due to zombies",
             );
         }
 
@@ -607,12 +600,11 @@ impl CodegenArgs {
 
         let matches_opt_path = |name| matches.opt_str(name).map(PathBuf::from);
         let matches_opt_dump_dir_path = |name| {
-            matches_opt_path(name).map(|path| {
+            matches_opt_path(name).inspect(|path| {
                 if path.is_file() {
-                    std::fs::remove_file(&path).unwrap();
+                    std::fs::remove_file(path).unwrap();
                 }
-                std::fs::create_dir_all(&path).unwrap();
-                path
+                std::fs::create_dir_all(path).unwrap();
             })
         };
         // FIXME(eddyb) should these be handled as `-C linker-args="..."` instead?
@@ -650,10 +642,7 @@ impl CodegenArgs {
                 .opt_present("spirt-keep-debug-sources-in-dumps"),
             spirt_keep_unstructured_cfg_in_dumps: matches
                 .opt_present("spirt-keep-unstructured-cfg-in-dumps"),
-            specializer_debug: matches.opt_present("specializer-debug"),
             specializer_dump_instances: matches_opt_path("specializer-dump-instances"),
-            print_all_zombie: matches.opt_present("print-all-zombie"),
-            print_zombie: matches.opt_present("print-zombie"),
         };
 
         Ok(Self {
@@ -818,6 +807,7 @@ impl FromStr for ModuleOutputType {
 
 impl<'tcx> BackendTypes for CodegenCx<'tcx> {
     type Value = SpirvValue;
+    type Metadata = ();
     type Function = SpirvValue;
 
     type BasicBlock = Word;
@@ -849,22 +839,18 @@ impl<'tcx> HasTargetSpec for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> HasParamEnv<'tcx> for CodegenCx<'tcx> {
-    fn param_env(&self) -> ParamEnv<'tcx> {
-        ParamEnv::reveal_all()
+impl<'tcx> HasTypingEnv<'tcx> for CodegenCx<'tcx> {
+    fn typing_env(&self) -> TypingEnv<'tcx> {
+        TypingEnv::fully_monomorphized()
     }
 }
 
-impl<'tcx> MiscMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
     #[allow(clippy::type_complexity)]
     fn vtables(
         &self,
     ) -> &RefCell<FxHashMap<(Ty<'tcx>, Option<PolyExistentialTraitRef<'tcx>>), Self::Value>> {
         &self.vtables
-    }
-
-    fn check_overflow(&self) -> bool {
-        self.tcx.sess.overflow_checks()
     }
 
     fn get_fn(&self, instance: Instance<'tcx>) -> Self::Function {
@@ -920,7 +906,7 @@ impl<'tcx> MiscMethods<'tcx> for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> DebugInfoMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> DebugInfoCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn create_vtable_debuginfo(
         &self,
         _ty: Ty<'tcx>,
@@ -978,7 +964,7 @@ impl<'tcx> DebugInfoMethods<'tcx> for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> AsmMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> AsmCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn codegen_global_asm(
         &self,
         _template: &[InlineAsmTemplatePiece],

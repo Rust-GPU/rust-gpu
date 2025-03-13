@@ -1,10 +1,10 @@
 use crate::attr::{Entry, ExecutionModeExtra, IntrinsicType, SpecConstant, SpirvAttribute};
 use crate::builder::libm_intrinsics;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
-use rustc_ast::ast::{AttrKind, Attribute, LitIntType, LitKind, MetaItemLit, NestedMetaItem};
+use rustc_ast::ast::{AttrKind, Attribute, LitIntType, LitKind, MetaItemInner, MetaItemLit};
 use rustc_data_structures::fx::FxHashMap;
-use rustc_span::symbol::{Ident, Symbol};
 use rustc_span::Span;
+use rustc_span::symbol::{Ident, Symbol};
 use std::rc::Rc;
 
 /// Various places in the codebase (mostly attribute parsing) need to compare rustc Symbols to particular keywords.
@@ -120,6 +120,13 @@ const BUILTINS: &[(&str, BuiltIn)] = {
         ("bary_coord_no_persp_nv", BuiltIn::BaryCoordNoPerspNV),
         ("bary_coord", BaryCoordKHR),
         ("bary_coord_no_persp", BaryCoordNoPerspKHR),
+        ("primitive_point_indices_ext", PrimitivePointIndicesEXT),
+        ("primitive_line_indices_ext", PrimitiveLineIndicesEXT),
+        (
+            "primitive_triangle_indices_ext",
+            PrimitiveTriangleIndicesEXT,
+        ),
+        ("cull_primitive_ext", CullPrimitiveEXT),
         ("frag_size_ext", FragSizeEXT),
         ("frag_invocation_count_ext", FragInvocationCountEXT),
         ("launch_id", BuiltIn::LaunchIdKHR),
@@ -169,6 +176,7 @@ const STORAGE_CLASSES: &[(&str, StorageClass)] = {
         ("incoming_ray_payload", StorageClass::IncomingRayPayloadKHR),
         ("shader_record_buffer", StorageClass::ShaderRecordBufferKHR),
         ("physical_storage_buffer", PhysicalStorageBuffer),
+        ("task_payload_workgroup_ext", TaskPayloadWorkgroupEXT),
     ]
 };
 
@@ -183,6 +191,8 @@ const EXECUTION_MODELS: &[(&str, ExecutionModel)] = {
         ("compute", GLCompute),
         ("task_nv", TaskNV),
         ("mesh_nv", MeshNV),
+        ("task_ext", TaskEXT),
+        ("mesh_ext", MeshEXT),
         ("ray_generation", ExecutionModel::RayGenerationKHR),
         ("intersection", ExecutionModel::IntersectionKHR),
         ("any_hit", ExecutionModel::AnyHitKHR),
@@ -263,6 +273,17 @@ const EXECUTION_MODES: &[(&str, ExecutionMode, ExecutionModeExtraDim)] = {
         ("output_primitives_nv", OutputPrimitivesNV, Value),
         ("derivative_group_quads_nv", DerivativeGroupQuadsNV, None),
         ("output_triangles_nv", OutputTrianglesNV, None),
+        ("output_lines_ext", ExecutionMode::OutputLinesEXT, None),
+        (
+            "output_triangles_ext",
+            ExecutionMode::OutputTrianglesEXT,
+            None,
+        ),
+        (
+            "output_primitives_ext",
+            ExecutionMode::OutputPrimitivesEXT,
+            Value,
+        ),
         (
             "pixel_interlock_ordered_ext",
             PixelInterlockOrderedEXT,
@@ -334,6 +355,7 @@ impl Symbols {
             ("block", SpirvAttribute::Block),
             ("flat", SpirvAttribute::Flat),
             ("invariant", SpirvAttribute::Invariant),
+            ("per_primitive_ext", SpirvAttribute::PerPrimitiveExt),
             (
                 "sampled_image",
                 SpirvAttribute::IntrinsicType(IntrinsicType::SampledImage),
@@ -508,7 +530,7 @@ pub(crate) fn parse_attrs_for_checking<'a>(
 
 fn parse_spec_constant_attr(
     sym: &Symbols,
-    arg: &NestedMetaItem,
+    arg: &MetaItemInner,
 ) -> Result<SpecConstant, ParseAttrError> {
     let mut id = None;
     let mut default = None;
@@ -538,7 +560,7 @@ fn parse_spec_constant_attr(
     })
 }
 
-fn parse_attr_int_value(arg: &NestedMetaItem) -> Result<u32, ParseAttrError> {
+fn parse_attr_int_value(arg: &MetaItemInner) -> Result<u32, ParseAttrError> {
     let arg = match arg.meta_item() {
         Some(arg) => arg,
         None => return Err((arg.span(), "attribute must have value".to_string())),
@@ -552,7 +574,7 @@ fn parse_attr_int_value(arg: &NestedMetaItem) -> Result<u32, ParseAttrError> {
     }
 }
 
-fn parse_local_size_attr(arg: &NestedMetaItem) -> Result<[u32; 3], ParseAttrError> {
+fn parse_local_size_attr(arg: &MetaItemInner) -> Result<[u32; 3], ParseAttrError> {
     let arg = match arg.meta_item() {
         Some(arg) => arg,
         None => return Err((arg.span(), "attribute must have value".to_string())),
@@ -562,7 +584,7 @@ fn parse_local_size_attr(arg: &NestedMetaItem) -> Result<[u32; 3], ParseAttrErro
             let mut local_size = [1; 3];
             for (idx, lit) in tuple.iter().enumerate() {
                 match lit {
-                    NestedMetaItem::Lit(MetaItemLit {
+                    MetaItemInner::Lit(MetaItemLit {
                         kind: LitKind::Int(x, LitIntType::Unsuffixed),
                         ..
                     }) if *x <= u32::MAX as u128 => local_size[idx] = x.get() as u32,
@@ -592,7 +614,7 @@ fn parse_local_size_attr(arg: &NestedMetaItem) -> Result<[u32; 3], ParseAttrErro
 // ie #[spirv(fragment(origin_lower_left))] or #[spirv(gl_compute(local_size_x=64, local_size_y=8))]
 fn parse_entry_attrs(
     sym: &Symbols,
-    arg: &NestedMetaItem,
+    arg: &MetaItemInner,
     name: &Ident,
     execution_model: ExecutionModel,
 ) -> Result<Entry, ParseAttrError> {
@@ -717,7 +739,7 @@ fn parse_entry_attrs(
                 .execution_modes
                 .push((origin_mode, ExecutionModeExtra::new([])));
         }
-        GLCompute | MeshNV | TaskNV => {
+        GLCompute | MeshNV | TaskNV | TaskEXT | MeshEXT => {
             if let Some(local_size) = local_size {
                 entry
                     .execution_modes
@@ -726,7 +748,7 @@ fn parse_entry_attrs(
                 return Err((
                     arg.span(),
                     String::from(
-                        "The `threads` argument must be specified when using `#[spirv(compute)]`, `#[spirv(mesh_nv)]` or `#[spirv(task_nv)]`",
+                        "The `threads` argument must be specified when using `#[spirv(compute)]`, `#[spirv(mesh_nv)]`, `#[spirv(task_nv)]`, `#[spirv(task_ext)]` or `#[spirv(mesh_ext)]`",
                     ),
                 ));
             }

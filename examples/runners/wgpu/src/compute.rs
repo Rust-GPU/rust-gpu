@@ -1,4 +1,4 @@
-use crate::{maybe_watch, CompiledShaderModules, Options};
+use crate::{CompiledShaderModules, Options, maybe_watch};
 
 use std::time::Duration;
 use wgpu::util::DeviceExt;
@@ -110,7 +110,7 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
         label: None,
         layout: Some(&pipeline_layout),
         module: &module,
-        entry_point,
+        entry_point: Some(entry_point),
     });
 
     let readback_buffer = device.create_buffer(&wgpu::BufferDescriptor {

@@ -101,28 +101,9 @@ splitting option, hence it takes a directory instead of a file path. This is the
 binary before `spirv-opt` is executed, so it may be useful to output this to check if an issue is in
 Rust-GPU, or in `spirv-opt`.
 
-### `--specializer-debug`
-
-Enables debug logging for the specializer.
-
-_**FIXME(@eddyb)** use `log`/`tracing` instead for this purpose_
-
 ### `--specializer-dump-instances FILE`
 
 Dumps to `FILE` all instances inferred by the specializer.
-
-### `--print-zombie`
-
-Prints to rustc stdout which functions were removed due to being zombies, and why.
-
-_**FIXME(@eddyb)** use `log`/`tracing` instead for this purpose_
-
-### `--print-all-zombie`
-
-Prints to rustc stdout *everything* that was removed due to being zombies, why, and if it was an
-original zombie or if it was infected. (prints a lot!)
-
-_**FIXME(@eddyb)** use `log`/`tracing` instead for this purpose_
 
 ### `--no-spirv-val`
 

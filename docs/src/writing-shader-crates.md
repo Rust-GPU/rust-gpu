@@ -95,13 +95,13 @@ which may slow down full rebuilds a bit. Please read [this
 issue](https://github.com/EmbarkStudios/rust-gpu/issues/448) for more
 information, there's a few important caveats to know about this.
 
-### Using `.cargo/config`
+### Using `.cargo/config.toml`
 
 > **Note** This method will require manually rebuilding `rust-gpu` each
   time there has been changes to the repository.
 
 If you just want to build a shader crate, and don't need to automatically
-compile the SPIR-V binary at build time, you can use `.cargo/config` to set the
+compile the SPIR-V binary at build time, you can use `.cargo/config.toml` to set the
 necessary flags. Before you can do that however you need to do a couple of steps
 first to build the compiler backend.
 
@@ -112,17 +112,23 @@ Now you should have a `librustc_codegen_spirv` dynamic library available in
 `target/release`. You'll need to keep this somewhere stable that you can
 reference from your shader project.
 
-Now we need to add our `.cargo/config` file. This is a configuration file that
-tells cargo how to build for SPIR-V. You need provide the target you're
-compiling for (see [platform support](./platform-support.md)) and provide a path
-to your built `rustc_codegen_spirv` dynamic library. We have to also provide
-some additional options.
+Copy the `rust-gpu/rust-toolchain.toml` file to your project. You must use the same
+version of Rust as `rust-gpu` so that dynamic codegen library can be loaded by `rustc`.
+
+Now we need to add our `.cargo/config.toml` file that can be used to teach `cargo`
+how to build SPIR-V. Here are a few things we need to mention there.
+
+- Path to a spec of a target you're compiling for (see [platform support](./platform-support.md)).
+  These specs reside in a directory inside the `spirv-builder` crate and an example relative path
+  could look like `../rust-gpu/crates/spirv-builder/target-specs/spirv-unknown-spv1.3.json`.
+- Absolute path to the `rustc_codegen_spirv` dynamic library that we built above.
+- Some additional options.
 
 ```toml
 [build]
-target = "spirv-unknown-spv1.3"
+target = "<path_to_target_spec>"
 rustflags = [
-    "-Zcodegen-backend=<path_to_librustc_codegen_spirv>",
+    "-Zcodegen-backend=<absolute_path_to_librustc_codegen_spirv>",
     "-Zbinary-dep-depinfo",
     "-Csymbol-mangling-version=v0",
     "-Zcrate-attr=feature(register_tool)",

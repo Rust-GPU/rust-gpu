@@ -1,8 +1,10 @@
 ---
 name: Bug Report
 about: Report a bug with using rust-gpu.
-title: '(my bug report)'
-labels: 't: bug'
+title: "(my bug report)"
+labels: bug
+assignees: ''
+
 ---
 
 <!-- Thank you for filing a bug report! 🐛 -->

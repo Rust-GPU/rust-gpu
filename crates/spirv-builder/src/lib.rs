@@ -1,3 +1,5 @@
+// FIXME(eddyb) update/review these lints.
+//
 // BEGIN - Embark standard lints v0.4
 // do not change or add/remove here, but one can add exceptions after this section
 // for more info see: <https://github.com/EmbarkStudios/rust-ecosystem/issues/59>
@@ -38,7 +40,6 @@
     clippy::match_same_arms,
     clippy::match_wildcard_for_single_variants,
     clippy::mem_forget,
-    clippy::mismatched_target_os,
     clippy::mut_mut,
     clippy::mutex_integer,
     clippy::needless_borrow,
@@ -804,6 +805,10 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         profile,
     ]);
 
+    if let Ok(extra_cargoflags) = tracked_env_var_get("RUSTGPU_CARGOFLAGS") {
+        cargo.args(extra_cargoflags.split_whitespace());
+    }
+
     // FIXME(eddyb) consider moving `target-specs` into `rustc_codegen_spirv_types`.
     // FIXME(eddyb) consider the `RUST_TARGET_PATH` env var alternative.
     cargo
@@ -835,9 +840,9 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // inner invocation of Cargo (because e.g. build scripts might read them),
     // before we set any of our own below.
     for (key, _) in env::vars_os() {
-        let remove = key.to_str().map_or(false, |s| {
-            s.starts_with("CARGO_FEATURES_") || s.starts_with("CARGO_CFG_")
-        });
+        let remove = key
+            .to_str()
+            .is_some_and(|s| s.starts_with("CARGO_FEATURES_") || s.starts_with("CARGO_CFG_"));
         if remove {
             cargo.env_remove(key);
         }

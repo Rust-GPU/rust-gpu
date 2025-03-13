@@ -1,4 +1,4 @@
-use super::{get_name, get_names, Result};
+use super::{Result, get_name, get_names};
 use rspirv::dr::{Block, Function, Module};
 use rspirv::spirv::{ExecutionModel, Op, Word};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
@@ -94,7 +94,8 @@ pub fn outgoing_edges(block: &Block) -> impl Iterator<Item = Word> + '_ {
         | Op::Kill
         | Op::Unreachable
         | Op::IgnoreIntersectionKHR
-        | Op::TerminateRayKHR => (0..0).step_by(1),
+        | Op::TerminateRayKHR
+        | Op::EmitMeshTasksEXT => (0..0).step_by(1),
         _ => panic!("Invalid block terminator: {terminator:?}"),
     };
     operand_indices.map(move |i| terminator.operands[i].unwrap_id_ref())
