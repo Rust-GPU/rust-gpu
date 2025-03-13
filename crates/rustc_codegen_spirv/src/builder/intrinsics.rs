@@ -393,7 +393,7 @@ impl Builder<'_, '_> {
                         let lower = self.emit().s_convert(u32, None, arg).unwrap();
                         let higher = self
                             .emit()
-                            .shift_left_logical(ty, None, arg, u32_32)
+                            .shift_right_logical(ty, None, arg, u32_32)
                             .unwrap();
                         let higher = self.emit().s_convert(u32, None, higher).unwrap();
 
@@ -414,6 +414,7 @@ impl Builder<'_, '_> {
             _ => self.fatal("count_ones on a non-integer type"),
         }
     }
+
     pub fn bit_reverse(&self, arg: SpirvValue) -> SpirvValue {
         let ty = arg.ty;
         match self.cx.lookup_type(ty) {
@@ -453,7 +454,7 @@ impl Builder<'_, '_> {
                         let lower = self.emit().s_convert(u32, None, arg).unwrap();
                         let higher = self
                             .emit()
-                            .shift_left_logical(ty, None, arg, u32_32)
+                            .shift_right_logical(ty, None, arg, u32_32)
                             .unwrap();
                         let higher = self.emit().s_convert(u32, None, higher).unwrap();
 
@@ -463,7 +464,7 @@ impl Builder<'_, '_> {
 
                         let higher_bits = self.emit().u_convert(uint, None, higher_bits).unwrap();
                         let shift = self.constant_u32(self.span(), 32).def(self);
-                        let higher_bits = self.emit().shift_right_logical(uint, None, higher_bits, shift).unwrap();
+                        let higher_bits = self.emit().shift_left_logical(uint, None, higher_bits, shift).unwrap();
                         let lower_bits = self.emit().u_convert(uint, None, lower_bits).unwrap();
 
                         let result = self.emit().bitwise_or(ty, None, lower_bits, higher_bits).unwrap();
@@ -542,7 +543,7 @@ impl Builder<'_, '_> {
                         let lower = self.emit().s_convert(u32, None, arg).unwrap();
                         let higher = self
                             .emit()
-                            .shift_left_logical(ty, None, arg, u32_32)
+                            .shift_right_logical(ty, None, arg, u32_32)
                             .unwrap();
                         let higher = self.emit().s_convert(u32, None, higher).unwrap();
 
