@@ -404,14 +404,14 @@ impl Builder<'_, '_> {
                     _ => {
                         let undef = self.undef(ty).def(self);
                         self.zombie(undef, &format!(
-                            "counting leading / trailing zeros on unsupported {ty:?} bit integer type"
+                            "count_ones() on unsupported {ty:?} bit integer type"
                         ));
                         undef
                     }
                 }
                     .with_type(u32)
             }
-            _ => self.fatal("count_ones on a non-integer type"),
+            _ => self.fatal("count_ones() on a non-integer type"),
         }
     }
 
@@ -477,14 +477,14 @@ impl Builder<'_, '_> {
                     _ => {
                         let undef = self.undef(ty).def(self);
                         self.zombie(undef, &format!(
-                            "counting leading / trailing zeros on unsupported {ty:?} bit integer type"
+                            "bit_reverse() on unsupported {ty:?} bit integer type"
                         ));
                         undef
                     }
                 }
                     .with_type(ty)
             }
-            _ => self.fatal("count_ones on a non-integer type"),
+            _ => self.fatal("bit_reverse() on a non-integer type"),
         }
     }
 
@@ -569,7 +569,7 @@ impl Builder<'_, '_> {
                     _ => {
                         let undef = self.undef(ty).def(self);
                         self.zombie(undef, &format!(
-                            "counting leading / trailing zeros on unsupported {ty:?} bit integer type"
+                            "count_leading_trailing_zeros() on unsupported {ty:?} bit integer type"
                         ));
                         undef
                     }
@@ -590,7 +590,7 @@ impl Builder<'_, '_> {
                 }
                 .with_type(u32)
             }
-            _ => self.fatal("counting leading / trailing zeros on a non-integer type"),
+            _ => self.fatal("count_leading_trailing_zeros() on a non-integer type"),
         }
     }
 
