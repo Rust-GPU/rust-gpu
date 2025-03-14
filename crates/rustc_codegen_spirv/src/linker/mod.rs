@@ -58,6 +58,8 @@ pub struct Options {
     // NOTE(eddyb) these are debugging options that used to be env vars
     // (for more information see `docs/src/codegen-args.md`).
     pub dump_post_merge: Option<PathBuf>,
+    pub dump_pre_inline: Option<PathBuf>,
+    pub dump_post_inline: Option<PathBuf>,
     pub dump_post_split: Option<PathBuf>,
     pub dump_spirt_passes: Option<PathBuf>,
     pub spirt_strip_custom_debuginfo_from_dumps: bool,
@@ -83,19 +85,29 @@ fn id(header: &mut ModuleHeader) -> Word {
     result
 }
 
-fn apply_rewrite_rules(rewrite_rules: &FxHashMap<Word, Word>, blocks: &mut [Block]) {
-    let all_ids_mut = blocks
-        .iter_mut()
-        .flat_map(|b| b.label.iter_mut().chain(b.instructions.iter_mut()))
-        .flat_map(|inst| {
-            inst.result_id
-                .iter_mut()
-                .chain(inst.result_type.iter_mut())
-                .chain(
-                    inst.operands
-                        .iter_mut()
-                        .filter_map(|op| op.id_ref_any_mut()),
-                )
+fn apply_rewrite_rules<'a>(
+    rewrite_rules: &FxHashMap<Word, Word>,
+    blocks: impl IntoIterator<Item = &'a mut Block>,
+) {
+    let apply = |inst: &mut Instruction| {
+        if let Some(ref mut id) = &mut inst.result_id {
+            if let Some(&rewrite) = rewrite_rules.get(id) {
+                *id = rewrite;
+            }
+        }
+
+        if let Some(ref mut id) = &mut inst.result_type {
+            if let Some(&rewrite) = rewrite_rules.get(id) {
+                *id = rewrite;
+            }
+        }
+
+        inst.operands.iter_mut().for_each(|op| {
+            if let Some(id) = op.id_ref_any_mut() {
+                if let Some(&rewrite) = rewrite_rules.get(id) {
+                    *id = rewrite;
+                }
+            }
         });
     for id in all_ids_mut {
         if let Some(&rewrite) = rewrite_rules.get(id) {
@@ -402,6 +414,10 @@ pub fn link(
         duplicates::remove_duplicate_debuginfo(&mut output);
     }
 
+    if let Some(dir) = &opts.dump_pre_inline {
+        dump_spv_and_spirt(&output, dir.join(disambiguated_crate_name_for_dumps));
+    }
+
     {
         let _timer = sess.timer("link_inline");
         inline::inline(sess, &mut output)?;
@@ -410,6 +426,11 @@ pub fn link(
     if opts.dce {
         let _timer = sess.timer("link_dce-after-inlining");
         dce::dce(&mut output);
+    }
+
+    // HACK(eddyb) this has to be after DCE, to not break SPIR-T w/ dead decorations.
+    if let Some(dir) = &opts.dump_post_inline {
+        dump_spv_and_spirt(&output, dir.join(disambiguated_crate_name_for_dumps));
     }
 
     {
