@@ -886,7 +886,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         get_sole_artifact(&stdout).ok_or_else(|| {
             eprintln!("--- build output ---\n{stdout}");
             panic!(
-                "`{ARTIFACT_SUFFIX}` artifact not found in (supposedly successful) build output (see above)"
+                "`{ARTIFACT_SUFFIX}` artifact not found in (supposedly successful) build output (see above). Verify that `crate-type` is set correctly"
             );
         })
     } else {
