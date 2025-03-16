@@ -589,7 +589,7 @@ impl SpirvBuilder {
                         .unwrap()
                         .to_str()
                         .unwrap()
-                        .strip_suffix(".spv.json")
+                        .strip_suffix(ARTIFACT_SUFFIX)
                         .unwrap()
                 );
                 if self.print_metadata == MetadataPrintout::Full {
