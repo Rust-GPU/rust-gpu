@@ -801,7 +801,21 @@
 <a href="#800" id="800">800</a>
 <a href="#801" id="801">801</a>
 <a href="#802" id="802">802</a>
-<a href="#803" id="803">803</a></pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a></pre></div><pre class="rust"><code><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test;
 
 <span class="kw">mod </span>dce;
@@ -861,6 +875,8 @@
     <span class="comment">// NOTE(eddyb) these are debugging options that used to be env vars
     // (for more information see `docs/src/codegen-args.md`).
     </span><span class="kw">pub </span>dump_post_merge: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+    <span class="kw">pub </span>dump_pre_inline: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+    <span class="kw">pub </span>dump_post_inline: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
     <span class="kw">pub </span>dump_post_split: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
     <span class="kw">pub </span>dump_spirt_passes: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
     <span class="kw">pub </span>spirt_strip_custom_debuginfo_from_dumps: bool,
@@ -886,9 +902,12 @@
     result
 }
 
-<span class="kw">fn </span>apply_rewrite_rules(rewrite_rules: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, Word&gt;, blocks: <span class="kw-2">&amp;mut </span>[Block]) {
+<span class="kw">fn </span>apply_rewrite_rules&lt;<span class="lifetime">'a</span>&gt;(
+    rewrite_rules: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, Word&gt;,
+    blocks: <span class="kw">impl </span>IntoIterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Block&gt;,
+) {
     <span class="kw">let </span>all_ids_mut = blocks
-        .iter_mut()
+        .into_iter()
         .flat_map(|b| b.label.iter_mut().chain(b.instructions.iter_mut()))
         .flat_map(|inst| {
             inst.result_id
@@ -1205,6 +1224,10 @@
         duplicates::remove_duplicate_debuginfo(<span class="kw-2">&amp;mut </span>output);
     }
 
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = <span class="kw-2">&amp;</span>opts.dump_pre_inline {
+        dump_spv_and_spirt(<span class="kw-2">&amp;</span>output, dir.join(disambiguated_crate_name_for_dumps));
+    }
+
     {
         <span class="kw">let </span>_timer = sess.timer(<span class="string">"link_inline"</span>);
         inline::inline(sess, <span class="kw-2">&amp;mut </span>output)<span class="question-mark">?</span>;
@@ -1213,6 +1236,11 @@
     <span class="kw">if </span>opts.dce {
         <span class="kw">let </span>_timer = sess.timer(<span class="string">"link_dce-after-inlining"</span>);
         dce::dce(<span class="kw-2">&amp;mut </span>output);
+    }
+
+    <span class="comment">// HACK(eddyb) this has to be after DCE, to not break SPIR-T w/ dead decorations.
+    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = <span class="kw-2">&amp;</span>opts.dump_post_inline {
+        dump_spv_and_spirt(<span class="kw-2">&amp;</span>output, dir.join(disambiguated_crate_name_for_dumps));
     }
 
     {

@@ -1083,7 +1083,95 @@
 <a href="#1082" id="1082">1082</a>
 <a href="#1083" id="1083">1083</a>
 <a href="#1084" id="1084">1084</a>
-<a href="#1085" id="1085">1085</a></pre></div><pre class="rust"><code><span class="doccomment">//! This algorithm is not intended to be an optimization, it is rather for legalization.
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
+<a href="#1091" id="1091">1091</a>
+<a href="#1092" id="1092">1092</a>
+<a href="#1093" id="1093">1093</a>
+<a href="#1094" id="1094">1094</a>
+<a href="#1095" id="1095">1095</a>
+<a href="#1096" id="1096">1096</a>
+<a href="#1097" id="1097">1097</a>
+<a href="#1098" id="1098">1098</a>
+<a href="#1099" id="1099">1099</a>
+<a href="#1100" id="1100">1100</a>
+<a href="#1101" id="1101">1101</a>
+<a href="#1102" id="1102">1102</a>
+<a href="#1103" id="1103">1103</a>
+<a href="#1104" id="1104">1104</a>
+<a href="#1105" id="1105">1105</a>
+<a href="#1106" id="1106">1106</a>
+<a href="#1107" id="1107">1107</a>
+<a href="#1108" id="1108">1108</a>
+<a href="#1109" id="1109">1109</a>
+<a href="#1110" id="1110">1110</a>
+<a href="#1111" id="1111">1111</a>
+<a href="#1112" id="1112">1112</a>
+<a href="#1113" id="1113">1113</a>
+<a href="#1114" id="1114">1114</a>
+<a href="#1115" id="1115">1115</a>
+<a href="#1116" id="1116">1116</a>
+<a href="#1117" id="1117">1117</a>
+<a href="#1118" id="1118">1118</a>
+<a href="#1119" id="1119">1119</a>
+<a href="#1120" id="1120">1120</a>
+<a href="#1121" id="1121">1121</a>
+<a href="#1122" id="1122">1122</a>
+<a href="#1123" id="1123">1123</a>
+<a href="#1124" id="1124">1124</a>
+<a href="#1125" id="1125">1125</a>
+<a href="#1126" id="1126">1126</a>
+<a href="#1127" id="1127">1127</a>
+<a href="#1128" id="1128">1128</a>
+<a href="#1129" id="1129">1129</a>
+<a href="#1130" id="1130">1130</a>
+<a href="#1131" id="1131">1131</a>
+<a href="#1132" id="1132">1132</a>
+<a href="#1133" id="1133">1133</a>
+<a href="#1134" id="1134">1134</a>
+<a href="#1135" id="1135">1135</a>
+<a href="#1136" id="1136">1136</a>
+<a href="#1137" id="1137">1137</a>
+<a href="#1138" id="1138">1138</a>
+<a href="#1139" id="1139">1139</a>
+<a href="#1140" id="1140">1140</a>
+<a href="#1141" id="1141">1141</a>
+<a href="#1142" id="1142">1142</a>
+<a href="#1143" id="1143">1143</a>
+<a href="#1144" id="1144">1144</a>
+<a href="#1145" id="1145">1145</a>
+<a href="#1146" id="1146">1146</a>
+<a href="#1147" id="1147">1147</a>
+<a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
+<a href="#1152" id="1152">1152</a>
+<a href="#1153" id="1153">1153</a>
+<a href="#1154" id="1154">1154</a>
+<a href="#1155" id="1155">1155</a>
+<a href="#1156" id="1156">1156</a>
+<a href="#1157" id="1157">1157</a>
+<a href="#1158" id="1158">1158</a>
+<a href="#1159" id="1159">1159</a>
+<a href="#1160" id="1160">1160</a>
+<a href="#1161" id="1161">1161</a>
+<a href="#1162" id="1162">1162</a>
+<a href="#1163" id="1163">1163</a>
+<a href="#1164" id="1164">1164</a>
+<a href="#1165" id="1165">1165</a>
+<a href="#1166" id="1166">1166</a>
+<a href="#1167" id="1167">1167</a>
+<a href="#1168" id="1168">1168</a>
+<a href="#1169" id="1169">1169</a>
+<a href="#1170" id="1170">1170</a>
+<a href="#1171" id="1171">1171</a>
+<a href="#1172" id="1172">1172</a>
+<a href="#1173" id="1173">1173</a></pre></div><pre class="rust"><code><span class="doccomment">//! This algorithm is not intended to be an optimization, it is rather for legalization.
 //! Specifically, spir-v disallows things like a `StorageClass::Function` pointer to a
 //! `StorageClass::Input` pointer. Our frontend definitely allows it, though, this is like taking a
 //! `&amp;Input&lt;T&gt;` in a function! So, we inline all functions that take these "illegal" pointers, then
@@ -1093,16 +1181,16 @@
 <span class="kw">use </span><span class="kw">super</span>::ipo::CallGraph;
 <span class="kw">use </span><span class="kw">super</span>::simple_passes::outgoing_edges;
 <span class="kw">use super</span>::{get_name, get_names};
+<span class="kw">use </span><span class="kw">crate</span>::custom_decorations::SpanRegenerator;
 <span class="kw">use </span><span class="kw">crate</span>::custom_insts::{<span class="self">self</span>, CustomInst, CustomOp};
 <span class="kw">use </span>rspirv::dr::{Block, Function, Instruction, Module, ModuleHeader, Operand};
 <span class="kw">use </span>rspirv::spirv::{FunctionControl, Op, StorageClass, Word};
-<span class="kw">use </span>rustc_data_structures::fx::{FxHashMap, FxHashSet};
+<span class="kw">use </span>rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexMap, FxIndexSet};
 <span class="kw">use </span>rustc_errors::ErrorGuaranteed;
 <span class="kw">use </span>rustc_session::Session;
 <span class="kw">use </span>smallvec::SmallVec;
-<span class="kw">use </span>std::mem::{<span class="self">self</span>, take};
-
-<span class="kw">type </span>FunctionMap = FxHashMap&lt;Word, Function&gt;;
+<span class="kw">use </span>std::cmp::Ordering;
+<span class="kw">use </span>std::mem;
 
 <span class="comment">// FIXME(eddyb) this is a bit silly, but this keeps being repeated everywhere.
 </span><span class="kw">fn </span>next_id(header: <span class="kw-2">&amp;mut </span>ModuleHeader) -&gt; Word {
@@ -1115,6 +1203,9 @@
     <span class="comment">// This algorithm gets real sad if there's recursion - but, good news, SPIR-V bans recursion
     </span>deny_recursion_in_module(sess, module)<span class="question-mark">?</span>;
 
+    <span class="comment">// Compute the call-graph that will drive (inside-out, aka bottom-up) inlining.
+    </span><span class="kw">let </span>(call_graph, func_id_to_idx) = CallGraph::collect_with_func_id_to_idx(module);
+
     <span class="kw">let </span>custom_ext_inst_set_import = module
         .ext_inst_imports
         .iter()
@@ -1124,92 +1215,10 @@
         })
         .map(|inst| inst.result_id.unwrap());
 
-    <span class="comment">// HACK(eddyb) compute the set of functions that may `Abort` *transitively*,
-    // which is only needed because of how we inline (sometimes it's outside-in,
-    // aka top-down, instead of always being inside-out, aka bottom-up).
-    //
-    // (inlining is needed in the first place because our custom `Abort`
-    // instructions get lowered to a simple `OpReturn` in entry-points, but
-    // that requires that they get inlined all the way up to the entry-points)
-    </span><span class="kw">let </span>functions_that_may_abort = custom_ext_inst_set_import
-        .map(|custom_ext_inst_set_import| {
-            <span class="kw">let </span><span class="kw-2">mut </span>may_abort_by_id = FxHashSet::default();
-
-            <span class="comment">// FIXME(eddyb) use this `CallGraph` abstraction more during inlining.
-            </span><span class="kw">let </span>call_graph = CallGraph::collect(module);
-            <span class="kw">for </span>func_idx <span class="kw">in </span>call_graph.post_order() {
-                <span class="kw">let </span>func_id = module.functions[func_idx].def_id().unwrap();
-
-                <span class="kw">let </span>any_callee_may_abort = call_graph.callees[func_idx].iter().any(|<span class="kw-2">&amp;</span>callee_idx| {
-                    may_abort_by_id.contains(<span class="kw-2">&amp;</span>module.functions[callee_idx].def_id().unwrap())
-                });
-                <span class="kw">if </span>any_callee_may_abort {
-                    may_abort_by_id.insert(func_id);
-                    <span class="kw">continue</span>;
-                }
-
-                <span class="kw">let </span>may_abort_directly = module.functions[func_idx].blocks.iter().any(|block| {
-                    <span class="kw">match </span><span class="kw-2">&amp;</span>block.instructions[..] {
-                        [.., last_normal_inst, terminator_inst]
-                            <span class="kw">if </span>last_normal_inst.class.opcode == Op::ExtInst
-                                &amp;&amp; last_normal_inst.operands[<span class="number">0</span>].unwrap_id_ref()
-                                    == custom_ext_inst_set_import
-                                &amp;&amp; CustomOp::decode_from_ext_inst(last_normal_inst)
-                                    == CustomOp::Abort =&gt;
-                        {
-                            <span class="macro">assert_eq!</span>(terminator_inst.class.opcode, Op::Unreachable);
-                            <span class="bool-val">true
-                        </span>}
-
-                        <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
-                    }
-                });
-                <span class="kw">if </span>may_abort_directly {
-                    may_abort_by_id.insert(func_id);
-                }
-            }
-
-            may_abort_by_id
-        })
-        .unwrap_or_default();
-
-    <span class="kw">let </span>functions = module
-        .functions
-        .iter()
-        .map(|f| (f.def_id().unwrap(), f.clone()))
-        .collect();
     <span class="kw">let </span>legal_globals = LegalGlobal::gather_from_module(module);
 
-    <span class="comment">// Drop all the functions we'll be inlining. (This also means we won't waste time processing
-    // inlines in functions that will get inlined)
-    </span><span class="kw">let </span><span class="kw-2">mut </span>dropped_ids = FxHashSet::default();
-    <span class="kw">let </span><span class="kw-2">mut </span>inlined_to_legalize_dont_inlines = Vec::new();
-    module.functions.retain(|f| {
-        <span class="kw">let </span>should_inline_f = should_inline(<span class="kw-2">&amp;</span>legal_globals, <span class="kw-2">&amp;</span>functions_that_may_abort, f, <span class="prelude-val">None</span>);
-        <span class="kw">if </span>should_inline_f != <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>) {
-            <span class="kw">if </span>should_inline_f == <span class="prelude-val">Err</span>(MustInlineToLegalize) &amp;&amp; has_dont_inline(f) {
-                inlined_to_legalize_dont_inlines.push(f.def_id().unwrap());
-            }
-            <span class="comment">// TODO: We should insert all defined IDs in this function.
-            </span>dropped_ids.insert(f.def_id().unwrap());
-            <span class="bool-val">false
-        </span>} <span class="kw">else </span>{
-            <span class="bool-val">true
-        </span>}
-    });
-
-    <span class="kw">if </span>!inlined_to_legalize_dont_inlines.is_empty() {
-        <span class="kw">let </span>names = get_names(module);
-        <span class="kw">for </span>f <span class="kw">in </span>inlined_to_legalize_dont_inlines {
-            sess.dcx().warn(<span class="macro">format!</span>(
-                <span class="string">"`#[inline(never)]` function `{}` needs to be inlined \
-                 because it has illegal argument or return types"</span>,
-                get_name(<span class="kw-2">&amp;</span>names, f)
-            ));
-        }
-    }
-
     <span class="kw">let </span>header = module.header.as_mut().unwrap();
+
     <span class="comment">// FIXME(eddyb) clippy false positive (separate `map` required for borrowck).
     </span><span class="attr">#[allow(clippy::map_unwrap_or)]
     </span><span class="kw">let </span><span class="kw-2">mut </span>inliner = Inliner {
@@ -1234,6 +1243,8 @@
             id
         }),
 
+        func_id_to_idx,
+
         id_to_name: module
             .debug_names
             .iter()
@@ -1251,24 +1262,102 @@
         header,
         debug_string_source: <span class="kw-2">&amp;mut </span>module.debug_string_source,
         annotations: <span class="kw-2">&amp;mut </span>module.annotations,
-        types_global_values: <span class="kw-2">&amp;mut </span>module.types_global_values,
 
-        functions: <span class="kw-2">&amp;</span>functions,
-        legal_globals: <span class="kw-2">&amp;</span>legal_globals,
-        functions_that_may_abort: <span class="kw-2">&amp;</span>functions_that_may_abort,
+        legal_globals,
+
+        <span class="comment">// NOTE(eddyb) this is needed because our custom `Abort` instructions get
+        // lowered to a simple `OpReturn` in entry-points, but that requires that
+        // they get inlined all the way up to the entry-points in the first place.
+        </span>functions_that_may_abort: module
+            .functions
+            .iter()
+            .filter_map(|func| {
+                <span class="kw">let </span>custom_ext_inst_set_import = custom_ext_inst_set_import<span class="question-mark">?</span>;
+                func.blocks
+                    .iter()
+                    .any(|block| <span class="kw">match </span><span class="kw-2">&amp;</span>block.instructions[..] {
+                        [.., last_normal_inst, terminator_inst]
+                            <span class="kw">if </span>last_normal_inst.class.opcode == Op::ExtInst
+                                &amp;&amp; last_normal_inst.operands[<span class="number">0</span>].unwrap_id_ref()
+                                    == custom_ext_inst_set_import
+                                &amp;&amp; CustomOp::decode_from_ext_inst(last_normal_inst)
+                                    == CustomOp::Abort =&gt;
+                        {
+                            <span class="macro">assert_eq!</span>(terminator_inst.class.opcode, Op::Unreachable);
+                            <span class="bool-val">true
+                        </span>}
+
+                        <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
+                    })
+                    .then_some(func.def_id().unwrap())
+            })
+            .collect(),
+
+        inlined_dont_inlines_to_cause_and_callers: FxIndexMap::default(),
     };
-    <span class="kw">for </span>function <span class="kw">in </span><span class="kw-2">&amp;mut </span>module.functions {
-        inliner.inline_fn(function);
-        fuse_trivial_branches(function);
+
+    <span class="kw">let </span><span class="kw-2">mut </span>functions: Vec&lt;<span class="kw">_</span>&gt; = mem::take(<span class="kw-2">&amp;mut </span>module.functions)
+        .into_iter()
+        .map(<span class="prelude-val">Ok</span>)
+        .collect();
+
+    <span class="comment">// Inline functions in post-order (aka inside-out aka bottom-out) - that is,
+    // callees are processed before their callers, to avoid duplicating work.
+    </span><span class="kw">for </span>func_idx <span class="kw">in </span>call_graph.post_order() {
+        <span class="kw">let </span><span class="kw-2">mut </span>function = mem::replace(<span class="kw-2">&amp;mut </span>functions[func_idx], <span class="prelude-val">Err</span>(FuncIsBeingInlined)).unwrap();
+        inliner.inline_fn(<span class="kw-2">&amp;mut </span>function, <span class="kw-2">&amp;</span>functions);
+        fuse_trivial_branches(<span class="kw-2">&amp;mut </span>function);
+        functions[func_idx] = <span class="prelude-val">Ok</span>(function);
     }
 
-    <span class="comment">// Drop OpName etc. for inlined functions
-    </span>module.debug_names.retain(|inst| {
-        !inst
-            .operands
-            .iter()
-            .any(|op| op.id_ref_any().is_some_and(|id| dropped_ids.contains(<span class="kw-2">&amp;</span>id)))
-    });
+    module.functions = functions.into_iter().map(|func| func.unwrap()).collect();
+
+    <span class="kw">let </span>Inliner {
+        id_to_name,
+        inlined_dont_inlines_to_cause_and_callers,
+        ..
+    } = inliner;
+
+    <span class="kw">let </span><span class="kw-2">mut </span>span_regen = SpanRegenerator::new(sess.source_map(), module);
+    <span class="kw">for </span>(callee_id, (cause, callers)) <span class="kw">in </span>inlined_dont_inlines_to_cause_and_callers {
+        <span class="kw">let </span>callee_name = get_name(<span class="kw-2">&amp;</span>id_to_name, callee_id);
+
+        <span class="comment">// HACK(eddyb) `libcore` hides panics behind `#[inline(never)]` `fn`s,
+        // making this too noisy and useless (since it's an impl detail).
+        </span><span class="kw">if </span>cause == <span class="string">"panicking" </span>&amp;&amp; callee_name.starts_with(<span class="string">"core::"</span>) {
+            <span class="kw">continue</span>;
+        }
+
+        <span class="kw">let </span>callee_span = span_regen
+            .src_loc_for_id(callee_id)
+            .and_then(|src_loc| span_regen.src_loc_to_rustc(src_loc))
+            .unwrap_or_default();
+        sess.dcx()
+            .struct_span_warn(
+                callee_span,
+                <span class="macro">format!</span>(<span class="string">"`#[inline(never)]` function `{callee_name}` has been inlined"</span>),
+            )
+            .with_note(<span class="macro">format!</span>(<span class="string">"inlining was required due to {cause}"</span>))
+            .with_note(<span class="macro">format!</span>(
+                <span class="string">"called from {}"</span>,
+                callers
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(i, <span class="kw-2">&amp;</span>caller_id)| {
+                        <span class="comment">// HACK(eddyb) avoid showing too many names.
+                        </span><span class="kw">match </span>i.cmp(<span class="kw-2">&amp;</span><span class="number">4</span>) {
+                            Ordering::Less =&gt; {
+                                <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"`{}`"</span>, get_name(<span class="kw-2">&amp;</span>id_to_name, caller_id)))
+                            }
+                            Ordering::Equal =&gt; <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"and {} more"</span>, callers.len() - i)),
+                            Ordering::Greater =&gt; <span class="prelude-val">None</span>,
+                        }
+                    })
+                    .collect::&lt;SmallVec&lt;[<span class="kw">_</span>; <span class="number">5</span>]&gt;&gt;()
+                    .join(<span class="string">", "</span>)
+            ))
+            .emit();
+    }
 
     <span class="prelude-val">Ok</span>(())
 }
@@ -1451,42 +1540,42 @@
 
 <span class="doccomment">/// Helper error type for `should_inline` (see its doc comment).
 </span><span class="attr">#[derive(Copy, Clone, PartialEq, Eq)]
-</span><span class="kw">struct </span>MustInlineToLegalize;
+</span><span class="kw">struct </span>MustInlineToLegalize(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str);
 
-<span class="doccomment">/// Returns `Ok(true)`/`Err(MustInlineToLegalize)` if `callee` should/must be
+<span class="doccomment">/// Returns `Ok(true)`/`Err(MustInlineToLegalize(_))` if `callee` should/must be
 /// inlined (either in general, or specifically from `call_site`, if provided).
 ///
-/// The distinction made is that `Err(MustInlineToLegalize)` is not a heuristic,
-/// and inlining is *mandatory* due to an illegal signature/arguments.
+/// The distinction made here is that `Err(MustInlineToLegalize(cause))` is
+/// very much *not* a heuristic, and inlining is *mandatory* due to `cause`
+/// (usually illegal signature/arguments, but also the panicking mechanism).
+</span><span class="comment">//
+// FIXME(eddyb) the causes here are not fine-grained enough.
 </span><span class="kw">fn </span>should_inline(
     legal_globals: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, LegalGlobal&gt;,
     functions_that_may_abort: <span class="kw-2">&amp;</span>FxHashSet&lt;Word&gt;,
     callee: <span class="kw-2">&amp;</span>Function,
-    call_site: <span class="prelude-ty">Option</span>&lt;CallSite&lt;<span class="lifetime">'_</span>&gt;&gt;,
+    call_site: CallSite&lt;<span class="lifetime">'_</span>&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;bool, MustInlineToLegalize&gt; {
     <span class="kw">let </span>callee_def = callee.def.as_ref().unwrap();
     <span class="kw">let </span>callee_control = callee_def.operands[<span class="number">0</span>].unwrap_function_control();
 
-    <span class="comment">// HACK(eddyb) this "has a call-site" check ensures entry-points don't get
-    // accidentally removed as "must inline to legalize" function, but can still
-    // be inlined into other entry-points (if such an unusual situation arises).
-    </span><span class="kw">if </span>call_site.is_some() &amp;&amp; functions_that_may_abort.contains(<span class="kw-2">&amp;</span>callee.def_id().unwrap()) {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize);
+    <span class="kw">if </span>functions_that_may_abort.contains(<span class="kw-2">&amp;</span>callee.def_id().unwrap()) {
+        <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize(<span class="string">"panicking"</span>));
     }
 
     <span class="kw">let </span>ret_ty = legal_globals
         .get(<span class="kw-2">&amp;</span>callee_def.result_type.unwrap())
-        .ok_or(MustInlineToLegalize)<span class="question-mark">?</span>;
+        .ok_or(MustInlineToLegalize(<span class="string">"illegal return type"</span>))<span class="question-mark">?</span>;
     <span class="kw">if </span>!ret_ty.legal_as_fn_ret_ty() {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize);
+        <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize(<span class="string">"illegal (pointer) return type"</span>));
     }
 
     <span class="kw">for </span>(i, param) <span class="kw">in </span>callee.parameters.iter().enumerate() {
         <span class="kw">let </span>param_ty = legal_globals
             .get(param.result_type.as_ref().unwrap())
-            .ok_or(MustInlineToLegalize)<span class="question-mark">?</span>;
+            .ok_or(MustInlineToLegalize(<span class="string">"illegal parameter type"</span>))<span class="question-mark">?</span>;
         <span class="kw">if </span>!param_ty.legal_as_fn_param_ty() {
-            <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize);
+            <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize(<span class="string">"illegal (pointer) parameter type"</span>));
         }
 
         <span class="comment">// If the call isn't passing a legal pointer argument (a "memory object",
@@ -1494,13 +1583,13 @@
         // then inlining is required to have a chance at producing legal SPIR-V.
         //
         // FIXME(eddyb) rewriting away the pointer could be another alternative.
-        </span><span class="kw">if let </span>(LegalGlobal::TypePointer(<span class="kw">_</span>), <span class="prelude-val">Some</span>(call_site)) = (param_ty, call_site) {
+        </span><span class="kw">if let </span>LegalGlobal::TypePointer(<span class="kw">_</span>) = param_ty {
             <span class="kw">let </span>ptr_arg = call_site.call_inst.operands[i + <span class="number">1</span>].unwrap_id_ref();
             <span class="kw">match </span>legal_globals.get(<span class="kw-2">&amp;</span>ptr_arg) {
                 <span class="prelude-val">Some</span>(LegalGlobal::Variable) =&gt; {}
 
                 <span class="comment">// FIXME(eddyb) should some constants (undef/null) be allowed?
-                </span><span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize),
+                </span><span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize(<span class="string">"illegal (pointer) argument"</span>)),
 
                 <span class="prelude-val">None </span>=&gt; {
                     <span class="kw">let </span><span class="kw-2">mut </span>caller_param_and_var_ids = call_site
@@ -1526,7 +1615,7 @@
                         .map(|caller_inst| caller_inst.result_id.unwrap());
 
                     <span class="kw">if </span>!caller_param_and_var_ids.any(|id| ptr_arg == id) {
-                        <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize);
+                        <span class="kw">return </span><span class="prelude-val">Err</span>(MustInlineToLegalize(<span class="string">"illegal (pointer) argument"</span>));
                     }
                 }
             }
@@ -1536,38 +1625,45 @@
     <span class="prelude-val">Ok</span>(callee_control.contains(FunctionControl::INLINE))
 }
 
+<span class="doccomment">/// Helper error type for `Inliner`'s `functions` field, indicating a `Function`
+/// was taken out of its slot because it's being inlined.
+</span><span class="attr">#[derive(Debug)]
+</span><span class="kw">struct </span>FuncIsBeingInlined;
+
 <span class="comment">// Steps:
 // Move OpVariable decls
 // Rewrite return
 // Renumber IDs
 // Insert blocks
 
-</span><span class="kw">struct </span>Inliner&lt;<span class="lifetime">'m</span>, <span class="lifetime">'map</span>&gt; {
+</span><span class="kw">struct </span>Inliner&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>&gt; {
     <span class="doccomment">/// ID of `OpExtInstImport` for our custom "extended instruction set"
     /// (see `crate::custom_insts` for more details).
     </span>custom_ext_inst_set_import: Word,
 
     op_type_void_id: Word,
 
+    <span class="doccomment">/// Map from each function's ID to its index in `functions`.
+    </span>func_id_to_idx: FxHashMap&lt;Word, usize&gt;,
+
     <span class="doccomment">/// Pre-collected `OpName`s, that can be used to find any function's name
     /// during inlining (to be able to generate debuginfo that uses names).
-    </span>id_to_name: FxHashMap&lt;Word, <span class="kw-2">&amp;</span><span class="lifetime">'m </span>str&gt;,
+    </span>id_to_name: FxHashMap&lt;Word, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt;,
 
     <span class="doccomment">/// `OpString` cache (for deduplicating `OpString`s for the same string).
     </span><span class="comment">//
     // FIXME(eddyb) currently this doesn't reuse existing `OpString`s, but since
     // this is mostly for inlined callee names, it's expected almost no overlap
     // exists between existing `OpString`s and new ones, anyway.
-    </span>cached_op_strings: FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'m </span>str, Word&gt;,
+    </span>cached_op_strings: FxHashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, Word&gt;,
 
-    header: <span class="kw-2">&amp;</span><span class="lifetime">'m </span><span class="kw-2">mut </span>ModuleHeader,
-    debug_string_source: <span class="kw-2">&amp;</span><span class="lifetime">'m </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
-    annotations: <span class="kw-2">&amp;</span><span class="lifetime">'m </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
-    types_global_values: <span class="kw-2">&amp;</span><span class="lifetime">'m </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
+    header: <span class="kw-2">&amp;</span><span class="lifetime">'b </span><span class="kw-2">mut </span>ModuleHeader,
+    debug_string_source: <span class="kw-2">&amp;</span><span class="lifetime">'b </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
+    annotations: <span class="kw-2">&amp;</span><span class="lifetime">'b </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
 
-    functions: <span class="kw-2">&amp;</span><span class="lifetime">'map </span>FunctionMap,
-    legal_globals: <span class="kw-2">&amp;</span><span class="lifetime">'map </span>FxHashMap&lt;Word, LegalGlobal&gt;,
-    functions_that_may_abort: <span class="kw-2">&amp;</span><span class="lifetime">'map </span>FxHashSet&lt;Word&gt;,
+    legal_globals: FxHashMap&lt;Word, LegalGlobal&gt;,
+    functions_that_may_abort: FxHashSet&lt;Word&gt;,
+    inlined_dont_inlines_to_cause_and_callers: FxIndexMap&lt;Word, (<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, FxIndexSet&lt;Word&gt;)&gt;,
     <span class="comment">// rewrite_rules: FxHashMap&lt;Word, Word&gt;,
 </span>}
 
@@ -1593,42 +1689,29 @@
         }
     }
 
-    <span class="kw">fn </span>ptr_ty(<span class="kw-2">&amp;mut </span><span class="self">self</span>, pointee: Word) -&gt; Word {
-        <span class="comment">// TODO: This is horribly slow, fix this
-        </span><span class="kw">let </span>existing = <span class="self">self</span>.types_global_values.iter().find(|inst| {
-            inst.class.opcode == Op::TypePointer
-                &amp;&amp; inst.operands[<span class="number">0</span>].unwrap_storage_class() == StorageClass::Function
-                &amp;&amp; inst.operands[<span class="number">1</span>].unwrap_id_ref() == pointee
-        });
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(existing) = existing {
-            <span class="kw">return </span>existing.result_id.unwrap();
-        }
-        <span class="kw">let </span>inst_id = <span class="self">self</span>.id();
-        <span class="self">self</span>.types_global_values.push(Instruction::new(
-            Op::TypePointer,
-            <span class="prelude-val">None</span>,
-            <span class="prelude-val">Some</span>(inst_id),
-            <span class="macro">vec!</span>[
-                Operand::StorageClass(StorageClass::Function),
-                Operand::IdRef(pointee),
-            ],
-        ));
-        inst_id
-    }
-
-    <span class="kw">fn </span>inline_fn(<span class="kw-2">&amp;mut </span><span class="self">self</span>, function: <span class="kw-2">&amp;mut </span>Function) {
+    <span class="kw">fn </span>inline_fn(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        function: <span class="kw-2">&amp;mut </span>Function,
+        functions: <span class="kw-2">&amp;</span>[<span class="prelude-ty">Result</span>&lt;Function, FuncIsBeingInlined&gt;],
+    ) {
         <span class="kw">let </span><span class="kw-2">mut </span>block_idx = <span class="number">0</span>;
         <span class="kw">while </span>block_idx &lt; function.blocks.len() {
             <span class="comment">// If we successfully inlined a block, then repeat processing on the same block, in
             // case the newly inlined block has more inlined calls.
             // TODO: This is quadratic
-            </span><span class="kw">if </span>!<span class="self">self</span>.inline_block(function, block_idx) {
-                block_idx += <span class="number">1</span>;
+            </span><span class="kw">if </span>!<span class="self">self</span>.inline_block(function, block_idx, functions) {
+                <span class="comment">// TODO(eddyb) skip past the inlined callee without rescanning it.
+                </span>block_idx += <span class="number">1</span>;
             }
         }
     }
 
-    <span class="kw">fn </span>inline_block(<span class="kw-2">&amp;mut </span><span class="self">self</span>, caller: <span class="kw-2">&amp;mut </span>Function, block_idx: usize) -&gt; bool {
+    <span class="kw">fn </span>inline_block(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        caller: <span class="kw-2">&amp;mut </span>Function,
+        block_idx: usize,
+        functions: <span class="kw-2">&amp;</span>[<span class="prelude-ty">Result</span>&lt;Function, FuncIsBeingInlined&gt;],
+    ) -&gt; bool {
         <span class="comment">// Find the first inlined OpFunctionCall
         </span><span class="kw">let </span>call = caller.blocks[block_idx]
             .instructions
@@ -1639,8 +1722,8 @@
                 (
                     index,
                     inst,
-                    <span class="self">self</span>.functions
-                        .get(<span class="kw-2">&amp;</span>inst.operands[<span class="number">0</span>].id_ref_any().unwrap())
+                    functions[<span class="self">self</span>.func_id_to_idx[<span class="kw-2">&amp;</span>inst.operands[<span class="number">0</span>].id_ref_any().unwrap()]]
+                        .as_ref()
                         .unwrap(),
                 )
             })
@@ -1650,40 +1733,74 @@
                     call_inst: inst,
                 };
                 <span class="kw">match </span>should_inline(
-                    <span class="self">self</span>.legal_globals,
-                    <span class="self">self</span>.functions_that_may_abort,
+                    <span class="kw-2">&amp;</span><span class="self">self</span>.legal_globals,
+                    <span class="kw-2">&amp;</span><span class="self">self</span>.functions_that_may_abort,
                     f,
-                    <span class="prelude-val">Some</span>(call_site),
+                    call_site,
                 ) {
                     <span class="prelude-val">Ok</span>(inline) =&gt; inline,
-                    <span class="prelude-val">Err</span>(MustInlineToLegalize) =&gt; <span class="bool-val">true</span>,
+                    <span class="prelude-val">Err</span>(MustInlineToLegalize(cause)) =&gt; {
+                        <span class="kw">if </span>has_dont_inline(f) {
+                            <span class="self">self</span>.inlined_dont_inlines_to_cause_and_callers
+                                .entry(f.def_id().unwrap())
+                                .or_insert_with(|| (cause, Default::default()))
+                                .<span class="number">1
+                                </span>.insert(caller.def_id().unwrap());
+                        }
+                        <span class="bool-val">true
+                    </span>}
                 }
             });
         <span class="kw">let </span>(call_index, call_inst, callee) = <span class="kw">match </span>call {
             <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="bool-val">false</span>,
             <span class="prelude-val">Some</span>(call) =&gt; call,
         };
-        <span class="kw">let </span>call_result_type = {
+
+        <span class="comment">// Propagate "may abort" from callee to caller (i.e. as aborts get inlined).
+        </span><span class="kw">if </span><span class="self">self
+            </span>.functions_that_may_abort
+            .contains(<span class="kw-2">&amp;</span>callee.def_id().unwrap())
+        {
+            <span class="self">self</span>.functions_that_may_abort
+                .insert(caller.def_id().unwrap());
+        }
+
+        <span class="kw">let </span><span class="kw-2">mut </span>maybe_call_result_phi = {
             <span class="kw">let </span>ty = call_inst.result_type.unwrap();
             <span class="kw">if </span>ty == <span class="self">self</span>.op_type_void_id {
                 <span class="prelude-val">None
             </span>} <span class="kw">else </span>{
-                <span class="prelude-val">Some</span>(ty)
+                <span class="prelude-val">Some</span>(Instruction::new(
+                    Op::Phi,
+                    <span class="prelude-val">Some</span>(ty),
+                    <span class="prelude-val">Some</span>(call_inst.result_id.unwrap()),
+                    <span class="macro">vec!</span>[],
+                ))
             }
         };
-        <span class="kw">let </span>call_result_id = call_inst.result_id.unwrap();
 
-        <span class="comment">// Get the debuginfo instructions that apply to the call.
+        <span class="comment">// Get the debug "source location" instruction that applies to the call.
         </span><span class="kw">let </span>custom_ext_inst_set_import = <span class="self">self</span>.custom_ext_inst_set_import;
-        <span class="kw">let </span>call_debug_insts = caller.blocks[block_idx].instructions[..call_index]
+        <span class="kw">let </span>call_debug_src_loc_inst = caller.blocks[block_idx].instructions[..call_index]
             .iter()
-            .filter(|inst| <span class="kw">match </span>inst.class.opcode {
-                Op::Line | Op::NoLine =&gt; <span class="bool-val">true</span>,
-                Op::ExtInst <span class="kw">if </span>inst.operands[<span class="number">0</span>].unwrap_id_ref() == custom_ext_inst_set_import =&gt; {
-                    CustomOp::decode_from_ext_inst(inst).is_debuginfo()
-                }
-                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
-            });
+            .rev()
+            .find_map(|inst| {
+                <span class="prelude-val">Some</span>(<span class="kw">match </span>inst.class.opcode {
+                    Op::Line =&gt; <span class="prelude-val">Some</span>(inst),
+                    Op::NoLine =&gt; <span class="prelude-val">None</span>,
+                    Op::ExtInst
+                        <span class="kw">if </span>inst.operands[<span class="number">0</span>].unwrap_id_ref() == custom_ext_inst_set_import =&gt;
+                    {
+                        <span class="kw">match </span>CustomOp::decode_from_ext_inst(inst) {
+                            CustomOp::SetDebugSrcLoc =&gt; <span class="prelude-val">Some</span>(inst),
+                            CustomOp::ClearDebugSrcLoc =&gt; <span class="prelude-val">None</span>,
+                            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+                        }
+                    }
+                    <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+                })
+            })
+            .flatten();
 
         <span class="comment">// Rewrite parameters to arguments
         </span><span class="kw">let </span>call_arguments = call_inst
@@ -1697,21 +1814,68 @@
         });
         <span class="kw">let </span><span class="kw-2">mut </span>rewrite_rules = callee_parameters.zip(call_arguments).collect();
 
-        <span class="kw">let </span>return_variable = <span class="kw">if </span>call_result_type.is_some() {
-            <span class="prelude-val">Some</span>(<span class="self">self</span>.id())
-        } <span class="kw">else </span>{
-            <span class="prelude-val">None
-        </span>};
         <span class="kw">let </span>return_jump = <span class="self">self</span>.id();
         <span class="comment">// Rewrite OpReturns of the callee.
-        </span><span class="attr">#[allow(clippy::needless_borrow)]
-        </span><span class="kw">let </span>(<span class="kw-2">mut </span>inlined_callee_blocks, extra_debug_insts_pre_call, extra_debug_insts_post_call) =
-            <span class="self">self</span>.get_inlined_blocks(<span class="kw-2">&amp;</span>callee, call_debug_insts, return_variable, return_jump);
+        </span><span class="kw">let </span><span class="kw-2">mut </span>inlined_callee_blocks = <span class="self">self</span>.get_inlined_blocks(
+            callee,
+            call_debug_src_loc_inst,
+            maybe_call_result_phi.as_mut(),
+            return_jump,
+        );
         <span class="comment">// Clone the IDs of the callee, because otherwise they'd be defined multiple times if the
         // fn is inlined multiple times.
         </span><span class="self">self</span>.add_clone_id_rules(<span class="kw-2">&amp;mut </span>rewrite_rules, <span class="kw-2">&amp;</span>inlined_callee_blocks);
         apply_rewrite_rules(<span class="kw-2">&amp;</span>rewrite_rules, <span class="kw-2">&amp;mut </span>inlined_callee_blocks);
         <span class="self">self</span>.apply_rewrite_for_decorations(<span class="kw-2">&amp;</span>rewrite_rules);
+
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(call_result_phi) = <span class="kw-2">&amp;mut </span>maybe_call_result_phi {
+            <span class="comment">// HACK(eddyb) new IDs should be generated earlier, to avoid pushing
+            // callee IDs to `call_result_phi.operands` only to rewrite them here.
+            </span><span class="kw">for </span>op <span class="kw">in </span><span class="kw-2">&amp;mut </span>call_result_phi.operands {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = op.id_ref_any_mut() {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>rewrite) = rewrite_rules.get(id) {
+                        <span class="kw-2">*</span>id = rewrite;
+                    }
+                }
+            }
+
+            <span class="comment">// HACK(eddyb) this special-casing of the single-return case is
+            // really necessary for passes like `mem2reg` which are not capable
+            // of skipping through the extraneous `OpPhi`s on their own.
+            </span><span class="kw">if let </span>[returned_value, _return_block] = <span class="kw-2">&amp;</span>call_result_phi.operands[..] {
+                <span class="kw">let </span>call_result_id = call_result_phi.result_id.unwrap();
+                <span class="kw">let </span>returned_value_id = returned_value.unwrap_id_ref();
+
+                maybe_call_result_phi = <span class="prelude-val">None</span>;
+
+                <span class="comment">// HACK(eddyb) this is a conservative approximation of all the
+                // instructions that could potentially reference the call result.
+                </span><span class="kw">let </span>reaching_insts = {
+                    <span class="kw">let </span>(pre_call_blocks, call_and_post_call_blocks) =
+                        caller.blocks.split_at_mut(block_idx);
+                    (pre_call_blocks.iter_mut().flat_map(|block| {
+                        block
+                            .instructions
+                            .iter_mut()
+                            .take_while(|inst| inst.class.opcode == Op::Phi)
+                    }))
+                    .chain(
+                        call_and_post_call_blocks
+                            .iter_mut()
+                            .flat_map(|block| <span class="kw-2">&amp;mut </span>block.instructions),
+                    )
+                };
+                <span class="kw">for </span>reaching_inst <span class="kw">in </span>reaching_insts {
+                    <span class="kw">for </span>op <span class="kw">in </span><span class="kw-2">&amp;mut </span>reaching_inst.operands {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = op.id_ref_any_mut() {
+                            <span class="kw">if </span><span class="kw-2">*</span>id == call_result_id {
+                                <span class="kw-2">*</span>id = returned_value_id;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         <span class="comment">// Split the block containing the `OpFunctionCall` into pre-call vs post-call.
         </span><span class="kw">let </span>pre_call_block_idx = block_idx;
@@ -1728,24 +1892,6 @@
             .unwrap();
         <span class="macro">assert!</span>(call.class.opcode == Op::FunctionCall);
 
-        <span class="comment">// HACK(eddyb) inject the additional debuginfo instructions generated by
-        // `get_inlined_blocks`, so the inlined call frame "stack" isn't corrupted.
-        </span>caller.blocks[pre_call_block_idx]
-            .instructions
-            .extend(extra_debug_insts_pre_call);
-        post_call_block_insts.splice(<span class="number">0</span>..<span class="number">0</span>, extra_debug_insts_post_call);
-
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(call_result_type) = call_result_type {
-            <span class="comment">// Generate the storage space for the return value: Do this *after* the split above,
-            // because if block_idx=0, inserting a variable here shifts call_index.
-            </span>insert_opvariables(<span class="kw-2">&amp;mut </span>caller.blocks[<span class="number">0</span>], [Instruction::new(
-                Op::Variable,
-                <span class="prelude-val">Some</span>(<span class="self">self</span>.ptr_ty(call_result_type)),
-                <span class="prelude-val">Some</span>(return_variable.unwrap()),
-                <span class="macro">vec!</span>[Operand::StorageClass(StorageClass::Function)],
-            )]);
-        }
-
         <span class="comment">// Insert non-entry inlined callee blocks just after the pre-call block.
         </span><span class="kw">let </span>non_entry_inlined_callee_blocks = inlined_callee_blocks.drain(<span class="number">1</span>..);
         <span class="kw">let </span>num_non_entry_inlined_callee_blocks = non_entry_inlined_callee_blocks.len();
@@ -1754,18 +1900,9 @@
             non_entry_inlined_callee_blocks,
         );
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(call_result_type) = call_result_type {
-            <span class="comment">// Add the load of the result value after the inlined function. Note there's guaranteed no
-            // OpPhi instructions since we just split this block.
-            </span>post_call_block_insts.insert(
-                <span class="number">0</span>,
-                Instruction::new(
-                    Op::Load,
-                    <span class="prelude-val">Some</span>(call_result_type),
-                    <span class="prelude-val">Some</span>(call_result_id),
-                    <span class="macro">vec!</span>[Operand::IdRef(return_variable.unwrap())],
-                ),
-            );
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(call_result_phi) = maybe_call_result_phi {
+            <span class="comment">// Add the `OpPhi` for the call result value, after the inlined function.
+            </span>post_call_block_insts.insert(<span class="number">0</span>, call_result_phi);
         }
 
         <span class="comment">// Insert the post-call block, after all the inlined callee blocks.
@@ -1789,52 +1926,115 @@
         <span class="comment">// Fuse the inlined callee entry block into the pre-call block.
         // This is okay because it's illegal to branch to the first BB in a function.
         </span>{
+            <span class="comment">// NOTE(eddyb) `OpExtInst`s have a result ID, even if unused, and
+            // it has to be unique, so this allocates new IDs as-needed.
+            </span><span class="kw">let </span>instantiate_debuginfo = |this: <span class="kw-2">&amp;mut </span><span class="self">Self</span>, inst: <span class="kw-2">&amp;</span>Instruction| {
+                <span class="kw">let </span><span class="kw-2">mut </span>inst = inst.clone();
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = <span class="kw-2">&amp;mut </span>inst.result_id {
+                    <span class="kw-2">*</span>id = this.id();
+                }
+                inst
+            };
+
+            <span class="kw">let </span>custom_inst_to_inst = |this: <span class="kw-2">&amp;mut </span><span class="self">Self</span>, inst: CustomInst&lt;<span class="kw">_</span>&gt;| {
+                Instruction::new(
+                    Op::ExtInst,
+                    <span class="prelude-val">Some</span>(this.op_type_void_id),
+                    <span class="prelude-val">Some</span>(this.id()),
+                    [
+                        Operand::IdRef(this.custom_ext_inst_set_import),
+                        Operand::LiteralExtInstInteger(inst.op() <span class="kw">as </span>u32),
+                    ]
+                    .into_iter()
+                    .chain(inst.into_operands())
+                    .collect(),
+                )
+            };
+
             <span class="comment">// Return the subsequence of `insts` made from `OpVariable`s, and any
             // debuginfo instructions (which may apply to them), while removing
             // *only* `OpVariable`s from `insts` (and keeping debuginfo in both).
             </span><span class="kw">let </span><span class="kw-2">mut </span>steal_vars = |insts: <span class="kw-2">&amp;mut </span>Vec&lt;Instruction&gt;| {
-                <span class="kw">let </span><span class="kw-2">mut </span>vars_and_debuginfo = <span class="macro">vec!</span>[];
-                insts.retain_mut(|inst| {
-                    <span class="kw">let </span>is_debuginfo = <span class="kw">match </span>inst.class.opcode {
-                        Op::Line | Op::NoLine =&gt; <span class="bool-val">true</span>,
-                        Op::ExtInst =&gt; {
-                            inst.operands[<span class="number">0</span>].unwrap_id_ref() == <span class="self">self</span>.custom_ext_inst_set_import
-                                &amp;&amp; CustomOp::decode_from_ext_inst(inst).is_debuginfo()
+                <span class="comment">// HACK(eddyb) this duplicates some code from `get_inlined_blocks`,
+                // but that will be removed once the inliner is refactored to be
+                // inside-out instead of outside-in (already finished in a branch).
+                </span><span class="kw">let </span><span class="kw-2">mut </span>enclosing_inlined_frames = SmallVec::&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt;::new();
+                <span class="kw">let </span><span class="kw-2">mut </span>current_debug_src_loc_inst = <span class="prelude-val">None</span>;
+                <span class="kw">let </span><span class="kw-2">mut </span>vars_and_debuginfo_range = <span class="number">0</span>..<span class="number">0</span>;
+                <span class="kw">while </span>vars_and_debuginfo_range.end &lt; insts.len() {
+                    <span class="kw">let </span>inst = <span class="kw-2">&amp;</span>insts[vars_and_debuginfo_range.end];
+                    <span class="kw">match </span>inst.class.opcode {
+                        Op::Line =&gt; current_debug_src_loc_inst = <span class="prelude-val">Some</span>(inst),
+                        Op::NoLine =&gt; current_debug_src_loc_inst = <span class="prelude-val">None</span>,
+                        Op::ExtInst
+                            <span class="kw">if </span>inst.operands[<span class="number">0</span>].unwrap_id_ref()
+                                == <span class="self">self</span>.custom_ext_inst_set_import =&gt;
+                        {
+                            <span class="kw">match </span>CustomOp::decode_from_ext_inst(inst) {
+                                CustomOp::SetDebugSrcLoc =&gt; current_debug_src_loc_inst = <span class="prelude-val">Some</span>(inst),
+                                CustomOp::ClearDebugSrcLoc =&gt; current_debug_src_loc_inst = <span class="prelude-val">None</span>,
+                                CustomOp::PushInlinedCallFrame =&gt; {
+                                    enclosing_inlined_frames
+                                        .push((current_debug_src_loc_inst.take(), inst));
+                                }
+                                CustomOp::PopInlinedCallFrame =&gt; {
+                                    <span class="kw">if let </span><span class="prelude-val">Some</span>((callsite_debug_src_loc_inst, <span class="kw">_</span>)) =
+                                        enclosing_inlined_frames.pop()
+                                    {
+                                        current_debug_src_loc_inst = callsite_debug_src_loc_inst;
+                                    }
+                                }
+                                CustomOp::Abort =&gt; <span class="kw">break</span>,
+                            }
                         }
-                        <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
-                    };
-                    <span class="kw">if </span>is_debuginfo {
-                        <span class="comment">// NOTE(eddyb) `OpExtInst`s have a result ID,
-                        // even if unused, and it has to be unique.
-                        </span><span class="kw">let </span><span class="kw-2">mut </span>inst = inst.clone();
-                        <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = <span class="kw-2">&amp;mut </span>inst.result_id {
-                            <span class="kw-2">*</span>id = <span class="self">self</span>.id();
-                        }
-                        vars_and_debuginfo.push(inst);
-                        <span class="bool-val">true
-                    </span>} <span class="kw">else if </span>inst.class.opcode == Op::Variable {
-                        <span class="comment">// HACK(eddyb) we're removing this `Instruction` from
-                        // `inst`, so it doesn't really matter what we use here.
-                        </span>vars_and_debuginfo.push(mem::replace(
-                            inst,
-                            Instruction::new(Op::Nop, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="macro">vec!</span>[]),
-                        ));
-                        <span class="bool-val">false
-                    </span>} <span class="kw">else </span>{
-                        <span class="bool-val">true
-                    </span>}
-                });
-                vars_and_debuginfo
+                        Op::Variable =&gt; {}
+                        <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
+                    }
+                    vars_and_debuginfo_range.end += <span class="number">1</span>;
+                }
+
+                <span class="comment">// `vars_and_debuginfo_range.end` indicates where `OpVariable`s
+                // end and other instructions start (module debuginfo), but to
+                // split the block in two, both sides of the "cut" need "repair":
+                // - the variables are missing "inlined call frames" pops, that
+                //   may happen later in the block, and have to be synthesized
+                // - the non-variables are missing "inlined call frames" pushes,
+                //   that must be recreated to avoid ending up with dangling pops
+                //
+                // FIXME(eddyb) this only collects to avoid borrow conflicts,
+                // between e.g. `enclosing_inlined_frames` and mutating `insts`,
+                // but also between different uses of `self`.
+                </span><span class="kw">let </span>all_pops_after_vars: SmallVec&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt; = enclosing_inlined_frames
+                    .iter()
+                    .map(|<span class="kw">_</span>| custom_inst_to_inst(<span class="self">self</span>, CustomInst::PopInlinedCallFrame))
+                    .collect();
+                <span class="kw">let </span>all_repushes_before_non_vars: SmallVec&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt; =
+                    (enclosing_inlined_frames.into_iter().flat_map(
+                        |(callsite_debug_src_loc_inst, push_inlined_call_frame_inst)| {
+                            (callsite_debug_src_loc_inst.into_iter())
+                                .chain([push_inlined_call_frame_inst])
+                        },
+                    ))
+                    .chain(current_debug_src_loc_inst)
+                    .map(|inst| instantiate_debuginfo(<span class="self">self</span>, inst))
+                    .collect();
+
+                <span class="kw">let </span>vars_and_debuginfo =
+                    insts.splice(vars_and_debuginfo_range, all_repushes_before_non_vars);
+                <span class="kw">let </span>repaired_vars_and_debuginfo = vars_and_debuginfo.chain(all_pops_after_vars);
+
+                <span class="comment">// FIXME(eddyb) collecting shouldn't be necessary but this is
+                // nested in a closure, and `splice` borrows the original `Vec`.
+                </span>repaired_vars_and_debuginfo.collect::&lt;SmallVec&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt;&gt;()
             };
 
             <span class="kw">let </span>[<span class="kw-2">mut </span>inlined_callee_entry_block]: [<span class="kw">_</span>; <span class="number">1</span>] =
                 inlined_callee_blocks.try_into().unwrap();
 
             <span class="comment">// Move the `OpVariable`s of the callee to the caller.
-            </span>insert_opvariables(
-                <span class="kw-2">&amp;mut </span>caller.blocks[<span class="number">0</span>],
-                steal_vars(<span class="kw-2">&amp;mut </span>inlined_callee_entry_block.instructions),
-            );
+            </span><span class="kw">let </span>callee_vars_and_debuginfo =
+                steal_vars(<span class="kw-2">&amp;mut </span>inlined_callee_entry_block.instructions);
+            <span class="self">self</span>.insert_opvariables(<span class="kw-2">&amp;mut </span>caller.blocks[<span class="number">0</span>], callee_vars_and_debuginfo);
 
             caller.blocks[pre_call_block_idx]
                 .instructions
@@ -1865,57 +2065,18 @@
         }
     }
 
-    <span class="comment">// HACK(eddyb) the second and third return values are additional debuginfo
-    // instructions that need to be inserted just before/after the callsite.
-    </span><span class="kw">fn </span>get_inlined_blocks&lt;<span class="lifetime">'a</span>&gt;(
+    <span class="kw">fn </span>get_inlined_blocks(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         callee: <span class="kw-2">&amp;</span>Function,
-        call_debug_insts: <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Instruction&gt;,
-        return_variable: <span class="prelude-ty">Option</span>&lt;Word&gt;,
+        call_debug_src_loc_inst: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Instruction&gt;,
+        <span class="kw-2">mut </span>maybe_call_result_phi: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>Instruction&gt;,
         return_jump: Word,
-    ) -&gt; (
-        Vec&lt;Block&gt;,
-        SmallVec&lt;[Instruction; <span class="number">8</span>]&gt;,
-        SmallVec&lt;[Instruction; <span class="number">8</span>]&gt;,
-    ) {
+    ) -&gt; Vec&lt;Block&gt; {
         <span class="kw">let </span><span class="self">Self </span>{
             custom_ext_inst_set_import,
             op_type_void_id,
             ..
         } = <span class="kw-2">*</span><span class="self">self</span>;
-
-        <span class="comment">// HACK(eddyb) this is terrible, but we have to deal with it because of
-        // how this inliner is outside-in, instead of inside-out, meaning that
-        // context builds up "outside" of the callee blocks, inside the caller.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>enclosing_inlined_frames = SmallVec::&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt;::new();
-        <span class="kw">let </span><span class="kw-2">mut </span>current_debug_src_loc_inst = <span class="prelude-val">None</span>;
-        <span class="kw">for </span>inst <span class="kw">in </span>call_debug_insts {
-            <span class="kw">match </span>inst.class.opcode {
-                Op::Line =&gt; current_debug_src_loc_inst = <span class="prelude-val">Some</span>(inst),
-                Op::NoLine =&gt; current_debug_src_loc_inst = <span class="prelude-val">None</span>,
-                Op::ExtInst
-                    <span class="kw">if </span>inst.operands[<span class="number">0</span>].unwrap_id_ref() == <span class="self">self</span>.custom_ext_inst_set_import =&gt;
-                {
-                    <span class="kw">match </span>CustomOp::decode_from_ext_inst(inst) {
-                        CustomOp::SetDebugSrcLoc =&gt; current_debug_src_loc_inst = <span class="prelude-val">Some</span>(inst),
-                        CustomOp::ClearDebugSrcLoc =&gt; current_debug_src_loc_inst = <span class="prelude-val">None</span>,
-                        CustomOp::PushInlinedCallFrame =&gt; {
-                            enclosing_inlined_frames
-                                .push((current_debug_src_loc_inst.take(), inst));
-                        }
-                        CustomOp::PopInlinedCallFrame =&gt; {
-                            <span class="kw">if let </span><span class="prelude-val">Some</span>((callsite_debug_src_loc_inst, <span class="kw">_</span>)) =
-                                enclosing_inlined_frames.pop()
-                            {
-                                current_debug_src_loc_inst = callsite_debug_src_loc_inst;
-                            }
-                        }
-                        CustomOp::Abort =&gt; {}
-                    }
-                }
-                <span class="kw">_ </span>=&gt; {}
-            }
-        }
 
         <span class="comment">// Prepare the debuginfo insts to prepend/append to every block.
         // FIXME(eddyb) this could be more efficient if we only used one pair of
@@ -1939,7 +2100,7 @@
                     ]));
                 id
             });
-        <span class="kw">let </span><span class="kw-2">mut </span>mk_debuginfo_prefix_and_suffix = |include_callee_frame| {
+        <span class="kw">let </span><span class="kw-2">mut </span>mk_debuginfo_prefix_and_suffix = || {
             <span class="comment">// NOTE(eddyb) `OpExtInst`s have a result ID, even if unused, and
             // it has to be unique (same goes for the other instructions below).
             </span><span class="kw">let </span>instantiate_debuginfo = |this: <span class="kw-2">&amp;mut </span><span class="self">Self</span>, inst: <span class="kw-2">&amp;</span>Instruction| {
@@ -1963,33 +2124,18 @@
                     .collect(),
                 )
             };
-            <span class="comment">// FIXME(eddyb) this only allocates to avoid borrow conflicts.
-            </span><span class="kw">let </span><span class="kw-2">mut </span>prefix = SmallVec::&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt;::new();
-            <span class="kw">let </span><span class="kw-2">mut </span>suffix = SmallVec::&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt;::new();
-            <span class="kw">for </span><span class="kw-2">&amp;</span>(callsite_debug_src_loc_inst, push_inlined_call_frame_inst) <span class="kw">in
-                </span><span class="kw-2">&amp;</span>enclosing_inlined_frames
-            {
-                prefix.extend(
-                    callsite_debug_src_loc_inst
-                        .into_iter()
-                        .chain([push_inlined_call_frame_inst])
-                        .map(|inst| instantiate_debuginfo(<span class="self">self</span>, inst)),
-                );
-                suffix.push(custom_inst_to_inst(<span class="self">self</span>, CustomInst::PopInlinedCallFrame));
-            }
-            prefix.extend(current_debug_src_loc_inst.map(|inst| instantiate_debuginfo(<span class="self">self</span>, inst)));
 
-            <span class="kw">if </span>include_callee_frame {
-                prefix.push(custom_inst_to_inst(
-                    <span class="self">self</span>,
-                    CustomInst::PushInlinedCallFrame {
-                        callee_name: Operand::IdRef(callee_name_id),
-                    },
-                ));
-                suffix.push(custom_inst_to_inst(<span class="self">self</span>, CustomInst::PopInlinedCallFrame));
-            }
-
-            (prefix, suffix)
+            (
+                (call_debug_src_loc_inst.map(|inst| instantiate_debuginfo(<span class="self">self</span>, inst)))
+                    .into_iter()
+                    .chain([custom_inst_to_inst(
+                        <span class="self">self</span>,
+                        CustomInst::PushInlinedCallFrame {
+                            callee_name: Operand::IdRef(callee_name_id),
+                        },
+                    )]),
+                [custom_inst_to_inst(<span class="self">self</span>, CustomInst::PopInlinedCallFrame)],
+            )
         };
 
         <span class="kw">let </span><span class="kw-2">mut </span>blocks = callee.blocks.clone();
@@ -2019,14 +2165,13 @@
             <span class="kw">if let </span>Op::Return | Op::ReturnValue = terminator.class.opcode {
                 <span class="kw">if </span>Op::ReturnValue == terminator.class.opcode {
                     <span class="kw">let </span>return_value = terminator.operands[<span class="number">0</span>].id_ref_any().unwrap();
-                    block
-                        .instructions
-                        .push(Instruction::new(Op::Store, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="macro">vec!</span>[
-                            Operand::IdRef(return_variable.unwrap()),
-                            Operand::IdRef(return_value),
-                        ]));
+                    <span class="kw">let </span>call_result_phi = maybe_call_result_phi.as_deref_mut().unwrap();
+                    call_result_phi.operands.extend([
+                        Operand::IdRef(return_value),
+                        Operand::IdRef(block.label_id().unwrap()),
+                    ]);
                 } <span class="kw">else </span>{
-                    <span class="macro">assert!</span>(return_variable.is_none());
+                    <span class="macro">assert!</span>(maybe_call_result_phi.is_none());
                 }
                 terminator =
                     Instruction::new(Op::Branch, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, <span class="macro">vec!</span>[Operand::IdRef(return_jump)]);
@@ -2040,7 +2185,7 @@
 
             <span class="comment">// HACK(eddyb) avoid adding debuginfo to otherwise-empty blocks.
             </span><span class="kw">if </span>block.instructions.len() &gt; num_phis {
-                <span class="kw">let </span>(debuginfo_prefix, debuginfo_suffix) = mk_debuginfo_prefix_and_suffix(<span class="bool-val">true</span>);
+                <span class="kw">let </span>(debuginfo_prefix, debuginfo_suffix) = mk_debuginfo_prefix_and_suffix();
                 <span class="comment">// Insert the prefix debuginfo instructions after `OpPhi`s,
                 // which sadly can't be covered by them.
                 </span>block
@@ -2054,23 +2199,54 @@
             block.instructions.push(terminator);
         }
 
-        <span class="kw">let </span>(caller_restore_debuginfo_after_call, calleer_reset_debuginfo_before_call) =
-            mk_debuginfo_prefix_and_suffix(<span class="bool-val">false</span>);
-        (
-            blocks,
-            calleer_reset_debuginfo_before_call,
-            caller_restore_debuginfo_after_call,
-        )
+        blocks
     }
-}
 
-<span class="kw">fn </span>insert_opvariables(block: <span class="kw-2">&amp;mut </span>Block, insts: <span class="kw">impl </span>IntoIterator&lt;Item = Instruction&gt;) {
-    <span class="kw">let </span>first_non_variable = block
-        .instructions
-        .iter()
-        .position(|inst| inst.class.opcode != Op::Variable);
-    <span class="kw">let </span>i = first_non_variable.unwrap_or(block.instructions.len());
-    block.instructions.splice(i..i, insts);
+    <span class="kw">fn </span>insert_opvariables(<span class="kw-2">&amp;</span><span class="self">self</span>, block: <span class="kw-2">&amp;mut </span>Block, insts: <span class="kw">impl </span>IntoIterator&lt;Item = Instruction&gt;) {
+        <span class="comment">// HACK(eddyb) this isn't as efficient as it could be in theory, but it's
+        // very important to make sure sure to never insert new instructions in
+        // the middle of debuginfo (as it would be affected by it).
+        </span><span class="kw">let </span><span class="kw-2">mut </span>inlined_frames_depth = <span class="number">0usize</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>outermost_has_debug_src_loc = <span class="bool-val">false</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>last_debugless_var_insertion_point_candidate = <span class="prelude-val">None</span>;
+        <span class="kw">for </span>(i, inst) <span class="kw">in </span>block.instructions.iter().enumerate() {
+            last_debugless_var_insertion_point_candidate =
+                (inlined_frames_depth == <span class="number">0 </span>&amp;&amp; !outermost_has_debug_src_loc).then_some(i);
+
+            <span class="kw">let </span>changed_has_debug_src_loc = <span class="kw">match </span>inst.class.opcode {
+                Op::Line =&gt; <span class="bool-val">true</span>,
+                Op::NoLine =&gt; <span class="bool-val">false</span>,
+                Op::ExtInst
+                    <span class="kw">if </span>inst.operands[<span class="number">0</span>].unwrap_id_ref() == <span class="self">self</span>.custom_ext_inst_set_import =&gt;
+                {
+                    <span class="kw">match </span>CustomOp::decode_from_ext_inst(inst) {
+                        CustomOp::SetDebugSrcLoc =&gt; <span class="bool-val">true</span>,
+                        CustomOp::ClearDebugSrcLoc =&gt; <span class="bool-val">false</span>,
+                        CustomOp::PushInlinedCallFrame =&gt; {
+                            inlined_frames_depth += <span class="number">1</span>;
+                            <span class="kw">continue</span>;
+                        }
+                        CustomOp::PopInlinedCallFrame =&gt; {
+                            inlined_frames_depth = inlined_frames_depth.saturating_sub(<span class="number">1</span>);
+                            <span class="kw">continue</span>;
+                        }
+                        CustomOp::Abort =&gt; <span class="kw">break</span>,
+                    }
+                }
+                Op::Variable =&gt; <span class="kw">continue</span>,
+                <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
+            };
+
+            <span class="kw">if </span>inlined_frames_depth == <span class="number">0 </span>{
+                outermost_has_debug_src_loc = changed_has_debug_src_loc;
+            }
+        }
+
+        <span class="comment">// HACK(eddyb) fallback to inserting at the start, which should be correct.
+        // FIXME(eddyb) some level of debuginfo repair could prevent needing this.
+        </span><span class="kw">let </span>i = last_debugless_var_insertion_point_candidate.unwrap_or(<span class="number">0</span>);
+        block.instructions.splice(i..i, insts);
+    }
 }
 
 <span class="kw">fn </span>fuse_trivial_branches(function: <span class="kw-2">&amp;mut </span>Function) {
@@ -2105,7 +2281,7 @@
         };
         <span class="kw">let </span>pred_insts = <span class="kw-2">&amp;</span>function.blocks[pred].instructions;
         <span class="kw">if </span>pred_insts.last().unwrap().class.opcode == Op::Branch {
-            <span class="kw">let </span><span class="kw-2">mut </span>dest_insts = take(<span class="kw-2">&amp;mut </span>function.blocks[dest_block].instructions);
+            <span class="kw">let </span><span class="kw-2">mut </span>dest_insts = mem::take(<span class="kw-2">&amp;mut </span>function.blocks[dest_block].instructions);
             <span class="kw">let </span>pred_insts = <span class="kw-2">&amp;mut </span>function.blocks[pred].instructions;
             pred_insts.pop(); <span class="comment">// pop the branch
             </span>pred_insts.append(<span class="kw-2">&amp;mut </span>dest_insts);

@@ -96,13 +96,19 @@
 <a href="#95" id="95">95</a>
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a></pre></div><pre class="rust"><code><span class="doccomment">//! Tools for interprocedural optimizations (aka "IPO"s).
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a></pre></div><pre class="rust"><code><span class="doccomment">//! Tools for interprocedural optimizations (aka "IPO"s).
 
 </span><span class="comment">// FIXME(eddyb) perhaps make all IPOs sub-modules of this module?
 
 </span><span class="kw">use </span>indexmap::IndexSet;
 <span class="kw">use </span>rspirv::dr::Module;
-<span class="kw">use </span>rspirv::spirv::Op;
+<span class="kw">use </span>rspirv::spirv::{Op, Word};
 <span class="kw">use </span>rustc_data_structures::fx::FxHashMap;
 
 <span class="comment">// FIXME(eddyb) use newtyped indices and `IndexVec`.
@@ -117,6 +123,9 @@
 
 <span class="kw">impl </span>CallGraph {
     <span class="kw">pub fn </span>collect(module: <span class="kw-2">&amp;</span>Module) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::collect_with_func_id_to_idx(module).<span class="number">0
+    </span>}
+    <span class="kw">pub fn </span>collect_with_func_id_to_idx(module: <span class="kw-2">&amp;</span>Module) -&gt; (<span class="self">Self</span>, FxHashMap&lt;Word, FuncIdx&gt;) {
         <span class="kw">let </span>func_id_to_idx: FxHashMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt; = module
             .functions
             .iter()
@@ -149,10 +158,13 @@
                     .collect()
             })
             .collect();
-        <span class="self">Self </span>{
-            entry_points,
-            callees,
-        }
+        (
+            <span class="self">Self </span>{
+                entry_points,
+                callees,
+            },
+            func_id_to_idx,
+        )
     }
 
     <span class="doccomment">/// Order functions using a post-order traversal, i.e. callees before callers.

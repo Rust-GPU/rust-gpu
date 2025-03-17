@@ -285,7 +285,8 @@
 <a href="#284" id="284">284</a>
 <a href="#285" id="285">285</a>
 <a href="#286" id="286">286</a>
-<a href="#287" id="287">287</a></pre></div><pre class="rust"><code><span class="doccomment">//! Dead code elimination
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a></pre></div><pre class="rust"><code><span class="doccomment">//! Dead code elimination
 //!
 //! This pass removes any instruction that doesn't affect the module. It does so by considering all
 //! `OpEntryPoint` instructions to be "rooted", and then everything a rooted instruction touches is
@@ -294,9 +295,10 @@
 //! *references* a rooted thing is also rooted, not the other way around - but that's the basic
 //! concept.
 
-</span><span class="kw">use </span>rspirv::dr::{Function, Instruction, Module, Operand};
+</span><span class="kw">use </span>rspirv::dr::{Block, Function, Instruction, Module, Operand};
 <span class="kw">use </span>rspirv::spirv::{Decoration, LinkageType, Op, StorageClass, Word};
-<span class="kw">use </span>rustc_data_structures::fx::FxIndexSet;
+<span class="kw">use </span>rustc_data_structures::fx::{FxIndexMap, FxIndexSet};
+<span class="kw">use </span>std::hash::Hash;
 
 <span class="kw">pub fn </span>dce(module: <span class="kw-2">&amp;mut </span>Module) {
     <span class="kw">let </span><span class="kw-2">mut </span>rooted = collect_roots(module);
@@ -424,11 +426,11 @@
     }
 }
 
-<span class="kw">pub fn </span>dce_phi(func: <span class="kw-2">&amp;mut </span>Function) {
+<span class="kw">pub fn </span>dce_phi(blocks: <span class="kw-2">&amp;mut </span>FxIndexMap&lt;<span class="kw">impl </span>Eq + Hash, <span class="kw-2">&amp;mut </span>Block&gt;) {
     <span class="kw">let </span><span class="kw-2">mut </span>used = FxIndexSet::default();
     <span class="kw">loop </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>changed = <span class="bool-val">false</span>;
-        <span class="kw">for </span>inst <span class="kw">in </span>func.all_inst_iter() {
+        <span class="kw">for </span>inst <span class="kw">in </span>blocks.values().flat_map(|block| <span class="kw-2">&amp;</span>block.instructions) {
             <span class="kw">if </span>inst.class.opcode != Op::Phi || used.contains(<span class="kw-2">&amp;</span>inst.result_id.unwrap()) {
                 <span class="kw">for </span>op <span class="kw">in </span><span class="kw-2">&amp;</span>inst.operands {
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = op.id_ref_any() {
@@ -441,7 +443,7 @@
             <span class="kw">break</span>;
         }
     }
-    <span class="kw">for </span>block <span class="kw">in </span><span class="kw-2">&amp;mut </span>func.blocks {
+    <span class="kw">for </span>block <span class="kw">in </span>blocks.values_mut() {
         block
             .instructions
             .retain(|inst| inst.class.opcode != Op::Phi || used.contains(<span class="kw-2">&amp;</span>inst.result_id.unwrap()));

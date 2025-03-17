@@ -594,7 +594,20 @@
 <a href="#593" id="593">593</a>
 <a href="#594" id="594">594</a>
 <a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a></pre></div><pre class="rust"><code><span class="doccomment">//! This algorithm is not intended to be an optimization, it is rather for legalization.
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a></pre></div><pre class="rust"><code><span class="doccomment">//! This algorithm is not intended to be an optimization, it is rather for legalization.
 //! Specifically, spir-v disallows things like a `StorageClass::Function` pointer to a
 //! `StorageClass::Input` pointer. Our frontend definitely allows it, though, this is like taking a
 //! `&amp;Input&lt;T&gt;` in a function! So, we inline all functions (see inline.rs) that take these
@@ -609,9 +622,13 @@
 <span class="kw">use super</span>::{apply_rewrite_rules, id};
 <span class="kw">use </span>rspirv::dr::{Block, Function, Instruction, ModuleHeader, Operand};
 <span class="kw">use </span>rspirv::spirv::{Op, Word};
-<span class="kw">use </span>rustc_data_structures::fx::{FxHashMap, FxHashSet};
+<span class="kw">use </span>rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexMap};
 <span class="kw">use </span>rustc_middle::bug;
 <span class="kw">use </span>std::collections::hash_map;
+
+<span class="comment">// HACK(eddyb) newtype instead of type alias to avoid mistakes.
+</span><span class="attr">#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+</span><span class="kw">struct </span>LabelId(Word);
 
 <span class="kw">pub fn </span>mem2reg(
     header: <span class="kw-2">&amp;mut </span>ModuleHeader,
@@ -620,8 +637,16 @@
     constants: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, u32&gt;,
     func: <span class="kw-2">&amp;mut </span>Function,
 ) {
-    <span class="kw">let </span>reachable = compute_reachable(<span class="kw-2">&amp;</span>func.blocks);
-    <span class="kw">let </span>preds = compute_preds(<span class="kw-2">&amp;</span>func.blocks, <span class="kw-2">&amp;</span>reachable);
+    <span class="comment">// HACK(eddyb) this ad-hoc indexing might be useful elsewhere as well, but
+    // it's made completely irrelevant by SPIR-T so only applies to legacy code.
+    </span><span class="kw">let </span><span class="kw-2">mut </span>blocks: FxIndexMap&lt;<span class="kw">_</span>, <span class="kw">_</span>&gt; = func
+        .blocks
+        .iter_mut()
+        .map(|block| (LabelId(block.label_id().unwrap()), block))
+        .collect();
+
+    <span class="kw">let </span>reachable = compute_reachable(<span class="kw-2">&amp;</span>blocks);
+    <span class="kw">let </span>preds = compute_preds(<span class="kw-2">&amp;</span>blocks, <span class="kw-2">&amp;</span>reachable);
     <span class="kw">let </span>idom = compute_idom(<span class="kw-2">&amp;</span>preds, <span class="kw-2">&amp;</span>reachable);
     <span class="kw">let </span>dominance_frontier = compute_dominance_frontier(<span class="kw-2">&amp;</span>preds, <span class="kw-2">&amp;</span>idom);
     <span class="kw">loop </span>{
@@ -630,31 +655,27 @@
             types_global_values,
             pointer_to_pointee,
             constants,
-            <span class="kw-2">&amp;mut </span>func.blocks,
+            <span class="kw-2">&amp;mut </span>blocks,
             <span class="kw-2">&amp;</span>dominance_frontier,
         );
         <span class="kw">if </span>!changed {
             <span class="kw">break</span>;
         }
         <span class="comment">// mem2reg produces minimal SSA form, not pruned, so DCE the dead ones
-        </span><span class="kw">super</span>::dce::dce_phi(func);
+        </span><span class="kw">super</span>::dce::dce_phi(<span class="kw-2">&amp;mut </span>blocks);
     }
 }
 
-<span class="kw">fn </span>label_to_index(blocks: <span class="kw-2">&amp;</span>[Block], id: Word) -&gt; usize {
-    blocks
-        .iter()
-        .position(|b| b.label_id().unwrap() == id)
-        .unwrap()
-}
-
-<span class="kw">fn </span>compute_reachable(blocks: <span class="kw-2">&amp;</span>[Block]) -&gt; Vec&lt;bool&gt; {
-    <span class="kw">fn </span>recurse(blocks: <span class="kw-2">&amp;</span>[Block], reachable: <span class="kw-2">&amp;mut </span>[bool], block: usize) {
+<span class="kw">fn </span>compute_reachable(blocks: <span class="kw-2">&amp;</span>FxIndexMap&lt;LabelId, <span class="kw-2">&amp;mut </span>Block&gt;) -&gt; Vec&lt;bool&gt; {
+    <span class="kw">fn </span>recurse(blocks: <span class="kw-2">&amp;</span>FxIndexMap&lt;LabelId, <span class="kw-2">&amp;mut </span>Block&gt;, reachable: <span class="kw-2">&amp;mut </span>[bool], block: usize) {
         <span class="kw">if </span>!reachable[block] {
             reachable[block] = <span class="bool-val">true</span>;
-            <span class="kw">for </span>dest_id <span class="kw">in </span>outgoing_edges(<span class="kw-2">&amp;</span>blocks[block]) {
-                <span class="kw">let </span>dest_idx = label_to_index(blocks, dest_id);
-                recurse(blocks, reachable, dest_idx);
+            <span class="kw">for </span>dest_id <span class="kw">in </span>outgoing_edges(blocks[block]) {
+                recurse(
+                    blocks,
+                    reachable,
+                    blocks.get_index_of(<span class="kw-2">&amp;</span>LabelId(dest_id)).unwrap(),
+                );
             }
         }
     }
@@ -663,17 +684,19 @@
     reachable
 }
 
-<span class="kw">fn </span>compute_preds(blocks: <span class="kw-2">&amp;</span>[Block], reachable_blocks: <span class="kw-2">&amp;</span>[bool]) -&gt; Vec&lt;Vec&lt;usize&gt;&gt; {
+<span class="kw">fn </span>compute_preds(
+    blocks: <span class="kw-2">&amp;</span>FxIndexMap&lt;LabelId, <span class="kw-2">&amp;mut </span>Block&gt;,
+    reachable_blocks: <span class="kw-2">&amp;</span>[bool],
+) -&gt; Vec&lt;Vec&lt;usize&gt;&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="macro">vec!</span>[<span class="macro">vec!</span>[]; blocks.len()];
     <span class="comment">// Do not count unreachable blocks as valid preds of blocks
     </span><span class="kw">for </span>(source_idx, source) <span class="kw">in </span>blocks
-        .iter()
+        .values()
         .enumerate()
         .filter(|<span class="kw-2">&amp;</span>(b, <span class="kw">_</span>)| reachable_blocks[b])
     {
         <span class="kw">for </span>dest_id <span class="kw">in </span>outgoing_edges(source) {
-            <span class="kw">let </span>dest_idx = label_to_index(blocks, dest_id);
-            result[dest_idx].push(source_idx);
+            result[blocks.get_index_of(<span class="kw-2">&amp;</span>LabelId(dest_id)).unwrap()].push(source_idx);
         }
     }
     result
@@ -757,7 +780,7 @@
     types_global_values: <span class="kw-2">&amp;mut </span>Vec&lt;Instruction&gt;,
     pointer_to_pointee: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, Word&gt;,
     constants: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, u32&gt;,
-    blocks: <span class="kw-2">&amp;mut </span>[Block],
+    blocks: <span class="kw-2">&amp;mut </span>FxIndexMap&lt;LabelId, <span class="kw-2">&amp;mut </span>Block&gt;,
     dominance_frontier: <span class="kw-2">&amp;</span>[FxHashSet&lt;usize&gt;],
 ) -&gt; bool {
     <span class="kw">let </span>var_maps_and_types = blocks[<span class="number">0</span>]
@@ -794,7 +817,11 @@
             rewrite_rules: FxHashMap::default(),
         };
         renamer.rename(<span class="number">0</span>, <span class="prelude-val">None</span>);
-        apply_rewrite_rules(<span class="kw-2">&amp;</span>renamer.rewrite_rules, blocks);
+        <span class="comment">// FIXME(eddyb) shouldn't this full rescan of the function be done once?
+        </span>apply_rewrite_rules(
+            <span class="kw-2">&amp;</span>renamer.rewrite_rules,
+            blocks.values_mut().map(|block| <span class="kw-2">&amp;mut **</span>block),
+        );
         remove_nops(blocks);
     }
     remove_old_variables(blocks, <span class="kw-2">&amp;</span>var_maps_and_types);
@@ -812,7 +839,7 @@
 <span class="kw">fn </span>collect_access_chains(
     pointer_to_pointee: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, Word&gt;,
     constants: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, u32&gt;,
-    blocks: <span class="kw-2">&amp;</span>[Block],
+    blocks: <span class="kw-2">&amp;</span>FxIndexMap&lt;LabelId, <span class="kw-2">&amp;mut </span>Block&gt;,
     base_var: Word,
     base_var_ty: Word,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;FxHashMap&lt;Word, VarInfo&gt;&gt; {
@@ -842,7 +869,7 @@
     <span class="comment">// Loop in case a previous block references a later AccessChain
     </span><span class="kw">loop </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>changed = <span class="bool-val">false</span>;
-        <span class="kw">for </span>inst <span class="kw">in </span>blocks.iter().flat_map(|b| <span class="kw-2">&amp;</span>b.instructions) {
+        <span class="kw">for </span>inst <span class="kw">in </span>blocks.values().flat_map(|b| <span class="kw-2">&amp;</span>b.instructions) {
             <span class="kw">for </span>(index, op) <span class="kw">in </span>inst.operands.iter().enumerate() {
                 <span class="kw">if let </span>Operand::IdRef(id) = op {
                     <span class="kw">if </span>variables.contains_key(id) {
@@ -900,10 +927,10 @@
 // same var map (e.g. `s.x = s.y;`).
 </span><span class="kw">fn </span>split_copy_memory(
     header: <span class="kw-2">&amp;mut </span>ModuleHeader,
-    blocks: <span class="kw-2">&amp;mut </span>[Block],
+    blocks: <span class="kw-2">&amp;mut </span>FxIndexMap&lt;LabelId, <span class="kw-2">&amp;mut </span>Block&gt;,
     var_map: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, VarInfo&gt;,
 ) {
-    <span class="kw">for </span>block <span class="kw">in </span>blocks {
+    <span class="kw">for </span>block <span class="kw">in </span>blocks.values_mut() {
         <span class="kw">let </span><span class="kw-2">mut </span>inst_index = <span class="number">0</span>;
         <span class="kw">while </span>inst_index &lt; block.instructions.len() {
             <span class="kw">let </span>inst = <span class="kw-2">&amp;</span>block.instructions[inst_index];
@@ -958,7 +985,7 @@
 }
 
 <span class="kw">fn </span>insert_phis(
-    blocks: <span class="kw-2">&amp;</span>[Block],
+    blocks: <span class="kw-2">&amp;</span>FxIndexMap&lt;LabelId, <span class="kw-2">&amp;mut </span>Block&gt;,
     dominance_frontier: <span class="kw-2">&amp;</span>[FxHashSet&lt;usize&gt;],
     var_map: <span class="kw-2">&amp;</span>FxHashMap&lt;Word, VarInfo&gt;,
 ) -&gt; FxHashSet&lt;usize&gt; {
@@ -967,7 +994,7 @@
     </span><span class="kw">let </span><span class="kw-2">mut </span>ever_on_work_list = FxHashSet::default();
     <span class="kw">let </span><span class="kw-2">mut </span>work_list = Vec::new();
     <span class="kw">let </span><span class="kw-2">mut </span>blocks_with_phi = FxHashSet::default();
-    <span class="kw">for </span>(block_idx, block) <span class="kw">in </span>blocks.iter().enumerate() {
+    <span class="kw">for </span>(block_idx, block) <span class="kw">in </span>blocks.values().enumerate() {
         <span class="kw">if </span>has_store(block, var_map) {
             ever_on_work_list.insert(block_idx);
             work_list.push(block_idx);
@@ -1012,10 +1039,10 @@
     }
 }
 
-<span class="kw">struct </span>Renamer&lt;<span class="lifetime">'a</span>&gt; {
+<span class="kw">struct </span>Renamer&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>&gt; {
     header: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>ModuleHeader,
     types_global_values: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>Vec&lt;Instruction&gt;,
-    blocks: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[Block],
+    blocks: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>FxIndexMap&lt;LabelId, <span class="kw-2">&amp;</span><span class="lifetime">'b </span><span class="kw-2">mut </span>Block&gt;,
     blocks_with_phi: FxHashSet&lt;usize&gt;,
     base_var_type: Word,
     var_map: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>FxHashMap&lt;Word, VarInfo&gt;,
@@ -1025,7 +1052,7 @@
     rewrite_rules: FxHashMap&lt;Word, Word&gt;,
 }
 
-<span class="kw">impl </span>Renamer&lt;<span class="lifetime">'_</span>&gt; {
+<span class="kw">impl </span>Renamer&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt; {
     <span class="comment">// Returns the phi definition.
     </span><span class="kw">fn </span>insert_phi_value(<span class="kw-2">&amp;mut </span><span class="self">self</span>, block: usize, from_block: usize) -&gt; Word {
         <span class="kw">let </span>from_block_label = <span class="self">self</span>.blocks[from_block].label_id().unwrap();
@@ -1145,9 +1172,8 @@
             }
         }
 
-        <span class="kw">for </span>dest_id <span class="kw">in </span>outgoing_edges(<span class="kw-2">&amp;</span><span class="self">self</span>.blocks[block]).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;() {
-            <span class="comment">// TODO: Don't do this find
-            </span><span class="kw">let </span>dest_idx = label_to_index(<span class="self">self</span>.blocks, dest_id);
+        <span class="kw">for </span>dest_id <span class="kw">in </span>outgoing_edges(<span class="self">self</span>.blocks[block]).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;() {
+            <span class="kw">let </span>dest_idx = <span class="self">self</span>.blocks.get_index_of(<span class="kw-2">&amp;</span>LabelId(dest_id)).unwrap();
             <span class="self">self</span>.rename(dest_idx, <span class="prelude-val">Some</span>(block));
         }
 
@@ -1157,8 +1183,8 @@
     }
 }
 
-<span class="kw">fn </span>remove_nops(blocks: <span class="kw-2">&amp;mut </span>[Block]) {
-    <span class="kw">for </span>block <span class="kw">in </span>blocks {
+<span class="kw">fn </span>remove_nops(blocks: <span class="kw-2">&amp;mut </span>FxIndexMap&lt;LabelId, <span class="kw-2">&amp;mut </span>Block&gt;) {
+    <span class="kw">for </span>block <span class="kw">in </span>blocks.values_mut() {
         block
             .instructions
             .retain(|inst| inst.class.opcode != Op::Nop);
@@ -1166,7 +1192,7 @@
 }
 
 <span class="kw">fn </span>remove_old_variables(
-    blocks: <span class="kw-2">&amp;mut </span>[Block],
+    blocks: <span class="kw-2">&amp;mut </span>FxIndexMap&lt;LabelId, <span class="kw-2">&amp;mut </span>Block&gt;,
     var_maps_and_types: <span class="kw-2">&amp;</span>[(FxHashMap&lt;u32, VarInfo&gt;, u32)],
 ) {
     blocks[<span class="number">0</span>].instructions.retain(|inst| {
@@ -1177,7 +1203,7 @@
                 .all(|(var_map, <span class="kw">_</span>)| !var_map.contains_key(<span class="kw-2">&amp;</span>result_id))
         }
     });
-    <span class="kw">for </span>block <span class="kw">in </span>blocks {
+    <span class="kw">for </span>block <span class="kw">in </span>blocks.values_mut() {
         block.instructions.retain(|inst| {
             !<span class="macro">matches!</span>(inst.class.opcode, Op::AccessChain | Op::InBoundsAccessChain)
                 || inst.operands.iter().all(|op| {
