@@ -60,6 +60,24 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         }
     }
 
+    pub fn undef_zombie(&self, word: Word, reason: &str) -> SpirvValue {
+        if let Some(current_span) = self.current_span {
+            self.undef_zombie_with_span(word, current_span, reason)
+        } else {
+            self.undef_zombie_no_span(word, reason)
+        }
+    }
+    pub fn undef_zombie_with_span(&self, ty: Word, span: Span, reason: &str) -> SpirvValue {
+        let undef = self.undef(ty);
+        self.zombie_with_span(undef.def(self), span, reason);
+        undef
+    }
+    pub fn undef_zombie_no_span(&self, ty: Word, reason: &str) -> SpirvValue {
+        let undef = self.undef(ty);
+        self.zombie_no_span(undef.def(self), reason);
+        undef
+    }
+
     pub fn validate_atomic(&self, ty: Word, to_zombie: Word) {
         if !self.i8_i16_atomics_allowed {
             match self.lookup_type(ty) {
