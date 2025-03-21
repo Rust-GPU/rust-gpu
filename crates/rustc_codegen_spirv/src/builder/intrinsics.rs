@@ -450,10 +450,9 @@ impl Builder<'_, '_> {
                         let lower_bits = self.emit().bit_reverse(u32, None, higher).unwrap();
 
                         let higher_bits = self.emit().u_convert(uint, None, higher_bits).unwrap();
-                        let shift = self.constant_u32(self.span(), 32).def(self);
                         let higher_bits = self
                             .emit()
-                            .shift_left_logical(uint, None, higher_bits, shift)
+                            .shift_left_logical(uint, None, higher_bits, u32_32)
                             .unwrap();
                         let lower_bits = self.emit().u_convert(uint, None, lower_bits).unwrap();
 
@@ -501,7 +500,7 @@ impl Builder<'_, '_> {
                             .unwrap()
                     } else {
                         // rust is always unsigned, so FindUMsb
-                        let bla = self
+                        let msb_bit = self
                             .emit()
                             .ext_inst(u32, None, glsl, GLOp::FindUMsb as u32, [Operand::IdRef(
                                 arg,
@@ -510,7 +509,7 @@ impl Builder<'_, '_> {
                         // the glsl op returns the Msb bit, not the amount of leading zeros of this u32
                         // leading zeros = 31 - Msb bit
                         let u32_31 = self.constant_u32(self.span(), 31).def(self);
-                        self.emit().i_sub(u32, None, u32_31, bla).unwrap()
+                        self.emit().i_sub(u32, None, u32_31, msb_bit).unwrap()
                     }
                 };
 
