@@ -512,18 +512,27 @@ impl Builder<'_, '_> {
                 let bool = SpirvType::Bool.def(self.span(), self);
                 let u32 = SpirvType::Integer(32, false).def(self.span(), self);
 
-                let gl_op = if trailing {
-                    // rust is always unsigned
-                    GLOp::FindILsb
-                } else {
-                    GLOp::FindUMsb
-                };
-
                 let glsl = self.ext_inst.borrow_mut().import_glsl(self);
                 let find_xsb = |arg| {
-                    self.emit()
-                        .ext_inst(u32, None, glsl, gl_op as u32, [Operand::IdRef(arg)])
-                        .unwrap()
+                    if trailing {
+                        self.emit()
+                            .ext_inst(u32, None, glsl, GLOp::FindILsb as u32, [Operand::IdRef(
+                                arg,
+                            )])
+                            .unwrap()
+                    } else {
+                        // rust is always unsigned, so FindUMsb
+                        let bla = self
+                            .emit()
+                            .ext_inst(u32, None, glsl, GLOp::FindUMsb as u32, [Operand::IdRef(
+                                arg,
+                            )])
+                            .unwrap();
+                        // the glsl op returns the Msb bit, not the amount of leading zeros of this u32
+                        // leading zeros = 31 - Msb bit
+                        let u32_31 = self.constant_u32(self.span(), 31).def(self);
+                        self.emit().i_sub(u32, None, u32_31, bla).unwrap()
+                    }
                 };
 
                 let converted = match bits {
