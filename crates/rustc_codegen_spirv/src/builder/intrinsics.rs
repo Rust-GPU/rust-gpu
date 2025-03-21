@@ -292,14 +292,10 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                         let res3 = self.or(res3, res4);
                         self.or(res1, res3)
                     }
-                    other => {
-                        let undef = self.undef(ret_ty);
-                        self.zombie(
-                            undef.def(self),
-                            &format!("bswap not implemented for int width {other}"),
-                        );
-                        undef
-                    }
+                    other => self.undef_zombie(
+                        ret_ty,
+                        &format!("bswap not implemented for int width {other}"),
+                    ),
                 };
 
                 // Cast back to the original signed type if necessary
@@ -310,11 +306,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 }
             }
 
-            sym::compare_bytes => {
-                let undef = self.undef(ret_ty);
-                self.zombie(undef.def(self), "memcmp not implemented");
-                undef
-            }
+            sym::compare_bytes => self.undef_zombie(ret_ty, "memcmp not implemented"),
 
             _ => {
                 // Call the fallback body instead of generating the intrinsic code
@@ -397,12 +389,10 @@ impl Builder<'_, '_> {
                             .unwrap()
                     }
                     _ => {
-                        let undef = self.undef(ty).def(self);
-                        self.zombie(
-                            undef,
+                        return self.undef_zombie(
+                            ty,
                             &format!("count_ones() on unsupported {ty:?} bit integer type"),
                         );
-                        undef
                     }
                 }
                 .with_type(u32)
@@ -461,12 +451,10 @@ impl Builder<'_, '_> {
                             .unwrap()
                     }
                     _ => {
-                        let undef = self.undef(ty).def(self);
-                        self.zombie(
-                            undef,
+                        return self.undef_zombie(
+                            ty,
                             &format!("bit_reverse() on unsupported {ty:?} bit integer type"),
                         );
-                        undef
                     }
                 }
                 .with_type(ty)
@@ -559,11 +547,9 @@ impl Builder<'_, '_> {
                         }
                     }
                     _ => {
-                        let undef = self.undef(ty).def(self);
-                        self.zombie(undef, &format!(
+                        return self.undef_zombie(ty, &format!(
                             "count_leading_trailing_zeros() on unsupported {ty:?} bit integer type"
                         ));
-                        undef
                     }
                 };
 

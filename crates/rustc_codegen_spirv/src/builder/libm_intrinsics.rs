@@ -261,94 +261,58 @@ impl Builder<'_, '_> {
                 self.sub(exp, one)
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Erf) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Erf not supported yet");
-                undef
+                self.undef_zombie(result_type, "Erf not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Erfc) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Erfc not supported yet");
-                undef
+                self.undef_zombie(result_type, "Erfc not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Fdim) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Fdim not supported yet");
-                undef
+                self.undef_zombie(result_type, "Fdim not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Hypot) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Hypot not supported yet");
-                undef
+                self.undef_zombie(result_type, "Hypot not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Ilogb) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Ilogb not supported yet");
-                undef
+                self.undef_zombie(result_type, "Ilogb not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::J0) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "J0 not supported yet");
-                undef
+                self.undef_zombie(result_type, "J0 not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Y0) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Y0 not supported yet");
-                undef
+                self.undef_zombie(result_type, "Y0 not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::J1) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "J1 not supported yet");
-                undef
+                self.undef_zombie(result_type, "J1 not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Y1) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Y1 not supported yet");
-                undef
+                self.undef_zombie(result_type, "Y1 not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Jn) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Jn not supported yet");
-                undef
+                self.undef_zombie(result_type, "Jn not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Yn) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Yn not supported yet");
-                undef
+                self.undef_zombie(result_type, "Yn not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Lgamma) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Lgamma not supported yet");
-                undef
+                self.undef_zombie(result_type, "Lgamma not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::LgammaR) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "LgammaR not supported yet");
-                undef
+                self.undef_zombie(result_type, "LgammaR not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Tgamma) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Tgamma not supported yet");
-                undef
+                self.undef_zombie(result_type, "Tgamma not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::NextAfter) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "NextAfter not supported yet");
-                undef
+                self.undef_zombie(result_type, "NextAfter not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Remainder) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Remainder not supported yet");
-                undef
+                self.undef_zombie(result_type, "Remainder not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::RemQuo) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "RemQuo not supported yet");
-                undef
+                self.undef_zombie(result_type, "RemQuo not supported yet")
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Scalbn) => {
-                let undef = self.undef(result_type);
-                self.zombie(undef.def(self), "Scalbn not supported yet");
-                undef
+                self.undef_zombie(result_type, "Scalbn not supported yet")
             }
         }
     }
