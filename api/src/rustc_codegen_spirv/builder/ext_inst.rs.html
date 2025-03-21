@@ -73,38 +73,11 @@
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
 <a href="#74" id="74">74</a>
-<a href="#75" id="75">75</a>
-<a href="#76" id="76">76</a>
-<a href="#77" id="77">77</a>
-<a href="#78" id="78">78</a>
-<a href="#79" id="79">79</a>
-<a href="#80" id="80">80</a>
-<a href="#81" id="81">81</a>
-<a href="#82" id="82">82</a>
-<a href="#83" id="83">83</a>
-<a href="#84" id="84">84</a>
-<a href="#85" id="85">85</a>
-<a href="#86" id="86">86</a>
-<a href="#87" id="87">87</a>
-<a href="#88" id="88">88</a>
-<a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
-<a href="#100" id="100">100</a>
-<a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Builder;
+<a href="#75" id="75">75</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Builder;
 <span class="kw">use </span><span class="kw">crate</span>::builder_spirv::{SpirvValue, SpirvValueExt};
 <span class="kw">use </span><span class="kw">crate</span>::custom_insts;
+<span class="kw">use </span>rspirv::dr::Operand;
 <span class="kw">use </span>rspirv::spirv::{GLOp, Word};
-<span class="kw">use </span>rspirv::{dr::Operand, spirv::Capability};
 
 <span class="kw">const </span>GLSL_STD_450: <span class="kw-2">&amp;</span>str = <span class="string">"GLSL.std.450"</span>;
 
@@ -115,7 +88,6 @@
     </span>custom: <span class="prelude-ty">Option</span>&lt;Word&gt;,
 
     glsl: <span class="prelude-ty">Option</span>&lt;Word&gt;,
-    integer_functions_2_intel: bool,
 }
 
 <span class="kw">impl </span>ExtInst {
@@ -140,32 +112,11 @@
             id
         }
     }
-
-    <span class="kw">pub fn </span>require_integer_functions_2_intel(<span class="kw-2">&amp;mut </span><span class="self">self</span>, bx: <span class="kw-2">&amp;</span>Builder&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt;, to_zombie: Word) {
-        <span class="kw">if </span>!<span class="self">self</span>.integer_functions_2_intel {
-            <span class="self">self</span>.integer_functions_2_intel = <span class="bool-val">true</span>;
-            <span class="kw">if </span>!bx
-                .builder
-                .has_capability(Capability::IntegerFunctions2INTEL)
-            {
-                bx.zombie(to_zombie, <span class="string">"capability IntegerFunctions2INTEL is required"</span>);
-            }
-            <span class="kw">if </span>!bx
-                .builder
-                .has_extension(bx.sym.spv_intel_shader_integer_functions2)
-            {
-                bx.zombie(
-                    to_zombie,
-                    <span class="string">"extension SPV_INTEL_shader_integer_functions2 is required"</span>,
-                );
-            }
-        }
-    }
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; Builder&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; {
     <span class="kw">pub fn </span>custom_inst(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
         result_type: Word,
         inst: custom_insts::CustomInst&lt;Operand&gt;,
     ) -&gt; SpirvValue {
@@ -182,12 +133,7 @@
             .with_type(result_type)
     }
 
-    <span class="kw">pub fn </span>gl_op(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        op: GLOp,
-        result_type: Word,
-        args: <span class="kw">impl </span>AsRef&lt;[SpirvValue]&gt;,
-    ) -&gt; SpirvValue {
+    <span class="kw">pub fn </span>gl_op(<span class="kw-2">&amp;</span><span class="self">self</span>, op: GLOp, result_type: Word, args: <span class="kw">impl </span>AsRef&lt;[SpirvValue]&gt;) -&gt; SpirvValue {
         <span class="kw">let </span>args = args.as_ref();
         <span class="kw">let </span>glsl = <span class="self">self</span>.ext_inst.borrow_mut().import_glsl(<span class="self">self</span>);
         <span class="self">self</span>.emit()
