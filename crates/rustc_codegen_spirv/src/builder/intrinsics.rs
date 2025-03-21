@@ -370,18 +370,12 @@ impl Builder<'_, '_> {
     pub fn count_ones(&self, arg: SpirvValue) -> SpirvValue {
         let ty = arg.ty;
         match self.cx.lookup_type(ty) {
-            SpirvType::Integer(bits, signed) => {
+            SpirvType::Integer(bits, false) => {
                 let u32 = SpirvType::Integer(32, false).def(self.span(), self);
 
                 match bits {
                     8 | 16 => {
                         let arg = arg.def(self);
-                        let arg = if signed {
-                            let unsigned = SpirvType::Integer(bits, false).def(self.span(), self);
-                            self.emit().bitcast(unsigned, None, arg).unwrap()
-                        } else {
-                            arg
-                        };
                         let arg = self.emit().u_convert(u32, None, arg).unwrap();
                         self.emit().bit_count(u32, None, arg).unwrap()
                     }
@@ -413,25 +407,23 @@ impl Builder<'_, '_> {
                 }
                 .with_type(u32)
             }
-            _ => self.fatal("count_ones() on a non-integer type"),
+            _ => self.fatal(format!(
+                "count_ones() expected an unsigned integer type, got {:?}",
+                self.cx.lookup_type(ty)
+            )),
         }
     }
 
     pub fn bit_reverse(&self, arg: SpirvValue) -> SpirvValue {
         let ty = arg.ty;
         match self.cx.lookup_type(ty) {
-            SpirvType::Integer(bits, signed) => {
+            SpirvType::Integer(bits, false) => {
                 let u32 = SpirvType::Integer(32, false).def(self.span(), self);
                 let uint = SpirvType::Integer(bits, false).def(self.span(), self);
 
-                match (bits, signed) {
-                    (8 | 16, signed) => {
+                match bits {
+                    8 | 16 => {
                         let arg = arg.def(self);
-                        let arg = if signed {
-                            self.emit().bitcast(uint, None, arg).unwrap()
-                        } else {
-                            arg
-                        };
                         let arg = self.emit().u_convert(u32, None, arg).unwrap();
 
                         let reverse = self.emit().bit_reverse(u32, None, arg).unwrap();
@@ -440,20 +432,10 @@ impl Builder<'_, '_> {
                             .emit()
                             .shift_right_logical(u32, None, reverse, shift)
                             .unwrap();
-                        let reverse = self.emit().u_convert(uint, None, reverse).unwrap();
-                        if signed {
-                            self.emit().bitcast(ty, None, reverse).unwrap()
-                        } else {
-                            reverse
-                        }
+                        self.emit().u_convert(uint, None, reverse).unwrap()
                     }
-                    (32, false) => self.emit().bit_reverse(u32, None, arg.def(self)).unwrap(),
-                    (32, true) => {
-                        let arg = self.emit().bitcast(u32, None, arg.def(self)).unwrap();
-                        let reverse = self.emit().bit_reverse(u32, None, arg).unwrap();
-                        self.emit().bitcast(ty, None, reverse).unwrap()
-                    }
-                    (64, signed) => {
+                    32 => self.emit().bit_reverse(u32, None, arg.def(self)).unwrap(),
+                    64 => {
                         let u32_32 = self.constant_u32(self.span(), 32).def(self);
                         let arg = arg.def(self);
                         let lower = self.emit().s_convert(u32, None, arg).unwrap();
@@ -475,15 +457,9 @@ impl Builder<'_, '_> {
                             .unwrap();
                         let lower_bits = self.emit().u_convert(uint, None, lower_bits).unwrap();
 
-                        let result = self
-                            .emit()
+                        self.emit()
                             .bitwise_or(ty, None, lower_bits, higher_bits)
-                            .unwrap();
-                        if signed {
-                            self.emit().bitcast(ty, None, result).unwrap()
-                        } else {
-                            result
-                        }
+                            .unwrap()
                     }
                     _ => {
                         let undef = self.undef(ty).def(self);
@@ -496,7 +472,10 @@ impl Builder<'_, '_> {
                 }
                 .with_type(ty)
             }
-            _ => self.fatal("bit_reverse() on a non-integer type"),
+            _ => self.fatal(format!(
+                "bit_reverse() expected an unsigned integer type, got {:?}",
+                self.cx.lookup_type(ty)
+            )),
         }
     }
 
@@ -508,7 +487,7 @@ impl Builder<'_, '_> {
     ) -> SpirvValue {
         let ty = arg.ty;
         match self.cx.lookup_type(ty) {
-            SpirvType::Integer(bits, signed) => {
+            SpirvType::Integer(bits, false) => {
                 let bool = SpirvType::Bool.def(self.span(), self);
                 let u32 = SpirvType::Integer(32, false).def(self.span(), self);
 
@@ -542,13 +521,6 @@ impl Builder<'_, '_> {
                             find_xsb(arg)
                         } else {
                             let arg = arg.def(self);
-                            let arg = if signed {
-                                let unsigned =
-                                    SpirvType::Integer(bits, false).def(self.span(), self);
-                                self.emit().bitcast(unsigned, None, arg).unwrap()
-                            } else {
-                                arg
-                            };
                             let arg = self.emit().u_convert(u32, None, arg).unwrap();
                             let xsb = find_xsb(arg);
                             let subtrahend = self.constant_u32(self.span(), 32 - bits).def(self);
@@ -611,7 +583,26 @@ impl Builder<'_, '_> {
                 }
                 .with_type(u32)
             }
-            _ => self.fatal("count_leading_trailing_zeros() on a non-integer type"),
+            SpirvType::Integer(bits, true) => {
+                // rustc wants `[i8,i16,i32,i64]::leading_zeros()` with `non_zero: true` for some reason. I do not know
+                // how these are reachable, marking them as zombies makes none of our compiletests fail.
+                let unsigned = SpirvType::Integer(bits, false).def(self.span(), self);
+                let arg = self
+                    .emit()
+                    .bitcast(unsigned, None, arg.def(self))
+                    .unwrap()
+                    .with_type(unsigned);
+                let result = self.count_leading_trailing_zeros(arg, trailing, non_zero);
+                self.emit()
+                    .bitcast(ty, None, result.def(self))
+                    .unwrap()
+                    .with_type(ty)
+            }
+            e => {
+                self.fatal(format!(
+                    "count_leading_trailing_zeros(trailing: {trailing}, non_zero: {non_zero}) expected an integer type, got {e:?}",
+                ));
+            }
         }
     }
 
