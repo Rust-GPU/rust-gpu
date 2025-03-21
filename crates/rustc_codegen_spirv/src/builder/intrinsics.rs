@@ -383,12 +383,12 @@ impl Builder<'_, '_> {
                     64 => {
                         let u32_32 = self.constant_u32(self.span(), 32).def(self);
                         let arg = arg.def(self);
-                        let lower = self.emit().s_convert(u32, None, arg).unwrap();
+                        let lower = self.emit().u_convert(u32, None, arg).unwrap();
                         let higher = self
                             .emit()
                             .shift_right_logical(ty, None, arg, u32_32)
                             .unwrap();
-                        let higher = self.emit().s_convert(u32, None, higher).unwrap();
+                        let higher = self.emit().u_convert(u32, None, higher).unwrap();
 
                         let lower_bits = self.emit().bit_count(u32, None, lower).unwrap();
                         let higher_bits = self.emit().bit_count(u32, None, higher).unwrap();
@@ -438,12 +438,12 @@ impl Builder<'_, '_> {
                     64 => {
                         let u32_32 = self.constant_u32(self.span(), 32).def(self);
                         let arg = arg.def(self);
-                        let lower = self.emit().s_convert(u32, None, arg).unwrap();
+                        let lower = self.emit().u_convert(u32, None, arg).unwrap();
                         let higher = self
                             .emit()
                             .shift_right_logical(ty, None, arg, u32_32)
                             .unwrap();
-                        let higher = self.emit().s_convert(u32, None, higher).unwrap();
+                        let higher = self.emit().u_convert(u32, None, higher).unwrap();
 
                         // note that higher and lower have swapped
                         let higher_bits = self.emit().bit_reverse(u32, None, lower).unwrap();
@@ -517,7 +517,7 @@ impl Builder<'_, '_> {
                 let converted = match bits {
                     8 | 16 => {
                         if trailing {
-                            let arg = self.emit().s_convert(u32, None, arg.def(self)).unwrap();
+                            let arg = self.emit().u_convert(u32, None, arg.def(self)).unwrap();
                             find_xsb(arg)
                         } else {
                             let arg = arg.def(self);
@@ -533,12 +533,12 @@ impl Builder<'_, '_> {
                         let u32_32 = self.constant_u32(self.span(), 32).def(self);
 
                         let arg = arg.def(self);
-                        let lower = self.emit().s_convert(u32, None, arg).unwrap();
+                        let lower = self.emit().u_convert(u32, None, arg).unwrap();
                         let higher = self
                             .emit()
                             .shift_right_logical(ty, None, arg, u32_32)
                             .unwrap();
-                        let higher = self.emit().s_convert(u32, None, higher).unwrap();
+                        let higher = self.emit().u_convert(u32, None, higher).unwrap();
 
                         let lower_bits = find_xsb(lower);
                         let higher_bits = find_xsb(higher);
