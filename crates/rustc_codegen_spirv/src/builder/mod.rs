@@ -16,7 +16,7 @@ use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{BuilderCursor, SpirvValue, SpirvValueExt};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
-use rspirv::spirv::Word;
+use rspirv::spirv::{StorageClass, Word};
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{
@@ -104,7 +104,23 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
     // HACK(eddyb) like the `CodegenCx` method but with `self.span()` awareness.
     pub fn type_ptr_to(&self, ty: Word) -> Word {
-        SpirvType::Pointer { pointee: ty }.def(self.span(), self)
+        SpirvType::Pointer {
+            pointee: ty,
+            storage_class: None,
+        }
+        .def(self.span(), self)
+    }
+
+    pub fn type_ptr_with_storage_class_to(
+        &self,
+        ty: Word,
+        storage_class: Option<StorageClass>,
+    ) -> Word {
+        SpirvType::Pointer {
+            pointee: ty,
+            storage_class,
+        }
+        .def(self.span(), self)
     }
 
     // TODO: Definitely add tests to make sure this impl is right.

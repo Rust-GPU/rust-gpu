@@ -61,6 +61,9 @@ pub enum SpirvType<'tcx> {
     },
     Pointer {
         pointee: Word,
+        /// The storage class to enforce for this pointer
+        /// or `None` for  automatic inference.
+        storage_class: Option<StorageClass>,
     },
     Function {
         return_type: Word,
@@ -213,13 +216,15 @@ impl SpirvType<'_> {
                 );
                 result
             }
-            Self::Pointer { pointee } => {
+            Self::Pointer {
+                pointee,
+                storage_class,
+            } => {
                 // NOTE(eddyb) we emit `StorageClass::Generic` here, but later
                 // the linker will specialize the entire SPIR-V module to use
                 // storage classes inferred from `OpVariable`s.
-                let result = cx
-                    .emit_global()
-                    .type_pointer(id, StorageClass::Generic, pointee);
+                let storage_class = storage_class.unwrap_or(StorageClass::Generic);
+                let result = cx.emit_global().type_pointer(id, storage_class, pointee);
                 // no pointers to functions
                 if let SpirvType::Function { .. } = cx.lookup_type(pointee) {
                     // FIXME(eddyb) use the `SPV_INTEL_function_pointers` extension.
@@ -286,13 +291,17 @@ impl SpirvType<'_> {
             return cached;
         }
         let result = match self {
-            Self::Pointer { pointee } => {
+            Self::Pointer {
+                pointee,
+                storage_class,
+            } => {
                 // NOTE(eddyb) we emit `StorageClass::Generic` here, but later
                 // the linker will specialize the entire SPIR-V module to use
                 // storage classes inferred from `OpVariable`s.
-                let result =
-                    cx.emit_global()
-                        .type_pointer(Some(id), StorageClass::Generic, pointee);
+                let storage_class = storage_class.unwrap_or(StorageClass::Generic);
+                let result = cx
+                    .emit_global()
+                    .type_pointer(Some(id), storage_class, pointee);
                 // no pointers to functions
                 if let SpirvType::Function { .. } = cx.lookup_type(pointee) {
                     // FIXME(eddyb) use the `SPV_INTEL_function_pointers` extension.
@@ -412,7 +421,13 @@ impl SpirvType<'_> {
             SpirvType::Matrix { element, count } => SpirvType::Matrix { element, count },
             SpirvType::Array { element, count } => SpirvType::Array { element, count },
             SpirvType::RuntimeArray { element } => SpirvType::RuntimeArray { element },
-            SpirvType::Pointer { pointee } => SpirvType::Pointer { pointee },
+            SpirvType::Pointer {
+                pointee,
+                storage_class,
+            } => SpirvType::Pointer {
+                pointee,
+                storage_class,
+            },
             SpirvType::Image {
                 sampled_type,
                 dim,
@@ -557,10 +572,14 @@ impl fmt::Debug for SpirvTypePrinter<'_, '_> {
                 .field("id", &self.id)
                 .field("element", &self.cx.debug_type(element))
                 .finish(),
-            SpirvType::Pointer { pointee } => f
+            SpirvType::Pointer {
+                pointee,
+                storage_class,
+            } => f
                 .debug_struct("Pointer")
                 .field("id", &self.id)
                 .field("pointee", &self.cx.debug_type(pointee))
+                .field("storage_class", &storage_class)
                 .finish(),
             SpirvType::Function {
                 return_type,
@@ -710,8 +729,14 @@ impl SpirvTypePrinter<'_, '_> {
                 ty(self.cx, stack, f, element)?;
                 f.write_str("]")
             }
-            SpirvType::Pointer { pointee } => {
+            SpirvType::Pointer {
+                pointee,
+                storage_class,
+            } => {
                 f.write_str("*")?;
+                if let Some(storage_class) = storage_class {
+                    write!(f, "{:?}", storage_class)?;
+                }
                 ty(self.cx, stack, f, pointee)
             }
             SpirvType::Function {
