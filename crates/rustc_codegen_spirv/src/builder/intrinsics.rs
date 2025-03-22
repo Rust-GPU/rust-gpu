@@ -479,13 +479,20 @@ impl Builder<'_, '_> {
                 let u32 = SpirvType::Integer(32, false).def(self.span(), self);
 
                 let glsl = self.ext_inst.borrow_mut().import_glsl(self);
-                let find_xsb = |arg| {
+                let find_xsb = |arg, offset: i32| {
                     if trailing {
-                        self.emit()
+                        let lsb = self
+                            .emit()
                             .ext_inst(u32, None, glsl, GLOp::FindILsb as u32, [Operand::IdRef(
                                 arg,
                             )])
-                            .unwrap()
+                            .unwrap();
+                        if offset == 0 {
+                            lsb
+                        } else {
+                            let const_offset = self.constant_i32(self.span(), offset).def(self);
+                            self.emit().i_add(u32, None, const_offset, lsb).unwrap()
+                        }
                     } else {
                         // rust is always unsigned, so FindUMsb
                         let msb_bit = self
@@ -496,25 +503,21 @@ impl Builder<'_, '_> {
                             .unwrap();
                         // the glsl op returns the Msb bit, not the amount of leading zeros of this u32
                         // leading zeros = 31 - Msb bit
-                        let u32_31 = self.constant_u32(self.span(), 31).def(self);
-                        self.emit().i_sub(u32, None, u32_31, msb_bit).unwrap()
+                        let const_offset = self.constant_i32(self.span(), 31 - offset).def(self);
+                        self.emit().i_sub(u32, None, const_offset, msb_bit).unwrap()
                     }
                 };
 
                 let converted = match bits {
                     8 | 16 => {
+                        let arg = self.emit().u_convert(u32, None, arg.def(self)).unwrap();
                         if trailing {
-                            let arg = self.emit().u_convert(u32, None, arg.def(self)).unwrap();
-                            find_xsb(arg)
+                            find_xsb(arg, 0)
                         } else {
-                            let arg = arg.def(self);
-                            let arg = self.emit().u_convert(u32, None, arg).unwrap();
-                            let xsb = find_xsb(arg);
-                            let subtrahend = self.constant_u32(self.span(), 32 - bits).def(self);
-                            self.emit().i_sub(u32, None, xsb, subtrahend).unwrap()
+                            find_xsb(arg, bits as i32 - 32)
                         }
                     }
-                    32 => find_xsb(arg.def(self)),
+                    32 => find_xsb(arg.def(self), 0),
                     64 => {
                         let u32_0 = self.constant_int(u32, 0).def(self);
                         let u32_32 = self.constant_u32(self.span(), 32).def(self);
@@ -527,20 +530,17 @@ impl Builder<'_, '_> {
                             .unwrap();
                         let higher = self.emit().u_convert(u32, None, higher).unwrap();
 
-                        let lower_bits = find_xsb(lower);
-                        let higher_bits = find_xsb(higher);
-
                         if trailing {
                             let use_lower = self.emit().i_equal(bool, None, higher, u32_0).unwrap();
-                            let lower_bits =
-                                self.emit().i_add(u32, None, lower_bits, u32_32).unwrap();
+                            let lower_bits = find_xsb(lower, 32);
+                            let higher_bits = find_xsb(higher, 0);
                             self.emit()
                                 .select(u32, None, use_lower, lower_bits, higher_bits)
                                 .unwrap()
                         } else {
                             let use_higher = self.emit().i_equal(bool, None, lower, u32_0).unwrap();
-                            let higher_bits =
-                                self.emit().i_add(u32, None, higher_bits, u32_32).unwrap();
+                            let lower_bits = find_xsb(lower, 0);
+                            let higher_bits = find_xsb(higher, 32);
                             self.emit()
                                 .select(u32, None, use_higher, higher_bits, lower_bits)
                                 .unwrap()
