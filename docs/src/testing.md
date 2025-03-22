@@ -1,14 +1,18 @@
 # Testing Rust-GPU
 
 Rust-GPU has a couple of different kinds of tests, most can be ran through
-`cargo test`, however Rust-GPU also has end-to-end tests for compiling Rust and
-validating its SPIR-V output, which can ran by running `cargo compiletest`.
+`cargo test`. Rust-GPU also has end-to-end tests for compiling Rust and
+validating its SPIR-V output, which can ran by running `cargo compiletest`. Finally,
+Rust-GPU has differential tests, which runs Rust and WGSL shaders and
+makes sure they have the same output. These can be run with `cargo difftest`.
 
 ```bash
-cargo test && cargo compiletest
+cargo test && cargo compiletest && cargo difftest
 ```
 
-## Adding Tests
+## Compile Tests
+
+### Adding Tests
 
 Rust-GPU's end-to-end test's use an external version of the [`compiletest`] tool
 as a testing framework. Be sure to check out the [repository][`compiletest`] and
