@@ -316,7 +316,25 @@
 <a href="#315" id="315">315</a>
 <a href="#316" id="316">316</a>
 <a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a></pre></div><pre class="rust"><code><span class="kw">mod </span>builder_methods;
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a></pre></div><pre class="rust"><code><span class="kw">mod </span>builder_methods;
 <span class="kw">mod </span>byte_addressable_buffer;
 <span class="kw">mod </span>ext_inst;
 <span class="kw">mod </span>intrinsics;
@@ -376,6 +394,24 @@
         } <span class="kw">else </span>{
             <span class="self">self</span>.zombie_no_span(word, reason);
         }
+    }
+
+    <span class="kw">pub fn </span>undef_zombie(<span class="kw-2">&amp;</span><span class="self">self</span>, word: Word, reason: <span class="kw-2">&amp;</span>str) -&gt; SpirvValue {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(current_span) = <span class="self">self</span>.current_span {
+            <span class="self">self</span>.undef_zombie_with_span(word, current_span, reason)
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.undef_zombie_no_span(word, reason)
+        }
+    }
+    <span class="kw">pub fn </span>undef_zombie_with_span(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Word, span: Span, reason: <span class="kw-2">&amp;</span>str) -&gt; SpirvValue {
+        <span class="kw">let </span>undef = <span class="self">self</span>.undef(ty);
+        <span class="self">self</span>.zombie_with_span(undef.def(<span class="self">self</span>), span, reason);
+        undef
+    }
+    <span class="kw">pub fn </span>undef_zombie_no_span(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Word, reason: <span class="kw-2">&amp;</span>str) -&gt; SpirvValue {
+        <span class="kw">let </span>undef = <span class="self">self</span>.undef(ty);
+        <span class="self">self</span>.zombie_no_span(undef.def(<span class="self">self</span>), reason);
+        undef
     }
 
     <span class="kw">pub fn </span>validate_atomic(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: Word, to_zombie: Word) {
