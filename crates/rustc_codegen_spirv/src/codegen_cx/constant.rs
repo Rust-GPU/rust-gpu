@@ -54,7 +54,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
     fn constant_int_from_native_signed(&self, span: Span, val: impl Into<i128>) -> SpirvValue {
         let size = Size::from_bytes(std::mem::size_of_val(&val));
-        let ty = SpirvType::Integer(size.bits() as u32, false).def(span, self);
+        let ty = SpirvType::Integer(size.bits() as u32, true).def(span, self);
         self.constant_int(ty, val.into() as u128)
     }
 
