@@ -492,7 +492,14 @@ impl<'tcx> BuilderSpirv<'tcx> {
         // The linker will always be ran on this module
         add_cap(&mut builder, &mut enabled_capabilities, Capability::Linkage);
 
-        builder.memory_model(AddressingModel::Logical, memory_model);
+        let addressing_model =
+            if enabled_capabilities.contains(&Capability::PhysicalStorageBufferAddresses) {
+                AddressingModel::PhysicalStorageBuffer64
+            } else {
+                AddressingModel::Logical
+            };
+
+        builder.memory_model(addressing_model, memory_model);
 
         Self {
             source_map: tcx.sess.source_map(),
