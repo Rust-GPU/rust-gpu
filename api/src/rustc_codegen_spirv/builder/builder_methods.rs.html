@@ -3260,7 +3260,9 @@
 <a href="#3259" id="3259">3259</a>
 <a href="#3260" id="3260">3260</a>
 <a href="#3261" id="3261">3261</a>
-<a href="#3262" id="3262">3262</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<a href="#3262" id="3262">3262</a>
+<a href="#3263" id="3263">3263</a>
+<a href="#3264" id="3264">3264</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 </span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 
 <span class="kw">use </span><span class="kw">super</span>::Builder;
@@ -5406,8 +5408,9 @@
                     <span class="self">self</span>.emit().logical_or(b, <span class="prelude-val">None</span>, lhs.def(<span class="self">self</span>), rhs)
                 }
                 <span class="comment">// x &lt; y  =&gt;  !x &amp;&amp; y
-                </span>IntULE =&gt; {
-                    <span class="kw">let </span>true_ = <span class="self">self</span>.constant_bool(<span class="self">self</span>.span(), <span class="bool-val">true</span>);
+                </span>IntULT =&gt; {
+                    <span class="comment">// intel-compute-runtime doesn't like OpLogicalNot
+                    </span><span class="kw">let </span>true_ = <span class="self">self</span>.constant_bool(<span class="self">self</span>.span(), <span class="bool-val">true</span>);
                     <span class="kw">let </span>lhs = <span class="self">self
                         </span>.emit()
                         .logical_not_equal(b, <span class="prelude-val">None</span>, lhs.def(<span class="self">self</span>), true_.def(<span class="self">self</span>))
@@ -5415,8 +5418,9 @@
                     <span class="self">self</span>.emit().logical_and(b, <span class="prelude-val">None</span>, lhs, rhs.def(<span class="self">self</span>))
                 }
                 <span class="comment">// x &lt;= y  =&gt;  !x || y
-                </span>IntULT =&gt; {
-                    <span class="kw">let </span>true_ = <span class="self">self</span>.constant_bool(<span class="self">self</span>.span(), <span class="bool-val">true</span>);
+                </span>IntULE =&gt; {
+                    <span class="comment">// intel-compute-runtime doesn't like OpLogicalNot
+                    </span><span class="kw">let </span>true_ = <span class="self">self</span>.constant_bool(<span class="self">self</span>.span(), <span class="bool-val">true</span>);
                     <span class="kw">let </span>lhs = <span class="self">self
                         </span>.emit()
                         .logical_not_equal(b, <span class="prelude-val">None</span>, lhs.def(<span class="self">self</span>), true_.def(<span class="self">self</span>))
