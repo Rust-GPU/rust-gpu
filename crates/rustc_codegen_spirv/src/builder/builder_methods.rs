@@ -2144,7 +2144,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     self.emit().logical_or(b, None, lhs.def(self), rhs)
                 }
                 // x < y  =>  !x && y
-                IntULE => {
+                IntULT => {
+                    // intel-compute-runtime doesn't like OpLogicalNot
                     let true_ = self.constant_bool(self.span(), true);
                     let lhs = self
                         .emit()
@@ -2153,7 +2154,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     self.emit().logical_and(b, None, lhs, rhs.def(self))
                 }
                 // x <= y  =>  !x || y
-                IntULT => {
+                IntULE => {
+                    // intel-compute-runtime doesn't like OpLogicalNot
                     let true_ = self.constant_bool(self.span(), true);
                     let lhs = self
                         .emit()
