@@ -306,6 +306,7 @@ pub struct SpirvBuilder {
     rustc_codegen_spirv_location: Option<std::path::PathBuf>,
     // Optional location of a known "target-spec" file
     path_to_target_spec: Option<PathBuf>,
+    target_dir_path: Option<String>,
 
     // `rustc_codegen_spirv::linker` codegen args
     pub shader_panic_strategy: ShaderPanicStrategy,
@@ -337,6 +338,7 @@ impl SpirvBuilder {
             extra_args: Vec::new(),
             rustc_codegen_spirv_location: None,
             path_to_target_spec: None,
+            target_dir_path: None,
 
             shader_panic_strategy: ShaderPanicStrategy::SilentExit,
 
@@ -511,6 +513,14 @@ impl SpirvBuilder {
             path_to_dylib.display()
         );
         self.rustc_codegen_spirv_location = Some(path_to_dylib);
+        self
+    }
+
+    /// Set the target dir path within `./target` to use for building shaders. Defaults to `spirv-builder`, resulting
+    /// in the path `./target/spirv-builder`.
+    #[must_use]
+    pub fn target_dir_path(mut self, name: impl Into<String>) -> Self {
+        self.target_dir_path = Some(name.into());
         self
     }
 
@@ -790,7 +800,14 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     };
     // FIXME(eddyb) use `crate metadata` to always be able to get the "outer"
     // (or "default") `--target-dir`, to append `/spirv-builder` to it.
-    let target_dir = outer_target_dir.map(|outer| outer.join("spirv-builder"));
+    let target_dir = outer_target_dir.map(|outer| {
+        outer.join(
+            builder
+                .target_dir_path
+                .as_deref()
+                .unwrap_or("spirv-builder"),
+        )
+    });
 
     let profile = if builder.release { "release" } else { "dev" };
 
