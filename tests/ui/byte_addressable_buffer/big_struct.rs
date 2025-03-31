@@ -1,4 +1,5 @@
 // build-pass
+// compile-flags: -Ctarget-feature=+ShaderNonUniform,+ext:SPV_EXT_descriptor_indexing
 
 use spirv_std::ByteAddressableBuffer;
 use spirv_std::spirv;
