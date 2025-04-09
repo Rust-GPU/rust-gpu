@@ -210,21 +210,23 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             },
             SpirvType::Integer(width, true) => match width {
                 8 => self
-                    .constant_i8(self.span(), unsafe { std::mem::transmute(fill_byte) })
+                    .constant_i8(self.span(), unsafe {
+                        std::mem::transmute::<u8, i8>(fill_byte)
+                    })
                     .def(self),
                 16 => self
                     .constant_i16(self.span(), unsafe {
-                        std::mem::transmute(memset_fill_u16(fill_byte))
+                        std::mem::transmute::<u16, i16>(memset_fill_u16(fill_byte))
                     })
                     .def(self),
                 32 => self
                     .constant_i32(self.span(), unsafe {
-                        std::mem::transmute(memset_fill_u32(fill_byte))
+                        std::mem::transmute::<u32, i32>(memset_fill_u32(fill_byte))
                     })
                     .def(self),
                 64 => self
                     .constant_i64(self.span(), unsafe {
-                        std::mem::transmute(memset_fill_u64(fill_byte))
+                        std::mem::transmute::<u64, i64>(memset_fill_u64(fill_byte))
                     })
                     .def(self),
                 _ => self.fatal(format!(
