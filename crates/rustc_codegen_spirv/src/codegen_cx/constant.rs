@@ -18,11 +18,6 @@ impl<'tcx> CodegenCx<'tcx> {
         self.builder.def_constant_cx(ty, val, self)
     }
 
-    pub fn constant_i8(&self, span: Span, val: i8) -> SpirvValue {
-        let ty = SpirvType::Integer(8, true).def(span, self);
-        self.def_constant(ty, SpirvConst::U32(val as u32))
-    }
-
     pub fn constant_u8(&self, span: Span, val: u8) -> SpirvValue {
         self.constant_int_from_native_unsigned(span, val)
     }
@@ -47,9 +42,8 @@ impl<'tcx> CodegenCx<'tcx> {
         self.constant_int_from_native_unsigned(span, val)
     }
 
-    pub fn constant_i64(&self, span: Span, val: u64) -> SpirvValue {
-        let ty = SpirvType::Integer(64, true).def(span, self);
-        self.def_constant(ty, SpirvConst::U64(val))
+    pub fn constant_i64(&self, span: Span, val: i64) -> SpirvValue {
+        self.constant_int_from_native_signed(span, val)
     }
 
     pub fn constant_u64(&self, span: Span, val: u64) -> SpirvValue {
