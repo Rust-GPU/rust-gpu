@@ -3262,7 +3262,32 @@
 <a href="#3261" id="3261">3261</a>
 <a href="#3262" id="3262">3262</a>
 <a href="#3263" id="3263">3263</a>
-<a href="#3264" id="3264">3264</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<a href="#3264" id="3264">3264</a>
+<a href="#3265" id="3265">3265</a>
+<a href="#3266" id="3266">3266</a>
+<a href="#3267" id="3267">3267</a>
+<a href="#3268" id="3268">3268</a>
+<a href="#3269" id="3269">3269</a>
+<a href="#3270" id="3270">3270</a>
+<a href="#3271" id="3271">3271</a>
+<a href="#3272" id="3272">3272</a>
+<a href="#3273" id="3273">3273</a>
+<a href="#3274" id="3274">3274</a>
+<a href="#3275" id="3275">3275</a>
+<a href="#3276" id="3276">3276</a>
+<a href="#3277" id="3277">3277</a>
+<a href="#3278" id="3278">3278</a>
+<a href="#3279" id="3279">3279</a>
+<a href="#3280" id="3280">3280</a>
+<a href="#3281" id="3281">3281</a>
+<a href="#3282" id="3282">3282</a>
+<a href="#3283" id="3283">3283</a>
+<a href="#3284" id="3284">3284</a>
+<a href="#3285" id="3285">3285</a>
+<a href="#3286" id="3286">3286</a>
+<a href="#3287" id="3287">3287</a>
+<a href="#3288" id="3288">3288</a>
+<a href="#3289" id="3289">3289</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 </span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 
 <span class="kw">use </span><span class="kw">super</span>::Builder;
@@ -3457,7 +3482,7 @@
         <span class="kw">match </span><span class="kw-2">*</span>ty {
             SpirvType::Void =&gt; <span class="self">self</span>.fatal(<span class="string">"memset invalid on void pattern"</span>),
             SpirvType::Bool =&gt; <span class="self">self</span>.fatal(<span class="string">"memset invalid on bool pattern"</span>),
-            SpirvType::Integer(width, _signedness) =&gt; <span class="kw">match </span>width {
+            SpirvType::Integer(width, <span class="bool-val">false</span>) =&gt; <span class="kw">match </span>width {
                 <span class="number">8 </span>=&gt; <span class="self">self</span>.constant_u8(<span class="self">self</span>.span(), fill_byte).def(<span class="self">self</span>),
                 <span class="number">16 </span>=&gt; <span class="self">self
                     </span>.constant_u16(<span class="self">self</span>.span(), memset_fill_u16(fill_byte))
@@ -3467,6 +3492,31 @@
                     .def(<span class="self">self</span>),
                 <span class="number">64 </span>=&gt; <span class="self">self
                     </span>.constant_u64(<span class="self">self</span>.span(), memset_fill_u64(fill_byte))
+                    .def(<span class="self">self</span>),
+                <span class="kw">_ </span>=&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(
+                    <span class="string">"memset on integer width {width} not implemented yet"
+                </span>)),
+            },
+            SpirvType::Integer(width, <span class="bool-val">true</span>) =&gt; <span class="kw">match </span>width {
+                <span class="number">8 </span>=&gt; <span class="self">self
+                    </span>.constant_i8(<span class="self">self</span>.span(), <span class="kw">unsafe </span>{
+                        std::mem::transmute::&lt;u8, i8&gt;(fill_byte)
+                    })
+                    .def(<span class="self">self</span>),
+                <span class="number">16 </span>=&gt; <span class="self">self
+                    </span>.constant_i16(<span class="self">self</span>.span(), <span class="kw">unsafe </span>{
+                        std::mem::transmute::&lt;u16, i16&gt;(memset_fill_u16(fill_byte))
+                    })
+                    .def(<span class="self">self</span>),
+                <span class="number">32 </span>=&gt; <span class="self">self
+                    </span>.constant_i32(<span class="self">self</span>.span(), <span class="kw">unsafe </span>{
+                        std::mem::transmute::&lt;u32, i32&gt;(memset_fill_u32(fill_byte))
+                    })
+                    .def(<span class="self">self</span>),
+                <span class="number">64 </span>=&gt; <span class="self">self
+                    </span>.constant_i64(<span class="self">self</span>.span(), <span class="kw">unsafe </span>{
+                        std::mem::transmute::&lt;u64, i64&gt;(memset_fill_u64(fill_byte))
+                    })
                     .def(<span class="self">self</span>),
                 <span class="kw">_ </span>=&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(
                     <span class="string">"memset on integer width {width} not implemented yet"
@@ -3582,7 +3632,7 @@
         } <span class="kw">else </span>{
             <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..count {
                 <span class="kw">let </span>const_index = <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), index <span class="kw">as </span>u32);
-                <span class="kw">let </span>gep_ptr = <span class="self">self</span>.gep(pat.ty, ptr, <span class="kw-2">&amp;</span>[const_index]);
+                <span class="kw">let </span>gep_ptr = <span class="self">self</span>.inbounds_gep(pat.ty, ptr, <span class="kw-2">&amp;</span>[const_index]);
                 <span class="self">self</span>.store(pat, gep_ptr, Align::from_bytes(<span class="number">0</span>).unwrap());
             }
         }
