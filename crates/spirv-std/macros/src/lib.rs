@@ -75,11 +75,9 @@
 mod image;
 
 use proc_macro::TokenStream;
-use proc_macro2::{Delimiter, Group, Ident, Span, TokenTree};
+use proc_macro2::{Delimiter, Group, Span, TokenTree};
 
-use syn::{
-    ImplItemFn, ItemFn, Token, punctuated::Punctuated, spanned::Spanned, visit_mut::VisitMut,
-};
+use syn::{ImplItemFn, visit_mut::VisitMut};
 
 use quote::{ToTokens, quote};
 use std::fmt::Write;
@@ -224,150 +222,6 @@ pub fn gpu_only(_attr: TokenStream, item: TokenStream) -> TokenStream {
     output.into()
 }
 
-/// Accepts a function with an argument named `component`, and outputs the
-/// function plus a vectorized version of the function which accepts a vector
-/// of `component`. This is mostly useful when you have the same impl body for
-/// a scalar and vector versions of the same operation.
-#[proc_macro_attribute]
-#[doc(hidden)]
-pub fn vectorized(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let function = syn::parse_macro_input!(item as syn::ItemFn);
-    let vectored_function = match create_vectored_fn(function.clone()) {
-        Ok(val) => val,
-        Err(err) => return err.to_compile_error().into(),
-    };
-
-    let output = quote::quote!(
-        #function
-
-        #vectored_function
-    );
-
-    output.into()
-}
-
-fn create_vectored_fn(
-    ItemFn {
-        attrs,
-        vis,
-        mut sig,
-        block,
-    }: ItemFn,
-) -> Result<ItemFn, syn::Error> {
-    const COMPONENT_ARG_NAME: &str = "component";
-    let trait_bound_name = Ident::new("VECTOR", Span::mixed_site());
-    let const_bound_name = Ident::new("LENGTH", Span::mixed_site());
-
-    sig.ident = Ident::new(&format!("{}_vector", sig.ident), Span::mixed_site());
-    sig.output = syn::ReturnType::Type(
-        Default::default(),
-        Box::new(path_from_ident(trait_bound_name.clone())),
-    );
-
-    let component_type = sig.inputs.iter_mut().find_map(|x| match x {
-        syn::FnArg::Typed(ty) => match &*ty.pat {
-            syn::Pat::Ident(pat) if pat.ident == COMPONENT_ARG_NAME => Some(&mut ty.ty),
-            _ => None,
-        },
-        syn::FnArg::Receiver(_) => None,
-    });
-
-    if component_type.is_none() {
-        return Err(syn::Error::new(
-            sig.inputs.span(),
-            "#[vectorized] requires an argument named `component`.",
-        ));
-    }
-    let component_type = component_type.unwrap();
-
-    let vector_path = {
-        let mut path = syn::Path {
-            leading_colon: None,
-            segments: Punctuated::new(),
-        };
-
-        for segment in &["crate", "vector"] {
-            path.segments
-                .push(Ident::new(segment, Span::mixed_site()).into());
-        }
-
-        path.segments.push(syn::PathSegment {
-            ident: Ident::new("Vector", Span::mixed_site()),
-            arguments: syn::PathArguments::AngleBracketed(syn::AngleBracketedGenericArguments {
-                colon2_token: None,
-                lt_token: Default::default(),
-                args: {
-                    let mut punct = Punctuated::new();
-
-                    punct.push(syn::GenericArgument::Type(*component_type.clone()));
-                    punct.push(syn::GenericArgument::Type(path_from_ident(
-                        const_bound_name.clone(),
-                    )));
-
-                    punct
-                },
-                gt_token: Default::default(),
-            }),
-        });
-
-        path
-    };
-
-    // Replace the original component type with vector version.
-    **component_type = path_from_ident(trait_bound_name.clone());
-
-    let trait_bounds = {
-        let mut punct = Punctuated::new();
-        punct.push(syn::TypeParamBound::Trait(syn::TraitBound {
-            paren_token: None,
-            modifier: syn::TraitBoundModifier::None,
-            lifetimes: None,
-            path: vector_path,
-        }));
-        punct
-    };
-
-    sig.generics
-        .params
-        .push(syn::GenericParam::Type(syn::TypeParam {
-            attrs: Vec::new(),
-            ident: trait_bound_name,
-            colon_token: Some(Token![:](Span::mixed_site())),
-            bounds: trait_bounds,
-            eq_token: None,
-            default: None,
-        }));
-
-    sig.generics
-        .params
-        .push(syn::GenericParam::Const(syn::ConstParam {
-            attrs: Vec::default(),
-            const_token: Default::default(),
-            ident: const_bound_name,
-            colon_token: Default::default(),
-            ty: syn::Type::Path(syn::TypePath {
-                qself: None,
-                path: Ident::new("usize", Span::mixed_site()).into(),
-            }),
-            eq_token: None,
-            default: None,
-        }));
-
-    Ok(ItemFn {
-        attrs,
-        vis,
-        sig,
-        block,
-    })
-}
-
-fn path_from_ident(ident: Ident) -> syn::Type {
-    syn::Type::Path(syn::TypePath {
-        qself: None,
-        path: syn::Path::from(ident),
-    })
-}
-
 /// Print a formatted string with a newline using the debug printf extension.
 ///
 /// Examples:
@@ -392,7 +246,7 @@ pub fn debug_printfln(input: TokenStream) -> TokenStream {
 }
 
 struct DebugPrintfInput {
-    span: proc_macro2::Span,
+    span: Span,
     format_string: String,
     variables: Vec<syn::Expr>,
 }
@@ -424,7 +278,7 @@ impl syn::parse::Parse for DebugPrintfInput {
     }
 }
 
-fn parsing_error(message: &str, span: proc_macro2::Span) -> TokenStream {
+fn parsing_error(message: &str, span: Span) -> TokenStream {
     syn::Error::new(span, message).to_compile_error().into()
 }
 
