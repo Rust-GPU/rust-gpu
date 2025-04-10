@@ -42,6 +42,13 @@ jobs:
       - if: ${{ runner.os == 'Linux' }}
         name: Linux - Install native dependencies
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
+      - if: ${{ runner.os == 'Linux' }}
+        name: Install xvfb, llvmpipe and lavapipe
+        run: |
+          sudo apt-get update -y -qq
+          sudo add-apt-repository ppa:kisak/turtle -y
+          sudo apt-get update
+          sudo apt install -y xvfb libgl1-mesa-dri libxcb-xfixes0-dev mesa-vulkan-drivers
       # cargo version is a random command that forces the installation of rust-toolchain
       - name: install rust-toolchain
         run: cargo version
@@ -63,6 +70,10 @@ jobs:
       - name: compiletest
         if: ${{ matrix.target != 'aarch64-linux-android' }}
         run: cargo run -p compiletests --release --no-default-features --features "use-installed-tools" -- --target-env vulkan1.1,vulkan1.2,spv1.3
+
+      - name: difftest
+        if: ${{ matrix.target != 'aarch64-linux-android' }}
+        run: cargo run -p difftests --release --no-default-features --features "use-installed-tools"
 
       - name: workspace test
         if: ${{ matrix.target != 'aarch64-linux-android' }}
@@ -145,8 +156,10 @@ jobs:
         run: cargo fetch --locked
       - name: Rustfmt
         run: cargo fmt --all -- --check
-      - name: Rustfmt tests
-        run: rustfmt --check tests/ui/**/*.rs
+      - name: Rustfmt compiletests
+        run: shopt -s globstar && rustfmt --check tests/compiletests/ui/**/*.rs
+      - name: Rustfmt difftests
+        run: cargo fmt --check --all --manifest-path tests/difftests/tests/Cargo.toml
       - name: Check docs are valid
         run: RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps
       - name: Check docs for `spirv-std` and `spirv-builder` on stable (for docs.rs)
