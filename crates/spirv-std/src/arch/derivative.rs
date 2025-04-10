@@ -36,6 +36,7 @@ pub unsafe trait Derivative: Sealed + Default {
     ///
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
+    #[inline]
     fn ddx(self) -> Self {
         deriv_fn!(OpDPdx, self)
     }
@@ -48,6 +49,7 @@ pub unsafe trait Derivative: Sealed + Default {
     ///
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
+    #[inline]
     fn ddx_fine(self) -> Self {
         cap_deriv_control!();
         deriv_fn!(OpDPdxFine, self)
@@ -63,6 +65,7 @@ pub unsafe trait Derivative: Sealed + Default {
     ///
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
+    #[inline]
     fn ddx_coarse(self) -> Self {
         cap_deriv_control!();
         deriv_fn!(OpDPdxCoarse, self)
@@ -77,6 +80,7 @@ pub unsafe trait Derivative: Sealed + Default {
     ///
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
+    #[inline]
     fn ddy(self) -> Self {
         deriv_fn!(OpDPdy, self)
     }
@@ -89,6 +93,7 @@ pub unsafe trait Derivative: Sealed + Default {
     ///
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
+    #[inline]
     fn ddy_fine(self) -> Self {
         cap_deriv_control!();
         deriv_fn!(OpDPdyFine, self)
@@ -104,6 +109,7 @@ pub unsafe trait Derivative: Sealed + Default {
     ///
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
+    #[inline]
     fn ddy_coarse(self) -> Self {
         cap_deriv_control!();
         deriv_fn!(OpDPdyCoarse, self)
@@ -116,6 +122,7 @@ pub unsafe trait Derivative: Sealed + Default {
     ///
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
+    #[inline]
     fn fwidth(self) -> Self {
         deriv_fn!(OpFwidth, self)
     }
@@ -127,6 +134,7 @@ pub unsafe trait Derivative: Sealed + Default {
     ///
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
+    #[inline]
     fn fwidth_fine(self) -> Self {
         cap_deriv_control!();
         deriv_fn!(OpFwidthFine, self)
@@ -139,6 +147,7 @@ pub unsafe trait Derivative: Sealed + Default {
     ///
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
+    #[inline]
     fn fwidth_coarse(self) -> Self {
         cap_deriv_control!();
         deriv_fn!(OpFwidthCoarse, self)
