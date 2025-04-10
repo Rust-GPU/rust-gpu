@@ -1,14 +1,7 @@
 use crate::sealed::Sealed;
 use glam::{Vec2, Vec3, Vec3A, Vec4};
 
-macro_rules! cap_deriv_control {
-    () => {
-        unsafe {
-            core::arch::asm!("OpCapability DerivativeControl");
-        }
-    };
-}
-
+#[cfg(target_arch = "spirv")]
 macro_rules! deriv_fn {
     ($inst:ident, $param:expr) => {
         unsafe {
@@ -51,7 +44,6 @@ pub unsafe trait Derivative: Sealed + Default {
     #[crate::macros::gpu_only]
     #[inline]
     fn ddx_fine(self) -> Self {
-        cap_deriv_control!();
         deriv_fn!(OpDPdxFine, self)
     }
 
@@ -67,7 +59,6 @@ pub unsafe trait Derivative: Sealed + Default {
     #[crate::macros::gpu_only]
     #[inline]
     fn ddx_coarse(self) -> Self {
-        cap_deriv_control!();
         deriv_fn!(OpDPdxCoarse, self)
     }
 
@@ -95,7 +86,6 @@ pub unsafe trait Derivative: Sealed + Default {
     #[crate::macros::gpu_only]
     #[inline]
     fn ddy_fine(self) -> Self {
-        cap_deriv_control!();
         deriv_fn!(OpDPdyFine, self)
     }
 
@@ -111,7 +101,6 @@ pub unsafe trait Derivative: Sealed + Default {
     #[crate::macros::gpu_only]
     #[inline]
     fn ddy_coarse(self) -> Self {
-        cap_deriv_control!();
         deriv_fn!(OpDPdyCoarse, self)
     }
 
@@ -136,7 +125,6 @@ pub unsafe trait Derivative: Sealed + Default {
     #[crate::macros::gpu_only]
     #[inline]
     fn fwidth_fine(self) -> Self {
-        cap_deriv_control!();
         deriv_fn!(OpFwidthFine, self)
     }
 
@@ -149,7 +137,6 @@ pub unsafe trait Derivative: Sealed + Default {
     #[crate::macros::gpu_only]
     #[inline]
     fn fwidth_coarse(self) -> Self {
-        cap_deriv_control!();
         deriv_fn!(OpFwidthCoarse, self)
     }
 }
