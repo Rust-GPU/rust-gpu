@@ -19,6 +19,9 @@ macro_rules! deriv_fn {
 }
 
 /// Types that can be derived by partial derivatives
+///
+/// # Safety
+/// Result Type must be a scalar or vector of floating-point type using the IEEE 754 encoding. The component width must be 32 bits.
 pub unsafe trait Derivative: Sealed + Default {
     /// Result is the partial derivative of `Self` with respect to the window x coordinate. Uses local differencing
     /// based on the value of `Self`. Same result as either [`Self::dfdx_fine`] or [`Self::dfdx_coarse`] on `Self`. Selection of which
