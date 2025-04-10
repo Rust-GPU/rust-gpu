@@ -21,7 +21,7 @@ macro_rules! deriv_fn {
 /// Types that can be derived by partial derivatives
 pub unsafe trait Derivative: Sealed + Default {
     /// Result is the partial derivative of `Self` with respect to the window x coordinate. Uses local differencing
-    /// based on the value of `Self`. Same result as either [`ddx_fine`] or [`ddx_coarse`] on `Self`. Selection of which
+    /// based on the value of `Self`. Same result as either [`dfdx_fine`] or [`dfdx_coarse`] on `Self`. Selection of which
     /// one is based on external factors.
     ///
     /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
@@ -30,7 +30,7 @@ pub unsafe trait Derivative: Sealed + Default {
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
     #[inline]
-    fn ddx(self) -> Self {
+    fn dfdx(self) -> Self {
         deriv_fn!(OpDPdx, self)
     }
 
@@ -43,14 +43,14 @@ pub unsafe trait Derivative: Sealed + Default {
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
     #[inline]
-    fn ddx_fine(self) -> Self {
+    fn dfdx_fine(self) -> Self {
         deriv_fn!(OpDPdxFine, self)
     }
 
     /// Result is the partial derivative of `Self` with respect to the window x coordinate. Uses local differencing
     /// based on the value of `Self` for the current fragment’s neighbors, and possibly, but not necessarily, includes
     /// the value of `Self` for the current fragment. That is, over a given area, the implementation can compute x
-    /// derivatives in fewer unique locations than would be allowed for [`ddx_fine`].
+    /// derivatives in fewer unique locations than would be allowed for [`dfdx_fine`].
     ///
     /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
     /// derivative group have executed all dynamic instances that are program-ordered before X'.
@@ -58,12 +58,12 @@ pub unsafe trait Derivative: Sealed + Default {
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
     #[inline]
-    fn ddx_coarse(self) -> Self {
+    fn dfdx_coarse(self) -> Self {
         deriv_fn!(OpDPdxCoarse, self)
     }
 
     /// Result is the partial derivative of `Self` with respect to the window y coordinate. Uses local differencing
-    /// based on the value of `Self`. Same result as either [`ddy_fine`] or [`ddy_coarse`] on `Self`. Selection of which
+    /// based on the value of `Self`. Same result as either [`dfdy_fine`] or [`dfdy_coarse`] on `Self`. Selection of which
     /// one is based on external factors.
     ///
     /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
@@ -72,7 +72,7 @@ pub unsafe trait Derivative: Sealed + Default {
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
     #[inline]
-    fn ddy(self) -> Self {
+    fn dfdy(self) -> Self {
         deriv_fn!(OpDPdy, self)
     }
 
@@ -85,14 +85,14 @@ pub unsafe trait Derivative: Sealed + Default {
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
     #[inline]
-    fn ddy_fine(self) -> Self {
+    fn dfdy_fine(self) -> Self {
         deriv_fn!(OpDPdyFine, self)
     }
 
     /// Result is the partial derivative of `Self` with respect to the window y coordinate. Uses local differencing
     /// based on the value of `Self` for the current fragment’s neighbors, and possibly, but not necessarily, includes
     /// the value of `Self` for the current fragment. That is, over a given area, the implementation can compute y
-    /// derivatives in fewer unique locations than would be allowed for [`ddy_fine`].
+    /// derivatives in fewer unique locations than would be allowed for [`dfdy_fine`].
     ///
     /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
     /// derivative group have executed all dynamic instances that are program-ordered before X'.
@@ -100,11 +100,11 @@ pub unsafe trait Derivative: Sealed + Default {
     /// This instruction is only valid in the Fragment Execution Model.
     #[crate::macros::gpu_only]
     #[inline]
-    fn ddy_coarse(self) -> Self {
+    fn dfdy_coarse(self) -> Self {
         deriv_fn!(OpDPdyCoarse, self)
     }
 
-    /// Result is the same as computing the sum of the absolute values of [`ddx`] and [`ddy`] on P.
+    /// Result is the same as computing the sum of the absolute values of [`dfdx`] and [`dfdy`] on P.
     ///
     /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
     /// derivative group have executed all dynamic instances that are program-ordered before X'.
@@ -116,7 +116,7 @@ pub unsafe trait Derivative: Sealed + Default {
         deriv_fn!(OpFwidth, self)
     }
 
-    /// Result is the same as computing the sum of the absolute values of [`ddx_fine`] and [`ddy_fine`] on P.
+    /// Result is the same as computing the sum of the absolute values of [`dfdx_fine`] and [`dfdy_fine`] on P.
     ///
     /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
     /// derivative group have executed all dynamic instances that are program-ordered before X'.
@@ -128,7 +128,7 @@ pub unsafe trait Derivative: Sealed + Default {
         deriv_fn!(OpFwidthFine, self)
     }
 
-    /// Result is the same as computing the sum of the absolute values of [`ddx_coarse`] and [`ddy_coarse`] on P.
+    /// Result is the same as computing the sum of the absolute values of [`dfdx_coarse`] and [`dfdy_coarse`] on P.
     ///
     /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
     /// derivative group have executed all dynamic instances that are program-ordered before X'.
