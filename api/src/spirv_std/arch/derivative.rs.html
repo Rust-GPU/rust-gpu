@@ -100,106 +100,204 @@
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
 <a href="#101" id="101">101</a>
-<a href="#102" id="102">102</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::float::Float;
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::sealed::Sealed;
+<span class="kw">use </span>glam::{Vec2, Vec3, Vec3A, Vec4};
 
 <span class="attr">#[cfg(target_arch = <span class="string">"spirv"</span>)]
 </span><span class="macro">macro_rules!</span> deriv_fn {
-    (<span class="macro-nonterminal">$p</span>:ident, <span class="macro-nonterminal">$inst</span>:ident) =&gt; {
+    (<span class="macro-nonterminal">$inst</span>:ident, <span class="macro-nonterminal">$param</span>:expr) =&gt; {
         <span class="kw">unsafe </span>{
-            <span class="kw">let </span><span class="kw-2">mut </span>o = Default::default();
-            <span class="macro">::core::arch::asm!</span>(
-                <span class="string">"%input = OpLoad _ {0}"</span>,
-                <span class="macro">concat!</span>(<span class="string">"%result = "</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$inst</span>), <span class="string">" _ %input"</span>),
-                <span class="string">"OpStore {1} %result"</span>,
-                <span class="kw">in</span>(reg) <span class="kw-2">&amp;</span><span class="macro-nonterminal">$p</span>,
-                <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>o,
+            <span class="kw">let </span><span class="kw-2">mut </span>result = Default::default();
+            <span class="macro">core::arch::asm!</span>(
+                <span class="string">"%input = OpLoad typeof*{1} {1}"</span>,
+                <span class="macro">concat!</span>(<span class="string">"%result = "</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$inst</span>), <span class="string">" typeof*{1} %input"</span>),
+                <span class="string">"OpStore {0} %result"</span>,
+                <span class="kw">in</span>(reg) <span class="kw-2">&amp;mut </span>result,
+                <span class="kw">in</span>(reg) <span class="kw-2">&amp;</span><span class="macro-nonterminal">$param</span>,
             );
-            o
+            result
         }
     };
 }
 
-<span class="doccomment">/// Returns the partial derivative of `component` with respect to the window's X
-/// coordinate. Returns the same result as either [`ddx_fine`] or
-/// [`ddx_coarse`], selection of which one is dependent on external factors.
-</span><span class="attr">#[<span class="kw">crate</span>::macros::vectorized]
-#[<span class="kw">crate</span>::macros::gpu_only]
-</span><span class="kw">pub fn </span>ddx&lt;F: Float&gt;(component: F) -&gt; F {
-    <span class="macro">deriv_fn!</span>(component, OpDPdx)
+<span class="doccomment">/// Types that can be derived by partial derivatives
+///
+/// # Safety
+/// Result Type must be a scalar or vector of floating-point type using the IEEE 754 encoding. The component width must be 32 bits.
+</span><span class="kw">pub unsafe trait </span>Derivative: Sealed + Default {
+    <span class="doccomment">/// Result is the partial derivative of `Self` with respect to the window x coordinate. Uses local differencing
+    /// based on the value of `Self`. Same result as either [`Self::dfdx_fine`] or [`Self::dfdx_coarse`] on `Self`. Selection of which
+    /// one is based on external factors.
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    </span><span class="attr">#[<span class="kw">crate</span>::macros::gpu_only]
+    #[inline]
+    </span><span class="kw">fn </span>dfdx(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="macro">deriv_fn!</span>(OpDPdx, <span class="self">self</span>)
+    }
+
+    <span class="doccomment">/// Result is the partial derivative of `Self` with respect to the window x coordinate. Uses local differencing
+    /// based on the value of `Self` for the current fragment and its immediate neighbor(s).
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    </span><span class="attr">#[<span class="kw">crate</span>::macros::gpu_only]
+    #[inline]
+    </span><span class="kw">fn </span>dfdx_fine(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="macro">deriv_fn!</span>(OpDPdxFine, <span class="self">self</span>)
+    }
+
+    <span class="doccomment">/// Result is the partial derivative of `Self` with respect to the window x coordinate. Uses local differencing
+    /// based on the value of `Self` for the current fragment’s neighbors, and possibly, but not necessarily, includes
+    /// the value of `Self` for the current fragment. That is, over a given area, the implementation can compute x
+    /// derivatives in fewer unique locations than would be allowed for [`Self::dfdx_fine`].
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    </span><span class="attr">#[<span class="kw">crate</span>::macros::gpu_only]
+    #[inline]
+    </span><span class="kw">fn </span>dfdx_coarse(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="macro">deriv_fn!</span>(OpDPdxCoarse, <span class="self">self</span>)
+    }
+
+    <span class="doccomment">/// Result is the partial derivative of `Self` with respect to the window y coordinate. Uses local differencing
+    /// based on the value of `Self`. Same result as either [`Self::dfdy_fine`] or [`Self::dfdy_coarse`] on `Self`. Selection of which
+    /// one is based on external factors.
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    </span><span class="attr">#[<span class="kw">crate</span>::macros::gpu_only]
+    #[inline]
+    </span><span class="kw">fn </span>dfdy(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="macro">deriv_fn!</span>(OpDPdy, <span class="self">self</span>)
+    }
+
+    <span class="doccomment">/// Result is the partial derivative of `Self` with respect to the window y coordinate. Uses local differencing
+    /// based on the value of `Self` for the current fragment and its immediate neighbor(s).
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    </span><span class="attr">#[<span class="kw">crate</span>::macros::gpu_only]
+    #[inline]
+    </span><span class="kw">fn </span>dfdy_fine(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="macro">deriv_fn!</span>(OpDPdyFine, <span class="self">self</span>)
+    }
+
+    <span class="doccomment">/// Result is the partial derivative of `Self` with respect to the window y coordinate. Uses local differencing
+    /// based on the value of `Self` for the current fragment’s neighbors, and possibly, but not necessarily, includes
+    /// the value of `Self` for the current fragment. That is, over a given area, the implementation can compute y
+    /// derivatives in fewer unique locations than would be allowed for [`Self::dfdy_fine`].
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    </span><span class="attr">#[<span class="kw">crate</span>::macros::gpu_only]
+    #[inline]
+    </span><span class="kw">fn </span>dfdy_coarse(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="macro">deriv_fn!</span>(OpDPdyCoarse, <span class="self">self</span>)
+    }
+
+    <span class="doccomment">/// Result is the same as computing the sum of the absolute values of [`Self::dfdx`] and [`Self::dfdy`] on P.
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    </span><span class="attr">#[<span class="kw">crate</span>::macros::gpu_only]
+    #[inline]
+    </span><span class="kw">fn </span>fwidth(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="macro">deriv_fn!</span>(OpFwidth, <span class="self">self</span>)
+    }
+
+    <span class="doccomment">/// Result is the same as computing the sum of the absolute values of [`Self::dfdx_fine`] and [`Self::dfdy_fine`] on P.
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    </span><span class="attr">#[<span class="kw">crate</span>::macros::gpu_only]
+    #[inline]
+    </span><span class="kw">fn </span>fwidth_fine(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="macro">deriv_fn!</span>(OpFwidthFine, <span class="self">self</span>)
+    }
+
+    <span class="doccomment">/// Result is the same as computing the sum of the absolute values of [`Self::dfdx_coarse`] and [`Self::dfdy_coarse`] on P.
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    </span><span class="attr">#[<span class="kw">crate</span>::macros::gpu_only]
+    #[inline]
+    </span><span class="kw">fn </span>fwidth_coarse(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="macro">deriv_fn!</span>(OpFwidthCoarse, <span class="self">self</span>)
+    }
 }
 
-<span class="doccomment">/// Returns the partial derivative of `component` with respect to the window's X
-/// coordinate. Uses local differencing based on the value of `component` for
-/// the current fragment and its immediate neighbor(s).
-</span><span class="attr">#[<span class="kw">crate</span>::macros::vectorized]
-#[<span class="kw">crate</span>::macros::gpu_only]
-</span><span class="kw">pub fn </span>ddx_fine&lt;F: Float&gt;(component: F) -&gt; F {
-    <span class="macro">deriv_fn!</span>(component, OpDPdxFine)
-}
-
-<span class="doccomment">/// Returns the partial derivative of `component` with respect to the window's X
-/// coordinate. Uses local differencing based on the value of `component` for
-/// the current fragment’s neighbors, and possibly, but not necessarily,
-/// includes the value of `component` for the current fragment. That is, over a
-/// given area, the implementation can compute X derivatives in fewer unique
-/// locations than would be allowed by [`ddx_fine`].
-</span><span class="attr">#[<span class="kw">crate</span>::macros::vectorized]
-#[<span class="kw">crate</span>::macros::gpu_only]
-</span><span class="kw">pub fn </span>ddx_coarse&lt;F: Float&gt;(component: F) -&gt; F {
-    <span class="macro">deriv_fn!</span>(component, OpDPdxCoarse)
-}
-
-<span class="doccomment">/// Returns the partial derivative of `component` with respect to the window's Y
-/// coordinate. Returns the same result as either [`ddy_fine`] or
-/// [`ddy_coarse`], selection of which one is dependent on external factors.
-</span><span class="attr">#[<span class="kw">crate</span>::macros::vectorized]
-#[<span class="kw">crate</span>::macros::gpu_only]
-</span><span class="kw">pub fn </span>ddy&lt;F: Float&gt;(component: F) -&gt; F {
-    <span class="macro">deriv_fn!</span>(component, OpDPdy)
-}
-
-<span class="doccomment">/// Returns the partial derivative of `component` with respect to the window's Y
-/// coordinate. Uses local differencing based on the value of `component` for
-/// the current fragment and its immediate neighbor(s).
-</span><span class="attr">#[<span class="kw">crate</span>::macros::vectorized]
-#[<span class="kw">crate</span>::macros::gpu_only]
-</span><span class="kw">pub fn </span>ddy_fine&lt;F: Float&gt;(component: F) -&gt; F {
-    <span class="macro">deriv_fn!</span>(component, OpDPdyFine)
-}
-
-<span class="doccomment">/// Returns the partial derivative of `component` with respect to the window's Y
-/// coordinate. Uses local differencing based on the value of `component` for
-/// the current fragment’s neighbors, and possibly, but not necessarily,
-/// includes the value of `component` for the current fragment. That is, over a
-/// given area, the implementation can compute Y derivatives in fewer unique
-/// locations than would be allowed by [`ddy_fine`].
-</span><span class="attr">#[<span class="kw">crate</span>::macros::vectorized]
-#[<span class="kw">crate</span>::macros::gpu_only]
-</span><span class="kw">pub fn </span>ddy_coarse&lt;F: Float&gt;(component: F) -&gt; F {
-    <span class="macro">deriv_fn!</span>(component, OpDPdyCoarse)
-}
-
-<span class="doccomment">/// Returns the sum of the absolute values of [`ddx`] and [`ddy`] as a single
-/// operation.
-</span><span class="attr">#[<span class="kw">crate</span>::macros::vectorized]
-#[<span class="kw">crate</span>::macros::gpu_only]
-</span><span class="kw">pub fn </span>fwidth&lt;F: Float&gt;(component: F) -&gt; F {
-    <span class="macro">deriv_fn!</span>(component, OpFwidth)
-}
-
-<span class="doccomment">/// Returns the sum of the absolute values of [`ddx_fine`] and [`ddy_fine`] as a
-/// single operation.
-</span><span class="attr">#[<span class="kw">crate</span>::macros::vectorized]
-#[<span class="kw">crate</span>::macros::gpu_only]
-</span><span class="kw">pub fn </span>fwidth_fine&lt;F: Float&gt;(component: F) -&gt; F {
-    <span class="macro">deriv_fn!</span>(component, OpFwidthFine)
-}
-
-<span class="doccomment">/// Returns the sum of the absolute values of [`ddx_coarse`] and [`ddy_coarse`]
-/// as a single operation.
-</span><span class="attr">#[<span class="kw">crate</span>::macros::vectorized]
-#[<span class="kw">crate</span>::macros::gpu_only]
-</span><span class="kw">pub fn </span>fwidth_coarse&lt;F: Float&gt;(component: F) -&gt; F {
-    <span class="macro">deriv_fn!</span>(component, OpFwidthCoarse)
-}
+<span class="kw">unsafe impl </span>Derivative <span class="kw">for </span>f32 {}
+<span class="kw">unsafe impl </span>Derivative <span class="kw">for </span>Vec2 {}
+<span class="kw">unsafe impl </span>Derivative <span class="kw">for </span>Vec3 {}
+<span class="kw">unsafe impl </span>Derivative <span class="kw">for </span>Vec4 {}
+<span class="kw">unsafe impl </span>Derivative <span class="kw">for </span>Vec3A {}
 </code></pre></div></section></main></body></html>
