@@ -1,102 +1,152 @@
-use crate::float::Float;
+use crate::sealed::Sealed;
+use glam::{Vec2, Vec3, Vec3A, Vec4};
 
-#[cfg(target_arch = "spirv")]
-macro_rules! deriv_fn {
-    ($p:ident, $inst:ident) => {
+macro_rules! cap_deriv_control {
+    () => {
         unsafe {
-            let mut o = Default::default();
-            ::core::arch::asm!(
-                "%input = OpLoad _ {0}",
-                concat!("%result = ", stringify!($inst), " _ %input"),
-                "OpStore {1} %result",
-                in(reg) &$p,
-                in(reg) &mut o,
-            );
-            o
+            core::arch::asm!("OpCapability DerivativeControl");
         }
     };
 }
 
-/// Returns the partial derivative of `component` with respect to the window's X
-/// coordinate. Returns the same result as either [`ddx_fine`] or
-/// [`ddx_coarse`], selection of which one is dependent on external factors.
-#[crate::macros::vectorized]
-#[crate::macros::gpu_only]
-pub fn ddx<F: Float>(component: F) -> F {
-    deriv_fn!(component, OpDPdx)
+macro_rules! deriv_fn {
+    ($inst:ident, $param:expr) => {
+        unsafe {
+            let mut result = Default::default();
+            core::arch::asm!(
+                "%input = OpLoad typeof*{1} {1}",
+                concat!("%result = ", stringify!($inst), " typeof*{1} %input"),
+                "OpStore {0} %result",
+                in(reg) &mut result,
+                in(reg) &$param,
+            );
+            result
+        }
+    };
 }
 
-/// Returns the partial derivative of `component` with respect to the window's X
-/// coordinate. Uses local differencing based on the value of `component` for
-/// the current fragment and its immediate neighbor(s).
-#[crate::macros::vectorized]
-#[crate::macros::gpu_only]
-pub fn ddx_fine<F: Float>(component: F) -> F {
-    deriv_fn!(component, OpDPdxFine)
+/// Types that can be derived by partial derivatives
+pub unsafe trait Derivative: Sealed + Default {
+    /// Result is the partial derivative of `Self` with respect to the window x coordinate. Uses local differencing
+    /// based on the value of `Self`. Same result as either [`ddx_fine`] or [`ddx_coarse`] on `Self`. Selection of which
+    /// one is based on external factors.
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    #[crate::macros::gpu_only]
+    fn ddx(self) -> Self {
+        deriv_fn!(OpDPdx, self)
+    }
+
+    /// Result is the partial derivative of `Self` with respect to the window x coordinate. Uses local differencing
+    /// based on the value of `Self` for the current fragment and its immediate neighbor(s).
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    #[crate::macros::gpu_only]
+    fn ddx_fine(self) -> Self {
+        cap_deriv_control!();
+        deriv_fn!(OpDPdxFine, self)
+    }
+
+    /// Result is the partial derivative of `Self` with respect to the window x coordinate. Uses local differencing
+    /// based on the value of `Self` for the current fragment’s neighbors, and possibly, but not necessarily, includes
+    /// the value of `Self` for the current fragment. That is, over a given area, the implementation can compute x
+    /// derivatives in fewer unique locations than would be allowed for [`ddx_fine`].
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    #[crate::macros::gpu_only]
+    fn ddx_coarse(self) -> Self {
+        cap_deriv_control!();
+        deriv_fn!(OpDPdxCoarse, self)
+    }
+
+    /// Result is the partial derivative of `Self` with respect to the window y coordinate. Uses local differencing
+    /// based on the value of `Self`. Same result as either [`ddy_fine`] or [`ddy_coarse`] on `Self`. Selection of which
+    /// one is based on external factors.
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    #[crate::macros::gpu_only]
+    fn ddy(self) -> Self {
+        deriv_fn!(OpDPdy, self)
+    }
+
+    /// Result is the partial derivative of `Self` with respect to the window y coordinate. Uses local differencing
+    /// based on the value of `Self` for the current fragment and its immediate neighbor(s).
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    #[crate::macros::gpu_only]
+    fn ddy_fine(self) -> Self {
+        cap_deriv_control!();
+        deriv_fn!(OpDPdyFine, self)
+    }
+
+    /// Result is the partial derivative of `Self` with respect to the window y coordinate. Uses local differencing
+    /// based on the value of `Self` for the current fragment’s neighbors, and possibly, but not necessarily, includes
+    /// the value of `Self` for the current fragment. That is, over a given area, the implementation can compute y
+    /// derivatives in fewer unique locations than would be allowed for [`ddy_fine`].
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    #[crate::macros::gpu_only]
+    fn ddy_coarse(self) -> Self {
+        cap_deriv_control!();
+        deriv_fn!(OpDPdyCoarse, self)
+    }
+
+    /// Result is the same as computing the sum of the absolute values of [`ddx`] and [`ddy`] on P.
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    #[crate::macros::gpu_only]
+    fn fwidth(self) -> Self {
+        deriv_fn!(OpFwidth, self)
+    }
+
+    /// Result is the same as computing the sum of the absolute values of [`ddx_fine`] and [`ddy_fine`] on P.
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    #[crate::macros::gpu_only]
+    fn fwidth_fine(self) -> Self {
+        cap_deriv_control!();
+        deriv_fn!(OpFwidthFine, self)
+    }
+
+    /// Result is the same as computing the sum of the absolute values of [`ddx_coarse`] and [`ddy_coarse`] on P.
+    ///
+    /// An invocation will not execute a dynamic instance of this instruction (X') until all invocations in its
+    /// derivative group have executed all dynamic instances that are program-ordered before X'.
+    ///
+    /// This instruction is only valid in the Fragment Execution Model.
+    #[crate::macros::gpu_only]
+    fn fwidth_coarse(self) -> Self {
+        cap_deriv_control!();
+        deriv_fn!(OpFwidthCoarse, self)
+    }
 }
 
-/// Returns the partial derivative of `component` with respect to the window's X
-/// coordinate. Uses local differencing based on the value of `component` for
-/// the current fragment’s neighbors, and possibly, but not necessarily,
-/// includes the value of `component` for the current fragment. That is, over a
-/// given area, the implementation can compute X derivatives in fewer unique
-/// locations than would be allowed by [`ddx_fine`].
-#[crate::macros::vectorized]
-#[crate::macros::gpu_only]
-pub fn ddx_coarse<F: Float>(component: F) -> F {
-    deriv_fn!(component, OpDPdxCoarse)
-}
-
-/// Returns the partial derivative of `component` with respect to the window's Y
-/// coordinate. Returns the same result as either [`ddy_fine`] or
-/// [`ddy_coarse`], selection of which one is dependent on external factors.
-#[crate::macros::vectorized]
-#[crate::macros::gpu_only]
-pub fn ddy<F: Float>(component: F) -> F {
-    deriv_fn!(component, OpDPdy)
-}
-
-/// Returns the partial derivative of `component` with respect to the window's Y
-/// coordinate. Uses local differencing based on the value of `component` for
-/// the current fragment and its immediate neighbor(s).
-#[crate::macros::vectorized]
-#[crate::macros::gpu_only]
-pub fn ddy_fine<F: Float>(component: F) -> F {
-    deriv_fn!(component, OpDPdyFine)
-}
-
-/// Returns the partial derivative of `component` with respect to the window's Y
-/// coordinate. Uses local differencing based on the value of `component` for
-/// the current fragment’s neighbors, and possibly, but not necessarily,
-/// includes the value of `component` for the current fragment. That is, over a
-/// given area, the implementation can compute Y derivatives in fewer unique
-/// locations than would be allowed by [`ddy_fine`].
-#[crate::macros::vectorized]
-#[crate::macros::gpu_only]
-pub fn ddy_coarse<F: Float>(component: F) -> F {
-    deriv_fn!(component, OpDPdyCoarse)
-}
-
-/// Returns the sum of the absolute values of [`ddx`] and [`ddy`] as a single
-/// operation.
-#[crate::macros::vectorized]
-#[crate::macros::gpu_only]
-pub fn fwidth<F: Float>(component: F) -> F {
-    deriv_fn!(component, OpFwidth)
-}
-
-/// Returns the sum of the absolute values of [`ddx_fine`] and [`ddy_fine`] as a
-/// single operation.
-#[crate::macros::vectorized]
-#[crate::macros::gpu_only]
-pub fn fwidth_fine<F: Float>(component: F) -> F {
-    deriv_fn!(component, OpFwidthFine)
-}
-
-/// Returns the sum of the absolute values of [`ddx_coarse`] and [`ddy_coarse`]
-/// as a single operation.
-#[crate::macros::vectorized]
-#[crate::macros::gpu_only]
-pub fn fwidth_coarse<F: Float>(component: F) -> F {
-    deriv_fn!(component, OpFwidthCoarse)
-}
+unsafe impl Derivative for f32 {}
+unsafe impl Derivative for Vec2 {}
+unsafe impl Derivative for Vec3 {}
+unsafe impl Derivative for Vec4 {}
+unsafe impl Derivative for Vec3A {}
