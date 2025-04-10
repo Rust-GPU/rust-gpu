@@ -10,7 +10,7 @@ pub fn main() {
 }
 
 pub fn derivative() {
-    Derivative::ddx(0.);
-    Derivative::ddy(0.);
+    Derivative::dfdx(0.);
+    Derivative::dfdy(0.);
     Derivative::fwidth(0.);
 }

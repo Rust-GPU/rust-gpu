@@ -11,11 +11,11 @@ pub fn main() {
 }
 
 pub fn derivative() {
-    Derivative::ddx_fine(0.);
-    Derivative::ddy_fine(0.);
+    Derivative::dfdx_fine(0.);
+    Derivative::dfdy_fine(0.);
     Derivative::fwidth_fine(0.);
 
-    Derivative::ddx_coarse(0.);
-    Derivative::ddy_coarse(0.);
+    Derivative::dfdx_coarse(0.);
+    Derivative::dfdy_coarse(0.);
     Derivative::fwidth_coarse(0.);
 }
