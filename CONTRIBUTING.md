@@ -5,9 +5,7 @@ Welcome! We're glad you're interested in contributing! We welcome contributions 
 ## How to get help
 
 For questions, clarifications, and general help please first search [Github
-discussions](discussions) and then ask your question if you can't find the answer.
-
-[discussions]: https://github.com/rust-gpu/rust-gpu/discussions
+discussions](https://github.com/rust-gpu/rust-gpu/discussions) and then ask your question if you can't find the answer.
 
 ## Issues
 
