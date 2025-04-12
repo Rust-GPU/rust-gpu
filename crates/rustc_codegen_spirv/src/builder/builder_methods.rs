@@ -627,7 +627,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         }
     }
 
-    #[instrument(level = "trace", skip(self), fields(ty = ?self.debug_type(ty), ptr, combined_indices = ?combined_indices.into_iter().map(|x| (self.debug_type(x.ty), x.kind)).collect::<Vec<_>>(), is_inbounds))]
+    #[instrument(level = "trace", skip(self), fields(ty = ?self.debug_type(ty), ptr, combined_indices = ?combined_indices.iter().map(|x| (self.debug_type(x.ty), x.kind)).collect::<Vec<_>>(), is_inbounds))]
     fn maybe_inbounds_gep(
         &mut self,
         // Represents the type of the element that `ptr` is assumed to point to
