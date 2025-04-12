@@ -996,7 +996,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     #[instrument(
-        level = "debug",
+        level = "trace",
         skip(self),
         fields(
             result_type = ?self.debug_type(result_type),
