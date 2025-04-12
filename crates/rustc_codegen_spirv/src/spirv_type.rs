@@ -373,6 +373,9 @@ impl SpirvType<'_> {
                     .bytes(),
             )
             .expect("alignof: Vectors must have power-of-2 size"),
+            Self::Array { count, .. } if cx.builder.lookup_const_scalar(count) == Some(0) => {
+                Align::from_bytes(0).unwrap()
+            }
             Self::Array { element, .. }
             | Self::RuntimeArray { element }
             | Self::Matrix { element, .. } => cx.lookup_type(element).alignof(cx),
