@@ -650,6 +650,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // the index applied directly to `ptr`, effectively an offset multiplier based
         // on the size of `ty`. `indices` are the subsequent indices used to drill down
         // into fields or elements of `ty`.
+        // https://llvm.org/docs/GetElementPtr.html
+        // "An OpAccessChain instruction is the equivalent of an LLVM getelementptr instruction where the first index element is zero."
+        // https://github.com/gpuweb/gpuweb/issues/33
         let (&ptr_base_index, indices) = combined_indices.split_first().unwrap();
 
         // Determine if this GEP operation is effectively byte-level addressing.
