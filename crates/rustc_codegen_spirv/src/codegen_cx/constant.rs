@@ -367,7 +367,7 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 
     pub fn create_const_alloc(&self, alloc: ConstAllocation<'tcx>, ty: Word) -> SpirvValue {
-        tracing::debug!(
+        tracing::trace!(
             "Creating const alloc of type {} with {} bytes",
             self.debug_type(ty),
             alloc.inner().len()
@@ -379,7 +379,7 @@ impl<'tcx> CodegenCx<'tcx> {
             alloc.inner().len(),
             "create_const_alloc must consume all bytes of an Allocation"
         );
-        tracing::debug!("Done creating alloc of type {}", self.debug_type(ty));
+        tracing::trace!("Done creating alloc of type {}", self.debug_type(ty));
         result
     }
 
