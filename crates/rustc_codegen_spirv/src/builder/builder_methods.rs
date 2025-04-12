@@ -36,7 +36,7 @@ use std::iter::{self, empty};
 use std::ops::RangeInclusive;
 
 use tracing::{Level, instrument, span};
-use tracing::{debug, warn};
+use tracing::{trace, warn};
 
 macro_rules! simple_op {
     (
@@ -423,7 +423,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         ptr: SpirvValue,
         ty: <Self as BackendTypes>::Type,
     ) -> (SpirvValue, <Self as BackendTypes>::Type) {
-        debug!("currently in adjust_pointer_for_typed_access");
         self.lookup_type(ty)
             .sizeof(self)
             .and_then(|size| self.adjust_pointer_for_sized_access(ptr, size))
@@ -451,7 +450,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             other => self.fatal(format!("`ptr` is non-pointer type: {other:?}")),
         };
 
-        debug!(
+        trace!(
             "before nested adjust_pointer_for_sized_access. `leaf_ty`: {}",
             self.debug_type(leaf_ty)
         );
@@ -467,7 +466,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             leaf_ty = inner_ty;
         }
 
-        debug!(
+        trace!(
             "after nested adjust_pointer_for_sized_access. `leaf_ty`: {}",
             self.debug_type(leaf_ty)
         );
@@ -488,7 +487,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 .with_type(leaf_ptr_ty)
         };
 
-        debug!(
+        trace!(
             "adjust_pointer_for_sized_access returning {} {}",
             self.debug_type(leaf_ptr.ty),
             self.debug_type(leaf_ty)
@@ -513,14 +512,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         leaf_ty: Option<<Self as BackendTypes>::Type>,
     ) -> Option<(SmallVec<[u32; 8]>, <Self as BackendTypes>::Type)> {
         assert_ne!(Some(ty), leaf_ty);
-        debug!("recovering access chain: ty: {:?}", self.debug_type(ty));
         if let Some(leaf_ty) = leaf_ty {
-            debug!(
+            trace!(
                 "recovering access chain: leaf_ty: {:?}",
                 self.debug_type(leaf_ty)
             );
         } else {
-            debug!("recovering access chain: leaf_ty: None");
+            trace!("recovering access chain: leaf_ty: None");
         }
 
         // HACK(eddyb) this has the correct ordering (`Sized(_) < Unsized`).
@@ -536,7 +534,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             start..=end
         };
 
-        debug!("leaf_size_range: {:?}", leaf_size_range);
+        trace!("leaf_size_range: {:?}", leaf_size_range);
 
         // NOTE(eddyb) `ty` and `ty_kind`/`ty_size` should be kept in sync.
         let mut ty_kind = self.lookup_type(ty);
@@ -550,7 +548,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     field_offsets,
                     ..
                 } => {
-                    debug!("recovering access chain from ADT");
+                    trace!("recovering access chain from ADT");
                     let (i, field_ty, field_ty_kind, field_ty_size, offset_in_field) = field_offsets
                         .iter()
                         .enumerate()
@@ -580,25 +578,25 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                         })?;
 
                     ty = field_ty;
-                    debug!("setting ty = field_ty: {:?}", self.debug_type(field_ty));
+                    trace!("setting ty = field_ty: {:?}", self.debug_type(field_ty));
                     ty_kind = field_ty_kind;
-                    debug!("setting ty_kind = field_ty_kind: {:?}", field_ty_kind);
+                    trace!("setting ty_kind = field_ty_kind: {:?}", field_ty_kind);
                     ty_size = field_ty_size;
-                    debug!("setting ty_size = field_ty_size: {:?}", field_ty_size);
+                    trace!("setting ty_size = field_ty_size: {:?}", field_ty_size);
 
                     indices.push(i as u32);
                     offset = offset_in_field;
-                    debug!("setting offset = offset_in_field: {:?}", offset_in_field);
+                    trace!("setting offset = offset_in_field: {:?}", offset_in_field);
                 }
                 SpirvType::Vector { element, .. }
                 | SpirvType::Array { element, .. }
                 | SpirvType::RuntimeArray { element }
                 | SpirvType::Matrix { element, .. } => {
-                    debug!("recovering access chain from Vector, Array, RuntimeArray, or Matrix");
+                    trace!("recovering access chain from Vector, Array, RuntimeArray, or Matrix");
                     ty = element;
-                    debug!("setting ty = element: {:?}", self.debug_type(element));
+                    trace!("setting ty = element: {:?}", self.debug_type(element));
                     ty_kind = self.lookup_type(ty);
-                    debug!("looked up ty kind: {:?}", ty_kind);
+                    trace!("looked up ty kind: {:?}", ty_kind);
 
                     let stride = ty_kind.sizeof(self)?;
                     ty_size = MaybeSized::Sized(stride);
@@ -607,14 +605,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     offset = Size::from_bytes(offset.bytes() % stride.bytes());
                 }
                 _ => {
-                    debug!("recovering access chain from SOMETHING ELSE, RETURNING NONE");
+                    trace!("recovering access chain from SOMETHING ELSE, RETURNING NONE");
                     return None;
                 }
             }
 
             // Avoid digging beyond the point the leaf could actually fit.
             if ty_size < *leaf_size_range.start() {
-                debug!("avoiding digging beyond the point the leaf could actually fit");
+                trace!("avoiding digging beyond the point the leaf could actually fit");
                 return None;
             }
 
@@ -622,8 +620,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 && leaf_size_range.contains(&ty_size)
                 && leaf_ty.map_or(true, |leaf_ty| leaf_ty == ty)
             {
-                debug!("returning type: {:?}", self.debug_type(ty));
-                debug!("returning indices with len: {:?}", indices.len());
+                trace!("returning type: {:?}", self.debug_type(ty));
+                trace!("returning indices with len: {:?}", indices.len());
                 return Some((indices, ty));
             }
         }
@@ -654,14 +652,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // into fields or elements of `ty`.
         let (&ptr_base_index, indices) = combined_indices.split_first().unwrap();
 
-        debug!("maybe_inbounds_gep: ty: {:?}", self.debug_type(ty));
-
         // Determine if this GEP operation is effectively byte-level addressing.
         // This check is based on the *provided* input type `ty`. If `ty` is i8 or u8,
         // it suggests the caller intends to perform byte-offset calculations,
         // which might allow for more flexible type recovery later.
         let is_byte_gep = matches!(self.lookup_type(ty), SpirvType::Integer(8, _));
-        debug!("Is byte GEP (based on input type): {}", is_byte_gep);
+        trace!("Is byte GEP (based on input type): {}", is_byte_gep);
 
         // --- Calculate the final pointee type based on the GEP operation ---
 
@@ -709,11 +705,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // type. This is the *required* result type for the SPIR-V `AccessChain`
         // instruction.
         let final_spirv_ptr_type = self.type_ptr_to(calculated_pointee_type);
-        debug!(
+        trace!(
             "Calculated final SPIR-V pointee type: {}",
             self.debug_type(calculated_pointee_type)
         );
-        debug!(
+        trace!(
             "Calculated final SPIR-V ptr type: {}",
             self.debug_type(final_spirv_ptr_type)
         );
@@ -773,7 +769,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 None,
             ) {
                 // Recovery successful! Found a structured path (`base_indices`) to the target offset.
-                debug!(
+                trace!(
                     "`recover_access_chain_from_offset` returned Some with base_pointee_ty: {}",
                     self.debug_type(base_pointee_ty)
                 );
@@ -789,14 +785,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let result_wrapper_type = if !is_byte_gep
                     || matches!(self.lookup_type(base_pointee_ty), SpirvType::Integer(8, _))
                 {
-                    debug!(
+                    trace!(
                         "Using strictly calculated type for wrapper: {}",
                         // Use type based on input `ty` + `indices`
                         self.debug_type(calculated_pointee_type)
                     );
                     final_spirv_ptr_type
                 } else {
-                    debug!(
+                    trace!(
                         "Byte GEP allowing recovered type for wrapper: {}",
                         // Use type based on recovery result
                         self.debug_type(base_pointee_ty)
@@ -823,7 +819,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                         .chain(gep_indices_ids.iter().copied())
                         .collect();
 
-                    debug!(
+                    trace!(
                         "emitting access chain via recovery path with wrapper type: {}",
                         self.debug_type(result_wrapper_type)
                     );
@@ -841,7 +837,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     // AND there are more `indices` to process. Using the `base_indices` derived from
                     // `original_pointee_ty` would be incorrect for interpreting the subsequent `indices`
                     // which were intended to operate relative to `ty`. Fall back to the standard path.
-                    debug!(
+                    trace!(
                         "Recovery type mismatch ({}) vs ({}) and GEP indices exist, falling back",
                         self.debug_type(ty),
                         self.debug_type(base_pointee_ty)
@@ -849,7 +845,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 }
             } else {
                 // `recover_access_chain_from_offset` couldn't find a structured path for the constant offset.
-                debug!("`recover_access_chain_from_offset` returned None, falling back");
+                trace!("`recover_access_chain_from_offset` returned None, falling back");
             }
         }
 
@@ -900,7 +896,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
         // If we found that `ptr` was defined by a previous `AccessChain`...
         if let Some((original_ptr, mut original_indices)) = maybe_original_access_chain {
-            debug!("has original access chain, attempting to merge GEPs");
+            trace!("has original access chain, attempting to merge GEPs");
 
             // Check if merging is possible. Requires:
             // 1. The original AccessChain had at least one index.
@@ -933,7 +929,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 // Append the remaining indices (`indices`) from the current GEP operation.
                 original_indices.extend(gep_indices_ids);
 
-                debug!(
+                trace!(
                     "emitting merged access chain with pointer to type: {}",
                     self.debug_type(calculated_pointee_type)
                 );
@@ -949,14 +945,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             } else {
                 // Cannot merge because one or both relevant indices are not constant,
                 // or the original chain was empty.
-                debug!(
+                trace!(
                     "Last index or base offset is not constant, or no last index, cannot merge."
                 );
             }
         } else {
             // The base pointer `ptr` was not the result of an AccessChain, or merging
             // wasn't attempted due to type mismatch.
-            debug!("no original access chain to merge with");
+            trace!("no original access chain to merge with");
         }
         // --- End GEP Merging Path ---
 
@@ -974,13 +970,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // pointer's pointee type when applying the *first* index operand (our
         // `ptr_base_index`). If `ty` and `original_pointee_ty` mismatched and we
         // reached this fallback, this cast ensures SPIR-V validity.
-        debug!("maybe_inbounds_gep fallback path calling pointercast");
+        trace!("maybe_inbounds_gep fallback path calling pointercast");
         // Cast ptr to point to `ty`.
         let ptr = self.pointercast(ptr, self.type_ptr_to(ty));
         // Get the ID of the (potentially newly casted) pointer.
         let ptr_id = ptr.def(self);
 
-        debug!(
+        trace!(
             "emitting access chain via fallback path with pointer type: {}",
             self.debug_type(final_spirv_ptr_type)
         );
@@ -2079,13 +2075,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         }
     }
 
-    #[instrument(level = "trace", skip(self), fields(dest_ty = ?self.debug_type(dest_ty)))]
+    #[instrument(level = "trace", skip(self), fields(val_type = ?self.debug_type(val.ty), dest_ty = ?self.debug_type(dest_ty)))]
     fn bitcast(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
-        debug!(
-            "bitcast val: {} -> dest: {}",
-            self.debug_type(val.ty),
-            self.debug_type(dest_ty)
-        );
         if val.ty == dest_ty {
             val
         } else {
@@ -2128,7 +2119,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     .unwrap()
                     .with_type(in_leaf_ty);
 
-                debug!(
+                trace!(
                     "unpacked newtype. val: {} -> in_leaf_ty: {}",
                     self.debug_type(val.ty),
                     self.debug_type(in_leaf_ty),
@@ -2138,14 +2129,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
             // Repack output newtypes, after bitcasting the leaf inside, instead.
             if let Some((indices, out_leaf_ty)) = unpack_newtype(dest_ty, dest_ty_kind) {
-                debug!(
+                trace!(
                     "unpacked newtype: dest: {} -> out_leaf_ty: {}",
                     self.debug_type(dest_ty),
                     self.debug_type(out_leaf_ty),
                 );
                 let out_leaf = self.bitcast(val, out_leaf_ty);
                 let out_agg_undef = self.undef(dest_ty);
-                debug!("returning composite insert");
+                trace!("returning composite insert");
                 return self
                     .emit()
                     .composite_insert(
@@ -2164,11 +2155,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
             // Reuse the pointer-specific logic in `pointercast` for `*T -> *U`.
             if val_is_ptr && dest_is_ptr {
-                debug!("val and dest are both pointers");
+                trace!("val and dest are both pointers");
                 return self.pointercast(val, dest_ty);
             }
 
-            debug!(
+            trace!(
                 "before emitting: val ty: {} -> dest ty: {}",
                 self.debug_type(val.ty),
                 self.debug_type(dest_ty)
@@ -2259,19 +2250,19 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // HACK(eddyb) reuse the special-casing in `const_bitcast`, which relies
         // on adding a pointer type to an untyped pointer (to some const data).
         if let SpirvValueKind::IllegalConst(_) = ptr.kind {
-            debug!("illegal const");
+            trace!("illegal const");
             return self.const_bitcast(ptr, dest_ty);
         }
 
         if ptr.ty == dest_ty {
-            debug!("ptr.ty == dest_ty");
+            trace!("ptr.ty == dest_ty");
             return ptr;
         }
 
         // Strip a previous `pointercast`, to reveal the original pointer type.
         let ptr = ptr.strip_ptrcasts();
 
-        debug!(
+        trace!(
             "ptr type after strippint pointer cases: {}",
             self.debug_type(ptr.ty),
         );
@@ -2300,8 +2291,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             dest_pointee_size..=dest_pointee_size,
             Some(dest_pointee),
         ) {
-            debug!("`recover_access_chain_from_offset` returned something");
-            debug!(
+            trace!("`recover_access_chain_from_offset` returned something");
+            trace!(
                 "ptr_pointee: {}, dest_pointee {}",
                 self.debug_type(ptr_pointee),
                 self.debug_type(dest_pointee),
@@ -2315,8 +2306,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 .unwrap()
                 .with_type(dest_ty)
         } else {
-            debug!("`recover_access_chain_from_offset` returned `None`");
-            debug!(
+            trace!("`recover_access_chain_from_offset` returned `None`");
+            trace!(
                 "ptr_pointee: {}, dest_pointee {}",
                 self.debug_type(ptr_pointee),
                 self.debug_type(dest_pointee),
@@ -2612,7 +2603,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         }
 
         let typed_copy_dst_src = const_size.and_then(|const_size| {
-            debug!(
+            trace!(
                 "adjusting pointers: src: {} -> dst: {}",
                 self.debug_type(src.ty),
                 self.debug_type(dst.ty),
@@ -2622,7 +2613,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             match (dst_adj, src_adj) {
                 // HACK(eddyb) fill in missing `dst`/`src` with the other side.
                 (Some((dst, access_ty)), None) => {
-                    debug!(
+                    trace!(
                         "DESTINATION adjusted memcpy calling pointercast: dst ty: {}, access ty: {}",
                         self.debug_type(dst.ty),
                         self.debug_type(access_ty)
@@ -2630,7 +2621,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     Some((dst, self.pointercast(src, self.type_ptr_to(access_ty))))
                 }
                 (None, Some((src, access_ty))) => {
-                    debug!(
+                    trace!(
                         "SOURCE adjusted memcpy calling pointercast: dst ty: {} -> access ty: {}, src ty: {}",
                         self.debug_type(dst.ty),
                         self.debug_type(access_ty),
@@ -2641,7 +2632,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 (Some((dst, dst_access_ty)), Some((src, src_access_ty)))
                     if dst_access_ty == src_access_ty =>
                 {
-                    debug!("BOTH adjusted memcpy calling pointercast");
+                    trace!("BOTH adjusted memcpy calling pointercast");
                     Some((dst, src))
                 }
                 (None, None) | (Some(_), Some(_)) => None,
@@ -2650,10 +2641,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
         if let Some((dst, src)) = typed_copy_dst_src {
             if let Some(const_value) = src.const_fold_load(self) {
-                debug!("storing const value");
+                trace!("storing const value");
                 self.store(const_value, dst, Align::from_bytes(0).unwrap());
             } else {
-                debug!("copying memory using OpCopyMemory");
+                trace!("copying memory using OpCopyMemory");
                 self.emit()
                     .copy_memory(dst.def(self), src.def(self), None, None, empty())
                     .unwrap();
@@ -2817,7 +2808,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             other => self.fatal(format!("insert_value not implemented on type {other:?}")),
         };
 
-        debug!("insert value");
         // HACK(eddyb) temporary workaround for untyped pointers upstream.
         // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
         let elt = self.bitcast(elt, field_type);
@@ -3112,7 +3102,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             ),
         };
 
-        debug!("call");
         // HACK(eddyb) temporary workaround for untyped pointers upstream.
         // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
         let args: SmallVec<[_; 8]> = args
