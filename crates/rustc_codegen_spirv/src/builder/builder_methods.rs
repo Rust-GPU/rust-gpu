@@ -859,6 +859,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // If they differ, merging could be invalid.
         let maybe_original_access_chain = if ty == original_pointee_ty {
             // Search the current function's instructions...
+            // FIXME(eddyb) this could get ridiculously expensive, at the very least
+            // it could use `.rev()`, hoping the base pointer was recently defined?
             let search_result = {
                 let emit = self.emit();
                 let module = emit.module_ref();
