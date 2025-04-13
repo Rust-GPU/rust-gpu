@@ -4,7 +4,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 use super::Builder;
 use crate::builder_spirv::{BuilderCursor, SpirvValue};
 use crate::codegen_cx::CodegenCx;
-use crate::spirv_type::SpirvType;
+use crate::spirv_type::{SpirvType, StorageClassKind};
 use rspirv::dr;
 use rspirv::grammar::{LogicalOperand, OperandKind, OperandQuantifier, reflect};
 use rspirv::spirv::{
@@ -309,8 +309,8 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
             Op::TypePointer => {
                 // The storage class can be specified explicitly or inferred later by using StorageClass::Generic.
                 let storage_class = match inst.operands[0].unwrap_storage_class() {
-                    StorageClass::Generic => None,
-                    storage_class => Some(storage_class),
+                    StorageClass::Generic => StorageClassKind::Inferred,
+                    storage_class => StorageClassKind::Explicit(storage_class),
                 };
                 SpirvType::Pointer {
                     pointee: inst.operands[1].unwrap_id_ref(),
@@ -673,7 +673,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
 
                 TyPat::Pointer(_, pat) => SpirvType::Pointer {
                     pointee: subst_ty_pat(cx, pat, ty_vars, leftover_operands)?,
-                    storage_class: None,
+                    storage_class: StorageClassKind::Inferred,
                 }
                 .def(DUMMY_SP, cx),
 

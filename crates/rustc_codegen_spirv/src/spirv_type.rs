@@ -61,9 +61,7 @@ pub enum SpirvType<'tcx> {
     },
     Pointer {
         pointee: Word,
-        /// The storage class to enforce for this pointer
-        /// or `None` for  automatic inference.
-        storage_class: Option<StorageClass>,
+        storage_class: StorageClassKind,
     },
     Function {
         return_type: Word,
@@ -91,6 +89,17 @@ pub enum SpirvType<'tcx> {
 
     AccelerationStructureKhr,
     RayQueryKhr,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum StorageClassKind {
+    /// Inferred based on globals and other pointers with explicit storage classes.
+    /// This corresponds to `StorageClass::Generic` in inline `asm!` and intermediate SPIR-V.
+    Inferred,
+
+    /// Explicitly set by an instruction that needs to create a storage class,
+    /// regardless of inputs.
+    Explicit(StorageClass),
 }
 
 impl SpirvType<'_> {
@@ -223,7 +232,10 @@ impl SpirvType<'_> {
                 // NOTE(eddyb) we emit `StorageClass::Generic` here, but later
                 // the linker will specialize the entire SPIR-V module to use
                 // storage classes inferred from `OpVariable`s.
-                let storage_class = storage_class.unwrap_or(StorageClass::Generic);
+                let storage_class = match storage_class {
+                    StorageClassKind::Inferred => StorageClass::Generic,
+                    StorageClassKind::Explicit(storage_class) => storage_class,
+                };
                 let result = cx.emit_global().type_pointer(id, storage_class, pointee);
                 // no pointers to functions
                 if let SpirvType::Function { .. } = cx.lookup_type(pointee) {
@@ -298,7 +310,10 @@ impl SpirvType<'_> {
                 // NOTE(eddyb) we emit `StorageClass::Generic` here, but later
                 // the linker will specialize the entire SPIR-V module to use
                 // storage classes inferred from `OpVariable`s.
-                let storage_class = storage_class.unwrap_or(StorageClass::Generic);
+                let storage_class = match storage_class {
+                    StorageClassKind::Inferred => StorageClass::Generic,
+                    StorageClassKind::Explicit(storage_class) => storage_class,
+                };
                 let result = cx
                     .emit_global()
                     .type_pointer(Some(id), storage_class, pointee);
@@ -734,7 +749,7 @@ impl SpirvTypePrinter<'_, '_> {
                 storage_class,
             } => {
                 f.write_str("*")?;
-                if let Some(storage_class) = storage_class {
+                if let StorageClassKind::Explicit(storage_class) = storage_class {
                     write!(f, "{:?}", storage_class)?;
                 }
                 ty(self.cx, stack, f, pointee)

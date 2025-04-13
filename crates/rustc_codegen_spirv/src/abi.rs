@@ -3,7 +3,7 @@
 
 use crate::attr::{AggregatedSpirvAttributes, IntrinsicType};
 use crate::codegen_cx::CodegenCx;
-use crate::spirv_type::SpirvType;
+use crate::spirv_type::{SpirvType, StorageClassKind};
 use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 use rustc_data_structures::fx::FxHashMap;
@@ -339,7 +339,7 @@ impl<'tcx> RecursivePointeeCache<'tcx> {
                 PointeeDefState::Defining => {
                     let id = SpirvType::Pointer {
                         pointee: pointee_spv,
-                        storage_class: None, // TODO(jwollen): Do we need to cache by storage class?
+                        storage_class: StorageClassKind::Inferred, // TODO(jwollen): Do we need to cache by storage class?
                     }
                     .def(span, cx);
                     entry.insert(PointeeDefState::Defined(id));
@@ -351,7 +351,7 @@ impl<'tcx> RecursivePointeeCache<'tcx> {
                     entry.insert(PointeeDefState::Defined(id));
                     SpirvType::Pointer {
                         pointee: pointee_spv,
-                        storage_class: None, // TODO(jwollen): Do we need to cache by storage class?
+                        storage_class: StorageClassKind::Inferred, // TODO(jwollen): Do we need to cache by storage class?
                     }
                     .def_with_id(cx, span, id)
                 }

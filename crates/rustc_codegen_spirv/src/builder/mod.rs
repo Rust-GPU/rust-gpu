@@ -15,7 +15,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{BuilderCursor, SpirvValue, SpirvValueExt};
 use crate::codegen_cx::CodegenCx;
-use crate::spirv_type::SpirvType;
+use crate::spirv_type::{SpirvType, StorageClassKind};
 use rspirv::spirv::{StorageClass, Word};
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
@@ -106,7 +106,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     pub fn type_ptr_to(&self, ty: Word) -> Word {
         SpirvType::Pointer {
             pointee: ty,
-            storage_class: None,
+            storage_class: StorageClassKind::Inferred,
         }
         .def(self.span(), self)
     }
@@ -114,7 +114,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     pub fn type_ptr_with_storage_class_to(
         &self,
         ty: Word,
-        storage_class: Option<StorageClass>,
+        storage_class: StorageClassKind,
     ) -> Word {
         SpirvType::Pointer {
             pointee: ty,
