@@ -427,7 +427,10 @@ pub fn instruction_signatures(op: Op) -> Option<&'static [InstSig<'static>]> {
         Op::ConvertPtrToU | Op::SatConvertSToU | Op::SatConvertUToS | Op::ConvertUToPtr => {}
         Op::PtrCastToGeneric | Op::GenericCastToPtr => sig! { (Pointer(_, T)) -> Pointer(_, T) },
         Op::GenericCastToPtrExplicit => sig! { {S} (Pointer(_, T)) -> Pointer(S, T) },
-        Op::Bitcast => {}
+        Op::Bitcast => sig! {
+            (Pointer(S, _)) -> Pointer(S, _) |
+            (_) -> _
+        },
 
         // 3.37.12. Composite Instructions
         Op::VectorExtractDynamic => sig! { (Vector(T), _) -> T },
