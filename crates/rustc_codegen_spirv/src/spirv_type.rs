@@ -182,35 +182,15 @@ impl SpirvType<'_> {
             Self::Vector { element, count } => cx.emit_global().type_vector_id(id, element, count),
             Self::Matrix { element, count } => cx.emit_global().type_matrix_id(id, element, count),
             Self::Array { element, count } => {
-                // ArrayStride decoration wants in *bytes*
-                let element_size = cx
-                    .lookup_type(element)
-                    .sizeof(cx)
-                    .expect("Element of sized array must be sized")
-                    .bytes();
-                let mut emit = cx.emit_global();
-                let result = emit.type_array_id(id, element, count.def_cx(cx));
-                emit.decorate(
-                    result,
-                    Decoration::ArrayStride,
-                    iter::once(Operand::LiteralBit32(element_size as u32)),
-                );
+                let result = cx
+                    .emit_global()
+                    .type_array_id(id, element, count.def_cx(cx));
+                self.decorate_array_stride(result, element, cx);
                 result
             }
             Self::RuntimeArray { element } => {
-                let mut emit = cx.emit_global();
-                let result = emit.type_runtime_array_id(id, element);
-                // ArrayStride decoration wants in *bytes*
-                let element_size = cx
-                    .lookup_type(element)
-                    .sizeof(cx)
-                    .expect("Element of sized array must be sized")
-                    .bytes();
-                emit.decorate(
-                    result,
-                    Decoration::ArrayStride,
-                    iter::once(Operand::LiteralBit32(element_size as u32)),
-                );
+                let result = cx.emit_global().type_runtime_array_id(id, element);
+                self.decorate_array_stride(result, element, cx);
                 result
             }
             Self::Pointer { pointee } => {
@@ -276,6 +256,19 @@ impl SpirvType<'_> {
         };
         cx.type_cache_def(result, self.tcx_arena_alloc_slices(cx), def_span);
         result
+    }
+
+    fn decorate_array_stride(self, result: u32, element: u32, cx: &CodegenCx<'_>) {
+        let mut emit = cx.emit_global();
+        let ty = cx.lookup_type(element);
+        if let Some(element_size) = ty.physical_size(cx) {
+            // ArrayStride decoration wants in *bytes*
+            emit.decorate(
+                result,
+                Decoration::ArrayStride,
+                iter::once(Operand::LiteralBit32(element_size.bytes() as u32)),
+            );
+        }
     }
 
     /// `def_with_id` is used by the `RecursivePointeeCache` to handle `OpTypeForwardPointer`: when
@@ -383,6 +376,35 @@ impl SpirvType<'_> {
             | Self::Sampler
             | Self::SampledImage { .. }
             | Self::InterfaceBlock { .. } => Align::from_bytes(4).unwrap(),
+        }
+    }
+
+    /// Get the physical size of the type needed for explicit layout decorations.
+    pub fn physical_size(&self, cx: &CodegenCx<'_>) -> Option<Size> {
+        match *self {
+            // TODO(jwollen) Handle physical pointers (PhysicalStorageBuffer)
+            Self::Pointer { .. } => None,
+
+            // TODO(jwollen) Handle unsized elements
+            Self::Adt { size, .. } => size,
+
+            Self::Array { element, count } => Some(
+                cx.lookup_type(element).physical_size(cx)?
+                    * cx.builder
+                        .lookup_const_scalar(count)
+                        .unwrap()
+                        .try_into()
+                        .unwrap(),
+            ),
+
+            // Always unsized types
+            Self::InterfaceBlock { .. } | Self::RayQueryKhr | Self::SampledImage { .. } => None,
+
+            // Descriptor types
+            Self::Image { .. } | Self::AccelerationStructureKhr | Self::Sampler => None,
+
+            // Primitive types
+            ty => ty.sizeof(cx),
         }
     }
 
