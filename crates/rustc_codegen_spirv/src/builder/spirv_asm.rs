@@ -4,7 +4,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 use super::Builder;
 use crate::builder_spirv::{BuilderCursor, SpirvValue};
 use crate::codegen_cx::CodegenCx;
-use crate::spirv_type::SpirvType;
+use crate::spirv_type::{SpirvType, StorageClassKind};
 use rspirv::dr;
 use rspirv::grammar::{LogicalOperand, OperandKind, OperandQuantifier, reflect};
 use rspirv::spirv::{
@@ -307,19 +307,14 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
             }
             .def(self.span(), self),
             Op::TypePointer => {
-                let storage_class = inst.operands[0].unwrap_storage_class();
-                if storage_class != StorageClass::Generic {
-                    self.struct_err("TypePointer in asm! requires `Generic` storage class")
-                        .with_note(format!(
-                            "`{storage_class:?}` storage class was specified"
-                        ))
-                        .with_help(format!(
-                            "the storage class will be inferred automatically (e.g. to `{storage_class:?}`)"
-                        ))
-                        .emit();
-                }
+                // The storage class can be specified explicitly or inferred later by using StorageClass::Generic.
+                let storage_class = match inst.operands[0].unwrap_storage_class() {
+                    StorageClass::Generic => StorageClassKind::Inferred,
+                    storage_class => StorageClassKind::Explicit(storage_class),
+                };
                 SpirvType::Pointer {
                     pointee: inst.operands[1].unwrap_id_ref(),
+                    storage_class,
                 }
                 .def(self.span(), self)
             }
@@ -678,6 +673,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
 
                 TyPat::Pointer(_, pat) => SpirvType::Pointer {
                     pointee: subst_ty_pat(cx, pat, ty_vars, leftover_operands)?,
+                    storage_class: StorageClassKind::Inferred,
                 }
                 .def(DUMMY_SP, cx),
 
@@ -931,7 +927,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                     Some(match kind {
                         TypeofKind::Plain => ty,
                         TypeofKind::Dereference => match self.lookup_type(ty) {
-                            SpirvType::Pointer { pointee } => pointee,
+                            SpirvType::Pointer { pointee, .. } => pointee,
                             other => {
                                 self.tcx.dcx().span_err(
                                     span,
@@ -953,7 +949,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                     self.check_reg(span, reg);
                     if let Some(place) = place {
                         match self.lookup_type(place.val.llval.ty) {
-                            SpirvType::Pointer { pointee } => Some(pointee),
+                            SpirvType::Pointer { pointee, .. } => Some(pointee),
                             other => {
                                 self.tcx.dcx().span_err(
                                     span,

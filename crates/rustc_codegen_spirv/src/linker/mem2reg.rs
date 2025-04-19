@@ -11,11 +11,12 @@
 
 use super::simple_passes::outgoing_edges;
 use super::{apply_rewrite_rules, id};
+use itertools::Itertools;
 use rspirv::dr::{Block, Function, Instruction, ModuleHeader, Operand};
 use rspirv::spirv::{Op, Word};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexMap};
-use rustc_middle::bug;
 use std::collections::hash_map;
+use std::iter;
 
 // HACK(eddyb) newtype instead of type alias to avoid mistakes.
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
@@ -328,10 +329,15 @@ fn split_copy_memory(
             if inst.class.opcode == Op::CopyMemory {
                 let target = inst.operands[0].id_ref_any().unwrap();
                 let source = inst.operands[1].id_ref_any().unwrap();
-                if inst.operands.len() > 2 {
-                    // TODO: Copy the memory operands to the load/store
-                    bug!("mem2reg OpCopyMemory doesn't support memory operands yet");
-                }
+                let mem_ops = &inst.operands[2..];
+                let (store_mem_ops, load_mem_ops) = if let Some((index, _)) = mem_ops[1..]
+                    .iter()
+                    .find_position(|op| matches!(op, Operand::MemoryAccess(..)))
+                {
+                    mem_ops.split_at(index)
+                } else {
+                    (mem_ops, mem_ops)
+                };
                 let ty = match (var_map.get(&target), var_map.get(&source)) {
                     (None, None) => {
                         inst_index += 1;
@@ -345,17 +351,22 @@ fn split_copy_memory(
                     }
                 };
                 let temp_id = id(header);
+
+                let load_ops = iter::once(Operand::IdRef(source))
+                    .chain(load_mem_ops.iter().cloned())
+                    .collect();
+
+                let store_ops = [Operand::IdRef(target), Operand::IdRef(temp_id)]
+                    .into_iter()
+                    .chain(store_mem_ops.iter().cloned())
+                    .collect();
+
                 block.instructions[inst_index] =
-                    Instruction::new(Op::Load, Some(ty), Some(temp_id), vec![Operand::IdRef(
-                        source,
-                    )]);
+                    Instruction::new(Op::Load, Some(ty), Some(temp_id), load_ops);
                 inst_index += 1;
                 block.instructions.insert(
                     inst_index,
-                    Instruction::new(Op::Store, None, None, vec![
-                        Operand::IdRef(target),
-                        Operand::IdRef(temp_id),
-                    ]),
+                    Instruction::new(Op::Store, None, None, store_ops),
                 );
             }
             inst_index += 1;

@@ -243,7 +243,7 @@ impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
                 let (base_addr, _base_addr_space) = match self.tcx.global_alloc(alloc_id) {
                     GlobalAlloc::Memory(alloc) => {
                         let pointee = match self.lookup_type(ty) {
-                            SpirvType::Pointer { pointee } => pointee,
+                            SpirvType::Pointer { pointee, .. } => pointee,
                             other => self.tcx.dcx().fatal(format!(
                                 "GlobalAlloc::Memory type not implemented: {}",
                                 other.debug(ty, self)
@@ -263,7 +263,7 @@ impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
                             .global_alloc(self.tcx.vtable_allocation((vty, dyn_ty.principal())))
                             .unwrap_memory();
                         let pointee = match self.lookup_type(ty) {
-                            SpirvType::Pointer { pointee } => pointee,
+                            SpirvType::Pointer { pointee, .. } => pointee,
                             other => self.tcx.dcx().fatal(format!(
                                 "GlobalAlloc::VTable type not implemented: {}",
                                 other.debug(ty, self)
@@ -332,7 +332,7 @@ impl<'tcx> CodegenCx<'tcx> {
                 if let Some(SpirvConst::ConstDataFromAlloc(alloc)) =
                     self.builder.lookup_const_by_id(pointee)
                 {
-                    if let SpirvType::Pointer { pointee } = self.lookup_type(ty) {
+                    if let SpirvType::Pointer { pointee, .. } = self.lookup_type(ty) {
                         let mut offset = Size::ZERO;
                         let init = self.read_from_const_alloc(alloc, &mut offset, pointee);
                         return self.static_addr_of(init, alloc.inner().align, None);

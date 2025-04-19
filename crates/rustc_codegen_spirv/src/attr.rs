@@ -337,7 +337,7 @@ impl CheckSpirvAttrVisitor<'_> {
                                 "attribute is only valid on a parameter of an entry-point function",
                             );
                         } else {
-                            // FIXME(eddyb) should we just remove all 5 of these storage class
+                            // FIXME(eddyb) should we just remove all 6 of these storage class
                             // attributes, instead of disallowing them here?
                             if let SpirvAttribute::StorageClass(storage_class) = parsed_attr {
                                 let valid = match storage_class {
@@ -347,7 +347,8 @@ impl CheckSpirvAttrVisitor<'_> {
 
                                     StorageClass::Private
                                     | StorageClass::Function
-                                    | StorageClass::Generic => {
+                                    | StorageClass::Generic
+                                    | StorageClass::PhysicalStorageBuffer => {
                                         Err("can not be used as part of an entry's interface")
                                     }
 

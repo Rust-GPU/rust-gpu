@@ -1615,6 +1615,14 @@ impl<'a, S: Specialization> InferCx<'a, S> {
 
         #[allow(clippy::match_same_arms)]
         Ok(match (a.clone(), b.clone()) {
+            // Concrete result types explicitly created inside functions
+            // can be assigned to instances.
+            // FIXME(jwollen) do we need to infere instance generics?
+            (InferOperand::Instance(_), InferOperand::Concrete(new))
+            | (InferOperand::Concrete(new), InferOperand::Instance(_)) => {
+                InferOperand::Concrete(new)
+            }
+
             // Instances of "generic" globals/functions must be of the same ID,
             // and their `generic_args` inference variables must be unified.
             (
@@ -1999,13 +2007,13 @@ impl<'a, S: Specialization> InferCx<'a, S> {
 
         if let Some(type_of_result) = type_of_result {
             // Keep the (instantiated) *Result Type*, for future instructions to use
-            // (but only if it has any `InferVar`s at all).
+            // if it has any `InferVar`s at all or if it was a concrete type.
             match type_of_result {
-                InferOperand::Var(_) | InferOperand::Instance(_) => {
+                InferOperand::Var(_) | InferOperand::Instance(_) | InferOperand::Concrete(_) => {
                     self.type_of_result
                         .insert(inst.result_id.unwrap(), type_of_result);
                 }
-                InferOperand::Unknown | InferOperand::Concrete(_) => {}
+                InferOperand::Unknown => {}
             }
         }
     }

@@ -385,11 +385,21 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     fn zombie_convert_ptr_to_u(&self, def: Word) {
-        self.zombie(def, "cannot convert pointers to integers");
+        if !self
+            .builder
+            .has_capability(Capability::PhysicalStorageBufferAddresses)
+        {
+            self.zombie(def, "cannot convert pointers to integers without OpCapability PhysicalStorageBufferAddresses");
+        }
     }
 
     fn zombie_convert_u_to_ptr(&self, def: Word) {
-        self.zombie(def, "cannot convert integers to pointers");
+        if !self
+            .builder
+            .has_capability(Capability::PhysicalStorageBufferAddresses)
+        {
+            self.zombie(def, "cannot convert integers to pointers without OpCapability PhysicalStorageBufferAddresses");
+        }
     }
 
     fn zombie_ptr_equal(&self, def: Word, inst: &str) {
@@ -432,14 +442,15 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         size: Size,
     ) -> Option<(SpirvValue, <Self as BackendTypes>::Type)> {
         let ptr = ptr.strip_ptrcasts();
-        let mut leaf_ty = match self.lookup_type(ptr.ty) {
-            SpirvType::Pointer { pointee } => pointee,
+        let pointee_ty = match self.lookup_type(ptr.ty) {
+            SpirvType::Pointer { pointee, .. } => pointee,
             other => self.fatal(format!("non-pointer type: {other:?}")),
         };
 
         // FIXME(eddyb) this isn't efficient, `recover_access_chain_from_offset`
         // could instead be doing all the extra digging itself.
         let mut indices = SmallVec::<[_; 8]>::new();
+        let mut leaf_ty = pointee_ty;
         while let Some((inner_indices, inner_ty)) = self.recover_access_chain_from_offset(
             leaf_ty,
             Size::ZERO,
@@ -454,7 +465,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             .then(|| self.type_ptr_to(leaf_ty))?;
 
         let leaf_ptr = if indices.is_empty() {
-            assert_ty_eq!(self, ptr.ty, leaf_ptr_ty);
+            // Compare pointee types instead of pointer  types as storage class might be different.
+            assert_ty_eq!(self, pointee_ty, leaf_ty);
             ptr
         } else {
             let indices = indices
@@ -611,7 +623,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let ptr = ptr.strip_ptrcasts();
         let ptr_id = ptr.def(self);
         let original_pointee_ty = match self.lookup_type(ptr.ty) {
-            SpirvType::Pointer { pointee } => pointee,
+            SpirvType::Pointer { pointee, .. } => pointee,
             other => self.fatal(format!("gep called on non-pointer type: {other:?}")),
         };
 
@@ -1486,11 +1498,17 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         self.fatal("dynamic alloca not supported yet")
     }
 
-    fn load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
+    fn load(&mut self, ty: Self::Type, ptr: Self::Value, align: Align) -> Self::Value {
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, ty);
         let loaded_val = ptr.const_fold_load(self).unwrap_or_else(|| {
             self.emit()
-                .load(access_ty, None, ptr.def(self), None, empty())
+                .load(
+                    access_ty,
+                    None,
+                    ptr.def(self),
+                    Some(MemoryAccess::ALIGNED),
+                    std::iter::once(Operand::LiteralBit32(align.bytes() as _)),
+                )
                 .unwrap()
                 .with_type(access_ty)
         });
@@ -1612,12 +1630,17 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // ignore
     }
 
-    fn store(&mut self, val: Self::Value, ptr: Self::Value, _align: Align) -> Self::Value {
+    fn store(&mut self, val: Self::Value, ptr: Self::Value, align: Align) -> Self::Value {
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, val.ty);
         let val = self.bitcast(val, access_ty);
 
         self.emit()
-            .store(ptr.def(self), val.def(self), None, empty())
+            .store(
+                ptr.def(self),
+                val.def(self),
+                Some(MemoryAccess::ALIGNED),
+                std::iter::once(Operand::LiteralBit32(align.bytes() as _)),
+            )
             .unwrap();
         // FIXME(eddyb) this is meant to be a handle the store instruction itself.
         val
@@ -1775,20 +1798,23 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     }
 
     fn inttoptr(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
-        match self.lookup_type(dest_ty) {
-            SpirvType::Pointer { .. } => (),
+        let result_ty = match self.lookup_type(dest_ty) {
+            SpirvType::Pointer { pointee, .. } => self.type_ptr_to_with_storage_class(
+                pointee,
+                StorageClassKind::Explicit(StorageClass::PhysicalStorageBuffer),
+            ),
             other => self.fatal(format!(
                 "inttoptr called on non-pointer dest type: {other:?}"
             )),
-        }
-        if val.ty == dest_ty {
+        };
+        if val.ty == result_ty {
             val
         } else {
             let result = self
                 .emit()
-                .convert_u_to_ptr(dest_ty, None, val.def(self))
+                .convert_u_to_ptr(result_ty, None, val.def(self))
                 .unwrap()
-                .with_type(dest_ty);
+                .with_type(result_ty);
             self.zombie_convert_u_to_ptr(result.def(self));
             result
         }
@@ -1951,6 +1977,25 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             return ptr;
         }
 
+        // No cast is needed if only the storage class mismatches.
+        let ptr_pointee = match self.lookup_type(ptr.ty) {
+            SpirvType::Pointer { pointee, .. } => pointee,
+            other => self.fatal(format!(
+                "pointercast called on non-pointer source type: {other:?}"
+            )),
+        };
+        let dest_pointee = match self.lookup_type(dest_ty) {
+            SpirvType::Pointer { pointee, .. } => pointee,
+            other => self.fatal(format!(
+                "pointercast called on non-pointer dest type: {other:?}"
+            )),
+        };
+
+        // FIXME(jwollen) Do we need to choose `dest_ty` if it has a fixed storage class and `ptr` has none?
+        if ptr_pointee == dest_pointee {
+            return ptr;
+        }
+
         // Strip a previous `pointercast`, to reveal the original pointer type.
         let ptr = ptr.strip_ptrcasts();
 
@@ -1959,17 +2004,16 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         }
 
         let ptr_pointee = match self.lookup_type(ptr.ty) {
-            SpirvType::Pointer { pointee } => pointee,
+            SpirvType::Pointer { pointee, .. } => pointee,
             other => self.fatal(format!(
                 "pointercast called on non-pointer source type: {other:?}"
             )),
         };
-        let dest_pointee = match self.lookup_type(dest_ty) {
-            SpirvType::Pointer { pointee } => pointee,
-            other => self.fatal(format!(
-                "pointercast called on non-pointer dest type: {other:?}"
-            )),
-        };
+
+        if ptr_pointee == dest_pointee {
+            return ptr;
+        }
+
         let dest_pointee_size = self.lookup_type(dest_pointee).sizeof(self);
 
         if let Some((indices, _)) = self.recover_access_chain_from_offset(
@@ -2256,9 +2300,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     fn memcpy(
         &mut self,
         dst: Self::Value,
-        _dst_align: Align,
+        dst_align: Align,
         src: Self::Value,
-        _src_align: Align,
+        src_align: Align,
         size: Self::Value,
         flags: MemFlags,
     ) {
@@ -2296,12 +2340,29 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             }
         });
 
+        // Pass all operands as `additional_params` since rspirv doesn't allow specifying
+        // extra operands ofter the first `MemoryAccess`
+        let mut ops: SmallVec<[_; 4]> = Default::default();
+        ops.push(Operand::MemoryAccess(MemoryAccess::ALIGNED));
+        if src_align != dst_align {
+            if self.emit().version().unwrap() > (1, 3) {
+                ops.push(Operand::LiteralBit32(dst_align.bytes() as _));
+                ops.push(Operand::MemoryAccess(MemoryAccess::ALIGNED));
+                ops.push(Operand::LiteralBit32(src_align.bytes() as _));
+            } else {
+                let align = dst_align.min(src_align);
+                ops.push(Operand::LiteralBit32(align.bytes() as _));
+            }
+        } else {
+            ops.push(Operand::LiteralBit32(dst_align.bytes() as _));
+        }
+
         if let Some((dst, src)) = typed_copy_dst_src {
             if let Some(const_value) = src.const_fold_load(self) {
                 self.store(const_value, dst, Align::from_bytes(0).unwrap());
             } else {
                 self.emit()
-                    .copy_memory(dst.def(self), src.def(self), None, None, empty())
+                    .copy_memory(dst.def(self), src.def(self), None, None, ops)
                     .unwrap();
             }
         } else {
@@ -2312,7 +2373,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     size.def(self),
                     None,
                     None,
-                    empty(),
+                    ops,
                 )
                 .unwrap();
             self.zombie(dst.def(self), "cannot memcpy dynamically sized data");
@@ -2351,7 +2412,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             .and_then(|size| Some(Size::from_bytes(u64::try_from(size).ok()?)));
 
         let elem_ty = match self.lookup_type(ptr.ty) {
-            SpirvType::Pointer { pointee } => pointee,
+            SpirvType::Pointer { pointee, .. } => pointee,
             _ => self.fatal(format!(
                 "memset called on non-pointer type: {}",
                 self.debug_type(ptr.ty)
@@ -2723,7 +2784,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 (callee.def(self), return_type, arguments)
             }
 
-            SpirvType::Pointer { pointee } => match self.lookup_type(pointee) {
+            SpirvType::Pointer { pointee, .. } => match self.lookup_type(pointee) {
                 SpirvType::Function {
                     return_type,
                     arguments,
