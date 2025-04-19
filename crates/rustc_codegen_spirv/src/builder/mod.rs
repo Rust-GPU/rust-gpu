@@ -111,7 +111,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         .def(self.span(), self)
     }
 
-    pub fn type_ptr_with_storage_class_to(
+    pub fn type_ptr_to_with_storage_class(
         &self,
         ty: Word,
         storage_class: StorageClassKind,
