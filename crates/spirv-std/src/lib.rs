@@ -98,6 +98,7 @@ pub mod indirect_command;
 pub mod integer;
 pub mod memory;
 pub mod number;
+pub mod ptr;
 pub mod ray_tracing;
 mod runtime_array;
 mod sampler;
