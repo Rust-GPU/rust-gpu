@@ -193,17 +193,20 @@ impl SpirvValue {
                 original_ptr_ty,
                 bitcast_result_id,
             } => {
-                cx.zombie_with_span(
-                    bitcast_result_id,
-                    span,
-                    &format!(
-                        "cannot cast between pointer types\
-                         \nfrom `{}`\
-                         \n  to `{}`",
-                        cx.debug_type(original_ptr_ty),
-                        cx.debug_type(self.ty)
-                    ),
-                );
+                // If physical poitners are supported, defer the error until after storage class inferrence.
+                if !cx.builder.has_capability(Capability::PhysicalStorageBufferAddresses) {
+                    cx.zombie_with_span(
+                        bitcast_result_id,
+                        span,
+                        &format!(
+                            "cannot cast between pointer types\
+                            \nfrom `{}`\
+                            \n  to `{}`",
+                            cx.debug_type(original_ptr_ty),
+                            cx.debug_type(self.ty)
+                        ),
+                    );
+                }
 
                 bitcast_result_id
             }
