@@ -360,11 +360,21 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     fn zombie_convert_ptr_to_u(&self, def: Word) {
-        self.zombie(def, "cannot convert pointers to integers");
+        if !self
+            .builder
+            .has_capability(Capability::PhysicalStorageBufferAddresses)
+        {
+            self.zombie(def, "cannot convert pointers to integers without OpCapability PhysicalStorageBufferAddresses");
+        }
     }
 
     fn zombie_convert_u_to_ptr(&self, def: Word) {
-        self.zombie(def, "cannot convert integers to pointers");
+        if !self
+            .builder
+            .has_capability(Capability::PhysicalStorageBufferAddresses)
+        {
+            self.zombie(def, "cannot convert integers to pointers without OpCapability PhysicalStorageBufferAddresses");
+        }
     }
 
     fn zombie_ptr_equal(&self, def: Word, inst: &str) {
@@ -1752,20 +1762,23 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     }
 
     fn inttoptr(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
-        match self.lookup_type(dest_ty) {
-            SpirvType::Pointer { .. } => (),
+        let result_ty = match self.lookup_type(dest_ty) {
+            SpirvType::Pointer { pointee, .. } => self.type_ptr_to_with_storage_class(
+                pointee,
+                StorageClassKind::Explicit(StorageClass::PhysicalStorageBuffer),
+            ),
             other => self.fatal(format!(
                 "inttoptr called on non-pointer dest type: {other:?}"
             )),
-        }
-        if val.ty == dest_ty {
+        };
+        if val.ty == result_ty {
             val
         } else {
             let result = self
                 .emit()
-                .convert_u_to_ptr(dest_ty, None, val.def(self))
+                .convert_u_to_ptr(result_ty, None, val.def(self))
                 .unwrap()
-                .with_type(dest_ty);
+                .with_type(result_ty);
             self.zombie_convert_u_to_ptr(result.def(self));
             result
         }
