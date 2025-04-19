@@ -101,7 +101,7 @@ impl SpirvValue {
                 match entry.val {
                     SpirvConst::PtrTo { pointee } => {
                         let ty = match cx.lookup_type(self.ty) {
-                            SpirvType::Pointer { pointee } => pointee,
+                            SpirvType::Pointer { pointee, .. } => pointee,
                             ty => bug!("load called on value that wasn't a pointer: {:?}", ty),
                         };
                         // FIXME(eddyb) deduplicate this `if`-`else` and its other copies.
