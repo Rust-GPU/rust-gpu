@@ -3287,7 +3287,361 @@
 <a href="#3286" id="3286">3286</a>
 <a href="#3287" id="3287">3287</a>
 <a href="#3288" id="3288">3288</a>
-<a href="#3289" id="3289">3289</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<a href="#3289" id="3289">3289</a>
+<a href="#3290" id="3290">3290</a>
+<a href="#3291" id="3291">3291</a>
+<a href="#3292" id="3292">3292</a>
+<a href="#3293" id="3293">3293</a>
+<a href="#3294" id="3294">3294</a>
+<a href="#3295" id="3295">3295</a>
+<a href="#3296" id="3296">3296</a>
+<a href="#3297" id="3297">3297</a>
+<a href="#3298" id="3298">3298</a>
+<a href="#3299" id="3299">3299</a>
+<a href="#3300" id="3300">3300</a>
+<a href="#3301" id="3301">3301</a>
+<a href="#3302" id="3302">3302</a>
+<a href="#3303" id="3303">3303</a>
+<a href="#3304" id="3304">3304</a>
+<a href="#3305" id="3305">3305</a>
+<a href="#3306" id="3306">3306</a>
+<a href="#3307" id="3307">3307</a>
+<a href="#3308" id="3308">3308</a>
+<a href="#3309" id="3309">3309</a>
+<a href="#3310" id="3310">3310</a>
+<a href="#3311" id="3311">3311</a>
+<a href="#3312" id="3312">3312</a>
+<a href="#3313" id="3313">3313</a>
+<a href="#3314" id="3314">3314</a>
+<a href="#3315" id="3315">3315</a>
+<a href="#3316" id="3316">3316</a>
+<a href="#3317" id="3317">3317</a>
+<a href="#3318" id="3318">3318</a>
+<a href="#3319" id="3319">3319</a>
+<a href="#3320" id="3320">3320</a>
+<a href="#3321" id="3321">3321</a>
+<a href="#3322" id="3322">3322</a>
+<a href="#3323" id="3323">3323</a>
+<a href="#3324" id="3324">3324</a>
+<a href="#3325" id="3325">3325</a>
+<a href="#3326" id="3326">3326</a>
+<a href="#3327" id="3327">3327</a>
+<a href="#3328" id="3328">3328</a>
+<a href="#3329" id="3329">3329</a>
+<a href="#3330" id="3330">3330</a>
+<a href="#3331" id="3331">3331</a>
+<a href="#3332" id="3332">3332</a>
+<a href="#3333" id="3333">3333</a>
+<a href="#3334" id="3334">3334</a>
+<a href="#3335" id="3335">3335</a>
+<a href="#3336" id="3336">3336</a>
+<a href="#3337" id="3337">3337</a>
+<a href="#3338" id="3338">3338</a>
+<a href="#3339" id="3339">3339</a>
+<a href="#3340" id="3340">3340</a>
+<a href="#3341" id="3341">3341</a>
+<a href="#3342" id="3342">3342</a>
+<a href="#3343" id="3343">3343</a>
+<a href="#3344" id="3344">3344</a>
+<a href="#3345" id="3345">3345</a>
+<a href="#3346" id="3346">3346</a>
+<a href="#3347" id="3347">3347</a>
+<a href="#3348" id="3348">3348</a>
+<a href="#3349" id="3349">3349</a>
+<a href="#3350" id="3350">3350</a>
+<a href="#3351" id="3351">3351</a>
+<a href="#3352" id="3352">3352</a>
+<a href="#3353" id="3353">3353</a>
+<a href="#3354" id="3354">3354</a>
+<a href="#3355" id="3355">3355</a>
+<a href="#3356" id="3356">3356</a>
+<a href="#3357" id="3357">3357</a>
+<a href="#3358" id="3358">3358</a>
+<a href="#3359" id="3359">3359</a>
+<a href="#3360" id="3360">3360</a>
+<a href="#3361" id="3361">3361</a>
+<a href="#3362" id="3362">3362</a>
+<a href="#3363" id="3363">3363</a>
+<a href="#3364" id="3364">3364</a>
+<a href="#3365" id="3365">3365</a>
+<a href="#3366" id="3366">3366</a>
+<a href="#3367" id="3367">3367</a>
+<a href="#3368" id="3368">3368</a>
+<a href="#3369" id="3369">3369</a>
+<a href="#3370" id="3370">3370</a>
+<a href="#3371" id="3371">3371</a>
+<a href="#3372" id="3372">3372</a>
+<a href="#3373" id="3373">3373</a>
+<a href="#3374" id="3374">3374</a>
+<a href="#3375" id="3375">3375</a>
+<a href="#3376" id="3376">3376</a>
+<a href="#3377" id="3377">3377</a>
+<a href="#3378" id="3378">3378</a>
+<a href="#3379" id="3379">3379</a>
+<a href="#3380" id="3380">3380</a>
+<a href="#3381" id="3381">3381</a>
+<a href="#3382" id="3382">3382</a>
+<a href="#3383" id="3383">3383</a>
+<a href="#3384" id="3384">3384</a>
+<a href="#3385" id="3385">3385</a>
+<a href="#3386" id="3386">3386</a>
+<a href="#3387" id="3387">3387</a>
+<a href="#3388" id="3388">3388</a>
+<a href="#3389" id="3389">3389</a>
+<a href="#3390" id="3390">3390</a>
+<a href="#3391" id="3391">3391</a>
+<a href="#3392" id="3392">3392</a>
+<a href="#3393" id="3393">3393</a>
+<a href="#3394" id="3394">3394</a>
+<a href="#3395" id="3395">3395</a>
+<a href="#3396" id="3396">3396</a>
+<a href="#3397" id="3397">3397</a>
+<a href="#3398" id="3398">3398</a>
+<a href="#3399" id="3399">3399</a>
+<a href="#3400" id="3400">3400</a>
+<a href="#3401" id="3401">3401</a>
+<a href="#3402" id="3402">3402</a>
+<a href="#3403" id="3403">3403</a>
+<a href="#3404" id="3404">3404</a>
+<a href="#3405" id="3405">3405</a>
+<a href="#3406" id="3406">3406</a>
+<a href="#3407" id="3407">3407</a>
+<a href="#3408" id="3408">3408</a>
+<a href="#3409" id="3409">3409</a>
+<a href="#3410" id="3410">3410</a>
+<a href="#3411" id="3411">3411</a>
+<a href="#3412" id="3412">3412</a>
+<a href="#3413" id="3413">3413</a>
+<a href="#3414" id="3414">3414</a>
+<a href="#3415" id="3415">3415</a>
+<a href="#3416" id="3416">3416</a>
+<a href="#3417" id="3417">3417</a>
+<a href="#3418" id="3418">3418</a>
+<a href="#3419" id="3419">3419</a>
+<a href="#3420" id="3420">3420</a>
+<a href="#3421" id="3421">3421</a>
+<a href="#3422" id="3422">3422</a>
+<a href="#3423" id="3423">3423</a>
+<a href="#3424" id="3424">3424</a>
+<a href="#3425" id="3425">3425</a>
+<a href="#3426" id="3426">3426</a>
+<a href="#3427" id="3427">3427</a>
+<a href="#3428" id="3428">3428</a>
+<a href="#3429" id="3429">3429</a>
+<a href="#3430" id="3430">3430</a>
+<a href="#3431" id="3431">3431</a>
+<a href="#3432" id="3432">3432</a>
+<a href="#3433" id="3433">3433</a>
+<a href="#3434" id="3434">3434</a>
+<a href="#3435" id="3435">3435</a>
+<a href="#3436" id="3436">3436</a>
+<a href="#3437" id="3437">3437</a>
+<a href="#3438" id="3438">3438</a>
+<a href="#3439" id="3439">3439</a>
+<a href="#3440" id="3440">3440</a>
+<a href="#3441" id="3441">3441</a>
+<a href="#3442" id="3442">3442</a>
+<a href="#3443" id="3443">3443</a>
+<a href="#3444" id="3444">3444</a>
+<a href="#3445" id="3445">3445</a>
+<a href="#3446" id="3446">3446</a>
+<a href="#3447" id="3447">3447</a>
+<a href="#3448" id="3448">3448</a>
+<a href="#3449" id="3449">3449</a>
+<a href="#3450" id="3450">3450</a>
+<a href="#3451" id="3451">3451</a>
+<a href="#3452" id="3452">3452</a>
+<a href="#3453" id="3453">3453</a>
+<a href="#3454" id="3454">3454</a>
+<a href="#3455" id="3455">3455</a>
+<a href="#3456" id="3456">3456</a>
+<a href="#3457" id="3457">3457</a>
+<a href="#3458" id="3458">3458</a>
+<a href="#3459" id="3459">3459</a>
+<a href="#3460" id="3460">3460</a>
+<a href="#3461" id="3461">3461</a>
+<a href="#3462" id="3462">3462</a>
+<a href="#3463" id="3463">3463</a>
+<a href="#3464" id="3464">3464</a>
+<a href="#3465" id="3465">3465</a>
+<a href="#3466" id="3466">3466</a>
+<a href="#3467" id="3467">3467</a>
+<a href="#3468" id="3468">3468</a>
+<a href="#3469" id="3469">3469</a>
+<a href="#3470" id="3470">3470</a>
+<a href="#3471" id="3471">3471</a>
+<a href="#3472" id="3472">3472</a>
+<a href="#3473" id="3473">3473</a>
+<a href="#3474" id="3474">3474</a>
+<a href="#3475" id="3475">3475</a>
+<a href="#3476" id="3476">3476</a>
+<a href="#3477" id="3477">3477</a>
+<a href="#3478" id="3478">3478</a>
+<a href="#3479" id="3479">3479</a>
+<a href="#3480" id="3480">3480</a>
+<a href="#3481" id="3481">3481</a>
+<a href="#3482" id="3482">3482</a>
+<a href="#3483" id="3483">3483</a>
+<a href="#3484" id="3484">3484</a>
+<a href="#3485" id="3485">3485</a>
+<a href="#3486" id="3486">3486</a>
+<a href="#3487" id="3487">3487</a>
+<a href="#3488" id="3488">3488</a>
+<a href="#3489" id="3489">3489</a>
+<a href="#3490" id="3490">3490</a>
+<a href="#3491" id="3491">3491</a>
+<a href="#3492" id="3492">3492</a>
+<a href="#3493" id="3493">3493</a>
+<a href="#3494" id="3494">3494</a>
+<a href="#3495" id="3495">3495</a>
+<a href="#3496" id="3496">3496</a>
+<a href="#3497" id="3497">3497</a>
+<a href="#3498" id="3498">3498</a>
+<a href="#3499" id="3499">3499</a>
+<a href="#3500" id="3500">3500</a>
+<a href="#3501" id="3501">3501</a>
+<a href="#3502" id="3502">3502</a>
+<a href="#3503" id="3503">3503</a>
+<a href="#3504" id="3504">3504</a>
+<a href="#3505" id="3505">3505</a>
+<a href="#3506" id="3506">3506</a>
+<a href="#3507" id="3507">3507</a>
+<a href="#3508" id="3508">3508</a>
+<a href="#3509" id="3509">3509</a>
+<a href="#3510" id="3510">3510</a>
+<a href="#3511" id="3511">3511</a>
+<a href="#3512" id="3512">3512</a>
+<a href="#3513" id="3513">3513</a>
+<a href="#3514" id="3514">3514</a>
+<a href="#3515" id="3515">3515</a>
+<a href="#3516" id="3516">3516</a>
+<a href="#3517" id="3517">3517</a>
+<a href="#3518" id="3518">3518</a>
+<a href="#3519" id="3519">3519</a>
+<a href="#3520" id="3520">3520</a>
+<a href="#3521" id="3521">3521</a>
+<a href="#3522" id="3522">3522</a>
+<a href="#3523" id="3523">3523</a>
+<a href="#3524" id="3524">3524</a>
+<a href="#3525" id="3525">3525</a>
+<a href="#3526" id="3526">3526</a>
+<a href="#3527" id="3527">3527</a>
+<a href="#3528" id="3528">3528</a>
+<a href="#3529" id="3529">3529</a>
+<a href="#3530" id="3530">3530</a>
+<a href="#3531" id="3531">3531</a>
+<a href="#3532" id="3532">3532</a>
+<a href="#3533" id="3533">3533</a>
+<a href="#3534" id="3534">3534</a>
+<a href="#3535" id="3535">3535</a>
+<a href="#3536" id="3536">3536</a>
+<a href="#3537" id="3537">3537</a>
+<a href="#3538" id="3538">3538</a>
+<a href="#3539" id="3539">3539</a>
+<a href="#3540" id="3540">3540</a>
+<a href="#3541" id="3541">3541</a>
+<a href="#3542" id="3542">3542</a>
+<a href="#3543" id="3543">3543</a>
+<a href="#3544" id="3544">3544</a>
+<a href="#3545" id="3545">3545</a>
+<a href="#3546" id="3546">3546</a>
+<a href="#3547" id="3547">3547</a>
+<a href="#3548" id="3548">3548</a>
+<a href="#3549" id="3549">3549</a>
+<a href="#3550" id="3550">3550</a>
+<a href="#3551" id="3551">3551</a>
+<a href="#3552" id="3552">3552</a>
+<a href="#3553" id="3553">3553</a>
+<a href="#3554" id="3554">3554</a>
+<a href="#3555" id="3555">3555</a>
+<a href="#3556" id="3556">3556</a>
+<a href="#3557" id="3557">3557</a>
+<a href="#3558" id="3558">3558</a>
+<a href="#3559" id="3559">3559</a>
+<a href="#3560" id="3560">3560</a>
+<a href="#3561" id="3561">3561</a>
+<a href="#3562" id="3562">3562</a>
+<a href="#3563" id="3563">3563</a>
+<a href="#3564" id="3564">3564</a>
+<a href="#3565" id="3565">3565</a>
+<a href="#3566" id="3566">3566</a>
+<a href="#3567" id="3567">3567</a>
+<a href="#3568" id="3568">3568</a>
+<a href="#3569" id="3569">3569</a>
+<a href="#3570" id="3570">3570</a>
+<a href="#3571" id="3571">3571</a>
+<a href="#3572" id="3572">3572</a>
+<a href="#3573" id="3573">3573</a>
+<a href="#3574" id="3574">3574</a>
+<a href="#3575" id="3575">3575</a>
+<a href="#3576" id="3576">3576</a>
+<a href="#3577" id="3577">3577</a>
+<a href="#3578" id="3578">3578</a>
+<a href="#3579" id="3579">3579</a>
+<a href="#3580" id="3580">3580</a>
+<a href="#3581" id="3581">3581</a>
+<a href="#3582" id="3582">3582</a>
+<a href="#3583" id="3583">3583</a>
+<a href="#3584" id="3584">3584</a>
+<a href="#3585" id="3585">3585</a>
+<a href="#3586" id="3586">3586</a>
+<a href="#3587" id="3587">3587</a>
+<a href="#3588" id="3588">3588</a>
+<a href="#3589" id="3589">3589</a>
+<a href="#3590" id="3590">3590</a>
+<a href="#3591" id="3591">3591</a>
+<a href="#3592" id="3592">3592</a>
+<a href="#3593" id="3593">3593</a>
+<a href="#3594" id="3594">3594</a>
+<a href="#3595" id="3595">3595</a>
+<a href="#3596" id="3596">3596</a>
+<a href="#3597" id="3597">3597</a>
+<a href="#3598" id="3598">3598</a>
+<a href="#3599" id="3599">3599</a>
+<a href="#3600" id="3600">3600</a>
+<a href="#3601" id="3601">3601</a>
+<a href="#3602" id="3602">3602</a>
+<a href="#3603" id="3603">3603</a>
+<a href="#3604" id="3604">3604</a>
+<a href="#3605" id="3605">3605</a>
+<a href="#3606" id="3606">3606</a>
+<a href="#3607" id="3607">3607</a>
+<a href="#3608" id="3608">3608</a>
+<a href="#3609" id="3609">3609</a>
+<a href="#3610" id="3610">3610</a>
+<a href="#3611" id="3611">3611</a>
+<a href="#3612" id="3612">3612</a>
+<a href="#3613" id="3613">3613</a>
+<a href="#3614" id="3614">3614</a>
+<a href="#3615" id="3615">3615</a>
+<a href="#3616" id="3616">3616</a>
+<a href="#3617" id="3617">3617</a>
+<a href="#3618" id="3618">3618</a>
+<a href="#3619" id="3619">3619</a>
+<a href="#3620" id="3620">3620</a>
+<a href="#3621" id="3621">3621</a>
+<a href="#3622" id="3622">3622</a>
+<a href="#3623" id="3623">3623</a>
+<a href="#3624" id="3624">3624</a>
+<a href="#3625" id="3625">3625</a>
+<a href="#3626" id="3626">3626</a>
+<a href="#3627" id="3627">3627</a>
+<a href="#3628" id="3628">3628</a>
+<a href="#3629" id="3629">3629</a>
+<a href="#3630" id="3630">3630</a>
+<a href="#3631" id="3631">3631</a>
+<a href="#3632" id="3632">3632</a>
+<a href="#3633" id="3633">3633</a>
+<a href="#3634" id="3634">3634</a>
+<a href="#3635" id="3635">3635</a>
+<a href="#3636" id="3636">3636</a>
+<a href="#3637" id="3637">3637</a>
+<a href="#3638" id="3638">3638</a>
+<a href="#3639" id="3639">3639</a>
+<a href="#3640" id="3640">3640</a>
+<a href="#3641" id="3641">3641</a>
+<a href="#3642" id="3642">3642</a>
+<a href="#3643" id="3643">3643</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 </span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 
 <span class="kw">use </span><span class="kw">super</span>::Builder;
@@ -3323,6 +3677,9 @@
 <span class="kw">use </span>std::cell::Cell;
 <span class="kw">use </span>std::iter::{<span class="self">self</span>, empty};
 <span class="kw">use </span>std::ops::RangeInclusive;
+
+<span class="kw">use </span>tracing::{Level, instrument, span};
+<span class="kw">use </span>tracing::{trace, warn};
 
 <span class="macro">macro_rules!</span> simple_op {
     (
@@ -3443,7 +3800,8 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; Builder&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; {
-    <span class="kw">fn </span>ordering_to_semantics_def(<span class="kw-2">&amp;</span><span class="self">self</span>, ordering: AtomicOrdering) -&gt; SpirvValue {
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+    </span><span class="kw">fn </span>ordering_to_semantics_def(<span class="kw-2">&amp;</span><span class="self">self</span>, ordering: AtomicOrdering) -&gt; SpirvValue {
         <span class="kw">let </span><span class="kw-2">mut </span>invalid_seq_cst = <span class="bool-val">false</span>;
         <span class="kw">let </span>semantics = <span class="kw">match </span>ordering {
             AtomicOrdering::Unordered | AtomicOrdering::Relaxed =&gt; MemorySemantics::NONE,
@@ -3478,7 +3836,8 @@
         semantics
     }
 
-    <span class="kw">fn </span>memset_const_pattern(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: <span class="kw-2">&amp;</span>SpirvType&lt;<span class="lifetime">'tcx</span>&gt;, fill_byte: u8) -&gt; Word {
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+    </span><span class="kw">fn </span>memset_const_pattern(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: <span class="kw-2">&amp;</span>SpirvType&lt;<span class="lifetime">'tcx</span>&gt;, fill_byte: u8) -&gt; Word {
         <span class="kw">match </span><span class="kw-2">*</span>ty {
             SpirvType::Void =&gt; <span class="self">self</span>.fatal(<span class="string">"memset invalid on void pattern"</span>),
             SpirvType::Bool =&gt; <span class="self">self</span>.fatal(<span class="string">"memset invalid on bool pattern"</span>),
@@ -3565,7 +3924,8 @@
         }
     }
 
-    <span class="kw">fn </span>memset_dynamic_pattern(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: <span class="kw-2">&amp;</span>SpirvType&lt;<span class="lifetime">'tcx</span>&gt;, fill_var: Word) -&gt; Word {
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+    </span><span class="kw">fn </span>memset_dynamic_pattern(<span class="kw-2">&amp;</span><span class="self">self</span>, ty: <span class="kw-2">&amp;</span>SpirvType&lt;<span class="lifetime">'tcx</span>&gt;, fill_var: Word) -&gt; Word {
         <span class="kw">match </span><span class="kw-2">*</span>ty {
             SpirvType::Void =&gt; <span class="self">self</span>.fatal(<span class="string">"memset invalid on void pattern"</span>),
             SpirvType::Bool =&gt; <span class="self">self</span>.fatal(<span class="string">"memset invalid on bool pattern"</span>),
@@ -3621,7 +3981,8 @@
         }
     }
 
-    <span class="kw">fn </span>memset_constant_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ptr: SpirvValue, pat: SpirvValue, size_bytes: u64) {
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+    </span><span class="kw">fn </span>memset_constant_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ptr: SpirvValue, pat: SpirvValue, size_bytes: u64) {
         <span class="kw">let </span>size_elem = <span class="self">self
             </span>.lookup_type(pat.ty)
             .sizeof(<span class="self">self</span>)
@@ -3639,6 +4000,7 @@
     }
 
     <span class="comment">// TODO: Test this is correct
+    </span><span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
     </span><span class="kw">fn </span>memset_dynamic_size(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ptr: SpirvValue, pat: SpirvValue, size_bytes: SpirvValue) {
         <span class="kw">let </span>size_elem = <span class="self">self
             </span>.lookup_type(pat.ty)
@@ -3673,15 +4035,18 @@
         <span class="self">self</span>.switch_to_block(exit_bb);
     }
 
-    <span class="kw">fn </span>zombie_convert_ptr_to_u(<span class="kw-2">&amp;</span><span class="self">self</span>, def: Word) {
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+    </span><span class="kw">fn </span>zombie_convert_ptr_to_u(<span class="kw-2">&amp;</span><span class="self">self</span>, def: Word) {
         <span class="self">self</span>.zombie(def, <span class="string">"cannot convert pointers to integers"</span>);
     }
 
-    <span class="kw">fn </span>zombie_convert_u_to_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>, def: Word) {
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+    </span><span class="kw">fn </span>zombie_convert_u_to_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>, def: Word) {
         <span class="self">self</span>.zombie(def, <span class="string">"cannot convert integers to pointers"</span>);
     }
 
-    <span class="kw">fn </span>zombie_ptr_equal(<span class="kw-2">&amp;</span><span class="self">self</span>, def: Word, inst: <span class="kw-2">&amp;</span>str) {
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+    </span><span class="kw">fn </span>zombie_ptr_equal(<span class="kw-2">&amp;</span><span class="self">self</span>, def: Word, inst: <span class="kw-2">&amp;</span>str) {
         <span class="kw">if </span>!<span class="self">self</span>.builder.has_capability(Capability::VariablePointers) {
             <span class="self">self</span>.zombie(
                 def,
@@ -3695,6 +4060,7 @@
     </span><span class="comment">//
     // HACK(eddyb) temporary workaround for untyped pointers upstream.
     // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
+    </span><span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>), fields(ptr, ty = <span class="question-mark">?</span><span class="self">self</span>.debug_type(ty)))]
     </span><span class="kw">fn </span>adjust_pointer_for_typed_access(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         ptr: SpirvValue,
@@ -3715,6 +4081,7 @@
     //
     // HACK(eddyb) temporary workaround for untyped pointers upstream.
     // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
+    </span><span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
     </span><span class="kw">fn </span>adjust_pointer_for_sized_access(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         ptr: SpirvValue,
@@ -3723,12 +4090,15 @@
         <span class="kw">let </span>ptr = ptr.strip_ptrcasts();
         <span class="kw">let </span><span class="kw-2">mut </span>leaf_ty = <span class="kw">match </span><span class="self">self</span>.lookup_type(ptr.ty) {
             SpirvType::Pointer { pointee } =&gt; pointee,
-            other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(<span class="string">"non-pointer type: {other:?}"</span>)),
+            other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(<span class="string">"`ptr` is non-pointer type: {other:?}"</span>)),
         };
 
-        <span class="comment">// FIXME(eddyb) this isn't efficient, `recover_access_chain_from_offset`
-        // could instead be doing all the extra digging itself.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>indices = SmallVec::&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt;::new();
+        <span class="macro">trace!</span>(
+            <span class="string">"before nested adjust_pointer_for_sized_access. `leaf_ty`: {}"</span>,
+            <span class="self">self</span>.debug_type(leaf_ty)
+        );
+
+        <span class="kw">let </span><span class="kw-2">mut </span>indices = SmallVec::&lt;[<span class="kw">_</span>; <span class="number">8</span>]&gt;::new();
         <span class="kw">while let </span><span class="prelude-val">Some</span>((inner_indices, inner_ty)) = <span class="self">self</span>.recover_access_chain_from_offset(
             leaf_ty,
             Size::ZERO,
@@ -3739,9 +4109,13 @@
             leaf_ty = inner_ty;
         }
 
+        <span class="macro">trace!</span>(
+            <span class="string">"after nested adjust_pointer_for_sized_access. `leaf_ty`: {}"</span>,
+            <span class="self">self</span>.debug_type(leaf_ty)
+        );
+
         <span class="kw">let </span>leaf_ptr_ty = (<span class="self">self</span>.lookup_type(leaf_ty).sizeof(<span class="self">self</span>) == <span class="prelude-val">Some</span>(size))
             .then(|| <span class="self">self</span>.type_ptr_to(leaf_ty))<span class="question-mark">?</span>;
-
         <span class="kw">let </span>leaf_ptr = <span class="kw">if </span>indices.is_empty() {
             <span class="macro">assert_ty_eq!</span>(<span class="self">self</span>, ptr.ty, leaf_ptr_ty);
             ptr
@@ -3755,6 +4129,12 @@
                 .unwrap()
                 .with_type(leaf_ptr_ty)
         };
+
+        <span class="macro">trace!</span>(
+            <span class="string">"adjust_pointer_for_sized_access returning {} {}"</span>,
+            <span class="self">self</span>.debug_type(leaf_ptr.ty),
+            <span class="self">self</span>.debug_type(leaf_ty)
+        );
         <span class="prelude-val">Some</span>((leaf_ptr, leaf_ty))
     }
 
@@ -3765,6 +4145,7 @@
     ///
     /// That is, try to turn `((_: *T) as *u8).add(offset) as *Leaf` into a series
     /// of struct field and array/vector element accesses.
+    </span><span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>), fields(ty = <span class="question-mark">?</span><span class="self">self</span>.debug_type(ty), leaf_size_or_unsized_range, leaf_ty = <span class="question-mark">?</span>leaf_ty))]
     </span><span class="kw">fn </span>recover_access_chain_from_offset(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         <span class="kw-2">mut </span>ty: &lt;<span class="self">Self </span><span class="kw">as </span>BackendTypes&gt;::Type,
@@ -3774,9 +4155,17 @@
         leaf_ty: <span class="prelude-ty">Option</span>&lt;&lt;<span class="self">Self </span><span class="kw">as </span>BackendTypes&gt;::Type&gt;,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;(SmallVec&lt;[u32; <span class="number">8</span>]&gt;, &lt;<span class="self">Self </span><span class="kw">as </span>BackendTypes&gt;::Type)&gt; {
         <span class="macro">assert_ne!</span>(<span class="prelude-val">Some</span>(ty), leaf_ty);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(leaf_ty) = leaf_ty {
+            <span class="macro">trace!</span>(
+                <span class="string">"recovering access chain: leaf_ty: {:?}"</span>,
+                <span class="self">self</span>.debug_type(leaf_ty)
+            );
+        } <span class="kw">else </span>{
+            <span class="macro">trace!</span>(<span class="string">"recovering access chain: leaf_ty: None"</span>);
+        }
 
         <span class="comment">// HACK(eddyb) this has the correct ordering (`Sized(_) &lt; Unsized`).
-        </span><span class="attr">#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
+        </span><span class="attr">#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
         </span><span class="kw">enum </span>MaybeSized {
             Sized(Size),
             Unsized,
@@ -3787,6 +4176,8 @@
                 [r.start(), r.end()].map(|x| x.map_or(MaybeSized::Unsized, MaybeSized::Sized));
             start..=end
         };
+
+        <span class="macro">trace!</span>(<span class="string">"leaf_size_range: {:?}"</span>, leaf_size_range);
 
         <span class="comment">// NOTE(eddyb) `ty` and `ty_kind`/`ty_size` should be kept in sync.
         </span><span class="kw">let </span><span class="kw-2">mut </span>ty_kind = <span class="self">self</span>.lookup_type(ty);
@@ -3800,6 +4191,7 @@
                     field_offsets,
                     ..
                 } =&gt; {
+                    <span class="macro">trace!</span>(<span class="string">"recovering access chain from ADT"</span>);
                     <span class="kw">let </span>(i, field_ty, field_ty_kind, field_ty_size, offset_in_field) = field_offsets
                         .iter()
                         .enumerate()
@@ -3829,18 +4221,25 @@
                         })<span class="question-mark">?</span>;
 
                     ty = field_ty;
+                    <span class="macro">trace!</span>(<span class="string">"setting ty = field_ty: {:?}"</span>, <span class="self">self</span>.debug_type(field_ty));
                     ty_kind = field_ty_kind;
+                    <span class="macro">trace!</span>(<span class="string">"setting ty_kind = field_ty_kind: {:?}"</span>, field_ty_kind);
                     ty_size = field_ty_size;
+                    <span class="macro">trace!</span>(<span class="string">"setting ty_size = field_ty_size: {:?}"</span>, field_ty_size);
 
                     indices.push(i <span class="kw">as </span>u32);
                     offset = offset_in_field;
+                    <span class="macro">trace!</span>(<span class="string">"setting offset = offset_in_field: {:?}"</span>, offset_in_field);
                 }
                 SpirvType::Vector { element, .. }
                 | SpirvType::Array { element, .. }
                 | SpirvType::RuntimeArray { element }
                 | SpirvType::Matrix { element, .. } =&gt; {
+                    <span class="macro">trace!</span>(<span class="string">"recovering access chain from Vector, Array, RuntimeArray, or Matrix"</span>);
                     ty = element;
+                    <span class="macro">trace!</span>(<span class="string">"setting ty = element: {:?}"</span>, <span class="self">self</span>.debug_type(element));
                     ty_kind = <span class="self">self</span>.lookup_type(ty);
+                    <span class="macro">trace!</span>(<span class="string">"looked up ty kind: {:?}"</span>, ty_kind);
 
                     <span class="kw">let </span>stride = ty_kind.sizeof(<span class="self">self</span>)<span class="question-mark">?</span>;
                     ty_size = MaybeSized::Sized(stride);
@@ -3848,11 +4247,15 @@
                     indices.push((offset.bytes() / stride.bytes()).try_into().ok()<span class="question-mark">?</span>);
                     offset = Size::from_bytes(offset.bytes() % stride.bytes());
                 }
-                <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+                <span class="kw">_ </span>=&gt; {
+                    <span class="macro">trace!</span>(<span class="string">"recovering access chain from SOMETHING ELSE, RETURNING NONE"</span>);
+                    <span class="kw">return </span><span class="prelude-val">None</span>;
+                }
             }
 
             <span class="comment">// Avoid digging beyond the point the leaf could actually fit.
             </span><span class="kw">if </span>ty_size &lt; <span class="kw-2">*</span>leaf_size_range.start() {
+                <span class="macro">trace!</span>(<span class="string">"avoiding digging beyond the point the leaf could actually fit"</span>);
                 <span class="kw">return </span><span class="prelude-val">None</span>;
             }
 
@@ -3860,160 +4263,393 @@
                 &amp;&amp; leaf_size_range.contains(<span class="kw-2">&amp;</span>ty_size)
                 &amp;&amp; leaf_ty.map_or(<span class="bool-val">true</span>, |leaf_ty| leaf_ty == ty)
             {
+                <span class="macro">trace!</span>(<span class="string">"returning type: {:?}"</span>, <span class="self">self</span>.debug_type(ty));
+                <span class="macro">trace!</span>(<span class="string">"returning indices with len: {:?}"</span>, indices.len());
                 <span class="kw">return </span><span class="prelude-val">Some</span>((indices, ty));
             }
         }
     }
 
-    <span class="kw">fn </span>maybe_inbounds_gep(
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>), fields(ty = <span class="question-mark">?</span><span class="self">self</span>.debug_type(ty), ptr, combined_indices = <span class="question-mark">?</span>combined_indices.iter().map(|x| (<span class="self">self</span>.debug_type(x.ty), x.kind)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), is_inbounds))]
+    </span><span class="kw">fn </span>maybe_inbounds_gep(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        ty: Word,
-        ptr: SpirvValue,
-        combined_indices: <span class="kw-2">&amp;</span>[SpirvValue],
-        is_inbounds: bool,
+        <span class="comment">// Represents the type of the element that `ptr` is assumed to point to
+        // *before* applying the *first* index (`ptr_base_index`). This type is used
+        // primarily to calculate the size for the initial offset.
+        </span>ty: Word,
+        <span class="comment">//  The base pointer value for the GEP operation.
+        </span>ptr: SpirvValue,
+        <span class="comment">// A slice of indices used for the GEP calculation. The *first* index is treated
+        // as the main offset from the base pointer `ptr`, scaled by the size of `ty`.
+        // Subsequent indices navigate through nested aggregate types (structs, arrays,
+        // vectors, etc.) starting from `ty`.
+        </span>combined_indices: <span class="kw-2">&amp;</span>[SpirvValue],
+        <span class="comment">// If true, generate an `OpInBoundsAccessChain`, which has stricter requirements
+        // but allows more optimization. If false, generate `OpAccessChain`.
+        </span>is_inbounds: bool,
     ) -&gt; SpirvValue {
-        <span class="kw">let </span>(<span class="kw-2">&amp;</span>ptr_base_index, indices) = combined_indices.split_first().unwrap();
-
-        <span class="comment">// The first index is an offset to the pointer, the rest are actual members.
+        <span class="comment">// Separate the first index (used for the base offset) from the rest of the
+        // indices (used for navigating within the aggregate type). `ptr_base_index` is
+        // the index applied directly to `ptr`, effectively an offset multiplier based
+        // on the size of `ty`. `indices` are the subsequent indices used to drill down
+        // into fields or elements of `ty`.
         // https://llvm.org/docs/GetElementPtr.html
         // "An OpAccessChain instruction is the equivalent of an LLVM getelementptr instruction where the first index element is zero."
         // https://github.com/gpuweb/gpuweb/issues/33
-        </span><span class="kw">let </span><span class="kw-2">mut </span>result_pointee_type = ty;
-        <span class="kw">let </span>indices: Vec&lt;<span class="kw">_</span>&gt; = indices
-            .iter()
-            .map(|index| {
-                result_pointee_type = <span class="kw">match </span><span class="self">self</span>.lookup_type(result_pointee_type) {
-                    SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element } =&gt; {
-                        element
-                    }
-                    <span class="kw">_ </span>=&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(
-                        <span class="string">"GEP not implemented for type {}"</span>,
-                        <span class="self">self</span>.debug_type(result_pointee_type)
-                    )),
-                };
-                index.def(<span class="self">self</span>)
-            })
-            .collect();
+        </span><span class="kw">let </span>(<span class="kw-2">&amp;</span>ptr_base_index, indices) = combined_indices.split_first().unwrap();
 
-        <span class="comment">// Special-case field accesses through a `pointercast`, to access the
-        // right field in the original type, for the `Logical` addressing model.
+        <span class="comment">// Determine if this GEP operation is effectively byte-level addressing.
+        // This check is based on the *provided* input type `ty`. If `ty` is i8 or u8,
+        // it suggests the caller intends to perform byte-offset calculations,
+        // which might allow for more flexible type recovery later.
+        </span><span class="kw">let </span>is_byte_gep = <span class="macro">matches!</span>(<span class="self">self</span>.lookup_type(ty), SpirvType::Integer(<span class="number">8</span>, <span class="kw">_</span>));
+        <span class="macro">trace!</span>(<span class="string">"Is byte GEP (based on input type): {}"</span>, is_byte_gep);
+
+        <span class="comment">// --- Calculate the final pointee type based on the GEP operation ---
+
+        // This loop does the type traversal according to the `indices` (excluding the
+        // base offset index). It starts with the initial element type `ty` and
+        // iteratively applies each index to determine the type of the element being
+        // accessed at each step. The result is the type that the *final* pointer,
+        // generated by the SPIR-V `AccessChain`` instruction, *must* point to according
+        // to the SPIR-V specification and the provided `indices`.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>calculated_pointee_type = ty;
+        <span class="kw">for </span>index_val <span class="kw">in </span>indices {
+            <span class="comment">// Lookup the current aggregate type we are indexing into.
+            </span>calculated_pointee_type = <span class="kw">match </span><span class="self">self</span>.lookup_type(calculated_pointee_type) {
+                <span class="comment">// If it's a struct (ADT), the index must be a constant. Use it to get
+                // the field type.
+                </span>SpirvType::Adt { field_types, .. } =&gt; {
+                    <span class="kw">let </span>const_index = <span class="self">self
+                        </span>.builder
+                        .lookup_const_scalar(<span class="kw-2">*</span>index_val)
+                        .expect(<span class="string">"Non-constant struct index for GEP"</span>)
+                        <span class="kw">as </span>usize;
+                    <span class="comment">// Get the type of the specific field.
+                    </span>field_types[const_index]
+                }
+                <span class="comment">// If it's an array, vector, or matrix, indexing yields the element type.
+                </span>SpirvType::Array { element, .. }
+                | SpirvType::RuntimeArray { element }
+                | SpirvType::Vector { element, .. }
+                | SpirvType::Matrix { element, .. } =&gt; element,
+                <span class="comment">// Special case: If we started with a byte GEP (`is_byte_gep` is true) and
+                // we are currently indexing into a byte type, the result is still a byte type.
+                // This prevents errors if `indices` contains non-zero values when `ty` is u8/i8.
+                </span>SpirvType::Integer(<span class="number">8</span>, signedness) <span class="kw">if </span>is_byte_gep =&gt; {
+                    <span class="comment">// Define the resulting byte type as it might not exist yet).
+                    </span>SpirvType::Integer(<span class="number">8</span>, signedness).def(<span class="self">self</span>.span(), <span class="self">self</span>)
+                }
+                <span class="comment">// Any other type cannot be indexed into via GEP.
+                </span><span class="kw">_ </span>=&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(
+                    <span class="string">"GEP not implemented for indexing into type {}"</span>,
+                    <span class="self">self</span>.debug_type(calculated_pointee_type)
+                )),
+            };
+        }
+        <span class="comment">// Construct the SPIR-V pointer type that points to the final calculated pointee
+        // type. This is the *required* result type for the SPIR-V `AccessChain`
+        // instruction.
+        </span><span class="kw">let </span>final_spirv_ptr_type = <span class="self">self</span>.type_ptr_to(calculated_pointee_type);
+        <span class="macro">trace!</span>(
+            <span class="string">"Calculated final SPIR-V pointee type: {}"</span>,
+            <span class="self">self</span>.debug_type(calculated_pointee_type)
+        );
+        <span class="macro">trace!</span>(
+            <span class="string">"Calculated final SPIR-V ptr type: {}"</span>,
+            <span class="self">self</span>.debug_type(final_spirv_ptr_type)
+        );
+
+        <span class="comment">// Ensure all the `indices` (excluding the base offset index) are defined in the
+        // SPIR-V module and get their corresponding SPIR-V IDs. These IDs will be used
+        // as operands in the AccessChain instruction.
+        </span><span class="kw">let </span>gep_indices_ids: Vec&lt;<span class="kw">_</span>&gt; = indices.iter().map(|index| index.def(<span class="self">self</span>)).collect();
+
+        <span class="comment">// --- Prepare the base pointer ---
+
+        // Remove any potentially redundant pointer casts applied to the input `ptr`.
+        // GEP operations should ideally work on the "underlying" pointer.
         </span><span class="kw">let </span>ptr = ptr.strip_ptrcasts();
-        <span class="kw">let </span>ptr_id = ptr.def(<span class="self">self</span>);
-        <span class="kw">let </span>original_pointee_ty = <span class="kw">match </span><span class="self">self</span>.lookup_type(ptr.ty) {
+        <span class="comment">// Get the SPIR-V ID for the (potentially stripped) base pointer.
+        </span><span class="kw">let </span>ptr_id = ptr.def(<span class="self">self</span>);
+        <span class="comment">// Determine the actual pointee type of the base pointer `ptr` *after* stripping casts.
+        // This might differ from the input `ty` if `ty` was less specific (e.g., u8).
+        </span><span class="kw">let </span>original_pointee_ty = <span class="kw">match </span><span class="self">self</span>.lookup_type(ptr.ty) {
             SpirvType::Pointer { pointee } =&gt; pointee,
             other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(<span class="string">"gep called on non-pointer type: {other:?}"</span>)),
         };
 
-        <span class="comment">// HACK(eddyb) `struct_gep` itself is falling out of use, as it's being
-        // replaced upstream by `ptr_add` (aka `inbounds_gep` with byte offsets).
-        //
-        // FIXME(eddyb) get rid of everything other than:
-        // - constant byte offset (`ptr_add`?)
-        // - dynamic indexing of a single array
-        </span><span class="kw">let </span>const_ptr_offset = <span class="self">self
+        <span class="comment">// --- Recovery Path ---
+
+        // Try to calculate the byte offset implied by the *first* index
+        // (`ptr_base_index`) if it's a compile-time constant. This uses the size of the
+        // *input type* `ty`.
+        </span><span class="kw">let </span>const_ptr_offset_bytes = <span class="self">self
             </span>.builder
-            .lookup_const_scalar(ptr_base_index)
-            .and_then(|idx| <span class="prelude-val">Some</span>(u64::try_from(idx).ok()<span class="question-mark">? </span>* <span class="self">self</span>.lookup_type(ty).sizeof(<span class="self">self</span>)<span class="question-mark">?</span>));
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(const_ptr_offset) = const_ptr_offset {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>((base_indices, base_pointee_ty)) = <span class="self">self</span>.recover_access_chain_from_offset(
-                original_pointee_ty,
-                const_ptr_offset,
-                <span class="prelude-val">Some</span>(Size::ZERO)..=<span class="prelude-val">None</span>,
-                <span class="prelude-val">None</span>,
+            .lookup_const_scalar(ptr_base_index) <span class="comment">// Check if ptr_base_index is constant scalar
+            </span>.and_then(|idx| {
+                <span class="kw">let </span>idx_u64 = u64::try_from(idx).ok()<span class="question-mark">?</span>;
+                <span class="comment">// Get the size of the input type `ty`
+                </span><span class="self">self</span>.lookup_type(ty)
+                    .sizeof(<span class="self">self</span>)
+                    <span class="comment">// Calculate offset in bytes
+                    </span>.map(|size| idx_u64.saturating_mul(size.bytes()))
+            });
+
+        <span class="comment">// If we successfully calculated a constant byte offset for the first index...
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(const_ptr_offset_bytes) = const_ptr_offset_bytes {
+            <span class="comment">// Try to reconstruct a more "structured" access chain based on the *original*
+            // pointee type of the pointer (`original_pointee_ty`) and the calculated byte offset.
+            // This is useful if the input `ty` was generic (like u8) but the pointer actually
+            // points to a structured type (like a struct). `recover_access_chain_from_offset`
+            // attempts to find a sequence of constant indices (`base_indices`) into
+            // `original_pointee_ty` that matches the `const_ptr_offset_bytes`.
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>((base_indices, base_pointee_ty)) = <span class="self">self</span>.recover_access_chain_from_offset(
+                <span class="comment">// Start from the pointer's actual underlying type
+                </span>original_pointee_ty,
+                <span class="comment">// The target byte offset
+                </span>Size::from_bytes(const_ptr_offset_bytes),
+                <span class="comment">// Allowed range (not strictly needed here?)
+                </span><span class="prelude-val">Some</span>(Size::ZERO)..=<span class="prelude-val">None</span>,
+                <span class="comment">// Don't require alignment
+                </span><span class="prelude-val">None</span>,
             ) {
-                <span class="comment">// FIXME(eddyb) this condition is pretty limiting, but
-                // eventually it shouldn't matter if GEPs are going away.
-                </span><span class="kw">if </span>ty == base_pointee_ty || indices.is_empty() {
-                    <span class="kw">let </span>result_pointee_type = <span class="kw">if </span>indices.is_empty() {
-                        base_pointee_ty
-                    } <span class="kw">else </span>{
-                        result_pointee_type
-                    };
-                    <span class="kw">let </span>indices = base_indices
+                <span class="comment">// Recovery successful! Found a structured path (`base_indices`) to the target offset.
+                </span><span class="macro">trace!</span>(
+                    <span class="string">"`recover_access_chain_from_offset` returned Some with base_pointee_ty: {}"</span>,
+                    <span class="self">self</span>.debug_type(base_pointee_ty)
+                );
+
+                <span class="comment">// Determine the result type for the `AccessChain` instruction we might
+                // emit. By default, use the `final_spirv_ptr_type` strictly calculated
+                // earlier from `ty` and `indices`.
+                //
+                // If this is a byte GEP *and* the recovered type happens to be a byte
+                // type, we can use the pointer type derived from the *recovered* type
+                // (`base_pointee_ty`). This helps preserve type information when
+                // recovery works for byte addressing.
+                </span><span class="kw">let </span>result_wrapper_type = <span class="kw">if </span>!is_byte_gep
+                    || <span class="macro">matches!</span>(<span class="self">self</span>.lookup_type(base_pointee_ty), SpirvType::Integer(<span class="number">8</span>, <span class="kw">_</span>))
+                {
+                    <span class="macro">trace!</span>(
+                        <span class="string">"Using strictly calculated type for wrapper: {}"</span>,
+                        <span class="comment">// Use type based on input `ty` + `indices`
+                        </span><span class="self">self</span>.debug_type(calculated_pointee_type)
+                    );
+                    final_spirv_ptr_type
+                } <span class="kw">else </span>{
+                    <span class="macro">trace!</span>(
+                        <span class="string">"Byte GEP allowing recovered type for wrapper: {}"</span>,
+                        <span class="comment">// Use type based on recovery result
+                        </span><span class="self">self</span>.debug_type(base_pointee_ty)
+                    );
+                    <span class="self">self</span>.type_ptr_to(base_pointee_ty)
+                };
+
+                <span class="comment">// Check if we can directly use the recovered path combined with the
+                // remaining indices. This is possible if:
+                // 1. The input type `ty` matches the type found by recovery
+                //    (`base_pointee_ty`). This means the recovery didn't fundamentally
+                // change the type interpretation needed for the *next* steps
+                // (`indices`).
+                // OR
+                // 2. There are no further indices (`gep_indices_ids` is empty). In this
+                //    case, the recovery path already leads to the final destination.
+                </span><span class="kw">if </span>ty == base_pointee_ty || gep_indices_ids.is_empty() {
+                    <span class="comment">// Combine the recovered constant indices with the remaining dynamic/constant indices.
+                    </span><span class="kw">let </span>combined_indices = base_indices
                         .into_iter()
-                        .map(|idx| <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), idx).def(<span class="self">self</span>))
-                        .chain(indices)
+                        <span class="comment">// Convert recovered `u32` indices to constant SPIR-V IDs.
+                        </span>.map(|idx| <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), idx).def(<span class="self">self</span>))
+                        <span class="comment">// Chain the original subsequent indices (`indices`).
+                        </span>.chain(gep_indices_ids.iter().copied())
                         .collect();
-                    <span class="kw">return </span><span class="self">self</span>.emit_access_chain(
-                        <span class="self">self</span>.type_ptr_to(result_pointee_type),
-                        ptr_id,
-                        <span class="prelude-val">None</span>,
-                        indices,
-                        is_inbounds,
+
+                    <span class="macro">trace!</span>(
+                        <span class="string">"emitting access chain via recovery path with wrapper type: {}"</span>,
+                        <span class="self">self</span>.debug_type(result_wrapper_type)
+                    );
+                    <span class="comment">// Emit a single AccessChain using the original pointer `ptr_id` and the fully combined index list.
+                    // Note: We don't pass `ptr_base_index` here because its effect is incorporated into `base_indices`.
+                    </span><span class="kw">return </span><span class="self">self</span>.emit_access_chain(
+                        result_wrapper_type, <span class="comment">// The chosen result pointer type
+                        </span>ptr_id,              <span class="comment">// The original base pointer ID
+                        </span><span class="prelude-val">None</span>,                <span class="comment">// No separate base index needed
+                        </span>combined_indices,    <span class="comment">// The combined structured + original indices
+                        </span>is_inbounds,         <span class="comment">// Preserve original inbounds request
+                    </span>);
+                } <span class="kw">else </span>{
+                    <span class="comment">// Recovery happened, but the recovered type `base_pointee_ty` doesn't match the input `ty`,
+                    // AND there are more `indices` to process. Using the `base_indices` derived from
+                    // `original_pointee_ty` would be incorrect for interpreting the subsequent `indices`
+                    // which were intended to operate relative to `ty`. Fall back to the standard path.
+                    </span><span class="macro">trace!</span>(
+                        <span class="string">"Recovery type mismatch ({}) vs ({}) and GEP indices exist, falling back"</span>,
+                        <span class="self">self</span>.debug_type(ty),
+                        <span class="self">self</span>.debug_type(base_pointee_ty)
                     );
                 }
+            } <span class="kw">else </span>{
+                <span class="comment">// `recover_access_chain_from_offset` couldn't find a structured path for the constant offset.
+                </span><span class="macro">trace!</span>(<span class="string">"`recover_access_chain_from_offset` returned None, falling back"</span>);
             }
         }
 
-        <span class="kw">let </span>result_type = <span class="self">self</span>.type_ptr_to(result_pointee_type);
+        <span class="comment">// --- End Recovery Path ---
 
-        <span class="comment">// Check if `ptr_id` is defined by an `OpAccessChain`, and if it is,
-        // grab its base pointer and indices.
-        //
-        // FIXME(eddyb) this could get ridiculously expensive, at the very least
-        // it could use `.rev()`, hoping the base pointer was recently defined?
+        // --- Attempt GEP Merging Path ---
+
+        // Check if the base pointer `ptr` itself was the result of a previous
+        // AccessChain instruction. Merging is only attempted if the input type `ty`
+        // matches the pointer's actual underlying pointee type `original_pointee_ty`.
+        // If they differ, merging could be invalid.
         </span><span class="kw">let </span>maybe_original_access_chain = <span class="kw">if </span>ty == original_pointee_ty {
-            <span class="kw">let </span>emit = <span class="self">self</span>.emit();
-            <span class="kw">let </span>module = emit.module_ref();
-            <span class="kw">let </span>func = <span class="kw-2">&amp;</span>module.functions[emit.selected_function().unwrap()];
-            <span class="kw">let </span>base_ptr_and_combined_indices = func
-                .all_inst_iter()
-                .find(|inst| inst.result_id == <span class="prelude-val">Some</span>(ptr_id))
-                .and_then(|ptr_def_inst| {
-                    <span class="kw">if </span><span class="macro">matches!</span>(
-                        ptr_def_inst.class.opcode,
-                        Op::AccessChain | Op::InBoundsAccessChain
-                    ) {
-                        <span class="kw">let </span>base_ptr = ptr_def_inst.operands[<span class="number">0</span>].unwrap_id_ref();
-                        <span class="kw">let </span>indices = ptr_def_inst.operands[<span class="number">1</span>..]
-                            .iter()
-                            .map(|op| op.unwrap_id_ref())
-                            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-                        <span class="prelude-val">Some</span>((base_ptr, indices))
-                    } <span class="kw">else </span>{
-                        <span class="prelude-val">None
-                    </span>}
-                });
-            base_ptr_and_combined_indices
+            <span class="comment">// Search the current function's instructions...
+            // FIXME(eddyb) this could get ridiculously expensive, at the very least
+            // it could use `.rev()`, hoping the base pointer was recently defined?
+            </span><span class="kw">let </span>search_result = {
+                <span class="kw">let </span>emit = <span class="self">self</span>.emit();
+                <span class="kw">let </span>module = emit.module_ref();
+                emit.selected_function().and_then(|func_idx| {
+                    module.functions.get(func_idx).and_then(|func| {
+                        <span class="comment">// Find the instruction that defined our base pointer `ptr_id`.
+                        </span>func.all_inst_iter()
+                            .find(|inst| inst.result_id == <span class="prelude-val">Some</span>(ptr_id))
+                            .and_then(|ptr_def_inst| {
+                                <span class="comment">// Check if that instruction was an `AccessChain` or `InBoundsAccessChain`.
+                                </span><span class="kw">if </span><span class="macro">matches!</span>(
+                                    ptr_def_inst.class.opcode,
+                                    Op::AccessChain | Op::InBoundsAccessChain
+                                ) {
+                                    <span class="comment">// If yes, extract its base pointer and its indices.
+                                    </span><span class="kw">let </span>base_ptr = ptr_def_inst.operands[<span class="number">0</span>].unwrap_id_ref();
+                                    <span class="kw">let </span>indices = ptr_def_inst.operands[<span class="number">1</span>..]
+                                        .iter()
+                                        .map(|op| op.unwrap_id_ref())
+                                        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+                                    <span class="prelude-val">Some</span>((base_ptr, indices))
+                                } <span class="kw">else </span>{
+                                    <span class="comment">// The instruction defining ptr was not an `AccessChain`.
+                                    </span><span class="prelude-val">None
+                                </span>}
+                            })
+                    })
+                })
+            };
+            search_result
         } <span class="kw">else </span>{
-            <span class="prelude-val">None
+            <span class="comment">// Input type `ty` doesn't match the pointer's actual type, cannot safely merge.
+            </span><span class="prelude-val">None
         </span>};
-        <span class="kw">if let </span><span class="prelude-val">Some</span>((original_ptr, <span class="kw-2">mut </span>original_indices)) = maybe_original_access_chain {
-            <span class="comment">// Transform the following:
-            // OpAccessChain original_ptr [a, b, c]
-            // OpPtrAccessChain ptr base [d, e, f]
-            // into
-            // OpAccessChain original_ptr [a, b, c + base, d, e, f]
-            // to remove the need for OpPtrAccessChain
-            </span><span class="kw">let </span>last = original_indices.last_mut().unwrap();
-            <span class="kw-2">*</span>last = <span class="self">self
-                </span>.add(last.with_type(ptr_base_index.ty), ptr_base_index)
-                .def(<span class="self">self</span>);
-            original_indices.extend(indices);
-            <span class="kw">return </span><span class="self">self</span>.emit_access_chain(
-                result_type,
-                original_ptr,
-                <span class="prelude-val">None</span>,
-                original_indices,
-                is_inbounds,
-            );
+
+        <span class="comment">// If we found that `ptr` was defined by a previous `AccessChain`...
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>((original_ptr, <span class="kw-2">mut </span>original_indices)) = maybe_original_access_chain {
+            <span class="macro">trace!</span>(<span class="string">"has original access chain, attempting to merge GEPs"</span>);
+
+            <span class="comment">// Check if merging is possible. Requires:
+            // 1. The original AccessChain had at least one index.
+            // 2. The *last* index of the original AccessChain is a constant.
+            // 3. The *first* index (`ptr_base_index`) of the *current* GEP is a constant.
+            // Merging usually involves adding these two constant indices.
+            </span><span class="kw">let </span>can_merge = <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>last_original_idx_id) = original_indices.last() {
+                <span class="comment">// Check if both the last original index and the current base index are constant scalars.
+                </span><span class="self">self</span>.builder
+                    .lookup_const_scalar(last_original_idx_id.with_type(ptr_base_index.ty))
+                    .is_some()
+                    &amp;&amp; <span class="self">self</span>.builder.lookup_const_scalar(ptr_base_index).is_some()
+            } <span class="kw">else </span>{
+                <span class="comment">// Original access chain had no indices to merge with.
+                </span><span class="bool-val">false
+            </span>};
+
+            <span class="kw">if </span>can_merge {
+                <span class="kw">let </span>last_original_idx_id = original_indices.last_mut().unwrap();
+                <span class="comment">// Add the current `ptr_base_index` to the last index of the original chain.
+                // The result becomes the new last index.
+                </span><span class="kw-2">*</span>last_original_idx_id = <span class="self">self
+                    </span>.add(
+                        <span class="comment">// Ensure types match for add.
+                        </span>last_original_idx_id.with_type(ptr_base_index.ty),
+                        ptr_base_index,
+                    )
+                    <span class="comment">// Define the result of the addition.
+                    </span>.def(<span class="self">self</span>);
+                <span class="comment">// Append the remaining indices (`indices`) from the current GEP operation.
+                </span>original_indices.extend(gep_indices_ids);
+
+                <span class="macro">trace!</span>(
+                    <span class="string">"emitting merged access chain with pointer to type: {}"</span>,
+                    <span class="self">self</span>.debug_type(calculated_pointee_type)
+                );
+                <span class="comment">// Emit a *single* AccessChain using the *original* base pointer and the *merged* index list.
+                // The result type *must* be the `final_spirv_ptr_type` calculated earlier based on the full chain of operations.
+                </span><span class="kw">return </span><span class="self">self</span>.emit_access_chain(
+                    final_spirv_ptr_type, <span class="comment">// Use the strictly calculated final type.
+                    </span>original_ptr,         <span class="comment">// Base pointer from the *original* AccessChain.
+                    </span><span class="prelude-val">None</span>,                 <span class="comment">// No separate base index; it's merged.
+                    </span>original_indices,     <span class="comment">// The combined list of indices.
+                    </span>is_inbounds,          <span class="comment">// Preserve original inbounds request.
+                </span>);
+            } <span class="kw">else </span>{
+                <span class="comment">// Cannot merge because one or both relevant indices are not constant,
+                // or the original chain was empty.
+                </span><span class="macro">trace!</span>(
+                    <span class="string">"Last index or base offset is not constant, or no last index, cannot merge."
+                </span>);
+            }
+        } <span class="kw">else </span>{
+            <span class="comment">// The base pointer `ptr` was not the result of an AccessChain, or merging
+            // wasn't attempted due to type mismatch.
+            </span><span class="macro">trace!</span>(<span class="string">"no original access chain to merge with"</span>);
         }
+        <span class="comment">// --- End GEP Merging Path ---
 
-        <span class="comment">// HACK(eddyb) temporary workaround for untyped pointers upstream.
-        // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
+        // --- Fallback / Default Path ---
+
+        // This path is taken if neither the Recovery nor the Merging path succeeded or applied.
+        // It performs a more direct translation of the GEP request.
+
+        // HACK(eddyb): Workaround for potential upstream issues where pointers might lack precise type info.
+        // FIXME(eddyb): Ideally, this should use untyped memory features if available/necessary.
+
+        // Before emitting the AccessChain, explicitly cast the base pointer `ptr` to
+        // ensure its pointee type matches the input `ty`. This is required because the
+        // SPIR-V `AccessChain` instruction implicitly uses the size of the base
+        // pointer's pointee type when applying the *first* index operand (our
+        // `ptr_base_index`). If `ty` and `original_pointee_ty` mismatched and we
+        // reached this fallback, this cast ensures SPIR-V validity.
+        </span><span class="macro">trace!</span>(<span class="string">"maybe_inbounds_gep fallback path calling pointercast"</span>);
+        <span class="comment">// Cast ptr to point to `ty`.
         </span><span class="kw">let </span>ptr = <span class="self">self</span>.pointercast(ptr, <span class="self">self</span>.type_ptr_to(ty));
-        <span class="kw">let </span>ptr_id = ptr.def(<span class="self">self</span>);
+        <span class="comment">// Get the ID of the (potentially newly casted) pointer.
+        </span><span class="kw">let </span>ptr_id = ptr.def(<span class="self">self</span>);
 
-        <span class="self">self</span>.emit_access_chain(
-            result_type,
-            ptr_id,
-            <span class="prelude-val">Some</span>(ptr_base_index),
-            indices,
-            is_inbounds,
-        )
+        <span class="macro">trace!</span>(
+            <span class="string">"emitting access chain via fallback path with pointer type: {}"</span>,
+            <span class="self">self</span>.debug_type(final_spirv_ptr_type)
+        );
+        <span class="comment">// Emit the `AccessChain` instruction.
+        </span><span class="self">self</span>.emit_access_chain(
+            final_spirv_ptr_type, <span class="comment">// Result *must* be a pointer to the final calculated type.
+            </span>ptr_id,               <span class="comment">// Use the (potentially casted) base pointer ID.
+            </span><span class="prelude-val">Some</span>(ptr_base_index), <span class="comment">// Provide the first index separately.
+            </span>gep_indices_ids,      <span class="comment">// Provide the rest of the indices.
+            </span>is_inbounds,          <span class="comment">// Preserve original inbounds request.
+        </span>)
     }
 
-    <span class="kw">fn </span>emit_access_chain(
+    <span class="attr">#[instrument(
+        level = <span class="string">"trace"</span>,
+        skip(<span class="self">self</span>),
+        fields(
+            result_type = <span class="question-mark">?</span><span class="self">self</span>.debug_type(result_type),
+             pointer,
+             ptr_base_index,
+             indices,
+             is_inbounds
+            )
+        )]
+    </span><span class="kw">fn </span>emit_access_chain(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         result_type: &lt;<span class="self">Self </span><span class="kw">as </span>BackendTypes&gt;::Type,
         pointer: Word,
@@ -4057,7 +4693,8 @@
         .with_type(result_type)
     }
 
-    <span class="kw">fn </span>fptoint_sat(
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+    </span><span class="kw">fn </span>fptoint_sat(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         signed: bool,
         val: SpirvValue,
@@ -4236,6 +4873,7 @@
     }
 
     <span class="comment">// HACK(eddyb) helper shared by `typed_alloca` and `alloca`.
+    </span><span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>), fields(ty = <span class="question-mark">?</span><span class="self">self</span>.debug_type(ty)))]
     </span><span class="kw">fn </span>declare_func_local_var(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         ty: &lt;<span class="self">Self </span><span class="kw">as </span>BackendTypes&gt;::Type,
@@ -4275,7 +4913,8 @@
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>Builder&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt; {
     <span class="kw">type </span>CodegenCx = CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;;
 
-    <span class="kw">fn </span>build(cx: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>::CodegenCx, llbb: <span class="self">Self</span>::BasicBlock) -&gt; <span class="self">Self </span>{
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(cx))]
+    </span><span class="kw">fn </span>build(cx: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>::CodegenCx, llbb: <span class="self">Self</span>::BasicBlock) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>cursor = cx.builder.select_block_by_id(llbb);
         <span class="comment">// FIXME(eddyb) change `Self::Function` to be more like a function index.
         </span><span class="kw">let </span>current_fn = {
@@ -4667,7 +5306,8 @@
         .with_type(val.ty)
     }
 
-    <span class="kw">fn </span>checked_binop(
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+    </span><span class="kw">fn </span>checked_binop(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         oop: OverflowOp,
         ty: Ty&lt;<span class="lifetime">'_</span>&gt;,
@@ -5083,7 +5723,8 @@
         }
     }
 
-    <span class="kw">fn </span>bitcast(<span class="kw-2">&amp;mut </span><span class="self">self</span>, val: <span class="self">Self</span>::Value, dest_ty: <span class="self">Self</span>::Type) -&gt; <span class="self">Self</span>::Value {
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>), fields(val_type = <span class="question-mark">?</span><span class="self">self</span>.debug_type(val.ty), dest_ty = <span class="question-mark">?</span><span class="self">self</span>.debug_type(dest_ty)))]
+    </span><span class="kw">fn </span>bitcast(<span class="kw-2">&amp;mut </span><span class="self">self</span>, val: <span class="self">Self</span>::Value, dest_ty: <span class="self">Self</span>::Type) -&gt; <span class="self">Self</span>::Value {
         <span class="kw">if </span>val.ty == dest_ty {
             val
         } <span class="kw">else </span>{
@@ -5094,6 +5735,9 @@
             // in SPIR-V, but still being used to paper over untyped pointers,
             // by unpacking/repacking newtype-shaped aggregates as-needed.
             </span><span class="kw">let </span>unpack_newtype = |ty, kind| {
+                <span class="kw">let </span>span = <span class="macro">span!</span>(Level::DEBUG, <span class="string">"unpack_newtype"</span>);
+                <span class="kw">let </span>_guard = span.enter();
+
                 <span class="kw">if </span>!<span class="macro">matches!</span>(kind, SpirvType::Adt { .. } | SpirvType::Array { .. }) {
                     <span class="kw">return </span><span class="prelude-val">None</span>;
                 }
@@ -5122,12 +5766,25 @@
                     .composite_extract(in_leaf_ty, <span class="prelude-val">None</span>, val.def(<span class="self">self</span>), indices)
                     .unwrap()
                     .with_type(in_leaf_ty);
+
+                <span class="macro">trace!</span>(
+                    <span class="string">"unpacked newtype. val: {} -&gt; in_leaf_ty: {}"</span>,
+                    <span class="self">self</span>.debug_type(val.ty),
+                    <span class="self">self</span>.debug_type(in_leaf_ty),
+                );
                 <span class="kw">return </span><span class="self">self</span>.bitcast(in_leaf, dest_ty);
             }
+
             <span class="comment">// Repack output newtypes, after bitcasting the leaf inside, instead.
             </span><span class="kw">if let </span><span class="prelude-val">Some</span>((indices, out_leaf_ty)) = unpack_newtype(dest_ty, dest_ty_kind) {
+                <span class="macro">trace!</span>(
+                    <span class="string">"unpacked newtype: dest: {} -&gt; out_leaf_ty: {}"</span>,
+                    <span class="self">self</span>.debug_type(dest_ty),
+                    <span class="self">self</span>.debug_type(out_leaf_ty),
+                );
                 <span class="kw">let </span>out_leaf = <span class="self">self</span>.bitcast(val, out_leaf_ty);
                 <span class="kw">let </span>out_agg_undef = <span class="self">self</span>.undef(dest_ty);
+                <span class="macro">trace!</span>(<span class="string">"returning composite insert"</span>);
                 <span class="kw">return </span><span class="self">self
                     </span>.emit()
                     .composite_insert(
@@ -5146,8 +5803,15 @@
 
             <span class="comment">// Reuse the pointer-specific logic in `pointercast` for `*T -&gt; *U`.
             </span><span class="kw">if </span>val_is_ptr &amp;&amp; dest_is_ptr {
+                <span class="macro">trace!</span>(<span class="string">"val and dest are both pointers"</span>);
                 <span class="kw">return </span><span class="self">self</span>.pointercast(val, dest_ty);
             }
+
+            <span class="macro">trace!</span>(
+                <span class="string">"before emitting: val ty: {} -&gt; dest ty: {}"</span>,
+                <span class="self">self</span>.debug_type(val.ty),
+                <span class="self">self</span>.debug_type(dest_ty)
+            );
 
             <span class="kw">let </span>result = <span class="self">self
                 </span>.emit()
@@ -5229,19 +5893,27 @@
         }
     }
 
-    <span class="kw">fn </span>pointercast(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ptr: <span class="self">Self</span>::Value, dest_ty: <span class="self">Self</span>::Type) -&gt; <span class="self">Self</span>::Value {
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>), fields(ptr, ptr_ty = <span class="question-mark">?</span><span class="self">self</span>.debug_type(ptr.ty), dest_ty = <span class="question-mark">?</span><span class="self">self</span>.debug_type(dest_ty)))]
+    </span><span class="kw">fn </span>pointercast(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ptr: <span class="self">Self</span>::Value, dest_ty: <span class="self">Self</span>::Type) -&gt; <span class="self">Self</span>::Value {
         <span class="comment">// HACK(eddyb) reuse the special-casing in `const_bitcast`, which relies
         // on adding a pointer type to an untyped pointer (to some const data).
         </span><span class="kw">if let </span>SpirvValueKind::IllegalConst(<span class="kw">_</span>) = ptr.kind {
+            <span class="macro">trace!</span>(<span class="string">"illegal const"</span>);
             <span class="kw">return </span><span class="self">self</span>.const_bitcast(ptr, dest_ty);
         }
 
         <span class="kw">if </span>ptr.ty == dest_ty {
+            <span class="macro">trace!</span>(<span class="string">"ptr.ty == dest_ty"</span>);
             <span class="kw">return </span>ptr;
         }
 
         <span class="comment">// Strip a previous `pointercast`, to reveal the original pointer type.
         </span><span class="kw">let </span>ptr = ptr.strip_ptrcasts();
+
+        <span class="macro">trace!</span>(
+            <span class="string">"ptr type after strippint pointer cases: {}"</span>,
+            <span class="self">self</span>.debug_type(ptr.ty),
+        );
 
         <span class="kw">if </span>ptr.ty == dest_ty {
             <span class="kw">return </span>ptr;
@@ -5267,6 +5939,12 @@
             dest_pointee_size..=dest_pointee_size,
             <span class="prelude-val">Some</span>(dest_pointee),
         ) {
+            <span class="macro">trace!</span>(<span class="string">"`recover_access_chain_from_offset` returned something"</span>);
+            <span class="macro">trace!</span>(
+                <span class="string">"ptr_pointee: {}, dest_pointee {}"</span>,
+                <span class="self">self</span>.debug_type(ptr_pointee),
+                <span class="self">self</span>.debug_type(dest_pointee),
+            );
             <span class="kw">let </span>indices = indices
                 .into_iter()
                 .map(|idx| <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), idx).def(<span class="self">self</span>))
@@ -5276,6 +5954,12 @@
                 .unwrap()
                 .with_type(dest_ty)
         } <span class="kw">else </span>{
+            <span class="macro">trace!</span>(<span class="string">"`recover_access_chain_from_offset` returned `None`"</span>);
+            <span class="macro">trace!</span>(
+                <span class="string">"ptr_pointee: {}, dest_pointee {}"</span>,
+                <span class="self">self</span>.debug_type(ptr_pointee),
+                <span class="self">self</span>.debug_type(dest_pointee),
+            );
             <span class="comment">// Defer the cast so that it has a chance to be avoided.
             </span><span class="kw">let </span>original_ptr = ptr.def(<span class="self">self</span>);
             SpirvValue {
@@ -5542,7 +6226,8 @@
         .with_type(b)
     }
 
-    <span class="kw">fn </span>memcpy(
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+    </span><span class="kw">fn </span>memcpy(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         dst: <span class="self">Self</span>::Value,
         _dst_align: Align,
@@ -5566,19 +6251,36 @@
         }
 
         <span class="kw">let </span>typed_copy_dst_src = const_size.and_then(|const_size| {
+            <span class="macro">trace!</span>(
+                <span class="string">"adjusting pointers: src: {} -&gt; dst: {}"</span>,
+                <span class="self">self</span>.debug_type(src.ty),
+                <span class="self">self</span>.debug_type(dst.ty),
+            );
             <span class="kw">let </span>dst_adj = <span class="self">self</span>.adjust_pointer_for_sized_access(dst, const_size);
             <span class="kw">let </span>src_adj = <span class="self">self</span>.adjust_pointer_for_sized_access(src, const_size);
             <span class="kw">match </span>(dst_adj, src_adj) {
                 <span class="comment">// HACK(eddyb) fill in missing `dst`/`src` with the other side.
                 </span>(<span class="prelude-val">Some</span>((dst, access_ty)), <span class="prelude-val">None</span>) =&gt; {
+                    <span class="macro">trace!</span>(
+                        <span class="string">"DESTINATION adjusted memcpy calling pointercast: dst ty: {}, access ty: {}"</span>,
+                        <span class="self">self</span>.debug_type(dst.ty),
+                        <span class="self">self</span>.debug_type(access_ty)
+                    );
                     <span class="prelude-val">Some</span>((dst, <span class="self">self</span>.pointercast(src, <span class="self">self</span>.type_ptr_to(access_ty))))
                 }
                 (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>((src, access_ty))) =&gt; {
+                    <span class="macro">trace!</span>(
+                        <span class="string">"SOURCE adjusted memcpy calling pointercast: dst ty: {} -&gt; access ty: {}, src ty: {}"</span>,
+                        <span class="self">self</span>.debug_type(dst.ty),
+                        <span class="self">self</span>.debug_type(access_ty),
+                        <span class="self">self</span>.debug_type(src.ty)
+                    );
                     <span class="prelude-val">Some</span>((<span class="self">self</span>.pointercast(dst, <span class="self">self</span>.type_ptr_to(access_ty)), src))
                 }
                 (<span class="prelude-val">Some</span>((dst, dst_access_ty)), <span class="prelude-val">Some</span>((src, src_access_ty)))
                     <span class="kw">if </span>dst_access_ty == src_access_ty =&gt;
                 {
+                    <span class="macro">trace!</span>(<span class="string">"BOTH adjusted memcpy calling pointercast"</span>);
                     <span class="prelude-val">Some</span>((dst, src))
                 }
                 (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) | (<span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="prelude-val">Some</span>(<span class="kw">_</span>)) =&gt; <span class="prelude-val">None</span>,
@@ -5587,8 +6289,10 @@
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>((dst, src)) = typed_copy_dst_src {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(const_value) = src.const_fold_load(<span class="self">self</span>) {
+                <span class="macro">trace!</span>(<span class="string">"storing const value"</span>);
                 <span class="self">self</span>.store(const_value, dst, Align::from_bytes(<span class="number">0</span>).unwrap());
             } <span class="kw">else </span>{
+                <span class="macro">trace!</span>(<span class="string">"copying memory using OpCopyMemory"</span>);
                 <span class="self">self</span>.emit()
                     .copy_memory(dst.def(<span class="self">self</span>), src.def(<span class="self">self</span>), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>, empty())
                     .unwrap();
@@ -5745,7 +6449,8 @@
             .with_type(result_type)
     }
 
-    <span class="kw">fn </span>insert_value(<span class="kw-2">&amp;mut </span><span class="self">self</span>, agg_val: <span class="self">Self</span>::Value, elt: <span class="self">Self</span>::Value, idx: u64) -&gt; <span class="self">Self</span>::Value {
+    <span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(<span class="self">self</span>))]
+    </span><span class="kw">fn </span>insert_value(<span class="kw-2">&amp;mut </span><span class="self">self</span>, agg_val: <span class="self">Self</span>::Value, elt: <span class="self">Self</span>::Value, idx: u64) -&gt; <span class="self">Self</span>::Value {
         <span class="kw">let </span>field_type = <span class="kw">match </span><span class="self">self</span>.lookup_type(agg_val.ty) {
             SpirvType::Adt { field_types, .. } =&gt; field_types[idx <span class="kw">as </span>usize],
             other =&gt; <span class="self">self</span>.fatal(<span class="macro">format!</span>(<span class="string">"insert_value not implemented on type {other:?}"</span>)),
@@ -5994,6 +6699,9 @@
         funclet: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::Funclet&gt;,
         instance: <span class="prelude-ty">Option</span>&lt;ty::Instance&lt;<span class="lifetime">'tcx</span>&gt;&gt;,
     ) -&gt; <span class="self">Self</span>::Value {
+        <span class="kw">let </span>span = <span class="macro">tracing::span!</span>(tracing::Level::DEBUG, <span class="string">"call"</span>);
+        <span class="kw">let </span>_enter = span.enter();
+
         <span class="kw">if </span>funclet.is_some() {
             <span class="self">self</span>.fatal(<span class="string">"TODO: Funclets are not supported"</span>);
         }
