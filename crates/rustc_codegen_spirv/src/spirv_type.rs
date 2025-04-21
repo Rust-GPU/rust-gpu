@@ -185,12 +185,12 @@ impl SpirvType<'_> {
                 let result = cx
                     .emit_global()
                     .type_array_id(id, element, count.def_cx(cx));
-                self.decorate_array_stride(result, element, cx);
+                Self::decorate_array_stride(result, element, cx);
                 result
             }
             Self::RuntimeArray { element } => {
                 let result = cx.emit_global().type_runtime_array_id(id, element);
-                self.decorate_array_stride(result, element, cx);
+                Self::decorate_array_stride(result, element, cx);
                 result
             }
             Self::Pointer { pointee } => {
@@ -258,7 +258,7 @@ impl SpirvType<'_> {
         result
     }
 
-    fn decorate_array_stride(self, result: u32, element: u32, cx: &CodegenCx<'_>) {
+    fn decorate_array_stride(result: u32, element: u32, cx: &CodegenCx<'_>) {
         let mut emit = cx.emit_global();
         let ty = cx.lookup_type(element);
         if let Some(element_size) = ty.physical_size(cx) {
@@ -380,12 +380,12 @@ impl SpirvType<'_> {
     }
 
     /// Get the physical size of the type needed for explicit layout decorations.
+    #[allow(clippy::match_same_arms)]
     pub fn physical_size(&self, cx: &CodegenCx<'_>) -> Option<Size> {
         match *self {
             // TODO(jwollen) Handle physical pointers (PhysicalStorageBuffer)
             Self::Pointer { .. } => None,
 
-            // TODO(jwollen) Handle unsized elements
             Self::Adt { size, .. } => size,
 
             Self::Array { element, count } => Some(
