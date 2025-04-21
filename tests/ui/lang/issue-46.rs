@@ -1,4 +1,4 @@
-// build-fail
+// build-pass
 
 use spirv_std::spirv;
 

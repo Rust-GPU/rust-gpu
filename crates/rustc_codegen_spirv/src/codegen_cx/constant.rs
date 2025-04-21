@@ -367,11 +367,11 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 
     pub fn create_const_alloc(&self, alloc: ConstAllocation<'tcx>, ty: Word) -> SpirvValue {
-        // println!(
-        //     "Creating const alloc of type {} with {} bytes",
-        //     self.debug_type(ty),
-        //     alloc.inner().len()
-        // );
+        tracing::trace!(
+            "Creating const alloc of type {} with {} bytes",
+            self.debug_type(ty),
+            alloc.inner().len()
+        );
         let mut offset = Size::ZERO;
         let result = self.read_from_const_alloc(alloc, &mut offset, ty);
         assert_eq!(
@@ -379,7 +379,7 @@ impl<'tcx> CodegenCx<'tcx> {
             alloc.inner().len(),
             "create_const_alloc must consume all bytes of an Allocation"
         );
-        // println!("Done creating alloc of type {}", self.debug_type(ty));
+        tracing::trace!("Done creating alloc of type {}", self.debug_type(ty));
         result
     }
 
