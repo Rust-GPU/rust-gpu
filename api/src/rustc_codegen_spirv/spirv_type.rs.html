@@ -816,7 +816,29 @@
 <a href="#815" id="815">815</a>
 <a href="#816" id="816">816</a>
 <a href="#817" id="817">817</a>
-<a href="#818" id="818">818</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::abi::{RecursivePointeeCache, TyLayoutNameKey};
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::abi::{RecursivePointeeCache, TyLayoutNameKey};
 <span class="kw">use </span><span class="kw">crate</span>::builder_spirv::SpirvValue;
 <span class="kw">use </span><span class="kw">crate</span>::codegen_cx::CodegenCx;
 <span class="kw">use </span>indexmap::IndexSet;
@@ -1000,35 +1022,15 @@
             <span class="self">Self</span>::Vector { element, count } =&gt; cx.emit_global().type_vector_id(id, element, count),
             <span class="self">Self</span>::Matrix { element, count } =&gt; cx.emit_global().type_matrix_id(id, element, count),
             <span class="self">Self</span>::Array { element, count } =&gt; {
-                <span class="comment">// ArrayStride decoration wants in *bytes*
-                </span><span class="kw">let </span>element_size = cx
-                    .lookup_type(element)
-                    .sizeof(cx)
-                    .expect(<span class="string">"Element of sized array must be sized"</span>)
-                    .bytes();
-                <span class="kw">let </span><span class="kw-2">mut </span>emit = cx.emit_global();
-                <span class="kw">let </span>result = emit.type_array_id(id, element, count.def_cx(cx));
-                emit.decorate(
-                    result,
-                    Decoration::ArrayStride,
-                    iter::once(Operand::LiteralBit32(element_size <span class="kw">as </span>u32)),
-                );
+                <span class="kw">let </span>result = cx
+                    .emit_global()
+                    .type_array_id(id, element, count.def_cx(cx));
+                <span class="self">Self</span>::decorate_array_stride(result, element, cx);
                 result
             }
             <span class="self">Self</span>::RuntimeArray { element } =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>emit = cx.emit_global();
-                <span class="kw">let </span>result = emit.type_runtime_array_id(id, element);
-                <span class="comment">// ArrayStride decoration wants in *bytes*
-                </span><span class="kw">let </span>element_size = cx
-                    .lookup_type(element)
-                    .sizeof(cx)
-                    .expect(<span class="string">"Element of sized array must be sized"</span>)
-                    .bytes();
-                emit.decorate(
-                    result,
-                    Decoration::ArrayStride,
-                    iter::once(Operand::LiteralBit32(element_size <span class="kw">as </span>u32)),
-                );
+                <span class="kw">let </span>result = cx.emit_global().type_runtime_array_id(id, element);
+                <span class="self">Self</span>::decorate_array_stride(result, element, cx);
                 result
             }
             <span class="self">Self</span>::Pointer { pointee } =&gt; {
@@ -1094,6 +1096,19 @@
         };
         cx.type_cache_def(result, <span class="self">self</span>.tcx_arena_alloc_slices(cx), def_span);
         result
+    }
+
+    <span class="kw">fn </span>decorate_array_stride(result: u32, element: u32, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'_</span>&gt;) {
+        <span class="kw">let </span><span class="kw-2">mut </span>emit = cx.emit_global();
+        <span class="kw">let </span>ty = cx.lookup_type(element);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(element_size) = ty.physical_size(cx) {
+            <span class="comment">// ArrayStride decoration wants in *bytes*
+            </span>emit.decorate(
+                result,
+                Decoration::ArrayStride,
+                iter::once(Operand::LiteralBit32(element_size.bytes() <span class="kw">as </span>u32)),
+            );
+        }
     }
 
     <span class="doccomment">/// `def_with_id` is used by the `RecursivePointeeCache` to handle `OpTypeForwardPointer`: when
@@ -1201,6 +1216,35 @@
             | <span class="self">Self</span>::Sampler
             | <span class="self">Self</span>::SampledImage { .. }
             | <span class="self">Self</span>::InterfaceBlock { .. } =&gt; Align::from_bytes(<span class="number">4</span>).unwrap(),
+        }
+    }
+
+    <span class="doccomment">/// Get the physical size of the type needed for explicit layout decorations.
+    </span><span class="attr">#[allow(clippy::match_same_arms)]
+    </span><span class="kw">pub fn </span>physical_size(<span class="kw-2">&amp;</span><span class="self">self</span>, cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Size&gt; {
+        <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
+            <span class="comment">// TODO(jwollen) Handle physical pointers (PhysicalStorageBuffer)
+            </span><span class="self">Self</span>::Pointer { .. } =&gt; <span class="prelude-val">None</span>,
+
+            <span class="self">Self</span>::Adt { size, .. } =&gt; size,
+
+            <span class="self">Self</span>::Array { element, count } =&gt; <span class="prelude-val">Some</span>(
+                cx.lookup_type(element).physical_size(cx)<span class="question-mark">?
+                    </span>* cx.builder
+                        .lookup_const_scalar(count)
+                        .unwrap()
+                        .try_into()
+                        .unwrap(),
+            ),
+
+            <span class="comment">// Always unsized types
+            </span><span class="self">Self</span>::InterfaceBlock { .. } | <span class="self">Self</span>::RayQueryKhr | <span class="self">Self</span>::SampledImage { .. } =&gt; <span class="prelude-val">None</span>,
+
+            <span class="comment">// Descriptor types
+            </span><span class="self">Self</span>::Image { .. } | <span class="self">Self</span>::AccelerationStructureKhr | <span class="self">Self</span>::Sampler =&gt; <span class="prelude-val">None</span>,
+
+            <span class="comment">// Primitive types
+            </span>ty =&gt; ty.sizeof(cx),
         }
     }
 
