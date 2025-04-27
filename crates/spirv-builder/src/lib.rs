@@ -606,6 +606,7 @@ fn dylib_path() -> Vec<PathBuf> {
     }
 }
 
+#[cfg(feature = "compile_codegen")]
 fn find_rustc_codegen_spirv() -> PathBuf {
     let filename = format!(
         "{}rustc_codegen_spirv{}",
@@ -619,6 +620,13 @@ fn find_rustc_codegen_spirv() -> PathBuf {
         }
     }
     panic!("Could not find {filename} in library path");
+}
+
+#[cfg(not(feature = "compile_codegen"))]
+fn find_rustc_codegen_spirv() -> PathBuf {
+    panic!(
+        "Without feature `compile_codegen`, you need to set the path of the codegen dylib using `rustc_codegen_spirv_location(...)`"
+    );
 }
 
 /// Joins strings together while ensuring none of the strings contain the separator.
