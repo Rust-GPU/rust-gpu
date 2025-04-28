@@ -81,78 +81,41 @@ use serde::Deserialize;
 use std::borrow::Borrow;
 use std::collections::HashMap;
 use std::env;
-use std::error::Error;
-use std::fmt;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use thiserror::Error;
 
 pub use rustc_codegen_spirv_types::Capability;
 pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum SpirvBuilderError {
+    #[error("`target` must be set, for example `spirv-unknown-vulkan1.2`")]
+    NoTargetSet,
+    #[error("expected `{SPIRV_TARGET_PREFIX}...` target, found `{target}`")]
     NonSpirvTarget { target: String },
+    #[error("SPIR-V target `{SPIRV_TARGET_PREFIX}-{target_env}` is not supported")]
     UnsupportedSpirvTargetEnv { target_env: String },
+    #[error("`path_to_crate` must be set")]
+    NoCratePathSet,
+    #[error("crate path {0} does not exist")]
     CratePathDoesntExist(PathBuf),
+    #[error("build failed")]
     BuildFailed,
+    #[error("multi-module build cannot be used with print_metadata = MetadataPrintout::Full")]
     MultiModuleWithPrintMetadata,
+    #[error("watching within build scripts will prevent build completion")]
     WatchWithPrintMetadata,
-    MetadataFileMissing(std::io::Error),
-    MetadataFileMalformed(serde_json::Error),
+    #[error("multi-module metadata file missing")]
+    MetadataFileMissing(#[from] std::io::Error),
+    #[error("unable to parse multi-module metadata file")]
+    MetadataFileMalformed(#[from] serde_json::Error),
 }
 
 const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
-
-impl fmt::Display for SpirvBuilderError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::NonSpirvTarget { target } => {
-                write!(
-                    f,
-                    "expected `{SPIRV_TARGET_PREFIX}...` target, found `{target}`"
-                )
-            }
-            Self::UnsupportedSpirvTargetEnv { target_env } if target_env.starts_with("opencl") => {
-                write!(
-                    f,
-                    "OpenCL targets like `{SPIRV_TARGET_PREFIX}-{target_env}` are not supported"
-                )
-            }
-            Self::UnsupportedSpirvTargetEnv { target_env } if target_env.starts_with("webgpu") => {
-                write!(
-                    f,
-                    "WebGPU targets like `{SPIRV_TARGET_PREFIX}-{target_env}` are not supported, \
-                     consider using `{SPIRV_TARGET_PREFIX}-vulkan1.0` instead"
-                )
-            }
-            Self::UnsupportedSpirvTargetEnv { target_env } => {
-                write!(
-                    f,
-                    "SPIR-V target `{SPIRV_TARGET_PREFIX}-{target_env}` is not supported"
-                )
-            }
-            Self::CratePathDoesntExist(path) => {
-                write!(f, "crate path {} does not exist", path.display())
-            }
-            Self::BuildFailed => f.write_str("build failed"),
-            Self::MultiModuleWithPrintMetadata => f.write_str(
-                "multi-module build cannot be used with print_metadata = MetadataPrintout::Full",
-            ),
-            Self::WatchWithPrintMetadata => {
-                f.write_str("watching within build scripts will prevent build completion")
-            }
-            Self::MetadataFileMissing(_) => f.write_str("multi-module metadata file missing"),
-            Self::MetadataFileMalformed(_) => {
-                f.write_str("unable to parse multi-module metadata file")
-            }
-        }
-    }
-}
-
-impl Error for SpirvBuilderError {}
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum MetadataPrintout {
