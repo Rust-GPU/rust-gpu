@@ -103,6 +103,10 @@ pub enum SpirvBuilderError {
     MissingCratePath,
     #[error("crate path {0} does not exist")]
     CratePathDoesntExist(PathBuf),
+    #[error(
+        "Without feature `compile_codegen`, you need to set the path of the codegen dylib using `rustc_codegen_spirv_location(...)`"
+    )]
+    MissingCodegenBackendDylib,
     #[error("build failed")]
     BuildFailed,
     #[error("multi-module build cannot be used with print_metadata = MetadataPrintout::Full")]
@@ -643,27 +647,23 @@ fn dylib_path() -> Vec<PathBuf> {
     }
 }
 
-#[cfg(feature = "compile_codegen")]
-fn find_rustc_codegen_spirv() -> PathBuf {
-    let filename = format!(
-        "{}rustc_codegen_spirv{}",
-        env::consts::DLL_PREFIX,
-        env::consts::DLL_SUFFIX
-    );
-    for mut path in dylib_path() {
-        path.push(&filename);
-        if path.is_file() {
-            return path;
+fn find_rustc_codegen_spirv() -> Result<PathBuf, SpirvBuilderError> {
+    if cfg!(feature = "compile_codegen") {
+        let filename = format!(
+            "{}rustc_codegen_spirv{}",
+            env::consts::DLL_PREFIX,
+            env::consts::DLL_SUFFIX
+        );
+        for mut path in dylib_path() {
+            path.push(&filename);
+            if path.is_file() {
+                return Ok(path);
+            }
         }
+        panic!("Could not find {filename} in library path");
+    } else {
+        Err(SpirvBuilderError::MissingCodegenBackendDylib)
     }
-    panic!("Could not find {filename} in library path");
-}
-
-#[cfg(not(feature = "compile_codegen"))]
-fn find_rustc_codegen_spirv() -> PathBuf {
-    panic!(
-        "Without feature `compile_codegen`, you need to set the path of the codegen dylib using `rustc_codegen_spirv_location(...)`"
-    );
 }
 
 /// Joins strings together while ensuring none of the strings contain the separator.
@@ -729,10 +729,9 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // alongside build.rs, and cargo will helpfully add it to LD_LIBRARY_PATH for us! However,
     // rustc expects a full path, instead of a filename looked up via LD_LIBRARY_PATH, so we need
     // to copy cargo's understanding of library lookup and find the library and its full path.
-    let rustc_codegen_spirv = builder
-        .rustc_codegen_spirv_location
-        .clone()
-        .unwrap_or_else(find_rustc_codegen_spirv);
+    let rustc_codegen_spirv = Ok(builder.rustc_codegen_spirv_location.clone())
+        .transpose()
+        .unwrap_or_else(find_rustc_codegen_spirv)?;
 
     let mut rustflags = vec![
         format!("-Zcodegen-backend={}", rustc_codegen_spirv.display()),
