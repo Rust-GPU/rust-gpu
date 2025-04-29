@@ -12,10 +12,13 @@ impl SpirvBuilder {
     /// Returns the result of the first successful compilation, then calls
     /// `on_compilation_finishes` for each subsequent compilation.
     pub fn watch(
-        mut self,
+        self,
         mut on_compilation_finishes: impl FnMut(CompileResult) + Send + 'static,
     ) -> Result<CompileResult, SpirvBuilderError> {
-        self.validate_running_conditions()?;
+        let path_to_crate = self
+            .path_to_crate
+            .as_ref()
+            .ok_or(SpirvBuilderError::MissingCratePath)?;
         if !matches!(self.print_metadata, crate::MetadataPrintout::None) {
             return Err(SpirvBuilderError::WatchWithPrintMetadata);
         }
@@ -43,7 +46,7 @@ impl SpirvBuilder {
                 .expect("Could create watcher");
             // This is likely to notice changes in the `target` dir, however, given that `cargo watch` doesn't seem to handle that,
             watcher
-                .watch(&self.path_to_crate, RecursiveMode::Recursive)
+                .watch(&path_to_crate, RecursiveMode::Recursive)
                 .expect("Could watch crate root");
             loop {
                 rx.recv().expect("Watcher still alive");
