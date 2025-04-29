@@ -107,6 +107,8 @@ pub enum SpirvBuilderError {
         "Without feature `compile_codegen`, you need to set the path of the codegen dylib using `rustc_codegen_spirv_location(...)`"
     )]
     MissingCodegenBackendDylib,
+    #[error("`rustc_codegen_spirv_location` path '{0}' is not a file")]
+    CodegenBackendDylibDoesNotExist(PathBuf),
     #[error("build failed")]
     BuildFailed,
     #[error("multi-module build cannot be used with print_metadata = MetadataPrintout::Full")]
@@ -556,17 +558,8 @@ impl SpirvBuilder {
     }
 
     #[must_use]
-    pub fn rustc_codegen_spirv_location(
-        mut self,
-        path_to_dylib: impl AsRef<std::path::Path>,
-    ) -> Self {
-        let path_to_dylib = path_to_dylib.as_ref().to_path_buf();
-        assert!(
-            path_to_dylib.is_file(),
-            "Provided path to dylib '{}' is not a file",
-            path_to_dylib.display()
-        );
-        self.rustc_codegen_spirv_location = Some(path_to_dylib);
+    pub fn rustc_codegen_spirv_location(mut self, path_to_dylib: impl AsRef<Path>) -> Self {
+        self.rustc_codegen_spirv_location = Some(path_to_dylib.as_ref().to_path_buf());
         self
     }
 
@@ -732,6 +725,11 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     let rustc_codegen_spirv = Ok(builder.rustc_codegen_spirv_location.clone())
         .transpose()
         .unwrap_or_else(find_rustc_codegen_spirv)?;
+    if !rustc_codegen_spirv.is_file() {
+        return Err(SpirvBuilderError::CodegenBackendDylibDoesNotExist(
+            rustc_codegen_spirv,
+        ));
+    }
 
     let mut rustflags = vec![
         format!("-Zcodegen-backend={}", rustc_codegen_spirv.display()),
