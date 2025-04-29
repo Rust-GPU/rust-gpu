@@ -124,6 +124,7 @@ pub enum SpirvBuilderError {
 const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum MetadataPrintout {
     /// Print no cargo metadata.
     None,
@@ -137,6 +138,7 @@ pub enum MetadataPrintout {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum SpirvMetadata {
     /// Strip all names and other debug information from SPIR-V output.
     #[default]
@@ -150,6 +152,7 @@ pub enum SpirvMetadata {
 
 /// Strategy used to handle Rust `panic!`s in shaders compiled to SPIR-V.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum ShaderPanicStrategy {
     /// Return from shader entry-point with no side-effects **(default)**.
     ///
@@ -202,6 +205,7 @@ pub enum ShaderPanicStrategy {
     ///     their `debugPrintf` support can be done during instance creation
     ///   * *optional*: integrating [`VK_EXT_debug_utils`](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_debug_utils.html)
     ///     allows more reporting flexibility than `DEBUG_PRINTF_TO_STDOUT=1`)
+    #[cfg_attr(feature = "clap", clap(skip))]
     DebugPrintfThenExit {
         /// Whether to also print the entry-point inputs (excluding buffers/resources),
         /// which should uniquely identify the panicking shader invocation.
@@ -233,6 +237,7 @@ pub enum ShaderPanicStrategy {
 /// Options for specifying the behavior of the validator
 /// Copied from `spirv-tools/src/val.rs` struct `ValidatorOptions`, with some fields disabled.
 #[derive(Default, Clone, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(feature = "clap", derive(clap::Parser))]
 pub struct ValidatorOptions {
     /// Record whether or not the validator should relax the rules on types for
     /// stores to structs.  When relaxed, it will allow a type mismatch as long as
@@ -244,6 +249,7 @@ pub struct ValidatorOptions {
     ///
     /// 2) the decorations that affect the memory layout are identical for both
     ///    types.  Other decorations are not relevant.
+    #[cfg_attr(feature = "clap", arg(long, default_value = "false"))]
     pub relax_struct_store: bool,
     /// Records whether or not the validator should relax the rules on pointer usage
     /// in logical addressing mode.
@@ -251,6 +257,7 @@ pub struct ValidatorOptions {
     /// When relaxed, it will allow the following usage cases of pointers:
     /// 1) `OpVariable` allocating an object whose type is a pointer type
     /// 2) `OpReturnValue` returning a pointer value
+    #[cfg_attr(feature = "clap", arg(long, default_value = "false"))]
     pub relax_logical_pointer: bool,
     // /// Records whether or not the validator should relax the rules because it is
     // /// expected that the optimizations will make the code legal.
@@ -271,9 +278,11 @@ pub struct ValidatorOptions {
     ///
     /// This is enabled by default when targeting Vulkan 1.1 or later.
     /// Relaxed layout is more permissive than the default rules in Vulkan 1.0.
+    #[cfg_attr(feature = "clap", arg(long, default_value = "None"))]
     pub relax_block_layout: Option<bool>,
     /// Records whether the validator should use standard block layout rules for
     /// uniform blocks.
+    #[cfg_attr(feature = "clap", arg(long, default_value = "false"))]
     pub uniform_buffer_standard_layout: bool,
     /// Records whether the validator should use "scalar" block layout rules.
     /// Scalar layout rules are more permissive than relaxed block layout.
@@ -291,9 +300,11 @@ pub struct ValidatorOptions {
     /// - a member Offset must be a multiple of the member's scalar alignment
     /// - `ArrayStride` or `MatrixStride` must be a multiple of the array or matrix
     ///   scalar alignment
+    #[cfg_attr(feature = "clap", arg(long, default_value = "false"))]
     pub scalar_block_layout: bool,
     /// Records whether or not the validator should skip validating standard
     /// uniform/storage block layout.
+    #[cfg_attr(feature = "clap", arg(long, default_value = "false"))]
     pub skip_block_layout: bool,
     // /// Applies a maximum to one or more Universal limits
     // pub max_limits: Vec<(ValidatorLimits, u32)>,
@@ -302,6 +313,7 @@ pub struct ValidatorOptions {
 /// Options for specifying the behavior of the optimizer
 /// Copied from `spirv-tools/src/opt.rs` struct `Options`, with some fields disabled.
 #[derive(Default, Clone, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(feature = "clap", derive(clap::Parser))]
 pub struct OptimizerOptions {
     // /// Records the validator options that should be passed to the validator,
     // /// the validator will run with the options before optimizer.
@@ -309,6 +321,7 @@ pub struct OptimizerOptions {
     // /// Records the maximum possible value for the id bound.
     // pub max_id_bound: Option<u32>,
     /// Records whether all bindings within the module should be preserved.
+    #[cfg_attr(feature = "clap", arg(long, default_value = "false"))]
     pub preserve_bindings: bool,
     // /// Records whether all specialization constants within the module
     // /// should be preserved.
@@ -316,46 +329,70 @@ pub struct OptimizerOptions {
 }
 
 /// Cargo features specification for building the shader crate.
-#[derive(Default, Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(feature = "clap", derive(clap::Parser))]
 pub struct ShaderCrateFeatures {
     /// Set --default-features for the target shader crate.
-    pub default_features: Option<bool>,
+    #[cfg_attr(feature = "clap", clap(long = "no-default-features", default_value = "true", action = clap::ArgAction::SetFalse))]
+    pub default_features: bool,
     /// Set --features for the target shader crate.
+    #[cfg_attr(feature = "clap", clap(long))]
     pub features: Vec<String>,
+}
+
+impl Default for ShaderCrateFeatures {
+    fn default() -> Self {
+        Self {
+            default_features: true,
+            features: Vec::new(),
+        }
+    }
 }
 
 #[non_exhaustive]
 #[derive(Clone, serde::Deserialize, serde::Serialize)]
+#[cfg_attr(feature = "clap", derive(clap::Parser))]
 pub struct SpirvBuilder {
     pub path_to_crate: Option<PathBuf>,
     /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::Full`].
     pub print_metadata: MetadataPrintout,
     /// Build in release. Defaults to true.
+    #[cfg_attr(feature = "clap", clap(long = "debug", default_value = "true", action = clap::ArgAction::SetFalse))]
     pub release: bool,
     /// The target triple, eg. `spirv-unknown-vulkan1.2`
+    #[cfg_attr(
+        feature = "clap",
+        clap(long, default_value = "spirv-unknown-vulkan1.2")
+    )]
     pub target: Option<String>,
     /// Cargo features specification for building the shader crate.
+    #[cfg_attr(feature = "clap", clap(flatten))]
     pub shader_crate_features: ShaderCrateFeatures,
     /// Deny any warnings, as they may never be printed when building within a build script. Defaults to false.
+    #[cfg_attr(feature = "clap", arg(long, default_value = "false"))]
     pub deny_warnings: bool,
     /// Splits the resulting SPIR-V file into one module per entry point. This is useful in cases
     /// where ecosystem tooling has bugs around multiple entry points per module - having all entry
     /// points bundled into a single file is the preferred system.
+    #[cfg_attr(feature = "clap", arg(long, default_value = "false"))]
     pub multimodule: bool,
     /// Sets the level of metadata (primarily `OpName` and `OpLine`) included in the SPIR-V binary.
     /// Including metadata significantly increases binary size.
+    #[cfg_attr(feature = "clap", arg(long, default_value = "none"))]
     pub spirv_metadata: SpirvMetadata,
     /// Adds a capability to the SPIR-V module. Checking if a capability is enabled in code can be
     /// done via `#[cfg(target_feature = "TheCapability")]`.
+    #[cfg_attr(feature = "clap", arg(long, value_parser=Self::parse_spirv_capability))]
     pub capabilities: Vec<Capability>,
     /// Adds an extension to the SPIR-V module. Checking if an extension is enabled in code can be
     /// done via `#[cfg(target_feature = "ext:the_extension")]`.
+    #[cfg_attr(feature = "clap", arg(long))]
     pub extensions: Vec<String>,
     /// Set additional "codegen arg". Note: the `RUSTGPU_CODEGEN_ARGS` environment variable
     /// takes precedence over any set arguments using this function.
     pub extra_args: Vec<String>,
     // Location of a known `rustc_codegen_spirv` dylib, only required without feature `rustc_codegen_spirv`.
-    pub rustc_codegen_spirv_location: Option<std::path::PathBuf>,
+    pub rustc_codegen_spirv_location: Option<PathBuf>,
 
     /// The path of the "target specification" file.
     ///
@@ -371,10 +408,24 @@ pub struct SpirvBuilder {
     pub shader_panic_strategy: ShaderPanicStrategy,
 
     /// spirv-val flags
+    #[cfg_attr(feature = "clap", clap(flatten))]
     pub validator: ValidatorOptions,
 
     /// spirv-opt flags
+    #[cfg_attr(feature = "clap", clap(flatten))]
     pub optimizer: OptimizerOptions,
+}
+
+#[cfg(feature = "clap")]
+impl SpirvBuilder {
+    /// Clap value parser for `Capability`.
+    fn parse_spirv_capability(capability: &str) -> Result<Capability, clap::Error> {
+        use core::str::FromStr;
+        Capability::from_str(capability).map_or_else(
+            |()| Err(clap::Error::new(clap::error::ErrorKind::InvalidValue)),
+            Ok,
+        )
+    }
 }
 
 impl Default for SpirvBuilder {
@@ -547,7 +598,7 @@ impl SpirvBuilder {
     /// Set --default-features for the target shader crate.
     #[must_use]
     pub fn shader_crate_default_features(mut self, default_features: bool) -> Self {
-        self.shader_crate_features.default_features = Some(default_features);
+        self.shader_crate_features.default_features = default_features;
         self
     }
 
@@ -897,10 +948,8 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
                 .join(format!("{}.json", target))
         }));
 
-    if let Some(default_features) = builder.shader_crate_features.default_features {
-        if !default_features {
-            cargo.arg("--no-default-features");
-        }
+    if !builder.shader_crate_features.default_features {
+        cargo.arg("--no-default-features");
     }
 
     if !builder.shader_crate_features.features.is_empty() {
