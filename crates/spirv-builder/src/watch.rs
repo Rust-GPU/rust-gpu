@@ -46,7 +46,7 @@ impl SpirvBuilder {
                 .expect("Could create watcher");
             // This is likely to notice changes in the `target` dir, however, given that `cargo watch` doesn't seem to handle that,
             watcher
-                .watch(&path_to_crate, RecursiveMode::Recursive)
+                .watch(path_to_crate, RecursiveMode::Recursive)
                 .expect("Could watch crate root");
             loop {
                 rx.recv().expect("Watcher still alive");

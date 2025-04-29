@@ -953,7 +953,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
 
     let build = cargo
         .stderr(Stdio::inherit())
-        .current_dir(&path_to_crate)
+        .current_dir(path_to_crate)
         .output()
         .expect("failed to execute cargo build");
 
