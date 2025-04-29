@@ -369,6 +369,7 @@ pub struct SpirvBuilder {
     pub target: Option<String>,
     /// Cargo features specification for building the shader crate.
     #[cfg_attr(feature = "clap", clap(flatten))]
+    #[serde(flatten)]
     pub shader_crate_features: ShaderCrateFeatures,
     /// Deny any warnings, as they may never be printed when building within a build script. Defaults to false.
     #[cfg_attr(feature = "clap", arg(long, default_value = "false"))]
@@ -416,10 +417,12 @@ pub struct SpirvBuilder {
 
     /// spirv-val flags
     #[cfg_attr(feature = "clap", clap(flatten))]
+    #[serde(flatten)]
     pub validator: ValidatorOptions,
 
     /// spirv-opt flags
     #[cfg_attr(feature = "clap", clap(flatten))]
+    #[serde(flatten)]
     pub optimizer: OptimizerOptions,
 }
 
