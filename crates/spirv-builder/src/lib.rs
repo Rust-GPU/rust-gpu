@@ -101,14 +101,14 @@ pub enum SpirvBuilderError {
     UnsupportedSpirvTargetEnv { target_env: String },
     #[error("`path_to_crate` must be set")]
     MissingCratePath,
-    #[error("crate path {0} does not exist")]
+    #[error("crate path '{0}' does not exist")]
     CratePathDoesntExist(PathBuf),
     #[error(
-        "Without feature `compile_codegen`, you need to set the path of the codegen dylib using `rustc_codegen_spirv_location(...)`"
+        "Without feature `rustc_codegen_spirv`, you need to set the path of the dylib using `rustc_codegen_spirv_location(...)`"
     )]
-    MissingCodegenBackendDylib,
+    MissingRustcCodegenSpirvDylib,
     #[error("`rustc_codegen_spirv_location` path '{0}' is not a file")]
-    CodegenBackendDylibDoesNotExist(PathBuf),
+    RustcCodegenSpirvDylibDoesNotExist(PathBuf),
     #[error("build failed")]
     BuildFailed,
     #[error("multi-module build cannot be used with print_metadata = MetadataPrintout::Full")]
@@ -353,7 +353,7 @@ pub struct SpirvBuilder {
     /// Set additional "codegen arg". Note: the `RUSTGPU_CODEGEN_ARGS` environment variable
     /// takes precedence over any set arguments using this function.
     pub extra_args: Vec<String>,
-    // Optional location of a known `rustc_codegen_spirv` dylib
+    // Location of a known `rustc_codegen_spirv` dylib, only required without feature `rustc_codegen_spirv`.
     pub rustc_codegen_spirv_location: Option<std::path::PathBuf>,
 
     /// The path of the "target specification" file.
@@ -641,7 +641,7 @@ fn dylib_path() -> Vec<PathBuf> {
 }
 
 fn find_rustc_codegen_spirv() -> Result<PathBuf, SpirvBuilderError> {
-    if cfg!(feature = "compile_codegen") {
+    if cfg!(feature = "rustc_codegen_spirv") {
         let filename = format!(
             "{}rustc_codegen_spirv{}",
             env::consts::DLL_PREFIX,
@@ -655,7 +655,7 @@ fn find_rustc_codegen_spirv() -> Result<PathBuf, SpirvBuilderError> {
         }
         panic!("Could not find {filename} in library path");
     } else {
-        Err(SpirvBuilderError::MissingCodegenBackendDylib)
+        Err(SpirvBuilderError::MissingRustcCodegenSpirvDylib)
     }
 }
 
@@ -726,7 +726,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         .transpose()
         .unwrap_or_else(find_rustc_codegen_spirv)?;
     if !rustc_codegen_spirv.is_file() {
-        return Err(SpirvBuilderError::CodegenBackendDylibDoesNotExist(
+        return Err(SpirvBuilderError::RustcCodegenSpirvDylibDoesNotExist(
             rustc_codegen_spirv,
         ));
     }
