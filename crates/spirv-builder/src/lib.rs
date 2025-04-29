@@ -278,7 +278,7 @@ pub struct ValidatorOptions {
     ///
     /// This is enabled by default when targeting Vulkan 1.1 or later.
     /// Relaxed layout is more permissive than the default rules in Vulkan 1.0.
-    #[cfg_attr(feature = "clap", arg(long, default_value = "None"))]
+    #[cfg_attr(feature = "clap", arg(long, default_value = "false"))]
     pub relax_block_layout: Option<bool>,
     /// Records whether the validator should use standard block layout rules for
     /// uniform blocks.
@@ -353,8 +353,10 @@ impl Default for ShaderCrateFeatures {
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 pub struct SpirvBuilder {
+    #[cfg_attr(feature = "clap", clap(skip))]
     pub path_to_crate: Option<PathBuf>,
     /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::Full`].
+    #[cfg_attr(feature = "clap", clap(skip))]
     pub print_metadata: MetadataPrintout,
     /// Build in release. Defaults to true.
     #[cfg_attr(feature = "clap", clap(long = "debug", default_value = "true", action = clap::ArgAction::SetFalse))]
@@ -390,21 +392,26 @@ pub struct SpirvBuilder {
     pub extensions: Vec<String>,
     /// Set additional "codegen arg". Note: the `RUSTGPU_CODEGEN_ARGS` environment variable
     /// takes precedence over any set arguments using this function.
+    #[cfg_attr(feature = "clap", clap(skip))]
     pub extra_args: Vec<String>,
     // Location of a known `rustc_codegen_spirv` dylib, only required without feature `rustc_codegen_spirv`.
+    #[cfg_attr(feature = "clap", clap(skip))]
     pub rustc_codegen_spirv_location: Option<PathBuf>,
 
     /// The path of the "target specification" file.
     ///
     /// For more info on "target specification" see
     /// [this RFC](https://rust-lang.github.io/rfcs/0131-target-specification.html).
+    #[cfg_attr(feature = "clap", clap(skip))]
     pub path_to_target_spec: Option<PathBuf>,
     /// Set the target dir path within `./target` to use for building shaders. Defaults to `spirv-builder`, resulting
     /// in the path `./target/spirv-builder`.
+    #[cfg_attr(feature = "clap", clap(skip))]
     pub target_dir_path: Option<String>,
 
     // `rustc_codegen_spirv::linker` codegen args
     /// Change the shader `panic!` handling strategy (see [`ShaderPanicStrategy`]).
+    #[cfg_attr(feature = "clap", clap(skip))]
     pub shader_panic_strategy: ShaderPanicStrategy,
 
     /// spirv-val flags
