@@ -236,7 +236,7 @@ pub enum ShaderPanicStrategy {
 
 /// Options for specifying the behavior of the validator
 /// Copied from `spirv-tools/src/val.rs` struct `ValidatorOptions`, with some fields disabled.
-#[derive(Default, Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Default, Debug, Clone, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 pub struct ValidatorOptions {
     /// Record whether or not the validator should relax the rules on types for
@@ -312,7 +312,7 @@ pub struct ValidatorOptions {
 
 /// Options for specifying the behavior of the optimizer
 /// Copied from `spirv-tools/src/opt.rs` struct `Options`, with some fields disabled.
-#[derive(Default, Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Default, Debug, Clone, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 pub struct OptimizerOptions {
     // /// Records the validator options that should be passed to the validator,
@@ -329,7 +329,7 @@ pub struct OptimizerOptions {
 }
 
 /// Cargo features specification for building the shader crate.
-#[derive(Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 pub struct ShaderCrateFeatures {
     /// Set --default-features for the target shader crate.
@@ -350,7 +350,7 @@ impl Default for ShaderCrateFeatures {
 }
 
 #[non_exhaustive]
-#[derive(Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 pub struct SpirvBuilder {
     pub path_to_crate: Option<PathBuf>,
