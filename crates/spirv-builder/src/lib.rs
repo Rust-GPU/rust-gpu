@@ -123,7 +123,7 @@ pub enum SpirvBuilderError {
 
 const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
 pub enum MetadataPrintout {
     /// Print no cargo metadata.
     None,
@@ -136,7 +136,7 @@ pub enum MetadataPrintout {
     Full,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
 pub enum SpirvMetadata {
     /// Strip all names and other debug information from SPIR-V output.
     #[default]
@@ -149,7 +149,7 @@ pub enum SpirvMetadata {
 }
 
 /// Strategy used to handle Rust `panic!`s in shaders compiled to SPIR-V.
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
 pub enum ShaderPanicStrategy {
     /// Return from shader entry-point with no side-effects **(default)**.
     ///
@@ -232,7 +232,7 @@ pub enum ShaderPanicStrategy {
 
 /// Options for specifying the behavior of the validator
 /// Copied from `spirv-tools/src/val.rs` struct `ValidatorOptions`, with some fields disabled.
-#[derive(Default, Clone)]
+#[derive(Default, Clone, serde::Deserialize, serde::Serialize)]
 pub struct ValidatorOptions {
     /// Record whether or not the validator should relax the rules on types for
     /// stores to structs.  When relaxed, it will allow a type mismatch as long as
@@ -301,7 +301,7 @@ pub struct ValidatorOptions {
 
 /// Options for specifying the behavior of the optimizer
 /// Copied from `spirv-tools/src/opt.rs` struct `Options`, with some fields disabled.
-#[derive(Default, Clone)]
+#[derive(Default, Clone, serde::Deserialize, serde::Serialize)]
 pub struct OptimizerOptions {
     // /// Records the validator options that should be passed to the validator,
     // /// the validator will run with the options before optimizer.
@@ -316,7 +316,7 @@ pub struct OptimizerOptions {
 }
 
 /// Cargo features specification for building the shader crate.
-#[derive(Default)]
+#[derive(Default, Clone, serde::Deserialize, serde::Serialize)]
 pub struct ShaderCrateFeatures {
     /// Set --default-features for the target shader crate.
     pub default_features: Option<bool>,
@@ -325,6 +325,7 @@ pub struct ShaderCrateFeatures {
 }
 
 #[non_exhaustive]
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
 pub struct SpirvBuilder {
     pub path_to_crate: Option<PathBuf>,
     /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::Full`].
