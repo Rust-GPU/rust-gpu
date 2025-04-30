@@ -999,6 +999,12 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // so we turn off that caching with an env var, just to avoid any issues.
     cargo.env("CARGO_CACHE_RUSTC_INFO", "0");
 
+    // NOTE(firestar99) If you call SpirvBuilder in a build script, it will
+    // set `RUSTC` before calling it. And if we were to propagate it to our
+    // cargo invocation, it will take precedence over the `+toolchain` we
+    // previously set.
+    cargo.env_remove("RUSTC");
+
     // NOTE(eddyb) this used to be just `RUSTFLAGS` but at some point Cargo
     // added a separate environment variable using `\x1f` instead of spaces,
     // which allows us to have spaces within individual `rustc` flags.
