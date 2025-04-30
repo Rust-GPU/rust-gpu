@@ -30,16 +30,18 @@ impl<T> RuntimeArray<T> {
     /// and lead to UB.
     #[spirv_std_macros::gpu_only]
     pub unsafe fn index(&self, index: usize) -> &T {
-        // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        let mut result_slot = core::mem::MaybeUninit::uninit();
-        asm! {
-            "%result = OpAccessChain _ {arr} {index}",
-            "OpStore {result_slot} %result",
-            arr = in(reg) self,
-            index = in(reg) index,
-            result_slot = in(reg) result_slot.as_mut_ptr(),
+        unsafe {
+            // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
+            let mut result_slot = core::mem::MaybeUninit::uninit();
+            asm! {
+                "%result = OpAccessChain _ {arr} {index}",
+                "OpStore {result_slot} %result",
+                arr = in(reg) self,
+                index = in(reg) index,
+                result_slot = in(reg) result_slot.as_mut_ptr(),
+            }
+            result_slot.assume_init()
         }
-        result_slot.assume_init()
     }
 
     /// Index the array, returning a mutable reference to an element. Unfortunately, because the
@@ -51,15 +53,17 @@ impl<T> RuntimeArray<T> {
     /// and lead to UB.
     #[spirv_std_macros::gpu_only]
     pub unsafe fn index_mut(&mut self, index: usize) -> &mut T {
-        // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        let mut result_slot = core::mem::MaybeUninit::uninit();
-        asm! {
-            "%result = OpAccessChain _ {arr} {index}",
-            "OpStore {result_slot} %result",
-            arr = in(reg) self,
-            index = in(reg) index,
-            result_slot = in(reg) result_slot.as_mut_ptr(),
+        unsafe {
+            // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
+            let mut result_slot = core::mem::MaybeUninit::uninit();
+            asm! {
+                "%result = OpAccessChain _ {arr} {index}",
+                "OpStore {result_slot} %result",
+                arr = in(reg) self,
+                index = in(reg) index,
+                result_slot = in(reg) result_slot.as_mut_ptr(),
+            }
+            result_slot.assume_init()
         }
-        result_slot.assume_init()
     }
 }
