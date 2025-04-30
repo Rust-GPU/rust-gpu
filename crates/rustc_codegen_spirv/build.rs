@@ -199,9 +199,6 @@ mod win {",
                 src = src.replace("if constant_ty.is_simd() {", "if false {");
             }
 
-            //src = src.replace(" object::", " thorin::object::"); src =
-            //src.replace("(object::", "(thorin::object::");
-
             fs::write(out_path, src)?;
         }
     }
@@ -209,9 +206,6 @@ mod win {",
     // HACK(eddyb) very basic extraction of deps from original `Cargo.toml`.
     let mut all_extern_crates = cg_ssa_lib_rs_extern_crates;
     let cg_ssa_cargo_toml = fs::read_to_string(out_pqp_cg_ssa_dir.join("Cargo.toml"))?;
-    for line in cg_ssa_cargo_toml.lines() {
-        println!("cargo::warning={line}");
-    }
 
     let mut current_section: Option<&str> = None;
 
