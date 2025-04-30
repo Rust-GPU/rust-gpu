@@ -635,8 +635,8 @@ impl SpirvBuilder {
 
     /// Builds the module. If `print_metadata` is [`MetadataPrintout::Full`], you usually don't have to inspect the path
     /// in the result, as the environment variable for the path to the module will already be set.
-    pub fn build(self) -> Result<CompileResult, SpirvBuilderError> {
-        let metadata_file = invoke_rustc(&self)?;
+    pub fn build(&self) -> Result<CompileResult, SpirvBuilderError> {
+        let metadata_file = invoke_rustc(self)?;
         match self.print_metadata {
             MetadataPrintout::Full | MetadataPrintout::DependencyOnly => {
                 leaf_deps(&metadata_file, |artifact| {
