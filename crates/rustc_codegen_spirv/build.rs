@@ -15,9 +15,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2024-11-22"
+channel = "nightly-2025-04-28"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = b19329a37cedf2027517ae22c87cf201f93d776e"#;
+# commit_hash = cb31a009e3e735ab08613cec2d8a5a754e65596f"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -199,6 +199,9 @@ mod win {",
                 src = src.replace("if constant_ty.is_simd() {", "if false {");
             }
 
+            //src = src.replace(" object::", " thorin::object::"); src =
+            //src.replace("(object::", "(thorin::object::");
+
             fs::write(out_path, src)?;
         }
     }
@@ -206,24 +209,73 @@ mod win {",
     // HACK(eddyb) very basic extraction of deps from original `Cargo.toml`.
     let mut all_extern_crates = cg_ssa_lib_rs_extern_crates;
     let cg_ssa_cargo_toml = fs::read_to_string(out_pqp_cg_ssa_dir.join("Cargo.toml"))?;
-    let mut toml_directive = None;
+    for line in cg_ssa_cargo_toml.lines() {
+        println!("cargo::warning={line}");
+    }
+
+    let mut current_section: Option<&str> = None;
+
     for line in cg_ssa_cargo_toml.lines() {
         let line = line.trim();
         if line.starts_with('#') || line.is_empty() {
             continue;
         }
-        if line.starts_with('[') {
-            toml_directive = Some(line);
-        } else if toml_directive == Some("[dependencies]") {
-            if let Some((name, _)) = line.split_once(" = ") {
+
+        if line.starts_with('[') && line.ends_with(']') {
+            if line == "[dependencies]" {
+                current_section = Some("[dependencies]");
+            } else if line.starts_with("[dependencies.") {
+                // This is a [dependencies.foo] section header.
+                // Extract 'foo' from '[dependencies.foo]'
+                if let Some(name_in_header) = line
+                    .strip_prefix("[dependencies.")
+                    .and_then(|s| s.strip_suffix(']'))
+                {
+                    let name = name_in_header.trim().trim_matches('"');
+
+                    // HACK(eddyb) ignore a weird edge case.
+                    if name == "thorin-dwp" {
+                        continue;
+                    }
+                    if !name.is_empty() {
+                        let crate_identifier = name.replace('-', "_");
+                        let extern_crate = format!("extern crate {};", crate_identifier);
+
+                        if !all_extern_crates.contains(&extern_crate) {
+                            writeln(&mut all_extern_crates, "#[allow(unused_extern_crates)]");
+                            writeln(&mut all_extern_crates, &extern_crate);
+                        }
+                    }
+
+                    // Set section to None so we don't process lines *within* this table
+                    // (like version="...") as dependency names.
+                    current_section = None;
+                } else {
+                    // Malformed line like "[dependencies.foo", treat as unknown section
+                    current_section = Some(line);
+                }
+            } else {
+                // It's some other section ([build-dependencies], [workspace], etc.)
+                current_section = Some(line);
+            }
+        } else if current_section == Some("[dependencies]") {
+            // Look for lines like `name = ...`
+            if let Some((name_in_line, _)) = line.split_once('=') {
+                let name = name_in_line.trim().trim_matches('"');
+
                 // HACK(eddyb) ignore a weird edge case.
                 if name == "thorin-dwp" {
                     continue;
                 }
-                let extern_crate = format!("extern crate {};", name.replace('-', "_"));
-                if !all_extern_crates.contains(&extern_crate) {
-                    writeln(&mut all_extern_crates, "#[allow(unused_extern_crates)]");
-                    writeln(&mut all_extern_crates, &extern_crate);
+
+                if !name.is_empty() {
+                    let crate_identifier = name.replace('-', "_");
+                    let extern_crate = format!("extern crate {};", crate_identifier);
+
+                    if !all_extern_crates.contains(&extern_crate) {
+                        writeln(&mut all_extern_crates, "#[allow(unused_extern_crates)]");
+                        writeln(&mut all_extern_crates, &extern_crate);
+                    }
                 }
             }
         }

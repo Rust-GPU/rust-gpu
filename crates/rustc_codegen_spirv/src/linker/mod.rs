@@ -336,23 +336,27 @@ pub fn link(
         for func in &mut output.functions {
             simple_passes::block_ordering_pass(func);
         }
-        output = specializer::specialize(opts, output, specializer::SimpleSpecialization {
-            specialize_operand: |operand| {
-                matches!(operand, Operand::StorageClass(StorageClass::Generic))
-            },
+        output = specializer::specialize(
+            opts,
+            output,
+            specializer::SimpleSpecialization {
+                specialize_operand: |operand| {
+                    matches!(operand, Operand::StorageClass(StorageClass::Generic))
+                },
 
-            // NOTE(eddyb) this can be anything that is guaranteed to pass
-            // validation - there are no constraints so this is either some
-            // unused pointer, or perhaps one created using `OpConstantNull`
-            // and simply never mixed with pointers that have a storage class.
-            // It would be nice to use `Generic` itself here so that we leave
-            // some kind of indication of it being unconstrained, but `Generic`
-            // requires additional capabilities, so we use `Function` instead.
-            // TODO(eddyb) investigate whether this can end up in a pointer
-            // type that's the value of a module-scoped variable, and whether
-            // `Function` is actually invalid! (may need `Private`)
-            concrete_fallback: Operand::StorageClass(StorageClass::Function),
-        });
+                // NOTE(eddyb) this can be anything that is guaranteed to pass
+                // validation - there are no constraints so this is either some
+                // unused pointer, or perhaps one created using `OpConstantNull`
+                // and simply never mixed with pointers that have a storage class.
+                // It would be nice to use `Generic` itself here so that we leave
+                // some kind of indication of it being unconstrained, but `Generic`
+                // requires additional capabilities, so we use `Function` instead.
+                // TODO(eddyb) investigate whether this can end up in a pointer
+                // type that's the value of a module-scoped variable, and whether
+                // `Function` is actually invalid! (may need `Private`)
+                concrete_fallback: Operand::StorageClass(StorageClass::Function),
+            },
+        );
     }
 
     // NOTE(eddyb) with SPIR-T, we can do `mem2reg` before inlining, too!
@@ -477,7 +481,11 @@ pub fn link(
         let (spv_words, module_or_err, lower_from_spv_timer) =
             spv_module_to_spv_words_and_spirt_module(&output);
         let module = &mut module_or_err.map_err(|e| {
-            let spv_path = outputs.temp_path_ext("spirt-lower-from-spv-input.spv", None);
+            let spv_path = outputs.temp_path_ext_for_cgu(
+                "spv",
+                "spirt-lower-from-spv-input",
+                sess.invocation_temp.as_deref(),
+            );
 
             let was_saved_msg =
                 match std::fs::write(&spv_path, spirv_tools::binary::from_binary(&spv_words)) {
@@ -638,10 +646,13 @@ pub fn link(
             module.entry_points.push(entry.clone());
             let entry_name = entry.operands[2].unwrap_literal_string().to_string();
             let mut file_stem = OsString::from(
-                sanitize_filename::sanitize_with_options(&entry_name, sanitize_filename::Options {
-                    replacement: "-",
-                    ..Default::default()
-                })
+                sanitize_filename::sanitize_with_options(
+                    &entry_name,
+                    sanitize_filename::Options {
+                        replacement: "-",
+                        ..Default::default()
+                    },
+                )
                 .replace("--", "-"),
             );
             // It's always possible to find an unambiguous `file_stem`, but it
@@ -765,7 +776,11 @@ impl Drop for SpirtDumpGuard<'_> {
                 self.per_pass_module_for_dumping
                     .push(("", self.module.clone()));
             }
-            dump_spirt_file_path = Some(self.outputs.temp_path_ext("spirt", None));
+            dump_spirt_file_path = Some(self.outputs.temp_path_ext_for_cgu(
+                "spirt",
+                "dump",
+                self.sess.invocation_temp.as_deref(),
+            ));
         }
 
         if let Some(dump_spirt_file_path) = &dump_spirt_file_path {

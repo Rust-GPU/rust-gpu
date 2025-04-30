@@ -228,14 +228,17 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             };
             let block_insts_maybe_custom = func_at_block_insts.into_iter().map(|func_at_inst| {
                 let data_inst_def = func_at_inst.def();
-                (func_at_inst, match cx[data_inst_def.form].kind {
-                    DataInstKind::SpvExtInst { ext_set, inst }
-                        if ext_set == custom_ext_inst_set =>
-                    {
-                        Some(CustomOp::decode(inst).with_operands(&data_inst_def.inputs))
-                    }
-                    _ => None,
-                })
+                (
+                    func_at_inst,
+                    match cx[data_inst_def.form].kind {
+                        DataInstKind::SpvExtInst { ext_set, inst }
+                            if ext_set == custom_ext_inst_set =>
+                        {
+                            Some(CustomOp::decode(inst).with_operands(&data_inst_def.inputs))
+                        }
+                        _ => None,
+                    },
+                )
             });
             let custom_terminator_inst = block_insts_maybe_custom
                 .clone()

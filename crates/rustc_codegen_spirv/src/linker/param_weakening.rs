@@ -8,7 +8,7 @@ use indexmap::IndexMap;
 use rspirv::dr::{Builder, Module, Operand};
 use rspirv::spirv::{Op, Word};
 use rustc_data_structures::fx::FxHashMap;
-use rustc_index::bit_set::BitSet;
+use rustc_index::bit_set::DenseBitSet;
 use std::mem;
 
 pub fn remove_unused_params(module: Module) -> Module {
@@ -17,7 +17,7 @@ pub fn remove_unused_params(module: Module) -> Module {
     // Gather all of the unused parameters for each function, transitively.
     // (i.e. parameters which are passed, as call arguments, to functions that
     // won't use them, are also considered unused, through any number of calls)
-    let mut unused_params_per_func_id: IndexMap<Word, BitSet<usize>> = IndexMap::new();
+    let mut unused_params_per_func_id: IndexMap<Word, DenseBitSet<usize>> = IndexMap::new();
     for func_idx in call_graph.post_order() {
         // Skip entry points, as they're the only "exported" functions, at least
         // at link-time (likely only relevant to `Kernel`s, but not `Shader`s).
@@ -33,7 +33,7 @@ pub fn remove_unused_params(module: Module) -> Module {
             .enumerate()
             .map(|(i, p)| (p.result_id.unwrap(), i))
             .collect();
-        let mut unused_params = BitSet::new_filled(func.parameters.len());
+        let mut unused_params = DenseBitSet::new_filled(func.parameters.len());
         for inst in func.all_inst_iter() {
             // If this is a call, we can ignore the arguments passed to the
             // callee parameters we already determined to be unused, because

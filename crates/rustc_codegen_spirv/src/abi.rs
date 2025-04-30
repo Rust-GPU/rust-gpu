@@ -6,6 +6,11 @@ use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
+use rustc_abi::ExternAbi;
+use rustc_abi::{
+    Align, BackendRepr, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions, Scalar, Size,
+    TagEncoding, VariantIdx, Variants,
+};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
 use rustc_index::Idx;
@@ -20,12 +25,7 @@ use rustc_middle::{bug, span_bug};
 use rustc_span::DUMMY_SP;
 use rustc_span::def_id::DefId;
 use rustc_span::{Span, Symbol};
-use rustc_target::abi::call::{ArgAbi, ArgAttributes, FnAbi, PassMode};
-use rustc_target::abi::{
-    Align, BackendRepr, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions, Scalar, Size,
-    TagEncoding, VariantIdx, Variants,
-};
-use rustc_target::spec::abi::Abi;
+use rustc_target::callconv::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::fmt;
@@ -46,8 +46,8 @@ pub(crate) fn provide(providers: &mut Providers) {
         let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS.fn_sig)(tcx, def_id);
         result.map_bound(|outer| {
             outer.map_bound(|mut inner| {
-                if let Abi::C { .. } = inner.abi {
-                    inner.abi = Abi::Unadjusted;
+                if let ExternAbi::C { .. } = inner.abi {
+                    inner.abi = ExternAbi::Unadjusted;
                 }
                 inner
             })
@@ -110,6 +110,8 @@ pub(crate) fn provide(providers: &mut Providers) {
             size,
             max_repr_align,
             unadjusted_abi_align,
+            uninhabited,
+            randomization_seed,
         } = *layout;
         LayoutData {
             fields: match *fields {
@@ -125,6 +127,7 @@ pub(crate) fn provide(providers: &mut Providers) {
                 },
             },
             variants: match *variants {
+                Variants::Empty => Variants::Empty,
                 Variants::Single { index } => Variants::Single { index },
                 Variants::Multiple {
                     tag,
@@ -155,6 +158,8 @@ pub(crate) fn provide(providers: &mut Providers) {
             size,
             max_repr_align,
             unadjusted_abi_align,
+            uninhabited,
+            randomization_seed,
         }
     }
 
@@ -198,6 +203,7 @@ pub(crate) fn provide(providers: &mut Providers) {
         let trivial_struct = match tcx.hir_node_by_def_id(def_id) {
             rustc_hir::Node::Item(item) => match item.kind {
                 rustc_hir::ItemKind::Struct(
+                    _,
                     _,
                     &rustc_hir::Generics {
                         params:
@@ -462,7 +468,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
         // `ScalarPair`.
         // There's a few layers that we go through here. First we inspect layout.backend_repr, then if relevant, layout.fields, etc.
         match self.backend_repr {
-            BackendRepr::Uninhabited => SpirvType::Adt {
+            x @ _ if x.is_unsized() => SpirvType::Adt {
                 def_id: def_id_for_spirv_type_adt(*self),
                 size: Some(Size::ZERO),
                 align: Align::from_bytes(0).unwrap(),
@@ -523,7 +529,9 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 if let TyKind::Adt(adt, _) = self.ty.kind() {
                     if let Variants::Single { index } = self.variants {
                         for i in self.fields.index_by_increasing_offset() {
-                            let field = &adt.variants()[index].fields[i.into()];
+                            let field_index = rustc_abi::FieldIdx::from_usize(i);
+                            let field: &rustc_middle::ty::FieldDef =
+                                &adt.variants()[index].fields[field_index];
                             field_names.push(field.name);
                         }
                     }
@@ -542,7 +550,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 }
                 .def_with_name(cx, span, TyLayoutNameKey::from(*self))
             }
-            BackendRepr::Vector { element, count } => {
+            BackendRepr::SimdVector { element, count } => {
                 let elem_spirv = trans_scalar(cx, span, *self, element, Size::ZERO);
                 SpirvType::Vector {
                     element: elem_spirv,
@@ -653,6 +661,7 @@ fn dig_scalar_pointee<'tcx>(
 
     let all_fields = (match &layout.variants {
         Variants::Multiple { variants, .. } => 0..variants.len(),
+        Variants::Empty => 0..0,
         Variants::Single { index } => {
             let i = index.as_usize();
             i..i + 1
@@ -811,7 +820,8 @@ fn trans_struct<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>) -
         field_offsets.push(offset);
         if let Variants::Single { index } = ty.variants {
             if let TyKind::Adt(adt, _) = ty.ty.kind() {
-                let field = &adt.variants()[index].fields[i.into()];
+                let field_index = rustc_abi::FieldIdx::from_usize(i);
+                let field: &rustc_middle::ty::FieldDef = &adt.variants()[index].fields[field_index];
                 field_names.push(field.name);
             } else {
                 // FIXME(eddyb) this looks like something that should exist in rustc.
@@ -868,6 +878,7 @@ impl<'tcx> From<TyAndLayout<'tcx>> for TyLayoutNameKey<'tcx> {
             variant: match layout.variants {
                 Variants::Single { index } => Some(index),
                 Variants::Multiple { .. } => None,
+                Variants::Empty => None,
             },
         }
     }
@@ -984,11 +995,11 @@ fn trans_intrinsic_type<'tcx>(
                 cx: &CodegenCx<'tcx>,
                 const_: Const<'tcx>,
             ) -> Result<P, ErrorGuaranteed> {
-                let (const_val, const_ty) = const_
-                    .try_to_valtree()
-                    .expect("expected monomorphic const in codegen");
+                let const_val = const_.to_value();
+                let const_ty = const_val.ty;
                 assert!(const_ty.is_integral());
                 const_val
+                    .valtree
                     .try_to_scalar_int()
                     .and_then(P::from_scalar_int)
                     .ok_or_else(|| {

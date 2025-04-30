@@ -54,7 +54,6 @@ use crate::spirv_type_constraints::{self, InstSig, StorageClassPat, TyListPat, T
 use indexmap::{IndexMap, IndexSet};
 use rspirv::dr::{Builder, Function, Instruction, Module, Operand};
 use rspirv::spirv::{Op, StorageClass, Word};
-use rustc_data_structures::captures::Captures;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
 use std::collections::{BTreeMap, VecDeque};
@@ -624,12 +623,15 @@ impl<S: Specialization> Specializer<S> {
 
             // Inference variables become "generic" parameters.
             if param_count > 0 {
-                self.generics.insert(result_id, Generic {
-                    param_count,
-                    def: inst.clone(),
-                    param_values,
-                    replacements,
-                });
+                self.generics.insert(
+                    result_id,
+                    Generic {
+                        param_count,
+                        def: inst.clone(),
+                        param_values,
+                        replacements,
+                    },
+                );
             }
         }
     }
@@ -1112,7 +1114,7 @@ impl<'a> Match<'a> {
     fn debug_with_infer_cx<'b>(
         &'b self,
         cx: &'b InferCx<'a, impl Specialization>,
-    ) -> impl fmt::Debug + Captures<'a> + '_ {
+    ) -> impl fmt::Debug + '_ {
         fn debug_var_found<'a, A: smallvec::Array<Item = T> + 'a, T: 'a, TD: fmt::Display>(
             var_found: &'a SmallIntMap<impl smallvec::Array<Item = SmallVec<A>>>,
             display: &'a impl Fn(&'a T) -> TD,
@@ -2102,10 +2104,13 @@ impl<'a, S: Specialization> InferCx<'a, S> {
 
                     Op::Return => {}
 
-                    _ => self.instantiate_instruction(inst, InstructionLocation::FnBody {
-                        block_idx,
-                        inst_idx,
-                    }),
+                    _ => self.instantiate_instruction(
+                        inst,
+                        InstructionLocation::FnBody {
+                            block_idx,
+                            inst_idx,
+                        },
+                    ),
                 }
             }
         }

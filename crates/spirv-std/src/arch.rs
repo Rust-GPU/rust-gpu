@@ -270,7 +270,7 @@ impl<T> IndexUnchecked<T> for [T] {
 
     #[cfg(not(target_arch = "spirv"))]
     unsafe fn index_unchecked(&self, index: usize) -> &T {
-        self.get_unchecked(index)
+        unsafe { self.get_unchecked(index) }
     }
 
     #[cfg(target_arch = "spirv")]
@@ -291,7 +291,7 @@ impl<T> IndexUnchecked<T> for [T] {
 
     #[cfg(not(target_arch = "spirv"))]
     unsafe fn index_unchecked_mut(&mut self, index: usize) -> &mut T {
-        self.get_unchecked_mut(index)
+        unsafe { self.get_unchecked_mut(index) }
     }
 }
 
@@ -312,7 +312,7 @@ impl<T, const N: usize> IndexUnchecked<T> for [T; N] {
 
     #[cfg(not(target_arch = "spirv"))]
     unsafe fn index_unchecked(&self, index: usize) -> &T {
-        self.get_unchecked(index)
+        unsafe { self.get_unchecked(index) }
     }
 
     #[cfg(target_arch = "spirv")]
@@ -331,6 +331,6 @@ impl<T, const N: usize> IndexUnchecked<T> for [T; N] {
 
     #[cfg(not(target_arch = "spirv"))]
     unsafe fn index_unchecked_mut(&mut self, index: usize) -> &mut T {
-        self.get_unchecked_mut(index)
+        unsafe { self.get_unchecked_mut(index) }
     }
 }

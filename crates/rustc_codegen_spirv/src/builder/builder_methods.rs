@@ -10,6 +10,7 @@ use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::dr::{InsertPoint, Instruction, Operand};
 use rspirv::spirv::{Capability, MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
+use rustc_abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
 use rustc_apfloat::{Float, Round, Status, ieee};
 use rustc_codegen_ssa::MemFlags;
 use rustc_codegen_ssa::common::{
@@ -27,8 +28,7 @@ use rustc_middle::middle::codegen_fn_attrs::CodegenFnAttrs;
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_middle::ty::{self, Ty};
 use rustc_span::Span;
-use rustc_target::abi::call::FnAbi;
-use rustc_target::abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
+use rustc_target::callconv::FnAbi;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::cell::Cell;
@@ -215,24 +215,16 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             },
             SpirvType::Integer(width, true) => match width {
                 8 => self
-                    .constant_i8(self.span(), unsafe {
-                        std::mem::transmute::<u8, i8>(fill_byte)
-                    })
+                    .constant_i8(self.span(), u8::cast_signed(fill_byte))
                     .def(self),
                 16 => self
-                    .constant_i16(self.span(), unsafe {
-                        std::mem::transmute::<u16, i16>(memset_fill_u16(fill_byte))
-                    })
+                    .constant_i16(self.span(), u16::cast_signed(memset_fill_u16(fill_byte)))
                     .def(self),
                 32 => self
-                    .constant_i32(self.span(), unsafe {
-                        std::mem::transmute::<u32, i32>(memset_fill_u32(fill_byte))
-                    })
+                    .constant_i32(self.span(), u32::cast_signed(memset_fill_u32(fill_byte)))
                     .def(self),
                 64 => self
-                    .constant_i64(self.span(), unsafe {
-                        std::mem::transmute::<u64, i64>(memset_fill_u64(fill_byte))
-                    })
+                    .constant_i64(self.span(), u64::cast_signed(memset_fill_u64(fill_byte)))
                     .def(self),
                 _ => self.fatal(format!(
                     "memset on integer width {width} not implemented yet"
@@ -1259,9 +1251,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         };
         // TODO: rspirv doesn't have insert_variable function
         let result_id = builder.id();
-        let inst = Instruction::new(Op::Variable, Some(ptr_ty), Some(result_id), vec![
-            Operand::StorageClass(StorageClass::Function),
-        ]);
+        let inst = Instruction::new(
+            Op::Variable,
+            Some(ptr_ty),
+            Some(result_id),
+            vec![Operand::StorageClass(StorageClass::Function)],
+        );
         builder.insert_into_block(index, inst).unwrap();
         result_id.with_type(ptr_ty)
     }
@@ -1334,13 +1329,16 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 let ((line_start, col_start), (line_end, col_end)) =
                     (line_col_range.start, line_col_range.end);
 
-                self.custom_inst(void_ty, CustomInst::SetDebugSrcLoc {
-                    file: Operand::IdRef(file.file_name_op_string_id),
-                    line_start: Operand::IdRef(self.const_u32(line_start).def(self)),
-                    line_end: Operand::IdRef(self.const_u32(line_end).def(self)),
-                    col_start: Operand::IdRef(self.const_u32(col_start).def(self)),
-                    col_end: Operand::IdRef(self.const_u32(col_end).def(self)),
-                });
+                self.custom_inst(
+                    void_ty,
+                    CustomInst::SetDebugSrcLoc {
+                        file: Operand::IdRef(file.file_name_op_string_id),
+                        line_start: Operand::IdRef(self.const_u32(line_start).def(self)),
+                        line_end: Operand::IdRef(self.const_u32(line_end).def(self)),
+                        col_start: Operand::IdRef(self.const_u32(col_start).def(self)),
+                        col_end: Operand::IdRef(self.const_u32(col_end).def(self)),
+                    },
+                );
             }
 
             // HACK(eddyb) remove the previous instruction if made irrelevant.
@@ -1689,11 +1687,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         let signed = match ty.kind() {
             ty::Int(_) => true,
             ty::Uint(_) => false,
-            other => self.fatal(format!("Unexpected {} type: {other:#?}", match oop {
-                OverflowOp::Add => "checked add",
-                OverflowOp::Sub => "checked sub",
-                OverflowOp::Mul => "checked mul",
-            })),
+            other => self.fatal(format!(
+                "Unexpected {} type: {other:#?}",
+                match oop {
+                    OverflowOp::Add => "checked add",
+                    OverflowOp::Sub => "checked sub",
+                    OverflowOp::Mul => "checked mul",
+                }
+            )),
         };
 
         let result = if is_add {
@@ -1833,7 +1834,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 place.val.llval,
                 place.val.align,
             );
-            OperandValue::Immediate(self.to_immediate(llval, place.layout))
+            OperandValue::Immediate(llval)
         } else if let BackendRepr::ScalarPair(a, b) = place.layout.backend_repr {
             let b_offset = a
                 .primitive()
@@ -3541,9 +3542,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                 .map(|s| Cow::Owned(s.replace('%', "%%")))
                                 .interleave(ref_arg_ids_with_ty_and_spec.iter().map(
                                     |&(ref_id, ty, spec)| {
-                                        use rustc_target::abi::{
-                                            Float::*, Integer::*, Primitive::*,
-                                        };
+                                        use rustc_abi::{Float::*, Integer::*, Primitive::*};
 
                                         let layout = self.layout_of(ty);
 

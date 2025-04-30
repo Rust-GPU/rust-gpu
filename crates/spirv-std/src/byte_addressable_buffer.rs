@@ -94,7 +94,7 @@ impl<'a> ByteAddressableBuffer<&'a [u32]> {
     /// See [`Self`].
     pub unsafe fn load<T>(&self, byte_index: u32) -> T {
         bounds_check::<T>(self.data, byte_index);
-        buffer_load_intrinsic(self.data, byte_index)
+        unsafe { buffer_load_intrinsic(self.data, byte_index) }
     }
 
     /// Loads an arbitrary type from the buffer. `byte_index` must be a
@@ -103,7 +103,7 @@ impl<'a> ByteAddressableBuffer<&'a [u32]> {
     /// # Safety
     /// See [`Self`]. Additionally, bounds or alignment checking is not performed.
     pub unsafe fn load_unchecked<T>(&self, byte_index: u32) -> T {
-        buffer_load_intrinsic(self.data, byte_index)
+        unsafe { buffer_load_intrinsic(self.data, byte_index) }
     }
 }
 
@@ -127,7 +127,7 @@ impl<'a> ByteAddressableBuffer<&'a mut [u32]> {
     /// See [`Self`].
     #[inline]
     pub unsafe fn load<T>(&self, byte_index: u32) -> T {
-        self.as_ref().load(byte_index)
+        unsafe { self.as_ref().load(byte_index) }
     }
 
     /// Loads an arbitrary type from the buffer. `byte_index` must be a
@@ -137,7 +137,7 @@ impl<'a> ByteAddressableBuffer<&'a mut [u32]> {
     /// See [`Self`]. Additionally, bounds or alignment checking is not performed.
     #[inline]
     pub unsafe fn load_unchecked<T>(&self, byte_index: u32) -> T {
-        self.as_ref().load_unchecked(byte_index)
+        unsafe { self.as_ref().load_unchecked(byte_index) }
     }
 
     /// Stores an arbitrary type into the buffer. `byte_index` must be a
@@ -147,7 +147,9 @@ impl<'a> ByteAddressableBuffer<&'a mut [u32]> {
     /// See [`Self`].
     pub unsafe fn store<T>(&mut self, byte_index: u32, value: T) {
         bounds_check::<T>(self.data, byte_index);
-        buffer_store_intrinsic(self.data, byte_index, value);
+        unsafe {
+            buffer_store_intrinsic(self.data, byte_index, value);
+        }
     }
 
     /// Stores an arbitrary type into the buffer. `byte_index` must be a
@@ -156,6 +158,8 @@ impl<'a> ByteAddressableBuffer<&'a mut [u32]> {
     /// # Safety
     /// See [`Self`]. Additionally, bounds or alignment checking is not performed.
     pub unsafe fn store_unchecked<T>(&mut self, byte_index: u32, value: T) {
-        buffer_store_intrinsic(self.data, byte_index, value);
+        unsafe {
+            buffer_store_intrinsic(self.data, byte_index, value);
+        }
     }
 }

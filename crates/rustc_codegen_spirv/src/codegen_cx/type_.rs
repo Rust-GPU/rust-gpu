@@ -5,6 +5,7 @@ use super::CodegenCx;
 use crate::abi::ConvSpirvType;
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
+use rustc_abi::{AddressSpace, BackendRepr, Reg};
 use rustc_codegen_ssa::common::TypeKind;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, LayoutTypeCodegenMethods};
 use rustc_middle::ty::Ty;
@@ -14,8 +15,7 @@ use rustc_middle::ty::layout::{
 use rustc_middle::{bug, span_bug};
 use rustc_span::source_map::Spanned;
 use rustc_span::{DUMMY_SP, Span};
-use rustc_target::abi::call::{CastTarget, FnAbi, Reg};
-use rustc_target::abi::{AddressSpace, BackendRepr};
+use rustc_target::callconv::{CastTarget, FnAbi};
 
 impl<'tcx> LayoutOfHelpers<'tcx> for CodegenCx<'tcx> {
     type LayoutOfResult = TyAndLayout<'tcx>;
@@ -97,18 +97,17 @@ impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
     fn is_backend_immediate(&self, layout: TyAndLayout<'tcx>) -> bool {
         match layout.backend_repr {
-            BackendRepr::Scalar(_) | BackendRepr::Vector { .. } => true,
+            BackendRepr::Scalar(_) | BackendRepr::SimdVector { .. } => true,
             BackendRepr::ScalarPair(..) => false,
-            BackendRepr::Uninhabited | BackendRepr::Memory { .. } => layout.is_zst(),
+            BackendRepr::Memory { .. } => layout.is_zst(),
         }
     }
 
     fn is_backend_scalar_pair(&self, layout: TyAndLayout<'tcx>) -> bool {
         match layout.backend_repr {
             BackendRepr::ScalarPair(..) => true,
-            BackendRepr::Uninhabited
-            | BackendRepr::Scalar(_)
-            | BackendRepr::Vector { .. }
+            BackendRepr::Scalar(_)
+            | BackendRepr::SimdVector { .. }
             | BackendRepr::Memory { .. } => false,
         }
     }
@@ -130,7 +129,7 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> BaseTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> BaseTypeCodegenMethods for CodegenCx<'tcx> {
     fn type_i8(&self) -> Self::Type {
         SpirvType::Integer(8, false).def(DUMMY_SP, self)
     }

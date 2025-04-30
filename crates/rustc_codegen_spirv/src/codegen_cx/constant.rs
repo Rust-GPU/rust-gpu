@@ -6,12 +6,12 @@ use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
+use rustc_abi::{self, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
 use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods};
 use rustc_middle::bug;
 use rustc_middle::mir::interpret::{ConstAllocation, GlobalAlloc, Scalar, alloc_range};
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_span::{DUMMY_SP, Span};
-use rustc_target::abi::{self, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
 
 impl<'tcx> CodegenCx<'tcx> {
     pub fn def_constant(&self, ty: Word, val: SpirvConst<'_, 'tcx>) -> SpirvValue {
@@ -109,7 +109,7 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
+impl<'tcx> ConstCodegenMethods for CodegenCx<'tcx> {
     fn const_null(&self, t: Self::Type) -> Self::Value {
         self.constant_null(t)
     }
@@ -169,11 +169,17 @@ impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
             .layout_of(self.tcx.types.str_)
             .spirv_type(DUMMY_SP, self);
         (
-            self.def_constant(self.type_ptr_to(str_ty), SpirvConst::PtrTo {
-                pointee: self
-                    .constant_composite(str_ty, s.bytes().map(|b| self.const_u8(b).def_cx(self)))
-                    .def_cx(self),
-            }),
+            self.def_constant(
+                self.type_ptr_to(str_ty),
+                SpirvConst::PtrTo {
+                    pointee: self
+                        .constant_composite(
+                            str_ty,
+                            s.bytes().map(|b| self.const_u8(b).def_cx(self)),
+                        )
+                        .def_cx(self),
+                },
+            ),
             self.const_usize(len as u64),
         )
     }
@@ -214,7 +220,7 @@ impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn scalar_to_backend(
         &self,
         scalar: Scalar,
-        layout: abi::Scalar,
+        layout: rustc_abi::Scalar,
         ty: Self::Type,
     ) -> Self::Value {
         match scalar {
@@ -254,13 +260,18 @@ impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
                         (value, AddressSpace::DATA)
                     }
                     GlobalAlloc::Function { instance } => (
-                        self.get_fn_addr(instance.polymorphize(self.tcx)),
+                        self.get_fn_addr(instance),
                         self.data_layout().instruction_address_space,
                     ),
                     GlobalAlloc::VTable(vty, dyn_ty) => {
                         let alloc = self
                             .tcx
-                            .global_alloc(self.tcx.vtable_allocation((vty, dyn_ty.principal())))
+                            .global_alloc(self.tcx.vtable_allocation((
+                                vty,
+                                dyn_ty.principal().map(|principal| {
+                                    self.tcx.instantiate_bound_regions_with_erased(principal)
+                                }),
+                            )))
                             .unwrap_memory();
                         let pointee = match self.lookup_type(ty) {
                             SpirvType::Pointer { pointee } => pointee,
@@ -305,7 +316,13 @@ impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
     // the actual value generation until after a pointer to this value is cast
     // to its final type (e.g. that will be loaded as).
     // FIXME(eddyb) replace this with `qptr` handling of constant data.
-    fn const_data_from_alloc(&self, alloc: ConstAllocation<'tcx>) -> Self::Value {
+    fn const_data_from_alloc(&self, alloc: ConstAllocation<'_>) -> Self::Value {
+        // SAFETY: The `ConstAllocation` provided by `rustc_middle`'s MIR interpretation
+        // context is derived from the global `TyCtxt` and its arenas, which have the
+        // lifetime `'tcx`. Although the trait signature uses `ConstAllocation<'_>`, the
+        // underlying data is guaranteed to be valid for `'tcx`.
+        let alloc =
+            unsafe { std::mem::transmute::<ConstAllocation<'_>, ConstAllocation<'tcx>>(alloc) };
         let void_type = SpirvType::Void.def(DUMMY_SP, self);
         self.def_constant(void_type, SpirvConst::ConstDataFromAlloc(alloc))
     }
@@ -354,12 +371,12 @@ impl<'tcx> CodegenCx<'tcx> {
 
     // This function comes from `ty::layout`'s `layout_of_uncached`,
     // where it's named `scalar_unit`.
-    pub fn primitive_to_scalar(&self, value: Primitive) -> abi::Scalar {
+    pub fn primitive_to_scalar(&self, value: Primitive) -> rustc_abi::Scalar {
         let bits = value.size(self.data_layout()).bits();
         assert!(bits <= 128);
-        abi::Scalar::Initialized {
+        rustc_abi::Scalar::Initialized {
             value,
-            valid_range: abi::WrappingRange {
+            valid_range: rustc_abi::WrappingRange {
                 start: 0,
                 end: (!0 >> (128 - bits)),
             },

@@ -388,7 +388,7 @@ impl DiagnosticReporter<'_> {
             .use_stack
             .split_last()
             .filter(
-                |(
+                |&(
                     &UseOrigin::Global {
                         attrs: use_attrs, ..
                     }

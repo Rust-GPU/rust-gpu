@@ -9,9 +9,9 @@ use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
-use rustc_attr::InlineAttr;
+use rustc_abi::Align;
+use rustc_attr_parsing::InlineAttr;
 use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
-use rustc_hir::def::DefKind;
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
 use rustc_middle::mir::mono::{Linkage, MonoItem, Visibility};
@@ -19,13 +19,14 @@ use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
 use rustc_span::Span;
 use rustc_span::def_id::DefId;
-use rustc_target::abi::Align;
 
 fn attrs_to_spirv(attrs: &CodegenFnAttrs) -> FunctionControl {
     let mut control = FunctionControl::NONE;
     match attrs.inline {
         InlineAttr::None => (),
-        InlineAttr::Hint | InlineAttr::Always => control.insert(FunctionControl::INLINE),
+        InlineAttr::Hint | InlineAttr::Always | InlineAttr::Force { .. } => {
+            control.insert(FunctionControl::INLINE)
+        }
         InlineAttr::Never => control.insert(FunctionControl::DONT_INLINE),
     }
     if attrs.flags.contains(CodegenFnAttrFlags::FFI_PURE) {
@@ -131,13 +132,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
         let declared = fn_id.with_type(function_type);
 
-        let attrs = AggregatedSpirvAttributes::parse(self, match self.tcx.def_kind(def_id) {
-            // This was made to ICE cross-crate at some point, but then got
-            // reverted in https://github.com/rust-lang/rust/pull/111381.
-            // FIXME(eddyb) remove this workaround once we rustup past that.
-            DefKind::Closure => &[],
-            _ => self.tcx.get_attrs_unchecked(def_id),
-        });
+        let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.get_attrs_unchecked(def_id));
         if let Some(entry) = attrs.entry.map(|attr| attr.value) {
             let entry_name = entry
                 .name
@@ -339,9 +334,12 @@ impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
 impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
     fn static_addr_of(&self, cv: Self::Value, _align: Align, _kind: Option<&str>) -> Self::Value {
-        self.def_constant(self.type_ptr_to(cv.ty), SpirvConst::PtrTo {
-            pointee: cv.def_cx(self),
-        })
+        self.def_constant(
+            self.type_ptr_to(cv.ty),
+            SpirvConst::PtrTo {
+                pointee: cv.def_cx(self),
+            },
+        )
     }
 
     fn codegen_static(&self, def_id: DefId) {

@@ -5,7 +5,7 @@
 use crate::codegen_cx::CodegenCx;
 use crate::symbols::Symbols;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
-use rustc_ast::Attribute;
+
 use rustc_hir as hir;
 use rustc_hir::def_id::LocalModDefId;
 use rustc_hir::intravisit::{self, Visitor};
@@ -148,7 +148,7 @@ impl AggregatedSpirvAttributes {
     ///
     /// Any errors for malformed/duplicate attributes will have been reported
     /// prior to codegen, by the `attr` check pass.
-    pub fn parse<'tcx>(cx: &CodegenCx<'tcx>, attrs: &'tcx [Attribute]) -> Self {
+    pub fn parse<'tcx>(cx: &CodegenCx<'tcx>, attrs: &'tcx [rustc_hir::Attribute]) -> Self {
         let mut aggregated_attrs = Self::default();
 
         // NOTE(eddyb) `span_delayed_bug` ensures that if attribute checking fails
@@ -254,8 +254,8 @@ fn target_from_impl_item(tcx: TyCtxt<'_>, impl_item: &hir::ImplItem<'_>) -> Targ
     match impl_item.kind {
         hir::ImplItemKind::Const(..) => Target::AssocConst,
         hir::ImplItemKind::Fn(..) => {
-            let parent_owner_id = tcx.hir().get_parent_item(impl_item.hir_id());
-            let containing_item = tcx.hir().expect_item(parent_owner_id.def_id);
+            let parent_owner_id = tcx.hir_get_parent_item(impl_item.hir_id());
+            let containing_item = tcx.hir_expect_item(parent_owner_id.def_id);
             let containing_impl_is_for_trait = match &containing_item.kind {
                 hir::ItemKind::Impl(hir::Impl { of_trait, .. }) => of_trait.is_some(),
                 _ => unreachable!("parent of an ImplItem must be an Impl"),
@@ -281,7 +281,7 @@ impl CheckSpirvAttrVisitor<'_> {
 
         let parse_attrs = |attrs| crate::symbols::parse_attrs_for_checking(&self.sym, attrs);
 
-        let attrs = self.tcx.hir().attrs(hir_id);
+        let attrs = self.tcx.hir_attrs(hir_id);
         for parse_attr_result in parse_attrs(attrs) {
             let (span, parsed_attr) = match parse_attr_result {
                 Ok(span_and_parsed_attr) => span_and_parsed_attr,
@@ -327,10 +327,9 @@ impl CheckSpirvAttrVisitor<'_> {
                 | SpirvAttribute::SpecConstant(_) => match target {
                     Target::Param => {
                         let parent_hir_id = self.tcx.parent_hir_id(hir_id);
-                        let parent_is_entry_point =
-                            parse_attrs(self.tcx.hir().attrs(parent_hir_id))
-                                .filter_map(|r| r.ok())
-                                .any(|(_, attr)| matches!(attr, SpirvAttribute::Entry(_)));
+                        let parent_is_entry_point = parse_attrs(self.tcx.hir_attrs(parent_hir_id))
+                            .filter_map(|r| r.ok())
+                            .any(|(_, attr)| matches!(attr, SpirvAttribute::Entry(_)));
                         if !parent_is_entry_point {
                             self.tcx.dcx().span_err(
                                 span,
@@ -418,8 +417,8 @@ impl CheckSpirvAttrVisitor<'_> {
 impl<'tcx> Visitor<'tcx> for CheckSpirvAttrVisitor<'tcx> {
     type NestedFilter = nested_filter::OnlyBodies;
 
-    fn nested_visit_map(&mut self) -> Self::Map {
-        self.tcx.hir()
+    fn maybe_tcx(&mut self) -> Self::MaybeTyCtxt {
+        self.tcx
     }
 
     fn visit_item(&mut self, item: &'tcx hir::Item<'tcx>) {
@@ -498,8 +497,8 @@ fn check_mod_attrs(tcx: TyCtxt<'_>, module_def_id: LocalModDefId) {
         tcx,
         sym: Symbols::get(),
     };
-    tcx.hir()
-        .visit_item_likes_in_module(module_def_id, check_spirv_attr_visitor);
+    tcx.hir_visit_item_likes_in_module(module_def_id, check_spirv_attr_visitor);
+
     if module_def_id.is_top_level_module() {
         check_spirv_attr_visitor.check_spirv_attributes(CRATE_HIR_ID, Target::Mod);
     }

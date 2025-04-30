@@ -17,7 +17,7 @@ use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
 use rustc_middle::{bug, ty};
 use rustc_span::Span;
 use rustc_span::sym;
-use rustc_target::abi::call::{FnAbi, PassMode};
+use rustc_target::callconv::{FnAbi, PassMode};
 use std::assert_matches::assert_matches;
 
 fn int_type_width_signed(ty: Ty<'_>, cx: &CodegenCx<'_>) -> Option<(u64, bool)> {
@@ -161,10 +161,11 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             }
             sym::sinf32 | sym::sinf64 => self.gl_op(GLOp::Sin, ret_ty, [args[0].immediate()]),
             sym::cosf32 | sym::cosf64 => self.gl_op(GLOp::Cos, ret_ty, [args[0].immediate()]),
-            sym::powf32 | sym::powf64 => self.gl_op(GLOp::Pow, ret_ty, [
-                args[0].immediate(),
-                args[1].immediate(),
-            ]),
+            sym::powf32 | sym::powf64 => self.gl_op(
+                GLOp::Pow,
+                ret_ty,
+                [args[0].immediate(), args[1].immediate()],
+            ),
             sym::expf32 | sym::expf64 => self.gl_op(GLOp::Exp, ret_ty, [args[0].immediate()]),
             sym::exp2f32 | sym::exp2f64 => self.gl_op(GLOp::Exp2, ret_ty, [args[0].immediate()]),
             sym::logf32 | sym::logf64 => self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()]),
@@ -176,20 +177,26 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 let ln = self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()]);
                 self.fmul(mul, ln)
             }
-            sym::fmaf32 | sym::fmaf64 => self.gl_op(GLOp::Fma, ret_ty, [
-                args[0].immediate(),
-                args[1].immediate(),
-                args[2].immediate(),
-            ]),
+            sym::fmaf32 | sym::fmaf64 => self.gl_op(
+                GLOp::Fma,
+                ret_ty,
+                [
+                    args[0].immediate(),
+                    args[1].immediate(),
+                    args[2].immediate(),
+                ],
+            ),
             sym::fabsf32 | sym::fabsf64 => self.gl_op(GLOp::FAbs, ret_ty, [args[0].immediate()]),
-            sym::minnumf32 | sym::minnumf64 => self.gl_op(GLOp::FMin, ret_ty, [
-                args[0].immediate(),
-                args[1].immediate(),
-            ]),
-            sym::maxnumf32 | sym::maxnumf64 => self.gl_op(GLOp::FMax, ret_ty, [
-                args[0].immediate(),
-                args[1].immediate(),
-            ]),
+            sym::minnumf32 | sym::minnumf64 => self.gl_op(
+                GLOp::FMin,
+                ret_ty,
+                [args[0].immediate(), args[1].immediate()],
+            ),
+            sym::maxnumf32 | sym::maxnumf64 => self.gl_op(
+                GLOp::FMax,
+                ret_ty,
+                [args[0].immediate(), args[1].immediate()],
+            ),
             sym::copysignf32 | sym::copysignf64 => {
                 let val = args[0].immediate();
                 let sign = args[1].immediate();
@@ -199,8 +206,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             sym::ceilf32 | sym::ceilf64 => self.gl_op(GLOp::Ceil, ret_ty, [args[0].immediate()]),
             sym::truncf32 | sym::truncf64 => self.gl_op(GLOp::Trunc, ret_ty, [args[0].immediate()]),
             // TODO: Correctness of all these rounds
-            sym::rintf32 | sym::rintf64 => self.gl_op(GLOp::Round, ret_ty, [args[0].immediate()]),
-            sym::nearbyintf32 | sym::nearbyintf64 | sym::roundf32 | sym::roundf64 => {
+            sym::round_ties_even_f32 | sym::round_ties_even_f64 => {
                 self.gl_op(GLOp::Round, ret_ty, [args[0].immediate()])
             }
 
@@ -483,9 +489,13 @@ impl Builder<'_, '_> {
                     if trailing {
                         let lsb = self
                             .emit()
-                            .ext_inst(u32, None, glsl, GLOp::FindILsb as u32, [Operand::IdRef(
-                                arg,
-                            )])
+                            .ext_inst(
+                                u32,
+                                None,
+                                glsl,
+                                GLOp::FindILsb as u32,
+                                [Operand::IdRef(arg)],
+                            )
                             .unwrap();
                         if offset == 0 {
                             lsb
@@ -497,9 +507,13 @@ impl Builder<'_, '_> {
                         // rust is always unsigned, so FindUMsb
                         let msb_bit = self
                             .emit()
-                            .ext_inst(u32, None, glsl, GLOp::FindUMsb as u32, [Operand::IdRef(
-                                arg,
-                            )])
+                            .ext_inst(
+                                u32,
+                                None,
+                                glsl,
+                                GLOp::FindUMsb as u32,
+                                [Operand::IdRef(arg)],
+                            )
                             .unwrap();
                         // the glsl op returns the Msb bit, not the amount of leading zeros of this u32
                         // leading zeros = 31 - Msb bit
@@ -604,18 +618,21 @@ impl Builder<'_, '_> {
         // so the best thing we can do is use our own custom instruction.
         let kind_id = self.emit().string(kind);
         let message_debug_printf_fmt_str_id = self.emit().string(message_debug_printf_fmt_str);
-        self.custom_inst(void_ty, CustomInst::Abort {
-            kind: Operand::IdRef(kind_id),
-            message_debug_printf: [message_debug_printf_fmt_str_id]
-                .into_iter()
-                .chain(
-                    message_debug_printf_args
-                        .into_iter()
-                        .map(|arg| arg.def(self)),
-                )
-                .map(Operand::IdRef)
-                .collect(),
-        });
+        self.custom_inst(
+            void_ty,
+            CustomInst::Abort {
+                kind: Operand::IdRef(kind_id),
+                message_debug_printf: [message_debug_printf_fmt_str_id]
+                    .into_iter()
+                    .chain(
+                        message_debug_printf_args
+                            .into_iter()
+                            .map(|arg| arg.def(self)),
+                    )
+                    .map(Operand::IdRef)
+                    .collect(),
+            },
+        );
         self.unreachable();
 
         // HACK(eddyb) we still need an active block in case the user of this

@@ -69,7 +69,7 @@ impl CallGraph {
     pub fn post_order(&self) -> Vec<FuncIdx> {
         let num_funcs = self.callees.len();
 
-        // FIXME(eddyb) use a proper bitset.
+        // FIXME(eddyb) use a properDenseBitSet.
         let mut visited = vec![false; num_funcs];
         let mut post_order = Vec::with_capacity(num_funcs);
 

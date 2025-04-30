@@ -16,6 +16,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 use itertools::Itertools as _;
 use rspirv::dr::{Module, Operand};
 use rspirv::spirv::{Decoration, LinkageType, Op, Word};
+use rustc_abi::{AddressSpace, HasDataLayout, TargetDataLayout};
 use rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_codegen_ssa::mir::debuginfo::{FunctionDebugContext, VariableKind};
 use rustc_codegen_ssa::traits::{
@@ -27,12 +28,11 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::mir;
 use rustc_middle::mir::mono::CodegenUnit;
 use rustc_middle::ty::layout::{HasTyCtxt, HasTypingEnv};
-use rustc_middle::ty::{Instance, PolyExistentialTraitRef, Ty, TyCtxt, TypingEnv};
+use rustc_middle::ty::{ExistentialTraitRef, Instance, Ty, TyCtxt, TypingEnv};
 use rustc_session::Session;
 use rustc_span::symbol::Symbol;
 use rustc_span::{DUMMY_SP, SourceFile, Span};
-use rustc_target::abi::call::{FnAbi, PassMode};
-use rustc_target::abi::{AddressSpace, HasDataLayout, TargetDataLayout};
+use rustc_target::callconv::{FnAbi, PassMode};
 use rustc_target::spec::{HasTargetSpec, Target, TargetTuple};
 use std::cell::RefCell;
 use std::collections::BTreeSet;
@@ -52,7 +52,7 @@ pub struct CodegenCx<'tcx> {
     pub function_parameter_values: RefCell<FxHashMap<Word, Vec<SpirvValue>>>,
     pub type_cache: TypeCache<'tcx>,
     /// Cache generated vtables
-    pub vtables: RefCell<FxHashMap<(Ty<'tcx>, Option<PolyExistentialTraitRef<'tcx>>), SpirvValue>>,
+    pub vtables: RefCell<FxHashMap<(Ty<'tcx>, Option<ExistentialTraitRef<'tcx>>), SpirvValue>>,
     pub ext_inst: RefCell<ExtInst>,
     /// Invalid SPIR-V IDs that should be stripped from the final binary,
     /// each with its own reason and span that should be used for reporting
@@ -685,10 +685,10 @@ impl CodegenArgs {
                 *current_id = *remap.entry(*current_id).or_insert_with(|| len as u32 + 1);
             };
             module.all_inst_iter_mut().for_each(|inst| {
-                if let Some(ref mut result_id) = &mut inst.result_id {
+                if let Some(result_id) = &mut inst.result_id {
                     insert(result_id);
                 }
-                if let Some(ref mut result_type) = &mut inst.result_type {
+                if let Some(result_type) = &mut inst.result_type {
                     insert(result_type);
                 }
                 inst.operands.iter_mut().for_each(|op| {
@@ -849,7 +849,7 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
     #[allow(clippy::type_complexity)]
     fn vtables(
         &self,
-    ) -> &RefCell<FxHashMap<(Ty<'tcx>, Option<PolyExistentialTraitRef<'tcx>>), Self::Value>> {
+    ) -> &RefCell<FxHashMap<(Ty<'tcx>, Option<ExistentialTraitRef<'tcx>>), Self::Value>> {
         &self.vtables
     }
 
@@ -910,7 +910,7 @@ impl<'tcx> DebugInfoCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn create_vtable_debuginfo(
         &self,
         _ty: Ty<'tcx>,
-        _trait_ref: Option<PolyExistentialTraitRef<'tcx>>,
+        _trait_ref: Option<ExistentialTraitRef<'tcx>>,
         _vtable: Self::Value,
     ) {
         // Ignore.
@@ -972,6 +972,10 @@ impl<'tcx> AsmCodegenMethods<'tcx> for CodegenCx<'tcx> {
         _options: InlineAsmOptions,
         _line_spans: &[Span],
     ) {
+        todo!()
+    }
+
+    fn mangled_name(&self, _instance: Instance<'tcx>) -> String {
         todo!()
     }
 }

@@ -7,13 +7,13 @@ use either::Either;
 use rspirv::dr::{Instruction, Module, Operand};
 use rspirv::spirv::{Decoration, Op, Word};
 use rustc_data_structures::fx::FxIndexMap;
-use rustc_data_structures::sync::Lrc;
 use rustc_span::{FileName, SourceFile};
 use rustc_span::{Span, source_map::SourceMap};
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::marker::PhantomData;
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::{fmt, iter, slice, str};
 
 /// Decorations not native to SPIR-V require some form of encoding into existing
@@ -39,11 +39,16 @@ pub trait CustomDecoration<'a>: Sized {
         let mut encoded = Self::ENCODING_PREFIX.to_string();
         self.encode(&mut encoded).unwrap();
 
-        Instruction::new(Op::DecorateString, None, None, vec![
-            Operand::IdRef(id),
-            Operand::Decoration(Decoration::UserTypeGOOGLE),
-            Operand::LiteralString(encoded),
-        ])
+        Instruction::new(
+            Op::DecorateString,
+            None,
+            None,
+            vec![
+                Operand::IdRef(id),
+                Operand::Decoration(Decoration::UserTypeGOOGLE),
+                Operand::LiteralString(encoded),
+            ],
+        )
     }
 
     fn try_decode_from_inst(inst: &Instruction) -> Option<(Word, LazilyDecoded<'_, Self>)> {
@@ -54,10 +59,13 @@ pub trait CustomDecoration<'a>: Sized {
             let prefixed_encoded = inst.operands[2].unwrap_literal_string();
             let encoded = prefixed_encoded.strip_prefix(Self::ENCODING_PREFIX)?;
 
-            Some((id, LazilyDecoded {
-                encoded,
-                _marker: PhantomData,
-            }))
+            Some((
+                id,
+                LazilyDecoded {
+                    encoded,
+                    _marker: PhantomData,
+                },
+            ))
         } else {
             None
         }
@@ -313,7 +321,7 @@ struct SpvDebugFile<'a> {
     /// Source strings from one `OpSource`, and any number of `OpSourceContinued`.
     op_source_parts: SmallVec<[&'a str; 1]>,
 
-    regenerated_rustc_source_file: Option<Lrc<SourceFile>>,
+    regenerated_rustc_source_file: Option<Arc<SourceFile>>,
 }
 
 impl<'a> SpanRegenerator<'a> {

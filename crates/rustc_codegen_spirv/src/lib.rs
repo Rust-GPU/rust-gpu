@@ -2,17 +2,20 @@
 #![allow(internal_features)]
 #![allow(rustc::diagnostic_outside_of_impl)]
 #![allow(rustc::untranslatable_diagnostic)]
+#![cfg_attr(bootstrap, feature(let_chains))]
 #![feature(assert_matches)]
 #![feature(box_patterns)]
-#![feature(debug_closure_helpers)]
 #![feature(file_buffered)]
 #![feature(if_let_guard)]
-#![feature(let_chains)]
 #![feature(negative_impls)]
 #![feature(rustdoc_internals)]
+#![feature(string_from_utf8_lossy_owned)]
 #![feature(trait_alias)]
 #![feature(try_blocks)]
 // HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
+// HACK(LegNeato) including this above throws a warning that may hide other issues, and
+// without it we get an error. So we include it here.
+#![feature(let_chains)]
 
 //! Welcome to the API documentation for the `rust-gpu` project, this API is
 //! unstable and mainly intended for developing on the project itself. This is
@@ -150,8 +153,9 @@ use maybe_pqp_cg_ssa::traits::{
 use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind};
 use rspirv::binary::Assemble;
 use rustc_ast::expand::allocator::AllocatorKind;
+use rustc_ast::expand::autodiff_attrs::AutoDiffItem;
 use rustc_data_structures::fx::FxIndexMap;
-use rustc_errors::{DiagCtxtHandle, ErrorGuaranteed, FatalError};
+use rustc_errors::{DiagCtxtHandle, FatalError};
 use rustc_metadata::EncodedMetadata;
 use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
 use rustc_middle::mir::mono::{MonoItem, MonoItemData};
@@ -257,15 +261,18 @@ impl CodegenBackend for SpirvCodegenBackend {
         rustc_errors::DEFAULT_LOCALE_RESOURCE
     }
 
-    fn target_features(&self, sess: &Session, _allow_unstable: bool) -> Vec<Symbol> {
+    fn target_features_cfg(&self, sess: &Session) -> (Vec<Symbol>, Vec<Symbol>) {
         let cmdline = sess.opts.cg.target_feature.split(',');
         let cfg = sess.target.options.features.split(',');
-        cfg.chain(cmdline)
-            .filter(|l| l.starts_with('+'))
-            .map(|l| &l[1..])
-            .filter(|l| !l.is_empty())
-            .map(Symbol::intern)
-            .collect()
+        (
+            cfg.chain(cmdline)
+                .filter(|l| l.starts_with('+'))
+                .map(|l| &l[1..])
+                .filter(|l| !l.is_empty())
+                .map(Symbol::intern)
+                .collect(),
+            vec![],
+        )
     }
 
     fn provide(&self, providers: &mut rustc_middle::util::Providers) {
@@ -310,12 +317,7 @@ impl CodegenBackend for SpirvCodegenBackend {
             .join(sess)
     }
 
-    fn link(
-        &self,
-        sess: &Session,
-        codegen_results: CodegenResults,
-        outputs: &OutputFilenames,
-    ) -> Result<(), ErrorGuaranteed> {
+    fn link(&self, sess: &Session, codegen_results: CodegenResults, outputs: &OutputFilenames) {
         let timer = sess.timer("link_crate");
         link::link(
             sess,
@@ -324,8 +326,6 @@ impl CodegenBackend for SpirvCodegenBackend {
             codegen_results.crate_info.local_crate_name.as_str(),
         );
         drop(timer);
-
-        sess.dcx().has_errors().map_or(Ok(()), Err)
     }
 }
 
@@ -372,7 +372,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
     unsafe fn optimize(
         _: &CodegenContext<Self>,
         _: DiagCtxtHandle<'_>,
-        _: &ModuleCodegen<Self::Module>,
+        _: &mut ModuleCodegen<Self::Module>,
         _: &ModuleConfig,
     ) -> Result<(), FatalError> {
         // TODO: Implement
@@ -389,6 +389,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
                 .to_vec(),
             name: thin_module.name().to_string(),
             kind: ModuleKind::Regular,
+            thin_lto_buffer: None,
         };
         Ok(module)
     }
@@ -408,7 +409,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
     ) -> Result<CompiledModule, FatalError> {
         let path = cgcx
             .output_filenames
-            .temp_path(OutputType::Object, Some(&module.name));
+            .temp_path_for_cgu(OutputType::Object, &module.name, None);
         // Note: endianness doesn't matter, readers deduce endianness from magic header.
         let spirv_module = spirv_tools::binary::from_binary(&module.module_llvm);
         File::create(&path)
@@ -423,6 +424,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             bytecode: None,
             assembly: None,
             llvm_ir: None,
+            links_from_incr_cache: vec![],
         })
     }
 
@@ -435,6 +437,15 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     fn serialize_module(module: ModuleCodegen<Self::Module>) -> (String, Self::ModuleBuffer) {
         (module.name, SpirvModuleBuffer(module.module_llvm))
+    }
+
+    fn autodiff(
+        _cgcx: &CodegenContext<Self>,
+        _module: &ModuleCodegen<Self::Module>,
+        _diff_fncs: Vec<AutoDiffItem>,
+        _config: &ModuleConfig,
+    ) -> Result<(), FatalError> {
+        todo!()
     }
 }
 
@@ -510,6 +521,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
                 name: cgu_name.to_string(),
                 module_llvm: spirv_module,
                 kind: ModuleKind::Regular,
+                thin_lto_buffer: None,
             },
             0,
         )
@@ -544,7 +556,7 @@ impl Drop for DumpModuleOnPanic<'_, '_, '_> {
 }
 
 /// This is the entrypoint for a hot plugged `rustc_codegen_spirv`
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn __rustc_codegen_backend() -> Box<dyn CodegenBackend> {
     // Tweak rustc's default ICE panic hook, to direct people to `rust-gpu`.
     rustc_driver::install_ice_hook("https://github.com/rust-gpu/rust-gpu/issues/new", |dcx| {
