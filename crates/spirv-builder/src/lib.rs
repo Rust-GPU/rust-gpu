@@ -78,6 +78,7 @@ mod target_specs;
 mod watch;
 
 use raw_string::{RawStr, RawString};
+use semver::Version;
 use serde::Deserialize;
 use std::borrow::Borrow;
 use std::collections::HashMap;
@@ -403,6 +404,9 @@ pub struct SpirvBuilder {
     // Overwrite the toolchain like `cargo +nightly`
     #[cfg_attr(feature = "clap", clap(skip))]
     pub toolchain_overwrite: Option<String>,
+    // Set the rustc version of the toolchain, used to adjust params to support older toolchains
+    #[cfg_attr(feature = "clap", clap(skip))]
+    pub toolchain_rustc_version: Option<Version>,
 
     /// The path of the "target specification" file.
     ///
@@ -460,6 +464,7 @@ impl Default for SpirvBuilder {
             path_to_target_spec: None,
             target_dir_path: None,
             toolchain_overwrite: None,
+            toolchain_rustc_version: None,
             shader_panic_strategy: ShaderPanicStrategy::default(),
             validator: ValidatorOptions::default(),
             optimizer: OptimizerOptions::default(),
@@ -781,6 +786,13 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         }
     }
 
+    let toolchain_rustc_version =
+        if let Some(toolchain_rustc_version) = &builder.toolchain_rustc_version {
+            toolchain_rustc_version.clone()
+        } else {
+            query_rustc_version(builder.toolchain_overwrite.as_deref())?
+        };
+
     // Okay, this is a little bonkers: in a normal world, we'd have the user clone
     // rustc_codegen_spirv and pass in the path to it, and then we'd invoke cargo to build it, grab
     // the resulting .so, and pass it into -Z codegen-backend. But that's really gross: the user
@@ -958,13 +970,21 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
 
     // FIXME(eddyb) consider moving `target-specs` into `rustc_codegen_spirv_types`.
     // FIXME(eddyb) consider the `RUST_TARGET_PATH` env var alternative.
-    cargo
-        .arg("--target")
-        .arg(builder.path_to_target_spec.clone().unwrap_or_else(|| {
-            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("target-specs")
-                .join(format!("{}.json", target))
-        }));
+
+    // NOTE(firestar99) rustc 1.76 has been tested to correctly parse modern
+    // target_spec jsons, some later version requires them, some earlier
+    // version fails with them (notably our 0.9.0 release)
+    if toolchain_rustc_version >= Version::new(1, 76, 0) {
+        cargo
+            .arg("--target")
+            .arg(builder.path_to_target_spec.clone().unwrap_or_else(|| {
+                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                    .join("target-specs")
+                    .join(format!("{}.json", target))
+            }));
+    } else {
+        cargo.arg("--target").arg(target);
+    }
 
     if !builder.shader_crate_features.default_features {
         cargo.arg("--no-default-features");
@@ -1107,4 +1127,21 @@ fn leaf_deps(artifact: &Path, mut handle: impl FnMut(&RawStr)) -> std::io::Resul
     }
     recurse(&deps_map, artifact.to_str().unwrap().into(), &mut handle);
     Ok(())
+}
+
+pub fn query_rustc_version(toolchain: Option<&str>) -> std::io::Result<Version> {
+    let mut cmd = Command::new("rustc");
+    if let Some(toolchain) = toolchain {
+        cmd.arg(format!("+{}", toolchain));
+    }
+    cmd.arg("--version");
+
+    let parse = |stdout| {
+        let output = String::from_utf8(stdout).ok()?;
+        let output = output.strip_prefix("rustc ")?;
+        let version = &output[..output.find("-")?];
+        Some(Version::parse(version).expect("invalid version"))
+    };
+
+    Ok(parse(cmd.output()?.stdout).expect("rustc --version parsing failed"))
 }
