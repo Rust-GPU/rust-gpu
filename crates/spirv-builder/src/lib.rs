@@ -398,6 +398,9 @@ pub struct SpirvBuilder {
     // Location of a known `rustc_codegen_spirv` dylib, only required without feature `rustc_codegen_spirv`.
     #[cfg_attr(feature = "clap", clap(skip))]
     pub rustc_codegen_spirv_location: Option<PathBuf>,
+    // Overwrite the toolchain like `cargo +nightly`
+    #[cfg_attr(feature = "clap", clap(skip))]
+    pub toolchain_overwrite: Option<String>,
 
     /// The path of the "target specification" file.
     ///
@@ -454,7 +457,7 @@ impl Default for SpirvBuilder {
             rustc_codegen_spirv_location: None,
             path_to_target_spec: None,
             target_dir_path: None,
-
+            toolchain_overwrite: None,
             shader_panic_strategy: ShaderPanicStrategy::default(),
             validator: ValidatorOptions::default(),
             optimizer: OptimizerOptions::default(),
@@ -934,6 +937,9 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     let profile = if builder.release { "release" } else { "dev" };
 
     let mut cargo = Command::new("cargo");
+    if let Some(toolchain) = &builder.toolchain_overwrite {
+        cargo.arg(format!("+{}", toolchain));
+    }
     cargo.args([
         "build",
         "--lib",
