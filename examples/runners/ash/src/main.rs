@@ -104,6 +104,17 @@ pub struct Options {
 }
 
 pub fn main() {
+    // Hack: spirv_builder builds into a custom directory if running under cargo, to not
+    // deadlock, and the default target directory if not. However, packages like `proc-macro2`
+    // have different configurations when being built here vs. when building
+    // rustc_codegen_spirv normally, so we *want* to build into a separate target directory, to
+    // not have to rebuild half the crate graph every time we run. So, pretend we're running
+    // under cargo by setting these environment variables.
+    unsafe {
+        std::env::set_var("OUT_DIR", env!("OUT_DIR"));
+        std::env::set_var("PROFILE", env!("PROFILE"));
+    }
+
     let options = Options::parse();
     let shaders = compile_shaders();
 
@@ -239,15 +250,6 @@ pub fn main() {
 }
 
 pub fn compile_shaders() -> Vec<SpvFile> {
-    // Hack: spirv_builder builds into a custom directory if running under cargo, to not
-    // deadlock, and the default target directory if not. However, packages like `proc-macro2`
-    // have different configurations when being built here vs. when building
-    // rustc_codegen_spirv normally, so we *want* to build into a separate target directory, to
-    // not have to rebuild half the crate graph every time we run. So, pretend we're running
-    // under cargo by setting these environment variables.
-    std::env::set_var("OUT_DIR", env!("OUT_DIR"));
-    std::env::set_var("PROFILE", env!("PROFILE"));
-
     SpirvBuilder::new(
         concat!(env!("CARGO_MANIFEST_DIR"), "/../../shaders/sky-shader"),
         "spirv-unknown-vulkan1.1",
@@ -1329,7 +1331,9 @@ pub struct FragmentShaderEntryPoint {
 }
 
 unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
-    ::std::slice::from_raw_parts((p as *const T).cast::<u8>(), ::std::mem::size_of::<T>())
+    unsafe {
+        ::std::slice::from_raw_parts((p as *const T).cast::<u8>(), ::std::mem::size_of::<T>())
+    }
 }
 
 unsafe extern "system" fn vulkan_debug_callback(
@@ -1338,19 +1342,19 @@ unsafe extern "system" fn vulkan_debug_callback(
     p_callback_data: *const vk::DebugUtilsMessengerCallbackDataEXT<'_>,
     _user_data: *mut std::os::raw::c_void,
 ) -> vk::Bool32 {
-    let callback_data = *p_callback_data;
+    let callback_data = unsafe { *p_callback_data };
     let message_id_number: i32 = callback_data.message_id_number;
 
     let message_id_name = if callback_data.p_message_id_name.is_null() {
         Cow::from("")
     } else {
-        CStr::from_ptr(callback_data.p_message_id_name).to_string_lossy()
+        unsafe { CStr::from_ptr(callback_data.p_message_id_name).to_string_lossy() }
     };
 
     let message = if callback_data.p_message.is_null() {
         Cow::from("")
     } else {
-        CStr::from_ptr(callback_data.p_message).to_string_lossy()
+        unsafe { CStr::from_ptr(callback_data.p_message).to_string_lossy() }
     };
 
     println!(

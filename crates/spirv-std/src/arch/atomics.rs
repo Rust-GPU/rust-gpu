@@ -14,21 +14,23 @@ use crate::{
 #[doc(alias = "OpAtomicLoad")]
 #[inline]
 pub unsafe fn atomic_load<N: Number, const SCOPE: u32, const SEMANTICS: u32>(ptr: &N) -> N {
-    let mut result = N::default();
+    unsafe {
+        let mut result = N::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%result = OpAtomicLoad _ {ptr} %scope %semantics",
-        "OpStore {result} %result",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        result = in(reg) &mut result
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%result = OpAtomicLoad _ {ptr} %scope %semantics",
+            "OpStore {result} %result",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            result = in(reg) &mut result
+        }
+
+        result
     }
-
-    result
 }
 
 /// Atomically store through `ptr` using the given `SEMANTICS`. All subparts of
@@ -41,16 +43,18 @@ pub unsafe fn atomic_store<N: Number, const SCOPE: u32, const SEMANTICS: u32>(
     ptr: &mut N,
     value: N,
 ) {
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "OpAtomicStore {ptr} %scope %semantics %value",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        value = in(reg) &value
+    unsafe {
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "OpAtomicStore {ptr} %scope %semantics %value",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            value = in(reg) &value
+        }
     }
 }
 
@@ -69,23 +73,25 @@ pub unsafe fn atomic_exchange<N: Number, const SCOPE: u32, const SEMANTICS: u32>
     ptr: &mut N,
     value: N,
 ) -> N {
-    let mut old = N::default();
+    unsafe {
+        let mut old = N::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicExchange _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicExchange _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -111,27 +117,29 @@ pub unsafe fn atomic_compare_exchange<
     value: I,
     comparator: I,
 ) -> I {
-    let mut old = I::default();
+    unsafe {
+        let mut old = I::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%equal = OpConstant %u32 {equal}",
-        "%unequal = OpConstant %u32 {unequal}",
-        "%value = OpLoad _ {value}",
-        "%comparator = OpLoad _ {comparator}",
-        "%old = OpAtomicCompareExchange _ {ptr} %scope %equal %unequal %value %comparator",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        equal = const EQUAL,
-        unequal = const UNEQUAL,
-        ptr = in(reg) ptr,
-        value = in(reg) &value,
-        comparator = in(reg) &comparator,
-        old = in(reg) &mut old,
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%equal = OpConstant %u32 {equal}",
+            "%unequal = OpConstant %u32 {unequal}",
+            "%value = OpLoad _ {value}",
+            "%comparator = OpLoad _ {comparator}",
+            "%old = OpAtomicCompareExchange _ {ptr} %scope %equal %unequal %value %comparator",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            equal = const EQUAL,
+            unequal = const UNEQUAL,
+            ptr = in(reg) ptr,
+            value = in(reg) &value,
+            comparator = in(reg) &comparator,
+            old = in(reg) &mut old,
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -148,21 +156,23 @@ pub unsafe fn atomic_compare_exchange<
 pub unsafe fn atomic_i_increment<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
     ptr: &mut I,
 ) -> I {
-    let mut old = I::default();
+    unsafe {
+        let mut old = I::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%old = OpAtomicIIncrement _ {ptr} %scope %semantics",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%old = OpAtomicIIncrement _ {ptr} %scope %semantics",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -179,21 +189,23 @@ pub unsafe fn atomic_i_increment<I: Integer, const SCOPE: u32, const SEMANTICS: 
 pub unsafe fn atomic_i_decrement<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
     ptr: &mut I,
 ) -> I {
-    let mut old = I::default();
+    unsafe {
+        let mut old = I::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%old = OpAtomicIDecrement _ {ptr} %scope %semantics",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%old = OpAtomicIDecrement _ {ptr} %scope %semantics",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -211,23 +223,25 @@ pub unsafe fn atomic_i_add<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
     ptr: &mut I,
     value: I,
 ) -> I {
-    let mut old = I::default();
+    unsafe {
+        let mut old = I::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicIAdd _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicIAdd _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -245,23 +259,25 @@ pub unsafe fn atomic_i_sub<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
     ptr: &mut I,
     value: I,
 ) -> I {
-    let mut old = I::default();
+    unsafe {
+        let mut old = I::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicISub _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicISub _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -280,23 +296,25 @@ pub unsafe fn atomic_s_min<S: SignedInteger, const SCOPE: u32, const SEMANTICS: 
     ptr: &mut S,
     value: S,
 ) -> S {
-    let mut old = S::default();
+    unsafe {
+        let mut old = S::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicSMin _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicSMin _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -315,23 +333,25 @@ pub unsafe fn atomic_u_min<U: UnsignedInteger, const SCOPE: u32, const SEMANTICS
     ptr: &mut U,
     value: U,
 ) -> U {
-    let mut old = U::default();
+    unsafe {
+        let mut old = U::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicUMin _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicUMin _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -350,23 +370,25 @@ pub unsafe fn atomic_s_max<S: SignedInteger, const SCOPE: u32, const SEMANTICS: 
     ptr: &mut S,
     value: S,
 ) -> S {
-    let mut old = S::default();
+    unsafe {
+        let mut old = S::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicSMax _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicSMax _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -385,23 +407,25 @@ pub unsafe fn atomic_u_max<U: UnsignedInteger, const SCOPE: u32, const SEMANTICS
     ptr: &mut U,
     value: U,
 ) -> U {
-    let mut old = U::default();
+    unsafe {
+        let mut old = U::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicUMax _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicUMax _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -419,23 +443,25 @@ pub unsafe fn atomic_and<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
     ptr: &mut I,
     value: I,
 ) -> I {
-    let mut old = I::default();
+    unsafe {
+        let mut old = I::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicAnd _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicAnd _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -453,23 +479,25 @@ pub unsafe fn atomic_or<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
     ptr: &mut I,
     value: I,
 ) -> I {
-    let mut old = I::default();
+    unsafe {
+        let mut old = I::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicOr _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicOr _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -487,23 +515,25 @@ pub unsafe fn atomic_xor<I: Integer, const SCOPE: u32, const SEMANTICS: u32>(
     ptr: &mut I,
     value: I,
 ) -> I {
-    let mut old = I::default();
+    unsafe {
+        let mut old = I::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicXor _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicXor _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -522,23 +552,25 @@ pub unsafe fn atomic_f_min<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
     ptr: &mut F,
     value: F,
 ) -> F {
-    let mut old = F::default();
+    unsafe {
+        let mut old = F::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicFMinEXT _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicFMinEXT _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -557,23 +589,25 @@ pub unsafe fn atomic_f_max<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
     ptr: &mut F,
     value: F,
 ) -> F {
-    let mut old = F::default();
+    unsafe {
+        let mut old = F::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicFMaxEXT _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicFMaxEXT _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }
 
 /// Perform the following steps atomically with respect to any other atomic
@@ -591,21 +625,23 @@ pub unsafe fn atomic_f_add<F: Float, const SCOPE: u32, const SEMANTICS: u32>(
     ptr: &mut F,
     value: F,
 ) -> F {
-    let mut old = F::default();
+    unsafe {
+        let mut old = F::default();
 
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%scope = OpConstant %u32 {scope}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "%value = OpLoad _ {value}",
-        "%old = OpAtomicFAddEXT _ {ptr} %scope %semantics %value",
-        "OpStore {old} %old",
-        scope = const SCOPE,
-        semantics = const SEMANTICS,
-        ptr = in(reg) ptr,
-        old = in(reg) &mut old,
-        value = in(reg) &value
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%scope = OpConstant %u32 {scope}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "%value = OpLoad _ {value}",
+            "%old = OpAtomicFAddEXT _ {ptr} %scope %semantics %value",
+            "OpStore {old} %old",
+            scope = const SCOPE,
+            semantics = const SEMANTICS,
+            ptr = in(reg) ptr,
+            old = in(reg) &mut old,
+            value = in(reg) &value
+        }
+
+        old
     }
-
-    old
 }

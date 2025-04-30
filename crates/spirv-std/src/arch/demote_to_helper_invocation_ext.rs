@@ -20,7 +20,9 @@ use core::arch::asm;
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpDemoteToHelperInvocationEXT", alias = "discard")]
 pub unsafe fn demote_to_helper_invocation() {
-    asm!("OpDemoteToHelperInvocationEXT");
+    unsafe {
+        asm!("OpDemoteToHelperInvocationEXT");
+    }
 }
 
 /// Returns `true` if the invocation is currently a helper invocation, otherwise

@@ -38,15 +38,17 @@ pub unsafe fn control_barrier<
     const MEMORY: u32,    // Scope
     const SEMANTICS: u32, // Semantics
 >() {
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%execution = OpConstant %u32 {execution}",
-        "%memory = OpConstant %u32 {memory}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "OpControlBarrier %execution %memory %semantics",
-        execution = const EXECUTION,
-        memory = const MEMORY,
-        semantics = const SEMANTICS,
+    unsafe {
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%execution = OpConstant %u32 {execution}",
+            "%memory = OpConstant %u32 {memory}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "OpControlBarrier %execution %memory %semantics",
+            execution = const EXECUTION,
+            memory = const MEMORY,
+            semantics = const SEMANTICS,
+        }
     }
 }
 
@@ -72,13 +74,15 @@ pub unsafe fn memory_barrier<
     const MEMORY: u32,    // Scope
     const SEMANTICS: u32, // Semantics
 >() {
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%memory = OpConstant %u32 {memory}",
-        "%semantics = OpConstant %u32 {semantics}",
-        "OpMemoryBarrier %memory %semantics",
-        memory = const MEMORY,
-        semantics = const SEMANTICS,
+    unsafe {
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%memory = OpConstant %u32 {memory}",
+            "%semantics = OpConstant %u32 {semantics}",
+            "OpMemoryBarrier %memory %semantics",
+            memory = const MEMORY,
+            semantics = const SEMANTICS,
+        }
     }
 }
 
@@ -90,13 +94,15 @@ pub unsafe fn memory_barrier<
 #[spirv_std_macros::gpu_only]
 #[inline]
 pub unsafe fn workgroup_memory_barrier() {
-    memory_barrier::<
-        { crate::memory::Scope::Workgroup as u32 },
-        {
-            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-        },
-    >();
+    unsafe {
+        memory_barrier::<
+            { crate::memory::Scope::Workgroup as u32 },
+            {
+                crate::memory::Semantics::WORKGROUP_MEMORY.bits()
+                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+            },
+        >();
+    }
 }
 
 /// Blocks execution of all threads in a group until all group shared accesses have been completed and all threads in the group have reached this call.
@@ -107,14 +113,16 @@ pub unsafe fn workgroup_memory_barrier() {
 #[spirv_std_macros::gpu_only]
 #[inline]
 pub unsafe fn workgroup_memory_barrier_with_group_sync() {
-    control_barrier::<
-        { crate::memory::Scope::Workgroup as u32 },
-        { crate::memory::Scope::Workgroup as u32 },
-        {
-            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-        },
-    >();
+    unsafe {
+        control_barrier::<
+            { crate::memory::Scope::Workgroup as u32 },
+            { crate::memory::Scope::Workgroup as u32 },
+            {
+                crate::memory::Semantics::WORKGROUP_MEMORY.bits()
+                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+            },
+        >();
+    }
 }
 
 /// Blocks execution of all threads in a group until all device memory accesses have been completed.
@@ -125,14 +133,16 @@ pub unsafe fn workgroup_memory_barrier_with_group_sync() {
 #[spirv_std_macros::gpu_only]
 #[inline]
 pub unsafe fn device_memory_barrier() {
-    memory_barrier::<
-        { crate::memory::Scope::Device as u32 },
-        {
-            crate::memory::Semantics::IMAGE_MEMORY.bits()
-                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-        },
-    >();
+    unsafe {
+        memory_barrier::<
+            { crate::memory::Scope::Device as u32 },
+            {
+                crate::memory::Semantics::IMAGE_MEMORY.bits()
+                    | crate::memory::Semantics::UNIFORM_MEMORY.bits()
+                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+            },
+        >();
+    }
 }
 
 /// Blocks execution of all threads in a group until all device memory accesses have been completed and all threads in the group have reached this call.
@@ -143,15 +153,17 @@ pub unsafe fn device_memory_barrier() {
 #[spirv_std_macros::gpu_only]
 #[inline]
 pub unsafe fn device_memory_barrier_with_group_sync() {
-    control_barrier::<
-        { crate::memory::Scope::Workgroup as u32 },
-        { crate::memory::Scope::Device as u32 },
-        {
-            crate::memory::Semantics::IMAGE_MEMORY.bits()
-                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-        },
-    >();
+    unsafe {
+        control_barrier::<
+            { crate::memory::Scope::Workgroup as u32 },
+            { crate::memory::Scope::Device as u32 },
+            {
+                crate::memory::Semantics::IMAGE_MEMORY.bits()
+                    | crate::memory::Semantics::UNIFORM_MEMORY.bits()
+                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+            },
+        >();
+    }
 }
 
 /// Blocks execution of all threads in a group until all memory accesses have been completed.
@@ -162,15 +174,17 @@ pub unsafe fn device_memory_barrier_with_group_sync() {
 #[spirv_std_macros::gpu_only]
 #[inline]
 pub unsafe fn all_memory_barrier() {
-    memory_barrier::<
-        { crate::memory::Scope::Device as u32 },
-        {
-            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                | crate::memory::Semantics::IMAGE_MEMORY.bits()
-                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-        },
-    >();
+    unsafe {
+        memory_barrier::<
+            { crate::memory::Scope::Device as u32 },
+            {
+                crate::memory::Semantics::WORKGROUP_MEMORY.bits()
+                    | crate::memory::Semantics::IMAGE_MEMORY.bits()
+                    | crate::memory::Semantics::UNIFORM_MEMORY.bits()
+                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+            },
+        >();
+    }
 }
 
 /// Blocks execution of all threads in a group until all memory accesses have been completed and all threads in the group have reached this call.
@@ -181,14 +195,16 @@ pub unsafe fn all_memory_barrier() {
 #[spirv_std_macros::gpu_only]
 #[inline]
 pub unsafe fn all_memory_barrier_with_group_sync() {
-    control_barrier::<
-        { crate::memory::Scope::Workgroup as u32 },
-        { crate::memory::Scope::Device as u32 },
-        {
-            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                | crate::memory::Semantics::IMAGE_MEMORY.bits()
-                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-        },
-    >();
+    unsafe {
+        control_barrier::<
+            { crate::memory::Scope::Workgroup as u32 },
+            { crate::memory::Scope::Device as u32 },
+            {
+                crate::memory::Semantics::WORKGROUP_MEMORY.bits()
+                    | crate::memory::Semantics::IMAGE_MEMORY.bits()
+                    | crate::memory::Semantics::UNIFORM_MEMORY.bits()
+                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+            },
+        >();
+    }
 }
