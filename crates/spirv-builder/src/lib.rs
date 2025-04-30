@@ -73,6 +73,7 @@
 #![doc = include_str!("../README.md")]
 
 mod depfile;
+mod target_specs;
 #[cfg(feature = "watch")]
 mod watch;
 
@@ -89,6 +90,7 @@ use thiserror::Error;
 
 pub use rustc_codegen_spirv_types::Capability;
 pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
+pub use target_specs::TARGET_SPECS;
 
 #[derive(Debug, Error)]
 #[non_exhaustive]
