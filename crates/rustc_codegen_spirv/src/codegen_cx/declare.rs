@@ -12,7 +12,6 @@ use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
 use rustc_abi::Align;
 use rustc_attr_parsing::InlineAttr;
 use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
-use rustc_hir::def::DefKind;
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
 use rustc_middle::mir::mono::{Linkage, MonoItem, Visibility};
@@ -127,16 +126,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
         let declared = fn_id.with_type(function_type);
 
-        let attrs = AggregatedSpirvAttributes::parse(
-            self,
-            match self.tcx.def_kind(def_id) {
-                // This was made to ICE cross-crate at some point, but then got
-                // reverted in https://github.com/rust-lang/rust/pull/111381.
-                // FIXME(eddyb) remove this workaround once we rustup past that.
-                DefKind::Closure => &[],
-                _ => self.tcx.get_attrs_unchecked(def_id),
-            },
-        );
+        let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.get_attrs_unchecked(def_id));
         if let Some(entry) = attrs.entry.map(|attr| attr.value) {
             let entry_name = entry
                 .name
