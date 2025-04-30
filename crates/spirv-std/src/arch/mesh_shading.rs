@@ -21,10 +21,12 @@ use core::arch::asm;
 #[doc(alias = "OpSetMeshOutputsEXT")]
 #[inline]
 pub unsafe fn set_mesh_outputs_ext(vertex_count: u32, primitive_count: u32) {
-    asm! {
-        "OpSetMeshOutputsEXT {vertex_count} {primitive_count}",
-        vertex_count = in(reg) vertex_count,
-        primitive_count = in(reg) primitive_count,
+    unsafe {
+        asm! {
+            "OpSetMeshOutputsEXT {vertex_count} {primitive_count}",
+            vertex_count = in(reg) vertex_count,
+            primitive_count = in(reg) primitive_count,
+        }
     }
 }
 
@@ -56,12 +58,14 @@ pub unsafe fn set_mesh_outputs_ext(vertex_count: u32, primitive_count: u32) {
 #[doc(alias = "OpEmitMeshTasksEXT")]
 #[inline]
 pub unsafe fn emit_mesh_tasks_ext(group_count_x: u32, group_count_y: u32, group_count_z: u32) -> ! {
-    asm! {
-        "OpEmitMeshTasksEXT {group_count_x} {group_count_y} {group_count_z}",
-        group_count_x = in(reg) group_count_x,
-        group_count_y = in(reg) group_count_y,
-        group_count_z = in(reg) group_count_z,
-        options(noreturn),
+    unsafe {
+        asm! {
+            "OpEmitMeshTasksEXT {group_count_x} {group_count_y} {group_count_z}",
+            group_count_x = in(reg) group_count_x,
+            group_count_y = in(reg) group_count_y,
+            group_count_z = in(reg) group_count_z,
+            options(noreturn),
+        }
     }
 }
 
@@ -98,12 +102,14 @@ pub unsafe fn emit_mesh_tasks_ext_payload<T>(
     group_count_z: u32,
     payload: &mut T,
 ) -> ! {
-    asm! {
-        "OpEmitMeshTasksEXT {group_count_x} {group_count_y} {group_count_z} {payload}",
-        group_count_x = in(reg) group_count_x,
-        group_count_y = in(reg) group_count_y,
-        group_count_z = in(reg) group_count_z,
-        payload = in(reg) payload,
-        options(noreturn),
+    unsafe {
+        asm! {
+            "OpEmitMeshTasksEXT {group_count_x} {group_count_y} {group_count_z} {payload}",
+            group_count_x = in(reg) group_count_x,
+            group_count_y = in(reg) group_count_y,
+            group_count_z = in(reg) group_count_z,
+            payload = in(reg) payload,
+            options(noreturn),
+        }
     }
 }
