@@ -127,14 +127,7 @@ fn maybe_watch(
     {
         use spirv_builder::{CompileResult, MetadataPrintout, SpirvBuilder};
         use std::path::PathBuf;
-        // Hack: spirv_builder builds into a custom directory if running under cargo, to not
-        // deadlock, and the default target directory if not. However, packages like `proc-macro2`
-        // have different configurations when being built here vs. when building
-        // rustc_codegen_spirv normally, so we *want* to build into a separate target directory, to
-        // not have to rebuild half the crate graph every time we run. So, pretend we're running
-        // under cargo by setting these environment variables.
-        std::env::set_var("OUT_DIR", env!("OUT_DIR"));
-        std::env::set_var("PROFILE", env!("PROFILE"));
+
         let crate_name = match options.shader {
             RustGPUShader::Simplest => "simplest-shader",
             RustGPUShader::Sky => "sky-shader",
@@ -234,10 +227,21 @@ pub struct Options {
     force_spirv_passthru: bool,
 }
 
-#[cfg_attr(target_os = "android", export_name = "android_main")]
+#[cfg_attr(target_os = "android", unsafe(export_name = "android_main"))]
 pub fn main(
     #[cfg(target_os = "android")] android_app: winit::platform::android::activity::AndroidApp,
 ) {
+    // Hack: spirv_builder builds into a custom directory if running under cargo, to not
+    // deadlock, and the default target directory if not. However, packages like `proc-macro2`
+    // have different configurations when being built here vs. when building
+    // rustc_codegen_spirv normally, so we *want* to build into a separate target directory, to
+    // not have to rebuild half the crate graph every time we run. So, pretend we're running
+    // under cargo by setting these environment variables.
+    unsafe {
+        std::env::set_var("OUT_DIR", env!("OUT_DIR"));
+        std::env::set_var("PROFILE", env!("PROFILE"));
+    }
+
     let options = Options::parse();
 
     #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]
