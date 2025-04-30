@@ -18,9 +18,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2025-04-27"
+channel = "nightly-2025-04-28"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = 10fa3c449f6b1613b352a6cbf78d3d91fd9a1d81"#;
+# commit_hash = cb31a009e3e735ab08613cec2d8a5a754e65596f"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
