@@ -1,4 +1,4 @@
-use spirv_builder::SpirvBuilder;
+use spirv_builder::{MetadataPrintout, SpirvBuilder};
 use std::env;
 use std::error::Error;
 use std::fs;
@@ -7,7 +7,9 @@ use std::path::Path;
 fn build_shader(path_to_crate: &str, codegen_names: bool) -> Result<(), Box<dyn Error>> {
     let builder_dir = &Path::new(env!("CARGO_MANIFEST_DIR"));
     let path_to_crate = builder_dir.join(path_to_crate);
-    let result = SpirvBuilder::new(path_to_crate, "spirv-unknown-vulkan1.1").build()?;
+    let result = SpirvBuilder::new(path_to_crate, "spirv-unknown-vulkan1.1")
+        .print_metadata(MetadataPrintout::Full)
+        .build()?;
     if codegen_names {
         let out_dir = env::var_os("OUT_DIR").unwrap();
         let dest_path = Path::new(&out_dir).join("entry_points.rs");
