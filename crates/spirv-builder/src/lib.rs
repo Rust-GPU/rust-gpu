@@ -130,13 +130,13 @@ const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
 pub enum MetadataPrintout {
     /// Print no cargo metadata.
+    #[default]
     None,
     /// Print only dependency information (eg for multiple modules).
     DependencyOnly,
     /// Print all cargo metadata.
     ///
     /// Includes dependency information and spirv environment variable.
-    #[default]
     Full,
 }
 
