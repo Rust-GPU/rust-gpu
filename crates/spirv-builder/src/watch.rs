@@ -8,11 +8,15 @@ use std::{collections::HashSet, sync::mpsc::sync_channel};
 impl SpirvBuilder {
     /// Watches the module for changes using [`notify`](https://crates.io/crates/notify),
     /// and rebuild it upon changes. Calls `on_compilation_finishes` after each
-    /// successful compilation.
-    pub fn watch(
+    /// successful compilation. The second `Option<AcceptFirstCompile<T>>`
+    /// param allows you to return some `T` on the first compile, which is
+    /// then returned by this function (wrapped in Option).
+    pub fn watch<T>(
         &self,
-        mut on_compilation_finishes: impl FnMut(CompileResult) + Send + 'static,
-    ) -> Result<(), SpirvBuilderError> {
+        mut on_compilation_finishes: impl FnMut(CompileResult, Option<AcceptFirstCompile<'_, T>>)
+        + Send
+        + 'static,
+    ) -> Result<Option<T>, SpirvBuilderError> {
         let path_to_crate = self
             .path_to_crate
             .as_ref()
@@ -42,7 +46,8 @@ impl SpirvBuilder {
             }
         };
         let metadata = self.parse_metadata_file(&metadata_file)?;
-        on_compilation_finishes(metadata);
+        let mut out = None;
+        on_compilation_finishes(metadata, Some(AcceptFirstCompile(&mut out)));
 
         let builder = self.clone();
         let thread = std::thread::spawn(move || {
@@ -57,12 +62,24 @@ impl SpirvBuilder {
                         .parse_metadata_file(&file)
                         .expect("Metadata file is correct");
                     watcher.watch_leaf_deps(&metadata_file);
-                    on_compilation_finishes(metadata);
+                    on_compilation_finishes(metadata, None);
                 }
             }
         });
         drop(thread);
-        Ok(())
+        Ok(out)
+    }
+}
+
+pub struct AcceptFirstCompile<'a, T>(&'a mut Option<T>);
+
+impl<'a, T> AcceptFirstCompile<'a, T> {
+    pub fn new(write: &'a mut Option<T>) -> Self {
+        Self(write)
+    }
+
+    pub fn submit(self, t: T) {
+        *self.0 = Some(t);
     }
 }
 
