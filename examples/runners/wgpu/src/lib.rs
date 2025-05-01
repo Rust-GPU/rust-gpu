@@ -164,13 +164,7 @@ fn maybe_watch(
             // HACK(eddyb) needed because of `debugPrintf` instrumentation limitations
             // (see https://github.com/KhronosGroup/SPIRV-Tools/issues/4892).
             .multimodule(has_debug_printf);
-        let initial_result = if let Some(mut f) = on_watch {
-            builder
-                .watch(move |compile_result| f(handle_compile_result(compile_result)))
-                .expect("Configuration is correct for watching")
-        } else {
-            builder.build().unwrap()
-        };
+
         fn handle_compile_result(compile_result: CompileResult) -> CompiledShaderModules {
             let load_spv_module = |path| {
                 let data = std::fs::read(path).unwrap();
@@ -194,7 +188,22 @@ fn maybe_watch(
                 },
             }
         }
-        handle_compile_result(initial_result)
+
+        if let Some(mut f) = on_watch {
+            builder
+                .watch(move |compile_result, accept| {
+                    let modules = handle_compile_result(compile_result);
+                    if let Some(accept) = accept {
+                        accept.submit(modules);
+                    } else {
+                        f(modules);
+                    }
+                })
+                .expect("Configuration is correct for watching")
+                .unwrap()
+        } else {
+            handle_compile_result(builder.build().unwrap())
+        }
     }
     #[cfg(any(target_os = "android", target_arch = "wasm32"))]
     {
