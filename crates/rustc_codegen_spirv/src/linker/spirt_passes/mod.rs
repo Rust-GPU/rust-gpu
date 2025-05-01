@@ -407,7 +407,7 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                                     &cx[func_at_inst.def().form].kind
                                 {
                                     // HACK(eddyb) small selection relevant for now,
-                                    // but should be extended using e.g. aDenseBitSet.
+                                    // but should be extended using e.g. a bitset.
                                     if [wk.OpNop, wk.OpCompositeInsert].contains(&spv_inst.opcode) {
                                         continue;
                                     }
