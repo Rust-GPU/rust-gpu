@@ -11,7 +11,7 @@ use std::process::{Command, ExitCode};
 use std::{env, fs, mem};
 
 /// Current `rust-toolchain.toml` file
-/// WARNING!!! cargo-gpu is new relying on this being a string literal! It will
+/// WARNING!!! cargo-gpu is now relying on this being a string literal! It will
 /// scan `build.rs` for any line starting with `channel = "..."` to figure out
 /// which toolchain version to use! This also allows backwards compat.
 /// Unfortunately, directly including the actual workspace `rust-toolchain.toml` doesn't work together with
