@@ -150,6 +150,7 @@ use maybe_pqp_cg_ssa::traits::{
 use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind};
 use rspirv::binary::Assemble;
 use rustc_ast::expand::allocator::AllocatorKind;
+use rustc_ast::expand::autodiff_attrs::AutoDiffItem;
 use rustc_data_structures::fx::FxIndexMap;
 use rustc_errors::{DiagCtxtHandle, FatalError};
 use rustc_metadata::EncodedMetadata;
@@ -389,6 +390,16 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     fn serialize_module(module: ModuleCodegen<Self::Module>) -> (String, Self::ModuleBuffer) {
         (module.name, SpirvModuleBuffer(module.module_llvm))
+    }
+
+    fn autodiff(
+        _cgcx: &CodegenContext<Self>,
+        _tcx: TyCtxt<'_>,
+        _module: &ModuleCodegen<Self::Module>,
+        _diff_fncs: Vec<AutoDiffItem>,
+        _config: &ModuleConfig,
+    ) -> Result<(), FatalError> {
+        todo!()
     }
 }
 
