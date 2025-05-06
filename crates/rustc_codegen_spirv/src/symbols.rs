@@ -1,8 +1,9 @@
 use crate::attr::{Entry, ExecutionModeExtra, IntrinsicType, SpecConstant, SpirvAttribute};
 use crate::builder::libm_intrinsics;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
-use rustc_ast::ast::{AttrKind, Attribute, LitIntType, LitKind, MetaItemInner, MetaItemLit};
+use rustc_ast::ast::{LitIntType, LitKind, MetaItemInner, MetaItemLit};
 use rustc_data_structures::fx::FxHashMap;
+use rustc_hir::{AttrKind, Attribute};
 use rustc_span::Span;
 use rustc_span::symbol::{Ident, Symbol};
 use std::rc::Rc;
@@ -442,12 +443,12 @@ pub(crate) fn parse_attrs_for_checking<'a>(
 ) -> impl Iterator<Item = Result<(Span, SpirvAttribute), ParseAttrError>> + 'a {
     attrs.iter().flat_map(move |attr| {
         let (whole_attr_error, args) = match attr.kind {
-            AttrKind::Normal(ref normal) => {
+            AttrKind::Normal(ref item) => {
                 // #[...]
-                let s = &normal.item.path.segments;
-                if s.len() > 1 && s[0].ident.name == sym.rust_gpu {
+                let s = &item.path.segments;
+                if s.len() > 1 && s[0].name == sym.rust_gpu {
                     // #[rust_gpu ...]
-                    if s.len() != 2 || s[1].ident.name != sym.spirv {
+                    if s.len() != 2 || s[1].name != sym.spirv {
                         // #[rust_gpu::...] but not #[rust_gpu::spirv]
                         (
                             Some(Err((
