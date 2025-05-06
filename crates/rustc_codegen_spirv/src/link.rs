@@ -434,7 +434,7 @@ fn add_upstream_rust_crates(
         .expect("failed to find crate type in dependency format list");
     for &cnum in &codegen_results.crate_info.used_crates {
         let src = &codegen_results.crate_info.used_crate_source[&cnum];
-        match data[cnum.as_usize() - 1] {
+        match data[cnum] {
             Linkage::NotLinked | Linkage::IncludedFromDylib => {}
             Linkage::Static => rlibs.push(src.rlib.as_ref().unwrap().0.clone()),
             //Linkage::Dynamic => rlibs.push(src.dylib.as_ref().unwrap().0.clone()),
@@ -465,7 +465,7 @@ fn add_upstream_native_libraries(
                 NativeLibKind::Static {
                     bundle: Some(false),
                     ..
-                } if data[cnum.as_usize() - 1] != Linkage::Static => {}
+                } if data[cnum] != Linkage::Static => {}
 
                 NativeLibKind::Static {
                     bundle: None | Some(true),
