@@ -151,7 +151,7 @@ use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind
 use rspirv::binary::Assemble;
 use rustc_ast::expand::allocator::AllocatorKind;
 use rustc_data_structures::fx::FxIndexMap;
-use rustc_errors::{DiagCtxtHandle, ErrorGuaranteed, FatalError};
+use rustc_errors::{DiagCtxtHandle, FatalError};
 use rustc_metadata::EncodedMetadata;
 use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
 use rustc_middle::mir::mono::{MonoItem, MonoItemData};
@@ -271,12 +271,7 @@ impl CodegenBackend for SpirvCodegenBackend {
             .join(sess)
     }
 
-    fn link(
-        &self,
-        sess: &Session,
-        codegen_results: CodegenResults,
-        outputs: &OutputFilenames,
-    ) -> Result<(), ErrorGuaranteed> {
+    fn link(&self, sess: &Session, codegen_results: CodegenResults, outputs: &OutputFilenames) {
         let timer = sess.timer("link_crate");
         link::link(
             sess,
@@ -285,8 +280,6 @@ impl CodegenBackend for SpirvCodegenBackend {
             codegen_results.crate_info.local_crate_name.as_str(),
         );
         drop(timer);
-
-        sess.dcx().has_errors().map_or(Ok(()), Err)
     }
 }
 
