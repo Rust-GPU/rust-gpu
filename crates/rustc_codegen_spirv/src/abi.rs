@@ -125,6 +125,7 @@ pub(crate) fn provide(providers: &mut Providers) {
                 },
             },
             variants: match *variants {
+                Variants::Empty => Variants::Empty,
                 Variants::Single { index } => Variants::Single { index },
                 Variants::Multiple {
                     tag,
@@ -652,6 +653,7 @@ fn dig_scalar_pointee<'tcx>(
     }
 
     let all_fields = (match &layout.variants {
+        Variants::Empty => 0..0,
         Variants::Multiple { variants, .. } => 0..variants.len(),
         Variants::Single { index } => {
             let i = index.as_usize();
@@ -867,7 +869,7 @@ impl<'tcx> From<TyAndLayout<'tcx>> for TyLayoutNameKey<'tcx> {
             ty: layout.ty,
             variant: match layout.variants {
                 Variants::Single { index } => Some(index),
-                Variants::Multiple { .. } => None,
+                _ => None,
             },
         }
     }
