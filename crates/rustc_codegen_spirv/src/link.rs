@@ -427,11 +427,10 @@ fn add_upstream_rust_crates(
     codegen_results: &CodegenResults,
     crate_type: CrateType,
 ) {
-    let (_, data) = codegen_results
+    let data = codegen_results
         .crate_info
         .dependency_formats
-        .iter()
-        .find(|(ty, _)| *ty == crate_type)
+        .get(&crate_type)
         .expect("failed to find crate type in dependency format list");
     for &cnum in &codegen_results.crate_info.used_crates {
         let src = &codegen_results.crate_info.used_crate_source[&cnum];
@@ -451,11 +450,10 @@ fn add_upstream_native_libraries(
     codegen_results: &CodegenResults,
     crate_type: CrateType,
 ) {
-    let (_, data) = codegen_results
+    let data = codegen_results
         .crate_info
         .dependency_formats
-        .iter()
-        .find(|(ty, _)| *ty == crate_type)
+        .get(&crate_type)
         .expect("failed to find crate type in dependency format list");
 
     for &cnum in &codegen_results.crate_info.used_crates {
