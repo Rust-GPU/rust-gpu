@@ -218,7 +218,7 @@ impl CodegenBackend for SpirvCodegenBackend {
         rustc_errors::DEFAULT_LOCALE_RESOURCE
     }
 
-    fn target_features(&self, sess: &Session, _allow_unstable: bool) -> Vec<Symbol> {
+    fn target_features_cfg(&self, sess: &Session, _allow_unstable: bool) -> Vec<Symbol> {
         let cmdline = sess.opts.cg.target_feature.split(',');
         let cfg = sess.target.options.features.split(',');
         cfg.chain(cmdline)
