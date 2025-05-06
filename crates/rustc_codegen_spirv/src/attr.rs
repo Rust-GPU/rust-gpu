@@ -5,11 +5,10 @@
 use crate::codegen_cx::CodegenCx;
 use crate::symbols::Symbols;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
-use rustc_ast::Attribute;
 use rustc_hir as hir;
 use rustc_hir::def_id::LocalModDefId;
 use rustc_hir::intravisit::{self, Visitor};
-use rustc_hir::{CRATE_HIR_ID, HirId, MethodKind, Target};
+use rustc_hir::{Attribute, CRATE_HIR_ID, HirId, MethodKind, Target};
 use rustc_middle::hir::nested_filter;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::TyCtxt;
