@@ -975,8 +975,20 @@ impl<'tcx> AsmCodegenMethods<'tcx> for CodegenCx<'tcx> {
         _template: &[InlineAsmTemplatePiece],
         _operands: &[GlobalAsmOperandRef<'tcx>],
         _options: InlineAsmOptions,
-        _line_spans: &[Span],
+        line_spans: &[Span],
     ) {
-        todo!()
+        self.tcx.dcx().span_fatal(
+            line_spans.first().copied().unwrap_or_default(),
+            "[Rust-GPU] `global_asm!` not yet supported",
+        );
+    }
+
+    // FIXME(eddyb) should this method be implemented as just symbol mangling,
+    // or renamed upstream into something much more specific?
+    fn mangled_name(&self, instance: Instance<'tcx>) -> String {
+        self.tcx.dcx().span_bug(
+            self.tcx.def_span(instance.def_id()),
+            "[Rust-GPU] `#[naked] fn` not yet supported",
+        )
     }
 }
