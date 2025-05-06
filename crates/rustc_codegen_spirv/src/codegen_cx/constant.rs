@@ -254,7 +254,7 @@ impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
                         (value, AddressSpace::DATA)
                     }
                     GlobalAlloc::Function { instance } => (
-                        self.get_fn_addr(instance.polymorphize(self.tcx)),
+                        self.get_fn_addr(instance),
                         self.data_layout().instruction_address_space,
                     ),
                     GlobalAlloc::VTable(vty, dyn_ty) => {
