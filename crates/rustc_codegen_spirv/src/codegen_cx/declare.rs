@@ -9,7 +9,7 @@ use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
-use rustc_attr::InlineAttr;
+use rustc_attr_parsing::InlineAttr;
 use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
 use rustc_hir::def::DefKind;
 use rustc_middle::bug;
