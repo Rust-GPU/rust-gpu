@@ -85,7 +85,7 @@ extern crate rustc_arena;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_ast;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
-extern crate rustc_attr;
+extern crate rustc_attr_parsing;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_codegen_ssa;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
