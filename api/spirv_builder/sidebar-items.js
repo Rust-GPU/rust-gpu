@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Capability","MetadataPrintout","ModuleResult","ShaderPanicStrategy","SpirvBuilderError","SpirvMetadata"],"struct":["CompileResult","SpirvBuilder"]};
+window.SIDEBAR_ITEMS = {"constant":["TARGET_SPECS"],"enum":["Capability","MetadataPrintout","ModuleResult","ShaderPanicStrategy","SpirvBuilderError","SpirvMetadata"],"fn":["query_rustc_version"],"struct":["CompileResult","OptimizerOptions","ShaderCrateFeatures","SpirvBuilder","ValidatorOptions"]};
