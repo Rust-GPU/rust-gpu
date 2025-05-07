@@ -690,10 +690,10 @@ impl CodegenArgs {
                 *current_id = *remap.entry(*current_id).or_insert_with(|| len as u32 + 1);
             };
             module.all_inst_iter_mut().for_each(|inst| {
-                if let Some(ref mut result_id) = &mut inst.result_id {
+                if let Some(result_id) = &mut inst.result_id {
                     insert(result_id);
                 }
-                if let Some(ref mut result_type) = &mut inst.result_type {
+                if let Some(result_type) = &mut inst.result_type {
                     insert(result_type);
                 }
                 inst.operands.iter_mut().for_each(|op| {

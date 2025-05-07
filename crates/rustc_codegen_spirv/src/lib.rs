@@ -500,7 +500,7 @@ impl Drop for DumpModuleOnPanic<'_, '_, '_> {
 }
 
 /// This is the entrypoint for a hot plugged `rustc_codegen_spirv`
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn __rustc_codegen_backend() -> Box<dyn CodegenBackend> {
     // Tweak rustc's default ICE panic hook, to direct people to `rust-gpu`.
     rustc_driver::install_ice_hook("https://github.com/rust-gpu/rust-gpu/issues/new", |dcx| {
