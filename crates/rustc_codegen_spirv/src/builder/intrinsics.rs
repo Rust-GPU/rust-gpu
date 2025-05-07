@@ -198,8 +198,10 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             sym::floorf32 | sym::floorf64 => self.gl_op(GLOp::Floor, ret_ty, [args[0].immediate()]),
             sym::ceilf32 | sym::ceilf64 => self.gl_op(GLOp::Ceil, ret_ty, [args[0].immediate()]),
             sym::truncf32 | sym::truncf64 => self.gl_op(GLOp::Trunc, ret_ty, [args[0].immediate()]),
+            sym::rintf32 | sym::rintf64 => {
+                self.gl_op(GLOp::RoundEven, ret_ty, [args[0].immediate()])
+            }
             // TODO: Correctness of all these rounds
-            sym::rintf32 | sym::rintf64 => self.gl_op(GLOp::Round, ret_ty, [args[0].immediate()]),
             sym::nearbyintf32 | sym::nearbyintf64 | sym::roundf32 | sym::roundf64 => {
                 self.gl_op(GLOp::Round, ret_ty, [args[0].immediate()])
             }
