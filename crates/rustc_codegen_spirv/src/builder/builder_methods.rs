@@ -10,6 +10,7 @@ use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::dr::{InsertPoint, Instruction, Operand};
 use rspirv::spirv::{Capability, MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
+use rustc_abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
 use rustc_apfloat::{Float, Round, Status, ieee};
 use rustc_codegen_ssa::MemFlags;
 use rustc_codegen_ssa::common::{
@@ -27,8 +28,7 @@ use rustc_middle::middle::codegen_fn_attrs::CodegenFnAttrs;
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_middle::ty::{self, Ty};
 use rustc_span::Span;
-use rustc_target::abi::call::FnAbi;
-use rustc_target::abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
+use rustc_target::callconv::FnAbi;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::cell::Cell;
@@ -2355,9 +2355,19 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         }
     }
 
-    fn icmp(&mut self, op: IntPredicate, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
+    fn icmp(&mut self, op: IntPredicate, lhs: Self::Value, mut rhs: Self::Value) -> Self::Value {
         // Note: the signedness of the opcode doesn't have to match the signedness of the operands.
         use IntPredicate::*;
+
+        if lhs.ty != rhs.ty
+            && [lhs, rhs].map(|v| matches!(self.lookup_type(v.ty), SpirvType::Pointer { .. }))
+                == [true, true]
+        {
+            // HACK(eddyb) temporary workaround for untyped pointers upstream.
+            // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
+            rhs = self.pointercast(rhs, lhs.ty);
+        }
+
         assert_ty_eq!(self, lhs.ty, rhs.ty);
         let b = SpirvType::Bool.def(self.span(), self);
         match self.lookup_type(lhs.ty) {
@@ -3566,9 +3576,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                 .map(|s| Cow::Owned(s.replace('%', "%%")))
                                 .interleave(ref_arg_ids_with_ty_and_spec.iter().map(
                                     |&(ref_id, ty, spec)| {
-                                        use rustc_target::abi::{
-                                            Float::*, Integer::*, Primitive::*,
-                                        };
+                                        use rustc_abi::{Float::*, Integer::*, Primitive::*};
 
                                         let layout = self.layout_of(ty);
 
