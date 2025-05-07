@@ -389,15 +389,15 @@ impl DiagnosticReporter<'_> {
             .split_last()
             .filter(
                 |(
-                    &UseOrigin::Global {
+                    UseOrigin::Global {
                         attrs: use_attrs, ..
                     }
-                    | &UseOrigin::IntraFunc {
+                    | UseOrigin::IntraFunc {
                         func_attrs: use_attrs,
                         ..
                     },
                     _,
-                )| { use_attrs == attrs },
+                )| *use_attrs == attrs,
             )
             .map_or((None, &self.use_stack[..]), |(current, stack)| {
                 (Some(current), stack)
