@@ -18,9 +18,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2025-02-16"
+channel = "nightly-2025-03-29"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = 9cd60bd2ccc41bc898d2ad86728f14035d2df72d"#;
+# commit_hash = 920d95eaf23d7eb6b415d09868e4f793024fa604"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -159,9 +159,9 @@ fn generate_pqp_cg_ssa() -> Result<(), Box<dyn Error>> {
                 }
             }
 
-            // HACK(eddyb) remove `windows` dependency (from MSVC linker output
-            // parsing, which `rustc_codegen_spirv` will never invoke anyway).
             if relative_path == Path::new("src/back/link.rs") {
+                // HACK(eddyb) remove `windows` dependency (from MSVC linker output
+                // parsing, which `rustc_codegen_spirv` will never invoke anyway).
                 src = src.replace(
                     "#[cfg(not(windows))]
 fn escape_linker_output(",
@@ -179,6 +179,33 @@ mod win {",
                     "#[cfg(any())]
 mod win {",
                 );
+                // HACK(eddyb) remove `object` dependency (for Windows `raw_dylib`
+                // handling, which `rustc_codegen_spirv` will never invoke anyway).
+                src = src.replace("mod raw_dylib;", "// mod raw_dylib;");
+                src = src.replace(
+                    "
+        for output_path in raw_dylib::",
+                    "
+        #[cfg(any())]
+        for output_path in raw_dylib::",
+                );
+                src = src.replace(
+                    "
+        for link_path in raw_dylib::",
+                    "
+        #[cfg(any())]
+        for link_path in raw_dylib::",
+                );
+            }
+            if relative_path == Path::new("src/back/metadata.rs") {
+                // HACK(eddyb) remove `object` dependency.
+                src = src.replace("
+pub(crate) fn create_object_file(sess: &Session) -> Option<write::Object<'static>> {","
+pub(crate) fn create_object_file(_: &Session) -> Option<write::Object<'static>> {
+    None
+}
+#[cfg(any())]
+pub(crate) fn create_object_file(sess: &Session) -> Option<write::Object<'static>> {");
             }
 
             // HACK(eddyb) "typed alloca" patches.
@@ -259,6 +286,9 @@ mod win {",
             println!("cargo::warning={line}");
         }
         println!("cargo::warning=");
+
+        // HACK(eddyb) allow the warning to be cleared after `lib.rs` is fixed.
+        println!("cargo:rerun-if-changed=src/lib.rs");
     }
 
     // HACK(eddyb) write a file that can be `include!`d from `lib.rs`.
