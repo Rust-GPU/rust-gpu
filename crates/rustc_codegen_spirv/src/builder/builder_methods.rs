@@ -854,12 +854,34 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
         // --- End Recovery Path ---
 
+        // FIXME(eddyb) the comments below might not make much sense, because this
+        // used to be in the "fallback path" before being moved to before merging.
+        //
+        // Before emitting the AccessChain, explicitly cast the base pointer `ptr` to
+        // ensure its pointee type matches the input `ty`. This is required because the
+        // SPIR-V `AccessChain` instruction implicitly uses the size of the base
+        // pointer's pointee type when applying the *first* index operand (our
+        // `ptr_base_index`). If `ty` and `original_pointee_ty` mismatched and we
+        // reached this fallback, this cast ensures SPIR-V validity.
+        trace!("maybe_inbounds_gep fallback path calling pointercast");
+        // Cast ptr to point to `ty`.
+        // HACK(eddyb) temporary workaround for untyped pointers upstream.
+        // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
+        let ptr = self.pointercast(ptr, self.type_ptr_to(ty));
+        // Get the ID of the (potentially newly casted) pointer.
+        let ptr_id = ptr.def(self);
+        // HACK(eddyb) updated pointee type of `ptr` post-`pointercast`.
+        let original_pointee_ty = ty;
+
         // --- Attempt GEP Merging Path ---
 
         // Check if the base pointer `ptr` itself was the result of a previous
         // AccessChain instruction. Merging is only attempted if the input type `ty`
         // matches the pointer's actual underlying pointee type `original_pointee_ty`.
         // If they differ, merging could be invalid.
+        // HACK(eddyb) always attempted now, because we `pointercast` first, which:
+        // - is noop when `ty == original_pointee_ty` pre-`pointercast` (old condition)
+        // - may generate (potentially mergeable) new `AccessChain`s in other cases
         let maybe_original_access_chain = if ty == original_pointee_ty {
             // Search the current function's instructions...
             // FIXME(eddyb) this could get ridiculously expensive, at the very least
@@ -908,12 +930,21 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             // 2. The *last* index of the original AccessChain is a constant.
             // 3. The *first* index (`ptr_base_index`) of the *current* GEP is a constant.
             // Merging usually involves adding these two constant indices.
+            //
+            // FIXME(eddyb) the above comment seems inaccurate, there is no reason
+            // why runtime indices couldn't be added together just like constants
+            // (and in fact this is needed nowadays for all array indexing).
             let can_merge = if let Some(&last_original_idx_id) = original_indices.last() {
-                // Check if both the last original index and the current base index are constant scalars.
-                self.builder
-                    .lookup_const_scalar(last_original_idx_id.with_type(ptr_base_index.ty))
-                    .is_some()
-                    && self.builder.lookup_const_scalar(ptr_base_index).is_some()
+                // HACK(eddyb) see the above comment, this bypasses the const
+                // check below, without tripping a clippy warning etc.
+                let always_merge = true;
+                always_merge || {
+                    // Check if both the last original index and the current base index are constant scalars.
+                    self.builder
+                        .lookup_const_scalar(last_original_idx_id.with_type(ptr_base_index.ty))
+                        .is_some()
+                        && self.builder.lookup_const_scalar(ptr_base_index).is_some()
+                }
             } else {
                 // Original access chain had no indices to merge with.
                 false
@@ -965,21 +996,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
         // This path is taken if neither the Recovery nor the Merging path succeeded or applied.
         // It performs a more direct translation of the GEP request.
-
-        // HACK(eddyb): Workaround for potential upstream issues where pointers might lack precise type info.
-        // FIXME(eddyb): Ideally, this should use untyped memory features if available/necessary.
-
-        // Before emitting the AccessChain, explicitly cast the base pointer `ptr` to
-        // ensure its pointee type matches the input `ty`. This is required because the
-        // SPIR-V `AccessChain` instruction implicitly uses the size of the base
-        // pointer's pointee type when applying the *first* index operand (our
-        // `ptr_base_index`). If `ty` and `original_pointee_ty` mismatched and we
-        // reached this fallback, this cast ensures SPIR-V validity.
-        trace!("maybe_inbounds_gep fallback path calling pointercast");
-        // Cast ptr to point to `ty`.
-        let ptr = self.pointercast(ptr, self.type_ptr_to(ty));
-        // Get the ID of the (potentially newly casted) pointer.
-        let ptr_id = ptr.def(self);
 
         trace!(
             "emitting access chain via fallback path with pointer type: {}",
