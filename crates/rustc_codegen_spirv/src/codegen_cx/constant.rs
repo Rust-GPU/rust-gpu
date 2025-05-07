@@ -172,11 +172,17 @@ impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
             .layout_of(self.tcx.types.str_)
             .spirv_type(DUMMY_SP, self);
         (
-            self.def_constant(self.type_ptr_to(str_ty), SpirvConst::PtrTo {
-                pointee: self
-                    .constant_composite(str_ty, s.bytes().map(|b| self.const_u8(b).def_cx(self)))
-                    .def_cx(self),
-            }),
+            self.def_constant(
+                self.type_ptr_to(str_ty),
+                SpirvConst::PtrTo {
+                    pointee: self
+                        .constant_composite(
+                            str_ty,
+                            s.bytes().map(|b| self.const_u8(b).def_cx(self)),
+                        )
+                        .def_cx(self),
+                },
+            ),
             self.const_usize(len as u64),
         )
     }
