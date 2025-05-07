@@ -82,7 +82,7 @@ impl<'tcx> CodegenCx<'tcx> {
                     .span_err(span, format!("cannot declare {name} as an entry point"));
                 return;
             };
-            self.tcx.hir().body_owned_by(fn_local_def_id).params
+            self.tcx.hir_body_owned_by(fn_local_def_id).params
         };
         for (arg_abi, hir_param) in fn_abi.args.iter().zip(hir_params) {
             match arg_abi.mode {
@@ -429,7 +429,7 @@ impl<'tcx> CodegenCx<'tcx> {
         call_args: &mut Vec<SpirvValue>,
         decoration_locations: &mut FxHashMap<StorageClass, u32>,
     ) {
-        let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.hir().attrs(hir_param.hir_id));
+        let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.hir_attrs(hir_param.hir_id));
 
         let EntryParamDeducedFromRustRefOrValue {
             value_layout,

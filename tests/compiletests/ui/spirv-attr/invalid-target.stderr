@@ -2620,5 +2620,33 @@ error: attribute is only valid on a function parameter, not on a foreign functio
 87 |         uniform, position, descriptor_set = 0, binding = 0, flat, invariant, // param-only
    |                                                                   ^^^^^^^^^
 
-error: aborting due to 437 previous errors
+error: unconstrained opaque type
+   --> $DIR/invalid-target.rs:118:18
+    |
+118 | type _OpaqueTy = impl Copy;
+    |                  ^^^^^^^^^
+    |
+    = note: `_OpaqueTy` must be used in combination with a concrete type within the same crate
 
+error[E0308]: mismatched types
+   --> $DIR/invalid-target.rs:121:5
+    |
+118 | type _OpaqueTy = impl Copy;
+    |                  --------- the expected opaque type
+119 |
+120 | fn _opaque_ty_definer() -> _OpaqueTy {
+    |                            --------- expected `_OpaqueTy` because of return type
+121 |     ()
+    |     ^^ expected opaque type, found `()`
+    |
+    = note: expected opaque type `_OpaqueTy`
+                 found unit type `()`
+note: this item must have a `#[define_opaque(_OpaqueTy)]` attribute to be able to define hidden types
+   --> $DIR/invalid-target.rs:120:4
+    |
+120 | fn _opaque_ty_definer() -> _OpaqueTy {
+    |    ^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 439 previous errors
+
+For more information about this error, try `rustc --explain E0308`.

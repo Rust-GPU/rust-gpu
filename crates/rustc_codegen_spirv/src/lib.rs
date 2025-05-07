@@ -2,6 +2,7 @@
 #![allow(internal_features)]
 #![allow(rustc::diagnostic_outside_of_impl)]
 #![allow(rustc::untranslatable_diagnostic)]
+#![cfg_attr(doc, recursion_limit = "256")] // FIXME(nnethercote): will be removed by #124141
 #![feature(assert_matches)]
 #![feature(box_patterns)]
 #![feature(debug_closure_helpers)]
@@ -10,6 +11,7 @@
 #![feature(let_chains)]
 #![feature(negative_impls)]
 #![feature(rustdoc_internals)]
+#![feature(string_from_utf8_lossy_owned)]
 #![feature(trait_alias)]
 #![feature(try_blocks)]
 // HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
@@ -95,6 +97,8 @@ extern crate rustc_data_structures;
 extern crate rustc_driver;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_errors;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
+extern crate rustc_hashes;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_hir;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
@@ -221,15 +225,21 @@ impl CodegenBackend for SpirvCodegenBackend {
         rustc_errors::DEFAULT_LOCALE_RESOURCE
     }
 
-    fn target_features_cfg(&self, sess: &Session, _allow_unstable: bool) -> Vec<Symbol> {
+    fn target_features_cfg(&self, sess: &Session) -> (Vec<Symbol>, Vec<Symbol>) {
         let cmdline = sess.opts.cg.target_feature.split(',');
         let cfg = sess.target.options.features.split(',');
-        cfg.chain(cmdline)
+
+        let all_target_features: Vec<_> = cfg
+            .chain(cmdline)
             .filter(|l| l.starts_with('+'))
             .map(|l| &l[1..])
             .filter(|l| !l.is_empty())
             .map(Symbol::intern)
-            .collect()
+            .collect();
+
+        // HACK(eddyb) the second list is "including unstable target features",
+        // but there is no reason to make a distinction for SPIR-V ones.
+        (all_target_features.clone(), all_target_features)
     }
 
     fn provide(&self, providers: &mut rustc_middle::util::Providers) {
@@ -329,7 +339,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
     unsafe fn optimize(
         _: &CodegenContext<Self>,
         _: DiagCtxtHandle<'_>,
-        _: &ModuleCodegen<Self::Module>,
+        _: &mut ModuleCodegen<Self::Module>,
         _: &ModuleConfig,
     ) -> Result<(), FatalError> {
         // TODO: Implement
@@ -346,6 +356,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
                 .to_vec(),
             name: thin_module.name().to_string(),
             kind: ModuleKind::Regular,
+            thin_lto_buffer: None,
         };
         Ok(module)
     }
@@ -380,6 +391,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             bytecode: None,
             assembly: None,
             llvm_ir: None,
+            links_from_incr_cache: vec![],
         })
     }
 
@@ -466,6 +478,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
                 name: cgu_name.to_string(),
                 module_llvm: spirv_module,
                 kind: ModuleKind::Regular,
+                thin_lto_buffer: None,
             },
             0,
         )
