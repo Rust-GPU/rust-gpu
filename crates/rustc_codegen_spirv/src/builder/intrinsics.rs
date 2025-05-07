@@ -17,7 +17,7 @@ use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
 use rustc_middle::{bug, ty};
 use rustc_span::Span;
 use rustc_span::sym;
-use rustc_target::abi::call::{FnAbi, PassMode};
+use rustc_target::callconv::{FnAbi, PassMode};
 use std::assert_matches::assert_matches;
 
 fn int_type_width_signed(ty: Ty<'_>, cx: &CodegenCx<'_>) -> Option<(u64, bool)> {

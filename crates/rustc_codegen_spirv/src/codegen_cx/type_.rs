@@ -5,6 +5,7 @@ use super::CodegenCx;
 use crate::abi::ConvSpirvType;
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
+use rustc_abi::{AddressSpace, BackendRepr, Reg};
 use rustc_codegen_ssa::common::TypeKind;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, LayoutTypeCodegenMethods};
 use rustc_middle::ty::Ty;
@@ -14,8 +15,7 @@ use rustc_middle::ty::layout::{
 use rustc_middle::{bug, span_bug};
 use rustc_span::source_map::Spanned;
 use rustc_span::{DUMMY_SP, Span};
-use rustc_target::abi::call::{CastTarget, FnAbi, Reg};
-use rustc_target::abi::{AddressSpace, BackendRepr};
+use rustc_target::callconv::{CastTarget, FnAbi};
 
 impl<'tcx> LayoutOfHelpers<'tcx> for CodegenCx<'tcx> {
     type LayoutOfResult = TyAndLayout<'tcx>;
