@@ -1851,7 +1851,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 place.val.llval,
                 place.val.align,
             );
-            OperandValue::Immediate(self.to_immediate(llval, place.layout))
+            OperandValue::Immediate(llval)
         } else if let BackendRepr::ScalarPair(a, b) = place.layout.backend_repr {
             let b_offset = a
                 .primitive()

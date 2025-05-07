@@ -109,15 +109,12 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
+impl ConstCodegenMethods for CodegenCx<'_> {
     fn const_null(&self, t: Self::Type) -> Self::Value {
         self.constant_null(t)
     }
     fn const_undef(&self, ty: Self::Type) -> Self::Value {
         self.undef(ty)
-    }
-    fn is_undef(&self, v: Self::Value) -> bool {
-        matches!(self.builder.lookup_const(v), Some(SpirvConst::Undef))
     }
     fn const_poison(&self, ty: Self::Type) -> Self::Value {
         // No distinction between undef and poison.
@@ -319,7 +316,12 @@ impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
     // the actual value generation until after a pointer to this value is cast
     // to its final type (e.g. that will be loaded as).
     // FIXME(eddyb) replace this with `qptr` handling of constant data.
-    fn const_data_from_alloc(&self, alloc: ConstAllocation<'tcx>) -> Self::Value {
+    fn const_data_from_alloc(&self, alloc: ConstAllocation<'_>) -> Self::Value {
+        // HACK(eddyb) the `ConstCodegenMethods` trait no longer guarantees the
+        // lifetime that `alloc` is interned for, but since it *is* interned,
+        // we can cheaply recover it (see also the `ty::Lift` infrastructure).
+        let alloc = self.tcx.lift(alloc).unwrap();
+
         let void_type = SpirvType::Void.def(DUMMY_SP, self);
         self.def_constant(void_type, SpirvConst::ConstDataFromAlloc(alloc))
     }
