@@ -8,8 +8,8 @@ use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 use rustc_abi::ExternAbi as Abi;
 use rustc_abi::{
-    Align, BackendRepr, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions, Scalar, Size,
-    TagEncoding, VariantIdx, Variants,
+    Align, BackendRepr, FieldIdx, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions,
+    Scalar, Size, TagEncoding, VariantIdx, Variants,
 };
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
@@ -106,6 +106,7 @@ pub(crate) fn provide(providers: &mut Providers) {
             ref variants,
             backend_repr,
             largest_niche,
+            uninhabited,
             align,
             size,
             max_repr_align,
@@ -153,6 +154,7 @@ pub(crate) fn provide(providers: &mut Providers) {
             },
             backend_repr,
             largest_niche,
+            uninhabited,
             align,
             size,
             max_repr_align,
@@ -201,7 +203,7 @@ pub(crate) fn provide(providers: &mut Providers) {
         let trivial_struct = match tcx.hir_node_by_def_id(def_id) {
             rustc_hir::Node::Item(item) => match item.kind {
                 rustc_hir::ItemKind::Struct(
-                    _,
+                    ..,
                     &rustc_hir::Generics {
                         params:
                             &[]
@@ -465,7 +467,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
         // `ScalarPair`.
         // There's a few layers that we go through here. First we inspect layout.backend_repr, then if relevant, layout.fields, etc.
         match self.backend_repr {
-            BackendRepr::Uninhabited => SpirvType::Adt {
+            _ if self.uninhabited => SpirvType::Adt {
                 def_id: def_id_for_spirv_type_adt(*self),
                 size: Some(Size::ZERO),
                 align: Align::from_bytes(0).unwrap(),
@@ -526,7 +528,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 if let TyKind::Adt(adt, _) = self.ty.kind() {
                     if let Variants::Single { index } = self.variants {
                         for i in self.fields.index_by_increasing_offset() {
-                            let field = &adt.variants()[index].fields[i.into()];
+                            let field = &adt.variants()[index].fields[FieldIdx::new(i)];
                             field_names.push(field.name);
                         }
                     }
@@ -545,7 +547,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 }
                 .def_with_name(cx, span, TyLayoutNameKey::from(*self))
             }
-            BackendRepr::Vector { element, count } => {
+            BackendRepr::SimdVector { element, count } => {
                 let elem_spirv = trans_scalar(cx, span, *self, element, Size::ZERO);
                 SpirvType::Vector {
                     element: elem_spirv,
@@ -815,7 +817,7 @@ fn trans_struct<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>) -
         field_offsets.push(offset);
         if let Variants::Single { index } = ty.variants {
             if let TyKind::Adt(adt, _) = ty.ty.kind() {
-                let field = &adt.variants()[index].fields[i.into()];
+                let field = &adt.variants()[index].fields[FieldIdx::new(i)];
                 field_names.push(field.name);
             } else {
                 // FIXME(eddyb) this looks like something that should exist in rustc.
