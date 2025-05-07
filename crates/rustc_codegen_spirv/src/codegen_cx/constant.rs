@@ -6,12 +6,12 @@ use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
+use rustc_abi::{self as abi, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
 use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods};
 use rustc_middle::bug;
 use rustc_middle::mir::interpret::{ConstAllocation, GlobalAlloc, Scalar, alloc_range};
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_span::{DUMMY_SP, Span};
-use rustc_target::abi::{self, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
 
 impl<'tcx> CodegenCx<'tcx> {
     pub fn def_constant(&self, ty: Word, val: SpirvConst<'_, 'tcx>) -> SpirvValue {
@@ -269,7 +269,12 @@ impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
                     GlobalAlloc::VTable(vty, dyn_ty) => {
                         let alloc = self
                             .tcx
-                            .global_alloc(self.tcx.vtable_allocation((vty, dyn_ty.principal())))
+                            .global_alloc(self.tcx.vtable_allocation((
+                                vty,
+                                dyn_ty.principal().map(|principal| {
+                                    self.tcx.instantiate_bound_regions_with_erased(principal)
+                                }),
+                            )))
                             .unwrap_memory();
                         let pointee = match self.lookup_type(ty) {
                             SpirvType::Pointer { pointee } => pointee,

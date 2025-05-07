@@ -6,6 +6,11 @@ use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
+use rustc_abi::ExternAbi as Abi;
+use rustc_abi::{
+    Align, BackendRepr, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions, Scalar, Size,
+    TagEncoding, VariantIdx, Variants,
+};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
 use rustc_index::Idx;
@@ -20,12 +25,7 @@ use rustc_middle::{bug, span_bug};
 use rustc_span::DUMMY_SP;
 use rustc_span::def_id::DefId;
 use rustc_span::{Span, Symbol};
-use rustc_target::abi::call::{ArgAbi, ArgAttributes, FnAbi, PassMode};
-use rustc_target::abi::{
-    Align, BackendRepr, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions, Scalar, Size,
-    TagEncoding, VariantIdx, Variants,
-};
-use rustc_target::spec::abi::Abi;
+use rustc_target::callconv::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::fmt;
@@ -988,9 +988,10 @@ fn trans_intrinsic_type<'tcx>(
                 cx: &CodegenCx<'tcx>,
                 const_: Const<'tcx>,
             ) -> Result<P, ErrorGuaranteed> {
-                let (const_val, const_ty) = const_
-                    .try_to_valtree()
-                    .expect("expected monomorphic const in codegen");
+                let ty::Value {
+                    ty: const_ty,
+                    valtree: const_val,
+                } = const_.to_value();
                 assert!(const_ty.is_integral());
                 const_val
                     .try_to_scalar_int()
