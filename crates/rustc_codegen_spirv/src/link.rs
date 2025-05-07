@@ -329,7 +329,7 @@ fn do_spirv_opt(
 
     match sess.opts.optimize {
         OptLevel::No => {}
-        OptLevel::Less | OptLevel::Default | OptLevel::Aggressive => {
+        OptLevel::Less | OptLevel::More | OptLevel::Aggressive => {
             optimizer.register_performance_passes();
         }
         OptLevel::Size | OptLevel::SizeMin => {

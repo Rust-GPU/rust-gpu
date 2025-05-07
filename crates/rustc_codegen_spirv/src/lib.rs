@@ -79,6 +79,8 @@ use rustc_codegen_ssa as maybe_pqp_cg_ssa;
 
 // FIXME(eddyb) remove all `#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]`
 // as soon as they're not needed anymore (i.e. using `rustc_codegen_ssa` again).
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
+extern crate rustc_abi;
 extern crate rustc_apfloat;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_arena;
@@ -394,7 +396,6 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     fn autodiff(
         _cgcx: &CodegenContext<Self>,
-        _tcx: TyCtxt<'_>,
         _module: &ModuleCodegen<Self::Module>,
         _diff_fncs: Vec<AutoDiffItem>,
         _config: &ModuleConfig,
