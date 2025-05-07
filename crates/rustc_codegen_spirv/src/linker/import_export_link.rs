@@ -202,7 +202,7 @@ fn check_tys_equal(
 
 fn replace_all_uses_with(module: &mut Module, rules: &FxHashMap<u32, u32>) {
     module.all_inst_iter_mut().for_each(|inst| {
-        if let Some(ref mut result_type) = &mut inst.result_type {
+        if let Some(result_type) = &mut inst.result_type {
             if let Some(&rewrite) = rules.get(result_type) {
                 *result_type = rewrite;
             }
