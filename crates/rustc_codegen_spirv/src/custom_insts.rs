@@ -117,7 +117,7 @@ macro_rules! def_custom_insts {
             pub fn with_operands<T: Clone>(self, operands: &[T]) -> CustomInst<T> {
                 match self {
                     $(Self::$name => match operands {
-                        [$($($field,)+ $(ref $variadic_field @ ..)?)?] => CustomInst::$name $({
+                        [$($($field,)+ $($variadic_field @ ..)?)?] => CustomInst::$name $({
                             $($field: $field.clone(),)+
                             $($variadic_field: $variadic_field.iter().cloned().collect())?
                         })?,
