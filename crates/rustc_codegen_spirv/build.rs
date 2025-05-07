@@ -199,13 +199,16 @@ mod win {",
             }
             if relative_path == Path::new("src/back/metadata.rs") {
                 // HACK(eddyb) remove `object` dependency.
-                src = src.replace("
-pub(crate) fn create_object_file(sess: &Session) -> Option<write::Object<'static>> {","
+                src = src.replace(
+                    "
+pub(crate) fn create_object_file(sess: &Session) -> Option<write::Object<'static>> {",
+                    "
 pub(crate) fn create_object_file(_: &Session) -> Option<write::Object<'static>> {
     None
 }
 #[cfg(any())]
-pub(crate) fn create_object_file(sess: &Session) -> Option<write::Object<'static>> {");
+pub(crate) fn create_object_file(sess: &Session) -> Option<write::Object<'static>> {",
+                );
             }
 
             // HACK(eddyb) "typed alloca" patches.
@@ -225,8 +228,16 @@ pub(crate) fn create_object_file(sess: &Session) -> Option<write::Object<'static
             } else if relative_path == Path::new("src/mir/operand.rs") {
                 src = src.replace("alloca(field.size,", "typed_alloca(llfield_ty,");
 
-                // HACK(eddyb) non-array `#[repr(simd)]` workaround (see `src/abi.rs`).
+                // HACK(eddyb) non-array `#[repr(simd)]` workarounds (see `src/abi.rs`).
                 src = src.replace("if constant_ty.is_simd() {", "if false {");
+                src = src.replace(
+                    "match (self.val, self.layout.backend_repr) {",
+                    "match (self.val, self.layout.backend_repr) {
+                // `#[repr(simd)]` types are also immediate.
+                (OperandValue::Immediate(llval), BackendRepr::SimdVector { element, .. }) => {
+                    (Some(element), bx.extract_element(llval, bx.cx().const_usize(i as u64)))
+                }",
+                );
             }
 
             fs::write(out_path, src)?;
