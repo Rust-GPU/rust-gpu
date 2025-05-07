@@ -8,11 +8,12 @@ use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 use rustc_abi::ExternAbi as Abi;
 use rustc_abi::{
-    Align, BackendRepr, FieldIdx, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions,
-    Scalar, Size, TagEncoding, VariantIdx, Variants,
+    Align, BackendRepr, FieldIdx, FieldsShape, HasDataLayout as _, LayoutData, Primitive,
+    ReprFlags, ReprOptions, Scalar, Size, TagEncoding, VariantIdx, Variants,
 };
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
+use rustc_hashes::Hash64;
 use rustc_index::Idx;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
@@ -164,6 +165,85 @@ pub(crate) fn provide(providers: &mut Providers) {
     }
 
     providers.layout_of = |tcx, key| {
+        // HACK(eddyb) to special-case any types at all, they must be normalized,
+        // but when normalization would be needed, `layout_of`'s default provider
+        // recurses (supposedly for caching reasons), i.e. its calls `layout_of`
+        // w/ the normalized type in input, which once again reaches this hook,
+        // without ever needing any explicit normalization here.
+        let ty = key.value;
+
+        // HACK(eddyb) bypassing upstream `#[repr(simd)]` changes (see also
+        // the later comment above `check_well_formed`, for more details).
+        let reimplement_old_style_repr_simd = match ty.kind() {
+            ty::Adt(def, args) if def.repr().simd() && !def.repr().packed() && def.is_struct() => {
+                Some(def.non_enum_variant()).and_then(|v| {
+                    let (count, e_ty) = v
+                        .fields
+                        .iter()
+                        .map(|f| f.ty(tcx, args))
+                        .dedup_with_count()
+                        .exactly_one()
+                        .ok()?;
+                    let e_len = u64::try_from(count).ok().filter(|&e_len| e_len > 1)?;
+                    Some((def, e_ty, e_len))
+                })
+            }
+            _ => None,
+        };
+
+        // HACK(eddyb) tweaked copy of the old upstream logic for `#[repr(simd)]`:
+        // https://github.com/rust-lang/rust/blob/1.86.0/compiler/rustc_ty_utils/src/layout.rs#L464-L590
+        if let Some((adt_def, e_ty, e_len)) = reimplement_old_style_repr_simd {
+            let cx = rustc_middle::ty::layout::LayoutCx::new(
+                tcx,
+                key.typing_env.with_post_analysis_normalized(tcx),
+            );
+            let dl = cx.data_layout();
+
+            // Compute the ABI of the element type:
+            let e_ly = cx.layout_of(e_ty)?;
+            let BackendRepr::Scalar(e_repr) = e_ly.backend_repr else {
+                // This error isn't caught in typeck, e.g., if
+                // the element type of the vector is generic.
+                tcx.dcx().span_fatal(
+                    tcx.def_span(adt_def.did()),
+                    format!(
+                        "SIMD type `{ty}` with a non-primitive-scalar \
+                     (integer/float/pointer) element type `{}`",
+                        e_ly.ty
+                    ),
+                );
+            };
+
+            // Compute the size and alignment of the vector:
+            let size = e_ly.size.checked_mul(e_len, dl).unwrap();
+            let align = dl.llvmlike_vector_align(size);
+            let size = size.align_to(align.abi);
+
+            let layout = tcx.mk_layout(LayoutData {
+                variants: Variants::Single {
+                    index: rustc_abi::FIRST_VARIANT,
+                },
+                fields: FieldsShape::Array {
+                    stride: e_ly.size,
+                    count: e_len,
+                },
+                backend_repr: BackendRepr::SimdVector {
+                    element: e_repr,
+                    count: e_len,
+                },
+                largest_niche: e_ly.largest_niche,
+                uninhabited: false,
+                size,
+                align,
+                max_repr_align: None,
+                unadjusted_abi_align: align.abi,
+                randomization_seed: e_ly.randomization_seed.wrapping_add(Hash64::new(e_len)),
+            });
+
+            return Ok(TyAndLayout { ty, layout });
+        }
+
         let TyAndLayout { ty, mut layout } =
             (rustc_interface::DEFAULT_QUERY_PROVIDERS.layout_of)(tcx, key)?;
 
