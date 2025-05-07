@@ -1670,7 +1670,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 place.val.llval,
                 place.val.align,
             );
-            OperandValue::Immediate(self.to_immediate(llval, place.layout))
+            OperandValue::Immediate(llval)
         } else if let BackendRepr::ScalarPair(a, b) = place.layout.backend_repr {
             let b_offset = a
                 .primitive()
@@ -3401,20 +3401,15 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
                                     // HACK(eddyb) even worse, each call made to
                                     // `rt::Placeholder::new(...)` takes anywhere
-                                    // between 16 and 20 instructions each, due
-                                    // to `enum`s represented as scalar pairs.
+                                    // between 8 and 16 instructions each, due
+                                    // to `rt::Count`'s `enum` representation.
                                     for _ in 0..fmt_placeholders_len {
-                                        try_rev_take(16).and_then(|insts| {
-                                            let scalar_pairs_with_used_2nd_field = insts
-                                                .iter()
-                                                .take_while(|inst| {
-                                                    !matches!(inst, Inst::Load(..))
-                                                })
-                                                .filter(|inst| {
-                                                    matches!(inst, Inst::InBoundsAccessChain(.., 1))
-                                                })
-                                                .count();
-                                            try_rev_take(scalar_pairs_with_used_2nd_field * 2)?;
+                                        try_rev_take(4).and_then(|_| {
+                                            for _ in 0..2 {
+                                                if let [Inst::Bitcast(..), _] = try_rev_take(2)?[..] {
+                                                    try_rev_take(4)?;
+                                                }
+                                            }
                                             Some(())
                                         })
                                         .ok_or_else(|| {

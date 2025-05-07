@@ -260,7 +260,7 @@ impl<'a, 'tcx> ArgAbiBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     }
 }
 
-impl<'a, 'tcx> AbiBuilderMethods<'tcx> for Builder<'a, 'tcx> {
+impl AbiBuilderMethods for Builder<'_, '_> {
     fn get_param(&mut self, index: usize) -> Self::Value {
         self.function_parameter_values.borrow()[&self.current_fn.def(self)][index]
     }
