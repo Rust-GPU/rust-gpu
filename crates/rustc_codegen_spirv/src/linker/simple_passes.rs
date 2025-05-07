@@ -8,11 +8,11 @@ use std::mem::take;
 
 pub fn shift_ids(module: &mut Module, add: u32) {
     module.all_inst_iter_mut().for_each(|inst| {
-        if let Some(ref mut result_id) = &mut inst.result_id {
+        if let Some(result_id) = &mut inst.result_id {
             *result_id += add;
         }
 
-        if let Some(ref mut result_type) = &mut inst.result_type {
+        if let Some(result_type) = &mut inst.result_type {
             *result_type += add;
         }
 
@@ -110,11 +110,11 @@ pub fn compact_ids(module: &mut Module) -> u32 {
     };
 
     module.all_inst_iter_mut().for_each(|inst| {
-        if let Some(ref mut result_id) = &mut inst.result_id {
+        if let Some(result_id) = &mut inst.result_id {
             *result_id = insert(*result_id);
         }
 
-        if let Some(ref mut result_type) = &mut inst.result_type {
+        if let Some(result_type) = &mut inst.result_type {
             *result_type = insert(*result_type);
         }
 
