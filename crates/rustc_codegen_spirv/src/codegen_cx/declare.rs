@@ -127,13 +127,16 @@ impl<'tcx> CodegenCx<'tcx> {
 
         let declared = fn_id.with_type(function_type);
 
-        let attrs = AggregatedSpirvAttributes::parse(self, match self.tcx.def_kind(def_id) {
-            // This was made to ICE cross-crate at some point, but then got
-            // reverted in https://github.com/rust-lang/rust/pull/111381.
-            // FIXME(eddyb) remove this workaround once we rustup past that.
-            DefKind::Closure => &[],
-            _ => self.tcx.get_attrs_unchecked(def_id),
-        });
+        let attrs = AggregatedSpirvAttributes::parse(
+            self,
+            match self.tcx.def_kind(def_id) {
+                // This was made to ICE cross-crate at some point, but then got
+                // reverted in https://github.com/rust-lang/rust/pull/111381.
+                // FIXME(eddyb) remove this workaround once we rustup past that.
+                DefKind::Closure => &[],
+                _ => self.tcx.get_attrs_unchecked(def_id),
+            },
+        );
         if let Some(entry) = attrs.entry.map(|attr| attr.value) {
             let entry_name = entry
                 .name
@@ -365,9 +368,12 @@ impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
 impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
     fn static_addr_of(&self, cv: Self::Value, _align: Align, _kind: Option<&str>) -> Self::Value {
-        self.def_constant(self.type_ptr_to(cv.ty), SpirvConst::PtrTo {
-            pointee: cv.def_cx(self),
-        })
+        self.def_constant(
+            self.type_ptr_to(cv.ty),
+            SpirvConst::PtrTo {
+                pointee: cv.def_cx(self),
+            },
+        )
     }
 
     fn codegen_static(&self, def_id: DefId) {

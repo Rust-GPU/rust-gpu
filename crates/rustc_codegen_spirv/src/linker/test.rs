@@ -66,12 +66,15 @@ fn load(bytes: &[u8]) -> Module {
 
 // FIXME(eddyb) shouldn't this be named just `link`? (`assemble_spirv` is separate)
 fn assemble_and_link(binaries: &[&[u8]]) -> Result<Module, PrettyString> {
-    link_with_linker_opts(binaries, &crate::linker::Options {
-        compact_ids: true,
-        dce: true,
-        keep_link_exports: true,
-        ..Default::default()
-    })
+    link_with_linker_opts(
+        binaries,
+        &crate::linker::Options {
+            compact_ids: true,
+            dce: true,
+            keep_link_exports: true,
+            ..Default::default()
+        },
+    )
 }
 
 fn link_with_linker_opts(

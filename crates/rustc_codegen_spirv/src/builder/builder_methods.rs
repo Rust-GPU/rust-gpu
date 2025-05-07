@@ -1094,9 +1094,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         };
         // TODO: rspirv doesn't have insert_variable function
         let result_id = builder.id();
-        let inst = Instruction::new(Op::Variable, Some(ptr_ty), Some(result_id), vec![
-            Operand::StorageClass(StorageClass::Function),
-        ]);
+        let inst = Instruction::new(
+            Op::Variable,
+            Some(ptr_ty),
+            Some(result_id),
+            vec![Operand::StorageClass(StorageClass::Function)],
+        );
         builder.insert_into_block(index, inst).unwrap();
         result_id.with_type(ptr_ty)
     }
@@ -1169,13 +1172,16 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 let ((line_start, col_start), (line_end, col_end)) =
                     (line_col_range.start, line_col_range.end);
 
-                self.custom_inst(void_ty, CustomInst::SetDebugSrcLoc {
-                    file: Operand::IdRef(file.file_name_op_string_id),
-                    line_start: Operand::IdRef(self.const_u32(line_start).def(self)),
-                    line_end: Operand::IdRef(self.const_u32(line_end).def(self)),
-                    col_start: Operand::IdRef(self.const_u32(col_start).def(self)),
-                    col_end: Operand::IdRef(self.const_u32(col_end).def(self)),
-                });
+                self.custom_inst(
+                    void_ty,
+                    CustomInst::SetDebugSrcLoc {
+                        file: Operand::IdRef(file.file_name_op_string_id),
+                        line_start: Operand::IdRef(self.const_u32(line_start).def(self)),
+                        line_end: Operand::IdRef(self.const_u32(line_end).def(self)),
+                        col_start: Operand::IdRef(self.const_u32(col_start).def(self)),
+                        col_end: Operand::IdRef(self.const_u32(col_end).def(self)),
+                    },
+                );
             }
 
             // HACK(eddyb) remove the previous instruction if made irrelevant.
@@ -1524,11 +1530,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         let signed = match ty.kind() {
             ty::Int(_) => true,
             ty::Uint(_) => false,
-            other => self.fatal(format!("Unexpected {} type: {other:#?}", match oop {
-                OverflowOp::Add => "checked add",
-                OverflowOp::Sub => "checked sub",
-                OverflowOp::Mul => "checked mul",
-            })),
+            other => self.fatal(format!(
+                "Unexpected {} type: {other:#?}",
+                match oop {
+                    OverflowOp::Add => "checked add",
+                    OverflowOp::Sub => "checked sub",
+                    OverflowOp::Mul => "checked mul",
+                }
+            )),
         };
 
         let result = if is_add {

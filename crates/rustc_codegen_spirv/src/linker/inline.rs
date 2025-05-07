@@ -63,9 +63,14 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
 
         custom_ext_inst_set_import: custom_ext_inst_set_import.unwrap_or_else(|| {
             let id = next_id(header);
-            let inst = Instruction::new(Op::ExtInstImport, None, Some(id), vec![
-                Operand::LiteralString(custom_insts::CUSTOM_EXT_INST_SET.to_string()),
-            ]);
+            let inst = Instruction::new(
+                Op::ExtInstImport,
+                None,
+                Some(id),
+                vec![Operand::LiteralString(
+                    custom_insts::CUSTOM_EXT_INST_SET.to_string(),
+                )],
+            );
             module.ext_inst_imports.push(inst);
             id
         }),
@@ -921,10 +926,12 @@ impl Inliner<'_, '_> {
             .entry(callee_name)
             .or_insert_with(|| {
                 let id = next_id(self.header);
-                self.debug_string_source
-                    .push(Instruction::new(Op::String, None, Some(id), vec![
-                        Operand::LiteralString(callee_name.to_string()),
-                    ]));
+                self.debug_string_source.push(Instruction::new(
+                    Op::String,
+                    None,
+                    Some(id),
+                    vec![Operand::LiteralString(callee_name.to_string())],
+                ));
                 id
             });
         let mut mk_debuginfo_prefix_and_suffix = || {
