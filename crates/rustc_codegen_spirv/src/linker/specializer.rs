@@ -54,7 +54,6 @@ use crate::spirv_type_constraints::{self, InstSig, StorageClassPat, TyListPat, T
 use indexmap::{IndexMap, IndexSet};
 use rspirv::dr::{Builder, Function, Instruction, Module, Operand};
 use rspirv::spirv::{Op, StorageClass, Word};
-use rustc_data_structures::captures::Captures;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
 use std::collections::{BTreeMap, VecDeque};
@@ -1112,10 +1111,10 @@ impl<'a> Match<'a> {
         self
     }
 
-    fn debug_with_infer_cx<'b>(
+    fn debug_with_infer_cx<'b, T: Specialization>(
         &'b self,
-        cx: &'b InferCx<'a, impl Specialization>,
-    ) -> impl fmt::Debug + Captures<'a> + '_ {
+        cx: &'b InferCx<'a, T>,
+    ) -> impl fmt::Debug + use<'a, 'b, T> {
         fn debug_var_found<'a, A: smallvec::Array<Item = T> + 'a, T: 'a, TD: fmt::Display>(
             var_found: &'a SmallIntMap<impl smallvec::Array<Item = SmallVec<A>>>,
             display: &'a impl Fn(&'a T) -> TD,

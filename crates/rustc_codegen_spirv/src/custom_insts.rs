@@ -43,7 +43,8 @@ lazy_static! {
     ///   achieved by hashing the `SCHEMA` constant from `def_custom_insts!` below
     pub static ref CUSTOM_EXT_INST_SET: String = {
         let schema_hash = {
-            use rustc_data_structures::stable_hasher::{Hash128, StableHasher};
+            use rustc_data_structures::stable_hasher::StableHasher;
+            use rustc_hashes::Hash128;
             use std::hash::Hash;
 
             let mut hasher = StableHasher::new();
