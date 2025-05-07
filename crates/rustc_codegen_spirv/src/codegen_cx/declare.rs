@@ -9,6 +9,7 @@ use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
+use rustc_abi::Align;
 use rustc_attr_parsing::InlineAttr;
 use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
 use rustc_hir::def::DefKind;
@@ -19,13 +20,14 @@ use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
 use rustc_span::Span;
 use rustc_span::def_id::DefId;
-use rustc_target::abi::Align;
 
 fn attrs_to_spirv(attrs: &CodegenFnAttrs) -> FunctionControl {
     let mut control = FunctionControl::NONE;
     match attrs.inline {
         InlineAttr::None => (),
-        InlineAttr::Hint | InlineAttr::Always => control.insert(FunctionControl::INLINE),
+        InlineAttr::Hint | InlineAttr::Always | InlineAttr::Force { .. } => {
+            control.insert(FunctionControl::INLINE)
+        }
         InlineAttr::Never => control.insert(FunctionControl::DONT_INLINE),
     }
     if attrs.flags.contains(CodegenFnAttrFlags::FFI_PURE) {

@@ -17,7 +17,7 @@ use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
 use rustc_middle::{bug, ty};
 use rustc_span::Span;
 use rustc_span::sym;
-use rustc_target::abi::call::{FnAbi, PassMode};
+use rustc_target::callconv::{FnAbi, PassMode};
 use std::assert_matches::assert_matches;
 
 fn int_type_width_signed(ty: Ty<'_>, cx: &CodegenCx<'_>) -> Option<(u64, bool)> {
@@ -336,9 +336,9 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         self.abort_with_kind_and_message_debug_printf("abort", "intrinsics::abort() called", []);
     }
 
-    fn assume(&mut self, _val: Self::Value) {
-        // TODO: llvm.assume
-    }
+    // FIXME(eddyb) `assume` is not implemented atm, so all of its forms should
+    // avoid computing its (potentially illegal) bool input in the first place.
+    fn assume(&mut self, _val: Self::Value) {}
 
     fn expect(&mut self, cond: Self::Value, _expected: bool) -> Self::Value {
         // TODO: llvm.expect

@@ -145,7 +145,6 @@ fn link_with_linker_opts(
         };
         rustc_span::create_session_globals_then(sopts.edition, Some(sm_inputs), || {
             let mut sess = rustc_session::build_session(
-                early_dcx,
                 sopts,
                 CompilerIO {
                     input: Input::Str {
@@ -164,7 +163,10 @@ fn link_with_linker_opts(
                 Default::default(),
                 rustc_interface::util::rustc_version_str().unwrap_or("unknown"),
                 Default::default(),
-                Default::default(),
+                {
+                    extern crate rustc_driver_impl;
+                    &rustc_driver_impl::USING_INTERNAL_FEATURES
+                },
                 Default::default(),
             );
 

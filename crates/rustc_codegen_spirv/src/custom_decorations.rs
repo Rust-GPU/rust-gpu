@@ -7,13 +7,13 @@ use either::Either;
 use rspirv::dr::{Instruction, Module, Operand};
 use rspirv::spirv::{Decoration, Op, Word};
 use rustc_data_structures::fx::FxIndexMap;
-use rustc_data_structures::sync::Lrc;
 use rustc_span::{FileName, SourceFile};
 use rustc_span::{Span, source_map::SourceMap};
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::marker::PhantomData;
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::{fmt, iter, slice, str};
 
 /// Decorations not native to SPIR-V require some form of encoding into existing
@@ -321,7 +321,7 @@ struct SpvDebugFile<'a> {
     /// Source strings from one `OpSource`, and any number of `OpSourceContinued`.
     op_source_parts: SmallVec<[&'a str; 1]>,
 
-    regenerated_rustc_source_file: Option<Lrc<SourceFile>>,
+    regenerated_rustc_source_file: Option<Arc<SourceFile>>,
 }
 
 impl<'a> SpanRegenerator<'a> {

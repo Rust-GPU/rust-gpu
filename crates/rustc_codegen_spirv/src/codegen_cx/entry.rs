@@ -19,7 +19,7 @@ use rustc_middle::span_bug;
 use rustc_middle::ty::layout::{LayoutOf, TyAndLayout};
 use rustc_middle::ty::{self, Instance, Ty};
 use rustc_span::Span;
-use rustc_target::abi::call::{ArgAbi, FnAbi, PassMode};
+use rustc_target::callconv::{ArgAbi, FnAbi, PassMode};
 use std::assert_matches::assert_matches;
 
 /// Various information about an entry-point parameter, which can only be deduced
