@@ -26,7 +26,7 @@ fn attrs_to_spirv(attrs: &CodegenFnAttrs) -> FunctionControl {
     match attrs.inline {
         InlineAttr::None => (),
         InlineAttr::Hint | InlineAttr::Always | InlineAttr::Force { .. } => {
-            control.insert(FunctionControl::INLINE)
+            control.insert(FunctionControl::INLINE);
         }
         InlineAttr::Never => control.insert(FunctionControl::DONT_INLINE),
     }

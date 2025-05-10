@@ -218,7 +218,6 @@ impl Parse for ImageType {
 
             if input.peek(syn::Token![,]) {
                 input.parse::<syn::Token![,]>()?;
-                continue;
             } else {
                 break;
             }
