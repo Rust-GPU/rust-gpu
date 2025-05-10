@@ -1081,22 +1081,21 @@ struct RustcOutput {
 const ARTIFACT_SUFFIX: &str = ".spv.json";
 
 fn get_sole_artifact(out: &str) -> Option<PathBuf> {
-    let last = out
-        .lines()
-        .filter_map(|line| {
-            if let Ok(line) = serde_json::from_str::<RustcOutput>(line) {
-                Some(line)
-            } else {
-                // Pass through invalid lines
-                println!("{line}");
-                None
-            }
-        })
-        .filter(|line| line.reason == "compiler-artifact")
-        .last()
-        .expect("Did not find output file in rustc output");
+    let mut last_compiler_artifact = None;
+    for line in out.lines() {
+        let Ok(msg) = serde_json::from_str::<RustcOutput>(line) else {
+            // Pass through invalid lines
+            println!("{line}");
+            continue;
+        };
+        if msg.reason == "compiler-artifact" {
+            last_compiler_artifact = Some(msg);
+        }
+    }
+    let last_compiler_artifact =
+        last_compiler_artifact.expect("Did not find output file in rustc output");
 
-    let mut filenames = last
+    let mut filenames = last_compiler_artifact
         .filenames
         .unwrap()
         .into_iter()
