@@ -598,7 +598,7 @@ fn remove_old_variables(
         block.instructions.retain(|inst| {
             !matches!(inst.class.opcode, Op::AccessChain | Op::InBoundsAccessChain)
                 || inst.operands.iter().all(|op| {
-                    op.id_ref_any().map_or(true, |id| {
+                    op.id_ref_any().is_none_or(|id| {
                         var_maps_and_types
                             .iter()
                             .all(|(var_map, _)| !var_map.contains_key(&id))
