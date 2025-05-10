@@ -229,10 +229,9 @@ fn kill_linkage_instructions(
         .retain(|f| !rewrite_rules.contains_key(&f.def_id().unwrap()));
 
     // drop imported variables
-    module.types_global_values.retain(|v| {
-        v.result_id
-            .map_or(true, |v| !rewrite_rules.contains_key(&v))
-    });
+    module
+        .types_global_values
+        .retain(|v| v.result_id.is_none_or(|v| !rewrite_rules.contains_key(&v)));
 
     // NOTE(eddyb) `Options`'s `keep_link_export`s field requests that `Export`s
     // are left in (primarily for unit testing - see also its doc comment).
@@ -264,13 +263,13 @@ fn import_kill_annotations_and_debug(
 ) {
     module.annotations.retain(|inst| {
         inst.operands.is_empty()
-            || inst.operands[0].id_ref_any().map_or(true, |id| {
+            || inst.operands[0].id_ref_any().is_none_or(|id| {
                 !rewrite_rules.contains_key(&id) && !killed_parameters.contains(&id)
             })
     });
     module.debug_names.retain(|inst| {
         inst.operands.is_empty()
-            || inst.operands[0].id_ref_any().map_or(true, |id| {
+            || inst.operands[0].id_ref_any().is_none_or(|id| {
                 !rewrite_rules.contains_key(&id) && !killed_parameters.contains(&id)
             })
     });
@@ -278,7 +277,7 @@ fn import_kill_annotations_and_debug(
     for inst in &mut module.annotations {
         if inst.class.opcode == Op::GroupDecorate {
             inst.operands.retain(|op| {
-                op.id_ref_any().map_or(true, |id| {
+                op.id_ref_any().is_none_or(|id| {
                     !rewrite_rules.contains_key(&id) && !killed_parameters.contains(&id)
                 })
             });
