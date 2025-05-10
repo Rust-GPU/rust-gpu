@@ -151,7 +151,7 @@ pub fn main() {
     #[allow(deprecated)]
     event_loop
         .run(move |event, event_loop_window_target| match event {
-            Event::AboutToWait { .. } => {
+            Event::AboutToWait => {
                 match compiler_receiver.try_recv() {
                     Err(TryRecvError::Empty) => {
                         if ctx.rendering_paused {

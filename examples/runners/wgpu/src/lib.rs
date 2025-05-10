@@ -100,14 +100,11 @@ impl CompiledShaderModules {
         wanted_entry: &str,
     ) -> wgpu::ShaderModuleDescriptorSpirV<'a> {
         for (name, spv_module) in &self.named_spv_modules {
-            match name {
-                Some(name) if name != wanted_entry => continue,
-                _ => {
-                    return wgpu::ShaderModuleDescriptorSpirV {
-                        label: name.as_deref(),
-                        source: Cow::Borrowed(&spv_module.source),
-                    };
-                }
+            if name.as_ref().is_none_or(|name| name == wanted_entry) {
+                return wgpu::ShaderModuleDescriptorSpirV {
+                    label: name.as_deref(),
+                    source: Cow::Borrowed(&spv_module.source),
+                };
             }
         }
         unreachable!(
