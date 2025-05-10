@@ -618,7 +618,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
             if offset == Size::ZERO
                 && leaf_size_range.contains(&ty_size)
-                && leaf_ty.map_or(true, |leaf_ty| leaf_ty == ty)
+                && leaf_ty.is_none_or(|leaf_ty| leaf_ty == ty)
             {
                 trace!("successful recovery leaf type: {:?}", self.debug_type(ty));
                 trace!("successful recovery indices: {:?}", indices);
