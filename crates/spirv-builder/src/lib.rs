@@ -956,7 +956,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
 
     let mut cargo = Command::new("cargo");
     if let Some(toolchain) = &builder.toolchain_overwrite {
-        cargo.arg(format!("+{}", toolchain));
+        cargo.arg(format!("+{toolchain}"));
     }
     cargo.args([
         "build",
@@ -1137,7 +1137,7 @@ fn leaf_deps(artifact: &Path, mut handle: impl FnMut(&RawStr)) -> std::io::Resul
 pub fn query_rustc_version(toolchain: Option<&str>) -> std::io::Result<Version> {
     let mut cmd = Command::new("rustc");
     if let Some(toolchain) = toolchain {
-        cmd.arg(format!("+{}", toolchain));
+        cmd.arg(format!("+{toolchain}"));
     }
     cmd.arg("--version");
     let output = cmd.output()?;
@@ -1149,5 +1149,5 @@ pub fn query_rustc_version(toolchain: Option<&str>) -> std::io::Result<Version> 
         Version::parse(version).ok()
     };
     Ok(parse(&stdout)
-        .unwrap_or_else(|| panic!("failed parsing `rustc --version` output `{}`", stdout)))
+        .unwrap_or_else(|| panic!("failed parsing `rustc --version` output `{stdout}`")))
 }
