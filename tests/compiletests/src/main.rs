@@ -383,13 +383,10 @@ fn rust_flags(codegen_backend_path: &Path) -> String {
 fn map_status_to_result(status: std::process::ExitStatus) -> io::Result<()> {
     match status.success() {
         true => Ok(()),
-        false => Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!(
-                "process terminated with non-zero code: {}",
-                status.code().unwrap_or(0)
-            ),
-        )),
+        false => Err(io::Error::other(format!(
+            "process terminated with non-zero code: {}",
+            status.code().unwrap_or(0)
+        ))),
     }
 }
 
