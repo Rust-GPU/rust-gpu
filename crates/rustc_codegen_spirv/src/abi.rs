@@ -249,7 +249,14 @@ pub(crate) fn provide(providers: &mut Providers) {
 
         #[allow(clippy::match_like_matches_macro)]
         let hide_niche = match ty.kind() {
-            ty::Bool => true,
+            ty::Bool => {
+                // HACK(eddyb) we can't bypass e.g. `Option<bool>` being a byte,
+                // due to `core` PR https://github.com/rust-lang/rust/pull/138881
+                // (which adds a new `transmute`, from `ControlFlow<bool>` to `u8`).
+                let libcore_needs_bool_niche = true;
+
+                !libcore_needs_bool_niche
+            }
             _ => false,
         };
 
