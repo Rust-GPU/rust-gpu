@@ -143,7 +143,7 @@ fn link_with_linker_opts(
             hash_kind: sopts.unstable_opts.src_hash_algorithm(&target),
             checksum_hash_kind: None,
         };
-        rustc_span::create_session_globals_then(sopts.edition, Some(sm_inputs), || {
+        rustc_span::create_session_globals_then(sopts.edition, &[], Some(sm_inputs), || {
             let mut sess = rustc_session::build_session(
                 sopts,
                 CompilerIO {

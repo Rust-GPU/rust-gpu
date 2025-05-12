@@ -65,8 +65,12 @@ pub fn link(
 
         if outputs.outputs.should_codegen() {
             let out_filename = out_filename(sess, crate_type, outputs, Symbol::intern(crate_name));
-            let out_filename_file_for_writing =
-                out_filename.file_for_writing(outputs, OutputType::Exe, None);
+            let out_filename_file_for_writing = out_filename.file_for_writing(
+                outputs,
+                OutputType::Exe,
+                crate_name,
+                sess.invocation_temp.as_deref(),
+            );
             match crate_type {
                 CrateType::Rlib => {
                     link_rlib(sess, codegen_results, &out_filename_file_for_writing);
@@ -137,7 +141,7 @@ fn link_rlib(sess: &Session, codegen_results: &CodegenResults, out_filename: &Pa
 
     create_archive(
         &file_list,
-        codegen_results.metadata.raw_data(),
+        codegen_results.metadata.stub_or_full(),
         out_filename,
     );
 }

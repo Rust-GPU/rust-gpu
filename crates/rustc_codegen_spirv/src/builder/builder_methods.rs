@@ -3349,7 +3349,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                     pieces_len_id,
                                     rt_args_slice_ptr_id,
                                     rt_args_len_id,
-                                    _fmt_placeholders_slice_ptr_id,
+                                    fmt_placeholders_slice_ptr_id,
                                     fmt_placeholders_len_id,
                                 ] if (pieces_len, rt_args_count) == (!0, !0) => {
                                     let [pieces_len, rt_args_len, fmt_placeholders_len] = match [
@@ -3369,56 +3369,40 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                         }
                                     };
 
-                                    // FIXME(eddyb) simplify the logic below after
-                                    // https://github.com/rust-lang/rust/pull/139131
-                                    // (~1.88) as it makes `&[rt::Placeholder]`
-                                    // constant (via promotion to 'static).
-
-                                    // HACK(eddyb) this accounts for all of these:
-                                    // - `rt::Placeholder` copies into array: 2 insts each
-                                    // - `rt::UnsafeArg::new()` call: 1 inst
-                                    // - runtime args array->slice ptr cast: 1 inst
-                                    // - placeholders array->slice ptr cast: 1 inst
-                                    let extra_insts = try_rev_take(3 + fmt_placeholders_len * 2).ok_or_else(|| {
+                                    let prepare_args_insts = try_rev_take(3).ok_or_else(|| {
                                         FormatArgsNotRecognized(
                                             "fmt::Arguments::new_v1_formatted call: ran out of instructions".into(),
                                         )
                                     })?;
-                                    let rt_args_slice_ptr_id = match extra_insts[..] {
-                                        [.., Inst::Bitcast(out_id, in_id), Inst::Bitcast(..)]
-                                            if out_id == rt_args_slice_ptr_id =>
-                                        {
-                                            in_id
-                                        }
-                                        _ => {
-                                            let mut insts = extra_insts;
-                                            insts.extend(fmt_args_new_call_insts);
-                                            return Err(FormatArgsNotRecognized(format!(
-                                                "fmt::Arguments::new_v1_formatted call sequence ({insts:?})",
-                                            )));
-                                        }
-                                    };
-
-                                    // HACK(eddyb) even worse, each call made to
-                                    // `rt::Placeholder::new(...)` takes anywhere
-                                    // between 8 and 16 instructions each, due
-                                    // to `rt::Count`'s `enum` representation.
-                                    for _ in 0..fmt_placeholders_len {
-                                        try_rev_take(4).and_then(|_| {
-                                            for _ in 0..2 {
-                                                if let [Inst::Bitcast(..), _] = try_rev_take(2)?[..] {
-                                                    try_rev_take(4)?;
-                                                }
+                                    let (rt_args_slice_ptr_id, _fmt_placeholders_slice_ptr_id) =
+                                        match prepare_args_insts[..] {
+                                            [
+                                                // HACK(eddyb) `rt::UnsafeArg::new()` call
+                                                // (`unsafe` ZST "constructor").
+                                                Inst::Call(_, _, ref rt_unsafe_arg_call_args),
+                                                Inst::Bitcast(
+                                                    rt_args_cast_out_id,
+                                                    rt_args_cast_in_id,
+                                                ),
+                                                Inst::Bitcast(
+                                                    placeholders_cast_out_id,
+                                                    placeholders_cast_in_id,
+                                                ),
+                                            ] if rt_unsafe_arg_call_args.is_empty()
+                                                && rt_args_cast_out_id == rt_args_slice_ptr_id
+                                                && placeholders_cast_out_id
+                                                    == fmt_placeholders_slice_ptr_id =>
+                                            {
+                                                (rt_args_cast_in_id, placeholders_cast_in_id)
                                             }
-                                            Some(())
-                                        })
-                                        .ok_or_else(|| {
-                                            FormatArgsNotRecognized(
-                                                "fmt::rt::Placeholder::new call: ran out of instructions"
-                                                    .into(),
-                                            )
-                                        })?;
-                                    }
+                                            _ => {
+                                                let mut insts = prepare_args_insts;
+                                                insts.extend(fmt_args_new_call_insts);
+                                                return Err(FormatArgsNotRecognized(format!(
+                                                    "fmt::Arguments::new_v1_formatted call sequence ({insts:?})",
+                                                )));
+                                            }
+                                        };
 
                                     decoded_format_args
                                         .has_unknown_fmt_placeholder_to_args_mapping =
@@ -3707,7 +3691,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         let force_warn = |span, msg| -> rustc_errors::Diag<'_, ()> {
                             rustc_errors::Diag::new(
                                 self.tcx.dcx(),
-                                rustc_errors::Level::ForceWarning(None),
+                                rustc_errors::Level::ForceWarning,
                                 msg,
                             )
                             .with_span(span)
