@@ -18,9 +18,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2025-04-14"
+channel = "nightly-2025-04-27"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = 092a284ba0421695f2032c947765429fd7095796"#;
+# commit_hash = 10fa3c449f6b1613b352a6cbf78d3d91fd9a1d81"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -319,6 +319,9 @@ mod maybe_pqp_cg_ssa;
 
     // HACK(eddyb) `if cfg!(llvm_enzyme)` added upstream for autodiff support.
     println!("cargo::rustc-check-cfg=cfg(llvm_enzyme)");
+
+    // HACK(eddyb) `cfg_attr(bootstrap, ...` used upstream temporarily.
+    println!("cargo::rustc-check-cfg=cfg(bootstrap)");
 
     Ok(())
 }
