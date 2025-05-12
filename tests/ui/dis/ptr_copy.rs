@@ -11,9 +11,9 @@ use spirv_std::spirv;
 fn copy_via_raw_ptr(src: &f32, dst: &mut f32) {
     #[cfg(via_intrinsic)]
     {
-        extern "rust-intrinsic" {
-            fn copy<T>(src: *const T, dst: *mut T, count: usize);
-        }
+        #[rustc_intrinsic]
+        unsafe fn copy<T>(src: *const T, dst: *mut T, count: usize);
+
         unsafe { copy(src, dst, 1) }
     }
 
