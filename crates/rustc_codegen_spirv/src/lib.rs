@@ -12,6 +12,7 @@
 #![feature(string_from_utf8_lossy_owned)]
 #![feature(trait_alias)]
 #![feature(try_blocks)]
+#![recursion_limit = "256"]
 // HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
 
 //! Welcome to the API documentation for the `rust-gpu` project, this API is
@@ -150,7 +151,7 @@ use maybe_pqp_cg_ssa::traits::{
     CodegenBackend, ExtraBackendMethods, ModuleBufferMethods, ThinBufferMethods,
     WriteBackendMethods,
 };
-use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind};
+use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind, TargetConfig};
 use rspirv::binary::Assemble;
 use rustc_ast::expand::allocator::AllocatorKind;
 use rustc_ast::expand::autodiff_attrs::AutoDiffItem;
@@ -222,11 +223,11 @@ impl CodegenBackend for SpirvCodegenBackend {
         rustc_errors::DEFAULT_LOCALE_RESOURCE
     }
 
-    fn target_features_cfg(&self, sess: &Session) -> (Vec<Symbol>, Vec<Symbol>) {
+    fn target_config(&self, sess: &Session) -> TargetConfig {
         let cmdline = sess.opts.cg.target_feature.split(',');
         let cfg = sess.target.options.features.split(',');
 
-        let all_target_features: Vec<_> = cfg
+        let target_features: Vec<_> = cfg
             .chain(cmdline)
             .filter(|l| l.starts_with('+'))
             .map(|l| &l[1..])
@@ -234,9 +235,21 @@ impl CodegenBackend for SpirvCodegenBackend {
             .map(Symbol::intern)
             .collect();
 
-        // HACK(eddyb) the second list is "including unstable target features",
+        // HACK(eddyb) this should be a superset of `target_features`,
+        // which *additionally* also includes unstable target features,
         // but there is no reason to make a distinction for SPIR-V ones.
-        (all_target_features.clone(), all_target_features)
+        let unstable_target_features = target_features.clone();
+
+        TargetConfig {
+            target_features,
+            unstable_target_features,
+
+            // FIXME(eddyb) support and/or emulate `f16` and `f128`.
+            has_reliable_f16: false,
+            has_reliable_f16_math: false,
+            has_reliable_f128: false,
+            has_reliable_f128_math: false,
+        }
     }
 
     fn provide(&self, providers: &mut rustc_middle::util::Providers) {
@@ -438,8 +451,8 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
         // TODO: Do dep_graph stuff
         let cgu = tcx.codegen_unit(cgu_name);
 
-        let cx = CodegenCx::new(tcx, cgu);
-        let do_codegen = || {
+        let mut cx = CodegenCx::new(tcx, cgu);
+        let do_codegen = |cx: &mut CodegenCx<'_>| {
             let mono_items = cx.codegen_unit.items_in_deterministic_order(cx.tcx);
 
             if let Some(dir) = &cx.codegen_args.dump_mir {
@@ -448,27 +461,33 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
 
             for &(mono_item, mono_item_data) in mono_items.iter() {
                 mono_item.predefine::<Builder<'_, '_>>(
-                    &cx,
+                    cx,
                     mono_item_data.linkage,
                     mono_item_data.visibility,
                 );
             }
 
             // ... and now that we have everything pre-defined, fill out those definitions.
-            for &(mono_item, _) in mono_items.iter() {
-                mono_item.define::<Builder<'_, '_>>(&cx);
+            for &(mono_item, mono_item_data) in &mono_items {
+                mono_item.define::<Builder<'_, '_>>(cx, mono_item_data);
             }
 
-            if let Some(_entry) = maybe_create_entry_wrapper::<Builder<'_, '_>>(&cx) {
+            if let Some(_entry) = maybe_create_entry_wrapper::<Builder<'_, '_>>(cx) {
                 // attributes::sanitize(&cx, SanitizerSet::empty(), entry);
             }
         };
-        if let Some(path) = &cx.codegen_args.dump_module_on_panic {
-            let module_dumper = DumpModuleOnPanic { cx: &cx, path };
-            with_no_trimmed_paths!(do_codegen());
+        // HACK(eddyb) mutable access needed for `mono_item.define::<...>(cx, ...)`
+        // but that alone leads to needless cloning and smuggling a mutable borrow
+        // through `DumpModuleOnPanic` (for both its `Drop` impl and `do_codegen`).
+        if let Some(path) = cx.codegen_args.dump_module_on_panic.clone() {
+            let module_dumper = DumpModuleOnPanic {
+                cx: &mut cx,
+                path: &path,
+            };
+            with_no_trimmed_paths!(do_codegen(module_dumper.cx));
             drop(module_dumper);
         } else {
-            with_no_trimmed_paths!(do_codegen());
+            with_no_trimmed_paths!(do_codegen(&mut cx));
         }
         let spirv_module = cx.finalize_module().assemble();
 
@@ -495,7 +514,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
 }
 
 struct DumpModuleOnPanic<'a, 'cx, 'tcx> {
-    cx: &'cx CodegenCx<'tcx>,
+    cx: &'cx mut CodegenCx<'tcx>,
     path: &'a Path,
 }
 

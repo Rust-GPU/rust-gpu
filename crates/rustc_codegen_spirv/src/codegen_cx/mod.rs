@@ -971,7 +971,7 @@ impl<'tcx> DebugInfoCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
 impl<'tcx> AsmCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn codegen_global_asm(
-        &self,
+        &mut self,
         _template: &[InlineAsmTemplatePiece],
         _operands: &[GlobalAsmOperandRef<'tcx>],
         _options: InlineAsmOptions,
