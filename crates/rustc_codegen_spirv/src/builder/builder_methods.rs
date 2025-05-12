@@ -879,36 +879,33 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             // Search the current function's instructions...
             // FIXME(eddyb) this could get ridiculously expensive, at the very least
             // it could use `.rev()`, hoping the base pointer was recently defined?
-            let search_result = {
-                let emit = self.emit();
-                let module = emit.module_ref();
-                emit.selected_function().and_then(|func_idx| {
-                    module.functions.get(func_idx).and_then(|func| {
-                        // Find the instruction that defined our base pointer `ptr_id`.
-                        func.all_inst_iter()
-                            .find(|inst| inst.result_id == Some(ptr_id))
-                            .and_then(|ptr_def_inst| {
-                                // Check if that instruction was an `AccessChain` or `InBoundsAccessChain`.
-                                if matches!(
-                                    ptr_def_inst.class.opcode,
-                                    Op::AccessChain | Op::InBoundsAccessChain
-                                ) {
-                                    // If yes, extract its base pointer and its indices.
-                                    let base_ptr = ptr_def_inst.operands[0].unwrap_id_ref();
-                                    let indices = ptr_def_inst.operands[1..]
-                                        .iter()
-                                        .map(|op| op.unwrap_id_ref())
-                                        .collect::<Vec<_>>();
-                                    Some((base_ptr, indices))
-                                } else {
-                                    // The instruction defining ptr was not an `AccessChain`.
-                                    None
-                                }
-                            })
-                    })
+            let emit = self.emit();
+            let module = emit.module_ref();
+            emit.selected_function().and_then(|func_idx| {
+                module.functions.get(func_idx).and_then(|func| {
+                    // Find the instruction that defined our base pointer `ptr_id`.
+                    func.all_inst_iter()
+                        .find(|inst| inst.result_id == Some(ptr_id))
+                        .and_then(|ptr_def_inst| {
+                            // Check if that instruction was an `AccessChain` or `InBoundsAccessChain`.
+                            if matches!(
+                                ptr_def_inst.class.opcode,
+                                Op::AccessChain | Op::InBoundsAccessChain
+                            ) {
+                                // If yes, extract its base pointer and its indices.
+                                let base_ptr = ptr_def_inst.operands[0].unwrap_id_ref();
+                                let indices = ptr_def_inst.operands[1..]
+                                    .iter()
+                                    .map(|op| op.unwrap_id_ref())
+                                    .collect::<Vec<_>>();
+                                Some((base_ptr, indices))
+                            } else {
+                                // The instruction defining ptr was not an `AccessChain`.
+                                None
+                            }
+                        })
                 })
-            };
-            search_result
+            })
         } else {
             // Input type `ty` doesn't match the pointer's actual type, cannot safely merge.
             None
