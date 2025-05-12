@@ -5,7 +5,6 @@
 #![cfg_attr(doc, recursion_limit = "256")] // FIXME(nnethercote): will be removed by #124141
 #![feature(assert_matches)]
 #![feature(box_patterns)]
-#![feature(debug_closure_helpers)]
 #![feature(file_buffered)]
 #![feature(if_let_guard)]
 #![feature(let_chains)]
@@ -374,9 +373,11 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         module: ModuleCodegen<Self::Module>,
         _config: &ModuleConfig,
     ) -> Result<CompiledModule, FatalError> {
-        let path = cgcx
-            .output_filenames
-            .temp_path(OutputType::Object, Some(&module.name));
+        let path = cgcx.output_filenames.temp_path_for_cgu(
+            OutputType::Object,
+            &module.name,
+            cgcx.invocation_temp.as_deref(),
+        );
         // Note: endianness doesn't matter, readers deduce endianness from magic header.
         let spirv_module = spirv_tools::binary::from_binary(&module.module_llvm);
         File::create(&path)
