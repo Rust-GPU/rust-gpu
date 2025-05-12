@@ -496,7 +496,7 @@ pub fn link(
         let (spv_words, module_or_err, lower_from_spv_timer) =
             spv_module_to_spv_words_and_spirt_module(&output);
         let module = &mut module_or_err.map_err(|e| {
-            let spv_path = outputs.temp_path_ext("spirt-lower-from-spv-input.spv", None);
+            let spv_path = outputs.temp_path_for_diagnostic("spirt-lower-from-spv-input.spv");
 
             let was_saved_msg =
                 match std::fs::write(&spv_path, spirv_tools::binary::from_binary(&spv_words)) {
@@ -787,7 +787,7 @@ impl Drop for SpirtDumpGuard<'_> {
                 self.per_pass_module_for_dumping
                     .push(("", self.module.clone()));
             }
-            dump_spirt_file_path = Some(self.outputs.temp_path_ext("spirt", None));
+            dump_spirt_file_path = Some(self.outputs.temp_path_for_diagnostic("spirt"));
         }
 
         if let Some(dump_spirt_file_path) = &dump_spirt_file_path {
