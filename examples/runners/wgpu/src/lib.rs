@@ -72,6 +72,8 @@
 // #![allow()]
 
 use clap::Parser;
+use clap::builder::PossibleValue;
+use clap::ValueEnum;
 use std::borrow::Cow;
 use strum::{Display, EnumString};
 
@@ -81,12 +83,22 @@ mod compute;
 
 mod graphics;
 
-#[derive(EnumString, Display, PartialEq, Eq, Copy, Clone)]
+#[derive(Debug, EnumString, Display, PartialEq, Eq, Copy, Clone, ValueEnum)]
 pub enum RustGPUShader {
     Simplest,
     Sky,
     Compute,
     Mouse,
+}
+
+impl RustGPUShader {
+    pub fn help_string() -> String {
+        let variants: Vec<String> = Self::value_variants()
+            .iter()
+            .map(|v| v.to_possible_value().unwrap().get_name().to_owned())
+            .collect();
+        format!("Shader to run [{}]", variants.join(", "))
+    }
 }
 
 struct CompiledShaderModules {
@@ -148,7 +160,7 @@ fn maybe_watch(
             .iter()
             .copied()
             .collect::<PathBuf>();
-
+        
         let has_debug_printf = options.force_spirv_passthru;
 
         let builder = SpirvBuilder::new(crate_path, "spirv-unknown-vulkan1.1")
@@ -224,7 +236,7 @@ fn maybe_watch(
 #[derive(Parser, Clone)]
 #[command()]
 pub struct Options {
-    #[arg(short, long, default_value = "Sky")]
+    #[arg(short, long, default_value = "Sky", help = RustGPUShader::help_string())]
     shader: RustGPUShader,
 
     #[arg(long)]
