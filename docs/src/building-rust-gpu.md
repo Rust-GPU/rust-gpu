@@ -26,9 +26,6 @@ build the examples - specifically, x11 and libxkbcommon, as well as gcc/clang wi
 called (fedora) `libX11-devel`, `libxkbcommon-x11-devel`, and `gcc-c++`, or (ubuntu) `libxkbcommon-x11-dev`,
 `libx11-dev`, and `gcc`.
 
-## Prerequisite windows packages:
-Ensure you have `rust-lld.exe` installed with: `rustup component add llvm-tools-preview`, the repo ships with a `rust-lld.exe` configuration to get around the _default_ `msvc` compiler's symbol limit of `65535`, if you're seeing `LNK1189` or `LNK1248` errors suggested reading materials: [LNK1189](LNK1189), [LNK1248](LNK1248) please make an [Issue](Issue) if you see these errors as these problems are supposed to be handled for you in the `.cargo/config.toml` file where the Rust-GPU project explicitly overrides the default linker and passes flags to mitigate the above.
-
 ## Using installed SPIRV-Tools
 
 By default, all of the crates and examples in this repo will compile the [`spirv-tools-sys`](https://crates.io/crates/spirv-tools-sys) crate, including a lot of C++ code from [SPIRV-Tools](https://github.com/EmbarkStudios/SPIRV-Tools). If you don't want to build the C++ code because you already have [SPIRV-Tools](https://github.com/KhronosGroup/SPIRV-Tools#downloads) installed, or just don't want to spend more time compiling, you can build/run the crate with the `use-installed-tools` feature.
@@ -49,6 +46,3 @@ You should see `warning: use-installed-tools feature on, skipping compilation of
 [examples/runners/cpu]: https://github.com/rust-gpu/rust-gpu/tree/main/examples/runners/cpu
 [examples/runners/wgpu]: https://github.com/rust-gpu/rust-gpu/tree/main/examples/runners/wgpu
 [examples/shaders]: https://github.com/rust-gpu/rust-gpu/tree/main/examples/shaders
-[LNK1189](https://learn.microsoft.com/en-us/cpp/error-messages/tool-errors/linker-tools-error-lnk1189?view=msvc-170)
-[LNK1248](https://learn.microsoft.com/en-us/cpp/error-messages/tool-errors/linker-tools-error-lnk1248?view=msvc-170)
-[Issue](https://github.com/Rust-GPU/rust-gpu/issues)
