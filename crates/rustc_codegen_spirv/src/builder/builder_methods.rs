@@ -10,6 +10,7 @@ use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::dr::{InsertPoint, Instruction, Operand};
 use rspirv::spirv::{Capability, MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
+use rustc_abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
 use rustc_apfloat::{Float, Round, Status, ieee};
 use rustc_codegen_ssa::MemFlags;
 use rustc_codegen_ssa::common::{
@@ -27,8 +28,7 @@ use rustc_middle::middle::codegen_fn_attrs::CodegenFnAttrs;
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_middle::ty::{self, Ty};
 use rustc_span::Span;
-use rustc_target::abi::call::FnAbi;
-use rustc_target::abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
+use rustc_target::callconv::FnAbi;
 use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::cell::Cell;
@@ -139,11 +139,7 @@ fn memset_dynamic_scalar(
     .def(builder.span(), builder);
     let composite = builder
         .emit()
-        .composite_construct(
-            composite_type,
-            None,
-            iter::repeat(fill_var).take(byte_width),
-        )
+        .composite_construct(composite_type, None, iter::repeat_n(fill_var, byte_width))
         .unwrap();
     let result_type = if is_float {
         SpirvType::Float(byte_width as u32 * 8)
@@ -214,25 +210,15 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 )),
             },
             SpirvType::Integer(width, true) => match width {
-                8 => self
-                    .constant_i8(self.span(), unsafe {
-                        std::mem::transmute::<u8, i8>(fill_byte)
-                    })
-                    .def(self),
+                8 => self.constant_i8(self.span(), fill_byte as i8).def(self),
                 16 => self
-                    .constant_i16(self.span(), unsafe {
-                        std::mem::transmute::<u16, i16>(memset_fill_u16(fill_byte))
-                    })
+                    .constant_i16(self.span(), memset_fill_u16(fill_byte) as i16)
                     .def(self),
                 32 => self
-                    .constant_i32(self.span(), unsafe {
-                        std::mem::transmute::<u32, i32>(memset_fill_u32(fill_byte))
-                    })
+                    .constant_i32(self.span(), memset_fill_u32(fill_byte) as i32)
                     .def(self),
                 64 => self
-                    .constant_i64(self.span(), unsafe {
-                        std::mem::transmute::<u64, i64>(memset_fill_u64(fill_byte))
-                    })
+                    .constant_i64(self.span(), memset_fill_u64(fill_byte) as i64)
                     .def(self),
                 _ => self.fatal(format!(
                     "memset on integer width {width} not implemented yet"
@@ -252,18 +238,15 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let elem_pat = self.memset_const_pattern(&self.lookup_type(element), fill_byte);
                 self.constant_composite(
                     ty.def(self.span(), self),
-                    iter::repeat(elem_pat).take(count as usize),
+                    iter::repeat_n(elem_pat, count as usize),
                 )
                 .def(self)
             }
             SpirvType::Array { element, count } => {
                 let elem_pat = self.memset_const_pattern(&self.lookup_type(element), fill_byte);
                 let count = self.builder.lookup_const_scalar(count).unwrap() as usize;
-                self.constant_composite(
-                    ty.def(self.span(), self),
-                    iter::repeat(elem_pat).take(count),
-                )
-                .def(self)
+                self.constant_composite(ty.def(self.span(), self), iter::repeat_n(elem_pat, count))
+                    .def(self)
             }
             SpirvType::RuntimeArray { .. } => {
                 self.fatal("memset on runtime arrays not implemented yet")
@@ -308,7 +291,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     .composite_construct(
                         ty.def(self.span(), self),
                         None,
-                        iter::repeat(elem_pat).take(count),
+                        iter::repeat_n(elem_pat, count),
                     )
                     .unwrap()
             }
@@ -318,7 +301,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     .composite_construct(
                         ty.def(self.span(), self),
                         None,
-                        iter::repeat(elem_pat).take(count as usize),
+                        iter::repeat_n(elem_pat, count as usize),
                     )
                     .unwrap()
             }
@@ -618,7 +601,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
             if offset == Size::ZERO
                 && leaf_size_range.contains(&ty_size)
-                && leaf_ty.map_or(true, |leaf_ty| leaf_ty == ty)
+                && leaf_ty.is_none_or(|leaf_ty| leaf_ty == ty)
             {
                 trace!("returning type: {:?}", self.debug_type(ty));
                 trace!("returning indices with len: {:?}", indices.len());
@@ -854,46 +837,65 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
         // --- End Recovery Path ---
 
+        // FIXME(eddyb) the comments below might not make much sense, because this
+        // used to be in the "fallback path" before being moved to before merging.
+        //
+        // Before emitting the AccessChain, explicitly cast the base pointer `ptr` to
+        // ensure its pointee type matches the input `ty`. This is required because the
+        // SPIR-V `AccessChain` instruction implicitly uses the size of the base
+        // pointer's pointee type when applying the *first* index operand (our
+        // `ptr_base_index`). If `ty` and `original_pointee_ty` mismatched and we
+        // reached this fallback, this cast ensures SPIR-V validity.
+        trace!("maybe_inbounds_gep fallback path calling pointercast");
+        // Cast ptr to point to `ty`.
+        // HACK(eddyb) temporary workaround for untyped pointers upstream.
+        // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
+        let ptr = self.pointercast(ptr, self.type_ptr_to(ty));
+        // Get the ID of the (potentially newly casted) pointer.
+        let ptr_id = ptr.def(self);
+        // HACK(eddyb) updated pointee type of `ptr` post-`pointercast`.
+        let original_pointee_ty = ty;
+
         // --- Attempt GEP Merging Path ---
 
         // Check if the base pointer `ptr` itself was the result of a previous
         // AccessChain instruction. Merging is only attempted if the input type `ty`
         // matches the pointer's actual underlying pointee type `original_pointee_ty`.
         // If they differ, merging could be invalid.
+        // HACK(eddyb) always attempted now, because we `pointercast` first, which:
+        // - is noop when `ty == original_pointee_ty` pre-`pointercast` (old condition)
+        // - may generate (potentially mergeable) new `AccessChain`s in other cases
         let maybe_original_access_chain = if ty == original_pointee_ty {
             // Search the current function's instructions...
             // FIXME(eddyb) this could get ridiculously expensive, at the very least
             // it could use `.rev()`, hoping the base pointer was recently defined?
-            let search_result = {
-                let emit = self.emit();
-                let module = emit.module_ref();
-                emit.selected_function().and_then(|func_idx| {
-                    module.functions.get(func_idx).and_then(|func| {
-                        // Find the instruction that defined our base pointer `ptr_id`.
-                        func.all_inst_iter()
-                            .find(|inst| inst.result_id == Some(ptr_id))
-                            .and_then(|ptr_def_inst| {
-                                // Check if that instruction was an `AccessChain` or `InBoundsAccessChain`.
-                                if matches!(
-                                    ptr_def_inst.class.opcode,
-                                    Op::AccessChain | Op::InBoundsAccessChain
-                                ) {
-                                    // If yes, extract its base pointer and its indices.
-                                    let base_ptr = ptr_def_inst.operands[0].unwrap_id_ref();
-                                    let indices = ptr_def_inst.operands[1..]
-                                        .iter()
-                                        .map(|op| op.unwrap_id_ref())
-                                        .collect::<Vec<_>>();
-                                    Some((base_ptr, indices))
-                                } else {
-                                    // The instruction defining ptr was not an `AccessChain`.
-                                    None
-                                }
-                            })
-                    })
+            let emit = self.emit();
+            let module = emit.module_ref();
+            emit.selected_function().and_then(|func_idx| {
+                module.functions.get(func_idx).and_then(|func| {
+                    // Find the instruction that defined our base pointer `ptr_id`.
+                    func.all_inst_iter()
+                        .find(|inst| inst.result_id == Some(ptr_id))
+                        .and_then(|ptr_def_inst| {
+                            // Check if that instruction was an `AccessChain` or `InBoundsAccessChain`.
+                            if matches!(
+                                ptr_def_inst.class.opcode,
+                                Op::AccessChain | Op::InBoundsAccessChain
+                            ) {
+                                // If yes, extract its base pointer and its indices.
+                                let base_ptr = ptr_def_inst.operands[0].unwrap_id_ref();
+                                let indices = ptr_def_inst.operands[1..]
+                                    .iter()
+                                    .map(|op| op.unwrap_id_ref())
+                                    .collect::<Vec<_>>();
+                                Some((base_ptr, indices))
+                            } else {
+                                // The instruction defining ptr was not an `AccessChain`.
+                                None
+                            }
+                        })
                 })
-            };
-            search_result
+            })
         } else {
             // Input type `ty` doesn't match the pointer's actual type, cannot safely merge.
             None
@@ -908,12 +910,21 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             // 2. The *last* index of the original AccessChain is a constant.
             // 3. The *first* index (`ptr_base_index`) of the *current* GEP is a constant.
             // Merging usually involves adding these two constant indices.
+            //
+            // FIXME(eddyb) the above comment seems inaccurate, there is no reason
+            // why runtime indices couldn't be added together just like constants
+            // (and in fact this is needed nowadays for all array indexing).
             let can_merge = if let Some(&last_original_idx_id) = original_indices.last() {
-                // Check if both the last original index and the current base index are constant scalars.
-                self.builder
-                    .lookup_const_scalar(last_original_idx_id.with_type(ptr_base_index.ty))
-                    .is_some()
-                    && self.builder.lookup_const_scalar(ptr_base_index).is_some()
+                // HACK(eddyb) see the above comment, this bypasses the const
+                // check below, without tripping a clippy warning etc.
+                let always_merge = true;
+                always_merge || {
+                    // Check if both the last original index and the current base index are constant scalars.
+                    self.builder
+                        .lookup_const_scalar(last_original_idx_id.with_type(ptr_base_index.ty))
+                        .is_some()
+                        && self.builder.lookup_const_scalar(ptr_base_index).is_some()
+                }
             } else {
                 // Original access chain had no indices to merge with.
                 false
@@ -965,21 +976,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
         // This path is taken if neither the Recovery nor the Merging path succeeded or applied.
         // It performs a more direct translation of the GEP request.
-
-        // HACK(eddyb): Workaround for potential upstream issues where pointers might lack precise type info.
-        // FIXME(eddyb): Ideally, this should use untyped memory features if available/necessary.
-
-        // Before emitting the AccessChain, explicitly cast the base pointer `ptr` to
-        // ensure its pointee type matches the input `ty`. This is required because the
-        // SPIR-V `AccessChain` instruction implicitly uses the size of the base
-        // pointer's pointee type when applying the *first* index operand (our
-        // `ptr_base_index`). If `ty` and `original_pointee_ty` mismatched and we
-        // reached this fallback, this cast ensures SPIR-V validity.
-        trace!("maybe_inbounds_gep fallback path calling pointercast");
-        // Cast ptr to point to `ty`.
-        let ptr = self.pointercast(ptr, self.type_ptr_to(ty));
-        // Get the ID of the (potentially newly casted) pointer.
-        let ptr_id = ptr.def(self);
 
         trace!(
             "emitting access chain via fallback path with pointer type: {}",
@@ -1259,9 +1255,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         };
         // TODO: rspirv doesn't have insert_variable function
         let result_id = builder.id();
-        let inst = Instruction::new(Op::Variable, Some(ptr_ty), Some(result_id), vec![
-            Operand::StorageClass(StorageClass::Function),
-        ]);
+        let inst = Instruction::new(
+            Op::Variable,
+            Some(ptr_ty),
+            Some(result_id),
+            vec![Operand::StorageClass(StorageClass::Function)],
+        );
         builder.insert_into_block(index, inst).unwrap();
         result_id.with_type(ptr_ty)
     }
@@ -1334,13 +1333,16 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 let ((line_start, col_start), (line_end, col_end)) =
                     (line_col_range.start, line_col_range.end);
 
-                self.custom_inst(void_ty, CustomInst::SetDebugSrcLoc {
-                    file: Operand::IdRef(file.file_name_op_string_id),
-                    line_start: Operand::IdRef(self.const_u32(line_start).def(self)),
-                    line_end: Operand::IdRef(self.const_u32(line_end).def(self)),
-                    col_start: Operand::IdRef(self.const_u32(col_start).def(self)),
-                    col_end: Operand::IdRef(self.const_u32(col_end).def(self)),
-                });
+                self.custom_inst(
+                    void_ty,
+                    CustomInst::SetDebugSrcLoc {
+                        file: Operand::IdRef(file.file_name_op_string_id),
+                        line_start: Operand::IdRef(self.const_u32(line_start).def(self)),
+                        line_end: Operand::IdRef(self.const_u32(line_end).def(self)),
+                        col_start: Operand::IdRef(self.const_u32(col_start).def(self)),
+                        col_end: Operand::IdRef(self.const_u32(col_end).def(self)),
+                    },
+                );
             }
 
             // HACK(eddyb) remove the previous instruction if made irrelevant.
@@ -1689,11 +1691,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         let signed = match ty.kind() {
             ty::Int(_) => true,
             ty::Uint(_) => false,
-            other => self.fatal(format!("Unexpected {} type: {other:#?}", match oop {
-                OverflowOp::Add => "checked add",
-                OverflowOp::Sub => "checked sub",
-                OverflowOp::Mul => "checked mul",
-            })),
+            other => self.fatal(format!(
+                "Unexpected {} type: {other:#?}",
+                match oop {
+                    OverflowOp::Add => "checked add",
+                    OverflowOp::Sub => "checked sub",
+                    OverflowOp::Mul => "checked mul",
+                }
+            )),
         };
 
         let result = if is_add {
@@ -1833,7 +1838,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 place.val.llval,
                 place.val.align,
             );
-            OperandValue::Immediate(self.to_immediate(llval, place.layout))
+            OperandValue::Immediate(llval)
         } else if let BackendRepr::ScalarPair(a, b) = place.layout.backend_repr {
             let b_offset = a
                 .primitive()
@@ -2330,9 +2335,19 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         }
     }
 
-    fn icmp(&mut self, op: IntPredicate, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
+    fn icmp(&mut self, op: IntPredicate, lhs: Self::Value, mut rhs: Self::Value) -> Self::Value {
         // Note: the signedness of the opcode doesn't have to match the signedness of the operands.
         use IntPredicate::*;
+
+        if lhs.ty != rhs.ty
+            && [lhs, rhs].map(|v| matches!(self.lookup_type(v.ty), SpirvType::Pointer { .. }))
+                == [true, true]
+        {
+            // HACK(eddyb) temporary workaround for untyped pointers upstream.
+            // FIXME(eddyb) replace with untyped memory SPIR-V + `qptr` or similar.
+            rhs = self.pointercast(rhs, lhs.ty);
+        }
+
         assert_ty_eq!(self, lhs.ty, rhs.ty);
         let b = SpirvType::Bool.def(self.span(), self);
         match self.lookup_type(lhs.ty) {
@@ -2771,14 +2786,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         }
         .def(self.span(), self);
         if self.builder.lookup_const(elt).is_some() {
-            self.constant_composite(result_type, iter::repeat(elt.def(self)).take(num_elts))
+            self.constant_composite(result_type, iter::repeat_n(elt.def(self), num_elts))
         } else {
             self.emit()
-                .composite_construct(
-                    result_type,
-                    None,
-                    iter::repeat(elt.def(self)).take(num_elts),
-                )
+                .composite_construct(result_type, None, iter::repeat_n(elt.def(self), num_elts))
                 .unwrap()
                 .with_type(result_type)
         }
@@ -3541,9 +3552,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                 .map(|s| Cow::Owned(s.replace('%', "%%")))
                                 .interleave(ref_arg_ids_with_ty_and_spec.iter().map(
                                     |&(ref_id, ty, spec)| {
-                                        use rustc_target::abi::{
-                                            Float::*, Integer::*, Primitive::*,
-                                        };
+                                        use rustc_abi::{Float::*, Integer::*, Primitive::*};
 
                                         let layout = self.layout_of(ty);
 

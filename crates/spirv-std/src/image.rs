@@ -733,14 +733,16 @@ impl<
     ) where
         I: Integer,
     {
-        asm! {
-            "%image = OpLoad _ {this}",
-            "%coordinate = OpLoad _ {coordinate}",
-            "%texels = OpLoad _ {texels}",
-            "OpImageWrite %image %coordinate %texels",
-            this = in(reg) self,
-            coordinate = in(reg) &coordinate,
-            texels = in(reg) &texels,
+        unsafe {
+            asm! {
+                "%image = OpLoad _ {this}",
+                "%coordinate = OpLoad _ {coordinate}",
+                "%texels = OpLoad _ {texels}",
+                "OpImageWrite %image %coordinate %texels",
+                this = in(reg) self,
+                coordinate = in(reg) &coordinate,
+                texels = in(reg) &texels,
+            }
         }
     }
 }
@@ -802,14 +804,16 @@ impl<
     ) where
         I: Integer,
     {
-        asm! {
-            "%image = OpLoad _ {this}",
-            "%coordinate = OpLoad _ {coordinate}",
-            "%texels = OpLoad _ {texels}",
-            "OpImageWrite %image %coordinate %texels",
-            this = in(reg) self,
-            coordinate = in(reg) &coordinate,
-            texels = in(reg) &texels,
+        unsafe {
+            asm! {
+                "%image = OpLoad _ {this}",
+                "%coordinate = OpLoad _ {coordinate}",
+                "%texels = OpLoad _ {texels}",
+                "OpImageWrite %image %coordinate %texels",
+                this = in(reg) self,
+                coordinate = in(reg) &coordinate,
+                texels = in(reg) &texels,
+            }
         }
     }
 }
