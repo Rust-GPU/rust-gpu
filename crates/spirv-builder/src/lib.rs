@@ -73,7 +73,6 @@
 #![doc = include_str!("../README.md")]
 
 mod depfile;
-mod target_specs;
 #[cfg(feature = "watch")]
 mod watch;
 
@@ -90,8 +89,8 @@ use std::process::{Command, Stdio};
 use thiserror::Error;
 
 pub use rustc_codegen_spirv_types::Capability;
+pub use rustc_codegen_spirv_types::TARGET_SPEC_DIR;
 pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
-pub use target_specs::TARGET_SPECS;
 
 #[derive(Debug, Error)]
 #[non_exhaustive]
@@ -975,13 +974,12 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // target_spec jsons, some later version requires them, some earlier
     // version fails with them (notably our 0.9.0 release)
     if toolchain_rustc_version >= Version::new(1, 76, 0) {
-        cargo
-            .arg("--target")
-            .arg(builder.path_to_target_spec.clone().unwrap_or_else(|| {
-                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                    .join("target-specs")
-                    .join(format!("{}.json", target))
-            }));
+        cargo.arg("--target").arg(
+            builder
+                .path_to_target_spec
+                .clone()
+                .unwrap_or_else(|| PathBuf::from(format!("{}/{}.json", TARGET_SPEC_DIR, target))),
+        );
     } else {
         cargo.arg("--target").arg(target);
     }
