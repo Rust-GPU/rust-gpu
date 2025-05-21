@@ -159,7 +159,7 @@ fn maybe_watch(
             .iter()
             .copied()
             .collect::<PathBuf>();
-        
+
         let has_debug_printf = options.force_spirv_passthru;
 
         let builder = SpirvBuilder::new(crate_path, "spirv-unknown-vulkan1.1")
