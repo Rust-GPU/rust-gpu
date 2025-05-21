@@ -1,6 +1,20 @@
 [alias]
 compiletest = "run --release -p compiletests --"
 
+
+[target.x86_64-pc-windows-msvc]
+# Using Rust's LLD linker to avoid MSVC linker limitations
+linker = "rust-lld.exe"
+rustflags = [
+    # Generic Code Sharing Control (Nightly-only)
+    # ------------------------------------------
+    # Disables cross-crate generic sharing to work around Windows PE export limits.
+    # Should prevent:
+    # - LNK1189 (too many objects)
+    # - LNK1248 (too many exports)
+    "-Zshare-generics=n", # =off is also an option, but you're going to increase binary size in doing so.
+]
+
 [target.'cfg(all())']
 rustflags = [
     # FIXME(eddyb) update/review these lints.
