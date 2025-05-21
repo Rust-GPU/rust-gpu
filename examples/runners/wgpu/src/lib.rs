@@ -90,16 +90,6 @@ pub enum RustGPUShader {
     Mouse,
 }
 
-impl RustGPUShader {
-    pub fn help_string() -> String {
-        let variants: Vec<String> = Self::value_variants()
-            .iter()
-            .map(|v| v.to_possible_value().unwrap().get_name().to_owned())
-            .collect();
-        format!("Shader to run [{}]", variants.join(", "))
-    }
-}
-
 struct CompiledShaderModules {
     named_spv_modules: Vec<(Option<String>, wgpu::ShaderModuleDescriptorSpirV<'static>)>,
 }
@@ -235,7 +225,8 @@ fn maybe_watch(
 #[derive(Parser, Clone)]
 #[command()]
 pub struct Options {
-    #[arg(short, long, default_value = "Sky", help = RustGPUShader::help_string())]
+    /// which shader to run
+    #[arg(short, long, default_value = "sky")]
     shader: RustGPUShader,
 
     #[arg(long)]
