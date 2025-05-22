@@ -1,5 +1,8 @@
 use anyhow::Result;
-use std::{env, process};
+use std::{
+    env,
+    process::{self, Command},
+};
 use tester::{
     ColorConfig, DynTestName, OutputFormat, RunIgnored, ShouldPanic, TestDesc, TestDescAndFn,
     TestFn, TestType, run_tests_console,
@@ -64,6 +67,25 @@ fn main() -> Result<()> {
     if test_cases.is_empty() {
         eprintln!("No valid tests found in {}", base.display());
         process::exit(1);
+    }
+
+    // We build first to ensure that the tests are compiled before running them and to
+    // passthrough stdout and stderr from cargo to help debugging.
+    let mut cmd = Command::new("cargo");
+    let cmd = cmd
+        .arg("build")
+        .arg("--release")
+        .current_dir(&base)
+        .stderr(std::process::Stdio::inherit())
+        .stdout(std::process::Stdio::inherit());
+    tracing::debug!("Running cargo command: {:?}", cmd);
+
+    let output = cmd.output().expect("build output");
+    let exit_code = output.status.code().unwrap_or(-1);
+    tracing::debug!("Cargo build exited with code {}", exit_code);
+    if !output.status.success() {
+        tracing::error!("Cargo build failed");
+        process::exit(exit_code);
     }
 
     let tests: Vec<TestDescAndFn> = test_cases
