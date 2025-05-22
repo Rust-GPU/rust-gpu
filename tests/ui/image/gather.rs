@@ -1,5 +1,6 @@
 // Test `OpImageGather`
 // build-pass
+// compile-flags: -Ctarget-feature=+ShaderNonUniform,+ext:SPV_EXT_descriptor_indexing
 
 use core::arch::asm;
 use spirv_std::spirv;
