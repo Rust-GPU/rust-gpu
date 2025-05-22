@@ -1,0 +1,53 @@
+[workspace]
+resolver = "2"
+members = [
+    "simple-compute/simple-compute-rust",
+    "simple-compute/simple-compute-wgsl",
+]
+
+[workspace.package]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[workspace.lints.rust]
+unexpected_cfgs = { level = "allow", check-cfg = [
+    'cfg(target_arch, values("spirv"))'
+] }
+
+[workspace.dependencies]
+spirv-builder = { path = "../../../crates/spirv-builder", version = "=0.9.0", default-features = false }
+spirv-std = { path = "../../../crates/spirv-std", version = "=0.9.0" }
+spirv-std-types = { path = "../../../crates/spirv-std/shared", version = "=0.9.0" }
+spirv-std-macros = { path = "../../../crates/spirv-std/macros", version = "=0.9.0" }
+difftest = { path = "../../../tests/difftests/lib" }
+# External dependencies that need to be mentioned more than once.
+num-traits = { version = "0.2.15", default-features = false }
+glam = { version = ">=0.22, <=0.29", default-features = false }
+
+# Enable incremental by default in release mode.
+[profile.release]
+incremental = true
+# HACK(eddyb) this is the default but without explicitly specifying it, Cargo
+# will treat the identical settings in `[profile.release.build-override]` below
+# as different sets of `rustc` flags and will not reuse artifacts between them.
+codegen-units = 256
+
+# Compile build-dependencies in release mode with the same settings
+# as regular dependencies (including the incremental enabled above).
+[profile.release.build-override]
+opt-level = 3
+incremental = true
+codegen-units = 256
+
+# HACK(eddyb) reduce the number of linker exports and/or imports, by avoiding
+# inter-CGU linkage, to stay under the 64Ki MSVC limit for `rustc_codegen_spirv`
+# when building it in "debug mode" (only relevant to CI for now, realistically),
+# i.e. working around this issue: https://github.com/rust-lang/rust/issues/53014.
+[profile.dev]
+# HACK(eddyb) fewer inter-crate exports/imports (not just inter-CGU), but sadly
+# not configurable w/o breaking `Cargo.toml` parsing from non-nightly Cargo
+# (moved to `.github/workflows/ci.yaml` as `RUSTFLAGS: -Zshare-generics=off`).
+#
+# rustflags = ["-Zshare-generics=off"]
+codegen-units = 1
