@@ -1,6 +1,5 @@
 use difftest::config::Config;
 use difftest::scaffold::compute::{RustComputeShader, WgpuComputeTest};
-use std::path::PathBuf;
 
 fn main() {
     // Load the config from the harness.
