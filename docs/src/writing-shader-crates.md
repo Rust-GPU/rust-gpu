@@ -120,7 +120,7 @@ how to build SPIR-V. Here are a few things we need to mention there.
 
 - Path to a spec of a target you're compiling for (see [platform support](./platform-support.md)).
   These specs reside in a directory inside the `spirv-builder` crate and an example relative path
-  could look like `../rust-gpu/crates/spirv-builder/target-specs/spirv-unknown-spv1.3.json`.
+  could look like `../rust-gpu/crates/rustc_codegen_spirv-types/target-specs/spirv-unknown-spv1.3.json`.
 - Absolute path to the `rustc_codegen_spirv` dynamic library that we built above.
 - Some additional options.
 

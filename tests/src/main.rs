@@ -1,5 +1,6 @@
 use clap::Parser;
 use itertools::Itertools as _;
+use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
 use std::{
     env, io,
     path::{Path, PathBuf},
@@ -30,10 +31,7 @@ impl Opt {
 const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
 
 fn target_spec_json(target: &str) -> String {
-    format!(
-        "{}/../crates/spirv-builder/target-specs/{target}.json",
-        env!("CARGO_MANIFEST_DIR")
-    )
+    format!("{TARGET_SPEC_DIR_PATH}/{target}.json")
 }
 
 #[derive(Copy, Clone)]
