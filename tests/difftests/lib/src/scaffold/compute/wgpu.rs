@@ -123,14 +123,13 @@ where
 
     fn init() -> anyhow::Result<(wgpu::Device, wgpu::Queue)> {
         block_on(async {
-            let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+            let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
                 #[cfg(target_os = "linux")]
                 backends: wgpu::Backends::VULKAN,
                 #[cfg(not(target_os = "linux"))]
                 backends: wgpu::Backends::PRIMARY,
-                dx12_shader_compiler: Default::default(),
                 flags: Default::default(),
-                gles_minor_version: Default::default(),
+                backend_options: Default::default(),
             });
             let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
@@ -141,18 +140,16 @@ where
                 .await
                 .context("Failed to find a suitable GPU adapter")?;
             let (device, queue) = adapter
-                .request_device(
-                    &wgpu::DeviceDescriptor {
-                        label: Some("wgpu Device"),
-                        #[cfg(target_os = "linux")]
-                        required_features: wgpu::Features::SPIRV_SHADER_PASSTHROUGH,
-                        #[cfg(not(target_os = "linux"))]
-                        required_features: wgpu::Features::empty(),
-                        required_limits: wgpu::Limits::default(),
-                        memory_hints: Default::default(),
-                    },
-                    None,
-                )
+                .request_device(&wgpu::DeviceDescriptor {
+                    label: Some("wgpu Device"),
+                    #[cfg(target_os = "linux")]
+                    required_features: wgpu::Features::SPIRV_SHADER_PASSTHROUGH,
+                    #[cfg(not(target_os = "linux"))]
+                    required_features: wgpu::Features::empty(),
+                    required_limits: wgpu::Limits::default(),
+                    memory_hints: Default::default(),
+                    trace: Default::default(),
+                })
                 .await
                 .context("Failed to create device")?;
             Ok((device, queue))
@@ -255,7 +252,7 @@ where
         buffer_slice.map_async(wgpu::MapMode::Read, move |res| {
             let _ = sender.send(res);
         });
-        device.poll(wgpu::Maintain::Wait);
+        device.poll(wgpu::PollType::Wait)?;
         block_on(receiver)
             .context("mapping canceled")?
             .context("mapping failed")?;
