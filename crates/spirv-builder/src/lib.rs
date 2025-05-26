@@ -73,7 +73,6 @@
 #![doc = include_str!("../README.md")]
 
 mod depfile;
-mod target_specs;
 #[cfg(feature = "watch")]
 mod watch;
 
@@ -91,7 +90,9 @@ use thiserror::Error;
 
 pub use rustc_codegen_spirv_types::Capability;
 pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
-pub use target_specs::TARGET_SPECS;
+
+#[cfg(feature = "include_target_specs")]
+pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
 
 #[derive(Debug, Error)]
 #[non_exhaustive]
@@ -107,11 +108,16 @@ pub enum SpirvBuilderError {
     #[error("crate path '{0}' does not exist")]
     CratePathDoesntExist(PathBuf),
     #[error(
-        "Without feature `rustc_codegen_spirv`, you need to set the path of the dylib using `rustc_codegen_spirv_location(...)`"
+        "Without feature `rustc_codegen_spirv`, you need to set the path of the dylib with `rustc_codegen_spirv_location`"
     )]
     MissingRustcCodegenSpirvDylib,
     #[error("`rustc_codegen_spirv_location` path '{0}' is not a file")]
     RustcCodegenSpirvDylibDoesNotExist(PathBuf),
+    #[error(
+        "Without feature `include_target_specs`, instead of setting a `target`, \
+        you need to set the path of the target spec file of your particular target with `path_to_target_spec`"
+    )]
+    MissingTargetSpec,
     #[error("build failed")]
     BuildFailed,
     #[error("multi-module build cannot be used with print_metadata = MetadataPrintout::Full")]
@@ -975,13 +981,13 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // target_spec jsons, some later version requires them, some earlier
     // version fails with them (notably our 0.9.0 release)
     if toolchain_rustc_version >= Version::new(1, 76, 0) {
-        cargo
-            .arg("--target")
-            .arg(builder.path_to_target_spec.clone().unwrap_or_else(|| {
-                PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                    .join("target-specs")
-                    .join(format!("{}.json", target))
-            }));
+        let path = builder.path_to_target_spec.clone();
+        let path = if cfg!(feature = "include_target_specs") {
+            path.unwrap_or_else(|| PathBuf::from(format!("{TARGET_SPEC_DIR_PATH}/{target}.json")))
+        } else {
+            path.ok_or(SpirvBuilderError::MissingTargetSpec)?
+        };
+        cargo.arg("--target").arg(path);
     } else {
         cargo.arg("--target").arg(target);
     }
