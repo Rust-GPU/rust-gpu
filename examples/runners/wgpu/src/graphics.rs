@@ -1,4 +1,5 @@
 use crate::{CompiledShaderModules, Options, maybe_watch};
+use wgpu::ShaderModuleDescriptorPassthrough;
 
 use shared::ShaderConstants;
 use winit::{
@@ -39,11 +40,10 @@ async fn run(
     window: Window,
     compiled_shader_modules: CompiledShaderModules,
 ) {
-    let backends = wgpu::util::backend_bits_from_env()
-        .unwrap_or(wgpu::Backends::VULKAN | wgpu::Backends::METAL);
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+    let backends =
+        wgpu::Backends::from_env().unwrap_or(wgpu::Backends::VULKAN | wgpu::Backends::METAL);
+    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
         backends,
-        dx12_shader_compiler: wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default(),
         ..Default::default()
     });
 
@@ -83,15 +83,13 @@ async fn run(
 
     // Create the logical device and command queue
     let (device, queue) = adapter
-        .request_device(
-            &wgpu::DeviceDescriptor {
-                label: None,
-                required_features,
-                required_limits,
-                memory_hints: wgpu::MemoryHints::Performance,
-            },
-            None,
-        )
+        .request_device(&wgpu::DeviceDescriptor {
+            label: None,
+            required_features,
+            required_limits,
+            memory_hints: wgpu::MemoryHints::Performance,
+            trace: Default::default(),
+        })
         .await
         .expect("Failed to create device");
 
@@ -373,7 +371,11 @@ fn create_pipeline(
     // FIXME(eddyb) automate this decision by default.
     let create_module = |module| {
         if options.force_spirv_passthru {
-            unsafe { device.create_shader_module_spirv(&module) }
+            unsafe {
+                device.create_shader_module_passthrough(ShaderModuleDescriptorPassthrough::SpirV(
+                    module,
+                ))
+            }
         } else {
             let wgpu::ShaderModuleDescriptorSpirV { label, source } = module;
             device.create_shader_module(wgpu::ShaderModuleDescriptor {
