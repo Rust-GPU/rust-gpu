@@ -358,7 +358,6 @@ impl Default for ShaderCrateFeatures {
     }
 }
 
-#[non_exhaustive]
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 pub struct SpirvBuilder {
