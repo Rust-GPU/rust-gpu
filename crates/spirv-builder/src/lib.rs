@@ -363,7 +363,8 @@ impl Default for ShaderCrateFeatures {
 pub struct SpirvBuilder {
     #[cfg_attr(feature = "clap", clap(skip))]
     pub path_to_crate: Option<PathBuf>,
-    /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::Full`].
+    /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::None`].
+    /// Within build scripts, set it to [`MetadataPrintout::DependencyOnly`] or [`MetadataPrintout::Full`] to ensure the build script is rerun on code changes.
     #[cfg_attr(feature = "clap", clap(skip))]
     pub print_metadata: MetadataPrintout,
     /// Build in release. Defaults to true.
