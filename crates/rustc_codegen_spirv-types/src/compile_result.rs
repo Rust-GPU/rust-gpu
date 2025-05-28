@@ -1,42 +1,46 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
+
+pub type ModuleResult = GenericModuleResult<PathBuf>;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum ModuleResult {
-    SingleModule(PathBuf),
-    MultiModule(BTreeMap<String, PathBuf>),
+pub enum GenericModuleResult<T> {
+    SingleModule(T),
+    MultiModule(BTreeMap<String, T>),
 }
 
-impl ModuleResult {
-    pub fn unwrap_single(&self) -> &Path {
+impl<T> GenericModuleResult<T> {
+    pub fn unwrap_single(&self) -> &T {
         match self {
-            ModuleResult::SingleModule(result) => result,
-            ModuleResult::MultiModule(_) => {
+            GenericModuleResult::SingleModule(result) => result,
+            GenericModuleResult::MultiModule(_) => {
                 panic!("called `ModuleResult::unwrap_single()` on a `MultiModule` result")
             }
         }
     }
 
-    pub fn unwrap_multi(&self) -> &BTreeMap<String, PathBuf> {
+    pub fn unwrap_multi(&self) -> &BTreeMap<String, T> {
         match self {
-            ModuleResult::MultiModule(result) => result,
-            ModuleResult::SingleModule(_) => {
+            GenericModuleResult::MultiModule(result) => result,
+            GenericModuleResult::SingleModule(_) => {
                 panic!("called `ModuleResult::unwrap_multi()` on a `SingleModule` result")
             }
         }
     }
 }
 
+pub type CompileResult = GenericCompileResult<PathBuf>;
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CompileResult {
+pub struct GenericCompileResult<T> {
     pub entry_points: Vec<String>,
-    pub module: ModuleResult,
+    pub module: GenericModuleResult<T>,
 }
 
-impl CompileResult {
+impl<T> GenericCompileResult<T> {
     pub fn codegen_entry_point_strings(&self) -> String {
         let trie = Trie::create_from(self.entry_points.iter().map(|x| x as &str));
         let mut builder = String::new();
@@ -109,9 +113,6 @@ impl<'a> Trie<'a> {
         }
     }
 }
-
-#[allow(non_upper_case_globals)]
-pub const a: &str = "x::a";
 
 #[cfg(test)]
 mod test {
