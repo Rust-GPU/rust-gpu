@@ -1,4 +1,4 @@
-# `rustc_codegen_spirv_target_spec`
+# `rustc_codegen_spirv-target-specs`
 
 The target spec json files of rust-gpu to hand to the rustc compiler, declaring various metadata about our codegen backend.
 
