@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+use std::convert::Infallible;
 use std::fmt::Write;
 use std::path::PathBuf;
 
@@ -41,6 +42,42 @@ pub struct GenericCompileResult<T> {
 }
 
 impl<T> GenericCompileResult<T> {
+    pub fn try_map<R, E>(
+        &self,
+        mut map_entry_point: impl FnMut(&String) -> Result<String, E>,
+        mut map_module: impl FnMut(&T) -> Result<R, E>,
+    ) -> Result<GenericCompileResult<R>, E> {
+        Ok(match &self.module {
+            GenericModuleResult::SingleModule(t) => GenericCompileResult {
+                entry_points: self
+                    .entry_points
+                    .iter()
+                    .map(map_entry_point)
+                    .collect::<Result<_, _>>()?,
+                module: GenericModuleResult::SingleModule(map_module(t)?),
+            },
+            GenericModuleResult::MultiModule(map) => {
+                let new_map: BTreeMap<String, R> = map
+                    .iter()
+                    .map(|(entry_point, t)| Ok((map_entry_point(entry_point)?, map_module(t)?)))
+                    .collect::<Result<_, _>>()?;
+                GenericCompileResult {
+                    entry_points: new_map.keys().cloned().collect(),
+                    module: GenericModuleResult::MultiModule(new_map),
+                }
+            }
+        })
+    }
+
+    pub fn map<R>(
+        &self,
+        mut map_entry_point: impl FnMut(&String) -> String,
+        mut map_module: impl FnMut(&T) -> R,
+    ) -> GenericCompileResult<R> {
+        self.try_map::<_, Infallible>(|e| Ok(map_entry_point(e)), |e| Ok(map_module(e)))
+            .unwrap()
+    }
+
     pub fn codegen_entry_point_strings(&self) -> String {
         let trie = Trie::create_from(self.entry_points.iter().map(|x| x as &str));
         let mut builder = String::new();
