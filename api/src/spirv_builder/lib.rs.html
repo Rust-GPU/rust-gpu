@@ -1146,7 +1146,18 @@
 <a href="#1145" id="1145">1145</a>
 <a href="#1146" id="1146">1146</a>
 <a href="#1147" id="1147">1147</a>
-<a href="#1148" id="1148">1148</a></pre></div><pre class="rust"><code><span class="comment">// FIXME(eddyb) update/review these lints.
+<a href="#1148" id="1148">1148</a>
+<a href="#1149" id="1149">1149</a>
+<a href="#1150" id="1150">1150</a>
+<a href="#1151" id="1151">1151</a>
+<a href="#1152" id="1152">1152</a>
+<a href="#1153" id="1153">1153</a>
+<a href="#1154" id="1154">1154</a>
+<a href="#1155" id="1155">1155</a>
+<a href="#1156" id="1156">1156</a>
+<a href="#1157" id="1157">1157</a>
+<a href="#1158" id="1158">1158</a>
+<a href="#1159" id="1159">1159</a></pre></div><pre class="rust"><code><span class="comment">// FIXME(eddyb) update/review these lints.
 //
 // BEGIN - Embark standard lints v0.4
 // do not change or add/remove here, but one can add exceptions after this section
@@ -1221,7 +1232,6 @@
 </span><span class="attr">#![doc = <span class="macro">include_str!</span>(<span class="string">"../README.md"</span>)]
 
 </span><span class="kw">mod </span>depfile;
-<span class="kw">mod </span>target_specs;
 <span class="attr">#[cfg(feature = <span class="string">"watch"</span>)]
 </span><span class="kw">mod </span>watch;
 
@@ -1239,7 +1249,9 @@
 
 <span class="kw">pub use </span>rustc_codegen_spirv_types::Capability;
 <span class="kw">pub use </span>rustc_codegen_spirv_types::{CompileResult, ModuleResult};
-<span class="kw">pub use </span>target_specs::TARGET_SPECS;
+
+<span class="attr">#[cfg(feature = <span class="string">"include-target-specs"</span>)]
+</span><span class="kw">pub use </span>rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
 
 <span class="attr">#[derive(Debug, Error)]
 #[non_exhaustive]
@@ -1255,11 +1267,16 @@
     <span class="attr">#[error(<span class="string">"crate path '{0}' does not exist"</span>)]
     </span>CratePathDoesntExist(PathBuf),
     <span class="attr">#[error(
-        <span class="string">"Without feature `rustc_codegen_spirv`, you need to set the path of the dylib using `rustc_codegen_spirv_location(...)`"
+        <span class="string">"Without feature `rustc_codegen_spirv`, you need to set the path of the dylib with `rustc_codegen_spirv_location`"
     </span>)]
     </span>MissingRustcCodegenSpirvDylib,
     <span class="attr">#[error(<span class="string">"`rustc_codegen_spirv_location` path '{0}' is not a file"</span>)]
     </span>RustcCodegenSpirvDylibDoesNotExist(PathBuf),
+    <span class="attr">#[error(
+        <span class="string">"Without feature `include-target-specs`, instead of setting a `target`, \
+        you need to set the path of the target spec file of your particular target with `path_to_target_spec`"
+    </span>)]
+    </span>MissingTargetSpec,
     <span class="attr">#[error(<span class="string">"build failed"</span>)]
     </span>BuildFailed,
     <span class="attr">#[error(<span class="string">"multi-module build cannot be used with print_metadata = MetadataPrintout::Full"</span>)]
@@ -1500,13 +1517,13 @@
     }
 }
 
-<span class="attr">#[non_exhaustive]
-#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
+<span class="attr">#[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = <span class="string">"clap"</span>, derive(clap::Parser))]
 </span><span class="kw">pub struct </span>SpirvBuilder {
     <span class="attr">#[cfg_attr(feature = <span class="string">"clap"</span>, clap(skip))]
     </span><span class="kw">pub </span>path_to_crate: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
-    <span class="doccomment">/// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::Full`].
+    <span class="doccomment">/// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::None`].
+    /// Within build scripts, set it to [`MetadataPrintout::DependencyOnly`] or [`MetadataPrintout::Full`] to ensure the build script is rerun on code changes.
     </span><span class="attr">#[cfg_attr(feature = <span class="string">"clap"</span>, clap(skip))]
     </span><span class="kw">pub </span>print_metadata: MetadataPrintout,
     <span class="doccomment">/// Build in release. Defaults to true.
@@ -2123,13 +2140,18 @@
     // target_spec jsons, some later version requires them, some earlier
     // version fails with them (notably our 0.9.0 release)
     </span><span class="kw">if </span>toolchain_rustc_version &gt;= Version::new(<span class="number">1</span>, <span class="number">76</span>, <span class="number">0</span>) {
-        cargo
-            .arg(<span class="string">"--target"</span>)
-            .arg(builder.path_to_target_spec.clone().unwrap_or_else(|| {
-                PathBuf::from(<span class="macro">env!</span>(<span class="string">"CARGO_MANIFEST_DIR"</span>))
-                    .join(<span class="string">"target-specs"</span>)
-                    .join(<span class="macro">format!</span>(<span class="string">"{}.json"</span>, target))
-            }));
+        <span class="kw">let </span>path_opt = builder.path_to_target_spec.clone();
+        <span class="kw">let </span>path;
+        <span class="attr">#[cfg(feature = <span class="string">"include-target-specs"</span>)]
+        </span>{
+            path = path_opt
+                .unwrap_or_else(|| PathBuf::from(<span class="macro">format!</span>(<span class="string">"{TARGET_SPEC_DIR_PATH}/{target}.json"</span>)));
+        }
+        <span class="attr">#[cfg(not(feature = <span class="string">"include-target-specs"</span>))]
+        </span>{
+            path = path_opt.ok_or(SpirvBuilderError::MissingTargetSpec)<span class="question-mark">?</span>;
+        }
+        cargo.arg(<span class="string">"--target"</span>).arg(path);
     } <span class="kw">else </span>{
         cargo.arg(<span class="string">"--target"</span>).arg(target);
     }

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TARGET_SPEC_DIR_PATH"]};
