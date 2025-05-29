@@ -91,7 +91,7 @@ use thiserror::Error;
 pub use rustc_codegen_spirv_types::Capability;
 pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
 
-#[cfg(feature = "include_target_specs")]
+#[cfg(feature = "include-target-specs")]
 pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
 
 #[derive(Debug, Error)]
@@ -114,7 +114,7 @@ pub enum SpirvBuilderError {
     #[error("`rustc_codegen_spirv_location` path '{0}' is not a file")]
     RustcCodegenSpirvDylibDoesNotExist(PathBuf),
     #[error(
-        "Without feature `include_target_specs`, instead of setting a `target`, \
+        "Without feature `include-target-specs`, instead of setting a `target`, \
         you need to set the path of the target spec file of your particular target with `path_to_target_spec`"
     )]
     MissingTargetSpec,
@@ -983,12 +983,12 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     if toolchain_rustc_version >= Version::new(1, 76, 0) {
         let path_opt = builder.path_to_target_spec.clone();
         let path;
-        #[cfg(feature = "include_target_specs")]
+        #[cfg(feature = "include-target-specs")]
         {
             path = path_opt
                 .unwrap_or_else(|| PathBuf::from(format!("{TARGET_SPEC_DIR_PATH}/{target}.json")));
         }
-        #[cfg(not(feature = "include_target_specs"))]
+        #[cfg(not(feature = "include-target-specs"))]
         {
             path = path_opt.ok_or(SpirvBuilderError::MissingTargetSpec)?;
         }
