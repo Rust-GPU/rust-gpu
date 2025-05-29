@@ -11,8 +11,10 @@ use core::arch::asm;
 #[doc(alias = "OpEmitVertex")]
 #[inline]
 pub unsafe fn emit_vertex() {
-    asm! {
-        "OpEmitVertex",
+    unsafe {
+        asm! {
+            "OpEmitVertex",
+        }
     }
 }
 
@@ -25,8 +27,10 @@ pub unsafe fn emit_vertex() {
 #[doc(alias = "OpEndPrimitive")]
 #[inline]
 pub unsafe fn end_primitive() {
-    asm! {
-        "OpEndPrimitive",
+    unsafe {
+        asm! {
+            "OpEndPrimitive",
+        }
     }
 }
 
@@ -44,11 +48,13 @@ pub unsafe fn end_primitive() {
 #[doc(alias = "OpEmitStreamVertex")]
 #[inline]
 pub unsafe fn emit_stream_vertex<const STREAM: i64>() {
-    asm! {
-        "%i64 = OpTypeInt 64 1",
-        "%stream = OpConstant %i64 {stream}",
-        "OpEmitStreamVertex %stream",
-        stream = const STREAM,
+    unsafe {
+        asm! {
+            "%i64 = OpTypeInt 64 1",
+            "%stream = OpConstant %i64 {stream}",
+            "OpEmitStreamVertex %stream",
+            stream = const STREAM,
+        }
     }
 }
 
@@ -64,10 +70,12 @@ pub unsafe fn emit_stream_vertex<const STREAM: i64>() {
 #[doc(alias = "OpEndStreamPrimitive")]
 #[inline]
 pub unsafe fn end_stream_primitive<const STREAM: i64>() {
-    asm! {
-        "%i64 = OpTypeInt 64 1",
-        "%stream = OpConstant %i64 {stream}",
-        "OpEndStreamPrimitive %stream",
-        stream = const STREAM,
+    unsafe {
+        asm! {
+            "%i64 = OpTypeInt 64 1",
+            "%stream = OpConstant %i64 {stream}",
+            "OpEndStreamPrimitive %stream",
+            stream = const STREAM,
+        }
     }
 }

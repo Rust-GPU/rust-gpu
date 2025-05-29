@@ -12,23 +12,23 @@ use rspirv::spirv::{
     AddressingModel, Capability, MemoryModel, Op, SourceLanguage, StorageClass, Word,
 };
 use rspirv::{binary::Assemble, binary::Disassemble};
+use rustc_abi::Size;
 use rustc_arena::DroplessArena;
 use rustc_codegen_ssa::traits::ConstCodegenMethods as _;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
-use rustc_data_structures::sync::Lrc;
 use rustc_middle::bug;
 use rustc_middle::mir::interpret::ConstAllocation;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::source_map::SourceMap;
 use rustc_span::symbol::Symbol;
 use rustc_span::{DUMMY_SP, FileName, FileNameDisplayPreference, SourceFile, Span};
-use rustc_target::abi::Size;
 use std::assert_matches::assert_matches;
 use std::cell::{RefCell, RefMut};
 use std::hash::{Hash, Hasher};
 use std::iter;
 use std::ops::Range;
 use std::str;
+use std::sync::Arc;
 use std::{fs::File, io::Write, path::Path};
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
@@ -346,16 +346,16 @@ struct WithConstLegality<V> {
 /// equivalent to a whole `rustc` `SourceFile`, but has O(1) `Eq` and `Hash`
 /// implementations (i.e. not involving the path or the contents of the file).
 ///
-/// This is possible because we can compare `Lrc<SourceFile>`s by equality, as
+/// This is possible because we can compare `Arc<SourceFile>`s by equality, as
 /// `rustc`'s `SourceMap` already ensures that only one `SourceFile` will be
 /// allocated for some given file. For hashing, we could hash the address, or
 ///
-struct DebugFileKey(Lrc<SourceFile>);
+struct DebugFileKey(Arc<SourceFile>);
 
 impl PartialEq for DebugFileKey {
     fn eq(&self, other: &Self) -> bool {
         let (Self(self_sf), Self(other_sf)) = (self, other);
-        Lrc::ptr_eq(self_sf, other_sf)
+        Arc::ptr_eq(self_sf, other_sf)
     }
 }
 impl Eq for DebugFileKey {}
@@ -829,7 +829,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
         (self.def_debug_file(lo_loc.file), lo_line_col..hi_line_col)
     }
 
-    fn def_debug_file(&self, sf: Lrc<SourceFile>) -> DebugFileSpirv<'tcx> {
+    fn def_debug_file(&self, sf: Arc<SourceFile>) -> DebugFileSpirv<'tcx> {
         *self
             .debug_file_cache
             .borrow_mut()
@@ -839,7 +839,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
 
                 // FIXME(eddyb) it would be nicer if we could just rely on
                 // `RealFileName::to_string_lossy` returning `Cow<'_, str>`,
-                // but sadly that `'_` is the lifetime of the temporary `Lrc`,
+                // but sadly that `'_` is the lifetime of the temporary `Arc`,
                 // not `'tcx`, so we have to arena-allocate to get `&'tcx str`.
                 let file_name = match &sf.name {
                     FileName::Real(name) => {

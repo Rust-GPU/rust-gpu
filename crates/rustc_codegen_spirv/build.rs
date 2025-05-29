@@ -18,9 +18,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2024-11-22"
+channel = "nightly-2025-05-09"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = b19329a37cedf2027517ae22c87cf201f93d776e"#;
+# commit_hash = 50aa04180709189a03dde5fd1c05751b2625ed37"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -159,9 +159,9 @@ fn generate_pqp_cg_ssa() -> Result<(), Box<dyn Error>> {
                 }
             }
 
-            // HACK(eddyb) remove `windows` dependency (from MSVC linker output
-            // parsing, which `rustc_codegen_spirv` will never invoke anyway).
             if relative_path == Path::new("src/back/link.rs") {
+                // HACK(eddyb) remove `windows` dependency (from MSVC linker output
+                // parsing, which `rustc_codegen_spirv` will never invoke anyway).
                 src = src.replace(
                     "#[cfg(not(windows))]
 fn escape_linker_output(",
@@ -178,6 +178,36 @@ fn escape_linker_output(",
 mod win {",
                     "#[cfg(any())]
 mod win {",
+                );
+                // HACK(eddyb) remove `object` dependency (for Windows `raw_dylib`
+                // handling, which `rustc_codegen_spirv` will never invoke anyway).
+                src = src.replace("mod raw_dylib;", "// mod raw_dylib;");
+                src = src.replace(
+                    "
+        for output_path in raw_dylib::",
+                    "
+        #[cfg(any())]
+        for output_path in raw_dylib::",
+                );
+                src = src.replace(
+                    "
+        for link_path in raw_dylib::",
+                    "
+        #[cfg(any())]
+        for link_path in raw_dylib::",
+                );
+            }
+            if relative_path == Path::new("src/back/metadata.rs") {
+                // HACK(eddyb) remove `object` dependency.
+                src = src.replace(
+                    "
+pub(crate) fn create_object_file(sess: &Session) -> Option<write::Object<'static>> {",
+                    "
+pub(crate) fn create_object_file(_: &Session) -> Option<write::Object<'static>> {
+    None
+}
+#[cfg(any())]
+pub(crate) fn create_object_file(sess: &Session) -> Option<write::Object<'static>> {",
                 );
             }
 
@@ -198,8 +228,16 @@ mod win {",
             } else if relative_path == Path::new("src/mir/operand.rs") {
                 src = src.replace("alloca(field.size,", "typed_alloca(llfield_ty,");
 
-                // HACK(eddyb) non-array `#[repr(simd)]` workaround (see `src/abi.rs`).
+                // HACK(eddyb) non-array `#[repr(simd)]` workarounds (see `src/abi.rs`).
                 src = src.replace("if constant_ty.is_simd() {", "if false {");
+                src = src.replace(
+                    "match (self.val, self.layout.backend_repr) {",
+                    "match (self.val, self.layout.backend_repr) {
+                // `#[repr(simd)]` types are also immediate.
+                (OperandValue::Immediate(llval), BackendRepr::SimdVector { element, .. }) => {
+                    (Some(element), bx.extract_element(llval, bx.cx().const_usize(i as u64)))
+                }",
+                );
             }
 
             fs::write(out_path, src)?;
@@ -259,6 +297,9 @@ mod win {",
             println!("cargo::warning={line}");
         }
         println!("cargo::warning=");
+
+        // HACK(eddyb) allow the warning to be cleared after `lib.rs` is fixed.
+        println!("cargo:rerun-if-changed=src/lib.rs");
     }
 
     // HACK(eddyb) write a file that can be `include!`d from `lib.rs`.
@@ -275,6 +316,12 @@ mod maybe_pqp_cg_ssa;
     fs::write(out_dir.join("pqp_cg_ssa.rs"), pqp_cg_ssa_top_level)?;
 
     println!("cargo::rustc-check-cfg=cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)");
+
+    // HACK(eddyb) `if cfg!(llvm_enzyme)` added upstream for autodiff support.
+    println!("cargo::rustc-check-cfg=cfg(llvm_enzyme)");
+
+    // HACK(eddyb) `cfg_attr(bootstrap, ...` used upstream temporarily.
+    println!("cargo::rustc-check-cfg=cfg(bootstrap)");
 
     Ok(())
 }

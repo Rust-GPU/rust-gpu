@@ -27,16 +27,18 @@ impl AccelerationStructure {
     #[doc(alias = "OpConvertUToAccelerationStructureKHR")]
     #[inline]
     pub unsafe fn from_u64(id: u64) -> AccelerationStructure {
-        // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        let mut result_slot = core::mem::MaybeUninit::uninit();
-        asm! {
-            "%ret = OpTypeAccelerationStructureKHR",
-            "%result = OpConvertUToAccelerationStructureKHR %ret {id}",
-            "OpStore {result_slot} %result",
-            id = in(reg) id,
-            result_slot = in(reg) result_slot.as_mut_ptr(),
+        unsafe {
+            // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
+            let mut result_slot = core::mem::MaybeUninit::uninit();
+            asm! {
+                "%ret = OpTypeAccelerationStructureKHR",
+                "%result = OpConvertUToAccelerationStructureKHR %ret {id}",
+                "OpStore {result_slot} %result",
+                id = in(reg) id,
+                result_slot = in(reg) result_slot.as_mut_ptr(),
+            }
+            result_slot.assume_init()
         }
-        result_slot.assume_init()
     }
 
     /// Converts a vector of two 32 bit integers into an [`AccelerationStructure`].
@@ -46,17 +48,19 @@ impl AccelerationStructure {
     #[doc(alias = "OpConvertUToAccelerationStructureKHR")]
     #[inline]
     pub unsafe fn from_vec(id: impl Vector<u32, 2>) -> AccelerationStructure {
-        // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        let mut result_slot = core::mem::MaybeUninit::uninit();
-        asm! {
-            "%ret = OpTypeAccelerationStructureKHR",
-            "%id = OpLoad _ {id}",
-            "%result = OpConvertUToAccelerationStructureKHR %ret %id",
-            "OpStore {result_slot} %result",
-            id = in(reg) &id,
-            result_slot = in(reg) result_slot.as_mut_ptr(),
+        unsafe {
+            // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
+            let mut result_slot = core::mem::MaybeUninit::uninit();
+            asm! {
+                "%ret = OpTypeAccelerationStructureKHR",
+                "%id = OpLoad _ {id}",
+                "%result = OpConvertUToAccelerationStructureKHR %ret %id",
+                "OpStore {result_slot} %result",
+                id = in(reg) &id,
+                result_slot = in(reg) result_slot.as_mut_ptr(),
+            }
+            result_slot.assume_init()
         }
-        result_slot.assume_init()
     }
 
     #[spirv_std_macros::gpu_only]
@@ -103,33 +107,35 @@ impl AccelerationStructure {
         ray_tmax: f32,
         payload: &mut T,
     ) {
-        asm! {
-            "%acceleration_structure = OpLoad _ {acceleration_structure}",
-            "%ray_origin = OpLoad _ {ray_origin}",
-            "%ray_direction = OpLoad _ {ray_direction}",
-            "OpTraceRayKHR \
-            %acceleration_structure \
-            {ray_flags} \
-            {cull_mask} \
-            {sbt_offset} \
-            {sbt_stride} \
-            {miss_index} \
-            %ray_origin \
-            {ray_tmin} \
-            %ray_direction \
-            {ray_tmax} \
-            {payload}",
-            acceleration_structure = in(reg) self,
-            ray_flags = in(reg) ray_flags.bits(),
-            cull_mask = in(reg) cull_mask,
-            sbt_offset = in(reg) sbt_offset,
-            sbt_stride = in(reg) sbt_stride,
-            miss_index = in(reg) miss_index,
-            ray_origin = in(reg) &ray_origin,
-            ray_tmin = in(reg) ray_tmin,
-            ray_direction = in(reg) &ray_direction,
-            ray_tmax = in(reg) ray_tmax,
-            payload = in(reg) payload,
+        unsafe {
+            asm! {
+                "%acceleration_structure = OpLoad _ {acceleration_structure}",
+                "%ray_origin = OpLoad _ {ray_origin}",
+                "%ray_direction = OpLoad _ {ray_direction}",
+                "OpTraceRayKHR \
+                %acceleration_structure \
+                {ray_flags} \
+                {cull_mask} \
+                {sbt_offset} \
+                {sbt_stride} \
+                {miss_index} \
+                %ray_origin \
+                {ray_tmin} \
+                %ray_direction \
+                {ray_tmax} \
+                {payload}",
+                acceleration_structure = in(reg) self,
+                ray_flags = in(reg) ray_flags.bits(),
+                cull_mask = in(reg) cull_mask,
+                sbt_offset = in(reg) sbt_offset,
+                sbt_stride = in(reg) sbt_stride,
+                miss_index = in(reg) miss_index,
+                ray_origin = in(reg) &ray_origin,
+                ray_tmin = in(reg) ray_tmin,
+                ray_direction = in(reg) &ray_direction,
+                ray_tmax = in(reg) ray_tmax,
+                payload = in(reg) payload,
+            }
         }
     }
 }
@@ -259,27 +265,29 @@ impl RayQuery {
         ray_direction: impl Vector<f32, 3>,
         ray_tmax: f32,
     ) {
-        asm! {
-            "%acceleration_structure = OpLoad _ {acceleration_structure}",
-            "%origin = OpLoad _ {ray_origin}",
-            "%direction = OpLoad _ {ray_direction}",
-            "OpRayQueryInitializeKHR \
-                {ray_query} \
-                %acceleration_structure \
-                {ray_flags} \
-                {cull_mask} \
-                %origin \
-                {ray_tmin} \
-                %direction \
-                {ray_tmax}",
-            ray_query = in(reg) self,
-            acceleration_structure = in(reg) acceleration_structure,
-            ray_flags = in(reg) ray_flags.bits(),
-            cull_mask = in(reg) cull_mask,
-            ray_origin = in(reg) &ray_origin,
-            ray_tmin = in(reg) ray_tmin,
-            ray_direction = in(reg) &ray_direction,
-            ray_tmax = in(reg) ray_tmax,
+        unsafe {
+            asm! {
+                "%acceleration_structure = OpLoad _ {acceleration_structure}",
+                "%origin = OpLoad _ {ray_origin}",
+                "%direction = OpLoad _ {ray_direction}",
+                "OpRayQueryInitializeKHR \
+                    {ray_query} \
+                    %acceleration_structure \
+                    {ray_flags} \
+                    {cull_mask} \
+                    %origin \
+                    {ray_tmin} \
+                    %direction \
+                    {ray_tmax}",
+                ray_query = in(reg) self,
+                acceleration_structure = in(reg) acceleration_structure,
+                ray_flags = in(reg) ray_flags.bits(),
+                cull_mask = in(reg) cull_mask,
+                ray_origin = in(reg) &ray_origin,
+                ray_tmin = in(reg) ray_tmin,
+                ray_direction = in(reg) &ray_direction,
+                ray_tmax = in(reg) ray_tmax,
+            }
         }
     }
 
@@ -290,17 +298,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryProceedKHR")]
     #[inline]
     pub unsafe fn proceed(&self) -> bool {
-        let mut result = false;
+        unsafe {
+            let mut result = false;
 
-        asm! {
-            "%bool = OpTypeBool",
-            "%result = OpRayQueryProceedKHR %bool {ray_query}",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%bool = OpTypeBool",
+                "%result = OpRayQueryProceedKHR %bool {ray_query}",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Terminates further execution of a ray query; further calls to
@@ -311,7 +321,7 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryTerminateKHR")]
     #[inline]
     pub unsafe fn terminate(&self) {
-        asm!("OpRayQueryTerminateKHR {}", in(reg) self)
+        unsafe { asm!("OpRayQueryTerminateKHR {}", in(reg) self) }
     }
 
     /// Confirms a triangle intersection to be included in the determination
@@ -325,7 +335,7 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryConfirmIntersectionKHR")]
     #[inline]
     pub unsafe fn confirm_intersection(&self) {
-        asm!("OpRayQueryConfirmIntersectionKHR {}", in(reg) self)
+        unsafe { asm!("OpRayQueryConfirmIntersectionKHR {}", in(reg) self) }
     }
 
     /// Returns the type of the current candidate intersection.
@@ -335,20 +345,22 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionTypeKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_type(&self) -> CandidateIntersection {
-        let result: u32;
+        unsafe {
+            let result: u32;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 0",
-            "{result} = OpRayQueryGetIntersectionTypeKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
-        }
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "{result} = OpRayQueryGetIntersectionTypeKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
 
-        match result {
-            0 => CandidateIntersection::Triangle,
-            1 => CandidateIntersection::AABB,
-            _ => CandidateIntersection::Triangle,
+            match result {
+                0 => CandidateIntersection::Triangle,
+                1 => CandidateIntersection::AABB,
+                _ => CandidateIntersection::Triangle,
+            }
         }
     }
 
@@ -357,21 +369,23 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionTypeKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_type(&self) -> CommittedIntersection {
-        let result: u32;
+        unsafe {
+            let result: u32;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 1",
-            "{result} = OpRayQueryGetIntersectionTypeKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
-        }
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 1",
+                "{result} = OpRayQueryGetIntersectionTypeKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
 
-        match result {
-            0 => CommittedIntersection::None,
-            1 => CommittedIntersection::Triangle,
-            2 => CommittedIntersection::Generated,
-            _ => CommittedIntersection::None,
+            match result {
+                0 => CommittedIntersection::None,
+                1 => CommittedIntersection::Triangle,
+                2 => CommittedIntersection::Generated,
+                _ => CommittedIntersection::None,
+            }
         }
     }
 
@@ -380,16 +394,18 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetRayTMinKHR")]
     #[inline]
     pub unsafe fn get_ray_t_min(&self) -> f32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%f32 = OpTypeFloat 32",
-            "{result} = OpRayQueryGetRayTMinKHR %f32 {ray_query}",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%f32 = OpTypeFloat 32",
+                "{result} = OpRayQueryGetRayTMinKHR %f32 {ray_query}",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Returns the "Ray Flags" value used by the ray query.
@@ -397,15 +413,17 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetRayFlagsKHR")]
     #[inline]
     pub unsafe fn get_ray_flags(&self) -> RayFlags {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "{result} = OpRayQueryGetRayFlagsKHR typeof{result} {ray_query}",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "{result} = OpRayQueryGetRayFlagsKHR typeof{result} {ray_query}",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            RayFlags::from_bits_truncate(result)
         }
-
-        RayFlags::from_bits_truncate(result)
     }
 
     /// Gets the "T" value for the current or previous intersection considered
@@ -418,17 +436,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionTKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_t(&self) -> f32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 0",
-            "{result} = OpRayQueryGetIntersectionTKHR typeof{result} {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "{result} = OpRayQueryGetIntersectionTKHR typeof{result} {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the "T" value for the current or previous intersection considered
@@ -442,17 +462,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionTKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_t(&self) -> f32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 1",
-            "{result} = OpRayQueryGetIntersectionTKHR typeof{result} {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 1",
+                "{result} = OpRayQueryGetIntersectionTKHR typeof{result} {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the custom index of the instance for the current intersection
@@ -463,17 +485,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionInstanceCustomIndexKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_instance_custom_index(&self) -> u32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 0",
-            "{result} = OpRayQueryGetIntersectionInstanceCustomIndexKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "{result} = OpRayQueryGetIntersectionInstanceCustomIndexKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the custom index of the instance for the current intersection
@@ -487,17 +511,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionInstanceCustomIndexKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_instance_custom_index(&self) -> u32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 1",
-            "{result} = OpRayQueryGetIntersectionInstanceCustomIndexKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 1",
+                "{result} = OpRayQueryGetIntersectionInstanceCustomIndexKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the id of the instance for the current intersection considered in a
@@ -508,17 +534,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionInstanceIdKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_instance_id(&self) -> u32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 0",
-            "{result} = OpRayQueryGetIntersectionInstanceIdKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "{result} = OpRayQueryGetIntersectionInstanceIdKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the id of the instance for the current intersection considered in a
@@ -532,17 +560,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionInstanceIdKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_instance_id(&self) -> u32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 1",
-            "{result} = OpRayQueryGetIntersectionInstanceIdKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 1",
+                "{result} = OpRayQueryGetIntersectionInstanceIdKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the shader binding table record offset for the current intersection
@@ -553,17 +583,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_shader_binding_table_record_offset(&self) -> u32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 0",
-            "{result} = OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "{result} = OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the shader binding table record offset for the current intersection
@@ -577,17 +609,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_shader_binding_table_record_offset(&self) -> u32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 1",
-            "{result} = OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 1",
+                "{result} = OpRayQueryGetIntersectionInstanceShaderBindingTableRecordOffsetKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the geometry index for the current intersection considered in a
@@ -598,17 +632,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionGeometryIndexKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_geometry_index(&self) -> u32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 0",
-            "{result} = OpRayQueryGetIntersectionGeometryIndexKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "{result} = OpRayQueryGetIntersectionGeometryIndexKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the geometry index for the current intersection considered in a
@@ -622,17 +658,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionGeometryIndexKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_geometry_index(&self) -> u32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 1",
-            "{result} = OpRayQueryGetIntersectionGeometryIndexKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 1",
+                "{result} = OpRayQueryGetIntersectionGeometryIndexKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the primitive index for the current intersection considered in a
@@ -643,17 +681,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionPrimitiveIndexKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_primitive_index(&self) -> u32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 0",
-            "{result} = OpRayQueryGetIntersectionPrimitiveIndexKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "{result} = OpRayQueryGetIntersectionPrimitiveIndexKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the primitive index for the current intersection considered in a
@@ -667,17 +707,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionPrimitiveIndexKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_primitive_index(&self) -> u32 {
-        let result;
+        unsafe {
+            let result;
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 1",
-            "{result} = OpRayQueryGetIntersectionPrimitiveIndexKHR %u32 {ray_query} %intersection",
-            ray_query = in(reg) self,
-            result = out(reg) result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 1",
+                "{result} = OpRayQueryGetIntersectionPrimitiveIndexKHR %u32 {ray_query} %intersection",
+                ray_query = in(reg) self,
+                result = out(reg) result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the second and third barycentric coordinates of the current
@@ -690,18 +732,20 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionBarycentricsKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_barycentrics<V: Vector<f32, 2>>(&self) -> V {
-        let mut result = Default::default();
+        unsafe {
+            let mut result = Default::default();
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 0",
-            "%result = OpRayQueryGetIntersectionBarycentricsKHR typeof*{result} {ray_query} %intersection",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "%result = OpRayQueryGetIntersectionBarycentricsKHR typeof*{result} {ray_query} %intersection",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the second and third barycentric coordinates of the current
@@ -716,18 +760,20 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionBarycentricsKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_barycentrics<V: Vector<f32, 2>>(&self) -> V {
-        let mut result = Default::default();
+        unsafe {
+            let mut result = Default::default();
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 1",
-            "%result = OpRayQueryGetIntersectionBarycentricsKHR typeof*{result} {ray_query} %intersection",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 1",
+                "%result = OpRayQueryGetIntersectionBarycentricsKHR typeof*{result} {ray_query} %intersection",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Returns whether the current intersection considered in a ray query was with
@@ -740,19 +786,21 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionFrontFaceKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_front_face(&self) -> bool {
-        let mut result = false;
+        unsafe {
+            let mut result = false;
 
-        asm! {
-            "%bool = OpTypeBool",
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 0",
-            "%result = OpRayQueryGetIntersectionFrontFaceKHR %bool {ray_query} %intersection",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%bool = OpTypeBool",
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "%result = OpRayQueryGetIntersectionFrontFaceKHR %bool {ray_query} %intersection",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Returns whether the current intersection considered in a ray query was with
@@ -767,19 +815,21 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionFrontFaceKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_front_face(&self) -> bool {
-        let mut result = false;
+        unsafe {
+            let mut result = false;
 
-        asm! {
-            "%bool = OpTypeBool",
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 1",
-            "%result = OpRayQueryGetIntersectionFrontFaceKHR %bool {ray_query} %intersection",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%bool = OpTypeBool",
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 1",
+                "%result = OpRayQueryGetIntersectionFrontFaceKHR %bool {ray_query} %intersection",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Returns whether a candidate intersection considered in a ray query was with
@@ -788,17 +838,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionCandidateAABBOpaqueKHR")]
     #[inline]
     pub unsafe fn get_intersection_candidate_aabb_opaque(&self) -> bool {
-        let mut result = false;
+        unsafe {
+            let mut result = false;
 
-        asm! {
-            "%bool = OpTypeBool",
-            "%result = OpRayQueryGetIntersectionCandidateAABBOpaqueKHR %bool {ray_query}",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%bool = OpTypeBool",
+                "%result = OpRayQueryGetIntersectionCandidateAABBOpaqueKHR %bool {ray_query}",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the object-space ray direction for the current intersection considered
@@ -809,18 +861,20 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionObjectRayDirectionKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_object_ray_direction<V: Vector<f32, 3>>(&self) -> V {
-        let mut result = Default::default();
+        unsafe {
+            let mut result = Default::default();
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 0",
-            "%result = OpRayQueryGetIntersectionObjectRayDirectionKHR typeof*{result} {ray_query} %intersection",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "%result = OpRayQueryGetIntersectionObjectRayDirectionKHR typeof*{result} {ray_query} %intersection",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the object-space ray direction for the current intersection considered
@@ -834,18 +888,20 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionObjectRayDirectionKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_object_ray_direction<V: Vector<f32, 3>>(&self) -> V {
-        let mut result = Default::default();
+        unsafe {
+            let mut result = Default::default();
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 1",
-            "%result = OpRayQueryGetIntersectionObjectRayDirectionKHR typeof*{result} {ray_query} %intersection",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 1",
+                "%result = OpRayQueryGetIntersectionObjectRayDirectionKHR typeof*{result} {ray_query} %intersection",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the object-space ray origin for the current intersection considered in
@@ -856,18 +912,20 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionObjectRayOriginKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_object_ray_origin<V: Vector<f32, 3>>(&self) -> V {
-        let mut result = Default::default();
+        unsafe {
+            let mut result = Default::default();
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 0",
-            "%result = OpRayQueryGetIntersectionObjectRayOriginKHR typeof*{result} {ray_query} %intersection",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "%result = OpRayQueryGetIntersectionObjectRayOriginKHR typeof*{result} {ray_query} %intersection",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the object-space ray origin for the current intersection considered in
@@ -881,18 +939,20 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionObjectRayOriginKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_object_ray_origin<V: Vector<f32, 3>>(&self) -> V {
-        let mut result = Default::default();
+        unsafe {
+            let mut result = Default::default();
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%intersection = OpConstant %u32 1",
-            "%result = OpRayQueryGetIntersectionObjectRayOriginKHR typeof*{result} {ray_query} %intersection",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 1",
+                "%result = OpRayQueryGetIntersectionObjectRayOriginKHR typeof*{result} {ray_query} %intersection",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the world-space direction for the ray traced in a ray query.
@@ -900,17 +960,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetWorldRayDirectionKHR")]
     #[inline]
     pub unsafe fn get_world_ray_direction<V: Vector<f32, 3>>(&self) -> V {
-        let mut result = Default::default();
+        unsafe {
+            let mut result = Default::default();
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%result = OpRayQueryGetWorldRayDirectionKHR typeof*{result} {ray_query}",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%result = OpRayQueryGetWorldRayDirectionKHR typeof*{result} {ray_query}",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets the world-space origin for the ray traced in a ray query.
@@ -918,17 +980,19 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetWorldRayOriginKHR")]
     #[inline]
     pub unsafe fn get_world_ray_origin<V: Vector<f32, 3>>(&self) -> V {
-        let mut result = Default::default();
+        unsafe {
+            let mut result = Default::default();
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%result = OpRayQueryGetWorldRayOriginKHR typeof*{result} {ray_query}",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%result = OpRayQueryGetWorldRayOriginKHR typeof*{result} {ray_query}",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets a matrix that transforms values to world-space from the object-space of
@@ -939,26 +1003,28 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionObjectToWorldKHR")]
     #[inline]
     pub unsafe fn get_candidate_intersection_object_to_world<V: Vector<f32, 3>>(&self) -> [V; 4] {
-        let mut result = Default::default();
+        unsafe {
+            let mut result = Default::default();
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%f32 = OpTypeFloat 32",
-            "%f32x3 = OpTypeVector %f32 3",
-            "%f32x3x4 = OpTypeMatrix %f32x3 4",
-            "%intersection = OpConstant %u32 0",
-            "%matrix = OpRayQueryGetIntersectionObjectToWorldKHR %f32x3x4 {ray_query} %intersection",
-            "%col0 = OpCompositeExtract %f32x3 %matrix 0",
-            "%col1 = OpCompositeExtract %f32x3 %matrix 1",
-            "%col2 = OpCompositeExtract %f32x3 %matrix 2",
-            "%col3 = OpCompositeExtract %f32x3 %matrix 3",
-            "%result = OpCompositeConstruct typeof*{result} %col0 %col1 %col2 %col3",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%f32 = OpTypeFloat 32",
+                "%f32x3 = OpTypeVector %f32 3",
+                "%f32x3x4 = OpTypeMatrix %f32x3 4",
+                "%intersection = OpConstant %u32 0",
+                "%matrix = OpRayQueryGetIntersectionObjectToWorldKHR %f32x3x4 {ray_query} %intersection",
+                "%col0 = OpCompositeExtract %f32x3 %matrix 0",
+                "%col1 = OpCompositeExtract %f32x3 %matrix 1",
+                "%col2 = OpCompositeExtract %f32x3 %matrix 2",
+                "%col3 = OpCompositeExtract %f32x3 %matrix 3",
+                "%result = OpCompositeConstruct typeof*{result} %col0 %col1 %col2 %col3",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 
     /// Gets a matrix that transforms values to world-space from the object-space of
@@ -972,25 +1038,27 @@ impl RayQuery {
     #[doc(alias = "OpRayQueryGetIntersectionObjectToWorldKHR")]
     #[inline]
     pub unsafe fn get_committed_intersection_object_to_world<V: Vector<f32, 3>>(&self) -> [V; 4] {
-        let mut result = Default::default();
+        unsafe {
+            let mut result = Default::default();
 
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%f32 = OpTypeFloat 32",
-            "%f32x3 = OpTypeVector %f32 3",
-            "%f32x3x4 = OpTypeMatrix %f32x3 4",
-            "%intersection = OpConstant %u32 1",
-            "%matrix = OpRayQueryGetIntersectionObjectToWorldKHR %f32x3x4 {ray_query} %intersection",
-            "%col0 = OpCompositeExtract %f32x3 %matrix 0",
-            "%col1 = OpCompositeExtract %f32x3 %matrix 1",
-            "%col2 = OpCompositeExtract %f32x3 %matrix 2",
-            "%col3 = OpCompositeExtract %f32x3 %matrix 3",
-            "%result = OpCompositeConstruct typeof*{result} %col0 %col1 %col2 %col3",
-            "OpStore {result} %result",
-            ray_query = in(reg) self,
-            result = in(reg) &mut result,
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%f32 = OpTypeFloat 32",
+                "%f32x3 = OpTypeVector %f32 3",
+                "%f32x3x4 = OpTypeMatrix %f32x3 4",
+                "%intersection = OpConstant %u32 1",
+                "%matrix = OpRayQueryGetIntersectionObjectToWorldKHR %f32x3x4 {ray_query} %intersection",
+                "%col0 = OpCompositeExtract %f32x3 %matrix 0",
+                "%col1 = OpCompositeExtract %f32x3 %matrix 1",
+                "%col2 = OpCompositeExtract %f32x3 %matrix 2",
+                "%col3 = OpCompositeExtract %f32x3 %matrix 3",
+                "%result = OpCompositeConstruct typeof*{result} %col0 %col1 %col2 %col3",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
         }
-
-        result
     }
 }
