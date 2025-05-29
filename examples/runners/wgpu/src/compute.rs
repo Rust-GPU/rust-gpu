@@ -12,10 +12,9 @@ pub fn start(options: &Options) {
 }
 
 async fn start_internal(options: &Options, compiled_shader_modules: CompiledShaderModules) {
-    let backends = wgpu::util::backend_bits_from_env().unwrap_or(wgpu::Backends::PRIMARY);
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+    let backends = wgpu::Backends::from_env().unwrap_or(wgpu::Backends::PRIMARY);
+    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
         backends,
-        dx12_shader_compiler: wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default(),
         ..Default::default()
     });
     let adapter = wgpu::util::initialize_adapter_from_env_or_default(&instance, None)
@@ -43,15 +42,13 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
     }
 
     let (device, queue) = adapter
-        .request_device(
-            &wgpu::DeviceDescriptor {
-                label: None,
-                required_features,
-                required_limits: wgpu::Limits::default(),
-                memory_hints: wgpu::MemoryHints::Performance,
-            },
-            None,
-        )
+        .request_device(&wgpu::DeviceDescriptor {
+            label: None,
+            required_features,
+            required_limits: wgpu::Limits::default(),
+            memory_hints: wgpu::MemoryHints::Performance,
+            trace: Default::default(),
+        })
         .await
         .expect("Failed to create device");
     drop(instance);
@@ -67,7 +64,11 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
     // FIXME(eddyb) automate this decision by default.
     let module = compiled_shader_modules.spv_module_for_entry_point(entry_point);
     let module = if options.force_spirv_passthru {
-        unsafe { device.create_shader_module_spirv(&module) }
+        unsafe {
+            device.create_shader_module_passthrough(wgpu::ShaderModuleDescriptorPassthrough::SpirV(
+                module,
+            ))
+        }
     } else {
         let wgpu::ShaderModuleDescriptorSpirV { label, source } = module;
         device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -225,7 +226,7 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
     buffer_slice.map_async(wgpu::MapMode::Read, |r| r.unwrap());
     // NOTE(eddyb) `poll` should return only after the above callbacks fire
     // (see also https://github.com/gfx-rs/wgpu/pull/2698 for more details).
-    device.poll(wgpu::Maintain::Wait);
+    device.poll(wgpu::PollType::Wait).unwrap();
 
     if timestamping {
         if let (Some(timestamp_readback_buffer), Some(timestamp_period)) =

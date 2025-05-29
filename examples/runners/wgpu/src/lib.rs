@@ -216,8 +216,12 @@ fn maybe_watch(
             RustGPUShader::Compute => wgpu::include_spirv_raw!(env!("compute_shader.spv")),
             RustGPUShader::Mouse => wgpu::include_spirv_raw!(env!("mouse_shader.spv")),
         };
+        let spirv = match module {
+            wgpu::ShaderModuleDescriptorPassthrough::SpirV(spirv) => spirv,
+            _ => panic!("not spirv"),
+        };
         CompiledShaderModules {
-            named_spv_modules: vec![(None, module)],
+            named_spv_modules: vec![(None, spirv)],
         }
     }
 }
