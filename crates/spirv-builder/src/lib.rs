@@ -134,6 +134,7 @@ const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
+#[non_exhaustive]
 pub enum MetadataPrintout {
     /// Print no cargo metadata.
     #[default]
@@ -148,6 +149,7 @@ pub enum MetadataPrintout {
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
+#[non_exhaustive]
 pub enum SpirvMetadata {
     /// Strip all names and other debug information from SPIR-V output.
     #[default]
@@ -162,6 +164,7 @@ pub enum SpirvMetadata {
 /// Strategy used to handle Rust `panic!`s in shaders compiled to SPIR-V.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
+#[non_exhaustive]
 pub enum ShaderPanicStrategy {
     /// Return from shader entry-point with no side-effects **(default)**.
     ///
@@ -247,6 +250,7 @@ pub enum ShaderPanicStrategy {
 /// Copied from `spirv-tools/src/val.rs` struct `ValidatorOptions`, with some fields disabled.
 #[derive(Default, Debug, Clone, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
+#[non_exhaustive]
 pub struct ValidatorOptions {
     /// Record whether or not the validator should relax the rules on types for
     /// stores to structs.  When relaxed, it will allow a type mismatch as long as
@@ -323,6 +327,7 @@ pub struct ValidatorOptions {
 /// Copied from `spirv-tools/src/opt.rs` struct `Options`, with some fields disabled.
 #[derive(Default, Debug, Clone, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
+#[non_exhaustive]
 pub struct OptimizerOptions {
     // /// Records the validator options that should be passed to the validator,
     // /// the validator will run with the options before optimizer.
@@ -340,6 +345,7 @@ pub struct OptimizerOptions {
 /// Cargo features specification for building the shader crate.
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
+#[non_exhaustive]
 pub struct ShaderCrateFeatures {
     /// Set --default-features for the target shader crate.
     #[cfg_attr(feature = "clap", clap(long = "no-default-features", default_value = "true", action = clap::ArgAction::SetFalse))]
@@ -360,6 +366,7 @@ impl Default for ShaderCrateFeatures {
 
 #[derive(Clone, Debug, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
+#[non_exhaustive]
 pub struct SpirvBuilder {
     #[cfg_attr(feature = "clap", clap(skip))]
     pub path_to_crate: Option<PathBuf>,
