@@ -624,7 +624,8 @@
 <a href="#623" id="623">623</a>
 <a href="#624" id="624">624</a>
 <a href="#625" id="625">625</a>
-<a href="#626" id="626">626</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 </span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 
 <span class="kw">use </span><span class="kw">super</span>::Builder;
@@ -1157,18 +1158,19 @@
                         <span class="kw">let </span>higher = <span class="self">self</span>.emit().u_convert(u32, <span class="prelude-val">None</span>, higher).unwrap();
 
                         <span class="kw">if </span>trailing {
-                            <span class="kw">let </span>use_lower = <span class="self">self</span>.emit().i_equal(bool, <span class="prelude-val">None</span>, higher, u32_0).unwrap();
+                            <span class="kw">let </span>use_lower = <span class="self">self</span>.emit().i_equal(bool, <span class="prelude-val">None</span>, lower, u32_0).unwrap();
                             <span class="kw">let </span>lower_bits = find_xsb(lower, <span class="number">32</span>);
                             <span class="kw">let </span>higher_bits = find_xsb(higher, <span class="number">0</span>);
                             <span class="self">self</span>.emit()
-                                .select(u32, <span class="prelude-val">None</span>, use_lower, lower_bits, higher_bits)
+                                .select(u32, <span class="prelude-val">None</span>, use_lower, higher_bits, lower_bits)
                                 .unwrap()
                         } <span class="kw">else </span>{
-                            <span class="kw">let </span>use_higher = <span class="self">self</span>.emit().i_equal(bool, <span class="prelude-val">None</span>, lower, u32_0).unwrap();
+                            <span class="kw">let </span>use_higher =
+                                <span class="self">self</span>.emit().i_equal(bool, <span class="prelude-val">None</span>, higher, u32_0).unwrap();
                             <span class="kw">let </span>lower_bits = find_xsb(lower, <span class="number">0</span>);
                             <span class="kw">let </span>higher_bits = find_xsb(higher, <span class="number">32</span>);
                             <span class="self">self</span>.emit()
-                                .select(u32, <span class="prelude-val">None</span>, use_higher, higher_bits, lower_bits)
+                                .select(u32, <span class="prelude-val">None</span>, use_higher, lower_bits, higher_bits)
                                 .unwrap()
                         }
                     }
