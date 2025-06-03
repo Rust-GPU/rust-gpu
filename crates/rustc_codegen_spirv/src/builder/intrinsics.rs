@@ -531,18 +531,19 @@ impl Builder<'_, '_> {
                         let higher = self.emit().u_convert(u32, None, higher).unwrap();
 
                         if trailing {
-                            let use_lower = self.emit().i_equal(bool, None, higher, u32_0).unwrap();
+                            let use_lower = self.emit().i_equal(bool, None, lower, u32_0).unwrap();
                             let lower_bits = find_xsb(lower, 32);
                             let higher_bits = find_xsb(higher, 0);
                             self.emit()
-                                .select(u32, None, use_lower, lower_bits, higher_bits)
+                                .select(u32, None, use_lower, higher_bits, lower_bits)
                                 .unwrap()
                         } else {
-                            let use_higher = self.emit().i_equal(bool, None, lower, u32_0).unwrap();
+                            let use_higher =
+                                self.emit().i_equal(bool, None, higher, u32_0).unwrap();
                             let lower_bits = find_xsb(lower, 0);
                             let higher_bits = find_xsb(higher, 32);
                             self.emit()
-                                .select(u32, None, use_higher, higher_bits, lower_bits)
+                                .select(u32, None, use_higher, lower_bits, higher_bits)
                                 .unwrap()
                         }
                     }
