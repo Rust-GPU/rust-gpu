@@ -3,7 +3,7 @@
 /* global Mark, elasticlunr, path_to_root */
 
 window.search = window.search || {};
-(function search() {
+(function search(search) {
     // Search functionality
     //
     // You can use !hasFocus() to prevent keyhandling in your key
@@ -29,11 +29,16 @@ window.search = window.search || {};
         searchicon = document.getElementById('search-toggle'),
         content = document.getElementById('content'),
 
-        // SVG text elements don't render if inside a <mark> tag.
-        mark_exclude = ['text'],
+        mark_exclude = [],
         marker = new Mark(content),
         URL_SEARCH_PARAM = 'search',
-        URL_MARK_PARAM = 'highlight';
+        URL_MARK_PARAM = 'highlight',
+
+        SEARCH_HOTKEY_KEYCODE = 83,
+        ESCAPE_KEYCODE = 27,
+        DOWN_KEYCODE = 40,
+        UP_KEYCODE = 38,
+        SELECT_KEYCODE = 13;
 
     let current_searchterm = '',
         doc_urls = [],
@@ -283,9 +288,6 @@ window.search = window.search || {};
 
         // If reloaded, do the search or mark again, depending on the current url parameters
         doSearchOrMarkFromUrl();
-
-        // Exported functions
-        config.hasFocus = hasFocus;
     }
 
     function unfocusSearchbar() {
@@ -346,7 +348,7 @@ window.search = window.search || {};
             return;
         }
 
-        if (e.key === 'Escape') {
+        if (e.keyCode === ESCAPE_KEYCODE) {
             e.preventDefault();
             searchbar.classList.remove('active');
             setSearchUrlParameters('',
@@ -356,38 +358,31 @@ window.search = window.search || {};
             }
             showSearch(false);
             marker.unmark();
-        } else if (!hasFocus() && (e.key === 's' || e.key === '/')) {
+        } else if (!hasFocus() && e.keyCode === SEARCH_HOTKEY_KEYCODE) {
             e.preventDefault();
             showSearch(true);
             window.scrollTo(0, 0);
             searchbar.select();
-        } else if (hasFocus() && (e.key === 'ArrowDown'
-                               || e.key === 'Enter')) {
+        } else if (hasFocus() && e.keyCode === DOWN_KEYCODE) {
             e.preventDefault();
-            const first = searchresults.firstElementChild;
-            if (first !== null) {
-                unfocusSearchbar();
-                first.classList.add('focus');
-                if (e.key === 'Enter') {
-                    window.location.assign(first.querySelector('a'));
-                }
-            }
-        } else if (!hasFocus() && (e.key === 'ArrowDown'
-                                || e.key === 'ArrowUp'
-                                || e.key === 'Enter')) {
+            unfocusSearchbar();
+            searchresults.firstElementChild.classList.add('focus');
+        } else if (!hasFocus() && (e.keyCode === DOWN_KEYCODE
+                                || e.keyCode === UP_KEYCODE
+                                || e.keyCode === SELECT_KEYCODE)) {
             // not `:focus` because browser does annoying scrolling
             const focused = searchresults.querySelector('li.focus');
             if (!focused) {
                 return;
             }
             e.preventDefault();
-            if (e.key === 'ArrowDown') {
+            if (e.keyCode === DOWN_KEYCODE) {
                 const next = focused.nextElementSibling;
                 if (next) {
                     focused.classList.remove('focus');
                     next.classList.add('focus');
                 }
-            } else if (e.key === 'ArrowUp') {
+            } else if (e.keyCode === UP_KEYCODE) {
                 focused.classList.remove('focus');
                 const prev = focused.previousElementSibling;
                 if (prev) {
@@ -395,7 +390,7 @@ window.search = window.search || {};
                 } else {
                     searchbar.select();
                 }
-            } else { // Enter
+            } else { // SELECT_KEYCODE
                 window.location.assign(focused.querySelector('a'));
             }
         }
@@ -526,4 +521,6 @@ window.search = window.search || {};
 
     loadScript(path_to_root + 'searchindex.js', 'search-index');
 
+    // Exported functions
+    search.hasFocus = hasFocus;
 })(window.search);

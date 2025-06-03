@@ -577,56 +577,7 @@
 <a href="#576" id="576">576</a>
 <a href="#577" id="577">577</a>
 <a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
-<a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a>
-<a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
-<a href="#594" id="594">594</a>
-<a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
-<a href="#597" id="597">597</a>
-<a href="#598" id="598">598</a>
-<a href="#599" id="599">599</a>
-<a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
-<a href="#606" id="606">606</a>
-<a href="#607" id="607">607</a>
-<a href="#608" id="608">608</a>
-<a href="#609" id="609">609</a>
-<a href="#610" id="610">610</a>
-<a href="#611" id="611">611</a>
-<a href="#612" id="612">612</a>
-<a href="#613" id="613">613</a>
-<a href="#614" id="614">614</a>
-<a href="#615" id="615">615</a>
-<a href="#616" id="616">616</a>
-<a href="#617" id="617">617</a>
-<a href="#618" id="618">618</a>
-<a href="#619" id="619">619</a>
-<a href="#620" id="620">620</a>
-<a href="#621" id="621">621</a>
-<a href="#622" id="622">622</a>
-<a href="#623" id="623">623</a>
-<a href="#624" id="624">624</a>
-<a href="#625" id="625">625</a>
-<a href="#626" id="626">626</a>
-<a href="#627" id="627">627</a>
-<a href="#628" id="628">628</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
+<a href="#579" id="579">579</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
 </span><span class="attr">#![allow(internal_features)]
 #![allow(rustc::diagnostic_outside_of_impl)]
 #![allow(rustc::untranslatable_diagnostic)]
@@ -785,10 +736,10 @@
 <span class="kw">use </span>rustc_middle::mir::mono::{MonoItem, MonoItemData};
 <span class="kw">use </span>rustc_middle::mir::pretty::write_mir_pretty;
 <span class="kw">use </span>rustc_middle::ty::print::with_no_trimmed_paths;
-<span class="kw">use </span>rustc_middle::ty::{<span class="self">self</span>, Instance, InstanceKind, TyCtxt};
+<span class="kw">use </span>rustc_middle::ty::{InstanceKind, TyCtxt};
 <span class="kw">use </span>rustc_session::Session;
 <span class="kw">use </span>rustc_session::config::{<span class="self">self</span>, OutputFilenames, OutputType};
-<span class="kw">use </span>rustc_span::symbol::{Symbol, sym};
+<span class="kw">use </span>rustc_span::symbol::Symbol;
 <span class="kw">use </span>std::any::Any;
 <span class="kw">use </span>std::fs::{File, create_dir_all};
 <span class="kw">use </span>std::io::Cursor;
@@ -811,45 +762,6 @@
         }
     }
 }
-
-<span class="kw">fn </span>is_blocklisted_fn&lt;<span class="lifetime">'tcx</span>&gt;(
-    tcx: TyCtxt&lt;<span class="lifetime">'tcx</span>&gt;,
-    sym: <span class="kw-2">&amp;</span>symbols::Symbols,
-    instance: Instance&lt;<span class="lifetime">'tcx</span>&gt;,
-) -&gt; bool {
-    <span class="comment">// TODO: These sometimes have a constant value of an enum variant with a hole
-    </span><span class="kw">if let </span>InstanceKind::Item(def_id) = instance.def {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(debug_trait_def_id) = tcx.get_diagnostic_item(sym::Debug) {
-            <span class="comment">// Helper for detecting `&lt;_ as core::fmt::Debug&gt;::fmt` (in impls).
-            </span><span class="kw">let </span>is_debug_fmt_method = |def_id| <span class="kw">match </span>tcx.opt_associated_item(def_id) {
-                <span class="prelude-val">Some</span>(assoc) <span class="kw">if </span>assoc.ident(tcx).name == sym::fmt =&gt; <span class="kw">match </span>assoc.container {
-                    ty::AssocItemContainer::Impl =&gt; {
-                        <span class="kw">let </span>impl_def_id = assoc.container_id(tcx);
-                        tcx.impl_trait_ref(impl_def_id)
-                            .map(|tr| tr.skip_binder().def_id)
-                            == <span class="prelude-val">Some</span>(debug_trait_def_id)
-                    }
-                    ty::AssocItemContainer::Trait =&gt; <span class="bool-val">false</span>,
-                },
-                <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
-            };
-
-            <span class="kw">if </span>is_debug_fmt_method(def_id) {
-                <span class="kw">return </span><span class="bool-val">true</span>;
-            }
-
-            <span class="kw">if </span>tcx.opt_item_ident(def_id).map(|i| i.name) == <span class="prelude-val">Some</span>(sym.fmt_decimal) {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(parent_def_id) = tcx.opt_parent(def_id) {
-                    <span class="kw">if </span>is_debug_fmt_method(parent_def_id) {
-                        <span class="kw">return </span><span class="bool-val">true</span>;
-                    }
-                }
-            }
-        }
-    }
-
-    <span class="bool-val">false
-</span>}
 
 <span class="comment">// TODO: Should this store Vec or Module?
 </span><span class="kw">struct </span>SpirvModuleBuffer(Vec&lt;u32&gt;);
@@ -1098,11 +1010,6 @@
             }
 
             <span class="kw">for </span><span class="kw-2">&amp;</span>(mono_item, mono_item_data) <span class="kw">in </span>mono_items.iter() {
-                <span class="kw">if let </span>MonoItem::Fn(instance) = mono_item {
-                    <span class="kw">if </span>is_blocklisted_fn(cx.tcx, <span class="kw-2">&amp;</span>cx.sym, instance) {
-                        <span class="kw">continue</span>;
-                    }
-                }
                 mono_item.predefine::&lt;Builder&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt;&gt;(
                     <span class="kw-2">&amp;</span>cx,
                     mono_item_data.linkage,
@@ -1112,11 +1019,6 @@
 
             <span class="comment">// ... and now that we have everything pre-defined, fill out those definitions.
             </span><span class="kw">for </span><span class="kw-2">&amp;</span>(mono_item, <span class="kw">_</span>) <span class="kw">in </span>mono_items.iter() {
-                <span class="kw">if let </span>MonoItem::Fn(instance) = mono_item {
-                    <span class="kw">if </span>is_blocklisted_fn(cx.tcx, <span class="kw-2">&amp;</span>cx.sym, instance) {
-                        <span class="kw">continue</span>;
-                    }
-                }
                 mono_item.define::&lt;Builder&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt;&gt;(<span class="kw-2">&amp;</span>cx);
             }
 
