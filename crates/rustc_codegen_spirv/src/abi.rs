@@ -6,8 +6,14 @@ use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
+use rustc_abi::ExternAbi as Abi;
+use rustc_abi::{
+    Align, BackendRepr, FieldIdx, FieldsShape, HasDataLayout as _, LayoutData, Primitive,
+    ReprFlags, ReprOptions, Scalar, Size, TagEncoding, VariantIdx, Variants,
+};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
+use rustc_hashes::Hash64;
 use rustc_index::Idx;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
@@ -20,12 +26,7 @@ use rustc_middle::{bug, span_bug};
 use rustc_span::DUMMY_SP;
 use rustc_span::def_id::DefId;
 use rustc_span::{Span, Symbol};
-use rustc_target::abi::call::{ArgAbi, ArgAttributes, FnAbi, PassMode};
-use rustc_target::abi::{
-    Align, BackendRepr, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions, Scalar, Size,
-    TagEncoding, VariantIdx, Variants,
-};
-use rustc_target::spec::abi::Abi;
+use rustc_target::callconv::{ArgAbi, ArgAttributes, FnAbi, PassMode};
 use std::cell::RefCell;
 use std::collections::hash_map::Entry;
 use std::fmt;
@@ -106,10 +107,12 @@ pub(crate) fn provide(providers: &mut Providers) {
             ref variants,
             backend_repr,
             largest_niche,
+            uninhabited,
             align,
             size,
             max_repr_align,
             unadjusted_abi_align,
+            randomization_seed,
         } = *layout;
         LayoutData {
             fields: match *fields {
@@ -125,6 +128,7 @@ pub(crate) fn provide(providers: &mut Providers) {
                 },
             },
             variants: match *variants {
+                Variants::Empty => Variants::Empty,
                 Variants::Single { index } => Variants::Single { index },
                 Variants::Multiple {
                     tag,
@@ -151,20 +155,108 @@ pub(crate) fn provide(providers: &mut Providers) {
             },
             backend_repr,
             largest_niche,
+            uninhabited,
             align,
             size,
             max_repr_align,
             unadjusted_abi_align,
+            randomization_seed,
         }
     }
 
     providers.layout_of = |tcx, key| {
+        // HACK(eddyb) to special-case any types at all, they must be normalized,
+        // but when normalization would be needed, `layout_of`'s default provider
+        // recurses (supposedly for caching reasons), i.e. its calls `layout_of`
+        // w/ the normalized type in input, which once again reaches this hook,
+        // without ever needing any explicit normalization here.
+        let ty = key.value;
+
+        // HACK(eddyb) bypassing upstream `#[repr(simd)]` changes (see also
+        // the later comment above `check_well_formed`, for more details).
+        let reimplement_old_style_repr_simd = match ty.kind() {
+            ty::Adt(def, args) if def.repr().simd() && !def.repr().packed() && def.is_struct() => {
+                Some(def.non_enum_variant()).and_then(|v| {
+                    let (count, e_ty) = v
+                        .fields
+                        .iter()
+                        .map(|f| f.ty(tcx, args))
+                        .dedup_with_count()
+                        .exactly_one()
+                        .ok()?;
+                    let e_len = u64::try_from(count).ok().filter(|&e_len| e_len > 1)?;
+                    Some((def, e_ty, e_len))
+                })
+            }
+            _ => None,
+        };
+
+        // HACK(eddyb) tweaked copy of the old upstream logic for `#[repr(simd)]`:
+        // https://github.com/rust-lang/rust/blob/1.86.0/compiler/rustc_ty_utils/src/layout.rs#L464-L590
+        if let Some((adt_def, e_ty, e_len)) = reimplement_old_style_repr_simd {
+            let cx = rustc_middle::ty::layout::LayoutCx::new(
+                tcx,
+                key.typing_env.with_post_analysis_normalized(tcx),
+            );
+            let dl = cx.data_layout();
+
+            // Compute the ABI of the element type:
+            let e_ly = cx.layout_of(e_ty)?;
+            let BackendRepr::Scalar(e_repr) = e_ly.backend_repr else {
+                // This error isn't caught in typeck, e.g., if
+                // the element type of the vector is generic.
+                tcx.dcx().span_fatal(
+                    tcx.def_span(adt_def.did()),
+                    format!(
+                        "SIMD type `{ty}` with a non-primitive-scalar \
+                     (integer/float/pointer) element type `{}`",
+                        e_ly.ty
+                    ),
+                );
+            };
+
+            // Compute the size and alignment of the vector:
+            let size = e_ly.size.checked_mul(e_len, dl).unwrap();
+            let align = dl.llvmlike_vector_align(size);
+            let size = size.align_to(align.abi);
+
+            let layout = tcx.mk_layout(LayoutData {
+                variants: Variants::Single {
+                    index: rustc_abi::FIRST_VARIANT,
+                },
+                fields: FieldsShape::Array {
+                    stride: e_ly.size,
+                    count: e_len,
+                },
+                backend_repr: BackendRepr::SimdVector {
+                    element: e_repr,
+                    count: e_len,
+                },
+                largest_niche: e_ly.largest_niche,
+                uninhabited: false,
+                size,
+                align,
+                max_repr_align: None,
+                unadjusted_abi_align: align.abi,
+                randomization_seed: e_ly.randomization_seed.wrapping_add(Hash64::new(e_len)),
+            });
+
+            return Ok(TyAndLayout { ty, layout });
+        }
+
         let TyAndLayout { ty, mut layout } =
             (rustc_interface::DEFAULT_QUERY_PROVIDERS.layout_of)(tcx, key)?;
 
         #[allow(clippy::match_like_matches_macro)]
         let hide_niche = match ty.kind() {
-            ty::Bool => true,
+            ty::Bool => {
+                // HACK(eddyb) we can't bypass e.g. `Option<bool>` being a byte,
+                // due to `core` PR https://github.com/rust-lang/rust/pull/138881
+                // (which adds a new `transmute`, from `ControlFlow<bool>` to `u8`).
+                let libcore_needs_bool_niche = true;
+
+                !libcore_needs_bool_niche
+            }
             _ => false,
         };
 
@@ -198,7 +290,7 @@ pub(crate) fn provide(providers: &mut Providers) {
         let trivial_struct = match tcx.hir_node_by_def_id(def_id) {
             rustc_hir::Node::Item(item) => match item.kind {
                 rustc_hir::ItemKind::Struct(
-                    _,
+                    ..,
                     &rustc_hir::Generics {
                         params:
                             &[]
@@ -462,7 +554,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
         // `ScalarPair`.
         // There's a few layers that we go through here. First we inspect layout.backend_repr, then if relevant, layout.fields, etc.
         match self.backend_repr {
-            BackendRepr::Uninhabited => SpirvType::Adt {
+            _ if self.uninhabited => SpirvType::Adt {
                 def_id: def_id_for_spirv_type_adt(*self),
                 size: Some(Size::ZERO),
                 align: Align::from_bytes(0).unwrap(),
@@ -523,7 +615,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 if let TyKind::Adt(adt, _) = self.ty.kind() {
                     if let Variants::Single { index } = self.variants {
                         for i in self.fields.index_by_increasing_offset() {
-                            let field = &adt.variants()[index].fields[i.into()];
+                            let field = &adt.variants()[index].fields[FieldIdx::new(i)];
                             field_names.push(field.name);
                         }
                     }
@@ -542,7 +634,7 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 }
                 .def_with_name(cx, span, TyLayoutNameKey::from(*self))
             }
-            BackendRepr::Vector { element, count } => {
+            BackendRepr::SimdVector { element, count } => {
                 let elem_spirv = trans_scalar(cx, span, *self, element, Size::ZERO);
                 SpirvType::Vector {
                     element: elem_spirv,
@@ -652,6 +744,7 @@ fn dig_scalar_pointee<'tcx>(
     }
 
     let all_fields = (match &layout.variants {
+        Variants::Empty => 0..0,
         Variants::Multiple { variants, .. } => 0..variants.len(),
         Variants::Single { index } => {
             let i = index.as_usize();
@@ -811,7 +904,7 @@ fn trans_struct<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>) -
         field_offsets.push(offset);
         if let Variants::Single { index } = ty.variants {
             if let TyKind::Adt(adt, _) = ty.ty.kind() {
-                let field = &adt.variants()[index].fields[i.into()];
+                let field = &adt.variants()[index].fields[FieldIdx::new(i)];
                 field_names.push(field.name);
             } else {
                 // FIXME(eddyb) this looks like something that should exist in rustc.
@@ -867,7 +960,7 @@ impl<'tcx> From<TyAndLayout<'tcx>> for TyLayoutNameKey<'tcx> {
             ty: layout.ty,
             variant: match layout.variants {
                 Variants::Single { index } => Some(index),
-                Variants::Multiple { .. } => None,
+                _ => None,
             },
         }
     }
@@ -984,9 +1077,10 @@ fn trans_intrinsic_type<'tcx>(
                 cx: &CodegenCx<'tcx>,
                 const_: Const<'tcx>,
             ) -> Result<P, ErrorGuaranteed> {
-                let (const_val, const_ty) = const_
-                    .try_to_valtree()
-                    .expect("expected monomorphic const in codegen");
+                let ty::Value {
+                    ty: const_ty,
+                    valtree: const_val,
+                } = const_.to_value();
                 assert!(const_ty.is_integral());
                 const_val
                     .try_to_scalar_int()

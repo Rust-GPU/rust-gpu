@@ -43,7 +43,8 @@ lazy_static! {
     ///   achieved by hashing the `SCHEMA` constant from `def_custom_insts!` below
     pub static ref CUSTOM_EXT_INST_SET: String = {
         let schema_hash = {
-            use rustc_data_structures::stable_hasher::{Hash128, StableHasher};
+            use rustc_data_structures::stable_hasher::StableHasher;
+            use rustc_hashes::Hash128;
             use std::hash::Hash;
 
             let mut hasher = StableHasher::new();
@@ -57,31 +58,38 @@ lazy_static! {
 
 pub fn register_to_spirt_context(cx: &spirt::Context) {
     use spirt::spv::spec::{ExtInstSetDesc, ExtInstSetInstructionDesc};
-    cx.register_custom_ext_inst_set(&CUSTOM_EXT_INST_SET, ExtInstSetDesc {
-        // HACK(eddyb) this is the most compact form I've found, that isn't
-        // outright lossy by omitting "Rust vs Rust-GPU" or the version.
-        short_alias: Some(
-            concat!("Rust-GPU ", join_cargo_pkg_version_major_minor_patch!(".")).into(),
-        ),
-        instructions: SCHEMA
-            .iter()
-            .map(|&(i, name, operand_names)| {
-                (i, ExtInstSetInstructionDesc {
-                    name: name.into(),
-                    operand_names: operand_names
-                        .iter()
-                        .map(|name| {
-                            name.strip_prefix("..")
-                                .unwrap_or(name)
-                                .replace('_', " ")
-                                .into()
-                        })
-                        .collect(),
-                    is_debuginfo: name.contains("Debug") || name.contains("InlinedCallFrame"),
+    cx.register_custom_ext_inst_set(
+        &CUSTOM_EXT_INST_SET,
+        ExtInstSetDesc {
+            // HACK(eddyb) this is the most compact form I've found, that isn't
+            // outright lossy by omitting "Rust vs Rust-GPU" or the version.
+            short_alias: Some(
+                concat!("Rust-GPU ", join_cargo_pkg_version_major_minor_patch!(".")).into(),
+            ),
+            instructions: SCHEMA
+                .iter()
+                .map(|&(i, name, operand_names)| {
+                    (
+                        i,
+                        ExtInstSetInstructionDesc {
+                            name: name.into(),
+                            operand_names: operand_names
+                                .iter()
+                                .map(|name| {
+                                    name.strip_prefix("..")
+                                        .unwrap_or(name)
+                                        .replace('_', " ")
+                                        .into()
+                                })
+                                .collect(),
+                            is_debuginfo: name.contains("Debug")
+                                || name.contains("InlinedCallFrame"),
+                        },
+                    )
                 })
-            })
-            .collect(),
-    });
+                .collect(),
+        },
+    );
 }
 
 macro_rules! def_custom_insts {
@@ -110,7 +118,7 @@ macro_rules! def_custom_insts {
             pub fn with_operands<T: Clone>(self, operands: &[T]) -> CustomInst<T> {
                 match self {
                     $(Self::$name => match operands {
-                        [$($($field,)+ $(ref $variadic_field @ ..)?)?] => CustomInst::$name $({
+                        [$($($field,)+ $($variadic_field @ ..)?)?] => CustomInst::$name $({
                             $($field: $field.clone(),)+
                             $($variadic_field: $variadic_field.iter().cloned().collect())?
                         })?,

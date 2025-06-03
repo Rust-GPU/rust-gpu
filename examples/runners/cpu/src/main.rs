@@ -36,7 +36,6 @@
     clippy::map_err_ignore,
     clippy::map_flatten,
     clippy::map_unwrap_or,
-    clippy::match_on_vec_items,
     clippy::match_same_arms,
     clippy::match_wildcard_for_single_variants,
     clippy::mem_forget,
@@ -92,9 +91,9 @@ fn color_u32_from_vec4(v: Vec4) -> u32 {
     let convert = |f: f32| -> u32 { (f.clamp(0.0, 1.0) * 255.0).round() as u32 };
 
     convert(srgb_oetf(v.z))
-        | convert(srgb_oetf(v.y)) << 8
-        | convert(srgb_oetf(v.x)) << 16
-        | convert(v.w) << 24
+        | (convert(srgb_oetf(v.y)) << 8)
+        | (convert(srgb_oetf(v.x)) << 16)
+        | (convert(v.w) << 24)
 }
 
 fn main() {

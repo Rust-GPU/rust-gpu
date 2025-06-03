@@ -211,7 +211,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
             let start = line.as_str();
             match line.next()? {
                 // skip over leading whitespace
-                ch if ch.is_whitespace() => continue,
+                ch if ch.is_whitespace() => {}
                 // lex a string
                 '"' => {
                     let mut cooked = String::new();
@@ -254,7 +254,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                     let end = loop {
                         let end = line.as_str();
                         match line.next() {
-                            Some(ch) if !ch.is_whitespace() => continue,
+                            Some(ch) if !ch.is_whitespace() => {}
                             _ => break end,
                         }
                     };
@@ -788,6 +788,8 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
             _ => return None,
         }
 
+        // HACK(eddyb) clippy false positive, `.ok()` loses information.
+        #[allow(clippy::manual_ok_err)]
         match subst_ty_pat(
             self,
             sig.output_type.unwrap(),
