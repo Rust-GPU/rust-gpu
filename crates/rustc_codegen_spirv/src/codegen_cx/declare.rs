@@ -76,12 +76,6 @@ impl<'tcx> CodegenCx<'tcx> {
             other => bug!("fn_abi type {}", other.debug(function_type, self)),
         };
 
-        if crate::is_blocklisted_fn(self.tcx, &self.sym, instance) {
-            // This can happen if we call a blocklisted function in another crate.
-            let result = self.undef(function_type);
-            self.zombie_with_span(result.def_cx(self), span, "called blocklisted fn");
-            return result;
-        }
         let fn_id = {
             let mut emit = self.emit_global();
             let fn_id = emit

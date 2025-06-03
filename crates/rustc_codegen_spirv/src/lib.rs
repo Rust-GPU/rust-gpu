@@ -157,10 +157,10 @@ use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
 use rustc_middle::mir::mono::{MonoItem, MonoItemData};
 use rustc_middle::mir::pretty::write_mir_pretty;
 use rustc_middle::ty::print::with_no_trimmed_paths;
-use rustc_middle::ty::{self, Instance, InstanceKind, TyCtxt};
+use rustc_middle::ty::{InstanceKind, TyCtxt};
 use rustc_session::Session;
 use rustc_session::config::{self, OutputFilenames, OutputType};
-use rustc_span::symbol::{Symbol, sym};
+use rustc_span::symbol::Symbol;
 use std::any::Any;
 use std::fs::{File, create_dir_all};
 use std::io::Cursor;
@@ -182,45 +182,6 @@ fn dump_mir(tcx: TyCtxt<'_>, mono_items: &[(MonoItem<'_>, MonoItemData)], path: 
             }
         }
     }
-}
-
-fn is_blocklisted_fn<'tcx>(
-    tcx: TyCtxt<'tcx>,
-    sym: &symbols::Symbols,
-    instance: Instance<'tcx>,
-) -> bool {
-    // TODO: These sometimes have a constant value of an enum variant with a hole
-    if let InstanceKind::Item(def_id) = instance.def {
-        if let Some(debug_trait_def_id) = tcx.get_diagnostic_item(sym::Debug) {
-            // Helper for detecting `<_ as core::fmt::Debug>::fmt` (in impls).
-            let is_debug_fmt_method = |def_id| match tcx.opt_associated_item(def_id) {
-                Some(assoc) if assoc.ident(tcx).name == sym::fmt => match assoc.container {
-                    ty::AssocItemContainer::Impl => {
-                        let impl_def_id = assoc.container_id(tcx);
-                        tcx.impl_trait_ref(impl_def_id)
-                            .map(|tr| tr.skip_binder().def_id)
-                            == Some(debug_trait_def_id)
-                    }
-                    ty::AssocItemContainer::Trait => false,
-                },
-                _ => false,
-            };
-
-            if is_debug_fmt_method(def_id) {
-                return true;
-            }
-
-            if tcx.opt_item_ident(def_id).map(|i| i.name) == Some(sym.fmt_decimal) {
-                if let Some(parent_def_id) = tcx.opt_parent(def_id) {
-                    if is_debug_fmt_method(parent_def_id) {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-
-    false
 }
 
 // TODO: Should this store Vec or Module?
@@ -470,11 +431,6 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
             }
 
             for &(mono_item, mono_item_data) in mono_items.iter() {
-                if let MonoItem::Fn(instance) = mono_item {
-                    if is_blocklisted_fn(cx.tcx, &cx.sym, instance) {
-                        continue;
-                    }
-                }
                 mono_item.predefine::<Builder<'_, '_>>(
                     &cx,
                     mono_item_data.linkage,
@@ -484,11 +440,6 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
 
             // ... and now that we have everything pre-defined, fill out those definitions.
             for &(mono_item, _) in mono_items.iter() {
-                if let MonoItem::Fn(instance) = mono_item {
-                    if is_blocklisted_fn(cx.tcx, &cx.sym, instance) {
-                        continue;
-                    }
-                }
                 mono_item.define::<Builder<'_, '_>>(&cx);
             }
 
