@@ -718,21 +718,22 @@ fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>
         FieldsShape::Union(_) => {
             assert!(!ty.is_unsized(), "{ty:#?}");
 
-            // Represent the `union` with its largest case, which should work
-            // for at least `MaybeUninit<T>` (which is between `T` and `()`),
-            // but also potentially some other ones as well.
-            // NOTE(eddyb) even if long-term this may become a byte array, that
-            // only works for "data types" and not "opaque handles" (images etc.).
-            let largest_case = (0..ty.fields.count())
-                .map(|i| ty.field(cx, i))
-                .max_by_key(|case| case.size);
-
-            if let Some(case) = largest_case {
-                assert_eq!(ty.size, case.size);
-                case.spirv_type(span, cx)
-            } else {
-                assert_eq!(ty.size, Size::ZERO);
-                create_zst(cx, span, ty)
+            // NOTE(eddyb) even if long-term this may become a byte array, that only
+            // works for "data types" and not "opaque handles" (images etc.).
+            match ty.fields.count() {
+                // For unions with no fields, represent as a zero-sized type.
+                0 => {
+                    assert_eq!(ty.size, Size::ZERO);
+                    create_zst(cx, span, ty)
+                }
+                // For unions with a single field, represent as the field itself.
+                1 => {
+                    let field = ty.field(cx, 0);
+                    assert_eq!(ty.size, field.size);
+                    field.spirv_type(span, cx)
+                }
+                // For unions with multiple fields, represent as struct with all fields at offset 0
+                _ => trans_struct(cx, span, ty),
             }
         }
         FieldsShape::Array { stride, count } => {
