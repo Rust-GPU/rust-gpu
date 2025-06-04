@@ -72,12 +72,11 @@ fn main() -> Result<()> {
     // We build first to ensure that the tests are compiled before running them and to
     // passthrough stdout and stderr from cargo to help debugging.
     let mut cmd = Command::new("cargo");
-    let cmd = cmd
-        .arg("build")
-        .arg("--release")
-        .current_dir(&base)
-        .stderr(std::process::Stdio::inherit())
-        .stdout(std::process::Stdio::inherit());
+    let cmd = cmd.arg("build").arg("--release");
+    runner::forward_features(cmd);
+    cmd.current_dir(&base)
+        .stderr(process::Stdio::inherit())
+        .stdout(process::Stdio::inherit());
     tracing::debug!("Running cargo command: {:?}", cmd);
 
     let output = cmd.output().expect("build output");

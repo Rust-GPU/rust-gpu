@@ -135,25 +135,22 @@ impl Runner {
             trace!("Config file created at {}", config_file.path().display());
 
             let mut cmd = Command::new("cargo");
-            let cmd = cmd
-                .arg("run")
-                .arg("--release")
-                .arg("--manifest-path")
-                .arg(
-                    manifest_path
-                        .to_str()
-                        .ok_or_else(|| RunnerError::Manifest {
-                            path: manifest_path.clone(),
-                        })?,
-                )
-                .arg(
-                    config_file
-                        .path()
-                        .to_str()
-                        .ok_or_else(|| RunnerError::Config {
-                            msg: "Invalid config file path".into(),
-                        })?,
-                );
+            cmd.arg("run").arg("--release").arg("--manifest-path").arg(
+                manifest_path
+                    .to_str()
+                    .ok_or_else(|| RunnerError::Manifest {
+                        path: manifest_path.clone(),
+                    })?,
+            );
+            forward_features(&mut cmd);
+            cmd.arg("--").arg(
+                config_file
+                    .path()
+                    .to_str()
+                    .ok_or_else(|| RunnerError::Config {
+                        msg: "Invalid config file path".into(),
+                    })?,
+            );
             debug!("Running cargo command: {:?}", cmd);
 
             let output = cmd
@@ -328,6 +325,18 @@ impl Runner {
             }
         }
         Ok(packages)
+    }
+}
+
+pub fn forward_features(cmd: &mut Command) {
+    cmd.arg("--features");
+    #[cfg(feature = "use-compiled-tools")]
+    {
+        cmd.arg("difftest/use-compiled-tools");
+    }
+    #[cfg(feature = "use-installed-tools")]
+    {
+        cmd.arg("difftest/use-installed-tools");
     }
 }
 
