@@ -67,14 +67,6 @@ jobs:
         if: ${{ matrix.target != 'aarch64-linux-android' }}
         run: cargo test -p rustc_codegen_spirv --release --no-default-features --features "use-installed-tools"
 
-      - name: compiletest
-        if: ${{ matrix.target != 'aarch64-linux-android' }}
-        run: cargo run -p compiletests --release --no-default-features --features "use-installed-tools" -- --target-env vulkan1.1,vulkan1.2,spv1.3
-
-      - name: difftest
-        if: ${{ matrix.target != 'aarch64-linux-android' }}
-        run: cargo run -p difftests --release --no-default-features --features "use-installed-tools"
-
       - name: workspace test
         if: ${{ matrix.target != 'aarch64-linux-android' }}
         run: cargo test --release
@@ -125,11 +117,71 @@ jobs:
           cargo apk build -p example-runner-wgpu --lib --features use-installed-tools --no-default-features
           echo "::endgroup::"
 
-  # This just allows us to branch protect on this one job rather needing to change
-  # it if the test matrix changes
+  compiletest:
+    name: Compiletest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+          - os: windows-2022
+            target: x86_64-pc-windows-msvc
+          - os: macOS-latest
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install spirv-tools binaries
+        shell: bash
+        run: cargo run --manifest-path .github/install-spirv-tools/Cargo.toml -- ${{matrix.target}} 0.10.0 "${{github.workspace}}/bin"
+      # cargo version is a random command that forces the installation of rust-toolchain
+      - name: install rust-toolchain
+        run: cargo version
+      - name: cargo fetch --locked
+        run: cargo fetch --locked --target ${{ matrix.target }}
+      - name: compiletest
+        run: cargo run -p compiletests --release --no-default-features --features "use-installed-tools" -- --target-env vulkan1.1,vulkan1.2,spv1.3
+
+  difftest:
+    name: Difftest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: x86_64-unknown-linux-gnu
+          - os: windows-2022
+            target: x86_64-pc-windows-msvc
+          - os: macOS-latest
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install spirv-tools binaries
+        shell: bash
+        run: cargo run --manifest-path .github/install-spirv-tools/Cargo.toml -- ${{matrix.target}} 0.10.0 "${{github.workspace}}/bin"
+      - if: ${{ runner.os == 'Linux' }}
+        name: Linux - Install native dependencies
+        run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
+      - if: ${{ runner.os == 'Linux' }}
+        name: Install xvfb, llvmpipe and lavapipe
+        run: |
+          sudo apt-get update -y -qq
+          sudo add-apt-repository ppa:kisak/turtle -y
+          sudo apt-get update
+          sudo apt install -y xvfb libgl1-mesa-dri libxcb-xfixes0-dev mesa-vulkan-drivers
+      # cargo version is a random command that forces the installation of rust-toolchain
+      - name: install rust-toolchain
+        run: cargo version
+      - name: cargo fetch --locked
+        run: cargo fetch --locked --target ${{ matrix.target }}
+      - name: difftest
+        run: cargo run -p difftests --release --no-default-features --features "use-installed-tools"
+
+  # This allows us to have a single job we can branch protect on, rather than needing
+  # to update the branch protection rules when the test matrix changes
   test_success:
     runs-on: ubuntu-24.04
-    needs: test
+    needs: [test, compiletest, difftest]
     steps:
     - run: echo "All test jobs passed"
 
