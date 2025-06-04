@@ -41,7 +41,9 @@ Create a subdirectory under `tests/` with the test name. For example, `tests/foo
 test named `foo`. In the test directory, create 2 or more Rust binary packages. Add the
 packages to the top-level workspace `Cargo.toml` in the `tests/` directory. _Note that
 this isn't the top-level workspace for the project._ The test binaries are in their own
-workspace rather than the main workspace.
+workspace rather than the main workspace in order to not pollute our root workspace and
+slow down cargo due to evaluating the potentially hundreds of cargo projects in
+difftests.
 
 ### Test Binary Example
 
