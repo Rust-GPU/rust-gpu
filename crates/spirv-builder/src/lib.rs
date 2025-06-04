@@ -128,6 +128,8 @@ pub enum SpirvBuilderError {
     MetadataFileMissing(#[from] std::io::Error),
     #[error("unable to parse multi-module metadata file")]
     MetadataFileMalformed(#[from] serde_json::Error),
+    #[error("cargo metadata error")]
+    CargoMetadata(#[from] cargo_metadata::Error),
 }
 
 const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
@@ -427,10 +429,11 @@ pub struct SpirvBuilder {
     /// [this RFC](https://rust-lang.github.io/rfcs/0131-target-specification.html).
     #[cfg_attr(feature = "clap", clap(skip))]
     pub path_to_target_spec: Option<PathBuf>,
-    /// Set the target dir path within `./target` to use for building shaders. Defaults to `spirv-builder`, resulting
-    /// in the path `./target/spirv-builder`.
+    /// Set the target dir path to use for building shaders. Relative paths will be resolved
+    /// relative to the `target` dir of the shader crate, absolute paths are used as is.
+    /// Defaults to `spirv-builder`, resulting in the path `./target/spirv-builder`.
     #[cfg_attr(feature = "clap", clap(skip))]
-    pub target_dir_path: Option<String>,
+    pub target_dir_path: Option<PathBuf>,
 
     // `rustc_codegen_spirv::linker` codegen args
     /// Change the shader `panic!` handling strategy (see [`ShaderPanicStrategy`]).
@@ -648,10 +651,11 @@ impl SpirvBuilder {
         self
     }
 
-    /// Set the target dir path within `./target` to use for building shaders. Defaults to `spirv-builder`, resulting
-    /// in the path `./target/spirv-builder`.
+    /// Set the target dir path to use for building shaders. Relative paths will be resolved
+    /// relative to the `target` dir of the shader crate, absolute paths are used as is.
+    /// Defaults to `spirv-builder`, resulting in the path `./target/spirv-builder`.
     #[must_use]
-    pub fn target_dir_path(mut self, name: impl Into<String>) -> Self {
+    pub fn target_dir_path(mut self, name: impl Into<PathBuf>) -> Self {
         self.target_dir_path = Some(name.into());
         self
     }
@@ -932,34 +936,21 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         rustflags.extend(extra_rustflags.split_whitespace().map(|s| s.to_string()));
     }
 
-    // If we're nested in `cargo` invocation, use a different `--target-dir`,
-    // to avoid waiting on the same lock (which effectively dead-locks us).
-    let outer_target_dir = match (env::var("PROFILE"), env::var_os("OUT_DIR")) {
-        (Ok(outer_profile), Some(dir)) => {
-            // Strip `$outer_profile/build/*/out`.
-            [&outer_profile, "build", "*", "out"].iter().rev().try_fold(
-                PathBuf::from(dir),
-                |mut dir, &filter| {
-                    if (filter == "*" || dir.ends_with(filter)) && dir.pop() {
-                        Some(dir)
-                    } else {
-                        None
-                    }
-                },
-            )
-        }
-        _ => None,
+    let target_dir_path = builder
+        .target_dir_path
+        .clone()
+        .unwrap_or_else(|| PathBuf::from("spirv-builder"));
+    let target_dir = if target_dir_path.is_absolute() {
+        target_dir_path
+    } else {
+        let metadata = cargo_metadata::MetadataCommand::new()
+            .current_dir(path_to_crate)
+            .exec()?;
+        metadata
+            .target_directory
+            .into_std_path_buf()
+            .join(target_dir_path)
     };
-    // FIXME(eddyb) use `crate metadata` to always be able to get the "outer"
-    // (or "default") `--target-dir`, to append `/spirv-builder` to it.
-    let target_dir = outer_target_dir.map(|outer| {
-        outer.join(
-            builder
-                .target_dir_path
-                .as_deref()
-                .unwrap_or("spirv-builder"),
-        )
-    });
 
     let profile = if builder.release { "release" } else { "dev" };
 
@@ -1014,10 +1005,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
             .arg(builder.shader_crate_features.features.join(","));
     }
 
-    // NOTE(eddyb) see above how this is computed and why it might be missing.
-    if let Some(target_dir) = target_dir {
-        cargo.arg("--target-dir").arg(target_dir);
-    }
+    cargo.arg("--target-dir").arg(target_dir);
 
     // Clear Cargo environment variables that we don't want to leak into the
     // inner invocation of Cargo (because e.g. build scripts might read them),
