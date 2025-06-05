@@ -88,8 +88,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use thiserror::Error;
 
-pub use rustc_codegen_spirv_types::Capability;
-pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
+pub use rustc_codegen_spirv_types::*;
 
 #[cfg(feature = "include-target-specs")]
 pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
