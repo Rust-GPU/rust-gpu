@@ -24,9 +24,6 @@ jobs:
             target: x86_64-pc-windows-msvc
           - os: macOS-latest
             target: x86_64-apple-darwin
-          - os: ubuntu-24.04
-            target: aarch64-linux-android
-            host: x86_64-unknown-linux-gnu
     runs-on: ${{ matrix.os }}
     env:
       RUSTUP_UNPACK_RAM: "26214400"
@@ -42,13 +39,6 @@ jobs:
       - if: ${{ runner.os == 'Linux' }}
         name: Linux - Install native dependencies
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
-      - if: ${{ runner.os == 'Linux' }}
-        name: Install xvfb, llvmpipe and lavapipe
-        run: |
-          sudo apt-get update -y -qq
-          sudo add-apt-repository ppa:kisak/turtle -y
-          sudo apt-get update
-          sudo apt install -y xvfb libgl1-mesa-dri libxcb-xfixes0-dev mesa-vulkan-drivers
       # cargo version is a random command that forces the installation of rust-toolchain
       - name: install rust-toolchain
         run: cargo version
@@ -60,31 +50,25 @@ jobs:
       # Core crates
       # Compiled in --release because cargo compiletest would otherwise compile in release again.
       - name: rustc_codegen_spirv build
-        if: ${{ matrix.target != 'aarch64-linux-android' }}
         run: cargo test -p rustc_codegen_spirv --release --no-default-features --features "use-installed-tools" --no-run
 
       - name: rustc_codegen_spirv test
-        if: ${{ matrix.target != 'aarch64-linux-android' }}
         run: cargo test -p rustc_codegen_spirv --release --no-default-features --features "use-installed-tools"
 
       - name: workspace test
-        if: ${{ matrix.target != 'aarch64-linux-android' }}
         run: cargo test --release
 
       # Examples
       - name: cargo check examples
-        if: ${{ matrix.target != 'aarch64-linux-android' }}
         run: cargo check -p example-runner-ash -p example-runner-wgpu -p example-runner-cpu -p compute-shader -p mouse-shader -p simplest-shader -p sky-shader --no-default-features --features "use-installed-tools"
 
       - name: build example shaders
-        if: ${{ matrix.target != 'aarch64-linux-android' }}
         env:
           PROFILE: release
           OUT_DIR: "target/release/ci/out"
         run: cargo run -p example-runner-wgpu-builder --release --no-default-features --features "use-installed-tools"
 
       - name: build example shaders (dev aka "debug mode")
-        if: ${{ matrix.target != 'aarch64-linux-android' }}
         env:
           # HACK(eddyb) see `[profile.dev]` in `Cargo.toml` for more on why
           # `-Zshare-generics=off` is useful (and why it had to be moved here).
@@ -93,8 +77,35 @@ jobs:
           OUT_DIR: "target/debug/ci/out"
         run: cargo run -p example-runner-wgpu-builder --no-default-features --features "use-installed-tools"
 
+  android:
+    name: Android
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: aarch64-linux-android
+            host: x86_64-unknown-linux-gnu
+    runs-on: ${{ matrix.os }}
+    env:
+      RUSTUP_UNPACK_RAM: "26214400"
+      RUSTUP_IO_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      # Install the spirv-tools binaries from tarballs hosted on each release
+      # of spirv-tools. This downloads the tarball, decompresses it, unpacks
+      # the binaries to the specified path, and adds them to PATH
+      - name: Install spirv-tools binaries
+        shell: bash
+        run: cargo run --manifest-path .github/install-spirv-tools/Cargo.toml -- ${{matrix.host || matrix.target}} 0.10.0 "${{github.workspace}}/bin"
+      # cargo version is a random command that forces the installation of rust-toolchain
+      - name: install rust-toolchain
+        run: cargo version
+      # Fetch dependencies in a separate step to clearly show how long each part
+      # of the testing takes
+      - name: cargo fetch --locked
+        run: cargo fetch --locked --target ${{ matrix.target }}
+
       - name: Build WGPU Example for Android
-        if: ${{ matrix.target == 'aarch64-linux-android' }}
         shell: bash
         run: |
           echo "::group::Uninstall android-31"
@@ -181,7 +192,7 @@ jobs:
   # to update the branch protection rules when the test matrix changes
   test_success:
     runs-on: ubuntu-24.04
-    needs: [test, compiletest, difftest]
+    needs: [test, compiletest, difftest, android]
     steps:
     - run: echo "All test jobs passed"
 
