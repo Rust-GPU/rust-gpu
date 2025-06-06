@@ -45,6 +45,10 @@ pub const TARGET_SPECS: &[(&str, &str)] = &[
         include_str!("../target-specs/spirv-unknown-spv1.5.json"),
     ),
     (
+        "spirv-unknown-spv1.6.json",
+        include_str!("../target-specs/spirv-unknown-spv1.6.json"),
+    ),
+    (
         "spirv-unknown-vulkan1.0.json",
         include_str!("../target-specs/spirv-unknown-vulkan1.0.json"),
     ),
@@ -59,5 +63,13 @@ pub const TARGET_SPECS: &[(&str, &str)] = &[
     (
         "spirv-unknown-vulkan1.2.json",
         include_str!("../target-specs/spirv-unknown-vulkan1.2.json"),
+    ),
+    (
+        "spirv-unknown-vulkan1.3.json",
+        include_str!("../target-specs/spirv-unknown-vulkan1.3.json"),
+    ),
+    (
+        "spirv-unknown-vulkan1.4.json",
+        include_str!("../target-specs/spirv-unknown-vulkan1.4.json"),
     ),
 ];

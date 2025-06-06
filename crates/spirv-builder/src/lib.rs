@@ -782,9 +782,10 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
             //
             // FIXME(eddyb) consider moving this list, or even `target-specs`,
             // into `rustc_codegen_spirv_types`'s code/source.
-            "spv1.0" | "spv1.1" | "spv1.2" | "spv1.3" | "spv1.4" | "spv1.5" => {}
+            "spv1.0" | "spv1.1" | "spv1.2" | "spv1.3" | "spv1.4" | "spv1.5" | "spv1.6" => {}
             "opengl4.0" | "opengl4.1" | "opengl4.2" | "opengl4.3" | "opengl4.5" => {}
-            "vulkan1.0" | "vulkan1.1" | "vulkan1.1spv1.4" | "vulkan1.2" => {}
+            "vulkan1.0" | "vulkan1.1" | "vulkan1.1spv1.4" | "vulkan1.2" | "vulkan1.3"
+            | "vulkan1.4" => {}
 
             _ => {
                 return Err(SpirvBuilderError::UnsupportedSpirvTargetEnv {
