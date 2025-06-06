@@ -33,6 +33,7 @@ The `rust-gpu` project currently supports a limited number of platforms and grap
 - `spirv-unknown-spv1.3`
 - `spirv-unknown-spv1.4`
 - `spirv-unknown-spv1.5`
+- `spirv-unknown-spv1.6`
 
 ### Vulkan Targets
 
@@ -40,6 +41,8 @@ The `rust-gpu` project currently supports a limited number of platforms and grap
 - `spirv-unknown-vulkan1.1`
 - `spirv-unknown-vulkan1.1spv1.4`
 - `spirv-unknown-vulkan1.2`
+- `spirv-unknown-vulkan1.3`
+- `spirv-unknown-vulkan1.4`
 
 ### WebGPU Targets
 

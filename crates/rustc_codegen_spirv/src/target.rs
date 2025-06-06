@@ -17,7 +17,8 @@ impl SpirvTarget {
             | TargetEnv::Universal_1_2
             | TargetEnv::Universal_1_3
             | TargetEnv::Universal_1_4
-            | TargetEnv::Universal_1_5 => MemoryModel::Simple,
+            | TargetEnv::Universal_1_5
+            | TargetEnv::Universal_1_6 => MemoryModel::Simple,
 
             TargetEnv::OpenGL_4_0
             | TargetEnv::OpenGL_4_1
@@ -38,41 +39,14 @@ impl SpirvTarget {
             | TargetEnv::Vulkan_1_1
             | TargetEnv::WebGPU_0
             | TargetEnv::Vulkan_1_1_Spirv_1_4
-            | TargetEnv::Vulkan_1_2 => MemoryModel::Vulkan,
+            | TargetEnv::Vulkan_1_2
+            | TargetEnv::Vulkan_1_3
+            | TargetEnv::Vulkan_1_4 => MemoryModel::Vulkan,
         }
     }
 
     pub fn spirv_version(&self) -> (u8, u8) {
-        #[allow(clippy::match_same_arms)]
-        match self.env {
-            TargetEnv::Universal_1_0 => (1, 0),
-            TargetEnv::Universal_1_1 => (1, 1),
-            TargetEnv::Universal_1_2 => (1, 2),
-            TargetEnv::Universal_1_3 => (1, 3),
-            TargetEnv::Universal_1_4 => (1, 4),
-            TargetEnv::Universal_1_5 => (1, 5),
-
-            TargetEnv::OpenGL_4_0 => (1, 0),
-            TargetEnv::OpenGL_4_1 => (1, 0),
-            TargetEnv::OpenGL_4_2 => (1, 0),
-            TargetEnv::OpenGL_4_3 => (1, 0),
-            TargetEnv::OpenGL_4_5 => (1, 0),
-
-            TargetEnv::OpenCL_1_2 => (1, 0),
-            TargetEnv::OpenCL_2_0 => (1, 0),
-            TargetEnv::OpenCL_2_1 => (1, 0),
-            TargetEnv::OpenCL_2_2 => (1, 2),
-            TargetEnv::OpenCLEmbedded_1_2 => (1, 0),
-            TargetEnv::OpenCLEmbedded_2_0 => (1, 0),
-            TargetEnv::OpenCLEmbedded_2_1 => (1, 0),
-            TargetEnv::OpenCLEmbedded_2_2 => (1, 2),
-
-            TargetEnv::Vulkan_1_0 => (1, 0),
-            TargetEnv::Vulkan_1_1 => (1, 3),
-            TargetEnv::WebGPU_0 => (1, 3),
-            TargetEnv::Vulkan_1_1_Spirv_1_4 => (1, 4),
-            TargetEnv::Vulkan_1_2 => (1, 5),
-        }
+        self.env.spirv_version()
     }
 
     fn init_target_opts(&self) -> TargetOptions {
