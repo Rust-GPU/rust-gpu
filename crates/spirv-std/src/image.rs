@@ -733,14 +733,16 @@ impl<
     ) where
         I: Integer,
     {
-        asm! {
-            "%image = OpLoad _ {this}",
-            "%coordinate = OpLoad _ {coordinate}",
-            "%texels = OpLoad _ {texels}",
-            "OpImageWrite %image %coordinate %texels",
-            this = in(reg) self,
-            coordinate = in(reg) &coordinate,
-            texels = in(reg) &texels,
+        unsafe {
+            asm! {
+                "%image = OpLoad _ {this}",
+                "%coordinate = OpLoad _ {coordinate}",
+                "%texels = OpLoad _ {texels}",
+                "OpImageWrite %image %coordinate %texels",
+                this = in(reg) self,
+                coordinate = in(reg) &coordinate,
+                texels = in(reg) &texels,
+            }
         }
     }
 }
@@ -802,14 +804,16 @@ impl<
     ) where
         I: Integer,
     {
-        asm! {
-            "%image = OpLoad _ {this}",
-            "%coordinate = OpLoad _ {coordinate}",
-            "%texels = OpLoad _ {texels}",
-            "OpImageWrite %image %coordinate %texels",
-            this = in(reg) self,
-            coordinate = in(reg) &coordinate,
-            texels = in(reg) &texels,
+        unsafe {
+            asm! {
+                "%image = OpLoad _ {this}",
+                "%coordinate = OpLoad _ {coordinate}",
+                "%texels = OpLoad _ {texels}",
+                "OpImageWrite %image %coordinate %texels",
+                this = in(reg) self,
+                coordinate = in(reg) &coordinate,
+                texels = in(reg) &texels,
+            }
         }
     }
 }
@@ -848,13 +852,13 @@ impl<
 
         unsafe {
             asm! {
-            "%image = OpLoad _ {this}",
-            "%coordinate = OpLoad _ {coordinate}",
-            "%result = OpImageRead typeof*{result} %image %coordinate",
-            "OpStore {result} %result",
-            this = in(reg) self,
-            coordinate = in(reg) &coordinate,
-            result = in(reg) &mut result,
+                "%image = OpLoad _ {this}",
+                "%coordinate = OpLoad _ {coordinate}",
+                "%result = OpImageRead typeof*{result} %image %coordinate",
+                "OpStore {result} %result",
+                this = in(reg) self,
+                coordinate = in(reg) &coordinate,
+                result = in(reg) &mut result,
             }
         }
 
@@ -880,13 +884,14 @@ impl<
     where
         Self: HasQueryLevels,
     {
-        let result: u32;
+        let mut result = Default::default();
         unsafe {
             asm! {
                 "%image = OpLoad _ {this}",
-                "{result} = OpImageQueryLevels typeof{result} %image",
+                "%result = OpImageQueryLevels typeof*{result} %image",
+                "OpStore {result} %result",
                 this = in(reg) self,
-                result = out(reg) result,
+                result = in(reg) &mut result,
             }
         }
         result
@@ -1019,13 +1024,14 @@ impl<
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQuerySamples")]
     pub fn query_samples(&self) -> u32 {
-        let result: u32;
+        let mut result = Default::default();
         unsafe {
             asm! {
                 "%image = OpLoad _ {this}",
-                "{result} = OpImageQuerySamples typeof{result} %image",
+                "%result = OpImageQuerySamples typeof*{result} %image",
+                "OpStore {result} %result",
                 this = in(reg) self,
-                result = out(reg) result,
+                result = in(reg) &mut result,
             }
         }
         result
