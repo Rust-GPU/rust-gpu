@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod test;
 
+mod array_stride_fixer;
 mod dce;
 mod destructure_composites;
 mod duplicates;
@@ -353,6 +354,12 @@ pub fn link(
             // `Function` is actually invalid! (may need `Private`)
             concrete_fallback: Operand::StorageClass(StorageClass::Function),
         });
+    }
+
+    // Fix ArrayStride decorations for arrays in storage classes where newer SPIR-V versions forbid explicit layouts
+    {
+        let _timer = sess.timer("fix_array_stride_decorations");
+        array_stride_fixer::fix_array_stride_decorations(&mut output);
     }
 
     // NOTE(eddyb) with SPIR-T, we can do `mem2reg` before inlining, too!
