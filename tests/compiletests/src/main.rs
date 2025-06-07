@@ -14,7 +14,7 @@ struct Opt {
     bless: bool,
 
     /// The environment to compile to the SPIR-V tests.
-    #[arg(long, default_value = "spv1.3")]
+    #[arg(long, default_value = "vulkan1.2")]
     target_env: String,
 
     /// Only run tests that match these filters.
