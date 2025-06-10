@@ -1,4 +1,3 @@
-#![cfg(target_arch = "spirv")]
 #![no_std]
 
 use spirv_std::spirv;
