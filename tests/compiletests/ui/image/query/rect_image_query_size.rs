@@ -4,6 +4,8 @@
 // ignore-vulkan1.1
 // ignore-vulkan1.1spv1.4
 // ignore-vulkan1.2
+// ignore-vulkan1.3
+// ignore-vulkan1.4
 
 use spirv_std::spirv;
 use spirv_std::{Image, arch};
