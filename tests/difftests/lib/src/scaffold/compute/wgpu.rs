@@ -1,6 +1,7 @@
 use crate::config::Config;
+use anyhow::Context;
 use bytemuck::Pod;
-use futures::{channel::oneshot::Canceled, executor::block_on};
+use futures::executor::block_on;
 use spirv_builder::{ModuleResult, SpirvBuilder};
 use std::{
     borrow::Cow,
@@ -9,29 +10,14 @@ use std::{
     io::Write,
     path::PathBuf,
 };
-use thiserror::Error;
-use wgpu::{BufferAsyncError, PipelineCompilationOptions, util::DeviceExt};
-
-#[derive(Error, Debug)]
-pub enum ComputeError {
-    #[error("Failed to find a suitable GPU adapter")]
-    AdapterNotFound,
-    #[error("Failed to create device: {0}")]
-    DeviceCreationFailed(String),
-    #[error("Failed to load shader: {0}")]
-    ShaderLoadFailed(String),
-    #[error("Mapping compute output future canceled: {0}")]
-    MappingCanceled(Canceled),
-    #[error("Mapping compute output failed: {0}")]
-    MappingFailed(BufferAsyncError),
-}
+use wgpu::{PipelineCompilationOptions, util::DeviceExt};
 
 /// Trait that creates a shader module and provides its entry point.
 pub trait ComputeShader {
     fn create_module(
         &self,
         device: &wgpu::Device,
-    ) -> Result<(wgpu::ShaderModule, Option<String>), ComputeError>;
+    ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)>;
 }
 
 /// A compute shader written in Rust compiled with spirv-builder.
@@ -49,40 +35,33 @@ impl ComputeShader for RustComputeShader {
     fn create_module(
         &self,
         device: &wgpu::Device,
-    ) -> Result<(wgpu::ShaderModule, Option<String>), ComputeError> {
+    ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)> {
         let builder = SpirvBuilder::new(&self.path, "spirv-unknown-vulkan1.1")
             .print_metadata(spirv_builder::MetadataPrintout::None)
             .release(true)
             .multimodule(false)
             .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::SilentExit)
             .preserve_bindings(true);
-        let artifact = builder
-            .build()
-            .map_err(|e| ComputeError::ShaderLoadFailed(e.to_string()))?;
+        let artifact = builder.build().context("SpirvBuilder::build() failed")?;
 
         if artifact.entry_points.len() != 1 {
-            return Err(ComputeError::ShaderLoadFailed(format!(
+            anyhow::bail!(
                 "Expected exactly one entry point, found {}",
                 artifact.entry_points.len()
-            )));
+            );
         }
         let entry_point = artifact.entry_points.into_iter().next().unwrap();
 
         let shader_bytes = match artifact.module {
-            ModuleResult::SingleModule(path) => {
-                fs::read(&path).map_err(|e| ComputeError::ShaderLoadFailed(e.to_string()))?
-            }
+            ModuleResult::SingleModule(path) => fs::read(&path)
+                .with_context(|| format!("reading spv file '{}' failed", path.display()))?,
             ModuleResult::MultiModule(_modules) => {
-                return Err(ComputeError::ShaderLoadFailed(
-                    "Multiple modules produced".to_string(),
-                ));
+                anyhow::bail!("MultiModule modules produced");
             }
         };
 
         if shader_bytes.len() % 4 != 0 {
-            return Err(ComputeError::ShaderLoadFailed(
-                "SPIR-V binary length is not a multiple of 4".to_string(),
-            ));
+            anyhow::bail!("SPIR-V binary length is not a multiple of 4");
         }
         let shader_words: Vec<u32> = bytemuck::cast_slice(&shader_bytes).to_vec();
         let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -112,9 +91,9 @@ impl ComputeShader for WgslComputeShader {
     fn create_module(
         &self,
         device: &wgpu::Device,
-    ) -> Result<(wgpu::ShaderModule, Option<String>), ComputeError> {
+    ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)> {
         let shader_source = fs::read_to_string(&self.path)
-            .map_err(|e| ComputeError::ShaderLoadFailed(e.to_string()))?;
+            .with_context(|| format!("reading wgsl source file '{}'", &self.path.display()))?;
         let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("Compute Shader"),
             source: wgpu::ShaderSource::Wgsl(Cow::Owned(shader_source)),
@@ -142,7 +121,7 @@ where
         }
     }
 
-    fn init() -> Result<(wgpu::Device, wgpu::Queue), ComputeError> {
+    fn init() -> anyhow::Result<(wgpu::Device, wgpu::Queue)> {
         block_on(async {
             let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
                 #[cfg(target_os = "linux")]
@@ -160,7 +139,7 @@ where
                     force_fallback_adapter: false,
                 })
                 .await
-                .ok_or(ComputeError::AdapterNotFound)?;
+                .context("Failed to find a suitable GPU adapter")?;
             let (device, queue) = adapter
                 .request_device(
                     &wgpu::DeviceDescriptor {
@@ -175,12 +154,12 @@ where
                     None,
                 )
                 .await
-                .map_err(|e| ComputeError::DeviceCreationFailed(e.to_string()))?;
+                .context("Failed to create device")?;
             Ok((device, queue))
         })
     }
 
-    fn run_internal<I>(self, input: Option<I>) -> Result<Vec<u8>, ComputeError>
+    fn run_internal<I>(self, input: Option<I>) -> anyhow::Result<Vec<u8>>
     where
         I: Sized + Pod,
     {
@@ -278,20 +257,20 @@ where
         });
         device.poll(wgpu::Maintain::Wait);
         block_on(receiver)
-            .map_err(ComputeError::MappingCanceled)?
-            .map_err(ComputeError::MappingFailed)?;
+            .context("mapping canceled")?
+            .context("mapping failed")?;
         let data = buffer_slice.get_mapped_range().to_vec();
         staging_buffer.unmap();
         Ok(data)
     }
 
     /// Runs the compute shader with no input.
-    pub fn run(self) -> Result<Vec<u8>, ComputeError> {
+    pub fn run(self) -> anyhow::Result<Vec<u8>> {
         self.run_internal::<()>(None)
     }
 
     /// Runs the compute shader with provided input.
-    pub fn run_with_input<I>(self, input: I) -> Result<Vec<u8>, ComputeError>
+    pub fn run_with_input<I>(self, input: I) -> anyhow::Result<Vec<u8>>
     where
         I: Sized + Pod,
     {
@@ -299,21 +278,21 @@ where
     }
 
     /// Runs the compute shader with no input and writes the output to a file.
-    pub fn run_test(self, config: &Config) -> Result<(), ComputeError> {
+    pub fn run_test(self, config: &Config) -> anyhow::Result<()> {
         let output = self.run()?;
-        let mut f = File::create(&config.output_path).unwrap();
-        f.write_all(&output).unwrap();
+        let mut f = File::create(&config.output_path)?;
+        f.write_all(&output)?;
         Ok(())
     }
 
     /// Runs the compute shader with provided input and writes the output to a file.
-    pub fn run_test_with_input<I>(self, config: &Config, input: I) -> Result<(), ComputeError>
+    pub fn run_test_with_input<I>(self, config: &Config, input: I) -> anyhow::Result<()>
     where
         I: Sized + Pod,
     {
         let output = self.run_with_input(input)?;
-        let mut f = File::create(&config.output_path).unwrap();
-        f.write_all(&output).unwrap();
+        let mut f = File::create(&config.output_path)?;
+        f.write_all(&output)?;
         Ok(())
     }
 }
