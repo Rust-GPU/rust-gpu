@@ -356,10 +356,10 @@ pub fn link(
         });
     }
 
-    // Fix ArrayStride decorations for arrays in storage classes where newer SPIR-V versions forbid explicit layouts
+    // Fix ArrayStride decorations (after storage classes are resolved to avoid conflicts)
     {
         let _timer = sess.timer("fix_array_stride_decorations");
-        array_stride_fixer::fix_array_stride_decorations(&mut output);
+        array_stride_fixer::fix_array_stride_decorations_with_deduplication(&mut output, false);
     }
 
     // NOTE(eddyb) with SPIR-T, we can do `mem2reg` before inlining, too!
