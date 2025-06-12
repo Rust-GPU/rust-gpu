@@ -1,8 +1,12 @@
 // build-fail
 // normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$SPIRV_STD_SRC/"
 // compile-flags: -C target-feature=+ImageQuery,+SampledRect
+// ignore-vulkan1.0
+// ignore-vulkan1.1
+// ignore-vulkan1.1spv1.4
+// ignore-vulkan1.2
 
-use spirv_std::{Image, arch, spirv, image::SampledImage};
+use spirv_std::{Image, arch, image::SampledImage, spirv};
 
 #[spirv(fragment)]
 pub fn main(
