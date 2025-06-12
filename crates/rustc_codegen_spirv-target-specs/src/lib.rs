@@ -52,6 +52,8 @@ pub enum SpirvTargetEnv {
     Vulkan_1_3,
     #[strum(to_string = "vulkan1.4")]
     Vulkan_1_4,
+    #[strum(to_string = "wgsl")]
+    Wgsl,
 }
 
 impl SpirvTargetEnv {
@@ -93,7 +95,7 @@ mod tests {
     #[test]
     pub fn test_parse_as_str_loop() {
         for target in SpirvTargetEnv::iter() {
-            let parsed = SpirvTargetEnv::parse_triple(target.as_str()).unwrap();
+            let parsed = SpirvTargetEnv::parse_triple(&target.target_triple()).unwrap();
             assert_eq!(target, parsed);
         }
     }
