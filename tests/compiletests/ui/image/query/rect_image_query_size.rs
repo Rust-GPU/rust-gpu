@@ -1,5 +1,9 @@
 // build-pass
 // compile-flags: -C target-feature=+ImageQuery,+SampledRect
+// ignore-vulkan1.0
+// ignore-vulkan1.1
+// ignore-vulkan1.1spv1.4
+// ignore-vulkan1.2
 
 use spirv_std::spirv;
 use spirv_std::{Image, arch};
