@@ -194,3 +194,68 @@ impl<V: Vector<S, 4>, S: Scalar>
 pub trait ImageCoordinateSubpassData<T, const ARRAYED: u32> {}
 impl<V: Vector<I, 2>, I: Integer> ImageCoordinateSubpassData<I, { Arrayed::False as u32 }> for V {}
 impl<V: Vector<I, 3>, I: Integer> ImageCoordinateSubpassData<I, { Arrayed::True as u32 }> for V {}
+
+/// Marker trait for query size results based on image dimension and arraying.
+///
+/// Unlike `ImageCoordinate`, this trait represents the SPIR-V size query results:
+/// - 1D images return a scalar
+/// - 2D/Cube/Rect images return 2 components (Cube returns face width/height)
+/// - 3D images return 3 components
+/// - Arrayed images add one component for the array size
+pub trait ImageSizeQuery<T, const DIM: u32, const ARRAYED: u32> {}
+
+// 1D images
+impl<T: Scalar> ImageSizeQuery<T, { Dimensionality::OneD as u32 }, { Arrayed::False as u32 }>
+    for T
+{
+}
+impl<V: Vector<T, 2>, T: Scalar>
+    ImageSizeQuery<T, { Dimensionality::OneD as u32 }, { Arrayed::True as u32 }> for V
+{
+}
+
+// 2D images
+impl<V: Vector<T, 2>, T: Scalar>
+    ImageSizeQuery<T, { Dimensionality::TwoD as u32 }, { Arrayed::False as u32 }> for V
+{
+}
+impl<V: Vector<T, 3>, T: Scalar>
+    ImageSizeQuery<T, { Dimensionality::TwoD as u32 }, { Arrayed::True as u32 }> for V
+{
+}
+
+// 3D images
+impl<V: Vector<T, 3>, T: Scalar>
+    ImageSizeQuery<T, { Dimensionality::ThreeD as u32 }, { Arrayed::False as u32 }> for V
+{
+}
+impl<V: Vector<T, 4>, T: Scalar>
+    ImageSizeQuery<T, { Dimensionality::ThreeD as u32 }, { Arrayed::True as u32 }> for V
+{
+}
+
+// Cube images - returns 2D size (width/height of face)
+impl<V: Vector<T, 2>, T: Scalar>
+    ImageSizeQuery<T, { Dimensionality::Cube as u32 }, { Arrayed::False as u32 }> for V
+{
+}
+impl<V: Vector<T, 3>, T: Scalar>
+    ImageSizeQuery<T, { Dimensionality::Cube as u32 }, { Arrayed::True as u32 }> for V
+{
+}
+
+// Rect images
+impl<V: Vector<T, 2>, T: Scalar>
+    ImageSizeQuery<T, { Dimensionality::Rect as u32 }, { Arrayed::False as u32 }> for V
+{
+}
+impl<V: Vector<T, 3>, T: Scalar>
+    ImageSizeQuery<T, { Dimensionality::Rect as u32 }, { Arrayed::True as u32 }> for V
+{
+}
+
+// Buffer images
+impl<T: Scalar> ImageSizeQuery<T, { Dimensionality::Buffer as u32 }, { Arrayed::False as u32 }>
+    for T
+{
+}

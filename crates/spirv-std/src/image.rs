@@ -10,7 +10,7 @@ mod params;
 /// Contains extra image operands
 pub mod sample_with;
 
-pub use self::params::{ImageCoordinate, ImageCoordinateSubpassData, SampleType};
+pub use self::params::{ImageCoordinate, ImageCoordinateSubpassData, ImageSizeQuery, SampleType};
 pub use crate::macros::Image;
 pub use spirv_std_types::image_params::{
     AccessQualifier, Arrayed, Dimensionality, ImageDepth, ImageFormat, Multisampled, Sampled,
@@ -933,7 +933,7 @@ impl<
     /// Query the dimensions of Image, with no level of detail.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQuerySize")]
-    pub fn query_size<Size: ImageCoordinate<u32, DIM, ARRAYED> + Default>(&self) -> Size
+    pub fn query_size<Size: ImageSizeQuery<u32, DIM, ARRAYED> + Default>(&self) -> Size
     where
         Self: HasQuerySize,
     {
@@ -971,10 +971,10 @@ impl<
         COMPONENTS,
     >
 {
-    /// Query the dimensions of Image, with no level of detail.
+    /// Query the dimensions of Image at a specific level of detail.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQuerySizeLod")]
-    pub fn query_size_lod<Size: ImageCoordinate<u32, DIM, ARRAYED> + Default>(
+    pub fn query_size_lod<Size: ImageSizeQuery<u32, DIM, ARRAYED> + Default>(
         &self,
         lod: u32,
     ) -> Size
@@ -1121,7 +1121,7 @@ impl<
     /// Query the dimensions of the image at the specified level of detail.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQuerySizeLod")]
-    pub fn query_size_lod<Size: ImageCoordinate<u32, DIM, ARRAYED> + Default>(
+    pub fn query_size_lod<Size: ImageSizeQuery<u32, DIM, ARRAYED> + Default>(
         &self,
         lod: u32,
     ) -> Size
@@ -1179,7 +1179,7 @@ impl<
     /// Available only for multisampled images.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageQuerySize")]
-    pub fn query_size<Size: ImageCoordinate<u32, DIM, ARRAYED> + Default>(&self) -> Size
+    pub fn query_size<Size: ImageSizeQuery<u32, DIM, ARRAYED> + Default>(&self) -> Size
     where
         Image<
             SampledType,
