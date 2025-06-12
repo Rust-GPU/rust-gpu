@@ -1,4 +1,3 @@
-// Test `OpImageQuerySize` on multisampled `SampledImage`
 // build-pass
 // compile-flags: -C target-feature=+ImageQuery
 

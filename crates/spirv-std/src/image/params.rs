@@ -197,7 +197,7 @@ impl<V: Vector<I, 3>, I: Integer> ImageCoordinateSubpassData<I, { Arrayed::True 
 
 /// Marker trait for query size results based on image dimension and arraying.
 ///
-/// Unlike `ImageCoordinate`, this trait represents the SPIR-V size query results:
+/// This trait represents the SPIR-V size query results:
 /// - 1D images return a scalar
 /// - 2D/Cube/Rect images return 2 components (Cube returns face width/height)
 /// - 3D images return 3 components
