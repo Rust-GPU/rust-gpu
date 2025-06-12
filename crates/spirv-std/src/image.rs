@@ -1117,6 +1117,94 @@ impl<
         }
         result.truncate_into()
     }
+
+    /// Query the dimensions of the image at the specified level of detail.
+    #[crate::macros::gpu_only]
+    #[doc(alias = "OpImageQuerySizeLod")]
+    pub fn query_size_lod<Size: ImageCoordinate<u32, DIM, ARRAYED> + Default>(
+        &self,
+        lod: u32,
+    ) -> Size
+    where
+        Image<
+            SampledType,
+            DIM,
+            DEPTH,
+            ARRAYED,
+            { Multisampled::False as u32 },
+            SAMPLED,
+            FORMAT,
+            COMPONENTS,
+        >: HasQuerySizeLod,
+    {
+        let mut result: Size = Default::default();
+        unsafe {
+            asm! {
+                "%sampledImage = OpLoad _ {this}",
+                "%image = OpImage _ %sampledImage",
+                "%result = OpImageQuerySizeLod typeof*{result} %image {lod}",
+                "OpStore {result} %result",
+                this = in(reg) self,
+                lod = in(reg) lod,
+                result = in(reg) &mut result,
+            }
+        }
+        result
+    }
+}
+
+impl<
+    SampledType: SampleType<FORMAT, COMPONENTS>,
+    const DIM: u32,
+    const DEPTH: u32,
+    const ARRAYED: u32,
+    const SAMPLED: u32,
+    const FORMAT: u32,
+    const COMPONENTS: u32,
+>
+    SampledImage<
+        Image<
+            SampledType,
+            DIM,
+            DEPTH,
+            ARRAYED,
+            { Multisampled::True as u32 },
+            SAMPLED,
+            FORMAT,
+            COMPONENTS,
+        >,
+    >
+{
+    /// Query the dimensions of the image, with no level of detail.
+    /// Available only for multisampled images.
+    #[crate::macros::gpu_only]
+    #[doc(alias = "OpImageQuerySize")]
+    pub fn query_size<Size: ImageCoordinate<u32, DIM, ARRAYED> + Default>(&self) -> Size
+    where
+        Image<
+            SampledType,
+            DIM,
+            DEPTH,
+            ARRAYED,
+            { Multisampled::True as u32 },
+            SAMPLED,
+            FORMAT,
+            COMPONENTS,
+        >: HasQuerySize,
+    {
+        let mut result: Size = Default::default();
+        unsafe {
+            asm! {
+                "%sampledImage = OpLoad _ {this}",
+                "%image = OpImage _ %sampledImage",
+                "%result = OpImageQuerySize typeof*{result} %image",
+                "OpStore {result} %result",
+                this = in(reg) self,
+                result = in(reg) &mut result,
+            }
+        }
+        result
+    }
 }
 
 /// Helper trait that defines all `*_with` methods on an `Image` that use the extra image operands,
