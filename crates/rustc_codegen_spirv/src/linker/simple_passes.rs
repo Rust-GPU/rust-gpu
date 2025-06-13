@@ -1,6 +1,7 @@
 use super::{Result, get_name, get_names};
 use rspirv::dr::{Block, Function, Module};
-use rspirv::spirv::{ExecutionModel, Op, Word};
+use rspirv::spirv::{Decoration, ExecutionModel, Op, Word};
+use rustc_codegen_spirv_types::Capability;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_session::Session;
 use std::iter::once;
@@ -263,4 +264,20 @@ pub fn check_fragment_insts(sess: &Session, module: &Module) -> Result<()> {
             None => Ok(()),
         }
     }
+}
+
+/// Remove all [`Decoration::NonUniform`] if this module does *not* have [`Capability::ShaderNonUniform`].
+/// This allows image asm to always declare `NonUniform` and not worry about conditional compilation.
+pub fn remove_non_uniform_decorations(_sess: &Session, module: &mut Module) -> Result<()> {
+    let has_shader_non_uniform_capability = module.capabilities.iter().any(|inst| {
+        inst.class.opcode == Op::Capability
+            && inst.operands[0].unwrap_capability() == Capability::ShaderNonUniform
+    });
+    if !has_shader_non_uniform_capability {
+        module.annotations.retain(|inst| {
+            !(inst.class.opcode == Op::Decorate
+                && inst.operands[1].unwrap_decoration() == Decoration::NonUniform)
+        });
+    }
+    Ok(())
 }
