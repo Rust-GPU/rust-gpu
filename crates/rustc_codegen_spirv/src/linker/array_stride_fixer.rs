@@ -10,7 +10,7 @@ use rspirv::spirv::{Capability, Decoration, Op, StorageClass, Word};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 
 /// Describes how an array type is used across different storage classes
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArrayUsagePattern {
     /// Array is only used in storage classes that require explicit layout
     LayoutRequired,
@@ -29,6 +29,10 @@ pub struct ArrayStorageContext {
     pub storage_classes: FxHashSet<StorageClass>,
     /// Whether this array allows or forbids layout in its contexts
     pub usage_pattern: ArrayUsagePattern,
+    /// Array types that this array contains as elements (for nested arrays)
+    pub element_arrays: FxHashSet<Word>,
+    /// Array types that contain this array as an element
+    pub parent_arrays: FxHashSet<Word>,
 }
 
 /// Check if a storage class allows explicit layout decorations based on SPIR-V version and capabilities.
@@ -53,15 +57,9 @@ fn allows_layout(
     }
 }
 
-/// Comprehensive fix for `ArrayStride` decorations with optional type deduplication
-pub fn fix_array_stride_decorations_with_deduplication(
-    module: &mut Module,
-    use_context_aware_deduplication: bool,
-) {
-    // Get SPIR-V version from module header
-    let spirv_version = module.header.as_ref().map_or((1, 0), |h| h.version()); // Default to 1.0 if no header
-
-    // Check for WorkgroupMemoryExplicitLayoutKHR capability
+/// Comprehensive fix for `ArrayStride` decorations with staged processing architecture
+pub fn fix_array_stride_decorations_with_deduplication(module: &mut Module) {
+    let spirv_version = module.header.as_ref().map_or((1, 0), |h| h.version());
     let has_workgroup_layout_capability = module.capabilities.iter().any(|inst| {
         inst.class.opcode == Op::Capability
             && inst.operands.first()
@@ -70,39 +68,52 @@ pub fn fix_array_stride_decorations_with_deduplication(
                 ))
     });
 
-    // Analyze storage class contexts for all array types
+    // Analyze all array usage patterns and dependencies
     let array_contexts =
         analyze_array_storage_contexts(module, spirv_version, has_workgroup_layout_capability);
 
-    // Handle mixed usage arrays by creating specialized versions
-    let specializations = create_specialized_array_types(module, &array_contexts);
+    // Create specialized array types when necessary (mixed usage scenarios)
+    let specializations = create_specialized_array_types(
+        module,
+        &array_contexts,
+        spirv_version,
+        has_workgroup_layout_capability,
+    );
 
-    // Update references to use appropriate specialized types
+    // Update references with full context awareness
     if !specializations.is_empty() {
         update_references_for_specialized_arrays(
             module,
             &specializations,
+            &array_contexts,
             spirv_version,
             has_workgroup_layout_capability,
         );
     }
 
-    // Apply context-aware type deduplication if requested
-    if use_context_aware_deduplication {
-        crate::linker::duplicates::remove_duplicate_types_with_array_context(
-            module,
-            Some(&array_contexts),
-        );
-    }
+    // Remove decorations from layout-forbidden contexts
+    remove_array_stride_decorations_for_forbidden_contexts(
+        module,
+        &array_contexts,
+        spirv_version,
+        has_workgroup_layout_capability,
+    );
 
-    // Remove ArrayStride decorations from arrays used in forbidden contexts
-    remove_array_stride_decorations_for_forbidden_contexts(module, &array_contexts);
+    // Final cleanup and deduplication.
+    // Always run the context-aware variant so that arrays used in differing
+    // storage-class contexts are not incorrectly merged.
+    crate::linker::duplicates::remove_duplicate_types_with_array_context(
+        module,
+        Some(&array_contexts),
+    );
 }
 
 /// Remove `ArrayStride` decorations from arrays used in layout-forbidden storage classes
 fn remove_array_stride_decorations_for_forbidden_contexts(
     module: &mut Module,
     array_contexts: &FxHashMap<Word, ArrayStorageContext>,
+    spirv_version: (u8, u8),
+    has_workgroup_layout_capability: bool,
 ) {
     // Find array types that should have their ArrayStride decorations removed
     // Remove from arrays used in forbidden contexts OR mixed usage that includes forbidden contexts
@@ -117,7 +128,7 @@ fn remove_array_stride_decorations_for_forbidden_contexts(
                     // If the array is used in any context that forbids layout, remove the decoration
                     // This is a conservative approach that prevents validation errors
                     let has_forbidden_context = context.storage_classes.iter().any(|&sc| {
-                        !allows_layout(sc, (1, 4), false) // Use SPIR-V 1.4 rules for conservative check
+                        !allows_layout(sc, spirv_version, has_workgroup_layout_capability)
                     });
 
                     if has_forbidden_context {
@@ -146,7 +157,7 @@ fn remove_array_stride_decorations_for_forbidden_contexts(
 }
 
 /// Analyze storage class contexts for all array types in the module
-pub fn analyze_array_storage_contexts(
+fn analyze_array_storage_contexts(
     module: &Module,
     spirv_version: (u8, u8),
     has_workgroup_layout_capability: bool,
@@ -162,7 +173,29 @@ pub fn analyze_array_storage_contexts(
                 array_contexts.insert(result_id, ArrayStorageContext {
                     storage_classes: FxHashSet::default(),
                     usage_pattern: ArrayUsagePattern::Unused,
+                    element_arrays: FxHashSet::default(),
+                    parent_arrays: FxHashSet::default(),
                 });
+            }
+        }
+    }
+
+    // Build parent-child relationships between array types
+    for inst in &module.types_global_values {
+        if matches!(inst.class.opcode, Op::TypeArray | Op::TypeRuntimeArray) {
+            if let Some(parent_id) = inst.result_id {
+                if !inst.operands.is_empty() {
+                    let element_type = inst.operands[0].unwrap_id_ref();
+                    // If the element type is also an array, record the parent-child relationship
+                    if array_types.contains(&element_type) {
+                        if let Some(parent_context) = array_contexts.get_mut(&parent_id) {
+                            parent_context.element_arrays.insert(element_type);
+                        }
+                        if let Some(element_context) = array_contexts.get_mut(&element_type) {
+                            element_context.parent_arrays.insert(parent_id);
+                        }
+                    }
+                }
             }
         }
     }
@@ -211,7 +244,7 @@ pub fn analyze_array_storage_contexts(
         }
     }
 
-    // Determine usage patterns
+    // Determine usage patterns with enhanced logic for nested arrays
     for context in array_contexts.values_mut() {
         if context.storage_classes.is_empty() {
             context.usage_pattern = ArrayUsagePattern::Unused;
@@ -240,6 +273,50 @@ pub fn analyze_array_storage_contexts(
         }
     }
 
+    // Propagate context from parent arrays to child arrays for better consistency
+    // If a parent array is pure workgroup, its child arrays should inherit this context
+    let mut changed = true;
+    while changed {
+        changed = false;
+        let array_ids: Vec<Word> = array_contexts.keys().copied().collect();
+
+        for &array_id in &array_ids {
+            let (parent_arrays, current_pattern) = {
+                let context = &array_contexts[&array_id];
+                (context.parent_arrays.clone(), context.usage_pattern)
+            };
+
+            // If this array has parent arrays that are pure workgroup, and this array
+            // doesn't have mixed usage, then it should also be pure workgroup
+            if current_pattern != ArrayUsagePattern::LayoutForbidden
+                && current_pattern != ArrayUsagePattern::MixedUsage
+            {
+                let has_pure_workgroup_parent = parent_arrays.iter().any(|&parent_id| {
+                    matches!(
+                        array_contexts.get(&parent_id).map(|ctx| ctx.usage_pattern),
+                        Some(ArrayUsagePattern::LayoutForbidden)
+                    )
+                });
+
+                if has_pure_workgroup_parent {
+                    if let Some(context) = array_contexts.get_mut(&array_id) {
+                        // Only inherit if this array doesn't have its own conflicting storage classes
+                        let has_layout_required_usage = context.storage_classes.iter().any(|&sc| {
+                            allows_layout(sc, spirv_version, has_workgroup_layout_capability)
+                        });
+
+                        if !has_layout_required_usage {
+                            context.usage_pattern = ArrayUsagePattern::LayoutForbidden;
+                            // Also inherit the workgroup storage class if not already present
+                            context.storage_classes.insert(StorageClass::Workgroup);
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     array_contexts
 }
 
@@ -247,15 +324,41 @@ pub fn analyze_array_storage_contexts(
 fn create_specialized_array_types(
     module: &mut Module,
     array_contexts: &FxHashMap<Word, ArrayStorageContext>,
+    spirv_version: (u8, u8),
+    has_workgroup_layout_capability: bool,
 ) -> FxHashMap<Word, (Word, Word)> {
     let mut specializations = FxHashMap::default(); // original_id -> (layout_required_id, layout_forbidden_id)
 
-    // Find arrays that need specialization (mixed usage)
+    // Find arrays that need specialization (true mixed usage only)
+    // Be more conservative - only specialize arrays that truly have conflicting requirements
     let arrays_to_specialize: Vec<Word> = array_contexts
         .iter()
         .filter_map(|(&id, context)| {
+            // Only specialize if the array has BOTH layout-required AND layout-forbidden usage
+            // AND it's not just inheriting context from parents (check own storage classes)
             if context.usage_pattern == ArrayUsagePattern::MixedUsage {
-                Some(id)
+                let mut has_layout_required = false;
+                let mut has_layout_forbidden = false;
+
+                // Check actual storage classes, not inherited patterns
+                for &storage_class in &context.storage_classes {
+                    if allows_layout(
+                        storage_class,
+                        spirv_version,
+                        has_workgroup_layout_capability,
+                    ) {
+                        has_layout_required = true;
+                    } else {
+                        has_layout_forbidden = true;
+                    }
+                }
+
+                // Only specialize if there's a true conflict in this array's own usage
+                if has_layout_required && has_layout_forbidden {
+                    Some(id)
+                } else {
+                    None
+                }
             } else {
                 None
             }
@@ -308,224 +411,250 @@ fn create_specialized_array_types(
         }
     }
 
-    // IMPORTANT: Do not add the specialized arrays to the end - this would create forward references
-    // Instead, we need to insert them in the correct position to maintain SPIR-V type ordering
+    // Insert specialized arrays right after their corresponding original arrays
+    // This maintains proper SPIR-V type ordering
+    let mut new_types_global_values = Vec::new();
 
-    // Find the insertion point: after the last original array type that needs specialization
-    // This ensures all specialized arrays are defined before any types that might reference them
-    let mut insertion_point = 0;
-    for (i, inst) in module.types_global_values.iter().enumerate() {
+    for inst in &module.types_global_values {
+        new_types_global_values.push(inst.clone());
+
+        // If this is an array that was specialized, add the specialized versions right after
         if let Some(result_id) = inst.result_id {
-            if arrays_to_specialize.contains(&result_id) {
-                insertion_point = i + 1;
+            if let Some(&(layout_required_id, layout_forbidden_id)) =
+                specializations.get(&result_id)
+            {
+                // Find and add the specialized versions
+                for new_inst in &new_type_instructions {
+                    if new_inst.result_id == Some(layout_required_id) {
+                        new_types_global_values.push(new_inst.clone());
+                        break;
+                    }
+                }
+                for new_inst in &new_type_instructions {
+                    if new_inst.result_id == Some(layout_forbidden_id) {
+                        new_types_global_values.push(new_inst.clone());
+                        break;
+                    }
+                }
             }
         }
     }
 
-    // Insert the specialized array types at the calculated position
-    // This maintains the invariant that referenced types appear before referencing types
-    for (i, new_inst) in new_type_instructions.into_iter().enumerate() {
-        module
-            .types_global_values
-            .insert(insertion_point + i, new_inst);
-    }
+    module.types_global_values = new_types_global_values;
 
     specializations
 }
 
-/// Update all references to specialized array types based on storage class context
-fn update_references_for_specialized_arrays(
-    module: &mut Module,
+/// Helper function to select the appropriate specialized variant based on context
+fn select_array_variant_for_context(
+    original_id: Word,
+    context_storage_classes: &FxHashSet<StorageClass>,
     specializations: &FxHashMap<Word, (Word, Word)>,
     spirv_version: (u8, u8),
     has_workgroup_layout_capability: bool,
+) -> Option<Word> {
+    if let Some(&(layout_required_id, layout_forbidden_id)) = specializations.get(&original_id) {
+        // If context is pure workgroup, use layout_forbidden variant
+        if context_storage_classes.len() == 1
+            && context_storage_classes.contains(&StorageClass::Workgroup)
+        {
+            return Some(layout_forbidden_id);
+        }
+
+        // If context has any layout-forbidden storage classes, use layout_forbidden variant
+        let has_forbidden_context = context_storage_classes
+            .iter()
+            .any(|&sc| !allows_layout(sc, spirv_version, has_workgroup_layout_capability));
+
+        if has_forbidden_context {
+            Some(layout_forbidden_id)
+        } else {
+            Some(layout_required_id)
+        }
+    } else {
+        None
+    }
+}
+
+/// Update all references to specialized array types and create specialized pointer types
+fn update_references_for_specialized_arrays(
+    module: &mut Module,
+    specializations: &FxHashMap<Word, (Word, Word)>,
+    array_contexts: &FxHashMap<Word, ArrayStorageContext>,
+    spirv_version: (u8, u8),
+    has_workgroup_layout_capability: bool,
 ) {
-    // Update struct types that contain specialized arrays
-    // This is safe now because all specialized arrays have been properly positioned in the types section
+    if specializations.is_empty() {
+        return;
+    }
+
+    let mut next_id = module.header.as_ref().map_or(1, |h| h.bound);
+
+    // Step 1: Create new pointer types for specialized arrays
+    let mut pointer_rewrite_rules = FxHashMap::default(); // old_pointer_id -> new_pointer_id
+    let mut new_pointer_instructions = Vec::new();
+
+    // Collect all pointer types that need updating
+    for inst in &module.types_global_values {
+        if inst.class.opcode == Op::TypePointer && inst.operands.len() >= 2 {
+            let storage_class = inst.operands[0].unwrap_storage_class();
+            let pointee_type = inst.operands[1].unwrap_id_ref();
+
+            if let Some(&(layout_required_id, layout_forbidden_id)) =
+                specializations.get(&pointee_type)
+            {
+                // Choose variant based on storage class
+                let target_array_id = if allows_layout(
+                    storage_class,
+                    spirv_version,
+                    has_workgroup_layout_capability,
+                ) {
+                    layout_required_id
+                } else {
+                    layout_forbidden_id
+                };
+
+                // Create new pointer type
+                let mut new_pointer_inst = inst.clone();
+                new_pointer_inst.result_id = Some(next_id);
+                new_pointer_inst.operands[1] = Operand::IdRef(target_array_id);
+                new_pointer_instructions.push(new_pointer_inst);
+
+                pointer_rewrite_rules.insert(inst.result_id.unwrap(), next_id);
+                next_id += 1;
+            }
+        }
+    }
+
+    // Step 2: Update struct field and array element references that point to
+    // original (now specialized) arrays so they reference the appropriate
+    // specialized variant.
+
+    // 2a) Struct field types
     for inst in &mut module.types_global_values {
         if inst.class.opcode == Op::TypeStruct {
-            for operand in &mut inst.operands {
-                if let Some(referenced_id) = operand.id_ref_any() {
-                    if let Some(&(layout_required_id, _layout_forbidden_id)) =
-                        specializations.get(&referenced_id)
-                    {
-                        // For struct types, we use the layout-required variant since structs
-                        // can be used in both layout-required and layout-forbidden contexts
-                        *operand = Operand::IdRef(layout_required_id);
+            for op in &mut inst.operands {
+                if let Some(field_type_id) = op.id_ref_any_mut() {
+                    if let Some(new_id) = select_array_variant_for_context(
+                        *field_type_id,
+                        // We don't have per struct storage class context, but
+                        // any arrays appearing inside a Block decorated struct
+                        // are expected to be in layout-required contexts.
+                        &[StorageClass::StorageBuffer, StorageClass::Uniform]
+                            .iter()
+                            .cloned()
+                            .collect::<FxHashSet<StorageClass>>(),
+                        specializations,
+                        spirv_version,
+                        has_workgroup_layout_capability,
+                    ) {
+                        *field_type_id = new_id;
                     }
                 }
             }
         }
     }
 
-    // Collect all existing pointer types that reference specialized arrays FIRST
-    let mut existing_pointers_to_specialize = Vec::new();
+    // 2b) Array element references for non-specialized arrays
+    for inst in &mut module.types_global_values {
+        if matches!(inst.class.opcode, Op::TypeArray | Op::TypeRuntimeArray) {
+            if let Some(parent_id) = inst.result_id {
+                // Skip arrays that were themselves specialized (they should already be correctly set up)
+                if specializations.contains_key(&parent_id) {
+                    continue;
+                }
+
+                // Update element reference based on parent's context
+                if let Some(element_operand) = inst.operands.get_mut(0) {
+                    if let Some(elem_id) = element_operand.id_ref_any_mut() {
+                        if let Some(parent_context) = array_contexts.get(&parent_id) {
+                            if let Some(new_elem_id) = select_array_variant_for_context(
+                                *elem_id,
+                                &parent_context.storage_classes,
+                                specializations,
+                                spirv_version,
+                                has_workgroup_layout_capability,
+                            ) {
+                                *elem_id = new_elem_id;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Step 3: Update pointer types in types section to reference specialized arrays
+    let mut updated_pointer_types = Vec::new();
     for inst in &module.types_global_values {
         if inst.class.opcode == Op::TypePointer && inst.operands.len() >= 2 {
+            let storage_class = inst.operands[0].unwrap_storage_class();
             let pointee_type = inst.operands[1].unwrap_id_ref();
-            if specializations.contains_key(&pointee_type) {
-                existing_pointers_to_specialize.push(inst.clone());
+
+            if let Some(&(layout_required_id, layout_forbidden_id)) =
+                specializations.get(&pointee_type)
+            {
+                // Choose variant based on storage class
+                let target_array_id = if allows_layout(
+                    storage_class,
+                    spirv_version,
+                    has_workgroup_layout_capability,
+                ) {
+                    layout_required_id
+                } else {
+                    layout_forbidden_id
+                };
+
+                // Update the pointer to reference the appropriate specialized array
+                let mut updated_inst = inst.clone();
+                updated_inst.operands[1] = Operand::IdRef(target_array_id);
+                updated_pointer_types.push((inst.result_id.unwrap(), updated_inst));
             }
         }
     }
 
-    // Create ALL specialized pointer types from the collected existing ones
-    let mut next_id = module.header.as_ref().map_or(1, |h| h.bound);
-    let mut new_pointer_instructions = Vec::new();
-    let mut pointer_type_mappings = FxHashMap::default(); // old_pointer_id -> new_pointer_id
-
-    // Create new pointer types for each storage class context
-    for inst in &existing_pointers_to_specialize {
-        let storage_class = inst.operands[0].unwrap_storage_class();
-        let pointee_type = inst.operands[1].unwrap_id_ref();
-
-        if let Some(&(layout_required_id, layout_forbidden_id)) = specializations.get(&pointee_type)
-        {
-            let allows_layout_for_sc = allows_layout(
-                storage_class,
-                spirv_version,
-                has_workgroup_layout_capability,
-            );
-
-            // Create new pointer type pointing to appropriate specialized array
-            let target_array_id = if allows_layout_for_sc {
-                layout_required_id
-            } else {
-                layout_forbidden_id
-            };
-
-            let mut new_pointer_inst = inst.clone();
-            new_pointer_inst.result_id = Some(next_id);
-            new_pointer_inst.operands[1] = Operand::IdRef(target_array_id);
-            new_pointer_instructions.push(new_pointer_inst);
-
-            // Map old pointer to new pointer
-            if let Some(old_pointer_id) = inst.result_id {
-                pointer_type_mappings.insert(old_pointer_id, next_id);
+    // Apply pointer type updates
+    for inst in &mut module.types_global_values {
+        if let Some(result_id) = inst.result_id {
+            for (old_id, new_inst) in &updated_pointer_types {
+                if result_id == *old_id {
+                    *inst = new_inst.clone();
+                    break;
+                }
             }
-            next_id += 1;
         }
     }
 
-    // Update module header bound to account for the new pointer types
+    // Step 4: Keep original arrays (even after specialization) to avoid
+    // potential forward-reference ordering issues. These original types are
+    // now unused, but retaining them is harmless and greatly simplifies the
+    // type-ordering constraints enforced by the SPIR-V -> SPIR-T lowering
+    // step.
+    // NOTE: If size becomes a concern, we can revisit this and implement a
+    // safer removal strategy that preserves correct ordering.
+
+    // Step 5: Add new pointer types to the module
+    module.types_global_values.extend(new_pointer_instructions);
+
+    // Update module header bound
     if let Some(ref mut header) = module.header {
         header.bound = next_id;
     }
 
-    // Insert new pointer type instructions in the correct position
-    // They must come after the specialized arrays they reference, but before any variables that use them
-
-    // Find the last specialized array position to ensure pointers come after their pointee types
-    let mut pointer_insertion_point = 0;
-    for (i, inst) in module.types_global_values.iter().enumerate() {
-        if let Some(result_id) = inst.result_id {
-            // Check if this is one of our specialized arrays
-            if specializations
-                .values()
-                .any(|&(req_id, forb_id)| result_id == req_id || result_id == forb_id)
-            {
-                pointer_insertion_point = i + 1;
+    // Step 6: Apply pointer rewrite rules throughout the module
+    for inst in module.all_inst_iter_mut() {
+        if let Some(ref mut id) = inst.result_type {
+            *id = pointer_rewrite_rules.get(id).copied().unwrap_or(*id);
+        }
+        for op in &mut inst.operands {
+            if let Some(id) = op.id_ref_any_mut() {
+                *id = pointer_rewrite_rules.get(id).copied().unwrap_or(*id);
             }
         }
     }
 
-    // Insert the new pointer types at the calculated position
-    // This ensures they appear after specialized arrays but before variables
-    for (i, new_pointer_inst) in new_pointer_instructions.into_iter().enumerate() {
-        module
-            .types_global_values
-            .insert(pointer_insertion_point + i, new_pointer_inst);
-    }
-
-    // Update ALL references to old pointer types throughout the entire module
-    // This includes variables, function parameters, and all instructions
-
-    // Update global variables and function types
-    for inst in &mut module.types_global_values {
-        match inst.class.opcode {
-            Op::Variable => {
-                if let Some(var_type_id) = inst.result_type {
-                    if let Some(&new_pointer_id) = pointer_type_mappings.get(&var_type_id) {
-                        inst.result_type = Some(new_pointer_id);
-                    }
-                }
-            }
-            Op::TypeFunction => {
-                // Update function type operands (return type and parameter types)
-                for operand in &mut inst.operands {
-                    if let Some(referenced_id) = operand.id_ref_any() {
-                        if let Some(&new_pointer_id) = pointer_type_mappings.get(&referenced_id) {
-                            *operand = Operand::IdRef(new_pointer_id);
-                        }
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-
-    // Update function signatures and local variables
-    for function in &mut module.functions {
-        // Update function parameters
-        for param in &mut function.parameters {
-            if let Some(param_type_id) = param.result_type {
-                if let Some(&new_pointer_id) = pointer_type_mappings.get(&param_type_id) {
-                    param.result_type = Some(new_pointer_id);
-                }
-            }
-        }
-
-        // Update all instructions in function bodies
-        for block in &mut function.blocks {
-            for inst in &mut block.instructions {
-                // Update result type
-                if let Some(result_type_id) = inst.result_type {
-                    if let Some(&new_pointer_id) = pointer_type_mappings.get(&result_type_id) {
-                        inst.result_type = Some(new_pointer_id);
-                    }
-                }
-
-                // Update operand references
-                for operand in &mut inst.operands {
-                    if let Some(referenced_id) = operand.id_ref_any() {
-                        if let Some(&new_pointer_id) = pointer_type_mappings.get(&referenced_id) {
-                            *operand = Operand::IdRef(new_pointer_id);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    // Remove old pointer type instructions that reference specialized arrays
-    module.types_global_values.retain(|inst| {
-        if inst.class.opcode == Op::TypePointer && inst.operands.len() >= 2 {
-            let pointee_type = inst.operands[1].unwrap_id_ref();
-            !specializations.contains_key(&pointee_type)
-        } else {
-            true
-        }
-    });
-
-    // Remove original array type instructions that were specialized
-    let arrays_to_remove: FxHashSet<Word> = specializations.keys().cloned().collect();
-    module.types_global_values.retain(|inst| {
-        if let Some(result_id) = inst.result_id {
-            !arrays_to_remove.contains(&result_id)
-        } else {
-            true
-        }
-    });
-
-    // STEP 8: Copy ArrayStride decorations from original arrays to layout-required variants
-    // and remove them from layout-forbidden variants
+    // Step 7: Handle ArrayStride decorations for specialized arrays
     let mut decorations_to_add = Vec::new();
-    let layout_forbidden_arrays: FxHashSet<Word> = specializations
-        .values()
-        .map(|&(_, layout_forbidden_id)| layout_forbidden_id)
-        .collect();
-
-    // Find existing ArrayStride decorations on original arrays and copy them to layout-required variants
     for inst in &module.annotations {
         if inst.class.opcode == Op::Decorate
             && inst.operands.len() >= 2
@@ -533,22 +662,23 @@ fn update_references_for_specialized_arrays(
         {
             let target_id = inst.operands[0].unwrap_id_ref();
             if let Some(&(layout_required_id, _)) = specializations.get(&target_id) {
-                // Copy the decoration to the layout-required variant
                 let mut new_decoration = inst.clone();
                 new_decoration.operands[0] = Operand::IdRef(layout_required_id);
                 decorations_to_add.push(new_decoration);
             }
         }
     }
-
-    // Add the copied decorations
     module.annotations.extend(decorations_to_add);
 
-    // Remove ArrayStride decorations from layout-forbidden arrays and original arrays
+    // Remove ArrayStride decorations from original and layout-forbidden arrays
+    let layout_forbidden_arrays: FxHashSet<Word> = specializations
+        .values()
+        .map(|&(_, layout_forbidden_id)| layout_forbidden_id)
+        .collect();
     let arrays_to_remove_decorations: FxHashSet<Word> = layout_forbidden_arrays
         .iter()
         .cloned()
-        .chain(specializations.keys().cloned()) // Also remove from original arrays
+        .chain(specializations.keys().cloned())
         .collect();
 
     module.annotations.retain(|inst| {
@@ -562,6 +692,66 @@ fn update_references_for_specialized_arrays(
             true
         }
     });
+
+    // Step 8: Rewrite any remaining uses/results of original array IDs to the
+    // chosen specialized variant (defaulting to the layout-required variant).
+    if !specializations.is_empty() {
+        let mut array_default_rewrite: FxHashMap<Word, Word> = FxHashMap::default();
+        for (&orig, &(layout_required_id, _)) in specializations {
+            array_default_rewrite.insert(orig, layout_required_id);
+        }
+
+        for inst in module.all_inst_iter_mut() {
+            // Skip type declarations themselves – we only want to fix *uses* of the IDs.
+            if matches!(
+                inst.class.opcode,
+                Op::TypeVoid
+                    | Op::TypeBool
+                    | Op::TypeInt
+                    | Op::TypeFloat
+                    | Op::TypeVector
+                    | Op::TypeMatrix
+                    | Op::TypeImage
+                    | Op::TypeSampler
+                    | Op::TypeSampledImage
+                    | Op::TypeArray
+                    | Op::TypeRuntimeArray
+                    | Op::TypeStruct
+                    | Op::TypeOpaque
+                    | Op::TypePointer
+                    | Op::TypeFunction
+                    | Op::TypeEvent
+                    | Op::TypeDeviceEvent
+                    | Op::TypeReserveId
+                    | Op::TypeQueue
+                    | Op::TypePipe
+                    | Op::TypeForwardPointer
+            ) {
+                continue;
+            }
+
+            // Avoid changing the declared type of function parameters and
+            // composite ops, as they must stay in sync with their value
+            // operands.
+            if !matches!(
+                inst.class.opcode,
+                Op::FunctionParameter | Op::CompositeInsert | Op::CompositeExtract
+            ) {
+                if let Some(ref mut ty) = inst.result_type {
+                    if let Some(&new) = array_default_rewrite.get(ty) {
+                        *ty = new;
+                    }
+                }
+            }
+            for op in &mut inst.operands {
+                if let Some(id) = op.id_ref_any_mut() {
+                    if let Some(&new) = array_default_rewrite.get(id) {
+                        *id = new;
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Check if a type hierarchy contains a specific array type

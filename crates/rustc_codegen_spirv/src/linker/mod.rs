@@ -359,7 +359,7 @@ pub fn link(
     // Fix ArrayStride decorations (after storage classes are resolved to avoid conflicts)
     {
         let _timer = sess.timer("fix_array_stride_decorations");
-        array_stride_fixer::fix_array_stride_decorations_with_deduplication(&mut output, false);
+        array_stride_fixer::fix_array_stride_decorations_with_deduplication(&mut output);
     }
 
     // NOTE(eddyb) with SPIR-T, we can do `mem2reg` before inlining, too!
