@@ -24,7 +24,7 @@ pub fn transpose_2d_workgroup(
     // This should trigger the OpInBoundsAccessChain issue
     shared_real[ly][lx] = 1.0;
     shared_imag[ly][lx] = 2.0;
-    
+
     // Read back to ensure usage
     let _val = shared_real[lx][ly] + shared_imag[lx][ly];
 }
