@@ -472,6 +472,11 @@ pub fn link(
         duplicates::remove_duplicate_debuginfo(&mut output);
     }
 
+    {
+        let _timer = sess.timer("link_remove_non_uniform");
+        simple_passes::remove_non_uniform_decorations(sess, &mut output)?;
+    }
+
     // NOTE(eddyb) SPIR-T pipeline is entirely limited to this block.
     {
         let (spv_words, module_or_err, lower_from_spv_timer) =
