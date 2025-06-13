@@ -1,6 +1,6 @@
 use clap::Parser;
 use itertools::Itertools as _;
-use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
+use rustc_codegen_spirv_target_specs::SpirvTargetEnv;
 use std::{
     env, io,
     path::{Path, PathBuf},
@@ -28,12 +28,6 @@ impl Opt {
     }
 }
 
-const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
-
-fn target_spec_json(target: &str) -> String {
-    format!("{TARGET_SPEC_DIR_PATH}/{target}.json")
-}
-
 #[derive(Copy, Clone)]
 enum DepKind {
     SpirvLib,
@@ -48,9 +42,9 @@ impl DepKind {
         }
     }
 
-    fn target_dir_suffix(self, target: &str) -> String {
+    fn target_dir_suffix(self, target: SpirvTargetEnv) -> String {
         match self {
-            Self::SpirvLib => format!("{target}/debug/deps"),
+            Self::SpirvLib => format!("{}/debug/deps", target.target_triple()),
             Self::ProcMacro => "debug/deps".into(),
         }
     }
@@ -141,37 +135,43 @@ impl Runner {
             extra_flags: "",
         }];
 
-        for (env, variation) in self
+        for (target, variation) in self
             .opt
             .environments()
-            .flat_map(|env| VARIATIONS.iter().map(move |variation| (env, variation)))
+            .flat_map(|target| VARIATIONS.iter().map(move |variation| (target, variation)))
         {
+            let target = if target.contains("-") {
+                SpirvTargetEnv::parse_triple(target)
+            } else {
+                SpirvTargetEnv::parse_triple(&format!("spirv-unknown-{target}"))
+            }
+            .unwrap_or_else(|| panic!("unknown target {}", target));
+
             // HACK(eddyb) in order to allow *some* tests to have separate output
             // in different testing variations (i.e. experimental features), while
             // keeping *most* of the tests unchanged, we make use of "stage IDs",
             // which offer `// only-S` and `// ignore-S` for any stage ID `S`.
             let stage_id = if variation.name == "default" {
                 // Use the environment name as the stage ID.
-                env.to_string()
+                target.to_string()
             } else {
                 // Include the variation name in the stage ID.
-                format!("{}-{}", env, variation.name)
+                format!("{}-{}", target, variation.name)
             };
 
-            println!("Testing env: {stage_id}\n");
+            println!("Testing target: {target}\n");
 
-            let target = format!("{SPIRV_TARGET_PREFIX}{env}");
-            let libs = build_deps(&self.deps_target_dir, &self.codegen_backend_path, &target);
+            let libs = build_deps(&self.deps_target_dir, &self.codegen_backend_path, target);
             let mut flags = test_rustc_flags(
                 &self.codegen_backend_path,
                 &libs,
                 &[
                     &self
                         .deps_target_dir
-                        .join(DepKind::SpirvLib.target_dir_suffix(&target)),
+                        .join(DepKind::SpirvLib.target_dir_suffix(target)),
                     &self
                         .deps_target_dir
-                        .join(DepKind::ProcMacro.target_dir_suffix(&target)),
+                        .join(DepKind::ProcMacro.target_dir_suffix(target)),
                 ],
             );
             flags += variation.extra_flags;
@@ -180,7 +180,7 @@ impl Runner {
                 stage_id,
                 target_rustcflags: Some(flags),
                 mode: mode.parse().expect("Invalid mode"),
-                target: target_spec_json(&target),
+                target: target.target_json_path(),
                 src_base: self.tests_dir.join(mode),
                 build_base: self.compiletest_build_dir.clone(),
                 bless: self.opt.bless,
@@ -196,7 +196,11 @@ impl Runner {
 }
 
 /// Runs the processes needed to build `spirv-std` & other deps.
-fn build_deps(deps_target_dir: &Path, codegen_backend_path: &Path, target: &str) -> TestDeps {
+fn build_deps(
+    deps_target_dir: &Path,
+    codegen_backend_path: &Path,
+    target: SpirvTargetEnv,
+) -> TestDeps {
     // Build compiletests-deps-helper
     std::process::Command::new("cargo")
         .args([
@@ -205,7 +209,7 @@ fn build_deps(deps_target_dir: &Path, codegen_backend_path: &Path, target: &str)
             "compiletests-deps-helper",
             "-Zbuild-std=core",
             "-Zbuild-std-features=compiler-builtins-mem",
-            &*format!("--target={}", target_spec_json(target)),
+            &*format!("--target={}", target.target_json_path()),
         ])
         .arg("--target-dir")
         .arg(deps_target_dir)
@@ -290,7 +294,7 @@ fn find_lib(
     deps_target_dir: &Path,
     base: impl AsRef<Path>,
     dep_kind: DepKind,
-    target: &str,
+    target: SpirvTargetEnv,
 ) -> Result<PathBuf, FindLibError> {
     let base = base.as_ref();
     let (expected_prefix, expected_extension) = dep_kind.prefix_and_extension();

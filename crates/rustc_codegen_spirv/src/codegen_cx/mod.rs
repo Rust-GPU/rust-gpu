@@ -10,16 +10,17 @@ use crate::builder_spirv::{
 use crate::custom_decorations::{CustomDecoration, SrcLocDecoration, ZombieDecoration};
 use crate::spirv_type::{SpirvType, SpirvTypePrinter, TypeCache};
 use crate::symbols::Symbols;
-use crate::target::SpirvTarget;
 
 // HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
+use crate::target::TargetsExt;
 use itertools::Itertools as _;
 use rspirv::dr::{Module, Operand};
 use rspirv::spirv::{Decoration, LinkageType, Word};
 use rustc_abi::{AddressSpace, HasDataLayout, TargetDataLayout};
 use rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
+use rustc_codegen_spirv_target_specs::SpirvTargetEnv;
 use rustc_codegen_ssa::mir::debuginfo::{FunctionDebugContext, VariableKind};
 use rustc_codegen_ssa::traits::{
     AsmCodegenMethods, BackendTypes, DebugInfoCodegenMethods, GlobalAsmOperandRef,
@@ -99,7 +100,7 @@ impl<'tcx> CodegenCx<'tcx> {
     pub fn new(tcx: TyCtxt<'tcx>, codegen_unit: &'tcx CodegenUnit<'tcx>) -> Self {
         // Validate the target spec, as the backend doesn't control `--target`.
         let target_tuple = tcx.sess.opts.target_triple.tuple();
-        let target: SpirvTarget = target_tuple.parse().unwrap_or_else(|_| {
+        let target = SpirvTargetEnv::parse_triple(target_tuple).unwrap_or_else(|| {
             let qualifier = if !target_tuple.starts_with("spirv-") {
                 "non-SPIR-V "
             } else {

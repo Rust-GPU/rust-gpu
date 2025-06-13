@@ -77,6 +77,7 @@ mod depfile;
 mod watch;
 
 use raw_string::{RawStr, RawString};
+use rustc_codegen_spirv_target_specs::SpirvTargetEnv;
 use semver::Version;
 use serde::Deserialize;
 use std::borrow::Borrow;
@@ -88,8 +89,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use thiserror::Error;
 
-pub use rustc_codegen_spirv_types::Capability;
-pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
+pub use rustc_codegen_spirv_types::*;
 
 #[cfg(feature = "include-target-specs")]
 pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
@@ -99,10 +99,8 @@ pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
 pub enum SpirvBuilderError {
     #[error("`target` must be set, for example `spirv-unknown-vulkan1.2`")]
     MissingTarget,
-    #[error("expected `{SPIRV_TARGET_PREFIX}...` target, found `{target}`")]
-    NonSpirvTarget { target: String },
-    #[error("SPIR-V target `{SPIRV_TARGET_PREFIX}-{target_env}` is not supported")]
-    UnsupportedSpirvTargetEnv { target_env: String },
+    #[error("Unknown target `{target}`")]
+    UnknownTarget { target: String },
     #[error("`path_to_crate` must be set")]
     MissingCratePath,
     #[error("crate path '{0}' does not exist")]
@@ -131,8 +129,6 @@ pub enum SpirvBuilderError {
     #[error("cargo metadata error")]
     CargoMetadata(#[from] cargo_metadata::Error),
 }
-
-const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
@@ -790,44 +786,20 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         .target
         .as_ref()
         .ok_or(SpirvBuilderError::MissingTarget)?;
+    let target = SpirvTargetEnv::parse_triple(target).ok_or(SpirvBuilderError::UnknownTarget {
+        target: target.clone(),
+    })?;
     let path_to_crate = builder
         .path_to_crate
         .as_ref()
         .ok_or(SpirvBuilderError::MissingCratePath)?;
-    {
-        let target_env = target.strip_prefix(SPIRV_TARGET_PREFIX).ok_or_else(|| {
-            SpirvBuilderError::NonSpirvTarget {
-                target: target.clone(),
-            }
-        })?;
-        // HACK(eddyb) used only to split the full list into groups.
-        #[allow(clippy::match_same_arms)]
-        match target_env {
-            // HACK(eddyb) hardcoded list to avoid checking if the JSON file
-            // for a particular target exists (and sanitizing strings for paths).
-            //
-            // FIXME(eddyb) consider moving this list, or even `target-specs`,
-            // into `rustc_codegen_spirv_types`'s code/source.
-            "spv1.0" | "spv1.1" | "spv1.2" | "spv1.3" | "spv1.4" | "spv1.5" | "spv1.6" => {}
-            "opengl4.0" | "opengl4.1" | "opengl4.2" | "opengl4.3" | "opengl4.5" => {}
-            "vulkan1.0" | "vulkan1.1" | "vulkan1.1spv1.4" | "vulkan1.2" | "vulkan1.3"
-            | "vulkan1.4" => {}
-
-            _ => {
-                return Err(SpirvBuilderError::UnsupportedSpirvTargetEnv {
-                    target_env: target_env.into(),
-                });
-            }
-        }
-
-        if (builder.print_metadata == MetadataPrintout::Full) && builder.multimodule {
-            return Err(SpirvBuilderError::MultiModuleWithPrintMetadata);
-        }
-        if !path_to_crate.is_dir() {
-            return Err(SpirvBuilderError::CratePathDoesntExist(
-                path_to_crate.clone(),
-            ));
-        }
+    if (builder.print_metadata == MetadataPrintout::Full) && builder.multimodule {
+        return Err(SpirvBuilderError::MultiModuleWithPrintMetadata);
+    }
+    if !path_to_crate.is_dir() {
+        return Err(SpirvBuilderError::CratePathDoesntExist(
+            path_to_crate.clone(),
+        ));
     }
 
     let toolchain_rustc_version =
@@ -1017,8 +989,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         let path;
         #[cfg(feature = "include-target-specs")]
         {
-            path = path_opt
-                .unwrap_or_else(|| PathBuf::from(format!("{TARGET_SPEC_DIR_PATH}/{target}.json")));
+            path = path_opt.unwrap_or_else(|| PathBuf::from(target.target_json_path()));
         }
         #[cfg(not(feature = "include-target-specs"))]
         {
@@ -1026,7 +997,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         }
         cargo.arg("--target").arg(path);
     } else {
-        cargo.arg("--target").arg(target);
+        cargo.arg("--target").arg(target.target_triple());
     }
 
     if !builder.shader_crate_features.default_features {
