@@ -25,7 +25,9 @@ pub fn main(
     target_env = "vulkan1.0",
     target_env = "vulkan1.1",
     target_env = "vulkan1.1spv1.4",
-    target_env = "vulkan1.2"
+    target_env = "vulkan1.2",
+    target_env = "vulkan1.3",
+    target_env = "vulkan1.4"
 )))]
 #[spirv(fragment)]
 pub fn main_cubemap(
