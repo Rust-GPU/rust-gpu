@@ -12,6 +12,8 @@
 // and the pre-`vulkan1.2` output, but per-revisions `{only,ignore}-*` directives
 // are not supported in `compiletest-rs`.
 // ignore-vulkan1.2
+// ignore-vulkan1.3
+// ignore-vulkan1.4
 
 use core::arch::asm;
 use spirv_std::spirv;
