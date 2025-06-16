@@ -17,13 +17,7 @@ jobs:
     name: Test
     strategy:
       matrix:
-        include:
-          - os: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
-          - os: windows-2022
-            target: x86_64-pc-windows-msvc
-          - os: macOS-latest
-            target: aarch64-apple-darwin
+        os: [ ubuntu-24.04, windows-2022, macOS-latest ]
     runs-on: ${{ matrix.os }}
     env:
       RUSTUP_UNPACK_RAM: "26214400"
@@ -38,13 +32,14 @@ jobs:
       - if: ${{ runner.os == 'Linux' }}
         name: Linux - Install native dependencies
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
-      # cargo version is a random command that forces the installation of rust-toolchain
+      # just need a random command that forces the installation of rust-toolchain
+      # figure out native target triple while we're at it
       - name: install rust-toolchain
-        run: cargo version
+        run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
       # Fetch dependencies in a separate step to clearly show how long each part
       # of the testing takes
       - name: cargo fetch --locked
-        run: cargo fetch --locked --target ${{ matrix.target }}
+        run: cargo fetch --locked --target $TARGET
 
       # Core crates
       # Compiled in --release because cargo compiletest would otherwise compile in release again.
@@ -80,10 +75,8 @@ jobs:
     name: Android
     strategy:
       matrix:
-        include:
-          - os: ubuntu-24.04
-            target: aarch64-linux-android
-            host: x86_64-unknown-linux-gnu
+        os: [ ubuntu-24.04 ]
+        target: [ aarch64-linux-android ]
     runs-on: ${{ matrix.os }}
     env:
       RUSTUP_UNPACK_RAM: "26214400"
@@ -95,11 +88,8 @@ jobs:
         with:
           version: 1.4.309.0
           cache: true
-      # cargo version is a random command that forces the installation of rust-toolchain
       - name: install rust-toolchain
         run: cargo version
-      # Fetch dependencies in a separate step to clearly show how long each part
-      # of the testing takes
       - name: cargo fetch --locked
         run: cargo fetch --locked --target ${{ matrix.target }}
 
@@ -130,13 +120,7 @@ jobs:
     name: Compiletest
     strategy:
       matrix:
-        include:
-          - os: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
-          - os: windows-2022
-            target: x86_64-pc-windows-msvc
-          - os: macOS-latest
-            target: aarch64-apple-darwin
+        os: [ ubuntu-24.04, windows-2022, macOS-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -145,11 +129,10 @@ jobs:
         with:
           version: 1.4.309.0
           cache: true
-      # cargo version is a random command that forces the installation of rust-toolchain
       - name: install rust-toolchain
-        run: cargo version
+        run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
       - name: cargo fetch --locked
-        run: cargo fetch --locked --target ${{ matrix.target }}
+        run: cargo fetch --locked --target $TARGET
       - name: compiletest
         run: cargo run -p compiletests --release --no-default-features --features "use-installed-tools" -- --target-env vulkan1.1,vulkan1.2,spv1.3
 
@@ -157,13 +140,7 @@ jobs:
     name: Difftest
     strategy:
       matrix:
-        include:
-          - os: ubuntu-24.04
-            target: x86_64-unknown-linux-gnu
-          - os: windows-2022
-            target: x86_64-pc-windows-msvc
-          - os: macOS-latest
-            target: aarch64-apple-darwin
+        os: [ ubuntu-24.04, windows-2022, macOS-latest ]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -182,13 +159,12 @@ jobs:
           sudo add-apt-repository ppa:kisak/turtle -y
           sudo apt-get update
           sudo apt install -y xvfb libgl1-mesa-dri libxcb-xfixes0-dev mesa-vulkan-drivers
-      # cargo version is a random command that forces the installation of rust-toolchain
       - name: install rust-toolchain
-        run: cargo version
+        run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
       - name: cargo fetch --locked
-        run: cargo fetch --locked --target ${{ matrix.target }}
+        run: cargo fetch --locked --target $TARGET
       - name: cargo fetch --locked difftests
-        run: cargo fetch --locked --manifest-path=tests/difftests/tests/Cargo.toml --target ${{ matrix.target }}
+        run: cargo fetch --locked --manifest-path=tests/difftests/tests/Cargo.toml --target $TARGET
       - name: test difftest
         run: cargo test -p "difftest*" --release --no-default-features --features "use-installed-tools"
       - name: difftests
