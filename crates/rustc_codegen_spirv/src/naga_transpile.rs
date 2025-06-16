@@ -11,15 +11,25 @@ pub type NagaTranspile = fn(
     out_filename: &Path,
 ) -> Result<(), ErrorGuaranteed>;
 
-pub fn should_transpile(sess: &Session) -> Option<NagaTranspile> {
+pub fn should_transpile(sess: &Session) -> Result<Option<NagaTranspile>, ErrorGuaranteed> {
     let target = SpirvTargetEnv::parse_triple(sess.opts.target_triple.tuple())
         .expect("parsing should fail earlier");
-    match target {
-        SpirvTargetEnv::Naga_Wgsl => Some(transpile::wgsl_transpile),
-        _ => None,
-    }
+    let result: Result<Option<NagaTranspile>, ()> = match target {
+        #[cfg(feature = "naga")]
+        SpirvTargetEnv::Naga_Wgsl => Ok(Some(transpile::wgsl_transpile)),
+        #[cfg(not(feature = "naga"))]
+        SpirvTargetEnv::Naga_Wgsl => Err(()),
+        _ => Ok(None),
+    };
+    result.map_err(|_e| {
+        sess.dcx().err(format!(
+            "Target {} requires feature \"naga\" on rustc_codegen_spirv",
+            target.target_triple()
+        ))
+    })
 }
 
+#[cfg(feature = "naga")]
 mod transpile {
     use crate::codegen_cx::CodegenArgs;
     use naga::error::ShaderError;
