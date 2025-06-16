@@ -1,4 +1,5 @@
 // build-fail
+// ignore-wgsl
 
 use spirv_std::{Image, RuntimeArray, spirv};
 

@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -Ctarget-feature=+Geometry
+// ignore-wgsl
 
 use spirv_std::spirv;
 
