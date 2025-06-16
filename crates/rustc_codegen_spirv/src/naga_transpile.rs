@@ -21,7 +21,7 @@ pub fn should_transpile(sess: &Session) -> Result<Option<NagaTranspile>, ErrorGu
         SpirvTargetEnv::Wgsl => Err(()),
         _ => Ok(None),
     };
-    result.map_err(|_| {
+    result.map_err(|_e| {
         sess.dcx().err(format!(
             "Target {} requires feature \"naga\" on rustc_codegen_spirv",
             target.target_triple()

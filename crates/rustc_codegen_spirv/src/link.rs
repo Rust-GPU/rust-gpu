@@ -313,10 +313,8 @@ fn post_link_single_module(
         drop(save_modules_timer);
     }
 
-    if let Ok(transpile) = should_transpile(sess) {
-        if let Some(transpile) = transpile {
-            transpile(sess, cg_args, &spv_binary, out_filename).ok();
-        }
+    if let Ok(Some(transpile)) = should_transpile(sess) {
+        transpile(sess, cg_args, &spv_binary, out_filename).ok();
     }
 }
 
