@@ -196,9 +196,7 @@ pub fn gpu_only(_attr: TokenStream, item: TokenStream) -> TokenStream {
         block,
     } = syn::parse_macro_input!(item as syn::ItemFn);
 
-    // FIXME(eddyb) this looks like a clippy false positive (`sig` is used below).
-    #[allow(clippy::redundant_clone)]
-    let fn_name = sig.ident.clone();
+    let fn_name = &sig.ident;
 
     let sig_cpu = syn::Signature {
         abi: None,
