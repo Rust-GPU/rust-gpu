@@ -23,7 +23,7 @@ use crate::custom_decorations::{CustomDecoration, SrcLocDecoration, ZombieDecora
 use crate::custom_insts;
 use either::Either;
 use rspirv::binary::{Assemble, Consumer};
-use rspirv::dr::{Block, Loader, Module, ModuleHeader, Operand};
+use rspirv::dr::{Block, Function, Loader, Module, ModuleHeader, Operand};
 use rspirv::spirv::{Op, StorageClass, Word};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
@@ -710,6 +710,9 @@ pub fn link(
             dce::dce(output);
         }
 
+        // Validate fragment shaders after DCE to catch silent optimization failures
+        validate_fragment_shader_outputs(sess, output)?;
+
         {
             let _timer = sess.timer("link_remove_duplicate_debuginfo");
             duplicates::remove_duplicate_debuginfo(output);
@@ -819,4 +822,158 @@ impl Drop for SpirtDumpGuard<'_> {
             }
         }
     }
+}
+
+/// Validate that fragment shaders have meaningful output operations
+/// This catches the case described in issue #284 where fragment shaders
+/// are optimized to have no output, causing silent rendering failures
+fn validate_fragment_shader_outputs(sess: &Session, module: &Module) -> Result<()> {
+    use rspirv::spirv::{ExecutionModel, Op};
+
+    // Find all fragment entry points
+    for entry in &module.entry_points {
+        if entry.class.opcode == Op::EntryPoint {
+            if let Some(execution_model) = entry.operands.first() {
+                if execution_model.unwrap_execution_model() == ExecutionModel::Fragment {
+                    let function_id = entry.operands[1].unwrap_id_ref();
+                    let entry_name = entry.operands[2].unwrap_literal_string();
+
+                    // Check if this fragment shader has meaningful output operations
+                    if !fragment_shader_writes_output(module, function_id) {
+                        let mut err = sess.dcx().struct_err(format!(
+                            "fragment shader `{}` produces no output",
+                            entry_name
+                        ));
+
+                        err = err.with_help(
+                            "fragment shaders must write to output parameters to produce visible results"
+                        ).with_note(
+                            "use complete assignment like `*out_frag_color = vec4(r, g, b, a)` instead of partial component assignments"
+                        ).with_note(
+                            "partial component assignments may be optimized away if not all components are written"
+                        );
+
+                        // Look for the function to provide better diagnostics
+                        if let Some(func) = module
+                            .functions
+                            .iter()
+                            .find(|f| f.def_id() == Some(function_id))
+                        {
+                            if has_partial_output_writes(module, func) {
+                                err = err.with_note(
+                                    "detected partial component writes (e.g., `out.x = value`) which were optimized away"
+                                ).with_help(
+                                    "write all components at once: `*out_frag_color = vec4(r, g, b, 1.0)`"
+                                );
+                            }
+                        }
+
+                        return Err(err.emit());
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Check if a fragment shader function has any meaningful output writes
+fn fragment_shader_writes_output(module: &Module, function_id: Word) -> bool {
+    // Find the function definition
+    let function = match module
+        .functions
+        .iter()
+        .find(|f| f.def_id() == Some(function_id))
+    {
+        Some(func) => func,
+        None => return true, // If function not found, assume it's valid
+    };
+
+    // Check all instructions in the function for output writes
+    for block in &function.blocks {
+        for inst in &block.instructions {
+            if inst.class.opcode == Op::Store {
+                if let Some(target_id) = inst.operands.first().and_then(|op| op.id_ref_any()) {
+                    if is_output_storage_variable(module, target_id) {
+                        return true;
+                    }
+                }
+            }
+
+            // Check function calls recursively
+            if inst.class.opcode == Op::FunctionCall {
+                if let Some(callee_id) = inst.operands.first().and_then(|op| op.id_ref_any()) {
+                    if fragment_shader_writes_output(module, callee_id) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    false
+}
+
+/// Check if a fragment shader has partial output writes that might have been optimized away
+fn has_partial_output_writes(module: &Module, function: &Function) -> bool {
+    use rspirv::spirv::Op;
+
+    // Look for AccessChain operations on output variables
+    // This suggests the shader was trying to write individual components
+    for block in &function.blocks {
+        for inst in &block.instructions {
+            if matches!(inst.class.opcode, Op::AccessChain | Op::InBoundsAccessChain) {
+                if let Some(base_id) = inst.operands.first().and_then(|op| op.id_ref_any()) {
+                    if is_output_storage_variable(module, base_id) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    false
+}
+
+/// Check if a variable ID refers to an Output storage class variable
+fn is_output_storage_variable(module: &Module, var_id: Word) -> bool {
+    use rspirv::spirv::{Op, StorageClass};
+
+    // Check direct output variables
+    for inst in &module.types_global_values {
+        if inst.result_id == Some(var_id) && inst.class.opcode == Op::Variable {
+            if let Some(storage_class) = inst.operands.first() {
+                return storage_class.unwrap_storage_class() == StorageClass::Output;
+            }
+        }
+    }
+
+    // Check if this is a pointer derived from an output variable
+    for inst in &module.types_global_values {
+        if inst.result_id == Some(var_id)
+            && matches!(inst.class.opcode, Op::AccessChain | Op::InBoundsAccessChain)
+        {
+            if let Some(base_id) = inst.operands.first().and_then(|op| op.id_ref_any()) {
+                return is_output_storage_variable(module, base_id);
+            }
+        }
+    }
+
+    // Check in function bodies for derived pointers
+    for function in &module.functions {
+        for block in &function.blocks {
+            for inst in &block.instructions {
+                if inst.result_id == Some(var_id)
+                    && matches!(inst.class.opcode, Op::AccessChain | Op::InBoundsAccessChain)
+                {
+                    if let Some(base_id) = inst.operands.first().and_then(|op| op.id_ref_any()) {
+                        return is_output_storage_variable(module, base_id);
+                    }
+                }
+            }
+        }
+    }
+
+    false
 }
