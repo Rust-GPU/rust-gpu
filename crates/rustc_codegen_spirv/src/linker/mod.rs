@@ -297,6 +297,13 @@ pub fn link(
         simple_passes::check_fragment_insts(sess, &output)?;
     }
 
+    // Early detection: Check fragment shaders for meaningful output operations
+    // TODO: This check is currently too aggressive and may have false positives
+    // {
+    //     let _timer = sess.timer("link_fragment_output_validity_check");
+    //     simple_passes::check_fragment_output_validity(sess, &output)?;
+    // }
+
     // HACK(eddyb) this has to run before the `report_and_remove_zombies` pass,
     // so that any zombies that are passed as call arguments, but eventually unused,
     // won't be (incorrectly) considered used.
@@ -705,6 +712,9 @@ pub fn link(
             dce::dce(output);
         }
 
+        // Check for missing entry points after DCE
+        validate_entry_points_exist(sess, output)?;
+
         {
             let _timer = sess.timer("link_remove_duplicate_debuginfo");
             duplicates::remove_duplicate_debuginfo(output);
@@ -726,6 +736,79 @@ pub fn link(
     }
 
     Ok(output)
+}
+
+/// Validates that all declared entry points have corresponding function definitions
+/// after dead code elimination. This prevents silent compilation failures where
+/// entry point functions are eliminated but their declarations remain.
+fn validate_entry_points_exist(sess: &Session, module: &Module) -> Result<()> {
+    let mut missing_entry_points = Vec::new();
+
+    // Collect all function IDs that exist in the module
+    let existing_function_ids: rustc_data_structures::fx::FxHashSet<Word> = module
+        .functions
+        .iter()
+        .filter_map(|func| func.def.as_ref().map(|def| def.result_id.unwrap()))
+        .collect();
+
+    // Check each entry point declaration
+    for entry_point in &module.entry_points {
+        if entry_point.class.opcode == rspirv::spirv::Op::EntryPoint {
+            let function_id = entry_point.operands[1].unwrap_id_ref();
+            let entry_name = entry_point.operands[2].unwrap_literal_string();
+
+            if !existing_function_ids.contains(&function_id) {
+                missing_entry_points.push(entry_name.to_string());
+            }
+        }
+    }
+
+    if !missing_entry_points.is_empty() {
+        let error_msg = if missing_entry_points.len() == 1 {
+            format!(
+                "entry point `{}` was eliminated during dead code elimination, \
+                likely because its function body was optimized away",
+                missing_entry_points[0]
+            )
+        } else {
+            format!(
+                "entry points {:?} were eliminated during dead code elimination, \
+                likely because their function bodies were optimized away",
+                missing_entry_points
+            )
+        };
+
+        let mut err = sess.dcx().struct_err(error_msg);
+
+        // Provide specific help based on the entry point name
+        let has_fragment = missing_entry_points
+            .iter()
+            .any(|name| name.contains("fragment") || name.contains("fs"));
+        if has_fragment {
+            err = err.with_help(
+                "fragment shaders must write to output parameters. \
+                Use complete assignment like `*out_frag_color = vec4(r, g, b, a)` \
+                instead of individual component assignments",
+            );
+            err = err.with_note(
+                "example: `*out_frag_color = vec4(in_color.x, in_color.y, in_color.z, 1.0);`",
+            );
+        } else {
+            err = err.with_help(
+                "ensure entry point functions have observable side effects \
+                (e.g., write to output parameters, call non-pure functions)",
+            );
+        }
+
+        err = err.with_note(
+            "entry point functions that produce no observable effects \
+            are considered dead code and will be eliminated during optimization",
+        );
+
+        return Err(err.emit());
+    }
+
+    Ok(())
 }
 
 /// Helper for dumping SPIR-T on drop, which allows panics to also dump,

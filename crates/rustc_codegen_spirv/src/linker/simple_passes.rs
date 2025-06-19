@@ -157,6 +157,122 @@ pub fn name_variables_pass(module: &mut Module) {
     }
 }
 
+/// Check fragment shaders for meaningful output operations
+pub fn check_fragment_output_validity(sess: &Session, module: &Module) -> Result<()> {
+    let names = get_names(module);
+
+    // Find all fragment entry points
+    let fragment_entries: Vec<_> = module
+        .entry_points
+        .iter()
+        .filter(|entry| {
+            entry.class.opcode == Op::EntryPoint
+                && entry.operands[0].unwrap_execution_model() == ExecutionModel::Fragment
+        })
+        .collect();
+
+    for entry in fragment_entries {
+        let entry_function_id = entry.operands[1].unwrap_id_ref();
+        let entry_name = entry.operands[2].unwrap_literal_string();
+
+        // Find the actual function definition
+        let entry_function = module
+            .functions
+            .iter()
+            .find(|func| func.def_id() == Some(entry_function_id));
+
+        if let Some(func) = entry_function {
+            // Check if this function has any meaningful output operations
+            if !has_meaningful_output_operations(module, func, &names) {
+                let func_name = get_name(&names, entry_function_id);
+                sess.dcx()
+                    .struct_warn(format!(
+                        "fragment shader entry point `{}` appears to have no meaningful output operations and may be optimized away",
+                        entry_name
+                    ))
+                    .with_note(format!("function: {}", func_name))
+                    .with_help(
+                        "ensure fragment shaders write to output parameters (e.g., `*out_frag_color = vec4(...)`)"
+                    )
+                    .emit();
+            }
+        }
+    }
+
+    Ok(())
+}
+
+/// Check if a function has meaningful output operations (stores to output variables)
+fn has_meaningful_output_operations(
+    module: &Module,
+    func: &Function,
+    names: &FxHashMap<Word, &str>,
+) -> bool {
+    // Look for store operations to output variables
+    for block in &func.blocks {
+        for inst in &block.instructions {
+            match inst.class.opcode {
+                Op::Store => {
+                    // Check if we're storing to an output variable
+                    if let Some(target_id) = inst.operands.first().and_then(|op| op.id_ref_any()) {
+                        if is_output_variable(module, target_id) {
+                            return true;
+                        }
+                    }
+                }
+                Op::AccessChain | Op::InBoundsAccessChain => {
+                    // Check if this creates a pointer to an output variable
+                    if let Some(result_id) = inst.result_id {
+                        if let Some(base_id) = inst.operands.first().and_then(|op| op.id_ref_any())
+                        {
+                            if is_output_variable(module, base_id) {
+                                // This creates a pointer to an output variable,
+                                // check if it's used in stores later
+                                if is_pointer_used_for_output(func, result_id) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    false
+}
+
+/// Check if a variable is an output variable
+fn is_output_variable(module: &Module, var_id: Word) -> bool {
+    for inst in &module.types_global_values {
+        if inst.result_id == Some(var_id) && inst.class.opcode == Op::Variable {
+            if let Some(storage_class) = inst.operands.first() {
+                return matches!(
+                    storage_class.unwrap_storage_class(),
+                    rspirv::spirv::StorageClass::Output
+                );
+            }
+        }
+    }
+    false
+}
+
+/// Check if a pointer is used in store operations
+fn is_pointer_used_for_output(func: &Function, pointer_id: Word) -> bool {
+    for block in &func.blocks {
+        for inst in &block.instructions {
+            if inst.class.opcode == Op::Store {
+                if let Some(target_id) = inst.operands.first().and_then(|op| op.id_ref_any()) {
+                    if target_id == pointer_id {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    false
+}
+
 // Some instructions are only valid in fragment shaders. Check them.
 pub fn check_fragment_insts(sess: &Session, module: &Module) -> Result<()> {
     let mut visited = vec![false; module.functions.len()];
