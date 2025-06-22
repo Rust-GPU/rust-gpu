@@ -264,9 +264,27 @@
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
 <a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a></pre></div><pre class="rust"><code><span class="kw">use super</span>::{<span class="prelude-ty">Result</span>, get_name, get_names};
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a></pre></div><pre class="rust"><code><span class="kw">use super</span>::{<span class="prelude-ty">Result</span>, get_name, get_names};
 <span class="kw">use </span>rspirv::dr::{Block, Function, Module};
-<span class="kw">use </span>rspirv::spirv::{ExecutionModel, Op, Word};
+<span class="kw">use </span>rspirv::spirv::{Decoration, ExecutionModel, Op, Word};
+<span class="kw">use </span>rustc_codegen_spirv_types::Capability;
 <span class="kw">use </span>rustc_data_structures::fx::{FxHashMap, FxHashSet};
 <span class="kw">use </span>rustc_session::Session;
 <span class="kw">use </span>std::iter::once;
@@ -529,5 +547,21 @@
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
         }
     }
+}
+
+<span class="doccomment">/// Remove all [`Decoration::NonUniform`] if this module does *not* have [`Capability::ShaderNonUniform`].
+/// This allows image asm to always declare `NonUniform` and not worry about conditional compilation.
+</span><span class="kw">pub fn </span>remove_non_uniform_decorations(_sess: <span class="kw-2">&amp;</span>Session, module: <span class="kw-2">&amp;mut </span>Module) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+    <span class="kw">let </span>has_shader_non_uniform_capability = module.capabilities.iter().any(|inst| {
+        inst.class.opcode == Op::Capability
+            &amp;&amp; inst.operands[<span class="number">0</span>].unwrap_capability() == Capability::ShaderNonUniform
+    });
+    <span class="kw">if </span>!has_shader_non_uniform_capability {
+        module.annotations.retain(|inst| {
+            !(inst.class.opcode == Op::Decorate
+                &amp;&amp; inst.operands[<span class="number">1</span>].unwrap_decoration() == Decoration::NonUniform)
+        });
+    }
+    <span class="prelude-val">Ok</span>(())
 }
 </code></pre></div></section></main></body></html>

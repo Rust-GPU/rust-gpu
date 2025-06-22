@@ -63,7 +63,13 @@
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
-<a href="#65" id="65">65</a></pre></div><pre class="rust"><code><span class="attr">#[cfg(target_arch = <span class="string">"spirv"</span>)]
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a></pre></div><pre class="rust"><code><span class="attr">#[cfg(target_arch = <span class="string">"spirv"</span>)]
 </span><span class="kw">use </span>core::arch::asm;
 <span class="kw">use </span>core::marker::PhantomData;
 
@@ -96,15 +102,18 @@
     </span><span class="attr">#[spirv_std_macros::gpu_only]
     </span><span class="kw">pub unsafe fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; <span class="kw-2">&amp;</span>T {
         <span class="comment">// FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>result_slot = core::mem::MaybeUninit::uninit();
+        </span><span class="kw">let </span><span class="kw-2">mut </span>result = core::mem::MaybeUninit::uninit();
         <span class="macro">asm!</span> {
-            <span class="string">"%result = OpAccessChain _ {arr} {index}"</span>,
-            <span class="string">"OpStore {result_slot} %result"</span>,
-            arr = <span class="kw">in</span>(reg) <span class="self">self</span>,
-            index = <span class="kw">in</span>(reg) index,
-            result_slot = <span class="kw">in</span>(reg) result_slot.as_mut_ptr(),
+            <span class="string">"OpDecorate %index NonUniform"</span>,
+            <span class="string">"OpDecorate %result NonUniform"</span>,
+            <span class="string">"%index = OpLoad _ {index}"</span>,
+            <span class="string">"%result = OpAccessChain typeof*{result} {this} %index"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
+            result = <span class="kw">in</span>(reg) result.as_mut_ptr(),
+            this = <span class="kw">in</span>(reg) <span class="self">self</span>,
+            index = <span class="kw">in</span>(reg) <span class="kw-2">&amp;</span>index,
         }
-        result_slot.assume_init()
+        result.assume_init()
     }
 
     <span class="doccomment">/// Index the array, returning a mutable reference to an element. Unfortunately, because the
@@ -117,15 +126,18 @@
     </span><span class="attr">#[spirv_std_macros::gpu_only]
     </span><span class="kw">pub unsafe fn </span>index_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; <span class="kw-2">&amp;mut </span>T {
         <span class="comment">// FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        </span><span class="kw">let </span><span class="kw-2">mut </span>result_slot = core::mem::MaybeUninit::uninit();
+        </span><span class="kw">let </span><span class="kw-2">mut </span>result = core::mem::MaybeUninit::uninit();
         <span class="macro">asm!</span> {
-            <span class="string">"%result = OpAccessChain _ {arr} {index}"</span>,
-            <span class="string">"OpStore {result_slot} %result"</span>,
-            arr = <span class="kw">in</span>(reg) <span class="self">self</span>,
-            index = <span class="kw">in</span>(reg) index,
-            result_slot = <span class="kw">in</span>(reg) result_slot.as_mut_ptr(),
+            <span class="string">"OpDecorate %index NonUniform"</span>,
+            <span class="string">"OpDecorate %result NonUniform"</span>,
+            <span class="string">"%index = OpLoad _ {index}"</span>,
+            <span class="string">"%result = OpAccessChain typeof*{result} {this} %index"</span>,
+            <span class="string">"OpStore {result} %result"</span>,
+            result = <span class="kw">in</span>(reg) result.as_mut_ptr(),
+            this = <span class="kw">in</span>(reg) <span class="self">self</span>,
+            index = <span class="kw">in</span>(reg) <span class="kw-2">&amp;</span>index,
         }
-        result_slot.assume_init()
+        result.assume_init()
     }
 }
 </code></pre></div></section></main></body></html>
