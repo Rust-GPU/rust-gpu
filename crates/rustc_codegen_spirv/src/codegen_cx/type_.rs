@@ -165,9 +165,17 @@ impl<'tcx> BaseTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
     }
 
     fn type_array(&self, ty: Self::Type, len: u64) -> Self::Type {
+        let ty_spirv = self.lookup_type(ty);
+        // Calculate stride with alignment
+        let stride = ty_spirv.physical_size(self).and_then(|_| {
+            ty_spirv
+                .sizeof(self)
+                .map(|size| size.align_to(ty_spirv.alignof(self)).bytes() as u32)
+        });
         SpirvType::Array {
             element: ty,
             count: self.constant_u64(DUMMY_SP, len),
+            stride,
         }
         .def(DUMMY_SP, self)
     }

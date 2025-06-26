@@ -261,7 +261,7 @@ impl<'tcx> CodegenCx<'tcx> {
         let value_spirv_type = value_layout.spirv_type(hir_param.ty_span, self);
         // Some types automatically specify a storage class. Compute that here.
         let element_ty = match self.lookup_type(value_spirv_type) {
-            SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element } => {
+            SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element, .. } => {
                 self.lookup_type(element)
             }
             ty => ty,
@@ -505,7 +505,7 @@ impl<'tcx> CodegenCx<'tcx> {
             && {
                 // Peel off arrays first (used for "descriptor indexing").
                 let outermost_or_array_element = match self.lookup_type(value_spirv_type) {
-                    SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element } => {
+                    SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element, .. } => {
                         element
                     }
                     _ => value_spirv_type,
@@ -966,7 +966,7 @@ impl<'tcx> CodegenCx<'tcx> {
                 SpirvType::Vector { element, .. }
                 | SpirvType::Matrix { element, .. }
                 | SpirvType::Array { element, .. }
-                | SpirvType::RuntimeArray { element }
+                | SpirvType::RuntimeArray { element, .. }
                 | SpirvType::Pointer { pointee: element }
                 | SpirvType::InterfaceBlock {
                     inner_type: element,

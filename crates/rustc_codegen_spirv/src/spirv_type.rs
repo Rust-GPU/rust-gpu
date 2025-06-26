@@ -55,9 +55,15 @@ pub enum SpirvType<'tcx> {
         element: Word,
         /// Note: array count is ref to constant.
         count: SpirvValue,
+        /// Whether this array has an explicit stride decoration.
+        /// None means no decoration, Some(stride) means decorated with that stride.
+        stride: Option<u32>,
     },
     RuntimeArray {
         element: Word,
+        /// Whether this array has an explicit stride decoration.
+        /// None means no decoration, Some(stride) means decorated with that stride.
+        stride: Option<u32>,
     },
     Pointer {
         pointee: Word,
@@ -181,16 +187,32 @@ impl SpirvType<'_> {
             }
             Self::Vector { element, count } => cx.emit_global().type_vector_id(id, element, count),
             Self::Matrix { element, count } => cx.emit_global().type_matrix_id(id, element, count),
-            Self::Array { element, count } => {
+            Self::Array {
+                element,
+                count,
+                stride,
+            } => {
                 let result = cx
                     .emit_global()
                     .type_array_id(id, element, count.def_cx(cx));
-                Self::decorate_array_stride(result, element, cx);
+                if let Some(stride_bytes) = stride {
+                    cx.emit_global().decorate(
+                        result,
+                        Decoration::ArrayStride,
+                        iter::once(Operand::LiteralBit32(stride_bytes)),
+                    );
+                }
                 result
             }
-            Self::RuntimeArray { element } => {
+            Self::RuntimeArray { element, stride } => {
                 let result = cx.emit_global().type_runtime_array_id(id, element);
-                Self::decorate_array_stride(result, element, cx);
+                if let Some(stride_bytes) = stride {
+                    cx.emit_global().decorate(
+                        result,
+                        Decoration::ArrayStride,
+                        iter::once(Operand::LiteralBit32(stride_bytes)),
+                    );
+                }
                 result
             }
             Self::Pointer { pointee } => {
@@ -258,19 +280,6 @@ impl SpirvType<'_> {
         result
     }
 
-    fn decorate_array_stride(result: u32, element: u32, cx: &CodegenCx<'_>) {
-        let mut emit = cx.emit_global();
-        let ty = cx.lookup_type(element);
-        if let Some(element_size) = ty.physical_size(cx) {
-            // ArrayStride decoration wants in *bytes*
-            emit.decorate(
-                result,
-                Decoration::ArrayStride,
-                iter::once(Operand::LiteralBit32(element_size.bytes() as u32)),
-            );
-        }
-    }
-
     /// `def_with_id` is used by the `RecursivePointeeCache` to handle `OpTypeForwardPointer`: when
     /// emitting the subsequent `OpTypePointer`, the ID is already known and must be re-used.
     pub fn def_with_id(self, cx: &CodegenCx<'_>, def_span: Span, id: Word) -> Word {
@@ -332,7 +341,7 @@ impl SpirvType<'_> {
                 cx.lookup_type(element).sizeof(cx)? * count.next_power_of_two() as u64
             }
             Self::Matrix { element, count } => cx.lookup_type(element).sizeof(cx)? * count as u64,
-            Self::Array { element, count } => {
+            Self::Array { element, count, .. } => {
                 cx.lookup_type(element).sizeof(cx)?
                     * cx.builder
                         .lookup_const_scalar(count)
@@ -367,7 +376,7 @@ impl SpirvType<'_> {
             )
             .expect("alignof: Vectors must have power-of-2 size"),
             Self::Array { element, .. }
-            | Self::RuntimeArray { element }
+            | Self::RuntimeArray { element, .. }
             | Self::Matrix { element, .. } => cx.lookup_type(element).alignof(cx),
             Self::Pointer { .. } => cx.tcx.data_layout.pointer_align.abi,
             Self::Image { .. }
@@ -388,7 +397,11 @@ impl SpirvType<'_> {
 
             Self::Adt { size, .. } => size,
 
-            Self::Array { element, count } => Some(
+            Self::Array {
+                element,
+                count,
+                stride: _,
+            } => Some(
                 cx.lookup_type(element).physical_size(cx)?
                     * cx.builder
                         .lookup_const_scalar(count)
@@ -432,8 +445,18 @@ impl SpirvType<'_> {
             SpirvType::Float(width) => SpirvType::Float(width),
             SpirvType::Vector { element, count } => SpirvType::Vector { element, count },
             SpirvType::Matrix { element, count } => SpirvType::Matrix { element, count },
-            SpirvType::Array { element, count } => SpirvType::Array { element, count },
-            SpirvType::RuntimeArray { element } => SpirvType::RuntimeArray { element },
+            SpirvType::Array {
+                element,
+                count,
+                stride,
+            } => SpirvType::Array {
+                element,
+                count,
+                stride,
+            },
+            SpirvType::RuntimeArray { element, stride } => {
+                SpirvType::RuntimeArray { element, stride }
+            }
             SpirvType::Pointer { pointee } => SpirvType::Pointer { pointee },
             SpirvType::Image {
                 sampled_type,
@@ -561,7 +584,11 @@ impl fmt::Debug for SpirvTypePrinter<'_, '_> {
                 .field("element", &self.cx.debug_type(element))
                 .field("count", &count)
                 .finish(),
-            SpirvType::Array { element, count } => f
+            SpirvType::Array {
+                element,
+                count,
+                stride,
+            } => f
                 .debug_struct("Array")
                 .field("id", &self.id)
                 .field("element", &self.cx.debug_type(element))
@@ -573,11 +600,13 @@ impl fmt::Debug for SpirvTypePrinter<'_, '_> {
                         .lookup_const_scalar(count)
                         .expect("Array type has invalid count value"),
                 )
+                .field("stride", &stride)
                 .finish(),
-            SpirvType::RuntimeArray { element } => f
+            SpirvType::RuntimeArray { element, stride } => f
                 .debug_struct("RuntimeArray")
                 .field("id", &self.id)
                 .field("element", &self.cx.debug_type(element))
+                .field("stride", &stride)
                 .finish(),
             SpirvType::Pointer { pointee } => f
                 .debug_struct("Pointer")
@@ -720,14 +749,14 @@ impl SpirvTypePrinter<'_, '_> {
                 ty(self.cx, stack, f, element)?;
                 write!(f, "x{count}")
             }
-            SpirvType::Array { element, count } => {
+            SpirvType::Array { element, count, .. } => {
                 let len = self.cx.builder.lookup_const_scalar(count);
                 let len = len.expect("Array type has invalid count value");
                 f.write_str("[")?;
                 ty(self.cx, stack, f, element)?;
                 write!(f, "; {len}]")
             }
-            SpirvType::RuntimeArray { element } => {
+            SpirvType::RuntimeArray { element, .. } => {
                 f.write_str("[")?;
                 ty(self.cx, stack, f, element)?;
                 f.write_str("]")

@@ -302,10 +302,21 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                 self.err("OpTypeArray in asm! is not supported yet");
                 return;
             }
-            Op::TypeRuntimeArray => SpirvType::RuntimeArray {
-                element: inst.operands[0].unwrap_id_ref(),
+            Op::TypeRuntimeArray => {
+                let element_type = inst.operands[0].unwrap_id_ref();
+                let element_spirv = self.lookup_type(element_type);
+                // Calculate stride with alignment for asm runtime arrays
+                let stride = element_spirv.physical_size(self).and_then(|_| {
+                    element_spirv
+                        .sizeof(self)
+                        .map(|size| size.align_to(element_spirv.alignof(self)).bytes() as u32)
+                });
+                SpirvType::RuntimeArray {
+                    element: element_type,
+                    stride,
+                }
+                .def(self.span(), self)
             }
-            .def(self.span(), self),
             Op::TypePointer => {
                 let storage_class = inst.operands[0].unwrap_storage_class();
                 if storage_class != StorageClass::Generic {
@@ -704,7 +715,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                         };
                         ty = match cx.lookup_type(ty) {
                             SpirvType::Array { element, .. }
-                            | SpirvType::RuntimeArray { element }
+                            | SpirvType::RuntimeArray { element, .. }
                             // HACK(eddyb) this is pretty bad because it's not
                             // checking that the index is an `OpConstant 0`, but
                             // there's no other valid choice anyway.

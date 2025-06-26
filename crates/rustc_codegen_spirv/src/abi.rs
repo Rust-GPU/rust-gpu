@@ -741,8 +741,16 @@ fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>
                 // There's a potential for this array to be sized, but the element to be unsized, e.g. `[[u8]; 5]`.
                 // However, I think rust disallows all these cases, so assert this here.
                 assert_eq!(count, 0);
+                let element_spirv = cx.lookup_type(element_type);
+                // Calculate stride with alignment for runtime arrays
+                let stride = element_spirv.physical_size(cx).and_then(|_| {
+                    element_spirv
+                        .sizeof(cx)
+                        .map(|size| size.align_to(element_spirv.alignof(cx)).bytes() as u32)
+                });
                 SpirvType::RuntimeArray {
                     element: element_type,
+                    stride,
                 }
                 .def(span, cx)
             } else if count == 0 {
@@ -756,9 +764,13 @@ fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>
                     .expect("Unexpected unsized type in sized FieldsShape::Array")
                     .align_to(element_spv.alignof(cx));
                 assert_eq!(stride_spv, stride);
+                // For arrays with explicit layout, use the actual stride from Rust's layout
+                // which already accounts for alignment
+                let array_stride = element_spv.physical_size(cx).map(|_| stride.bytes() as u32);
                 SpirvType::Array {
                     element: element_type,
                     count: count_const,
+                    stride: array_stride,
                 }
                 .def(span, cx)
             }
@@ -1060,8 +1072,17 @@ fn trans_intrinsic_type<'tcx>(
             // We use a generic param to indicate the underlying element type.
             // The SPIR-V element type will be generated from the first generic param.
             if let Some(elem_ty) = args.types().next() {
+                let element_type = cx.layout_of(elem_ty).spirv_type(span, cx);
+                let element_spirv = cx.lookup_type(element_type);
+                // Calculate stride with alignment for intrinsic runtime arrays
+                let stride = element_spirv.physical_size(cx).and_then(|_| {
+                    element_spirv
+                        .sizeof(cx)
+                        .map(|size| size.align_to(element_spirv.alignof(cx)).bytes() as u32)
+                });
                 Ok(SpirvType::RuntimeArray {
-                    element: cx.layout_of(elem_ty).spirv_type(span, cx),
+                    element: element_type,
+                    stride,
                 }
                 .def(span, cx))
             } else {

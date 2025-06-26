@@ -1,0 +1,39 @@
+OpCapability Shader
+OpCapability Float64
+OpCapability Int64
+OpCapability Int16
+OpCapability Int8
+OpCapability ShaderClockKHR
+OpCapability VulkanMemoryModel
+OpExtension "SPV_KHR_shader_clock"
+OpMemoryModel Logical Vulkan
+OpEntryPoint GLCompute %1 "main_cs" %2
+OpExecutionMode %1 LocalSize 1 1 1
+%3 = OpString "$OPSTRING_FILENAME/array_with_stride.rs"
+OpSource Unknown 0 %3 "// build-pass/n// compile-flags: -C llvm-args=--disassemble-globals/n// CHECK: OpDecorate %{{[0-9]+}} ArrayStride/n/nuse spirv_std::spirv;/n/n// Arrays in storage buffers should have ArrayStride decoration/n#[derive(Copy, Clone)]/npub struct StorageBuffer {/n    data: [f32; 4],/n}/n/n#[spirv(compute(threads(1)))]/npub fn main_cs(/n    #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] storage: &mut StorageBuffer,/n) {/n    storage.data[0] = 1.0;/n    storage.data[1] = 2.0;/n}/n"
+OpName %4 "StorageBuffer"
+OpMemberName %4 0 "data"
+OpName %2 "storage"
+OpDecorate %5 ArrayStride 4
+OpMemberDecorate %4 0 Offset 0
+OpDecorate %6 Block
+OpMemberDecorate %6 0 Offset 0
+OpDecorate %2 Binding 0
+OpDecorate %2 DescriptorSet 0
+%7 = OpTypeFloat 32
+%8 = OpTypeInt 32 0
+%9 = OpConstant  %8  4
+%5 = OpTypeArray %7 %9
+%4 = OpTypeStruct %5
+%6 = OpTypeStruct %4
+%10 = OpTypePointer StorageBuffer %6
+%11 = OpTypeVoid
+%12 = OpTypeFunction %11
+%13 = OpTypePointer StorageBuffer %4
+%2 = OpVariable  %10  StorageBuffer
+%14 = OpConstant  %8  0
+%15 = OpTypeBool
+%16 = OpTypePointer StorageBuffer %7
+%17 = OpConstant  %7  1065353216
+%18 = OpConstant  %8  1
+%19 = OpConstant  %7  1073741824
