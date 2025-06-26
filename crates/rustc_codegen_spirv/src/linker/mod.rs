@@ -55,6 +55,9 @@ pub struct Options {
     /// **Note**: currently only used for unit testing, and not exposed elsewhere.
     pub keep_link_exports: bool,
 
+    /// Allow fragment shaders with no output operations (disables Issue #284 validation)
+    pub allow_fragment_no_output: bool,
+
     // NOTE(eddyb) these are debugging options that used to be env vars
     // (for more information see `docs/src/codegen-args.md`).
     pub dump_post_merge: Option<PathBuf>,
@@ -711,7 +714,9 @@ pub fn link(
         }
 
         // Validate fragment shaders after DCE to catch silent optimization failures
-        validate_fragment_shader_outputs(sess, output)?;
+        if !opts.allow_fragment_no_output {
+            validate_fragment_shader_outputs(sess, output)?;
+        }
 
         {
             let _timer = sess.timer("link_remove_duplicate_debuginfo");
@@ -851,6 +856,8 @@ fn validate_fragment_shader_outputs(sess: &Session, module: &Module) -> Result<(
                             "use complete assignment like `*out_frag_color = vec4(r, g, b, a)` instead of partial component assignments"
                         ).with_note(
                             "partial component assignments may be optimized away if not all components are written"
+                        ).with_note(
+                            "to disable this validation (e.g. for testing), use `--allow-fragment-no-output`"
                         );
 
                         // Look for the function to provide better diagnostics
@@ -864,6 +871,8 @@ fn validate_fragment_shader_outputs(sess: &Session, module: &Module) -> Result<(
                                     "detected partial component writes (e.g., `out.x = value`) which were optimized away"
                                 ).with_help(
                                     "write all components at once: `*out_frag_color = vec4(r, g, b, 1.0)`"
+                                ).with_note(
+                                    "alternatively, use `--allow-fragment-no-output` to disable this validation"
                                 );
                             }
                         }
