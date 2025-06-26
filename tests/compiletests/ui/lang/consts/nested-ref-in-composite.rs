@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Test `&'static T` constants where the `T` values themselves contain references,
 // nested in `OpConstantComposite` (structs/arrays) - currently these are disallowed.
 

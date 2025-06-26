@@ -1,5 +1,5 @@
 // build-pass
-// compile-flags: -C llvm-args=--disassemble-fn=ptr_read::copy_via_raw_ptr
+// compile-flags: -C llvm-args=--disassemble-fn=ptr_read::copy_via_raw_ptr,--allow-fragment-no-output
 
 use spirv_std::spirv;
 

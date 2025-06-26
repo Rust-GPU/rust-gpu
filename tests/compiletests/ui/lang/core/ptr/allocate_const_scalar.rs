@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Doesn't work, only worked before because I think it got optimized away before
 // hitting the backend.
 

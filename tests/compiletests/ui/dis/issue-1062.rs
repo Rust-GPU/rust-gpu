@@ -3,7 +3,7 @@
 // Test that rotates take the correct path for non-zero bit amounts.
 
 // build-pass
-// compile-flags: -C llvm-args=--disassemble-entry=main
+// compile-flags: -C llvm-args=--disassemble-entry=main,--allow-fragment-no-output
 
 use spirv_std::spirv;
 

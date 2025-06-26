@@ -1,4 +1,5 @@
 // build-pass
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // compile-flags: -Ctarget-feature=+ext:SPV_KHR_non_semantic_info
 
 use spirv_std::spirv;

@@ -1,4 +1,5 @@
 // build-pass
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 
 use spirv_std::spirv;
 

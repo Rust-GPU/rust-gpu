@@ -5,7 +5,7 @@
 // the default Rust ABI adjustments, that we now override through query hooks)
 
 // build-pass
-// compile-flags: -C llvm-args=--disassemble-entry=main
+// compile-flags: -C llvm-args=--disassemble-entry=main,--allow-fragment-no-output
 
 use spirv_std::spirv;
 

@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Tests multiplying a `Mat3` by a `Vec3`.
 // build-pass
 

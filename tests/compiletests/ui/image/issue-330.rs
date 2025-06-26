@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 use spirv_std::glam::Vec4;
 use spirv_std::spirv;
 use spirv_std::{Sampler, image::Image2dArray};

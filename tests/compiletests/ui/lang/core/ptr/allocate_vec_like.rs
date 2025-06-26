@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Tests using a vector like pointer at `const` time.
 // build-pass
 

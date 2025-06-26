@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Test `OpImageSampleExplicitLod` Lod
 // build-pass
 

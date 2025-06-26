@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -Ctarget-feature=+StorageImageExtendedFormats
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 
 use glam::{Vec2, Vec3, Vec4};
 use spirv_std::spirv;

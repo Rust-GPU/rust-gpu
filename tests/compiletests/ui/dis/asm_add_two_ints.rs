@@ -1,5 +1,5 @@
 // build-pass
-// compile-flags: -C llvm-args=--disassemble-fn=asm_add_two_ints::add_two_ints
+// compile-flags: -C llvm-args=--disassemble-fn=asm_add_two_ints::add_two_ints,--allow-fragment-no-output
 
 use core::arch::asm;
 use spirv_std::spirv;

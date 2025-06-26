@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Test all trailing and leading zeros. No need to test ones, they just call the zero variant with !value
 
 // build-pass

@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Tests that matrix type inference fails correctly, for empty struct
 // build-fail
 

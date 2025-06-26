@@ -1,6 +1,6 @@
 // build-pass
 // compile-flags: -C target-feature=+DerivativeControl
-// compile-flags: -C llvm-args=--disassemble-fn=derivative_control::derivative
+// compile-flags: -C llvm-args=--disassemble-fn=derivative_control::derivative,--allow-fragment-no-output
 
 use spirv_std::arch::Derivative;
 use spirv_std::spirv;

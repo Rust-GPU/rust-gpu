@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // build-fail
 // normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$SPIRV_STD_SRC/"
 // compile-flags: -C target-feature=+ImageQuery,+SampledRect

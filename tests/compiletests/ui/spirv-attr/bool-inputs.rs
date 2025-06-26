@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -Ctarget-feature=+FragmentFullyCoveredEXT,+ext:SPV_EXT_fragment_fully_covered
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 
 use spirv_std::spirv;
 

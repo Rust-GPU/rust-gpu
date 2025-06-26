@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Tests that the zombie `bool` from `overflowing_*` (the "has overflowed" value)
 // isn't kept alive by the user's own (unrelated) `bool` constants.
 //

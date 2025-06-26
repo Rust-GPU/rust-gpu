@@ -3,7 +3,7 @@
 // Tests the various forms of `#[spirv(spec_constant)]`.
 
 // build-pass
-// compile-flags: -C llvm-args=--disassemble-globals
+// compile-flags: -C llvm-args=--disassemble-globals,--allow-fragment-no-output
 // normalize-stderr-test "OpCapability VulkanMemoryModel\n" -> ""
 // normalize-stderr-test "OpSource .*\n" -> ""
 // normalize-stderr-test "OpExtension .SPV_KHR_vulkan_memory_model.\n" -> ""

@@ -1,5 +1,5 @@
 // build-pass
-// compile-flags: -C llvm-args=--disassemble-fn=derivative::derivative
+// compile-flags: -C llvm-args=--disassemble-fn=derivative::derivative,--allow-fragment-no-output
 
 use spirv_std::arch::Derivative;
 use spirv_std::spirv;

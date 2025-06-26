@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Tests that using `&mut` (or interior mutability) with read-only storage classes
 // does actually error (see `mutability-errors.stderr` for the error messages).
 // build-fail

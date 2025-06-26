@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Tests validating tracking of basic blocks
 // within the `asm!` macro.
 // build-fail

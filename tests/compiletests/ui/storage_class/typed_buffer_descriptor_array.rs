@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -C target-feature=+RuntimeDescriptorArray,+ext:SPV_EXT_descriptor_indexing
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 
 use glam::Vec4;
 use spirv_std::spirv;

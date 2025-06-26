@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Test panics coming from the Rust language such as `1 / 0`.
 // build-pass
 

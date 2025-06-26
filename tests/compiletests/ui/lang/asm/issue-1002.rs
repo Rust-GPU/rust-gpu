@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Tests that we don't allow returning from `asm!` (which would always be UB).
 // build-fail
 

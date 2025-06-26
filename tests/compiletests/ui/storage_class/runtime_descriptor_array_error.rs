@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // build-fail
 
 use spirv_std::{Image, RuntimeArray, spirv};

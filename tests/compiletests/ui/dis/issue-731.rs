@@ -3,7 +3,7 @@
 // only ever done on `fn`-local `OpVariable`s, not on the original global.
 
 // build-pass
-// compile-flags: -C llvm-args=--disassemble-entry=main
+// compile-flags: -C llvm-args=--disassemble-entry=main,--allow-fragment-no-output
 
 use spirv_std::spirv;
 

@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -C target-feature=+ImageQuery,+SampledRect
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // ignore-vulkan1.0
 // ignore-vulkan1.1
 // ignore-vulkan1.1spv1.4
