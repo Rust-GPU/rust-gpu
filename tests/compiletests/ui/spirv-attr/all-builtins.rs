@@ -35,6 +35,7 @@ pub fn compute(
     #[spirv(num_workgroups)] num_workgroups: UVec3,
     #[spirv(subgroup_id)] subgroup_id: u32,
     #[spirv(workgroup_id)] workgroup_id: UVec3,
+    #[spirv(workgroup_size)] workgroup_size: UVec3,
     #[spirv(workgroup)] workgroup_local_memory: &mut [u32; 256],
 ) {
 }
