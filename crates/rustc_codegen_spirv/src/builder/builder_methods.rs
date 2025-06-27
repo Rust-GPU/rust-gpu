@@ -2033,6 +2033,31 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         if val.ty == dest_ty {
             val
         } else {
+            // If casting a constant, directly create a constant of the target type.
+            // This avoids creating intermediate types that might require additional
+            // capabilities. For example, casting a f16 constant to f32 will directly
+            // create a f32 constant, avoiding the need for Float16 capability if it is
+            // not used elsewhere.
+            if let Some(const_val) = self.builder.lookup_const_scalar(val) {
+                if let (SpirvType::Float(src_width), SpirvType::Float(dst_width)) =
+                    (self.lookup_type(val.ty), self.lookup_type(dest_ty))
+                {
+                    if src_width < dst_width {
+                        // Convert the bit representation to the actual float value
+                        let float_val = match src_width {
+                            32 => Some(f32::from_bits(const_val as u32) as f64),
+                            64 => Some(f64::from_bits(const_val as u64)),
+                            _ => None,
+                        };
+
+                        if let Some(val) = float_val {
+                            return self.constant_float(dest_ty, val);
+                        }
+                    }
+                }
+            }
+
+            // Regular conversion
             self.emit()
                 .f_convert(dest_ty, None, val.def(self))
                 .unwrap()
@@ -2198,6 +2223,46 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             // I guess?
             return val;
         }
+
+        // If casting a constant, directly create a constant of the target type. This
+        // avoids creating intermediate types that might require additional
+        // capabilities. For example, casting a u8 constant to u32 will directly create
+        // a u32 constant, avoiding the need for Int8 capability if it is not used
+        // elsewhere.
+        if let Some(const_val) = self.builder.lookup_const_scalar(val) {
+            let src_ty = self.lookup_type(val.ty);
+            let dst_ty_spv = self.lookup_type(dest_ty);
+
+            // Try to optimize the constant cast
+            let optimized_result = match (src_ty, dst_ty_spv) {
+                // Integer to integer cast
+                (SpirvType::Integer(src_width, _), SpirvType::Integer(dst_width, _)) => {
+                    // Only optimize if we're widening. This avoids creating the source
+                    // type when it's safe to do so. For narrowing casts (e.g., u32 as
+                    // u8), we need the proper truncation behavior that the regular cast
+                    // provides.
+                    if src_width < dst_width {
+                        Some(self.constant_int(dest_ty, const_val))
+                    } else {
+                        None
+                    }
+                }
+                // Bool to integer cast - const_val will be 0 or 1
+                (SpirvType::Bool, SpirvType::Integer(_, _)) => {
+                    Some(self.constant_int(dest_ty, const_val))
+                }
+                // Integer to bool cast - compare with zero
+                (SpirvType::Integer(_, _), SpirvType::Bool) => {
+                    Some(self.constant_bool(self.span(), const_val != 0))
+                }
+                _ => None,
+            };
+
+            if let Some(result) = optimized_result {
+                return result;
+            }
+        }
+
         match (self.lookup_type(val.ty), self.lookup_type(dest_ty)) {
             // sign change
             (

@@ -3,7 +3,7 @@ use crate::builder_spirv::SpirvValue;
 use crate::codegen_cx::CodegenCx;
 use indexmap::IndexSet;
 use rspirv::dr::Operand;
-use rspirv::spirv::{Capability, Decoration, Dim, ImageFormat, StorageClass, Word};
+use rspirv::spirv::{Decoration, Dim, ImageFormat, StorageClass, Word};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_middle::span_bug;
 use rustc_span::def_id::DefId;
@@ -105,21 +105,6 @@ impl SpirvType<'_> {
                 let result = cx.emit_global().type_int_id(id, width, signedness as u32);
                 let u_or_i = if signedness { "i" } else { "u" };
                 match width {
-                    8 if !cx.builder.has_capability(Capability::Int8) => cx.zombie_with_span(
-                        result,
-                        def_span,
-                        &format!("`{u_or_i}8` without `OpCapability Int8`"),
-                    ),
-                    16 if !cx.builder.has_capability(Capability::Int16) => cx.zombie_with_span(
-                        result,
-                        def_span,
-                        &format!("`{u_or_i}16` without `OpCapability Int16`"),
-                    ),
-                    64 if !cx.builder.has_capability(Capability::Int64) => cx.zombie_with_span(
-                        result,
-                        def_span,
-                        &format!("`{u_or_i}64` without `OpCapability Int64`"),
-                    ),
                     8 | 16 | 32 | 64 => {}
                     w => cx.zombie_with_span(
                         result,
@@ -132,16 +117,6 @@ impl SpirvType<'_> {
             Self::Float(width) => {
                 let result = cx.emit_global().type_float_id(id, width);
                 match width {
-                    16 if !cx.builder.has_capability(Capability::Float16) => cx.zombie_with_span(
-                        result,
-                        def_span,
-                        "`f16` without `OpCapability Float16`",
-                    ),
-                    64 if !cx.builder.has_capability(Capability::Float64) => cx.zombie_with_span(
-                        result,
-                        def_span,
-                        "`f64` without `OpCapability Float64`",
-                    ),
                     16 | 32 | 64 => (),
                     other => cx.zombie_with_span(
                         result,

@@ -7,6 +7,25 @@ use rustc_session::Session;
 use std::iter::once;
 use std::mem::take;
 
+/// Returns the capability required for an integer type of the given width, if any.
+fn capability_for_int_width(width: u32) -> Option<rspirv::spirv::Capability> {
+    match width {
+        8 => Some(rspirv::spirv::Capability::Int8),
+        16 => Some(rspirv::spirv::Capability::Int16),
+        64 => Some(rspirv::spirv::Capability::Int64),
+        _ => None,
+    }
+}
+
+/// Returns the capability required for a float type of the given width, if any.
+fn capability_for_float_width(width: u32) -> Option<rspirv::spirv::Capability> {
+    match width {
+        16 => Some(rspirv::spirv::Capability::Float16),
+        64 => Some(rspirv::spirv::Capability::Float64),
+        _ => None,
+    }
+}
+
 pub fn shift_ids(module: &mut Module, add: u32) {
     module.all_inst_iter_mut().for_each(|inst| {
         if let Some(ref mut result_id) = &mut inst.result_id {
@@ -264,6 +283,111 @@ pub fn check_fragment_insts(sess: &Session, module: &Module) -> Result<()> {
             None => Ok(()),
         }
     }
+}
+
+/// Check that types requiring specific capabilities have those capabilities declared.
+///
+/// This function validates that if a module uses types like u8/i8 (requiring Int8),
+/// u16/i16 (requiring Int16), etc., the corresponding capabilities are declared.
+pub fn check_type_capabilities(sess: &Session, module: &Module) -> Result<()> {
+    use rspirv::spirv::Capability;
+
+    // Collect declared capabilities
+    let declared_capabilities: FxHashSet<Capability> = module
+        .capabilities
+        .iter()
+        .map(|inst| inst.operands[0].unwrap_capability())
+        .collect();
+
+    let mut errors = Vec::new();
+
+    for inst in &module.types_global_values {
+        match inst.class.opcode {
+            Op::TypeInt => {
+                let width = inst.operands[0].unwrap_literal_bit32();
+                let signedness = inst.operands[1].unwrap_literal_bit32() != 0;
+                let type_name = if signedness { "i" } else { "u" };
+
+                if let Some(required_cap) = capability_for_int_width(width) {
+                    if !declared_capabilities.contains(&required_cap) {
+                        errors.push(format!(
+                            "`{type_name}{width}` type used without `OpCapability {required_cap:?}`"
+                        ));
+                    }
+                }
+            }
+            Op::TypeFloat => {
+                let width = inst.operands[0].unwrap_literal_bit32();
+
+                if let Some(required_cap) = capability_for_float_width(width) {
+                    if !declared_capabilities.contains(&required_cap) {
+                        errors.push(format!(
+                            "`f{width}` type used without `OpCapability {required_cap:?}`"
+                        ));
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    if !errors.is_empty() {
+        let mut err = sess
+            .dcx()
+            .struct_err("Missing required capabilities for types");
+        for error in errors {
+            err = err.with_note(error);
+        }
+        Err(err.emit())
+    } else {
+        Ok(())
+    }
+}
+
+/// Remove type-related capabilities that are not required by any types in the module.
+///
+/// This function specifically targets Int8, Int16, Int64, Float16, and Float64 capabilities,
+/// removing them if no types in the module require them. All other capabilities are preserved.
+/// This is part of the fix for issue #300 where constant casts were creating unnecessary types.
+pub fn remove_unused_type_capabilities(module: &mut Module) {
+    use rspirv::spirv::Capability;
+
+    // Collect type-related capabilities that are actually needed
+    let mut needed_type_capabilities = FxHashSet::default();
+
+    // Scan all types to determine which type-related capabilities are needed
+    for inst in &module.types_global_values {
+        match inst.class.opcode {
+            Op::TypeInt => {
+                let width = inst.operands[0].unwrap_literal_bit32();
+                if let Some(cap) = capability_for_int_width(width) {
+                    needed_type_capabilities.insert(cap);
+                }
+            }
+            Op::TypeFloat => {
+                let width = inst.operands[0].unwrap_literal_bit32();
+                if let Some(cap) = capability_for_float_width(width) {
+                    needed_type_capabilities.insert(cap);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Remove only type-related capabilities that aren't needed
+    module.capabilities.retain(|inst| {
+        let cap = inst.operands[0].unwrap_capability();
+        match cap {
+            // Only remove these type-related capabilities if they're not used
+            Capability::Int8
+            | Capability::Int16
+            | Capability::Int64
+            | Capability::Float16
+            | Capability::Float64 => needed_type_capabilities.contains(&cap),
+            // Keep all other capabilities
+            _ => true,
+        }
+    });
 }
 
 /// Remove all [`Decoration::NonUniform`] if this module does *not* have [`Capability::ShaderNonUniform`].
