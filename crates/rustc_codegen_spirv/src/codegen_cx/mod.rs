@@ -339,11 +339,14 @@ impl CodegenArgs {
     pub fn from_session(sess: &Session) -> Self {
         // Split comma-separated arguments within each llvm_args entry
         // This handles cases like "--disassemble-fn=foo,--allow-fragment-no-output"
-        let expanded_args: Vec<String> = sess.opts.cg.llvm_args
+        let expanded_args: Vec<String> = sess
+            .opts
+            .cg
+            .llvm_args
             .iter()
             .flat_map(|arg| arg.split(',').map(|s| s.to_string()))
             .collect();
-        
+
         match CodegenArgs::parse(&expanded_args) {
             Ok(ok) => ok,
             Err(err) => sess
