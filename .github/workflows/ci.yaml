@@ -178,7 +178,13 @@ jobs:
     # Hack for buggy GitHub Actions behavior with skipped checks: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/troubleshooting-required-status-checks#handling-skipped-but-required-checks
     if: ${{ always() }}
     steps:
-    - run: echo "All test jobs passed"
+      # Another hack is to actually check the status of the dependencies or else it'll fall through
+      - run: |
+          echo "Checking statuses..."
+          [[ "${{ needs.test.result }}" == "success" ]] || exit 1
+          [[ "${{ needs.compiletest.result }}" == "success" ]] || exit 1
+          [[ "${{ needs.difftest.result }}" == "success" ]] || exit 1
+          [[ "${{ needs.android.result }}" == "success" ]] || exit 1
 
   lint:
     name: Lint
