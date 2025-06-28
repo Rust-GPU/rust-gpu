@@ -3193,6 +3193,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             .and_then(|def_id| self.buffer_store_intrinsics.borrow().get(&def_id).copied());
         let is_panic_entry_point = instance_def_id
             .is_some_and(|def_id| self.panic_entry_points.borrow().contains(&def_id));
+        let from_trait_impl =
+            instance_def_id.and_then(|def_id| self.from_trait_impls.borrow().get(&def_id).copied());
 
         if let Some(libm_intrinsic) = libm_intrinsic {
             let result = self.call_libm_intrinsic(libm_intrinsic, result_type, args);
@@ -3204,8 +3206,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     self.debug_type(result.ty),
                 );
             }
-            result
-        } else if is_panic_entry_point {
+            return result;
+        }
+
+        if is_panic_entry_point {
             // HACK(eddyb) Rust 2021 `panic!` always uses `format_args!`, even
             // in the simple case that used to pass a `&str` constant, which
             // would not remain reachable in the SPIR-V - but `format_args!` is
@@ -3678,24 +3682,75 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             // HACK(eddyb) redirect any possible panic call to an abort, to avoid
             // needing to materialize `&core::panic::Location` or `format_args!`.
             self.abort_with_kind_and_message_debug_printf("panic", message, debug_printf_args);
-            self.undef(result_type)
-        } else if let Some(mode) = buffer_load_intrinsic {
-            self.codegen_buffer_load_intrinsic(result_type, args, mode)
-        } else if let Some(mode) = buffer_store_intrinsic {
+            return self.undef(result_type);
+        }
+
+        if let Some(mode) = buffer_load_intrinsic {
+            return self.codegen_buffer_load_intrinsic(result_type, args, mode);
+        }
+
+        if let Some(mode) = buffer_store_intrinsic {
             self.codegen_buffer_store_intrinsic(args, mode);
 
             let void_ty = SpirvType::Void.def(rustc_span::DUMMY_SP, self);
-            SpirvValue {
+            return SpirvValue {
                 kind: SpirvValueKind::IllegalTypeUsed(void_ty),
                 ty: void_ty,
-            }
-        } else {
-            let args = args.iter().map(|arg| arg.def(self)).collect::<Vec<_>>();
-            self.emit()
-                .function_call(result_type, None, callee_val, args)
-                .unwrap()
-                .with_type(result_type)
+            };
         }
+
+        if let Some((source_ty, target_ty)) = from_trait_impl {
+            // Optimize From::from calls with constant arguments to avoid creating intermediate types.
+            if let [arg] = args {
+                if let Some(const_val) = self.builder.lookup_const_scalar(*arg) {
+                    use rustc_middle::ty::{FloatTy, IntTy, UintTy};
+
+                    let optimized_result = match (source_ty.kind(), target_ty.kind()) {
+                        // Unsigned integer widening conversions
+                        (
+                            ty::Uint(UintTy::U8),
+                            ty::Uint(UintTy::U16 | UintTy::U32 | UintTy::U64 | UintTy::U128),
+                        )
+                        | (
+                            ty::Uint(UintTy::U16),
+                            ty::Uint(UintTy::U32 | UintTy::U64 | UintTy::U128),
+                        )
+                        | (ty::Uint(UintTy::U32), ty::Uint(UintTy::U64 | UintTy::U128))
+                        | (ty::Uint(UintTy::U64), ty::Uint(UintTy::U128))
+                        // Signed integer widening conversions
+                        | (
+                            ty::Int(IntTy::I8),
+                            ty::Int(IntTy::I16 | IntTy::I32 | IntTy::I64 | IntTy::I128),
+                        )
+                        | (ty::Int(IntTy::I16), ty::Int(IntTy::I32 | IntTy::I64 | IntTy::I128))
+                        | (ty::Int(IntTy::I32), ty::Int(IntTy::I64 | IntTy::I128))
+                        | (ty::Int(IntTy::I64), ty::Int(IntTy::I128)) => {
+                            Some(self.constant_int(result_type, const_val))
+                        }
+
+                        // Float widening conversions: f32->f64
+                        (ty::Float(FloatTy::F32), ty::Float(FloatTy::F64)) => {
+                            let float_val = f32::from_bits(const_val as u32) as f64;
+                            Some(self.constant_float(result_type, float_val))
+                        }
+
+                        // No optimization for narrowing conversions or unsupported types
+                        _ => None,
+                    };
+
+                    if let Some(result) = optimized_result {
+                        return result;
+                    }
+                }
+            }
+        }
+
+        // Default: emit a regular function call
+        let args = args.iter().map(|arg| arg.def(self)).collect::<Vec<_>>();
+        self.emit()
+            .function_call(result_type, None, callee_val, args)
+            .unwrap()
+            .with_type(result_type)
     }
 
     fn zext(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
