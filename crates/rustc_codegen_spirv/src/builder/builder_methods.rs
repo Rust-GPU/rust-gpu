@@ -3701,39 +3701,23 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
         if let Some((source_ty, target_ty)) = from_trait_impl {
             // Optimize From::from calls with constant arguments to avoid creating intermediate types.
+            // Since From is only implemented for safe conversions (widening conversions that preserve
+            // the numeric value), we can directly create a constant of the target type for primitive
+            // numeric types.
             if let [arg] = args {
                 if let Some(const_val) = self.builder.lookup_const_scalar(*arg) {
-                    use rustc_middle::ty::{FloatTy, IntTy, UintTy};
-
+                    use rustc_middle::ty::FloatTy;
                     let optimized_result = match (source_ty.kind(), target_ty.kind()) {
-                        // Unsigned integer widening conversions
-                        (
-                            ty::Uint(UintTy::U8),
-                            ty::Uint(UintTy::U16 | UintTy::U32 | UintTy::U64 | UintTy::U128),
-                        )
-                        | (
-                            ty::Uint(UintTy::U16),
-                            ty::Uint(UintTy::U32 | UintTy::U64 | UintTy::U128),
-                        )
-                        | (ty::Uint(UintTy::U32), ty::Uint(UintTy::U64 | UintTy::U128))
-                        | (ty::Uint(UintTy::U64), ty::Uint(UintTy::U128))
-                        // Signed integer widening conversions
-                        | (
-                            ty::Int(IntTy::I8),
-                            ty::Int(IntTy::I16 | IntTy::I32 | IntTy::I64 | IntTy::I128),
-                        )
-                        | (ty::Int(IntTy::I16), ty::Int(IntTy::I32 | IntTy::I64 | IntTy::I128))
-                        | (ty::Int(IntTy::I32), ty::Int(IntTy::I64 | IntTy::I128))
-                        | (ty::Int(IntTy::I64), ty::Int(IntTy::I128)) => {
+                        // Integer widening conversions
+                        (ty::Uint(_), ty::Uint(_)) | (ty::Int(_), ty::Int(_)) => {
                             Some(self.constant_int(result_type, const_val))
                         }
-
-                        // Float widening conversions: f32->f64
+                        // Float widening conversions
+                        // TODO(@LegNeato): Handle more float types
                         (ty::Float(FloatTy::F32), ty::Float(FloatTy::F64)) => {
                             let float_val = f32::from_bits(const_val as u32) as f64;
                             Some(self.constant_float(result_type, float_val))
                         }
-
                         // No optimization for narrowing conversions or unsupported types
                         _ => None,
                     };
