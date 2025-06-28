@@ -84,6 +84,10 @@ pub struct CodegenCx<'tcx> {
     /// Intrinsic for storing a `<T>` into a `&[u32]`. The `PassMode` is the mode of the `<T>`.
     pub buffer_store_intrinsics: RefCell<FxHashMap<DefId, &'tcx PassMode>>,
 
+    /// Maps `DefId`s of `From::from` method implementations to their source and target types.
+    /// Used to optimize constant conversions like `u32::from(42u8)` to avoid creating the source type.
+    pub from_trait_impls: RefCell<FxHashMap<DefId, (Ty<'tcx>, Ty<'tcx>)>>,
+
     /// Some runtimes (e.g. intel-compute-runtime) disallow atomics on i8 and i16, even though it's allowed by the spec.
     /// This enables/disables them.
     pub i8_i16_atomics_allowed: bool,
@@ -203,6 +207,7 @@ impl<'tcx> CodegenCx<'tcx> {
             fmt_rt_arg_new_fn_ids_to_ty_and_spec: Default::default(),
             buffer_load_intrinsics: Default::default(),
             buffer_store_intrinsics: Default::default(),
+            from_trait_impls: Default::default(),
             i8_i16_atomics_allowed: false,
             codegen_args,
         }
