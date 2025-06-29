@@ -1,5 +1,5 @@
 // build-pass
-// compile-flags: -C llvm-args=--disassemble-fn=asm::asm
+// compile-flags: -C llvm-args=--disassemble-fn=asm::asm,--allow-fragment-no-output
 
 use core::arch::asm;
 use spirv_std::spirv;

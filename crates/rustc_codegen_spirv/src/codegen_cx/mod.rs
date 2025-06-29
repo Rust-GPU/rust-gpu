@@ -337,7 +337,17 @@ pub struct CodegenArgs {
 
 impl CodegenArgs {
     pub fn from_session(sess: &Session) -> Self {
-        match CodegenArgs::parse(&sess.opts.cg.llvm_args) {
+        // Split comma-separated arguments within each llvm_args entry
+        // This handles cases like "--disassemble-fn=foo,--allow-fragment-no-output"
+        let expanded_args: Vec<String> = sess
+            .opts
+            .cg
+            .llvm_args
+            .iter()
+            .flat_map(|arg| arg.split(',').map(|s| s.to_string()))
+            .collect();
+
+        match CodegenArgs::parse(&expanded_args) {
             Ok(ok) => ok,
             Err(err) => sess
                 .dcx()
@@ -420,6 +430,11 @@ impl CodegenArgs {
                 "disables SPIR-V Storage Class inference",
             );
             opts.optflag("", "no-structurize", "disables CFG structurization");
+            opts.optflag(
+                "",
+                "allow-fragment-no-output",
+                "allow fragment shaders with no output operations",
+            );
 
             opts.optmulti(
                 "",
@@ -628,6 +643,7 @@ impl CodegenArgs {
             // FIXME(eddyb) deduplicate between `CodegenArgs` and `linker::Options`.
             spirv_metadata,
             keep_link_exports: false,
+            allow_fragment_no_output: matches.opt_present("allow-fragment-no-output"),
 
             // NOTE(eddyb) these are debugging options that used to be env vars
             // (for more information see `docs/src/codegen-args.md`).

@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Test that zero sized unions don't ICE (even if unions are generally not supported yet)
 // build-pass
 

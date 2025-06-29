@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -Ctarget-feature=+RayTracingKHR,+ext:SPV_KHR_ray_tracing
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 
 use spirv_std::spirv;
 

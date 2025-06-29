@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Test that newtypes of `ScalarPair` can have references taken to their field.
 
 // build-pass

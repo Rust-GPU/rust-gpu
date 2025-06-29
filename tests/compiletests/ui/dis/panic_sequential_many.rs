@@ -5,7 +5,7 @@
 
 // build-pass
 // compile-flags: -C target-feature=+ext:SPV_KHR_non_semantic_info
-// compile-flags: -C llvm-args=--abort-strategy=debug-printf
+// compile-flags: -C llvm-args=--abort-strategy=debug-printf,--allow-fragment-no-output
 // compile-flags: -C llvm-args=--disassemble
 //
 // FIXME(eddyb) consider using such replacements also for dealing

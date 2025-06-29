@@ -1,4 +1,5 @@
 // build-pass
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 
 use spirv_std::spirv;
 use spirv_std::{Image, Sampler, arch, image::ImageWithMethods, image::sample_with};

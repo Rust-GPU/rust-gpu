@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Test that various packing methods work.
 // build-pass
 

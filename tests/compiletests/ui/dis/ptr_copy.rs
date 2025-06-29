@@ -2,7 +2,7 @@
 //[normal] build-fail
 // normalize-stderr-test "\S*/library/core/src/" -> "$$CORE_SRC/"
 //[via_intrinsic] build-pass
-// compile-flags: -C llvm-args=--disassemble-fn=ptr_copy::copy_via_raw_ptr
+// compile-flags: -C llvm-args=--disassemble-fn=ptr_copy::copy_via_raw_ptr,--allow-fragment-no-output
 
 #![cfg_attr(via_intrinsic, allow(internal_features), feature(intrinsics))]
 

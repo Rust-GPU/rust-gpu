@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Test that bounds checking causes panics.
 // build-pass
 

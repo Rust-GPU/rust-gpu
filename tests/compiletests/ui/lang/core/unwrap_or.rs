@@ -4,7 +4,7 @@
 // OpINotEqual, as well as %bool, should not appear in the output.
 
 // build-pass
-// compile-flags: -C llvm-args=--disassemble-entry=main
+// compile-flags: -C llvm-args=--disassemble-entry=main,--allow-fragment-no-output
 
 use spirv_std::spirv;
 

@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Tests allocating a null pointer at `const` time.
 // build-pass
 

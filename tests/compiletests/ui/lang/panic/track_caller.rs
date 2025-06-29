@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Test that propagating `#[track_caller]` doesn't cause constant-related errors.
 
 // build-pass

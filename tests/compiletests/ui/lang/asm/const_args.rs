@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Tests using `asm!` with a const argument.
 // build-pass
 

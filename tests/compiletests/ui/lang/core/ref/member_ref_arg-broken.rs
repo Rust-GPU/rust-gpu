@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // FIXME(eddyb) this is like `member_ref_arg`, but testing the error messages
 // in some broken cases - this test should eventually pass, but for now
 // we care more that the error messages do not regress too much.

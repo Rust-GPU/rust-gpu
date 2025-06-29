@@ -1,4 +1,5 @@
 // build-pass
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 
 #![feature(adt_const_params)]
 #![allow(incomplete_features)]

@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Test `OpImageWrite`
 // build-pass
 // compile-flags: -C target-feature=+StorageImageWriteWithoutFormat

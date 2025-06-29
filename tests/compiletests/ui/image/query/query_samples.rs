@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -C target-feature=+ImageQuery
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 
 use spirv_std::spirv;
 use spirv_std::{Image, arch};

@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Tests that `asm!` can infer the result type of `OpAccessChain`,
 // when used to index arrays.
 

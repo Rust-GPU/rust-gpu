@@ -1,3 +1,4 @@
+// compile-flags: -C llvm-args=--allow-fragment-no-output
 // Test that using DST (i.e. slice) storage buffers passes (Vulkan) validation.
 
 // build-pass
