@@ -601,7 +601,7 @@ pub fn subgroup_ballot_find_msb(subgroup_mask: SubgroupMask) -> u32 {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffle")]
 #[inline]
-pub unsafe fn subgroup_shuffle<T: VectorOrScalar>(value: T, id: u32) -> T {
+pub fn subgroup_shuffle<T: VectorOrScalar>(value: T, id: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -638,7 +638,7 @@ pub unsafe fn subgroup_shuffle<T: VectorOrScalar>(value: T, id: u32) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleXor")]
 #[inline]
-pub unsafe fn subgroup_shuffle_xor<T: VectorOrScalar>(value: T, mask: u32) -> T {
+pub fn subgroup_shuffle_xor<T: VectorOrScalar>(value: T, mask: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -675,7 +675,7 @@ pub unsafe fn subgroup_shuffle_xor<T: VectorOrScalar>(value: T, mask: u32) -> T 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleUp")]
 #[inline]
-pub unsafe fn subgroup_shuffle_up<T: VectorOrScalar>(value: T, delta: u32) -> T {
+pub fn subgroup_shuffle_up<T: VectorOrScalar>(value: T, delta: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -712,7 +712,7 @@ pub unsafe fn subgroup_shuffle_up<T: VectorOrScalar>(value: T, delta: u32) -> T 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleDown")]
 #[inline]
-pub unsafe fn subgroup_shuffle_down<T: VectorOrScalar>(value: T, delta: u32) -> T {
+pub fn subgroup_shuffle_down<T: VectorOrScalar>(value: T, delta: u32) -> T {
     let mut result = T::default();
 
     unsafe {
