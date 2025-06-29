@@ -1356,7 +1356,7 @@ pub enum QuadDirection {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadSwap")]
 #[inline]
-pub unsafe fn subgroup_quad_swap<const DIRECTION: u32, T: VectorOrScalar>(value: T) -> T {
+pub fn subgroup_quad_swap<const DIRECTION: u32, T: VectorOrScalar>(value: T) -> T {
     let mut result = T::default();
 
     unsafe {
