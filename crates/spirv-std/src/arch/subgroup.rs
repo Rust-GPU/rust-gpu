@@ -533,7 +533,7 @@ macro_subgroup_ballot_bit_count!(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotFindLSB")]
 #[inline]
-pub unsafe fn subgroup_ballot_find_lsb(subgroup_mask: SubgroupMask) -> u32 {
+pub fn subgroup_ballot_find_lsb(subgroup_mask: SubgroupMask) -> u32 {
     let mut result = 0;
 
     unsafe {
@@ -566,7 +566,7 @@ pub unsafe fn subgroup_ballot_find_lsb(subgroup_mask: SubgroupMask) -> u32 {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotFindMSB")]
 #[inline]
-pub unsafe fn subgroup_ballot_find_msb(subgroup_mask: SubgroupMask) -> u32 {
+pub fn subgroup_ballot_find_msb(subgroup_mask: SubgroupMask) -> u32 {
     let mut result = 0;
 
     unsafe {
