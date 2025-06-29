@@ -447,7 +447,7 @@ pub unsafe fn subgroup_inverse_ballot(subgroup_mask: SubgroupMask) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotBitExtract")]
 #[inline]
-pub unsafe fn subgroup_ballot_bit_extract(subgroup_mask: SubgroupMask, id: u32) -> bool {
+pub fn subgroup_ballot_bit_extract(subgroup_mask: SubgroupMask, id: u32) -> bool {
     let mut result = false;
 
     unsafe {
