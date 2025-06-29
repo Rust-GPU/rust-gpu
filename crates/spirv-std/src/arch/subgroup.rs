@@ -67,7 +67,7 @@ pub enum GroupOperation {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "subgroupBarrier")]
 #[inline]
-pub unsafe fn subgroup_barrier() {
+pub fn subgroup_barrier() {
     unsafe {
         barrier::control_barrier::<
             SUBGROUP,
@@ -92,7 +92,7 @@ pub unsafe fn subgroup_barrier() {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "subgroupMemoryBarrier")]
 #[inline]
-pub unsafe fn subgroup_memory_barrier() {
+pub fn subgroup_memory_barrier() {
     unsafe {
         barrier::memory_barrier::<
             SUBGROUP,
@@ -116,7 +116,7 @@ pub unsafe fn subgroup_memory_barrier() {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "subgroupMemoryBarrierBuffer")]
 #[inline]
-pub unsafe fn subgroup_memory_barrier_buffer() {
+pub fn subgroup_memory_barrier_buffer() {
     unsafe {
         barrier::memory_barrier::<
             SUBGROUP,
@@ -137,7 +137,7 @@ pub unsafe fn subgroup_memory_barrier_buffer() {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "subgroupMemoryBarrierShared")]
 #[inline]
-pub unsafe fn subgroup_memory_barrier_shared() {
+pub fn subgroup_memory_barrier_shared() {
     unsafe {
         barrier::memory_barrier::<
             SUBGROUP,
@@ -156,7 +156,7 @@ pub unsafe fn subgroup_memory_barrier_shared() {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "subgroupMemoryBarrierImage")]
 #[inline]
-pub unsafe fn subgroup_memory_barrier_image() {
+pub fn subgroup_memory_barrier_image() {
     unsafe {
         barrier::memory_barrier::<
             SUBGROUP,
@@ -175,7 +175,7 @@ pub unsafe fn subgroup_memory_barrier_image() {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformElect")]
 #[inline]
-pub unsafe fn subgroup_elect() -> bool {
+pub fn subgroup_elect() -> bool {
     let mut result = false;
 
     unsafe {
@@ -205,7 +205,7 @@ pub unsafe fn subgroup_elect() -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformAll")]
 #[inline]
-pub unsafe fn subgroup_all(predicate: bool) -> bool {
+pub fn subgroup_all(predicate: bool) -> bool {
     let mut result = false;
 
     unsafe {
@@ -237,7 +237,7 @@ pub unsafe fn subgroup_all(predicate: bool) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformAny")]
 #[inline]
-pub unsafe fn subgroup_any(predicate: bool) -> bool {
+pub fn subgroup_any(predicate: bool) -> bool {
     let mut result = false;
 
     unsafe {
@@ -269,7 +269,7 @@ pub unsafe fn subgroup_any(predicate: bool) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformAllEqual")]
 #[inline]
-pub unsafe fn subgroup_all_equal<T: VectorOrScalar>(value: T) -> bool {
+pub fn subgroup_all_equal<T: VectorOrScalar>(value: T) -> bool {
     let mut result = false;
 
     unsafe {
@@ -340,7 +340,7 @@ pub unsafe fn subgroup_broadcast<T: VectorOrScalar>(value: T, id: u32) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBroadcastFirst")]
 #[inline]
-pub unsafe fn subgroup_broadcast_first<T: VectorOrScalar>(value: T) -> T {
+pub fn subgroup_broadcast_first<T: VectorOrScalar>(value: T) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -373,7 +373,7 @@ pub unsafe fn subgroup_broadcast_first<T: VectorOrScalar>(value: T) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallot")]
 #[inline]
-pub unsafe fn subgroup_ballot(predicate: bool) -> SubgroupMask {
+pub fn subgroup_ballot(predicate: bool) -> SubgroupMask {
     let mut result = SubgroupMask::default();
 
     unsafe {
@@ -487,7 +487,7 @@ macro_rules! macro_subgroup_ballot_bit_count {
         #[spirv_std_macros::gpu_only]
         #[doc(alias = "OpGroupNonUniformBallotBitCount")]
         #[inline]
-        pub unsafe fn $name(subgroup_mask: SubgroupMask) -> u32 {
+        pub fn $name(subgroup_mask: SubgroupMask) -> u32 {
             let mut result = 0;
 
             unsafe {
@@ -739,7 +739,7 @@ macro_rules! macro_subgroup_op {
         #[spirv_std_macros::gpu_only]
         #[doc(alias = $asm_op)]
         #[inline]
-        pub unsafe fn $name<I: VectorOrScalar<Scalar = $scalar>>(
+        pub fn $name<I: VectorOrScalar<Scalar = $scalar>>(
             value: I,
         ) -> I {
             let mut result = I::default();
