@@ -1,5 +1,3 @@
-#![allow(clippy::missing_safety_doc)]
-
 #[cfg(target_arch = "spirv")]
 use crate::arch::barrier;
 use crate::float::Float;
@@ -792,6 +790,16 @@ macro_rules! macro_subgroup_op_clustered {
         pub unsafe fn $name<const CLUSTER_SIZE: u32, I: VectorOrScalar<Scalar = $scalar>>(
             value: I,
         ) -> I {
+            const {
+                assert!(CLUSTER_SIZE >= 1, "`ClusterSize` must be at least 1");
+                assert!(
+                    CLUSTER_SIZE.is_power_of_two(),
+                    "`ClusterSize` must be a power of 2"
+                );
+                // Cannot be verified with static assertions:
+                // `ClusterSize` must not be greater than the size of the group
+            }
+
             let mut result = I::default();
 
             unsafe {
@@ -843,6 +851,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 macro_subgroup_op!(impl Float, "OpGroupNonUniformFAdd", subgroup_f_add, GroupOperation::Reduce, subgroup_inclusive_f_add, GroupOperation::InclusiveScan, subgroup_exclusive_f_add, GroupOperation::ExclusiveScan; r"
 A floating point add group operation of all `value` operands contributed by active invocations in the group.
@@ -871,6 +882,9 @@ The type of `value` must be the same as Result Type. The method used to perform 
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 
 // mul
@@ -901,6 +915,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 macro_subgroup_op!(impl Float, "OpGroupNonUniformFMul", subgroup_f_mul, GroupOperation::Reduce, subgroup_inclusive_f_mul, GroupOperation::InclusiveScan, subgroup_exclusive_f_mul, GroupOperation::ExclusiveScan; r"
 A floating point multiply group operation of all `value` operands contributed by active invocations in the group.
@@ -929,6 +946,9 @@ The type of `value` must be the same as Result Type. The method used to perform 
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 
 // min
@@ -959,6 +979,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 macro_subgroup_op!(impl UnsignedInteger, "OpGroupNonUniformUMin", subgroup_u_min, GroupOperation::Reduce, subgroup_inclusive_u_min, GroupOperation::InclusiveScan, subgroup_exclusive_u_min, GroupOperation::ExclusiveScan; r"
 An unsigned integer minimum group operation of all `value` operands contributed by active invocations in the group.
@@ -987,6 +1010,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 macro_subgroup_op!(impl Float, "OpGroupNonUniformFMin", subgroup_f_min, GroupOperation::Reduce, subgroup_inclusive_f_min, GroupOperation::InclusiveScan, subgroup_exclusive_f_min, GroupOperation::ExclusiveScan; r"
 A floating point minimum group operation of all `value` operands contributed by active invocations in the group.
@@ -1015,6 +1041,9 @@ The type of `value` must be the same as Result Type. The method used to perform 
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 
 // max
@@ -1045,6 +1074,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 macro_subgroup_op!(impl UnsignedInteger, "OpGroupNonUniformUMax", subgroup_u_max, GroupOperation::Reduce, subgroup_inclusive_u_max, GroupOperation::InclusiveScan, subgroup_exclusive_u_max, GroupOperation::ExclusiveScan; r"
 An unsigned integer maximum group operation of all `value` operands contributed by active invocations in the group.
@@ -1073,6 +1105,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 macro_subgroup_op!(impl Float, "OpGroupNonUniformFMax", subgroup_f_max, GroupOperation::Reduce, subgroup_inclusive_f_max, GroupOperation::InclusiveScan, subgroup_exclusive_f_max, GroupOperation::ExclusiveScan; r"
 A floating point maximum group operation of all `value` operands contributed by active invocations in by group.
@@ -1099,6 +1134,9 @@ The identity I for Operation is -INF.
 The type of `value` must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 
 // and
@@ -1129,6 +1167,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 
 // or
@@ -1159,6 +1200,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 
 // xor
@@ -1189,6 +1233,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 
 // logical and
@@ -1219,6 +1266,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 
 // logical or
@@ -1249,6 +1299,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 
 // logical xor
@@ -1279,6 +1332,9 @@ The type of `value` must be the same as Result Type.
 ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
+
+# Safety
+* `ClusterSize` must not be greater than the size of the group
 ");
 
 /// Result is the `value` of the invocation within the quad with a quad index equal to `index`.
