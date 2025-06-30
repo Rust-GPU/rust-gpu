@@ -844,11 +844,11 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -875,11 +875,11 @@ Result Type must be a scalar or vector of floating-point type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -908,11 +908,11 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 1. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is 1. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -939,11 +939,11 @@ Result Type must be a scalar or vector of floating-point type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 1. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is 1. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -972,11 +972,11 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is INT_MAX. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is INT_MAX. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -1003,11 +1003,11 @@ Result Type must be a scalar or vector of integer type, whose Signedness operand
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is UINT_MAX. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is UINT_MAX. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -1034,11 +1034,11 @@ Result Type must be a scalar or vector of floating-point type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is +INF. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is +INF. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -1067,11 +1067,11 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is INT_MIN. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is INT_MIN. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -1098,11 +1098,11 @@ Result Type must be a scalar or vector of integer type, whose Signedness operand
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -1160,11 +1160,11 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is ~0. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is ~0. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -1193,11 +1193,11 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -1226,11 +1226,11 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -1259,11 +1259,11 @@ Result Type must be a scalar or vector of Boolean type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is ~0. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is ~0. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -1292,11 +1292,11 @@ Result Type must be a scalar or vector of Boolean type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
@@ -1325,11 +1325,11 @@ Result Type must be a scalar or vector of Boolean type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, ClusterSize must be present.
+The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
-ClusterSize is the size of cluster to use. ClusterSize must be a scalar of integer type, whose Signedness operand is 0. ClusterSize must come from a constant instruction. Behavior is undefined unless ClusterSize is at least 1 and a power of 2. If ClusterSize is greater than the size of the group, executing this instruction results in undefined behavior.
+`ClusterSize` is the size of cluster to use. `ClusterSize` must be a scalar of integer type, whose Signedness operand is 0. `ClusterSize` must come from a constant instruction. Behavior is undefined unless `ClusterSize` is at least 1 and a power of 2. If `ClusterSize` is greater than the size of the group, executing this instruction results in undefined behavior.
 
 Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 
