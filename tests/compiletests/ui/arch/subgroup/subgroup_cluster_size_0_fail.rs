@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -C target-feature=+GroupNonUniform,+GroupNonUniformArithmetic,+GroupNonUniformClustered,+ext:SPV_KHR_vulkan_memory_model
+// normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"
 
 use glam::UVec3;
 use spirv_std::arch::{GroupOperation, SubgroupMask};
