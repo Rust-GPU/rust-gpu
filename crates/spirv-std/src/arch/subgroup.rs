@@ -409,7 +409,7 @@ pub fn subgroup_ballot(predicate: bool) -> SubgroupMask {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformInverseBallot")]
 #[inline]
-pub unsafe fn subgroup_inverse_ballot(subgroup_mask: SubgroupMask) -> bool {
+pub unsafe fn subgroup_inverse_ballot(value: SubgroupMask) -> bool {
     let mut result = false;
 
     unsafe {
@@ -417,11 +417,11 @@ pub unsafe fn subgroup_inverse_ballot(subgroup_mask: SubgroupMask) -> bool {
             "%bool = OpTypeBool",
             "%u32 = OpTypeInt 32 0",
             "%subgroup = OpConstant %u32 {subgroup}",
-            "%subgroup_mask = OpLoad _ {subgroup_mask}",
-            "%result = OpGroupNonUniformInverseBallot %bool %subgroup %subgroup_mask",
+            "%value = OpLoad _ {value}",
+            "%result = OpGroupNonUniformInverseBallot %bool %subgroup %value",
             "OpStore {result} %result",
             subgroup = const SUBGROUP,
-            subgroup_mask = in(reg) &subgroup_mask,
+            value = in(reg) &value,
             result = in(reg) &mut result,
         }
     }
@@ -447,7 +447,7 @@ pub unsafe fn subgroup_inverse_ballot(subgroup_mask: SubgroupMask) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotBitExtract")]
 #[inline]
-pub fn subgroup_ballot_bit_extract(subgroup_mask: SubgroupMask, id: u32) -> bool {
+pub fn subgroup_ballot_bit_extract(value: SubgroupMask, index: u32) -> bool {
     let mut result = false;
 
     unsafe {
@@ -455,13 +455,13 @@ pub fn subgroup_ballot_bit_extract(subgroup_mask: SubgroupMask, id: u32) -> bool
             "%bool = OpTypeBool",
             "%u32 = OpTypeInt 32 0",
             "%subgroup = OpConstant %u32 {subgroup}",
-            "%subgroup_mask = OpLoad _ {subgroup_mask}",
-            "%id = OpLoad _ {id}",
-            "%result = OpGroupNonUniformBallotBitExtract %bool %subgroup %subgroup_mask %id",
+            "%value = OpLoad _ {value}",
+            "%index = OpLoad _ {index}",
+            "%result = OpGroupNonUniformBallotBitExtract %bool %subgroup %value %index",
             "OpStore {result} %result",
             subgroup = const SUBGROUP,
-            subgroup_mask = in(reg) &subgroup_mask,
-            id = in(reg) &id,
+            value = in(reg) &value,
+            index = in(reg) &index,
             result = in(reg) &mut result,
         }
     }
@@ -487,19 +487,19 @@ macro_rules! macro_subgroup_ballot_bit_count {
         #[spirv_std_macros::gpu_only]
         #[doc(alias = "OpGroupNonUniformBallotBitCount")]
         #[inline]
-        pub fn $name(subgroup_mask: SubgroupMask) -> u32 {
+        pub fn $name(value: SubgroupMask) -> u32 {
             let mut result = 0;
 
             unsafe {
                 asm! {
                     "%u32 = OpTypeInt 32 0",
                     "%subgroup = OpConstant %u32 {subgroup}",
-                    "%subgroup_mask = OpLoad _ {subgroup_mask}",
-                    "%result = OpGroupNonUniformBallotBitCount %u32 %subgroup {groupop} %subgroup_mask",
+                    "%value = OpLoad _ {value}",
+                    "%result = OpGroupNonUniformBallotBitCount %u32 %subgroup {groupop} %value",
                     "OpStore {result} %result",
                     subgroup = const SUBGROUP,
                     groupop = const ($group_op as u32),
-                    subgroup_mask = in(reg) &subgroup_mask,
+                    value = in(reg) &value,
                     result = in(reg) &mut result,
                 }
             }
@@ -533,18 +533,18 @@ macro_subgroup_ballot_bit_count!(
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotFindLSB")]
 #[inline]
-pub fn subgroup_ballot_find_lsb(subgroup_mask: SubgroupMask) -> u32 {
+pub fn subgroup_ballot_find_lsb(value: SubgroupMask) -> u32 {
     let mut result = 0;
 
     unsafe {
         asm! {
             "%u32 = OpTypeInt 32 0",
             "%subgroup = OpConstant %u32 {subgroup}",
-            "%subgroup_mask = OpLoad _ {subgroup_mask}",
-            "%result = OpGroupNonUniformBallotFindLSB %u32 %subgroup %subgroup_mask",
+            "%value = OpLoad _ {value}",
+            "%result = OpGroupNonUniformBallotFindLSB %u32 %subgroup %value",
             "OpStore {result} %result",
             subgroup = const SUBGROUP,
-            subgroup_mask = in(reg) &subgroup_mask,
+            value = in(reg) &value,
             result = in(reg) &mut result,
         }
     }
@@ -566,18 +566,18 @@ pub fn subgroup_ballot_find_lsb(subgroup_mask: SubgroupMask) -> u32 {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotFindMSB")]
 #[inline]
-pub fn subgroup_ballot_find_msb(subgroup_mask: SubgroupMask) -> u32 {
+pub fn subgroup_ballot_find_msb(value: SubgroupMask) -> u32 {
     let mut result = 0;
 
     unsafe {
         asm! {
             "%u32 = OpTypeInt 32 0",
             "%subgroup = OpConstant %u32 {subgroup}",
-            "%subgroup_mask = OpLoad _ {subgroup_mask}",
-            "%result = OpGroupNonUniformBallotFindMSB %u32 %subgroup %subgroup_mask",
+            "%value = OpLoad _ {value}",
+            "%result = OpGroupNonUniformBallotFindMSB %u32 %subgroup %value",
             "OpStore {result} %result",
             subgroup = const SUBGROUP,
-            subgroup_mask = in(reg) &subgroup_mask,
+            value = in(reg) &value,
             result = in(reg) &mut result,
         }
     }
@@ -1277,7 +1277,7 @@ Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadBroadcast")]
 #[inline]
-pub unsafe fn subgroup_quad_broadcast<T: VectorOrScalar>(value: T, id: u32) -> T {
+pub unsafe fn subgroup_quad_broadcast<T: VectorOrScalar>(value: T, index: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -1285,12 +1285,12 @@ pub unsafe fn subgroup_quad_broadcast<T: VectorOrScalar>(value: T, id: u32) -> T
             "%u32 = OpTypeInt 32 0",
             "%subgroup = OpConstant %u32 {subgroup}",
             "%value = OpLoad _ {value}",
-            "%id = OpLoad _ {id}",
-            "%result = OpGroupNonUniformQuadBroadcast _ %subgroup %value %id",
+            "%index = OpLoad _ {index}",
+            "%result = OpGroupNonUniformQuadBroadcast _ %subgroup %value %index",
             "OpStore {result} %result",
             subgroup = const SUBGROUP,
             value = in(reg) &value,
-            id = in(reg) &id,
+            index = in(reg) &index,
             result = in(reg) &mut result,
         }
     }
