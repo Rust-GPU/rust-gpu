@@ -975,7 +975,12 @@
 <a href="#974" id="974">974</a>
 <a href="#975" id="975">975</a>
 <a href="#976" id="976">976</a>
-<a href="#977" id="977">977</a></pre></div><pre class="rust"><code><span class="kw">mod </span>constant;
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a></pre></div><pre class="rust"><code><span class="kw">mod </span>constant;
 <span class="kw">mod </span>declare;
 <span class="kw">mod </span>entry;
 <span class="kw">mod </span>type_;
@@ -1060,6 +1065,10 @@
     </span><span class="kw">pub </span>buffer_load_intrinsics: RefCell&lt;FxHashMap&lt;DefId, <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>PassMode&gt;&gt;,
     <span class="doccomment">/// Intrinsic for storing a `&lt;T&gt;` into a `&amp;[u32]`. The `PassMode` is the mode of the `&lt;T&gt;`.
     </span><span class="kw">pub </span>buffer_store_intrinsics: RefCell&lt;FxHashMap&lt;DefId, <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>PassMode&gt;&gt;,
+
+    <span class="doccomment">/// Maps `DefId`s of `From::from` method implementations to their source and target types.
+    /// Used to optimize constant conversions like `u32::from(42u8)` to avoid creating the source type.
+    </span><span class="kw">pub </span>from_trait_impls: RefCell&lt;FxHashMap&lt;DefId, (Ty&lt;<span class="lifetime">'tcx</span>&gt;, Ty&lt;<span class="lifetime">'tcx</span>&gt;)&gt;&gt;,
 
     <span class="doccomment">/// Some runtimes (e.g. intel-compute-runtime) disallow atomics on i8 and i16, even though it's allowed by the spec.
     /// This enables/disables them.
@@ -1180,6 +1189,7 @@
             fmt_rt_arg_new_fn_ids_to_ty_and_spec: Default::default(),
             buffer_load_intrinsics: Default::default(),
             buffer_store_intrinsics: Default::default(),
+            from_trait_impls: Default::default(),
             i8_i16_atomics_allowed: <span class="bool-val">false</span>,
             codegen_args,
         }

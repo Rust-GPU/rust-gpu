@@ -373,7 +373,31 @@
 <a href="#372" id="372">372</a>
 <a href="#373" id="373">373</a>
 <a href="#374" id="374">374</a>
-<a href="#375" id="375">375</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a></pre></div><pre class="rust"><code><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 </span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 
 <span class="kw">use </span><span class="kw">super</span>::CodegenCx;
@@ -542,6 +566,30 @@
                         <span class="self">self</span>.tcx.dcx().err(<span class="macro">format!</span>(
                             <span class="string">"missing libm intrinsic {symbol_name}, which is {instance}"
                         </span>));
+                    }
+                }
+            }
+        }
+
+        <span class="comment">// Check if this is a From trait implementation
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(impl_def_id) = <span class="self">self</span>.tcx.impl_of_method(def_id) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(trait_ref) = <span class="self">self</span>.tcx.impl_trait_ref(impl_def_id) {
+                <span class="kw">let </span>trait_def_id = trait_ref.skip_binder().def_id;
+
+                <span class="comment">// Check if this is the From trait.
+                </span><span class="kw">let </span>trait_path = <span class="self">self</span>.tcx.def_path_str(trait_def_id);
+                <span class="kw">if </span><span class="macro">matches!</span>(
+                    trait_path.as_str(),
+                    <span class="string">"core::convert::From" </span>| <span class="string">"std::convert::From"
+                </span>) {
+                    <span class="comment">// Extract the source and target types from the trait substitutions
+                    </span><span class="kw">let </span>trait_args = trait_ref.skip_binder().args;
+                    <span class="kw">if let </span>(<span class="prelude-val">Some</span>(target_ty), <span class="prelude-val">Some</span>(source_ty)) =
+                        (trait_args.types().nth(<span class="number">0</span>), trait_args.types().nth(<span class="number">1</span>))
+                    {
+                        <span class="self">self</span>.from_trait_impls
+                            .borrow_mut()
+                            .insert(def_id, (source_ty, target_ty));
                     }
                 }
             }
