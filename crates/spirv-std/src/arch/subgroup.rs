@@ -294,6 +294,11 @@ pub fn subgroup_all_equal<T: VectorOrScalar>(value: T) -> bool {
 /// The resulting value is undefined if `id` is an inactive invocation, or is greater than or equal to the size of the group.
 ///
 /// Requires Capability `GroupNonUniformBallot`.
+///
+/// # Safety
+/// * `id` must not be dynamically uniform
+/// * before 1.5: `id` must be constant
+/// * Result is undefined if `id` is an inactive invocation or out of bounds
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBroadcast")]
 #[inline]
@@ -396,6 +401,9 @@ pub fn subgroup_ballot(predicate: bool) -> SubgroupMask {
 /// `value` is a set of bitfields where the first invocation is represented in the lowest bit of the first vector component and the last (up to the size of the group) is the higher bit number of the last bitmask needed to represent all bits of the group invocations.
 ///
 /// Requires Capability `GroupNonUniformBallot`.
+///
+/// # Safety
+/// * `value` must be the same for all dynamic instances of this instruction
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformInverseBallot")]
 #[inline]
@@ -434,6 +442,10 @@ pub unsafe fn subgroup_inverse_ballot(value: SubgroupMask) -> bool {
 /// The resulting value is undefined if `index` is greater than or equal to the size of the group.
 ///
 /// Requires Capability `GroupNonUniformBallot`.
+///
+/// # Safety
+/// * This function is safe
+/// * Result is undefined if `id` is out of bounds
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotBitExtract")]
 #[inline]
@@ -520,6 +532,10 @@ macro_subgroup_ballot_bit_count!(
 /// `value` is a set of bitfields where the first invocation is represented in the lowest bit of the first vector component and the last (up to the size of the group) is the higher bit number of the last bitmask needed to represent all bits of the group invocations.
 ///
 /// Requires Capability `GroupNonUniformBallot`.
+///
+/// # Safety
+/// * This function is safe
+/// * Result is undefined if `id` is an inactive invocation or out of bounds
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBallotFindLSB")]
 #[inline]
@@ -588,6 +604,10 @@ pub fn subgroup_ballot_find_msb(value: SubgroupMask) -> u32 {
 /// The resulting value is undefined if `id` is an inactive invocation, or is greater than or equal to the size of the group.
 ///
 /// Requires Capability `GroupNonUniformShuffle`.
+///
+/// # Safety
+/// * This function is safe
+/// * Result is undefined if `id` is an inactive invocation or out of bounds
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffle")]
 #[inline]
@@ -625,6 +645,10 @@ pub fn subgroup_shuffle<T: VectorOrScalar>(value: T, id: u32) -> T {
 /// The resulting value is undefined if current invocation’s id within the group xor’ed with Mask is an inactive invocation, or is greater than or equal to the size of the group.
 ///
 /// Requires Capability `GroupNonUniformShuffle`.
+///
+/// # Safety
+/// * This function is safe
+/// * Result is undefined if current invocation’s id within the group xor’ed with `mask` is an inactive invocation or out of bounds
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleXor")]
 #[inline]
@@ -662,6 +686,10 @@ pub fn subgroup_shuffle_xor<T: VectorOrScalar>(value: T, mask: u32) -> T {
 /// Delta is treated as unsigned and the resulting value is undefined if Delta is greater than the current invocation’s id within the group or if the selected lane is inactive.
 ///
 /// Requires Capability `GroupNonUniformShuffleRelative`.
+///
+/// # Safety
+/// * This function is safe
+/// * Result is undefined if `delta` is greater than the current invocation’s id within the group or if the selected lane is inactive
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleUp")]
 #[inline]
@@ -699,6 +727,10 @@ pub fn subgroup_shuffle_up<T: VectorOrScalar>(value: T, delta: u32) -> T {
 /// Delta is treated as unsigned and the resulting value is undefined if Delta is greater than or equal to the size of the group, or if the current invocation’s id within the group + Delta is either an inactive invocation or greater than or equal to the size of the group.
 ///
 /// Requires Capability `GroupNonUniformShuffleRelative`.
+///
+/// # Safety
+/// * This function is safe
+/// * Result is undefined if `delta` is greater than or equal to the size of the group, or if the current invocation’s id within the group + `delta` is either an inactive invocation or greater than or equal to the size of the group.
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleDown")]
 #[inline]
@@ -1264,10 +1296,14 @@ Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 /// If the value of `index` is greater than or equal to 4, or refers to an inactive invocation, the resulting value is undefined.
 ///
 /// Requires Capability `GroupNonUniformQuad`.
+///
+/// # Safety
+/// * This function is safe
+/// * Result is undefined if the value of `index` is greater than or equal to 4, or refers to an inactive invocation
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadBroadcast")]
 #[inline]
-pub unsafe fn subgroup_quad_broadcast<T: VectorOrScalar>(value: T, index: u32) -> T {
+pub fn subgroup_quad_broadcast<T: VectorOrScalar>(value: T, index: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -1343,6 +1379,10 @@ pub enum QuadDirection {
 /// If an active invocation reads `value` from an inactive invocation, the resulting value is undefined.
 ///
 /// Requires Capability `GroupNonUniformQuad`.
+///
+/// # Safety
+/// * This function is safe
+/// * Result is undefined if an active invocation reads `value` from an inactive invocation
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadSwap")]
 #[inline]
