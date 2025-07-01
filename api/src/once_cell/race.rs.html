@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/once_cell-1.20.2/src/race.rs`."><title>race.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="once_cell" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">once_cell/</div>race.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-6f17d22bba15001f/once_cell-1.21.3/src/race.rs`."><title>race.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="once_cell" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.0-nightly (b19329a37 2024-11-21)" data-channel="nightly" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">once_cell/</div>race.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -417,7 +417,86 @@
 <a href="#416" id="416">416</a>
 <a href="#417" id="417">417</a>
 <a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a></pre></div><pre class="rust"><code><span class="doccomment">//! Thread-safe, non-blocking, "first one wins" flavor of `OnceCell`.
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
+<a href="#498" id="498">498</a></pre></div><pre class="rust"><code><span class="doccomment">//! Thread-safe, non-blocking, "first one wins" flavor of `OnceCell`.
 //!
 //! If two threads race to initialize a type from the `race` module, they
 //! don't block, execute initialization function together, but only one of
@@ -437,6 +516,14 @@
 //! getter thread's perspective. This is an acceptable tradeoff to make since
 //! `Acquire` and `Release` have very little performance overhead on most
 //! architectures versus `Relaxed`.
+
+</span><span class="comment">// The "atomic orderings" section of the documentation above promises
+// "happens-before" semantics. This drives the choice of orderings in the uses
+// of `compare_exchange` below. On success, the value was zero/null, so there
+// was nothing to acquire (there is never any `Ordering::Release` store of 0).
+// On failure, the value was nonzero, so it was initialized previously (perhaps
+// on another thread) using `Ordering::Release`, so we must use
+// `Ordering::Acquire` to ensure that store "happens-before" this load.
 
 </span><span class="attr">#[cfg(not(feature = <span class="string">"portable-atomic"</span>))]
 </span><span class="kw">use </span>core::sync::atomic;
@@ -458,8 +545,8 @@
 <span class="kw">impl </span>OnceNonZeroUsize {
     <span class="doccomment">/// Creates a new empty cell.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub const fn </span>new() -&gt; OnceNonZeroUsize {
-        OnceNonZeroUsize { inner: AtomicUsize::new(<span class="number">0</span>) }
+    </span><span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ inner: AtomicUsize::new(<span class="number">0</span>) }
     }
 
     <span class="doccomment">/// Gets the underlying value.
@@ -469,15 +556,54 @@
         NonZeroUsize::new(val)
     }
 
+    <span class="doccomment">/// Get the reference to the underlying value, without checking if the cell
+    /// is initialized.
+    ///
+    /// # Safety
+    ///
+    /// Caller must ensure that the cell is in initialized state, and that
+    /// the contents are acquired by (synchronized to) this thread.
+    </span><span class="kw">pub unsafe fn </span>get_unchecked(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; NonZeroUsize {
+        <span class="attr">#[inline(always)]
+        </span><span class="kw">fn </span>as_const_ptr(r: <span class="kw-2">&amp;</span>AtomicUsize) -&gt; <span class="kw-2">*const </span>usize {
+            <span class="kw">use </span>core::mem::align_of;
+
+            <span class="kw">let </span>p: <span class="kw-2">*const </span>AtomicUsize = r;
+            <span class="comment">// SAFETY: "This type has the same size and bit validity as
+            // the underlying integer type, usize. However, the alignment of
+            // this type is always equal to its size, even on targets where
+            // usize has a lesser alignment."
+            </span><span class="kw">const </span>_ALIGNMENT_COMPATIBLE: () =
+                <span class="macro">assert!</span>(align_of::&lt;AtomicUsize&gt;() % align_of::&lt;usize&gt;() == <span class="number">0</span>);
+            p.cast::&lt;usize&gt;()
+        }
+
+        <span class="comment">// TODO(MSRV-1.70): Use `AtomicUsize::as_ptr().cast_const()`
+        // See https://github.com/rust-lang/rust/issues/138246.
+        </span><span class="kw">let </span>p = as_const_ptr(<span class="kw-2">&amp;</span><span class="self">self</span>.inner);
+
+        <span class="comment">// SAFETY: The caller is responsible for ensuring that the value
+        // was initialized and that the contents have been acquired by
+        // this thread. Assuming that, we can assume there will be no
+        // conflicting writes to the value since the value will never
+        // change once initialized. This relies on the statement in
+        // https://doc.rust-lang.org/1.83.0/core/sync/atomic/ that "(A
+        // `compare_exchange` or `compare_exchange_weak` that does not
+        // succeed is not considered a write."
+        </span><span class="kw">let </span>val = <span class="kw">unsafe </span>{ p.read() };
+
+        <span class="comment">// SAFETY: The caller is responsible for ensuring the value is
+        // initialized and thus not zero.
+        </span><span class="kw">unsafe </span>{ NonZeroUsize::new_unchecked(val) }
+    }
+
     <span class="doccomment">/// Sets the contents of this cell to `value`.
     ///
     /// Returns `Ok(())` if the cell was empty and `Err(())` if it was
     /// full.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, value: NonZeroUsize) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
-        <span class="kw">let </span>exchange =
-            <span class="self">self</span>.inner.compare_exchange(<span class="number">0</span>, value.get(), Ordering::AcqRel, Ordering::Acquire);
-        <span class="kw">match </span>exchange {
+        <span class="kw">match </span><span class="self">self</span>.compare_exchange(value) {
             <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(()),
         }
@@ -511,20 +637,26 @@
     <span class="kw">where
         </span>F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;NonZeroUsize, E&gt;,
     {
-        <span class="kw">let </span>val = <span class="self">self</span>.inner.load(Ordering::Acquire);
-        <span class="kw">let </span>res = <span class="kw">match </span>NonZeroUsize::new(val) {
-            <span class="prelude-val">Some</span>(it) =&gt; it,
-            <span class="prelude-val">None </span>=&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>val = f()<span class="question-mark">?</span>.get();
-                <span class="kw">let </span>exchange =
-                    <span class="self">self</span>.inner.compare_exchange(<span class="number">0</span>, val, Ordering::AcqRel, Ordering::Acquire);
-                <span class="kw">if let </span><span class="prelude-val">Err</span>(old) = exchange {
-                    val = old;
-                }
-                <span class="kw">unsafe </span>{ NonZeroUsize::new_unchecked(val) }
-            }
-        };
-        <span class="prelude-val">Ok</span>(res)
+        <span class="kw">match </span><span class="self">self</span>.get() {
+            <span class="prelude-val">Some</span>(it) =&gt; <span class="prelude-val">Ok</span>(it),
+            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.init(f),
+        }
+    }
+
+    <span class="attr">#[cold]
+    #[inline(never)]
+    </span><span class="kw">fn </span>init&lt;E&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw">impl </span>FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;NonZeroUsize, E&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;NonZeroUsize, E&gt; {
+        <span class="kw">let </span>nz = f()<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>val = nz.get();
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(old) = <span class="self">self</span>.compare_exchange(nz) {
+            val = old;
+        }
+        <span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ NonZeroUsize::new_unchecked(val) })
+    }
+
+    <span class="attr">#[inline(always)]
+    </span><span class="kw">fn </span>compare_exchange(<span class="kw-2">&amp;</span><span class="self">self</span>, val: NonZeroUsize) -&gt; <span class="prelude-ty">Result</span>&lt;usize, usize&gt; {
+        <span class="self">self</span>.inner.compare_exchange(<span class="number">0</span>, val.get(), Ordering::Release, Ordering::Acquire)
     }
 }
 
@@ -537,14 +669,14 @@
 <span class="kw">impl </span>OnceBool {
     <span class="doccomment">/// Creates a new empty cell.
     </span><span class="attr">#[inline]
-    </span><span class="kw">pub const fn </span>new() -&gt; OnceBool {
-        OnceBool { inner: OnceNonZeroUsize::new() }
+    </span><span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ inner: OnceNonZeroUsize::new() }
     }
 
     <span class="doccomment">/// Gets the underlying value.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;bool&gt; {
-        <span class="self">self</span>.inner.get().map(OnceBool::from_usize)
+        <span class="self">self</span>.inner.get().map(<span class="self">Self</span>::from_usize)
     }
 
     <span class="doccomment">/// Sets the contents of this cell to `value`.
@@ -553,7 +685,7 @@
     /// full.
     </span><span class="attr">#[inline]
     </span><span class="kw">pub fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, value: bool) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
-        <span class="self">self</span>.inner.set(OnceBool::to_usize(value))
+        <span class="self">self</span>.inner.set(<span class="self">Self</span>::to_usize(value))
     }
 
     <span class="doccomment">/// Gets the contents of the cell, initializing it with `f` if the cell was
@@ -566,7 +698,7 @@
     <span class="kw">where
         </span>F: FnOnce() -&gt; bool,
     {
-        OnceBool::from_usize(<span class="self">self</span>.inner.get_or_init(|| OnceBool::to_usize(f())))
+        <span class="self">Self</span>::from_usize(<span class="self">self</span>.inner.get_or_init(|| <span class="self">Self</span>::to_usize(f())))
     }
 
     <span class="doccomment">/// Gets the contents of the cell, initializing it with `f` if
@@ -580,7 +712,7 @@
     <span class="kw">where
         </span>F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;bool, E&gt;,
     {
-        <span class="self">self</span>.inner.get_or_try_init(|| f().map(OnceBool::to_usize)).map(OnceBool::from_usize)
+        <span class="self">self</span>.inner.get_or_try_init(|| f().map(<span class="self">Self</span>::to_usize)).map(<span class="self">Self</span>::from_usize)
     }
 
     <span class="attr">#[inline]
@@ -617,8 +749,8 @@
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T&gt; OnceRef&lt;<span class="lifetime">'a</span>, T&gt; {
     <span class="doccomment">/// Creates a new empty cell.
-    </span><span class="kw">pub const fn </span>new() -&gt; OnceRef&lt;<span class="lifetime">'a</span>, T&gt; {
-        OnceRef { inner: AtomicPtr::new(ptr::null_mut()), ghost: PhantomData }
+    </span><span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ inner: AtomicPtr::new(ptr::null_mut()), ghost: PhantomData }
     }
 
     <span class="doccomment">/// Gets a reference to the underlying value.
@@ -632,10 +764,7 @@
     /// Returns `Ok(())` if the cell was empty and `Err(value)` if it was
     /// full.
     </span><span class="kw">pub fn </span>set(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T) -&gt; <span class="prelude-ty">Result</span>&lt;(), ()&gt; {
-        <span class="kw">let </span>ptr = value <span class="kw">as </span><span class="kw-2">*const </span>T <span class="kw">as </span><span class="kw-2">*mut </span>T;
-        <span class="kw">let </span>exchange =
-            <span class="self">self</span>.inner.compare_exchange(ptr::null_mut(), ptr, Ordering::AcqRel, Ordering::Acquire);
-        <span class="kw">match </span>exchange {
+        <span class="kw">match </span><span class="self">self</span>.compare_exchange(value) {
             <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(()),
         }
@@ -669,23 +798,33 @@
     <span class="kw">where
         </span>F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>T, E&gt;,
     {
-        <span class="kw">let </span><span class="kw-2">mut </span>ptr = <span class="self">self</span>.inner.load(Ordering::Acquire);
-
-        <span class="kw">if </span>ptr.is_null() {
-            <span class="comment">// TODO replace with `cast_mut` when MSRV reaches 1.65.0 (also in `set`)
-            </span>ptr = f()<span class="question-mark">? </span><span class="kw">as </span><span class="kw-2">*const </span>T <span class="kw">as </span><span class="kw-2">*mut </span>T;
-            <span class="kw">let </span>exchange = <span class="self">self</span>.inner.compare_exchange(
-                ptr::null_mut(),
-                ptr,
-                Ordering::AcqRel,
-                Ordering::Acquire,
-            );
-            <span class="kw">if let </span><span class="prelude-val">Err</span>(old) = exchange {
-                ptr = old;
-            }
+        <span class="kw">match </span><span class="self">self</span>.get() {
+            <span class="prelude-val">Some</span>(val) =&gt; <span class="prelude-val">Ok</span>(val),
+            <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.init(f),
         }
+    }
 
-        <span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>ptr })
+    <span class="attr">#[cold]
+    #[inline(never)]
+    </span><span class="kw">fn </span>init&lt;E&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw">impl </span>FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>T, E&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>T, E&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>value: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T = f()<span class="question-mark">?</span>;
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(old) = <span class="self">self</span>.compare_exchange(value) {
+            value = <span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>old };
+        }
+        <span class="prelude-val">Ok</span>(value)
+    }
+
+    <span class="attr">#[inline(always)]
+    </span><span class="kw">fn </span>compare_exchange(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T) -&gt; <span class="prelude-ty">Result</span>&lt;(), <span class="kw-2">*const </span>T&gt; {
+        <span class="self">self</span>.inner
+            .compare_exchange(
+                ptr::null_mut(),
+                &lt;<span class="kw-2">*const </span>T&gt;::cast_mut(value),
+                Ordering::Release,
+                Ordering::Acquire,
+            )
+            .map(|<span class="kw">_</span>: <span class="kw-2">*mut </span>T| ())
+            .map_err(&lt;<span class="kw-2">*mut </span>T&gt;::cast_const)
     }
 
     <span class="doccomment">/// ```compile_fail
@@ -745,8 +884,13 @@
 
     <span class="kw">impl</span>&lt;T&gt; OnceBox&lt;T&gt; {
         <span class="doccomment">/// Creates a new empty cell.
-        </span><span class="kw">pub const fn </span>new() -&gt; OnceBox&lt;T&gt; {
-            OnceBox { inner: AtomicPtr::new(ptr::null_mut()), ghost: PhantomData }
+        </span><span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
+            <span class="self">Self </span>{ inner: AtomicPtr::new(ptr::null_mut()), ghost: PhantomData }
+        }
+
+        <span class="doccomment">/// Creates a new cell with the given value.
+        </span><span class="kw">pub fn </span>with_value(value: Box&lt;T&gt;) -&gt; <span class="self">Self </span>{
+            <span class="self">Self </span>{ inner: AtomicPtr::new(Box::into_raw(value)), ghost: PhantomData }
         }
 
         <span class="doccomment">/// Gets a reference to the underlying value.
@@ -767,7 +911,7 @@
             <span class="kw">let </span>exchange = <span class="self">self</span>.inner.compare_exchange(
                 ptr::null_mut(),
                 ptr,
-                Ordering::AcqRel,
+                Ordering::Release,
                 Ordering::Acquire,
             );
             <span class="kw">if </span>exchange.is_err() {
@@ -805,27 +949,41 @@
         <span class="kw">where
             </span>F: FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;T&gt;, E&gt;,
         {
-            <span class="kw">let </span><span class="kw-2">mut </span>ptr = <span class="self">self</span>.inner.load(Ordering::Acquire);
+            <span class="kw">match </span><span class="self">self</span>.get() {
+                <span class="prelude-val">Some</span>(val) =&gt; <span class="prelude-val">Ok</span>(val),
+                <span class="prelude-val">None </span>=&gt; <span class="self">self</span>.init(f)
+            }
+        }
 
-            <span class="kw">if </span>ptr.is_null() {
-                <span class="kw">let </span>val = f()<span class="question-mark">?</span>;
-                ptr = Box::into_raw(val);
-                <span class="kw">let </span>exchange = <span class="self">self</span>.inner.compare_exchange(
-                    ptr::null_mut(),
-                    ptr,
-                    Ordering::AcqRel,
-                    Ordering::Acquire,
-                );
-                <span class="kw">if let </span><span class="prelude-val">Err</span>(old) = exchange {
-                    drop(<span class="kw">unsafe </span>{ Box::from_raw(ptr) });
-                    ptr = old;
-                }
-            };
+        <span class="attr">#[cold]
+        #[inline(never)]
+        </span><span class="kw">fn </span>init&lt;E&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw">impl </span>FnOnce() -&gt; <span class="prelude-ty">Result</span>&lt;Box&lt;T&gt;, E&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>T, E&gt; {
+            <span class="kw">let </span>val = f()<span class="question-mark">?</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>ptr = Box::into_raw(val);
+            <span class="kw">let </span>exchange = <span class="self">self</span>.inner.compare_exchange(
+                ptr::null_mut(),
+                ptr,
+                Ordering::Release,
+                Ordering::Acquire,
+            );
+            <span class="kw">if let </span><span class="prelude-val">Err</span>(old) = exchange {
+                drop(<span class="kw">unsafe </span>{ Box::from_raw(ptr) });
+                ptr = old;
+            }
             <span class="prelude-val">Ok</span>(<span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span>ptr })
         }
     }
 
     <span class="kw">unsafe impl</span>&lt;T: Sync + Send&gt; Sync <span class="kw">for </span>OnceBox&lt;T&gt; {}
+
+    <span class="kw">impl</span>&lt;T: Clone&gt; Clone <span class="kw">for </span>OnceBox&lt;T&gt; {
+        <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+            <span class="kw">match </span><span class="self">self</span>.get() {
+                <span class="prelude-val">Some</span>(value) =&gt; OnceBox::with_value(Box::new(value.clone())),
+                <span class="prelude-val">None </span>=&gt; OnceBox::new(),
+            }
+        }
+    }
 
     <span class="doccomment">/// ```compile_fail
     /// struct S(*mut ());
