@@ -130,7 +130,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest, macOS-latest ]
+        target_env: [ "vulkan1.1,vulkan1.2,vulkan1.3,vulkan1.4,spv1.3,spv1.4" ]
+        experimental: [ false ]
+        include:
+          - os: ubuntu-24.04
+            target_env: naga-wgsl
+            experimental: true
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
     steps:
       - uses: actions/checkout@v4
       - name: Install Vulkan SDK
@@ -145,7 +152,7 @@ jobs:
       - name: cargo fetch --locked
         run: cargo fetch --locked --target $TARGET
       - name: compiletest
-        run: cargo run -p compiletests --release --no-default-features --features "use-installed-tools" -- --target-env vulkan1.1,vulkan1.2,vulkan1.3,vulkan1.4,spv1.3,spv1.4
+        run: cargo run -p compiletests --release --no-default-features --features "use-installed-tools" -- --target-env ${{ matrix.target_env }}
 
   difftest:
     name: Difftest
