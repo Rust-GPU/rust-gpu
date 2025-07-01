@@ -109,6 +109,22 @@ impl SpirvTargetEnv {
     }
 }
 
+pub trait IntoSpirvTarget: Sized {
+    fn to_spirv_target_env(&self) -> Result<SpirvTargetEnv, SpirvTargetParseError>;
+}
+
+impl IntoSpirvTarget for SpirvTargetEnv {
+    fn to_spirv_target_env(&self) -> Result<SpirvTargetEnv, SpirvTargetParseError> {
+        Ok(*self)
+    }
+}
+
+impl IntoSpirvTarget for &str {
+    fn to_spirv_target_env(&self) -> Result<SpirvTargetEnv, SpirvTargetParseError> {
+        SpirvTargetEnv::parse_triple(self)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
