@@ -22,6 +22,6 @@ mod clap {
         let builder = SpirvBuilder::try_parse_from(["", "--target", &env.target_triple()])
             .map_err(|e| e.to_string())
             .unwrap();
-        assert_eq!(builder.target, Some(env));
+        assert_eq!(builder.target.unwrap().unwrap(), env);
     }
 }

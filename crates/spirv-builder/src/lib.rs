@@ -93,6 +93,7 @@ use thiserror::Error;
 pub use rustc_codegen_spirv_target_specs::{
     IntoSpirvTarget, SpirvTargetEnv, SpirvTargetParseError,
 };
+pub use rustc_codegen_spirv_target_specs::{deserialize_target, serialize_target};
 pub use rustc_codegen_spirv_types::*;
 
 #[cfg(feature = "include-target-specs")]
@@ -101,8 +102,10 @@ pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum SpirvBuilderError {
-    #[error("`target` must be set or was invalid, for example `spirv-unknown-vulkan1.2`")]
+    #[error("`target` must be set, for example `spirv-unknown-vulkan1.2`")]
     MissingTarget,
+    #[error("Error parsing target: {0}")]
+    SpirvTargetParseError(#[from] SpirvTargetParseError),
     #[error("`path_to_crate` must be set")]
     MissingCratePath,
     #[error("crate path '{0}' does not exist")]
@@ -409,10 +412,14 @@ pub struct SpirvBuilder {
         clap(
             long,
             default_value = "spirv-unknown-vulkan1.2",
-            value_parser = SpirvTargetEnv::parse_triple
+            value_parser = Self::parse_target
         )
     )]
-    pub target: Option<SpirvTargetEnv>,
+    #[serde(
+        serialize_with = "serialize_target",
+        deserialize_with = "deserialize_target"
+    )]
+    pub target: Option<Result<SpirvTargetEnv, SpirvTargetParseError>>,
     /// Cargo features specification for building the shader crate.
     #[cfg_attr(feature = "clap", clap(flatten))]
     #[serde(flatten)]
@@ -481,6 +488,12 @@ pub struct SpirvBuilder {
 
 #[cfg(feature = "clap")]
 impl SpirvBuilder {
+    fn parse_target(
+        target: &str,
+    ) -> Result<Result<SpirvTargetEnv, SpirvTargetParseError>, clap::Error> {
+        Ok(SpirvTargetEnv::parse_triple(target))
+    }
+
     /// Clap value parser for `Capability`.
     fn parse_spirv_capability(capability: &str) -> Result<Capability, clap::Error> {
         use core::str::FromStr;
@@ -521,7 +534,7 @@ impl SpirvBuilder {
     pub fn new(path_to_crate: impl AsRef<Path>, target: impl IntoSpirvTarget) -> Self {
         Self {
             path_to_crate: Some(path_to_crate.as_ref().to_owned()),
-            target: target.to_spirv_target_env().ok(),
+            target: Some(target.to_spirv_target_env()),
             ..SpirvBuilder::default()
         }
     }
@@ -788,7 +801,10 @@ fn join_checking_for_separators(strings: Vec<impl Borrow<str>>, sep: &str) -> St
 
 // Returns path to the metadata json.
 fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
-    let target = builder.target.ok_or(SpirvBuilderError::MissingTarget)?;
+    let target = builder
+        .target
+        .clone()
+        .ok_or(SpirvBuilderError::MissingTarget)??;
     let path_to_crate = builder
         .path_to_crate
         .as_ref()
