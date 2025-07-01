@@ -62,7 +62,7 @@ pub enum SpirvTargetEnv {
     Vulkan_1_4,
 }
 
-#[derive(Clone, Error)]
+#[derive(Clone, Error, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SpirvTargetParseError {
     #[error("Expected `rustc_codegen_spirv` target with prefix `{SPIRV_TARGET_PREFIX}`, got `{0}`")]

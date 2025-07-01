@@ -29,12 +29,14 @@ where
     S: Serializer,
 {
     // cannot use `transpose()` due to target being a ref, not a value
-    match target {
-        Some(Ok(_)) | None => Serialize::serialize(target, serializer),
+    let option = match target {
+        None => None,
+        Some(Ok(e)) => Some(*e),
         Some(Err(_e)) => Err(Error::custom(
             "cannot serialize `target` that failed to parse",
-        )),
-    }
+        ))?,
+    };
+    Serialize::serialize(&option, serializer)
 }
 
 pub fn deserialize_target<'de, D>(
@@ -51,7 +53,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::SpirvTargetEnv;
+    use super::*;
+    use crate::{SpirvTargetEnv, SpirvTargetParseError};
 
     #[test]
     fn test_serde_roundtrip() {
@@ -59,6 +62,27 @@ mod tests {
             let json = serde_json::to_string(&env).unwrap();
             let deserialize: SpirvTargetEnv = serde_json::from_str(&json).unwrap();
             assert_eq!(env, deserialize);
+        }
+    }
+
+    #[test]
+    fn test_serde_target_roundtrip() {
+        #[derive(Clone, Debug, Eq, PartialEq, serde::Deserialize, serde::Serialize)]
+        struct FakeSpirvBuilder {
+            #[serde(
+                serialize_with = "serialize_target",
+                deserialize_with = "deserialize_target"
+            )]
+            target: Option<Result<SpirvTargetEnv, SpirvTargetParseError>>,
+        }
+
+        for env in SpirvTargetEnv::iter() {
+            let builder = FakeSpirvBuilder {
+                target: Some(Ok(env)),
+            };
+            let json = serde_json::to_string(&builder).unwrap();
+            let deserialize: FakeSpirvBuilder = serde_json::from_str(&json).unwrap();
+            assert_eq!(builder, deserialize);
         }
     }
 }
