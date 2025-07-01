@@ -90,7 +90,9 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use thiserror::Error;
 
-pub use rustc_codegen_spirv_target_specs::{SpirvTargetEnv, SpirvTargetParseError};
+pub use rustc_codegen_spirv_target_specs::{
+    IntoSpirvTarget, SpirvTargetEnv, SpirvTargetParseError,
+};
 pub use rustc_codegen_spirv_types::*;
 
 #[cfg(feature = "include-target-specs")]
@@ -99,10 +101,8 @@ pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum SpirvBuilderError {
-    #[error("`target` must be set, for example `spirv-unknown-vulkan1.2`")]
+    #[error("`target` must be set or was invalid, for example `spirv-unknown-vulkan1.2`")]
     MissingTarget,
-    #[error("Error parsing target: {0}")]
-    SpirvTargetParseError(#[from] SpirvTargetParseError),
     #[error("`path_to_crate` must be set")]
     MissingCratePath,
     #[error("crate path '{0}' does not exist")]
@@ -406,9 +406,13 @@ pub struct SpirvBuilder {
     /// The target triple, eg. `spirv-unknown-vulkan1.2`
     #[cfg_attr(
         feature = "clap",
-        clap(long, default_value = "spirv-unknown-vulkan1.2")
+        clap(
+            long,
+            default_value = "spirv-unknown-vulkan1.2",
+            value_parser = SpirvTargetEnv::parse_triple
+        )
     )]
-    pub target: Option<String>,
+    pub target: Option<SpirvTargetEnv>,
     /// Cargo features specification for building the shader crate.
     #[cfg_attr(feature = "clap", clap(flatten))]
     #[serde(flatten)]
@@ -514,10 +518,10 @@ impl Default for SpirvBuilder {
 }
 
 impl SpirvBuilder {
-    pub fn new(path_to_crate: impl AsRef<Path>, target: impl Into<String>) -> Self {
+    pub fn new(path_to_crate: impl AsRef<Path>, target: impl IntoSpirvTarget) -> Self {
         Self {
             path_to_crate: Some(path_to_crate.as_ref().to_owned()),
-            target: Some(target.into()),
+            target: target.to_spirv_target_env().ok(),
             ..SpirvBuilder::default()
         }
     }
@@ -784,11 +788,7 @@ fn join_checking_for_separators(strings: Vec<impl Borrow<str>>, sep: &str) -> St
 
 // Returns path to the metadata json.
 fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
-    let target = builder
-        .target
-        .as_ref()
-        .ok_or(SpirvBuilderError::MissingTarget)?;
-    let target = SpirvTargetEnv::parse_triple(target)?;
+    let target = builder.target.ok_or(SpirvBuilderError::MissingTarget)?;
     let path_to_crate = builder
         .path_to_crate
         .as_ref()
