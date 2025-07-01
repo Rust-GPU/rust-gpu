@@ -11,6 +11,8 @@ pub const TARGET_SPEC_DIR_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tar
 
 #[cfg(feature = "include_str")]
 mod include_str;
+#[cfg(feature = "serde")]
+mod serde;
 
 pub const SPIRV_ARCH: &str = "spirv";
 pub const SPIRV_VENDOR: &str = "unknown";
@@ -19,7 +21,6 @@ pub const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
 /// All target envs rust-gpu supports. The corresponding target tripple is `spirv-unknown-ENV` with `ENV` replaced by any of the values below.
 #[allow(non_camel_case_types, clippy::upper_case_acronyms)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash, EnumString, IntoStaticStr, EnumIter, Display)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub enum SpirvTargetEnv {
     #[strum(to_string = "opengl4.0")]
     OpenGL_4_0,
