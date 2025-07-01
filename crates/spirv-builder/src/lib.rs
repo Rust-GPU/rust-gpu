@@ -73,6 +73,8 @@
 
 pub mod cargo_cmd;
 mod depfile;
+#[cfg(test)]
+mod tests;
 #[cfg(feature = "watch")]
 mod watch;
 
