@@ -72,6 +72,8 @@
 #![doc = include_str!("../README.md")]
 
 mod depfile;
+#[cfg(test)]
+mod tests;
 #[cfg(feature = "watch")]
 mod watch;
 
