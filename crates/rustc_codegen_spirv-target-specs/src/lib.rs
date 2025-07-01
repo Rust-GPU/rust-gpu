@@ -12,7 +12,9 @@ pub const TARGET_SPEC_DIR_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tar
 #[cfg(feature = "include_str")]
 mod include_str;
 #[cfg(feature = "serde")]
-mod serde;
+mod serde_feature;
+#[cfg(feature = "serde")]
+pub use serde_feature::*;
 
 pub const SPIRV_ARCH: &str = "spirv";
 pub const SPIRV_VENDOR: &str = "unknown";
@@ -60,7 +62,8 @@ pub enum SpirvTargetEnv {
     Vulkan_1_4,
 }
 
-#[derive(Error)]
+#[derive(Clone, Error)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SpirvTargetParseError {
     #[error("Expected `rustc_codegen_spirv` target with prefix `{SPIRV_TARGET_PREFIX}`, got `{0}`")]
     WrongPrefix(String),
@@ -120,6 +123,12 @@ impl IntoSpirvTarget for SpirvTargetEnv {
 }
 
 impl IntoSpirvTarget for &str {
+    fn to_spirv_target_env(&self) -> Result<SpirvTargetEnv, SpirvTargetParseError> {
+        SpirvTargetEnv::parse_triple(self)
+    }
+}
+
+impl IntoSpirvTarget for String {
     fn to_spirv_target_env(&self) -> Result<SpirvTargetEnv, SpirvTargetParseError> {
         SpirvTargetEnv::parse_triple(self)
     }
