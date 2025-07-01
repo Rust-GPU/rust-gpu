@@ -100,16 +100,7 @@ impl<'tcx> CodegenCx<'tcx> {
     pub fn new(tcx: TyCtxt<'tcx>, codegen_unit: &'tcx CodegenUnit<'tcx>) -> Self {
         // Validate the target spec, as the backend doesn't control `--target`.
         let target_tuple = tcx.sess.opts.target_triple.tuple();
-        let target = SpirvTargetEnv::parse_triple(target_tuple).unwrap_or_else(|| {
-            let qualifier = if !target_tuple.starts_with("spirv-") {
-                "non-SPIR-V "
-            } else {
-                ""
-            };
-            tcx.dcx().fatal(format!(
-                "{qualifier}target `{target_tuple}` not supported by `rustc_codegen_spirv`",
-            ))
-        });
+        let target = SpirvTargetEnv::parse_triple(target_tuple).unwrap();
         let target_spec_mismatched_jsons = {
             use rustc_target::json::ToJson;
 

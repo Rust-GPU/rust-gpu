@@ -77,7 +77,6 @@ mod depfile;
 mod watch;
 
 use raw_string::{RawStr, RawString};
-use rustc_codegen_spirv_target_specs::SpirvTargetEnv;
 use semver::Version;
 use serde::Deserialize;
 use std::borrow::Borrow;
@@ -89,6 +88,7 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use thiserror::Error;
 
+pub use rustc_codegen_spirv_target_specs::{SpirvTargetEnv, SpirvTargetParseError};
 pub use rustc_codegen_spirv_types::*;
 
 #[cfg(feature = "include-target-specs")]
@@ -99,8 +99,8 @@ pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
 pub enum SpirvBuilderError {
     #[error("`target` must be set, for example `spirv-unknown-vulkan1.2`")]
     MissingTarget,
-    #[error("Unknown target `{target}`")]
-    UnknownTarget { target: String },
+    #[error("Error parsing target: {0}")]
+    SpirvTargetParseError(#[from] SpirvTargetParseError),
     #[error("`path_to_crate` must be set")]
     MissingCratePath,
     #[error("crate path '{0}' does not exist")]
@@ -786,9 +786,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         .target
         .as_ref()
         .ok_or(SpirvBuilderError::MissingTarget)?;
-    let target = SpirvTargetEnv::parse_triple(target).ok_or(SpirvBuilderError::UnknownTarget {
-        target: target.clone(),
-    })?;
+    let target = SpirvTargetEnv::parse_triple(target)?;
     let path_to_crate = builder
         .path_to_crate
         .as_ref()
