@@ -151,6 +151,8 @@ impl Runner {
                 format!("{}-{}", env, variation.name)
             };
 
+            println!("Testing env: {}\n", stage_id);
+
             let target = format!("{SPIRV_TARGET_PREFIX}{env}");
             let libs = build_deps(&self.deps_target_dir, &self.codegen_backend_path, &target);
             let mut flags = test_rustc_flags(&self.codegen_backend_path, &libs, &[
