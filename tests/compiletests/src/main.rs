@@ -145,7 +145,7 @@ impl Runner {
             } else {
                 SpirvTargetEnv::parse_triple(&format!("spirv-unknown-{target}"))
             }
-            .unwrap_or_else(|| panic!("unknown target {}", target));
+            .unwrap();
 
             // HACK(eddyb) in order to allow *some* tests to have separate output
             // in different testing variations (i.e. experimental features), while
