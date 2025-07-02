@@ -111,6 +111,27 @@ fn main() -> Result<()> {
         })
         .collect();
 
+    // If filters are provided that look like paths (contain '/'), convert them to test names
+    let opts = if opts.filters.iter().any(|f| f.contains('/')) {
+        let mut new_opts = opts;
+        new_opts.filters = new_opts
+            .filters
+            .into_iter()
+            .map(|filter| {
+                if filter.contains('/') {
+                    // Convert path-like filter to test name format
+                    let path_filter = filter.replace('/', "::");
+                    format!("{}", path_filter)
+                } else {
+                    filter
+                }
+            })
+            .collect();
+        new_opts
+    } else {
+        opts
+    };
+
     let passed = run_tests_console(&opts, tests).expect("Failed to run tests");
 
     process::exit(if passed { 0 } else { 1 });
