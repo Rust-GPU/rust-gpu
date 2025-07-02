@@ -121,7 +121,7 @@ fn main() -> Result<()> {
                 if filter.contains('/') {
                     // Convert path-like filter to test name format
                     let path_filter = filter.replace('/', "::");
-                    format!("difftests::{}", path_filter)
+                    format!("{}", path_filter)
                 } else {
                     filter
                 }
