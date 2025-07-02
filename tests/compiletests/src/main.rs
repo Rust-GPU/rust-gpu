@@ -371,6 +371,13 @@ fn rust_flags(codegen_backend_path: &Path) -> String {
         // GVN currently can lead to the memcpy-out-of-const-alloc-global-var
         // pattern, even for `ScalarPair` (e.g. `return None::<u32>;`).
         "-Zmir-enable-passes=-GVN",
+        // HACK(eddyb) avoid ever reusing instantiations from `compiler_builtins`
+        // which is special-cased to turn calls to functions that never return,
+        // into aborts, and this applies to the panics of UB-checking helpers
+        // (https://github.com/rust-lang/rust/pull/122580#issuecomment-3033026194)
+        // but while upstream that only loses the panic message, for us it's even
+        // worse, as we lose the chance to remove otherwise-dead `fmt::Arguments`.
+        "-Zshare-generics=off",
         // NOTE(eddyb) flags copied from `spirv-builder` are all above this line.
         "-Cdebuginfo=2",
         "-Cembed-bitcode=no",

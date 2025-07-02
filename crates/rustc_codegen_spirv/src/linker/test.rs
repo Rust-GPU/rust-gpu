@@ -144,6 +144,8 @@ fn link_with_linker_opts(
             checksum_hash_kind: None,
         };
         rustc_span::create_session_globals_then(sopts.edition, &[], Some(sm_inputs), || {
+            extern crate rustc_driver_impl;
+
             let mut sess = rustc_session::build_session(
                 sopts,
                 CompilerIO {
@@ -163,10 +165,7 @@ fn link_with_linker_opts(
                 Default::default(),
                 rustc_interface::util::rustc_version_str().unwrap_or("unknown"),
                 Default::default(),
-                {
-                    extern crate rustc_driver_impl;
-                    &rustc_driver_impl::USING_INTERNAL_FEATURES
-                },
+                &rustc_driver_impl::USING_INTERNAL_FEATURES,
                 Default::default(),
             );
 
@@ -175,16 +174,11 @@ fn link_with_linker_opts(
             sess.psess = {
                 let source_map = sess.psess.clone_source_map();
 
-                let fallback_bundle = {
-                    extern crate rustc_error_messages;
-                    rustc_error_messages::fallback_fluent_bundle(
-                        Vec::new(),
-                        sess.opts.unstable_opts.translate_directionality_markers,
-                    )
-                };
-                let emitter =
-                    rustc_errors::emitter::HumanEmitter::new(Box::new(buf), fallback_bundle)
-                        .sm(Some(source_map.clone()));
+                let emitter = rustc_errors::emitter::HumanEmitter::new(
+                    Box::new(buf),
+                    rustc_driver_impl::default_translator(),
+                )
+                .sm(Some(source_map.clone()));
 
                 rustc_session::parse::ParseSess::with_dcx(
                     rustc_errors::DiagCtxt::new(Box::new(emitter))

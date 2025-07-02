@@ -12,7 +12,6 @@ pub use spirv_asm::InstructionTable;
 // HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
-use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{BuilderCursor, SpirvValue, SpirvValueExt};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
@@ -193,10 +192,6 @@ impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
         todo!()
     }
 
-    fn get_dbg_loc(&self) -> Option<Self::DILocation> {
-        None
-    }
-
     fn insert_reference_to_gdb_debug_scripts_section_global(&mut self) {
         todo!()
     }
@@ -253,10 +248,6 @@ impl<'a, 'tcx> ArgAbiBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 arg_abi
             ),
         }
-    }
-
-    fn arg_memory_ty(&self, arg_abi: &ArgAbi<'tcx, Ty<'tcx>>) -> Self::Type {
-        arg_abi.layout.spirv_type(self.span(), self)
     }
 }
 

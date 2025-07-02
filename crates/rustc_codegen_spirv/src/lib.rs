@@ -2,7 +2,6 @@
 #![allow(internal_features)]
 #![allow(rustc::diagnostic_outside_of_impl)]
 #![allow(rustc::untranslatable_diagnostic)]
-#![cfg_attr(bootstrap, feature(let_chains))]
 #![feature(assert_matches)]
 #![feature(box_patterns)]
 #![feature(file_buffered)]
@@ -33,7 +32,6 @@
 //! [`spirv-tools`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools
 //! [`spirv-tools-sys`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools_sys
 #![feature(rustc_private)]
-#![feature(result_flattening)]
 // crate-specific exceptions:
 #![allow(
     unsafe_code,                // rustc_codegen_ssa requires unsafe functions in traits to be impl'd
@@ -41,7 +39,7 @@
     clippy::todo,               // still lots to implement :)
 
     // FIXME(eddyb) new warnings from 1.83 rustup, apply their suggested changes.
-    elided_named_lifetimes,
+    mismatched_lifetime_syntaxes,
     clippy::needless_lifetimes,
 )]
 
@@ -86,6 +84,8 @@ extern crate rustc_apfloat;
 extern crate rustc_arena;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_ast;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
+extern crate rustc_attr_data_structures;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_attr_parsing;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
@@ -262,12 +262,7 @@ impl CodegenBackend for SpirvCodegenBackend {
         crate::attr::provide(providers);
     }
 
-    fn codegen_crate(
-        &self,
-        tcx: TyCtxt<'_>,
-        metadata: EncodedMetadata,
-        need_metadata_module: bool,
-    ) -> Box<dyn Any> {
+    fn codegen_crate(&self, tcx: TyCtxt<'_>) -> Box<dyn Any> {
         Box::new(maybe_pqp_cg_ssa::base::codegen_crate(
             Self,
             tcx,
@@ -277,8 +272,6 @@ impl CodegenBackend for SpirvCodegenBackend {
                 .target_cpu
                 .clone()
                 .unwrap_or_else(|| tcx.sess.target.cpu.to_string()),
-            metadata,
-            need_metadata_module,
         ))
     }
 
@@ -294,11 +287,18 @@ impl CodegenBackend for SpirvCodegenBackend {
             .join(sess)
     }
 
-    fn link(&self, sess: &Session, codegen_results: CodegenResults, outputs: &OutputFilenames) {
+    fn link(
+        &self,
+        sess: &Session,
+        codegen_results: CodegenResults,
+        metadata: EncodedMetadata,
+        outputs: &OutputFilenames,
+    ) {
         let timer = sess.timer("link_crate");
         link::link(
             sess,
             &codegen_results,
+            &metadata,
             outputs,
             codegen_results.crate_info.local_crate_name.as_str(),
         );
@@ -346,7 +346,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         warn!("TODO: Implement print_statistics");
     }
 
-    unsafe fn optimize(
+    fn optimize(
         _: &CodegenContext<Self>,
         _: DiagCtxtHandle<'_>,
         _: &mut ModuleCodegen<Self::Module>,
@@ -356,7 +356,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         Ok(())
     }
 
-    unsafe fn optimize_thin(
+    fn optimize_thin(
         _cgcx: &CodegenContext<Self>,
         thin_module: ThinModule<Self>,
     ) -> Result<ModuleCodegen<Self::Module>, FatalError> {
@@ -378,7 +378,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         todo!()
     }
 
-    unsafe fn codegen(
+    fn codegen(
         cgcx: &CodegenContext<Self>,
         _diag_handler: DiagCtxtHandle<'_>,
         module: ModuleCodegen<Self::Module>,
@@ -439,9 +439,9 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
         todo!()
     }
 
-    fn compile_codegen_unit(
+    fn compile_codegen_unit<'tcx>(
         &self,
-        tcx: TyCtxt<'_>,
+        tcx: TyCtxt<'tcx>,
         cgu_name: Symbol,
     ) -> (ModuleCodegen<Self::Module>, u64) {
         let _timer = tcx
@@ -452,8 +452,8 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
         let cgu = tcx.codegen_unit(cgu_name);
 
         let mut cx = CodegenCx::new(tcx, cgu);
-        let do_codegen = |cx: &mut CodegenCx<'_>| {
-            let mono_items = cx.codegen_unit.items_in_deterministic_order(cx.tcx);
+        let do_codegen = |cx: &mut CodegenCx<'tcx>| {
+            let mono_items = cgu.items_in_deterministic_order(cx.tcx);
 
             if let Some(dir) = &cx.codegen_args.dump_mir {
                 dump_mir(tcx, mono_items.as_slice(), &dir.join(cgu_name.to_string()));
@@ -462,6 +462,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
             for &(mono_item, mono_item_data) in mono_items.iter() {
                 mono_item.predefine::<Builder<'_, '_>>(
                     cx,
+                    cgu_name.as_str(),
                     mono_item_data.linkage,
                     mono_item_data.visibility,
                 );
@@ -469,10 +470,10 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
 
             // ... and now that we have everything pre-defined, fill out those definitions.
             for &(mono_item, mono_item_data) in &mono_items {
-                mono_item.define::<Builder<'_, '_>>(cx, mono_item_data);
+                mono_item.define::<Builder<'_, '_>>(cx, cgu_name.as_str(), mono_item_data);
             }
 
-            if let Some(_entry) = maybe_create_entry_wrapper::<Builder<'_, '_>>(cx) {
+            if let Some(_entry) = maybe_create_entry_wrapper::<Builder<'_, '_>>(cx, cgu) {
                 // attributes::sanitize(&cx, SanitizerSet::empty(), entry);
             }
         };
