@@ -290,7 +290,7 @@ pub(crate) fn provide(providers: &mut Providers) {
         let trivial_struct = match tcx.hir_node_by_def_id(def_id) {
             rustc_hir::Node::Item(item) => match item.kind {
                 rustc_hir::ItemKind::Struct(
-                    ..,
+                    _,
                     &rustc_hir::Generics {
                         params:
                             &[]
@@ -309,6 +309,7 @@ pub(crate) fn provide(providers: &mut Providers) {
                         where_clause_span: _,
                         span: _,
                     },
+                    _,
                 ) => Some(tcx.adt_def(def_id)),
                 _ => None,
             },
@@ -792,10 +793,11 @@ fn dig_scalar_pointee<'tcx>(
 // the type is really more "Layout with Ty" (`.ty` field + `Deref`s to `Layout`).
 fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>) -> Word {
     fn create_zst<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>) -> Word {
+        assert_eq!(ty.size, Size::ZERO);
         SpirvType::Adt {
             def_id: def_id_for_spirv_type_adt(ty),
             size: Some(Size::ZERO),
-            align: Align::from_bytes(0).unwrap(),
+            align: ty.align.abi,
             field_types: &[],
             field_offsets: &[],
             field_names: None,
@@ -817,14 +819,18 @@ fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>
             // NOTE(eddyb) even if long-term this may become a byte array, that
             // only works for "data types" and not "opaque handles" (images etc.).
             let largest_case = (0..ty.fields.count())
-                .map(|i| ty.field(cx, i))
-                .max_by_key(|case| case.size);
+                .map(|i| (FieldIdx::from_usize(i), ty.field(cx, i)))
+                .max_by_key(|(_, case)| case.size);
 
-            if let Some(case) = largest_case {
-                assert_eq!(ty.size, case.size);
-                case.spirv_type(span, cx)
+            if let Some((case_idx, case)) = largest_case {
+                if ty.align != case.align {
+                    // HACK(eddyb) mismatched alignment requires a wrapper `struct`.
+                    trans_struct_or_union(cx, span, ty, Some(case_idx))
+                } else {
+                    assert_eq!(ty.size, case.size);
+                    case.spirv_type(span, cx)
+                }
             } else {
-                assert_eq!(ty.size, Size::ZERO);
                 create_zst(cx, span, ty)
             }
         }
@@ -859,10 +865,19 @@ fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>
         FieldsShape::Arbitrary {
             offsets: _,
             memory_index: _,
-        } => trans_struct(cx, span, ty),
+        } => trans_struct_or_union(cx, span, ty, None),
     }
 }
 
+#[cfg_attr(
+    not(rustc_codegen_spirv_disable_pqp_cg_ssa),
+    expect(
+        unused,
+        reason = "actually used from \
+            `<rustc_codegen_ssa::traits::ConstCodegenMethods for CodegenCx<'_>>::const_struct`, \
+            but `rustc_codegen_ssa` being `pqp_cg_ssa` makes that trait unexported"
+    )
+)]
 // returns (field_offsets, size, align)
 pub fn auto_struct_layout(
     cx: &CodegenCx<'_>,
@@ -890,7 +905,12 @@ pub fn auto_struct_layout(
 }
 
 // see struct_llfields in librustc_codegen_llvm for implementation hints
-fn trans_struct<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>) -> Word {
+fn trans_struct_or_union<'tcx>(
+    cx: &CodegenCx<'tcx>,
+    span: Span,
+    ty: TyAndLayout<'tcx>,
+    union_case: Option<FieldIdx>,
+) -> Word {
     let size = if ty.is_unsized() { None } else { Some(ty.size) };
     let align = ty.align.abi;
     // FIXME(eddyb) use `AccumulateVec`s just like `rustc` itself does.
@@ -898,6 +918,12 @@ fn trans_struct<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>) -
     let mut field_offsets = Vec::new();
     let mut field_names = Vec::new();
     for i in ty.fields.index_by_increasing_offset() {
+        if let Some(expected_field_idx) = union_case {
+            if i != expected_field_idx.as_usize() {
+                continue;
+            }
+        }
+
         let field_ty = ty.field(cx, i);
         field_types.push(field_ty.spirv_type(span, cx));
         let offset = ty.fields.offset(i);

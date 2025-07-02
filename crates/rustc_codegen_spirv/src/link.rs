@@ -13,7 +13,7 @@ use rustc_codegen_ssa::back::write::CodegenContext;
 use rustc_codegen_ssa::{CodegenResults, NativeLib};
 use rustc_data_structures::fx::FxHashSet;
 use rustc_errors::{Diag, FatalError};
-use rustc_metadata::fs::METADATA_FILENAME;
+use rustc_metadata::{EncodedMetadata, fs::METADATA_FILENAME};
 use rustc_middle::bug;
 use rustc_middle::dep_graph::WorkProduct;
 use rustc_middle::middle::dependency_format::Linkage;
@@ -35,6 +35,7 @@ use std::sync::Arc;
 pub fn link(
     sess: &Session,
     codegen_results: &CodegenResults,
+    metadata: &EncodedMetadata,
     outputs: &OutputFilenames,
     crate_name: &str,
 ) {
@@ -73,7 +74,12 @@ pub fn link(
             );
             match crate_type {
                 CrateType::Rlib => {
-                    link_rlib(sess, codegen_results, &out_filename_file_for_writing);
+                    link_rlib(
+                        sess,
+                        codegen_results,
+                        metadata,
+                        &out_filename_file_for_writing,
+                    );
                 }
                 CrateType::Executable | CrateType::Cdylib | CrateType::Dylib => {
                     // HACK(eddyb) there's no way way to access `outputs.filestem`,
@@ -117,7 +123,12 @@ pub fn link(
     }
 }
 
-fn link_rlib(sess: &Session, codegen_results: &CodegenResults, out_filename: &Path) {
+fn link_rlib(
+    sess: &Session,
+    codegen_results: &CodegenResults,
+    metadata: &EncodedMetadata,
+    out_filename: &Path,
+) {
     let mut file_list = Vec::<&Path>::new();
     for obj in codegen_results
         .modules
@@ -139,11 +150,7 @@ fn link_rlib(sess: &Session, codegen_results: &CodegenResults, out_filename: &Pa
         }
     }
 
-    create_archive(
-        &file_list,
-        codegen_results.metadata.stub_or_full(),
-        out_filename,
-    );
+    create_archive(&file_list, metadata.stub_or_full(), out_filename);
 }
 
 fn link_exe(
