@@ -894,10 +894,6 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
         self.tcx.sess
     }
 
-    fn codegen_unit(&self) -> &'tcx CodegenUnit<'tcx> {
-        self.codegen_unit
-    }
-
     fn set_frame_pointer_type(&self, _llfn: Self::Function) {
         todo!()
     }

@@ -14,7 +14,7 @@ use rustc_abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
 use rustc_apfloat::{Float, Round, Status, ieee};
 use rustc_codegen_ssa::MemFlags;
 use rustc_codegen_ssa::common::{
-    AtomicOrdering, AtomicRmwBinOp, IntPredicate, RealPredicate, SynchronizationScope, TypeKind,
+    AtomicRmwBinOp, IntPredicate, RealPredicate, SynchronizationScope, TypeKind,
 };
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
@@ -26,7 +26,7 @@ use rustc_data_structures::fx::FxHashSet;
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::CodegenFnAttrs;
 use rustc_middle::ty::layout::LayoutOf;
-use rustc_middle::ty::{self, Ty};
+use rustc_middle::ty::{self, AtomicOrdering, Ty};
 use rustc_span::Span;
 use rustc_target::callconv::FnAbi;
 use smallvec::SmallVec;
@@ -157,17 +157,15 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn ordering_to_semantics_def(&self, ordering: AtomicOrdering) -> SpirvValue {
         let mut invalid_seq_cst = false;
         let semantics = match ordering {
-            AtomicOrdering::Unordered | AtomicOrdering::Relaxed => MemorySemantics::NONE,
-            // Note: rustc currently has AtomicOrdering::Consume commented out, if it ever becomes
-            // uncommented, it should be MakeVisible | Acquire.
+            AtomicOrdering::Relaxed => MemorySemantics::NONE,
             AtomicOrdering::Acquire => MemorySemantics::MAKE_VISIBLE | MemorySemantics::ACQUIRE,
             AtomicOrdering::Release => MemorySemantics::MAKE_AVAILABLE | MemorySemantics::RELEASE,
-            AtomicOrdering::AcquireRelease => {
+            AtomicOrdering::AcqRel => {
                 MemorySemantics::MAKE_AVAILABLE
                     | MemorySemantics::MAKE_VISIBLE
                     | MemorySemantics::ACQUIRE_RELEASE
             }
-            AtomicOrdering::SequentiallyConsistent => {
+            AtomicOrdering::SeqCst => {
                 let emit = self.emit();
                 let memory_model = emit.module_ref().memory_model.as_ref().unwrap();
                 if memory_model.operands[1].unwrap_memory_model() == MemoryModel::Vulkan {
@@ -182,8 +180,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         if invalid_seq_cst {
             self.zombie(
                 semantics.def(self),
-                "cannot use AtomicOrdering=SequentiallyConsistent on Vulkan memory model \
-                 (check if AcquireRelease fits your needs)",
+                "cannot use `AtomicOrdering::SeqCst` on Vulkan memory model \
+                 (check if `AcqRel` fits your needs)",
             );
         }
         semantics
@@ -3279,6 +3277,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         .collect::<Option<Vec<u8>>>()?;
                     String::from_utf8(piece_str_bytes).ok()
                 };
+
+                // HACK(eddyb) `panic_explicit` doesn't take any regular arguments,
+                // only an (implicit) `&'static panic::Location<'static>`.
+                if args.len() == 1 {
+                    decoded_format_args.const_pieces =
+                        Some(["explicit panic".into()].into_iter().collect());
+                    return Ok(decoded_format_args);
+                }
 
                 // HACK(eddyb) some entry-points only take a `&str`, not `fmt::Arguments`.
                 if let [

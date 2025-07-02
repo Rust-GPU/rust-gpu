@@ -17,8 +17,6 @@ use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
 use rustc_middle::{bug, ty};
 use rustc_span::Span;
 use rustc_span::sym;
-use rustc_target::callconv::{FnAbi, PassMode};
-use std::assert_matches::assert_matches;
 
 fn int_type_width_signed(ty: Ty<'_>, cx: &CodegenCx<'_>) -> Option<(u64, bool)> {
     match ty.kind() {
@@ -64,9 +62,8 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     fn codegen_intrinsic_call(
         &mut self,
         instance: Instance<'tcx>,
-        fn_abi: &FnAbi<'tcx, Ty<'tcx>>,
         args: &[OperandRef<'tcx, Self::Value>],
-        llresult: Self::Value,
+        result: PlaceRef<'tcx, Self::Value>,
         _span: Span,
     ) -> Result<(), ty::Instance<'tcx>> {
         let callee_ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
@@ -84,7 +81,6 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         let name = self.tcx.item_name(def_id);
 
         let ret_ty = self.layout_of(sig.output()).spirv_type(self.span(), self);
-        let result = PlaceRef::new_sized(llresult, fn_abi.ret.layout);
 
         let value = match name {
             sym::likely | sym::unlikely => {
@@ -94,7 +90,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 
             sym::breakpoint => {
                 self.abort();
-                assert!(fn_abi.ret.is_ignore());
+                assert!(result.layout.ty.is_unit());
                 return Ok(());
             }
 
@@ -113,7 +109,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             | sym::prefetch_read_instruction
             | sym::prefetch_write_instruction => {
                 // ignore
-                assert!(fn_abi.ret.is_ignore());
+                assert!(result.layout.ty.is_unit());
                 return Ok(());
             }
 
@@ -338,8 +334,14 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             }
         };
 
-        if !fn_abi.ret.is_ignore() {
-            assert_matches!(fn_abi.ret.mode, PassMode::Direct(_) | PassMode::Pair(..));
+        if result.layout.ty.is_bool() {
+            let val = self.from_immediate(value);
+            self.store_to_place(val, result.val);
+        } else if !result.layout.ty.is_unit() {
+            // FIXME(eddyb) upstream uses `self.store_to_place(value, result.val);`,
+            // which AFAICT does not handle packed pairs explicitly, meaning it
+            // can/will store e.g. LLVM `{A, B}` values, which is legal (in LLVM),
+            // but seems suboptimal (or even risky with e.g. layout randomization).
             OperandRef::from_immediate_or_packed_pair(self, value, result.layout)
                 .val
                 .store(self, result);
@@ -358,10 +360,6 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     fn expect(&mut self, cond: Self::Value, _expected: bool) -> Self::Value {
         // TODO: llvm.expect
         cond
-    }
-
-    fn type_test(&mut self, _pointer: Self::Value, _typeid: Self::Metadata) -> Self::Value {
-        todo!()
     }
 
     fn type_checked_load(

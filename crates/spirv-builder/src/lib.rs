@@ -848,6 +848,13 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         // GVN currently can lead to the memcpy-out-of-const-alloc-global-var
         // pattern, even for `ScalarPair` (e.g. `return None::<u32>;`).
         "-Zmir-enable-passes=-GVN".to_string(),
+        // HACK(eddyb) avoid ever reusing instantiations from `compiler_builtins`
+        // which is special-cased to turn calls to functions that never return,
+        // into aborts, and this applies to the panics of UB-checking helpers
+        // (https://github.com/rust-lang/rust/pull/122580#issuecomment-3033026194)
+        // but while upstream that only loses the panic message, for us it's even
+        // worse, as we lose the chance to remove otherwise-dead `fmt::Arguments`.
+        "-Zshare-generics=off".to_string(),
     ];
 
     // Wrapper for `env::var` that appropriately informs Cargo of the dependency.

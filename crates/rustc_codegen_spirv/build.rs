@@ -18,9 +18,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2025-05-09"
+channel = "nightly-2025-06-23"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = 50aa04180709189a03dde5fd1c05751b2625ed37"#;
+# commit_hash = be19eda0dc4c22c5cf5f1b48fd163acf9bd4b0a6"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -209,6 +209,13 @@ pub(crate) fn create_object_file(_: &Session) -> Option<write::Object<'static>> 
 #[cfg(any())]
 pub(crate) fn create_object_file(sess: &Session) -> Option<write::Object<'static>> {",
                 );
+                src = src.replace(
+                    "
+pub(super) fn elf_e_flags(architecture: Architecture, sess: &Session) -> u32 {",
+                    "
+#[cfg(any())]
+pub(super) fn elf_e_flags(architecture: Architecture, sess: &Session) -> u32 {",
+                );
             }
 
             // HACK(eddyb) "typed alloca" patches.
@@ -319,9 +326,6 @@ mod maybe_pqp_cg_ssa;
 
     // HACK(eddyb) `if cfg!(llvm_enzyme)` added upstream for autodiff support.
     println!("cargo::rustc-check-cfg=cfg(llvm_enzyme)");
-
-    // HACK(eddyb) `cfg_attr(bootstrap, ...` used upstream temporarily.
-    println!("cargo::rustc-check-cfg=cfg(bootstrap)");
 
     Ok(())
 }
