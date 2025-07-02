@@ -3399,15 +3399,18 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                             .map(|operand| operand.id_ref_any())
                             .collect::<Option<SmallVec<[_; 4]>>>()?;
 
+                        let const_as_u32 = |id| match self.builder.lookup_const_by_id(id)? {
+                            SpirvConst::Scalar(x) => u32::try_from(x).ok(),
+                            _ => None,
+                        };
+
                         // Decode the instruction into one of our `Inst`s.
                         Some(
                             match (inst.class.opcode, inst.result_id, &id_operands[..]) {
                                 (Op::Bitcast, Some(r), &[x]) => Inst::Bitcast(r, x),
                                 (Op::InBoundsAccessChain, Some(r), &[p, i]) => {
-                                    if let Some(SpirvConst::Scalar(i)) =
-                                        self.builder.lookup_const_by_id(i)
-                                    {
-                                        Inst::InBoundsAccessChain(r, p, i as u32)
+                                    if let Some(i) = const_as_u32(i) {
+                                        Inst::InBoundsAccessChain(r, p, i)
                                     } else {
                                         Inst::Unsupported(inst.class.opcode)
                                     }
@@ -3494,58 +3497,21 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 if rt_args_count > 0 {
                     let rt_args_array_ptr_id = rt_args_slice_ptr_id.unwrap();
 
-                    // Each runtime argument has 4 instructions to call one of
+                    // Each runtime argument has A instructions to call one of
                     // the `fmt::rt::Argument::new_*` functions (and temporarily
-                    // store its result), and 4 instructions to copy it into
-                    // the appropriate slot in the array. The groups of 4 and 4
-                    // instructions, for all runtime args, are each separate.
-                    let copies_to_rt_args_array =
-                        try_rev_take(rt_args_count * 4).ok_or_else(|| {
+                    // store its result), and B instructions to copy it into
+                    // the appropriate slot in the array. The groups of A and B
+                    // instructions, for all runtime args, are each separate,
+                    // so the B×N later instructions are all processed first,
+                    // before moving (backwards) to the A×N earlier instructions.
+
+                    let rev_copies_to_rt_args_array_src_ptrs: SmallVec<[_; 4]> =
+                    (0..rt_args_count).rev().map(|rt_arg_idx| {
+                        let copy_to_rt_args_array_insts = try_rev_take(4).ok_or_else(|| {
                             FormatArgsNotRecognized(
-                                "[fmt::rt::Argument; N] copies: ran out of instructions".into(),
+                                "[fmt::rt::Argument; N] copy: ran out of instructions".into(),
                             )
                         })?;
-                    let copies_to_rt_args_array = copies_to_rt_args_array.chunks(4);
-                    let rt_arg_new_calls = try_rev_take(rt_args_count * 4).ok_or_else(|| {
-                        FormatArgsNotRecognized(
-                            "fmt::rt::Argument::new calls: ran out of instructions".into(),
-                        )
-                    })?;
-                    let rt_arg_new_calls = rt_arg_new_calls.chunks(4);
-
-                    for (rt_arg_idx, (rt_arg_new_call_insts, copy_to_rt_args_array_insts)) in
-                        rt_arg_new_calls.zip(copies_to_rt_args_array).enumerate()
-                    {
-                        let call_ret_slot_ptr = match rt_arg_new_call_insts[..] {
-                            [
-                                Inst::Call(call_ret_id, callee_id, ref call_args),
-                                Inst::InBoundsAccessChain(tmp_slot_field_ptr, tmp_slot_ptr, 0),
-                                Inst::CompositeExtract(field, wrapper_newtype, 0),
-                                Inst::Store(st_dst_ptr, st_val),
-                            ] if wrapper_newtype == call_ret_id
-                                && (st_dst_ptr, st_val) == (tmp_slot_field_ptr, field) =>
-                            {
-                                self.fmt_rt_arg_new_fn_ids_to_ty_and_spec
-                                    .borrow()
-                                    .get(&callee_id)
-                                    .and_then(|&(ty, spec)| match call_args[..] {
-                                        [x] => {
-                                            decoded_format_args
-                                                .ref_arg_ids_with_ty_and_spec
-                                                .push((x, ty, spec));
-                                            Some(tmp_slot_ptr)
-                                        }
-                                        _ => None,
-                                    })
-                            }
-                            _ => None,
-                        }
-                        .ok_or_else(|| {
-                            FormatArgsNotRecognized(format!(
-                                "fmt::rt::Argument::new call sequence ({rt_arg_new_call_insts:?})"
-                            ))
-                        })?;
-
                         match copy_to_rt_args_array_insts[..] {
                             [
                                 Inst::InBoundsAccessChain(array_slot, array_base, array_idx),
@@ -3555,15 +3521,57 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                             ] if array_base == rt_args_array_ptr_id
                                 && array_idx as usize == rt_arg_idx
                                 && dst_base_ptr == array_slot
-                                && src_base_ptr == call_ret_slot_ptr
-                                && (copy_dst, copy_src) == (dst_field_ptr, src_field_ptr) => {}
+                                && (copy_dst, copy_src) == (dst_field_ptr, src_field_ptr) =>
+                            {
+                                Ok(src_base_ptr)
+                            }
                             _ => {
-                                return Err(FormatArgsNotRecognized(format!(
-                                    "[fmt::rt::Argument; N] copies sequence ({copy_to_rt_args_array_insts:?})"
-                                )));
+                                Err(FormatArgsNotRecognized(format!(
+                                    "[fmt::rt::Argument; N] copy sequence ({copy_to_rt_args_array_insts:?})"
+                                )))
                             }
                         }
-                    }
+                    }).collect::<Result<_, _>>()?;
+
+                    let rev_ref_arg_ids_with_ty_and_spec = (rev_copies_to_rt_args_array_src_ptrs
+                        .into_iter())
+                    .map(|copy_to_rt_args_array_src_ptr| {
+                        let rt_arg_new_call_insts = try_rev_take(4).ok_or_else(|| {
+                            FormatArgsNotRecognized(
+                                "fmt::rt::Argument::new call: ran out of instructions".into(),
+                            )
+                        })?;
+                        match rt_arg_new_call_insts[..] {
+                            [
+                                Inst::Call(call_ret_id, callee_id, ref call_args),
+                                Inst::InBoundsAccessChain(tmp_slot_field_ptr, tmp_slot_ptr, 0),
+                                Inst::CompositeExtract(field, wrapper_newtype, 0),
+                                Inst::Store(st_dst_ptr, st_val),
+                            ] if wrapper_newtype == call_ret_id
+                                && tmp_slot_ptr == copy_to_rt_args_array_src_ptr
+                                && (st_dst_ptr, st_val) == (tmp_slot_field_ptr, field) =>
+                            {
+                                self.fmt_rt_arg_new_fn_ids_to_ty_and_spec
+                                    .borrow()
+                                    .get(&callee_id)
+                                    .and_then(|&(ty, spec)| match call_args[..] {
+                                        [x] => Some((x, ty, spec)),
+                                        _ => None,
+                                    })
+                            }
+                            _ => None,
+                        }
+                        .ok_or_else(|| {
+                            FormatArgsNotRecognized(format!(
+                                "fmt::rt::Argument::new call sequence ({rt_arg_new_call_insts:?})"
+                            ))
+                        })
+                    })
+                    .collect::<Result<_, _>>()?;
+
+                    decoded_format_args.ref_arg_ids_with_ty_and_spec =
+                        rev_ref_arg_ids_with_ty_and_spec;
+                    decoded_format_args.ref_arg_ids_with_ty_and_spec.reverse();
                 }
 
                 // If the `pieces: &[&str]` slice needs a bitcast, it'll be here.
