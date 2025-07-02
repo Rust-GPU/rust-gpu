@@ -3246,10 +3246,25 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
                 // Take `count` instructions, advancing backwards, but returning
                 // instructions in their original order (and decoded to `Inst`s).
-                let mut try_rev_take = |count| {
+                let mut try_rev_take = |count: isize| {
+                    // HACK(eddyb) this is extremely silly but it's easier to do
+                    // this than to rely on `Iterator::peekable` or anything else,
+                    // lower down this file, without messing up the state here.
+                    let is_peek = count < 0;
+                    let count = count.unsigned_abs();
+
+                    let mut non_debug_insts_for_peek = is_peek.then(|| non_debug_insts.clone());
+                    let non_debug_insts = non_debug_insts_for_peek
+                        .as_mut()
+                        .unwrap_or(&mut non_debug_insts);
+
+                    // FIXME(eddyb) there might be an easier way to do this,
+                    // e.g. maybe `map_while` + post-`collect` length check?
                     let maybe_rev_insts = (0..count).map(|_| {
                         let (i, inst) = non_debug_insts.next_back()?;
-                        taken_inst_idx_range.start.set(i);
+                        if !is_peek {
+                            taken_inst_idx_range.start.set(i);
+                        }
 
                         // HACK(eddyb) avoid the logic below that assumes only ID operands
                         if inst.class.opcode == Op::CompositeExtract {
@@ -3509,15 +3524,21 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         }
                     }).collect::<Result<_, _>>()?;
 
-                    let rev_ref_arg_ids_with_ty_and_spec = (rev_copies_to_rt_args_array_src_ptrs
-                        .into_iter())
-                    .map(|copy_to_rt_args_array_src_ptr| {
+                    // HACK(eddyb) sometimes there is an extra tuple of refs,
+                    // nowadays, but MIR opts mean it's not always guaranteed,
+                    // hopefully it's always uniform across all the arguments.
+                    let mut maybe_ref_args_tmp_slot_ptr = None;
+
+                    let rev_maybe_ref_arg_ids_with_ty_and_spec = ((0..rt_args_count)
+                        .rev()
+                        .zip_eq(rev_copies_to_rt_args_array_src_ptrs))
+                    .map(|(rt_arg_idx, copy_to_rt_args_array_src_ptr)| {
                         let rt_arg_new_call_insts = try_rev_take(4).ok_or_else(|| {
                             FormatArgsNotRecognized(
                                 "fmt::rt::Argument::new call: ran out of instructions".into(),
                             )
                         })?;
-                        match rt_arg_new_call_insts[..] {
+                        let (ref_arg_id, ty, spec) = match rt_arg_new_call_insts[..] {
                             [
                                 Inst::Call(call_ret_id, callee_id, ref call_args),
                                 Inst::InBoundsAccessChain(tmp_slot_field_ptr, tmp_slot_ptr, 0),
@@ -3541,36 +3562,134 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                             FormatArgsNotRecognized(format!(
                                 "fmt::rt::Argument::new call sequence ({rt_arg_new_call_insts:?})"
                             ))
-                        })
+                        })?;
+
+                        // HACK(eddyb) `0` (an invalid ID) is later used as a
+                        // placeholder (see also `maybe_ref_args_tmp_slot_ptr`).
+                        assert_ne!(ref_arg_id, 0);
+
+                        // HACK(eddyb) `try_rev_take(-2)` is "peeking", not taking.
+                        let maybe_ref_args_tuple_load_insts = try_rev_take(-2);
+                        let maybe_ref_arg_id = match maybe_ref_args_tuple_load_insts.as_deref() {
+                            Some(
+                                &[
+                                    Inst::InBoundsAccessChain(field_ptr, base_ptr, field_idx),
+                                    Inst::Load(ld_val, ld_src_ptr),
+                                ],
+                            ) if maybe_ref_args_tmp_slot_ptr
+                                .is_none_or(|expected| base_ptr == expected)
+                                && field_idx as usize == rt_arg_idx
+                                && (ld_val, ld_src_ptr) == (ref_arg_id, field_ptr) =>
+                            {
+                                // HACK(eddyb) consume the peeked instructions.
+                                try_rev_take(2).unwrap();
+
+                                maybe_ref_args_tmp_slot_ptr = Some(base_ptr);
+
+                                // HACK(eddyb) using `0` (an invalid ID) as a
+                                // placeholder to require further processing.
+                                0
+                            }
+                            _ => ref_arg_id,
+                        };
+
+                        Ok((maybe_ref_arg_id, ty, spec))
                     })
                     .collect::<Result<_, _>>()?;
 
                     decoded_format_args.ref_arg_ids_with_ty_and_spec =
-                        rev_ref_arg_ids_with_ty_and_spec;
+                        rev_maybe_ref_arg_ids_with_ty_and_spec;
                     decoded_format_args.ref_arg_ids_with_ty_and_spec.reverse();
+
+                    // HACK(eddyb) see above for context regarding the use of
+                    // `0` as placeholders and `maybe_ref_args_tmp_slot_ptr`.
+                    if let Some(ref_args_tmp_slot_ptr) = maybe_ref_args_tmp_slot_ptr {
+                        for (rt_arg_idx, (maybe_ref_arg_id, ..)) in decoded_format_args
+                            .ref_arg_ids_with_ty_and_spec
+                            .iter_mut()
+                            .enumerate()
+                            .rev()
+                        {
+                            if *maybe_ref_arg_id == 0 {
+                                let ref_arg_store_insts = try_rev_take(2).ok_or_else(|| {
+                                    FormatArgsNotRecognized(
+                                        "fmt::rt::Argument::new argument store: ran out of instructions".into(),
+                                    )
+                                })?;
+
+                                *maybe_ref_arg_id = match ref_arg_store_insts[..] {
+                                    [
+                                        Inst::InBoundsAccessChain(field_ptr, base_ptr, field_idx),
+                                        Inst::Store(st_dst_ptr, st_val),
+                                    ] if base_ptr == ref_args_tmp_slot_ptr
+                                        && field_idx as usize == rt_arg_idx
+                                        && st_dst_ptr == field_ptr =>
+                                    {
+                                        Some(st_val)
+                                    }
+                                    _ => None,
+                                }
+                                .ok_or_else(|| {
+                                    FormatArgsNotRecognized(format!(
+                                        "fmt::rt::Argument::new argument store sequence ({ref_arg_store_insts:?})"
+                                    ))
+                                })?;
+                            }
+                        }
+                    }
                 }
 
                 // If the `pieces: &[&str]` slice needs a bitcast, it'll be here.
-                let pieces_slice_ptr_id = match try_rev_take(1).as_deref() {
-                    Some(&[Inst::Bitcast(out_id, in_id)]) if out_id == pieces_slice_ptr_id => in_id,
+                // HACK(eddyb) `try_rev_take(-1)` is "peeking", not taking.
+                let pieces_slice_ptr_id = match try_rev_take(-1).as_deref() {
+                    Some(&[Inst::Bitcast(out_id, in_id)]) if out_id == pieces_slice_ptr_id => {
+                        // HACK(eddyb) consume the peeked instructions.
+                        try_rev_take(1).unwrap();
+
+                        in_id
+                    }
                     _ => pieces_slice_ptr_id,
                 };
                 decoded_format_args.const_pieces =
-                    const_slice_as_elem_ids(pieces_slice_ptr_id, pieces_len).and_then(
-                        |piece_ids| {
-                            piece_ids
-                                .iter()
-                                .map(|&piece_id| {
-                                    match self.builder.lookup_const_by_id(piece_id)? {
-                                        SpirvConst::Composite(piece) => {
-                                            const_str_as_utf8(piece.try_into().ok()?)
-                                        }
-                                        _ => None,
+                    match const_slice_as_elem_ids(pieces_slice_ptr_id, pieces_len) {
+                        Some(piece_ids) => piece_ids
+                            .iter()
+                            .map(
+                                |&piece_id| match self.builder.lookup_const_by_id(piece_id)? {
+                                    SpirvConst::Composite(piece) => {
+                                        const_str_as_utf8(piece.try_into().ok()?)
                                     }
-                                })
-                                .collect::<Option<_>>()
+                                    _ => None,
+                                },
+                            )
+                            .collect::<Option<_>>(),
+                        // HACK(eddyb) minor upstream blunder results in at
+                        // least one instance of a runtime `[&str; 1]` array,
+                        // see also this comment left on the responsible PR:
+                        // https://github.com/rust-lang/rust/pull/129658#discussion_r2181834781
+                        // HACK(eddyb) `try_rev_take(-4)` is "peeking", not taking.
+                        None if pieces_len == 1 => match try_rev_take(-4).as_deref() {
+                            Some(
+                                &[
+                                    Inst::InBoundsAccessChain2(field0_ptr, array_ptr_0, 0, 0),
+                                    Inst::Store(st0_dst_ptr, st0_val),
+                                    Inst::InBoundsAccessChain2(field1_ptr, array_ptr_1, 0, 1),
+                                    Inst::Store(st1_dst_ptr, st1_val),
+                                ],
+                            ) if [array_ptr_0, array_ptr_1] == [pieces_slice_ptr_id; 2]
+                                && st0_dst_ptr == field0_ptr
+                                && st1_dst_ptr == field1_ptr =>
+                            {
+                                // HACK(eddyb) consume the peeked instructions.
+                                try_rev_take(4).unwrap();
+
+                                const_str_as_utf8(&[st0_val, st1_val])
+                                    .map(|s| [s].into_iter().collect())
+                            }
+                            _ => None,
                         },
-                    );
+                        None => None,
+                    };
 
                 // Keep all instructions up to (but not including) the last one
                 // confirmed above to be the first instruction of `format_args!`.
