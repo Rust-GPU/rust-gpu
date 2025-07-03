@@ -88,21 +88,24 @@ macro_rules! simple_op {
             assert_ty_eq!(self, lhs.ty, rhs.ty);
             let result_type = lhs.ty;
 
-            $(if let Some(const_lhs) = self.try_get_const_value(lhs) {
-                if let Some(const_rhs) = self.try_get_const_value(rhs) {
-                    #[allow(unreachable_patterns)]
-                    match (const_lhs, const_rhs) {
-                        $(
-                            (ConstValue::Unsigned($int_lhs), ConstValue::Unsigned($int_rhs)) => return self.const_uint_big(result_type, $fold_int),
-                            (ConstValue::Signed($int_lhs), ConstValue::Signed($int_rhs)) => return self.const_uint_big(result_type, $fold_int as u128),
-                        )?
-                        $((ConstValue::Unsigned($uint_lhs), ConstValue::Unsigned($uint_rhs)) => return self.const_uint_big(result_type, $fold_uint), )?
-                        $((ConstValue::Signed($sint_lhs), ConstValue::Signed($sint_rhs)) => return self.const_uint_big(result_type, $fold_sint as u128), )?
-                        $((ConstValue::Bool($bool_lhs), ConstValue::Bool($bool_rhs)) => return self.const_uint_big(result_type, ($fold_bool).into()), )?
-                        _ => (),
+            $(
+                #[allow(unreachable_patterns, clippy::collapsible_match)]
+                if let Some(const_lhs) = self.try_get_const_value(lhs) {
+                    if let Some(const_rhs) = self.try_get_const_value(rhs) {
+                        #[allow(unreachable_patterns)]
+                        match (const_lhs, const_rhs) {
+                            $(
+                                (ConstValue::Unsigned($int_lhs), ConstValue::Unsigned($int_rhs)) => return self.const_uint_big(result_type, $fold_int),
+                                (ConstValue::Signed($int_lhs), ConstValue::Signed($int_rhs)) => return self.const_uint_big(result_type, $fold_int as u128),
+                            )?
+                            $((ConstValue::Unsigned($uint_lhs), ConstValue::Unsigned($uint_rhs)) => return self.const_uint_big(result_type, $fold_uint), )?
+                            $((ConstValue::Signed($sint_lhs), ConstValue::Signed($sint_rhs)) => return self.const_uint_big(result_type, $fold_sint as u128), )?
+                            $((ConstValue::Bool($bool_lhs), ConstValue::Bool($bool_rhs)) => return self.const_uint_big(result_type, ($fold_bool).into()), )?
+                            _ => (),
+                        }
                     }
                 }
-            })?
+            )?
 
             match self.lookup_type(result_type) {
                 $(SpirvType::Integer(_, _) => {
@@ -149,22 +152,25 @@ macro_rules! simple_shift_op {
         fn $func_name(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
             let result_type = lhs.ty;
 
-            $(if let Some(const_lhs) = self.try_get_const_value(lhs) {
-                if let Some(const_rhs) = self.try_get_const_value(rhs) {
-                    #[allow(unreachable_patterns)]
-                    match (const_lhs, const_rhs) {
-                        $(
-                            (ConstValue::Unsigned($shift_uint_lhs), ConstValue::Unsigned($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_uint),
-                            (ConstValue::Unsigned($shift_uint_lhs), ConstValue::Signed($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_uint),
-                        )?
-                        $(
-                            (ConstValue::Signed($shift_int_lhs), ConstValue::Unsigned($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_int),
-                            (ConstValue::Signed($shift_int_lhs), ConstValue::Signed($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_int),
-                        )?
-                        _ => (),
+            $(
+                #[allow(unreachable_patterns, clippy::collapsible_match)]
+                if let Some(const_lhs) = self.try_get_const_value(lhs) {
+                    if let Some(const_rhs) = self.try_get_const_value(rhs) {
+                        #[allow(unreachable_patterns)]
+                        match (const_lhs, const_rhs) {
+                            $(
+                                (ConstValue::Unsigned($shift_uint_lhs), ConstValue::Unsigned($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_uint),
+                                (ConstValue::Unsigned($shift_uint_lhs), ConstValue::Signed($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_uint),
+                            )?
+                            $(
+                                (ConstValue::Signed($shift_int_lhs), ConstValue::Unsigned($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_int),
+                                (ConstValue::Signed($shift_int_lhs), ConstValue::Signed($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_int),
+                            )?
+                            _ => (),
+                        }
                     }
                 }
-            })?
+            )?
 
             self.emit()
                 .$inst_name(result_type, None, lhs.def(self), rhs.def(self))
@@ -192,19 +198,21 @@ macro_rules! simple_uni_op {
         fn $func_name(&mut self, val: Self::Value) -> Self::Value {
             let result_type = val.ty;
 
-            $(if let Some(const_val) = self.try_get_const_value(val) {
-                #[allow(unreachable_patterns)]
-                match const_val {
-                    $(
-                        ConstValue::Unsigned($int_val) => return self.const_uint_big(result_type, $fold_int),
-                        ConstValue::Signed($int_val) => return self.const_uint_big(result_type, $fold_int as u128),
-                    )?
-                    $(ConstValue::Unsigned($uint_val) => return self.const_uint_big(result_type, $fold_uint), )?
-                    $(ConstValue::Signed($sint_val) => return self.const_uint_big(result_type, $fold_sint as u128), )?
-                    $(ConstValue::Bool($bool_val) => return self.const_uint_big(result_type, ($fold_bool).into()), )?
-                    _ => (),
+            $(
+                #[allow(unreachable_patterns, clippy::collapsible_match)]
+                if let Some(const_val) = self.try_get_const_value(val) {
+                    match const_val {
+                        $(
+                            ConstValue::Unsigned($int_val) => return self.const_uint_big(result_type, $fold_int),
+                            ConstValue::Signed($int_val) => return self.const_uint_big(result_type, $fold_int as u128),
+                        )?
+                        $(ConstValue::Unsigned($uint_val) => return self.const_uint_big(result_type, $fold_uint), )?
+                        $(ConstValue::Signed($sint_val) => return self.const_uint_big(result_type, $fold_sint as u128), )?
+                        $(ConstValue::Bool($bool_val) => return self.const_uint_big(result_type, ($fold_bool).into()), )?
+                        _ => (),
+                    }
                 }
-            })?
+            )?
 
             match self.lookup_type(result_type) {
                 $(SpirvType::Integer(_, _) => {
