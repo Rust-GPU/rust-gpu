@@ -18,6 +18,8 @@
 // normalize-stderr-test "\S:\S*/panic_builtin_bounds_check.rs" -> "$$DIR/panic_builtin_bounds_check.rs"
 // FIXME(eddyb) handle this one in the test runner.
 // normalize-stderr-test "\S*/lib/rustlib/" -> "$$SYSROOT/lib/rustlib/"
+//
+// ignore-wgsl
 
 use spirv_std::spirv;
 

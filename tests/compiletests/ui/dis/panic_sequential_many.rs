@@ -19,6 +19,8 @@
 // normalize-stderr-test "\S:\S*/panic_sequential_many.rs" -> "$$DIR/panic_sequential_many.rs"
 // FIXME(eddyb) handle this one in the test runner.
 // normalize-stderr-test "\S*/lib/rustlib/" -> "$$SYSROOT/lib/rustlib/"
+//
+// ignore-wgsl
 
 use spirv_std::spirv;
 

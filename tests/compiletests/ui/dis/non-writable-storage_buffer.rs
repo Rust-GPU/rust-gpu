@@ -15,6 +15,7 @@
 // ignore-vulkan1.2
 // ignore-vulkan1.3
 // ignore-vulkan1.4
+// ignore-wgsl
 
 use spirv_std::spirv;
 
