@@ -143,10 +143,13 @@ macro_rules! simple_op {
 macro_rules! simple_shift_op {
     (
         $func_name:ident
-        , int: $inst_name:ident
+        $(, int: $inst_int:ident)?
+        $(, uint: $inst_uint:ident)?
+        $(, sint: $inst_sint:ident)?
         $(, fold_const {
-            $(shift_uint($shift_uint_lhs:ident, $shift_uint_rhs:ident) => $fold_shift_uint:expr;)?
-            $(shift_int($shift_int_lhs:ident, $shift_int_rhs:ident) => $fold_shift_int:expr;)?
+            $(int($int_lhs:ident, $int_rhs:ident) => $fold_int:expr;)?
+            $(uint($uint_lhs:ident, $uint_rhs:ident) => $fold_uint:expr;)?
+            $(sint($sint_lhs:ident, $sint_rhs:ident) => $fold_sint:expr;)?
         })?
     ) => {
         fn $func_name(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
@@ -159,12 +162,18 @@ macro_rules! simple_shift_op {
                         #[allow(unreachable_patterns)]
                         match (const_lhs, const_rhs) {
                             $(
-                                (ConstValue::Unsigned($shift_uint_lhs), ConstValue::Unsigned($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_uint),
-                                (ConstValue::Unsigned($shift_uint_lhs), ConstValue::Signed($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_uint),
+                                (ConstValue::Unsigned($int_lhs), ConstValue::Unsigned($int_rhs)) => return self.const_uint_big(result_type, $fold_int),
+                                (ConstValue::Unsigned($int_lhs), ConstValue::Signed($int_rhs)) => return self.const_uint_big(result_type, $fold_int),
+                                (ConstValue::Signed($int_lhs), ConstValue::Unsigned($int_rhs)) => return self.const_uint_big(result_type, $fold_int as u128),
+                                (ConstValue::Signed($int_lhs), ConstValue::Signed($int_rhs)) => return self.const_uint_big(result_type, $fold_int as u128),
                             )?
                             $(
-                                (ConstValue::Signed($shift_int_lhs), ConstValue::Unsigned($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_int),
-                                (ConstValue::Signed($shift_int_lhs), ConstValue::Signed($shift_uint_rhs)) => return self.const_uint_big(result_type, $fold_shift_int),
+                                (ConstValue::Unsigned($uint_lhs), ConstValue::Unsigned($uint_rhs)) => return self.const_uint_big(result_type, $fold_uint),
+                                (ConstValue::Unsigned($uint_lhs), ConstValue::Signed($uint_rhs)) => return self.const_uint_big(result_type, $fold_uint),
+                            )?
+                            $(
+                                (ConstValue::Signed($sint_lhs), ConstValue::Unsigned($sint_rhs)) => return self.const_uint_big(result_type, $fold_sint as u128),
+                                (ConstValue::Signed($sint_lhs), ConstValue::Signed($sint_rhs)) => return self.const_uint_big(result_type, $fold_sint as u128),
                             )?
                             _ => (),
                         }
@@ -172,10 +181,26 @@ macro_rules! simple_shift_op {
                 }
             )?
 
-            self.emit()
-                .$inst_name(result_type, None, lhs.def(self), rhs.def(self))
-                .unwrap()
-                .with_type(result_type)
+            match self.lookup_type(result_type) {
+                $(SpirvType::Integer(_, _) => {
+                    self.emit()
+                        .$inst_int(result_type, None, lhs.def(self), rhs.def(self))
+                })?
+                $(SpirvType::Integer(_, false) => {
+                    self.emit()
+                        .$inst_uint(result_type, None, lhs.def(self), rhs.def(self))
+                })?
+                $(SpirvType::Integer(_, true) => {
+                    self.emit()
+                        .$inst_sint(result_type, None, lhs.def(self), rhs.def(self))
+                })?
+                o => self.fatal(format!(
+                    concat!(stringify!($func_name), "() not implemented for type {}"),
+                    o.debug(result_type, self)
+                )),
+            }
+            .unwrap()
+            .with_type(result_type)
         }
     };
 }
@@ -1765,24 +1790,24 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     simple_op! {frem_algebraic, float: f_rem} // algebraic=normal
     simple_shift_op! {
         shl,
-        int: shift_left_logical
-        // fold_const {
-        //     int(a, b) => a.wrapping_shl(b as u32);
-        // }
+        int: shift_left_logical,
+        fold_const {
+            int(a, b) => a.wrapping_shl(b as u32);
+        }
     }
     simple_shift_op! {
         lshr,
-        int: shift_right_logical
-        // fold_const {
-        //     int(a, b) => a.wrapping_shr(b as u32);
-        // }
+        uint: shift_right_logical,
+        fold_const {
+            uint(a, b) => a.wrapping_shr(b as u32);
+        }
     }
     simple_shift_op! {
         ashr,
-        int: shift_right_arithmetic
-        // fold_const {
-        //     int(a, b) => a.wrapping_shr(b as u32);
-        // }
+        sint: shift_right_arithmetic,
+        fold_const {
+            sint(a, b) => a.wrapping_shr(b as u32);
+        }
     }
     simple_uni_op! {
         neg,
