@@ -33,76 +33,174 @@ use smallvec::SmallVec;
 use std::borrow::Cow;
 use std::cell::Cell;
 use std::iter::{self, empty};
-use std::ops::RangeInclusive;
+use std::ops::{BitAnd, BitOr, BitXor, Not, RangeInclusive};
 
 use tracing::{Level, instrument, span};
 use tracing::{trace, warn};
 
+enum ConstValue {
+    Unsigned(u128),
+    Signed(i128),
+    Bool(bool),
+}
+
+impl<'a, 'tcx> Builder<'a, 'tcx> {
+    fn try_get_const_value(&self, val: SpirvValue) -> Option<ConstValue> {
+        if let Some(const_val) = self.builder.lookup_const(val) {
+            let x = match const_val {
+                SpirvConst::Scalar(x) => x,
+                _ => return None,
+            };
+            match self.lookup_type(val.ty) {
+                SpirvType::Integer(bits, signed) => {
+                    let size = Size::from_bits(bits);
+                    Some(if signed {
+                        ConstValue::Signed(size.sign_extend(x))
+                    } else {
+                        ConstValue::Unsigned(size.truncate(x))
+                    })
+                }
+                SpirvType::Bool => Some(ConstValue::Bool(x != 0)),
+                _ => None,
+            }
+        } else {
+            None
+        }
+    }
+}
+
 macro_rules! simple_op {
     (
-        $func_name:ident, $inst_name:ident
+        $func_name:ident
+        $(, int: $inst_int:ident)?
+        $(, uint: $inst_uint:ident)?
+        $(, sint: $inst_sint:ident)?
+        $(, float: $inst_float:ident)?
+        $(, bool: $inst_bool:ident)?
         $(, fold_const {
-            $(int($fold_int_lhs:ident, $fold_int_rhs:ident) => $fold_int:expr)?
+            $(int($int_lhs:ident, $int_rhs:ident) => $fold_int:expr;)?
+            $(uint($uint_lhs:ident, $uint_rhs:ident) => $fold_uint:expr;)?
+            $(sint($sint_lhs:ident, $sint_rhs:ident) => $fold_sint:expr;)?
+            $(bool($bool_lhs:ident, $bool_rhs:ident) => $fold_bool:expr;)?
         })?
     ) => {
         fn $func_name(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
             assert_ty_eq!(self, lhs.ty, rhs.ty);
             let result_type = lhs.ty;
 
-            $(if let Some(const_lhs) = self.builder.lookup_const(lhs) {
-                if let Some(const_rhs) = self.builder.lookup_const(rhs) {
-                    match self.lookup_type(result_type) {
-                        $(SpirvType::Integer(bits, signed) => {
-                            let size = Size::from_bits(bits);
-                            let as_u128 = |const_val| {
-                                let x = match const_val {
-                                    SpirvConst::Scalar(x) => x,
-                                    _ => return None,
-                                };
-                                Some(if signed {
-                                    size.sign_extend(x) as u128
-                                } else {
-                                    size.truncate(x)
-                                })
-                            };
-                            if let Some($fold_int_lhs) = as_u128(const_lhs) {
-                                if let Some($fold_int_rhs) = as_u128(const_rhs) {
-                                    return self.const_uint_big(result_type, $fold_int);
-                                }
-                            }
-                        })?
-                        _ => {}
+            $(
+                #[allow(unreachable_patterns, clippy::collapsible_match)]
+                if let Some(const_lhs) = self.try_get_const_value(lhs)
+                    && let Some(const_rhs) = self.try_get_const_value(rhs)
+                {
+                    #[allow(unreachable_patterns)]
+                    match (const_lhs, const_rhs) {
+                        $(
+                            (ConstValue::Unsigned($int_lhs), ConstValue::Unsigned($int_rhs)) => return self.const_uint_big(result_type, $fold_int),
+                            (ConstValue::Signed($int_lhs), ConstValue::Signed($int_rhs)) => return self.const_uint_big(result_type, $fold_int as u128),
+                        )?
+                        $((ConstValue::Unsigned($uint_lhs), ConstValue::Unsigned($uint_rhs)) => return self.const_uint_big(result_type, $fold_uint), )?
+                        $((ConstValue::Signed($sint_lhs), ConstValue::Signed($sint_rhs)) => return self.const_uint_big(result_type, $fold_sint as u128), )?
+                        $((ConstValue::Bool($bool_lhs), ConstValue::Bool($bool_rhs)) => return self.const_uint_big(result_type, ($fold_bool).into()), )?
+                        _ => (),
                     }
                 }
-            })?
+            )?
 
-            self.emit()
-                .$inst_name(result_type, None, lhs.def(self), rhs.def(self))
-                .unwrap()
-                .with_type(result_type)
-        }
-    };
-}
-
-// shl and shr allow different types as their operands
-macro_rules! simple_op_unchecked_type {
-    ($func_name:ident, $inst_name:ident) => {
-        fn $func_name(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
-            self.emit()
-                .$inst_name(lhs.ty, None, lhs.def(self), rhs.def(self))
-                .unwrap()
-                .with_type(lhs.ty)
+            match self.lookup_type(result_type) {
+                $(SpirvType::Integer(_, _) => {
+                    self.emit()
+                        .$inst_int(result_type, None, lhs.def(self), rhs.def(self))
+                })?
+                $(SpirvType::Integer(_, false) => {
+                    self.emit()
+                        .$inst_uint(result_type, None, lhs.def(self), rhs.def(self))
+                })?
+                $(SpirvType::Integer(_, true) => {
+                    self.emit()
+                        .$inst_sint(result_type, None, lhs.def(self), rhs.def(self))
+                })?
+                $(SpirvType::Float(_) => {
+                    self.emit()
+                        .$inst_float(result_type, None, lhs.def(self), rhs.def(self))
+                })?
+                $(SpirvType::Bool => {
+                    self.emit()
+                        .$inst_bool(result_type, None, lhs.def(self), rhs.def(self))
+                })?
+                o => self.fatal(format!(
+                    concat!(stringify!($func_name), "() not implemented for type {}"),
+                    o.debug(result_type, self)
+                )),
+            }
+            .unwrap()
+            .with_type(result_type)
         }
     };
 }
 
 macro_rules! simple_uni_op {
-    ($func_name:ident, $inst_name:ident) => {
+    (
+        $func_name:ident
+        $(, int: $inst_int:ident)?
+        $(, uint: $inst_uint:ident)?
+        $(, sint: $inst_sint:ident)?
+        $(, float: $inst_float:ident)?
+        $(, bool: $inst_bool:ident)?
+        $(, fold_const {
+            $(int($int_val:ident) => $fold_int:expr;)?
+            $(uint($uint_val:ident) => $fold_uint:expr;)?
+            $(sint($sint_val:ident) => $fold_sint:expr;)?
+            $(bool($bool_val:ident) => $fold_bool:expr;)?
+        })?
+    ) => {
         fn $func_name(&mut self, val: Self::Value) -> Self::Value {
-            self.emit()
-                .$inst_name(val.ty, None, val.def(self))
-                .unwrap()
-                .with_type(val.ty)
+            let result_type = val.ty;
+
+            $(
+                #[allow(unreachable_patterns, clippy::collapsible_match)]
+                if let Some(const_val) = self.try_get_const_value(val) {
+                    match const_val {
+                        $(
+                            ConstValue::Unsigned($int_val) => return self.const_uint_big(result_type, $fold_int),
+                            ConstValue::Signed($int_val) => return self.const_uint_big(result_type, $fold_int as u128),
+                        )?
+                        $(ConstValue::Unsigned($uint_val) => return self.const_uint_big(result_type, $fold_uint), )?
+                        $(ConstValue::Signed($sint_val) => return self.const_uint_big(result_type, $fold_sint as u128), )?
+                        $(ConstValue::Bool($bool_val) => return self.const_uint_big(result_type, ($fold_bool).into()), )?
+                        _ => (),
+                    }
+                }
+            )?
+
+            match self.lookup_type(result_type) {
+                $(SpirvType::Integer(_, _) => {
+                    self.emit()
+                        .$inst_int(result_type, None, val.def(self))
+                })?
+                $(SpirvType::Integer(_, false) => {
+                    self.emit()
+                        .$inst_uint(result_type, None, val.def(self))
+                })?
+                $(SpirvType::Integer(_, true) => {
+                    self.emit()
+                        .$inst_sint(result_type, None, val.def(self))
+                })?
+                $(SpirvType::Float(_) => {
+                    self.emit()
+                        .$inst_float(result_type, None, val.def(self))
+                })?
+                $(SpirvType::Bool => {
+                    self.emit()
+                        .$inst_bool(result_type, None, val.def(self))
+                })?
+                o => self.fatal(format!(
+                    concat!(stringify!($func_name), "() not implemented for type {}"),
+                    o.debug(result_type, self)
+                )),
+            }
+            .unwrap()
+            .with_type(result_type)
         }
     };
 }
@@ -1357,132 +1455,179 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         self.emit().unreachable().unwrap();
     }
 
+    // use wrapping_op everywhere, rustc will error out for us if the expr overflows
     simple_op! {
-        add, i_add,
+        add,
+        int: i_add,
         fold_const {
-            int(a, b) => a.wrapping_add(b)
+            int(a, b) => a.wrapping_add(b);
         }
     }
     // FIXME(eddyb) try to annotate the SPIR-V for `fast` and `algebraic`.
-    simple_op! {fadd, f_add}
-    simple_op! {fadd_fast, f_add} // fast=normal
-    simple_op! {fadd_algebraic, f_add} // algebraic=normal
-    simple_op! {sub, i_sub}
-    simple_op! {fsub, f_sub}
-    simple_op! {fsub_fast, f_sub} // fast=normal
-    simple_op! {fsub_algebraic, f_sub} // algebraic=normal
+    simple_op! {fadd, float: f_add}
+    simple_op! {fadd_fast, float: f_add} // fast=normal
+    simple_op! {fadd_algebraic, float: f_add} // algebraic=normal
     simple_op! {
-        mul, i_mul,
-        // HACK(eddyb) `rustc_codegen_ssa` relies on `Builder` methods doing
-        // on-the-fly constant-folding, for e.g. intrinsics that copy memory.
+        sub,
+        int: i_sub,
         fold_const {
-            int(a, b) => a.wrapping_mul(b)
+            int(a, b) => a.wrapping_sub(b);
         }
     }
-    simple_op! {fmul, f_mul}
-    simple_op! {fmul_fast, f_mul} // fast=normal
-    simple_op! {fmul_algebraic, f_mul} // algebraic=normal
-    simple_op! {udiv, u_div}
+    simple_op! {fsub, float: f_sub}
+    simple_op! {fsub_fast, float: f_sub} // fast=normal
+    simple_op! {fsub_algebraic, float: f_sub} // algebraic=normal
+    simple_op! {
+        mul,
+        int: i_mul,
+        fold_const {
+            int(a, b) => a.wrapping_mul(b);
+        }
+    }
+    simple_op! {fmul, float: f_mul}
+    simple_op! {fmul_fast, float: f_mul} // fast=normal
+    simple_op! {fmul_algebraic, float: f_mul} // algebraic=normal
+    simple_op! {
+        udiv,
+        uint: u_div,
+        fold_const {
+            uint(a, b) => a.wrapping_div(b);
+        }
+    }
     // Note: exactudiv is UB when there's a remainder, so it's valid to implement as a normal div.
     // TODO: Can we take advantage of the UB and emit something else?
-    simple_op! {exactudiv, u_div}
-    simple_op! {sdiv, s_div}
+    simple_op! {
+        exactudiv,
+        uint: u_div,
+        fold_const {
+            uint(a, b) => a.wrapping_div(b);
+        }
+    }
+    simple_op! {
+        sdiv,
+        sint: s_div,
+        fold_const {
+            sint(a, b) => a.wrapping_div(b);
+        }
+    }
     // Same note and TODO as exactudiv
-    simple_op! {exactsdiv, s_div}
-    simple_op! {fdiv, f_div}
-    simple_op! {fdiv_fast, f_div} // fast=normal
-    simple_op! {fdiv_algebraic, f_div} // algebraic=normal
-    simple_op! {urem, u_mod}
-    simple_op! {srem, s_rem}
-    simple_op! {frem, f_rem}
-    simple_op! {frem_fast, f_rem} // fast=normal
-    simple_op! {frem_algebraic, f_rem} // algebraic=normal
-    simple_op_unchecked_type! {shl, shift_left_logical}
-    simple_op_unchecked_type! {lshr, shift_right_logical}
-    simple_op_unchecked_type! {ashr, shift_right_arithmetic}
-    simple_op! {unchecked_sadd, i_add} // already unchecked by default
-    simple_op! {unchecked_uadd, i_add} // already unchecked by default
-    simple_op! {unchecked_ssub, i_sub} // already unchecked by default
-    simple_op! {unchecked_usub, i_sub} // already unchecked by default
-    simple_op! {unchecked_smul, i_mul} // already unchecked by default
-    simple_op! {unchecked_umul, i_mul} // already unchecked by default
-    simple_uni_op! {neg, s_negate}
-    simple_uni_op! {fneg, f_negate}
+    simple_op! {
+        exactsdiv,
+        sint: s_div,
+        fold_const {
+            sint(a, b) => a.wrapping_div(b);
+        }
+    }
+    simple_op! {fdiv, float: f_div}
+    simple_op! {fdiv_fast, float: f_div} // fast=normal
+    simple_op! {fdiv_algebraic, float: f_div} // algebraic=normal
+    simple_op! {
+        urem,
+        uint: u_mod,
+        fold_const {
+            uint(a, b) => a.wrapping_rem(b);
+        }
+    }
+    simple_op! {
+        srem,
+        sint: s_rem,
+        fold_const {
+            sint(a, b) => a.wrapping_rem(b);
+        }
+    }
+    simple_op! {frem, float: f_rem}
+    simple_op! {frem_fast, float: f_rem} // fast=normal
+    simple_op! {frem_algebraic, float: f_rem} // algebraic=normal
+    simple_shift_op! {
+        shl,
+        int: shift_left_logical
+        // fold_const {
+        //     int(a, b) => a.wrapping_shl(b as u32);
+        // }
+    }
+    simple_shift_op! {
+        lshr,
+        int: shift_right_logical
+        // fold_const {
+        //     int(a, b) => a.wrapping_shr(b as u32);
+        // }
+    }
+    simple_shift_op! {
+        ashr,
+        int: shift_right_arithmetic
+        // fold_const {
+        //     int(a, b) => a.wrapping_shr(b as u32);
+        // }
+    }
+    simple_uni_op! {
+        neg,
+        sint: s_negate,
+        fold_const {
+            sint(a) => a.wrapping_neg();
+        }
+    }
+    simple_uni_op! {fneg, float: f_negate}
 
-    fn and(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
-        assert_ty_eq!(self, lhs.ty, rhs.ty);
-        let ty = lhs.ty;
-        match self.lookup_type(ty) {
-            SpirvType::Integer(_, _) => {
-                self.emit()
-                    .bitwise_and(ty, None, lhs.def(self), rhs.def(self))
-            }
-            SpirvType::Bool => self
-                .emit()
-                .logical_and(ty, None, lhs.def(self), rhs.def(self)),
-            o => self.fatal(format!(
-                "and() not implemented for type {}",
-                o.debug(ty, self)
-            )),
-        }
-        .unwrap()
-        .with_type(ty)
+    /// already unchecked by default
+    fn unchecked_sadd(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
+        self.add(lhs, rhs)
     }
-    fn or(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
-        assert_ty_eq!(self, lhs.ty, rhs.ty);
-        let ty = lhs.ty;
-        match self.lookup_type(ty) {
-            SpirvType::Integer(_, _) => {
-                self.emit()
-                    .bitwise_or(ty, None, lhs.def(self), rhs.def(self))
-            }
-            SpirvType::Bool => self
-                .emit()
-                .logical_or(ty, None, lhs.def(self), rhs.def(self)),
-            o => self.fatal(format!(
-                "or() not implemented for type {}",
-                o.debug(ty, self)
-            )),
-        }
-        .unwrap()
-        .with_type(ty)
+    /// already unchecked by default
+    fn unchecked_uadd(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
+        self.add(lhs, rhs)
     }
-    fn xor(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
-        assert_ty_eq!(self, lhs.ty, rhs.ty);
-        let ty = lhs.ty;
-        match self.lookup_type(ty) {
-            SpirvType::Integer(_, _) => {
-                self.emit()
-                    .bitwise_xor(ty, None, lhs.def(self), rhs.def(self))
-            }
-            SpirvType::Bool => {
-                self.emit()
-                    .logical_not_equal(ty, None, lhs.def(self), rhs.def(self))
-            }
-            o => self.fatal(format!(
-                "xor() not implemented for type {}",
-                o.debug(ty, self)
-            )),
-        }
-        .unwrap()
-        .with_type(ty)
+    /// already unchecked by default
+    fn unchecked_ssub(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
+        self.sub(lhs, rhs)
     }
-    fn not(&mut self, val: Self::Value) -> Self::Value {
-        match self.lookup_type(val.ty) {
-            SpirvType::Integer(_, _) => self.emit().not(val.ty, None, val.def(self)),
-            SpirvType::Bool => {
-                let true_ = self.constant_bool(self.span(), true);
-                // intel-compute-runtime doesn't like OpLogicalNot
-                self.emit()
-                    .logical_not_equal(val.ty, None, val.def(self), true_.def(self))
-            }
-            o => self.fatal(format!(
-                "not() not implemented for type {}",
-                o.debug(val.ty, self)
-            )),
+    /// already unchecked by default
+    fn unchecked_usub(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
+        self.sub(lhs, rhs)
+    }
+    /// already unchecked by default
+    fn unchecked_smul(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
+        self.mul(lhs, rhs)
+    }
+    /// already unchecked by default
+    fn unchecked_umul(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value {
+        self.mul(lhs, rhs)
+    }
+
+    simple_op! {
+        and,
+        int: bitwise_and,
+        bool: logical_and,
+        fold_const {
+            int(a, b) => a.bitand(b);
+            bool(a, b) => a.bitand(b);
         }
-        .unwrap()
-        .with_type(val.ty)
+    }
+    simple_op! {
+        or,
+        int: bitwise_or,
+        bool: logical_or,
+        fold_const {
+            int(a, b) => a.bitor(b);
+            bool(a, b) => a.bitor(b);
+        }
+    }
+    simple_op! {
+        xor,
+        int: bitwise_xor,
+        bool: logical_not_equal,
+        fold_const {
+            int(a, b) => a.bitxor(b);
+            bool(a, b) => a.bitxor(b);
+        }
+    }
+    simple_uni_op! {
+        not,
+        int: not,
+        bool: logical_not,
+        fold_const {
+            int(a) => a.not();
+            bool(a) => a.not();
+        }
     }
 
     #[instrument(level = "trace", skip(self))]
