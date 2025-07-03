@@ -1670,6 +1670,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     simple_op! {
         add,
         int: i_add,
+        // TODO why does libm fail to compile if `add` doesn't support float? Why is it not using `fadd`?
+        float: f_add,
         fold_const {
             int(a, b) => a.wrapping_add(b);
         }
@@ -1681,6 +1683,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     simple_op! {
         sub,
         int: i_sub,
+        // TODO why does libm fail to compile if `add` doesn't support float? Why is it not using `fadd`?
+        float: f_sub,
         fold_const {
             int(a, b) => a.wrapping_sub(b);
         }
