@@ -2910,6 +2910,12 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     ) -> Self::Value {
         assert_ty_eq!(self, then_val.ty, else_val.ty);
         let result_type = then_val.ty;
+
+        if let Some(ConstValue::Bool(b)) = self.try_get_const_value(cond) {
+            // as we directly return the values, it'll preserve their constness as well
+            return if b { then_val } else { else_val };
+        }
+
         self.emit()
             .select(
                 result_type,
