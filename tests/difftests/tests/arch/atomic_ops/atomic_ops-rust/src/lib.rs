@@ -14,20 +14,20 @@ pub fn main_cs(
     const SEMANTICS: u32 = Semantics::NONE.bits();
 
     let tid = global_id.x;
-    
+
     // All threads participate in atomic operations
     // Each thread adds 1 to the first counter
     unsafe { atomic_i_add::<_, SCOPE, SEMANTICS>(&mut counters[0], 1) };
-    
-    // Each thread subtracts 1 from the second counter  
+
+    // Each thread subtracts 1 from the second counter
     unsafe { atomic_i_sub::<_, SCOPE, SEMANTICS>(&mut counters[1], 1) };
-    
+
     // Each thread tries to set minimum with their thread ID
     unsafe { atomic_u_min::<_, SCOPE, SEMANTICS>(&mut counters[2], tid) };
-    
+
     // Each thread tries to set maximum with their thread ID
     unsafe { atomic_u_max::<_, SCOPE, SEMANTICS>(&mut counters[3], tid) };
-    
+
     // Thread 0 stores the final values after all operations complete
     if tid == 0 {
         // Use atomic loads to ensure we read the final values

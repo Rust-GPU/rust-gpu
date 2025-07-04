@@ -1,5 +1,7 @@
 use difftest::config::Config;
-use difftest::scaffold::compute::{RustComputeShader, WgpuComputeTestPushConstants, BufferConfig, BufferUsage};
+use difftest::scaffold::compute::{
+    BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTestPushConstants,
+};
 
 #[repr(C)]
 #[derive(Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -12,18 +14,14 @@ pub struct PushConstants {
 
 fn main() {
     let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
-    
+
     let num_elements = 256;
     let buffer_size = num_elements * 4; // 4 bytes per f32
-    
+
     // Create input data
-    let input_data: Vec<f32> = (0..num_elements)
-        .map(|i| i as f32 * 0.1)
-        .collect();
-    let input_bytes: Vec<u8> = input_data.iter()
-        .flat_map(|&x| x.to_ne_bytes())
-        .collect();
-    
+    let input_data: Vec<f32> = (0..num_elements).map(|i| i as f32 * 0.1).collect();
+    let input_bytes: Vec<u8> = input_data.iter().flat_map(|&x| x.to_ne_bytes()).collect();
+
     // Create push constants data
     let push_constants = PushConstants {
         multiplier: 2.5,
@@ -31,7 +29,7 @@ fn main() {
         flags: 0, // Linear transformation
         count: num_elements as u32,
     };
-    
+
     let test = WgpuComputeTestPushConstants::new(
         RustComputeShader::default(),
         [4, 1, 1], // 256 / 64 = 4 workgroups
@@ -50,6 +48,6 @@ fn main() {
         std::mem::size_of::<PushConstants>() as u32,
         bytemuck::bytes_of(&push_constants).to_vec(),
     );
-    
+
     test.run_test(&config).unwrap();
 }

@@ -1,7 +1,7 @@
 #![no_std]
 
-use spirv_std::spirv;
 use spirv_std::arch::workgroup_memory_barrier_with_group_sync;
+use spirv_std::spirv;
 
 #[spirv(compute(threads(64)))]
 pub fn main_cs(
@@ -13,19 +13,19 @@ pub fn main_cs(
 ) {
     let tid = global_id.x as usize;
     let lid = local_id.x as usize;
-    
+
     if tid < input.len() && tid < output.len() && lid < 64 {
         // Load data into shared memory
         shared[lid] = input[tid];
-        
+
         // Workgroup barrier to ensure all threads have loaded their data
         unsafe {
             workgroup_memory_barrier_with_group_sync();
         }
-        
+
         // Perform operations on shared memory
         let mut result = shared[lid];
-        
+
         // Different threads perform different operations
         if lid % 4 == 0 {
             // Read from neighboring thread's data
@@ -46,20 +46,20 @@ pub fn main_cs(
             // XOR with wrapped neighbor
             result ^= shared[(lid + 32) % 64];
         }
-        
+
         // Another barrier before writing back
         unsafe {
             workgroup_memory_barrier_with_group_sync();
         }
-        
+
         // Write result back to shared memory
         shared[lid] = result;
-        
+
         // Memory barrier to ensure writes are visible
         unsafe {
             workgroup_memory_barrier_with_group_sync();
         }
-        
+
         // Final read and output
         output[tid] = shared[lid];
     }

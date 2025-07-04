@@ -10,7 +10,7 @@ fn main() {
     // Initialize input buffer with values to sum
     let input_data: Vec<u32> = (1..=64).collect();
     let input_bytes = bytemuck::cast_slice(&input_data).to_vec();
-    
+
     let buffers = vec![
         BufferConfig {
             size: 256, // 64 u32 values

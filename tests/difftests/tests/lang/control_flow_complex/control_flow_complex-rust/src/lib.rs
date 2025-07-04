@@ -10,13 +10,13 @@ pub fn main_cs(
     #[spirv(global_invocation_id)] global_id: spirv_std::glam::UVec3,
 ) {
     let tid = global_id.x as usize;
-    
+
     if tid < input.len() && tid < output.len() {
         let value = input[tid];
-        
+
         // Complex control flow with nested loops, early returns, and match expressions
         let result = process_value(value, tid as u32);
-        
+
         output[tid] = result;
     }
 }
@@ -26,11 +26,11 @@ fn process_value(value: u32, tid: u32) -> u32 {
     if value == 0 {
         return 0;
     }
-    
+
     if value > 1000 {
         return value - 1000;
     }
-    
+
     // Complex match expression
     let base = match value % 10 {
         0 => 10,
@@ -42,14 +42,14 @@ fn process_value(value: u32, tid: u32) -> u32 {
                 sum += value + i;
             }
             sum
-        },
+        }
         6 => {
             // Early return from match arm
             if tid % 2 == 0 {
                 return value * 3;
             }
             value * 4
-        },
+        }
         7 | 8 => {
             // Nested loop with break
             let mut result = 0;
@@ -62,15 +62,11 @@ fn process_value(value: u32, tid: u32) -> u32 {
                 }
             }
             result
-        },
+        }
         9 => {
             // Complex nested condition
             if tid < 10 {
-                if value < 50 {
-                    value + tid
-                } else {
-                    value - tid
-                }
+                if value < 50 { value + tid } else { value - tid }
             } else {
                 // Loop with continue
                 let mut sum = 0;
@@ -85,10 +81,10 @@ fn process_value(value: u32, tid: u32) -> u32 {
                 }
                 sum
             }
-        },
+        }
         _ => value, // This should never be reached due to modulo 10
     };
-    
+
     // Final transformation with nested conditions
     if base > 50 {
         if tid % 3 == 0 {
@@ -105,7 +101,7 @@ fn process_value(value: u32, tid: u32) -> u32 {
         loop {
             result = (result * 3 + 1) / 2;
             counter += 1;
-            
+
             if result == 1 || counter >= 10 || result > 1000 {
                 break;
             }

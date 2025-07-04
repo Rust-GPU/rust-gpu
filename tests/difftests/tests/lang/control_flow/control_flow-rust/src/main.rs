@@ -10,7 +10,7 @@ fn main() {
     // Create input data with various values to test different control flow paths
     let input_data: Vec<u32> = (0..64).map(|i| i as u32).collect();
     let input_bytes = bytemuck::cast_slice(&input_data).to_vec();
-    
+
     let buffers = vec![
         BufferConfig {
             size: 256, // 64 u32 values

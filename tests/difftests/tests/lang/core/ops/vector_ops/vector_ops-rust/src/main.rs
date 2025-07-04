@@ -9,31 +9,29 @@ fn main() {
 
     // Create input data with various float values
     let input_data: Vec<f32> = (0..128)
-        .map(|i| {
-            match i % 16 {
-                0 => 0.0,
-                1 => 1.0,
-                2 => -1.0,
-                3 => 0.5,
-                4 => -0.5,
-                5 => 2.0,
-                6 => -2.0,
-                7 => 3.0,
-                8 => std::f32::consts::PI,
-                9 => std::f32::consts::E,
-                10 => 0.1,
-                11 => -0.1,
-                12 => 4.0,
-                13 => -4.0,
-                14 => 0.25,
-                15 => -0.25,
-                _ => unreachable!(),
-            }
+        .map(|i| match i % 16 {
+            0 => 0.0,
+            1 => 1.0,
+            2 => -1.0,
+            3 => 0.5,
+            4 => -0.5,
+            5 => 2.0,
+            6 => -2.0,
+            7 => 3.0,
+            8 => std::f32::consts::PI,
+            9 => std::f32::consts::E,
+            10 => 0.1,
+            11 => -0.1,
+            12 => 4.0,
+            13 => -4.0,
+            14 => 0.25,
+            15 => -0.25,
+            _ => unreachable!(),
         })
         .collect();
-    
+
     let input_bytes = bytemuck::cast_slice(&input_data).to_vec();
-    
+
     let buffers = vec![
         BufferConfig {
             size: 512, // 128 f32 values

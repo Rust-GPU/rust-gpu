@@ -16,9 +16,9 @@ fn main() {
     input_data[1] = 10;
     input_data[2] = 15;
     input_data[3] = 20;
-    
+
     let input_bytes = bytemuck::cast_slice(&input_data).to_vec();
-    
+
     let buffers = vec![
         BufferConfig {
             size: 1024, // 256 u32 values
