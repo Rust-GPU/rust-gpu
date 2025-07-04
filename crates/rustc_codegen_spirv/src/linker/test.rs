@@ -66,12 +66,15 @@ fn load(bytes: &[u8]) -> Module {
 
 // FIXME(eddyb) shouldn't this be named just `link`? (`assemble_spirv` is separate)
 fn assemble_and_link(binaries: &[&[u8]]) -> Result<Module, PrettyString> {
-    link_with_linker_opts(binaries, &crate::linker::Options {
-        compact_ids: true,
-        dce: true,
-        keep_link_exports: true,
-        ..Default::default()
-    })
+    link_with_linker_opts(
+        binaries,
+        &crate::linker::Options {
+            compact_ids: true,
+            dce: true,
+            keep_link_exports: true,
+            ..Default::default()
+        },
+    )
 }
 
 fn link_with_linker_opts(
@@ -140,9 +143,8 @@ fn link_with_linker_opts(
             hash_kind: sopts.unstable_opts.src_hash_algorithm(&target),
             checksum_hash_kind: None,
         };
-        rustc_span::create_session_globals_then(sopts.edition, Some(sm_inputs), || {
+        rustc_span::create_session_globals_then(sopts.edition, &[], Some(sm_inputs), || {
             let mut sess = rustc_session::build_session(
-                early_dcx,
                 sopts,
                 CompilerIO {
                     input: Input::Str {
@@ -161,7 +163,10 @@ fn link_with_linker_opts(
                 Default::default(),
                 rustc_interface::util::rustc_version_str().unwrap_or("unknown"),
                 Default::default(),
-                Default::default(),
+                {
+                    extern crate rustc_driver_impl;
+                    &rustc_driver_impl::USING_INTERNAL_FEATURES
+                },
                 Default::default(),
             );
 

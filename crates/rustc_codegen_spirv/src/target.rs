@@ -54,13 +54,13 @@ impl SpirvTarget {
         o.simd_types_indirect = false;
         o.allows_weak_linkage = false;
         o.crt_static_allows_dylibs = true;
+        o.crt_static_respected = true;
         o.dll_prefix = "".into();
         o.dll_suffix = ".spv.json".into();
         o.dynamic_linking = true;
         o.emit_debug_gdb_scripts = false;
         o.linker_flavor = LinkerFlavor::Unix(Cc::No);
         o.panic_strategy = PanicStrategy::Abort;
-        o.os = "unknown".into();
         o.env = self.env.to_string().into();
         o.vendor = self.vendor.clone().into();
         // TODO: Investigate if main_needs_argc_argv is useful (for building exes)

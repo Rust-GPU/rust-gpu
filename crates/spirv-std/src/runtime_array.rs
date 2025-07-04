@@ -30,19 +30,21 @@ impl<T> RuntimeArray<T> {
     /// and lead to UB.
     #[spirv_std_macros::gpu_only]
     pub unsafe fn index(&self, index: usize) -> &T {
-        // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        let mut result = core::mem::MaybeUninit::uninit();
-        asm! {
-            "OpDecorate %index NonUniform",
-            "OpDecorate %result NonUniform",
-            "%index = OpLoad _ {index}",
-            "%result = OpAccessChain typeof*{result} {this} %index",
-            "OpStore {result} %result",
-            result = in(reg) result.as_mut_ptr(),
-            this = in(reg) self,
-            index = in(reg) &index,
+        unsafe {
+            // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
+            let mut result = core::mem::MaybeUninit::uninit();
+            asm! {
+                "OpDecorate %index NonUniform",
+                "OpDecorate %result NonUniform",
+                "%index = OpLoad _ {index}",
+                "%result = OpAccessChain typeof*{result} {this} %index",
+                "OpStore {result} %result",
+                result = in(reg) result.as_mut_ptr(),
+                this = in(reg) self,
+                index = in(reg) &index,
+            }
+            result.assume_init()
         }
-        result.assume_init()
     }
 
     /// Index the array, returning a mutable reference to an element. Unfortunately, because the
@@ -54,18 +56,20 @@ impl<T> RuntimeArray<T> {
     /// and lead to UB.
     #[spirv_std_macros::gpu_only]
     pub unsafe fn index_mut(&mut self, index: usize) -> &mut T {
-        // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        let mut result = core::mem::MaybeUninit::uninit();
-        asm! {
-            "OpDecorate %index NonUniform",
-            "OpDecorate %result NonUniform",
-            "%index = OpLoad _ {index}",
-            "%result = OpAccessChain typeof*{result} {this} %index",
-            "OpStore {result} %result",
-            result = in(reg) result.as_mut_ptr(),
-            this = in(reg) self,
-            index = in(reg) &index,
+        unsafe {
+            // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
+            let mut result = core::mem::MaybeUninit::uninit();
+            asm! {
+                "OpDecorate %index NonUniform",
+                "OpDecorate %result NonUniform",
+                "%index = OpLoad _ {index}",
+                "%result = OpAccessChain typeof*{result} {this} %index",
+                "OpStore {result} %result",
+                result = in(reg) result.as_mut_ptr(),
+                this = in(reg) self,
+                index = in(reg) &index,
+            }
+            result.assume_init()
         }
-        result.assume_init()
     }
 }

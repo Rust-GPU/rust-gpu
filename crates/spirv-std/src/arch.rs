@@ -87,18 +87,20 @@ pub unsafe fn vector_extract_dynamic<T: Scalar, const N: usize>(
     vector: impl Vector<T, N>,
     index: usize,
 ) -> T {
-    let mut result = T::default();
+    unsafe {
+        let mut result = T::default();
 
-    asm! {
-        "%vector = OpLoad _ {vector}",
-        "%element = OpVectorExtractDynamic _ %vector {index}",
-        "OpStore {element} %element",
-        vector = in(reg) &vector,
-        index = in(reg) index,
-        element = in(reg) &mut result
+        asm! {
+            "%vector = OpLoad _ {vector}",
+            "%element = OpVectorExtractDynamic _ %vector {index}",
+            "OpStore {element} %element",
+            vector = in(reg) &vector,
+            index = in(reg) index,
+            element = in(reg) &mut result
+        }
+
+        result
     }
-
-    result
 }
 
 /// Make a copy of a vector, with a single, variably selected,
@@ -115,20 +117,22 @@ pub unsafe fn vector_insert_dynamic<T: Scalar, V: Vector<T, N>, const N: usize>(
     index: usize,
     element: T,
 ) -> V {
-    let mut result = V::default();
+    unsafe {
+        let mut result = V::default();
 
-    asm! {
-        "%vector = OpLoad _ {vector}",
-        "%element = OpLoad _ {element}",
-        "%new_vector = OpVectorInsertDynamic _ %vector %element {index}",
-        "OpStore {result} %new_vector",
-        vector = in(reg) &vector,
-        index = in(reg) index,
-        element = in(reg) &element,
-        result = in(reg) &mut result,
+        asm! {
+            "%vector = OpLoad _ {vector}",
+            "%element = OpLoad _ {element}",
+            "%new_vector = OpVectorInsertDynamic _ %vector %element {index}",
+            "OpStore {result} %new_vector",
+            vector = in(reg) &vector,
+            index = in(reg) index,
+            element = in(reg) &element,
+            result = in(reg) &mut result,
+        }
+
+        result
     }
-
-    result
 }
 
 /// Fragment-shader discard. Equivalvent to `discard()` from GLSL
@@ -150,17 +154,19 @@ pub fn kill() -> ! {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpReadClockKHR")]
 pub unsafe fn read_clock_khr<const SCOPE: u32>() -> u64 {
-    let mut result: u64;
+    unsafe {
+        let mut result: u64;
 
-    asm! {
-        "%uint = OpTypeInt 32 0",
-        "%scope = OpConstant %uint {scope}",
-        "{result} = OpReadClockKHR typeof*{result} %scope",
-        result = out(reg) result,
-        scope = const SCOPE,
-    };
+        asm! {
+            "%uint = OpTypeInt 32 0",
+            "%scope = OpConstant %uint {scope}",
+            "{result} = OpReadClockKHR typeof*{result} %scope",
+            result = out(reg) result,
+            scope = const SCOPE,
+        };
 
-    result
+        result
+    }
 }
 
 /// Like `read_clock_khr` but returns a vector to avoid requiring the `Int64`
@@ -170,35 +176,39 @@ pub unsafe fn read_clock_khr<const SCOPE: u32>() -> u64 {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpReadClockKHR")]
 pub unsafe fn read_clock_uvec2_khr<V: Vector<u32, 2>, const SCOPE: u32>() -> V {
-    let mut result = V::default();
+    unsafe {
+        let mut result = V::default();
 
-    asm! {
-        "%uint = OpTypeInt 32 0",
-        "%scope = OpConstant %uint {scope}",
-        "%result = OpReadClockKHR typeof*{result} %scope",
-        "OpStore {result} %result",
-        result = in(reg) &mut result,
-        scope = const SCOPE,
-    };
+        asm! {
+            "%uint = OpTypeInt 32 0",
+            "%scope = OpConstant %uint {scope}",
+            "%result = OpReadClockKHR typeof*{result} %scope",
+            "OpStore {result} %result",
+            result = in(reg) &mut result,
+            scope = const SCOPE,
+        };
 
-    result
+        result
+    }
 }
 
 #[cfg(target_arch = "spirv")]
 unsafe fn call_glsl_op_with_ints<T: Integer, const OP: u32>(a: T, b: T) -> T {
-    let mut result = T::default();
-    asm!(
-        "%glsl = OpExtInstImport \"GLSL.std.450\"",
-        "%a = OpLoad _ {a}",
-        "%b = OpLoad _ {b}",
-        "%result = OpExtInst typeof*{result} %glsl {op} %a %b",
-        "OpStore {result} %result",
-        a = in(reg) &a,
-        b = in(reg) &b,
-        result = in(reg) &mut result,
-        op = const OP
-    );
-    result
+    unsafe {
+        let mut result = T::default();
+        asm!(
+            "%glsl = OpExtInstImport \"GLSL.std.450\"",
+            "%a = OpLoad _ {a}",
+            "%b = OpLoad _ {b}",
+            "%result = OpExtInst typeof*{result} %glsl {op} %a %b",
+            "OpStore {result} %result",
+            a = in(reg) &a,
+            b = in(reg) &b,
+            result = in(reg) &mut result,
+            op = const OP
+        );
+        result
+    }
 }
 
 /// Compute the minimum of two unsigned integers via a GLSL extended instruction.
@@ -245,83 +255,91 @@ pub trait IndexUnchecked<T> {
 impl<T> IndexUnchecked<T> for [T] {
     #[cfg(target_arch = "spirv")]
     unsafe fn index_unchecked(&self, index: usize) -> &T {
-        // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        let mut result_slot = core::mem::MaybeUninit::uninit();
-        asm! {
-            "%slice_ptr = OpLoad _ {slice_ptr_ptr}",
-            "%data_ptr = OpCompositeExtract _ %slice_ptr 0",
-            "%result = OpAccessChain _ %data_ptr {index}",
-            "OpStore {result_slot} %result",
-            slice_ptr_ptr = in(reg) &self,
-            index = in(reg) index,
-            result_slot = in(reg) result_slot.as_mut_ptr(),
+        unsafe {
+            // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
+            let mut result_slot = core::mem::MaybeUninit::uninit();
+            asm! {
+                "%slice_ptr = OpLoad _ {slice_ptr_ptr}",
+                "%data_ptr = OpCompositeExtract _ %slice_ptr 0",
+                "%result = OpAccessChain _ %data_ptr {index}",
+                "OpStore {result_slot} %result",
+                slice_ptr_ptr = in(reg) &self,
+                index = in(reg) index,
+                result_slot = in(reg) result_slot.as_mut_ptr(),
+            }
+            result_slot.assume_init()
         }
-        result_slot.assume_init()
     }
 
     #[cfg(not(target_arch = "spirv"))]
     unsafe fn index_unchecked(&self, index: usize) -> &T {
-        self.get_unchecked(index)
+        unsafe { self.get_unchecked(index) }
     }
 
     #[cfg(target_arch = "spirv")]
     unsafe fn index_unchecked_mut(&mut self, index: usize) -> &mut T {
-        // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        let mut result_slot = core::mem::MaybeUninit::uninit();
-        asm! {
-            "%slice_ptr = OpLoad _ {slice_ptr_ptr}",
-            "%data_ptr = OpCompositeExtract _ %slice_ptr 0",
-            "%result = OpAccessChain _ %data_ptr {index}",
-            "OpStore {result_slot} %result",
-            slice_ptr_ptr = in(reg) &self,
-            index = in(reg) index,
-            result_slot = in(reg) result_slot.as_mut_ptr(),
+        unsafe {
+            // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
+            let mut result_slot = core::mem::MaybeUninit::uninit();
+            asm! {
+                "%slice_ptr = OpLoad _ {slice_ptr_ptr}",
+                "%data_ptr = OpCompositeExtract _ %slice_ptr 0",
+                "%result = OpAccessChain _ %data_ptr {index}",
+                "OpStore {result_slot} %result",
+                slice_ptr_ptr = in(reg) &self,
+                index = in(reg) index,
+                result_slot = in(reg) result_slot.as_mut_ptr(),
+            }
+            result_slot.assume_init()
         }
-        result_slot.assume_init()
     }
 
     #[cfg(not(target_arch = "spirv"))]
     unsafe fn index_unchecked_mut(&mut self, index: usize) -> &mut T {
-        self.get_unchecked_mut(index)
+        unsafe { self.get_unchecked_mut(index) }
     }
 }
 
 impl<T, const N: usize> IndexUnchecked<T> for [T; N] {
     #[cfg(target_arch = "spirv")]
     unsafe fn index_unchecked(&self, index: usize) -> &T {
-        // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        let mut result_slot = core::mem::MaybeUninit::uninit();
-        asm! {
-            "%result = OpAccessChain _ {array_ptr} {index}",
-            "OpStore {result_slot} %result",
-            array_ptr = in(reg) self,
-            index = in(reg) index,
-            result_slot = in(reg) result_slot.as_mut_ptr(),
+        unsafe {
+            // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
+            let mut result_slot = core::mem::MaybeUninit::uninit();
+            asm! {
+                "%result = OpAccessChain _ {array_ptr} {index}",
+                "OpStore {result_slot} %result",
+                array_ptr = in(reg) self,
+                index = in(reg) index,
+                result_slot = in(reg) result_slot.as_mut_ptr(),
+            }
+            result_slot.assume_init()
         }
-        result_slot.assume_init()
     }
 
     #[cfg(not(target_arch = "spirv"))]
     unsafe fn index_unchecked(&self, index: usize) -> &T {
-        self.get_unchecked(index)
+        unsafe { self.get_unchecked(index) }
     }
 
     #[cfg(target_arch = "spirv")]
     unsafe fn index_unchecked_mut(&mut self, index: usize) -> &mut T {
-        // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
-        let mut result_slot = core::mem::MaybeUninit::uninit();
-        asm! {
-            "%result = OpAccessChain _ {array_ptr} {index}",
-            "OpStore {result_slot} %result",
-            array_ptr = in(reg) self,
-            index = in(reg) index,
-            result_slot = in(reg) result_slot.as_mut_ptr(),
+        unsafe {
+            // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
+            let mut result_slot = core::mem::MaybeUninit::uninit();
+            asm! {
+                "%result = OpAccessChain _ {array_ptr} {index}",
+                "OpStore {result_slot} %result",
+                array_ptr = in(reg) self,
+                index = in(reg) index,
+                result_slot = in(reg) result_slot.as_mut_ptr(),
+            }
+            result_slot.assume_init()
         }
-        result_slot.assume_init()
     }
 
     #[cfg(not(target_arch = "spirv"))]
     unsafe fn index_unchecked_mut(&mut self, index: usize) -> &mut T {
-        self.get_unchecked_mut(index)
+        unsafe { self.get_unchecked_mut(index) }
     }
 }
