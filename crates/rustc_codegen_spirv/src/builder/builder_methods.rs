@@ -2462,6 +2462,62 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
         assert_ty_eq!(self, lhs.ty, rhs.ty);
         let b = SpirvType::Bool.def(self.span(), self);
+
+        if let Some(const_lhs) = self.try_get_const_value(lhs)
+            && let Some(const_rhs) = self.try_get_const_value(rhs)
+        {
+            let const_result = match self.lookup_type(lhs.ty) {
+                SpirvType::Integer(_, _) => match (const_lhs, const_rhs, op) {
+                    (ConstValue::Unsigned(lhs), ConstValue::Unsigned(rhs), IntEQ) => {
+                        Some(lhs.eq(&rhs))
+                    }
+                    (ConstValue::Signed(lhs), ConstValue::Signed(rhs), IntEQ) => Some(lhs.eq(&rhs)),
+                    (ConstValue::Unsigned(lhs), ConstValue::Unsigned(rhs), IntNE) => {
+                        Some(lhs.ne(&rhs))
+                    }
+                    (ConstValue::Signed(lhs), ConstValue::Signed(rhs), IntNE) => Some(lhs.ne(&rhs)),
+                    (ConstValue::Unsigned(lhs), ConstValue::Unsigned(rhs), IntUGT) => {
+                        Some(lhs.gt(&rhs))
+                    }
+                    (ConstValue::Unsigned(lhs), ConstValue::Unsigned(rhs), IntUGE) => {
+                        Some(lhs.ge(&rhs))
+                    }
+                    (ConstValue::Unsigned(lhs), ConstValue::Unsigned(rhs), IntULT) => {
+                        Some(lhs.lt(&rhs))
+                    }
+                    (ConstValue::Unsigned(lhs), ConstValue::Unsigned(rhs), IntULE) => {
+                        Some(lhs.le(&rhs))
+                    }
+                    (ConstValue::Signed(lhs), ConstValue::Signed(rhs), IntUGT) => {
+                        Some(lhs.gt(&rhs))
+                    }
+                    (ConstValue::Signed(lhs), ConstValue::Signed(rhs), IntUGE) => {
+                        Some(lhs.ge(&rhs))
+                    }
+                    (ConstValue::Signed(lhs), ConstValue::Signed(rhs), IntULT) => {
+                        Some(lhs.lt(&rhs))
+                    }
+                    (ConstValue::Signed(lhs), ConstValue::Signed(rhs), IntULE) => {
+                        Some(lhs.le(&rhs))
+                    }
+                    (_, _, _) => None,
+                },
+                SpirvType::Bool => match (const_lhs, const_rhs, op) {
+                    (ConstValue::Bool(lhs), ConstValue::Bool(rhs), IntEQ) => Some(lhs.eq(&rhs)),
+                    (ConstValue::Bool(lhs), ConstValue::Bool(rhs), IntNE) => Some(lhs.ne(&rhs)),
+                    (ConstValue::Bool(lhs), ConstValue::Bool(rhs), IntUGT) => Some(lhs.gt(&rhs)),
+                    (ConstValue::Bool(lhs), ConstValue::Bool(rhs), IntUGE) => Some(lhs.ge(&rhs)),
+                    (ConstValue::Bool(lhs), ConstValue::Bool(rhs), IntULT) => Some(lhs.lt(&rhs)),
+                    (ConstValue::Bool(lhs), ConstValue::Bool(rhs), IntULE) => Some(lhs.le(&rhs)),
+                    (_, _, _) => None,
+                },
+                _ => None,
+            };
+            if let Some(result) = const_result {
+                return self.const_bool(result);
+            }
+        }
+
         match self.lookup_type(lhs.ty) {
             SpirvType::Integer(_, _) => match op {
                 IntEQ => self.emit().i_equal(b, None, lhs.def(self), rhs.def(self)),
