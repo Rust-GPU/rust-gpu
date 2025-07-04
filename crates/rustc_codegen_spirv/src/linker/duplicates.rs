@@ -117,11 +117,14 @@ fn gather_names(debug_names: &[Instruction]) -> FxHashMap<Word, String> {
         .collect()
 }
 
-fn make_dedupe_key(
+fn make_dedupe_key_with_array_context(
     inst: &Instruction,
     unresolved_forward_pointers: &FxHashSet<Word>,
     annotations: &FxHashMap<Word, Vec<u32>>,
     names: &FxHashMap<Word, String>,
+    array_contexts: Option<
+        &FxHashMap<Word, crate::linker::array_stride_fixer::ArrayStorageContext>,
+    >,
 ) -> Vec<u32> {
     let mut data = vec![inst.class.opcode as u32];
 
@@ -169,6 +172,38 @@ fn make_dedupe_key(
         }
     }
 
+    // For array types, include storage class context in the key to prevent
+    // inappropriate deduplication between different storage class contexts
+    if let Some(result_id) = inst.result_id {
+        if matches!(inst.class.opcode, Op::TypeArray | Op::TypeRuntimeArray) {
+            if let Some(contexts) = array_contexts {
+                if let Some(context) = contexts.get(&result_id) {
+                    // Include usage pattern in the key so arrays with different contexts won't deduplicate
+                    let usage_pattern_discriminant = match context.usage_pattern {
+                        crate::linker::array_stride_fixer::ArrayUsagePattern::LayoutRequired => {
+                            1u32
+                        }
+                        crate::linker::array_stride_fixer::ArrayUsagePattern::LayoutForbidden => {
+                            2u32
+                        }
+                        crate::linker::array_stride_fixer::ArrayUsagePattern::MixedUsage => 3u32,
+                        crate::linker::array_stride_fixer::ArrayUsagePattern::Unused => 4u32,
+                    };
+                    data.push(usage_pattern_discriminant);
+
+                    // Also include the specific storage classes for fine-grained differentiation
+                    let mut storage_classes: Vec<u32> = context
+                        .storage_classes
+                        .iter()
+                        .map(|sc| *sc as u32)
+                        .collect();
+                    storage_classes.sort(); // Ensure deterministic ordering
+                    data.extend(storage_classes);
+                }
+            }
+        }
+    }
+
     data
 }
 
@@ -185,6 +220,15 @@ fn rewrite_inst_with_rules(inst: &mut Instruction, rules: &FxHashMap<u32, u32>) 
 }
 
 pub fn remove_duplicate_types(module: &mut Module) {
+    remove_duplicate_types_with_array_context(module, None);
+}
+
+pub fn remove_duplicate_types_with_array_context(
+    module: &mut Module,
+    array_contexts: Option<
+        &FxHashMap<Word, crate::linker::array_stride_fixer::ArrayStorageContext>,
+    >,
+) {
     // Keep in mind, this algorithm requires forward type references to not exist - i.e. it's a valid spir-v module.
 
     // When a duplicate type is encountered, then this is a map from the deleted ID, to the new, deduplicated ID.
@@ -222,7 +266,13 @@ pub fn remove_duplicate_types(module: &mut Module) {
         // all_inst_iter_mut pass below. However, the code is a lil bit cleaner this way I guess.
         rewrite_inst_with_rules(inst, &rewrite_rules);
 
-        let key = make_dedupe_key(inst, &unresolved_forward_pointers, &annotations, &names);
+        let key = make_dedupe_key_with_array_context(
+            inst,
+            &unresolved_forward_pointers,
+            &annotations,
+            &names,
+            array_contexts,
+        );
 
         match key_to_result_id.entry(key) {
             hash_map::Entry::Vacant(entry) => {
