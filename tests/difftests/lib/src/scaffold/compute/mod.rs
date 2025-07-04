@@ -1,2 +1,5 @@
 mod wgpu;
-pub use wgpu::{RustComputeShader, WgpuComputeTest, WgslComputeShader};
+pub use wgpu::{
+    BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTest, WgpuComputeTestMultiBuffer,
+    WgpuComputeTestPushConstants, WgslComputeShader,
+};
