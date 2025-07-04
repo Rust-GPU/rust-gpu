@@ -1,5 +1,6 @@
 #![no_std]
 
+use difftest::round6;
 use spirv_std::glam::{UVec2, UVec3, UVec4, Vec2, Vec3, Vec4, Vec4Swizzles};
 #[allow(unused_imports)]
 use spirv_std::num_traits::Float;
@@ -33,9 +34,9 @@ pub fn main_cs(
     let v2a = Vec2::new(a, b);
     let v2b = Vec2::new(c, d);
 
-    output[base_offset + 0] = (v2a.dot(v2b) * 1000.0).round() / 1000.0;
-    output[base_offset + 1] = (v2a.length() * 1000.0).round() / 1000.0;
-    output[base_offset + 2] = (v2a.distance(v2b) * 1000.0).round() / 1000.0;
+    output[base_offset + 0] = round6!(v2a.dot(v2b));
+    output[base_offset + 1] = round6!(v2a.length());
+    output[base_offset + 2] = round6!(v2a.distance(v2b));
 
     let v2_add = v2a + v2b;
     output[base_offset + 3] = v2_add.x;
@@ -49,25 +50,25 @@ pub fn main_cs(
     let v3a = Vec3::new(a, b, c);
     let v3b = Vec3::new(b, c, d);
 
-    output[base_offset + 7] = (v3a.dot(v3b) * 1000.0).round() / 1000.0;
-    output[base_offset + 8] = (v3a.length() * 1000.0).round() / 1000.0;
+    output[base_offset + 7] = round6!(v3a.dot(v3b));
+    output[base_offset + 8] = round6!(v3a.length());
 
     let v3_cross = v3a.cross(v3b);
-    output[base_offset + 9] = v3_cross.x;
-    output[base_offset + 10] = v3_cross.y;
-    output[base_offset + 11] = v3_cross.z;
+    output[base_offset + 9] = round6!(v3_cross.x);
+    output[base_offset + 10] = round6!(v3_cross.y);
+    output[base_offset + 11] = round6!(v3_cross.z);
 
     let v3_norm = v3a.normalize();
-    output[base_offset + 12] = (v3_norm.x * 1000.0).round() / 1000.0;
-    output[base_offset + 13] = (v3_norm.y * 1000.0).round() / 1000.0;
-    output[base_offset + 14] = (v3_norm.z * 1000.0).round() / 1000.0;
+    output[base_offset + 12] = round6!(v3_norm.x);
+    output[base_offset + 13] = round6!(v3_norm.y);
+    output[base_offset + 14] = round6!(v3_norm.z);
 
     // Vec4 operations
     let v4a = Vec4::new(a, b, c, d);
     let v4b = Vec4::new(d, c, b, a);
 
-    output[base_offset + 15] = (v4a.dot(v4b) * 1000.0).round() / 1000.0;
-    output[base_offset + 16] = (v4a.length() * 1000.0).round() / 1000.0;
+    output[base_offset + 15] = round6!(v4a.dot(v4b));
+    output[base_offset + 16] = round6!(v4a.length());
 
     let v4_sub = v4a - v4b;
     output[base_offset + 17] = v4_sub.x;

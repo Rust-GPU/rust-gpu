@@ -1,5 +1,20 @@
+#![cfg_attr(target_arch = "spirv", no_std)]
+
+#[cfg(not(target_arch = "spirv"))]
 pub mod config;
+#[cfg(not(target_arch = "spirv"))]
 pub mod scaffold;
+
+/// Macro to round a f32 value to 6 decimal places for cross-platform consistency
+/// in floating-point operations. This helps ensure difftest results are consistent
+/// across different platforms (Linux, Mac, Windows) which may have slight differences
+/// in floating-point implementations.
+#[macro_export]
+macro_rules! round6 {
+    ($v:expr) => {
+        (($v) * 1_000_000.0).round() / 1_000_000.0
+    };
+}
 
 #[cfg(test)]
 mod tests {
