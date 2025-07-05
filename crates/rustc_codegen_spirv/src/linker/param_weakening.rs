@@ -8,7 +8,7 @@ use indexmap::IndexMap;
 use rspirv::dr::{Builder, Module, Operand};
 use rspirv::spirv::{Op, Word};
 use rustc_data_structures::fx::FxHashMap;
-use rustc_index::bit_set::BitSet;
+use rustc_index::bit_set::DenseBitSet as BitSet;
 use std::mem;
 
 pub fn remove_unused_params(module: Module) -> Module {

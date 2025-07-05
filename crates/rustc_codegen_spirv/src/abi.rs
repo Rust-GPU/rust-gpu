@@ -110,6 +110,7 @@ pub(crate) fn provide(providers: &mut Providers) {
             size,
             max_repr_align,
             unadjusted_abi_align,
+            randomization_seed,
         } = *layout;
         LayoutData {
             fields: match *fields {
@@ -156,6 +157,7 @@ pub(crate) fn provide(providers: &mut Providers) {
             size,
             max_repr_align,
             unadjusted_abi_align,
+            randomization_seed,
         }
     }
 
