@@ -120,8 +120,7 @@ fn main() -> Result<()> {
             .map(|filter| {
                 if filter.contains('/') {
                     // Convert path-like filter to test name format
-                    let path_filter = filter.replace('/', "::");
-                    format!("{}", path_filter)
+                    filter.replace('/', "::")
                 } else {
                     filter
                 }
