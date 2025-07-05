@@ -116,6 +116,9 @@ impl<'tcx> ConstCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn const_undef(&self, ty: Self::Type) -> Self::Value {
         self.undef(ty)
     }
+    fn is_undef(&self, v: Self::Value) -> bool {
+        matches!(self.builder.lookup_const(v), Some(SpirvConst::Undef))
+    }
     fn const_poison(&self, ty: Self::Type) -> Self::Value {
         // No distinction between undef and poison.
         self.const_undef(ty)
