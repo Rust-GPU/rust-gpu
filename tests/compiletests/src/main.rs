@@ -60,7 +60,7 @@ fn main() {
     let opt = Opt::parse();
 
     let tests_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let workspace_root = tests_dir.parent().unwrap();
+    let workspace_root = tests_dir.parent().unwrap().parent().unwrap();
     let original_target_dir = workspace_root.join("target");
     let deps_target_dir = original_target_dir.join("compiletest-deps");
     let compiletest_build_dir = original_target_dir.join("compiletest-results");
