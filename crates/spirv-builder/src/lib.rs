@@ -36,7 +36,6 @@
     clippy::map_err_ignore,
     clippy::map_flatten,
     clippy::map_unwrap_or,
-    clippy::match_on_vec_items,
     clippy::match_same_arms,
     clippy::match_wildcard_for_single_variants,
     clippy::mem_forget,
@@ -849,6 +848,13 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         // GVN currently can lead to the memcpy-out-of-const-alloc-global-var
         // pattern, even for `ScalarPair` (e.g. `return None::<u32>;`).
         "-Zmir-enable-passes=-GVN".to_string(),
+        // HACK(eddyb) avoid ever reusing instantiations from `compiler_builtins`
+        // which is special-cased to turn calls to functions that never return,
+        // into aborts, and this applies to the panics of UB-checking helpers
+        // (https://github.com/rust-lang/rust/pull/122580#issuecomment-3033026194)
+        // but while upstream that only loses the panic message, for us it's even
+        // worse, as we lose the chance to remove otherwise-dead `fmt::Arguments`.
+        "-Zshare-generics=off".to_string(),
     ];
 
     // Wrapper for `env::var` that appropriately informs Cargo of the dependency.
@@ -957,7 +963,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
 
     let mut cargo = Command::new("cargo");
     if let Some(toolchain) = &builder.toolchain_overwrite {
-        cargo.arg(format!("+{}", toolchain));
+        cargo.arg(format!("+{toolchain}"));
     }
     cargo.args([
         "build",
@@ -1081,22 +1087,21 @@ struct RustcOutput {
 const ARTIFACT_SUFFIX: &str = ".spv.json";
 
 fn get_sole_artifact(out: &str) -> Option<PathBuf> {
-    let last = out
-        .lines()
-        .filter_map(|line| {
-            if let Ok(line) = serde_json::from_str::<RustcOutput>(line) {
-                Some(line)
-            } else {
-                // Pass through invalid lines
-                println!("{line}");
-                None
-            }
-        })
-        .filter(|line| line.reason == "compiler-artifact")
-        .last()
-        .expect("Did not find output file in rustc output");
+    let mut last_compiler_artifact = None;
+    for line in out.lines() {
+        let Ok(msg) = serde_json::from_str::<RustcOutput>(line) else {
+            // Pass through invalid lines
+            println!("{line}");
+            continue;
+        };
+        if msg.reason == "compiler-artifact" {
+            last_compiler_artifact = Some(msg);
+        }
+    }
+    let last_compiler_artifact =
+        last_compiler_artifact.expect("Did not find output file in rustc output");
 
-    let mut filenames = last
+    let mut filenames = last_compiler_artifact
         .filenames
         .unwrap()
         .into_iter()
@@ -1139,7 +1144,7 @@ fn leaf_deps(artifact: &Path, mut handle: impl FnMut(&RawStr)) -> std::io::Resul
 pub fn query_rustc_version(toolchain: Option<&str>) -> std::io::Result<Version> {
     let mut cmd = Command::new("rustc");
     if let Some(toolchain) = toolchain {
-        cmd.arg(format!("+{}", toolchain));
+        cmd.arg(format!("+{toolchain}"));
     }
     cmd.arg("--version");
     let output = cmd.output()?;
@@ -1151,5 +1156,5 @@ pub fn query_rustc_version(toolchain: Option<&str>) -> std::io::Result<Version> 
         Version::parse(version).ok()
     };
     Ok(parse(&stdout)
-        .unwrap_or_else(|| panic!("failed parsing `rustc --version` output `{}`", stdout)))
+        .unwrap_or_else(|| panic!("failed parsing `rustc --version` output `{stdout}`")))
 }
