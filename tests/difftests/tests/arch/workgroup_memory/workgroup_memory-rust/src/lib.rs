@@ -66,6 +66,10 @@ pub fn main_cs(
         shared[lid] += shared[lid + 1];
     }
 
+    unsafe {
+        workgroup_memory_barrier_with_group_sync();
+    }
+
     // Write final result
     if lid == 0 {
         output[0] = shared[0];
