@@ -12,7 +12,7 @@ use tempfile::NamedTempFile;
 use thiserror::Error;
 use tracing::{debug, error, info, trace};
 
-use crate::differ::{Difference, DifferenceDisplay, OutputDiffer};
+use crate::differ::{DiffMagnitude, Difference, DifferenceDisplay, OutputDiffer};
 
 #[derive(Debug, Error)]
 pub enum RunnerError {
@@ -103,11 +103,13 @@ impl ErrorReport {
 
     fn set_summary_from_differences(&mut self, differences: &[Difference]) {
         if !differences.is_empty() {
-            let (max_diff, max_rel) = self.calculate_max_differences(differences);
             self.summary_parts
                 .push(format!("{} differences", differences.len()));
-            self.summary_parts
-                .push(format!("max: {:.3e} ({:.2}%)", max_diff, max_rel * 100.0));
+
+            if let Some((max_diff, max_rel)) = self.calculate_max_differences(differences) {
+                self.summary_parts
+                    .push(format!("max: {:.3e} ({:.2}%)", max_diff, max_rel * 100.0));
+            }
         }
     }
 
@@ -157,28 +159,38 @@ impl ErrorReport {
 
     fn add_summary_line(&mut self, differences: &[Difference]) {
         if !differences.is_empty() {
-            let (max_diff, max_rel) = self.calculate_max_differences(differences);
-            self.lines.push(format!(
-                "• {} differences, max: {:.3e} ({:.2}%)",
-                differences.len(),
-                max_diff,
-                max_rel * 100.0
-            ));
+            if let Some((max_diff, max_rel)) = self.calculate_max_differences(differences) {
+                self.lines.push(format!(
+                    "• {} differences, max: {:.3e} ({:.2}%)",
+                    differences.len(),
+                    max_diff,
+                    max_rel * 100.0
+                ));
+            } else {
+                self.lines
+                    .push(format!("• {} differences", differences.len()));
+            }
         }
     }
 
-    fn calculate_max_differences(&self, differences: &[Difference]) -> (f64, f64) {
+    fn calculate_max_differences(&self, differences: &[Difference]) -> Option<(f64, f64)> {
         let max_diff = differences
             .iter()
-            .map(|d| d.absolute_diff)
-            .max_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap_or(0.0);
+            .filter_map(|d| match &d.absolute_diff {
+                DiffMagnitude::Numeric(val) => Some(*val),
+                DiffMagnitude::Incomparable => None,
+            })
+            .max_by(|a, b| a.partial_cmp(b).unwrap());
         let max_rel = differences
             .iter()
-            .filter_map(|d| d.relative_diff)
+            .filter_map(|d| match &d.relative_diff {
+                DiffMagnitude::Numeric(val) => Some(*val),
+                DiffMagnitude::Incomparable => None,
+            })
             .max_by(|a, b| a.partial_cmp(b).unwrap())
             .unwrap_or(0.0);
-        (max_diff, max_rel)
+
+        max_diff.map(|diff| (diff, max_rel))
     }
 
     fn build(self) -> String {
