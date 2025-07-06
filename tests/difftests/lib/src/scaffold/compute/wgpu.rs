@@ -163,7 +163,14 @@ where
                 #[cfg(not(target_os = "linux"))]
                 backends: wgpu::Backends::PRIMARY,
                 flags: Default::default(),
-                backend_options: Default::default(),
+                backend_options: wgpu::BackendOptions {
+                    #[cfg(target_os = "windows")]
+                    dx12: wgpu::Dx12BackendOptions {
+                        shader_compiler: wgpu::Dx12Compiler::StaticDxc,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                },
             });
             let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
