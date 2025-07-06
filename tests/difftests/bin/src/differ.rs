@@ -1,4 +1,14 @@
 use difftest::config::OutputType;
+use std::marker::PhantomData;
+
+/// Represents the magnitude of a difference between two values
+#[derive(Debug, Clone)]
+pub enum DiffMagnitude {
+    /// A numeric difference that can be measured
+    Numeric(f64),
+    /// A difference that cannot be measured numerically (e.g., raw bytes)
+    Incomparable,
+}
 
 /// Trait for comparing two outputs and producing differences
 pub trait OutputDiffer {
@@ -33,8 +43,8 @@ pub struct Difference {
     pub index: usize,
     pub value1: String,
     pub value2: String,
-    pub absolute_diff: f64,
-    pub relative_diff: Option<f64>,
+    pub absolute_diff: DiffMagnitude,
+    pub relative_diff: DiffMagnitude,
 }
 
 /// Differ for raw byte comparison
@@ -50,8 +60,8 @@ impl OutputDiffer for RawDiffer {
                 index: 0,
                 value1: format!("{} bytes", output1.len()),
                 value2: format!("{} bytes", output2.len()),
-                absolute_diff: 0.0,
-                relative_diff: None,
+                absolute_diff: DiffMagnitude::Incomparable,
+                relative_diff: DiffMagnitude::Incomparable,
             }]
         }
     }
@@ -91,50 +101,129 @@ impl DifferenceDisplay for RawDiffer {
     }
 }
 
-/// Differ for f32 arrays
-pub struct F32Differ;
+/// Trait for numeric types that can be diffed
+pub trait NumericType: Copy + PartialEq + std::fmt::Display + Send + Sync + 'static {
+    fn from_bytes(bytes: &[u8]) -> Self;
+    fn abs_diff(a: Self, b: Self) -> f64;
+    fn type_name() -> &'static str;
+    fn format_value(value: Self) -> String;
+    fn can_have_relative_diff() -> bool;
+    fn as_f64(value: Self) -> f64;
+}
 
-impl OutputDiffer for F32Differ {
+impl NumericType for f32 {
+    fn from_bytes(bytes: &[u8]) -> Self {
+        f32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]])
+    }
+    fn abs_diff(a: Self, b: Self) -> f64 {
+        (a - b).abs() as f64
+    }
+    fn type_name() -> &'static str {
+        "F32"
+    }
+    fn format_value(value: Self) -> String {
+        format!("{:.9}", value)
+    }
+    fn can_have_relative_diff() -> bool {
+        true
+    }
+    fn as_f64(value: Self) -> f64 {
+        value as f64
+    }
+}
+
+impl NumericType for u32 {
+    fn from_bytes(bytes: &[u8]) -> Self {
+        u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]])
+    }
+    fn abs_diff(a: Self, b: Self) -> f64 {
+        if a > b {
+            (a - b) as f64
+        } else {
+            (b - a) as f64
+        }
+    }
+    fn type_name() -> &'static str {
+        "U32"
+    }
+    fn format_value(value: Self) -> String {
+        format!("{}", value)
+    }
+    fn can_have_relative_diff() -> bool {
+        false
+    }
+    fn as_f64(value: Self) -> f64 {
+        value as f64
+    }
+}
+
+/// Generic differ for numeric types
+pub struct NumericDiffer<T: NumericType> {
+    _phantom: PhantomData<T>,
+}
+
+impl<T: NumericType> Default for NumericDiffer<T> {
+    fn default() -> Self {
+        Self {
+            _phantom: PhantomData,
+        }
+    }
+}
+
+impl<T: NumericType> OutputDiffer for NumericDiffer<T> {
     fn compare(&self, output1: &[u8], output2: &[u8], epsilon: Option<f32>) -> Vec<Difference> {
         if output1.len() != output2.len() {
             return vec![Difference {
                 index: 0,
                 value1: format!("{} bytes", output1.len()),
                 value2: format!("{} bytes", output2.len()),
-                absolute_diff: 0.0,
-                relative_diff: None,
+                absolute_diff: DiffMagnitude::Numeric(0.0),
+                relative_diff: DiffMagnitude::Incomparable,
             }];
         }
 
-        let floats1: Vec<f32> = output1
-            .chunks_exact(4)
-            .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+        let values1: Vec<T> = output1
+            .chunks_exact(std::mem::size_of::<T>())
+            .map(T::from_bytes)
             .collect();
-        let floats2: Vec<f32> = output2
-            .chunks_exact(4)
-            .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+        let values2: Vec<T> = output2
+            .chunks_exact(std::mem::size_of::<T>())
+            .map(T::from_bytes)
             .collect();
 
         let mut differences = Vec::new();
-
-        for (i, (&v1, &v2)) in floats1.iter().zip(floats2.iter()).enumerate() {
-            let diff = (v1 - v2).abs();
-            // If no epsilon specified, report all differences
-            let threshold = epsilon.unwrap_or(0.0);
-            if diff > threshold {
-                let rel_diff = if v1.abs() > 1e-10 || v2.abs() > 1e-10 {
-                    Some((diff as f64) / f64::max(v1.abs() as f64, v2.abs() as f64))
+        for (i, (&v1, &v2)) in values1.iter().zip(values2.iter()).enumerate() {
+            if v1 != v2 {
+                let diff = T::abs_diff(v1, v2);
+                // For floating point types, check epsilon threshold
+                let threshold = if T::can_have_relative_diff() {
+                    epsilon.unwrap_or(0.0) as f64
                 } else {
-                    None
+                    0.0
                 };
 
-                differences.push(Difference {
-                    index: i,
-                    value1: format!("{:.9}", v1),
-                    value2: format!("{:.9}", v2),
-                    absolute_diff: diff as f64,
-                    relative_diff: rel_diff,
-                });
+                if diff > threshold {
+                    let rel_diff = if T::can_have_relative_diff() {
+                        let v1_abs = T::as_f64(v1).abs();
+                        let v2_abs = T::as_f64(v2).abs();
+                        let max_abs = f64::max(v1_abs, v2_abs);
+                        if max_abs > 1e-10 {
+                            DiffMagnitude::Numeric(diff / max_abs)
+                        } else {
+                            DiffMagnitude::Incomparable
+                        }
+                    } else {
+                        DiffMagnitude::Incomparable
+                    };
+
+                    differences.push(Difference {
+                        index: i,
+                        value1: T::format_value(v1),
+                        value2: T::format_value(v2),
+                        absolute_diff: DiffMagnitude::Numeric(diff),
+                        relative_diff: rel_diff,
+                    });
+                }
             }
         }
 
@@ -142,55 +231,61 @@ impl OutputDiffer for F32Differ {
     }
 
     fn name(&self) -> &'static str {
-        "32-bit Float"
+        T::type_name()
     }
 }
 
-impl DifferenceDisplay for F32Differ {
+impl<T: NumericType> DifferenceDisplay for NumericDiffer<T> {
     fn format_table(&self, diffs: &[Difference], pkg1: &str, pkg2: &str) -> String {
         use tabled::settings::{Alignment, Modify, Style, object::Rows};
 
-        if diffs.is_empty() {
-            return String::new();
-        }
-
-        // Extract suffix from package names (e.g., "math_ops-wgsl" -> "WGSL")
-        let extract_suffix = |pkg: &str| -> String {
-            if let Some(pos) = pkg.rfind('-') {
-                let suffix = &pkg[pos + 1..];
-                suffix.to_uppercase()
-            } else {
-                pkg.to_string()
-            }
-        };
-
-        let col1_name = extract_suffix(pkg1);
-        let col2_name = extract_suffix(pkg2);
-
-        // Build rows for the table
         let rows: Vec<Vec<String>> = diffs
             .iter()
             .take(10)
             .map(|d| {
-                vec![
-                    d.index.to_string(),
-                    d.value1.clone(),
-                    d.value2.clone(),
-                    format!("{:.3e}", d.absolute_diff),
-                    d.relative_diff
-                        .map(|r| format!("{:.2}%", r * 100.0))
-                        .unwrap_or_else(|| "N/A".to_string()),
-                ]
+                let abs_str = match &d.absolute_diff {
+                    DiffMagnitude::Numeric(val) => {
+                        if T::can_have_relative_diff() {
+                            format!("{:.3e}", val)
+                        } else {
+                            format!("{}", *val as u64)
+                        }
+                    }
+                    DiffMagnitude::Incomparable => "N/A".to_string(),
+                };
+
+                let rel_str = match &d.relative_diff {
+                    DiffMagnitude::Numeric(val) => format!("{:.2}%", val * 100.0),
+                    DiffMagnitude::Incomparable => "N/A".to_string(),
+                };
+
+                if T::can_have_relative_diff() {
+                    vec![
+                        d.index.to_string(),
+                        d.value1.clone(),
+                        d.value2.clone(),
+                        abs_str,
+                        rel_str,
+                    ]
+                } else {
+                    vec![
+                        d.index.to_string(),
+                        d.value1.clone(),
+                        d.value2.clone(),
+                        abs_str,
+                    ]
+                }
             })
             .collect();
 
-        // Create a table with custom headers
         let mut builder = tabled::builder::Builder::default();
 
-        // Add header row
-        builder.push_record(vec!["#", &col1_name, &col2_name, "Δ abs", "Δ %"]);
+        if T::can_have_relative_diff() {
+            builder.push_record(vec!["#", pkg1, pkg2, "Δ abs", "Δ %"]);
+        } else {
+            builder.push_record(vec!["#", pkg1, pkg2, "Δ"]);
+        }
 
-        // Add data rows
         for row in &rows {
             builder.push_record(row);
         }
@@ -203,7 +298,6 @@ impl DifferenceDisplay for F32Differ {
         let mut result = table.to_string();
 
         if diffs.len() > 10 {
-            // Get the width of the last line to properly align the text
             let last_line_width = result
                 .lines()
                 .last()
@@ -233,26 +327,30 @@ impl DifferenceDisplay for F32Differ {
         use std::io::Write;
         let mut file = std::fs::File::create(path)?;
 
-        let floats: Vec<f32> = output
-            .chunks_exact(4)
-            .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+        let values: Vec<T> = output
+            .chunks_exact(std::mem::size_of::<T>())
+            .map(T::from_bytes)
             .collect();
 
-        for (i, &value) in floats.iter().enumerate() {
-            writeln!(file, "{}: {:.9}", i, value)?;
+        for (i, &value) in values.iter().enumerate() {
+            writeln!(file, "{}: {}", i, T::format_value(value))?;
         }
 
         Ok(())
     }
 }
 
+/// Type aliases for specific numeric differs
+pub type F32Differ = NumericDiffer<f32>;
+pub type U32Differ = NumericDiffer<u32>;
+
 impl From<OutputType> for Box<dyn OutputDiffer + Send + Sync> {
     fn from(output_type: OutputType) -> Self {
         match output_type {
             OutputType::Raw => Box::new(RawDiffer),
-            OutputType::F32 => Box::new(F32Differ),
+            OutputType::F32 => Box::new(F32Differ::default()),
             OutputType::F64 => todo!("F64Differ not implemented yet"),
-            OutputType::U32 => todo!("U32Differ not implemented yet"),
+            OutputType::U32 => Box::new(U32Differ::default()),
             OutputType::I32 => todo!("I32Differ not implemented yet"),
         }
     }
@@ -262,10 +360,123 @@ impl From<OutputType> for Box<dyn DifferenceDisplay + Send + Sync> {
     fn from(output_type: OutputType) -> Self {
         match output_type {
             OutputType::Raw => Box::new(RawDiffer),
-            OutputType::F32 => Box::new(F32Differ),
+            OutputType::F32 => Box::new(F32Differ::default()),
             OutputType::F64 => todo!("F64Display not implemented yet"),
-            OutputType::U32 => todo!("U32Display not implemented yet"),
+            OutputType::U32 => Box::new(U32Differ::default()),
             OutputType::I32 => todo!("I32Display not implemented yet"),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_u32_differ_no_differences() {
+        let differ = U32Differ::default();
+        let data1 = vec![1u32, 2, 3, 4];
+        let bytes1 = bytemuck::cast_slice(&data1);
+        let bytes2 = bytemuck::cast_slice(&data1);
+
+        let diffs = differ.compare(bytes1, bytes2, None);
+        assert!(diffs.is_empty());
+    }
+
+    #[test]
+    fn test_u32_differ_with_differences() {
+        let differ = U32Differ::default();
+        let data1 = vec![1u32, 2, 3, 4];
+        let data2 = vec![1u32, 5, 3, 7];
+        let bytes1 = bytemuck::cast_slice(&data1);
+        let bytes2 = bytemuck::cast_slice(&data2);
+
+        let diffs = differ.compare(bytes1, bytes2, None);
+        assert_eq!(diffs.len(), 2);
+
+        // Check first difference (index 1: 2 vs 5)
+        assert_eq!(diffs[0].index, 1);
+        assert_eq!(diffs[0].value1, "2");
+        assert_eq!(diffs[0].value2, "5");
+        match &diffs[0].absolute_diff {
+            DiffMagnitude::Numeric(val) => assert_eq!(*val, 3.0),
+            _ => panic!("Expected numeric difference"),
+        }
+        match &diffs[0].relative_diff {
+            DiffMagnitude::Incomparable => {}
+            _ => panic!("Expected incomparable relative diff for U32"),
+        }
+
+        // Check second difference (index 3: 4 vs 7)
+        assert_eq!(diffs[1].index, 3);
+        assert_eq!(diffs[1].value1, "4");
+        assert_eq!(diffs[1].value2, "7");
+        match &diffs[1].absolute_diff {
+            DiffMagnitude::Numeric(val) => assert_eq!(*val, 3.0),
+            _ => panic!("Expected numeric difference"),
+        }
+    }
+
+    #[test]
+    fn test_u32_differ_different_lengths() {
+        let differ = U32Differ::default();
+        let data1 = vec![1u32, 2];
+        let data2 = vec![1u32, 2, 3, 4];
+        let bytes1 = bytemuck::cast_slice(&data1);
+        let bytes2 = bytemuck::cast_slice(&data2);
+
+        let diffs = differ.compare(bytes1, bytes2, None);
+        assert_eq!(diffs.len(), 1);
+        assert_eq!(diffs[0].value1, "8 bytes");
+        assert_eq!(diffs[0].value2, "16 bytes");
+    }
+
+    #[test]
+    fn test_f32_differ_with_epsilon() {
+        let differ = F32Differ::default();
+        let data1 = vec![1.0f32, 2.0, 3.0];
+        let data2 = vec![1.0001f32, 2.0, 3.01];
+        let bytes1 = bytemuck::cast_slice(&data1);
+        let bytes2 = bytemuck::cast_slice(&data2);
+
+        // With epsilon = 0.001, only the third value should be reported
+        let diffs = differ.compare(bytes1, bytes2, Some(0.001));
+        assert_eq!(diffs.len(), 1);
+        assert_eq!(diffs[0].index, 2);
+
+        // Without epsilon, both differences should be reported
+        let diffs = differ.compare(bytes1, bytes2, None);
+        assert_eq!(diffs.len(), 2);
+    }
+
+    #[test]
+    fn test_raw_differ() {
+        let differ = RawDiffer;
+        let bytes1 = b"hello";
+        let bytes2 = b"world";
+
+        let diffs = differ.compare(bytes1, bytes2, None);
+        assert_eq!(diffs.len(), 1);
+        match &diffs[0].absolute_diff {
+            DiffMagnitude::Incomparable => {}
+            _ => panic!("Expected incomparable diff for raw bytes"),
+        }
+    }
+
+    #[test]
+    fn test_diff_magnitude_enum() {
+        // Test that we can create and match on DiffMagnitude variants
+        let numeric = DiffMagnitude::Numeric(42.0);
+        let incomparable = DiffMagnitude::Incomparable;
+
+        match numeric {
+            DiffMagnitude::Numeric(val) => assert_eq!(val, 42.0),
+            _ => panic!("Expected numeric"),
+        }
+
+        match incomparable {
+            DiffMagnitude::Incomparable => {}
+            _ => panic!("Expected incomparable"),
         }
     }
 }
