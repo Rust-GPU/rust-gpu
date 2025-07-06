@@ -51,6 +51,13 @@ fn main() {
         buffers,
     );
 
+    // Write metadata file
+    let metadata = difftest::config::TestMetadata {
+        epsilon: Some(1e-5), // 1e-5 - appropriate for 5 decimal place rounding
+        output_type: difftest::config::OutputType::F32,
+    };
+    config.write_metadata(&metadata).unwrap();
+
     test.run_test(&config).unwrap();
 }
 

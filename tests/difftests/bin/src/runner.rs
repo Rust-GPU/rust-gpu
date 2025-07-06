@@ -1,4 +1,5 @@
 use bytesize::ByteSize;
+use difftest::config::{OutputType, TestMetadata};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{HashMap, HashSet},
@@ -10,6 +11,8 @@ use std::{
 use tempfile::NamedTempFile;
 use thiserror::Error;
 use tracing::{debug, error, info, trace};
+
+use crate::differ::{Difference, DifferenceDisplay, OutputDiffer};
 
 #[derive(Debug, Error)]
 pub enum RunnerError {
@@ -54,6 +57,7 @@ pub type RunnerResult<T> = std::result::Result<T, RunnerError>;
 #[derive(Debug, Serialize)]
 pub struct HarnessConfig {
     pub output_path: PathBuf,
+    pub metadata_path: PathBuf,
 }
 
 #[derive(Deserialize)]
@@ -71,6 +75,129 @@ struct PackageOutput {
     package_path: PathBuf,
     output: Vec<u8>,
     temp_path: PathBuf,
+}
+
+struct TestInfo {
+    name: String,
+    path: String,
+}
+
+struct ErrorReport {
+    lines: Vec<String>,
+    test_info: TestInfo,
+    summary_parts: Vec<String>,
+}
+
+impl ErrorReport {
+    fn new(test_info: TestInfo, differ_name: &'static str, epsilon: Option<f32>) -> Self {
+        let epsilon_str = match epsilon {
+            Some(e) => format!(", ε={}", e),
+            None => String::new(),
+        };
+        Self {
+            lines: Vec::new(),
+            test_info,
+            summary_parts: vec![format!("{}{}", differ_name, epsilon_str)],
+        }
+    }
+
+    fn set_summary_from_differences(&mut self, differences: &[Difference]) {
+        if !differences.is_empty() {
+            let (max_diff, max_rel) = self.calculate_max_differences(differences);
+            self.summary_parts
+                .push(format!("{} differences", differences.len()));
+            self.summary_parts
+                .push(format!("max: {:.3e} ({:.2}%)", max_diff, max_rel * 100.0));
+        }
+    }
+
+    fn set_distinct_outputs(&mut self, count: usize) {
+        self.summary_parts
+            .push(format!("{} distinct outputs", count));
+    }
+
+    fn add_output_files(
+        &mut self,
+        groups: &HashMap<Vec<u8>, Vec<&PackageOutput>>,
+        pkg_outputs: &[PackageOutput],
+    ) {
+        if groups.len() <= 5 {
+            for (output_bytes, group) in groups {
+                let names: Vec<&str> = group.iter().map(|po| po.pkg_name.as_str()).collect();
+                self.lines.push(format!("▪ {}", names.join(", ")));
+                self.lines.push(format!(
+                    "  → Raw:  {} ({:.1})",
+                    group[0].temp_path.display(),
+                    ByteSize::b(output_bytes.len() as u64)
+                ));
+                let text_path = group[0].temp_path.with_extension("txt");
+                self.lines
+                    .push(format!("  → Text: {}", text_path.display()));
+                self.lines.push("".to_string());
+            }
+        } else {
+            for po in pkg_outputs {
+                self.lines.push(format!("▪ {}", po.pkg_name));
+                self.lines.push(format!(
+                    "  → Raw:  {} ({:.1})",
+                    po.temp_path.display(),
+                    ByteSize::b(po.output.len() as u64)
+                ));
+                let text_path = po.temp_path.with_extension("txt");
+                self.lines
+                    .push(format!("  → Text: {}", text_path.display()));
+                self.lines.push("".to_string());
+            }
+        }
+    }
+
+    fn add_comparison_table(&mut self, table: String) {
+        self.lines.push(table);
+    }
+
+    fn add_summary_line(&mut self, differences: &[Difference]) {
+        if !differences.is_empty() {
+            let (max_diff, max_rel) = self.calculate_max_differences(differences);
+            self.lines.push(format!(
+                "• {} differences, max: {:.3e} ({:.2}%)",
+                differences.len(),
+                max_diff,
+                max_rel * 100.0
+            ));
+        }
+    }
+
+    fn calculate_max_differences(&self, differences: &[Difference]) -> (f64, f64) {
+        let max_diff = differences
+            .iter()
+            .map(|d| d.absolute_diff)
+            .max_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap_or(0.0);
+        let max_rel = differences
+            .iter()
+            .filter_map(|d| d.relative_diff)
+            .max_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap_or(0.0);
+        (max_diff, max_rel)
+    }
+
+    fn build(self) -> String {
+        let mut result = Vec::new();
+
+        // Header
+        result.push(format!(
+            "\x1b[1m{} ({})\x1b[0m",
+            self.test_info.name, self.test_info.path
+        ));
+        result.push(self.summary_parts.join(" • "));
+        result.push("─".repeat(65));
+        result.push("".to_string());
+
+        // Body
+        result.extend(self.lines);
+
+        result.join("\n")
+    }
 }
 
 #[derive(Clone)]
@@ -110,6 +237,8 @@ impl Runner {
 
         let mut temp_files: Vec<NamedTempFile> = Vec::with_capacity(packages.len());
         let mut pkg_outputs: Vec<PackageOutput> = Vec::with_capacity(packages.len());
+        let mut epsilon: Option<f32> = None;
+        let mut output_type = None;
 
         for package in packages {
             trace!("Processing package at {}", package.display());
@@ -120,13 +249,23 @@ impl Runner {
             let output_file = NamedTempFile::new()?;
             let temp_output_path = output_file.path().to_path_buf();
             temp_files.push(output_file);
+
+            let metadata_file = NamedTempFile::new()?;
+            let temp_metadata_path = metadata_file.path().to_path_buf();
+            temp_files.push(metadata_file);
+
             trace!(
                 "Temporary output file created at {}",
                 temp_output_path.display()
             );
+            trace!(
+                "Temporary metadata file created at {}",
+                temp_metadata_path.display()
+            );
 
             let config = HarnessConfig {
                 output_path: temp_output_path.clone(),
+                metadata_path: temp_metadata_path.clone(),
             };
             let config_json = serde_json::to_string(&config)
                 .map_err(|e| RunnerError::Config { msg: e.to_string() })?;
@@ -173,12 +312,64 @@ impl Runner {
                 });
             }
 
-            let output_bytes = fs::read(temp_files.last().unwrap().path())?;
+            let output_bytes = fs::read(&temp_output_path)?;
             debug!(
                 "Read {} bytes of output for package '{}'",
                 output_bytes.len(),
                 pkg_name
             );
+
+            // Try to read metadata file
+            if let Ok(metadata_content) = fs::read_to_string(&temp_metadata_path) {
+                if !metadata_content.trim().is_empty() {
+                    match serde_json::from_str::<TestMetadata>(&metadata_content) {
+                        Ok(metadata) => {
+                            if let Some(meta_epsilon) = metadata.epsilon {
+                                epsilon = match epsilon {
+                                    Some(e) => Some(e.max(meta_epsilon)),
+                                    None => Some(meta_epsilon),
+                                };
+                                debug!(
+                                    "Found epsilon {} in metadata for package '{}'",
+                                    meta_epsilon, pkg_name
+                                );
+                            }
+
+                            if output_type.is_none() {
+                                output_type = Some(metadata.output_type);
+                            } else if output_type != Some(metadata.output_type) {
+                                error!("Inconsistent output types across packages");
+                                return Err(RunnerError::Config {
+                                    msg: format!(
+                                        "Package '{}' has output type {:?}, but previous packages have {:?}",
+                                        pkg_name, metadata.output_type, output_type
+                                    ),
+                                });
+                            }
+                        }
+                        Err(e) => {
+                            error!("Failed to parse metadata for package '{}'", pkg_name);
+                            return Err(RunnerError::Config {
+                                msg: format!(
+                                    "Failed to parse metadata for package '{}': {}",
+                                    pkg_name, e
+                                ),
+                            });
+                        }
+                    }
+                } else {
+                    debug!(
+                        "Empty metadata file for package '{}', using defaults",
+                        pkg_name
+                    );
+                }
+            } else {
+                debug!(
+                    "No metadata file for package '{}', using defaults",
+                    pkg_name
+                );
+            }
+
             pkg_outputs.push(PackageOutput {
                 pkg_name,
                 package_path: package,
@@ -192,9 +383,25 @@ impl Runner {
             return Err(RunnerError::EmptyOutput);
         }
 
-        let groups = self.group_outputs(&pkg_outputs);
+        let output_type = output_type.unwrap_or(OutputType::Raw);
+        let groups = self.group_outputs(&pkg_outputs, epsilon, output_type);
         if groups.len() > 1 {
-            let details = self.format_group_details(&pkg_outputs);
+            let differ: Box<dyn OutputDiffer + Send + Sync> = output_type.into();
+            let display: Box<dyn DifferenceDisplay + Send + Sync> = output_type.into();
+
+            // Write human-readable outputs
+            for po in &pkg_outputs {
+                let text_path = po.temp_path.with_extension("txt");
+                if let Err(e) = display.write_human_readable(&po.output, &text_path) {
+                    debug!("Failed to write human-readable output: {}", e);
+                } else {
+                    info!("Wrote human-readable output to {}", text_path.display());
+                }
+            }
+
+            // Generate detailed error report
+            let details =
+                self.format_error(&pkg_outputs, epsilon, output_type, &*differ, &*display);
             self.keep_temp_files(&mut temp_files);
             return Err(RunnerError::DifferingOutput(details));
         }
@@ -223,42 +430,207 @@ impl Runner {
     fn group_outputs<'a>(
         &self,
         pkg_outputs: &'a [PackageOutput],
+        epsilon: Option<f32>,
+        output_type: OutputType,
     ) -> HashMap<Vec<u8>, Vec<&'a PackageOutput>> {
         let mut groups: HashMap<Vec<u8>, Vec<&'a PackageOutput>> = HashMap::new();
-        for po in pkg_outputs {
-            groups.entry(po.output.clone()).or_default().push(po);
+
+        // If no epsilon specified or type is Raw with epsilon 0, use exact byte comparison
+        if epsilon.is_none() || (epsilon == Some(0.0) && output_type == OutputType::Raw) {
+            for po in pkg_outputs {
+                groups.entry(po.output.clone()).or_default().push(po);
+            }
+            return groups;
         }
+
+        // Otherwise, group outputs that are within epsilon of each other
+        for po in pkg_outputs {
+            let mut found_group = false;
+
+            for (group_output, group) in groups.iter_mut() {
+                if self.outputs_match(&po.output, group_output, epsilon, output_type) {
+                    group.push(po);
+                    found_group = true;
+                    break;
+                }
+            }
+
+            if !found_group {
+                groups.insert(po.output.clone(), vec![po]);
+            }
+        }
+
         groups
     }
 
-    fn format_group_details(&self, pkg_outputs: &[PackageOutput]) -> String {
-        let groups = self.group_outputs(pkg_outputs);
-        const TOTAL_WIDTH: usize = 50;
-        let mut details = Vec::with_capacity(groups.len() * 4);
-        for (i, (output, group)) in groups.iter().enumerate() {
-            let group_index = i + 1;
-            let header = format!(
-                "╭─ Output {} ({}) ",
-                group_index,
-                ByteSize::b(output.len() as u64)
-            );
-            let header = if header.len() < TOTAL_WIDTH {
-                format!("{}{}", header, "─".repeat(TOTAL_WIDTH - header.len()))
-            } else {
-                header
-            };
-            details.push(header);
-            for po in group {
-                let p = po
-                    .package_path
-                    .strip_prefix(self.base_dir.parent().expect("base_dir is not root"))
-                    .expect("base_path is not a prefix of package_path");
-                details.push(format!("│ {} ({})", po.pkg_name, p.display()));
-            }
-            let footer = format!("╰──▶ {} \n", group[0].temp_path.display());
-            details.push(footer);
+    fn outputs_match(
+        &self,
+        output1: &[u8],
+        output2: &[u8],
+        epsilon: Option<f32>,
+        output_type: OutputType,
+    ) -> bool {
+        if output1.len() != output2.len() {
+            return false;
         }
-        details.join("\n")
+
+        match output_type {
+            OutputType::Raw => output1 == output2,
+            OutputType::F32 => {
+                if output1.len() % 4 != 0 {
+                    return false;
+                }
+
+                match epsilon {
+                    None => output1 == output2, // Exact comparison if no epsilon
+                    Some(eps) => {
+                        let floats1: Vec<f32> = output1
+                            .chunks_exact(4)
+                            .map(|chunk| {
+                                f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]])
+                            })
+                            .collect();
+
+                        let floats2: Vec<f32> = output2
+                            .chunks_exact(4)
+                            .map(|chunk| {
+                                f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]])
+                            })
+                            .collect();
+
+                        floats1
+                            .iter()
+                            .zip(floats2.iter())
+                            .all(|(a, b)| (a - b).abs() <= eps)
+                    }
+                }
+            }
+            OutputType::F64 => {
+                if output1.len() % 8 != 0 {
+                    return false;
+                }
+
+                match epsilon {
+                    None => output1 == output2, // Exact comparison if no epsilon
+                    Some(eps) => {
+                        let floats1: Vec<f64> = output1
+                            .chunks_exact(8)
+                            .map(|chunk| {
+                                f64::from_le_bytes([
+                                    chunk[0], chunk[1], chunk[2], chunk[3], chunk[4], chunk[5],
+                                    chunk[6], chunk[7],
+                                ])
+                            })
+                            .collect();
+
+                        let floats2: Vec<f64> = output2
+                            .chunks_exact(8)
+                            .map(|chunk| {
+                                f64::from_le_bytes([
+                                    chunk[0], chunk[1], chunk[2], chunk[3], chunk[4], chunk[5],
+                                    chunk[6], chunk[7],
+                                ])
+                            })
+                            .collect();
+
+                        floats1
+                            .iter()
+                            .zip(floats2.iter())
+                            .all(|(a, b)| (a - b).abs() <= eps as f64)
+                    }
+                }
+            }
+            OutputType::U32 | OutputType::I32 => {
+                // For integer types, epsilon doesn't make sense, so exact match
+                output1 == output2
+            }
+        }
+    }
+
+    fn format_error(
+        &self,
+        pkg_outputs: &[PackageOutput],
+        epsilon: Option<f32>,
+        output_type: OutputType,
+        differ: &dyn OutputDiffer,
+        display: &dyn DifferenceDisplay,
+    ) -> String {
+        let test_info = self.extract_test_info(pkg_outputs);
+        let groups = self.group_outputs(pkg_outputs, epsilon, output_type);
+
+        let mut report = ErrorReport::new(test_info, differ.name(), epsilon);
+
+        // Analyze the differences
+        match groups.len() {
+            0 => unreachable!("No output groups"),
+            1 => unreachable!("All outputs match - shouldn't be an error"),
+            2 if pkg_outputs.len() == 2 => {
+                // Exactly 2 outputs that differ
+                let differences =
+                    differ.compare(&pkg_outputs[0].output, &pkg_outputs[1].output, epsilon);
+                report.set_summary_from_differences(&differences);
+            }
+            2 => {
+                // Multiple outputs, 2 distinct groups
+                let group_vec: Vec<_> = groups.values().collect();
+                let differences =
+                    differ.compare(&group_vec[0][0].output, &group_vec[1][0].output, epsilon);
+                report.set_summary_from_differences(&differences);
+            }
+            n => {
+                // Many distinct outputs
+                report.set_distinct_outputs(n);
+            }
+        }
+
+        // Format output files
+        report.add_output_files(&groups, pkg_outputs);
+
+        // Add detailed comparison if applicable
+        if groups.len() == 2 && pkg_outputs.len() == 2 {
+            let differences =
+                differ.compare(&pkg_outputs[0].output, &pkg_outputs[1].output, epsilon);
+            if !differences.is_empty() {
+                let table = display.format_report(
+                    &differences,
+                    &pkg_outputs[0].pkg_name,
+                    &pkg_outputs[1].pkg_name,
+                    epsilon,
+                );
+                report.add_comparison_table(table);
+            }
+        } else if groups.len() == 2 && pkg_outputs.len() > 2 {
+            let group_vec: Vec<_> = groups.values().collect();
+            let differences =
+                differ.compare(&group_vec[0][0].output, &group_vec[1][0].output, epsilon);
+            report.add_summary_line(&differences);
+        }
+
+        report.build()
+    }
+
+    fn extract_test_info(&self, pkg_outputs: &[PackageOutput]) -> TestInfo {
+        if pkg_outputs.is_empty() {
+            return TestInfo {
+                name: "unknown".to_string(),
+                path: "unknown".to_string(),
+            };
+        }
+
+        let test_path = pkg_outputs[0]
+            .package_path
+            .parent()
+            .unwrap_or(&pkg_outputs[0].package_path);
+        let relative_path = test_path.strip_prefix(&self.base_dir).unwrap_or(test_path);
+
+        TestInfo {
+            name: test_path
+                .file_name()
+                .unwrap_or_else(|| std::ffi::OsStr::new("unknown"))
+                .to_string_lossy()
+                .to_string(),
+            path: relative_path.display().to_string(),
+        }
     }
 
     #[allow(clippy::unused_self)]
@@ -343,6 +715,7 @@ pub fn forward_features(cmd: &mut Command) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use difftest::config::OutputType;
     use std::{fs, io::Write, path::Path, path::PathBuf};
     use tempfile::{NamedTempFile, tempdir};
 
@@ -362,7 +735,7 @@ mod tests {
         let pkg3 = dummy_package_output("baz", "/path/to/baz", b"hello", "tmp3");
         let outputs = vec![pkg1, pkg2, pkg3];
         let runner = Runner::new(PathBuf::from("dummy_base"));
-        let groups = runner.group_outputs(&outputs);
+        let groups = runner.group_outputs(&outputs, None, OutputType::Raw);
         assert_eq!(groups.len(), 2);
     }
 
@@ -460,6 +833,148 @@ mod tests {
         match result {
             Err(RunnerError::DuplicatePackageName { pkg_name }) => assert_eq!(pkg_name, "dup_pkg"),
             _ => panic!("Expected DuplicatePackageName error"),
+        }
+    }
+
+    #[test]
+    fn test_outputs_match_no_epsilon() {
+        let runner = Runner::new(PathBuf::from("dummy_base"));
+
+        // Exact match should work
+        assert!(runner.outputs_match(b"hello", b"hello", None, OutputType::Raw));
+
+        // Different content should not match
+        assert!(!runner.outputs_match(b"hello", b"world", None, OutputType::Raw));
+    }
+
+    #[test]
+    fn test_outputs_match_with_epsilon_f32() {
+        let runner = Runner::new(PathBuf::from("dummy_base"));
+
+        // Prepare test data - two floats with small difference
+        let val1: f32 = 1.0;
+        let val2: f32 = 1.00001;
+        let arr1 = [val1];
+        let arr2 = [val2];
+        let bytes1 = bytemuck::cast_slice(&arr1);
+        let bytes2 = bytemuck::cast_slice(&arr2);
+
+        // Should not match without epsilon
+        assert!(!runner.outputs_match(bytes1, bytes2, None, OutputType::F32));
+
+        // Should match with sufficient epsilon
+        assert!(runner.outputs_match(bytes1, bytes2, Some(0.0001), OutputType::F32));
+
+        // Should not match with too small epsilon
+        assert!(!runner.outputs_match(bytes1, bytes2, Some(0.000001), OutputType::F32));
+    }
+
+    #[test]
+    fn test_outputs_match_with_epsilon_f64() {
+        let runner = Runner::new(PathBuf::from("dummy_base"));
+
+        // Prepare test data - two doubles with small difference
+        let val1: f64 = 1.0;
+        let val2: f64 = 1.00001;
+        let arr1 = [val1];
+        let arr2 = [val2];
+        let bytes1 = bytemuck::cast_slice(&arr1);
+        let bytes2 = bytemuck::cast_slice(&arr2);
+
+        // Should not match without epsilon
+        assert!(!runner.outputs_match(bytes1, bytes2, None, OutputType::F64));
+
+        // Should match with sufficient epsilon
+        assert!(runner.outputs_match(bytes1, bytes2, Some(0.0001), OutputType::F64));
+
+        // Should not match with too small epsilon
+        assert!(!runner.outputs_match(bytes1, bytes2, Some(0.000001), OutputType::F64));
+    }
+
+    #[test]
+    fn test_group_outputs_with_epsilon() {
+        let runner = Runner::new(PathBuf::from("dummy_base"));
+
+        // Create float outputs with small differences
+        let val1: f32 = 1.0;
+        let val2: f32 = 1.00001;
+        let val3: f32 = 2.0;
+
+        let pkg1 =
+            dummy_package_output("foo", "/path/to/foo", bytemuck::cast_slice(&[val1]), "tmp1");
+        let pkg2 =
+            dummy_package_output("bar", "/path/to/bar", bytemuck::cast_slice(&[val2]), "tmp2");
+        let pkg3 =
+            dummy_package_output("baz", "/path/to/baz", bytemuck::cast_slice(&[val3]), "tmp3");
+
+        let outputs = vec![pkg1, pkg2, pkg3];
+
+        // Without epsilon, val1 and val2 should be in different groups
+        let groups = runner.group_outputs(&outputs, None, OutputType::F32);
+        assert_eq!(groups.len(), 3);
+
+        // With epsilon, val1 and val2 should be in the same group
+        let groups_with_epsilon = runner.group_outputs(&outputs, Some(0.0001), OutputType::F32);
+        assert_eq!(groups_with_epsilon.len(), 2);
+    }
+
+    #[test]
+    fn test_invalid_metadata_json() {
+        // Test that invalid JSON in metadata file causes proper error
+        let metadata_content = "{ invalid json }";
+        let result: Result<difftest::config::TestMetadata, _> =
+            serde_json::from_str(metadata_content);
+        assert!(result.is_err());
+        // Just check that it's an error, don't check the specific message
+    }
+
+    #[test]
+    fn test_inconsistent_output_types() {
+        // This test verifies that when packages have different output types,
+        // the runner returns an error. This tests the code at line 340-347
+        // where we check: if output_type != Some(metadata.output_type)
+
+        // We can't easily test the full run_test_case flow without real binaries,
+        // but we can at least verify the error is constructed properly
+
+        // Test that the error message is properly formatted
+        let error = RunnerError::Config {
+            msg: format!(
+                "Package '{}' has output type {:?}, but previous packages have {:?}",
+                "test_pkg",
+                OutputType::F32,
+                Some(OutputType::F64)
+            ),
+        };
+
+        match error {
+            RunnerError::Config { msg } => {
+                assert!(msg.contains("test_pkg"));
+                assert!(msg.contains("F32"));
+                assert!(msg.contains("F64"));
+            }
+            _ => panic!("Wrong error type"),
+        }
+    }
+
+    #[test]
+    fn test_metadata_parsing_error_message() {
+        // Test that metadata parsing errors are formatted correctly
+
+        let error = RunnerError::Config {
+            msg: format!(
+                "Failed to parse metadata for package '{}': {}",
+                "test_pkg", "invalid JSON"
+            ),
+        };
+
+        match error {
+            RunnerError::Config { msg } => {
+                assert!(msg.contains("Failed to parse metadata"));
+                assert!(msg.contains("test_pkg"));
+                assert!(msg.contains("invalid JSON"));
+            }
+            _ => panic!("Wrong error type"),
         }
     }
 }

@@ -10,6 +10,7 @@ use tester::{
 };
 use tracing_subscriber::FmtSubscriber;
 
+mod differ;
 mod runner;
 use runner::Runner;
 
