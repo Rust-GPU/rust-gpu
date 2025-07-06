@@ -3,13 +3,13 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::CodegenCx;
 use crate::abi::ConvSpirvType;
-use crate::attr::{AggregatedSpirvAttributes, Entry, Spanned, SpecConstant};
+use crate::attr::{AggregatedSpirvAttributes, Entry, ExecutionModeExtra, Spanned, SpecConstant};
 use crate::builder::Builder;
 use crate::builder_spirv::{SpirvValue, SpirvValueExt};
 use crate::spirv_type::SpirvType;
 use rspirv::dr::Operand;
 use rspirv::spirv::{
-    Capability, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
+    Capability, Decoration, Dim, ExecutionMode, ExecutionModel, FunctionControl, StorageClass, Word,
 };
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods};
 use rustc_data_structures::fx::FxHashMap;
@@ -139,6 +139,7 @@ impl<'tcx> CodegenCx<'tcx> {
             hir_params,
             name,
             entry.execution_model,
+            &entry.execution_modes,
         );
         let mut emit = self.emit_global();
         entry
@@ -157,6 +158,7 @@ impl<'tcx> CodegenCx<'tcx> {
         hir_params: &[hir::Param<'tcx>],
         name: String,
         execution_model: ExecutionModel,
+        execution_modes: &[(ExecutionMode, ExecutionModeExtra)],
     ) -> Word {
         let stub_fn = {
             let void = SpirvType::Void.def(span, self);
@@ -182,6 +184,7 @@ impl<'tcx> CodegenCx<'tcx> {
             bx.set_span(hir_param.span);
             self.declare_shader_interface_for_param(
                 execution_model,
+                execution_modes,
                 entry_arg_abi,
                 hir_param,
                 &mut op_entry_point_interface_operands,
@@ -419,6 +422,7 @@ impl<'tcx> CodegenCx<'tcx> {
     fn declare_shader_interface_for_param(
         &self,
         execution_model: ExecutionModel,
+        execution_modes: &[(ExecutionMode, ExecutionModeExtra)],
         entry_arg_abi: &ArgAbi<'tcx, Ty<'tcx>>,
         hir_param: &hir::Param<'tcx>,
         op_entry_point_interface_operands: &mut Vec<Word>,
@@ -427,6 +431,21 @@ impl<'tcx> CodegenCx<'tcx> {
         decoration_locations: &mut FxHashMap<StorageClass, u32>,
     ) {
         let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.hir().attrs(hir_param.hir_id));
+
+        // Handle WorkgroupSize builtin specially as it's a constant, not a variable
+        if let Some(builtin) = &attrs.builtin {
+            if builtin.value == rspirv::spirv::BuiltIn::WorkgroupSize {
+                self.handle_workgroup_size_builtin(
+                    execution_modes,
+                    entry_arg_abi,
+                    hir_param,
+                    &attrs,
+                    bx,
+                    call_args,
+                );
+                return;
+            }
+        }
 
         let EntryParamDeducedFromRustRefOrValue {
             value_layout,
@@ -983,5 +1002,79 @@ impl<'tcx> CodegenCx<'tcx> {
                 _ => (),
             }
         }
+    }
+
+    fn handle_workgroup_size_builtin(
+        &self,
+        execution_modes: &[(ExecutionMode, ExecutionModeExtra)],
+        entry_arg_abi: &ArgAbi<'tcx, Ty<'tcx>>,
+        hir_param: &hir::Param<'tcx>,
+        attrs: &AggregatedSpirvAttributes,
+        _bx: &mut Builder<'_, 'tcx>,
+        call_args: &mut Vec<SpirvValue>,
+    ) {
+        // Find the LocalSize execution mode
+        let local_size = execution_modes.iter().find_map(|(mode, extra)| {
+            if *mode == ExecutionMode::LocalSize {
+                Some(extra.as_ref())
+            } else {
+                None
+            }
+        });
+
+        let local_size_values = match local_size {
+            Some(values) => values,
+            None => {
+                self.tcx.dcx().span_err(
+                    attrs.builtin.as_ref().unwrap().span,
+                    "WorkgroupSize builtin requires LocalSize execution mode to be set (e.g., #[spirv(compute(threads(x, y, z)))])",
+                );
+                return;
+            }
+        };
+
+        // Validate the parameter type and get the SPIR-V type
+        let value_spirv_type = entry_arg_abi.layout.spirv_type(hir_param.ty_span, self);
+        let expected_element_type = SpirvType::Integer(32, false).def(hir_param.span, self);
+        let expected_vec_type = SpirvType::Vector {
+            element: expected_element_type,
+            count: 3,
+        }
+        .def(hir_param.span, self);
+
+        // Verify the type matches what we expect (Vec3<u32>)
+        if value_spirv_type != expected_vec_type {
+            self.tcx.dcx().span_err(
+                hir_param.ty_span,
+                "WorkgroupSize builtin must have type UVec3",
+            );
+            return;
+        }
+
+        let components: Vec<_> = local_size_values
+            .iter()
+            .map(|&size| self.constant_u32(hir_param.span, size).def_cx(self))
+            .collect();
+
+        let const_composite_id = self
+            .emit_global()
+            .constant_composite(expected_vec_type, components);
+
+        // Decorate with BuiltIn WorkgroupSize
+        self.emit_global().decorate(
+            const_composite_id,
+            Decoration::BuiltIn,
+            std::iter::once(Operand::BuiltIn(rspirv::spirv::BuiltIn::WorkgroupSize)),
+        );
+
+        // Emit OpName
+        if let hir::PatKind::Binding(_, _, ident, _) = &hir_param.pat.kind {
+            self.emit_global()
+                .name(const_composite_id, ident.to_string());
+        }
+
+        // Add the constant as the call argument
+        let value = const_composite_id.with_type(expected_vec_type);
+        call_args.push(value);
     }
 }
