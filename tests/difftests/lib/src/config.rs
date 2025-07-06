@@ -27,6 +27,10 @@ pub struct TestMetadata {
     /// (F32, F64, etc.) to enable epsilon-based comparison for numeric types.
     #[serde(default)]
     pub output_type: OutputType,
+
+    /// If present, indicates this test was skipped with the given reason
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub skipped: Option<String>,
 }
 
 /// Specifies how test output data should be interpreted for comparison

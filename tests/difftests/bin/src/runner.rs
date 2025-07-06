@@ -336,6 +336,12 @@ impl Runner {
                 if !metadata_content.trim().is_empty() {
                     match serde_json::from_str::<TestMetadata>(&metadata_content) {
                         Ok(metadata) => {
+                            // Check if test was skipped
+                            if let Some(skip_reason) = &metadata.skipped {
+                                info!("Package '{}' was skipped: {}", pkg_name, skip_reason);
+                                continue;
+                            }
+
                             if let Some(meta_epsilon) = metadata.epsilon {
                                 epsilon = match epsilon {
                                     Some(e) => Some(e.max(meta_epsilon)),
@@ -388,6 +394,12 @@ impl Runner {
                 output: output_bytes,
                 temp_path: temp_output_path,
             });
+        }
+
+        // Check if we have any valid outputs
+        if pkg_outputs.is_empty() {
+            error!("All packages were skipped. At least one package must produce output.");
+            return Err(RunnerError::EmptyOutput);
         }
 
         if pkg_outputs.iter().all(|po| po.output.is_empty()) {
