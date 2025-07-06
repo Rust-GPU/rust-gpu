@@ -52,6 +52,8 @@ fn main_cs(@builtin(local_invocation_id) local_id: vec3<u32>) {
         shared_data[lid] += shared_data[lid + 1u];
     }
     
+    workgroupBarrier();
+    
     // Write final result
     if (lid == 0u) {
         output[0] = shared_data[0];
