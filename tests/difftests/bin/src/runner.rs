@@ -383,7 +383,7 @@ impl Runner {
             return Err(RunnerError::EmptyOutput);
         }
 
-        let output_type = output_type.unwrap_or(OutputType::Raw);
+        let output_type = output_type.unwrap_or_default();
         let groups = self.group_outputs(&pkg_outputs, epsilon, output_type);
         if groups.len() > 1 {
             let differ: Box<dyn OutputDiffer + Send + Sync> = output_type.into();
