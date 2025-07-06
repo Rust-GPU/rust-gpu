@@ -34,6 +34,7 @@ fn main() {
     let metadata = difftest::config::TestMetadata {
         epsilon: None,
         output_type: difftest::config::OutputType::U32,
+        ..Default::default()
     };
     config.write_metadata(&metadata).unwrap();
 

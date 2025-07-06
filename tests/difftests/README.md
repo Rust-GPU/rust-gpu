@@ -99,11 +99,17 @@ The library provides helper types for common test patterns:
 - `WgpuComputeTestMultiBuffer` - Multi-buffer compute shader test with input/output
   separation
 - `WgpuComputeTestPushConstant` - Compute shader test with push constants support
+- `Skip` - Marks a test variant as skipped with a reason
 
 **Shader source types:**
 
 - `RustComputeShader` - Compiles the current crate as a Rust GPU shader
 - `WgslComputeShader` - Loads WGSL shader from file (shader.wgsl or compute.wgsl)
+
+**Backend types:**
+
+- `WgpuBackend` - Default wgpu-based compute backend
+- `VulkanoBackend` - Vulkano-based compute backend (useful for testing different GPU drivers)
 
 For examples, see:
 
@@ -204,6 +210,40 @@ Reports all of the above, plus:
 The harness automatically writes human-readable `.txt` files alongside binary outputs.
 For floating-point data (F32/F64), these show the array values in decimal format. For
 raw/integer data, these show the values as hex bytes or integers
+
+## Skipping Tests on Specific Platforms
+
+Sometimes a test variant needs to be skipped on certain platforms (e.g., due to driver 
+issues or platform limitations). The difftest framework provides a clean way to handle
+this using the `Skip` scaffolding type:
+
+```rust
+use difftest::scaffold::Skip;
+
+fn main() {
+    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+    
+    // Skip on macOS due to platform-specific issues
+    #[cfg(target_os = "macos")]
+    {
+        let skip = Skip::new("This test is not supported on macOS");
+        skip.run_test(&config).unwrap();
+        return;
+    }
+    
+    // Run the actual test on other platforms
+    #[cfg(not(target_os = "macos"))]
+    {
+        // ... normal test implementation ...
+    }
+}
+```
+
+When a test is skipped:
+- The skip reason is recorded in the test metadata
+- The test runner logs the skip reason
+- The test doesn't contribute to the output comparison
+- If all variants are skipped, the test fails with an error
 
 ## Harness logs
 
