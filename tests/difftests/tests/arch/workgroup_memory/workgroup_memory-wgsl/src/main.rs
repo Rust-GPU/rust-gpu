@@ -29,5 +29,12 @@ fn main() {
         buffers,
     );
 
+    // Write metadata for U32 comparison
+    let metadata = difftest::config::TestMetadata {
+        epsilon: None,
+        output_type: difftest::config::OutputType::U32,
+    };
+    config.write_metadata(&metadata).unwrap();
+
     test.run_test(&config).unwrap();
 }
