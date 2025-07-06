@@ -556,8 +556,6 @@ struct Generic {
 /// pass when it discovers the need for a particular variant.
 #[derive(Clone, Debug, Default)]
 struct ArrayLayoutVariants {
-    /// Variant that *keeps* the `ArrayStride` decoration, if it exists.
-    layout_required_id: Option<Word>,
     /// Variant that *omits* the `ArrayStride` decoration.
     layout_forbidden_id: Option<Word>,
 }
@@ -2483,9 +2481,10 @@ impl<'a, S: Specialization> Expander<'a, S> {
             let mut inst = inst;
             // Ensure even non-generic `OpTypePointer`s use the proper array variant.
             if inst.class.opcode == Op::TypePointer {
-                if let (Some(Operand::StorageClass(sc)), Some(Operand::IdRef(pointee_id))) =
-                    (inst.operands.first().cloned(), inst.operands.get(1).cloned())
-                {
+                if let (Some(Operand::StorageClass(sc)), Some(Operand::IdRef(pointee_id))) = (
+                    inst.operands.first().cloned(),
+                    inst.operands.get(1).cloned(),
+                ) {
                     let need_no_stride = !self.specializer.allows_layout(sc);
                     let variant_id = self.get_array_variant(
                         pointee_id,
@@ -2728,57 +2727,113 @@ impl<'a, S: Specialization> Expander<'a, S> {
         need_no_stride: bool,
         new_types: &mut Vec<Instruction>,
     ) -> Word {
-        // Only care about true arrays.
-        // Only care about true arrays. Look up the defining instruction from the cached map,
-        // as the original `types_global_values` list has been temporarily moved out of the
-        // `Module` during expansion.
-        let original_inst_opt = self.original_types.get(&original_id).cloned();
-
-        let original_inst = match original_inst_opt {
-            Some(i) if matches!(i.class.opcode, Op::TypeArray | Op::TypeRuntimeArray) => i,
-            _ => return original_id,
+        // Look up the defining instruction from the cached map, as the original
+        // `types_global_values` list has been temporarily moved out of the `Module`
+        // during expansion.
+        let original_inst = match self.original_types.get(&original_id) {
+            Some(i) => i.clone(),
+            None => return original_id,
         };
 
-        // Consult shared cache first with a short-lived borrow to avoid conflicts during
-        // recursive calls further below.
-        if need_no_stride {
-            if let Some(id) = self
-                .specializer
-                .array_layout_variants
-                .borrow()
-                .get(&original_id)
-                .and_then(|v| v.layout_forbidden_id)
-            {
-                return id;
-            }
-        } else {
+        // Fast-path if we don't need to strip layout information.
+        if !need_no_stride {
             return original_id;
         }
 
-        // Create stride-less clone.
-        let new_id = self.builder.id();
-        let mut new_inst = original_inst.clone();
-        new_inst.result_id = Some(new_id);
-
-        // Recurse into element type (array of arrays).
-        if let Some(&Operand::IdRef(elem_ty)) = original_inst.operands.first() {
-            let nested_variant = self.get_array_variant(elem_ty, need_no_stride, new_types);
-            if nested_variant != elem_ty {
-                new_inst.operands[0] = Operand::IdRef(nested_variant);
-            }
+        // If we already produced a stride-less variant for this type, just return it.
+        if let Some(id) = self
+            .specializer
+            .array_layout_variants
+            .borrow()
+            .get(&original_id)
+            .and_then(|v| v.layout_forbidden_id)
+        {
+            return id;
         }
 
-        new_types.push(new_inst.clone());
-        // Record in the lookup so that future queries can find this variant.
-        self.original_types.insert(new_id, new_inst.clone());
+        match original_inst.class.opcode {
+            Op::TypeArray | Op::TypeRuntimeArray => {
+                // Handle arrays: remove the `ArrayStride` decoration (by simply cloning the
+                // instruction – the decoration lives in `OpDecorate`).
 
-        // Update cache entry now (new borrow).
-        self.specializer
-            .array_layout_variants
-            .borrow_mut()
-            .entry(original_id)
-            .or_default()
-            .layout_forbidden_id = Some(new_id);
-        new_id
+                let new_id = self.builder.id();
+                let mut new_inst = original_inst.clone();
+                new_inst.result_id = Some(new_id);
+
+                // Recurse into the element type (arrays of arrays).
+                if let Some(&Operand::IdRef(elem_ty)) = original_inst.operands.first() {
+                    let nested_variant = self.get_array_variant(elem_ty, need_no_stride, new_types);
+                    if nested_variant != elem_ty {
+                        new_inst.operands[0] = Operand::IdRef(nested_variant);
+                    }
+                }
+
+                new_types.push(new_inst.clone());
+                // Cache definition for later lookups.
+                self.original_types.insert(new_id, new_inst);
+
+                self.specializer
+                    .array_layout_variants
+                    .borrow_mut()
+                    .entry(original_id)
+                    .or_default()
+                    .layout_forbidden_id = Some(new_id);
+
+                new_id
+            }
+
+            Op::TypeStruct => {
+                // For structs, we need to create a clone that references the stride-less
+                // variants of any member types that themselves changed.
+
+                // Track whether any member type changed – if not, we can reuse the original.
+                let mut changed = false;
+                let mut new_operands = original_inst.operands.clone();
+
+                for (idx, op) in original_inst.operands.iter().enumerate() {
+                    if let Operand::IdRef(member_ty) = op {
+                        let new_member_ty =
+                            self.get_array_variant(*member_ty, need_no_stride, new_types);
+                        if new_member_ty != *member_ty {
+                            new_operands[idx] = Operand::IdRef(new_member_ty);
+                            changed = true;
+                        }
+                    }
+                }
+
+                if !changed {
+                    // Even if no member type changed, cache lookup to avoid redundant work.
+                    self.specializer
+                        .array_layout_variants
+                        .borrow_mut()
+                        .entry(original_id)
+                        .or_default()
+                        .layout_forbidden_id = Some(original_id);
+                    return original_id;
+                }
+
+                let new_id = self.builder.id();
+                let mut new_inst = original_inst.clone();
+                new_inst.result_id = Some(new_id);
+                new_inst.operands = new_operands;
+
+                new_types.push(new_inst.clone());
+                self.original_types.insert(new_id, new_inst);
+
+                self.specializer
+                    .array_layout_variants
+                    .borrow_mut()
+                    .entry(original_id)
+                    .or_default()
+                    .layout_forbidden_id = Some(new_id);
+
+                new_id
+            }
+
+            _ => {
+                // Not an array or struct – nothing to do.
+                original_id
+            }
+        }
     }
 }

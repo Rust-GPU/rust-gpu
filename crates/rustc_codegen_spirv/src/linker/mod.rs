@@ -1,7 +1,6 @@
 #[cfg(test)]
 mod test;
 
-mod array_stride_fixer;
 mod dce;
 mod destructure_composites;
 mod duplicates;
