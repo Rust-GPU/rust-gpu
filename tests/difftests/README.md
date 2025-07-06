@@ -23,7 +23,9 @@ discrepancies across implementations.
 
 3. **Output Comparison**
    - The harness reads outputs as opaque bytes.
-   - If outputs differ, the test fails.
+   - If outputs differ, the test fails with detailed error reporting.
+   - Tests can specify metadata to enable smarter epsilon-based comparisons and human
+     display of data.
 
 Because the difftest harness merely runs Rust binaries in a directory, it supports
 testing various setups. For example, you can:
@@ -54,10 +56,13 @@ Each test binary must:
 3. Load the config using `difftest::Config::from_path`.
 4. Write its computed output to `output_path`.
 
+The test binary can _optionally_ write test metadata to `metadata_path` for custom
+comparison behavior.
+
 For example:
 
 ```rust
-use difftest::config::Config;
+use difftest::config::{Config, TestMetadata, OutputType};
 use std::{env, fs, io::Write};
 
 fn main() {
@@ -70,6 +75,13 @@ fn main() {
     let mut file = fs::File::create(&config.output_path)
         .expect("Failed to create output file");
     file.write_all(&output).expect("Failed to write output");
+
+    // Optional: Write metadata for floating-point comparison
+    let metadata = TestMetadata {
+        epsilon: Some(0.00001),  // Allow differences up to 1e-5
+        output_type: OutputType::F32,  // Interpret output as f32 array
+    };
+    config.write_metadata(&metadata).expect("Failed to write metadata");
 }
 ```
 
@@ -79,38 +91,69 @@ Of course, many test will have common host and GPU needs. Rather than require ev
 binary to reimplement functionality, we have created some common tests with reasonable
 defaults in the `difftest` library.
 
-For example, this will handle compiling the current crate as a Rust compute shader,
-running it via `wgpu`, and writing the output to the appropriate place:
+The library provides helper types for common test patterns:
+
+**Test types:**
+
+- `WgpuComputeTest` - Single buffer compute shader test
+- `WgpuComputeTestMultiBuffer` - Multi-buffer compute shader test with input/output
+  separation
+- `WgpuComputeTestPushConstant` - Compute shader test with push constants support
+
+**Shader source types:**
+
+- `RustComputeShader` - Compiles the current crate as a Rust GPU shader
+- `WgslComputeShader` - Loads WGSL shader from file (shader.wgsl or compute.wgsl)
+
+For examples, see:
+
+- [`tests/lang/core/ops/math_ops/`](tests/lang/core/ops/math_ops/) - Multi-buffer test
+  with floating-point metadata
+- [`tests/storage_class/push_constant/`](tests/storage_class/push_constant/) - Push
+  constants usage
+- [`tests/arch/workgroup_memory/`](tests/arch/workgroup_memory/) - Workgroup memory
+  usage
+
+### Test Metadata
+
+Tests producing floating-point outputs can specify comparison metadata to handle
+platform-specific precision differences. The metadata controls how the harness compares
+outputs:
 
 ```rust
-fn main() {
-    // Load the config from the harness.
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+use difftest::config::{TestMetadata, OutputType};
 
-    // Define test parameters, loading the rust shader from the current crate.
-    let test = WgpuComputeTest::new(RustComputeShader::default(), [1, 1, 1], 1024);
+// Write metadata before or after writing output
+let metadata = TestMetadata {
+    epsilon: Some(0.00001),        // Maximum allowed difference (default: None)
+    output_type: OutputType::F32,  // How to interpret output data (default: Raw)
+};
+config.write_metadata(&metadata)?;
 
-    // Run the test and write the output to a file.
-    test.run_test(&config).unwrap();
-}
+// Alternative: Use the helper method for common cases
+let metadata = TestMetadata::with_epsilon(0.00001);  // Sets epsilon, keeps default output_type
+config.write_metadata(&metadata)?;
 ```
 
-and this will handle loading a shader named `shader.wgsl` or `compute.wgsl` in the root
-of the current crate, running it via `wgpu`, and writing the output to the appropriate
-place:
+**Metadata fields:**
 
-```rust
-fn main() {
-    // Load the config from the harness.
-    let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
+- `epsilon`: Optional maximum allowed absolute difference between values. When `None`
+  (default), exact byte-for-byte comparison is used. When `Some(value)`, floating-point
+  values are compared with the specified tolerance.
+- `output_type`: Specifies how to interpret output data:
+  - `Raw`: Exact byte comparison (default)
+  - `F32`: Interpret as array of 32-bit floats, enables epsilon comparison
+  - `F64`: Interpret as array of 64-bit floats, enables epsilon comparison
+  - `U32`/`I32`: Interpret as 32-bit integers (epsilon ignored)
 
-    // Define test parameters, loading the wgsl shader from the crate directory.
-    let test = WgpuComputeTest::new(WgslComputeShader::default(), [1, 1, 1], 1024);
+**Important notes:**
 
-    // Run the test and write the output to a file.
-    test.run_test(&config).unwrap();
-}
-```
+- If no metadata file is written or the file is empty, the harness uses exact byte
+  comparison.
+- All test packages must have consistent metadata. If packages specify different
+  `output_type` values, the test will fail with an error.
+- Invalid JSON in metadata files will cause the test to fail immediately.
+- The `epsilon` field is only used when `output_type` is `F32` or `F64`.
 
 ## Running Tests
 
@@ -137,13 +180,32 @@ cargo difftest --nocapture
 
 ## Debugging Failing Tests
 
-If outputs differ, the error message lists:
+When outputs differ, the harness provides detailed error reporting:
 
-- Binary package names
-- Their directories
-- Output file paths
+### For raw byte differences
 
-Inspect the output files with your preferred tools to determine the differences.
+- Shows which packages produced different outputs
+- Lists output file paths for manual inspection
+- Groups packages by their output values
+
+Inspect the output files with your preferred tools to determine the root cause.
+
+### For floating-point differences (with `output_type: F32/F64`)
+
+Reports all of the above, plus:
+
+- Actual floating-point values in a comparison table
+- Shows the maximum difference found
+- Indicates the epsilon threshold (if specified)
+- Highlights specific values that exceed the tolerance
+
+### Additional output files
+
+The harness automatically writes human-readable `.txt` files alongside binary outputs.
+For floating-point data (F32/F64), these show the array values in decimal format. For
+raw/integer data, these show the values as hex bytes or integers
+
+## Harness logs
 
 If you suspect a bug in the test harness, you can view detailed test harness logs:
 

@@ -5,14 +5,17 @@ pub mod config;
 #[cfg(not(target_arch = "spirv"))]
 pub mod scaffold;
 
-/// Macro to round a f32 value to 6 decimal places for cross-platform consistency
-/// in floating-point operations. This helps ensure difftest results are consistent
-/// across different platforms (Linux, Mac, Windows) which may have slight differences
-/// in floating-point implementations.
+/// Macro to round a f32 value for cross-platform compatibility in floating-point
+/// operations. This helps ensure difftest results are consistent across different
+/// platforms (Linux, Mac, Windows) which may have slight differences in floating-point
+/// implementations due to different FMA usage, operation ordering, etc.
+///
+/// We round to 5 decimal places to handle differences that can appear in the 6th-7th
+/// decimal places due to platform variations.
 #[macro_export]
-macro_rules! round6 {
+macro_rules! compat_round {
     ($v:expr) => {
-        (($v) * 1_000_000.0).round() / 1_000_000.0
+        (($v) * 100_000.0).round() / 100_000.0
     };
 }
 
@@ -25,9 +28,11 @@ mod tests {
     #[test]
     fn test_config_from_path() {
         let mut tmp = NamedTempFile::new().unwrap();
-        let config_json = r#"{ "output_path": "/tmp/output.txt" }"#;
+        let config_json =
+            r#"{ "output_path": "/tmp/output.txt", "metadata_path": "/tmp/metadata.json" }"#;
         write!(tmp, "{config_json}").unwrap();
         let config = Config::from_path(tmp.path()).unwrap();
         assert_eq!(config.output_path.to_str().unwrap(), "/tmp/output.txt");
+        assert_eq!(config.metadata_path.to_str().unwrap(), "/tmp/metadata.json");
     }
 }

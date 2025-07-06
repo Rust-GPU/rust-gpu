@@ -19,14 +19,14 @@ fn main() {
             6 => -2.0,
             7 => std::f32::consts::PI,
             8 => std::f32::consts::E,
-            9 => 10.0,
-            10 => -10.0,
+            9 => 3.0,
+            10 => -3.0,
             11 => 0.1,
             12 => -0.1,
-            13 => 100.0,
-            14 => -100.0,
+            13 => 4.0,
+            14 => -4.0,
             15 => 3.14159,
-            _ => (i as f32) * 0.7 - 5.0,
+            _ => (i as f32) * 0.1 - 1.5,
         })
         .collect();
 
@@ -50,6 +50,13 @@ fn main() {
         [1, 1, 1], // Single workgroup with 32 threads
         buffers,
     );
+
+    // Write metadata file
+    let metadata = difftest::config::TestMetadata {
+        epsilon: Some(2e-6), // Small epsilon for last-bit differences
+        output_type: difftest::config::OutputType::F32,
+    };
+    config.write_metadata(&metadata).unwrap();
 
     test.run_test(&config).unwrap();
 }

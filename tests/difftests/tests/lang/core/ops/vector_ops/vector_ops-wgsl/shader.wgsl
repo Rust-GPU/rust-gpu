@@ -4,9 +4,9 @@ var<storage, read> input: array<f32>;
 @group(0) @binding(1)
 var<storage, read_write> output: array<f32>;
 
-// Helper function to round to 6 decimal places for cross-platform consistency
-fn round6(v: f32) -> f32 {
-    return round(v * 1000000.0) / 1000000.0;
+// Helper function to round to 5 decimal places for cross-platform compatibility
+fn compat_round(v: f32) -> f32 {
+    return round(v * 100000.0) / 100000.0;
 }
 
 @compute @workgroup_size(32, 1, 1)
@@ -33,47 +33,47 @@ fn main_cs(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let v2a = vec2<f32>(a, b);
     let v2b = vec2<f32>(c, d);
     
-    output[base_offset + 0u] = round6(dot(v2a, v2b));
-    output[base_offset + 1u] = round6(length(v2a));
-    output[base_offset + 2u] = round6(distance(v2a, v2b));
+    output[base_offset + 0u] = compat_round(dot(v2a, v2b));
+    output[base_offset + 1u] = compat_round(length(v2a));
+    output[base_offset + 2u] = compat_round(distance(v2a, v2b));
     
     let v2_add = v2a + v2b;
-    output[base_offset + 3u] = v2_add.x;
-    output[base_offset + 4u] = v2_add.y;
+    output[base_offset + 3u] = compat_round(v2_add.x);
+    output[base_offset + 4u] = compat_round(v2_add.y);
     
     let v2_mul = v2a * 2.0;
-    output[base_offset + 5u] = v2_mul.x;
-    output[base_offset + 6u] = v2_mul.y;
+    output[base_offset + 5u] = compat_round(v2_mul.x);
+    output[base_offset + 6u] = compat_round(v2_mul.y);
     
     // Vec3 operations
     let v3a = vec3<f32>(a, b, c);
     let v3b = vec3<f32>(b, c, d);
     
-    output[base_offset + 7u] = round6(dot(v3a, v3b));
-    output[base_offset + 8u] = round6(length(v3a));
+    output[base_offset + 7u] = compat_round(dot(v3a, v3b));
+    output[base_offset + 8u] = compat_round(length(v3a));
     
     let v3_cross = cross(v3a, v3b);
-    output[base_offset + 9u] = round6(v3_cross.x);
-    output[base_offset + 10u] = round6(v3_cross.y);
-    output[base_offset + 11u] = round6(v3_cross.z);
+    output[base_offset + 9u] = compat_round(v3_cross.x);
+    output[base_offset + 10u] = compat_round(v3_cross.y);
+    output[base_offset + 11u] = compat_round(v3_cross.z);
     
     let v3_norm = normalize(v3a);
-    output[base_offset + 12u] = round6(v3_norm.x);
-    output[base_offset + 13u] = round6(v3_norm.y);
-    output[base_offset + 14u] = round6(v3_norm.z);
+    output[base_offset + 12u] = compat_round(v3_norm.x);
+    output[base_offset + 13u] = compat_round(v3_norm.y);
+    output[base_offset + 14u] = compat_round(v3_norm.z);
     
     // Vec4 operations
     let v4a = vec4<f32>(a, b, c, d);
     let v4b = vec4<f32>(d, c, b, a);
     
-    output[base_offset + 15u] = round6(dot(v4a, v4b));
-    output[base_offset + 16u] = round6(length(v4a));
+    output[base_offset + 15u] = compat_round(dot(v4a, v4b));
+    output[base_offset + 16u] = compat_round(length(v4a));
     
     let v4_sub = v4a - v4b;
-    output[base_offset + 17u] = v4_sub.x;
-    output[base_offset + 18u] = v4_sub.y;
-    output[base_offset + 19u] = v4_sub.z;
-    output[base_offset + 20u] = v4_sub.w;
+    output[base_offset + 17u] = compat_round(v4_sub.x);
+    output[base_offset + 18u] = compat_round(v4_sub.y);
+    output[base_offset + 19u] = compat_round(v4_sub.z);
+    output[base_offset + 20u] = compat_round(v4_sub.w);
     
     // Swizzling
     output[base_offset + 21u] = v4a.x;

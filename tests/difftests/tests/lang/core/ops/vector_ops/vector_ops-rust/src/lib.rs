@@ -1,6 +1,6 @@
 #![no_std]
 
-use difftest::round6;
+use difftest::compat_round;
 use spirv_std::glam::{UVec2, UVec3, UVec4, Vec2, Vec3, Vec4, Vec4Swizzles};
 #[allow(unused_imports)]
 use spirv_std::num_traits::Float;
@@ -34,47 +34,47 @@ pub fn main_cs(
     let v2a = Vec2::new(a, b);
     let v2b = Vec2::new(c, d);
 
-    output[base_offset + 0] = round6!(v2a.dot(v2b));
-    output[base_offset + 1] = round6!(v2a.length());
-    output[base_offset + 2] = round6!(v2a.distance(v2b));
+    output[base_offset + 0] = compat_round!(v2a.dot(v2b));
+    output[base_offset + 1] = compat_round!(v2a.length());
+    output[base_offset + 2] = compat_round!(v2a.distance(v2b));
 
     let v2_add = v2a + v2b;
-    output[base_offset + 3] = v2_add.x;
-    output[base_offset + 4] = v2_add.y;
+    output[base_offset + 3] = compat_round!(v2_add.x);
+    output[base_offset + 4] = compat_round!(v2_add.y);
 
     let v2_mul = v2a * 2.0;
-    output[base_offset + 5] = v2_mul.x;
-    output[base_offset + 6] = v2_mul.y;
+    output[base_offset + 5] = compat_round!(v2_mul.x);
+    output[base_offset + 6] = compat_round!(v2_mul.y);
 
     // Vec3 operations
     let v3a = Vec3::new(a, b, c);
     let v3b = Vec3::new(b, c, d);
 
-    output[base_offset + 7] = round6!(v3a.dot(v3b));
-    output[base_offset + 8] = round6!(v3a.length());
+    output[base_offset + 7] = compat_round!(v3a.dot(v3b));
+    output[base_offset + 8] = compat_round!(v3a.length());
 
     let v3_cross = v3a.cross(v3b);
-    output[base_offset + 9] = round6!(v3_cross.x);
-    output[base_offset + 10] = round6!(v3_cross.y);
-    output[base_offset + 11] = round6!(v3_cross.z);
+    output[base_offset + 9] = compat_round!(v3_cross.x);
+    output[base_offset + 10] = compat_round!(v3_cross.y);
+    output[base_offset + 11] = compat_round!(v3_cross.z);
 
     let v3_norm = v3a.normalize();
-    output[base_offset + 12] = round6!(v3_norm.x);
-    output[base_offset + 13] = round6!(v3_norm.y);
-    output[base_offset + 14] = round6!(v3_norm.z);
+    output[base_offset + 12] = compat_round!(v3_norm.x);
+    output[base_offset + 13] = compat_round!(v3_norm.y);
+    output[base_offset + 14] = compat_round!(v3_norm.z);
 
     // Vec4 operations
     let v4a = Vec4::new(a, b, c, d);
     let v4b = Vec4::new(d, c, b, a);
 
-    output[base_offset + 15] = round6!(v4a.dot(v4b));
-    output[base_offset + 16] = round6!(v4a.length());
+    output[base_offset + 15] = compat_round!(v4a.dot(v4b));
+    output[base_offset + 16] = compat_round!(v4a.length());
 
     let v4_sub = v4a - v4b;
-    output[base_offset + 17] = v4_sub.x;
-    output[base_offset + 18] = v4_sub.y;
-    output[base_offset + 19] = v4_sub.z;
-    output[base_offset + 20] = v4_sub.w;
+    output[base_offset + 17] = compat_round!(v4_sub.x);
+    output[base_offset + 18] = compat_round!(v4_sub.y);
+    output[base_offset + 19] = compat_round!(v4_sub.z);
+    output[base_offset + 20] = compat_round!(v4_sub.w);
 
     // Swizzling
     output[base_offset + 21] = v4a.x;

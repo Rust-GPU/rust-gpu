@@ -1,6 +1,6 @@
 #![no_std]
 
-use difftest::round6;
+use difftest::compat_round;
 #[allow(unused_imports)]
 use spirv_std::num_traits::Float;
 use spirv_std::spirv;
@@ -25,27 +25,27 @@ pub fn main_cs(
     }
 
     // Basic arithmetic
-    output[base_offset + 0] = round6!(x + 1.5);
-    output[base_offset + 1] = round6!(x - 0.5);
-    output[base_offset + 2] = round6!(x * 2.0);
-    output[base_offset + 3] = round6!(x / 2.0);
-    output[base_offset + 4] = round6!(x % 3.0);
+    output[base_offset + 0] = compat_round!(x + 1.5);
+    output[base_offset + 1] = compat_round!(x - 0.5);
+    output[base_offset + 2] = compat_round!(x * 2.0);
+    output[base_offset + 3] = compat_round!(x / 2.0);
+    output[base_offset + 4] = compat_round!(x % 3.0);
 
     // Trigonometric functions (simplified for consistent results)
-    output[base_offset + 5] = round6!(x.sin());
-    output[base_offset + 6] = round6!(x.cos());
-    output[base_offset + 7] = round6!(x.tan().clamp(-10.0, 10.0));
+    output[base_offset + 5] = compat_round!(x.sin());
+    output[base_offset + 6] = compat_round!(x.cos());
+    output[base_offset + 7] = compat_round!(x.tan().clamp(-10.0, 10.0));
     output[base_offset + 8] = 0.0;
     output[base_offset + 9] = 0.0;
-    output[base_offset + 10] = round6!(x.atan());
+    output[base_offset + 10] = compat_round!(x.atan());
 
     // Exponential and logarithmic (simplified)
-    output[base_offset + 11] = round6!(x.exp().min(1e6));
-    output[base_offset + 12] = round6!(if x > 0.0 { x.ln() } else { -10.0 });
-    output[base_offset + 13] = round6!(x.abs().sqrt());
-    output[base_offset + 14] = round6!(x.abs() * x.abs()); // Use multiplication instead of powf
-    output[base_offset + 15] = round6!(if x > 0.0 { x.log2() } else { -10.0 });
-    output[base_offset + 16] = round6!(x.exp2().min(1e6));
+    output[base_offset + 11] = compat_round!(x.exp().min(1048576.0)); // 2^20
+    output[base_offset + 12] = compat_round!(if x > 0.0 { x.ln() } else { -10.0 });
+    output[base_offset + 13] = compat_round!(x.abs().sqrt());
+    output[base_offset + 14] = compat_round!(x.abs() * x.abs()); // Use multiplication instead of powf
+    output[base_offset + 15] = compat_round!(if x > 0.0 { x.log2() } else { -10.0 });
+    output[base_offset + 16] = compat_round!(x.exp2().min(1048576.0)); // 2^20
     output[base_offset + 17] = x.floor(); // floor/ceil/round are exact
     output[base_offset + 18] = x.ceil();
     output[base_offset + 19] = x.round();
