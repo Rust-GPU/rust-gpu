@@ -1,6 +1,6 @@
 #![no_std]
 
-use difftest::round6;
+use difftest::compat_round;
 use spirv_std::glam::{Mat2, Mat3, Mat4, UVec3, Vec2, Vec3, Vec4};
 #[allow(unused_imports)]
 use spirv_std::num_traits::Float;
@@ -36,10 +36,10 @@ pub fn main_cs(
 
     // Mat2 multiplication
     let m2_mul = m2a * m2b;
-    output[base_offset + 0] = round6!(m2_mul.col(0).x);
-    output[base_offset + 1] = round6!(m2_mul.col(0).y);
-    output[base_offset + 2] = round6!(m2_mul.col(1).x);
-    output[base_offset + 3] = round6!(m2_mul.col(1).y);
+    output[base_offset + 0] = compat_round!(m2_mul.col(0).x);
+    output[base_offset + 1] = compat_round!(m2_mul.col(0).y);
+    output[base_offset + 2] = compat_round!(m2_mul.col(1).x);
+    output[base_offset + 3] = compat_round!(m2_mul.col(1).y);
 
     // Mat2 transpose
     let m2_transpose = m2a.transpose();
@@ -49,13 +49,13 @@ pub fn main_cs(
     output[base_offset + 7] = m2_transpose.col(1).y;
 
     // Mat2 determinant (with rounding for consistency)
-    output[base_offset + 8] = round6!(m2a.determinant());
+    output[base_offset + 8] = compat_round!(m2a.determinant());
 
     // Mat2 * Vec2
     let v2 = Vec2::new(1.0, 2.0);
     let m2_v2 = m2a * v2;
-    output[base_offset + 9] = round6!(m2_v2.x);
-    output[base_offset + 10] = round6!(m2_v2.y);
+    output[base_offset + 9] = compat_round!(m2_v2.x);
+    output[base_offset + 10] = compat_round!(m2_v2.y);
 
     // Mat3 operations
     let m3a = Mat3::from_cols(Vec3::new(a, b, c), Vec3::new(b, c, d), Vec3::new(c, d, a));
@@ -63,15 +63,15 @@ pub fn main_cs(
 
     // Mat3 multiplication
     let m3_mul = m3a * m3b;
-    output[base_offset + 11] = round6!(m3_mul.col(0).x);
-    output[base_offset + 12] = round6!(m3_mul.col(0).y);
-    output[base_offset + 13] = round6!(m3_mul.col(0).z);
-    output[base_offset + 14] = round6!(m3_mul.col(1).x);
-    output[base_offset + 15] = round6!(m3_mul.col(1).y);
-    output[base_offset + 16] = round6!(m3_mul.col(1).z);
-    output[base_offset + 17] = round6!(m3_mul.col(2).x);
-    output[base_offset + 18] = round6!(m3_mul.col(2).y);
-    output[base_offset + 19] = round6!(m3_mul.col(2).z);
+    output[base_offset + 11] = compat_round!(m3_mul.col(0).x);
+    output[base_offset + 12] = compat_round!(m3_mul.col(0).y);
+    output[base_offset + 13] = compat_round!(m3_mul.col(0).z);
+    output[base_offset + 14] = compat_round!(m3_mul.col(1).x);
+    output[base_offset + 15] = compat_round!(m3_mul.col(1).y);
+    output[base_offset + 16] = compat_round!(m3_mul.col(1).z);
+    output[base_offset + 17] = compat_round!(m3_mul.col(2).x);
+    output[base_offset + 18] = compat_round!(m3_mul.col(2).y);
+    output[base_offset + 19] = compat_round!(m3_mul.col(2).z);
 
     // Mat3 transpose - store just diagonal elements
     let m3_transpose = m3a.transpose();
@@ -80,14 +80,14 @@ pub fn main_cs(
     output[base_offset + 22] = m3_transpose.col(2).z;
 
     // Mat3 determinant (with rounding for consistency)
-    output[base_offset + 23] = round6!(m3a.determinant());
+    output[base_offset + 23] = compat_round!(m3a.determinant());
 
     // Mat3 * Vec3 (with rounding for consistency)
     let v3 = Vec3::new(1.0, 2.0, 3.0);
     let m3_v3 = m3a * v3;
-    output[base_offset + 24] = round6!(m3_v3.x);
-    output[base_offset + 25] = round6!(m3_v3.y);
-    output[base_offset + 26] = round6!(m3_v3.z);
+    output[base_offset + 24] = compat_round!(m3_v3.x);
+    output[base_offset + 25] = compat_round!(m3_v3.y);
+    output[base_offset + 26] = compat_round!(m3_v3.z);
 
     // Mat4 operations
     let m4a = Mat4::from_cols(
@@ -105,10 +105,10 @@ pub fn main_cs(
 
     // Mat4 multiplication (just store diagonal for brevity)
     let m4_mul = m4a * m4b;
-    output[base_offset + 27] = round6!(m4_mul.col(0).x);
-    output[base_offset + 28] = round6!(m4_mul.col(1).y);
-    output[base_offset + 29] = round6!(m4_mul.col(2).z);
-    output[base_offset + 30] = round6!(m4_mul.col(3).w);
+    output[base_offset + 27] = compat_round!(m4_mul.col(0).x);
+    output[base_offset + 28] = compat_round!(m4_mul.col(1).y);
+    output[base_offset + 29] = compat_round!(m4_mul.col(2).z);
+    output[base_offset + 30] = compat_round!(m4_mul.col(3).w);
 
     // Mat4 transpose (just store diagonal)
     let m4_transpose = m4a.transpose();
@@ -118,15 +118,15 @@ pub fn main_cs(
     output[base_offset + 34] = m4_transpose.col(3).w;
 
     // Mat4 determinant (with rounding for consistency)
-    output[base_offset + 35] = round6!(m4a.determinant());
+    output[base_offset + 35] = compat_round!(m4a.determinant());
 
     // Mat4 * Vec4 (with rounding for consistency)
     let v4 = Vec4::new(1.0, 2.0, 3.0, 4.0);
     let m4_v4 = m4a * v4;
-    output[base_offset + 36] = round6!(m4_v4.x);
-    output[base_offset + 37] = round6!(m4_v4.y);
-    output[base_offset + 38] = round6!(m4_v4.z);
-    output[base_offset + 39] = round6!(m4_v4.w);
+    output[base_offset + 36] = compat_round!(m4_v4.x);
+    output[base_offset + 37] = compat_round!(m4_v4.y);
+    output[base_offset + 38] = compat_round!(m4_v4.z);
+    output[base_offset + 39] = compat_round!(m4_v4.w);
 
     // Identity matrices
     output[base_offset + 40] = Mat2::IDENTITY.col(0).x;
@@ -136,8 +136,8 @@ pub fn main_cs(
     // Matrix inverse
     if m2a.determinant().abs() > 0.0001 {
         let m2_inv = m2a.inverse();
-        output[base_offset + 43] = round6!(m2_inv.col(0).x);
-        output[base_offset + 44] = round6!(m2_inv.col(1).y);
+        output[base_offset + 43] = compat_round!(m2_inv.col(0).x);
+        output[base_offset + 44] = compat_round!(m2_inv.col(1).y);
     } else {
         output[base_offset + 43] = 0.0;
         output[base_offset + 44] = 0.0;
@@ -145,13 +145,13 @@ pub fn main_cs(
 
     // Matrix addition
     let m2_add = m2a + m2b;
-    output[base_offset + 45] = m2_add.col(0).x;
-    output[base_offset + 46] = m2_add.col(0).y;
+    output[base_offset + 45] = compat_round!(m2_add.col(0).x);
+    output[base_offset + 46] = compat_round!(m2_add.col(0).y);
 
     // Matrix scalar multiplication
     let m2_scale = m2a * 2.0;
-    output[base_offset + 47] = m2_scale.col(0).x;
-    output[base_offset + 48] = m2_scale.col(0).y;
+    output[base_offset + 47] = compat_round!(m2_scale.col(0).x);
+    output[base_offset + 48] = compat_round!(m2_scale.col(0).y);
 
     output[base_offset + 49] = 1.0; // Padding
 }
