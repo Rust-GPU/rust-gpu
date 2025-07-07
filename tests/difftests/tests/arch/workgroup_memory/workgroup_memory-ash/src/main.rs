@@ -1,15 +1,16 @@
 #[cfg(not(target_arch = "spirv"))]
 fn main() {
     use difftest::config::Config;
-    use difftest::scaffold::Skip;
 
     let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
 
     // Skip on macOS due to Vulkan/MoltenVK configuration issues
     #[cfg(target_os = "macos")]
     {
+        use difftest::scaffold::Skip;
+        
         let skip =
-            Skip::new("Vulkano tests are skipped on macOS due to MoltenVK configuration issues");
+            Skip::new("Ash tests are skipped on macOS due to MoltenVK configuration issues");
         skip.run_test(&config).unwrap();
         return;
     }
@@ -17,7 +18,7 @@ fn main() {
     // Run the actual test on other platforms
     #[cfg(not(target_os = "macos"))]
     {
-        use difftest::scaffold::compute::{BufferConfig, BufferUsage, ComputeTest, VulkanoBackend};
+        use difftest::scaffold::compute::{AshBackend, BufferConfig, BufferUsage, ComputeTest};
         use spirv_builder::{ModuleResult, SpirvBuilder};
         use std::fs;
 
@@ -64,7 +65,7 @@ fn main() {
             },
         ];
 
-        let test = ComputeTest::<VulkanoBackend>::new(
+        let test = ComputeTest::<AshBackend>::new(
             spirv_bytes,
             entry_point,
             [1, 1, 1], // Single workgroup with 64 threads
