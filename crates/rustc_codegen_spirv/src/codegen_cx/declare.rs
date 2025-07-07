@@ -229,6 +229,12 @@ impl<'tcx> CodegenCx<'tcx> {
                 (pieces_len.parse().unwrap(), rt_args_len.parse().unwrap()),
             );
         }
+        if demangled_symbol_name == "<core::fmt::Arguments>::new_v1_formatted" {
+            // HACK(eddyb) `!0` used as a placeholder value to indicate "dynamic".
+            self.fmt_args_new_fn_ids
+                .borrow_mut()
+                .insert(fn_id, (!0, !0));
+        }
 
         // HACK(eddyb) there is no good way to identify these definitions
         // (e.g. no `#[lang = "..."]` attribute), but this works well enough.

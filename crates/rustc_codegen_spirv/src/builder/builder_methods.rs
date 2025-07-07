@@ -7,7 +7,7 @@ use crate::builder_spirv::{BuilderCursor, SpirvConst, SpirvValue, SpirvValueExt,
 use crate::codegen_cx::CodegenCx;
 use crate::custom_insts::{CustomInst, CustomOp};
 use crate::spirv_type::SpirvType;
-use itertools::Itertools;
+use itertools::{Either, Itertools};
 use rspirv::dr::{InsertPoint, Instruction, Operand};
 use rspirv::spirv::{Capability, MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
 use rustc_apfloat::{Float, Round, Status, ieee};
@@ -3230,6 +3230,16 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 /// * `&a` with `typeof a` and ' ',
                 /// * `&b` with `typeof b` and 'x'
                 ref_arg_ids_with_ty_and_spec: SmallVec<[(Word, Ty<'tcx>, char); 2]>,
+
+                /// If `fmt::Arguments::new_v1_formatted` was used, this holds
+                /// the length of the `&[fmt::rt::Placeholder]` slice, which
+                /// currently cannot be directly supported, and therefore even
+                /// if all of `ref_arg_ids_with_ty_and_spec` are printable,
+                /// a much jankier fallback still has to be used, as it it were:
+                ///
+                /// `format!("a{{0}}b{{1}}c\n  with {{…}} from: {}, {}", x, y)`
+                /// (w/ `const_pieces = ["a", "b", "c"]` & `ref_args = [&x, &y]`).
+                has_unknown_fmt_placeholder_to_args_mapping: Option<usize>,
             }
             struct FormatArgsNotRecognized(String);
 
@@ -3455,6 +3465,105 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                             };
 
                             match call_args[..] {
+                                // `<core::fmt::Arguments>::new_v1_formatted`
+                                //
+                                // HACK(eddyb) this isn't fully supported,
+                                // as that would require digging into unstable
+                                // internals of `core::fmt::rt::Placeholder`s,
+                                // but the whole call still needs to be removed,
+                                // and both const str pieces and runtime args
+                                // can still be printed (even if in jankier way).
+                                [
+                                    pieces_slice_ptr_id,
+                                    pieces_len_id,
+                                    rt_args_slice_ptr_id,
+                                    rt_args_len_id,
+                                    _fmt_placeholders_slice_ptr_id,
+                                    fmt_placeholders_len_id,
+                                ] if (pieces_len, rt_args_count) == (!0, !0) => {
+                                    let [pieces_len, rt_args_len, fmt_placeholders_len] = match [
+                                        pieces_len_id,
+                                        rt_args_len_id,
+                                        fmt_placeholders_len_id,
+                                    ]
+                                    .map(const_u32_as_usize)
+                                    {
+                                        [Some(a), Some(b), Some(c)] => [a, b, c],
+                                        _ => {
+                                            return Err(FormatArgsNotRecognized(
+                                                "fmt::Arguments::new_v1_formatted \
+                                                     with dynamic lengths"
+                                                    .into(),
+                                            ));
+                                        }
+                                    };
+
+                                    // FIXME(eddyb) simplify the logic below after
+                                    // https://github.com/rust-lang/rust/pull/139131
+                                    // (~1.88) as it makes `&[rt::Placeholder]`
+                                    // constant (via promotion to 'static).
+
+                                    // HACK(eddyb) this accounts for all of these:
+                                    // - `rt::Placeholder` copies into array: 2 insts each
+                                    // - `rt::UnsafeArg::new()` call: 1 inst
+                                    // - runtime args array->slice ptr cast: 1 inst
+                                    // - placeholders array->slice ptr cast: 1 inst
+                                    let extra_insts = try_rev_take(3 + fmt_placeholders_len * 2).ok_or_else(|| {
+                                        FormatArgsNotRecognized(
+                                            "fmt::Arguments::new_v1_formatted call: ran out of instructions".into(),
+                                        )
+                                    })?;
+                                    let rt_args_slice_ptr_id = match extra_insts[..] {
+                                        [.., Inst::Bitcast(out_id, in_id), Inst::Bitcast(..)]
+                                            if out_id == rt_args_slice_ptr_id =>
+                                        {
+                                            in_id
+                                        }
+                                        _ => {
+                                            let mut insts = extra_insts;
+                                            insts.extend(fmt_args_new_call_insts);
+                                            return Err(FormatArgsNotRecognized(format!(
+                                                "fmt::Arguments::new_v1_formatted call sequence ({insts:?})",
+                                            )));
+                                        }
+                                    };
+
+                                    // HACK(eddyb) even worse, each call made to
+                                    // `rt::Placeholder::new(...)` takes anywhere
+                                    // between 16 and 20 instructions each, due
+                                    // to `enum`s represented as scalar pairs.
+                                    for _ in 0..fmt_placeholders_len {
+                                        try_rev_take(16).and_then(|insts| {
+                                            let scalar_pairs_with_used_2nd_field = insts
+                                                .iter()
+                                                .take_while(|inst| {
+                                                    !matches!(inst, Inst::Load(..))
+                                                })
+                                                .filter(|inst| {
+                                                    matches!(inst, Inst::InBoundsAccessChain(.., 1))
+                                                })
+                                                .count();
+                                            try_rev_take(scalar_pairs_with_used_2nd_field * 2)?;
+                                            Some(())
+                                        })
+                                        .ok_or_else(|| {
+                                            FormatArgsNotRecognized(
+                                                "fmt::rt::Placeholder::new call: ran out of instructions"
+                                                    .into(),
+                                            )
+                                        })?;
+                                    }
+
+                                    decoded_format_args
+                                        .has_unknown_fmt_placeholder_to_args_mapping =
+                                        Some(fmt_placeholders_len);
+
+                                    (
+                                        (pieces_slice_ptr_id, pieces_len),
+                                        (Some(rt_args_slice_ptr_id), rt_args_len),
+                                    )
+                                }
+
                                 // `<core::fmt::Arguments>::new_v1`
                                 [pieces_slice_ptr_id, rt_args_slice_ptr_id] => (
                                     (pieces_slice_ptr_id, pieces_len),
@@ -3608,58 +3717,97 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             let mut debug_printf_args = SmallVec::<[_; 2]>::new();
             let message = match try_decode_and_remove_format_args() {
                 Ok(DecodedFormatArgs {
-                    const_pieces,
+                    const_pieces: None, ..
+                }) => "<unknown message>".into(),
+
+                Ok(DecodedFormatArgs {
+                    const_pieces: Some(const_pieces),
                     ref_arg_ids_with_ty_and_spec,
+                    has_unknown_fmt_placeholder_to_args_mapping,
                 }) => {
-                    match const_pieces {
-                        Some(const_pieces) => {
-                            const_pieces
-                                .into_iter()
-                                .map(|s| Cow::Owned(s.replace('%', "%%")))
-                                .interleave(ref_arg_ids_with_ty_and_spec.iter().map(
-                                    |&(ref_id, ty, spec)| {
-                                        use rustc_target::abi::{
-                                            Float::*, Integer::*, Primitive::*,
-                                        };
+                    let args = ref_arg_ids_with_ty_and_spec
+                        .iter()
+                        .map(|&(ref_id, ty, spec)| {
+                            use rustc_target::abi::{Float::*, Integer::*, Primitive::*};
 
-                                        let layout = self.layout_of(ty);
+                            let layout = self.layout_of(ty);
 
-                                        let scalar = match layout.backend_repr {
-                                            BackendRepr::Scalar(scalar) => Some(scalar.primitive()),
-                                            _ => None,
-                                        };
-                                        let debug_printf_fmt = match (spec, scalar) {
-                                            // FIXME(eddyb) support more of these,
-                                            // potentially recursing to print ADTs.
-                                            (' ' | '?', Some(Int(I32, false))) => "%u",
-                                            ('x', Some(Int(I32, false))) => "%x",
-                                            (' ' | '?', Some(Int(I32, true))) => "%i",
-                                            (' ' | '?', Some(Float(F32))) => "%f",
+                            let scalar = match layout.backend_repr {
+                                BackendRepr::Scalar(scalar) => Some(scalar.primitive()),
+                                _ => None,
+                            };
+                            let debug_printf_fmt = match (spec, scalar) {
+                                // FIXME(eddyb) support more of these,
+                                // potentially recursing to print ADTs.
+                                (' ' | '?', Some(Int(I32, false))) => "%u",
+                                ('x', Some(Int(I32, false))) => "%x",
+                                (' ' | '?', Some(Int(I32, true))) => "%i",
+                                (' ' | '?', Some(Float(F32))) => "%f",
 
-                                            _ => "",
-                                        };
+                                _ => "",
+                            };
 
-                                        if debug_printf_fmt.is_empty() {
-                                            return Cow::Owned(
-                                                format!("{{/* unprintable {ty} */:{spec}}}")
-                                                    .replace('%', "%%"),
-                                            );
-                                        }
+                            if debug_printf_fmt.is_empty() {
+                                return Cow::Owned(
+                                    format!("{{/* unprintable {ty} */:{spec}}}").replace('%', "%%"),
+                                );
+                            }
 
-                                        let spirv_type = layout.spirv_type(self.span(), self);
-                                        debug_printf_args.push(
-                                            self.emit()
-                                                .load(spirv_type, None, ref_id, None, [])
-                                                .unwrap()
-                                                .with_type(spirv_type),
-                                        );
-                                        Cow::Borrowed(debug_printf_fmt)
-                                    },
-                                ))
-                                .collect::<String>()
-                        }
-                        None => "<unknown message>".into(),
-                    }
+                            let spirv_type = layout.spirv_type(self.span(), self);
+                            debug_printf_args.push(
+                                self.emit()
+                                    .load(spirv_type, None, ref_id, None, [])
+                                    .unwrap()
+                                    .with_type(spirv_type),
+                            );
+                            Cow::Borrowed(debug_printf_fmt)
+                        });
+
+                    // HACK(eddyb) due to `fmt::Arguments::new_v1_formatted`,
+                    // we can't always assume that all the formatting arguments
+                    // are used 1:1 as placeholders (i.e. between `const_pieces`).
+                    let (placeholder_count, placeholders_are_args) =
+                        match has_unknown_fmt_placeholder_to_args_mapping {
+                            Some(count) => (count, false),
+                            None => (args.len(), true),
+                        };
+
+                    // HACK(eddyb) extra sanity check to avoid visual mishaps.
+                    let valid_placeholder_count = placeholder_count
+                        .clamp(const_pieces.len().saturating_sub(1), const_pieces.len());
+                    let placeholders_are_args =
+                        placeholders_are_args && placeholder_count == valid_placeholder_count;
+
+                    // FIXME(eddyb) stop using `itertools`'s `intersperse`,
+                    // when it gets stabilized on `Iterator` instead.
+                    #[allow(unstable_name_collisions)]
+                    let (placeholders, suffix) = if placeholders_are_args {
+                        (Either::Left(args), None)
+                    } else {
+                        // See also `has_unknown_fmt_placeholder_to_args_mapping`
+                        // comment (which has an example for 3 pieces and 2 args).
+                        //
+                        // FIXME(eddyb) this could definitely be improved, but
+                        // so far this only really gets hit in esoteric `core`
+                        // internals (UB checks and `char::encode_utf{8,16}`).
+                        (
+                            Either::Right(
+                                (0..valid_placeholder_count).map(|i| format!("{{{i}}}").into()),
+                            ),
+                            Some(
+                                ["\n  with {…} from: ".into()]
+                                    .into_iter()
+                                    .chain(args.intersperse(", ".into())),
+                            ),
+                        )
+                    };
+
+                    const_pieces
+                        .into_iter()
+                        .map(|s| Cow::Owned(s.replace('%', "%%")))
+                        .interleave(placeholders)
+                        .chain(suffix.into_iter().flatten())
+                        .collect::<String>()
                 }
 
                 Err(FormatArgsNotRecognized(step)) => {
