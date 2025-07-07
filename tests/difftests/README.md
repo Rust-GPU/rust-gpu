@@ -109,7 +109,7 @@ The library provides helper types for common test patterns:
 **Backend types:**
 
 - `WgpuBackend` - Default wgpu-based compute backend
-- `VulkanoBackend` - Vulkano-based compute backend (useful for testing different GPU drivers)
+- `AshBackend` - Ash-based compute backend (low-level Vulkan access for debugging driver issues)
 
 For examples, see:
 
