@@ -655,6 +655,17 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // https://github.com/gpuweb/gpuweb/issues/33
         let (&ptr_base_index, indices) = combined_indices.split_first().unwrap();
 
+        // HACK(eddyb) this effectively removes any real support for GEPs with
+        // any `indices` (beyond `ptr_base_index`), which should now be the case
+        // across `rustc_codegen_ssa` (see also comment inside `inbounds_gep`).
+        if !indices.is_empty() {
+            self.fatal(format!(
+                "[RUST-GPU BUG] `inbounds_gep` or `gep` called \
+                 with {} combined indices (expected only 1)",
+                combined_indices.len(),
+            ));
+        }
+
         // Determine if this GEP operation is effectively byte-level addressing.
         // This check is based on the *provided* input type `ty`. If `ty` is i8 or u8,
         // it suggests the caller intends to perform byte-offset calculations,
@@ -1972,6 +1983,21 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         ptr: Self::Value,
         indices: &[Self::Value],
     ) -> Self::Value {
+        // HACK(eddyb) effectively a backport of this `gep [0, i]` -> `gep [i]`
+        // PR: https://github.com/rust-lang/rust/pull/134117 to even earlier
+        // nightlies - and that PR happens to remove the last GEP that can be
+        // emitted with any "structured" (struct/array) indices, beyond the
+        // "first index" (which acts as `<*T>::offset` aka "pointer arithmetic").
+        if let &[ptr_base_index, structured_index] = indices {
+            if self.builder.lookup_const_scalar(ptr_base_index) == Some(0) {
+                if let SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element, .. } =
+                    self.lookup_type(ty)
+                {
+                    return self.maybe_inbounds_gep(element, ptr, &[structured_index], true);
+                }
+            }
+        }
+
         self.maybe_inbounds_gep(ty, ptr, indices, true)
     }
 
