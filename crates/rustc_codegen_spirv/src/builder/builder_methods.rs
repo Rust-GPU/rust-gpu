@@ -675,15 +675,28 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     /// where `T` is given by `stride_elem_ty` (named so for extra clarity).
     ///
     /// This can produce legal SPIR-V by using 3 strategies:
-    /// 1. `pointercast` for a constant offset of `0`
-    ///    - itself can succeed via `recover_access_chain_from_offset`
-    ///    - even if a specific cast is unsupported, legal SPIR-V can still be
-    ///      obtained, if all downstream uses rely on e.g. `strip_ptrcasts`
-    ///    - also used before the merge strategy (3.), to improve its chances
+    /// 1. noop, i.e. returning `ptr` unmodified, comparable to a `pointercast`
+    ///    (but instead letting downstream users do any casts they might need,
+    ///     themselves - also, upstream untyped pointers mean that no pointer
+    ///     can be expected to have any specific pointee type)
     /// 2. `recover_access_chain_from_offset` for constant offsets
     ///    (e.g. from `ptradd`/`inbounds_ptradd` used to access `struct` fields)
     /// 3. merging onto an array `OpAccessChain` with the same `stride_elem_ty`
     ///    (possibly `&array[0]` from `pointercast` doing `*[T; N]` -> `*T`)
+    ///
+    /// Also, `pointercast` (used downstream, or as part of strategy 3.) helps
+    /// with producing legal SPIR-V, as it allows deferring whole casts chains,
+    /// and has a couple success modes of its own:
+    /// - itself can also use `recover_access_chain_from_offset`, supporting
+    ///   `struct`/array casts e.g. `*(T, U, ...)` -> `*T` / `*[T; N]` -> `*T`
+    /// - even if a specific cast is unsupported, legal SPIR-V can still be
+    ///   later obtained (thanks to `SpirvValueKind::LogicalPtrCast`), if all
+    ///   uses of that cast rely on `pointercast` and/or `strip_ptrcasts`, e.g.:
+    ///   - another `ptr_offset_strided` call (with a different offset)
+    ///   - `adjust_pointer_for_typed_access`/`adjust_pointer_for_sized_access`
+    ///     (themselves used by e.g. loads, stores, copies, etc.)
+    //
+    // FIXME(eddyb) maybe move the above `pointercast` section to its own docs?
     #[instrument(level = "trace", skip(self), fields(ptr, stride_elem_ty = ?self.debug_type(stride_elem_ty), index, is_inbounds))]
     fn ptr_offset_strided(
         &mut self,
@@ -700,15 +713,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             Some(idx_u64 * stride)
         });
 
-        // Strategy 1: an offset of `0` is always a noop, and `pointercast`
-        // gets to use `SpirvValueKind::LogicalPtrCast`, which can later
-        // be "undone" (by `strip_ptrcasts`), allowing more flexibility
-        // downstream (instead of overeagerly "shrinking" the pointee).
+        // Strategy 1: do nothing for a `0` offset (and `stride_elem_ty` can be
+        // safely ignored, because any typed uses will `pointercast` if needed).
         if const_offset == Some(Size::ZERO) {
-            trace!("ptr_offset_strided: strategy 1 picked: offset 0 => pointer cast");
+            trace!("ptr_offset_strided: strategy 1 picked: offset 0 => noop");
 
-            // FIXME(eddyb) could this just `return ptr;`? what even breaks?
-            return self.pointercast(ptr, self.type_ptr_to(stride_elem_ty));
+            return ptr;
         }
 
         // Strategy 2: try recovering an `OpAccessChain` from a constant offset.
@@ -3209,6 +3219,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     Bitcast(ID, ID),
                     CompositeExtract(ID, ID, u32),
                     InBoundsAccessChain(ID, ID, u32),
+                    InBoundsAccessChain2(ID, ID, u32, u32),
                     Store(ID, ID),
                     Load(ID, ID),
                     CopyMemory(ID, ID),
@@ -3261,6 +3272,13 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                 (Op::InBoundsAccessChain, Some(r), &[p, i]) => {
                                     if let Some(i) = const_as_u32(i) {
                                         Inst::InBoundsAccessChain(r, p, i)
+                                    } else {
+                                        Inst::Unsupported(inst.class.opcode)
+                                    }
+                                }
+                                (Op::InBoundsAccessChain, Some(r), &[p, i, j]) => {
+                                    if let [Some(i), Some(j)] = [i, j].map(const_as_u32) {
+                                        Inst::InBoundsAccessChain2(r, p, i, j)
                                     } else {
                                         Inst::Unsupported(inst.class.opcode)
                                     }
@@ -3456,20 +3474,45 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
                     let rev_copies_to_rt_args_array_src_ptrs: SmallVec<[_; 4]> =
                     (0..rt_args_count).rev().map(|rt_arg_idx| {
-                        let copy_to_rt_args_array_insts = try_rev_take(4).ok_or_else(|| {
+                        let mut copy_to_rt_args_array_insts = try_rev_take(3).ok_or_else(|| {
                             FormatArgsNotRecognized(
                                 "[fmt::rt::Argument; N] copy: ran out of instructions".into(),
                             )
                         })?;
+
+                        // HACK(eddyb) account for both the split and combined
+                        // access chain cases that `inbounds_gep` can now cause.
+                        if let Inst::InBoundsAccessChain(dst_field_ptr, dst_base_ptr, 0) =
+                            copy_to_rt_args_array_insts[0]
+                        {
+                            if let Some(mut prev_insts) = try_rev_take(1) {
+                                assert_eq!(prev_insts.len(), 1);
+                                let prev_inst = prev_insts.pop().unwrap();
+
+                                match prev_inst {
+                                    Inst::InBoundsAccessChain(
+                                        array_elem_ptr,
+                                        array_ptr,
+                                        idx,
+                                    ) if dst_base_ptr == array_elem_ptr => {
+                                        copy_to_rt_args_array_insts[0] =
+                                            Inst::InBoundsAccessChain2(dst_field_ptr, array_ptr, idx, 0);
+                                    }
+                                    _ => {
+                                        // HACK(eddyb) don't lose the taken `prev_inst`.
+                                        copy_to_rt_args_array_insts.insert(0, prev_inst);
+                                    }
+                                }
+                            }
+                        }
+
                         match copy_to_rt_args_array_insts[..] {
                             [
-                                Inst::InBoundsAccessChain(array_slot, array_base, array_idx),
-                                Inst::InBoundsAccessChain(dst_field_ptr, dst_base_ptr, 0),
+                                Inst::InBoundsAccessChain2(dst_field_ptr, dst_array_base_ptr, array_idx, 0),
                                 Inst::InBoundsAccessChain(src_field_ptr, src_base_ptr, 0),
                                 Inst::CopyMemory(copy_dst, copy_src),
-                            ] if array_base == rt_args_array_ptr_id
+                            ] if dst_array_base_ptr == rt_args_array_ptr_id
                                 && array_idx as usize == rt_arg_idx
-                                && dst_base_ptr == array_slot
                                 && (copy_dst, copy_src) == (dst_field_ptr, src_field_ptr) =>
                             {
                                 Ok(src_base_ptr)
