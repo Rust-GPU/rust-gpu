@@ -117,7 +117,7 @@ fn gather_names(debug_names: &[Instruction]) -> FxHashMap<Word, String> {
         .collect()
 }
 
-fn make_dedupe_key(
+fn make_dedupe_key_with_array_context(
     inst: &Instruction,
     unresolved_forward_pointers: &FxHashSet<Word>,
     annotations: &FxHashMap<Word, Vec<u32>>,
@@ -168,6 +168,8 @@ fn make_dedupe_key(
             }
         }
     }
+
+    // Array context feature removed - was never actually used
 
     data
 }
@@ -222,7 +224,12 @@ pub fn remove_duplicate_types(module: &mut Module) {
         // all_inst_iter_mut pass below. However, the code is a lil bit cleaner this way I guess.
         rewrite_inst_with_rules(inst, &rewrite_rules);
 
-        let key = make_dedupe_key(inst, &unresolved_forward_pointers, &annotations, &names);
+        let key = make_dedupe_key_with_array_context(
+            inst,
+            &unresolved_forward_pointers,
+            &annotations,
+            &names,
+        );
 
         match key_to_result_id.entry(key) {
             hash_map::Entry::Vacant(entry) => {

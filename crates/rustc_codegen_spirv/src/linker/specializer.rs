@@ -57,6 +57,7 @@ use rspirv::spirv::{Op, StorageClass, Word};
 use rustc_data_structures::captures::Captures;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
+use std::cell::RefCell;
 use std::collections::{BTreeMap, VecDeque};
 use std::ops::{Range, RangeTo};
 use std::{fmt, io, iter, mem, slice};
@@ -128,11 +129,23 @@ pub fn specialize(
             .collect();
     }
 
+    let spirv_version = module.header.as_ref().map_or((1, 0), |h| h.version());
+    let has_workgroup_layout_capability = module.capabilities.iter().any(|inst| {
+        inst.class.opcode == Op::Capability
+            && inst.operands.first()
+                == Some(&Operand::Capability(
+                    rspirv::spirv::Capability::WorkgroupMemoryExplicitLayoutKHR,
+                ))
+    });
+
     let mut specializer = Specializer {
         specialization,
         debug_names,
         generics: IndexMap::new(),
         int_consts: FxHashMap::default(),
+        array_layout_variants: RefCell::new(FxHashMap::default()),
+        spirv_version,
+        has_workgroup_layout_capability,
     };
 
     specializer.collect_generics(&module);
@@ -524,6 +537,29 @@ struct Generic {
     replacements: Replacements,
 }
 
+/// For every `OpTypeArray` (identified by its defining instruction result ID), we may
+/// need two physical variants that differ only by the presence of an `ArrayStride`
+/// decoration.
+///
+/// * `layout_required_id`   – An array type *with* `ArrayStride` attached. This variant
+///   must be used whenever the SPIR-V storage class context *requires* explicit
+///   layout information (e.g. `StorageBuffer`). In most existing modules this will be
+///   the original array type that rust-gpu produced.
+/// * `layout_forbidden_id`  – An array type *without* `ArrayStride`. This variant must
+///   be used in storage classes where explicit layout is disallowed (e.g.
+///   `Workgroup`, `Private`, `Function` in SPIR-V ≥ 1.4 without special
+///   capabilities).
+///
+/// Not every module needs both variants – e.g. an array only ever used in
+/// `StorageBuffer` memory does not require the `layout_forbidden_id`. Therefore the
+/// two fields are optional and are filled on demand by the storage-class inference
+/// pass when it discovers the need for a particular variant.
+#[derive(Clone, Debug, Default)]
+struct ArrayLayoutVariants {
+    /// Variant that *omits* the `ArrayStride` decoration.
+    layout_forbidden_id: Option<Word>,
+}
+
 struct Specializer<S: Specialization> {
     specialization: S,
 
@@ -536,6 +572,16 @@ struct Specializer<S: Specialization> {
     /// Integer `OpConstant`s (i.e. containing a `LiteralBit32`), to be used
     /// for interpreting `TyPat::IndexComposite` (such as for `OpAccessChain`).
     int_consts: FxHashMap<Word, u32>,
+
+    /// Lazily-populated map holding, for every original array type ID, the IDs of
+    /// its specialised layout-`required` / layout-`forbidden` clones (if any).
+    array_layout_variants: RefCell<FxHashMap<Word, ArrayLayoutVariants>>,
+
+    /// SPIR-V version of the current module (major, minor)
+    spirv_version: (u8, u8),
+
+    /// Whether the module enables `WorkgroupMemoryExplicitLayoutKHR`
+    has_workgroup_layout_capability: bool,
 }
 
 impl<S: Specialization> Specializer<S> {
@@ -678,6 +724,17 @@ impl<S: Specialization> Specializer<S> {
             None
         } else {
             Some(replacements)
+        }
+    }
+
+    /// Return `true` if the given storage class allows explicit layout decorations
+    /// (i.e. `ArrayStride`).
+    fn allows_layout(&self, storage_class: StorageClass) -> bool {
+        match storage_class {
+            StorageClass::UniformConstant => false,
+            StorageClass::Workgroup => self.has_workgroup_layout_capability,
+            StorageClass::Function | StorageClass::Private => self.spirv_version < (1, 4),
+            _ => true,
         }
     }
 }
@@ -2202,10 +2259,25 @@ struct Expander<'a, S: Specialization> {
     /// own `replacements` analyzed in order to fully collect all instances.
     // FIXME(eddyb) fine-tune the length of `SmallVec<[_; 4]>` here.
     propagate_instances_queue: VecDeque<Instance<SmallVec<[CopyOperand; 4]>>>,
+
+    /// Snapshot of all original type/global instructions keyed by their result ID.
+    /// This is necessary because during expansion we temporarily move the original
+    /// `types_global_values` out of the `Module`, making them inaccessible to helper
+    /// routines (such as `get_array_variant`).
+    original_types: FxHashMap<Word, Instruction>,
 }
 
 impl<'a, S: Specialization> Expander<'a, S> {
     fn new(specializer: &'a Specializer<S>, module: Module) -> Self {
+        // Build a lookup table of all original type/global instructions before moving
+        // `module` into the internal `Builder`.
+        let mut original_types = FxHashMap::default();
+        for inst in &module.types_global_values {
+            if let Some(id) = inst.result_id {
+                original_types.insert(id, inst.clone());
+            }
+        }
+
         Expander {
             specializer,
 
@@ -2213,6 +2285,8 @@ impl<'a, S: Specialization> Expander<'a, S> {
 
             instances: BTreeMap::new(),
             propagate_instances_queue: VecDeque::new(),
+
+            original_types,
         }
     }
 
@@ -2354,26 +2428,72 @@ impl<'a, S: Specialization> Expander<'a, S> {
         // Expand `Op(Member)Decorate* %target ...`, when `target` is "generic".
         let mut expanded_annotations = expand_debug_or_annotation(annotations);
 
-        // Expand "generic" globals (types, constants and module-scoped variables).
+        // Will store any additional type declarations (array variants, etc.) that we might
+        // need to generate while expanding pointer types.
         let mut expanded_types_global_values =
             Vec::with_capacity(types_global_values.len().next_power_of_two());
         for inst in types_global_values {
             if let Some(result_id) = inst.result_id {
                 if let Some(generic) = self.specializer.generics.get(&result_id) {
-                    expanded_types_global_values.extend(self.all_instances_of(result_id).map(
-                        |(instance, &instance_id)| {
-                            let mut expanded_inst = inst.clone();
-                            expanded_inst.result_id = Some(instance_id);
-                            for (loc, operand) in generic
-                                .replacements
-                                .to_concrete(&instance.generic_args, |i| self.instances[&i])
-                            {
-                                expanded_inst.index_set(loc, operand.into());
+                    // Collect instances first to avoid borrowing `self` immutably and mutably at the same time.
+                    let instance_info: Vec<_> = self
+                        .all_instances_of(result_id)
+                        .map(|(inst, &inst_id)| (inst.clone(), inst_id))
+                        .collect();
+
+                    for (instance, instance_id) in instance_info {
+                        let mut expanded_inst = inst.clone();
+                        expanded_inst.result_id = Some(instance_id);
+                        for (loc, operand) in generic
+                            .replacements
+                            .to_concrete(&instance.generic_args, |i| self.instances[&i])
+                        {
+                            expanded_inst.index_set(loc, operand.into());
+                        }
+
+                        // If this is a pointer type now specialized to a concrete storage
+                        // class, ensure its pointee array type respects layout rules.
+                        if expanded_inst.class.opcode == Op::TypePointer {
+                            if let (
+                                Some(Operand::StorageClass(sc)),
+                                Some(Operand::IdRef(pointee_id)),
+                            ) = (
+                                expanded_inst.operands.first().cloned(),
+                                expanded_inst.operands.get(1).cloned(),
+                            ) {
+                                let need_no_stride = !self.specializer.allows_layout(sc);
+                                let variant_id = self.get_array_variant(
+                                    pointee_id,
+                                    need_no_stride,
+                                    &mut expanded_types_global_values,
+                                );
+                                if variant_id != pointee_id {
+                                    expanded_inst.operands[1] = Operand::IdRef(variant_id);
+                                }
                             }
-                            expanded_inst
-                        },
-                    ));
+                        }
+
+                        expanded_types_global_values.push(expanded_inst);
+                    }
                     continue;
+                }
+            }
+            let mut inst = inst;
+            // Ensure even non-generic `OpTypePointer`s use the proper array variant.
+            if inst.class.opcode == Op::TypePointer {
+                if let (Some(Operand::StorageClass(sc)), Some(Operand::IdRef(pointee_id))) = (
+                    inst.operands.first().cloned(),
+                    inst.operands.get(1).cloned(),
+                ) {
+                    let need_no_stride = !self.specializer.allows_layout(sc);
+                    let variant_id = self.get_array_variant(
+                        pointee_id,
+                        need_no_stride,
+                        &mut expanded_types_global_values,
+                    );
+                    if variant_id != pointee_id {
+                        inst.operands[1] = Operand::IdRef(variant_id);
+                    }
                 }
             }
             expanded_types_global_values.push(inst);
@@ -2463,8 +2583,51 @@ impl<'a, S: Specialization> Expander<'a, S> {
         module.entry_points = entry_points;
         module.debug_names = expanded_debug_names;
         module.annotations = expanded_annotations;
-        module.types_global_values = expanded_types_global_values;
+        module.types_global_values = expanded_types_global_values.clone();
         module.functions = expanded_functions;
+
+        // `expanded_types_global_values` already contains any new type declarations (array variants).
+        module.types_global_values = expanded_types_global_values;
+
+        // Pass 2: rewrite result types of value/composite instructions that still reference the
+        // *original* (layout-bearing) array types to their stride-less specialised variants.
+        if !self.specializer.array_layout_variants.borrow().is_empty() {
+            let mut variant_map = FxHashMap::<Word, Word>::default();
+            for (orig, variants) in self.specializer.array_layout_variants.borrow().iter() {
+                if let Some(forbidden) = variants.layout_forbidden_id {
+                    variant_map.insert(*orig, forbidden);
+                }
+            }
+
+            // Helper closure: given a mutable instruction, patch its result type if needed.
+            let patch_inst = |inst: &mut Instruction| {
+                if let Some(rt) = inst.result_type {
+                    if let Some(&new_id) = variant_map.get(&rt) {
+                        inst.result_type = Some(new_id);
+                    }
+                }
+            };
+
+            // Patch globals (constants etc.).
+            for inst in &mut module.types_global_values {
+                patch_inst(inst);
+            }
+
+            // Patch every instruction inside every function.
+            for func in &mut module.functions {
+                if let Some(def) = &mut func.def {
+                    patch_inst(def);
+                }
+                for blk in &mut func.blocks {
+                    if let Some(lbl) = &mut blk.label {
+                        patch_inst(lbl);
+                    }
+                    for inst in &mut blk.instructions {
+                        patch_inst(inst);
+                    }
+                }
+            }
+        }
 
         self.builder.module()
     }
@@ -2550,5 +2713,127 @@ impl<'a, S: Specialization> Expander<'a, S> {
             writeln!(w)?;
         }
         Ok(())
+    }
+
+    /// Obtain (or lazily create) an array type variant that either keeps or removes
+    /// the `ArrayStride` decoration, according to `need_no_stride`.
+    ///
+    /// * `need_no_stride == false`  => layout-required/allowed, return original ID.
+    /// * `need_no_stride == true`   => layout-forbidden, create a stride-less clone if
+    ///   one does not yet exist.
+    fn get_array_variant(
+        &mut self,
+        original_id: Word,
+        need_no_stride: bool,
+        new_types: &mut Vec<Instruction>,
+    ) -> Word {
+        // Look up the defining instruction from the cached map, as the original
+        // `types_global_values` list has been temporarily moved out of the `Module`
+        // during expansion.
+        let original_inst = match self.original_types.get(&original_id) {
+            Some(i) => i.clone(),
+            None => return original_id,
+        };
+
+        // Fast-path if we don't need to strip layout information.
+        if !need_no_stride {
+            return original_id;
+        }
+
+        // If we already produced a stride-less variant for this type, just return it.
+        if let Some(id) = self
+            .specializer
+            .array_layout_variants
+            .borrow()
+            .get(&original_id)
+            .and_then(|v| v.layout_forbidden_id)
+        {
+            return id;
+        }
+
+        match original_inst.class.opcode {
+            Op::TypeArray | Op::TypeRuntimeArray => {
+                // Handle arrays: remove the `ArrayStride` decoration (by simply cloning the
+                // instruction – the decoration lives in `OpDecorate`).
+
+                let new_id = self.builder.id();
+                let mut new_inst = original_inst.clone();
+                new_inst.result_id = Some(new_id);
+
+                // Recurse into the element type (arrays of arrays).
+                if let Some(&Operand::IdRef(elem_ty)) = original_inst.operands.first() {
+                    let nested_variant = self.get_array_variant(elem_ty, need_no_stride, new_types);
+                    if nested_variant != elem_ty {
+                        new_inst.operands[0] = Operand::IdRef(nested_variant);
+                    }
+                }
+
+                new_types.push(new_inst.clone());
+                // Cache definition for later lookups.
+                self.original_types.insert(new_id, new_inst);
+
+                self.specializer
+                    .array_layout_variants
+                    .borrow_mut()
+                    .entry(original_id)
+                    .or_default()
+                    .layout_forbidden_id = Some(new_id);
+
+                new_id
+            }
+
+            Op::TypeStruct => {
+                // For structs, we need to create a clone that references the stride-less
+                // variants of any member types that themselves changed.
+
+                // Track whether any member type changed – if not, we can reuse the original.
+                let mut changed = false;
+                let mut new_operands = original_inst.operands.clone();
+
+                for (idx, op) in original_inst.operands.iter().enumerate() {
+                    if let Operand::IdRef(member_ty) = op {
+                        let new_member_ty =
+                            self.get_array_variant(*member_ty, need_no_stride, new_types);
+                        if new_member_ty != *member_ty {
+                            new_operands[idx] = Operand::IdRef(new_member_ty);
+                            changed = true;
+                        }
+                    }
+                }
+
+                if !changed {
+                    // Even if no member type changed, cache lookup to avoid redundant work.
+                    self.specializer
+                        .array_layout_variants
+                        .borrow_mut()
+                        .entry(original_id)
+                        .or_default()
+                        .layout_forbidden_id = Some(original_id);
+                    return original_id;
+                }
+
+                let new_id = self.builder.id();
+                let mut new_inst = original_inst.clone();
+                new_inst.result_id = Some(new_id);
+                new_inst.operands = new_operands;
+
+                new_types.push(new_inst.clone());
+                self.original_types.insert(new_id, new_inst);
+
+                self.specializer
+                    .array_layout_variants
+                    .borrow_mut()
+                    .entry(original_id)
+                    .or_default()
+                    .layout_forbidden_id = Some(new_id);
+
+                new_id
+            }
+
+            _ => {
+                // Not an array or struct – nothing to do.
+                original_id
+            }
+        }
     }
 }
