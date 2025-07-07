@@ -150,7 +150,7 @@ impl NumericType for u32 {
         format!("{}", value)
     }
     fn can_have_relative_diff() -> bool {
-        false
+        true
     }
     fn as_f64(value: Self) -> f64 {
         value as f64
@@ -403,8 +403,8 @@ mod tests {
             _ => panic!("Expected numeric difference"),
         }
         match &diffs[0].relative_diff {
-            DiffMagnitude::Incomparable => {}
-            _ => panic!("Expected incomparable relative diff for U32"),
+            DiffMagnitude::Numeric(val) => assert_eq!(*val, 3.0 / 5.0), // 3/5 = 0.6
+            _ => panic!("Expected numeric relative diff for U32"),
         }
 
         // Check second difference (index 3: 4 vs 7)
