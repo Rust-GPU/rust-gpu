@@ -766,6 +766,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
 
         // If we successfully calculated a constant byte offset for the first index...
         if let Some(const_ptr_offset_bytes) = const_ptr_offset_bytes {
+            // HACK(eddyb) an offset of `0` is always a noop, and `pointercast`
+            // gets to use `SpirvValueKind::LogicalPtrCast`, which can later
+            // be "undone" (by `strip_ptrcasts`), allowing more flexibility
+            // downstream (instead of overeagerly "shrinking" the pointee).
+            if const_ptr_offset_bytes == 0 {
+                return self.pointercast(ptr, final_spirv_ptr_type);
+            }
+
             // Try to reconstruct a more "structured" access chain based on the *original*
             // pointee type of the pointer (`original_pointee_ty`) and the calculated byte offset.
             // This is useful if the input `ty` was generic (like u8) but the pointer actually
