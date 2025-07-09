@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/spirt_passes/diagnostics.rs`."><title>diagnostics.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-1a91846b.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.88.0-nightly (50aa04180 2025-05-08)" data-channel="nightly" data-search-js="search-f7877310.js" data-settings-js="settings-5514c975.js" ><script src="../../../../static.files/storage-4e99c027.js"></script><script defer src="../../../../static.files/src-script-63605ae7.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-7ef8a74a.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/linker/spirt_passes/</div>diagnostics.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::custom_decorations::{
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/linker/spirt_passes/diagnostics.rs`."><title>diagnostics.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../../static.files/storage-4e99c027.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/linker/spirt_passes/</div>diagnostics.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::custom_decorations::{
 <a href=#2 id=2 data-nosnippet>2</a>    CustomDecoration, SpanRegenerator, SrcLocDecoration, ZombieDecoration,
 <a href=#3 id=3 data-nosnippet>3</a>};
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::custom_insts::{<span class="self">self</span>, CustomInst, CustomOp};
@@ -404,28 +404,28 @@
 <a href=#404 id=404 data-nosnippet>404</a>            });
 <a href=#405 id=405 data-nosnippet>405</a>
 <a href=#406 id=406 data-nosnippet>406</a>        <span class="kw">let </span>attrs_def = <span class="kw-2">&amp;</span><span class="self">self</span>.cx[attrs];
-<a href=#407 id=407 data-nosnippet>407</a>        <span class="kw">if </span>!<span class="self">self</span>.linker_options.early_report_zombies {
-<a href=#408 id=408 data-nosnippet>408</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(zombie) = try_decode_custom_decoration::&lt;ZombieDecoration&lt;<span class="lifetime">'_</span>&gt;&gt;(attrs_def) {
-<a href=#409 id=409 data-nosnippet>409</a>                <span class="kw">let </span>ZombieDecoration { reason } = zombie.decode();
-<a href=#410 id=410 data-nosnippet>410</a>                <span class="kw">let </span>def_span = current_def
-<a href=#411 id=411 data-nosnippet>411</a>                    .and_then(|def| def.to_rustc_span(<span class="self">self</span>.cx, <span class="kw-2">&amp;mut </span><span class="self">self</span>.span_regen))
-<a href=#412 id=412 data-nosnippet>412</a>                    .or_else(|| {
-<a href=#413 id=413 data-nosnippet>413</a>                        <span class="comment">// If there's no clear source for the span, try to get
-<a href=#414 id=414 data-nosnippet>414</a>                        // it from the same attrs as the zombie, which could
-<a href=#415 id=415 data-nosnippet>415</a>                        // be missing from `use_stack` in some edge cases
-<a href=#416 id=416 data-nosnippet>416</a>                        // (such as zombied function parameters).
-<a href=#417 id=417 data-nosnippet>417</a>                        </span><span class="self">self</span>.span_regen.spirt_attrs_to_rustc_span(<span class="self">self</span>.cx, attrs)
-<a href=#418 id=418 data-nosnippet>418</a>                    })
-<a href=#419 id=419 data-nosnippet>419</a>                    .unwrap_or(DUMMY_SP);
-<a href=#420 id=420 data-nosnippet>420</a>                <span class="kw">let </span><span class="kw-2">mut </span>err = <span class="self">self
-<a href=#421 id=421 data-nosnippet>421</a>                    </span>.sess
-<a href=#422 id=422 data-nosnippet>422</a>                    .dcx()
-<a href=#423 id=423 data-nosnippet>423</a>                    .struct_span_err(def_span, reason.to_string());
-<a href=#424 id=424 data-nosnippet>424</a>                <span class="kw">for </span>use_origin <span class="kw">in </span>use_stack_for_def.iter().rev() {
-<a href=#425 id=425 data-nosnippet>425</a>                    use_origin.note(<span class="self">self</span>.cx, <span class="kw-2">&amp;mut </span><span class="self">self</span>.span_regen, <span class="kw-2">&amp;mut </span>err);
-<a href=#426 id=426 data-nosnippet>426</a>                }
-<a href=#427 id=427 data-nosnippet>427</a>                <span class="self">self</span>.overall_result = <span class="prelude-val">Err</span>(err.emit());
-<a href=#428 id=428 data-nosnippet>428</a>            }
+<a href=#407 id=407 data-nosnippet>407</a>        <span class="kw">if </span>!<span class="self">self</span>.linker_options.early_report_zombies
+<a href=#408 id=408 data-nosnippet>408</a>            &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(zombie) = try_decode_custom_decoration::&lt;ZombieDecoration&lt;<span class="lifetime">'_</span>&gt;&gt;(attrs_def)
+<a href=#409 id=409 data-nosnippet>409</a>        {
+<a href=#410 id=410 data-nosnippet>410</a>            <span class="kw">let </span>ZombieDecoration { reason } = zombie.decode();
+<a href=#411 id=411 data-nosnippet>411</a>            <span class="kw">let </span>def_span = current_def
+<a href=#412 id=412 data-nosnippet>412</a>                .and_then(|def| def.to_rustc_span(<span class="self">self</span>.cx, <span class="kw-2">&amp;mut </span><span class="self">self</span>.span_regen))
+<a href=#413 id=413 data-nosnippet>413</a>                .or_else(|| {
+<a href=#414 id=414 data-nosnippet>414</a>                    <span class="comment">// If there's no clear source for the span, try to get
+<a href=#415 id=415 data-nosnippet>415</a>                    // it from the same attrs as the zombie, which could
+<a href=#416 id=416 data-nosnippet>416</a>                    // be missing from `use_stack` in some edge cases
+<a href=#417 id=417 data-nosnippet>417</a>                    // (such as zombied function parameters).
+<a href=#418 id=418 data-nosnippet>418</a>                    </span><span class="self">self</span>.span_regen.spirt_attrs_to_rustc_span(<span class="self">self</span>.cx, attrs)
+<a href=#419 id=419 data-nosnippet>419</a>                })
+<a href=#420 id=420 data-nosnippet>420</a>                .unwrap_or(DUMMY_SP);
+<a href=#421 id=421 data-nosnippet>421</a>            <span class="kw">let </span><span class="kw-2">mut </span>err = <span class="self">self
+<a href=#422 id=422 data-nosnippet>422</a>                </span>.sess
+<a href=#423 id=423 data-nosnippet>423</a>                .dcx()
+<a href=#424 id=424 data-nosnippet>424</a>                .struct_span_err(def_span, reason.to_string());
+<a href=#425 id=425 data-nosnippet>425</a>            <span class="kw">for </span>use_origin <span class="kw">in </span>use_stack_for_def.iter().rev() {
+<a href=#426 id=426 data-nosnippet>426</a>                use_origin.note(<span class="self">self</span>.cx, <span class="kw-2">&amp;mut </span><span class="self">self</span>.span_regen, <span class="kw-2">&amp;mut </span>err);
+<a href=#427 id=427 data-nosnippet>427</a>            }
+<a href=#428 id=428 data-nosnippet>428</a>            <span class="self">self</span>.overall_result = <span class="prelude-val">Err</span>(err.emit());
 <a href=#429 id=429 data-nosnippet>429</a>        }
 <a href=#430 id=430 data-nosnippet>430</a>
 <a href=#431 id=431 data-nosnippet>431</a>        <span class="kw">let </span>diags = attrs_def.attrs.iter().flat_map(|attr| <span class="kw">match </span>attr {
@@ -623,83 +623,82 @@
 <a href=#623 id=623 data-nosnippet>623</a>                    ext_set,
 <a href=#624 id=624 data-nosnippet>624</a>                    inst: ext_inst,
 <a href=#625 id=625 data-nosnippet>625</a>                } = <span class="self">self</span>.cx[data_inst_def.form].kind
-<a href=#626 id=626 data-nosnippet>626</a>                {
-<a href=#627 id=627 data-nosnippet>627</a>                    <span class="kw">if </span>ext_set == <span class="self">self</span>.custom_ext_inst_set {
-<a href=#628 id=628 data-nosnippet>628</a>                        <span class="kw">match </span>CustomOp::decode(ext_inst) {
-<a href=#629 id=629 data-nosnippet>629</a>                            CustomOp::SetDebugSrcLoc =&gt; {
-<a href=#630 id=630 data-nosnippet>630</a>                                <span class="kw-2">*</span>last_debug_src_loc_inst = <span class="prelude-val">Some</span>(data_inst_def);
-<a href=#631 id=631 data-nosnippet>631</a>                            }
-<a href=#632 id=632 data-nosnippet>632</a>                            CustomOp::ClearDebugSrcLoc =&gt; {
-<a href=#633 id=633 data-nosnippet>633</a>                                <span class="kw-2">*</span>last_debug_src_loc_inst = <span class="prelude-val">None</span>;
-<a href=#634 id=634 data-nosnippet>634</a>                            }
-<a href=#635 id=635 data-nosnippet>635</a>                            op =&gt; <span class="kw">match </span>op.with_operands(<span class="kw-2">&amp;</span>data_inst_def.inputs) {
-<a href=#636 id=636 data-nosnippet>636</a>                                CustomInst::SetDebugSrcLoc { .. }
-<a href=#637 id=637 data-nosnippet>637</a>                                | CustomInst::ClearDebugSrcLoc =&gt; <span class="macro">unreachable!</span>(),
-<a href=#638 id=638 data-nosnippet>638</a>                                CustomInst::PushInlinedCallFrame { callee_name } =&gt; {
-<a href=#639 id=639 data-nosnippet>639</a>                                    <span class="comment">// Treat this like a call, in the caller.
-<a href=#640 id=640 data-nosnippet>640</a>                                    </span>replace_origin(<span class="self">self</span>, IntraFuncUseOrigin::CallCallee);
-<a href=#641 id=641 data-nosnippet>641</a>
-<a href=#642 id=642 data-nosnippet>642</a>                                    <span class="kw">let </span>const_kind = |v: Value| <span class="kw">match </span>v {
-<a href=#643 id=643 data-nosnippet>643</a>                                        Value::Const(ct) =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.cx[ct].kind,
-<a href=#644 id=644 data-nosnippet>644</a>                                        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-<a href=#645 id=645 data-nosnippet>645</a>                                    };
-<a href=#646 id=646 data-nosnippet>646</a>                                    <span class="kw">let </span>const_str = |v: Value| <span class="kw">match </span>const_kind(v) {
-<a href=#647 id=647 data-nosnippet>647</a>                                        <span class="kw-2">&amp;</span>ConstKind::SpvStringLiteralForExtInst(s) =&gt; s,
-<a href=#648 id=648 data-nosnippet>648</a>                                        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-<a href=#649 id=649 data-nosnippet>649</a>                                    };
-<a href=#650 id=650 data-nosnippet>650</a>                                    <span class="self">self</span>.use_stack.push(UseOrigin::IntraFunc {
-<a href=#651 id=651 data-nosnippet>651</a>                                        func_attrs: AttrSet::default(),
-<a href=#652 id=652 data-nosnippet>652</a>                                        special_func: <span class="prelude-val">Some</span>(SpecialFunc::Inlined {
-<a href=#653 id=653 data-nosnippet>653</a>                                            callee_name: const_str(callee_name),
-<a href=#654 id=654 data-nosnippet>654</a>                                        }),
-<a href=#655 id=655 data-nosnippet>655</a>                                        last_debug_src_loc_inst: <span class="prelude-val">None</span>,
-<a href=#656 id=656 data-nosnippet>656</a>                                        inst_attrs: AttrSet::default(),
-<a href=#657 id=657 data-nosnippet>657</a>                                        origin: IntraFuncUseOrigin::Other,
-<a href=#658 id=658 data-nosnippet>658</a>                                    });
-<a href=#659 id=659 data-nosnippet>659</a>                                }
-<a href=#660 id=660 data-nosnippet>660</a>                                CustomInst::PopInlinedCallFrame =&gt; {
-<a href=#661 id=661 data-nosnippet>661</a>                                    <span class="kw">match </span><span class="self">self</span>.use_stack.last() {
-<a href=#662 id=662 data-nosnippet>662</a>                                        <span class="prelude-val">Some</span>(UseOrigin::IntraFunc { special_func, .. }) =&gt; {
-<a href=#663 id=663 data-nosnippet>663</a>                                            <span class="kw">if let </span><span class="prelude-val">Some</span>(SpecialFunc::Inlined { .. }) = special_func
-<a href=#664 id=664 data-nosnippet>664</a>                                            {
-<a href=#665 id=665 data-nosnippet>665</a>                                                <span class="self">self</span>.use_stack.pop().unwrap();
-<a href=#666 id=666 data-nosnippet>666</a>                                                <span class="comment">// Undo what `PushInlinedCallFrame` did to the
-<a href=#667 id=667 data-nosnippet>667</a>                                                // original `UseOrigin::IntraFunc`.
-<a href=#668 id=668 data-nosnippet>668</a>                                                </span>replace_origin(<span class="self">self</span>, IntraFuncUseOrigin::Other);
-<a href=#669 id=669 data-nosnippet>669</a>                                            } <span class="kw">else </span>{
-<a href=#670 id=670 data-nosnippet>670</a>                                                <span class="comment">// HACK(eddyb) synthesize a diagnostic to report right away.
-<a href=#671 id=671 data-nosnippet>671</a>                                                </span><span class="self">self</span>.report_from_attrs(
-<a href=#672 id=672 data-nosnippet>672</a>                                                    AttrSet::default().append_diag(
-<a href=#673 id=673 data-nosnippet>673</a>                                                        <span class="self">self</span>.cx,
-<a href=#674 id=674 data-nosnippet>674</a>                                                        Diag::bug([
-<a href=#675 id=675 data-nosnippet>675</a>                                                            <span class="string">"`PopInlinedCallFrame` without an \
+<a href=#626 id=626 data-nosnippet>626</a>                    &amp;&amp; ext_set == <span class="self">self</span>.custom_ext_inst_set
+<a href=#627 id=627 data-nosnippet>627</a>                {
+<a href=#628 id=628 data-nosnippet>628</a>                    <span class="kw">match </span>CustomOp::decode(ext_inst) {
+<a href=#629 id=629 data-nosnippet>629</a>                        CustomOp::SetDebugSrcLoc =&gt; {
+<a href=#630 id=630 data-nosnippet>630</a>                            <span class="kw-2">*</span>last_debug_src_loc_inst = <span class="prelude-val">Some</span>(data_inst_def);
+<a href=#631 id=631 data-nosnippet>631</a>                        }
+<a href=#632 id=632 data-nosnippet>632</a>                        CustomOp::ClearDebugSrcLoc =&gt; {
+<a href=#633 id=633 data-nosnippet>633</a>                            <span class="kw-2">*</span>last_debug_src_loc_inst = <span class="prelude-val">None</span>;
+<a href=#634 id=634 data-nosnippet>634</a>                        }
+<a href=#635 id=635 data-nosnippet>635</a>                        op =&gt; <span class="kw">match </span>op.with_operands(<span class="kw-2">&amp;</span>data_inst_def.inputs) {
+<a href=#636 id=636 data-nosnippet>636</a>                            CustomInst::SetDebugSrcLoc { .. } | CustomInst::ClearDebugSrcLoc =&gt; {
+<a href=#637 id=637 data-nosnippet>637</a>                                <span class="macro">unreachable!</span>()
+<a href=#638 id=638 data-nosnippet>638</a>                            }
+<a href=#639 id=639 data-nosnippet>639</a>                            CustomInst::PushInlinedCallFrame { callee_name } =&gt; {
+<a href=#640 id=640 data-nosnippet>640</a>                                <span class="comment">// Treat this like a call, in the caller.
+<a href=#641 id=641 data-nosnippet>641</a>                                </span>replace_origin(<span class="self">self</span>, IntraFuncUseOrigin::CallCallee);
+<a href=#642 id=642 data-nosnippet>642</a>
+<a href=#643 id=643 data-nosnippet>643</a>                                <span class="kw">let </span>const_kind = |v: Value| <span class="kw">match </span>v {
+<a href=#644 id=644 data-nosnippet>644</a>                                    Value::Const(ct) =&gt; <span class="kw-2">&amp;</span><span class="self">self</span>.cx[ct].kind,
+<a href=#645 id=645 data-nosnippet>645</a>                                    <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+<a href=#646 id=646 data-nosnippet>646</a>                                };
+<a href=#647 id=647 data-nosnippet>647</a>                                <span class="kw">let </span>const_str = |v: Value| <span class="kw">match </span>const_kind(v) {
+<a href=#648 id=648 data-nosnippet>648</a>                                    <span class="kw-2">&amp;</span>ConstKind::SpvStringLiteralForExtInst(s) =&gt; s,
+<a href=#649 id=649 data-nosnippet>649</a>                                    <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+<a href=#650 id=650 data-nosnippet>650</a>                                };
+<a href=#651 id=651 data-nosnippet>651</a>                                <span class="self">self</span>.use_stack.push(UseOrigin::IntraFunc {
+<a href=#652 id=652 data-nosnippet>652</a>                                    func_attrs: AttrSet::default(),
+<a href=#653 id=653 data-nosnippet>653</a>                                    special_func: <span class="prelude-val">Some</span>(SpecialFunc::Inlined {
+<a href=#654 id=654 data-nosnippet>654</a>                                        callee_name: const_str(callee_name),
+<a href=#655 id=655 data-nosnippet>655</a>                                    }),
+<a href=#656 id=656 data-nosnippet>656</a>                                    last_debug_src_loc_inst: <span class="prelude-val">None</span>,
+<a href=#657 id=657 data-nosnippet>657</a>                                    inst_attrs: AttrSet::default(),
+<a href=#658 id=658 data-nosnippet>658</a>                                    origin: IntraFuncUseOrigin::Other,
+<a href=#659 id=659 data-nosnippet>659</a>                                });
+<a href=#660 id=660 data-nosnippet>660</a>                            }
+<a href=#661 id=661 data-nosnippet>661</a>                            CustomInst::PopInlinedCallFrame =&gt; {
+<a href=#662 id=662 data-nosnippet>662</a>                                <span class="kw">match </span><span class="self">self</span>.use_stack.last() {
+<a href=#663 id=663 data-nosnippet>663</a>                                    <span class="prelude-val">Some</span>(UseOrigin::IntraFunc { special_func, .. }) =&gt; {
+<a href=#664 id=664 data-nosnippet>664</a>                                        <span class="kw">if let </span><span class="prelude-val">Some</span>(SpecialFunc::Inlined { .. }) = special_func {
+<a href=#665 id=665 data-nosnippet>665</a>                                            <span class="self">self</span>.use_stack.pop().unwrap();
+<a href=#666 id=666 data-nosnippet>666</a>                                            <span class="comment">// Undo what `PushInlinedCallFrame` did to the
+<a href=#667 id=667 data-nosnippet>667</a>                                            // original `UseOrigin::IntraFunc`.
+<a href=#668 id=668 data-nosnippet>668</a>                                            </span>replace_origin(<span class="self">self</span>, IntraFuncUseOrigin::Other);
+<a href=#669 id=669 data-nosnippet>669</a>                                        } <span class="kw">else </span>{
+<a href=#670 id=670 data-nosnippet>670</a>                                            <span class="comment">// HACK(eddyb) synthesize a diagnostic to report right away.
+<a href=#671 id=671 data-nosnippet>671</a>                                            </span><span class="self">self</span>.report_from_attrs(
+<a href=#672 id=672 data-nosnippet>672</a>                                                AttrSet::default().append_diag(
+<a href=#673 id=673 data-nosnippet>673</a>                                                    <span class="self">self</span>.cx,
+<a href=#674 id=674 data-nosnippet>674</a>                                                    Diag::bug([
+<a href=#675 id=675 data-nosnippet>675</a>                                                        <span class="string">"`PopInlinedCallFrame` without an \
 <a href=#676 id=676 data-nosnippet>676</a>                                                             inlined call frame in `use_stack`"
-<a href=#677 id=677 data-nosnippet>677</a>                                                                </span>.into(),
-<a href=#678 id=678 data-nosnippet>678</a>                                                        ]),
-<a href=#679 id=679 data-nosnippet>679</a>                                                    ),
-<a href=#680 id=680 data-nosnippet>680</a>                                                );
-<a href=#681 id=681 data-nosnippet>681</a>                                            }
-<a href=#682 id=682 data-nosnippet>682</a>                                        }
-<a href=#683 id=683 data-nosnippet>683</a>                                        <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-<a href=#684 id=684 data-nosnippet>684</a>                                    }
-<a href=#685 id=685 data-nosnippet>685</a>                                }
-<a href=#686 id=686 data-nosnippet>686</a>                                CustomInst::Abort { .. } =&gt; {}
-<a href=#687 id=687 data-nosnippet>687</a>                            },
-<a href=#688 id=688 data-nosnippet>688</a>                        }
-<a href=#689 id=689 data-nosnippet>689</a>                    }
-<a href=#690 id=690 data-nosnippet>690</a>                }
-<a href=#691 id=691 data-nosnippet>691</a>            }
-<a href=#692 id=692 data-nosnippet>692</a>            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-<a href=#693 id=693 data-nosnippet>693</a>        }
-<a href=#694 id=694 data-nosnippet>694</a>
-<a href=#695 id=695 data-nosnippet>695</a>        <span class="kw">if let </span>DataInstKind::FuncCall(func) = <span class="self">self</span>.cx[data_inst_def.form].kind {
-<a href=#696 id=696 data-nosnippet>696</a>            <span class="comment">// HACK(eddyb) visit `func` early, to control its `use_stack`, with
-<a href=#697 id=697 data-nosnippet>697</a>            // the later visit from `inner_visit_with` ignored as a duplicate.
-<a href=#698 id=698 data-nosnippet>698</a>            </span><span class="kw">let </span>old_origin = replace_origin(<span class="self">self</span>, IntraFuncUseOrigin::CallCallee);
-<a href=#699 id=699 data-nosnippet>699</a>            <span class="self">self</span>.visit_func_use(func);
-<a href=#700 id=700 data-nosnippet>700</a>            replace_origin(<span class="self">self</span>, old_origin);
-<a href=#701 id=701 data-nosnippet>701</a>        }
-<a href=#702 id=702 data-nosnippet>702</a>
-<a href=#703 id=703 data-nosnippet>703</a>        data_inst_def.inner_visit_with(<span class="self">self</span>);
-<a href=#704 id=704 data-nosnippet>704</a>    }
-<a href=#705 id=705 data-nosnippet>705</a>}</code></pre></div></section></main></body></html>
+<a href=#677 id=677 data-nosnippet>677</a>                                                            </span>.into(),
+<a href=#678 id=678 data-nosnippet>678</a>                                                    ]),
+<a href=#679 id=679 data-nosnippet>679</a>                                                ),
+<a href=#680 id=680 data-nosnippet>680</a>                                            );
+<a href=#681 id=681 data-nosnippet>681</a>                                        }
+<a href=#682 id=682 data-nosnippet>682</a>                                    }
+<a href=#683 id=683 data-nosnippet>683</a>                                    <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+<a href=#684 id=684 data-nosnippet>684</a>                                }
+<a href=#685 id=685 data-nosnippet>685</a>                            }
+<a href=#686 id=686 data-nosnippet>686</a>                            CustomInst::Abort { .. } =&gt; {}
+<a href=#687 id=687 data-nosnippet>687</a>                        },
+<a href=#688 id=688 data-nosnippet>688</a>                    }
+<a href=#689 id=689 data-nosnippet>689</a>                }
+<a href=#690 id=690 data-nosnippet>690</a>            }
+<a href=#691 id=691 data-nosnippet>691</a>            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+<a href=#692 id=692 data-nosnippet>692</a>        }
+<a href=#693 id=693 data-nosnippet>693</a>
+<a href=#694 id=694 data-nosnippet>694</a>        <span class="kw">if let </span>DataInstKind::FuncCall(func) = <span class="self">self</span>.cx[data_inst_def.form].kind {
+<a href=#695 id=695 data-nosnippet>695</a>            <span class="comment">// HACK(eddyb) visit `func` early, to control its `use_stack`, with
+<a href=#696 id=696 data-nosnippet>696</a>            // the later visit from `inner_visit_with` ignored as a duplicate.
+<a href=#697 id=697 data-nosnippet>697</a>            </span><span class="kw">let </span>old_origin = replace_origin(<span class="self">self</span>, IntraFuncUseOrigin::CallCallee);
+<a href=#698 id=698 data-nosnippet>698</a>            <span class="self">self</span>.visit_func_use(func);
+<a href=#699 id=699 data-nosnippet>699</a>            replace_origin(<span class="self">self</span>, old_origin);
+<a href=#700 id=700 data-nosnippet>700</a>        }
+<a href=#701 id=701 data-nosnippet>701</a>
+<a href=#702 id=702 data-nosnippet>702</a>        data_inst_def.inner_visit_with(<span class="self">self</span>);
+<a href=#703 id=703 data-nosnippet>703</a>    }
+<a href=#704 id=704 data-nosnippet>704</a>}</code></pre></div></section></main></body></html>

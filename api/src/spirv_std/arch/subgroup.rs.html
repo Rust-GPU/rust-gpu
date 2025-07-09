@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/spirv-std/src/arch/subgroup.rs`."><title>subgroup.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1a91846b.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirv_std" data-themes="" data-resource-suffix="" data-rustdoc-version="1.88.0-nightly (50aa04180 2025-05-08)" data-channel="nightly" data-search-js="search-f7877310.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-63605ae7.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-7ef8a74a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirv_std/arch/</div>subgroup.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="attr">#[cfg(target_arch = <span class="string">"spirv"</span>)]
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/spirv-std/src/arch/subgroup.rs`."><title>subgroup.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="spirv_std" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirv_std/arch/</div>subgroup.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="attr">#[cfg(target_arch = <span class="string">"spirv"</span>)]
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">use </span><span class="kw">crate</span>::arch::barrier;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span><span class="kw">crate</span>::float::Float;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::integer::{Integer, SignedInteger, UnsignedInteger};
@@ -844,7 +844,7 @@
 <a href=#844 id=844 data-nosnippet>844</a>
 <a href=#845 id=845 data-nosnippet>845</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#846 id=846 data-nosnippet>846</a>
-<a href=#847 id=847 data-nosnippet>847</a>The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#847 id=847 data-nosnippet>847</a>The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#848 id=848 data-nosnippet>848</a>
 <a href=#849 id=849 data-nosnippet>849</a>The type of `value` must be the same as Result Type.
 <a href=#850 id=850 data-nosnippet>850</a>
@@ -875,7 +875,7 @@
 <a href=#875 id=875 data-nosnippet>875</a>
 <a href=#876 id=876 data-nosnippet>876</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#877 id=877 data-nosnippet>877</a>
-<a href=#878 id=878 data-nosnippet>878</a>The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#878 id=878 data-nosnippet>878</a>The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#879 id=879 data-nosnippet>879</a>
 <a href=#880 id=880 data-nosnippet>880</a>The type of `value` must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
 <a href=#881 id=881 data-nosnippet>881</a>
@@ -908,7 +908,7 @@
 <a href=#908 id=908 data-nosnippet>908</a>
 <a href=#909 id=909 data-nosnippet>909</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#910 id=910 data-nosnippet>910</a>
-<a href=#911 id=911 data-nosnippet>911</a>The identity I for Operation is 1. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#911 id=911 data-nosnippet>911</a>The identity I for Operation is 1. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#912 id=912 data-nosnippet>912</a>
 <a href=#913 id=913 data-nosnippet>913</a>The type of `value` must be the same as Result Type.
 <a href=#914 id=914 data-nosnippet>914</a>
@@ -939,7 +939,7 @@
 <a href=#939 id=939 data-nosnippet>939</a>
 <a href=#940 id=940 data-nosnippet>940</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#941 id=941 data-nosnippet>941</a>
-<a href=#942 id=942 data-nosnippet>942</a>The identity I for Operation is 1. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#942 id=942 data-nosnippet>942</a>The identity I for Operation is 1. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#943 id=943 data-nosnippet>943</a>
 <a href=#944 id=944 data-nosnippet>944</a>The type of `value` must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
 <a href=#945 id=945 data-nosnippet>945</a>
@@ -959,7 +959,7 @@
 <a href=#959 id=959 data-nosnippet>959</a>
 <a href=#960 id=960 data-nosnippet>960</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#961 id=961 data-nosnippet>961</a>
-<a href=#962 id=962 data-nosnippet>962</a>The identity I for Operation is INT_MAX.
+<a href=#962 id=962 data-nosnippet>962</a>The identity I for Operation is `INT_MAX`.
 <a href=#963 id=963 data-nosnippet>963</a>
 <a href=#964 id=964 data-nosnippet>964</a>The type of `value` must be the same as Result Type.
 <a href=#965 id=965 data-nosnippet>965</a>
@@ -972,7 +972,7 @@
 <a href=#972 id=972 data-nosnippet>972</a>
 <a href=#973 id=973 data-nosnippet>973</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#974 id=974 data-nosnippet>974</a>
-<a href=#975 id=975 data-nosnippet>975</a>The identity I for Operation is INT_MAX. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#975 id=975 data-nosnippet>975</a>The identity I for Operation is `INT_MAX`. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#976 id=976 data-nosnippet>976</a>
 <a href=#977 id=977 data-nosnippet>977</a>The type of `value` must be the same as Result Type.
 <a href=#978 id=978 data-nosnippet>978</a>
@@ -990,7 +990,7 @@
 <a href=#990 id=990 data-nosnippet>990</a>
 <a href=#991 id=991 data-nosnippet>991</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#992 id=992 data-nosnippet>992</a>
-<a href=#993 id=993 data-nosnippet>993</a>The identity I for Operation is UINT_MAX.
+<a href=#993 id=993 data-nosnippet>993</a>The identity I for Operation is `UINT_MAX`.
 <a href=#994 id=994 data-nosnippet>994</a>
 <a href=#995 id=995 data-nosnippet>995</a>The type of `value` must be the same as Result Type.
 <a href=#996 id=996 data-nosnippet>996</a>
@@ -1003,7 +1003,7 @@
 <a href=#1003 id=1003 data-nosnippet>1003</a>
 <a href=#1004 id=1004 data-nosnippet>1004</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#1005 id=1005 data-nosnippet>1005</a>
-<a href=#1006 id=1006 data-nosnippet>1006</a>The identity I for Operation is UINT_MAX. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#1006 id=1006 data-nosnippet>1006</a>The identity I for Operation is `UINT_MAX`. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#1007 id=1007 data-nosnippet>1007</a>
 <a href=#1008 id=1008 data-nosnippet>1008</a>The type of `value` must be the same as Result Type.
 <a href=#1009 id=1009 data-nosnippet>1009</a>
@@ -1034,7 +1034,7 @@
 <a href=#1034 id=1034 data-nosnippet>1034</a>
 <a href=#1035 id=1035 data-nosnippet>1035</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#1036 id=1036 data-nosnippet>1036</a>
-<a href=#1037 id=1037 data-nosnippet>1037</a>The identity I for Operation is +INF. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#1037 id=1037 data-nosnippet>1037</a>The identity I for Operation is +INF. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#1038 id=1038 data-nosnippet>1038</a>
 <a href=#1039 id=1039 data-nosnippet>1039</a>The type of `value` must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
 <a href=#1040 id=1040 data-nosnippet>1040</a>
@@ -1054,7 +1054,7 @@
 <a href=#1054 id=1054 data-nosnippet>1054</a>
 <a href=#1055 id=1055 data-nosnippet>1055</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#1056 id=1056 data-nosnippet>1056</a>
-<a href=#1057 id=1057 data-nosnippet>1057</a>The identity I for Operation is INT_MIN.
+<a href=#1057 id=1057 data-nosnippet>1057</a>The identity I for Operation is `INT_MIN`.
 <a href=#1058 id=1058 data-nosnippet>1058</a>
 <a href=#1059 id=1059 data-nosnippet>1059</a>The type of `value` must be the same as Result Type.
 <a href=#1060 id=1060 data-nosnippet>1060</a>
@@ -1067,7 +1067,7 @@
 <a href=#1067 id=1067 data-nosnippet>1067</a>
 <a href=#1068 id=1068 data-nosnippet>1068</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#1069 id=1069 data-nosnippet>1069</a>
-<a href=#1070 id=1070 data-nosnippet>1070</a>The identity I for Operation is INT_MIN. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#1070 id=1070 data-nosnippet>1070</a>The identity I for Operation is `INT_MIN`. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#1071 id=1071 data-nosnippet>1071</a>
 <a href=#1072 id=1072 data-nosnippet>1072</a>The type of `value` must be the same as Result Type.
 <a href=#1073 id=1073 data-nosnippet>1073</a>
@@ -1098,7 +1098,7 @@
 <a href=#1098 id=1098 data-nosnippet>1098</a>
 <a href=#1099 id=1099 data-nosnippet>1099</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#1100 id=1100 data-nosnippet>1100</a>
-<a href=#1101 id=1101 data-nosnippet>1101</a>The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#1101 id=1101 data-nosnippet>1101</a>The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#1102 id=1102 data-nosnippet>1102</a>
 <a href=#1103 id=1103 data-nosnippet>1103</a>The type of `value` must be the same as Result Type.
 <a href=#1104 id=1104 data-nosnippet>1104</a>
@@ -1160,7 +1160,7 @@
 <a href=#1160 id=1160 data-nosnippet>1160</a>
 <a href=#1161 id=1161 data-nosnippet>1161</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#1162 id=1162 data-nosnippet>1162</a>
-<a href=#1163 id=1163 data-nosnippet>1163</a>The identity I for Operation is ~0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#1163 id=1163 data-nosnippet>1163</a>The identity I for Operation is ~0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#1164 id=1164 data-nosnippet>1164</a>
 <a href=#1165 id=1165 data-nosnippet>1165</a>The type of `value` must be the same as Result Type.
 <a href=#1166 id=1166 data-nosnippet>1166</a>
@@ -1193,7 +1193,7 @@
 <a href=#1193 id=1193 data-nosnippet>1193</a>
 <a href=#1194 id=1194 data-nosnippet>1194</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#1195 id=1195 data-nosnippet>1195</a>
-<a href=#1196 id=1196 data-nosnippet>1196</a>The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#1196 id=1196 data-nosnippet>1196</a>The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#1197 id=1197 data-nosnippet>1197</a>
 <a href=#1198 id=1198 data-nosnippet>1198</a>The type of `value` must be the same as Result Type.
 <a href=#1199 id=1199 data-nosnippet>1199</a>
@@ -1226,7 +1226,7 @@
 <a href=#1226 id=1226 data-nosnippet>1226</a>
 <a href=#1227 id=1227 data-nosnippet>1227</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#1228 id=1228 data-nosnippet>1228</a>
-<a href=#1229 id=1229 data-nosnippet>1229</a>The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#1229 id=1229 data-nosnippet>1229</a>The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#1230 id=1230 data-nosnippet>1230</a>
 <a href=#1231 id=1231 data-nosnippet>1231</a>The type of `value` must be the same as Result Type.
 <a href=#1232 id=1232 data-nosnippet>1232</a>
@@ -1259,7 +1259,7 @@
 <a href=#1259 id=1259 data-nosnippet>1259</a>
 <a href=#1260 id=1260 data-nosnippet>1260</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#1261 id=1261 data-nosnippet>1261</a>
-<a href=#1262 id=1262 data-nosnippet>1262</a>The identity I for Operation is ~0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#1262 id=1262 data-nosnippet>1262</a>The identity I for Operation is ~0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#1263 id=1263 data-nosnippet>1263</a>
 <a href=#1264 id=1264 data-nosnippet>1264</a>The type of `value` must be the same as Result Type.
 <a href=#1265 id=1265 data-nosnippet>1265</a>
@@ -1292,7 +1292,7 @@
 <a href=#1292 id=1292 data-nosnippet>1292</a>
 <a href=#1293 id=1293 data-nosnippet>1293</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#1294 id=1294 data-nosnippet>1294</a>
-<a href=#1295 id=1295 data-nosnippet>1295</a>The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#1295 id=1295 data-nosnippet>1295</a>The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#1296 id=1296 data-nosnippet>1296</a>
 <a href=#1297 id=1297 data-nosnippet>1297</a>The type of `value` must be the same as Result Type.
 <a href=#1298 id=1298 data-nosnippet>1298</a>
@@ -1325,7 +1325,7 @@
 <a href=#1325 id=1325 data-nosnippet>1325</a>
 <a href=#1326 id=1326 data-nosnippet>1326</a>Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 <a href=#1327 id=1327 data-nosnippet>1327</a>
-<a href=#1328 id=1328 data-nosnippet>1328</a>The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+<a href=#1328 id=1328 data-nosnippet>1328</a>The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 <a href=#1329 id=1329 data-nosnippet>1329</a>
 <a href=#1330 id=1330 data-nosnippet>1330</a>The type of `value` must be the same as Result Type.
 <a href=#1331 id=1331 data-nosnippet>1331</a>

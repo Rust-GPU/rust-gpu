@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/constant.rs`."><title>constant.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1a91846b.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.88.0-nightly (50aa04180 2025-05-08)" data-channel="nightly" data-search-js="search-f7877310.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-63605ae7.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-7ef8a74a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/codegen_cx/</div>constant.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/codegen_cx/constant.rs`."><title>constant.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/codegen_cx/</div>constant.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">super</span>::CodegenCx;
@@ -343,252 +343,249 @@
 <a href=#343 id=343 data-nosnippet>343</a>    <span class="kw">pub fn </span>const_bitcast(<span class="kw-2">&amp;</span><span class="self">self</span>, val: SpirvValue, ty: Word) -&gt; SpirvValue {
 <a href=#344 id=344 data-nosnippet>344</a>        <span class="comment">// HACK(eddyb) special-case `const_data_from_alloc` + `static_addr_of`
 <a href=#345 id=345 data-nosnippet>345</a>        // as the old `from_const_alloc` (now `OperandRef::from_const_alloc`).
-<a href=#346 id=346 data-nosnippet>346</a>        </span><span class="kw">if let </span>SpirvValueKind::IllegalConst(<span class="kw">_</span>) = val.kind {
-<a href=#347 id=347 data-nosnippet>347</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(SpirvConst::PtrTo { pointee }) = <span class="self">self</span>.builder.lookup_const(val) {
-<a href=#348 id=348 data-nosnippet>348</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(SpirvConst::ConstDataFromAlloc(alloc)) =
-<a href=#349 id=349 data-nosnippet>349</a>                    <span class="self">self</span>.builder.lookup_const_by_id(pointee)
-<a href=#350 id=350 data-nosnippet>350</a>                {
-<a href=#351 id=351 data-nosnippet>351</a>                    <span class="kw">if let </span>SpirvType::Pointer { pointee } = <span class="self">self</span>.lookup_type(ty) {
-<a href=#352 id=352 data-nosnippet>352</a>                        <span class="kw">let </span><span class="kw-2">mut </span>offset = Size::ZERO;
-<a href=#353 id=353 data-nosnippet>353</a>                        <span class="kw">let </span>init = <span class="self">self</span>.read_from_const_alloc(alloc, <span class="kw-2">&amp;mut </span>offset, pointee);
-<a href=#354 id=354 data-nosnippet>354</a>                        <span class="kw">return </span><span class="self">self</span>.static_addr_of(init, alloc.inner().align, <span class="prelude-val">None</span>);
-<a href=#355 id=355 data-nosnippet>355</a>                    }
-<a href=#356 id=356 data-nosnippet>356</a>                }
-<a href=#357 id=357 data-nosnippet>357</a>            }
-<a href=#358 id=358 data-nosnippet>358</a>        }
-<a href=#359 id=359 data-nosnippet>359</a>
-<a href=#360 id=360 data-nosnippet>360</a>        <span class="kw">if </span>val.ty == ty {
-<a href=#361 id=361 data-nosnippet>361</a>            val
-<a href=#362 id=362 data-nosnippet>362</a>        } <span class="kw">else </span>{
-<a href=#363 id=363 data-nosnippet>363</a>            <span class="comment">// FIXME(eddyb) implement via `OpSpecConstantOp`.
-<a href=#364 id=364 data-nosnippet>364</a>            // FIXME(eddyb) this zombies the original value without creating a new one.
-<a href=#365 id=365 data-nosnippet>365</a>            </span><span class="kw">let </span>result = val.def_cx(<span class="self">self</span>).with_type(ty);
-<a href=#366 id=366 data-nosnippet>366</a>            <span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">"const_bitcast"</span>);
-<a href=#367 id=367 data-nosnippet>367</a>            result
-<a href=#368 id=368 data-nosnippet>368</a>        }
-<a href=#369 id=369 data-nosnippet>369</a>    }
-<a href=#370 id=370 data-nosnippet>370</a>
-<a href=#371 id=371 data-nosnippet>371</a>    <span class="comment">// This function comes from `ty::layout`'s `layout_of_uncached`,
-<a href=#372 id=372 data-nosnippet>372</a>    // where it's named `scalar_unit`.
-<a href=#373 id=373 data-nosnippet>373</a>    </span><span class="kw">pub fn </span>primitive_to_scalar(<span class="kw-2">&amp;</span><span class="self">self</span>, value: Primitive) -&gt; abi::Scalar {
-<a href=#374 id=374 data-nosnippet>374</a>        <span class="kw">let </span>bits = value.size(<span class="self">self</span>.data_layout()).bits();
-<a href=#375 id=375 data-nosnippet>375</a>        <span class="macro">assert!</span>(bits &lt;= <span class="number">128</span>);
-<a href=#376 id=376 data-nosnippet>376</a>        abi::Scalar::Initialized {
-<a href=#377 id=377 data-nosnippet>377</a>            value,
-<a href=#378 id=378 data-nosnippet>378</a>            valid_range: abi::WrappingRange {
-<a href=#379 id=379 data-nosnippet>379</a>                start: <span class="number">0</span>,
-<a href=#380 id=380 data-nosnippet>380</a>                end: (!<span class="number">0 </span>&gt;&gt; (<span class="number">128 </span>- bits)),
-<a href=#381 id=381 data-nosnippet>381</a>            },
-<a href=#382 id=382 data-nosnippet>382</a>        }
-<a href=#383 id=383 data-nosnippet>383</a>    }
-<a href=#384 id=384 data-nosnippet>384</a>
-<a href=#385 id=385 data-nosnippet>385</a>    <span class="kw">pub fn </span>create_const_alloc(<span class="kw-2">&amp;</span><span class="self">self</span>, alloc: ConstAllocation&lt;<span class="lifetime">'tcx</span>&gt;, ty: Word) -&gt; SpirvValue {
-<a href=#386 id=386 data-nosnippet>386</a>        <span class="macro">tracing::trace!</span>(
-<a href=#387 id=387 data-nosnippet>387</a>            <span class="string">"Creating const alloc of type {} with {} bytes"</span>,
-<a href=#388 id=388 data-nosnippet>388</a>            <span class="self">self</span>.debug_type(ty),
-<a href=#389 id=389 data-nosnippet>389</a>            alloc.inner().len()
-<a href=#390 id=390 data-nosnippet>390</a>        );
-<a href=#391 id=391 data-nosnippet>391</a>        <span class="kw">let </span><span class="kw-2">mut </span>offset = Size::ZERO;
-<a href=#392 id=392 data-nosnippet>392</a>        <span class="kw">let </span>result = <span class="self">self</span>.read_from_const_alloc(alloc, <span class="kw-2">&amp;mut </span>offset, ty);
-<a href=#393 id=393 data-nosnippet>393</a>        <span class="macro">assert_eq!</span>(
-<a href=#394 id=394 data-nosnippet>394</a>            offset.bytes_usize(),
-<a href=#395 id=395 data-nosnippet>395</a>            alloc.inner().len(),
-<a href=#396 id=396 data-nosnippet>396</a>            <span class="string">"create_const_alloc must consume all bytes of an Allocation"
-<a href=#397 id=397 data-nosnippet>397</a>        </span>);
-<a href=#398 id=398 data-nosnippet>398</a>        <span class="macro">tracing::trace!</span>(<span class="string">"Done creating alloc of type {}"</span>, <span class="self">self</span>.debug_type(ty));
-<a href=#399 id=399 data-nosnippet>399</a>        result
-<a href=#400 id=400 data-nosnippet>400</a>    }
-<a href=#401 id=401 data-nosnippet>401</a>
-<a href=#402 id=402 data-nosnippet>402</a>    <span class="kw">fn </span>read_from_const_alloc(
-<a href=#403 id=403 data-nosnippet>403</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#404 id=404 data-nosnippet>404</a>        alloc: ConstAllocation&lt;<span class="lifetime">'tcx</span>&gt;,
-<a href=#405 id=405 data-nosnippet>405</a>        offset: <span class="kw-2">&amp;mut </span>Size,
-<a href=#406 id=406 data-nosnippet>406</a>        ty: Word,
-<a href=#407 id=407 data-nosnippet>407</a>    ) -&gt; SpirvValue {
-<a href=#408 id=408 data-nosnippet>408</a>        <span class="kw">let </span>ty_concrete = <span class="self">self</span>.lookup_type(ty);
-<a href=#409 id=409 data-nosnippet>409</a>        <span class="kw-2">*</span>offset = offset.align_to(ty_concrete.alignof(<span class="self">self</span>));
-<a href=#410 id=410 data-nosnippet>410</a>        <span class="comment">// these print statements are really useful for debugging, so leave them easily available
-<a href=#411 id=411 data-nosnippet>411</a>        // println!("const at {}: {}", offset.bytes(), self.debug_type(ty));
-<a href=#412 id=412 data-nosnippet>412</a>        </span><span class="kw">match </span>ty_concrete {
-<a href=#413 id=413 data-nosnippet>413</a>            SpirvType::Void =&gt; <span class="self">self
-<a href=#414 id=414 data-nosnippet>414</a>                </span>.tcx
-<a href=#415 id=415 data-nosnippet>415</a>                .dcx()
-<a href=#416 id=416 data-nosnippet>416</a>                .fatal(<span class="string">"cannot create const alloc of type void"</span>),
-<a href=#417 id=417 data-nosnippet>417</a>            SpirvType::Bool
-<a href=#418 id=418 data-nosnippet>418</a>            | SpirvType::Integer(..)
-<a href=#419 id=419 data-nosnippet>419</a>            | SpirvType::Float(<span class="kw">_</span>)
-<a href=#420 id=420 data-nosnippet>420</a>            | SpirvType::Pointer { .. } =&gt; {
-<a href=#421 id=421 data-nosnippet>421</a>                <span class="kw">let </span>size = ty_concrete.sizeof(<span class="self">self</span>).unwrap();
-<a href=#422 id=422 data-nosnippet>422</a>                <span class="kw">let </span>primitive = <span class="kw">match </span>ty_concrete {
-<a href=#423 id=423 data-nosnippet>423</a>                    SpirvType::Bool =&gt; Primitive::Int(Integer::fit_unsigned(<span class="number">0</span>), <span class="bool-val">false</span>),
-<a href=#424 id=424 data-nosnippet>424</a>                    SpirvType::Integer(int_size, int_signedness) =&gt; Primitive::Int(
-<a href=#425 id=425 data-nosnippet>425</a>                        <span class="kw">match </span>int_size {
-<a href=#426 id=426 data-nosnippet>426</a>                            <span class="number">8 </span>=&gt; Integer::I8,
-<a href=#427 id=427 data-nosnippet>427</a>                            <span class="number">16 </span>=&gt; Integer::I16,
-<a href=#428 id=428 data-nosnippet>428</a>                            <span class="number">32 </span>=&gt; Integer::I32,
-<a href=#429 id=429 data-nosnippet>429</a>                            <span class="number">64 </span>=&gt; Integer::I64,
-<a href=#430 id=430 data-nosnippet>430</a>                            <span class="number">128 </span>=&gt; Integer::I128,
-<a href=#431 id=431 data-nosnippet>431</a>                            other =&gt; {
-<a href=#432 id=432 data-nosnippet>432</a>                                <span class="self">self</span>.tcx
-<a href=#433 id=433 data-nosnippet>433</a>                                    .dcx()
-<a href=#434 id=434 data-nosnippet>434</a>                                    .fatal(<span class="macro">format!</span>(<span class="string">"invalid size for integer: {other}"</span>));
-<a href=#435 id=435 data-nosnippet>435</a>                            }
-<a href=#436 id=436 data-nosnippet>436</a>                        },
-<a href=#437 id=437 data-nosnippet>437</a>                        int_signedness,
-<a href=#438 id=438 data-nosnippet>438</a>                    ),
-<a href=#439 id=439 data-nosnippet>439</a>                    SpirvType::Float(float_size) =&gt; Primitive::Float(<span class="kw">match </span>float_size {
-<a href=#440 id=440 data-nosnippet>440</a>                        <span class="number">16 </span>=&gt; Float::F16,
-<a href=#441 id=441 data-nosnippet>441</a>                        <span class="number">32 </span>=&gt; Float::F32,
-<a href=#442 id=442 data-nosnippet>442</a>                        <span class="number">64 </span>=&gt; Float::F64,
-<a href=#443 id=443 data-nosnippet>443</a>                        <span class="number">128 </span>=&gt; Float::F128,
-<a href=#444 id=444 data-nosnippet>444</a>                        other =&gt; {
-<a href=#445 id=445 data-nosnippet>445</a>                            <span class="self">self</span>.tcx
-<a href=#446 id=446 data-nosnippet>446</a>                                .dcx()
-<a href=#447 id=447 data-nosnippet>447</a>                                .fatal(<span class="macro">format!</span>(<span class="string">"invalid size for float: {other}"</span>));
-<a href=#448 id=448 data-nosnippet>448</a>                        }
-<a href=#449 id=449 data-nosnippet>449</a>                    }),
-<a href=#450 id=450 data-nosnippet>450</a>                    SpirvType::Pointer { .. } =&gt; Primitive::Pointer(AddressSpace::DATA),
-<a href=#451 id=451 data-nosnippet>451</a>                    unsupported_spirv_type =&gt; <span class="macro">bug!</span>(
-<a href=#452 id=452 data-nosnippet>452</a>                        <span class="string">"invalid spirv type internal to create_alloc_const2: {:?}"</span>,
-<a href=#453 id=453 data-nosnippet>453</a>                        unsupported_spirv_type
-<a href=#454 id=454 data-nosnippet>454</a>                    ),
-<a href=#455 id=455 data-nosnippet>455</a>                };
-<a href=#456 id=456 data-nosnippet>456</a>                <span class="comment">// alloc_id is not needed by read_scalar, so we just use 0. If the context
-<a href=#457 id=457 data-nosnippet>457</a>                // refers to a pointer, read_scalar will find the actual alloc_id. It
-<a href=#458 id=458 data-nosnippet>458</a>                // only uses the input alloc_id in the case that the scalar is uninitialized
-<a href=#459 id=459 data-nosnippet>459</a>                // as part of the error output
-<a href=#460 id=460 data-nosnippet>460</a>                // tldr, the pointer here is only needed for the offset
-<a href=#461 id=461 data-nosnippet>461</a>                </span><span class="kw">let </span>value = <span class="kw">match </span>alloc.inner().read_scalar(
-<a href=#462 id=462 data-nosnippet>462</a>                    <span class="self">self</span>,
-<a href=#463 id=463 data-nosnippet>463</a>                    alloc_range(<span class="kw-2">*</span>offset, size),
-<a href=#464 id=464 data-nosnippet>464</a>                    <span class="macro">matches!</span>(primitive, Primitive::Pointer(<span class="kw">_</span>)),
-<a href=#465 id=465 data-nosnippet>465</a>                ) {
-<a href=#466 id=466 data-nosnippet>466</a>                    <span class="prelude-val">Ok</span>(scalar) =&gt; {
-<a href=#467 id=467 data-nosnippet>467</a>                        <span class="self">self</span>.scalar_to_backend(scalar, <span class="self">self</span>.primitive_to_scalar(primitive), ty)
-<a href=#468 id=468 data-nosnippet>468</a>                    }
-<a href=#469 id=469 data-nosnippet>469</a>                    <span class="kw">_ </span>=&gt; <span class="self">self</span>.undef(ty),
-<a href=#470 id=470 data-nosnippet>470</a>                };
-<a href=#471 id=471 data-nosnippet>471</a>                <span class="kw-2">*</span>offset += size;
-<a href=#472 id=472 data-nosnippet>472</a>                value
-<a href=#473 id=473 data-nosnippet>473</a>            }
-<a href=#474 id=474 data-nosnippet>474</a>            SpirvType::Adt {
-<a href=#475 id=475 data-nosnippet>475</a>                size,
-<a href=#476 id=476 data-nosnippet>476</a>                field_types,
-<a href=#477 id=477 data-nosnippet>477</a>                field_offsets,
-<a href=#478 id=478 data-nosnippet>478</a>                ..
-<a href=#479 id=479 data-nosnippet>479</a>            } =&gt; {
-<a href=#480 id=480 data-nosnippet>480</a>                <span class="kw">let </span>base = <span class="kw-2">*</span>offset;
-<a href=#481 id=481 data-nosnippet>481</a>                <span class="kw">let </span><span class="kw-2">mut </span>values = Vec::with_capacity(field_types.len());
-<a href=#482 id=482 data-nosnippet>482</a>                <span class="kw">let </span><span class="kw-2">mut </span>occupied_spaces = Vec::with_capacity(field_types.len());
-<a href=#483 id=483 data-nosnippet>483</a>                <span class="kw">for </span>(<span class="kw-2">&amp;</span>ty, <span class="kw-2">&amp;</span>field_offset) <span class="kw">in </span>field_types.iter().zip(field_offsets.iter()) {
-<a href=#484 id=484 data-nosnippet>484</a>                    <span class="kw">let </span>total_offset_start = base + field_offset;
-<a href=#485 id=485 data-nosnippet>485</a>                    <span class="kw">let </span><span class="kw-2">mut </span>total_offset_end = total_offset_start;
-<a href=#486 id=486 data-nosnippet>486</a>                    values.push(
-<a href=#487 id=487 data-nosnippet>487</a>                        <span class="self">self</span>.read_from_const_alloc(alloc, <span class="kw-2">&amp;mut </span>total_offset_end, ty)
-<a href=#488 id=488 data-nosnippet>488</a>                            .def_cx(<span class="self">self</span>),
-<a href=#489 id=489 data-nosnippet>489</a>                    );
-<a href=#490 id=490 data-nosnippet>490</a>                    occupied_spaces.push(total_offset_start..total_offset_end);
-<a href=#491 id=491 data-nosnippet>491</a>                }
-<a href=#492 id=492 data-nosnippet>492</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(size) = size {
-<a href=#493 id=493 data-nosnippet>493</a>                    <span class="kw-2">*</span>offset += size;
-<a href=#494 id=494 data-nosnippet>494</a>                } <span class="kw">else </span>{
-<a href=#495 id=495 data-nosnippet>495</a>                    <span class="macro">assert_eq!</span>(
-<a href=#496 id=496 data-nosnippet>496</a>                        offset.bytes_usize(),
-<a href=#497 id=497 data-nosnippet>497</a>                        alloc.inner().len(),
-<a href=#498 id=498 data-nosnippet>498</a>                        <span class="string">"create_const_alloc must consume all bytes of an Allocation after an unsized struct"
-<a href=#499 id=499 data-nosnippet>499</a>                    </span>);
-<a href=#500 id=500 data-nosnippet>500</a>                }
-<a href=#501 id=501 data-nosnippet>501</a>                <span class="self">self</span>.constant_composite(ty, values.into_iter())
-<a href=#502 id=502 data-nosnippet>502</a>            }
-<a href=#503 id=503 data-nosnippet>503</a>            SpirvType::Array { element, count } =&gt; {
-<a href=#504 id=504 data-nosnippet>504</a>                <span class="kw">let </span>count = <span class="self">self</span>.builder.lookup_const_scalar(count).unwrap() <span class="kw">as </span>usize;
-<a href=#505 id=505 data-nosnippet>505</a>                <span class="kw">let </span>values = (<span class="number">0</span>..count).map(|<span class="kw">_</span>| {
-<a href=#506 id=506 data-nosnippet>506</a>                    <span class="self">self</span>.read_from_const_alloc(alloc, offset, element)
-<a href=#507 id=507 data-nosnippet>507</a>                        .def_cx(<span class="self">self</span>)
-<a href=#508 id=508 data-nosnippet>508</a>                });
-<a href=#509 id=509 data-nosnippet>509</a>                <span class="self">self</span>.constant_composite(ty, values)
-<a href=#510 id=510 data-nosnippet>510</a>            }
-<a href=#511 id=511 data-nosnippet>511</a>            SpirvType::Vector { element, count } =&gt; {
-<a href=#512 id=512 data-nosnippet>512</a>                <span class="kw">let </span>total_size = ty_concrete
-<a href=#513 id=513 data-nosnippet>513</a>                    .sizeof(<span class="self">self</span>)
-<a href=#514 id=514 data-nosnippet>514</a>                    .expect(<span class="string">"create_const_alloc: Vectors must be sized"</span>);
-<a href=#515 id=515 data-nosnippet>515</a>                <span class="kw">let </span>final_offset = <span class="kw-2">*</span>offset + total_size;
-<a href=#516 id=516 data-nosnippet>516</a>                <span class="kw">let </span>values = (<span class="number">0</span>..count).map(|<span class="kw">_</span>| {
-<a href=#517 id=517 data-nosnippet>517</a>                    <span class="self">self</span>.read_from_const_alloc(alloc, offset, element)
-<a href=#518 id=518 data-nosnippet>518</a>                        .def_cx(<span class="self">self</span>)
-<a href=#519 id=519 data-nosnippet>519</a>                });
-<a href=#520 id=520 data-nosnippet>520</a>                <span class="kw">let </span>result = <span class="self">self</span>.constant_composite(ty, values);
-<a href=#521 id=521 data-nosnippet>521</a>                <span class="macro">assert!</span>(<span class="kw-2">*</span>offset &lt;= final_offset);
-<a href=#522 id=522 data-nosnippet>522</a>                <span class="comment">// Vectors sometimes have padding at the end (e.g. vec3), skip over it.
-<a href=#523 id=523 data-nosnippet>523</a>                </span><span class="kw-2">*</span>offset = final_offset;
-<a href=#524 id=524 data-nosnippet>524</a>                result
-<a href=#525 id=525 data-nosnippet>525</a>            }
-<a href=#526 id=526 data-nosnippet>526</a>            SpirvType::Matrix { element, count } =&gt; {
-<a href=#527 id=527 data-nosnippet>527</a>                <span class="kw">let </span>total_size = ty_concrete
-<a href=#528 id=528 data-nosnippet>528</a>                    .sizeof(<span class="self">self</span>)
-<a href=#529 id=529 data-nosnippet>529</a>                    .expect(<span class="string">"create_const_alloc: Matrices must be sized"</span>);
-<a href=#530 id=530 data-nosnippet>530</a>                <span class="kw">let </span>final_offset = <span class="kw-2">*</span>offset + total_size;
-<a href=#531 id=531 data-nosnippet>531</a>                <span class="kw">let </span>values = (<span class="number">0</span>..count).map(|<span class="kw">_</span>| {
-<a href=#532 id=532 data-nosnippet>532</a>                    <span class="self">self</span>.read_from_const_alloc(alloc, offset, element)
-<a href=#533 id=533 data-nosnippet>533</a>                        .def_cx(<span class="self">self</span>)
-<a href=#534 id=534 data-nosnippet>534</a>                });
-<a href=#535 id=535 data-nosnippet>535</a>                <span class="kw">let </span>result = <span class="self">self</span>.constant_composite(ty, values);
-<a href=#536 id=536 data-nosnippet>536</a>                <span class="macro">assert!</span>(<span class="kw-2">*</span>offset &lt;= final_offset);
-<a href=#537 id=537 data-nosnippet>537</a>                <span class="comment">// Matrices sometimes have padding at the end (e.g. Mat4x3), skip over it.
-<a href=#538 id=538 data-nosnippet>538</a>                </span><span class="kw-2">*</span>offset = final_offset;
-<a href=#539 id=539 data-nosnippet>539</a>                result
-<a href=#540 id=540 data-nosnippet>540</a>            }
-<a href=#541 id=541 data-nosnippet>541</a>            SpirvType::RuntimeArray { element } =&gt; {
-<a href=#542 id=542 data-nosnippet>542</a>                <span class="kw">let </span><span class="kw-2">mut </span>values = Vec::new();
-<a href=#543 id=543 data-nosnippet>543</a>                <span class="kw">while </span>offset.bytes_usize() != alloc.inner().len() {
-<a href=#544 id=544 data-nosnippet>544</a>                    values.push(
-<a href=#545 id=545 data-nosnippet>545</a>                        <span class="self">self</span>.read_from_const_alloc(alloc, offset, element)
-<a href=#546 id=546 data-nosnippet>546</a>                            .def_cx(<span class="self">self</span>),
-<a href=#547 id=547 data-nosnippet>547</a>                    );
-<a href=#548 id=548 data-nosnippet>548</a>                }
-<a href=#549 id=549 data-nosnippet>549</a>                <span class="kw">let </span>result = <span class="self">self</span>.constant_composite(ty, values.into_iter());
-<a href=#550 id=550 data-nosnippet>550</a>                <span class="comment">// TODO: Figure out how to do this. Compiling the below crashes both clspv *and* llvm-spirv:
-<a href=#551 id=551 data-nosnippet>551</a>                /*
-<a href=#552 id=552 data-nosnippet>552</a>                __constant struct A {
-<a href=#553 id=553 data-nosnippet>553</a>                    float x;
-<a href=#554 id=554 data-nosnippet>554</a>                    int y[];
-<a href=#555 id=555 data-nosnippet>555</a>                } a = {1, {2, 3, 4}};
-<a href=#556 id=556 data-nosnippet>556</a>
-<a href=#557 id=557 data-nosnippet>557</a>                __kernel void foo(__global int* data, __constant int* c) {
-<a href=#558 id=558 data-nosnippet>558</a>                __constant struct A* asdf = &amp;a;
-<a href=#559 id=559 data-nosnippet>559</a>                *data = *c + asdf-&gt;y[*c];
-<a href=#560 id=560 data-nosnippet>560</a>                }
-<a href=#561 id=561 data-nosnippet>561</a>                */
-<a href=#562 id=562 data-nosnippet>562</a>                // NOTE(eddyb) the above description is a bit outdated, it's now
-<a href=#563 id=563 data-nosnippet>563</a>                // clear `OpTypeRuntimeArray` does not belong in user code, and
-<a href=#564 id=564 data-nosnippet>564</a>                // is only for dynamically-sized SSBOs and descriptor indexing,
-<a href=#565 id=565 data-nosnippet>565</a>                // and a general solution looks similar to `union` handling, but
-<a href=#566 id=566 data-nosnippet>566</a>                // for the length of a fixed-length array.
-<a href=#567 id=567 data-nosnippet>567</a>                </span><span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">"constant `OpTypeRuntimeArray` value"</span>);
-<a href=#568 id=568 data-nosnippet>568</a>                result
-<a href=#569 id=569 data-nosnippet>569</a>            }
-<a href=#570 id=570 data-nosnippet>570</a>            SpirvType::Function { .. } =&gt; <span class="self">self
-<a href=#571 id=571 data-nosnippet>571</a>                </span>.tcx
-<a href=#572 id=572 data-nosnippet>572</a>                .dcx()
-<a href=#573 id=573 data-nosnippet>573</a>                .fatal(<span class="string">"TODO: SpirvType::Function not supported yet in create_const_alloc"</span>),
-<a href=#574 id=574 data-nosnippet>574</a>            SpirvType::Image { .. } =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="string">"cannot create a constant image value"</span>),
-<a href=#575 id=575 data-nosnippet>575</a>            SpirvType::Sampler =&gt; <span class="self">self
-<a href=#576 id=576 data-nosnippet>576</a>                </span>.tcx
-<a href=#577 id=577 data-nosnippet>577</a>                .dcx()
-<a href=#578 id=578 data-nosnippet>578</a>                .fatal(<span class="string">"cannot create a constant sampler value"</span>),
-<a href=#579 id=579 data-nosnippet>579</a>            SpirvType::SampledImage { .. } =&gt; <span class="self">self
-<a href=#580 id=580 data-nosnippet>580</a>                </span>.tcx
-<a href=#581 id=581 data-nosnippet>581</a>                .dcx()
-<a href=#582 id=582 data-nosnippet>582</a>                .fatal(<span class="string">"cannot create a constant sampled image value"</span>),
-<a href=#583 id=583 data-nosnippet>583</a>            SpirvType::InterfaceBlock { .. } =&gt; <span class="self">self
-<a href=#584 id=584 data-nosnippet>584</a>                </span>.tcx
-<a href=#585 id=585 data-nosnippet>585</a>                .dcx()
-<a href=#586 id=586 data-nosnippet>586</a>                .fatal(<span class="string">"cannot create a constant interface block value"</span>),
-<a href=#587 id=587 data-nosnippet>587</a>            SpirvType::AccelerationStructureKhr =&gt; <span class="self">self
-<a href=#588 id=588 data-nosnippet>588</a>                </span>.tcx
-<a href=#589 id=589 data-nosnippet>589</a>                .dcx()
-<a href=#590 id=590 data-nosnippet>590</a>                .fatal(<span class="string">"cannot create a constant acceleration structure"</span>),
-<a href=#591 id=591 data-nosnippet>591</a>            SpirvType::RayQueryKhr =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="string">"cannot create a constant ray query"</span>),
-<a href=#592 id=592 data-nosnippet>592</a>        }
-<a href=#593 id=593 data-nosnippet>593</a>    }
-<a href=#594 id=594 data-nosnippet>594</a>}</code></pre></div></section></main></body></html>
+<a href=#346 id=346 data-nosnippet>346</a>        </span><span class="kw">if let </span>SpirvValueKind::IllegalConst(<span class="kw">_</span>) = val.kind
+<a href=#347 id=347 data-nosnippet>347</a>            &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(SpirvConst::PtrTo { pointee }) = <span class="self">self</span>.builder.lookup_const(val)
+<a href=#348 id=348 data-nosnippet>348</a>            &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(SpirvConst::ConstDataFromAlloc(alloc)) =
+<a href=#349 id=349 data-nosnippet>349</a>                <span class="self">self</span>.builder.lookup_const_by_id(pointee)
+<a href=#350 id=350 data-nosnippet>350</a>            &amp;&amp; <span class="kw">let </span>SpirvType::Pointer { pointee } = <span class="self">self</span>.lookup_type(ty)
+<a href=#351 id=351 data-nosnippet>351</a>        {
+<a href=#352 id=352 data-nosnippet>352</a>            <span class="kw">let </span><span class="kw-2">mut </span>offset = Size::ZERO;
+<a href=#353 id=353 data-nosnippet>353</a>            <span class="kw">let </span>init = <span class="self">self</span>.read_from_const_alloc(alloc, <span class="kw-2">&amp;mut </span>offset, pointee);
+<a href=#354 id=354 data-nosnippet>354</a>            <span class="kw">return </span><span class="self">self</span>.static_addr_of(init, alloc.inner().align, <span class="prelude-val">None</span>);
+<a href=#355 id=355 data-nosnippet>355</a>        }
+<a href=#356 id=356 data-nosnippet>356</a>
+<a href=#357 id=357 data-nosnippet>357</a>        <span class="kw">if </span>val.ty == ty {
+<a href=#358 id=358 data-nosnippet>358</a>            val
+<a href=#359 id=359 data-nosnippet>359</a>        } <span class="kw">else </span>{
+<a href=#360 id=360 data-nosnippet>360</a>            <span class="comment">// FIXME(eddyb) implement via `OpSpecConstantOp`.
+<a href=#361 id=361 data-nosnippet>361</a>            // FIXME(eddyb) this zombies the original value without creating a new one.
+<a href=#362 id=362 data-nosnippet>362</a>            </span><span class="kw">let </span>result = val.def_cx(<span class="self">self</span>).with_type(ty);
+<a href=#363 id=363 data-nosnippet>363</a>            <span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">"const_bitcast"</span>);
+<a href=#364 id=364 data-nosnippet>364</a>            result
+<a href=#365 id=365 data-nosnippet>365</a>        }
+<a href=#366 id=366 data-nosnippet>366</a>    }
+<a href=#367 id=367 data-nosnippet>367</a>
+<a href=#368 id=368 data-nosnippet>368</a>    <span class="comment">// This function comes from `ty::layout`'s `layout_of_uncached`,
+<a href=#369 id=369 data-nosnippet>369</a>    // where it's named `scalar_unit`.
+<a href=#370 id=370 data-nosnippet>370</a>    </span><span class="kw">pub fn </span>primitive_to_scalar(<span class="kw-2">&amp;</span><span class="self">self</span>, value: Primitive) -&gt; abi::Scalar {
+<a href=#371 id=371 data-nosnippet>371</a>        <span class="kw">let </span>bits = value.size(<span class="self">self</span>.data_layout()).bits();
+<a href=#372 id=372 data-nosnippet>372</a>        <span class="macro">assert!</span>(bits &lt;= <span class="number">128</span>);
+<a href=#373 id=373 data-nosnippet>373</a>        abi::Scalar::Initialized {
+<a href=#374 id=374 data-nosnippet>374</a>            value,
+<a href=#375 id=375 data-nosnippet>375</a>            valid_range: abi::WrappingRange {
+<a href=#376 id=376 data-nosnippet>376</a>                start: <span class="number">0</span>,
+<a href=#377 id=377 data-nosnippet>377</a>                end: (!<span class="number">0 </span>&gt;&gt; (<span class="number">128 </span>- bits)),
+<a href=#378 id=378 data-nosnippet>378</a>            },
+<a href=#379 id=379 data-nosnippet>379</a>        }
+<a href=#380 id=380 data-nosnippet>380</a>    }
+<a href=#381 id=381 data-nosnippet>381</a>
+<a href=#382 id=382 data-nosnippet>382</a>    <span class="kw">pub fn </span>create_const_alloc(<span class="kw-2">&amp;</span><span class="self">self</span>, alloc: ConstAllocation&lt;<span class="lifetime">'tcx</span>&gt;, ty: Word) -&gt; SpirvValue {
+<a href=#383 id=383 data-nosnippet>383</a>        <span class="macro">tracing::trace!</span>(
+<a href=#384 id=384 data-nosnippet>384</a>            <span class="string">"Creating const alloc of type {} with {} bytes"</span>,
+<a href=#385 id=385 data-nosnippet>385</a>            <span class="self">self</span>.debug_type(ty),
+<a href=#386 id=386 data-nosnippet>386</a>            alloc.inner().len()
+<a href=#387 id=387 data-nosnippet>387</a>        );
+<a href=#388 id=388 data-nosnippet>388</a>        <span class="kw">let </span><span class="kw-2">mut </span>offset = Size::ZERO;
+<a href=#389 id=389 data-nosnippet>389</a>        <span class="kw">let </span>result = <span class="self">self</span>.read_from_const_alloc(alloc, <span class="kw-2">&amp;mut </span>offset, ty);
+<a href=#390 id=390 data-nosnippet>390</a>        <span class="macro">assert_eq!</span>(
+<a href=#391 id=391 data-nosnippet>391</a>            offset.bytes_usize(),
+<a href=#392 id=392 data-nosnippet>392</a>            alloc.inner().len(),
+<a href=#393 id=393 data-nosnippet>393</a>            <span class="string">"create_const_alloc must consume all bytes of an Allocation"
+<a href=#394 id=394 data-nosnippet>394</a>        </span>);
+<a href=#395 id=395 data-nosnippet>395</a>        <span class="macro">tracing::trace!</span>(<span class="string">"Done creating alloc of type {}"</span>, <span class="self">self</span>.debug_type(ty));
+<a href=#396 id=396 data-nosnippet>396</a>        result
+<a href=#397 id=397 data-nosnippet>397</a>    }
+<a href=#398 id=398 data-nosnippet>398</a>
+<a href=#399 id=399 data-nosnippet>399</a>    <span class="kw">fn </span>read_from_const_alloc(
+<a href=#400 id=400 data-nosnippet>400</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#401 id=401 data-nosnippet>401</a>        alloc: ConstAllocation&lt;<span class="lifetime">'tcx</span>&gt;,
+<a href=#402 id=402 data-nosnippet>402</a>        offset: <span class="kw-2">&amp;mut </span>Size,
+<a href=#403 id=403 data-nosnippet>403</a>        ty: Word,
+<a href=#404 id=404 data-nosnippet>404</a>    ) -&gt; SpirvValue {
+<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">let </span>ty_concrete = <span class="self">self</span>.lookup_type(ty);
+<a href=#406 id=406 data-nosnippet>406</a>        <span class="kw-2">*</span>offset = offset.align_to(ty_concrete.alignof(<span class="self">self</span>));
+<a href=#407 id=407 data-nosnippet>407</a>        <span class="comment">// these print statements are really useful for debugging, so leave them easily available
+<a href=#408 id=408 data-nosnippet>408</a>        // println!("const at {}: {}", offset.bytes(), self.debug_type(ty));
+<a href=#409 id=409 data-nosnippet>409</a>        </span><span class="kw">match </span>ty_concrete {
+<a href=#410 id=410 data-nosnippet>410</a>            SpirvType::Void =&gt; <span class="self">self
+<a href=#411 id=411 data-nosnippet>411</a>                </span>.tcx
+<a href=#412 id=412 data-nosnippet>412</a>                .dcx()
+<a href=#413 id=413 data-nosnippet>413</a>                .fatal(<span class="string">"cannot create const alloc of type void"</span>),
+<a href=#414 id=414 data-nosnippet>414</a>            SpirvType::Bool
+<a href=#415 id=415 data-nosnippet>415</a>            | SpirvType::Integer(..)
+<a href=#416 id=416 data-nosnippet>416</a>            | SpirvType::Float(<span class="kw">_</span>)
+<a href=#417 id=417 data-nosnippet>417</a>            | SpirvType::Pointer { .. } =&gt; {
+<a href=#418 id=418 data-nosnippet>418</a>                <span class="kw">let </span>size = ty_concrete.sizeof(<span class="self">self</span>).unwrap();
+<a href=#419 id=419 data-nosnippet>419</a>                <span class="kw">let </span>primitive = <span class="kw">match </span>ty_concrete {
+<a href=#420 id=420 data-nosnippet>420</a>                    SpirvType::Bool =&gt; Primitive::Int(Integer::fit_unsigned(<span class="number">0</span>), <span class="bool-val">false</span>),
+<a href=#421 id=421 data-nosnippet>421</a>                    SpirvType::Integer(int_size, int_signedness) =&gt; Primitive::Int(
+<a href=#422 id=422 data-nosnippet>422</a>                        <span class="kw">match </span>int_size {
+<a href=#423 id=423 data-nosnippet>423</a>                            <span class="number">8 </span>=&gt; Integer::I8,
+<a href=#424 id=424 data-nosnippet>424</a>                            <span class="number">16 </span>=&gt; Integer::I16,
+<a href=#425 id=425 data-nosnippet>425</a>                            <span class="number">32 </span>=&gt; Integer::I32,
+<a href=#426 id=426 data-nosnippet>426</a>                            <span class="number">64 </span>=&gt; Integer::I64,
+<a href=#427 id=427 data-nosnippet>427</a>                            <span class="number">128 </span>=&gt; Integer::I128,
+<a href=#428 id=428 data-nosnippet>428</a>                            other =&gt; {
+<a href=#429 id=429 data-nosnippet>429</a>                                <span class="self">self</span>.tcx
+<a href=#430 id=430 data-nosnippet>430</a>                                    .dcx()
+<a href=#431 id=431 data-nosnippet>431</a>                                    .fatal(<span class="macro">format!</span>(<span class="string">"invalid size for integer: {other}"</span>));
+<a href=#432 id=432 data-nosnippet>432</a>                            }
+<a href=#433 id=433 data-nosnippet>433</a>                        },
+<a href=#434 id=434 data-nosnippet>434</a>                        int_signedness,
+<a href=#435 id=435 data-nosnippet>435</a>                    ),
+<a href=#436 id=436 data-nosnippet>436</a>                    SpirvType::Float(float_size) =&gt; Primitive::Float(<span class="kw">match </span>float_size {
+<a href=#437 id=437 data-nosnippet>437</a>                        <span class="number">16 </span>=&gt; Float::F16,
+<a href=#438 id=438 data-nosnippet>438</a>                        <span class="number">32 </span>=&gt; Float::F32,
+<a href=#439 id=439 data-nosnippet>439</a>                        <span class="number">64 </span>=&gt; Float::F64,
+<a href=#440 id=440 data-nosnippet>440</a>                        <span class="number">128 </span>=&gt; Float::F128,
+<a href=#441 id=441 data-nosnippet>441</a>                        other =&gt; {
+<a href=#442 id=442 data-nosnippet>442</a>                            <span class="self">self</span>.tcx
+<a href=#443 id=443 data-nosnippet>443</a>                                .dcx()
+<a href=#444 id=444 data-nosnippet>444</a>                                .fatal(<span class="macro">format!</span>(<span class="string">"invalid size for float: {other}"</span>));
+<a href=#445 id=445 data-nosnippet>445</a>                        }
+<a href=#446 id=446 data-nosnippet>446</a>                    }),
+<a href=#447 id=447 data-nosnippet>447</a>                    SpirvType::Pointer { .. } =&gt; Primitive::Pointer(AddressSpace::DATA),
+<a href=#448 id=448 data-nosnippet>448</a>                    unsupported_spirv_type =&gt; <span class="macro">bug!</span>(
+<a href=#449 id=449 data-nosnippet>449</a>                        <span class="string">"invalid spirv type internal to create_alloc_const2: {:?}"</span>,
+<a href=#450 id=450 data-nosnippet>450</a>                        unsupported_spirv_type
+<a href=#451 id=451 data-nosnippet>451</a>                    ),
+<a href=#452 id=452 data-nosnippet>452</a>                };
+<a href=#453 id=453 data-nosnippet>453</a>                <span class="comment">// alloc_id is not needed by read_scalar, so we just use 0. If the context
+<a href=#454 id=454 data-nosnippet>454</a>                // refers to a pointer, read_scalar will find the actual alloc_id. It
+<a href=#455 id=455 data-nosnippet>455</a>                // only uses the input alloc_id in the case that the scalar is uninitialized
+<a href=#456 id=456 data-nosnippet>456</a>                // as part of the error output
+<a href=#457 id=457 data-nosnippet>457</a>                // tldr, the pointer here is only needed for the offset
+<a href=#458 id=458 data-nosnippet>458</a>                </span><span class="kw">let </span>value = <span class="kw">match </span>alloc.inner().read_scalar(
+<a href=#459 id=459 data-nosnippet>459</a>                    <span class="self">self</span>,
+<a href=#460 id=460 data-nosnippet>460</a>                    alloc_range(<span class="kw-2">*</span>offset, size),
+<a href=#461 id=461 data-nosnippet>461</a>                    <span class="macro">matches!</span>(primitive, Primitive::Pointer(<span class="kw">_</span>)),
+<a href=#462 id=462 data-nosnippet>462</a>                ) {
+<a href=#463 id=463 data-nosnippet>463</a>                    <span class="prelude-val">Ok</span>(scalar) =&gt; {
+<a href=#464 id=464 data-nosnippet>464</a>                        <span class="self">self</span>.scalar_to_backend(scalar, <span class="self">self</span>.primitive_to_scalar(primitive), ty)
+<a href=#465 id=465 data-nosnippet>465</a>                    }
+<a href=#466 id=466 data-nosnippet>466</a>                    <span class="kw">_ </span>=&gt; <span class="self">self</span>.undef(ty),
+<a href=#467 id=467 data-nosnippet>467</a>                };
+<a href=#468 id=468 data-nosnippet>468</a>                <span class="kw-2">*</span>offset += size;
+<a href=#469 id=469 data-nosnippet>469</a>                value
+<a href=#470 id=470 data-nosnippet>470</a>            }
+<a href=#471 id=471 data-nosnippet>471</a>            SpirvType::Adt {
+<a href=#472 id=472 data-nosnippet>472</a>                size,
+<a href=#473 id=473 data-nosnippet>473</a>                field_types,
+<a href=#474 id=474 data-nosnippet>474</a>                field_offsets,
+<a href=#475 id=475 data-nosnippet>475</a>                ..
+<a href=#476 id=476 data-nosnippet>476</a>            } =&gt; {
+<a href=#477 id=477 data-nosnippet>477</a>                <span class="kw">let </span>base = <span class="kw-2">*</span>offset;
+<a href=#478 id=478 data-nosnippet>478</a>                <span class="kw">let </span><span class="kw-2">mut </span>values = Vec::with_capacity(field_types.len());
+<a href=#479 id=479 data-nosnippet>479</a>                <span class="kw">let </span><span class="kw-2">mut </span>occupied_spaces = Vec::with_capacity(field_types.len());
+<a href=#480 id=480 data-nosnippet>480</a>                <span class="kw">for </span>(<span class="kw-2">&amp;</span>ty, <span class="kw-2">&amp;</span>field_offset) <span class="kw">in </span>field_types.iter().zip(field_offsets.iter()) {
+<a href=#481 id=481 data-nosnippet>481</a>                    <span class="kw">let </span>total_offset_start = base + field_offset;
+<a href=#482 id=482 data-nosnippet>482</a>                    <span class="kw">let </span><span class="kw-2">mut </span>total_offset_end = total_offset_start;
+<a href=#483 id=483 data-nosnippet>483</a>                    values.push(
+<a href=#484 id=484 data-nosnippet>484</a>                        <span class="self">self</span>.read_from_const_alloc(alloc, <span class="kw-2">&amp;mut </span>total_offset_end, ty)
+<a href=#485 id=485 data-nosnippet>485</a>                            .def_cx(<span class="self">self</span>),
+<a href=#486 id=486 data-nosnippet>486</a>                    );
+<a href=#487 id=487 data-nosnippet>487</a>                    occupied_spaces.push(total_offset_start..total_offset_end);
+<a href=#488 id=488 data-nosnippet>488</a>                }
+<a href=#489 id=489 data-nosnippet>489</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(size) = size {
+<a href=#490 id=490 data-nosnippet>490</a>                    <span class="kw-2">*</span>offset += size;
+<a href=#491 id=491 data-nosnippet>491</a>                } <span class="kw">else </span>{
+<a href=#492 id=492 data-nosnippet>492</a>                    <span class="macro">assert_eq!</span>(
+<a href=#493 id=493 data-nosnippet>493</a>                        offset.bytes_usize(),
+<a href=#494 id=494 data-nosnippet>494</a>                        alloc.inner().len(),
+<a href=#495 id=495 data-nosnippet>495</a>                        <span class="string">"create_const_alloc must consume all bytes of an Allocation after an unsized struct"
+<a href=#496 id=496 data-nosnippet>496</a>                    </span>);
+<a href=#497 id=497 data-nosnippet>497</a>                }
+<a href=#498 id=498 data-nosnippet>498</a>                <span class="self">self</span>.constant_composite(ty, values.into_iter())
+<a href=#499 id=499 data-nosnippet>499</a>            }
+<a href=#500 id=500 data-nosnippet>500</a>            SpirvType::Array { element, count } =&gt; {
+<a href=#501 id=501 data-nosnippet>501</a>                <span class="kw">let </span>count = <span class="self">self</span>.builder.lookup_const_scalar(count).unwrap() <span class="kw">as </span>usize;
+<a href=#502 id=502 data-nosnippet>502</a>                <span class="kw">let </span>values = (<span class="number">0</span>..count).map(|<span class="kw">_</span>| {
+<a href=#503 id=503 data-nosnippet>503</a>                    <span class="self">self</span>.read_from_const_alloc(alloc, offset, element)
+<a href=#504 id=504 data-nosnippet>504</a>                        .def_cx(<span class="self">self</span>)
+<a href=#505 id=505 data-nosnippet>505</a>                });
+<a href=#506 id=506 data-nosnippet>506</a>                <span class="self">self</span>.constant_composite(ty, values)
+<a href=#507 id=507 data-nosnippet>507</a>            }
+<a href=#508 id=508 data-nosnippet>508</a>            SpirvType::Vector { element, count } =&gt; {
+<a href=#509 id=509 data-nosnippet>509</a>                <span class="kw">let </span>total_size = ty_concrete
+<a href=#510 id=510 data-nosnippet>510</a>                    .sizeof(<span class="self">self</span>)
+<a href=#511 id=511 data-nosnippet>511</a>                    .expect(<span class="string">"create_const_alloc: Vectors must be sized"</span>);
+<a href=#512 id=512 data-nosnippet>512</a>                <span class="kw">let </span>final_offset = <span class="kw-2">*</span>offset + total_size;
+<a href=#513 id=513 data-nosnippet>513</a>                <span class="kw">let </span>values = (<span class="number">0</span>..count).map(|<span class="kw">_</span>| {
+<a href=#514 id=514 data-nosnippet>514</a>                    <span class="self">self</span>.read_from_const_alloc(alloc, offset, element)
+<a href=#515 id=515 data-nosnippet>515</a>                        .def_cx(<span class="self">self</span>)
+<a href=#516 id=516 data-nosnippet>516</a>                });
+<a href=#517 id=517 data-nosnippet>517</a>                <span class="kw">let </span>result = <span class="self">self</span>.constant_composite(ty, values);
+<a href=#518 id=518 data-nosnippet>518</a>                <span class="macro">assert!</span>(<span class="kw-2">*</span>offset &lt;= final_offset);
+<a href=#519 id=519 data-nosnippet>519</a>                <span class="comment">// Vectors sometimes have padding at the end (e.g. vec3), skip over it.
+<a href=#520 id=520 data-nosnippet>520</a>                </span><span class="kw-2">*</span>offset = final_offset;
+<a href=#521 id=521 data-nosnippet>521</a>                result
+<a href=#522 id=522 data-nosnippet>522</a>            }
+<a href=#523 id=523 data-nosnippet>523</a>            SpirvType::Matrix { element, count } =&gt; {
+<a href=#524 id=524 data-nosnippet>524</a>                <span class="kw">let </span>total_size = ty_concrete
+<a href=#525 id=525 data-nosnippet>525</a>                    .sizeof(<span class="self">self</span>)
+<a href=#526 id=526 data-nosnippet>526</a>                    .expect(<span class="string">"create_const_alloc: Matrices must be sized"</span>);
+<a href=#527 id=527 data-nosnippet>527</a>                <span class="kw">let </span>final_offset = <span class="kw-2">*</span>offset + total_size;
+<a href=#528 id=528 data-nosnippet>528</a>                <span class="kw">let </span>values = (<span class="number">0</span>..count).map(|<span class="kw">_</span>| {
+<a href=#529 id=529 data-nosnippet>529</a>                    <span class="self">self</span>.read_from_const_alloc(alloc, offset, element)
+<a href=#530 id=530 data-nosnippet>530</a>                        .def_cx(<span class="self">self</span>)
+<a href=#531 id=531 data-nosnippet>531</a>                });
+<a href=#532 id=532 data-nosnippet>532</a>                <span class="kw">let </span>result = <span class="self">self</span>.constant_composite(ty, values);
+<a href=#533 id=533 data-nosnippet>533</a>                <span class="macro">assert!</span>(<span class="kw-2">*</span>offset &lt;= final_offset);
+<a href=#534 id=534 data-nosnippet>534</a>                <span class="comment">// Matrices sometimes have padding at the end (e.g. Mat4x3), skip over it.
+<a href=#535 id=535 data-nosnippet>535</a>                </span><span class="kw-2">*</span>offset = final_offset;
+<a href=#536 id=536 data-nosnippet>536</a>                result
+<a href=#537 id=537 data-nosnippet>537</a>            }
+<a href=#538 id=538 data-nosnippet>538</a>            SpirvType::RuntimeArray { element } =&gt; {
+<a href=#539 id=539 data-nosnippet>539</a>                <span class="kw">let </span><span class="kw-2">mut </span>values = Vec::new();
+<a href=#540 id=540 data-nosnippet>540</a>                <span class="kw">while </span>offset.bytes_usize() != alloc.inner().len() {
+<a href=#541 id=541 data-nosnippet>541</a>                    values.push(
+<a href=#542 id=542 data-nosnippet>542</a>                        <span class="self">self</span>.read_from_const_alloc(alloc, offset, element)
+<a href=#543 id=543 data-nosnippet>543</a>                            .def_cx(<span class="self">self</span>),
+<a href=#544 id=544 data-nosnippet>544</a>                    );
+<a href=#545 id=545 data-nosnippet>545</a>                }
+<a href=#546 id=546 data-nosnippet>546</a>                <span class="kw">let </span>result = <span class="self">self</span>.constant_composite(ty, values.into_iter());
+<a href=#547 id=547 data-nosnippet>547</a>                <span class="comment">// TODO: Figure out how to do this. Compiling the below crashes both clspv *and* llvm-spirv:
+<a href=#548 id=548 data-nosnippet>548</a>                /*
+<a href=#549 id=549 data-nosnippet>549</a>                __constant struct A {
+<a href=#550 id=550 data-nosnippet>550</a>                    float x;
+<a href=#551 id=551 data-nosnippet>551</a>                    int y[];
+<a href=#552 id=552 data-nosnippet>552</a>                } a = {1, {2, 3, 4}};
+<a href=#553 id=553 data-nosnippet>553</a>
+<a href=#554 id=554 data-nosnippet>554</a>                __kernel void foo(__global int* data, __constant int* c) {
+<a href=#555 id=555 data-nosnippet>555</a>                __constant struct A* asdf = &amp;a;
+<a href=#556 id=556 data-nosnippet>556</a>                *data = *c + asdf-&gt;y[*c];
+<a href=#557 id=557 data-nosnippet>557</a>                }
+<a href=#558 id=558 data-nosnippet>558</a>                */
+<a href=#559 id=559 data-nosnippet>559</a>                // NOTE(eddyb) the above description is a bit outdated, it's now
+<a href=#560 id=560 data-nosnippet>560</a>                // clear `OpTypeRuntimeArray` does not belong in user code, and
+<a href=#561 id=561 data-nosnippet>561</a>                // is only for dynamically-sized SSBOs and descriptor indexing,
+<a href=#562 id=562 data-nosnippet>562</a>                // and a general solution looks similar to `union` handling, but
+<a href=#563 id=563 data-nosnippet>563</a>                // for the length of a fixed-length array.
+<a href=#564 id=564 data-nosnippet>564</a>                </span><span class="self">self</span>.zombie_no_span(result.def_cx(<span class="self">self</span>), <span class="string">"constant `OpTypeRuntimeArray` value"</span>);
+<a href=#565 id=565 data-nosnippet>565</a>                result
+<a href=#566 id=566 data-nosnippet>566</a>            }
+<a href=#567 id=567 data-nosnippet>567</a>            SpirvType::Function { .. } =&gt; <span class="self">self
+<a href=#568 id=568 data-nosnippet>568</a>                </span>.tcx
+<a href=#569 id=569 data-nosnippet>569</a>                .dcx()
+<a href=#570 id=570 data-nosnippet>570</a>                .fatal(<span class="string">"TODO: SpirvType::Function not supported yet in create_const_alloc"</span>),
+<a href=#571 id=571 data-nosnippet>571</a>            SpirvType::Image { .. } =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="string">"cannot create a constant image value"</span>),
+<a href=#572 id=572 data-nosnippet>572</a>            SpirvType::Sampler =&gt; <span class="self">self
+<a href=#573 id=573 data-nosnippet>573</a>                </span>.tcx
+<a href=#574 id=574 data-nosnippet>574</a>                .dcx()
+<a href=#575 id=575 data-nosnippet>575</a>                .fatal(<span class="string">"cannot create a constant sampler value"</span>),
+<a href=#576 id=576 data-nosnippet>576</a>            SpirvType::SampledImage { .. } =&gt; <span class="self">self
+<a href=#577 id=577 data-nosnippet>577</a>                </span>.tcx
+<a href=#578 id=578 data-nosnippet>578</a>                .dcx()
+<a href=#579 id=579 data-nosnippet>579</a>                .fatal(<span class="string">"cannot create a constant sampled image value"</span>),
+<a href=#580 id=580 data-nosnippet>580</a>            SpirvType::InterfaceBlock { .. } =&gt; <span class="self">self
+<a href=#581 id=581 data-nosnippet>581</a>                </span>.tcx
+<a href=#582 id=582 data-nosnippet>582</a>                .dcx()
+<a href=#583 id=583 data-nosnippet>583</a>                .fatal(<span class="string">"cannot create a constant interface block value"</span>),
+<a href=#584 id=584 data-nosnippet>584</a>            SpirvType::AccelerationStructureKhr =&gt; <span class="self">self
+<a href=#585 id=585 data-nosnippet>585</a>                </span>.tcx
+<a href=#586 id=586 data-nosnippet>586</a>                .dcx()
+<a href=#587 id=587 data-nosnippet>587</a>                .fatal(<span class="string">"cannot create a constant acceleration structure"</span>),
+<a href=#588 id=588 data-nosnippet>588</a>            SpirvType::RayQueryKhr =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="string">"cannot create a constant ray query"</span>),
+<a href=#589 id=589 data-nosnippet>589</a>        }
+<a href=#590 id=590 data-nosnippet>590</a>    }
+<a href=#591 id=591 data-nosnippet>591</a>}</code></pre></div></section></main></body></html>
