@@ -55,14 +55,47 @@ impl OutputDiffer for RawDiffer {
         if output1 == output2 {
             vec![]
         } else {
-            // For raw comparison, we just note that they differ
-            vec![Difference {
-                index: 0,
-                value1: format!("{} bytes", output1.len()),
-                value2: format!("{} bytes", output2.len()),
-                absolute_diff: DiffMagnitude::Incomparable,
-                relative_diff: DiffMagnitude::Incomparable,
-            }]
+            let mut differences = Vec::new();
+            let max_len = std::cmp::max(output1.len(), output2.len());
+
+            // Find byte-level differences
+            for i in 0..max_len {
+                let byte1 = output1.get(i);
+                let byte2 = output2.get(i);
+
+                match (byte1, byte2) {
+                    (Some(&b1), Some(&b2)) if b1 != b2 => {
+                        differences.push(Difference {
+                            index: i,
+                            value1: format!("{}", b1),
+                            value2: format!("{}", b2),
+                            absolute_diff: DiffMagnitude::Incomparable,
+                            relative_diff: DiffMagnitude::Incomparable,
+                        });
+                    }
+                    (Some(&b1), None) => {
+                        differences.push(Difference {
+                            index: i,
+                            value1: format!("{}", b1),
+                            value2: "".to_string(),
+                            absolute_diff: DiffMagnitude::Incomparable,
+                            relative_diff: DiffMagnitude::Incomparable,
+                        });
+                    }
+                    (None, Some(&b2)) => {
+                        differences.push(Difference {
+                            index: i,
+                            value1: "".to_string(),
+                            value2: format!("{}", b2),
+                            absolute_diff: DiffMagnitude::Incomparable,
+                            relative_diff: DiffMagnitude::Incomparable,
+                        });
+                    }
+                    _ => {} // bytes are equal
+                }
+            }
+
+            differences
         }
     }
 
@@ -72,18 +105,118 @@ impl OutputDiffer for RawDiffer {
 }
 
 impl DifferenceDisplay for RawDiffer {
-    fn format_table(&self, _diffs: &[Difference], _pkg1: &str, _pkg2: &str) -> String {
-        "Binary files differ".to_string()
+    fn format_table(&self, diffs: &[Difference], pkg1: &str, pkg2: &str) -> String {
+        use tabled::settings::{Alignment, Modify, Span, Style, object::Rows};
+
+        let rows: Vec<Vec<String>> = diffs
+            .iter()
+            .take(10)
+            .map(|d| {
+                let (hex1, dec1, ascii1) = if d.value1.is_empty() {
+                    ("--".to_string(), "--".to_string(), "--".to_string())
+                } else {
+                    let byte = d.value1.parse::<u8>().unwrap();
+                    let ascii = if byte.is_ascii_graphic() || byte == b' ' {
+                        format!("{}", byte as char)
+                    } else {
+                        match byte {
+                            b'\n' => "\\n".to_string(),
+                            b'\r' => "\\r".to_string(),
+                            b'\t' => "\\t".to_string(),
+                            b'\0' => "\\0".to_string(),
+                            _ => "".to_string(), // Empty for non-printable
+                        }
+                    };
+                    (
+                        format!("{:>3}", format!("{:02x}", byte)),
+                        format!("{:3}", byte),
+                        format!("{:^5}", ascii),
+                    )
+                };
+
+                let (hex2, dec2, ascii2) = if d.value2.is_empty() {
+                    ("--".to_string(), "--".to_string(), "--".to_string())
+                } else {
+                    let byte = d.value2.parse::<u8>().unwrap();
+                    let ascii = if byte.is_ascii_graphic() || byte == b' ' {
+                        format!("{}", byte as char)
+                    } else {
+                        match byte {
+                            b'\n' => "\\n".to_string(),
+                            b'\r' => "\\r".to_string(),
+                            b'\t' => "\\t".to_string(),
+                            b'\0' => "\\0".to_string(),
+                            _ => "".to_string(), // Empty for non-printable
+                        }
+                    };
+                    (
+                        format!("{:>3}", format!("{:02x}", byte)),
+                        format!("{:3}", byte),
+                        format!("{:^5}", ascii),
+                    )
+                };
+
+                vec![
+                    format!("0x{:04x}", d.index),
+                    hex1,
+                    dec1,
+                    ascii1,
+                    hex2,
+                    dec2,
+                    ascii2,
+                ]
+            })
+            .collect();
+
+        let mut builder = tabled::builder::Builder::default();
+
+        // Header rows
+        builder.push_record(vec!["Offset", pkg1, "", "", pkg2, "", ""]);
+        builder.push_record(vec!["", "Hex", "Dec", "ASCII", "Hex", "Dec", "ASCII"]);
+
+        for row in &rows {
+            builder.push_record(row);
+        }
+
+        let mut table = builder.build();
+        table
+            .with(Style::modern())
+            .with(Modify::new(Rows::new(0..)).with(Alignment::center()))
+            // Apply column spans to merge the package names across their columns
+            .modify((0, 1), Span::column(3))
+            .modify((0, 4), Span::column(3))
+            // Remove the borders between merged cells
+            .with(tabled::settings::style::BorderSpanCorrection);
+
+        let mut result = table.to_string();
+
+        if diffs.len() > 10 {
+            let last_line_width = result
+                .lines()
+                .last()
+                .map(|l| l.chars().count())
+                .unwrap_or(0);
+            result.push_str(&format!(
+                "\n{:>width$}",
+                format!("... {} more differences", diffs.len() - 10),
+                width = last_line_width
+            ));
+        }
+
+        result
     }
 
     fn format_report(
         &self,
-        _diffs: &[Difference],
+        diffs: &[Difference],
         pkg1: &str,
         pkg2: &str,
         _epsilon: Option<f32>,
     ) -> String {
-        format!("Binary outputs from {} and {} differ", pkg1, pkg2)
+        let mut report = format!("Total differences: {} bytes\n\n", diffs.len());
+        report.push_str(&self.format_table(diffs, pkg1, pkg2));
+
+        report
     }
 
     fn write_human_readable(&self, output: &[u8], path: &std::path::Path) -> std::io::Result<()> {
@@ -456,11 +589,72 @@ mod tests {
         let bytes2 = b"world";
 
         let diffs = differ.compare(bytes1, bytes2, None);
-        assert_eq!(diffs.len(), 1);
-        match &diffs[0].absolute_diff {
-            DiffMagnitude::Incomparable => {}
-            _ => panic!("Expected incomparable diff for raw bytes"),
-        }
+        assert_eq!(diffs.len(), 4); // 4 bytes differ (l at position 3 is same in both)
+
+        // Check first difference (h vs w)
+        assert_eq!(diffs[0].index, 0);
+        assert_eq!(diffs[0].value1, "104"); // h = 104
+        assert_eq!(diffs[0].value2, "119"); // w = 119
+
+        // Check second difference (e vs o)
+        assert_eq!(diffs[1].index, 1);
+        assert_eq!(diffs[1].value1, "101"); // 'e' = 101
+        assert_eq!(diffs[1].value2, "111"); // 'o' = 111
+
+        // Check third difference (first l vs r)
+        assert_eq!(diffs[2].index, 2);
+        assert_eq!(diffs[2].value1, "108"); // 'l' = 108
+        assert_eq!(diffs[2].value2, "114"); // 'r' = 114
+
+        // Check fourth difference (o vs d)
+        assert_eq!(diffs[3].index, 4);
+        assert_eq!(diffs[3].value1, "111"); // 'o' = 111
+        assert_eq!(diffs[3].value2, "100"); // 'd' = 100
+    }
+
+    #[test]
+    fn test_raw_differ_partial_match() {
+        let differ = RawDiffer;
+        let bytes1 = b"hello world";
+        let bytes2 = b"hello earth";
+
+        let diffs = differ.compare(bytes1, bytes2, None);
+        assert_eq!(diffs.len(), 4); // 4 bytes differ in "world" vs "earth" (r at position 8 is same)
+
+        // First difference should be at index 6 (w vs e)
+        assert_eq!(diffs[0].index, 6);
+        assert_eq!(diffs[0].value1, "119"); // 'w' = 119
+        assert_eq!(diffs[0].value2, "101"); // 'e' = 101
+
+        // Second difference at index 7 (o vs a)
+        assert_eq!(diffs[1].index, 7);
+        assert_eq!(diffs[1].value1, "111"); // 'o' = 111
+        assert_eq!(diffs[1].value2, "97"); // 'a' = 97
+
+        // Third difference at index 9 (l vs t)
+        assert_eq!(diffs[2].index, 9);
+        assert_eq!(diffs[2].value1, "108"); // 'l' = 108
+        assert_eq!(diffs[2].value2, "116"); // 't' = 116
+
+        // Fourth difference at index 10 (d vs h)
+        assert_eq!(diffs[3].index, 10);
+        assert_eq!(diffs[3].value1, "100"); // 'd' = 100
+        assert_eq!(diffs[3].value2, "104"); // 'h' = 104
+    }
+
+    #[test]
+    fn test_raw_differ_different_lengths() {
+        let differ = RawDiffer;
+        let bytes1 = b"hello";
+        let bytes2 = b"hello world";
+
+        let diffs = differ.compare(bytes1, bytes2, None);
+        assert_eq!(diffs.len(), 6); // " world" = 6 extra bytes
+
+        // Check that missing bytes are shown as empty string
+        assert_eq!(diffs[0].index, 5);
+        assert_eq!(diffs[0].value1, "");
+        assert_eq!(diffs[0].value2, "32"); // ' ' = 32
     }
 
     #[test]
