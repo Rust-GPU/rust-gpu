@@ -2,42 +2,34 @@ use super::backend::{BufferConfig, BufferUsage, ComputeBackend};
 use anyhow::{Context, Result};
 use ash::vk;
 use ash::vk::DescriptorType;
+use gpu_alloc::{GpuAllocator, MemoryBlock, Request, UsageFlags};
+use gpu_alloc_ash::AshMemoryDevice;
 use std::ffi::{CStr, CString};
+use std::sync::Mutex;
 
 pub struct AshBackend {
     instance: ash::Instance,
     device: ash::Device,
     queue: vk::Queue,
+    memory_allocator: Mutex<GpuAllocator<vk::DeviceMemory>>,
     command_pool: vk::CommandPool,
-    memory_properties: vk::PhysicalDeviceMemoryProperties,
     _entry: ash::Entry,
 }
 
-impl AshBackend {
-    fn find_memory_type(
-        &self,
-        type_filter: u32,
-        properties: vk::MemoryPropertyFlags,
-    ) -> Option<u32> {
-        for i in 0..self.memory_properties.memory_type_count {
-            if (type_filter & (1 << i)) != 0
-                && self.memory_properties.memory_types[i as usize]
-                    .property_flags
-                    .contains(properties)
-            {
-                return Some(i);
-            }
-        }
-        None
-    }
+pub struct AshBuffer {
+    buffer: vk::Buffer,
+    block: MemoryBlock<vk::DeviceMemory>,
+}
 
-    fn create_buffer(&self, config: &BufferConfig) -> Result<(vk::Buffer, vk::DeviceMemory)> {
+impl AshBackend {
+    unsafe fn create_buffer(&self, config: &BufferConfig) -> Result<AshBuffer> {
         unsafe {
             let usage = match config.usage {
                 BufferUsage::Storage => vk::BufferUsageFlags::STORAGE_BUFFER,
                 BufferUsage::StorageReadOnly => vk::BufferUsageFlags::STORAGE_BUFFER,
                 BufferUsage::Uniform => vk::BufferUsageFlags::UNIFORM_BUFFER,
             };
+
             let buffer = self
                 .device
                 .create_buffer(
@@ -54,38 +46,33 @@ impl AshBackend {
                 .context("Failed to create buffer")?;
 
             let memory_requirements = self.device.get_buffer_memory_requirements(buffer);
-            let memory_type_index = self
-                .find_memory_type(
-                    memory_requirements.memory_type_bits,
-                    vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT,
-                )
-                .context("Failed to find suitable memory type")?;
-            let memory = self
-                .device
-                .allocate_memory(
-                    &vk::MemoryAllocateInfo::default()
-                        .allocation_size(memory_requirements.size)
-                        .memory_type_index(memory_type_index),
-                    None,
-                )
-                .context("Failed to allocate memory")?;
-            self.device
-                .bind_buffer_memory(buffer, memory, 0)
-                .context("Failed to bind buffer memory")?;
+            let mut block = self.memory_allocator.lock().unwrap().alloc(
+                AshMemoryDevice::wrap(&self.device),
+                Request {
+                    usage: UsageFlags::HOST_ACCESS,
+                    align_mask: memory_requirements.alignment,
+                    size: memory_requirements.size,
+                    memory_types: memory_requirements.memory_type_bits,
+                },
+            )?;
 
-            // Initialize buffer if initial data provided
             if let Some(data) = &config.initial_data {
-                let mapped_ptr = self
-                    .device
-                    .map_memory(memory, 0, config.size, vk::MemoryMapFlags::empty())
-                    .context("Failed to map memory")?;
-
-                std::ptr::copy_nonoverlapping(data.as_ptr(), mapped_ptr as *mut u8, data.len());
-
-                self.device.unmap_memory(memory);
+                block.write_bytes(AshMemoryDevice::wrap(&self.device), 0, &data)?;
             }
 
-            Ok((buffer, memory))
+            self.device
+                .bind_buffer_memory(buffer, *block.memory(), 0)
+                .context("Failed to bind buffer memory")?;
+
+            Ok(AshBuffer { buffer, block })
+        }
+    }
+
+    unsafe fn destroy_buffer(&self, buffer: AshBuffer) {
+        unsafe {
+            self.device.destroy_buffer(buffer.buffer, None);
+            let mut allocator = self.memory_allocator.lock().unwrap();
+            allocator.dealloc(AshMemoryDevice::wrap(&self.device), buffer.block);
         }
     }
 }
@@ -117,7 +104,6 @@ impl ComputeBackend for AshBackend {
             let physical_device = *physical_devices
                 .first()
                 .context("No Vulkan devices found")?;
-            let memory_properties = instance.get_physical_device_memory_properties(physical_device);
 
             // Find compute queue family
             let queue_family_properties =
@@ -143,6 +129,12 @@ impl ComputeBackend for AshBackend {
                 .context("Failed to create Vulkan device")?;
             let queue = device.get_device_queue(queue_family_index, 0);
 
+            // Create GPU allocator
+            let memory_allocator = Mutex::new(GpuAllocator::new(
+                gpu_alloc::Config::i_am_potato(),
+                gpu_alloc_ash::device_properties(&instance, 0, physical_device)?,
+            ));
+
             // Create command pool
             let command_pool = device
                 .create_command_pool(
@@ -155,8 +147,8 @@ impl ComputeBackend for AshBackend {
                 instance,
                 device,
                 queue,
+                memory_allocator,
                 command_pool,
-                memory_properties,
                 _entry: entry,
             })
         }
@@ -233,13 +225,10 @@ impl ComputeBackend for AshBackend {
             };
 
             // Create buffers
-            let mut vk_buffers = Vec::new();
-            let mut buffer_memories = Vec::new();
-            for buffer_config in &buffers {
-                let (buffer, memory) = self.create_buffer(buffer_config)?;
-                vk_buffers.push(buffer);
-                buffer_memories.push(memory);
-            }
+            let mut vk_buffers = buffers
+                .iter()
+                .map(|bc| self.create_buffer(bc))
+                .collect::<Result<Vec<_>, _>>()?;
 
             // Allocate descriptor set
             let count_descriptor_types = |desc_type: DescriptorType| vk::DescriptorPoolSize {
@@ -275,29 +264,31 @@ impl ComputeBackend for AshBackend {
                 .context("Failed to allocate descriptor sets")?[0];
 
             // Update descriptor sets
-            let buffer_infos: Vec<vk::DescriptorBufferInfo> = vk_buffers
-                .iter()
-                .zip(&buffers)
-                .map(|(buffer, config)| {
-                    vk::DescriptorBufferInfo::default()
-                        .buffer(*buffer)
-                        .offset(0)
-                        .range(config.size)
-                })
-                .collect();
-            let descriptor_writes: Vec<vk::WriteDescriptorSet<'_>> = buffer_infos
-                .iter()
-                .zip(&buffers)
-                .enumerate()
-                .map(|(i, (buffer_info, config))| {
-                    vk::WriteDescriptorSet::default()
-                        .dst_set(descriptor_set)
-                        .dst_binding(i as u32)
-                        .descriptor_type(buffer_usage_to_descriptor_type(config.usage))
-                        .buffer_info(std::slice::from_ref(buffer_info))
-                })
-                .collect();
-            self.device.update_descriptor_sets(&descriptor_writes, &[]);
+            {
+                let buffer_infos = vk_buffers
+                    .iter()
+                    .map(|buffer| {
+                        vk::DescriptorBufferInfo::default()
+                            .buffer(buffer.buffer)
+                            .offset(0)
+                            .range(vk::WHOLE_SIZE)
+                    })
+                    .collect::<Vec<_>>();
+                let descriptor_writes = buffers
+                    .iter()
+                    .zip(buffer_infos.iter())
+                    .enumerate()
+                    .map(|(i, (buffers, buffer_info))| {
+                        vk::WriteDescriptorSet::default()
+                            .dst_set(descriptor_set)
+                            .dst_binding(i as u32)
+                            .descriptor_type(buffer_usage_to_descriptor_type(buffers.usage))
+                            .descriptor_count(1)
+                            .buffer_info(std::slice::from_ref(buffer_info))
+                    })
+                    .collect::<Vec<_>>();
+                self.device.update_descriptor_sets(&descriptor_writes, &[]);
+            }
 
             // Allocate command buffer
             let command_buffer = self
@@ -349,32 +340,23 @@ impl ComputeBackend for AshBackend {
                 .context("Failed to wait for queue")?;
 
             // Read buffer results
-            let mut results = Vec::new();
-            for (_i, (memory, config)) in buffer_memories.iter().zip(&buffers).enumerate() {
-                let mut data = vec![0u8; config.size as usize];
-
-                let mapped_ptr = self
-                    .device
-                    .map_memory(*memory, 0, config.size, vk::MemoryMapFlags::empty())
-                    .context("Failed to map memory for reading")?;
-
-                std::ptr::copy_nonoverlapping(
-                    mapped_ptr as *const u8,
-                    data.as_mut_ptr(),
-                    config.size as usize,
-                );
-
-                self.device.unmap_memory(*memory);
-
-                results.push(data);
-            }
+            let results = vk_buffers
+                .iter_mut()
+                .zip(&buffers)
+                .map(|(buffer, config)| {
+                    let mut data = vec![0u8; config.size as usize];
+                    buffer
+                        .block
+                        .read_bytes(AshMemoryDevice::wrap(&self.device), 0, &mut data)?;
+                    Ok(data)
+                })
+                .collect::<Result<Vec<_>>>()?;
 
             // Clean up
             self.device
                 .free_command_buffers(self.command_pool, &[command_buffer]);
-            for (buffer, memory) in vk_buffers.iter().zip(&buffer_memories) {
-                self.device.destroy_buffer(*buffer, None);
-                self.device.free_memory(*memory, None);
+            for buffer in vk_buffers {
+                self.destroy_buffer(buffer);
             }
             self.device.destroy_descriptor_pool(descriptor_pool, None);
             self.device.destroy_pipeline(pipeline, None);
