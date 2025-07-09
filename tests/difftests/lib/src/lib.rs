@@ -5,6 +5,9 @@ pub mod config;
 #[cfg(not(target_arch = "spirv"))]
 pub mod scaffold;
 
+#[cfg(not(target_arch = "spirv"))]
+pub use spirv_builder;
+
 /// Macro to round a f32 value for cross-platform compatibility in floating-point
 /// operations. This helps ensure difftest results are consistent across different
 /// platforms (Linux, Mac, Windows) which may have slight differences in floating-point
