@@ -9,7 +9,6 @@ pub struct AshBackend {
     device: ash::Device,
     queue: vk::Queue,
     command_pool: vk::CommandPool,
-    descriptor_pool: vk::DescriptorPool,
     memory_properties: vk::PhysicalDeviceMemoryProperties,
     _entry: ash::Entry,
 }
@@ -152,31 +151,11 @@ impl ComputeBackend for AshBackend {
                 )
                 .context("Failed to create command pool")?;
 
-            // Create descriptor pool
-            let descriptor_pool = device
-                .create_descriptor_pool(
-                    &vk::DescriptorPoolCreateInfo::default()
-                        .pool_sizes(&vec![
-                            vk::DescriptorPoolSize {
-                                ty: DescriptorType::STORAGE_BUFFER,
-                                descriptor_count: 16,
-                            },
-                            vk::DescriptorPoolSize {
-                                ty: DescriptorType::UNIFORM_BUFFER,
-                                descriptor_count: 16,
-                            },
-                        ])
-                        .max_sets(16),
-                    None,
-                )
-                .context("Failed to create descriptor pool")?;
-
             Ok(Self {
                 instance,
                 device,
                 queue,
                 command_pool,
-                descriptor_pool,
                 memory_properties,
                 _entry: entry,
             })
@@ -263,11 +242,34 @@ impl ComputeBackend for AshBackend {
             }
 
             // Allocate descriptor set
+            let count_descriptor_types = |desc_type: DescriptorType| vk::DescriptorPoolSize {
+                ty: desc_type,
+                descriptor_count: buffers
+                    .iter()
+                    .filter(|buffer| buffer_usage_to_descriptor_type(buffer.usage) == desc_type)
+                    .count() as u32,
+            };
+            let pool_sizes = [
+                count_descriptor_types(DescriptorType::STORAGE_BUFFER),
+                count_descriptor_types(DescriptorType::UNIFORM_BUFFER),
+            ]
+            .into_iter()
+            .filter(|a| a.descriptor_count != 0)
+            .collect::<Vec<_>>();
+            let descriptor_pool = self
+                .device
+                .create_descriptor_pool(
+                    &vk::DescriptorPoolCreateInfo::default()
+                        .pool_sizes(&pool_sizes)
+                        .max_sets(1),
+                    None,
+                )
+                .context("Failed to create descriptor pool")?;
             let descriptor_set = self
                 .device
                 .allocate_descriptor_sets(
                     &vk::DescriptorSetAllocateInfo::default()
-                        .descriptor_pool(self.descriptor_pool)
+                        .descriptor_pool(descriptor_pool)
                         .set_layouts(&[descriptor_set_layout]),
                 )
                 .context("Failed to allocate descriptor sets")?[0];
@@ -374,6 +376,7 @@ impl ComputeBackend for AshBackend {
                 self.device.destroy_buffer(*buffer, None);
                 self.device.free_memory(*memory, None);
             }
+            self.device.destroy_descriptor_pool(descriptor_pool, None);
             self.device.destroy_pipeline(pipeline, None);
             self.device.destroy_pipeline_layout(pipeline_layout, None);
             self.device
@@ -387,8 +390,6 @@ impl ComputeBackend for AshBackend {
 impl Drop for AshBackend {
     fn drop(&mut self) {
         unsafe {
-            self.device
-                .destroy_descriptor_pool(self.descriptor_pool, None);
             self.device.destroy_command_pool(self.command_pool, None);
             self.device.destroy_device(None);
             self.instance.destroy_instance(None);
