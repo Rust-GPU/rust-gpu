@@ -313,10 +313,9 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                 region,
                 input_idx: _,
             } = v
+                && region == self.func_body_region
             {
-                if region == self.func_body_region {
-                    return;
-                }
+                return;
             }
             if self.used.insert(v) {
                 self.queue.push_back(v);
@@ -461,10 +460,9 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                 while let Some(mut func_at_inst) = func_at_inst_iter.next() {
                     if let DataInstKind::SpvInst(spv_inst) =
                         &cx[func_at_inst.reborrow().def().form].kind
+                        && spv_inst.opcode == wk.OpNop
                     {
-                        if spv_inst.opcode == wk.OpNop {
-                            continue;
-                        }
+                        continue;
                     }
                     if !used_values.contains(&Value::DataInstOutput(func_at_inst.position)) {
                         // Replace the removed `DataInstDef` itself with `OpNop`,

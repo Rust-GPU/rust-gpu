@@ -1791,14 +1791,12 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // nightlies - and that PR happens to remove the last GEP that can be
         // emitted with any "structured" (struct/array) indices, beyond the
         // "first index" (which acts as `<*T>::offset` aka "pointer arithmetic").
-        if let &[ptr_base_index, structured_index] = indices {
-            if self.builder.lookup_const_scalar(ptr_base_index) == Some(0) {
-                if let SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element, .. } =
-                    self.lookup_type(ty)
-                {
-                    return self.maybe_inbounds_gep(element, ptr, &[structured_index], true);
-                }
-            }
+        if let &[ptr_base_index, structured_index] = indices
+            && self.builder.lookup_const_scalar(ptr_base_index) == Some(0)
+            && let SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element, .. } =
+                self.lookup_type(ty)
+        {
+            return self.maybe_inbounds_gep(element, ptr, &[structured_index], true);
         }
 
         self.maybe_inbounds_gep(ty, ptr, indices, true)
@@ -1883,22 +1881,20 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             // capabilities. For example, casting a f16 constant to f32 will directly
             // create a f32 constant, avoiding the need for Float16 capability if it is
             // not used elsewhere.
-            if let Some(const_val) = self.builder.lookup_const_scalar(val) {
-                if let (SpirvType::Float(src_width), SpirvType::Float(dst_width)) =
+            if let Some(const_val) = self.builder.lookup_const_scalar(val)
+                && let (SpirvType::Float(src_width), SpirvType::Float(dst_width)) =
                     (self.lookup_type(val.ty), self.lookup_type(dest_ty))
-                {
-                    if src_width < dst_width {
-                        // Convert the bit representation to the actual float value
-                        let float_val = match src_width {
-                            32 => Some(f32::from_bits(const_val as u32) as f64),
-                            64 => Some(f64::from_bits(const_val as u64)),
-                            _ => None,
-                        };
+                && src_width < dst_width
+            {
+                // Convert the bit representation to the actual float value
+                let float_val = match src_width {
+                    32 => Some(f32::from_bits(const_val as u32) as f64),
+                    64 => Some(f64::from_bits(const_val as u64)),
+                    _ => None,
+                };
 
-                        if let Some(val) = float_val {
-                            return self.constant_float(dest_ty, val);
-                        }
-                    }
+                if let Some(val) = float_val {
+                    return self.constant_float(dest_ty, val);
                 }
             }
 
@@ -3105,14 +3101,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 let const_slice_as_elem_ids = |ptr_id: Word, len: usize| {
                     if let SpirvConst::PtrTo { pointee } =
                         self.builder.lookup_const_by_id(ptr_id)?
-                    {
-                        if let SpirvConst::Composite(elems) =
+                        && let SpirvConst::Composite(elems) =
                             self.builder.lookup_const_by_id(pointee)?
-                        {
-                            if elems.len() == len {
-                                return Some(elems);
-                            }
-                        }
+                        && elems.len() == len
+                    {
+                        return Some(elems);
                     }
                     None
                 };
@@ -3147,12 +3140,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 ] = args[..]
                 {
                     // Optional `&'static panic::Location<'static>`.
-                    if other_args.len() <= 1 {
-                        if let Some(const_msg) = const_str_as_utf8(&[a_id, b_id]) {
-                            decoded_format_args.const_pieces =
-                                Some([const_msg].into_iter().collect());
-                            return Ok(decoded_format_args);
-                        }
+                    if other_args.len() <= 1
+                        && let Some(const_msg) = const_str_as_utf8(&[a_id, b_id])
+                    {
+                        decoded_format_args.const_pieces = Some([const_msg].into_iter().collect());
+                        return Ok(decoded_format_args);
                     }
                 }
 
@@ -3267,12 +3259,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         }
 
                         // HACK(eddyb) avoid the logic below that assumes only ID operands
-                        if inst.class.opcode == Op::CompositeExtract {
-                            if let (Some(r), &[Operand::IdRef(x), Operand::LiteralBit32(i)]) =
+                        if inst.class.opcode == Op::CompositeExtract
+                            && let (Some(r), &[Operand::IdRef(x), Operand::LiteralBit32(i)]) =
                                 (inst.result_id, &inst.operands[..])
-                            {
-                                return Some(Inst::CompositeExtract(r, x, i));
-                            }
+                        {
+                            return Some(Inst::CompositeExtract(r, x, i));
                         }
 
                         // HACK(eddyb) all instructions accepted below
@@ -3483,8 +3474,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         // access chain cases that `inbounds_gep` can now cause.
                         if let Inst::InBoundsAccessChain(dst_field_ptr, dst_base_ptr, 0) =
                             copy_to_rt_args_array_insts[0]
-                        {
-                            if let Some(mut prev_insts) = try_rev_take(1) {
+                            && let Some(mut prev_insts) = try_rev_take(1) {
                                 assert_eq!(prev_insts.len(), 1);
                                 let prev_inst = prev_insts.pop().unwrap();
 
@@ -3503,7 +3493,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                                     }
                                 }
                             }
-                        }
 
                         match copy_to_rt_args_array_insts[..] {
                             [
@@ -3855,27 +3844,27 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             // Since From is only implemented for safe conversions (widening conversions that preserve
             // the numeric value), we can directly create a constant of the target type for primitive
             // numeric types.
-            if let [arg] = args {
-                if let Some(const_val) = self.builder.lookup_const_scalar(*arg) {
-                    use rustc_middle::ty::FloatTy;
-                    let optimized_result = match (source_ty.kind(), target_ty.kind()) {
-                        // Integer widening conversions
-                        (ty::Uint(_), ty::Uint(_)) | (ty::Int(_), ty::Int(_)) => {
-                            Some(self.constant_int(result_type, const_val))
-                        }
-                        // Float widening conversions
-                        // TODO(@LegNeato): Handle more float types
-                        (ty::Float(FloatTy::F32), ty::Float(FloatTy::F64)) => {
-                            let float_val = f32::from_bits(const_val as u32) as f64;
-                            Some(self.constant_float(result_type, float_val))
-                        }
-                        // No optimization for narrowing conversions or unsupported types
-                        _ => None,
-                    };
-
-                    if let Some(result) = optimized_result {
-                        return result;
+            if let [arg] = args
+                && let Some(const_val) = self.builder.lookup_const_scalar(*arg)
+            {
+                use rustc_middle::ty::FloatTy;
+                let optimized_result = match (source_ty.kind(), target_ty.kind()) {
+                    // Integer widening conversions
+                    (ty::Uint(_), ty::Uint(_)) | (ty::Int(_), ty::Int(_)) => {
+                        Some(self.constant_int(result_type, const_val))
                     }
+                    // Float widening conversions
+                    // TODO(@LegNeato): Handle more float types
+                    (ty::Float(FloatTy::F32), ty::Float(FloatTy::F64)) => {
+                        let float_val = f32::from_bits(const_val as u32) as f64;
+                        Some(self.constant_float(result_type, float_val))
+                    }
+                    // No optimization for narrowing conversions or unsupported types
+                    _ => None,
+                };
+
+                if let Some(result) = optimized_result {
+                    return result;
                 }
             }
         }

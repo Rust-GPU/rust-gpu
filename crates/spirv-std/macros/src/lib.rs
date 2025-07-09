@@ -529,14 +529,12 @@ impl SampleImplRewriter {
 
         // use the type to insert it into the generic argument of the trait we're implementing
         // e.g., `ImageWithMethods<Dummy>` becomes `ImageWithMethods<SampleParams<SomeTy<B>, NoneTy, NoneTy>>`
-        if let Some(t) = &mut new_impl.trait_ {
-            if let syn::PathArguments::AngleBracketed(a) =
+        if let Some(t) = &mut new_impl.trait_
+            && let syn::PathArguments::AngleBracketed(a) =
                 &mut t.1.segments.last_mut().unwrap().arguments
-            {
-                if let Some(syn::GenericArgument::Type(t)) = a.args.last_mut() {
-                    *t = ty.clone();
-                }
-            }
+            && let Some(syn::GenericArgument::Type(t)) = a.args.last_mut()
+        {
+            *t = ty.clone();
         }
 
         // rewrite the implemented functions

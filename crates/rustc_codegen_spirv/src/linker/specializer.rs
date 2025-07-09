@@ -145,22 +145,21 @@ pub fn specialize(
     for inst in &module.entry_points {
         for interface_operand in &inst.operands[3..] {
             let interface_id = interface_operand.unwrap_id_ref();
-            if let Some(generic) = specializer.generics.get(&interface_id) {
-                if let Some(param_values) = &generic.param_values {
-                    if param_values.iter().all(|v| matches!(v, Value::Known(_))) {
-                        interface_concrete_instances.insert(Instance {
-                            generic_id: interface_id,
-                            generic_args: param_values
-                                .iter()
-                                .copied()
-                                .map(|v| match v {
-                                    Value::Known(v) => v,
-                                    _ => unreachable!(),
-                                })
-                                .collect(),
-                        });
-                    }
-                }
+            if let Some(generic) = specializer.generics.get(&interface_id)
+                && let Some(param_values) = &generic.param_values
+                && param_values.iter().all(|v| matches!(v, Value::Known(_)))
+            {
+                interface_concrete_instances.insert(Instance {
+                    generic_id: interface_id,
+                    generic_args: param_values
+                        .iter()
+                        .copied()
+                        .map(|v| match v {
+                            Value::Known(v) => v,
+                            _ => unreachable!(),
+                        })
+                        .collect(),
+                });
             }
         }
     }
@@ -588,10 +587,10 @@ impl<S: Specialization> Specializer<S> {
             };
 
             // Record all integer `OpConstant`s (used for `IndexComposite`).
-            if inst.class.opcode == Op::Constant {
-                if let Operand::LiteralBit32(x) = inst.operands[0] {
-                    self.int_consts.insert(result_id, x);
-                }
+            if inst.class.opcode == Op::Constant
+                && let Operand::LiteralBit32(x) = inst.operands[0]
+            {
+                self.int_consts.insert(result_id, x);
             }
 
             // Instantiate `inst` in a fresh inference context, to determine
@@ -2095,10 +2094,9 @@ impl<'a, S: Specialization> InferCx<'a, S> {
                         if let (Some(expected), Some(found)) = (
                             ret_ty.clone(),
                             self.type_of_result.get(&ret_val_id).cloned(),
-                        ) {
-                            if let Err(e) = self.equate_infer_operands(expected, found) {
-                                e.report(inst);
-                            }
+                        ) && let Err(e) = self.equate_infer_operands(expected, found)
+                        {
+                            e.report(inst);
                         }
                     }
 
@@ -2336,17 +2334,17 @@ impl<'a, S: Specialization> Expander<'a, S> {
         let expand_debug_or_annotation = |insts: Vec<Instruction>| {
             let mut expanded_insts = Vec::with_capacity(insts.len().next_power_of_two());
             for inst in insts {
-                if let [Operand::IdRef(target), ..] = inst.operands[..] {
-                    if self.specializer.generics.contains_key(&target) {
-                        expanded_insts.extend(self.all_instances_of(target).map(
-                            |(_, &instance_id)| {
-                                let mut expanded_inst = inst.clone();
-                                expanded_inst.operands[0] = Operand::IdRef(instance_id);
-                                expanded_inst
-                            },
-                        ));
-                        continue;
-                    }
+                if let [Operand::IdRef(target), ..] = inst.operands[..]
+                    && self.specializer.generics.contains_key(&target)
+                {
+                    expanded_insts.extend(self.all_instances_of(target).map(
+                        |(_, &instance_id)| {
+                            let mut expanded_inst = inst.clone();
+                            expanded_inst.operands[0] = Operand::IdRef(instance_id);
+                            expanded_inst
+                        },
+                    ));
+                    continue;
                 }
                 expanded_insts.push(inst);
             }
@@ -2363,23 +2361,23 @@ impl<'a, S: Specialization> Expander<'a, S> {
         let mut expanded_types_global_values =
             Vec::with_capacity(types_global_values.len().next_power_of_two());
         for inst in types_global_values {
-            if let Some(result_id) = inst.result_id {
-                if let Some(generic) = self.specializer.generics.get(&result_id) {
-                    expanded_types_global_values.extend(self.all_instances_of(result_id).map(
-                        |(instance, &instance_id)| {
-                            let mut expanded_inst = inst.clone();
-                            expanded_inst.result_id = Some(instance_id);
-                            for (loc, operand) in generic
-                                .replacements
-                                .to_concrete(&instance.generic_args, |i| self.instances[&i])
-                            {
-                                expanded_inst.index_set(loc, operand.into());
-                            }
-                            expanded_inst
-                        },
-                    ));
-                    continue;
-                }
+            if let Some(result_id) = inst.result_id
+                && let Some(generic) = self.specializer.generics.get(&result_id)
+            {
+                expanded_types_global_values.extend(self.all_instances_of(result_id).map(
+                    |(instance, &instance_id)| {
+                        let mut expanded_inst = inst.clone();
+                        expanded_inst.result_id = Some(instance_id);
+                        for (loc, operand) in generic
+                            .replacements
+                            .to_concrete(&instance.generic_args, |i| self.instances[&i])
+                        {
+                            expanded_inst.index_set(loc, operand.into());
+                        }
+                        expanded_inst
+                    },
+                ));
+                continue;
             }
             expanded_types_global_values.push(inst);
         }
@@ -2444,12 +2442,12 @@ impl<'a, S: Specialization> Expander<'a, S> {
                         // HACK(eddyb) this duplicates similar logic from `inline`.
                         for annotation_idx in 0..expanded_annotations.len() {
                             let inst = &expanded_annotations[annotation_idx];
-                            if let [Operand::IdRef(target), ..] = inst.operands[..] {
-                                if let Some(&rewritten_target) = rewrite_rules.get(&target) {
-                                    let mut expanded_inst = inst.clone();
-                                    expanded_inst.operands[0] = Operand::IdRef(rewritten_target);
-                                    expanded_annotations.push(expanded_inst);
-                                }
+                            if let [Operand::IdRef(target), ..] = inst.operands[..]
+                                && let Some(&rewritten_target) = rewrite_rules.get(&target)
+                            {
+                                let mut expanded_inst = inst.clone();
+                                expanded_inst.operands[0] = Operand::IdRef(rewritten_target);
+                                expanded_annotations.push(expanded_inst);
                             }
                         }
                     }

@@ -126,15 +126,13 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 | InlineAsmOperandRef::Label { .. } => (None, None),
             };
 
-            if let Some(in_value) = in_value {
-                if let (BackendRepr::Scalar(scalar), OperandValue::Immediate(in_value_spv)) =
+            if let Some(in_value) = in_value
+                && let (BackendRepr::Scalar(scalar), OperandValue::Immediate(in_value_spv)) =
                     (in_value.layout.backend_repr, &mut in_value.val)
-                {
-                    if let Primitive::Pointer(_) = scalar.primitive() {
-                        let in_value_precise_type = in_value.layout.spirv_type(self.span(), self);
-                        *in_value_spv = self.pointercast(*in_value_spv, in_value_precise_type);
-                    }
-                }
+                && let Primitive::Pointer(_) = scalar.primitive()
+            {
+                let in_value_precise_type = in_value.layout.spirv_type(self.span(), self);
+                *in_value_spv = self.pointercast(*in_value_spv, in_value_precise_type);
             }
             if let Some(out_place) = out_place {
                 let out_place_precise_type = out_place.layout.spirv_type(self.span(), self);

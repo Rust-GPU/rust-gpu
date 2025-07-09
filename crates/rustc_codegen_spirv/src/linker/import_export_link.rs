@@ -34,16 +34,16 @@ fn find_import_export_pairs_and_killed_params(
         .map(|(z, _)| z)
         .collect();
     for inst in module.global_inst_iter() {
-        if let Some(result_id) = inst.result_id {
-            if !zombie_infected.contains(&result_id) {
-                let mut id_operands = inst.operands.iter().filter_map(|o| o.id_ref_any());
-                // NOTE(eddyb) this takes advantage of the fact that the module
-                // is ordered def-before-use (with the minor exception of forward
-                // references for recursive data, which are not fully supported),
-                // to be able to propagate "zombie infection" in one pass.
-                if id_operands.any(|id| zombie_infected.contains(&id)) {
-                    zombie_infected.insert(result_id);
-                }
+        if let Some(result_id) = inst.result_id
+            && !zombie_infected.contains(&result_id)
+        {
+            let mut id_operands = inst.operands.iter().filter_map(|o| o.id_ref_any());
+            // NOTE(eddyb) this takes advantage of the fact that the module
+            // is ordered def-before-use (with the minor exception of forward
+            // references for recursive data, which are not fully supported),
+            // to be able to propagate "zombie infection" in one pass.
+            if id_operands.any(|id| zombie_infected.contains(&id)) {
+                zombie_infected.insert(result_id);
             }
         }
     }
@@ -202,17 +202,17 @@ fn check_tys_equal(
 
 fn replace_all_uses_with(module: &mut Module, rules: &FxHashMap<u32, u32>) {
     module.all_inst_iter_mut().for_each(|inst| {
-        if let Some(result_type) = &mut inst.result_type {
-            if let Some(&rewrite) = rules.get(result_type) {
-                *result_type = rewrite;
-            }
+        if let Some(result_type) = &mut inst.result_type
+            && let Some(&rewrite) = rules.get(result_type)
+        {
+            *result_type = rewrite;
         }
 
         inst.operands.iter_mut().for_each(|op| {
-            if let Some(w) = op.id_ref_any_mut() {
-                if let Some(&rewrite) = rules.get(w) {
-                    *w = rewrite;
-                }
+            if let Some(w) = op.id_ref_any_mut()
+                && let Some(&rewrite) = rules.get(w)
+            {
+                *w = rewrite;
             }
         });
     });

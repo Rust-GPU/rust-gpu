@@ -343,18 +343,15 @@ impl<'tcx> CodegenCx<'tcx> {
     pub fn const_bitcast(&self, val: SpirvValue, ty: Word) -> SpirvValue {
         // HACK(eddyb) special-case `const_data_from_alloc` + `static_addr_of`
         // as the old `from_const_alloc` (now `OperandRef::from_const_alloc`).
-        if let SpirvValueKind::IllegalConst(_) = val.kind {
-            if let Some(SpirvConst::PtrTo { pointee }) = self.builder.lookup_const(val) {
-                if let Some(SpirvConst::ConstDataFromAlloc(alloc)) =
-                    self.builder.lookup_const_by_id(pointee)
-                {
-                    if let SpirvType::Pointer { pointee } = self.lookup_type(ty) {
-                        let mut offset = Size::ZERO;
-                        let init = self.read_from_const_alloc(alloc, &mut offset, pointee);
-                        return self.static_addr_of(init, alloc.inner().align, None);
-                    }
-                }
-            }
+        if let SpirvValueKind::IllegalConst(_) = val.kind
+            && let Some(SpirvConst::PtrTo { pointee }) = self.builder.lookup_const(val)
+            && let Some(SpirvConst::ConstDataFromAlloc(alloc)) =
+                self.builder.lookup_const_by_id(pointee)
+            && let SpirvType::Pointer { pointee } = self.lookup_type(ty)
+        {
+            let mut offset = Size::ZERO;
+            let init = self.read_from_const_alloc(alloc, &mut offset, pointee);
+            return self.static_addr_of(init, alloc.inner().align, None);
         }
 
         if val.ty == ty {
