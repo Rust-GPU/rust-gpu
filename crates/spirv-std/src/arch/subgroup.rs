@@ -844,7 +844,7 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
@@ -875,7 +875,7 @@ Result Type must be a scalar or vector of floating-point type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
 
@@ -908,7 +908,7 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 1. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is 1. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
@@ -939,7 +939,7 @@ Result Type must be a scalar or vector of floating-point type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 1. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is 1. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined.
 
@@ -959,7 +959,7 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is INT_MAX.
+The identity I for Operation is `INT_MAX`.
 
 The type of `value` must be the same as Result Type.
 
@@ -972,7 +972,7 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is INT_MAX. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is `INT_MAX`. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
@@ -990,7 +990,7 @@ Result Type must be a scalar or vector of integer type, whose Signedness operand
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is UINT_MAX.
+The identity I for Operation is `UINT_MAX`.
 
 The type of `value` must be the same as Result Type.
 
@@ -1003,7 +1003,7 @@ Result Type must be a scalar or vector of integer type, whose Signedness operand
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is UINT_MAX. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is `UINT_MAX`. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
@@ -1034,7 +1034,7 @@ Result Type must be a scalar or vector of floating-point type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is +INF. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is +INF. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type. The method used to perform the group operation on the contributed Value(s) from active invocations is implementation defined. From the set of Value(s) provided by active invocations within a subgroup, if for any two Values one of them is a NaN, the other is chosen. If all Value(s) that are used by the current invocation are NaN, then the result is an undefined value.
 
@@ -1054,7 +1054,7 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is INT_MIN.
+The identity I for Operation is `INT_MIN`.
 
 The type of `value` must be the same as Result Type.
 
@@ -1067,7 +1067,7 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is INT_MIN. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is `INT_MIN`. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
@@ -1098,7 +1098,7 @@ Result Type must be a scalar or vector of integer type, whose Signedness operand
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
@@ -1160,7 +1160,7 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is ~0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is ~0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
@@ -1193,7 +1193,7 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
@@ -1226,7 +1226,7 @@ Result Type must be a scalar or vector of integer type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
@@ -1259,7 +1259,7 @@ Result Type must be a scalar or vector of Boolean type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is ~0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is ~0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
@@ -1292,7 +1292,7 @@ Result Type must be a scalar or vector of Boolean type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
@@ -1325,7 +1325,7 @@ Result Type must be a scalar or vector of Boolean type.
 
 Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
 
-The identity I for Operation is 0. If Operation is ClusteredReduce, `ClusterSize` must be present.
+The identity I for Operation is 0. If Operation is `ClusteredReduce`, `ClusterSize` must be present.
 
 The type of `value` must be the same as Result Type.
 
