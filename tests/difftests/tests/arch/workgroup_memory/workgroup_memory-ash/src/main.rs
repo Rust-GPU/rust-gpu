@@ -19,17 +19,19 @@ fn main() {
     #[cfg(not(target_os = "macos"))]
     {
         use difftest::scaffold::compute::{AshBackend, BufferConfig, BufferUsage, ComputeTest};
-        use spirv_builder::{ModuleResult, SpirvBuilder};
+        use difftest::spirv_builder::{
+            Capability, MetadataPrintout, ModuleResult, ShaderPanicStrategy, SpirvBuilder,
+        };
         use std::fs;
 
         // Build the Rust shader to SPIR-V
         let builder = SpirvBuilder::new(".", "spirv-unknown-vulkan1.2")
-            .print_metadata(spirv_builder::MetadataPrintout::None)
+            .print_metadata(MetadataPrintout::None)
             .release(true)
             .multimodule(false)
-            .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::SilentExit)
+            .shader_panic_strategy(ShaderPanicStrategy::SilentExit)
             .preserve_bindings(true)
-            .capability(spirv_builder::Capability::VulkanMemoryModel);
+            .capability(Capability::VulkanMemoryModel);
 
         let artifact = builder.build().expect("Failed to build SPIR-V");
 
