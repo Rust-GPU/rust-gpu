@@ -14,7 +14,7 @@ use core::arch::asm;
 /// - `hit_kind` is the integer hit kind reported back to other shaders and
 ///   accessible by the `hit kind` builtin.
 ///
-/// This instruction is allowed only in IntersectionKHR execution model.
+/// This instruction is allowed only in `IntersectionKHR` execution model.
 ///
 /// This instruction is a shader call instruction which may invoke shaders with
 /// the `any_hit` execution model.

@@ -5,7 +5,7 @@ use core::arch::asm;
 /// `discard()` in HLSL. Any stores to memory after this instruction are
 /// suppressed and the fragment does not write outputs to the framebuffer.
 ///
-/// Unlike [super::kill], this does not necessarily terminate the invocation. It
+/// Unlike [`super::kill`], this does not necessarily terminate the invocation. It
 /// is not considered a flow control instruction (flow control does not become
 /// non-uniform) and does not terminate the block.
 ///
