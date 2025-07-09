@@ -265,31 +265,27 @@ fn collect_access_chains(
         let mut changed = false;
         for inst in blocks.values().flat_map(|b| &b.instructions) {
             for (index, op) in inst.operands.iter().enumerate() {
-                if let Operand::IdRef(id) = op {
-                    if variables.contains_key(id) {
-                        match inst.class.opcode {
-                            // Only allow store if pointer is the lhs, not rhs
-                            Op::Store if index == 0 => {}
-                            Op::Load
-                            | Op::AccessChain
-                            | Op::InBoundsAccessChain
-                            | Op::CopyMemory => {}
-                            _ => return None,
-                        }
+                if let Operand::IdRef(id) = op
+                    && variables.contains_key(id)
+                {
+                    match inst.class.opcode {
+                        // Only allow store if pointer is the lhs, not rhs
+                        Op::Store if index == 0 => {}
+                        Op::Load | Op::AccessChain | Op::InBoundsAccessChain | Op::CopyMemory => {}
+                        _ => return None,
                     }
                 }
             }
-            if let Op::AccessChain | Op::InBoundsAccessChain = inst.class.opcode {
-                if let Some(base) = variables.get(&inst.operands[0].id_ref_any().unwrap()) {
-                    let info =
-                        construct_access_chain_info(pointer_to_pointee, constants, inst, base)?;
-                    match variables.entry(inst.result_id.unwrap()) {
-                        hash_map::Entry::Vacant(entry) => {
-                            entry.insert(info);
-                            changed = true;
-                        }
-                        hash_map::Entry::Occupied(_) => {}
+            if let Op::AccessChain | Op::InBoundsAccessChain = inst.class.opcode
+                && let Some(base) = variables.get(&inst.operands[0].id_ref_any().unwrap())
+            {
+                let info = construct_access_chain_info(pointer_to_pointee, constants, inst, base)?;
+                match variables.entry(inst.result_id.unwrap()) {
+                    hash_map::Entry::Vacant(entry) => {
+                        entry.insert(info);
+                        changed = true;
                     }
+                    hash_map::Entry::Occupied(_) => {}
                 }
             }
         }
@@ -492,11 +488,11 @@ impl Renamer<'_, '_> {
     fn rename(&mut self, block: usize, from_block: Option<usize>) {
         let original_stack = self.stack.len();
 
-        if let Some(from_block) = from_block {
-            if self.blocks_with_phi.contains(&block) {
-                let new_top = self.insert_phi_value(block, from_block);
-                self.stack.push(new_top);
-            }
+        if let Some(from_block) = from_block
+            && self.blocks_with_phi.contains(&block)
+        {
+            let new_top = self.insert_phi_value(block, from_block);
+            self.stack.push(new_top);
         }
 
         if !self.visited.insert(block) {

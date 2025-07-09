@@ -57,10 +57,10 @@ fn all_inst_iter(func: &Function) -> impl DoubleEndedIterator<Item = &Instructio
 fn spread_roots(module: &Module, rooted: &mut FxIndexSet<Word>) -> bool {
     let mut any = false;
     for inst in module.global_inst_iter() {
-        if let Some(id) = inst.result_id {
-            if rooted.contains(&id) {
-                any |= root(inst, rooted);
-            }
+        if let Some(id) = inst.result_id
+            && rooted.contains(&id)
+        {
+            any |= root(inst, rooted);
         }
     }
     for func in &module.functions {
@@ -72,10 +72,10 @@ fn spread_roots(module: &Module, rooted: &mut FxIndexSet<Word>) -> bool {
             for inst in all_inst_iter(func).rev() {
                 if !instruction_is_pure(inst) {
                     any |= root(inst, rooted);
-                } else if let Some(id) = inst.result_id {
-                    if rooted.contains(&id) {
-                        any |= root(inst, rooted);
-                    }
+                } else if let Some(id) = inst.result_id
+                    && rooted.contains(&id)
+                {
+                    any |= root(inst, rooted);
                 }
             }
         }

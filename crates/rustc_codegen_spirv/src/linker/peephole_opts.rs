@@ -344,20 +344,20 @@ fn process_instruction(
 
     // Fun little optimization: SPIR-V has a fancy OpVectorTimesScalar instruction. If we have a
     // vector times a collection of scalars, and the scalars are all the same, reduce it!
-    if operation_opcode == Op::FMul && composite_arguments.len() == 2 {
-        if let (&IdentifiedOperand::Vector(composite), IdentifiedOperand::Scalars(scalars))
+    if operation_opcode == Op::FMul
+        && composite_arguments.len() == 2
+        && let (&IdentifiedOperand::Vector(composite), IdentifiedOperand::Scalars(scalars))
         | (IdentifiedOperand::Scalars(scalars), &IdentifiedOperand::Vector(composite)) =
             (&composite_arguments[0], &composite_arguments[1])
-        {
-            let scalar = scalars[0];
-            if scalars.iter().skip(1).all(|&s| s == scalar) {
-                return Some(Instruction::new(
-                    Op::VectorTimesScalar,
-                    inst.result_type,
-                    inst.result_id,
-                    vec![Operand::IdRef(composite), Operand::IdRef(scalar)],
-                ));
-            }
+    {
+        let scalar = scalars[0];
+        if scalars.iter().skip(1).all(|&s| s == scalar) {
+            return Some(Instruction::new(
+                Op::VectorTimesScalar,
+                inst.result_type,
+                inst.result_id,
+                vec![Operand::IdRef(composite), Operand::IdRef(scalar)],
+            ));
         }
     }
 

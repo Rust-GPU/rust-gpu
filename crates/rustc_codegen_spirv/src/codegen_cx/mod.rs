@@ -774,16 +774,16 @@ impl CodegenArgs {
                 // with just the filename component of the path.
                 if inst.class.opcode == Op::String {
                     let path = Path::new(inst.operands[0].unwrap_literal_string());
-                    if path.is_absolute() {
-                        if let Some(file_name) = path.file_name() {
-                            let mut inst = inst.clone();
-                            inst.operands[0] = Operand::LiteralString(format!(
-                                "$OPSTRING_FILENAME/{}",
-                                file_name.to_string_lossy(),
-                            ));
-                            eprintln!("{}", inst.disassemble());
-                            continue;
-                        }
+                    if path.is_absolute()
+                        && let Some(file_name) = path.file_name()
+                    {
+                        let mut inst = inst.clone();
+                        inst.operands[0] = Operand::LiteralString(format!(
+                            "$OPSTRING_FILENAME/{}",
+                            file_name.to_string_lossy(),
+                        ));
+                        eprintln!("{}", inst.disassemble());
+                        continue;
                     }
                 }
                 eprintln!("{}", inst.disassemble());

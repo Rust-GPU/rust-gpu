@@ -542,12 +542,11 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
 
             let attrs = AggregatedSpirvAttributes::parse(cx, cx.tcx.get_attrs_unchecked(adt.did()));
 
-            if let Some(intrinsic_type_attr) = attrs.intrinsic_type.map(|attr| attr.value) {
-                if let Ok(spirv_type) =
+            if let Some(intrinsic_type_attr) = attrs.intrinsic_type.map(|attr| attr.value)
+                && let Ok(spirv_type) =
                     trans_intrinsic_type(cx, span, *self, args, intrinsic_type_attr)
-                {
-                    return spirv_type;
-                }
+            {
+                return spirv_type;
             }
         }
 
@@ -613,12 +612,12 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 };
                 // FIXME(eddyb) use `ArrayVec` here.
                 let mut field_names = Vec::new();
-                if let TyKind::Adt(adt, _) = self.ty.kind() {
-                    if let Variants::Single { index } = self.variants {
-                        for i in self.fields.index_by_increasing_offset() {
-                            let field = &adt.variants()[index].fields[FieldIdx::new(i)];
-                            field_names.push(field.name);
-                        }
+                if let TyKind::Adt(adt, _) = self.ty.kind()
+                    && let Variants::Single { index } = self.variants
+                {
+                    for i in self.fields.index_by_increasing_offset() {
+                        let field = &adt.variants()[index].fields[FieldIdx::new(i)];
+                        field_names.push(field.name);
                     }
                 }
                 SpirvType::Adt {
@@ -918,10 +917,10 @@ fn trans_struct_or_union<'tcx>(
     let mut field_offsets = Vec::new();
     let mut field_names = Vec::new();
     for i in ty.fields.index_by_increasing_offset() {
-        if let Some(expected_field_idx) = union_case {
-            if i != expected_field_idx.as_usize() {
-                continue;
-            }
+        if let Some(expected_field_idx) = union_case
+            && i != expected_field_idx.as_usize()
+        {
+            continue;
         }
 
         let field_ty = ty.field(cx, i);
@@ -995,10 +994,11 @@ impl<'tcx> From<TyAndLayout<'tcx>> for TyLayoutNameKey<'tcx> {
 impl fmt::Display for TyLayoutNameKey<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.ty)?;
-        if let (TyKind::Adt(def, _), Some(index)) = (self.ty.kind(), self.variant) {
-            if def.is_enum() && !def.variants().is_empty() {
-                write!(f, "::{}", def.variants()[index].name)?;
-            }
+        if let (TyKind::Adt(def, _), Some(index)) = (self.ty.kind(), self.variant)
+            && def.is_enum()
+            && !def.variants().is_empty()
+        {
+            write!(f, "::{}", def.variants()[index].name)?;
         }
         if let (TyKind::Coroutine(_, _), Some(index)) = (self.ty.kind(), self.variant) {
             write!(f, "::{}", CoroutineArgs::variant_name(index))?;

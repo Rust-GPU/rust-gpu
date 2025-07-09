@@ -178,12 +178,12 @@ fn dump_mir(tcx: TyCtxt<'_>, mono_items: &[(MonoItem<'_>, MonoItemData)], path: 
     create_dir_all(path.parent().unwrap()).unwrap();
     let mut file = File::create(path).unwrap();
     for &(mono_item, _) in mono_items {
-        if let MonoItem::Fn(instance) = mono_item {
-            if matches!(instance.def, InstanceKind::Item(_)) {
-                let mut mir = Cursor::new(Vec::new());
-                if write_mir_pretty(tcx, Some(instance.def_id()), &mut mir).is_ok() {
-                    writeln!(file, "{}", String::from_utf8(mir.into_inner()).unwrap()).unwrap();
-                }
+        if let MonoItem::Fn(instance) = mono_item
+            && matches!(instance.def, InstanceKind::Item(_))
+        {
+            let mut mir = Cursor::new(Vec::new());
+            if write_mir_pretty(tcx, Some(instance.def_id()), &mut mir).is_ok() {
+                writeln!(file, "{}", String::from_utf8(mir.into_inner()).unwrap()).unwrap();
             }
         }
     }

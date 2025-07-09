@@ -510,13 +510,13 @@ impl Inliner<'_, '_> {
         // AFAIK there is no case where keeping decorations on inline wouldn't be valid.
         for annotation_idx in 0..self.annotations.len() {
             let inst = &self.annotations[annotation_idx];
-            if let [Operand::IdRef(target), ..] = inst.operands[..] {
-                if let Some(&rewritten_target) = rewrite_rules.get(&target) {
-                    // Copy decoration instruction and push it.
-                    let mut cloned_inst = inst.clone();
-                    cloned_inst.operands[0] = Operand::IdRef(rewritten_target);
-                    self.annotations.push(cloned_inst);
-                }
+            if let [Operand::IdRef(target), ..] = inst.operands[..]
+                && let Some(&rewritten_target) = rewrite_rules.get(&target)
+            {
+                // Copy decoration instruction and push it.
+                let mut cloned_inst = inst.clone();
+                cloned_inst.operands[0] = Operand::IdRef(rewritten_target);
+                self.annotations.push(cloned_inst);
             }
         }
     }
@@ -664,10 +664,10 @@ impl Inliner<'_, '_> {
             // HACK(eddyb) new IDs should be generated earlier, to avoid pushing
             // callee IDs to `call_result_phi.operands` only to rewrite them here.
             for op in &mut call_result_phi.operands {
-                if let Some(id) = op.id_ref_any_mut() {
-                    if let Some(&rewrite) = rewrite_rules.get(id) {
-                        *id = rewrite;
-                    }
+                if let Some(id) = op.id_ref_any_mut()
+                    && let Some(&rewrite) = rewrite_rules.get(id)
+                {
+                    *id = rewrite;
                 }
             }
 
@@ -699,10 +699,10 @@ impl Inliner<'_, '_> {
                 };
                 for reaching_inst in reaching_insts {
                     for op in &mut reaching_inst.operands {
-                        if let Some(id) = op.id_ref_any_mut() {
-                            if *id == call_result_id {
-                                *id = returned_value_id;
-                            }
+                        if let Some(id) = op.id_ref_any_mut()
+                            && *id == call_result_id
+                        {
+                            *id = returned_value_id;
                         }
                     }
                 }

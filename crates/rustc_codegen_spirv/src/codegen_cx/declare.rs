@@ -168,25 +168,25 @@ impl<'tcx> CodegenCx<'tcx> {
         }
 
         // Check if this is a From trait implementation
-        if let Some(impl_def_id) = self.tcx.impl_of_method(def_id) {
-            if let Some(trait_ref) = self.tcx.impl_trait_ref(impl_def_id) {
-                let trait_def_id = trait_ref.skip_binder().def_id;
+        if let Some(impl_def_id) = self.tcx.impl_of_method(def_id)
+            && let Some(trait_ref) = self.tcx.impl_trait_ref(impl_def_id)
+        {
+            let trait_def_id = trait_ref.skip_binder().def_id;
 
-                // Check if this is the From trait.
-                let trait_path = self.tcx.def_path_str(trait_def_id);
-                if matches!(
-                    trait_path.as_str(),
-                    "core::convert::From" | "std::convert::From"
-                ) {
-                    // Extract the source and target types from the trait substitutions
-                    let trait_args = trait_ref.skip_binder().args;
-                    if let (Some(target_ty), Some(source_ty)) =
-                        (trait_args.types().nth(0), trait_args.types().nth(1))
-                    {
-                        self.from_trait_impls
-                            .borrow_mut()
-                            .insert(def_id, (source_ty, target_ty));
-                    }
+            // Check if this is the From trait.
+            let trait_path = self.tcx.def_path_str(trait_def_id);
+            if matches!(
+                trait_path.as_str(),
+                "core::convert::From" | "std::convert::From"
+            ) {
+                // Extract the source and target types from the trait substitutions
+                let trait_args = trait_ref.skip_binder().args;
+                if let (Some(target_ty), Some(source_ty)) =
+                    (trait_args.types().nth(0), trait_args.types().nth(1))
+                {
+                    self.from_trait_impls
+                        .borrow_mut()
+                        .insert(def_id, (source_ty, target_ty));
                 }
             }
         }
@@ -251,12 +251,12 @@ impl<'tcx> CodegenCx<'tcx> {
                     _ => return None,
                 })
             });
-            if let Some(spec) = spec {
-                if let Some((ty,)) = instance.args.types().collect_tuple() {
-                    self.fmt_rt_arg_new_fn_ids_to_ty_and_spec
-                        .borrow_mut()
-                        .insert(fn_id, (ty, spec));
-                }
+            if let Some(spec) = spec
+                && let Some((ty,)) = instance.args.types().collect_tuple()
+            {
+                self.fmt_rt_arg_new_fn_ids_to_ty_and_spec
+                    .borrow_mut()
+                    .insert(fn_id, (ty, spec));
             }
         }
 

@@ -262,17 +262,17 @@ pub(super) fn elf_e_flags(architecture: Architecture, sess: &Session) -> u32 {",
         }
         if line.starts_with('[') {
             toml_directive = Some(line);
-        } else if toml_directive == Some("[dependencies]") {
-            if let Some((name, _)) = line.split_once(" = ") {
-                // HACK(eddyb) ignore a weird edge case.
-                if name == "thorin-dwp" {
-                    continue;
-                }
-                let extern_crate = format!("extern crate {};", name.replace('-', "_"));
-                if !all_extern_crates.contains(&extern_crate) {
-                    writeln(&mut all_extern_crates, "#[allow(unused_extern_crates)]");
-                    writeln(&mut all_extern_crates, &extern_crate);
-                }
+        } else if toml_directive == Some("[dependencies]")
+            && let Some((name, _)) = line.split_once(" = ")
+        {
+            // HACK(eddyb) ignore a weird edge case.
+            if name == "thorin-dwp" {
+                continue;
+            }
+            let extern_crate = format!("extern crate {};", name.replace('-', "_"));
+            if !all_extern_crates.contains(&extern_crate) {
+                writeln(&mut all_extern_crates, "#[allow(unused_extern_crates)]");
+                writeln(&mut all_extern_crates, &extern_crate);
             }
         }
     }

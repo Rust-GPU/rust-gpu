@@ -69,12 +69,11 @@ pub fn block_ordering_pass(func: &mut Function) {
         let mut edges = outgoing_edges(current_block).collect::<Vec<_>>();
         // HACK(eddyb) treat `OpSelectionMerge` as an edge, in case it points
         // to an otherwise-unreachable block.
-        if let Some(before_last_idx) = current_block.instructions.len().checked_sub(2) {
-            if let Some(before_last) = current_block.instructions.get(before_last_idx) {
-                if before_last.class.opcode == Op::SelectionMerge {
-                    edges.push(before_last.operands[0].unwrap_id_ref());
-                }
-            }
+        if let Some(before_last_idx) = current_block.instructions.len().checked_sub(2)
+            && let Some(before_last) = current_block.instructions.get(before_last_idx)
+            && before_last.class.opcode == Op::SelectionMerge
+        {
+            edges.push(before_last.operands[0].unwrap_id_ref());
         }
         // Reverse the order, so reverse-postorder keeps things tidy
         for &outgoing in edges.iter().rev() {
@@ -308,23 +307,23 @@ pub fn check_type_capabilities(sess: &Session, module: &Module) -> Result<()> {
                 let signedness = inst.operands[1].unwrap_literal_bit32() != 0;
                 let type_name = if signedness { "i" } else { "u" };
 
-                if let Some(required_cap) = capability_for_int_width(width) {
-                    if !declared_capabilities.contains(&required_cap) {
-                        errors.push(format!(
-                            "`{type_name}{width}` type used without `OpCapability {required_cap:?}`"
-                        ));
-                    }
+                if let Some(required_cap) = capability_for_int_width(width)
+                    && !declared_capabilities.contains(&required_cap)
+                {
+                    errors.push(format!(
+                        "`{type_name}{width}` type used without `OpCapability {required_cap:?}`"
+                    ));
                 }
             }
             Op::TypeFloat => {
                 let width = inst.operands[0].unwrap_literal_bit32();
 
-                if let Some(required_cap) = capability_for_float_width(width) {
-                    if !declared_capabilities.contains(&required_cap) {
-                        errors.push(format!(
-                            "`f{width}` type used without `OpCapability {required_cap:?}`"
-                        ));
-                    }
+                if let Some(required_cap) = capability_for_float_width(width)
+                    && !declared_capabilities.contains(&required_cap)
+                {
+                    errors.push(format!(
+                        "`f{width}` type used without `OpCapability {required_cap:?}`"
+                    ));
                 }
             }
             _ => {}
