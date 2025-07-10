@@ -8,9 +8,8 @@ fn main() {
     #[cfg(target_os = "macos")]
     {
         use difftest::scaffold::Skip;
-        
-        let skip =
-            Skip::new("Ash tests are skipped on macOS due to MoltenVK configuration issues");
+
+        let skip = Skip::new("Ash tests are skipped on macOS due to MoltenVK configuration issues");
         skip.run_test(&config).unwrap();
         return;
     }
