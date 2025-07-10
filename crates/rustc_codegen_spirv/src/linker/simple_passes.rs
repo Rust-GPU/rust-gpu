@@ -1,4 +1,4 @@
-use super::{Result, get_name, get_names};
+use super::{get_name, get_names};
 use rspirv::dr::{Block, Function, Module};
 use rspirv::spirv::{Decoration, ExecutionModel, Op, Word};
 use rustc_codegen_spirv_types::Capability;
@@ -7,23 +7,32 @@ use rustc_session::Session;
 use std::iter::once;
 use std::mem::take;
 
+/// Error marker type, indicating an integer/float type SPIR-V lacks support for.
+struct UnsupportedType;
+
 /// Returns the capability required for an integer type of the given width, if any.
-fn capability_for_int_width(width: u32) -> Option<rspirv::spirv::Capability> {
-    match width {
+fn capability_for_int_width(
+    width: u32,
+) -> Result<Option<rspirv::spirv::Capability>, UnsupportedType> {
+    Ok(match width {
         8 => Some(rspirv::spirv::Capability::Int8),
         16 => Some(rspirv::spirv::Capability::Int16),
+        32 => None,
         64 => Some(rspirv::spirv::Capability::Int64),
-        _ => None,
-    }
+        _ => return Err(UnsupportedType),
+    })
 }
 
 /// Returns the capability required for a float type of the given width, if any.
-fn capability_for_float_width(width: u32) -> Option<rspirv::spirv::Capability> {
-    match width {
+fn capability_for_float_width(
+    width: u32,
+) -> Result<Option<rspirv::spirv::Capability>, UnsupportedType> {
+    Ok(match width {
         16 => Some(rspirv::spirv::Capability::Float16),
+        32 => None,
         64 => Some(rspirv::spirv::Capability::Float64),
-        _ => None,
-    }
+        _ => return Err(UnsupportedType),
+    })
 }
 
 pub fn shift_ids(module: &mut Module, add: u32) {
@@ -177,7 +186,7 @@ pub fn name_variables_pass(module: &mut Module) {
 }
 
 // Some instructions are only valid in fragment shaders. Check them.
-pub fn check_fragment_insts(sess: &Session, module: &Module) -> Result<()> {
+pub fn check_fragment_insts(sess: &Session, module: &Module) -> super::Result<()> {
     let mut visited = vec![false; module.functions.len()];
     let mut stack = Vec::new();
     let mut names = None;
@@ -219,7 +228,7 @@ pub fn check_fragment_insts(sess: &Session, module: &Module) -> Result<()> {
         names: &mut Option<FxHashMap<Word, &'m str>>,
         index: usize,
         func_id_to_idx: &FxHashMap<Word, usize>,
-    ) -> Result<()> {
+    ) -> super::Result<()> {
         if visited[index] {
             return Ok(());
         }
@@ -288,7 +297,7 @@ pub fn check_fragment_insts(sess: &Session, module: &Module) -> Result<()> {
 ///
 /// This function validates that if a module uses types like u8/i8 (requiring Int8),
 /// u16/i16 (requiring Int16), etc., the corresponding capabilities are declared.
-pub fn check_type_capabilities(sess: &Session, module: &Module) -> Result<()> {
+pub fn check_type_capabilities(sess: &Session, module: &Module) -> super::Result<()> {
     use rspirv::spirv::Capability;
 
     // Collect declared capabilities
@@ -298,44 +307,48 @@ pub fn check_type_capabilities(sess: &Session, module: &Module) -> Result<()> {
         .map(|inst| inst.operands[0].unwrap_capability())
         .collect();
 
-    let mut errors = Vec::new();
+    let mut missing_caps = vec![];
 
     for inst in &module.types_global_values {
-        match inst.class.opcode {
+        let (prefix, width, maybe_required_cap) = match inst.class.opcode {
             Op::TypeInt => {
                 let width = inst.operands[0].unwrap_literal_bit32();
-                let signedness = inst.operands[1].unwrap_literal_bit32() != 0;
-                let type_name = if signedness { "i" } else { "u" };
+                let signed = inst.operands[1].unwrap_literal_bit32() != 0;
 
-                if let Some(required_cap) = capability_for_int_width(width)
-                    && !declared_capabilities.contains(&required_cap)
-                {
-                    errors.push(format!(
-                        "`{type_name}{width}` type used without `OpCapability {required_cap:?}`"
-                    ));
-                }
+                (
+                    if signed { "i" } else { "u" },
+                    width,
+                    capability_for_int_width(width),
+                )
             }
             Op::TypeFloat => {
                 let width = inst.operands[0].unwrap_literal_bit32();
 
-                if let Some(required_cap) = capability_for_float_width(width)
-                    && !declared_capabilities.contains(&required_cap)
-                {
-                    errors.push(format!(
-                        "`f{width}` type used without `OpCapability {required_cap:?}`"
-                    ));
-                }
+                ("f", width, capability_for_float_width(width))
             }
-            _ => {}
+            _ => continue,
+        };
+
+        match maybe_required_cap {
+            Err(UnsupportedType) => {
+                sess.dcx()
+                    .err(format!("`{prefix}{width}` unsupported in SPIR-V"));
+            }
+            Ok(Some(required_cap)) if !declared_capabilities.contains(&required_cap) => {
+                missing_caps.push(format!(
+                    "`{prefix}{width}` type used without `OpCapability {required_cap:?}`"
+                ));
+            }
+            Ok(_) => {}
         }
     }
 
-    if !errors.is_empty() {
+    if !missing_caps.is_empty() {
         let mut err = sess
             .dcx()
-            .struct_err("Missing required capabilities for types");
-        for error in errors {
-            err = err.with_note(error);
+            .struct_err("missing required capabilities for types");
+        for msg in missing_caps {
+            err.note(msg);
         }
         Err(err.emit())
     } else {
@@ -359,13 +372,13 @@ pub fn remove_unused_type_capabilities(module: &mut Module) {
         match inst.class.opcode {
             Op::TypeInt => {
                 let width = inst.operands[0].unwrap_literal_bit32();
-                if let Some(cap) = capability_for_int_width(width) {
+                if let Ok(Some(cap)) = capability_for_int_width(width) {
                     needed_type_capabilities.insert(cap);
                 }
             }
             Op::TypeFloat => {
                 let width = inst.operands[0].unwrap_literal_bit32();
-                if let Some(cap) = capability_for_float_width(width) {
+                if let Ok(Some(cap)) = capability_for_float_width(width) {
                     needed_type_capabilities.insert(cap);
                 }
             }
@@ -391,7 +404,7 @@ pub fn remove_unused_type_capabilities(module: &mut Module) {
 
 /// Remove all [`Decoration::NonUniform`] if this module does *not* have [`Capability::ShaderNonUniform`].
 /// This allows image asm to always declare `NonUniform` and not worry about conditional compilation.
-pub fn remove_non_uniform_decorations(_sess: &Session, module: &mut Module) -> Result<()> {
+pub fn remove_non_uniform_decorations(_sess: &Session, module: &mut Module) -> super::Result<()> {
     let has_shader_non_uniform_capability = module.capabilities.iter().any(|inst| {
         inst.class.opcode == Op::Capability
             && inst.operands[0].unwrap_capability() == Capability::ShaderNonUniform

@@ -101,31 +101,8 @@ impl SpirvType<'_> {
         let result = match self {
             Self::Void => cx.emit_global().type_void_id(id),
             Self::Bool => cx.emit_global().type_bool_id(id),
-            Self::Integer(width, signedness) => {
-                let result = cx.emit_global().type_int_id(id, width, signedness as u32);
-                let u_or_i = if signedness { "i" } else { "u" };
-                match width {
-                    8 | 16 | 32 | 64 => {}
-                    w => cx.zombie_with_span(
-                        result,
-                        def_span,
-                        &format!("`{u_or_i}{w}` unsupported in SPIR-V"),
-                    ),
-                };
-                result
-            }
-            Self::Float(width) => {
-                let result = cx.emit_global().type_float_id(id, width);
-                match width {
-                    16 | 32 | 64 => (),
-                    other => cx.zombie_with_span(
-                        result,
-                        def_span,
-                        &format!("`f{other}` unsupported in SPIR-V"),
-                    ),
-                };
-                result
-            }
+            Self::Integer(width, signed) => cx.emit_global().type_int_id(id, width, signed as u32),
+            Self::Float(width) => cx.emit_global().type_float_id(id, width),
             Self::Adt {
                 def_id: _,
                 align: _,
