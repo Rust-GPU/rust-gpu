@@ -28,17 +28,29 @@ function clippy_no_features() {
 }
 
 # Core crates
+clippy crates/rustc_codegen_spirv-target-specs
+clippy crates/rustc_codegen_spirv-types
 clippy crates/rustc_codegen_spirv
 clippy crates/spirv-builder
+clippy crates/spirv-std
 
 # Examples
-
+clippy examples/multibuilder
 clippy examples/runners/ash
+clippy_no_features examples/runners/cpu
 clippy examples/runners/wgpu
 
-clippy_no_features examples/runners/cpu
+# shaders
 clippy_no_features examples/shaders/sky-shader
 clippy_no_features examples/shaders/simplest-shader
+clippy_no_features examples/shaders/compute-shader
+clippy_no_features examples/shaders/mouse-shader
+clippy_no_features examples/shaders/reduce
+
+# tests
+clippy tests/compiletests
+clippy tests/difftests/bin
+clippy tests/difftests/lib
 
 # Custom lints
 
