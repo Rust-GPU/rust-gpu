@@ -28,11 +28,11 @@ function clippy_no_features() {
 }
 
 # Core crates
-clippy crates/rustc_codegen_spirv-target-specs
-clippy crates/rustc_codegen_spirv-types
+clippy_no_features crates/rustc_codegen_spirv-target-specs
+clippy_no_features crates/rustc_codegen_spirv-types
 clippy crates/rustc_codegen_spirv
 clippy crates/spirv-builder
-clippy crates/spirv-std
+clippy_no_features crates/spirv-std
 
 # Examples
 clippy examples/multibuilder
