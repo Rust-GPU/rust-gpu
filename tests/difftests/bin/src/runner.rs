@@ -131,7 +131,7 @@ impl Runner {
             let config_json = serde_json::to_string(&config)
                 .map_err(|e| RunnerError::Config { msg: e.to_string() })?;
             let mut config_file = NamedTempFile::new()?;
-            write!(config_file, "{}", config_json).map_err(|e| RunnerError::Io { source: e })?;
+            write!(config_file, "{config_json}").map_err(|e| RunnerError::Io { source: e })?;
             trace!("Config file created at {}", config_file.path().display());
 
             let mut cmd = Command::new("cargo");
@@ -294,7 +294,7 @@ impl Runner {
                     .join("::")
             },
         );
-        format!("difftests::{}", name)
+        format!("difftests::{name}")
     }
 
     pub fn collect_test_dirs(root: &Path) -> RunnerResult<Vec<PathBuf>> {
