@@ -1,3 +1,5 @@
+#![allow(clippy::exit)]
+
 use anyhow::Result;
 use std::{
     env,

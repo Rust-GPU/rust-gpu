@@ -383,7 +383,7 @@ mod tests {
             version = "0.1.0"
             edition = "2021"
         "#;
-        write!(temp, "{}", cargo_toml).expect("failed to write to temp file");
+        write!(temp, "{cargo_toml}").expect("failed to write to temp file");
         let runner = Runner::new(PathBuf::from("dummy_base"));
         let pkg_name = runner
             .get_package_name(temp.path())
