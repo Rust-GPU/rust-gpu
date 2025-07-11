@@ -65,6 +65,13 @@ fn main() {
     let deps_target_dir = original_target_dir.join("compiletest-deps");
     let compiletest_build_dir = original_target_dir.join("compiletest-results");
 
+    // HACK(eddyb) force `compiletest` to pass `ui/...` relative paths to `rustc`,
+    // which should always end up being the same regardless of the path that the
+    // Rust-GPU repo is checked out at (among other things, this avoids harcoded
+    // `compiletest` limits being hit by e.g. users with slightly longer paths).
+    std::env::set_current_dir(tests_dir).unwrap();
+    let tests_dir = PathBuf::from("");
+
     // Pull in rustc_codegen_spirv as a dynamic library in the same way
     // spirv-builder does.
     let codegen_backend_path = find_rustc_codegen_spirv();
