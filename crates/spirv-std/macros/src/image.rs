@@ -218,7 +218,6 @@ impl Parse for ImageType {
 
             if input.peek(syn::Token![,]) {
                 input.parse::<syn::Token![,]>()?;
-                continue;
             } else {
                 break;
             }
@@ -239,7 +238,9 @@ impl Parse for ImageType {
             )
         })?;
 
-        if format.is_some() && format != Some(ImageFormat::Unknown) {
+        if let Some(format) = &format
+            && *format != ImageFormat::Unknown
+        {
             if sampled_type.is_some() {
                 return Err(syn::Error::new(
                     starting_span,
@@ -255,7 +256,6 @@ impl Parse for ImageType {
                 ));
             }
 
-            let format = format.as_ref().unwrap();
             sampled_type = Some(match format {
                 ImageFormat::Rgba32f
                 | ImageFormat::Rgba16f

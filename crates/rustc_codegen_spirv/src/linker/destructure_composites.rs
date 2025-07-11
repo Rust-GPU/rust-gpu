@@ -51,7 +51,6 @@ pub fn destructure_composites(function: &mut Function) {
                     rewrite_rules.get(&origin_id).map_or(origin_id, |id| *id),
                 );
                 *inst = Instruction::new(Op::Nop, None, None, vec![]);
-                continue;
             }
         }
     }

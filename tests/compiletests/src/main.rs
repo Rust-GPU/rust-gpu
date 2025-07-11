@@ -60,7 +60,7 @@ fn main() {
     let opt = Opt::parse();
 
     let tests_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let workspace_root = tests_dir.parent().unwrap();
+    let workspace_root = tests_dir.parent().unwrap().parent().unwrap();
     let original_target_dir = workspace_root.join("target");
     let deps_target_dir = original_target_dir.join("compiletest-deps");
     let compiletest_build_dir = original_target_dir.join("compiletest-results");
@@ -151,16 +151,22 @@ impl Runner {
                 format!("{}-{}", env, variation.name)
             };
 
+            println!("Testing env: {}\n", stage_id);
+
             let target = format!("{SPIRV_TARGET_PREFIX}{env}");
             let libs = build_deps(&self.deps_target_dir, &self.codegen_backend_path, &target);
-            let mut flags = test_rustc_flags(&self.codegen_backend_path, &libs, &[
-                &self
-                    .deps_target_dir
-                    .join(DepKind::SpirvLib.target_dir_suffix(&target)),
-                &self
-                    .deps_target_dir
-                    .join(DepKind::ProcMacro.target_dir_suffix(&target)),
-            ]);
+            let mut flags = test_rustc_flags(
+                &self.codegen_backend_path,
+                &libs,
+                &[
+                    &self
+                        .deps_target_dir
+                        .join(DepKind::SpirvLib.target_dir_suffix(&target)),
+                    &self
+                        .deps_target_dir
+                        .join(DepKind::ProcMacro.target_dir_suffix(&target)),
+                ],
+            );
             flags += variation.extra_flags;
 
             let config = compiletest::Config {
@@ -342,15 +348,7 @@ struct TestDeps {
 /// The RUSTFLAGS passed to all SPIR-V builds.
 // FIXME(eddyb) expose most of these from `spirv-builder`.
 fn rust_flags(codegen_backend_path: &Path) -> String {
-    let target_features = [
-        "Int8",
-        "Int16",
-        "Int64",
-        "Float64",
-        // Only needed for `ui/arch/read_clock_khr.rs`.
-        "ShaderClockKHR",
-        "ext:SPV_KHR_shader_clock",
-    ];
+    let target_features = ["Int8", "Int16", "Int64", "Float64"];
 
     [
         &*format!("-Zcodegen-backend={}", codegen_backend_path.display()),
@@ -373,6 +371,13 @@ fn rust_flags(codegen_backend_path: &Path) -> String {
         // GVN currently can lead to the memcpy-out-of-const-alloc-global-var
         // pattern, even for `ScalarPair` (e.g. `return None::<u32>;`).
         "-Zmir-enable-passes=-GVN",
+        // HACK(eddyb) avoid ever reusing instantiations from `compiler_builtins`
+        // which is special-cased to turn calls to functions that never return,
+        // into aborts, and this applies to the panics of UB-checking helpers
+        // (https://github.com/rust-lang/rust/pull/122580#issuecomment-3033026194)
+        // but while upstream that only loses the panic message, for us it's even
+        // worse, as we lose the chance to remove otherwise-dead `fmt::Arguments`.
+        "-Zshare-generics=off",
         // NOTE(eddyb) flags copied from `spirv-builder` are all above this line.
         "-Cdebuginfo=2",
         "-Cembed-bitcode=no",
@@ -385,13 +390,10 @@ fn rust_flags(codegen_backend_path: &Path) -> String {
 fn map_status_to_result(status: std::process::ExitStatus) -> io::Result<()> {
     match status.success() {
         true => Ok(()),
-        false => Err(io::Error::new(
-            io::ErrorKind::Other,
-            format!(
-                "process terminated with non-zero code: {}",
-                status.code().unwrap_or(0)
-            ),
-        )),
+        false => Err(io::Error::other(format!(
+            "process terminated with non-zero code: {}",
+            status.code().unwrap_or(0)
+        ))),
     }
 }
 

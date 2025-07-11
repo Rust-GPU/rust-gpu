@@ -16,6 +16,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 use itertools::Itertools as _;
 use rspirv::dr::{Module, Operand};
 use rspirv::spirv::{Decoration, LinkageType, Op, Word};
+use rustc_abi::{AddressSpace, HasDataLayout, TargetDataLayout};
 use rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_codegen_ssa::mir::debuginfo::{FunctionDebugContext, VariableKind};
 use rustc_codegen_ssa::traits::{
@@ -27,12 +28,11 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::mir;
 use rustc_middle::mir::mono::CodegenUnit;
 use rustc_middle::ty::layout::{HasTyCtxt, HasTypingEnv};
-use rustc_middle::ty::{Instance, PolyExistentialTraitRef, Ty, TyCtxt, TypingEnv};
+use rustc_middle::ty::{self, Instance, Ty, TyCtxt, TypingEnv};
 use rustc_session::Session;
 use rustc_span::symbol::Symbol;
 use rustc_span::{DUMMY_SP, SourceFile, Span};
-use rustc_target::abi::call::{FnAbi, PassMode};
-use rustc_target::abi::{AddressSpace, HasDataLayout, TargetDataLayout};
+use rustc_target::callconv::{FnAbi, PassMode};
 use rustc_target::spec::{HasTargetSpec, Target, TargetTuple};
 use std::cell::RefCell;
 use std::collections::BTreeSet;
@@ -52,7 +52,7 @@ pub struct CodegenCx<'tcx> {
     pub function_parameter_values: RefCell<FxHashMap<Word, Vec<SpirvValue>>>,
     pub type_cache: TypeCache<'tcx>,
     /// Cache generated vtables
-    pub vtables: RefCell<FxHashMap<(Ty<'tcx>, Option<PolyExistentialTraitRef<'tcx>>), SpirvValue>>,
+    pub vtables: RefCell<FxHashMap<(Ty<'tcx>, Option<ty::ExistentialTraitRef<'tcx>>), SpirvValue>>,
     pub ext_inst: RefCell<ExtInst>,
     /// Invalid SPIR-V IDs that should be stripped from the final binary,
     /// each with its own reason and span that should be used for reporting
@@ -83,6 +83,10 @@ pub struct CodegenCx<'tcx> {
     pub buffer_load_intrinsics: RefCell<FxHashMap<DefId, &'tcx PassMode>>,
     /// Intrinsic for storing a `<T>` into a `&[u32]`. The `PassMode` is the mode of the `<T>`.
     pub buffer_store_intrinsics: RefCell<FxHashMap<DefId, &'tcx PassMode>>,
+
+    /// Maps `DefId`s of `From::from` method implementations to their source and target types.
+    /// Used to optimize constant conversions like `u32::from(42u8)` to avoid creating the source type.
+    pub from_trait_impls: RefCell<FxHashMap<DefId, (Ty<'tcx>, Ty<'tcx>)>>,
 
     /// Some runtimes (e.g. intel-compute-runtime) disallow atomics on i8 and i16, even though it's allowed by the spec.
     /// This enables/disables them.
@@ -203,6 +207,7 @@ impl<'tcx> CodegenCx<'tcx> {
             fmt_rt_arg_new_fn_ids_to_ty_and_spec: Default::default(),
             buffer_load_intrinsics: Default::default(),
             buffer_store_intrinsics: Default::default(),
+            from_trait_impls: Default::default(),
             i8_i16_atomics_allowed: false,
             codegen_args,
         }
@@ -685,10 +690,10 @@ impl CodegenArgs {
                 *current_id = *remap.entry(*current_id).or_insert_with(|| len as u32 + 1);
             };
             module.all_inst_iter_mut().for_each(|inst| {
-                if let Some(ref mut result_id) = &mut inst.result_id {
+                if let Some(result_id) = &mut inst.result_id {
                     insert(result_id);
                 }
-                if let Some(ref mut result_type) = &mut inst.result_type {
+                if let Some(result_type) = &mut inst.result_type {
                     insert(result_type);
                 }
                 inst.operands.iter_mut().for_each(|op| {
@@ -769,16 +774,16 @@ impl CodegenArgs {
                 // with just the filename component of the path.
                 if inst.class.opcode == Op::String {
                     let path = Path::new(inst.operands[0].unwrap_literal_string());
-                    if path.is_absolute() {
-                        if let Some(file_name) = path.file_name() {
-                            let mut inst = inst.clone();
-                            inst.operands[0] = Operand::LiteralString(format!(
-                                "$OPSTRING_FILENAME/{}",
-                                file_name.to_string_lossy(),
-                            ));
-                            eprintln!("{}", inst.disassemble());
-                            continue;
-                        }
+                    if path.is_absolute()
+                        && let Some(file_name) = path.file_name()
+                    {
+                        let mut inst = inst.clone();
+                        inst.operands[0] = Operand::LiteralString(format!(
+                            "$OPSTRING_FILENAME/{}",
+                            file_name.to_string_lossy(),
+                        ));
+                        eprintln!("{}", inst.disassemble());
+                        continue;
                     }
                 }
                 eprintln!("{}", inst.disassemble());
@@ -849,7 +854,7 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
     #[allow(clippy::type_complexity)]
     fn vtables(
         &self,
-    ) -> &RefCell<FxHashMap<(Ty<'tcx>, Option<PolyExistentialTraitRef<'tcx>>), Self::Value>> {
+    ) -> &RefCell<FxHashMap<(Ty<'tcx>, Option<ty::ExistentialTraitRef<'tcx>>), Self::Value>> {
         &self.vtables
     }
 
@@ -889,10 +894,6 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
         self.tcx.sess
     }
 
-    fn codegen_unit(&self) -> &'tcx CodegenUnit<'tcx> {
-        self.codegen_unit
-    }
-
     fn set_frame_pointer_type(&self, _llfn: Self::Function) {
         todo!()
     }
@@ -910,7 +911,7 @@ impl<'tcx> DebugInfoCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn create_vtable_debuginfo(
         &self,
         _ty: Ty<'tcx>,
-        _trait_ref: Option<PolyExistentialTraitRef<'tcx>>,
+        _trait_ref: Option<ty::ExistentialTraitRef<'tcx>>,
         _vtable: Self::Value,
     ) {
         // Ignore.
@@ -966,12 +967,24 @@ impl<'tcx> DebugInfoCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
 impl<'tcx> AsmCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn codegen_global_asm(
-        &self,
+        &mut self,
         _template: &[InlineAsmTemplatePiece],
         _operands: &[GlobalAsmOperandRef<'tcx>],
         _options: InlineAsmOptions,
-        _line_spans: &[Span],
+        line_spans: &[Span],
     ) {
-        todo!()
+        self.tcx.dcx().span_fatal(
+            line_spans.first().copied().unwrap_or_default(),
+            "[Rust-GPU] `global_asm!` not yet supported",
+        );
+    }
+
+    // FIXME(eddyb) should this method be implemented as just symbol mangling,
+    // or renamed upstream into something much more specific?
+    fn mangled_name(&self, instance: Instance<'tcx>) -> String {
+        self.tcx.dcx().span_bug(
+            self.tcx.def_span(instance.def_id()),
+            "[Rust-GPU] `#[naked] fn` not yet supported",
+        )
     }
 }

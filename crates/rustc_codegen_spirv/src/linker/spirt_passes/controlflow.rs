@@ -113,20 +113,17 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                 .filter_map(|func_at_inst| {
                     let data_inst_def = func_at_inst.def();
                     let data_inst_form_def = &cx[data_inst_def.form];
-                    if let DataInstKind::SpvInst(spv_inst) = &data_inst_form_def.kind {
-                        if spv_inst.opcode == wk.OpLoad {
-                            if let Value::Const(ct) = data_inst_def.inputs[0] {
-                                if let ConstKind::PtrToGlobalVar(gv) = cx[ct].kind {
-                                    if interface_global_vars.contains(&gv) {
-                                        return Some((
-                                            gv,
-                                            data_inst_form_def.output_type.unwrap(),
-                                            Value::DataInstOutput(func_at_inst.position),
-                                        ));
-                                    }
-                                }
-                            }
-                        }
+                    if let DataInstKind::SpvInst(spv_inst) = &data_inst_form_def.kind
+                        && spv_inst.opcode == wk.OpLoad
+                        && let Value::Const(ct) = data_inst_def.inputs[0]
+                        && let ConstKind::PtrToGlobalVar(gv) = cx[ct].kind
+                        && interface_global_vars.contains(&gv)
+                    {
+                        return Some((
+                            gv,
+                            data_inst_form_def.output_type.unwrap(),
+                            Value::DataInstOutput(func_at_inst.position),
+                        ));
                     }
                     None
                 });
@@ -228,14 +225,17 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             };
             let block_insts_maybe_custom = func_at_block_insts.into_iter().map(|func_at_inst| {
                 let data_inst_def = func_at_inst.def();
-                (func_at_inst, match cx[data_inst_def.form].kind {
-                    DataInstKind::SpvExtInst { ext_set, inst }
-                        if ext_set == custom_ext_inst_set =>
-                    {
-                        Some(CustomOp::decode(inst).with_operands(&data_inst_def.inputs))
-                    }
-                    _ => None,
-                })
+                (
+                    func_at_inst,
+                    match cx[data_inst_def.form].kind {
+                        DataInstKind::SpvExtInst { ext_set, inst }
+                            if ext_set == custom_ext_inst_set =>
+                        {
+                            Some(CustomOp::decode(inst).with_operands(&data_inst_def.inputs))
+                        }
+                        _ => None,
+                    },
+                )
             });
             let custom_terminator_inst = block_insts_maybe_custom
                 .clone()

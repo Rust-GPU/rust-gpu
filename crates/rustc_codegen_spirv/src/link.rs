@@ -13,7 +13,7 @@ use rustc_codegen_ssa::back::write::CodegenContext;
 use rustc_codegen_ssa::{CodegenResults, NativeLib};
 use rustc_data_structures::fx::FxHashSet;
 use rustc_errors::{Diag, FatalError};
-use rustc_metadata::fs::METADATA_FILENAME;
+use rustc_metadata::{EncodedMetadata, fs::METADATA_FILENAME};
 use rustc_middle::bug;
 use rustc_middle::dep_graph::WorkProduct;
 use rustc_middle::middle::dependency_format::Linkage;
@@ -35,6 +35,7 @@ use std::sync::Arc;
 pub fn link(
     sess: &Session,
     codegen_results: &CodegenResults,
+    metadata: &EncodedMetadata,
     outputs: &OutputFilenames,
     crate_name: &str,
 ) {
@@ -65,11 +66,20 @@ pub fn link(
 
         if outputs.outputs.should_codegen() {
             let out_filename = out_filename(sess, crate_type, outputs, Symbol::intern(crate_name));
-            let out_filename_file_for_writing =
-                out_filename.file_for_writing(outputs, OutputType::Exe, None);
+            let out_filename_file_for_writing = out_filename.file_for_writing(
+                outputs,
+                OutputType::Exe,
+                crate_name,
+                sess.invocation_temp.as_deref(),
+            );
             match crate_type {
                 CrateType::Rlib => {
-                    link_rlib(sess, codegen_results, &out_filename_file_for_writing);
+                    link_rlib(
+                        sess,
+                        codegen_results,
+                        metadata,
+                        &out_filename_file_for_writing,
+                    );
                 }
                 CrateType::Executable | CrateType::Cdylib | CrateType::Dylib => {
                     // HACK(eddyb) there's no way way to access `outputs.filestem`,
@@ -113,7 +123,12 @@ pub fn link(
     }
 }
 
-fn link_rlib(sess: &Session, codegen_results: &CodegenResults, out_filename: &Path) {
+fn link_rlib(
+    sess: &Session,
+    codegen_results: &CodegenResults,
+    metadata: &EncodedMetadata,
+    out_filename: &Path,
+) {
     let mut file_list = Vec::<&Path>::new();
     for obj in codegen_results
         .modules
@@ -135,11 +150,7 @@ fn link_rlib(sess: &Session, codegen_results: &CodegenResults, out_filename: &Pa
         }
     }
 
-    create_archive(
-        &file_list,
-        codegen_results.metadata.raw_data(),
-        out_filename,
-    );
+    create_archive(&file_list, metadata.stub_or_full(), out_filename);
 }
 
 fn link_exe(
@@ -329,7 +340,7 @@ fn do_spirv_opt(
 
     match sess.opts.optimize {
         OptLevel::No => {}
-        OptLevel::Less | OptLevel::Default | OptLevel::Aggressive => {
+        OptLevel::Less | OptLevel::More | OptLevel::Aggressive => {
             optimizer.register_performance_passes();
         }
         OptLevel::Size | OptLevel::SizeMin => {
@@ -427,15 +438,14 @@ fn add_upstream_rust_crates(
     codegen_results: &CodegenResults,
     crate_type: CrateType,
 ) {
-    let (_, data) = codegen_results
+    let data = codegen_results
         .crate_info
         .dependency_formats
-        .iter()
-        .find(|(ty, _)| *ty == crate_type)
+        .get(&crate_type)
         .expect("failed to find crate type in dependency format list");
     for &cnum in &codegen_results.crate_info.used_crates {
         let src = &codegen_results.crate_info.used_crate_source[&cnum];
-        match data[cnum.as_usize() - 1] {
+        match data[cnum] {
             Linkage::NotLinked | Linkage::IncludedFromDylib => {}
             Linkage::Static => rlibs.push(src.rlib.as_ref().unwrap().0.clone()),
             //Linkage::Dynamic => rlibs.push(src.dylib.as_ref().unwrap().0.clone()),
@@ -451,11 +461,10 @@ fn add_upstream_native_libraries(
     codegen_results: &CodegenResults,
     crate_type: CrateType,
 ) {
-    let (_, data) = codegen_results
+    let data = codegen_results
         .crate_info
         .dependency_formats
-        .iter()
-        .find(|(ty, _)| *ty == crate_type)
+        .get(&crate_type)
         .expect("failed to find crate type in dependency format list");
 
     for &cnum in &codegen_results.crate_info.used_crates {
@@ -467,7 +476,7 @@ fn add_upstream_native_libraries(
                 NativeLibKind::Static {
                     bundle: Some(false),
                     ..
-                } if data[cnum.as_usize() - 1] != Linkage::Static => {}
+                } if data[cnum] != Linkage::Static => {}
 
                 NativeLibKind::Static {
                     bundle: None | Some(true),
@@ -487,7 +496,7 @@ fn add_upstream_native_libraries(
 // (see `compiler/rustc_codegen_ssa/src/back/link.rs`)
 fn relevant_lib(sess: &Session, lib: &NativeLib) -> bool {
     match lib.cfg {
-        Some(ref cfg) => rustc_attr::cfg_matches(cfg, sess, CRATE_NODE_ID, None),
+        Some(ref cfg) => rustc_attr_parsing::cfg_matches(cfg, sess, CRATE_NODE_ID, None),
         None => true,
     }
 }

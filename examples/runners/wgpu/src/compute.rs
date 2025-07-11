@@ -12,10 +12,9 @@ pub fn start(options: &Options) {
 }
 
 async fn start_internal(options: &Options, compiled_shader_modules: CompiledShaderModules) {
-    let backends = wgpu::util::backend_bits_from_env().unwrap_or(wgpu::Backends::PRIMARY);
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
+    let backends = wgpu::Backends::from_env().unwrap_or(wgpu::Backends::PRIMARY);
+    let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
         backends,
-        dx12_shader_compiler: wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default(),
         ..Default::default()
     });
     let adapter = wgpu::util::initialize_adapter_from_env_or_default(&instance, None)
@@ -43,15 +42,13 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
     }
 
     let (device, queue) = adapter
-        .request_device(
-            &wgpu::DeviceDescriptor {
-                label: None,
-                required_features,
-                required_limits: wgpu::Limits::default(),
-                memory_hints: wgpu::MemoryHints::Performance,
-            },
-            None,
-        )
+        .request_device(&wgpu::DeviceDescriptor {
+            label: None,
+            required_features,
+            required_limits: wgpu::Limits::default(),
+            memory_hints: wgpu::MemoryHints::Performance,
+            trace: Default::default(),
+        })
         .await
         .expect("Failed to create device");
     drop(instance);
@@ -67,7 +64,11 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
     // FIXME(eddyb) automate this decision by default.
     let module = compiled_shader_modules.spv_module_for_entry_point(entry_point);
     let module = if options.force_spirv_passthru {
-        unsafe { device.create_shader_module_spirv(&module) }
+        unsafe {
+            device.create_shader_module_passthrough(wgpu::ShaderModuleDescriptorPassthrough::SpirV(
+                module,
+            ))
+        }
     } else {
         let wgpu::ShaderModuleDescriptorSpirV { label, source } = module;
         device.create_shader_module(wgpu::ShaderModuleDescriptor {
@@ -176,16 +177,12 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
         let mut cpass = encoder.begin_compute_pass(&Default::default());
         cpass.set_bind_group(0, &bind_group, &[]);
         cpass.set_pipeline(&compute_pipeline);
-        if timestamping {
-            if let Some(queries) = queries.as_ref() {
-                cpass.write_timestamp(queries, 0);
-            }
+        if timestamping && let Some(queries) = queries.as_ref() {
+            cpass.write_timestamp(queries, 0);
         }
         cpass.dispatch_workgroups(src_range.len() as u32 / 64, 1, 1);
-        if timestamping {
-            if let Some(queries) = queries.as_ref() {
-                cpass.write_timestamp(queries, 1);
-            }
+        if timestamping && let Some(queries) = queries.as_ref() {
+            cpass.write_timestamp(queries, 1);
         }
     }
 
@@ -197,56 +194,53 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
         src.len() as wgpu::BufferAddress,
     );
 
-    if timestamping {
-        if let (Some(queries), Some(timestamp_buffer), Some(timestamp_readback_buffer)) = (
+    if timestamping
+        && let (Some(queries), Some(timestamp_buffer), Some(timestamp_readback_buffer)) = (
             queries.as_ref(),
             timestamp_buffer.as_ref(),
             timestamp_readback_buffer.as_ref(),
-        ) {
-            encoder.resolve_query_set(queries, 0..2, timestamp_buffer, 0);
-            encoder.copy_buffer_to_buffer(
-                timestamp_buffer,
-                0,
-                timestamp_readback_buffer,
-                0,
-                timestamp_buffer.size(),
-            );
-        }
+        )
+    {
+        encoder.resolve_query_set(queries, 0..2, timestamp_buffer, 0);
+        encoder.copy_buffer_to_buffer(
+            timestamp_buffer,
+            0,
+            timestamp_readback_buffer,
+            0,
+            timestamp_buffer.size(),
+        );
     }
 
     queue.submit(Some(encoder.finish()));
     let buffer_slice = readback_buffer.slice(..);
-    if timestamping {
-        if let Some(timestamp_readback_buffer) = timestamp_readback_buffer.as_ref() {
-            let timestamp_slice = timestamp_readback_buffer.slice(..);
-            timestamp_slice.map_async(wgpu::MapMode::Read, |r| r.unwrap());
-        }
+    if timestamping && let Some(timestamp_readback_buffer) = timestamp_readback_buffer.as_ref() {
+        let timestamp_slice = timestamp_readback_buffer.slice(..);
+        timestamp_slice.map_async(wgpu::MapMode::Read, |r| r.unwrap());
     }
     buffer_slice.map_async(wgpu::MapMode::Read, |r| r.unwrap());
     // NOTE(eddyb) `poll` should return only after the above callbacks fire
     // (see also https://github.com/gfx-rs/wgpu/pull/2698 for more details).
-    device.poll(wgpu::Maintain::Wait);
+    device.poll(wgpu::PollType::Wait).unwrap();
 
-    if timestamping {
-        if let (Some(timestamp_readback_buffer), Some(timestamp_period)) =
+    if timestamping
+        && let (Some(timestamp_readback_buffer), Some(timestamp_period)) =
             (timestamp_readback_buffer.as_ref(), timestamp_period)
+    {
         {
-            {
-                let timing_data = timestamp_readback_buffer.slice(..).get_mapped_range();
-                let timings = timing_data
-                    .chunks_exact(8)
-                    .map(|b| u64::from_ne_bytes(b.try_into().unwrap()))
-                    .collect::<Vec<_>>();
+            let timing_data = timestamp_readback_buffer.slice(..).get_mapped_range();
+            let timings = timing_data
+                .chunks_exact(8)
+                .map(|b| u64::from_ne_bytes(b.try_into().unwrap()))
+                .collect::<Vec<_>>();
 
-                println!(
-                    "Took: {:?}",
-                    Duration::from_nanos(
-                        ((timings[1] - timings[0]) as f64 * f64::from(timestamp_period)) as u64
-                    )
-                );
-                drop(timing_data);
-                timestamp_readback_buffer.unmap();
-            }
+            println!(
+                "Took: {:?}",
+                Duration::from_nanos(
+                    ((timings[1] - timings[0]) as f64 * f64::from(timestamp_period)) as u64
+                )
+            );
+            drop(timing_data);
+            timestamp_readback_buffer.unmap();
         }
     }
 

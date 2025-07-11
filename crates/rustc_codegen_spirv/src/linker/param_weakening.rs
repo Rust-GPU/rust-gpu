@@ -8,7 +8,7 @@ use indexmap::IndexMap;
 use rspirv::dr::{Builder, Module, Operand};
 use rspirv::spirv::{Op, Word};
 use rustc_data_structures::fx::FxHashMap;
-use rustc_index::bit_set::BitSet;
+use rustc_index::bit_set::DenseBitSet as BitSet;
 use std::mem;
 
 pub fn remove_unused_params(module: Module) -> Module {
@@ -48,16 +48,16 @@ pub fn remove_unused_params(module: Module) -> Module {
             };
 
             for (i, operand) in operands.iter().enumerate() {
-                if let Some(ignore_operands) = ignore_operands {
-                    if ignore_operands.contains(i) {
-                        continue;
-                    }
+                if let Some(ignore_operands) = ignore_operands
+                    && ignore_operands.contains(i)
+                {
+                    continue;
                 }
 
-                if let Operand::IdRef(id) = operand {
-                    if let Some(&param_idx) = params_id_to_idx.get(id) {
-                        unused_params.remove(param_idx);
-                    }
+                if let Operand::IdRef(id) = operand
+                    && let Some(&param_idx) = params_id_to_idx.get(id)
+                {
+                    unused_params.remove(param_idx);
                 }
             }
         }
@@ -82,17 +82,16 @@ pub fn remove_unused_params(module: Module) -> Module {
         }
 
         for inst in func.all_inst_iter_mut() {
-            if inst.class.opcode == Op::FunctionCall {
-                if let Some(unused_callee_params) =
+            if inst.class.opcode == Op::FunctionCall
+                && let Some(unused_callee_params) =
                     unused_params_per_func_id.get(&inst.operands[0].unwrap_id_ref())
-                {
-                    inst.operands = mem::take(&mut inst.operands)
-                        .into_iter()
-                        .enumerate()
-                        .filter(|&(i, _)| i == 0 || !unused_callee_params.contains(i - 1))
-                        .map(|(_, o)| o)
-                        .collect();
-                }
+            {
+                inst.operands = mem::take(&mut inst.operands)
+                    .into_iter()
+                    .enumerate()
+                    .filter(|&(i, _)| i == 0 || !unused_callee_params.contains(i - 1))
+                    .map(|(_, o)| o)
+                    .collect();
             }
         }
 

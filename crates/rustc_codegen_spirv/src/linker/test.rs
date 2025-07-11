@@ -66,12 +66,15 @@ fn load(bytes: &[u8]) -> Module {
 
 // FIXME(eddyb) shouldn't this be named just `link`? (`assemble_spirv` is separate)
 fn assemble_and_link(binaries: &[&[u8]]) -> Result<Module, PrettyString> {
-    link_with_linker_opts(binaries, &crate::linker::Options {
-        compact_ids: true,
-        dce: true,
-        keep_link_exports: true,
-        ..Default::default()
-    })
+    link_with_linker_opts(
+        binaries,
+        &crate::linker::Options {
+            compact_ids: true,
+            dce: true,
+            keep_link_exports: true,
+            ..Default::default()
+        },
+    )
 }
 
 fn link_with_linker_opts(
@@ -140,9 +143,10 @@ fn link_with_linker_opts(
             hash_kind: sopts.unstable_opts.src_hash_algorithm(&target),
             checksum_hash_kind: None,
         };
-        rustc_span::create_session_globals_then(sopts.edition, Some(sm_inputs), || {
+        rustc_span::create_session_globals_then(sopts.edition, &[], Some(sm_inputs), || {
+            extern crate rustc_driver_impl;
+
             let mut sess = rustc_session::build_session(
-                early_dcx,
                 sopts,
                 CompilerIO {
                     input: Input::Str {
@@ -161,7 +165,7 @@ fn link_with_linker_opts(
                 Default::default(),
                 rustc_interface::util::rustc_version_str().unwrap_or("unknown"),
                 Default::default(),
-                Default::default(),
+                &rustc_driver_impl::USING_INTERNAL_FEATURES,
                 Default::default(),
             );
 
@@ -170,16 +174,11 @@ fn link_with_linker_opts(
             sess.psess = {
                 let source_map = sess.psess.clone_source_map();
 
-                let fallback_bundle = {
-                    extern crate rustc_error_messages;
-                    rustc_error_messages::fallback_fluent_bundle(
-                        Vec::new(),
-                        sess.opts.unstable_opts.translate_directionality_markers,
-                    )
-                };
-                let emitter =
-                    rustc_errors::emitter::HumanEmitter::new(Box::new(buf), fallback_bundle)
-                        .sm(Some(source_map.clone()));
+                let emitter = rustc_errors::emitter::HumanEmitter::new(
+                    Box::new(buf),
+                    rustc_driver_impl::default_translator(),
+                )
+                .sm(Some(source_map.clone()));
 
                 rustc_session::parse::ParseSess::with_dcx(
                     rustc_errors::DiagCtxt::new(Box::new(emitter))

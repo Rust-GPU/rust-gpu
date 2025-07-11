@@ -110,37 +110,38 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                     // allowing us to bypass SPIR-T current (and temporary) lossiness
                     // wrt `default: OpUnreachable` (i.e. we prove the `default:` can't
                     // be entered based on `x` not having values other than `0` or `1`)
-                    if let SelectionKind::SpvInst(spv_inst) = kind {
-                        if spv_inst.opcode == wk.OpSwitch && cases.len() == 3 {
-                            // FIXME(eddyb) this kind of `OpSwitch` decoding logic should
-                            // be done by SPIR-T ahead of time, not here.
-                            let num_logical_imms = cases.len() - 1;
-                            assert_eq!(spv_inst.imms.len() % num_logical_imms, 0);
-                            let logical_imm_size = spv_inst.imms.len() / num_logical_imms;
-                            // FIXME(eddyb) collect to array instead.
-                            let logical_imms_as_u32s: SmallVec<[_; 2]> = spv_inst
-                                .imms
-                                .chunks(logical_imm_size)
-                                .map(spv_imm_checked_trunc32)
-                                .collect();
+                    if let SelectionKind::SpvInst(spv_inst) = kind
+                        && spv_inst.opcode == wk.OpSwitch
+                        && cases.len() == 3
+                    {
+                        // FIXME(eddyb) this kind of `OpSwitch` decoding logic should
+                        // be done by SPIR-T ahead of time, not here.
+                        let num_logical_imms = cases.len() - 1;
+                        assert_eq!(spv_inst.imms.len() % num_logical_imms, 0);
+                        let logical_imm_size = spv_inst.imms.len() / num_logical_imms;
+                        // FIXME(eddyb) collect to array instead.
+                        let logical_imms_as_u32s: SmallVec<[_; 2]> = spv_inst
+                            .imms
+                            .chunks(logical_imm_size)
+                            .map(spv_imm_checked_trunc32)
+                            .collect();
 
-                            // FIMXE(eddyb) support more values than just `0..=1`.
-                            if logical_imms_as_u32s[..] == [Some(0), Some(1)] {
-                                let redu = Reducible {
-                                    op: PureOp::IntToBool,
-                                    output_type: cx.intern(TypeDef {
-                                        attrs: Default::default(),
-                                        kind: TypeKind::SpvInst {
-                                            spv_inst: wk.OpTypeBool.into(),
-                                            type_and_const_inputs: iter::empty().collect(),
-                                        },
-                                    }),
-                                    input: *scrutinee,
-                                };
-                                let redu_target =
-                                    ReductionTarget::SwitchToIfElse(func_at_control_node.position);
-                                reduction_queue.push((redu_target, redu));
-                            }
+                        // FIMXE(eddyb) support more values than just `0..=1`.
+                        if logical_imms_as_u32s[..] == [Some(0), Some(1)] {
+                            let redu = Reducible {
+                                op: PureOp::IntToBool,
+                                output_type: cx.intern(TypeDef {
+                                    attrs: Default::default(),
+                                    kind: TypeKind::SpvInst {
+                                        spv_inst: wk.OpTypeBool.into(),
+                                        type_and_const_inputs: iter::empty().collect(),
+                                    },
+                                }),
+                                input: *scrutinee,
+                            };
+                            let redu_target =
+                                ReductionTarget::SwitchToIfElse(func_at_control_node.position);
+                            reduction_queue.push((redu_target, redu));
                         }
                     }
                 }

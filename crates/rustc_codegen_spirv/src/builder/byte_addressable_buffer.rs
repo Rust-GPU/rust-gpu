@@ -5,12 +5,12 @@ use super::Builder;
 use crate::builder_spirv::{SpirvValue, SpirvValueExt, SpirvValueKind};
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::{Decoration, Word};
+use rustc_abi::{Align, Size};
 use rustc_codegen_spirv_types::Capability;
 use rustc_codegen_ssa::traits::BuilderMethods;
 use rustc_errors::ErrorGuaranteed;
 use rustc_span::DUMMY_SP;
-use rustc_target::abi::call::PassMode;
-use rustc_target::abi::{Align, Size};
+use rustc_target::callconv::PassMode;
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn load_err(&mut self, original_type: Word, invalid_type: Word) -> SpirvValue {

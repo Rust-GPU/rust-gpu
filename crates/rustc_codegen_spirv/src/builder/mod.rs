@@ -12,11 +12,11 @@ pub use spirv_asm::InstructionTable;
 // HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
-use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{BuilderCursor, SpirvValue, SpirvValueExt};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
+use rustc_abi::{HasDataLayout, Size, TargetDataLayout};
 use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{
@@ -34,8 +34,7 @@ use rustc_middle::ty::layout::{
 use rustc_middle::ty::{Instance, Ty, TyCtxt, TypingEnv};
 use rustc_span::Span;
 use rustc_span::def_id::DefId;
-use rustc_target::abi::call::{ArgAbi, FnAbi, PassMode};
-use rustc_target::abi::{HasDataLayout, Size, TargetDataLayout};
+use rustc_target::callconv::{ArgAbi, FnAbi, PassMode};
 use rustc_target::spec::{HasTargetSpec, Target};
 use std::ops::{Deref, Range};
 
@@ -193,10 +192,6 @@ impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
         todo!()
     }
 
-    fn get_dbg_loc(&self) -> Option<Self::DILocation> {
-        None
-    }
-
     fn insert_reference_to_gdb_debug_scripts_section_global(&mut self) {
         todo!()
     }
@@ -254,13 +249,9 @@ impl<'a, 'tcx> ArgAbiBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             ),
         }
     }
-
-    fn arg_memory_ty(&self, arg_abi: &ArgAbi<'tcx, Ty<'tcx>>) -> Self::Type {
-        arg_abi.layout.spirv_type(self.span(), self)
-    }
 }
 
-impl<'a, 'tcx> AbiBuilderMethods<'tcx> for Builder<'a, 'tcx> {
+impl AbiBuilderMethods for Builder<'_, '_> {
     fn get_param(&mut self, index: usize) -> Self::Value {
         self.function_parameter_values.borrow()[&self.current_fn.def(self)][index]
     }

@@ -54,7 +54,6 @@ use crate::spirv_type_constraints::{self, InstSig, StorageClassPat, TyListPat, T
 use indexmap::{IndexMap, IndexSet};
 use rspirv::dr::{Builder, Function, Instruction, Module, Operand};
 use rspirv::spirv::{Op, StorageClass, Word};
-use rustc_data_structures::captures::Captures;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
 use std::collections::{BTreeMap, VecDeque};
@@ -146,22 +145,21 @@ pub fn specialize(
     for inst in &module.entry_points {
         for interface_operand in &inst.operands[3..] {
             let interface_id = interface_operand.unwrap_id_ref();
-            if let Some(generic) = specializer.generics.get(&interface_id) {
-                if let Some(param_values) = &generic.param_values {
-                    if param_values.iter().all(|v| matches!(v, Value::Known(_))) {
-                        interface_concrete_instances.insert(Instance {
-                            generic_id: interface_id,
-                            generic_args: param_values
-                                .iter()
-                                .copied()
-                                .map(|v| match v {
-                                    Value::Known(v) => v,
-                                    _ => unreachable!(),
-                                })
-                                .collect(),
-                        });
-                    }
-                }
+            if let Some(generic) = specializer.generics.get(&interface_id)
+                && let Some(param_values) = &generic.param_values
+                && param_values.iter().all(|v| matches!(v, Value::Known(_)))
+            {
+                interface_concrete_instances.insert(Instance {
+                    generic_id: interface_id,
+                    generic_args: param_values
+                        .iter()
+                        .copied()
+                        .map(|v| match v {
+                            Value::Known(v) => v,
+                            _ => unreachable!(),
+                        })
+                        .collect(),
+                });
             }
         }
     }
@@ -589,10 +587,10 @@ impl<S: Specialization> Specializer<S> {
             };
 
             // Record all integer `OpConstant`s (used for `IndexComposite`).
-            if inst.class.opcode == Op::Constant {
-                if let Operand::LiteralBit32(x) = inst.operands[0] {
-                    self.int_consts.insert(result_id, x);
-                }
+            if inst.class.opcode == Op::Constant
+                && let Operand::LiteralBit32(x) = inst.operands[0]
+            {
+                self.int_consts.insert(result_id, x);
             }
 
             // Instantiate `inst` in a fresh inference context, to determine
@@ -624,12 +622,15 @@ impl<S: Specialization> Specializer<S> {
 
             // Inference variables become "generic" parameters.
             if param_count > 0 {
-                self.generics.insert(result_id, Generic {
-                    param_count,
-                    def: inst.clone(),
-                    param_values,
-                    replacements,
-                });
+                self.generics.insert(
+                    result_id,
+                    Generic {
+                        param_count,
+                        def: inst.clone(),
+                        param_values,
+                        replacements,
+                    },
+                );
             }
         }
     }
@@ -1109,10 +1110,10 @@ impl<'a> Match<'a> {
         self
     }
 
-    fn debug_with_infer_cx<'b>(
+    fn debug_with_infer_cx<'b, T: Specialization>(
         &'b self,
-        cx: &'b InferCx<'a, impl Specialization>,
-    ) -> impl fmt::Debug + Captures<'a> + '_ {
+        cx: &'b InferCx<'a, T>,
+    ) -> impl fmt::Debug + use<'a, 'b, T> {
         fn debug_var_found<'a, A: smallvec::Array<Item = T> + 'a, T: 'a, TD: fmt::Display>(
             var_found: &'a SmallIntMap<impl smallvec::Array<Item = SmallVec<A>>>,
             display: &'a impl Fn(&'a T) -> TD,
@@ -2093,19 +2094,21 @@ impl<'a, S: Specialization> InferCx<'a, S> {
                         if let (Some(expected), Some(found)) = (
                             ret_ty.clone(),
                             self.type_of_result.get(&ret_val_id).cloned(),
-                        ) {
-                            if let Err(e) = self.equate_infer_operands(expected, found) {
-                                e.report(inst);
-                            }
+                        ) && let Err(e) = self.equate_infer_operands(expected, found)
+                        {
+                            e.report(inst);
                         }
                     }
 
                     Op::Return => {}
 
-                    _ => self.instantiate_instruction(inst, InstructionLocation::FnBody {
-                        block_idx,
-                        inst_idx,
-                    }),
+                    _ => self.instantiate_instruction(
+                        inst,
+                        InstructionLocation::FnBody {
+                            block_idx,
+                            inst_idx,
+                        },
+                    ),
                 }
             }
         }
@@ -2331,17 +2334,17 @@ impl<'a, S: Specialization> Expander<'a, S> {
         let expand_debug_or_annotation = |insts: Vec<Instruction>| {
             let mut expanded_insts = Vec::with_capacity(insts.len().next_power_of_two());
             for inst in insts {
-                if let [Operand::IdRef(target), ..] = inst.operands[..] {
-                    if self.specializer.generics.contains_key(&target) {
-                        expanded_insts.extend(self.all_instances_of(target).map(
-                            |(_, &instance_id)| {
-                                let mut expanded_inst = inst.clone();
-                                expanded_inst.operands[0] = Operand::IdRef(instance_id);
-                                expanded_inst
-                            },
-                        ));
-                        continue;
-                    }
+                if let [Operand::IdRef(target), ..] = inst.operands[..]
+                    && self.specializer.generics.contains_key(&target)
+                {
+                    expanded_insts.extend(self.all_instances_of(target).map(
+                        |(_, &instance_id)| {
+                            let mut expanded_inst = inst.clone();
+                            expanded_inst.operands[0] = Operand::IdRef(instance_id);
+                            expanded_inst
+                        },
+                    ));
+                    continue;
                 }
                 expanded_insts.push(inst);
             }
@@ -2358,23 +2361,23 @@ impl<'a, S: Specialization> Expander<'a, S> {
         let mut expanded_types_global_values =
             Vec::with_capacity(types_global_values.len().next_power_of_two());
         for inst in types_global_values {
-            if let Some(result_id) = inst.result_id {
-                if let Some(generic) = self.specializer.generics.get(&result_id) {
-                    expanded_types_global_values.extend(self.all_instances_of(result_id).map(
-                        |(instance, &instance_id)| {
-                            let mut expanded_inst = inst.clone();
-                            expanded_inst.result_id = Some(instance_id);
-                            for (loc, operand) in generic
-                                .replacements
-                                .to_concrete(&instance.generic_args, |i| self.instances[&i])
-                            {
-                                expanded_inst.index_set(loc, operand.into());
-                            }
-                            expanded_inst
-                        },
-                    ));
-                    continue;
-                }
+            if let Some(result_id) = inst.result_id
+                && let Some(generic) = self.specializer.generics.get(&result_id)
+            {
+                expanded_types_global_values.extend(self.all_instances_of(result_id).map(
+                    |(instance, &instance_id)| {
+                        let mut expanded_inst = inst.clone();
+                        expanded_inst.result_id = Some(instance_id);
+                        for (loc, operand) in generic
+                            .replacements
+                            .to_concrete(&instance.generic_args, |i| self.instances[&i])
+                        {
+                            expanded_inst.index_set(loc, operand.into());
+                        }
+                        expanded_inst
+                    },
+                ));
+                continue;
             }
             expanded_types_global_values.push(inst);
         }
@@ -2439,12 +2442,12 @@ impl<'a, S: Specialization> Expander<'a, S> {
                         // HACK(eddyb) this duplicates similar logic from `inline`.
                         for annotation_idx in 0..expanded_annotations.len() {
                             let inst = &expanded_annotations[annotation_idx];
-                            if let [Operand::IdRef(target), ..] = inst.operands[..] {
-                                if let Some(&rewritten_target) = rewrite_rules.get(&target) {
-                                    let mut expanded_inst = inst.clone();
-                                    expanded_inst.operands[0] = Operand::IdRef(rewritten_target);
-                                    expanded_annotations.push(expanded_inst);
-                                }
+                            if let [Operand::IdRef(target), ..] = inst.operands[..]
+                                && let Some(&rewritten_target) = rewrite_rules.get(&target)
+                            {
+                                let mut expanded_inst = inst.clone();
+                                expanded_inst.operands[0] = Operand::IdRef(rewritten_target);
+                                expanded_annotations.push(expanded_inst);
                             }
                         }
                     }

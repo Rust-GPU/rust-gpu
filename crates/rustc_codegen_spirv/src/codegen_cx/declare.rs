@@ -9,9 +9,9 @@ use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
-use rustc_attr::InlineAttr;
+use rustc_abi::Align;
+use rustc_attr_data_structures::InlineAttr;
 use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
-use rustc_hir::def::DefKind;
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
 use rustc_middle::mir::mono::{Linkage, MonoItem, Visibility};
@@ -19,13 +19,14 @@ use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
 use rustc_span::Span;
 use rustc_span::def_id::DefId;
-use rustc_target::abi::Align;
 
 fn attrs_to_spirv(attrs: &CodegenFnAttrs) -> FunctionControl {
     let mut control = FunctionControl::NONE;
     match attrs.inline {
         InlineAttr::None => (),
-        InlineAttr::Hint | InlineAttr::Always => control.insert(FunctionControl::INLINE),
+        InlineAttr::Hint | InlineAttr::Always | InlineAttr::Force { .. } => {
+            control.insert(FunctionControl::INLINE);
+        }
         InlineAttr::Never => control.insert(FunctionControl::DONT_INLINE),
     }
     if attrs.flags.contains(CodegenFnAttrFlags::FFI_PURE) {
@@ -125,13 +126,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
         let declared = fn_id.with_type(function_type);
 
-        let attrs = AggregatedSpirvAttributes::parse(self, match self.tcx.def_kind(def_id) {
-            // This was made to ICE cross-crate at some point, but then got
-            // reverted in https://github.com/rust-lang/rust/pull/111381.
-            // FIXME(eddyb) remove this workaround once we rustup past that.
-            DefKind::Closure => &[],
-            _ => self.tcx.get_attrs_unchecked(def_id),
-        });
+        let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.get_attrs_unchecked(def_id));
         if let Some(entry) = attrs.entry.map(|attr| attr.value) {
             let entry_name = entry
                 .name
@@ -172,6 +167,30 @@ impl<'tcx> CodegenCx<'tcx> {
             }
         }
 
+        // Check if this is a From trait implementation
+        if let Some(impl_def_id) = self.tcx.impl_of_method(def_id)
+            && let Some(trait_ref) = self.tcx.impl_trait_ref(impl_def_id)
+        {
+            let trait_def_id = trait_ref.skip_binder().def_id;
+
+            // Check if this is the From trait.
+            let trait_path = self.tcx.def_path_str(trait_def_id);
+            if matches!(
+                trait_path.as_str(),
+                "core::convert::From" | "std::convert::From"
+            ) {
+                // Extract the source and target types from the trait substitutions
+                let trait_args = trait_ref.skip_binder().args;
+                if let (Some(target_ty), Some(source_ty)) =
+                    (trait_args.types().nth(0), trait_args.types().nth(1))
+                {
+                    self.from_trait_impls
+                        .borrow_mut()
+                        .insert(def_id, (source_ty, target_ty));
+                }
+            }
+        }
+
         if [
             self.tcx.lang_items().panic_fn(),
             self.tcx.lang_items().panic_fmt(),
@@ -184,7 +203,9 @@ impl<'tcx> CodegenCx<'tcx> {
 
         // HACK(eddyb) there is no good way to identify these definitions
         // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
-        if demangled_symbol_name == "core::panicking::panic_nounwind_fmt" {
+        if let Some("panic_nounwind_fmt" | "panic_explicit") =
+            demangled_symbol_name.strip_prefix("core::panicking::")
+        {
             self.panic_entry_points.borrow_mut().insert(def_id);
         }
         if let Some(pieces_len) = demangled_symbol_name
@@ -205,6 +226,12 @@ impl<'tcx> CodegenCx<'tcx> {
                 (pieces_len.parse().unwrap(), rt_args_len.parse().unwrap()),
             );
         }
+        if demangled_symbol_name == "<core::fmt::Arguments>::new_v1_formatted" {
+            // HACK(eddyb) `!0` used as a placeholder value to indicate "dynamic".
+            self.fmt_args_new_fn_ids
+                .borrow_mut()
+                .insert(fn_id, (!0, !0));
+        }
 
         // HACK(eddyb) there is no good way to identify these definitions
         // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
@@ -224,12 +251,12 @@ impl<'tcx> CodegenCx<'tcx> {
                     _ => return None,
                 })
             });
-            if let Some(spec) = spec {
-                if let Some((ty,)) = instance.args.types().collect_tuple() {
-                    self.fmt_rt_arg_new_fn_ids_to_ty_and_spec
-                        .borrow_mut()
-                        .insert(fn_id, (ty, spec));
-                }
+            if let Some(spec) = spec
+                && let Some((ty,)) = instance.args.types().collect_tuple()
+            {
+                self.fmt_rt_arg_new_fn_ids_to_ty_and_spec
+                    .borrow_mut()
+                    .insert(fn_id, (ty, spec));
             }
         }
 
@@ -276,7 +303,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
 impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
     fn predefine_static(
-        &self,
+        &mut self,
         def_id: DefId,
         linkage: Linkage,
         _visibility: Visibility,
@@ -306,7 +333,7 @@ impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
     }
 
     fn predefine_fn(
-        &self,
+        &mut self,
         instance: Instance<'tcx>,
         linkage: Linkage,
         _visibility: Visibility,
@@ -333,12 +360,15 @@ impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
 impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
     fn static_addr_of(&self, cv: Self::Value, _align: Align, _kind: Option<&str>) -> Self::Value {
-        self.def_constant(self.type_ptr_to(cv.ty), SpirvConst::PtrTo {
-            pointee: cv.def_cx(self),
-        })
+        self.def_constant(
+            self.type_ptr_to(cv.ty),
+            SpirvConst::PtrTo {
+                pointee: cv.def_cx(self),
+            },
+        )
     }
 
-    fn codegen_static(&self, def_id: DefId) {
+    fn codegen_static(&mut self, def_id: DefId) {
         let g = self.get_static(def_id);
 
         let alloc = match self.tcx.eval_static_initializer(def_id) {
@@ -357,19 +387,69 @@ impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
         assert_ty_eq!(self, value_ty, v.ty);
         self.builder
             .set_global_initializer(g.def_cx(self), v.def_cx(self));
-    }
 
+        let attrs = self.tcx.codegen_fn_attrs(def_id);
+
+        let alloc = alloc.inner();
+        let align_override =
+            Some(alloc.align).filter(|&align| align != self.lookup_type(value_ty).alignof(self));
+        if let Some(_align) = align_override {
+            // FIXME(eddyb) implement, or at least error.
+        }
+
+        if attrs.flags.contains(CodegenFnAttrFlags::THREAD_LOCAL) {
+            // FIXME(eddyb) implement, or at least error.
+        }
+
+        if let Some(_section) = attrs.link_section {
+            // FIXME(eddyb) implement, or at least error.
+        }
+
+        if attrs.flags.contains(CodegenFnAttrFlags::USED_COMPILER) {
+            // `USED` and `USED_LINKER` can't be used together.
+            assert!(!attrs.flags.contains(CodegenFnAttrFlags::USED_LINKER));
+
+            // The semantics of #[used] in Rust only require the symbol to make it into the
+            // object file. It is explicitly allowed for the linker to strip the symbol if it
+            // is dead, which means we are allowed to use `llvm.compiler.used` instead of
+            // `llvm.used` here.
+            //
+            // Additionally, https://reviews.llvm.org/D97448 in LLVM 13 started emitting unique
+            // sections with SHF_GNU_RETAIN flag for llvm.used symbols, which may trigger bugs
+            // in the handling of `.init_array` (the static constructor list) in versions of
+            // the gold linker (prior to the one released with binutils 2.36).
+            //
+            // That said, we only ever emit these when `#[used(compiler)]` is explicitly
+            // requested. This is to avoid similar breakage on other targets, in particular
+            // MachO targets have *their* static constructor lists broken if `llvm.compiler.used`
+            // is emitted rather than `llvm.used`. However, that check happens when assigning
+            // the `CodegenFnAttrFlags` in the `codegen_fn_attrs` query, so we don't need to
+            // take care of it here.
+            self.add_compiler_used_global(g);
+        }
+        if attrs.flags.contains(CodegenFnAttrFlags::USED_LINKER) {
+            // `USED` and `USED_LINKER` can't be used together.
+            assert!(!attrs.flags.contains(CodegenFnAttrFlags::USED_COMPILER));
+
+            self.add_used_global(g);
+        }
+    }
+}
+
+impl CodegenCx<'_> {
     /// Mark the given global value as "used", to prevent the compiler and linker from potentially
     /// removing a static variable that may otherwise appear unused.
-    fn add_used_global(&self, _global: Self::Value) {
+    fn add_used_global(&self, global: SpirvValue) {
         // TODO: Ignore for now.
+        let _unused = (self, global);
     }
 
     /// Same as `add_used_global`, but only prevent the compiler from potentially removing an
     /// otherwise unused symbol. The linker is still permitted to drop it.
     ///
     /// This corresponds to the semantics of the `#[used]` attribute.
-    fn add_compiler_used_global(&self, _global: Self::Value) {
+    fn add_compiler_used_global(&self, global: SpirvValue) {
         // TODO: Ignore for now.
+        let _unused = (self, global);
     }
 }

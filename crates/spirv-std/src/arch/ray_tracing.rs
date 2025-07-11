@@ -14,7 +14,7 @@ use core::arch::asm;
 /// - `hit_kind` is the integer hit kind reported back to other shaders and
 ///   accessible by the `hit kind` builtin.
 ///
-/// This instruction is allowed only in IntersectionKHR execution model.
+/// This instruction is allowed only in `IntersectionKHR` execution model.
 ///
 /// This instruction is a shader call instruction which may invoke shaders with
 /// the `any_hit` execution model.
@@ -22,18 +22,20 @@ use core::arch::asm;
 #[doc(alias = "OpReportIntersectionKHR")]
 #[inline]
 pub unsafe fn report_intersection(hit: f32, hit_kind: u32) -> bool {
-    let mut result = false;
+    unsafe {
+        let mut result = false;
 
-    asm! {
-        "%bool = OpTypeBool",
-        "%result = OpReportIntersectionKHR %bool {hit} {hit_kind}",
-        "OpStore {result} %result",
-        result = in(reg) &mut result,
-        hit = in(reg) hit,
-        hit_kind = in(reg) hit_kind,
-    };
+        asm! {
+            "%bool = OpTypeBool",
+            "%result = OpReportIntersectionKHR %bool {hit} {hit_kind}",
+            "OpStore {result} %result",
+            result = in(reg) &mut result,
+            hit = in(reg) hit,
+            hit_kind = in(reg) hit_kind,
+        };
 
-    result
+        result
+    }
 }
 
 /// Ignores the current potential intersection, terminating the invocation that
@@ -43,7 +45,9 @@ pub unsafe fn report_intersection(hit: f32, hit_kind: u32) -> bool {
 #[doc(alias = "OpIgnoreIntersectionKHR")]
 #[inline]
 pub unsafe fn ignore_intersection() -> ! {
-    asm!("OpIgnoreIntersectionKHR", options(noreturn));
+    unsafe {
+        asm!("OpIgnoreIntersectionKHR", options(noreturn));
+    }
 }
 
 /// Terminates the invocation that executes it, stops the ray traversal, accepts
@@ -54,7 +58,9 @@ pub unsafe fn ignore_intersection() -> ! {
 #[doc(alias = "OpTerminateRayKHR")]
 #[inline]
 pub unsafe fn terminate_ray() -> ! {
-    asm!("OpTerminateRayKHR", options(noreturn));
+    unsafe {
+        asm!("OpTerminateRayKHR", options(noreturn));
+    }
 }
 
 /// Invoke a callable shader.
@@ -74,11 +80,13 @@ pub unsafe fn terminate_ray() -> ! {
 #[doc(alias = "OpExecuteCallableKHR")]
 #[inline]
 pub unsafe fn execute_callable<T, const ID: usize>(data: &T) {
-    asm! {
-        "%u32 = OpTypeInt 32 0",
-        "%id = OpConstant %u32 {id}",
-        "OpExecuteCallableKHR %id {data}",
-        id = const ID,
-        data = in(reg) data,
-    };
+    unsafe {
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%id = OpConstant %u32 {id}",
+            "OpExecuteCallableKHR %id {data}",
+            id = const ID,
+            data = in(reg) data,
+        };
+    }
 }

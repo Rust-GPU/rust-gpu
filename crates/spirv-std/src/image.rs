@@ -95,7 +95,7 @@ pub type Cubemap = crate::Image!(cube, type=f32, sampled, __crate_root=crate);
 /// You likely want to write this type using the [`crate::Image!`] macro helper, as the generic
 /// arguments here can get extremely verbose.
 ///
-/// See SPIR-V OpTypeImage specification for the meaning of integer parameters.
+/// See SPIR-V `OpTypeImage` specification for the meaning of integer parameters.
 #[spirv(generic_image_type)]
 #[derive(Copy, Clone)]
 // HACK(eddyb) avoids "transparent newtype of `_anti_zst_padding`" misinterpretation.

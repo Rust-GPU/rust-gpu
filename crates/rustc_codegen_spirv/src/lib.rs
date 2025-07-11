@@ -4,14 +4,14 @@
 #![allow(rustc::untranslatable_diagnostic)]
 #![feature(assert_matches)]
 #![feature(box_patterns)]
-#![feature(debug_closure_helpers)]
 #![feature(file_buffered)]
 #![feature(if_let_guard)]
-#![feature(let_chains)]
 #![feature(negative_impls)]
 #![feature(rustdoc_internals)]
+#![feature(string_from_utf8_lossy_owned)]
 #![feature(trait_alias)]
 #![feature(try_blocks)]
+#![recursion_limit = "256"]
 // HACK(eddyb) end of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
 
 //! Welcome to the API documentation for the `rust-gpu` project, this API is
@@ -32,16 +32,14 @@
 //! [`spirv-tools`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools
 //! [`spirv-tools-sys`]: https://rust-gpu.github.io/rust-gpu/api/spirv_tools_sys
 #![feature(rustc_private)]
-#![feature(result_flattening)]
 // crate-specific exceptions:
 #![allow(
     unsafe_code,                // rustc_codegen_ssa requires unsafe functions in traits to be impl'd
-    clippy::match_on_vec_items, // rustc_codegen_spirv has less strict panic requirements than other embark projects
     clippy::enum_glob_use,      // pretty useful pattern with some codegen'd enums (e.g. rspirv::spirv::Op)
     clippy::todo,               // still lots to implement :)
 
     // FIXME(eddyb) new warnings from 1.83 rustup, apply their suggested changes.
-    elided_named_lifetimes,
+    mismatched_lifetime_syntaxes,
     clippy::needless_lifetimes,
 )]
 
@@ -79,13 +77,17 @@ use rustc_codegen_ssa as maybe_pqp_cg_ssa;
 
 // FIXME(eddyb) remove all `#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]`
 // as soon as they're not needed anymore (i.e. using `rustc_codegen_ssa` again).
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
+extern crate rustc_abi;
 extern crate rustc_apfloat;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_arena;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_ast;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
-extern crate rustc_attr;
+extern crate rustc_attr_data_structures;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
+extern crate rustc_attr_parsing;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_codegen_ssa;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
@@ -93,6 +95,8 @@ extern crate rustc_data_structures;
 extern crate rustc_driver;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_errors;
+#[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
+extern crate rustc_hashes;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
 extern crate rustc_hir;
 #[cfg(rustc_codegen_spirv_disable_pqp_cg_ssa)]
@@ -147,11 +151,12 @@ use maybe_pqp_cg_ssa::traits::{
     CodegenBackend, ExtraBackendMethods, ModuleBufferMethods, ThinBufferMethods,
     WriteBackendMethods,
 };
-use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind};
+use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind, TargetConfig};
 use rspirv::binary::Assemble;
 use rustc_ast::expand::allocator::AllocatorKind;
+use rustc_ast::expand::autodiff_attrs::AutoDiffItem;
 use rustc_data_structures::fx::FxIndexMap;
-use rustc_errors::{DiagCtxtHandle, ErrorGuaranteed, FatalError};
+use rustc_errors::{DiagCtxtHandle, FatalError};
 use rustc_metadata::EncodedMetadata;
 use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
 use rustc_middle::mir::mono::{MonoItem, MonoItemData};
@@ -173,12 +178,12 @@ fn dump_mir(tcx: TyCtxt<'_>, mono_items: &[(MonoItem<'_>, MonoItemData)], path: 
     create_dir_all(path.parent().unwrap()).unwrap();
     let mut file = File::create(path).unwrap();
     for &(mono_item, _) in mono_items {
-        if let MonoItem::Fn(instance) = mono_item {
-            if matches!(instance.def, InstanceKind::Item(_)) {
-                let mut mir = Cursor::new(Vec::new());
-                if write_mir_pretty(tcx, Some(instance.def_id()), &mut mir).is_ok() {
-                    writeln!(file, "{}", String::from_utf8(mir.into_inner()).unwrap()).unwrap();
-                }
+        if let MonoItem::Fn(instance) = mono_item
+            && matches!(instance.def, InstanceKind::Item(_))
+        {
+            let mut mir = Cursor::new(Vec::new());
+            if write_mir_pretty(tcx, Some(instance.def_id()), &mut mir).is_ok() {
+                writeln!(file, "{}", String::from_utf8(mir.into_inner()).unwrap()).unwrap();
             }
         }
     }
@@ -218,15 +223,33 @@ impl CodegenBackend for SpirvCodegenBackend {
         rustc_errors::DEFAULT_LOCALE_RESOURCE
     }
 
-    fn target_features(&self, sess: &Session, _allow_unstable: bool) -> Vec<Symbol> {
+    fn target_config(&self, sess: &Session) -> TargetConfig {
         let cmdline = sess.opts.cg.target_feature.split(',');
         let cfg = sess.target.options.features.split(',');
-        cfg.chain(cmdline)
+
+        let target_features: Vec<_> = cfg
+            .chain(cmdline)
             .filter(|l| l.starts_with('+'))
             .map(|l| &l[1..])
             .filter(|l| !l.is_empty())
             .map(Symbol::intern)
-            .collect()
+            .collect();
+
+        // HACK(eddyb) this should be a superset of `target_features`,
+        // which *additionally* also includes unstable target features,
+        // but there is no reason to make a distinction for SPIR-V ones.
+        let unstable_target_features = target_features.clone();
+
+        TargetConfig {
+            target_features,
+            unstable_target_features,
+
+            // FIXME(eddyb) support and/or emulate `f16` and `f128`.
+            has_reliable_f16: false,
+            has_reliable_f16_math: false,
+            has_reliable_f128: false,
+            has_reliable_f128_math: false,
+        }
     }
 
     fn provide(&self, providers: &mut rustc_middle::util::Providers) {
@@ -239,12 +262,7 @@ impl CodegenBackend for SpirvCodegenBackend {
         crate::attr::provide(providers);
     }
 
-    fn codegen_crate(
-        &self,
-        tcx: TyCtxt<'_>,
-        metadata: EncodedMetadata,
-        need_metadata_module: bool,
-    ) -> Box<dyn Any> {
+    fn codegen_crate(&self, tcx: TyCtxt<'_>) -> Box<dyn Any> {
         Box::new(maybe_pqp_cg_ssa::base::codegen_crate(
             Self,
             tcx,
@@ -254,8 +272,6 @@ impl CodegenBackend for SpirvCodegenBackend {
                 .target_cpu
                 .clone()
                 .unwrap_or_else(|| tcx.sess.target.cpu.to_string()),
-            metadata,
-            need_metadata_module,
         ))
     }
 
@@ -275,18 +291,18 @@ impl CodegenBackend for SpirvCodegenBackend {
         &self,
         sess: &Session,
         codegen_results: CodegenResults,
+        metadata: EncodedMetadata,
         outputs: &OutputFilenames,
-    ) -> Result<(), ErrorGuaranteed> {
+    ) {
         let timer = sess.timer("link_crate");
         link::link(
             sess,
             &codegen_results,
+            &metadata,
             outputs,
             codegen_results.crate_info.local_crate_name.as_str(),
         );
         drop(timer);
-
-        sess.dcx().has_errors().map_or(Ok(()), Err)
     }
 }
 
@@ -330,17 +346,17 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         warn!("TODO: Implement print_statistics");
     }
 
-    unsafe fn optimize(
+    fn optimize(
         _: &CodegenContext<Self>,
         _: DiagCtxtHandle<'_>,
-        _: &ModuleCodegen<Self::Module>,
+        _: &mut ModuleCodegen<Self::Module>,
         _: &ModuleConfig,
     ) -> Result<(), FatalError> {
         // TODO: Implement
         Ok(())
     }
 
-    unsafe fn optimize_thin(
+    fn optimize_thin(
         _cgcx: &CodegenContext<Self>,
         thin_module: ThinModule<Self>,
     ) -> Result<ModuleCodegen<Self::Module>, FatalError> {
@@ -350,6 +366,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
                 .to_vec(),
             name: thin_module.name().to_string(),
             kind: ModuleKind::Regular,
+            thin_lto_buffer: None,
         };
         Ok(module)
     }
@@ -361,15 +378,17 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         todo!()
     }
 
-    unsafe fn codegen(
+    fn codegen(
         cgcx: &CodegenContext<Self>,
         _diag_handler: DiagCtxtHandle<'_>,
         module: ModuleCodegen<Self::Module>,
         _config: &ModuleConfig,
     ) -> Result<CompiledModule, FatalError> {
-        let path = cgcx
-            .output_filenames
-            .temp_path(OutputType::Object, Some(&module.name));
+        let path = cgcx.output_filenames.temp_path_for_cgu(
+            OutputType::Object,
+            &module.name,
+            cgcx.invocation_temp.as_deref(),
+        );
         // Note: endianness doesn't matter, readers deduce endianness from magic header.
         let spirv_module = spirv_tools::binary::from_binary(&module.module_llvm);
         File::create(&path)
@@ -384,6 +403,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             bytecode: None,
             assembly: None,
             llvm_ir: None,
+            links_from_incr_cache: vec![],
         })
     }
 
@@ -396,6 +416,15 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     fn serialize_module(module: ModuleCodegen<Self::Module>) -> (String, Self::ModuleBuffer) {
         (module.name, SpirvModuleBuffer(module.module_llvm))
+    }
+
+    fn autodiff(
+        _cgcx: &CodegenContext<Self>,
+        _module: &ModuleCodegen<Self::Module>,
+        _diff_fncs: Vec<AutoDiffItem>,
+        _config: &ModuleConfig,
+    ) -> Result<(), FatalError> {
+        todo!()
     }
 }
 
@@ -410,9 +439,9 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
         todo!()
     }
 
-    fn compile_codegen_unit(
+    fn compile_codegen_unit<'tcx>(
         &self,
-        tcx: TyCtxt<'_>,
+        tcx: TyCtxt<'tcx>,
         cgu_name: Symbol,
     ) -> (ModuleCodegen<Self::Module>, u64) {
         let _timer = tcx
@@ -422,9 +451,9 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
         // TODO: Do dep_graph stuff
         let cgu = tcx.codegen_unit(cgu_name);
 
-        let cx = CodegenCx::new(tcx, cgu);
-        let do_codegen = || {
-            let mono_items = cx.codegen_unit.items_in_deterministic_order(cx.tcx);
+        let mut cx = CodegenCx::new(tcx, cgu);
+        let do_codegen = |cx: &mut CodegenCx<'tcx>| {
+            let mono_items = cgu.items_in_deterministic_order(cx.tcx);
 
             if let Some(dir) = &cx.codegen_args.dump_mir {
                 dump_mir(tcx, mono_items.as_slice(), &dir.join(cgu_name.to_string()));
@@ -432,27 +461,34 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
 
             for &(mono_item, mono_item_data) in mono_items.iter() {
                 mono_item.predefine::<Builder<'_, '_>>(
-                    &cx,
+                    cx,
+                    cgu_name.as_str(),
                     mono_item_data.linkage,
                     mono_item_data.visibility,
                 );
             }
 
             // ... and now that we have everything pre-defined, fill out those definitions.
-            for &(mono_item, _) in mono_items.iter() {
-                mono_item.define::<Builder<'_, '_>>(&cx);
+            for &(mono_item, mono_item_data) in &mono_items {
+                mono_item.define::<Builder<'_, '_>>(cx, cgu_name.as_str(), mono_item_data);
             }
 
-            if let Some(_entry) = maybe_create_entry_wrapper::<Builder<'_, '_>>(&cx) {
+            if let Some(_entry) = maybe_create_entry_wrapper::<Builder<'_, '_>>(cx, cgu) {
                 // attributes::sanitize(&cx, SanitizerSet::empty(), entry);
             }
         };
-        if let Some(path) = &cx.codegen_args.dump_module_on_panic {
-            let module_dumper = DumpModuleOnPanic { cx: &cx, path };
-            with_no_trimmed_paths!(do_codegen());
+        // HACK(eddyb) mutable access needed for `mono_item.define::<...>(cx, ...)`
+        // but that alone leads to needless cloning and smuggling a mutable borrow
+        // through `DumpModuleOnPanic` (for both its `Drop` impl and `do_codegen`).
+        if let Some(path) = cx.codegen_args.dump_module_on_panic.clone() {
+            let module_dumper = DumpModuleOnPanic {
+                cx: &mut cx,
+                path: &path,
+            };
+            with_no_trimmed_paths!(do_codegen(module_dumper.cx));
             drop(module_dumper);
         } else {
-            with_no_trimmed_paths!(do_codegen());
+            with_no_trimmed_paths!(do_codegen(&mut cx));
         }
         let spirv_module = cx.finalize_module().assemble();
 
@@ -461,6 +497,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
                 name: cgu_name.to_string(),
                 module_llvm: spirv_module,
                 kind: ModuleKind::Regular,
+                thin_lto_buffer: None,
             },
             0,
         )
@@ -478,7 +515,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
 }
 
 struct DumpModuleOnPanic<'a, 'cx, 'tcx> {
-    cx: &'cx CodegenCx<'tcx>,
+    cx: &'cx mut CodegenCx<'tcx>,
     path: &'a Path,
 }
 
@@ -495,7 +532,7 @@ impl Drop for DumpModuleOnPanic<'_, '_, '_> {
 }
 
 /// This is the entrypoint for a hot plugged `rustc_codegen_spirv`
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub fn __rustc_codegen_backend() -> Box<dyn CodegenBackend> {
     // Tweak rustc's default ICE panic hook, to direct people to `rust-gpu`.
     rustc_driver::install_ice_hook("https://github.com/rust-gpu/rust-gpu/issues/new", |dcx| {

@@ -5,7 +5,7 @@ use core::arch::asm;
 /// `discard()` in HLSL. Any stores to memory after this instruction are
 /// suppressed and the fragment does not write outputs to the framebuffer.
 ///
-/// Unlike [super::kill], this does not necessarily terminate the invocation. It
+/// Unlike [`super::kill`], this does not necessarily terminate the invocation. It
 /// is not considered a flow control instruction (flow control does not become
 /// non-uniform) and does not terminate the block.
 ///
@@ -20,7 +20,9 @@ use core::arch::asm;
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpDemoteToHelperInvocationEXT", alias = "discard")]
 pub unsafe fn demote_to_helper_invocation() {
-    asm!("OpDemoteToHelperInvocationEXT");
+    unsafe {
+        asm!("OpDemoteToHelperInvocationEXT");
+    }
 }
 
 /// Returns `true` if the invocation is currently a helper invocation, otherwise

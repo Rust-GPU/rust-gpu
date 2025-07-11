@@ -84,60 +84,58 @@ impl Transformer for CustomDebuginfoToSpv<'_> {
                     ext_set,
                     inst: ext_inst,
                 } = self.cx[data_inst_def.form].kind
+                    && ext_set == self.custom_ext_inst_set
                 {
-                    if ext_set == self.custom_ext_inst_set {
-                        let custom_op = CustomOp::decode(ext_inst);
-                        match custom_op.with_operands(&data_inst_def.inputs) {
-                            CustomInst::SetDebugSrcLoc {
-                                file,
-                                line_start: line,
-                                line_end: _,
-                                col_start: col,
-                                col_end: _,
-                            } => {
-                                let const_kind = |v: Value| match v {
-                                    Value::Const(ct) => &self.cx[ct].kind,
-                                    _ => unreachable!(),
-                                };
-                                let const_str = |v: Value| match const_kind(v) {
-                                    &ConstKind::SpvStringLiteralForExtInst(s) => s,
-                                    _ => unreachable!(),
-                                };
-                                let const_u32 = |v: Value| match const_kind(v) {
-                                    ConstKind::SpvInst {
-                                        spv_inst_and_const_inputs,
-                                    } => {
-                                        let (spv_inst, _const_inputs) =
-                                            &**spv_inst_and_const_inputs;
-                                        assert!(spv_inst.opcode == self.wk.OpConstant);
-                                        match spv_inst.imms[..] {
-                                            [spv::Imm::Short(_, x)] => x,
-                                            _ => unreachable!(),
-                                        }
+                    let custom_op = CustomOp::decode(ext_inst);
+                    match custom_op.with_operands(&data_inst_def.inputs) {
+                        CustomInst::SetDebugSrcLoc {
+                            file,
+                            line_start: line,
+                            line_end: _,
+                            col_start: col,
+                            col_end: _,
+                        } => {
+                            let const_kind = |v: Value| match v {
+                                Value::Const(ct) => &self.cx[ct].kind,
+                                _ => unreachable!(),
+                            };
+                            let const_str = |v: Value| match const_kind(v) {
+                                &ConstKind::SpvStringLiteralForExtInst(s) => s,
+                                _ => unreachable!(),
+                            };
+                            let const_u32 = |v: Value| match const_kind(v) {
+                                ConstKind::SpvInst {
+                                    spv_inst_and_const_inputs,
+                                } => {
+                                    let (spv_inst, _const_inputs) = &**spv_inst_and_const_inputs;
+                                    assert!(spv_inst.opcode == self.wk.OpConstant);
+                                    match spv_inst.imms[..] {
+                                        [spv::Imm::Short(_, x)] => x,
+                                        _ => unreachable!(),
                                     }
-                                    _ => unreachable!(),
-                                };
-                                current_file_line_col =
-                                    Some((const_str(file), const_u32(line), const_u32(col)));
-                                insts_to_remove.push(inst);
-                                continue;
-                            }
-                            CustomInst::ClearDebugSrcLoc => {
-                                current_file_line_col = None;
-                                insts_to_remove.push(inst);
-                                continue;
-                            }
-                            CustomInst::PushInlinedCallFrame { .. }
-                            | CustomInst::PopInlinedCallFrame => {
-                                insts_to_remove.push(inst);
-                                continue;
-                            }
-                            CustomInst::Abort { .. } => {
-                                assert!(
-                                    !custom_op.is_debuginfo(),
-                                    "`CustomOp::{custom_op:?}` debuginfo not lowered"
-                                );
-                            }
+                                }
+                                _ => unreachable!(),
+                            };
+                            current_file_line_col =
+                                Some((const_str(file), const_u32(line), const_u32(col)));
+                            insts_to_remove.push(inst);
+                            continue;
+                        }
+                        CustomInst::ClearDebugSrcLoc => {
+                            current_file_line_col = None;
+                            insts_to_remove.push(inst);
+                            continue;
+                        }
+                        CustomInst::PushInlinedCallFrame { .. }
+                        | CustomInst::PopInlinedCallFrame => {
+                            insts_to_remove.push(inst);
+                            continue;
+                        }
+                        CustomInst::Abort { .. } => {
+                            assert!(
+                                !custom_op.is_debuginfo(),
+                                "`CustomOp::{custom_op:?}` debuginfo not lowered"
+                            );
                         }
                     }
                 }

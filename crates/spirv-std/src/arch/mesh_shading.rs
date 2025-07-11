@@ -16,15 +16,17 @@ use core::arch::asm;
 /// There must not be any control flow path to an output write that is not preceded
 /// by this instruction.
 ///
-/// This instruction is only valid in the *MeshEXT* Execution Model.
+/// This instruction is only valid in the *`MeshEXT`* Execution Model.
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpSetMeshOutputsEXT")]
 #[inline]
 pub unsafe fn set_mesh_outputs_ext(vertex_count: u32, primitive_count: u32) {
-    asm! {
-        "OpSetMeshOutputsEXT {vertex_count} {primitive_count}",
-        vertex_count = in(reg) vertex_count,
-        primitive_count = in(reg) primitive_count,
+    unsafe {
+        asm! {
+            "OpSetMeshOutputsEXT {vertex_count} {primitive_count}",
+            vertex_count = in(reg) vertex_count,
+            primitive_count = in(reg) primitive_count,
+        }
     }
 }
 
@@ -36,7 +38,7 @@ pub unsafe fn set_mesh_outputs_ext(vertex_count: u32, primitive_count: u32) {
 /// for the launch of child mesh tasks. See Vulkan API specification for more detail.
 ///
 /// 'Payload' is an optional pointer to the payload structure to pass to the generated mesh shader invocations.
-/// 'Payload' must be the result of an *OpVariable* with a storage class of *TaskPayloadWorkgroupEXT*.
+/// 'Payload' must be the result of an *`OpVariable`* with a storage class of *`TaskPayloadWorkgroupEXT`*.
 ///
 /// The arguments are taken from the first invocation in each workgroup.
 /// Any invocation must execute this instruction exactly once and under uniform
@@ -44,24 +46,26 @@ pub unsafe fn set_mesh_outputs_ext(vertex_count: u32, primitive_count: u32) {
 /// This instruction also serves as an *OpControlBarrier* instruction, and also
 /// performs and adheres to the description and semantics of an *OpControlBarrier*
 /// instruction with the 'Execution' and 'Memory' operands set to *Workgroup* and
-/// the 'Semantics' operand set to a combination of *WorkgroupMemory* and
-/// *AcquireRelease*.
+/// the 'Semantics' operand set to a combination of *`WorkgroupMemory`* and
+/// *`AcquireRelease`*.
 /// Ceases all further processing: Only instructions executed before
-/// *OpEmitMeshTasksEXT* have observable side effects.
+/// *`OpEmitMeshTasksEXT`* have observable side effects.
 ///
 /// This instruction must be the last instruction in a block.
 ///
-/// This instruction is only valid in the *TaskEXT* Execution Model.
+/// This instruction is only valid in the *`TaskEXT`* Execution Model.
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpEmitMeshTasksEXT")]
 #[inline]
 pub unsafe fn emit_mesh_tasks_ext(group_count_x: u32, group_count_y: u32, group_count_z: u32) -> ! {
-    asm! {
-        "OpEmitMeshTasksEXT {group_count_x} {group_count_y} {group_count_z}",
-        group_count_x = in(reg) group_count_x,
-        group_count_y = in(reg) group_count_y,
-        group_count_z = in(reg) group_count_z,
-        options(noreturn),
+    unsafe {
+        asm! {
+            "OpEmitMeshTasksEXT {group_count_x} {group_count_y} {group_count_z}",
+            group_count_x = in(reg) group_count_x,
+            group_count_y = in(reg) group_count_y,
+            group_count_z = in(reg) group_count_z,
+            options(noreturn),
+        }
     }
 }
 
@@ -73,7 +77,7 @@ pub unsafe fn emit_mesh_tasks_ext(group_count_x: u32, group_count_y: u32, group_
 /// for the launch of child mesh tasks. See Vulkan API specification for more detail.
 ///
 /// 'Payload' is an optional pointer to the payload structure to pass to the generated mesh shader invocations.
-/// 'Payload' must be the result of an *OpVariable* with a storage class of *TaskPayloadWorkgroupEXT*.
+/// 'Payload' must be the result of an *`OpVariable`* with a storage class of *`TaskPayloadWorkgroupEXT`*.
 ///
 /// The arguments are taken from the first invocation in each workgroup.
 /// Any invocation must execute this instruction exactly once and under uniform
@@ -81,14 +85,14 @@ pub unsafe fn emit_mesh_tasks_ext(group_count_x: u32, group_count_y: u32, group_
 /// This instruction also serves as an *OpControlBarrier* instruction, and also
 /// performs and adheres to the description and semantics of an *OpControlBarrier*
 /// instruction with the 'Execution' and 'Memory' operands set to *Workgroup* and
-/// the 'Semantics' operand set to a combination of *WorkgroupMemory* and
-/// *AcquireRelease*.
+/// the 'Semantics' operand set to a combination of *`WorkgroupMemory`* and
+/// *`AcquireRelease`*.
 /// Ceases all further processing: Only instructions executed before
-/// *OpEmitMeshTasksEXT* have observable side effects.
+/// *`OpEmitMeshTasksEXT`* have observable side effects.
 ///
 /// This instruction must be the last instruction in a block.
 ///
-/// This instruction is only valid in the *TaskEXT* Execution Model.
+/// This instruction is only valid in the *`TaskEXT`* Execution Model.
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpEmitMeshTasksEXT")]
 #[inline]
@@ -98,12 +102,14 @@ pub unsafe fn emit_mesh_tasks_ext_payload<T>(
     group_count_z: u32,
     payload: &mut T,
 ) -> ! {
-    asm! {
-        "OpEmitMeshTasksEXT {group_count_x} {group_count_y} {group_count_z} {payload}",
-        group_count_x = in(reg) group_count_x,
-        group_count_y = in(reg) group_count_y,
-        group_count_z = in(reg) group_count_z,
-        payload = in(reg) payload,
-        options(noreturn),
+    unsafe {
+        asm! {
+            "OpEmitMeshTasksEXT {group_count_x} {group_count_y} {group_count_z} {payload}",
+            group_count_x = in(reg) group_count_x,
+            group_count_y = in(reg) group_count_y,
+            group_count_z = in(reg) group_count_z,
+            payload = in(reg) payload,
+            options(noreturn),
+        }
     }
 }

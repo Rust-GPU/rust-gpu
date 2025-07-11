@@ -36,7 +36,6 @@
     clippy::map_err_ignore,
     clippy::map_flatten,
     clippy::map_unwrap_or,
-    clippy::match_on_vec_items,
     clippy::match_same_arms,
     clippy::match_wildcard_for_single_variants,
     clippy::mem_forget,
@@ -100,14 +99,11 @@ impl CompiledShaderModules {
         wanted_entry: &str,
     ) -> wgpu::ShaderModuleDescriptorSpirV<'a> {
         for (name, spv_module) in &self.named_spv_modules {
-            match name {
-                Some(name) if name != wanted_entry => continue,
-                _ => {
-                    return wgpu::ShaderModuleDescriptorSpirV {
-                        label: name.as_deref(),
-                        source: Cow::Borrowed(&spv_module.source),
-                    };
-                }
+            if name.as_ref().is_none_or(|name| name == wanted_entry) {
+                return wgpu::ShaderModuleDescriptorSpirV {
+                    label: name.as_deref(),
+                    source: Cow::Borrowed(&spv_module.source),
+                };
             }
         }
         unreachable!(
@@ -130,14 +126,7 @@ fn maybe_watch(
     {
         use spirv_builder::{CompileResult, MetadataPrintout, SpirvBuilder};
         use std::path::PathBuf;
-        // Hack: spirv_builder builds into a custom directory if running under cargo, to not
-        // deadlock, and the default target directory if not. However, packages like `proc-macro2`
-        // have different configurations when being built here vs. when building
-        // rustc_codegen_spirv normally, so we *want* to build into a separate target directory, to
-        // not have to rebuild half the crate graph every time we run. So, pretend we're running
-        // under cargo by setting these environment variables.
-        std::env::set_var("OUT_DIR", env!("OUT_DIR"));
-        std::env::set_var("PROFILE", env!("PROFILE"));
+
         let crate_name = match options.shader {
             RustGPUShader::Simplest => "simplest-shader",
             RustGPUShader::Sky => "sky-shader",
@@ -216,8 +205,12 @@ fn maybe_watch(
             RustGPUShader::Compute => wgpu::include_spirv_raw!(env!("compute_shader.spv")),
             RustGPUShader::Mouse => wgpu::include_spirv_raw!(env!("mouse_shader.spv")),
         };
+        let spirv = match module {
+            wgpu::ShaderModuleDescriptorPassthrough::SpirV(spirv) => spirv,
+            _ => panic!("not spirv"),
+        };
         CompiledShaderModules {
-            named_spv_modules: vec![(None, module)],
+            named_spv_modules: vec![(None, spirv)],
         }
     }
 }
@@ -233,10 +226,21 @@ pub struct Options {
     force_spirv_passthru: bool,
 }
 
-#[cfg_attr(target_os = "android", export_name = "android_main")]
+#[cfg_attr(target_os = "android", unsafe(export_name = "android_main"))]
 pub fn main(
     #[cfg(target_os = "android")] android_app: winit::platform::android::activity::AndroidApp,
 ) {
+    // Hack: spirv_builder builds into a custom directory if running under cargo, to not
+    // deadlock, and the default target directory if not. However, packages like `proc-macro2`
+    // have different configurations when being built here vs. when building
+    // rustc_codegen_spirv normally, so we *want* to build into a separate target directory, to
+    // not have to rebuild half the crate graph every time we run. So, pretend we're running
+    // under cargo by setting these environment variables.
+    unsafe {
+        std::env::set_var("OUT_DIR", env!("OUT_DIR"));
+        std::env::set_var("PROFILE", env!("PROFILE"));
+    }
+
     let options = Options::parse();
 
     #[cfg(not(any(target_os = "android", target_arch = "wasm32")))]

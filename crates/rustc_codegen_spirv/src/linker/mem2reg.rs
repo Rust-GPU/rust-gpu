@@ -253,40 +253,39 @@ fn collect_access_chains(
     }
 
     let mut variables = FxHashMap::default();
-    variables.insert(base_var, VarInfo {
-        ty: base_var_ty,
-        indices: vec![],
-    });
+    variables.insert(
+        base_var,
+        VarInfo {
+            ty: base_var_ty,
+            indices: vec![],
+        },
+    );
     // Loop in case a previous block references a later AccessChain
     loop {
         let mut changed = false;
         for inst in blocks.values().flat_map(|b| &b.instructions) {
             for (index, op) in inst.operands.iter().enumerate() {
-                if let Operand::IdRef(id) = op {
-                    if variables.contains_key(id) {
-                        match inst.class.opcode {
-                            // Only allow store if pointer is the lhs, not rhs
-                            Op::Store if index == 0 => {}
-                            Op::Load
-                            | Op::AccessChain
-                            | Op::InBoundsAccessChain
-                            | Op::CopyMemory => {}
-                            _ => return None,
-                        }
+                if let Operand::IdRef(id) = op
+                    && variables.contains_key(id)
+                {
+                    match inst.class.opcode {
+                        // Only allow store if pointer is the lhs, not rhs
+                        Op::Store if index == 0 => {}
+                        Op::Load | Op::AccessChain | Op::InBoundsAccessChain | Op::CopyMemory => {}
+                        _ => return None,
                     }
                 }
             }
-            if let Op::AccessChain | Op::InBoundsAccessChain = inst.class.opcode {
-                if let Some(base) = variables.get(&inst.operands[0].id_ref_any().unwrap()) {
-                    let info =
-                        construct_access_chain_info(pointer_to_pointee, constants, inst, base)?;
-                    match variables.entry(inst.result_id.unwrap()) {
-                        hash_map::Entry::Vacant(entry) => {
-                            entry.insert(info);
-                            changed = true;
-                        }
-                        hash_map::Entry::Occupied(_) => {}
+            if let Op::AccessChain | Op::InBoundsAccessChain = inst.class.opcode
+                && let Some(base) = variables.get(&inst.operands[0].id_ref_any().unwrap())
+            {
+                let info = construct_access_chain_info(pointer_to_pointee, constants, inst, base)?;
+                match variables.entry(inst.result_id.unwrap()) {
+                    hash_map::Entry::Vacant(entry) => {
+                        entry.insert(info);
+                        changed = true;
                     }
+                    hash_map::Entry::Occupied(_) => {}
                 }
             }
         }
@@ -345,17 +344,21 @@ fn split_copy_memory(
                     }
                 };
                 let temp_id = id(header);
-                block.instructions[inst_index] =
-                    Instruction::new(Op::Load, Some(ty), Some(temp_id), vec![Operand::IdRef(
-                        source,
-                    )]);
+                block.instructions[inst_index] = Instruction::new(
+                    Op::Load,
+                    Some(ty),
+                    Some(temp_id),
+                    vec![Operand::IdRef(source)],
+                );
                 inst_index += 1;
                 block.instructions.insert(
                     inst_index,
-                    Instruction::new(Op::Store, None, None, vec![
-                        Operand::IdRef(target),
-                        Operand::IdRef(temp_id),
-                    ]),
+                    Instruction::new(
+                        Op::Store,
+                        None,
+                        None,
+                        vec![Operand::IdRef(target), Operand::IdRef(temp_id)],
+                    ),
                 );
             }
             inst_index += 1;
@@ -462,10 +465,12 @@ impl Renamer<'_, '_> {
                 let new_id = id(self.header);
                 self.blocks[block].instructions.insert(
                     0,
-                    Instruction::new(Op::Phi, Some(self.base_var_type), Some(new_id), vec![
-                        Operand::IdRef(top_def),
-                        Operand::IdRef(from_block_label),
-                    ]),
+                    Instruction::new(
+                        Op::Phi,
+                        Some(self.base_var_type),
+                        Some(new_id),
+                        vec![Operand::IdRef(top_def), Operand::IdRef(from_block_label)],
+                    ),
                 );
                 self.phi_defs.insert(new_id);
                 new_id
@@ -483,11 +488,11 @@ impl Renamer<'_, '_> {
     fn rename(&mut self, block: usize, from_block: Option<usize>) {
         let original_stack = self.stack.len();
 
-        if let Some(from_block) = from_block {
-            if self.blocks_with_phi.contains(&block) {
-                let new_top = self.insert_phi_value(block, from_block);
-                self.stack.push(new_top);
-            }
+        if let Some(from_block) = from_block
+            && self.blocks_with_phi.contains(&block)
+        {
+            let new_top = self.insert_phi_value(block, from_block);
+            self.stack.push(new_top);
         }
 
         if !self.visited.insert(block) {
@@ -598,7 +603,7 @@ fn remove_old_variables(
         block.instructions.retain(|inst| {
             !matches!(inst.class.opcode, Op::AccessChain | Op::InBoundsAccessChain)
                 || inst.operands.iter().all(|op| {
-                    op.id_ref_any().map_or(true, |id| {
+                    op.id_ref_any().is_none_or(|id| {
                         var_maps_and_types
                             .iter()
                             .all(|(var_map, _)| !var_map.contains_key(&id))

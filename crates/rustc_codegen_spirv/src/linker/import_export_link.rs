@@ -34,16 +34,16 @@ fn find_import_export_pairs_and_killed_params(
         .map(|(z, _)| z)
         .collect();
     for inst in module.global_inst_iter() {
-        if let Some(result_id) = inst.result_id {
-            if !zombie_infected.contains(&result_id) {
-                let mut id_operands = inst.operands.iter().filter_map(|o| o.id_ref_any());
-                // NOTE(eddyb) this takes advantage of the fact that the module
-                // is ordered def-before-use (with the minor exception of forward
-                // references for recursive data, which are not fully supported),
-                // to be able to propagate "zombie infection" in one pass.
-                if id_operands.any(|id| zombie_infected.contains(&id)) {
-                    zombie_infected.insert(result_id);
-                }
+        if let Some(result_id) = inst.result_id
+            && !zombie_infected.contains(&result_id)
+        {
+            let mut id_operands = inst.operands.iter().filter_map(|o| o.id_ref_any());
+            // NOTE(eddyb) this takes advantage of the fact that the module
+            // is ordered def-before-use (with the minor exception of forward
+            // references for recursive data, which are not fully supported),
+            // to be able to propagate "zombie infection" in one pass.
+            if id_operands.any(|id| zombie_infected.contains(&id)) {
+                zombie_infected.insert(result_id);
             }
         }
     }
@@ -202,17 +202,17 @@ fn check_tys_equal(
 
 fn replace_all_uses_with(module: &mut Module, rules: &FxHashMap<u32, u32>) {
     module.all_inst_iter_mut().for_each(|inst| {
-        if let Some(ref mut result_type) = &mut inst.result_type {
-            if let Some(&rewrite) = rules.get(result_type) {
-                *result_type = rewrite;
-            }
+        if let Some(result_type) = &mut inst.result_type
+            && let Some(&rewrite) = rules.get(result_type)
+        {
+            *result_type = rewrite;
         }
 
         inst.operands.iter_mut().for_each(|op| {
-            if let Some(w) = op.id_ref_any_mut() {
-                if let Some(&rewrite) = rules.get(w) {
-                    *w = rewrite;
-                }
+            if let Some(w) = op.id_ref_any_mut()
+                && let Some(&rewrite) = rules.get(w)
+            {
+                *w = rewrite;
             }
         });
     });
@@ -229,10 +229,9 @@ fn kill_linkage_instructions(
         .retain(|f| !rewrite_rules.contains_key(&f.def_id().unwrap()));
 
     // drop imported variables
-    module.types_global_values.retain(|v| {
-        v.result_id
-            .map_or(true, |v| !rewrite_rules.contains_key(&v))
-    });
+    module
+        .types_global_values
+        .retain(|v| v.result_id.is_none_or(|v| !rewrite_rules.contains_key(&v)));
 
     // NOTE(eddyb) `Options`'s `keep_link_export`s field requests that `Export`s
     // are left in (primarily for unit testing - see also its doc comment).
@@ -264,13 +263,13 @@ fn import_kill_annotations_and_debug(
 ) {
     module.annotations.retain(|inst| {
         inst.operands.is_empty()
-            || inst.operands[0].id_ref_any().map_or(true, |id| {
+            || inst.operands[0].id_ref_any().is_none_or(|id| {
                 !rewrite_rules.contains_key(&id) && !killed_parameters.contains(&id)
             })
     });
     module.debug_names.retain(|inst| {
         inst.operands.is_empty()
-            || inst.operands[0].id_ref_any().map_or(true, |id| {
+            || inst.operands[0].id_ref_any().is_none_or(|id| {
                 !rewrite_rules.contains_key(&id) && !killed_parameters.contains(&id)
             })
     });
@@ -278,7 +277,7 @@ fn import_kill_annotations_and_debug(
     for inst in &mut module.annotations {
         if inst.class.opcode == Op::GroupDecorate {
             inst.operands.retain(|op| {
-                op.id_ref_any().map_or(true, |id| {
+                op.id_ref_any().is_none_or(|id| {
                     !rewrite_rules.contains_key(&id) && !killed_parameters.contains(&id)
                 })
             });

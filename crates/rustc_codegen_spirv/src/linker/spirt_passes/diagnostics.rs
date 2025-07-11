@@ -389,43 +389,43 @@ impl DiagnosticReporter<'_> {
             .split_last()
             .filter(
                 |(
-                    &UseOrigin::Global {
+                    UseOrigin::Global {
                         attrs: use_attrs, ..
                     }
-                    | &UseOrigin::IntraFunc {
+                    | UseOrigin::IntraFunc {
                         func_attrs: use_attrs,
                         ..
                     },
                     _,
-                )| { use_attrs == attrs },
+                )| *use_attrs == attrs,
             )
             .map_or((None, &self.use_stack[..]), |(current, stack)| {
                 (Some(current), stack)
             });
 
         let attrs_def = &self.cx[attrs];
-        if !self.linker_options.early_report_zombies {
-            if let Some(zombie) = try_decode_custom_decoration::<ZombieDecoration<'_>>(attrs_def) {
-                let ZombieDecoration { reason } = zombie.decode();
-                let def_span = current_def
-                    .and_then(|def| def.to_rustc_span(self.cx, &mut self.span_regen))
-                    .or_else(|| {
-                        // If there's no clear source for the span, try to get
-                        // it from the same attrs as the zombie, which could
-                        // be missing from `use_stack` in some edge cases
-                        // (such as zombied function parameters).
-                        self.span_regen.spirt_attrs_to_rustc_span(self.cx, attrs)
-                    })
-                    .unwrap_or(DUMMY_SP);
-                let mut err = self
-                    .sess
-                    .dcx()
-                    .struct_span_err(def_span, reason.to_string());
-                for use_origin in use_stack_for_def.iter().rev() {
-                    use_origin.note(self.cx, &mut self.span_regen, &mut err);
-                }
-                self.overall_result = Err(err.emit());
+        if !self.linker_options.early_report_zombies
+            && let Some(zombie) = try_decode_custom_decoration::<ZombieDecoration<'_>>(attrs_def)
+        {
+            let ZombieDecoration { reason } = zombie.decode();
+            let def_span = current_def
+                .and_then(|def| def.to_rustc_span(self.cx, &mut self.span_regen))
+                .or_else(|| {
+                    // If there's no clear source for the span, try to get
+                    // it from the same attrs as the zombie, which could
+                    // be missing from `use_stack` in some edge cases
+                    // (such as zombied function parameters).
+                    self.span_regen.spirt_attrs_to_rustc_span(self.cx, attrs)
+                })
+                .unwrap_or(DUMMY_SP);
+            let mut err = self
+                .sess
+                .dcx()
+                .struct_span_err(def_span, reason.to_string());
+            for use_origin in use_stack_for_def.iter().rev() {
+                use_origin.note(self.cx, &mut self.span_regen, &mut err);
             }
+            self.overall_result = Err(err.emit());
         }
 
         let diags = attrs_def.attrs.iter().flat_map(|attr| match attr {
@@ -623,69 +623,68 @@ impl<'a> Visitor<'a> for DiagnosticReporter<'a> {
                     ext_set,
                     inst: ext_inst,
                 } = self.cx[data_inst_def.form].kind
+                    && ext_set == self.custom_ext_inst_set
                 {
-                    if ext_set == self.custom_ext_inst_set {
-                        match CustomOp::decode(ext_inst) {
-                            CustomOp::SetDebugSrcLoc => {
-                                *last_debug_src_loc_inst = Some(data_inst_def);
-                            }
-                            CustomOp::ClearDebugSrcLoc => {
-                                *last_debug_src_loc_inst = None;
-                            }
-                            op => match op.with_operands(&data_inst_def.inputs) {
-                                CustomInst::SetDebugSrcLoc { .. }
-                                | CustomInst::ClearDebugSrcLoc => unreachable!(),
-                                CustomInst::PushInlinedCallFrame { callee_name } => {
-                                    // Treat this like a call, in the caller.
-                                    replace_origin(self, IntraFuncUseOrigin::CallCallee);
-
-                                    let const_kind = |v: Value| match v {
-                                        Value::Const(ct) => &self.cx[ct].kind,
-                                        _ => unreachable!(),
-                                    };
-                                    let const_str = |v: Value| match const_kind(v) {
-                                        &ConstKind::SpvStringLiteralForExtInst(s) => s,
-                                        _ => unreachable!(),
-                                    };
-                                    self.use_stack.push(UseOrigin::IntraFunc {
-                                        func_attrs: AttrSet::default(),
-                                        special_func: Some(SpecialFunc::Inlined {
-                                            callee_name: const_str(callee_name),
-                                        }),
-                                        last_debug_src_loc_inst: None,
-                                        inst_attrs: AttrSet::default(),
-                                        origin: IntraFuncUseOrigin::Other,
-                                    });
-                                }
-                                CustomInst::PopInlinedCallFrame => {
-                                    match self.use_stack.last() {
-                                        Some(UseOrigin::IntraFunc { special_func, .. }) => {
-                                            if let Some(SpecialFunc::Inlined { .. }) = special_func
-                                            {
-                                                self.use_stack.pop().unwrap();
-                                                // Undo what `PushInlinedCallFrame` did to the
-                                                // original `UseOrigin::IntraFunc`.
-                                                replace_origin(self, IntraFuncUseOrigin::Other);
-                                            } else {
-                                                // HACK(eddyb) synthesize a diagnostic to report right away.
-                                                self.report_from_attrs(
-                                                    AttrSet::default().append_diag(
-                                                        self.cx,
-                                                        Diag::bug([
-                                                            "`PopInlinedCallFrame` without an \
-                                                             inlined call frame in `use_stack`"
-                                                                .into(),
-                                                        ]),
-                                                    ),
-                                                );
-                                            }
-                                        }
-                                        _ => unreachable!(),
-                                    }
-                                }
-                                CustomInst::Abort { .. } => {}
-                            },
+                    match CustomOp::decode(ext_inst) {
+                        CustomOp::SetDebugSrcLoc => {
+                            *last_debug_src_loc_inst = Some(data_inst_def);
                         }
+                        CustomOp::ClearDebugSrcLoc => {
+                            *last_debug_src_loc_inst = None;
+                        }
+                        op => match op.with_operands(&data_inst_def.inputs) {
+                            CustomInst::SetDebugSrcLoc { .. } | CustomInst::ClearDebugSrcLoc => {
+                                unreachable!()
+                            }
+                            CustomInst::PushInlinedCallFrame { callee_name } => {
+                                // Treat this like a call, in the caller.
+                                replace_origin(self, IntraFuncUseOrigin::CallCallee);
+
+                                let const_kind = |v: Value| match v {
+                                    Value::Const(ct) => &self.cx[ct].kind,
+                                    _ => unreachable!(),
+                                };
+                                let const_str = |v: Value| match const_kind(v) {
+                                    &ConstKind::SpvStringLiteralForExtInst(s) => s,
+                                    _ => unreachable!(),
+                                };
+                                self.use_stack.push(UseOrigin::IntraFunc {
+                                    func_attrs: AttrSet::default(),
+                                    special_func: Some(SpecialFunc::Inlined {
+                                        callee_name: const_str(callee_name),
+                                    }),
+                                    last_debug_src_loc_inst: None,
+                                    inst_attrs: AttrSet::default(),
+                                    origin: IntraFuncUseOrigin::Other,
+                                });
+                            }
+                            CustomInst::PopInlinedCallFrame => {
+                                match self.use_stack.last() {
+                                    Some(UseOrigin::IntraFunc { special_func, .. }) => {
+                                        if let Some(SpecialFunc::Inlined { .. }) = special_func {
+                                            self.use_stack.pop().unwrap();
+                                            // Undo what `PushInlinedCallFrame` did to the
+                                            // original `UseOrigin::IntraFunc`.
+                                            replace_origin(self, IntraFuncUseOrigin::Other);
+                                        } else {
+                                            // HACK(eddyb) synthesize a diagnostic to report right away.
+                                            self.report_from_attrs(
+                                                AttrSet::default().append_diag(
+                                                    self.cx,
+                                                    Diag::bug([
+                                                        "`PopInlinedCallFrame` without an \
+                                                             inlined call frame in `use_stack`"
+                                                            .into(),
+                                                    ]),
+                                                ),
+                                            );
+                                        }
+                                    }
+                                    _ => unreachable!(),
+                                }
+                            }
+                            CustomInst::Abort { .. } => {}
+                        },
                     }
                 }
             }

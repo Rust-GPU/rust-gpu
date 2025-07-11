@@ -56,10 +56,10 @@ pub fn remove_duplicate_ext_inst_imports(module: &mut Module) {
 
     // Then rewrite all OpExtInst referencing the rewritten IDs
     for inst in module.all_inst_iter_mut() {
-        if inst.class.opcode == Op::ExtInst {
-            if let Operand::IdRef(ref mut id) = inst.operands[0] {
-                *id = rewrite_rules.get(id).copied().unwrap_or(*id);
-            }
+        if inst.class.opcode == Op::ExtInst
+            && let Operand::IdRef(ref mut id) = inst.operands[0]
+        {
+            *id = rewrite_rules.get(id).copied().unwrap_or(*id);
         }
     }
 }
@@ -201,11 +201,11 @@ pub fn remove_duplicate_types(module: &mut Module) {
     let names = gather_names(&module.debug_names);
 
     for inst in &mut module.types_global_values {
-        if inst.class.opcode == Op::TypeForwardPointer {
-            if let Operand::IdRef(id) = inst.operands[0] {
-                unresolved_forward_pointers.insert(id);
-                continue;
-            }
+        if inst.class.opcode == Op::TypeForwardPointer
+            && let Operand::IdRef(id) = inst.operands[0]
+        {
+            unresolved_forward_pointers.insert(id);
+            continue;
         }
         if inst.class.opcode == Op::TypePointer
             && unresolved_forward_pointers.contains(&inst.result_id.unwrap())
@@ -401,11 +401,12 @@ pub fn remove_duplicate_debuginfo(module: &mut Module) {
                             // as it needs to reset callee-side `DbgLocInst`,
                             // but we can replace it in-place and hope later
                             // it get nop'd out by some real `DbgLocInst`.
-                            insts[inst_idx]
-                                .operands
-                                .splice(1.., [Operand::LiteralExtInstInteger(
+                            insts[inst_idx].operands.splice(
+                                1..,
+                                [Operand::LiteralExtInstInteger(
                                     CustomOp::ClearDebugSrcLoc as u32,
-                                )]);
+                                )],
+                            );
                             dbg = DbgState {
                                 loc: Some(DbgLocInst {
                                     inst_idx,

@@ -63,9 +63,14 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
 
         custom_ext_inst_set_import: custom_ext_inst_set_import.unwrap_or_else(|| {
             let id = next_id(header);
-            let inst = Instruction::new(Op::ExtInstImport, None, Some(id), vec![
-                Operand::LiteralString(custom_insts::CUSTOM_EXT_INST_SET.to_string()),
-            ]);
+            let inst = Instruction::new(
+                Op::ExtInstImport,
+                None,
+                Some(id),
+                vec![Operand::LiteralString(
+                    custom_insts::CUSTOM_EXT_INST_SET.to_string(),
+                )],
+            );
             module.ext_inst_imports.push(inst);
             id
         }),
@@ -505,13 +510,13 @@ impl Inliner<'_, '_> {
         // AFAIK there is no case where keeping decorations on inline wouldn't be valid.
         for annotation_idx in 0..self.annotations.len() {
             let inst = &self.annotations[annotation_idx];
-            if let [Operand::IdRef(target), ..] = inst.operands[..] {
-                if let Some(&rewritten_target) = rewrite_rules.get(&target) {
-                    // Copy decoration instruction and push it.
-                    let mut cloned_inst = inst.clone();
-                    cloned_inst.operands[0] = Operand::IdRef(rewritten_target);
-                    self.annotations.push(cloned_inst);
-                }
+            if let [Operand::IdRef(target), ..] = inst.operands[..]
+                && let Some(&rewritten_target) = rewrite_rules.get(&target)
+            {
+                // Copy decoration instruction and push it.
+                let mut cloned_inst = inst.clone();
+                cloned_inst.operands[0] = Operand::IdRef(rewritten_target);
+                self.annotations.push(cloned_inst);
             }
         }
     }
@@ -659,10 +664,10 @@ impl Inliner<'_, '_> {
             // HACK(eddyb) new IDs should be generated earlier, to avoid pushing
             // callee IDs to `call_result_phi.operands` only to rewrite them here.
             for op in &mut call_result_phi.operands {
-                if let Some(id) = op.id_ref_any_mut() {
-                    if let Some(&rewrite) = rewrite_rules.get(id) {
-                        *id = rewrite;
-                    }
+                if let Some(id) = op.id_ref_any_mut()
+                    && let Some(&rewrite) = rewrite_rules.get(id)
+                {
+                    *id = rewrite;
                 }
             }
 
@@ -694,10 +699,10 @@ impl Inliner<'_, '_> {
                 };
                 for reaching_inst in reaching_insts {
                     for op in &mut reaching_inst.operands {
-                        if let Some(id) = op.id_ref_any_mut() {
-                            if *id == call_result_id {
-                                *id = returned_value_id;
-                            }
+                        if let Some(id) = op.id_ref_any_mut()
+                            && *id == call_result_id
+                        {
+                            *id = returned_value_id;
                         }
                     }
                 }
@@ -921,10 +926,12 @@ impl Inliner<'_, '_> {
             .entry(callee_name)
             .or_insert_with(|| {
                 let id = next_id(self.header);
-                self.debug_string_source
-                    .push(Instruction::new(Op::String, None, Some(id), vec![
-                        Operand::LiteralString(callee_name.to_string()),
-                    ]));
+                self.debug_string_source.push(Instruction::new(
+                    Op::String,
+                    None,
+                    Some(id),
+                    vec![Operand::LiteralString(callee_name.to_string())],
+                ));
                 id
             });
         let mut mk_debuginfo_prefix_and_suffix = || {

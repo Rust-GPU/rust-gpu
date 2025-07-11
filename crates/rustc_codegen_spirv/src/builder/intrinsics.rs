@@ -17,8 +17,6 @@ use rustc_middle::ty::{FnDef, Instance, Ty, TyKind, TypingEnv};
 use rustc_middle::{bug, ty};
 use rustc_span::Span;
 use rustc_span::sym;
-use rustc_target::abi::call::{FnAbi, PassMode};
-use std::assert_matches::assert_matches;
 
 fn int_type_width_signed(ty: Ty<'_>, cx: &CodegenCx<'_>) -> Option<(u64, bool)> {
     match ty.kind() {
@@ -46,16 +44,10 @@ impl Builder<'_, '_> {
             ),
         };
         let int_ty = SpirvType::Integer(width, false).def(self.span(), self);
-        let (mask_sign, mask_value) = match width {
-            32 => (
-                self.constant_u32(self.span(), 1 << 31),
-                self.constant_u32(self.span(), u32::MAX >> 1),
-            ),
-            64 => (
-                self.constant_u64(self.span(), 1 << 63),
-                self.constant_u64(self.span(), u64::MAX >> 1),
-            ),
-            _ => bug!("copysign must have width 32 or 64, not {}", width),
+        let [mask_sign, mask_value] = {
+            let sign_bit = 1u128.checked_shl(width - 1).unwrap();
+            let value_mask = sign_bit - 1;
+            [sign_bit, value_mask].map(|v| self.constant_int(int_ty, v))
         };
         let val_bits = self.bitcast(val, int_ty);
         let sign_bits = self.bitcast(sign, int_ty);
@@ -70,9 +62,8 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     fn codegen_intrinsic_call(
         &mut self,
         instance: Instance<'tcx>,
-        fn_abi: &FnAbi<'tcx, Ty<'tcx>>,
         args: &[OperandRef<'tcx, Self::Value>],
-        llresult: Self::Value,
+        result: PlaceRef<'tcx, Self::Value>,
         _span: Span,
     ) -> Result<(), ty::Instance<'tcx>> {
         let callee_ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
@@ -90,7 +81,6 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         let name = self.tcx.item_name(def_id);
 
         let ret_ty = self.layout_of(sig.output()).spirv_type(self.span(), self);
-        let result = PlaceRef::new_sized(llresult, fn_abi.ret.layout);
 
         let value = match name {
             sym::likely | sym::unlikely => {
@@ -100,7 +90,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 
             sym::breakpoint => {
                 self.abort();
-                assert!(fn_abi.ret.is_ignore());
+                assert!(result.layout.ty.is_unit());
                 return Ok(());
             }
 
@@ -119,7 +109,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
             | sym::prefetch_read_instruction
             | sym::prefetch_write_instruction => {
                 // ignore
-                assert!(fn_abi.ret.is_ignore());
+                assert!(result.layout.ty.is_unit());
                 return Ok(());
             }
 
@@ -154,53 +144,83 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 result
             }
 
-            sym::sqrtf32 | sym::sqrtf64 => self.gl_op(GLOp::Sqrt, ret_ty, [args[0].immediate()]),
-            sym::powif32 | sym::powif64 => {
+            sym::sqrtf32 | sym::sqrtf64 | sym::sqrtf128 => {
+                self.gl_op(GLOp::Sqrt, ret_ty, [args[0].immediate()])
+            }
+            sym::powif32 | sym::powif64 | sym::powif128 => {
                 let float = self.sitofp(args[1].immediate(), args[0].immediate().ty);
                 self.gl_op(GLOp::Pow, ret_ty, [args[0].immediate(), float])
             }
-            sym::sinf32 | sym::sinf64 => self.gl_op(GLOp::Sin, ret_ty, [args[0].immediate()]),
-            sym::cosf32 | sym::cosf64 => self.gl_op(GLOp::Cos, ret_ty, [args[0].immediate()]),
-            sym::powf32 | sym::powf64 => self.gl_op(GLOp::Pow, ret_ty, [
-                args[0].immediate(),
-                args[1].immediate(),
-            ]),
-            sym::expf32 | sym::expf64 => self.gl_op(GLOp::Exp, ret_ty, [args[0].immediate()]),
-            sym::exp2f32 | sym::exp2f64 => self.gl_op(GLOp::Exp2, ret_ty, [args[0].immediate()]),
-            sym::logf32 | sym::logf64 => self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()]),
-            sym::log2f32 | sym::log2f64 => self.gl_op(GLOp::Log2, ret_ty, [args[0].immediate()]),
-            sym::log10f32 | sym::log10f64 => {
+            sym::sinf32 | sym::sinf64 | sym::sinf128 => {
+                self.gl_op(GLOp::Sin, ret_ty, [args[0].immediate()])
+            }
+            sym::cosf32 | sym::cosf64 | sym::cosf128 => {
+                self.gl_op(GLOp::Cos, ret_ty, [args[0].immediate()])
+            }
+            sym::powf32 | sym::powf64 | sym::powf128 => self.gl_op(
+                GLOp::Pow,
+                ret_ty,
+                [args[0].immediate(), args[1].immediate()],
+            ),
+            sym::expf32 | sym::expf64 | sym::expf128 => {
+                self.gl_op(GLOp::Exp, ret_ty, [args[0].immediate()])
+            }
+            sym::exp2f32 | sym::exp2f64 | sym::exp2f128 => {
+                self.gl_op(GLOp::Exp2, ret_ty, [args[0].immediate()])
+            }
+            sym::logf32 | sym::logf64 | sym::logf128 => {
+                self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()])
+            }
+            sym::log2f32 | sym::log2f64 | sym::log2f128 => {
+                self.gl_op(GLOp::Log2, ret_ty, [args[0].immediate()])
+            }
+            sym::log10f32 | sym::log10f64 | sym::log10f128 => {
                 // spir-v glsl doesn't have log10, so,
                 // log10(x) == (1 / ln(10)) * ln(x)
                 let mul = self.constant_float(args[0].immediate().ty, 1.0 / 10.0f64.ln());
                 let ln = self.gl_op(GLOp::Log, ret_ty, [args[0].immediate()]);
                 self.fmul(mul, ln)
             }
-            sym::fmaf32 | sym::fmaf64 => self.gl_op(GLOp::Fma, ret_ty, [
-                args[0].immediate(),
-                args[1].immediate(),
-                args[2].immediate(),
-            ]),
-            sym::fabsf32 | sym::fabsf64 => self.gl_op(GLOp::FAbs, ret_ty, [args[0].immediate()]),
-            sym::minnumf32 | sym::minnumf64 => self.gl_op(GLOp::FMin, ret_ty, [
-                args[0].immediate(),
-                args[1].immediate(),
-            ]),
-            sym::maxnumf32 | sym::maxnumf64 => self.gl_op(GLOp::FMax, ret_ty, [
-                args[0].immediate(),
-                args[1].immediate(),
-            ]),
-            sym::copysignf32 | sym::copysignf64 => {
+            sym::fmaf32 | sym::fmaf64 | sym::fmaf128 => self.gl_op(
+                GLOp::Fma,
+                ret_ty,
+                [
+                    args[0].immediate(),
+                    args[1].immediate(),
+                    args[2].immediate(),
+                ],
+            ),
+            sym::fabsf32 | sym::fabsf64 | sym::fabsf128 => {
+                self.gl_op(GLOp::FAbs, ret_ty, [args[0].immediate()])
+            }
+            sym::minnumf32 | sym::minnumf64 | sym::minnumf128 => self.gl_op(
+                GLOp::FMin,
+                ret_ty,
+                [args[0].immediate(), args[1].immediate()],
+            ),
+            sym::maxnumf32 | sym::maxnumf64 | sym::maxnumf128 => self.gl_op(
+                GLOp::FMax,
+                ret_ty,
+                [args[0].immediate(), args[1].immediate()],
+            ),
+            sym::copysignf32 | sym::copysignf64 | sym::copysignf128 => {
                 let val = args[0].immediate();
                 let sign = args[1].immediate();
                 self.copysign(val, sign)
             }
-            sym::floorf32 | sym::floorf64 => self.gl_op(GLOp::Floor, ret_ty, [args[0].immediate()]),
-            sym::ceilf32 | sym::ceilf64 => self.gl_op(GLOp::Ceil, ret_ty, [args[0].immediate()]),
-            sym::truncf32 | sym::truncf64 => self.gl_op(GLOp::Trunc, ret_ty, [args[0].immediate()]),
-            // TODO: Correctness of all these rounds
-            sym::rintf32 | sym::rintf64 => self.gl_op(GLOp::Round, ret_ty, [args[0].immediate()]),
-            sym::nearbyintf32 | sym::nearbyintf64 | sym::roundf32 | sym::roundf64 => {
+            sym::floorf32 | sym::floorf64 | sym::floorf128 => {
+                self.gl_op(GLOp::Floor, ret_ty, [args[0].immediate()])
+            }
+            sym::ceilf32 | sym::ceilf64 | sym::ceilf128 => {
+                self.gl_op(GLOp::Ceil, ret_ty, [args[0].immediate()])
+            }
+            sym::truncf32 | sym::truncf64 | sym::truncf128 => {
+                self.gl_op(GLOp::Trunc, ret_ty, [args[0].immediate()])
+            }
+            sym::round_ties_even_f32 | sym::round_ties_even_f64 | sym::round_ties_even_f128 => {
+                self.gl_op(GLOp::RoundEven, ret_ty, [args[0].immediate()])
+            }
+            sym::roundf32 | sym::roundf64 | sym::roundf128 => {
                 self.gl_op(GLOp::Round, ret_ty, [args[0].immediate()])
             }
 
@@ -310,12 +330,18 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 
             _ => {
                 // Call the fallback body instead of generating the intrinsic code
-                return Err(ty::Instance::new(instance.def_id(), instance.args));
+                return Err(ty::Instance::new_raw(instance.def_id(), instance.args));
             }
         };
 
-        if !fn_abi.ret.is_ignore() {
-            assert_matches!(fn_abi.ret.mode, PassMode::Direct(_) | PassMode::Pair(..));
+        if result.layout.ty.is_bool() {
+            let val = self.from_immediate(value);
+            self.store_to_place(val, result.val);
+        } else if !result.layout.ty.is_unit() {
+            // FIXME(eddyb) upstream uses `self.store_to_place(value, result.val);`,
+            // which AFAICT does not handle packed pairs explicitly, meaning it
+            // can/will store e.g. LLVM `{A, B}` values, which is legal (in LLVM),
+            // but seems suboptimal (or even risky with e.g. layout randomization).
             OperandRef::from_immediate_or_packed_pair(self, value, result.layout)
                 .val
                 .store(self, result);
@@ -327,17 +353,13 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         self.abort_with_kind_and_message_debug_printf("abort", "intrinsics::abort() called", []);
     }
 
-    fn assume(&mut self, _val: Self::Value) {
-        // TODO: llvm.assume
-    }
+    // FIXME(eddyb) `assume` is not implemented atm, so all of its forms should
+    // avoid computing its (potentially illegal) bool input in the first place.
+    fn assume(&mut self, _val: Self::Value) {}
 
     fn expect(&mut self, cond: Self::Value, _expected: bool) -> Self::Value {
         // TODO: llvm.expect
         cond
-    }
-
-    fn type_test(&mut self, _pointer: Self::Value, _typeid: Self::Metadata) -> Self::Value {
-        todo!()
     }
 
     fn type_checked_load(
@@ -483,9 +505,13 @@ impl Builder<'_, '_> {
                     if trailing {
                         let lsb = self
                             .emit()
-                            .ext_inst(u32, None, glsl, GLOp::FindILsb as u32, [Operand::IdRef(
-                                arg,
-                            )])
+                            .ext_inst(
+                                u32,
+                                None,
+                                glsl,
+                                GLOp::FindILsb as u32,
+                                [Operand::IdRef(arg)],
+                            )
                             .unwrap();
                         if offset == 0 {
                             lsb
@@ -497,9 +523,13 @@ impl Builder<'_, '_> {
                         // rust is always unsigned, so FindUMsb
                         let msb_bit = self
                             .emit()
-                            .ext_inst(u32, None, glsl, GLOp::FindUMsb as u32, [Operand::IdRef(
-                                arg,
-                            )])
+                            .ext_inst(
+                                u32,
+                                None,
+                                glsl,
+                                GLOp::FindUMsb as u32,
+                                [Operand::IdRef(arg)],
+                            )
                             .unwrap();
                         // the glsl op returns the Msb bit, not the amount of leading zeros of this u32
                         // leading zeros = 31 - Msb bit
@@ -605,18 +635,21 @@ impl Builder<'_, '_> {
         // so the best thing we can do is use our own custom instruction.
         let kind_id = self.emit().string(kind);
         let message_debug_printf_fmt_str_id = self.emit().string(message_debug_printf_fmt_str);
-        self.custom_inst(void_ty, CustomInst::Abort {
-            kind: Operand::IdRef(kind_id),
-            message_debug_printf: [message_debug_printf_fmt_str_id]
-                .into_iter()
-                .chain(
-                    message_debug_printf_args
-                        .into_iter()
-                        .map(|arg| arg.def(self)),
-                )
-                .map(Operand::IdRef)
-                .collect(),
-        });
+        self.custom_inst(
+            void_ty,
+            CustomInst::Abort {
+                kind: Operand::IdRef(kind_id),
+                message_debug_printf: [message_debug_printf_fmt_str_id]
+                    .into_iter()
+                    .chain(
+                        message_debug_printf_args
+                            .into_iter()
+                            .map(|arg| arg.def(self)),
+                    )
+                    .map(Operand::IdRef)
+                    .collect(),
+            },
+        );
         self.unreachable();
 
         // HACK(eddyb) we still need an active block in case the user of this
