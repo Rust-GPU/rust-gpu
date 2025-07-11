@@ -246,20 +246,20 @@ impl Builder<'_, '_> {
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Log1p) => {
                 assert_eq!(args.len(), 1);
                 let one = self.constant_float(args[0].ty, 1.0);
-                let add = self.add(args[0], one);
+                let add = self.fadd(args[0], one);
                 self.gl_op(GLOp::Log, result_type, [add])
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Exp10) => {
                 assert_eq!(args.len(), 1);
                 // exp10(x) == exp(x * log(10));
                 let log10 = self.constant_float(args[0].ty, 10.0f64.ln());
-                let mul = self.mul(args[0], log10);
+                let mul = self.fmul(args[0], log10);
                 self.gl_op(GLOp::Exp, result_type, [mul])
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Expm1) => {
                 let exp = self.gl_op(GLOp::Exp, args[0].ty, [args[0]]);
                 let one = self.constant_float(exp.ty, 1.0);
-                self.sub(exp, one)
+                self.fsub(exp, one)
             }
             LibmIntrinsic::Custom(LibmCustomIntrinsic::Erf) => {
                 self.undef_zombie(result_type, "Erf not supported yet")
