@@ -54,13 +54,25 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             match self.lookup_type(val.ty) {
                 SpirvType::Integer(bits, signed) => {
                     let size = Size::from_bits(bits);
-                    Some(if signed {
-                        ConstValue::Signed(size.sign_extend(x))
+                    // ensure the u128 constant didn't overflow and const-folding isn't hiding issues
+                    if x == size.truncate(x) {
+                        Some(if signed {
+                            ConstValue::Signed(size.sign_extend(x))
+                        } else {
+                            ConstValue::Unsigned(size.truncate(x))
+                        })
                     } else {
-                        ConstValue::Unsigned(size.truncate(x))
-                    })
+                        None
+                    }
                 }
-                SpirvType::Bool => Some(ConstValue::Bool(x != 0)),
+                SpirvType::Bool => {
+                    match x {
+                        0 => Some(ConstValue::Bool(false)),
+                        1 => Some(ConstValue::Bool(true)),
+                        // ensure const-folding isn't hiding issues
+                        _ => None,
+                    }
+                }
                 _ => None,
             }
         } else {
