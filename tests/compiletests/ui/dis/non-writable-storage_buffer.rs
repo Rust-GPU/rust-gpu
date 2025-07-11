@@ -18,6 +18,7 @@
 // ignore-vulkan1.2
 // ignore-vulkan1.3
 // ignore-vulkan1.4
+// ignore-naga
 
 use spirv_std::spirv;
 

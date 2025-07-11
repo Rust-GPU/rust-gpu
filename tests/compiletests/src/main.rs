@@ -140,7 +140,7 @@ impl Runner {
             .environments()
             .flat_map(|target| VARIATIONS.iter().map(move |variation| (target, variation)))
         {
-            let target = if target.contains("-") {
+            let target = if target.starts_with("spirv-unknown-") {
                 SpirvTargetEnv::parse_triple(target)
             } else {
                 SpirvTargetEnv::parse_triple(&format!("spirv-unknown-{target}"))
