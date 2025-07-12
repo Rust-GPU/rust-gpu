@@ -27,24 +27,29 @@ pub fn main_cs(
         let mut result = shared[lid];
 
         // Different threads perform different operations
-        if lid % 4 == 0 {
-            // Read from neighboring thread's data
-            if lid + 1 < 64 {
-                result += shared[lid + 1];
+        match lid % 4 {
+            0 => {
+                // Read from neighboring thread's data
+                if lid + 1 < 64 {
+                    result += shared[lid + 1];
+                }
             }
-        } else if lid % 4 == 1 {
-            // Read from previous thread's data
-            if lid > 0 {
-                result += shared[lid - 1];
+            1 => {
+                // Read from previous thread's data
+                if lid > 0 {
+                    result += shared[lid - 1];
+                }
             }
-        } else if lid % 4 == 2 {
-            // Sum reduction within groups of 4
-            if lid + 2 < 64 {
-                result = shared[lid] + shared[lid + 1] + shared[lid + 2];
+            2 => {
+                // Sum reduction within groups of 4
+                if lid + 2 < 64 {
+                    result = shared[lid] + shared[lid + 1] + shared[lid + 2];
+                }
             }
-        } else {
-            // XOR with wrapped neighbor
-            result ^= shared[(lid + 32) % 64];
+            _ => {
+                // XOR with wrapped neighbor
+                result ^= shared[(lid + 32) % 64];
+            }
         }
 
         // Another barrier before writing back

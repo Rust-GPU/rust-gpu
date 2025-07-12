@@ -1,10 +1,9 @@
-#[cfg(not(target_arch = "spirv"))]
-fn main() {
-    use difftest::config::Config;
-    use difftest::scaffold::compute::{
-        BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTestMultiBuffer,
-    };
+use difftest::config::Config;
+use difftest::scaffold::compute::{
+    BufferConfig, BufferUsage, RustComputeShader, WgpuComputeTestMultiBuffer,
+};
 
+fn main() {
     let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
 
     // Initialize counter buffer with test values
@@ -32,6 +31,3 @@ fn main() {
 
     test.run_test(&config).unwrap();
 }
-
-#[cfg(target_arch = "spirv")]
-fn main() {}
