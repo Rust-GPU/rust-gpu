@@ -98,7 +98,7 @@ The library provides helper types for common test patterns:
 - `WgpuComputeTest` - Single buffer compute shader test
 - `WgpuComputeTestMultiBuffer` - Multi-buffer compute shader test with input/output
   separation
-- `WgpuComputeTestPushConstant` - Compute shader test with push constants support
+- `WgpuComputeTestPushConstants` - Compute shader test with push constants support
 - `Skip` - Marks a test variant as skipped with a reason
 
 **Shader source types:**
@@ -115,7 +115,7 @@ For examples, see:
 
 - [`tests/lang/core/ops/math_ops/`](tests/lang/core/ops/math_ops/) - Multi-buffer test
   with floating-point metadata
-- [`tests/storage_class/push_constant/`](tests/storage_class/push_constant/) - Push
+- [`tests/arch/push_constants/`](tests/arch/push_constants/) - Push
   constants usage
 - [`tests/arch/workgroup_memory/`](tests/arch/workgroup_memory/) - Workgroup memory
   usage
