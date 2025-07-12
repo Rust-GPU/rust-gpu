@@ -18,8 +18,15 @@ use super::backend::{self, ComputeBackend};
 pub type BufferConfig = backend::BufferConfig;
 pub type BufferUsage = backend::BufferUsage;
 
-/// Trait that creates a shader module and provides its entry point.
-pub trait ComputeShader {
+/// Trait for shaders that can provide SPIRV bytes.
+pub trait SpirvShader {
+    /// Returns the SPIRV bytes and entry point name.
+    fn spirv_bytes(&self) -> anyhow::Result<(Vec<u8>, String)>;
+}
+
+/// Trait for shaders that can create wgpu modules.
+pub trait WgpuShader {
+    /// Creates a wgpu shader module.
     fn create_module(
         &self,
         device: &wgpu::Device,
@@ -29,25 +36,46 @@ pub trait ComputeShader {
 /// A compute shader written in Rust compiled with spirv-builder.
 pub struct RustComputeShader {
     pub path: PathBuf,
+    pub target: String,
+    pub capabilities: Vec<spirv_builder::Capability>,
 }
 
 impl RustComputeShader {
     pub fn new<P: Into<PathBuf>>(path: P) -> Self {
-        Self { path: path.into() }
+        Self {
+            path: path.into(),
+            target: "spirv-unknown-vulkan1.1".to_string(),
+            capabilities: Vec::new(),
+        }
+    }
+
+    pub fn with_target<P: Into<PathBuf>>(path: P, target: impl Into<String>) -> Self {
+        Self {
+            path: path.into(),
+            target: target.into(),
+            capabilities: Vec::new(),
+        }
+    }
+
+    pub fn with_capability(mut self, capability: spirv_builder::Capability) -> Self {
+        self.capabilities.push(capability);
+        self
     }
 }
 
-impl ComputeShader for RustComputeShader {
-    fn create_module(
-        &self,
-        device: &wgpu::Device,
-    ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)> {
-        let builder = SpirvBuilder::new(&self.path, "spirv-unknown-vulkan1.1")
+impl SpirvShader for RustComputeShader {
+    fn spirv_bytes(&self) -> anyhow::Result<(Vec<u8>, String)> {
+        let mut builder = SpirvBuilder::new(&self.path, &self.target)
             .print_metadata(spirv_builder::MetadataPrintout::None)
             .release(true)
             .multimodule(false)
             .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::SilentExit)
             .preserve_bindings(true);
+
+        for capability in &self.capabilities {
+            builder = builder.capability(*capability);
+        }
+
         let artifact = builder.build().context("SpirvBuilder::build() failed")?;
 
         if artifact.entry_points.len() != 1 {
@@ -65,6 +93,17 @@ impl ComputeShader for RustComputeShader {
                 anyhow::bail!("MultiModule modules produced");
             }
         };
+
+        Ok((shader_bytes, entry_point))
+    }
+}
+
+impl WgpuShader for RustComputeShader {
+    fn create_module(
+        &self,
+        device: &wgpu::Device,
+    ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)> {
+        let (shader_bytes, entry_point) = self.spirv_bytes()?;
 
         if shader_bytes.len() % 4 != 0 {
             anyhow::bail!("SPIR-V binary length is not a multiple of 4");
@@ -93,7 +132,7 @@ impl WgslComputeShader {
     }
 }
 
-impl ComputeShader for WgslComputeShader {
+impl WgpuShader for WgslComputeShader {
     fn create_module(
         &self,
         device: &wgpu::Device,
@@ -133,7 +172,7 @@ pub struct WgpuComputeTestPushConstants<S> {
 
 impl<S> WgpuComputeTest<S>
 where
-    S: ComputeShader,
+    S: WgpuShader,
 {
     pub fn new(shader: S, dispatch: [u32; 3], output_bytes: u64) -> Self {
         Self {
@@ -544,7 +583,7 @@ impl Default for RustComputeShader {
 
 impl<S> WgpuComputeTestMultiBuffer<S>
 where
-    S: ComputeShader,
+    S: WgpuShader,
 {
     pub fn new(shader: S, dispatch: [u32; 3], buffers: Vec<BufferConfig>) -> Self {
         Self {
@@ -714,7 +753,7 @@ where
 
 impl<S> WgpuComputeTestPushConstants<S>
 where
-    S: ComputeShader,
+    S: WgpuShader,
 {
     pub fn new(
         shader: S,

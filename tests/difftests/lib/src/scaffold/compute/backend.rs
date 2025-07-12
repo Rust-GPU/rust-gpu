@@ -17,12 +17,14 @@ pub enum BufferUsage {
     Uniform,
 }
 
+use super::SpirvShader;
+
 /// A generic trait for compute backends
 pub trait ComputeBackend: Sized {
     /// Initialize the backend
     fn init() -> Result<Self>;
 
-    /// Create and run a compute shader with multiple buffers
+    /// Create and run a compute shader with multiple buffers from raw SPIRV bytes
     fn run_compute(
         &self,
         spirv_bytes: &[u8],
@@ -30,6 +32,17 @@ pub trait ComputeBackend: Sized {
         dispatch: [u32; 3],
         buffers: Vec<BufferConfig>,
     ) -> Result<Vec<Vec<u8>>>;
+
+    /// Create and run a compute shader with multiple buffers from a shader object
+    fn run_compute_shader<S: SpirvShader>(
+        &self,
+        shader: &S,
+        dispatch: [u32; 3],
+        buffers: Vec<BufferConfig>,
+    ) -> Result<Vec<Vec<u8>>> {
+        let (spirv_bytes, entry_point) = shader.spirv_bytes()?;
+        self.run_compute(&spirv_bytes, &entry_point, dispatch, buffers)
+    }
 }
 
 /// A compute test that can run on any backend
@@ -64,6 +77,46 @@ impl<B: ComputeBackend> ComputeTest<B> {
             self.dispatch,
             self.buffers,
         )
+    }
+
+    pub fn run_test(self, config: &Config) -> Result<()> {
+        let buffers = self.buffers.clone();
+        let outputs = self.run()?;
+        // Write the first storage buffer output to the file
+        for (output, buffer_config) in outputs.iter().zip(&buffers) {
+            if matches!(buffer_config.usage, BufferUsage::Storage) && !output.is_empty() {
+                use std::fs::File;
+                use std::io::Write;
+                let mut f = File::create(&config.output_path)?;
+                f.write_all(output)?;
+                return Ok(());
+            }
+        }
+        anyhow::bail!("No storage buffer output found")
+    }
+}
+
+/// A compute test that can run on any backend using a shader object
+pub struct ComputeShaderTest<B: ComputeBackend, S: SpirvShader> {
+    backend: B,
+    shader: S,
+    dispatch: [u32; 3],
+    buffers: Vec<BufferConfig>,
+}
+
+impl<B: ComputeBackend, S: SpirvShader> ComputeShaderTest<B, S> {
+    pub fn new(shader: S, dispatch: [u32; 3], buffers: Vec<BufferConfig>) -> Result<Self> {
+        Ok(Self {
+            backend: B::init()?,
+            shader,
+            dispatch,
+            buffers,
+        })
+    }
+
+    pub fn run(self) -> Result<Vec<Vec<u8>>> {
+        self.backend
+            .run_compute_shader(&self.shader, self.dispatch, self.buffers)
     }
 
     pub fn run_test(self, config: &Config) -> Result<()> {
