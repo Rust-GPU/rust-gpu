@@ -3,8 +3,8 @@ mod backend;
 mod wgpu;
 
 pub use ash::AshBackend;
-pub use backend::{BufferConfig, BufferUsage, ComputeBackend, ComputeTest};
+pub use backend::{BufferConfig, BufferUsage, ComputeBackend, ComputeShaderTest, ComputeTest};
 pub use wgpu::{
-    RustComputeShader, WgpuBackend, WgpuComputeTest, WgpuComputeTestMultiBuffer,
-    WgpuComputeTestPushConstants, WgslComputeShader,
+    RustComputeShader, SpirvShader, WgpuBackend, WgpuComputeTest, WgpuComputeTestMultiBuffer,
+    WgpuComputeTestPushConstants, WgpuShader, WgslComputeShader,
 };
