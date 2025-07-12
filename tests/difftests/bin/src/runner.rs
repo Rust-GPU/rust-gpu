@@ -91,7 +91,7 @@ struct ErrorReport {
 impl ErrorReport {
     fn new(test_info: TestInfo, differ_name: &'static str, epsilon: Option<f32>) -> Self {
         let epsilon_str = match epsilon {
-            Some(e) => format!(", ε={}", e),
+            Some(e) => format!(", ε={e}"),
             None => String::new(),
         };
         Self {
@@ -106,7 +106,7 @@ impl ErrorReport {
             self.summary_parts
                 .push(format!("{} differences", differences.len()));
 
-            if let Some((max_diff, max_rel)) = self.calculate_max_differences(differences) {
+            if let Some((max_diff, max_rel)) = Self::calculate_max_differences(differences) {
                 self.summary_parts
                     .push(format!("max: {:.3e} ({:.2}%)", max_diff, max_rel * 100.0));
             }
@@ -114,8 +114,7 @@ impl ErrorReport {
     }
 
     fn set_distinct_outputs(&mut self, count: usize) {
-        self.summary_parts
-            .push(format!("{} distinct outputs", count));
+        self.summary_parts.push(format!("{count} distinct outputs"));
     }
 
     fn add_output_files(
@@ -159,7 +158,7 @@ impl ErrorReport {
 
     fn add_summary_line(&mut self, differences: &[Difference]) {
         if !differences.is_empty() {
-            if let Some((max_diff, max_rel)) = self.calculate_max_differences(differences) {
+            if let Some((max_diff, max_rel)) = Self::calculate_max_differences(differences) {
                 self.lines.push(format!(
                     "• {} differences, max: {:.3e} ({:.2}%)",
                     differences.len(),
@@ -173,7 +172,7 @@ impl ErrorReport {
         }
     }
 
-    fn calculate_max_differences(&self, differences: &[Difference]) -> Option<(f64, f64)> {
+    fn calculate_max_differences(differences: &[Difference]) -> Option<(f64, f64)> {
         let max_diff = differences
             .iter()
             .filter_map(|d| match &d.absolute_diff {
@@ -369,8 +368,7 @@ impl Runner {
                             error!("Failed to parse metadata for package '{}'", pkg_name);
                             return Err(RunnerError::Config {
                                 msg: format!(
-                                    "Failed to parse metadata for package '{}': {}",
-                                    pkg_name, e
+                                    "Failed to parse metadata for package '{pkg_name}': {e}"
                                 ),
                             });
                         }
@@ -472,7 +470,7 @@ impl Runner {
             let mut found_group = false;
 
             for (group_output, group) in groups.iter_mut() {
-                if self.outputs_match(&po.output, group_output, epsilon, output_type) {
+                if Self::outputs_match(&po.output, group_output, epsilon, output_type) {
                     group.push(po);
                     found_group = true;
                     break;
@@ -488,7 +486,6 @@ impl Runner {
     }
 
     fn outputs_match(
-        &self,
         output1: &[u8],
         output2: &[u8],
         epsilon: Option<f32>,
@@ -862,19 +859,25 @@ mod tests {
 
     #[test]
     fn test_outputs_match_no_epsilon() {
-        let runner = Runner::new(PathBuf::from("dummy_base"));
-
         // Exact match should work
-        assert!(runner.outputs_match(b"hello", b"hello", None, OutputType::Raw));
+        assert!(Runner::outputs_match(
+            b"hello",
+            b"hello",
+            None,
+            OutputType::Raw
+        ));
 
         // Different content should not match
-        assert!(!runner.outputs_match(b"hello", b"world", None, OutputType::Raw));
+        assert!(!Runner::outputs_match(
+            b"hello",
+            b"world",
+            None,
+            OutputType::Raw
+        ));
     }
 
     #[test]
     fn test_outputs_match_with_epsilon_f32() {
-        let runner = Runner::new(PathBuf::from("dummy_base"));
-
         // Prepare test data - two floats with small difference
         let val1: f32 = 1.0;
         let val2: f32 = 1.00001;
@@ -884,19 +887,32 @@ mod tests {
         let bytes2 = bytemuck::cast_slice(&arr2);
 
         // Should not match without epsilon
-        assert!(!runner.outputs_match(bytes1, bytes2, None, OutputType::F32));
+        assert!(!Runner::outputs_match(
+            bytes1,
+            bytes2,
+            None,
+            OutputType::F32
+        ));
 
         // Should match with sufficient epsilon
-        assert!(runner.outputs_match(bytes1, bytes2, Some(0.0001), OutputType::F32));
+        assert!(Runner::outputs_match(
+            bytes1,
+            bytes2,
+            Some(0.0001),
+            OutputType::F32
+        ));
 
         // Should not match with too small epsilon
-        assert!(!runner.outputs_match(bytes1, bytes2, Some(0.000001), OutputType::F32));
+        assert!(!Runner::outputs_match(
+            bytes1,
+            bytes2,
+            Some(0.000001),
+            OutputType::F32
+        ));
     }
 
     #[test]
     fn test_outputs_match_with_epsilon_f64() {
-        let runner = Runner::new(PathBuf::from("dummy_base"));
-
         // Prepare test data - two doubles with small difference
         let val1: f64 = 1.0;
         let val2: f64 = 1.00001;
@@ -906,13 +922,28 @@ mod tests {
         let bytes2 = bytemuck::cast_slice(&arr2);
 
         // Should not match without epsilon
-        assert!(!runner.outputs_match(bytes1, bytes2, None, OutputType::F64));
+        assert!(!Runner::outputs_match(
+            bytes1,
+            bytes2,
+            None,
+            OutputType::F64
+        ));
 
         // Should match with sufficient epsilon
-        assert!(runner.outputs_match(bytes1, bytes2, Some(0.0001), OutputType::F64));
+        assert!(Runner::outputs_match(
+            bytes1,
+            bytes2,
+            Some(0.0001),
+            OutputType::F64
+        ));
 
         // Should not match with too small epsilon
-        assert!(!runner.outputs_match(bytes1, bytes2, Some(0.000001), OutputType::F64));
+        assert!(!Runner::outputs_match(
+            bytes1,
+            bytes2,
+            Some(0.000001),
+            OutputType::F64
+        ));
     }
 
     #[test]
