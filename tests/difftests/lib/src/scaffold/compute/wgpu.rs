@@ -369,7 +369,7 @@ where
     }
 }
 
-/// wgpu backend implementation for the generic ComputeBackend trait
+/// wgpu backend implementation for the generic `ComputeBackend` trait
 pub struct WgpuBackend {
     device: Arc<wgpu::Device>,
     queue: Arc<wgpu::Queue>,
@@ -431,13 +431,13 @@ impl ComputeBackend for WgpuBackend {
             let buffer = if let Some(initial_data) = &buffer_config.initial_data {
                 self.device
                     .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                        label: Some(&format!("Buffer {}", i)),
+                        label: Some(&format!("Buffer {i}")),
                         contents: initial_data,
                         usage,
                     })
             } else {
                 let buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
-                    label: Some(&format!("Buffer {}", i)),
+                    label: Some(&format!("Buffer {i}")),
                     size: buffer_config.size,
                     usage,
                     mapped_at_creation: true,
@@ -494,7 +494,7 @@ impl ComputeBackend for WgpuBackend {
                 BufferUsage::Storage | BufferUsage::StorageReadOnly
             ) {
                 let staging_buffer = self.device.create_buffer(&wgpu::BufferDescriptor {
-                    label: Some(&format!("Staging Buffer {}", i)),
+                    label: Some(&format!("Staging Buffer {i}")),
                     size: buffer_config.size,
                     usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
                     mapped_at_creation: false,
@@ -516,7 +516,7 @@ impl ComputeBackend for WgpuBackend {
 
         // Read back results
         let mut results = Vec::new();
-        for staging_buffer in staging_buffers.into_iter() {
+        for staging_buffer in staging_buffers {
             if let Some(buffer) = staging_buffer {
                 let buffer_slice = buffer.slice(..);
                 let (sender, receiver) = futures::channel::oneshot::channel();
@@ -631,13 +631,13 @@ where
 
             let buffer = if let Some(initial_data) = &buffer_config.initial_data {
                 device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some(&format!("Buffer {}", i)),
+                    label: Some(&format!("Buffer {i}")),
                     contents: initial_data,
                     usage,
                 })
             } else {
                 let buffer = device.create_buffer(&wgpu::BufferDescriptor {
-                    label: Some(&format!("Buffer {}", i)),
+                    label: Some(&format!("Buffer {i}")),
                     size: buffer_config.size,
                     usage,
                     mapped_at_creation: true,
@@ -692,7 +692,7 @@ where
                 BufferUsage::Storage | BufferUsage::StorageReadOnly
             ) {
                 let staging_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-                    label: Some(&format!("Staging Buffer {}", i)),
+                    label: Some(&format!("Staging Buffer {i}")),
                     size: buffer_config.size,
                     usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
                     mapped_at_creation: false,
@@ -714,7 +714,7 @@ where
 
         // Read back results.
         let mut results = Vec::new();
-        for staging_buffer in staging_buffers.into_iter() {
+        for staging_buffer in staging_buffers {
             if let Some(buffer) = staging_buffer {
                 let buffer_slice = buffer.slice(..);
                 let (sender, receiver) = futures::channel::oneshot::channel();
@@ -840,13 +840,13 @@ where
 
             let buffer = if let Some(initial_data) = &buffer_config.initial_data {
                 device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                    label: Some(&format!("Buffer {}", i)),
+                    label: Some(&format!("Buffer {i}")),
                     contents: initial_data,
                     usage,
                 })
             } else {
                 let buffer = device.create_buffer(&wgpu::BufferDescriptor {
-                    label: Some(&format!("Buffer {}", i)),
+                    label: Some(&format!("Buffer {i}")),
                     size: buffer_config.size,
                     usage,
                     mapped_at_creation: true,
@@ -902,7 +902,7 @@ where
                 BufferUsage::Storage | BufferUsage::StorageReadOnly
             ) {
                 let staging_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-                    label: Some(&format!("Staging Buffer {}", i)),
+                    label: Some(&format!("Staging Buffer {i}")),
                     size: buffer_config.size,
                     usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
                     mapped_at_creation: false,
@@ -924,7 +924,7 @@ where
 
         // Read back results.
         let mut results = Vec::new();
-        for staging_buffer in staging_buffers.into_iter() {
+        for staging_buffer in staging_buffers {
             if let Some(buffer) = staging_buffer {
                 let buffer_slice = buffer.slice(..);
                 let (sender, receiver) = futures::channel::oneshot::channel();
@@ -950,7 +950,7 @@ where
         let buffers = self.buffers.clone();
         let results = self.run()?;
         // Write first storage buffer output to file.
-        for (_i, (data, buffer_config)) in results.iter().zip(&buffers).enumerate() {
+        for (data, buffer_config) in results.iter().zip(&buffers) {
             if buffer_config.usage == BufferUsage::Storage && !data.is_empty() {
                 let mut f = File::create(&config.output_path)?;
                 f.write_all(data)?;

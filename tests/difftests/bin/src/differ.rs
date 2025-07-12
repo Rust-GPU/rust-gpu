@@ -1,3 +1,5 @@
+#![allow(clippy::unimplemented)]
+
 use difftest::config::OutputType;
 use std::marker::PhantomData;
 
@@ -67,8 +69,8 @@ impl OutputDiffer for RawDiffer {
                     (Some(&b1), Some(&b2)) if b1 != b2 => {
                         differences.push(Difference {
                             index: i,
-                            value1: format!("{}", b1),
-                            value2: format!("{}", b2),
+                            value1: format!("{b1}"),
+                            value2: format!("{b2}"),
                             absolute_diff: DiffMagnitude::Incomparable,
                             relative_diff: DiffMagnitude::Incomparable,
                         });
@@ -76,7 +78,7 @@ impl OutputDiffer for RawDiffer {
                     (Some(&b1), None) => {
                         differences.push(Difference {
                             index: i,
-                            value1: format!("{}", b1),
+                            value1: format!("{b1}"),
                             value2: "".to_string(),
                             absolute_diff: DiffMagnitude::Incomparable,
                             relative_diff: DiffMagnitude::Incomparable,
@@ -86,7 +88,7 @@ impl OutputDiffer for RawDiffer {
                         differences.push(Difference {
                             index: i,
                             value1: "".to_string(),
-                            value2: format!("{}", b2),
+                            value2: format!("{b2}"),
                             absolute_diff: DiffMagnitude::Incomparable,
                             relative_diff: DiffMagnitude::Incomparable,
                         });
@@ -129,8 +131,8 @@ impl DifferenceDisplay for RawDiffer {
                     };
                     (
                         format!("{:>3}", format!("{:02x}", byte)),
-                        format!("{:3}", byte),
-                        format!("{:^5}", ascii),
+                        format!("{byte:3}"),
+                        format!("{ascii:^5}"),
                     )
                 };
 
@@ -151,8 +153,8 @@ impl DifferenceDisplay for RawDiffer {
                     };
                     (
                         format!("{:>3}", format!("{:02x}", byte)),
-                        format!("{:3}", byte),
-                        format!("{:^5}", ascii),
+                        format!("{byte:3}"),
+                        format!("{ascii:^5}"),
                     )
                 };
 
@@ -191,11 +193,7 @@ impl DifferenceDisplay for RawDiffer {
         let mut result = table.to_string();
 
         if diffs.len() > 10 {
-            let last_line_width = result
-                .lines()
-                .last()
-                .map(|l| l.chars().count())
-                .unwrap_or(0);
+            let last_line_width = result.lines().last().map_or(0, |l| l.chars().count());
             result.push_str(&format!(
                 "\n{:>width$}",
                 format!("... {} more differences", diffs.len() - 10),
@@ -226,7 +224,7 @@ impl DifferenceDisplay for RawDiffer {
         for (i, chunk) in output.chunks(16).enumerate() {
             write!(file, "{:08x}: ", i * 16)?;
             for byte in chunk {
-                write!(file, "{:02x} ", byte)?;
+                write!(file, "{byte:02x} ")?;
             }
             writeln!(file)?;
         }
@@ -255,7 +253,7 @@ impl NumericType for f32 {
         "F32"
     }
     fn format_value(value: Self) -> String {
-        format!("{:.9}", value)
+        format!("{value:.9}")
     }
     fn can_have_relative_diff() -> bool {
         true
@@ -280,7 +278,7 @@ impl NumericType for u32 {
         "U32"
     }
     fn format_value(value: Self) -> String {
-        format!("{}", value)
+        format!("{value}")
     }
     fn can_have_relative_diff() -> bool {
         true
@@ -379,7 +377,7 @@ impl<T: NumericType> DifferenceDisplay for NumericDiffer<T> {
                 let abs_str = match &d.absolute_diff {
                     DiffMagnitude::Numeric(val) => {
                         if T::can_have_relative_diff() {
-                            format!("{:.3e}", val)
+                            format!("{val:.3e}")
                         } else {
                             format!("{}", *val as u64)
                         }
@@ -431,11 +429,7 @@ impl<T: NumericType> DifferenceDisplay for NumericDiffer<T> {
         let mut result = table.to_string();
 
         if diffs.len() > 10 {
-            let last_line_width = result
-                .lines()
-                .last()
-                .map(|l| l.chars().count())
-                .unwrap_or(0);
+            let last_line_width = result.lines().last().map_or(0, |l| l.chars().count());
             result.push_str(&format!(
                 "\n{:>width$}",
                 format!("... {} more differences", diffs.len() - 10),
@@ -482,9 +476,9 @@ impl From<OutputType> for Box<dyn OutputDiffer + Send + Sync> {
         match output_type {
             OutputType::Raw => Box::new(RawDiffer),
             OutputType::F32 => Box::new(F32Differ::default()),
-            OutputType::F64 => todo!("F64Differ not implemented yet"),
+            OutputType::F64 => unimplemented!("F64Differ not implemented yet"),
             OutputType::U32 => Box::new(U32Differ::default()),
-            OutputType::I32 => todo!("I32Differ not implemented yet"),
+            OutputType::I32 => unimplemented!("I32Differ not implemented yet"),
         }
     }
 }
@@ -494,9 +488,9 @@ impl From<OutputType> for Box<dyn DifferenceDisplay + Send + Sync> {
         match output_type {
             OutputType::Raw => Box::new(RawDiffer),
             OutputType::F32 => Box::new(F32Differ::default()),
-            OutputType::F64 => todo!("F64Display not implemented yet"),
+            OutputType::F64 => unimplemented!("F64Differ not implemented yet"),
             OutputType::U32 => Box::new(U32Differ::default()),
-            OutputType::I32 => todo!("I32Display not implemented yet"),
+            OutputType::I32 => unimplemented!("I32Differ not implemented yet"),
         }
     }
 }
@@ -533,11 +527,11 @@ mod tests {
         assert_eq!(diffs[0].value2, "5");
         match &diffs[0].absolute_diff {
             DiffMagnitude::Numeric(val) => assert_eq!(*val, 3.0),
-            _ => panic!("Expected numeric difference"),
+            DiffMagnitude::Incomparable => panic!("Expected numeric difference"),
         }
         match &diffs[0].relative_diff {
             DiffMagnitude::Numeric(val) => assert_eq!(*val, 3.0 / 5.0), // 3/5 = 0.6
-            _ => panic!("Expected numeric relative diff for U32"),
+            DiffMagnitude::Incomparable => panic!("Expected numeric relative diff for U32"),
         }
 
         // Check second difference (index 3: 4 vs 7)
@@ -546,7 +540,7 @@ mod tests {
         assert_eq!(diffs[1].value2, "7");
         match &diffs[1].absolute_diff {
             DiffMagnitude::Numeric(val) => assert_eq!(*val, 3.0),
-            _ => panic!("Expected numeric difference"),
+            DiffMagnitude::Incomparable => panic!("Expected numeric difference"),
         }
     }
 
@@ -665,12 +659,12 @@ mod tests {
 
         match numeric {
             DiffMagnitude::Numeric(val) => assert_eq!(val, 42.0),
-            _ => panic!("Expected numeric"),
+            DiffMagnitude::Incomparable => panic!("Expected numeric"),
         }
 
         match incomparable {
             DiffMagnitude::Incomparable => {}
-            _ => panic!("Expected incomparable"),
+            DiffMagnitude::Numeric(_) => panic!("Expected incomparable"),
         }
     }
 }

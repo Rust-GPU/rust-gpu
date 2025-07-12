@@ -2,7 +2,7 @@ use super::backend::{BufferConfig, BufferUsage, ComputeBackend};
 use anyhow::{Context, Result};
 use ash::vk;
 use ash::vk::DescriptorType;
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 
 pub struct AshBackend {
     instance: ash::Instance,
@@ -19,23 +19,20 @@ impl AshBackend {
         type_filter: u32,
         properties: vk::MemoryPropertyFlags,
     ) -> Option<u32> {
-        for i in 0..self.memory_properties.memory_type_count {
-            if (type_filter & (1 << i)) != 0
+        (0..self.memory_properties.memory_type_count).find(|&i| {
+            (type_filter & (1 << i)) != 0
                 && self.memory_properties.memory_types[i as usize]
                     .property_flags
                     .contains(properties)
-            {
-                return Some(i);
-            }
-        }
-        None
+        })
     }
 
     fn create_buffer(&self, config: &BufferConfig) -> Result<(vk::Buffer, vk::DeviceMemory)> {
         unsafe {
             let usage = match config.usage {
-                BufferUsage::Storage => vk::BufferUsageFlags::STORAGE_BUFFER,
-                BufferUsage::StorageReadOnly => vk::BufferUsageFlags::STORAGE_BUFFER,
+                BufferUsage::Storage | BufferUsage::StorageReadOnly => {
+                    vk::BufferUsageFlags::STORAGE_BUFFER
+                }
                 BufferUsage::Uniform => vk::BufferUsageFlags::UNIFORM_BUFFER,
             };
             let buffer = self
@@ -80,7 +77,7 @@ impl AshBackend {
                     .map_memory(memory, 0, config.size, vk::MemoryMapFlags::empty())
                     .context("Failed to map memory")?;
 
-                std::ptr::copy_nonoverlapping(data.as_ptr(), mapped_ptr as *mut u8, data.len());
+                std::ptr::copy_nonoverlapping(data.as_ptr(), mapped_ptr.cast::<u8>(), data.len());
 
                 self.device.unmap_memory(memory);
             }
@@ -100,9 +97,9 @@ impl ComputeBackend for AshBackend {
                 .create_instance(
                     &vk::InstanceCreateInfo::default().application_info(
                         &vk::ApplicationInfo::default()
-                            .application_name(CStr::from_bytes_with_nul_unchecked(b"difftest\0"))
+                            .application_name(c"difftest")
                             .application_version(vk::make_api_version(0, 1, 0, 0))
-                            .engine_name(CStr::from_bytes_with_nul_unchecked(b"difftest\0"))
+                            .engine_name(c"difftest")
                             .engine_version(vk::make_api_version(0, 1, 0, 0))
                             .api_version(vk::API_VERSION_1_2),
                     ),
@@ -350,7 +347,7 @@ impl ComputeBackend for AshBackend {
 
             // Read buffer results
             let mut results = Vec::new();
-            for (_i, (memory, config)) in buffer_memories.iter().zip(&buffers).enumerate() {
+            for (memory, config) in buffer_memories.iter().zip(&buffers) {
                 let mut data = vec![0u8; config.size as usize];
 
                 let mapped_ptr = self
