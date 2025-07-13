@@ -9,7 +9,7 @@ use itertools::Itertools as _;
 use rspirv::spirv::Word;
 use rustc_abi::{self as abi, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
 use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods};
-use rustc_middle::mir::interpret::{ConstAllocation, GlobalAlloc, Scalar, alloc_range};
+use rustc_middle::mir::interpret::{AllocError, ConstAllocation, GlobalAlloc, Scalar, alloc_range};
 use rustc_middle::ty::layout::LayoutOf;
 use rustc_span::{DUMMY_SP, Span};
 
@@ -298,24 +298,7 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                         (self.get_static(def_id), AddressSpace::DATA)
                     }
                 };
-                let value = if offset.bytes() == 0 {
-                    base_addr
-                } else {
-                    self.tcx
-                        .dcx()
-                        .fatal("Non-zero scalar_to_backend ptr.offset not supported")
-                    // let offset = self.constant_bit64(ptr.offset.bytes());
-                    // self.gep(base_addr, once(offset))
-                };
-                if let Primitive::Pointer(_) = layout.primitive() {
-                    assert_ty_eq!(self, value.ty, ty);
-                    value
-                } else {
-                    self.tcx
-                        .dcx()
-                        .fatal("Non-pointer-typed scalar_to_backend Scalar::Ptr not supported");
-                    // unsafe { llvm::LLVMConstPtrToInt(llval, llty) }
-                }
+                self.const_bitcast(self.const_ptr_byte_offset(base_addr, offset), ty)
             }
         }
     }
@@ -448,18 +431,82 @@ impl<'tcx> CodegenCx<'tcx> {
                     SpirvType::Pointer { .. } => Primitive::Pointer(AddressSpace::DATA),
                     _ => unreachable!(),
                 };
-                let value = match alloc.inner().read_scalar(
-                    self,
-                    alloc_range(offset, size),
-                    matches!(primitive, Primitive::Pointer(_)),
-                ) {
+
+                let range = alloc_range(offset, size);
+                let read_provenance = matches!(primitive, Primitive::Pointer(_));
+
+                let mut primitive = primitive;
+                let mut read_result = alloc.inner().read_scalar(self, range, read_provenance);
+
+                // HACK(eddyb) while reading a pointer as an integer will fail,
+                // the pointer itself can be read as a pointer, and then passed
+                // to `scalar_to_backend`, which will `const_bitcast` it to `ty`.
+                if read_result.is_err()
+                    && !read_provenance
+                    && let read_ptr_result @ Ok(Scalar::Ptr(ptr, _)) = alloc
+                        .inner()
+                        .read_scalar(self, range, /* read_provenance */ true)
+                {
+                    let (prov, _offset) = ptr.into_parts();
+                    primitive = Primitive::Pointer(
+                        self.tcx.global_alloc(prov.alloc_id()).address_space(self),
+                    );
+                    read_result = read_ptr_result;
+                }
+
+                let scalar_or_zombie = match read_result {
                     Ok(scalar) => {
-                        self.scalar_to_backend(scalar, self.primitive_to_scalar(primitive), ty)
+                        Ok(self.scalar_to_backend(scalar, self.primitive_to_scalar(primitive), ty))
                     }
-                    // FIXME(eddyb) this is really unsound, could be an error!
-                    _ => self.undef(ty),
+
+                    // FIXME(eddyb) could some of these use e.g. `const_bitcast`?
+                    // (or, in general, assembling one constant out of several)
+                    Err(err) => match err {
+                        // The scalar is only `undef` if the entire byte range
+                        // it covers is completely uninitialized - all other
+                        // failure modes of `read_scalar` are various errors.
+                        AllocError::InvalidUninitBytes(_) => {
+                            let uninit_range = alloc
+                                .inner()
+                                .init_mask()
+                                .is_range_initialized(range)
+                                .unwrap_err();
+                            let uninit_size = {
+                                let [start, end] = [uninit_range.start, uninit_range.end()]
+                                    .map(|x| x.clamp(range.start, range.end()));
+                                end - start
+                            };
+                            if uninit_size == size {
+                                Ok(self.undef(ty))
+                            } else {
+                                Err(format!(
+                                    "overlaps {} uninitialized bytes",
+                                    uninit_size.bytes()
+                                ))
+                            }
+                        }
+                        AllocError::ReadPointerAsInt(_) => Err("overlaps pointer bytes".into()),
+                        AllocError::ReadPartialPointer(_) => {
+                            Err("partially overlaps another pointer".into())
+                        }
+
+                        // HACK(eddyb) these should never happen when using
+                        // `read_scalar`, but better not outright crash.
+                        AllocError::ScalarSizeMismatch(_)
+                        | AllocError::OverwritePartialPointer(_) => {
+                            Err(format!("unrecognized `AllocError::{err:?}`"))
+                        }
+                    },
                 };
-                (value, size)
+                let result = scalar_or_zombie.unwrap_or_else(|reason| {
+                    let result = self.undef(ty);
+                    self.zombie_no_span(
+                        result.def_cx(self),
+                        &format!("unsupported `{}` constant: {reason}", self.debug_type(ty),),
+                    );
+                    result
+                });
+                (result, size)
             }
             SpirvType::Adt {
                 field_types,
