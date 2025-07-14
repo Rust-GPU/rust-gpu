@@ -103,10 +103,7 @@ impl<B: ComputeBackend> ComputeTest<B> {
         // Write the first storage buffer output to the file
         for (output, buffer_config) in outputs.iter().zip(&buffers) {
             if matches!(buffer_config.usage, BufferUsage::Storage) && !output.is_empty() {
-                use std::fs::File;
-                use std::io::Write;
-                let mut f = File::create(&config.output_path)?;
-                f.write_all(output)?;
+                config.write_result(output)?;
                 return Ok(());
             }
         }

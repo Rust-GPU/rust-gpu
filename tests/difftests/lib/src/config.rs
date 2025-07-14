@@ -1,10 +1,20 @@
 use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::Write;
 use std::{fs, path::Path};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
     pub output_path: std::path::PathBuf,
     pub metadata_path: std::path::PathBuf,
+}
+
+impl Config {
+    pub fn write_result<A: bytemuck::NoUninit>(&self, output: &[A]) -> anyhow::Result<()> {
+        let mut f = File::create(&self.output_path)?;
+        f.write_all(bytemuck::cast_slice(output))?;
+        Ok(())
+    }
 }
 
 /// Test metadata that controls output comparison behavior

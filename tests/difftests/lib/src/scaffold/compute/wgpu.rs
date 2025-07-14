@@ -6,7 +6,7 @@ use crate::scaffold::shader::WgslComputeShader;
 use anyhow::Context;
 use bytemuck::Pod;
 use futures::executor::block_on;
-use std::{borrow::Cow, fs::File, io::Write, sync::Arc};
+use std::{borrow::Cow, sync::Arc};
 use wgpu::{PipelineCompilationOptions, util::DeviceExt};
 
 pub type BufferConfig = backend::BufferConfig;
@@ -217,8 +217,7 @@ where
     /// Runs the compute shader with no input and writes the output to a file.
     pub fn run_test(self, config: &Config) -> anyhow::Result<()> {
         let output = self.run()?;
-        let mut f = File::create(&config.output_path)?;
-        f.write_all(&output)?;
+        config.write_result(&output)?;
         Ok(())
     }
 
@@ -228,8 +227,7 @@ where
         I: Sized + Pod,
     {
         let output = self.run_with_input(input)?;
-        let mut f = File::create(&config.output_path)?;
-        f.write_all(&output)?;
+        config.write_result(&output)?;
         Ok(())
     }
 }
@@ -565,8 +563,7 @@ where
         // Write the first storage buffer output to the file.
         for (output, buffer_config) in outputs.iter().zip(&buffers) {
             if matches!(buffer_config.usage, BufferUsage::Storage) && !output.is_empty() {
-                let mut f = File::create(&config.output_path)?;
-                f.write_all(output)?;
+                config.write_result(output)?;
                 return Ok(());
             }
         }
@@ -775,8 +772,7 @@ where
         // Write first storage buffer output to file.
         for (data, buffer_config) in results.iter().zip(&buffers) {
             if buffer_config.usage == BufferUsage::Storage && !data.is_empty() {
-                let mut f = File::create(&config.output_path)?;
-                f.write_all(data)?;
+                config.write_result(data)?;
                 return Ok(());
             }
         }
