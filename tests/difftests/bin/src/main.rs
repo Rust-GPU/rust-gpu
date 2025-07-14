@@ -1,8 +1,10 @@
 #![allow(clippy::exit)]
 
+use crate::testcase::collect_test_dirs;
 use anyhow::Result;
+use runner::Runner;
 use std::{
-    env,
+    env, fs,
     process::{self, Command},
 };
 use tester::{
@@ -14,7 +16,7 @@ use tracing_subscriber::FmtSubscriber;
 
 mod differ;
 mod runner;
-use runner::Runner;
+mod testcase;
 
 fn main() -> Result<()> {
     let subscriber = FmtSubscriber::builder()
@@ -63,10 +65,19 @@ fn main() -> Result<()> {
         .expect("Failed to canonicalize tests directory");
     tracing::debug!("Using tests directory: {}", base.display());
 
-    let runner = Runner::new(base.clone());
+    let output_dir = std::path::Path::new(manifest_dir).join("../tests/target/difftest");
+    fs::create_dir_all(&output_dir)?;
+    let output_dir = output_dir
+        .canonicalize()
+        .expect("Failed to canonicalize tests directory");
+    tracing::debug!("Using output directory: {}", output_dir.display());
 
-    let test_cases =
-        Runner::collect_test_dirs(&base).expect("Failed to collect test case directories");
+    let runner = Runner {
+        base_dir: base.clone(),
+        output_dir,
+    };
+
+    let test_cases = collect_test_dirs(&base).expect("Failed to collect test case directories");
     if test_cases.is_empty() {
         eprintln!("No valid tests found in {}", base.display());
         process::exit(1);
@@ -92,25 +103,22 @@ fn main() -> Result<()> {
 
     let tests: Vec<TestDescAndFn> = test_cases
         .into_iter()
-        .map(|case| {
-            let test_name = Runner::format_test_name(&case, &base);
-            TestDescAndFn {
-                desc: TestDesc {
-                    name: DynTestName(test_name.clone()),
-                    ignore: false,
-                    should_panic: ShouldPanic::No,
-                    allow_fail: false,
-                    test_type: TestType::IntegrationTest,
-                },
-                testfn: TestFn::DynTestFn(Box::new({
-                    let runner = runner.clone();
-                    move || {
-                        runner
-                            .run_test_case(&case)
-                            .unwrap_or_else(|e| panic!("{}", e));
-                    }
-                })),
-            }
+        .map(|case| TestDescAndFn {
+            desc: TestDesc {
+                name: DynTestName(case.to_string()),
+                ignore: false,
+                should_panic: ShouldPanic::No,
+                allow_fail: false,
+                test_type: TestType::IntegrationTest,
+            },
+            testfn: TestFn::DynTestFn(Box::new({
+                let runner = runner.clone();
+                move || {
+                    runner
+                        .run_test_case(&case)
+                        .unwrap_or_else(|e| panic!("{}", e));
+                }
+            })),
         })
         .collect();
 
