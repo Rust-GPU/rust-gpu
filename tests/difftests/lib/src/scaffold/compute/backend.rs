@@ -1,4 +1,5 @@
 use crate::config::Config;
+use crate::scaffold::shader::SpirvShader;
 use anyhow::Result;
 
 /// Configuration for a GPU buffer
@@ -9,6 +10,25 @@ pub struct BufferConfig {
     pub initial_data: Option<Vec<u8>>,
 }
 
+impl BufferConfig {
+    pub fn writeback(size: usize) -> Self {
+        Self {
+            size: size as u64,
+            usage: BufferUsage::Storage,
+            initial_data: None,
+        }
+    }
+
+    pub fn read_only<A: bytemuck::NoUninit>(slice: &[A]) -> Self {
+        let vec = bytemuck::cast_slice(slice).to_vec();
+        Self {
+            size: vec.len() as u64,
+            usage: BufferUsage::StorageReadOnly,
+            initial_data: Some(vec),
+        }
+    }
+}
+
 /// Buffer usage type
 #[derive(Clone, Copy, PartialEq)]
 pub enum BufferUsage {
@@ -16,8 +36,6 @@ pub enum BufferUsage {
     StorageReadOnly,
     Uniform,
 }
-
-use super::SpirvShader;
 
 /// A generic trait for compute backends
 pub trait ComputeBackend: Sized {
