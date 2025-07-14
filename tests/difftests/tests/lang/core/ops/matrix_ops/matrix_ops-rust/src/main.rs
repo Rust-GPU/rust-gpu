@@ -52,12 +52,10 @@ fn main() {
     );
 
     // Write metadata file
-    let metadata = difftest::config::TestMetadata {
-        epsilon: Some(2e-5),
-        output_type: difftest::config::OutputType::F32,
-        ..Default::default()
-    };
-    config.write_metadata(&metadata).unwrap();
+    // this one requires higher epsilon, noticed on an RDNA2 680M (Ryzen iGPU) with radv
+    config
+        .write_metadata(&difftest::config::TestMetadata::f32(2e-5))
+        .unwrap();
 
     test.run_test(&config).unwrap();
 }
