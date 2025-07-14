@@ -14,20 +14,12 @@ macro_rules! op_u {
         [
             ($value << 0) as u32,
             ($value << 1) as u32,
-            ($value << 2) as u32,
             ($value << 30) as u32,
             ($value << 31) as u32,
-            ($value << 32) as u32,
-            ($value << 33) as u32,
-            ($value << 34) as u32,
             ($value >> 0) as u32,
             ($value >> 1) as u32,
-            ($value >> 2) as u32,
             ($value >> 30) as u32,
             ($value >> 31) as u32,
-            ($value >> 32) as u32,
-            ($value >> 33) as u32,
-            ($value >> 34) as u32,
         ]
     };
 }
@@ -66,21 +58,21 @@ pub const INTERESTING_PATTERNS: [u32; 8] = interesting_patterns!(identity);
 pub enum Variants {
     /// const folding in rust-gpu
     ConstFold,
-    // /// `const {}` expr for const eval within rustc
-    // ConstExpr,
+    /// `const {}` expr for const eval within rustc
+    ConstExpr,
     /// dynamic values from `input_patterns`
     DynamicValues,
 }
 
-pub type EvalResult = [[[u32; 16]; 8]; 2];
+pub type EvalResult = [[[u32; 8]; 8]; 2];
 
 impl Variants {
     pub fn eval(&self, input_patterns: &[u32; 8]) -> EvalResult {
         match self {
             Variants::ConstFold => [interesting_patterns!(op_u), interesting_patterns!(op_i)],
-            // Variants::ConstExpr => {
-            //     const { [interesting_patterns!(op_u), interesting_patterns!(op_i)] }
-            // }
+            Variants::ConstExpr => {
+                const { [interesting_patterns!(op_u), interesting_patterns!(op_i)] }
+            }
             Variants::DynamicValues => [
                 [
                     op_u!(input_patterns[0]),
