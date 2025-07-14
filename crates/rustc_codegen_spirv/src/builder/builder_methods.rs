@@ -105,16 +105,18 @@ macro_rules! simple_op {
                 if let Some(const_lhs) = self.try_get_const_value(lhs)
                     && let Some(const_rhs) = self.try_get_const_value(rhs)
                 {
-                    #[allow(unreachable_patterns)]
-                    match (const_lhs, const_rhs) {
+                    let result = (|| Some(match (const_lhs, const_rhs) {
                         $(
-                            (ConstValue::Unsigned($int_lhs), ConstValue::Unsigned($int_rhs)) => return self.const_uint_big(result_type, $fold_int),
-                            (ConstValue::Signed($int_lhs), ConstValue::Signed($int_rhs)) => return self.const_uint_big(result_type, $fold_int as u128),
+                            (ConstValue::Unsigned($int_lhs), ConstValue::Unsigned($int_rhs)) => $fold_int,
+                            (ConstValue::Signed($int_lhs), ConstValue::Signed($int_rhs)) => $fold_int as u128,
                         )?
-                        $((ConstValue::Unsigned($uint_lhs), ConstValue::Unsigned($uint_rhs)) => return self.const_uint_big(result_type, $fold_uint), )?
-                        $((ConstValue::Signed($sint_lhs), ConstValue::Signed($sint_rhs)) => return self.const_uint_big(result_type, $fold_sint as u128), )?
-                        $((ConstValue::Bool($bool_lhs), ConstValue::Bool($bool_rhs)) => return self.const_uint_big(result_type, ($fold_bool).into()), )?
-                        _ => (),
+                        $((ConstValue::Unsigned($uint_lhs), ConstValue::Unsigned($uint_rhs)) => $fold_uint,)?
+                        $((ConstValue::Signed($sint_lhs), ConstValue::Signed($sint_rhs)) => $fold_sint as u128, )?
+                        $((ConstValue::Bool($bool_lhs), ConstValue::Bool($bool_rhs)) => ($fold_bool).into(), )?
+                        _ => return None,
+                    }))();
+                    if let Some(result) = result {
+                        return self.const_uint_big(result_type, result);
                     }
                 }
             )?
@@ -172,23 +174,25 @@ macro_rules! simple_shift_op {
                 if let Some(const_lhs) = self.try_get_const_value(lhs)
                     && let Some(const_rhs) = self.try_get_const_value(rhs)
                 {
-                    #[allow(unreachable_patterns)]
-                    match (const_lhs, const_rhs) {
+                    let result = (|| Some(match (const_lhs, const_rhs) {
                         $(
-                            (ConstValue::Unsigned($int_lhs), ConstValue::Unsigned($int_rhs)) => return self.const_uint_big(result_type, $fold_int),
-							(ConstValue::Unsigned($int_lhs), ConstValue::Signed($int_rhs)) => return self.const_uint_big(result_type, $fold_int),
-							(ConstValue::Signed($int_lhs), ConstValue::Unsigned($int_rhs)) => return self.const_uint_big(result_type, $fold_int as u128),
-							(ConstValue::Signed($int_lhs), ConstValue::Signed($int_rhs)) => return self.const_uint_big(result_type, $fold_int as u128),
+                            (ConstValue::Unsigned($int_lhs), ConstValue::Unsigned($int_rhs)) => $fold_int,
+							(ConstValue::Unsigned($int_lhs), ConstValue::Signed($int_rhs)) => $fold_int,
+							(ConstValue::Signed($int_lhs), ConstValue::Unsigned($int_rhs)) => $fold_int as u128,
+							(ConstValue::Signed($int_lhs), ConstValue::Signed($int_rhs)) => $fold_int as u128,
 						)?
 						$(
-							(ConstValue::Unsigned($uint_lhs), ConstValue::Unsigned($uint_rhs)) => return self.const_uint_big(result_type, $fold_uint),
-                            (ConstValue::Unsigned($uint_lhs), ConstValue::Signed($uint_rhs)) => return self.const_uint_big(result_type, $fold_uint),
+							(ConstValue::Unsigned($uint_lhs), ConstValue::Unsigned($uint_rhs)) => $fold_uint,
+                            (ConstValue::Unsigned($uint_lhs), ConstValue::Signed($uint_rhs)) => $fold_uint,
                         )?
                         $(
-                            (ConstValue::Signed($sint_lhs), ConstValue::Unsigned($sint_rhs)) => return self.const_uint_big(result_type, $fold_sint as u128),
-                            (ConstValue::Signed($sint_lhs), ConstValue::Signed($sint_rhs)) => return self.const_uint_big(result_type, $fold_sint as u128),
+                            (ConstValue::Signed($sint_lhs), ConstValue::Unsigned($sint_rhs)) => $fold_sint as u128,
+                            (ConstValue::Signed($sint_lhs), ConstValue::Signed($sint_rhs)) => $fold_sint as u128,
                         )?
-                        _ => (),
+                        _ => return None,
+                    }))();
+                    if let Some(result) = result {
+                        return self.const_uint_big(result_type, result);
                     }
                 }
             )?
@@ -238,15 +242,18 @@ macro_rules! simple_uni_op {
             $(
                 #[allow(unreachable_patterns, clippy::collapsible_match)]
                 if let Some(const_val) = self.try_get_const_value(val) {
-                    match const_val {
+                    let result = (|| Some(match (const_val) {
                         $(
-                            ConstValue::Unsigned($int_val) => return self.const_uint_big(result_type, $fold_int),
-                            ConstValue::Signed($int_val) => return self.const_uint_big(result_type, $fold_int as u128),
+                            ConstValue::Unsigned($int_val) => $fold_int,
+                            ConstValue::Signed($int_val) => $fold_int as u128,
                         )?
-                        $(ConstValue::Unsigned($uint_val) => return self.const_uint_big(result_type, $fold_uint), )?
-                        $(ConstValue::Signed($sint_val) => return self.const_uint_big(result_type, $fold_sint as u128), )?
-                        $(ConstValue::Bool($bool_val) => return self.const_uint_big(result_type, ($fold_bool).into()), )?
-                        _ => (),
+                        $(ConstValue::Unsigned($uint_val) => $fold_uint, )?
+                        $(ConstValue::Signed($sint_val) => $fold_sint as u128, )?
+                        $(ConstValue::Bool($bool_val) => ($fold_bool).into(), )?
+                        _ => return None,
+                    }))();
+                    if let Some(result) = result {
+                        return self.const_uint_big(result_type, result);
                     }
                 }
             )?
@@ -1538,7 +1545,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         add,
         int: i_add,
         fold_const {
-            int(a, b) => a.wrapping_add(b);
+            int(a, b) => a.checked_add(b)?;
         }
     }
     // FIXME(eddyb) try to annotate the SPIR-V for `fast` and `algebraic`.
@@ -1549,7 +1556,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         sub,
         int: i_sub,
         fold_const {
-            int(a, b) => a.wrapping_sub(b);
+            int(a, b) => a.checked_sub(b)?;
         }
     }
     simple_op! {fsub, float: f_sub}
@@ -1559,7 +1566,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         mul,
         int: i_mul,
         fold_const {
-            int(a, b) => a.wrapping_mul(b);
+            int(a, b) => a.checked_mul(b)?;
         }
     }
     simple_op! {fmul, float: f_mul}
@@ -1569,7 +1576,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         udiv,
         uint: u_div,
         fold_const {
-            uint(a, b) => a.wrapping_div(b);
+            uint(a, b) => a.checked_div(b)?;
         }
     }
     // Note: exactudiv is UB when there's a remainder, so it's valid to implement as a normal div.
@@ -1578,14 +1585,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         exactudiv,
         uint: u_div,
         fold_const {
-            uint(a, b) => a.wrapping_div(b);
+            uint(a, b) => a.checked_div(b)?;
         }
     }
     simple_op! {
         sdiv,
         sint: s_div,
         fold_const {
-            sint(a, b) => a.wrapping_div(b);
+            sint(a, b) => a.checked_div(b)?;
         }
     }
     // Same note and TODO as exactudiv
@@ -1593,7 +1600,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         exactsdiv,
         sint: s_div,
         fold_const {
-            sint(a, b) => a.wrapping_div(b);
+            sint(a, b) => a.checked_div(b)?;
         }
     }
     simple_op! {fdiv, float: f_div}
@@ -1603,14 +1610,14 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         urem,
         uint: u_mod,
         fold_const {
-            uint(a, b) => a.wrapping_rem(b);
+            uint(a, b) => a.checked_rem(b)?;
         }
     }
     simple_op! {
         srem,
         sint: s_rem,
         fold_const {
-            sint(a, b) => a.wrapping_rem(b);
+            sint(a, b) => a.checked_rem(b)?;
         }
     }
     simple_op! {frem, float: f_rem}
@@ -1620,28 +1627,28 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         shl,
         int: shift_left_logical,
         fold_const {
-            int(a, b) => a.wrapping_shl(b as u32);
+            int(a, b) => a.checked_shl(b as u32)?;
         }
     }
     simple_shift_op! {
         lshr,
         uint: shift_right_logical,
         fold_const {
-            uint(a, b) => a.wrapping_shr(b as u32);
+            uint(a, b) => a.checked_shr(b as u32)?;
         }
     }
     simple_shift_op! {
         ashr,
         sint: shift_right_arithmetic,
         fold_const {
-            sint(a, b) => a.wrapping_shr(b as u32);
+            sint(a, b) => a.checked_shr(b as u32)?;
         }
     }
     simple_uni_op! {
         neg,
         sint: s_negate,
         fold_const {
-            sint(a) => a.wrapping_neg();
+            sint(a) => a.checked_neg()?;
         }
     }
     simple_uni_op! {fneg, float: f_negate}
