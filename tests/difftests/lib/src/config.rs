@@ -51,10 +51,44 @@ pub enum OutputType {
 }
 
 impl TestMetadata {
-    /// Create metadata with a specific epsilon value, keeping default output type
-    pub fn with_epsilon(epsilon: f32) -> Self {
+    /// Create metadata for f32 with some epsilon value
+    pub fn f32(epsilon: f32) -> Self {
         Self {
+            output_type: OutputType::F32,
             epsilon: Some(epsilon),
+            ..Default::default()
+        }
+    }
+
+    /// Create metadata for f64 with some epsilon value
+    pub fn f64(epsilon: f32) -> Self {
+        Self {
+            output_type: OutputType::F64,
+            epsilon: Some(epsilon),
+            ..Default::default()
+        }
+    }
+
+    /// Create metadata for u32
+    pub fn u32() -> Self {
+        Self {
+            output_type: OutputType::U32,
+            ..Default::default()
+        }
+    }
+
+    /// Create metadata for i32
+    pub fn i32() -> Self {
+        Self {
+            output_type: OutputType::I32,
+            ..Default::default()
+        }
+    }
+
+    /// Create metadata for raw hex values
+    pub fn raw() -> Self {
+        Self {
+            output_type: OutputType::Raw,
             ..Default::default()
         }
     }

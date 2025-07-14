@@ -51,12 +51,9 @@ fn main() {
     );
 
     // Write metadata file
-    let metadata = difftest::config::TestMetadata {
-        epsilon: Some(2e-6), // Small epsilon for last-bit differences
-        output_type: difftest::config::OutputType::F32,
-        ..Default::default()
-    };
-    config.write_metadata(&metadata).unwrap();
+    config
+        .write_metadata(&difftest::config::TestMetadata::f32(2e-6))
+        .unwrap();
 
     test.run_test(&config).unwrap();
 }

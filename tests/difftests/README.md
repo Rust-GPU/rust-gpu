@@ -77,11 +77,7 @@ fn main() {
     file.write_all(&output).expect("Failed to write output");
 
     // Optional: Write metadata for floating-point comparison
-    let metadata = TestMetadata {
-        epsilon: Some(0.00001),  // Allow differences up to 1e-5
-        output_type: OutputType::F32,  // Interpret output as f32 array
-    };
-    config.write_metadata(&metadata).expect("Failed to write metadata");
+    config.write_metadata(&TestMetadata::f32(0.00001)).expect("Failed to write metadata");
 }
 ```
 
@@ -130,14 +126,15 @@ outputs:
 use difftest::config::{TestMetadata, OutputType};
 
 // Write metadata before or after writing output
-let metadata = TestMetadata {
-    epsilon: Some(0.00001),        // Maximum allowed difference (default: None)
-    output_type: OutputType::F32,  // How to interpret output data (default: Raw)
-};
+let metadata = TestMetadata::f32(0.00001); // output is f32 with some epsilon
 config.write_metadata(&metadata)?;
 
-// Alternative: Use the helper method for common cases
-let metadata = TestMetadata::with_epsilon(0.00001);  // Sets epsilon, keeps default output_type
+// Alternative: Construct TestMetadata yourself 
+let metadata = TestMetadata {
+    epsilon: Some(0.00001),        // Maximum allowed epsilon / difference (default: None)
+    output_type: OutputType::F32,  // How to interpret output data (default: Raw)
+    ..TestMetadata::default()
+};
 config.write_metadata(&metadata)?;
 ```
 
