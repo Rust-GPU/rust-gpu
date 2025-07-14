@@ -1,151 +1,16 @@
+use super::backend::{self, ComputeBackend};
 use crate::config::Config;
+use crate::scaffold::shader::RustComputeShader;
+use crate::scaffold::shader::WgpuShader;
+use crate::scaffold::shader::WgslComputeShader;
 use anyhow::Context;
 use bytemuck::Pod;
 use futures::executor::block_on;
-use spirv_builder::{ModuleResult, SpirvBuilder};
-use std::{
-    borrow::Cow,
-    env,
-    fs::{self, File},
-    io::Write,
-    path::PathBuf,
-    sync::Arc,
-};
+use std::{borrow::Cow, fs::File, io::Write, sync::Arc};
 use wgpu::{PipelineCompilationOptions, util::DeviceExt};
-
-use super::backend::{self, ComputeBackend};
 
 pub type BufferConfig = backend::BufferConfig;
 pub type BufferUsage = backend::BufferUsage;
-
-/// Trait for shaders that can provide SPIRV bytes.
-pub trait SpirvShader {
-    /// Returns the SPIRV bytes and entry point name.
-    fn spirv_bytes(&self) -> anyhow::Result<(Vec<u8>, String)>;
-}
-
-/// Trait for shaders that can create wgpu modules.
-pub trait WgpuShader {
-    /// Creates a wgpu shader module.
-    fn create_module(
-        &self,
-        device: &wgpu::Device,
-    ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)>;
-}
-
-/// A compute shader written in Rust compiled with spirv-builder.
-pub struct RustComputeShader {
-    pub path: PathBuf,
-    pub target: String,
-    pub capabilities: Vec<spirv_builder::Capability>,
-}
-
-impl RustComputeShader {
-    pub fn new<P: Into<PathBuf>>(path: P) -> Self {
-        Self {
-            path: path.into(),
-            target: "spirv-unknown-vulkan1.1".to_string(),
-            capabilities: Vec::new(),
-        }
-    }
-
-    pub fn with_target<P: Into<PathBuf>>(path: P, target: impl Into<String>) -> Self {
-        Self {
-            path: path.into(),
-            target: target.into(),
-            capabilities: Vec::new(),
-        }
-    }
-
-    pub fn with_capability(mut self, capability: spirv_builder::Capability) -> Self {
-        self.capabilities.push(capability);
-        self
-    }
-}
-
-impl SpirvShader for RustComputeShader {
-    fn spirv_bytes(&self) -> anyhow::Result<(Vec<u8>, String)> {
-        let mut builder = SpirvBuilder::new(&self.path, &self.target)
-            .print_metadata(spirv_builder::MetadataPrintout::None)
-            .release(true)
-            .multimodule(false)
-            .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::SilentExit)
-            .preserve_bindings(true);
-
-        for capability in &self.capabilities {
-            builder = builder.capability(*capability);
-        }
-
-        let artifact = builder.build().context("SpirvBuilder::build() failed")?;
-
-        if artifact.entry_points.len() != 1 {
-            anyhow::bail!(
-                "Expected exactly one entry point, found {}",
-                artifact.entry_points.len()
-            );
-        }
-        let entry_point = artifact.entry_points.into_iter().next().unwrap();
-
-        let shader_bytes = match artifact.module {
-            ModuleResult::SingleModule(path) => fs::read(&path)
-                .with_context(|| format!("reading spv file '{}' failed", path.display()))?,
-            ModuleResult::MultiModule(_modules) => {
-                anyhow::bail!("MultiModule modules produced");
-            }
-        };
-
-        Ok((shader_bytes, entry_point))
-    }
-}
-
-impl WgpuShader for RustComputeShader {
-    fn create_module(
-        &self,
-        device: &wgpu::Device,
-    ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)> {
-        let (shader_bytes, entry_point) = self.spirv_bytes()?;
-
-        if shader_bytes.len() % 4 != 0 {
-            anyhow::bail!("SPIR-V binary length is not a multiple of 4");
-        }
-        let shader_words: Vec<u32> = bytemuck::cast_slice(&shader_bytes).to_vec();
-        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Compute Shader"),
-            source: wgpu::ShaderSource::SpirV(Cow::Owned(shader_words)),
-        });
-        Ok((module, Some(entry_point)))
-    }
-}
-
-/// A WGSL compute shader.
-pub struct WgslComputeShader {
-    pub path: PathBuf,
-    pub entry_point: Option<String>,
-}
-
-impl WgslComputeShader {
-    pub fn new<P: Into<PathBuf>>(path: P, entry_point: Option<String>) -> Self {
-        Self {
-            path: path.into(),
-            entry_point,
-        }
-    }
-}
-
-impl WgpuShader for WgslComputeShader {
-    fn create_module(
-        &self,
-        device: &wgpu::Device,
-    ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)> {
-        let shader_source = fs::read_to_string(&self.path)
-            .with_context(|| format!("reading wgsl source file '{}'", &self.path.display()))?;
-        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Compute Shader"),
-            source: wgpu::ShaderSource::Wgsl(Cow::Owned(shader_source)),
-        });
-        Ok((module, self.entry_point.clone()))
-    }
-}
 
 /// Compute test that is generic over the shader type.
 pub struct WgpuComputeTest<S> {
@@ -536,48 +401,6 @@ impl ComputeBackend for WgpuBackend {
         }
 
         Ok(results)
-    }
-}
-
-/// For WGSL, the code checks for "shader.wgsl" then "compute.wgsl".
-impl Default for WgslComputeShader {
-    fn default() -> Self {
-        let manifest_dir = env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
-        let manifest_path = PathBuf::from(manifest_dir);
-        let shader_path = manifest_path.join("shader.wgsl");
-        let compute_path = manifest_path.join("compute.wgsl");
-
-        let (file, source) = if shader_path.exists() {
-            (
-                shader_path.clone(),
-                fs::read_to_string(&shader_path).unwrap_or_default(),
-            )
-        } else if compute_path.exists() {
-            (
-                compute_path.clone(),
-                fs::read_to_string(&compute_path).unwrap_or_default(),
-            )
-        } else {
-            panic!("No default WGSL shader found in manifest directory");
-        };
-
-        let entry_point = if source.contains("fn main_cs(") {
-            Some("main_cs".to_string())
-        } else if source.contains("fn main(") {
-            Some("main".to_string())
-        } else {
-            None
-        };
-
-        Self::new(file, entry_point)
-    }
-}
-
-/// For the SPIR-V shader, the manifest directory is used as the build path.
-impl Default for RustComputeShader {
-    fn default() -> Self {
-        let manifest_dir = env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
-        Self::new(PathBuf::from(manifest_dir))
     }
 }
 
