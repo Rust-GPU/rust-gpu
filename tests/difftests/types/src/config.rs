@@ -1,3 +1,4 @@
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::Write;
@@ -11,8 +12,18 @@ pub struct Config {
 
 impl Config {
     pub fn write_result<A: bytemuck::NoUninit>(&self, output: &[A]) -> anyhow::Result<()> {
-        let mut f = File::create(&self.output_path)?;
-        f.write_all(bytemuck::cast_slice(output))?;
+        let mut f = File::create(&self.output_path).with_context(|| {
+            format!(
+                "failed to create output file '{}'",
+                self.output_path.display()
+            )
+        })?;
+        f.write_all(bytemuck::cast_slice(output)).with_context(|| {
+            format!(
+                "failed to write to output file '{}'",
+                self.output_path.display()
+            )
+        })?;
         Ok(())
     }
 }
@@ -106,15 +117,28 @@ impl TestMetadata {
 
 impl Config {
     pub fn from_path<P: AsRef<Path>>(path: P) -> anyhow::Result<Self> {
-        let content = fs::read_to_string(path)?;
-        let config = serde_json::from_str(&content)?;
+        let path = path.as_ref();
+        let content = fs::read_to_string(path)
+            .with_context(|| format!("Could not read file '{}'", path.display()))?;
+        let config = serde_json::from_str(&content).with_context(|| {
+            format!(
+                "Could not parse json in file '{}':\n{content}",
+                path.display()
+            )
+        })?;
         Ok(config)
     }
 
     /// Write test metadata to the configured metadata path
     pub fn write_metadata(&self, metadata: &TestMetadata) -> anyhow::Result<()> {
-        let metadata_json = serde_json::to_string(metadata)?;
-        fs::write(&self.metadata_path, metadata_json)?;
+        let metadata_json =
+            serde_json::to_string(metadata).context("Could not serialize TestMetadata")?;
+        fs::write(&self.metadata_path, metadata_json).with_context(|| {
+            format!(
+                "Could not write TestMetadata to file at '{}'",
+                self.metadata_path.display()
+            )
+        })?;
         Ok(())
     }
 }
