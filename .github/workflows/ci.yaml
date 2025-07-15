@@ -42,6 +42,8 @@ jobs:
       # figure out native target triple while we're at it
       - name: install rust-toolchain
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
+      - name: install nextest
+        uses: taiki-e/install-action@nextest
       # Fetch dependencies in a separate step to clearly show how long each part
       # of the testing takes
       - name: cargo fetch --locked
@@ -50,13 +52,13 @@ jobs:
       # Core crates
       # Compiled in --release because cargo compiletest would otherwise compile in release again.
       - name: rustc_codegen_spirv build
-        run: cargo test -p rustc_codegen_spirv --release --no-default-features --features "use-installed-tools" --no-run
+        run: cargo nextest run -p rustc_codegen_spirv --release --no-default-features --features "use-installed-tools" --no-run
 
       - name: rustc_codegen_spirv test
-        run: cargo test -p rustc_codegen_spirv --release --no-default-features --features "use-installed-tools"
+        run: cargo nextest run -p rustc_codegen_spirv --release --no-default-features --features "use-installed-tools"
 
       - name: workspace test (excluding examples & difftest)
-        run: cargo test --release --workspace --exclude "example-runner-*" --exclude "difftest*" --no-default-features --features "use-installed-tools,clap"
+        run: cargo nextest run --release --workspace --exclude "example-runner-*" --exclude "difftest*" --no-default-features --features "use-installed-tools,clap"
 
       # Examples
       - name: cargo check examples
@@ -183,14 +185,16 @@ jobs:
           sudo apt install -y xvfb libgl1-mesa-dri libxcb-xfixes0-dev mesa-vulkan-drivers
       - name: install rust-toolchain
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
+      - name: install nextest
+        uses: taiki-e/install-action@nextest
       - name: cargo fetch --locked
         run: cargo fetch --locked --target $TARGET
       - name: cargo fetch --locked difftests
         run: cargo fetch --locked --manifest-path=tests/difftests/tests/Cargo.toml --target $TARGET
-      - name: test difftest
-        run: cargo test -p "difftest*" --release --no-default-features --features "use-installed-tools"
+      - name: test difftest-runner
+        run: cargo nextest run -P difftest-runner -p difftest-runner -p difftest --release --no-default-features --features "use-installed-tools"
       - name: difftests
-        run: cargo run -p difftests --release --no-default-features --features "use-installed-tools"
+        run: cargo nextest run -P difftests -p difftests --release --no-default-features --features "use-installed-tools"
 
   # This allows us to have a single job we can branch protect on, rather than needing
   # to update the branch protection rules when the test matrix changes
