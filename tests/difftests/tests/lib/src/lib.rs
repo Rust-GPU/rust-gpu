@@ -1,7 +1,7 @@
 #![cfg_attr(target_arch = "spirv", no_std)]
 
 #[cfg(not(target_arch = "spirv"))]
-pub mod config;
+pub use difftest_types::config;
 #[cfg(not(target_arch = "spirv"))]
 pub mod scaffold;
 
