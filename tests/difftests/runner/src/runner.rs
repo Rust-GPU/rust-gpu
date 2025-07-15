@@ -634,6 +634,10 @@ impl Runner {
 
 pub fn forward_features(cmd: &mut Command) {
     cmd.arg("--features");
+    #[cfg(all(feature = "use-compiled-tools", feature = "use-installed-tools"))]
+    compile_error!(
+        "Features `use-compiled-tools` and `use-installed-tools` are mutually exclusive"
+    );
     #[cfg(feature = "use-compiled-tools")]
     {
         cmd.arg("difftest/use-compiled-tools");
