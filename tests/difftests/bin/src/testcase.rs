@@ -16,13 +16,16 @@ pub struct TestCase {
     pub test_binaries: Vec<TestBinary>,
 }
 
+fn path_to_test_name(path: &Path) -> String {
+    path.to_string_lossy()
+        .replace("/", "::")
+        .replace("\\\\", "::")
+}
+
 impl TestCase {
     pub fn new_empty(root: &Path, relative_path: &Path) -> Self {
         TestCase {
-            name: format!(
-                "difftests::{}",
-                relative_path.to_string_lossy().replace("/", "::")
-            ),
+            name: format!("difftests::{}", path_to_test_name(relative_path)),
             absolute_path: root.join(relative_path),
             relative_path: relative_path.to_path_buf(),
             test_binaries: Vec::new(),
@@ -47,7 +50,7 @@ impl TestCase {
             if path.is_dir() && path.join("Cargo.toml").exists() {
                 debug!("Found binary package candidate: {}", path.display());
                 self.test_binaries
-                    .push(TestBinary::new(self, PathBuf::from(entry.file_name())));
+                    .push(TestBinary::new(self, Path::new(&entry.file_name())));
             }
         }
         Ok(())
@@ -71,15 +74,15 @@ pub struct TestBinary {
 }
 
 impl TestBinary {
-    pub fn new(test_case: &TestCase, relative_to_test_case: PathBuf) -> Self {
+    pub fn new(test_case: &TestCase, relative_to_test_case: &Path) -> Self {
         Self {
             name: format!(
                 "{}::{}",
                 test_case.name,
-                relative_to_test_case.to_string_lossy().replace("/", "::")
+                path_to_test_name(relative_to_test_case)
             ),
-            relative_path: test_case.relative_path.join(&relative_to_test_case),
-            absolute_path: test_case.absolute_path.join(&relative_to_test_case),
+            relative_path: test_case.relative_path.join(relative_to_test_case),
+            absolute_path: test_case.absolute_path.join(relative_to_test_case),
         }
     }
 }
@@ -128,7 +131,7 @@ mod tests {
             TestCase::new_empty(Path::new("/home/user/tests"), Path::new("core/group1"));
         test_case
             .test_binaries
-            .push(TestBinary::new(&test_case, PathBuf::from("testcase1")));
+            .push(TestBinary::new(&test_case, Path::new("testcase1")));
         assert_eq!(test_case.to_string(), "difftests::core::group1");
         assert_eq!(
             test_case.test_binaries[0].to_string(),
@@ -161,13 +164,13 @@ mod tests {
             .test_binaries
             .sort_by(|a, b| a.relative_path.cmp(&b.relative_path));
         assert_eq!(
-            test_case.test_binaries[0].relative_path.to_string_lossy(),
-            "test_case/pkg1"
+            test_case.test_binaries[0].relative_path,
+            Path::new("test_case/pkg1")
         );
         assert_eq!(test_case.test_binaries[0].absolute_path, pkg1_dir);
         assert_eq!(
-            test_case.test_binaries[1].relative_path.to_string_lossy(),
-            "test_case/pkg2"
+            test_case.test_binaries[1].relative_path,
+            Path::new("test_case/pkg2")
         );
         assert_eq!(test_case.test_binaries[1].absolute_path, pkg2_dir);
     }
