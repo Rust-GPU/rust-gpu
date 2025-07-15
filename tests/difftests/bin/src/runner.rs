@@ -255,7 +255,7 @@ impl Runner {
             let pkg_name = self.get_package_name(&manifest_path)?;
             debug!("Package '{}' detected", pkg_name);
 
-            let package_out = self.output_dir.join(package.path_from_root());
+            let package_out = self.output_dir.join(&package.relative_path);
             fs::create_dir_all(&package_out)?;
             debug!("Writing output to '{}'", package_out.display());
             let config_file = package_out.join("config.json");

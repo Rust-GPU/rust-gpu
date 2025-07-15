@@ -2,13 +2,14 @@ use crate::runner::RunnerResult;
 use std::fmt::{Display, Formatter};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use tracing::debug;
 
 /// A test case containing multiple test binaries that should produce the same output
 pub struct TestCase {
-    /// the relative path from the base difftest dir
-    pub relative_path: Arc<PathBuf>,
+    /// The name of the testcase, as a rust mod path
+    pub name: String,
+    /// the relative path from the base `difftest` dir
+    pub relative_path: PathBuf,
     /// the absolute path
     pub absolute_path: PathBuf,
     /// All the test binaries of this single test case.
@@ -16,15 +17,22 @@ pub struct TestCase {
 }
 
 impl TestCase {
-    pub fn try_new(root: &Path, relative_path: &Path) -> RunnerResult<Option<Self>> {
-        let absolute_path = root.join(relative_path);
-        let mut test_case = TestCase {
-            absolute_path,
-            relative_path: Arc::new(relative_path.to_path_buf()),
+    pub fn new_empty(root: &Path, relative_path: &Path) -> Self {
+        TestCase {
+            name: format!(
+                "difftests::{}",
+                relative_path.to_string_lossy().replace("/", "::")
+            ),
+            absolute_path: root.join(relative_path),
+            relative_path: relative_path.to_path_buf(),
             test_binaries: Vec::new(),
-        };
+        }
+    }
+
+    pub fn try_new(root: &Path, relative_path: &Path) -> RunnerResult<Option<Self>> {
+        let mut test_case = Self::new_empty(root, relative_path);
         test_case.collect_test_binaries()?;
-        if test_case.test_binaries.len() > 0 {
+        if !test_case.test_binaries.is_empty() {
             debug!("Test case found: {}", relative_path.display());
             Ok(Some(test_case))
         } else {
@@ -48,42 +56,37 @@ impl TestCase {
 
 impl Display for TestCase {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "difftests::{}", self.relative_path.to_string_lossy())
+        f.write_str(&self.name)
     }
 }
 
 /// A test binary that can be executed
 pub struct TestBinary {
-    /// the relative path from the test case
+    /// The name of the testcase, as a rust mod path
+    pub name: String,
+    /// the relative path from the base `difftest` dir
     pub relative_path: PathBuf,
-    /// the relative path from the test case
-    pub test_case_relative_path: Arc<PathBuf>,
     /// the absolute path
     pub absolute_path: PathBuf,
 }
 
 impl TestBinary {
-    pub fn new(test_case: &TestCase, relative_path: PathBuf) -> Self {
+    pub fn new(test_case: &TestCase, relative_to_test_case: PathBuf) -> Self {
         Self {
-            absolute_path: test_case.absolute_path.join(&relative_path),
-            test_case_relative_path: test_case.relative_path.clone(),
-            relative_path,
+            name: format!(
+                "{}::{}",
+                test_case.name,
+                relative_to_test_case.to_string_lossy().replace("/", "::")
+            ),
+            relative_path: test_case.relative_path.join(&relative_to_test_case),
+            absolute_path: test_case.absolute_path.join(&relative_to_test_case),
         }
-    }
-
-    pub fn path_from_root(&self) -> PathBuf {
-        self.test_case_relative_path.join(&self.relative_path)
     }
 }
 
 impl Display for TestBinary {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "difftests::{}::{}",
-            self.test_case_relative_path.to_string_lossy(),
-            self.relative_path.to_string_lossy()
-        )
+        f.write_str(&self.name)
     }
 }
 
@@ -95,7 +98,7 @@ pub fn collect_test_dirs(root: &Path) -> RunnerResult<Vec<TestCase>> {
             return Ok(());
         }
 
-        if let Some(test_case) = TestCase::try_new(root, &traverse)? {
+        if let Some(test_case) = TestCase::try_new(root, traverse)? {
             test_cases.push(test_case);
         }
         for entry in fs::read_dir(absolute_path)? {
@@ -121,19 +124,15 @@ mod tests {
 
     #[test]
     fn test_format_test_name() {
-        let test_case_relative_path = Arc::new(PathBuf::from("group1"));
-        let mut test_case = TestCase {
-            absolute_path: PathBuf::from("/home/user/tests/group1"),
-            relative_path: test_case_relative_path,
-            test_binaries: Vec::new(),
-        };
+        let mut test_case =
+            TestCase::new_empty(Path::new("/home/user/tests"), Path::new("core/group1"));
         test_case
             .test_binaries
             .push(TestBinary::new(&test_case, PathBuf::from("testcase1")));
-        assert_eq!(test_case.to_string(), "difftests::group1");
+        assert_eq!(test_case.to_string(), "difftests::core::group1");
         assert_eq!(
             test_case.test_binaries[0].to_string(),
-            "difftests::group1::testcase1"
+            "difftests::core::group1::testcase1"
         );
     }
 
@@ -163,12 +162,12 @@ mod tests {
             .sort_by(|a, b| a.relative_path.cmp(&b.relative_path));
         assert_eq!(
             test_case.test_binaries[0].relative_path.to_string_lossy(),
-            "pkg1"
+            "test_case/pkg1"
         );
         assert_eq!(test_case.test_binaries[0].absolute_path, pkg1_dir);
         assert_eq!(
             test_case.test_binaries[1].relative_path.to_string_lossy(),
-            "pkg2"
+            "test_case/pkg2"
         );
         assert_eq!(test_case.test_binaries[1].absolute_path, pkg2_dir);
     }
