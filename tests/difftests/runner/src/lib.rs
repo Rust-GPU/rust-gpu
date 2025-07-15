@@ -17,12 +17,16 @@ mod runner;
 mod testcase;
 
 pub fn run() -> Result<ExitCode> {
-    let subscriber = FmtSubscriber::builder()
-        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
-        .finish();
-    tracing::subscriber::set_global_default(subscriber).expect("Failed to set global subscriber");
-
     let mut args = Arguments::from_args();
+
+    // list must not print anything else to stdout
+    if !args.list {
+        let subscriber = FmtSubscriber::builder()
+            .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+            .finish();
+        tracing::subscriber::set_global_default(subscriber)
+            .expect("Failed to set global subscriber");
+    }
 
     // If filters are provided that look like paths (contain '/'), convert them to test names
     if let Some(filter) = &mut args.filter {
