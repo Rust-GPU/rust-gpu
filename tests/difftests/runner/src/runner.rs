@@ -272,6 +272,9 @@ impl Runner {
             fs::write(&config_file, &config_json)?;
             trace!("Config file created at {}", config_file.display());
 
+            fs::write(&temp_output_path, [])?;
+            trace!("Output file created at {}", temp_output_path.display());
+
             let mut cmd = Command::new("cargo");
             cmd.arg("run").arg("--release").arg("--manifest-path").arg(
                 manifest_path
