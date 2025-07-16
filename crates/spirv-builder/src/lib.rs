@@ -1038,6 +1038,11 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     // previously set.
     cargo.env_remove("RUSTC");
 
+    // NOTE(tuguzT) Used by Cargo to call executables of Clippy, Miri
+    // (and maybe other Cargo subcommands) instead of `rustc`
+    // which could affect its functionality and break the build process.
+    cargo.env_remove("RUSTC_WRAPPER");
+
     // NOTE(eddyb) this used to be just `RUSTFLAGS` but at some point Cargo
     // added a separate environment variable using `\x1f` instead of spaces,
     // which allows us to have spaces within individual `rustc` flags.
