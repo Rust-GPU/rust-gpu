@@ -49,8 +49,10 @@ clippy_no_features examples/shaders/reduce
 
 # tests
 clippy tests/compiletests
+clippy_no_features tests/difftests/types
+clippy tests/difftests/runner
 clippy tests/difftests/bin
-clippy tests/difftests/lib
+clippy tests/difftests/tests/lib
 
 # Custom lints
 
