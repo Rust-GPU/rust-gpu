@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spirv-tools-0.12.0/src/cmd.rs`."><title>cmd.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirv_tools" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirv_tools/</div>cmd.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::error::Message;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/spirv-tools-0.12.1/src/cmd.rs`."><title>cmd.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirv_tools" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirv_tools/</div>cmd.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::error::Message;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>std::process::{Command, Stdio};
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">pub enum </span>CmdError {
@@ -179,36 +179,39 @@
 <a href=#179 id=179 data-nosnippet>179</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#180 id=180 data-nosnippet>180</a>                }
 <a href=#181 id=181 data-nosnippet>181</a>                <span class="kw">let </span>(ret, remaining) = <span class="kw">match </span>memchr::memchr(<span class="self">self</span>.needle, <span class="self">self</span>.haystack) {
-<a href=#182 id=182 data-nosnippet>182</a>                    <span class="prelude-val">Some</span>(pos) =&gt; (<span class="kw-2">&amp;</span><span class="self">self</span>.haystack[..pos], <span class="kw-2">&amp;</span><span class="self">self</span>.haystack[pos + <span class="number">1</span>..]),
-<a href=#183 id=183 data-nosnippet>183</a>                    <span class="prelude-val">None </span>=&gt; (<span class="self">self</span>.haystack, <span class="kw-2">&amp;</span>[][..]),
-<a href=#184 id=184 data-nosnippet>184</a>                };
-<a href=#185 id=185 data-nosnippet>185</a>                <span class="self">self</span>.haystack = remaining;
-<a href=#186 id=186 data-nosnippet>186</a>                <span class="prelude-val">Some</span>(ret)
-<a href=#187 id=187 data-nosnippet>187</a>            }
-<a href=#188 id=188 data-nosnippet>188</a>        }
-<a href=#189 id=189 data-nosnippet>189</a>
-<a href=#190 id=190 data-nosnippet>190</a>        Split { haystack, needle }
-<a href=#191 id=191 data-nosnippet>191</a>    }
+<a href=#182 id=182 data-nosnippet>182</a>                    <span class="prelude-val">Some</span>(pos) =&gt; (
+<a href=#183 id=183 data-nosnippet>183</a>                        <span class="self">self</span>.haystack.get(..pos).unwrap(),
+<a href=#184 id=184 data-nosnippet>184</a>                        <span class="self">self</span>.haystack.get(pos + <span class="number">1</span>..).unwrap(),
+<a href=#185 id=185 data-nosnippet>185</a>                    ),
+<a href=#186 id=186 data-nosnippet>186</a>                    <span class="prelude-val">None </span>=&gt; (<span class="self">self</span>.haystack, <span class="kw-2">&amp;</span>[][..]),
+<a href=#187 id=187 data-nosnippet>187</a>                };
+<a href=#188 id=188 data-nosnippet>188</a>                <span class="self">self</span>.haystack = remaining;
+<a href=#189 id=189 data-nosnippet>189</a>                <span class="prelude-val">Some</span>(ret)
+<a href=#190 id=190 data-nosnippet>190</a>            }
+<a href=#191 id=191 data-nosnippet>191</a>        }
 <a href=#192 id=192 data-nosnippet>192</a>
-<a href=#193 id=193 data-nosnippet>193</a>    <span class="kw">let </span>binary = <span class="kw">match </span>retrieve_output {
-<a href=#194 id=194 data-nosnippet>194</a>        Output::Retrieve =&gt; std::fs::read(<span class="kw-2">&amp;</span>output_path).map_err(CmdError::Io)<span class="question-mark">?</span>,
-<a href=#195 id=195 data-nosnippet>195</a>        Output::Ignore =&gt; Vec::new(),
-<a href=#196 id=196 data-nosnippet>196</a>    };
-<a href=#197 id=197 data-nosnippet>197</a>
-<a href=#198 id=198 data-nosnippet>198</a>    <span class="comment">// Since we are retrieving the results via stdout, but it can also contain
-<a href=#199 id=199 data-nosnippet>199</a>    // diagnostic messages, we need to be careful
-<a href=#200 id=200 data-nosnippet>200</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>messages = Vec::new();
-<a href=#201 id=201 data-nosnippet>201</a>
-<a href=#202 id=202 data-nosnippet>202</a>    <span class="kw">for </span>line <span class="kw">in </span>split(<span class="kw-2">&amp;</span>output.stdout, <span class="string">b'\n'</span>) {
-<a href=#203 id=203 data-nosnippet>203</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(s) = std::str::from_utf8(line) {
-<a href=#204 id=204 data-nosnippet>204</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(msg) = <span class="kw">crate</span>::error::Message::parse(s) {
-<a href=#205 id=205 data-nosnippet>205</a>                messages.push(msg);
-<a href=#206 id=206 data-nosnippet>206</a>                <span class="kw">continue</span>;
-<a href=#207 id=207 data-nosnippet>207</a>            }
-<a href=#208 id=208 data-nosnippet>208</a>        }
-<a href=#209 id=209 data-nosnippet>209</a>
-<a href=#210 id=210 data-nosnippet>210</a>        <span class="kw">break</span>;
-<a href=#211 id=211 data-nosnippet>211</a>    }
+<a href=#193 id=193 data-nosnippet>193</a>        Split { haystack, needle }
+<a href=#194 id=194 data-nosnippet>194</a>    }
+<a href=#195 id=195 data-nosnippet>195</a>
+<a href=#196 id=196 data-nosnippet>196</a>    <span class="kw">let </span>binary = <span class="kw">match </span>retrieve_output {
+<a href=#197 id=197 data-nosnippet>197</a>        Output::Retrieve =&gt; std::fs::read(<span class="kw-2">&amp;</span>output_path).map_err(CmdError::Io)<span class="question-mark">?</span>,
+<a href=#198 id=198 data-nosnippet>198</a>        Output::Ignore =&gt; Vec::new(),
+<a href=#199 id=199 data-nosnippet>199</a>    };
+<a href=#200 id=200 data-nosnippet>200</a>
+<a href=#201 id=201 data-nosnippet>201</a>    <span class="comment">// Since we are retrieving the results via stdout, but it can also contain
+<a href=#202 id=202 data-nosnippet>202</a>    // diagnostic messages, we need to be careful
+<a href=#203 id=203 data-nosnippet>203</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>messages = Vec::new();
+<a href=#204 id=204 data-nosnippet>204</a>
+<a href=#205 id=205 data-nosnippet>205</a>    <span class="kw">for </span>line <span class="kw">in </span>split(<span class="kw-2">&amp;</span>output.stdout, <span class="string">b'\n'</span>) {
+<a href=#206 id=206 data-nosnippet>206</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(s) = std::str::from_utf8(line) {
+<a href=#207 id=207 data-nosnippet>207</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(msg) = <span class="kw">crate</span>::error::Message::parse(s) {
+<a href=#208 id=208 data-nosnippet>208</a>                messages.push(msg);
+<a href=#209 id=209 data-nosnippet>209</a>                <span class="kw">continue</span>;
+<a href=#210 id=210 data-nosnippet>210</a>            }
+<a href=#211 id=211 data-nosnippet>211</a>        }
 <a href=#212 id=212 data-nosnippet>212</a>
-<a href=#213 id=213 data-nosnippet>213</a>    <span class="prelude-val">Ok</span>(CmdOutput { binary, messages })
-<a href=#214 id=214 data-nosnippet>214</a>}</code></pre></div></section></main></body></html>
+<a href=#213 id=213 data-nosnippet>213</a>        <span class="kw">break</span>;
+<a href=#214 id=214 data-nosnippet>214</a>    }
+<a href=#215 id=215 data-nosnippet>215</a>
+<a href=#216 id=216 data-nosnippet>216</a>    <span class="prelude-val">Ok</span>(CmdOutput { binary, messages })
+<a href=#217 id=217 data-nosnippet>217</a>}</code></pre></div></section></main></body></html>
