@@ -71,6 +71,7 @@
 // #![allow()]
 #![doc = include_str!("../README.md")]
 
+pub mod cargo_cmd;
 mod depfile;
 #[cfg(feature = "watch")]
 mod watch;
@@ -961,7 +962,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
 
     let profile = if builder.release { "release" } else { "dev" };
 
-    let mut cargo = Command::new("cargo");
+    let mut cargo = cargo_cmd::CargoCmd::new();
     if let Some(toolchain) = &builder.toolchain_overwrite {
         cargo.arg(format!("+{toolchain}"));
     }
@@ -1014,35 +1015,6 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
 
     cargo.arg("--target-dir").arg(target_dir);
 
-    // Clear Cargo environment variables that we don't want to leak into the
-    // inner invocation of Cargo (because e.g. build scripts might read them),
-    // before we set any of our own below.
-    for (key, _) in env::vars_os() {
-        let remove = key
-            .to_str()
-            .is_some_and(|s| s.starts_with("CARGO_FEATURES_") || s.starts_with("CARGO_CFG_"));
-        if remove {
-            cargo.env_remove(key);
-        }
-    }
-
-    // NOTE(eddyb) Cargo caches some information it got from `rustc` in
-    // `.rustc_info.json`, and assumes it only depends on the `rustc` binary,
-    // but in our case, `rustc_codegen_spirv` changes are also relevant,
-    // so we turn off that caching with an env var, just to avoid any issues.
-    cargo.env("CARGO_CACHE_RUSTC_INFO", "0");
-
-    // NOTE(firestar99) If you call SpirvBuilder in a build script, it will
-    // set `RUSTC` before calling it. And if we were to propagate it to our
-    // cargo invocation, it will take precedence over the `+toolchain` we
-    // previously set.
-    cargo.env_remove("RUSTC");
-
-    // NOTE(tuguzT) Used by Cargo to call executables of Clippy, Miri
-    // (and maybe other Cargo subcommands) instead of `rustc`
-    // which could affect its functionality and break the build process.
-    cargo.env_remove("RUSTC_WRAPPER");
-
     // NOTE(eddyb) this used to be just `RUSTFLAGS` but at some point Cargo
     // added a separate environment variable using `\x1f` instead of spaces,
     // which allows us to have spaces within individual `rustc` flags.
@@ -1051,21 +1023,18 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         join_checking_for_separators(rustflags, "\x1f"),
     );
 
-    let profile_in_env_var = profile.replace('-', "_").to_ascii_uppercase();
-
     // NOTE(eddyb) there's no parallelism to take advantage of multiple CGUs,
     // and inter-CGU duplication can be wasteful, so this forces 1 CGU for now.
+    let profile_in_env_var = profile.replace('-', "_").to_ascii_uppercase();
     let num_cgus = 1;
     cargo.env(
         format!("CARGO_PROFILE_{profile_in_env_var}_CODEGEN_UNITS"),
         num_cgus.to_string(),
     );
 
-    let build = cargo
-        .stderr(Stdio::inherit())
-        .current_dir(path_to_crate)
-        .output()
-        .expect("failed to execute cargo build");
+    cargo.stderr(Stdio::inherit()).current_dir(path_to_crate);
+    log::debug!("building shaders with `{cargo}`");
+    let build = cargo.output().expect("failed to execute cargo build");
 
     // `get_last_artifact` has the side-effect of printing invalid lines, so
     // we do that even in case of an error, to let through any useful messages
