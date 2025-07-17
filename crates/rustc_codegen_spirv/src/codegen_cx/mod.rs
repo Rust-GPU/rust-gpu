@@ -15,7 +15,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use itertools::Itertools as _;
 use rspirv::dr::{Module, Operand};
-use rspirv::spirv::{Decoration, LinkageType, Op, Word};
+use rspirv::spirv::{Decoration, LinkageType, Word};
 use rustc_abi::{AddressSpace, HasDataLayout, TargetDataLayout};
 use rustc_ast::ast::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_codegen_ssa::mir::debuginfo::{FunctionDebugContext, VariableKind};
@@ -37,7 +37,7 @@ use rustc_target::spec::{HasTargetSpec, Target, TargetTuple};
 use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::iter::once;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::rc::Rc;
 use std::str::FromStr;
 
@@ -767,25 +767,6 @@ impl CodegenArgs {
 
         if self.disassemble_globals {
             for inst in module.global_inst_iter() {
-                // HACK: On Windows, paths are printed like `OpString "D:\\dir\\blah"`.
-                // Unfortunately, compiletest will only normalize `D:\dir\blah` to `$DIR/blah` -
-                // one backslash, not two. So, when disassembling for compiletest, check if the
-                // argument to OpString can be parsed as an absolute path, and if it is, replace it
-                // with just the filename component of the path.
-                if inst.class.opcode == Op::String {
-                    let path = Path::new(inst.operands[0].unwrap_literal_string());
-                    if path.is_absolute()
-                        && let Some(file_name) = path.file_name()
-                    {
-                        let mut inst = inst.clone();
-                        inst.operands[0] = Operand::LiteralString(format!(
-                            "$OPSTRING_FILENAME/{}",
-                            file_name.to_string_lossy(),
-                        ));
-                        eprintln!("{}", inst.disassemble());
-                        continue;
-                    }
-                }
                 eprintln!("{}", inst.disassemble());
             }
         }

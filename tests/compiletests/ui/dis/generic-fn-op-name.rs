@@ -8,6 +8,12 @@
 // normalize-stderr-test "OpSource .*\n" -> ""
 // normalize-stderr-test "OpExtension .SPV_KHR_vulkan_memory_model.\n" -> ""
 // normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"
+
+// HACK(eddyb) `compiletest` handles `ui\dis\`, but not `ui\\dis\\`, on Windows.
+// normalize-stderr-test "ui/dis/" -> "$$DIR/"
+
+// HACK(eddyb) this comment prevents `rustfmt` from deleting the above empty line.
+//
 #![feature(adt_const_params)]
 #![allow(incomplete_features)]
 

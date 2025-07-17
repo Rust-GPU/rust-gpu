@@ -1,5 +1,6 @@
 // Test creating an array.
 // build-pass
+// compile-flags: -C target-feature=+Int64
 
 use spirv_std::macros::spirv;
 

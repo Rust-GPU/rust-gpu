@@ -1,45 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-if [[ -z "${CI}" ]]; then
-    FEAT="use-compiled-tools"
-else
-    FEAT="use-installed-tools"
-fi
-
-function clippy() {
-    echo ::group::"$1"
-    cargo clippy \
-        --manifest-path "$1/Cargo.toml" \
-        --no-default-features \
-        --features "$FEAT" \
-        --all-targets \
-        -- -D warnings
-    echo ::endgroup::
-}
-
-function clippy_no_features() {
-    echo ::group::"$1"
-    cargo clippy \
-        --manifest-path "$1/Cargo.toml" \
-        --all-targets \
-        -- -D warnings
-    echo ::endgroup::
-}
-
-# Core crates
-clippy crates/rustc_codegen_spirv
-clippy crates/spirv-builder
-
-# Examples
-
-clippy examples/runners/ash
-clippy examples/runners/wgpu
-
-clippy_no_features examples/runners/cpu
-clippy_no_features examples/shaders/sky-shader
-clippy_no_features examples/shaders/simplest-shader
-
 # Custom lints
 
 # 1. Disallow `std::env` (mis)use from `rustc_codegen_spirv`
@@ -99,6 +60,11 @@ version_test crates/spirv-std
 # HACK(eddyb) see `crates/rustc_codegen_spirv/build.rs` for more on `pqp_cg_ssa`
 # (a patched copy of `rustc_codegen_ssa`).
 echo ::group::rustc_codegen_spirv_disable_pqp_cg_ssa
+if [[ -z "${CI}" ]]; then
+    FEAT="use-compiled-tools"
+else
+    FEAT="use-installed-tools"
+fi
 cargo clippy \
     --manifest-path "crates/rustc_codegen_spirv/Cargo.toml" \
     --no-default-features \

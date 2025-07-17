@@ -5,6 +5,7 @@ pub(crate) mod debuginfo;
 pub(crate) mod diagnostics;
 mod fuse_selects;
 mod reduce;
+pub(crate) mod validate;
 
 use lazy_static::lazy_static;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexSet};
@@ -63,7 +64,7 @@ macro_rules! def_spv_spec_with_extra_well_known {
                         let spv_spec = spv::spec::Spec::get();
                         let wk = &spv_spec.well_known;
 
-                        let decorations = match &spv_spec.operand_kinds[wk.Decoration] {
+                        let decorations = match wk.Decoration.def() {
                             spv::spec::OperandKindDef::ValueEnum { variants } => variants,
                             _ => unreachable!(),
                         };
@@ -101,7 +102,9 @@ def_spv_spec_with_extra_well_known! {
         OpCompositeExtract,
     ],
     operand_kind: spv::spec::OperandKind = [
+        Capability,
         ExecutionModel,
+        ImageFormat,
     ],
     decoration: u32 = [
         UserTypeGOOGLE,
