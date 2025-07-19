@@ -1,4 +1,5 @@
 // build-pass
+// compile-flags: -C target-feature=+Int8,+Int16,+Int64
 
 use spirv_std::arch::{signed_max, signed_min, unsigned_max, unsigned_min};
 use spirv_std::spirv;

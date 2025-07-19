@@ -65,6 +65,13 @@ fn main() {
     let deps_target_dir = original_target_dir.join("compiletest-deps");
     let compiletest_build_dir = original_target_dir.join("compiletest-results");
 
+    // HACK(eddyb) force `compiletest` to pass `ui/...` relative paths to `rustc`,
+    // which should always end up being the same regardless of the path that the
+    // Rust-GPU repo is checked out at (among other things, this avoids harcoded
+    // `compiletest` limits being hit by e.g. users with slightly longer paths).
+    std::env::set_current_dir(tests_dir).unwrap();
+    let tests_dir = PathBuf::from("");
+
     // Pull in rustc_codegen_spirv as a dynamic library in the same way
     // spirv-builder does.
     let codegen_backend_path = find_rustc_codegen_spirv();
@@ -151,7 +158,7 @@ impl Runner {
                 format!("{}-{}", env, variation.name)
             };
 
-            println!("Testing env: {}\n", stage_id);
+            println!("Testing env: {stage_id}\n");
 
             let target = format!("{SPIRV_TARGET_PREFIX}{env}");
             let libs = build_deps(&self.deps_target_dir, &self.codegen_backend_path, &target);
@@ -348,8 +355,6 @@ struct TestDeps {
 /// The RUSTFLAGS passed to all SPIR-V builds.
 // FIXME(eddyb) expose most of these from `spirv-builder`.
 fn rust_flags(codegen_backend_path: &Path) -> String {
-    let target_features = ["Int8", "Int16", "Int64", "Float64"];
-
     [
         &*format!("-Zcodegen-backend={}", codegen_backend_path.display()),
         // Ensure the codegen backend is emitted in `.d` files to force Cargo
@@ -381,7 +386,6 @@ fn rust_flags(codegen_backend_path: &Path) -> String {
         // NOTE(eddyb) flags copied from `spirv-builder` are all above this line.
         "-Cdebuginfo=2",
         "-Cembed-bitcode=no",
-        &format!("-Ctarget-feature=+{}", target_features.join(",+")),
     ]
     .join(" ")
 }

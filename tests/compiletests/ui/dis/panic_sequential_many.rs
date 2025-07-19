@@ -16,9 +16,11 @@
 // normalize-stderr-test "OpSource .*\n" -> ""
 // normalize-stderr-test "OpExtension .SPV_KHR_vulkan_memory_model.\n" -> ""
 // normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"
-// normalize-stderr-test "\S:\S*/panic_sequential_many.rs" -> "$$DIR/panic_sequential_many.rs"
 // FIXME(eddyb) handle this one in the test runner.
 // normalize-stderr-test "\S*/lib/rustlib/" -> "$$SYSROOT/lib/rustlib/"
+
+// HACK(eddyb) `compiletest` handles `ui\dis\`, but not `ui\\dis\\`, on Windows.
+// normalize-stderr-test "ui/dis/" -> "$$DIR/"
 
 use spirv_std::spirv;
 
