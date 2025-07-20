@@ -3,7 +3,9 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::Builder;
 use crate::abi::ConvSpirvType;
-use crate::builder_spirv::{BuilderCursor, SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
+use crate::builder_spirv::{
+    SpirvBlockCursor, SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind,
+};
 use crate::codegen_cx::CodegenCx;
 use crate::custom_insts::{CustomInst, CustomOp};
 use crate::spirv_type::SpirvType;
@@ -166,8 +168,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     | MemorySemantics::ACQUIRE_RELEASE
             }
             AtomicOrdering::SeqCst => {
-                let emit = self.emit();
-                let memory_model = emit.module_ref().memory_model.as_ref().unwrap();
+                let builder = self.emit();
+                let memory_model = builder.module_ref().memory_model.as_ref().unwrap();
                 if memory_model.operands[1].unwrap_memory_model() == MemoryModel::Vulkan {
                     invalid_seq_cst = true;
                 }
@@ -750,9 +752,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let ptr_id = ptr.def(self);
 
         let maybe_original_access_chain = {
-            let emit = self.emit();
-            let module = emit.module_ref();
-            let current_func_blocks = emit
+            let builder = self.emit();
+            let module = builder.module_ref();
+            let current_func_blocks = builder
                 .selected_function()
                 .and_then(|func_idx| Some(&module.functions.get(func_idx)?.blocks[..]))
                 .unwrap_or_default();
@@ -830,13 +832,13 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         indices: Vec<Word>,
         is_inbounds: bool,
     ) -> SpirvValue {
-        let mut emit = self.emit();
+        let mut builder = self.emit();
 
         let non_zero_ptr_base_index =
             ptr_base_index.filter(|&idx| self.builder.lookup_const_scalar(idx) != Some(0));
         if let Some(ptr_base_index) = non_zero_ptr_base_index {
             let result = if is_inbounds {
-                emit.in_bounds_ptr_access_chain(
+                builder.in_bounds_ptr_access_chain(
                     result_type,
                     None,
                     pointer,
@@ -844,7 +846,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     indices,
                 )
             } else {
-                emit.ptr_access_chain(
+                builder.ptr_access_chain(
                     result_type,
                     None,
                     pointer,
@@ -857,9 +859,9 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             result
         } else {
             if is_inbounds {
-                emit.in_bounds_access_chain(result_type, None, pointer, indices)
+                builder.in_bounds_access_chain(result_type, None, pointer, indices)
             } else {
-                emit.access_chain(result_type, None, pointer, indices)
+                builder.access_chain(result_type, None, pointer, indices)
             }
             .unwrap()
         }
@@ -1091,21 +1093,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
     #[instrument(level = "trace", skip(cx))]
     fn build(cx: &'a Self::CodegenCx, llbb: Self::BasicBlock) -> Self {
-        let cursor = cx.builder.select_block_by_id(llbb);
-        // FIXME(eddyb) change `Self::Function` to be more like a function index.
-        let current_fn = {
-            let emit = cx.emit_with_cursor(cursor);
-            let selected_function = emit.selected_function().unwrap();
-            let selected_function = &emit.module_ref().functions[selected_function];
-            let def_inst = selected_function.def.as_ref().unwrap();
-            let def = def_inst.result_id.unwrap();
-            let ty = def_inst.operands[1].unwrap_id_ref();
-            def.with_type(ty)
-        };
         Self {
             cx,
-            cursor,
-            current_fn,
+            current_block: llbb,
             current_span: Default::default(),
         }
     }
@@ -1201,17 +1191,18 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         llfn: Self::Function,
         _name: &str,
     ) -> Self::BasicBlock {
-        let cursor_fn = cx.builder.select_function_by_id(llfn.def_cx(cx));
-        cx.emit_with_cursor(cursor_fn).begin_block(None).unwrap()
+        let mut builder = cx.builder.builder_for_fn(llfn);
+        let id = builder.begin_block(None).unwrap();
+        let index_in_builder = builder.selected_block().unwrap();
+        SpirvBlockCursor {
+            parent_fn: llfn,
+            id,
+            index_in_builder,
+        }
     }
 
-    fn append_sibling_block(&mut self, _name: &str) -> Self::BasicBlock {
-        self.emit_with_cursor(BuilderCursor {
-            function: self.cursor.function,
-            block: None,
-        })
-        .begin_block(None)
-        .unwrap()
+    fn append_sibling_block(&mut self, name: &str) -> Self::BasicBlock {
+        Self::append_block(self.cx, self.current_block.parent_fn, name)
     }
 
     fn switch_to_block(&mut self, llbb: Self::BasicBlock) {
@@ -1239,7 +1230,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     }
 
     fn br(&mut self, dest: Self::BasicBlock) {
-        self.emit().branch(dest).unwrap();
+        self.emit().branch(dest.id).unwrap();
     }
 
     fn cond_br(
@@ -1257,7 +1248,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             Some(SpirvConst::Scalar(0)) => self.br(else_llbb),
             _ => {
                 self.emit()
-                    .branch_conditional(cond, then_llbb, else_llbb, empty())
+                    .branch_conditional(cond, then_llbb.id, else_llbb.id, empty())
                     .unwrap();
             }
         }
@@ -1330,9 +1321,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             )),
         };
         let cases = cases
-            .map(|(i, b)| (construct_case(self, signed, i), b))
+            .map(|(i, b)| (construct_case(self, signed, i), b.id))
             .collect::<Vec<_>>();
-        self.emit().switch(v.def(self), else_llbb, cases).unwrap();
+        self.emit()
+            .switch(v.def(self), else_llbb.id, cases)
+            .unwrap();
     }
 
     fn invoke(
@@ -1349,7 +1342,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     ) -> Self::Value {
         // Exceptions don't exist, jump directly to then block
         let result = self.call(llty, fn_attrs, fn_abi, llfn, args, funclet, instance);
-        self.emit().branch(then).unwrap();
+        self.emit().branch(then.id).unwrap();
         result
     }
 
@@ -2741,16 +2734,16 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             .with_type(agg_val.ty)
     }
 
-    fn set_personality_fn(&mut self, _personality: Self::Value) {
+    fn set_personality_fn(&mut self, _personality: Self::Function) {
         todo!()
     }
 
     // These are used by everyone except msvc
-    fn cleanup_landing_pad(&mut self, _pers_fn: Self::Value) -> (Self::Value, Self::Value) {
+    fn cleanup_landing_pad(&mut self, _pers_fn: Self::Function) -> (Self::Value, Self::Value) {
         todo!()
     }
 
-    fn filter_landing_pad(&mut self, _pers_fn: Self::Value) -> (Self::Value, Self::Value) {
+    fn filter_landing_pad(&mut self, _pers_fn: Self::Function) -> (Self::Value, Self::Value) {
         todo!()
     }
 
@@ -2979,16 +2972,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         // be fixed upstream, so we never see any "function pointer" values being
         // created just to perform direct calls.
         let (callee_val, result_type, argument_types) = match self.lookup_type(callee.ty) {
-            // HACK(eddyb) this seems to be needed, but it's not what `get_fn_addr`
-            // produces, are these coming from inside `rustc_codegen_spirv`?
-            SpirvType::Function {
-                return_type,
-                arguments,
-            } => {
-                assert_ty_eq!(self, callee_ty, callee.ty);
-                (callee.def(self), return_type, arguments)
-            }
-
             SpirvType::Pointer { pointee } => match self.lookup_type(pointee) {
                 SpirvType::Function {
                     return_type,
@@ -3014,7 +2997,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             },
 
             _ => bug!(
-                "call expected function or `fn` pointer type, got `{}`",
+                "call expected `fn` pointer type, got `{}`",
                 self.debug_type(callee.ty)
             ),
         };

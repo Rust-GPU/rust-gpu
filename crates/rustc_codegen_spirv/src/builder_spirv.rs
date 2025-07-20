@@ -7,7 +7,7 @@ use crate::spirv_type::SpirvType;
 use crate::symbols::Symbols;
 use crate::target::SpirvTarget;
 use crate::target_feature::TargetFeature;
-use rspirv::dr::{Block, Builder, Instruction, Module, Operand};
+use rspirv::dr::{Builder, Instruction, Module, Operand};
 use rspirv::spirv::{
     AddressingModel, Capability, MemoryModel, Op, SourceLanguage, StorageClass, Word,
 };
@@ -380,6 +380,22 @@ pub struct DebugFileSpirv<'tcx> {
     pub file_name_op_string_id: Word,
 }
 
+// HACK(eddyb) unlike a raw SPIR-V ID (or `SpirvValue`), this allows random-access.
+#[derive(Copy, Clone, Debug)]
+pub struct SpirvFunctionCursor {
+    pub ty: Word,
+    pub id: Word,
+    pub index_in_builder: usize,
+}
+
+// HACK(eddyb) unlike a raw SPIR-V ID, this allows random-access.
+#[derive(Copy, Clone, Debug)]
+pub struct SpirvBlockCursor {
+    pub parent_fn: SpirvFunctionCursor,
+    pub id: Word,
+    pub index_in_builder: usize,
+}
+
 /// Cursor system:
 ///
 /// The LLVM module builder model (and therefore `codegen_ssa`) assumes that there is a central
@@ -402,11 +418,15 @@ pub struct DebugFileSpirv<'tcx> {
 /// then `self.emit_global()` will use the generic "global cursor" and return a mutable reference
 /// to the rspirv builder with no basic block nor function selected, i.e. any instructions emitted
 /// will be in the global section.
+//
+// FIXME(eddyb) try updating documentation like the above.
+// FIXME(eddyb) figure out how to replace `BuilderCursor` with something like
+// `Option<SpirvBlockCursor>`, but that can't handle "in function outside BB".
 #[derive(Debug, Default, Copy, Clone)]
 #[must_use = "BuilderCursor should usually be assigned to the Builder.cursor field"]
-pub struct BuilderCursor {
-    pub function: Option<usize>,
-    pub block: Option<usize>,
+struct BuilderCursor {
+    fn_id_and_idx: Option<(Word, usize)>,
+    block_id_and_idx: Option<(Word, usize)>,
 }
 
 pub struct BuilderSpirv<'tcx> {
@@ -515,37 +535,59 @@ impl<'tcx> BuilderSpirv<'tcx> {
             .unwrap();
     }
 
-    /// See comment on `BuilderCursor`
-    pub fn builder(&self, cursor: BuilderCursor) -> RefMut<'_, Builder> {
-        let mut builder = self.builder.borrow_mut();
-        // select_function does bounds checks and other relatively expensive things, so don't just call it
-        // unconditionally.
-        if builder.selected_function() != cursor.function {
-            builder.select_function(cursor.function).unwrap();
-        }
-        if cursor.function.is_some() && builder.selected_block() != cursor.block {
-            builder.select_block(cursor.block).unwrap();
-        }
-        builder
-    }
-
     pub fn has_capability(&self, capability: Capability) -> bool {
         self.enabled_capabilities.contains(&capability)
     }
 
-    pub fn select_function_by_id(&self, id: Word) -> BuilderCursor {
+    /// See comment on `BuilderCursor`
+    fn builder(&self, cursor: BuilderCursor) -> RefMut<'_, Builder> {
         let mut builder = self.builder.borrow_mut();
-        for (index, func) in builder.module_ref().functions.iter().enumerate() {
-            if func.def.as_ref().and_then(|i| i.result_id) == Some(id) {
-                builder.select_function(Some(index)).unwrap();
-                return BuilderCursor {
-                    function: Some(index),
-                    block: None,
-                };
+
+        let [maybe_fn_idx, maybe_block_idx] = [cursor.fn_id_and_idx, cursor.block_id_and_idx]
+            .map(|id_and_idx| id_and_idx.map(|(_, idx)| idx));
+
+        let fn_changed = builder.selected_function() != maybe_fn_idx;
+        if fn_changed {
+            builder.select_function(maybe_fn_idx).unwrap();
+        }
+
+        // Only check the function/block IDs if either of their indices changed.
+        if let Some((fn_id, fn_idx)) = cursor.fn_id_and_idx
+            && (fn_changed || builder.selected_block() != maybe_block_idx)
+        {
+            builder.select_block(maybe_block_idx).unwrap();
+
+            let function = &builder.module_ref().functions[fn_idx];
+            if fn_changed {
+                assert_eq!(function.def_id(), Some(fn_id));
+            }
+            if let Some((block_id, block_idx)) = cursor.block_id_and_idx {
+                assert_eq!(function.blocks[block_idx].label_id(), Some(block_id));
             }
         }
 
-        bug!("Function not found: {}", id);
+        builder
+    }
+
+    /// See comment on `BuilderCursor`
+    pub fn global_builder(&self) -> RefMut<'_, Builder> {
+        self.builder(BuilderCursor::default())
+    }
+
+    /// See comment on `BuilderCursor`
+    pub fn builder_for_fn(&self, func: SpirvFunctionCursor) -> RefMut<'_, Builder> {
+        self.builder(BuilderCursor {
+            fn_id_and_idx: Some((func.id, func.index_in_builder)),
+            block_id_and_idx: None,
+        })
+    }
+
+    /// See comment on `BuilderCursor`
+    pub fn builder_for_block(&self, block: SpirvBlockCursor) -> RefMut<'_, Builder> {
+        self.builder(BuilderCursor {
+            fn_id_and_idx: Some((block.parent_fn.id, block.parent_fn.index_in_builder)),
+            block_id_and_idx: Some((block.id, block.index_in_builder)),
+        })
     }
 
     pub(crate) fn def_constant_cx(
@@ -619,7 +661,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
             id
         };
 
-        let mut builder = self.builder(BuilderCursor::default());
+        let mut builder = self.global_builder();
         let id = match val {
             SpirvConst::Scalar(v) => match scalar_ty.unwrap() {
                 SpirvType::Integer(..=32, _) | SpirvType::Float(..=32) => {
@@ -636,7 +678,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
                     let [lo_id, hi_id] =
                         [v as u64, (v >> 64) as u64].map(|half| cx.const_u64(half).def_cx(cx));
 
-                    builder = self.builder(BuilderCursor::default());
+                    builder = self.global_builder();
                     let mut const_op =
                         |op, lhs, maybe_rhs| const_op(&mut builder, op, lhs, maybe_rhs);
                     let [lo_u128_id, hi_shifted_u128_id] =
@@ -661,7 +703,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
 
                     let v_u128_id = cx.const_u128(v).def_cx(cx);
 
-                    builder = self.builder(BuilderCursor::default());
+                    builder = self.global_builder();
                     const_op(&mut builder, Op::Bitcast, v_u128_id, None)
                 }
                 SpirvType::Bool => match v {
@@ -835,7 +877,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
             .borrow_mut()
             .entry(DebugFileKey(sf))
             .or_insert_with_key(|DebugFileKey(sf)| {
-                let mut builder = self.builder(Default::default());
+                let mut builder = self.global_builder();
 
                 // FIXME(eddyb) it would be nicer if we could just rely on
                 // `RealFileName::to_string_lossy` returning `Cow<'_, str>`,
@@ -950,58 +992,5 @@ impl<'tcx> BuilderSpirv<'tcx> {
         );
         inst.operands.push(Operand::IdRef(initializer));
         module.types_global_values.push(inst);
-    }
-
-    pub fn select_block_by_id(&self, id: Word) -> BuilderCursor {
-        fn block_matches(block: &Block, id: Word) -> bool {
-            block.label.as_ref().and_then(|b| b.result_id) == Some(id)
-        }
-
-        let mut builder = self.builder.borrow_mut();
-        let module = builder.module_ref();
-
-        // The user is probably selecting a block in the current function, so search that first.
-        if let Some(selected_function) = builder.selected_function() {
-            // make no-ops really fast
-            if let Some(selected_block) = builder.selected_block() {
-                let block = &module.functions[selected_function].blocks[selected_block];
-                if block_matches(block, id) {
-                    return BuilderCursor {
-                        function: Some(selected_function),
-                        block: Some(selected_block),
-                    };
-                }
-            }
-
-            for (index, block) in module.functions[selected_function]
-                .blocks
-                .iter()
-                .enumerate()
-            {
-                if block_matches(block, id) {
-                    builder.select_block(Some(index)).unwrap();
-                    return BuilderCursor {
-                        function: Some(selected_function),
-                        block: Some(index),
-                    };
-                }
-            }
-        }
-
-        // Search the whole module.
-        for (function_index, function) in module.functions.iter().enumerate() {
-            for (block_index, block) in function.blocks.iter().enumerate() {
-                if block_matches(block, id) {
-                    builder.select_function(Some(function_index)).unwrap();
-                    builder.select_block(Some(block_index)).unwrap();
-                    return BuilderCursor {
-                        function: Some(function_index),
-                        block: Some(block_index),
-                    };
-                }
-            }
-        }
-
-        bug!("Block not found: {}", id);
     }
 }

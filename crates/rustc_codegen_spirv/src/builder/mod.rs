@@ -12,7 +12,7 @@ pub use spirv_asm::InstructionTable;
 // HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
-use crate::builder_spirv::{BuilderCursor, SpirvValue, SpirvValueExt};
+use crate::builder_spirv::{SpirvValue, SpirvValueExt};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
@@ -40,8 +40,7 @@ use std::ops::{Deref, Range};
 
 pub struct Builder<'a, 'tcx> {
     cx: &'a CodegenCx<'tcx>,
-    cursor: BuilderCursor,
-    current_fn: <Self as BackendTypes>::Function,
+    current_block: <Self as BackendTypes>::BasicBlock,
     current_span: Option<Span>,
 }
 
@@ -52,7 +51,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     // (sadly it requires making `&CodegeCx`'s types/consts more like SPIR-T,
     // and completely disjoint from mutably building functions).
     pub fn emit(&mut self) -> std::cell::RefMut<'a, rspirv::dr::Builder> {
-        self.cx.emit_with_cursor(self.cursor)
+        self.cx.builder.builder_for_block(self.current_block)
     }
 
     pub fn zombie(&self, word: Word, reason: &str) {
@@ -212,15 +211,16 @@ impl<'a, 'tcx> ArgAbiBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         idx: &mut usize,
         dst: PlaceRef<'tcx, Self::Value>,
     ) {
-        fn next(bx: &Builder<'_, '_>, idx: &mut usize) -> SpirvValue {
-            let val = bx.function_parameter_values.borrow()[&bx.current_fn.def(bx)][*idx];
+        fn next(bx: &mut Builder<'_, '_>, idx: &mut usize) -> SpirvValue {
+            let val = bx.get_param(*idx);
             *idx += 1;
             val
         }
         match arg_abi.mode {
             PassMode::Ignore => {}
             PassMode::Direct(_) => {
-                self.store_arg(arg_abi, next(self, idx), dst);
+                let arg = next(self, idx);
+                self.store_arg(arg_abi, arg, dst);
             }
             PassMode::Pair(..) => {
                 OperandValue::Pair(next(self, idx), next(self, idx)).store(self, dst);
@@ -257,7 +257,13 @@ impl<'a, 'tcx> ArgAbiBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 
 impl AbiBuilderMethods for Builder<'_, '_> {
     fn get_param(&mut self, index: usize) -> Self::Value {
-        self.function_parameter_values.borrow()[&self.current_fn.def(self)][index]
+        let builder = self.emit();
+        let param =
+            &builder.module_ref().functions[builder.selected_function().unwrap()].parameters[index];
+        param
+            .result_id
+            .unwrap()
+            .with_type(param.result_type.unwrap())
     }
 }
 

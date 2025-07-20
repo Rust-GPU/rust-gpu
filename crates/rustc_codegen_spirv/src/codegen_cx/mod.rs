@@ -4,7 +4,9 @@ mod entry;
 mod type_;
 
 use crate::builder::{ExtInst, InstructionTable};
-use crate::builder_spirv::{BuilderCursor, BuilderSpirv, SpirvConst, SpirvValue, SpirvValueKind};
+use crate::builder_spirv::{
+    BuilderSpirv, SpirvBlockCursor, SpirvConst, SpirvFunctionCursor, SpirvValue, SpirvValueKind,
+};
 use crate::custom_decorations::{CustomDecoration, SrcLocDecoration, ZombieDecoration};
 use crate::spirv_type::{SpirvType, SpirvTypePrinter, TypeCache};
 use crate::symbols::Symbols;
@@ -44,12 +46,10 @@ use std::str::FromStr;
 pub struct CodegenCx<'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub codegen_unit: &'tcx CodegenUnit<'tcx>,
-    /// Spir-v module builder
+    /// SPIR-V module builder
     pub builder: BuilderSpirv<'tcx>,
-    /// Map from MIR function to spir-v function ID
-    pub instances: RefCell<FxHashMap<Instance<'tcx>, SpirvValue>>,
-    /// Map from function ID to parameter list
-    pub function_parameter_values: RefCell<FxHashMap<Word, Vec<SpirvValue>>>,
+    pub fn_instances: RefCell<FxHashMap<Instance<'tcx>, SpirvFunctionCursor>>,
+    pub statics: RefCell<FxHashMap<DefId, SpirvValue>>,
     pub type_cache: TypeCache<'tcx>,
     /// Cache generated vtables
     pub vtables: RefCell<FxHashMap<(Ty<'tcx>, Option<ty::ExistentialTraitRef<'tcx>>), SpirvValue>>,
@@ -193,8 +193,8 @@ impl<'tcx> CodegenCx<'tcx> {
             tcx,
             codegen_unit,
             builder: BuilderSpirv::new(tcx, &sym, &target, &features),
-            instances: Default::default(),
-            function_parameter_values: Default::default(),
+            fn_instances: Default::default(),
+            statics: Default::default(),
             type_cache: Default::default(),
             vtables: Default::default(),
             ext_inst: Default::default(),
@@ -215,18 +215,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
     /// See comment on `BuilderCursor`
     pub fn emit_global(&self) -> std::cell::RefMut<'_, rspirv::dr::Builder> {
-        self.builder.builder(BuilderCursor {
-            function: None,
-            block: None,
-        })
-    }
-
-    /// See comment on `BuilderCursor`
-    pub fn emit_with_cursor(
-        &self,
-        cursor: BuilderCursor,
-    ) -> std::cell::RefMut<'_, rspirv::dr::Builder> {
-        self.builder.builder(cursor)
+        self.builder.global_builder()
     }
 
     #[track_caller]
@@ -794,12 +783,14 @@ impl FromStr for ModuleOutputType {
 impl<'tcx> BackendTypes for CodegenCx<'tcx> {
     type Value = SpirvValue;
     type Metadata = ();
-    type Function = SpirvValue;
+    type Function = SpirvFunctionCursor;
 
-    type BasicBlock = Word;
+    type BasicBlock = SpirvBlockCursor;
     type Type = Word;
     // Funclet: A structure representing an active landing pad for the duration of a basic block. (??)
     // https://doc.rust-lang.org/nightly/nightly-rustc/rustc_codegen_llvm/common/struct.Funclet.html
+    //
+    // FIXME(eddyb) replace with `!` or similar.
     type Funclet = ();
 
     type DIScope = ();
@@ -861,13 +852,13 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
         SpirvValue {
             kind: SpirvValueKind::FnAddr {
-                function: function.def_cx(self),
+                function: function.id,
             },
             ty,
         }
     }
 
-    fn eh_personality(&self) -> Self::Value {
+    fn eh_personality(&self) -> Self::Function {
         todo!()
     }
 
