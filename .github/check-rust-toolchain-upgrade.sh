@@ -38,7 +38,7 @@ if [ "$LATEST_DATE_NUM" -gt "$CURRENT_DATE_NUM" ]; then
     echo "::notice::New nightly available: $LATEST_DATE (current: $CURRENT_DATE)"
     
     # Get commit hash from the already fetched manifest
-    COMMIT_HASH=$(echo "$MANIFEST_CONTENT" | grep -A 50 '\[pkg.rust\]' | grep 'git-commit-hash = ' | head -1 | sed 's/git-commit-hash = "\(.*\)"/\1/')
+    COMMIT_HASH=$(echo "$MANIFEST_CONTENT" | grep -A 50 '\[pkg.rust\]' | grep 'git_commit_hash = ' | head -1 | sed 's/git_commit_hash = "\(.*\)"/\1/')
     
     if [ -z "$COMMIT_HASH" ]; then
         echo "::error::Could not extract commit hash from manifest"
