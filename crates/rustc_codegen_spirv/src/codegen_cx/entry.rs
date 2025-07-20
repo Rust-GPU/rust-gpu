@@ -5,13 +5,13 @@ use super::CodegenCx;
 use crate::abi::ConvSpirvType;
 use crate::attr::{AggregatedSpirvAttributes, Entry, Spanned, SpecConstant};
 use crate::builder::Builder;
-use crate::builder_spirv::{SpirvValue, SpirvValueExt};
+use crate::builder_spirv::{SpirvFunctionCursor, SpirvValue, SpirvValueExt};
 use crate::spirv_type::SpirvType;
 use rspirv::dr::Operand;
 use rspirv::spirv::{
     Capability, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
 };
-use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods};
+use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods, MiscCodegenMethods as _};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::MultiSpan;
 use rustc_hir as hir;
@@ -63,18 +63,18 @@ impl<'tcx> CodegenCx<'tcx> {
     // function.
     pub fn entry_stub(
         &self,
-        instance: &Instance<'_>,
+        entry_instance: Instance<'tcx>,
         fn_abi: &FnAbi<'tcx, Ty<'tcx>>,
-        entry_func: SpirvValue,
         name: String,
         entry: Entry,
     ) {
+        let entry_def_id = entry_instance.def_id();
         let span = self
             .tcx
-            .def_ident_span(instance.def_id())
-            .unwrap_or_else(|| self.tcx.def_span(instance.def_id()));
+            .def_ident_span(entry_def_id)
+            .unwrap_or_else(|| self.tcx.def_span(entry_def_id));
         let hir_params = {
-            let fn_local_def_id = if let Some(id) = instance.def_id().as_local() {
+            let fn_local_def_id = if let Some(id) = entry_def_id.as_local() {
                 id
             } else {
                 self.tcx
@@ -132,9 +132,9 @@ impl<'tcx> CodegenCx<'tcx> {
         }
 
         // let execution_model = entry.execution_model;
-        let fn_id = self.shader_entry_stub(
+        let stub = self.shader_entry_stub(
             span,
-            entry_func,
+            entry_instance,
             fn_abi,
             hir_params,
             name,
@@ -145,19 +145,19 @@ impl<'tcx> CodegenCx<'tcx> {
             .execution_modes
             .iter()
             .for_each(|(execution_mode, execution_mode_extra)| {
-                emit.execution_mode(fn_id, *execution_mode, execution_mode_extra);
+                emit.execution_mode(stub.id, *execution_mode, execution_mode_extra);
             });
     }
 
     fn shader_entry_stub(
         &self,
         span: Span,
-        entry_func: SpirvValue,
+        entry_instance: Instance<'tcx>,
         entry_fn_abi: &FnAbi<'tcx, Ty<'tcx>>,
         hir_params: &[hir::Param<'tcx>],
         name: String,
         execution_model: ExecutionModel,
-    ) -> Word {
+    ) -> SpirvFunctionCursor {
         let stub_fn = {
             let void = SpirvType::Void.def(span, self);
             let fn_void_void = SpirvType::Function {
@@ -169,8 +169,13 @@ impl<'tcx> CodegenCx<'tcx> {
             let id = emit
                 .begin_function(void, None, FunctionControl::NONE, fn_void_void)
                 .unwrap();
+            let index_in_builder = emit.selected_function().unwrap();
             emit.end_function().unwrap();
-            id.with_type(fn_void_void)
+            SpirvFunctionCursor {
+                ty: fn_void_void,
+                id,
+                index_in_builder,
+            }
         };
 
         let mut op_entry_point_interface_operands = vec![];
@@ -192,24 +197,23 @@ impl<'tcx> CodegenCx<'tcx> {
         }
         bx.set_span(span);
         bx.call(
-            entry_func.ty,
+            self.get_fn(entry_instance).ty,
             None,
             Some(entry_fn_abi),
-            entry_func,
+            self.get_fn_addr(entry_instance),
             &call_args,
             None,
             None,
         );
         bx.ret_void();
 
-        let stub_fn_id = stub_fn.def_cx(self);
         self.emit_global().entry_point(
             execution_model,
-            stub_fn_id,
+            stub_fn.id,
             name,
             op_entry_point_interface_operands,
         );
-        stub_fn_id
+        stub_fn
     }
 
     /// Attempt to compute `EntryParamDeducedFromRustRefOrValue` (see its docs)

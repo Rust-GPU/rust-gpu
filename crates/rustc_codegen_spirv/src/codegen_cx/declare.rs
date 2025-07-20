@@ -4,7 +4,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 use super::CodegenCx;
 use crate::abi::ConvSpirvType;
 use crate::attr::AggregatedSpirvAttributes;
-use crate::builder_spirv::{SpirvConst, SpirvValue, SpirvValueExt};
+use crate::builder_spirv::{SpirvConst, SpirvFunctionCursor, SpirvValue, SpirvValueExt};
 use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
@@ -40,11 +40,11 @@ fn attrs_to_spirv(attrs: &CodegenFnAttrs) -> FunctionControl {
 
 impl<'tcx> CodegenCx<'tcx> {
     /// Returns a function if it already exists, or declares a header if it doesn't.
-    pub fn get_fn_ext(&self, instance: Instance<'tcx>) -> SpirvValue {
+    pub fn get_fn_ext(&self, instance: Instance<'tcx>) -> SpirvFunctionCursor {
         assert!(!instance.args.has_infer());
         assert!(!instance.args.has_escaping_bound_vars());
 
-        if let Some(&func) = self.instances.borrow().get(&instance) {
+        if let Some(&func) = self.fn_instances.borrow().get(&instance) {
             return func;
         }
 
@@ -53,7 +53,7 @@ impl<'tcx> CodegenCx<'tcx> {
         let linkage = Some(LinkageType::Import);
         let llfn = self.declare_fn_ext(instance, linkage);
 
-        self.instances.borrow_mut().insert(instance, llfn);
+        self.fn_instances.borrow_mut().insert(instance, llfn);
 
         llfn
     }
@@ -62,7 +62,11 @@ impl<'tcx> CodegenCx<'tcx> {
     // MiscCodegenMethods::get_fn -> get_fn_ext -> declare_fn_ext
     // MiscCodegenMethods::get_fn_addr -> get_fn_ext -> declare_fn_ext
     // PreDefineCodegenMethods::predefine_fn -> declare_fn_ext
-    fn declare_fn_ext(&self, instance: Instance<'tcx>, linkage: Option<LinkageType>) -> SpirvValue {
+    fn declare_fn_ext(
+        &self,
+        instance: Instance<'tcx>,
+        linkage: Option<LinkageType>,
+    ) -> SpirvFunctionCursor {
         let def_id = instance.def_id();
 
         let control = attrs_to_spirv(self.tcx.codegen_fn_attrs(def_id));
@@ -77,23 +81,28 @@ impl<'tcx> CodegenCx<'tcx> {
             other => bug!("fn_abi type {}", other.debug(function_type, self)),
         };
 
-        let fn_id = {
+        let declared = {
             let mut emit = self.emit_global();
-            let fn_id = emit
+            let id = emit
                 .begin_function(return_type, None, control, function_type)
                 .unwrap();
+            let index_in_builder = emit.selected_function().unwrap();
+
+            // FIXME(eddyb) omitting `OpFunctionParameter` on imports might be
+            // illegal, this probably shouldn't be conditional at all.
             if linkage != Some(LinkageType::Import) {
-                let parameter_values = argument_types
-                    .iter()
-                    .map(|&ty| emit.function_parameter(ty).unwrap().with_type(ty))
-                    .collect::<Vec<_>>();
-                self.function_parameter_values
-                    .borrow_mut()
-                    .insert(fn_id, parameter_values);
+                for &ty in argument_types {
+                    emit.function_parameter(ty).unwrap();
+                }
             }
             emit.end_function().unwrap();
-            fn_id
+            SpirvFunctionCursor {
+                ty: function_type,
+                id,
+                index_in_builder,
+            }
         };
+        let fn_id = declared.id;
 
         // HACK(eddyb) this is a temporary workaround due to our use of `rspirv`,
         // which prevents us from attaching `OpLine`s to `OpFunction` definitions,
@@ -124,15 +133,17 @@ impl<'tcx> CodegenCx<'tcx> {
             self.set_linkage(fn_id, symbol_name.to_owned(), linkage);
         }
 
-        let declared = fn_id.with_type(function_type);
-
         let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.get_attrs_unchecked(def_id));
         if let Some(entry) = attrs.entry.map(|attr| attr.value) {
+            // HACK(eddyb) early insert to let `shader_entry_stub` call this
+            // very function via `get_fn_addr`.
+            self.fn_instances.borrow_mut().insert(instance, declared);
+
             let entry_name = entry
                 .name
                 .as_ref()
                 .map_or_else(|| instance.to_string(), ToString::to_string);
-            self.entry_stub(&instance, fn_abi, declared, entry_name, entry);
+            self.entry_stub(instance, fn_abi, entry_name, entry);
         }
 
         // FIXME(eddyb) should the maps exist at all, now that the `DefId` is known
@@ -264,8 +275,7 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 
     pub fn get_static(&self, def_id: DefId) -> SpirvValue {
-        let instance = Instance::mono(self.tcx, def_id);
-        if let Some(&g) = self.instances.borrow().get(&instance) {
+        if let Some(&g) = self.statics.borrow().get(&def_id) {
             return g;
         }
 
@@ -278,11 +288,12 @@ impl<'tcx> CodegenCx<'tcx> {
             "get_static() should always hit the cache for statics defined in the same CGU, but did not for `{def_id:?}`"
         );
 
+        let instance = Instance::mono(self.tcx, def_id);
         let ty = instance.ty(self.tcx, TypingEnv::fully_monomorphized());
         let sym = self.tcx.symbol_name(instance).name;
         let span = self.tcx.def_span(def_id);
         let g = self.declare_global(span, self.layout_of(ty).spirv_type(span, self));
-        self.instances.borrow_mut().insert(instance, g);
+        self.statics.borrow_mut().insert(def_id, g);
         self.set_linkage(g.def_cx(self), sym.to_string(), LinkageType::Import);
         g
     }
@@ -326,7 +337,7 @@ impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
         let g = self.declare_global(span, spvty);
 
-        self.instances.borrow_mut().insert(instance, g);
+        self.statics.borrow_mut().insert(def_id, g);
         if let Some(linkage) = linkage {
             self.set_linkage(g.def_cx(self), symbol_name.to_string(), linkage);
         }
@@ -354,7 +365,7 @@ impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
         };
         let declared = self.declare_fn_ext(instance, linkage2);
 
-        self.instances.borrow_mut().insert(instance, declared);
+        self.fn_instances.borrow_mut().insert(instance, declared);
     }
 }
 

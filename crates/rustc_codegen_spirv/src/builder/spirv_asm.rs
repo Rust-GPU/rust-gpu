@@ -3,7 +3,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::Builder;
 use crate::abi::ConvSpirvType;
-use crate::builder_spirv::{BuilderCursor, SpirvValue};
+use crate::builder_spirv::SpirvValue;
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use rspirv::dr;
@@ -418,12 +418,11 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                 // OpVariable with Function storage class should be emitted inside the function,
                 // however, all other OpVariables should appear in the global scope instead.
                 if inst.operands[0].unwrap_storage_class() == StorageClass::Function {
-                    self.emit_with_cursor(BuilderCursor {
-                        block: Some(0),
-                        ..self.cursor
-                    })
-                    .insert_into_block(dr::InsertPoint::Begin, inst)
-                    .unwrap();
+                    let mut builder = self.emit();
+                    builder.select_block(Some(0)).unwrap();
+                    builder
+                        .insert_into_block(dr::InsertPoint::Begin, inst)
+                        .unwrap();
                 } else {
                     self.emit_global()
                         .insert_types_global_values(dr::InsertPoint::End, inst);
