@@ -41,7 +41,7 @@ impl ExtInst {
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
     pub fn custom_inst(
-        &self,
+        &mut self,
         result_type: Word,
         inst: custom_insts::CustomInst<Operand>,
     ) -> SpirvValue {
@@ -58,7 +58,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             .with_type(result_type)
     }
 
-    pub fn gl_op(&self, op: GLOp, result_type: Word, args: impl AsRef<[SpirvValue]>) -> SpirvValue {
+    pub fn gl_op(
+        &mut self,
+        op: GLOp,
+        result_type: Word,
+        args: impl AsRef<[SpirvValue]>,
+    ) -> SpirvValue {
         let args = args.as_ref();
         let glsl = self.ext_inst.borrow_mut().import_glsl(self);
         self.emit()

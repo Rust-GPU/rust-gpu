@@ -538,7 +538,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
         };
         let inst_class = inst_name
             .strip_prefix("Op")
-            .and_then(|n| self.instruction_table.table.get(n));
+            .and_then(|n| self.cx.instruction_table.table.get(n));
         let inst_class = if let Some(inst) = inst_class {
             inst
         } else {

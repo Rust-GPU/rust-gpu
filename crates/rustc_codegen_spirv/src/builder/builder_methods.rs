@@ -127,7 +127,7 @@ fn memset_fill_u64(b: u8) -> u64 {
 }
 
 fn memset_dynamic_scalar(
-    builder: &Builder<'_, '_>,
+    builder: &mut Builder<'_, '_>,
     fill_var: Word,
     byte_width: usize,
     is_float: bool,
@@ -154,7 +154,7 @@ fn memset_dynamic_scalar(
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
     #[instrument(level = "trace", skip(self))]
-    fn ordering_to_semantics_def(&self, ordering: AtomicOrdering) -> SpirvValue {
+    fn ordering_to_semantics_def(&mut self, ordering: AtomicOrdering) -> SpirvValue {
         let mut invalid_seq_cst = false;
         let semantics = match ordering {
             AtomicOrdering::Relaxed => MemorySemantics::NONE,
@@ -263,7 +263,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     #[instrument(level = "trace", skip(self))]
-    fn memset_dynamic_pattern(&self, ty: &SpirvType<'tcx>, fill_var: Word) -> Word {
+    fn memset_dynamic_pattern(&mut self, ty: &SpirvType<'tcx>, fill_var: Word) -> Word {
         match *ty {
             SpirvType::Void => self.fatal("memset invalid on void pattern"),
             SpirvType::Bool => self.fatal("memset invalid on bool pattern"),
@@ -823,7 +823,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             )
         )]
     fn emit_access_chain(
-        &self,
+        &mut self,
         result_type: <Self as BackendTypes>::Type,
         pointer: Word,
         ptr_base_index: Option<SpirvValue>,
@@ -3091,18 +3091,20 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             struct FormatArgsNotRecognized(String);
 
             // HACK(eddyb) this is basically a `try` block.
-            let try_decode_and_remove_format_args = || {
+            let mut try_decode_and_remove_format_args = || {
                 let mut decoded_format_args = DecodedFormatArgs::default();
 
-                let const_u32_as_usize = |ct_id| match self.builder.lookup_const_by_id(ct_id)? {
+                // HACK(eddyb) work around mutable borrowing conflicts.
+                let cx = self.cx;
+
+                let const_u32_as_usize = |ct_id| match cx.builder.lookup_const_by_id(ct_id)? {
                     SpirvConst::Scalar(x) => Some(u32::try_from(x).ok()? as usize),
                     _ => None,
                 };
                 let const_slice_as_elem_ids = |ptr_id: Word, len: usize| {
-                    if let SpirvConst::PtrTo { pointee } =
-                        self.builder.lookup_const_by_id(ptr_id)?
+                    if let SpirvConst::PtrTo { pointee } = cx.builder.lookup_const_by_id(ptr_id)?
                         && let SpirvConst::Composite(elems) =
-                            self.builder.lookup_const_by_id(pointee)?
+                            cx.builder.lookup_const_by_id(pointee)?
                         && elems.len() == len
                     {
                         return Some(elems);
