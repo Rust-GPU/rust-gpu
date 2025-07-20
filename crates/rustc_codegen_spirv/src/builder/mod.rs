@@ -47,8 +47,12 @@ pub struct Builder<'a, 'tcx> {
 
 impl<'a, 'tcx> Builder<'a, 'tcx> {
     /// See comment on `BuilderCursor`
-    pub fn emit(&self) -> std::cell::RefMut<'_, rspirv::dr::Builder> {
-        self.emit_with_cursor(self.cursor)
+    //
+    // FIXME(eddyb) take advantage of `&mut self` to avoid `RefCell` entirely
+    // (sadly it requires making `&CodegeCx`'s types/consts more like SPIR-T,
+    // and completely disjoint from mutably building functions).
+    pub fn emit(&mut self) -> std::cell::RefMut<'a, rspirv::dr::Builder> {
+        self.cx.emit_with_cursor(self.cursor)
     }
 
     pub fn zombie(&self, word: Word, reason: &str) {
