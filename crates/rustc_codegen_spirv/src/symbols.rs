@@ -138,6 +138,10 @@ const BUILTINS: &[(&str, BuiltIn)] = {
         ("ray_tmax", BuiltIn::RayTmaxKHR),
         ("object_to_world", BuiltIn::ObjectToWorldKHR),
         ("world_to_object", BuiltIn::WorldToObjectKHR),
+        (
+            "hit_triangle_vertex_positions",
+            BuiltIn::HitTriangleVertexPositionsKHR,
+        ),
         ("hit_kind", BuiltIn::HitKindKHR),
         ("incoming_ray_flags", BuiltIn::IncomingRayFlagsKHR),
         ("warps_per_sm_nv", WarpsPerSMNV),
