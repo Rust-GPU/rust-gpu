@@ -43,20 +43,20 @@ impl CargoCmd {
         // which could affect its functionality and break the build process.
         cargo.env_remove("RUSTC_WRAPPER");
 
-        // overwritten by spirv-builder anyway
-        cargo.env_remove("CARGO_ENCODED_RUSTFLAGS");
-
+        // NOTE(firestar99, tuguzT) Other environment variables that we don't want to
+        // leak into the inner invocation of Cargo & break the build process.
         cargo
-            .env_remove("RUSTC")
-            .env_remove("RUSTC_WRAPPER")
             .env_remove("RUSTC_WORKSPACE_WRAPPER")
             .env_remove("RUSTFLAGS")
             .env_remove("CARGO")
             .env_remove("RUSTUP_TOOLCHAIN");
 
-        // ignore any externally supplied target dir
-        // spirv-builder: we overwrite it with `SpirvBuilder.target_dir_path` anyway
-        // cargo-gpu: we want to build it in our cache dir
+        // NOTE(firestar99) Overwritten by spirv-builder anyway
+        cargo.env_remove("CARGO_ENCODED_RUSTFLAGS");
+
+        // NOTE(firestar99) Ignore any externally supplied target dir:
+        // - spirv-builder: we overwrite it with `SpirvBuilder.target_dir_path` anyway
+        // - cargo-gpu: we want to build it in our cache dir
         cargo.env_remove("CARGO_TARGET_DIR");
 
         cargo
