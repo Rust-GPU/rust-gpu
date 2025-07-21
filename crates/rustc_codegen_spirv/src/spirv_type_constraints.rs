@@ -1104,9 +1104,7 @@ pub fn instruction_signatures(op: Op) -> Option<&'static [InstSig<'static>]> {
             reserved!(SPV_NV_displacement_micromap)
         }
         // SPV_KHR_ray_tracing_position_fetch
-        Op::RayQueryGetIntersectionTriangleVertexPositionsKHR => {
-            reserved!(SPV_KHR_ray_tracing_position_fetch)
-        }
+        Op::RayQueryGetIntersectionTriangleVertexPositionsKHR => {}
         // SPV_INTEL_bfloat16_conversion
         Op::ConvertFToBF16INTEL | Op::ConvertBF16ToFINTEL => {
             reserved!(SPV_INTEL_bfloat16_conversion)
