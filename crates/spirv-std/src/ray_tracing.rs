@@ -1061,4 +1061,27 @@ impl RayQuery {
             result
         }
     }
+
+    /// Gets the vertex positions for the triangle at the current intersection.
+    ///
+    /// Requires Capability `RayQueryPositionFetchKHR` and extension `SPV_KHR_ray_tracing_position_fetch`
+    #[spirv_std_macros::gpu_only]
+    #[doc(alias = "OpRayQueryGetIntersectionTriangleVertexPositionsKHR")]
+    #[inline]
+    pub unsafe fn get_intersection_triangle_vertex_positions<V: Vector<f32, 3>>(&self) -> [V; 3] {
+        unsafe {
+            let mut result = Default::default();
+
+            asm! {
+                "%u32 = OpTypeInt 32 0",
+                "%intersection = OpConstant %u32 0",
+                "%result = OpRayQueryGetIntersectionTriangleVertexPositionsKHR typeof*{result} {ray_query} %intersection",
+                "OpStore {result} %result",
+                ray_query = in(reg) self,
+                result = in(reg) &mut result,
+            }
+
+            result
+        }
+    }
 }
