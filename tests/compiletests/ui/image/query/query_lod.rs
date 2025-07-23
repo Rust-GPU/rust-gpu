@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -C target-feature=+ImageQuery
+// ignore-naga
 
 use spirv_std::spirv;
 use spirv_std::{Image, Sampler, arch};

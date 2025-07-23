@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -C llvm-args=--disassemble-fn=asm::asm
+// ignore-naga
 
 use core::arch::asm;
 use spirv_std::spirv;

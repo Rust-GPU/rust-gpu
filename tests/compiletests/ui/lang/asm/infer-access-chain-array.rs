@@ -2,6 +2,7 @@
 // when used to index arrays.
 
 // build-pass
+// ignore-naga
 
 use core::arch::asm;
 use glam::Vec4;
