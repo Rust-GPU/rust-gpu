@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -Ctarget-feature=+FragmentFullyCoveredEXT,+ext:SPV_EXT_fragment_fully_covered
+// ignore-naga
 
 use spirv_std::spirv;
 
