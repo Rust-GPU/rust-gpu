@@ -397,7 +397,6 @@ impl CodegenArgs {
         // FIXME(eddyb) should these be handled as `-C linker-args="..."` instead?
         {
             // FIXME(eddyb) clean up this `no-` "negation prefix" situation.
-            opts.optflag("", "no-dce", "disables running dead code elimination");
             opts.optflag(
                 "",
                 "no-compact-ids",
@@ -604,7 +603,6 @@ impl CodegenArgs {
         // FIXME(eddyb) should these be handled as `-C linker-args="..."` instead?
         let linker_opts = crate::linker::Options {
             // FIXME(eddyb) clean up this `no-` "negation prefix" situation.
-            dce: !matches.opt_present("no-dce"),
             compact_ids: !matches.opt_present("no-compact-ids"),
             early_report_zombies: !matches.opt_present("no-early-report-zombies"),
             infer_storage_classes: !matches.opt_present("no-infer-storage-classes"),

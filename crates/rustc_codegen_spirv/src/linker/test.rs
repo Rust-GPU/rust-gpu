@@ -70,7 +70,6 @@ fn assemble_and_link(binaries: &[&[u8]]) -> Result<Module, PrettyString> {
         binaries,
         &crate::linker::Options {
             compact_ids: true,
-            dce: true,
             keep_link_exports: true,
             ..Default::default()
         },
