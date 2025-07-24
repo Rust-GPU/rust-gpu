@@ -38,7 +38,6 @@ pub type Result<T> = std::result::Result<T, ErrorGuaranteed>;
 #[derive(Default)]
 pub struct Options {
     pub compact_ids: bool,
-    pub dce: bool,
     pub early_report_zombies: bool,
     pub infer_storage_classes: bool,
     pub structurize: bool,
@@ -272,6 +271,13 @@ pub fn link(
         output
     };
 
+    // FIXME(eddyb) do this before ever saving the original `.spv`s to disk.
+    {
+        let _timer = sess.timer("link_dce-post-merge");
+        dce::dce(&mut output);
+    }
+
+    // HACK(eddyb) this has to be after DCE, to not break SPIR-T w/ dead decorations.
     if let Some(dir) = &opts.dump_post_merge {
         dump_spv_and_spirt(&output, dir.join(disambiguated_crate_name_for_dumps));
     }
@@ -293,6 +299,11 @@ pub fn link(
     }
 
     {
+        let _timer = sess.timer("link_dce-post-link");
+        dce::dce(&mut output);
+    }
+
+    {
         let _timer = sess.timer("link_fragment_inst_check");
         simple_passes::check_fragment_insts(sess, &output)?;
     }
@@ -306,29 +317,11 @@ pub fn link(
     }
 
     if opts.early_report_zombies {
-        // HACK(eddyb) `report_and_remove_zombies` is bad at determining whether
-        // some things are dead (such as whole blocks), and there's no reason to
-        // *not* run DCE, given SPIR-T exists and makes DCE mandatory, but we're
-        // still only going to do the minimum necessary ("block ordering").
-        {
-            let _timer = sess.timer("link_block_ordering_pass-before-report_and_remove_zombies");
-            for func in &mut output.functions {
-                simple_passes::block_ordering_pass(func);
-            }
-        }
-
         let _timer = sess.timer("link_report_and_remove_zombies");
         zombies::report_and_remove_zombies(sess, &mut output)?;
     }
 
     if opts.infer_storage_classes {
-        // HACK(eddyb) this is not the best approach, but storage class inference
-        // can still fail in entirely legitimate ways (i.e. mismatches in zombies).
-        if !opts.early_report_zombies {
-            let _timer = sess.timer("link_dce-before-specialize_generic_storage_class");
-            dce::dce(&mut output);
-        }
-
         let _timer = sess.timer("specialize_generic_storage_class");
         // HACK(eddyb) `specializer` requires functions' blocks to be in RPO order
         // (i.e. `block_ordering_pass`) - this could be relaxed by using RPO visit
@@ -361,7 +354,7 @@ pub fn link(
 
     // NOTE(eddyb) with SPIR-T, we can do `mem2reg` before inlining, too!
     {
-        if opts.dce {
+        {
             let _timer = sess.timer("link_dce-before-inlining");
             dce::dce(&mut output);
         }
@@ -404,13 +397,14 @@ pub fn link(
         }
     }
 
-    if opts.dce {
+    {
         let _timer =
             sess.timer("link_dce-and-remove_duplicate_debuginfo-after-mem2reg-before-inlining");
         dce::dce(&mut output);
         duplicates::remove_duplicate_debuginfo(&mut output);
     }
 
+    // HACK(eddyb) this has to be after DCE, to not break SPIR-T w/ dead decorations.
     if let Some(dir) = &opts.dump_pre_inline {
         dump_spv_and_spirt(&output, dir.join(disambiguated_crate_name_for_dumps));
     }
@@ -420,7 +414,7 @@ pub fn link(
         inline::inline(sess, &mut output)?;
     }
 
-    if opts.dce {
+    {
         let _timer = sess.timer("link_dce-after-inlining");
         dce::dce(&mut output);
     }
@@ -469,7 +463,7 @@ pub fn link(
         }
     }
 
-    if opts.dce {
+    {
         let _timer =
             sess.timer("link_dce-and-remove_duplicate_debuginfo-after-mem2reg-after-inlining");
         dce::dce(&mut output);
@@ -711,6 +705,15 @@ pub fn link(
         ),
     };
     for (file_stem, output) in output_module_iter {
+        // Run DCE again, even if module_output_type == ModuleOutputType::Multiple - the first DCE ran before
+        // structurization and mem2reg (for perf reasons), and mem2reg may remove references to
+        // invalid types, so we need to DCE again.
+        {
+            let _timer = sess.timer("link_dce-post-split");
+            dce::dce(output);
+        }
+
+        // HACK(eddyb) this has to be after DCE, to not break SPIR-T w/ dead decorations.
         if let Some(dir) = &opts.dump_post_split {
             let mut file_name = disambiguated_crate_name_for_dumps.to_os_string();
             if let Some(file_stem) = file_stem {
@@ -719,13 +722,6 @@ pub fn link(
             }
 
             dump_spv_and_spirt(output, dir.join(file_name));
-        }
-        // Run DCE again, even if module_output_type == ModuleOutputType::Multiple - the first DCE ran before
-        // structurization and mem2reg (for perf reasons), and mem2reg may remove references to
-        // invalid types, so we need to DCE again.
-        if opts.dce {
-            let _timer = sess.timer("link_dce_2");
-            dce::dce(output);
         }
 
         {

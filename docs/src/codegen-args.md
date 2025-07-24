@@ -89,8 +89,7 @@ Dumps the module, to a file in `DIR`, immediately after the inliner pass runs.
 
 ### `--dump-post-split DIR`
 
-Dumps the modules, to files in `DIR`, immediately after multimodule splitting, but before final cleanup passes (e.g.
-DCE to remove the other entry points).
+Dumps the modules, to files in `DIR`, immediately after multimodule splitting.
 
 ### `--dump-post-link DIR`
 
@@ -112,11 +111,6 @@ Disables running `spirv-val` on the final output. Spooky scary option, can cause
 ### `--no-spirv-opt`
 
 Forcibly disables running `spirv-opt` on the final output, even if optimizations are enabled.
-
-### `--no-dce`
-
-Disables running dead code elimination. Can and probably will generate invalid modules or crash the
-linker, hasn't been tested for a while.
 
 ### `--no-compact-ids`
 
