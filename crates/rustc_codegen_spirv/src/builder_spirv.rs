@@ -40,13 +40,6 @@ pub enum SpirvValueKind {
     /// of such constants, instead of where they're generated (and cached).
     IllegalConst(Word),
 
-    /// This can only happen in one specific case - which is as a result of
-    /// `codegen_buffer_store_intrinsic`, that function is supposed to return
-    /// `OpTypeVoid`, however because it gets inline by the compiler it can't.
-    /// Instead we return this, and trigger an error if we ever end up using the
-    /// result of this function call (which we can't).
-    IllegalTypeUsed(Word),
-
     // FIXME(eddyb) this shouldn't be needed, but `rustc_codegen_ssa` still relies
     // on converting `Function`s to `Value`s even for direct calls, the `Builder`
     // should just have direct and indirect `call` variants (or a `Callee` enum).
@@ -162,16 +155,6 @@ impl SpirvValue {
                 };
 
                 cx.zombie_with_span(id, span, msg);
-
-                id
-            }
-
-            SpirvValueKind::IllegalTypeUsed(id) => {
-                cx.tcx
-                    .dcx()
-                    .struct_span_err(span, "Can't use type as a value")
-                    .with_note(format!("Type: *{}", cx.debug_type(id)))
-                    .emit();
 
                 id
             }
