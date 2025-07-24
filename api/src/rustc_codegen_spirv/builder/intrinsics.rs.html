@@ -381,7 +381,7 @@
 <a href=#381 id=381 data-nosnippet>381</a>}
 <a href=#382 id=382 data-nosnippet>382</a>
 <a href=#383 id=383 data-nosnippet>383</a><span class="kw">impl </span>Builder&lt;<span class="lifetime">'_</span>, <span class="lifetime">'_</span>&gt; {
-<a href=#384 id=384 data-nosnippet>384</a>    <span class="kw">pub fn </span>count_ones(<span class="kw-2">&amp;</span><span class="self">self</span>, arg: SpirvValue) -&gt; SpirvValue {
+<a href=#384 id=384 data-nosnippet>384</a>    <span class="kw">pub fn </span>count_ones(<span class="kw-2">&amp;mut </span><span class="self">self</span>, arg: SpirvValue) -&gt; SpirvValue {
 <a href=#385 id=385 data-nosnippet>385</a>        <span class="kw">let </span>ty = arg.ty;
 <a href=#386 id=386 data-nosnippet>386</a>        <span class="kw">match </span><span class="self">self</span>.cx.lookup_type(ty) {
 <a href=#387 id=387 data-nosnippet>387</a>            SpirvType::Integer(bits, <span class="bool-val">false</span>) =&gt; {
@@ -426,7 +426,7 @@
 <a href=#426 id=426 data-nosnippet>426</a>        }
 <a href=#427 id=427 data-nosnippet>427</a>    }
 <a href=#428 id=428 data-nosnippet>428</a>
-<a href=#429 id=429 data-nosnippet>429</a>    <span class="kw">pub fn </span>bit_reverse(<span class="kw-2">&amp;</span><span class="self">self</span>, arg: SpirvValue) -&gt; SpirvValue {
+<a href=#429 id=429 data-nosnippet>429</a>    <span class="kw">pub fn </span>bit_reverse(<span class="kw-2">&amp;mut </span><span class="self">self</span>, arg: SpirvValue) -&gt; SpirvValue {
 <a href=#430 id=430 data-nosnippet>430</a>        <span class="kw">let </span>ty = arg.ty;
 <a href=#431 id=431 data-nosnippet>431</a>        <span class="kw">match </span><span class="self">self</span>.cx.lookup_type(ty) {
 <a href=#432 id=432 data-nosnippet>432</a>            SpirvType::Integer(bits, <span class="bool-val">false</span>) =&gt; {
@@ -489,7 +489,7 @@
 <a href=#489 id=489 data-nosnippet>489</a>    }
 <a href=#490 id=490 data-nosnippet>490</a>
 <a href=#491 id=491 data-nosnippet>491</a>    <span class="kw">pub fn </span>count_leading_trailing_zeros(
-<a href=#492 id=492 data-nosnippet>492</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#492 id=492 data-nosnippet>492</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
 <a href=#493 id=493 data-nosnippet>493</a>        arg: SpirvValue,
 <a href=#494 id=494 data-nosnippet>494</a>        trailing: bool,
 <a href=#495 id=495 data-nosnippet>495</a>        non_zero: bool,
@@ -501,10 +501,10 @@
 <a href=#501 id=501 data-nosnippet>501</a>                <span class="kw">let </span>u32 = SpirvType::Integer(<span class="number">32</span>, <span class="bool-val">false</span>).def(<span class="self">self</span>.span(), <span class="self">self</span>);
 <a href=#502 id=502 data-nosnippet>502</a>
 <a href=#503 id=503 data-nosnippet>503</a>                <span class="kw">let </span>glsl = <span class="self">self</span>.ext_inst.borrow_mut().import_glsl(<span class="self">self</span>);
-<a href=#504 id=504 data-nosnippet>504</a>                <span class="kw">let </span>find_xsb = |arg, offset: i32| {
+<a href=#504 id=504 data-nosnippet>504</a>                <span class="kw">let </span>find_xsb = |this: <span class="kw-2">&amp;mut </span><span class="self">Self</span>, arg, offset: i32| {
 <a href=#505 id=505 data-nosnippet>505</a>                    <span class="kw">if </span>trailing {
-<a href=#506 id=506 data-nosnippet>506</a>                        <span class="kw">let </span>lsb = <span class="self">self
-<a href=#507 id=507 data-nosnippet>507</a>                            </span>.emit()
+<a href=#506 id=506 data-nosnippet>506</a>                        <span class="kw">let </span>lsb = this
+<a href=#507 id=507 data-nosnippet>507</a>                            .emit()
 <a href=#508 id=508 data-nosnippet>508</a>                            .ext_inst(
 <a href=#509 id=509 data-nosnippet>509</a>                                u32,
 <a href=#510 id=510 data-nosnippet>510</a>                                <span class="prelude-val">None</span>,
@@ -516,13 +516,13 @@
 <a href=#516 id=516 data-nosnippet>516</a>                        <span class="kw">if </span>offset == <span class="number">0 </span>{
 <a href=#517 id=517 data-nosnippet>517</a>                            lsb
 <a href=#518 id=518 data-nosnippet>518</a>                        } <span class="kw">else </span>{
-<a href=#519 id=519 data-nosnippet>519</a>                            <span class="kw">let </span>const_offset = <span class="self">self</span>.constant_i32(<span class="self">self</span>.span(), offset).def(<span class="self">self</span>);
-<a href=#520 id=520 data-nosnippet>520</a>                            <span class="self">self</span>.emit().i_add(u32, <span class="prelude-val">None</span>, const_offset, lsb).unwrap()
+<a href=#519 id=519 data-nosnippet>519</a>                            <span class="kw">let </span>const_offset = this.constant_i32(this.span(), offset).def(this);
+<a href=#520 id=520 data-nosnippet>520</a>                            this.emit().i_add(u32, <span class="prelude-val">None</span>, const_offset, lsb).unwrap()
 <a href=#521 id=521 data-nosnippet>521</a>                        }
 <a href=#522 id=522 data-nosnippet>522</a>                    } <span class="kw">else </span>{
 <a href=#523 id=523 data-nosnippet>523</a>                        <span class="comment">// rust is always unsigned, so FindUMsb
-<a href=#524 id=524 data-nosnippet>524</a>                        </span><span class="kw">let </span>msb_bit = <span class="self">self
-<a href=#525 id=525 data-nosnippet>525</a>                            </span>.emit()
+<a href=#524 id=524 data-nosnippet>524</a>                        </span><span class="kw">let </span>msb_bit = this
+<a href=#525 id=525 data-nosnippet>525</a>                            .emit()
 <a href=#526 id=526 data-nosnippet>526</a>                            .ext_inst(
 <a href=#527 id=527 data-nosnippet>527</a>                                u32,
 <a href=#528 id=528 data-nosnippet>528</a>                                <span class="prelude-val">None</span>,
@@ -533,8 +533,8 @@
 <a href=#533 id=533 data-nosnippet>533</a>                            .unwrap();
 <a href=#534 id=534 data-nosnippet>534</a>                        <span class="comment">// the glsl op returns the Msb bit, not the amount of leading zeros of this u32
 <a href=#535 id=535 data-nosnippet>535</a>                        // leading zeros = 31 - Msb bit
-<a href=#536 id=536 data-nosnippet>536</a>                        </span><span class="kw">let </span>const_offset = <span class="self">self</span>.constant_i32(<span class="self">self</span>.span(), <span class="number">31 </span>- offset).def(<span class="self">self</span>);
-<a href=#537 id=537 data-nosnippet>537</a>                        <span class="self">self</span>.emit().i_sub(u32, <span class="prelude-val">None</span>, const_offset, msb_bit).unwrap()
+<a href=#536 id=536 data-nosnippet>536</a>                        </span><span class="kw">let </span>const_offset = this.constant_i32(this.span(), <span class="number">31 </span>- offset).def(this);
+<a href=#537 id=537 data-nosnippet>537</a>                        this.emit().i_sub(u32, <span class="prelude-val">None</span>, const_offset, msb_bit).unwrap()
 <a href=#538 id=538 data-nosnippet>538</a>                    }
 <a href=#539 id=539 data-nosnippet>539</a>                };
 <a href=#540 id=540 data-nosnippet>540</a>
@@ -542,12 +542,12 @@
 <a href=#542 id=542 data-nosnippet>542</a>                    <span class="number">8 </span>| <span class="number">16 </span>=&gt; {
 <a href=#543 id=543 data-nosnippet>543</a>                        <span class="kw">let </span>arg = <span class="self">self</span>.emit().u_convert(u32, <span class="prelude-val">None</span>, arg.def(<span class="self">self</span>)).unwrap();
 <a href=#544 id=544 data-nosnippet>544</a>                        <span class="kw">if </span>trailing {
-<a href=#545 id=545 data-nosnippet>545</a>                            find_xsb(arg, <span class="number">0</span>)
+<a href=#545 id=545 data-nosnippet>545</a>                            find_xsb(<span class="self">self</span>, arg, <span class="number">0</span>)
 <a href=#546 id=546 data-nosnippet>546</a>                        } <span class="kw">else </span>{
-<a href=#547 id=547 data-nosnippet>547</a>                            find_xsb(arg, bits <span class="kw">as </span>i32 - <span class="number">32</span>)
+<a href=#547 id=547 data-nosnippet>547</a>                            find_xsb(<span class="self">self</span>, arg, bits <span class="kw">as </span>i32 - <span class="number">32</span>)
 <a href=#548 id=548 data-nosnippet>548</a>                        }
 <a href=#549 id=549 data-nosnippet>549</a>                    }
-<a href=#550 id=550 data-nosnippet>550</a>                    <span class="number">32 </span>=&gt; find_xsb(arg.def(<span class="self">self</span>), <span class="number">0</span>),
+<a href=#550 id=550 data-nosnippet>550</a>                    <span class="number">32 </span>=&gt; find_xsb(<span class="self">self</span>, arg.def(<span class="self">self</span>), <span class="number">0</span>),
 <a href=#551 id=551 data-nosnippet>551</a>                    <span class="number">64 </span>=&gt; {
 <a href=#552 id=552 data-nosnippet>552</a>                        <span class="kw">let </span>u32_0 = <span class="self">self</span>.constant_int(u32, <span class="number">0</span>).def(<span class="self">self</span>);
 <a href=#553 id=553 data-nosnippet>553</a>                        <span class="kw">let </span>u32_32 = <span class="self">self</span>.constant_u32(<span class="self">self</span>.span(), <span class="number">32</span>).def(<span class="self">self</span>);
@@ -562,16 +562,16 @@
 <a href=#562 id=562 data-nosnippet>562</a>
 <a href=#563 id=563 data-nosnippet>563</a>                        <span class="kw">if </span>trailing {
 <a href=#564 id=564 data-nosnippet>564</a>                            <span class="kw">let </span>use_lower = <span class="self">self</span>.emit().i_equal(bool, <span class="prelude-val">None</span>, lower, u32_0).unwrap();
-<a href=#565 id=565 data-nosnippet>565</a>                            <span class="kw">let </span>lower_bits = find_xsb(lower, <span class="number">32</span>);
-<a href=#566 id=566 data-nosnippet>566</a>                            <span class="kw">let </span>higher_bits = find_xsb(higher, <span class="number">0</span>);
+<a href=#565 id=565 data-nosnippet>565</a>                            <span class="kw">let </span>lower_bits = find_xsb(<span class="self">self</span>, lower, <span class="number">32</span>);
+<a href=#566 id=566 data-nosnippet>566</a>                            <span class="kw">let </span>higher_bits = find_xsb(<span class="self">self</span>, higher, <span class="number">0</span>);
 <a href=#567 id=567 data-nosnippet>567</a>                            <span class="self">self</span>.emit()
 <a href=#568 id=568 data-nosnippet>568</a>                                .select(u32, <span class="prelude-val">None</span>, use_lower, higher_bits, lower_bits)
 <a href=#569 id=569 data-nosnippet>569</a>                                .unwrap()
 <a href=#570 id=570 data-nosnippet>570</a>                        } <span class="kw">else </span>{
 <a href=#571 id=571 data-nosnippet>571</a>                            <span class="kw">let </span>use_higher =
 <a href=#572 id=572 data-nosnippet>572</a>                                <span class="self">self</span>.emit().i_equal(bool, <span class="prelude-val">None</span>, higher, u32_0).unwrap();
-<a href=#573 id=573 data-nosnippet>573</a>                            <span class="kw">let </span>lower_bits = find_xsb(lower, <span class="number">0</span>);
-<a href=#574 id=574 data-nosnippet>574</a>                            <span class="kw">let </span>higher_bits = find_xsb(higher, <span class="number">32</span>);
+<a href=#573 id=573 data-nosnippet>573</a>                            <span class="kw">let </span>lower_bits = find_xsb(<span class="self">self</span>, lower, <span class="number">0</span>);
+<a href=#574 id=574 data-nosnippet>574</a>                            <span class="kw">let </span>higher_bits = find_xsb(<span class="self">self</span>, higher, <span class="number">32</span>);
 <a href=#575 id=575 data-nosnippet>575</a>                            <span class="self">self</span>.emit()
 <a href=#576 id=576 data-nosnippet>576</a>                                .select(u32, <span class="prelude-val">None</span>, use_higher, lower_bits, higher_bits)
 <a href=#577 id=577 data-nosnippet>577</a>                                .unwrap()

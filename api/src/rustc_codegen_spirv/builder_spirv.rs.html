@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder_spirv.rs`."><title>builder_spirv.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/</div>builder_spirv.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/rustc_codegen_spirv/src/builder_spirv.rs`."><title>builder_spirv.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustc_codegen_spirv" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustc_codegen_spirv/</div>builder_spirv.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// HACK(eddyb) avoids rewriting all of the imports (see `lib.rs` and `build.rs`).
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::builder;
@@ -7,7 +7,7 @@
 <a href=#7 id=7 data-nosnippet>7</a><span class="kw">use </span><span class="kw">crate</span>::symbols::Symbols;
 <a href=#8 id=8 data-nosnippet>8</a><span class="kw">use </span><span class="kw">crate</span>::target::SpirvTarget;
 <a href=#9 id=9 data-nosnippet>9</a><span class="kw">use </span><span class="kw">crate</span>::target_feature::TargetFeature;
-<a href=#10 id=10 data-nosnippet>10</a><span class="kw">use </span>rspirv::dr::{Block, Builder, Instruction, Module, Operand};
+<a href=#10 id=10 data-nosnippet>10</a><span class="kw">use </span>rspirv::dr::{Builder, Instruction, Module, Operand};
 <a href=#11 id=11 data-nosnippet>11</a><span class="kw">use </span>rspirv::spirv::{
 <a href=#12 id=12 data-nosnippet>12</a>    AddressingModel, Capability, MemoryModel, Op, SourceLanguage, StorageClass, Word,
 <a href=#13 id=13 data-nosnippet>13</a>};
@@ -380,628 +380,617 @@
 <a href=#380 id=380 data-nosnippet>380</a>    </span><span class="kw">pub </span>file_name_op_string_id: Word,
 <a href=#381 id=381 data-nosnippet>381</a>}
 <a href=#382 id=382 data-nosnippet>382</a>
-<a href=#383 id=383 data-nosnippet>383</a><span class="doccomment">/// Cursor system:
-<a href=#384 id=384 data-nosnippet>384</a>///
-<a href=#385 id=385 data-nosnippet>385</a>/// The LLVM module builder model (and therefore `codegen_ssa`) assumes that there is a central
-<a href=#386 id=386 data-nosnippet>386</a>/// module object, then, builder objects are created pointing at that central module object (e.g.
-<a href=#387 id=387 data-nosnippet>387</a>/// for adding instructions to a basic block).  Several of these builder objects can be live at the
-<a href=#388 id=388 data-nosnippet>388</a>/// same time, mutating the central module object all at once.  Unfortunately, rspirv doesn't work
-<a href=#389 id=389 data-nosnippet>389</a>/// like that. Instead, there is a single builder object, which owns a module and a "cursor". This
-<a href=#390 id=390 data-nosnippet>390</a>/// cursor indicates to the builder where to append instructions when an instruction is added -
-<a href=#391 id=391 data-nosnippet>391</a>/// e.g. if `add()` is called, then `OpAdd` is appended to the basic block pointed to by the cursor.
-<a href=#392 id=392 data-nosnippet>392</a>///
-<a href=#393 id=393 data-nosnippet>393</a>/// So! We emulate the LLVM system by treating the rspirv Builder as the "central module object",
-<a href=#394 id=394 data-nosnippet>394</a>/// then, when a "builder object" is created, we store a reference to a `RefCell&lt;rspirv builder&gt;`,
-<a href=#395 id=395 data-nosnippet>395</a>/// *as well as* a copy of the cursor for that particular builder. Whenever the `RefCell` is
-<a href=#396 id=396 data-nosnippet>396</a>/// borrowed, then we stomp over the rspirv cursor with our copy, causing the duration of that
-<a href=#397 id=397 data-nosnippet>397</a>/// `RefCell` borrow to use that cursor.
-<a href=#398 id=398 data-nosnippet>398</a>///
-<a href=#399 id=399 data-nosnippet>399</a>/// So, if you're writing code inside `crate::builder::Builder`, then `self.emit()` will use
-<a href=#400 id=400 data-nosnippet>400</a>/// `self.cursor` (the current basic block) as that "stomp-over" cursor and return a mutable
-<a href=#401 id=401 data-nosnippet>401</a>/// reference to the rspirv builder. If you're writing code elsewhere (`codegen_cx::CodegenCx`),
-<a href=#402 id=402 data-nosnippet>402</a>/// then `self.emit_global()` will use the generic "global cursor" and return a mutable reference
-<a href=#403 id=403 data-nosnippet>403</a>/// to the rspirv builder with no basic block nor function selected, i.e. any instructions emitted
-<a href=#404 id=404 data-nosnippet>404</a>/// will be in the global section.
-<a href=#405 id=405 data-nosnippet>405</a></span><span class="attr">#[derive(Debug, Default, Copy, Clone)]
-<a href=#406 id=406 data-nosnippet>406</a>#[must_use = <span class="string">"BuilderCursor should usually be assigned to the Builder.cursor field"</span>]
-<a href=#407 id=407 data-nosnippet>407</a></span><span class="kw">pub struct </span>BuilderCursor {
-<a href=#408 id=408 data-nosnippet>408</a>    <span class="kw">pub </span>function: <span class="prelude-ty">Option</span>&lt;usize&gt;,
-<a href=#409 id=409 data-nosnippet>409</a>    <span class="kw">pub </span>block: <span class="prelude-ty">Option</span>&lt;usize&gt;,
-<a href=#410 id=410 data-nosnippet>410</a>}
-<a href=#411 id=411 data-nosnippet>411</a>
-<a href=#412 id=412 data-nosnippet>412</a><span class="kw">pub struct </span>BuilderSpirv&lt;<span class="lifetime">'tcx</span>&gt; {
-<a href=#413 id=413 data-nosnippet>413</a>    source_map: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>SourceMap,
-<a href=#414 id=414 data-nosnippet>414</a>    dropless_arena: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>DroplessArena,
-<a href=#415 id=415 data-nosnippet>415</a>
-<a href=#416 id=416 data-nosnippet>416</a>    builder: RefCell&lt;Builder&gt;,
-<a href=#417 id=417 data-nosnippet>417</a>
-<a href=#418 id=418 data-nosnippet>418</a>    <span class="comment">// Bidirectional maps between `SpirvConst` and the ID of the defined global
-<a href=#419 id=419 data-nosnippet>419</a>    // (e.g. `OpConstant...`) instruction.
-<a href=#420 id=420 data-nosnippet>420</a>    // NOTE(eddyb) both maps have `WithConstLegality` around their keys, which
-<a href=#421 id=421 data-nosnippet>421</a>    // allows getting that legality information without additional lookups.
-<a href=#422 id=422 data-nosnippet>422</a>    </span>const_to_id: RefCell&lt;FxHashMap&lt;WithType&lt;SpirvConst&lt;<span class="lifetime">'tcx</span>, <span class="lifetime">'tcx</span>&gt;&gt;, WithConstLegality&lt;Word&gt;&gt;&gt;,
-<a href=#423 id=423 data-nosnippet>423</a>    id_to_const: RefCell&lt;FxHashMap&lt;Word, WithConstLegality&lt;SpirvConst&lt;<span class="lifetime">'tcx</span>, <span class="lifetime">'tcx</span>&gt;&gt;&gt;&gt;,
-<a href=#424 id=424 data-nosnippet>424</a>
-<a href=#425 id=425 data-nosnippet>425</a>    debug_file_cache: RefCell&lt;FxHashMap&lt;DebugFileKey, DebugFileSpirv&lt;<span class="lifetime">'tcx</span>&gt;&gt;&gt;,
-<a href=#426 id=426 data-nosnippet>426</a>
-<a href=#427 id=427 data-nosnippet>427</a>    enabled_capabilities: FxHashSet&lt;Capability&gt;,
-<a href=#428 id=428 data-nosnippet>428</a>}
-<a href=#429 id=429 data-nosnippet>429</a>
-<a href=#430 id=430 data-nosnippet>430</a><span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; BuilderSpirv&lt;<span class="lifetime">'tcx</span>&gt; {
-<a href=#431 id=431 data-nosnippet>431</a>    <span class="kw">pub fn </span>new(
-<a href=#432 id=432 data-nosnippet>432</a>        tcx: TyCtxt&lt;<span class="lifetime">'tcx</span>&gt;,
-<a href=#433 id=433 data-nosnippet>433</a>        sym: <span class="kw-2">&amp;</span>Symbols,
-<a href=#434 id=434 data-nosnippet>434</a>        target: <span class="kw-2">&amp;</span>SpirvTarget,
-<a href=#435 id=435 data-nosnippet>435</a>        features: <span class="kw-2">&amp;</span>[TargetFeature],
-<a href=#436 id=436 data-nosnippet>436</a>    ) -&gt; <span class="self">Self </span>{
-<a href=#437 id=437 data-nosnippet>437</a>        <span class="kw">let </span>version = target.spirv_version();
-<a href=#438 id=438 data-nosnippet>438</a>        <span class="kw">let </span>memory_model = target.memory_model();
-<a href=#439 id=439 data-nosnippet>439</a>
-<a href=#440 id=440 data-nosnippet>440</a>        <span class="kw">let </span><span class="kw-2">mut </span>builder = Builder::new();
-<a href=#441 id=441 data-nosnippet>441</a>        builder.set_version(version.<span class="number">0</span>, version.<span class="number">1</span>);
-<a href=#442 id=442 data-nosnippet>442</a>        builder.module_mut().header.as_mut().unwrap().generator = <span class="number">0x001B_0000</span>;
-<a href=#443 id=443 data-nosnippet>443</a>
-<a href=#444 id=444 data-nosnippet>444</a>        <span class="kw">let </span><span class="kw-2">mut </span>enabled_capabilities = FxHashSet::default();
-<a href=#445 id=445 data-nosnippet>445</a>
-<a href=#446 id=446 data-nosnippet>446</a>        <span class="kw">fn </span>add_cap(
-<a href=#447 id=447 data-nosnippet>447</a>            builder: <span class="kw-2">&amp;mut </span>Builder,
-<a href=#448 id=448 data-nosnippet>448</a>            enabled_capabilities: <span class="kw-2">&amp;mut </span>FxHashSet&lt;Capability&gt;,
-<a href=#449 id=449 data-nosnippet>449</a>            cap: Capability,
-<a href=#450 id=450 data-nosnippet>450</a>        ) {
-<a href=#451 id=451 data-nosnippet>451</a>            <span class="comment">// This should be the only callsite of Builder::capability (aside from tests), to make
-<a href=#452 id=452 data-nosnippet>452</a>            // sure the hashset stays in sync.
-<a href=#453 id=453 data-nosnippet>453</a>            </span>builder.capability(cap);
-<a href=#454 id=454 data-nosnippet>454</a>            enabled_capabilities.insert(cap);
-<a href=#455 id=455 data-nosnippet>455</a>        }
-<a href=#456 id=456 data-nosnippet>456</a>        <span class="kw">fn </span>add_ext(builder: <span class="kw-2">&amp;mut </span>Builder, ext: Symbol) {
-<a href=#457 id=457 data-nosnippet>457</a>            <span class="comment">// This should be the only callsite of Builder::extension (aside from tests), to make
-<a href=#458 id=458 data-nosnippet>458</a>            // sure the hashset stays in sync.
-<a href=#459 id=459 data-nosnippet>459</a>            </span>builder.extension(ext.as_str());
-<a href=#460 id=460 data-nosnippet>460</a>        }
-<a href=#461 id=461 data-nosnippet>461</a>
-<a href=#462 id=462 data-nosnippet>462</a>        <span class="kw">for </span>feature <span class="kw">in </span>features {
-<a href=#463 id=463 data-nosnippet>463</a>            <span class="kw">match </span><span class="kw-2">*</span>feature {
-<a href=#464 id=464 data-nosnippet>464</a>                TargetFeature::Capability(cap) =&gt; {
-<a href=#465 id=465 data-nosnippet>465</a>                    add_cap(<span class="kw-2">&amp;mut </span>builder, <span class="kw-2">&amp;mut </span>enabled_capabilities, cap);
-<a href=#466 id=466 data-nosnippet>466</a>                }
-<a href=#467 id=467 data-nosnippet>467</a>                TargetFeature::Extension(ext) =&gt; {
-<a href=#468 id=468 data-nosnippet>468</a>                    add_ext(<span class="kw-2">&amp;mut </span>builder, ext);
-<a href=#469 id=469 data-nosnippet>469</a>                }
-<a href=#470 id=470 data-nosnippet>470</a>            }
-<a href=#471 id=471 data-nosnippet>471</a>        }
-<a href=#472 id=472 data-nosnippet>472</a>
-<a href=#473 id=473 data-nosnippet>473</a>        add_cap(<span class="kw-2">&amp;mut </span>builder, <span class="kw-2">&amp;mut </span>enabled_capabilities, Capability::Shader);
-<a href=#474 id=474 data-nosnippet>474</a>        <span class="kw">if </span>memory_model == MemoryModel::Vulkan {
-<a href=#475 id=475 data-nosnippet>475</a>            <span class="kw">if </span>version &lt; (<span class="number">1</span>, <span class="number">5</span>) {
-<a href=#476 id=476 data-nosnippet>476</a>                add_ext(<span class="kw-2">&amp;mut </span>builder, sym.spv_khr_vulkan_memory_model);
-<a href=#477 id=477 data-nosnippet>477</a>            }
-<a href=#478 id=478 data-nosnippet>478</a>            add_cap(
-<a href=#479 id=479 data-nosnippet>479</a>                <span class="kw-2">&amp;mut </span>builder,
-<a href=#480 id=480 data-nosnippet>480</a>                <span class="kw-2">&amp;mut </span>enabled_capabilities,
-<a href=#481 id=481 data-nosnippet>481</a>                Capability::VulkanMemoryModel,
-<a href=#482 id=482 data-nosnippet>482</a>            );
-<a href=#483 id=483 data-nosnippet>483</a>        }
-<a href=#484 id=484 data-nosnippet>484</a>
-<a href=#485 id=485 data-nosnippet>485</a>        <span class="comment">// The linker will always be ran on this module
-<a href=#486 id=486 data-nosnippet>486</a>        </span>add_cap(<span class="kw-2">&amp;mut </span>builder, <span class="kw-2">&amp;mut </span>enabled_capabilities, Capability::Linkage);
-<a href=#487 id=487 data-nosnippet>487</a>
-<a href=#488 id=488 data-nosnippet>488</a>        builder.memory_model(AddressingModel::Logical, memory_model);
-<a href=#489 id=489 data-nosnippet>489</a>
-<a href=#490 id=490 data-nosnippet>490</a>        <span class="self">Self </span>{
-<a href=#491 id=491 data-nosnippet>491</a>            source_map: tcx.sess.source_map(),
-<a href=#492 id=492 data-nosnippet>492</a>            dropless_arena: <span class="kw-2">&amp;</span>tcx.arena.dropless,
-<a href=#493 id=493 data-nosnippet>493</a>            builder: RefCell::new(builder),
-<a href=#494 id=494 data-nosnippet>494</a>            const_to_id: Default::default(),
-<a href=#495 id=495 data-nosnippet>495</a>            id_to_const: Default::default(),
-<a href=#496 id=496 data-nosnippet>496</a>            debug_file_cache: Default::default(),
-<a href=#497 id=497 data-nosnippet>497</a>            enabled_capabilities,
-<a href=#498 id=498 data-nosnippet>498</a>        }
-<a href=#499 id=499 data-nosnippet>499</a>    }
-<a href=#500 id=500 data-nosnippet>500</a>
-<a href=#501 id=501 data-nosnippet>501</a>    <span class="kw">pub fn </span>finalize(<span class="self">self</span>) -&gt; Module {
-<a href=#502 id=502 data-nosnippet>502</a>        <span class="self">self</span>.builder.into_inner().module()
-<a href=#503 id=503 data-nosnippet>503</a>    }
+<a href=#383 id=383 data-nosnippet>383</a><span class="comment">// HACK(eddyb) unlike a raw SPIR-V ID (or `SpirvValue`), this allows random-access.
+<a href=#384 id=384 data-nosnippet>384</a></span><span class="attr">#[derive(Copy, Clone, Debug)]
+<a href=#385 id=385 data-nosnippet>385</a></span><span class="kw">pub struct </span>SpirvFunctionCursor {
+<a href=#386 id=386 data-nosnippet>386</a>    <span class="kw">pub </span>ty: Word,
+<a href=#387 id=387 data-nosnippet>387</a>    <span class="kw">pub </span>id: Word,
+<a href=#388 id=388 data-nosnippet>388</a>    <span class="kw">pub </span>index_in_builder: usize,
+<a href=#389 id=389 data-nosnippet>389</a>}
+<a href=#390 id=390 data-nosnippet>390</a>
+<a href=#391 id=391 data-nosnippet>391</a><span class="comment">// HACK(eddyb) unlike a raw SPIR-V ID, this allows random-access.
+<a href=#392 id=392 data-nosnippet>392</a></span><span class="attr">#[derive(Copy, Clone, Debug)]
+<a href=#393 id=393 data-nosnippet>393</a></span><span class="kw">pub struct </span>SpirvBlockCursor {
+<a href=#394 id=394 data-nosnippet>394</a>    <span class="kw">pub </span>parent_fn: SpirvFunctionCursor,
+<a href=#395 id=395 data-nosnippet>395</a>    <span class="kw">pub </span>id: Word,
+<a href=#396 id=396 data-nosnippet>396</a>    <span class="kw">pub </span>index_in_builder: usize,
+<a href=#397 id=397 data-nosnippet>397</a>}
+<a href=#398 id=398 data-nosnippet>398</a>
+<a href=#399 id=399 data-nosnippet>399</a><span class="doccomment">/// Cursor system:
+<a href=#400 id=400 data-nosnippet>400</a>///
+<a href=#401 id=401 data-nosnippet>401</a>/// The LLVM module builder model (and therefore `codegen_ssa`) assumes that there is a central
+<a href=#402 id=402 data-nosnippet>402</a>/// module object, then, builder objects are created pointing at that central module object (e.g.
+<a href=#403 id=403 data-nosnippet>403</a>/// for adding instructions to a basic block).  Several of these builder objects can be live at the
+<a href=#404 id=404 data-nosnippet>404</a>/// same time, mutating the central module object all at once.  Unfortunately, rspirv doesn't work
+<a href=#405 id=405 data-nosnippet>405</a>/// like that. Instead, there is a single builder object, which owns a module and a "cursor". This
+<a href=#406 id=406 data-nosnippet>406</a>/// cursor indicates to the builder where to append instructions when an instruction is added -
+<a href=#407 id=407 data-nosnippet>407</a>/// e.g. if `add()` is called, then `OpAdd` is appended to the basic block pointed to by the cursor.
+<a href=#408 id=408 data-nosnippet>408</a>///
+<a href=#409 id=409 data-nosnippet>409</a>/// So! We emulate the LLVM system by treating the rspirv Builder as the "central module object",
+<a href=#410 id=410 data-nosnippet>410</a>/// then, when a "builder object" is created, we store a reference to a `RefCell&lt;rspirv builder&gt;`,
+<a href=#411 id=411 data-nosnippet>411</a>/// *as well as* a copy of the cursor for that particular builder. Whenever the `RefCell` is
+<a href=#412 id=412 data-nosnippet>412</a>/// borrowed, then we stomp over the rspirv cursor with our copy, causing the duration of that
+<a href=#413 id=413 data-nosnippet>413</a>/// `RefCell` borrow to use that cursor.
+<a href=#414 id=414 data-nosnippet>414</a>///
+<a href=#415 id=415 data-nosnippet>415</a>/// So, if you're writing code inside `crate::builder::Builder`, then `self.emit()` will use
+<a href=#416 id=416 data-nosnippet>416</a>/// `self.cursor` (the current basic block) as that "stomp-over" cursor and return a mutable
+<a href=#417 id=417 data-nosnippet>417</a>/// reference to the rspirv builder. If you're writing code elsewhere (`codegen_cx::CodegenCx`),
+<a href=#418 id=418 data-nosnippet>418</a>/// then `self.emit_global()` will use the generic "global cursor" and return a mutable reference
+<a href=#419 id=419 data-nosnippet>419</a>/// to the rspirv builder with no basic block nor function selected, i.e. any instructions emitted
+<a href=#420 id=420 data-nosnippet>420</a>/// will be in the global section.
+<a href=#421 id=421 data-nosnippet>421</a></span><span class="comment">//
+<a href=#422 id=422 data-nosnippet>422</a>// FIXME(eddyb) try updating documentation like the above.
+<a href=#423 id=423 data-nosnippet>423</a>// FIXME(eddyb) figure out how to replace `BuilderCursor` with something like
+<a href=#424 id=424 data-nosnippet>424</a>// `Option&lt;SpirvBlockCursor&gt;`, but that can't handle "in function outside BB".
+<a href=#425 id=425 data-nosnippet>425</a></span><span class="attr">#[derive(Debug, Default, Copy, Clone)]
+<a href=#426 id=426 data-nosnippet>426</a>#[must_use = <span class="string">"BuilderCursor should usually be assigned to the Builder.cursor field"</span>]
+<a href=#427 id=427 data-nosnippet>427</a></span><span class="kw">struct </span>BuilderCursor {
+<a href=#428 id=428 data-nosnippet>428</a>    fn_id_and_idx: <span class="prelude-ty">Option</span>&lt;(Word, usize)&gt;,
+<a href=#429 id=429 data-nosnippet>429</a>    block_id_and_idx: <span class="prelude-ty">Option</span>&lt;(Word, usize)&gt;,
+<a href=#430 id=430 data-nosnippet>430</a>}
+<a href=#431 id=431 data-nosnippet>431</a>
+<a href=#432 id=432 data-nosnippet>432</a><span class="kw">pub struct </span>BuilderSpirv&lt;<span class="lifetime">'tcx</span>&gt; {
+<a href=#433 id=433 data-nosnippet>433</a>    source_map: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>SourceMap,
+<a href=#434 id=434 data-nosnippet>434</a>    dropless_arena: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>DroplessArena,
+<a href=#435 id=435 data-nosnippet>435</a>
+<a href=#436 id=436 data-nosnippet>436</a>    builder: RefCell&lt;Builder&gt;,
+<a href=#437 id=437 data-nosnippet>437</a>
+<a href=#438 id=438 data-nosnippet>438</a>    <span class="comment">// Bidirectional maps between `SpirvConst` and the ID of the defined global
+<a href=#439 id=439 data-nosnippet>439</a>    // (e.g. `OpConstant...`) instruction.
+<a href=#440 id=440 data-nosnippet>440</a>    // NOTE(eddyb) both maps have `WithConstLegality` around their keys, which
+<a href=#441 id=441 data-nosnippet>441</a>    // allows getting that legality information without additional lookups.
+<a href=#442 id=442 data-nosnippet>442</a>    </span>const_to_id: RefCell&lt;FxHashMap&lt;WithType&lt;SpirvConst&lt;<span class="lifetime">'tcx</span>, <span class="lifetime">'tcx</span>&gt;&gt;, WithConstLegality&lt;Word&gt;&gt;&gt;,
+<a href=#443 id=443 data-nosnippet>443</a>    id_to_const: RefCell&lt;FxHashMap&lt;Word, WithConstLegality&lt;SpirvConst&lt;<span class="lifetime">'tcx</span>, <span class="lifetime">'tcx</span>&gt;&gt;&gt;&gt;,
+<a href=#444 id=444 data-nosnippet>444</a>
+<a href=#445 id=445 data-nosnippet>445</a>    debug_file_cache: RefCell&lt;FxHashMap&lt;DebugFileKey, DebugFileSpirv&lt;<span class="lifetime">'tcx</span>&gt;&gt;&gt;,
+<a href=#446 id=446 data-nosnippet>446</a>
+<a href=#447 id=447 data-nosnippet>447</a>    enabled_capabilities: FxHashSet&lt;Capability&gt;,
+<a href=#448 id=448 data-nosnippet>448</a>}
+<a href=#449 id=449 data-nosnippet>449</a>
+<a href=#450 id=450 data-nosnippet>450</a><span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; BuilderSpirv&lt;<span class="lifetime">'tcx</span>&gt; {
+<a href=#451 id=451 data-nosnippet>451</a>    <span class="kw">pub fn </span>new(
+<a href=#452 id=452 data-nosnippet>452</a>        tcx: TyCtxt&lt;<span class="lifetime">'tcx</span>&gt;,
+<a href=#453 id=453 data-nosnippet>453</a>        sym: <span class="kw-2">&amp;</span>Symbols,
+<a href=#454 id=454 data-nosnippet>454</a>        target: <span class="kw-2">&amp;</span>SpirvTarget,
+<a href=#455 id=455 data-nosnippet>455</a>        features: <span class="kw-2">&amp;</span>[TargetFeature],
+<a href=#456 id=456 data-nosnippet>456</a>    ) -&gt; <span class="self">Self </span>{
+<a href=#457 id=457 data-nosnippet>457</a>        <span class="kw">let </span>version = target.spirv_version();
+<a href=#458 id=458 data-nosnippet>458</a>        <span class="kw">let </span>memory_model = target.memory_model();
+<a href=#459 id=459 data-nosnippet>459</a>
+<a href=#460 id=460 data-nosnippet>460</a>        <span class="kw">let </span><span class="kw-2">mut </span>builder = Builder::new();
+<a href=#461 id=461 data-nosnippet>461</a>        builder.set_version(version.<span class="number">0</span>, version.<span class="number">1</span>);
+<a href=#462 id=462 data-nosnippet>462</a>        builder.module_mut().header.as_mut().unwrap().generator = <span class="number">0x001B_0000</span>;
+<a href=#463 id=463 data-nosnippet>463</a>
+<a href=#464 id=464 data-nosnippet>464</a>        <span class="kw">let </span><span class="kw-2">mut </span>enabled_capabilities = FxHashSet::default();
+<a href=#465 id=465 data-nosnippet>465</a>
+<a href=#466 id=466 data-nosnippet>466</a>        <span class="kw">fn </span>add_cap(
+<a href=#467 id=467 data-nosnippet>467</a>            builder: <span class="kw-2">&amp;mut </span>Builder,
+<a href=#468 id=468 data-nosnippet>468</a>            enabled_capabilities: <span class="kw-2">&amp;mut </span>FxHashSet&lt;Capability&gt;,
+<a href=#469 id=469 data-nosnippet>469</a>            cap: Capability,
+<a href=#470 id=470 data-nosnippet>470</a>        ) {
+<a href=#471 id=471 data-nosnippet>471</a>            <span class="comment">// This should be the only callsite of Builder::capability (aside from tests), to make
+<a href=#472 id=472 data-nosnippet>472</a>            // sure the hashset stays in sync.
+<a href=#473 id=473 data-nosnippet>473</a>            </span>builder.capability(cap);
+<a href=#474 id=474 data-nosnippet>474</a>            enabled_capabilities.insert(cap);
+<a href=#475 id=475 data-nosnippet>475</a>        }
+<a href=#476 id=476 data-nosnippet>476</a>        <span class="kw">fn </span>add_ext(builder: <span class="kw-2">&amp;mut </span>Builder, ext: Symbol) {
+<a href=#477 id=477 data-nosnippet>477</a>            <span class="comment">// This should be the only callsite of Builder::extension (aside from tests), to make
+<a href=#478 id=478 data-nosnippet>478</a>            // sure the hashset stays in sync.
+<a href=#479 id=479 data-nosnippet>479</a>            </span>builder.extension(ext.as_str());
+<a href=#480 id=480 data-nosnippet>480</a>        }
+<a href=#481 id=481 data-nosnippet>481</a>
+<a href=#482 id=482 data-nosnippet>482</a>        <span class="kw">for </span>feature <span class="kw">in </span>features {
+<a href=#483 id=483 data-nosnippet>483</a>            <span class="kw">match </span><span class="kw-2">*</span>feature {
+<a href=#484 id=484 data-nosnippet>484</a>                TargetFeature::Capability(cap) =&gt; {
+<a href=#485 id=485 data-nosnippet>485</a>                    add_cap(<span class="kw-2">&amp;mut </span>builder, <span class="kw-2">&amp;mut </span>enabled_capabilities, cap);
+<a href=#486 id=486 data-nosnippet>486</a>                }
+<a href=#487 id=487 data-nosnippet>487</a>                TargetFeature::Extension(ext) =&gt; {
+<a href=#488 id=488 data-nosnippet>488</a>                    add_ext(<span class="kw-2">&amp;mut </span>builder, ext);
+<a href=#489 id=489 data-nosnippet>489</a>                }
+<a href=#490 id=490 data-nosnippet>490</a>            }
+<a href=#491 id=491 data-nosnippet>491</a>        }
+<a href=#492 id=492 data-nosnippet>492</a>
+<a href=#493 id=493 data-nosnippet>493</a>        add_cap(<span class="kw-2">&amp;mut </span>builder, <span class="kw-2">&amp;mut </span>enabled_capabilities, Capability::Shader);
+<a href=#494 id=494 data-nosnippet>494</a>        <span class="kw">if </span>memory_model == MemoryModel::Vulkan {
+<a href=#495 id=495 data-nosnippet>495</a>            <span class="kw">if </span>version &lt; (<span class="number">1</span>, <span class="number">5</span>) {
+<a href=#496 id=496 data-nosnippet>496</a>                add_ext(<span class="kw-2">&amp;mut </span>builder, sym.spv_khr_vulkan_memory_model);
+<a href=#497 id=497 data-nosnippet>497</a>            }
+<a href=#498 id=498 data-nosnippet>498</a>            add_cap(
+<a href=#499 id=499 data-nosnippet>499</a>                <span class="kw-2">&amp;mut </span>builder,
+<a href=#500 id=500 data-nosnippet>500</a>                <span class="kw-2">&amp;mut </span>enabled_capabilities,
+<a href=#501 id=501 data-nosnippet>501</a>                Capability::VulkanMemoryModel,
+<a href=#502 id=502 data-nosnippet>502</a>            );
+<a href=#503 id=503 data-nosnippet>503</a>        }
 <a href=#504 id=504 data-nosnippet>504</a>
-<a href=#505 id=505 data-nosnippet>505</a>    <span class="kw">pub fn </span>dump_module_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
-<a href=#506 id=506 data-nosnippet>506</a>        <span class="self">self</span>.builder.borrow().module_ref().disassemble()
-<a href=#507 id=507 data-nosnippet>507</a>    }
-<a href=#508 id=508 data-nosnippet>508</a>
-<a href=#509 id=509 data-nosnippet>509</a>    <span class="doccomment">/// Helper function useful to place right before a crash, to debug the module state.
-<a href=#510 id=510 data-nosnippet>510</a>    </span><span class="kw">pub fn </span>dump_module(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw">impl </span>AsRef&lt;Path&gt;) {
-<a href=#511 id=511 data-nosnippet>511</a>        <span class="kw">let </span>module = <span class="self">self</span>.builder.borrow().module_ref().assemble();
-<a href=#512 id=512 data-nosnippet>512</a>        File::create(path)
-<a href=#513 id=513 data-nosnippet>513</a>            .unwrap()
-<a href=#514 id=514 data-nosnippet>514</a>            .write_all(spirv_tools::binary::from_binary(<span class="kw-2">&amp;</span>module))
-<a href=#515 id=515 data-nosnippet>515</a>            .unwrap();
-<a href=#516 id=516 data-nosnippet>516</a>    }
-<a href=#517 id=517 data-nosnippet>517</a>
-<a href=#518 id=518 data-nosnippet>518</a>    <span class="doccomment">/// See comment on `BuilderCursor`
-<a href=#519 id=519 data-nosnippet>519</a>    </span><span class="kw">pub fn </span>builder(<span class="kw-2">&amp;</span><span class="self">self</span>, cursor: BuilderCursor) -&gt; RefMut&lt;<span class="lifetime">'_</span>, Builder&gt; {
-<a href=#520 id=520 data-nosnippet>520</a>        <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder.borrow_mut();
-<a href=#521 id=521 data-nosnippet>521</a>        <span class="comment">// select_function does bounds checks and other relatively expensive things, so don't just call it
-<a href=#522 id=522 data-nosnippet>522</a>        // unconditionally.
-<a href=#523 id=523 data-nosnippet>523</a>        </span><span class="kw">if </span>builder.selected_function() != cursor.function {
-<a href=#524 id=524 data-nosnippet>524</a>            builder.select_function(cursor.function).unwrap();
-<a href=#525 id=525 data-nosnippet>525</a>        }
-<a href=#526 id=526 data-nosnippet>526</a>        <span class="kw">if </span>cursor.function.is_some() &amp;&amp; builder.selected_block() != cursor.block {
-<a href=#527 id=527 data-nosnippet>527</a>            builder.select_block(cursor.block).unwrap();
-<a href=#528 id=528 data-nosnippet>528</a>        }
-<a href=#529 id=529 data-nosnippet>529</a>        builder
-<a href=#530 id=530 data-nosnippet>530</a>    }
-<a href=#531 id=531 data-nosnippet>531</a>
-<a href=#532 id=532 data-nosnippet>532</a>    <span class="kw">pub fn </span>has_capability(<span class="kw-2">&amp;</span><span class="self">self</span>, capability: Capability) -&gt; bool {
-<a href=#533 id=533 data-nosnippet>533</a>        <span class="self">self</span>.enabled_capabilities.contains(<span class="kw-2">&amp;</span>capability)
-<a href=#534 id=534 data-nosnippet>534</a>    }
-<a href=#535 id=535 data-nosnippet>535</a>
-<a href=#536 id=536 data-nosnippet>536</a>    <span class="kw">pub fn </span>select_function_by_id(<span class="kw-2">&amp;</span><span class="self">self</span>, id: Word) -&gt; BuilderCursor {
-<a href=#537 id=537 data-nosnippet>537</a>        <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder.borrow_mut();
-<a href=#538 id=538 data-nosnippet>538</a>        <span class="kw">for </span>(index, func) <span class="kw">in </span>builder.module_ref().functions.iter().enumerate() {
-<a href=#539 id=539 data-nosnippet>539</a>            <span class="kw">if </span>func.def.as_ref().and_then(|i| i.result_id) == <span class="prelude-val">Some</span>(id) {
-<a href=#540 id=540 data-nosnippet>540</a>                builder.select_function(<span class="prelude-val">Some</span>(index)).unwrap();
-<a href=#541 id=541 data-nosnippet>541</a>                <span class="kw">return </span>BuilderCursor {
-<a href=#542 id=542 data-nosnippet>542</a>                    function: <span class="prelude-val">Some</span>(index),
-<a href=#543 id=543 data-nosnippet>543</a>                    block: <span class="prelude-val">None</span>,
-<a href=#544 id=544 data-nosnippet>544</a>                };
-<a href=#545 id=545 data-nosnippet>545</a>            }
-<a href=#546 id=546 data-nosnippet>546</a>        }
-<a href=#547 id=547 data-nosnippet>547</a>
-<a href=#548 id=548 data-nosnippet>548</a>        <span class="macro">bug!</span>(<span class="string">"Function not found: {}"</span>, id);
-<a href=#549 id=549 data-nosnippet>549</a>    }
-<a href=#550 id=550 data-nosnippet>550</a>
-<a href=#551 id=551 data-nosnippet>551</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>def_constant_cx(
-<a href=#552 id=552 data-nosnippet>552</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#553 id=553 data-nosnippet>553</a>        ty: Word,
-<a href=#554 id=554 data-nosnippet>554</a>        val: SpirvConst&lt;<span class="lifetime">'_</span>, <span class="lifetime">'tcx</span>&gt;,
-<a href=#555 id=555 data-nosnippet>555</a>        cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
-<a href=#556 id=556 data-nosnippet>556</a>    ) -&gt; SpirvValue {
-<a href=#557 id=557 data-nosnippet>557</a>        <span class="kw">let </span>scalar_ty = <span class="kw">match </span>val {
-<a href=#558 id=558 data-nosnippet>558</a>            SpirvConst::Scalar(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(cx.lookup_type(ty)),
-<a href=#559 id=559 data-nosnippet>559</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#560 id=560 data-nosnippet>560</a>        };
-<a href=#561 id=561 data-nosnippet>561</a>
-<a href=#562 id=562 data-nosnippet>562</a>        <span class="comment">// HACK(eddyb) this is done so late (just before interning `val`) to
-<a href=#563 id=563 data-nosnippet>563</a>        // minimize any potential misuse from direct `def_constant` calls.
-<a href=#564 id=564 data-nosnippet>564</a>        </span><span class="kw">let </span>val = <span class="kw">match </span>(val, scalar_ty) {
-<a href=#565 id=565 data-nosnippet>565</a>            (SpirvConst::Scalar(val), <span class="prelude-val">Some</span>(SpirvType::Integer(bits, signed))) =&gt; {
-<a href=#566 id=566 data-nosnippet>566</a>                <span class="kw">let </span>size = Size::from_bits(bits);
-<a href=#567 id=567 data-nosnippet>567</a>                SpirvConst::Scalar(<span class="kw">if </span>signed {
-<a href=#568 id=568 data-nosnippet>568</a>                    size.sign_extend(val) <span class="kw">as </span>u128
-<a href=#569 id=569 data-nosnippet>569</a>                } <span class="kw">else </span>{
-<a href=#570 id=570 data-nosnippet>570</a>                    size.truncate(val)
-<a href=#571 id=571 data-nosnippet>571</a>                })
-<a href=#572 id=572 data-nosnippet>572</a>            }
-<a href=#573 id=573 data-nosnippet>573</a>            <span class="kw">_ </span>=&gt; val,
-<a href=#574 id=574 data-nosnippet>574</a>        };
-<a href=#575 id=575 data-nosnippet>575</a>
-<a href=#576 id=576 data-nosnippet>576</a>        <span class="kw">let </span>val_with_type = WithType { ty, val };
-<a href=#577 id=577 data-nosnippet>577</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(entry) = <span class="self">self</span>.const_to_id.borrow().get(<span class="kw-2">&amp;</span>val_with_type) {
-<a href=#578 id=578 data-nosnippet>578</a>            <span class="comment">// FIXME(eddyb) deduplicate this `if`-`else` and its other copies.
-<a href=#579 id=579 data-nosnippet>579</a>            </span><span class="kw">let </span>kind = <span class="kw">if </span>entry.legal.is_ok() {
-<a href=#580 id=580 data-nosnippet>580</a>                SpirvValueKind::Def(entry.val)
-<a href=#581 id=581 data-nosnippet>581</a>            } <span class="kw">else </span>{
-<a href=#582 id=582 data-nosnippet>582</a>                SpirvValueKind::IllegalConst(entry.val)
-<a href=#583 id=583 data-nosnippet>583</a>            };
-<a href=#584 id=584 data-nosnippet>584</a>            <span class="kw">return </span>SpirvValue { kind, ty };
-<a href=#585 id=585 data-nosnippet>585</a>        }
-<a href=#586 id=586 data-nosnippet>586</a>        <span class="kw">let </span>val = val_with_type.val;
-<a href=#587 id=587 data-nosnippet>587</a>
-<a href=#588 id=588 data-nosnippet>588</a>        <span class="comment">// FIXME(eddyb) make this an extension method on `rspirv::dr::Builder`?
-<a href=#589 id=589 data-nosnippet>589</a>        </span><span class="kw">let </span>const_op = |builder: <span class="kw-2">&amp;mut </span>Builder, op, lhs, maybe_rhs: <span class="prelude-ty">Option</span>&lt;<span class="kw">_</span>&gt;| {
-<a href=#590 id=590 data-nosnippet>590</a>            <span class="comment">// HACK(eddyb) remove after `OpSpecConstantOp` support gets added to SPIR-T.
-<a href=#591 id=591 data-nosnippet>591</a>            </span><span class="kw">let </span>spirt_has_const_op = <span class="bool-val">false</span>;
+<a href=#505 id=505 data-nosnippet>505</a>        <span class="comment">// The linker will always be ran on this module
+<a href=#506 id=506 data-nosnippet>506</a>        </span>add_cap(<span class="kw-2">&amp;mut </span>builder, <span class="kw-2">&amp;mut </span>enabled_capabilities, Capability::Linkage);
+<a href=#507 id=507 data-nosnippet>507</a>
+<a href=#508 id=508 data-nosnippet>508</a>        builder.memory_model(AddressingModel::Logical, memory_model);
+<a href=#509 id=509 data-nosnippet>509</a>
+<a href=#510 id=510 data-nosnippet>510</a>        <span class="self">Self </span>{
+<a href=#511 id=511 data-nosnippet>511</a>            source_map: tcx.sess.source_map(),
+<a href=#512 id=512 data-nosnippet>512</a>            dropless_arena: <span class="kw-2">&amp;</span>tcx.arena.dropless,
+<a href=#513 id=513 data-nosnippet>513</a>            builder: RefCell::new(builder),
+<a href=#514 id=514 data-nosnippet>514</a>            const_to_id: Default::default(),
+<a href=#515 id=515 data-nosnippet>515</a>            id_to_const: Default::default(),
+<a href=#516 id=516 data-nosnippet>516</a>            debug_file_cache: Default::default(),
+<a href=#517 id=517 data-nosnippet>517</a>            enabled_capabilities,
+<a href=#518 id=518 data-nosnippet>518</a>        }
+<a href=#519 id=519 data-nosnippet>519</a>    }
+<a href=#520 id=520 data-nosnippet>520</a>
+<a href=#521 id=521 data-nosnippet>521</a>    <span class="kw">pub fn </span>finalize(<span class="self">self</span>) -&gt; Module {
+<a href=#522 id=522 data-nosnippet>522</a>        <span class="self">self</span>.builder.into_inner().module()
+<a href=#523 id=523 data-nosnippet>523</a>    }
+<a href=#524 id=524 data-nosnippet>524</a>
+<a href=#525 id=525 data-nosnippet>525</a>    <span class="kw">pub fn </span>dump_module_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+<a href=#526 id=526 data-nosnippet>526</a>        <span class="self">self</span>.builder.borrow().module_ref().disassemble()
+<a href=#527 id=527 data-nosnippet>527</a>    }
+<a href=#528 id=528 data-nosnippet>528</a>
+<a href=#529 id=529 data-nosnippet>529</a>    <span class="doccomment">/// Helper function useful to place right before a crash, to debug the module state.
+<a href=#530 id=530 data-nosnippet>530</a>    </span><span class="kw">pub fn </span>dump_module(<span class="kw-2">&amp;</span><span class="self">self</span>, path: <span class="kw">impl </span>AsRef&lt;Path&gt;) {
+<a href=#531 id=531 data-nosnippet>531</a>        <span class="kw">let </span>module = <span class="self">self</span>.builder.borrow().module_ref().assemble();
+<a href=#532 id=532 data-nosnippet>532</a>        File::create(path)
+<a href=#533 id=533 data-nosnippet>533</a>            .unwrap()
+<a href=#534 id=534 data-nosnippet>534</a>            .write_all(spirv_tools::binary::from_binary(<span class="kw-2">&amp;</span>module))
+<a href=#535 id=535 data-nosnippet>535</a>            .unwrap();
+<a href=#536 id=536 data-nosnippet>536</a>    }
+<a href=#537 id=537 data-nosnippet>537</a>
+<a href=#538 id=538 data-nosnippet>538</a>    <span class="kw">pub fn </span>has_capability(<span class="kw-2">&amp;</span><span class="self">self</span>, capability: Capability) -&gt; bool {
+<a href=#539 id=539 data-nosnippet>539</a>        <span class="self">self</span>.enabled_capabilities.contains(<span class="kw-2">&amp;</span>capability)
+<a href=#540 id=540 data-nosnippet>540</a>    }
+<a href=#541 id=541 data-nosnippet>541</a>
+<a href=#542 id=542 data-nosnippet>542</a>    <span class="doccomment">/// See comment on `BuilderCursor`
+<a href=#543 id=543 data-nosnippet>543</a>    </span><span class="kw">fn </span>builder(<span class="kw-2">&amp;</span><span class="self">self</span>, cursor: BuilderCursor) -&gt; RefMut&lt;<span class="lifetime">'_</span>, Builder&gt; {
+<a href=#544 id=544 data-nosnippet>544</a>        <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder.borrow_mut();
+<a href=#545 id=545 data-nosnippet>545</a>
+<a href=#546 id=546 data-nosnippet>546</a>        <span class="kw">let </span>[maybe_fn_idx, maybe_block_idx] = [cursor.fn_id_and_idx, cursor.block_id_and_idx]
+<a href=#547 id=547 data-nosnippet>547</a>            .map(|id_and_idx| id_and_idx.map(|(<span class="kw">_</span>, idx)| idx));
+<a href=#548 id=548 data-nosnippet>548</a>
+<a href=#549 id=549 data-nosnippet>549</a>        <span class="kw">let </span>fn_changed = builder.selected_function() != maybe_fn_idx;
+<a href=#550 id=550 data-nosnippet>550</a>        <span class="kw">if </span>fn_changed {
+<a href=#551 id=551 data-nosnippet>551</a>            builder.select_function(maybe_fn_idx).unwrap();
+<a href=#552 id=552 data-nosnippet>552</a>        }
+<a href=#553 id=553 data-nosnippet>553</a>
+<a href=#554 id=554 data-nosnippet>554</a>        <span class="comment">// Only check the function/block IDs if either of their indices changed.
+<a href=#555 id=555 data-nosnippet>555</a>        </span><span class="kw">if let </span><span class="prelude-val">Some</span>((fn_id, fn_idx)) = cursor.fn_id_and_idx
+<a href=#556 id=556 data-nosnippet>556</a>            &amp;&amp; (fn_changed || builder.selected_block() != maybe_block_idx)
+<a href=#557 id=557 data-nosnippet>557</a>        {
+<a href=#558 id=558 data-nosnippet>558</a>            builder.select_block(maybe_block_idx).unwrap();
+<a href=#559 id=559 data-nosnippet>559</a>
+<a href=#560 id=560 data-nosnippet>560</a>            <span class="kw">let </span>function = <span class="kw-2">&amp;</span>builder.module_ref().functions[fn_idx];
+<a href=#561 id=561 data-nosnippet>561</a>            <span class="kw">if </span>fn_changed {
+<a href=#562 id=562 data-nosnippet>562</a>                <span class="macro">assert_eq!</span>(function.def_id(), <span class="prelude-val">Some</span>(fn_id));
+<a href=#563 id=563 data-nosnippet>563</a>            }
+<a href=#564 id=564 data-nosnippet>564</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>((block_id, block_idx)) = cursor.block_id_and_idx {
+<a href=#565 id=565 data-nosnippet>565</a>                <span class="macro">assert_eq!</span>(function.blocks[block_idx].label_id(), <span class="prelude-val">Some</span>(block_id));
+<a href=#566 id=566 data-nosnippet>566</a>            }
+<a href=#567 id=567 data-nosnippet>567</a>        }
+<a href=#568 id=568 data-nosnippet>568</a>
+<a href=#569 id=569 data-nosnippet>569</a>        builder
+<a href=#570 id=570 data-nosnippet>570</a>    }
+<a href=#571 id=571 data-nosnippet>571</a>
+<a href=#572 id=572 data-nosnippet>572</a>    <span class="doccomment">/// See comment on `BuilderCursor`
+<a href=#573 id=573 data-nosnippet>573</a>    </span><span class="kw">pub fn </span>global_builder(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; RefMut&lt;<span class="lifetime">'_</span>, Builder&gt; {
+<a href=#574 id=574 data-nosnippet>574</a>        <span class="self">self</span>.builder(BuilderCursor::default())
+<a href=#575 id=575 data-nosnippet>575</a>    }
+<a href=#576 id=576 data-nosnippet>576</a>
+<a href=#577 id=577 data-nosnippet>577</a>    <span class="doccomment">/// See comment on `BuilderCursor`
+<a href=#578 id=578 data-nosnippet>578</a>    </span><span class="kw">pub fn </span>builder_for_fn(<span class="kw-2">&amp;</span><span class="self">self</span>, func: SpirvFunctionCursor) -&gt; RefMut&lt;<span class="lifetime">'_</span>, Builder&gt; {
+<a href=#579 id=579 data-nosnippet>579</a>        <span class="self">self</span>.builder(BuilderCursor {
+<a href=#580 id=580 data-nosnippet>580</a>            fn_id_and_idx: <span class="prelude-val">Some</span>((func.id, func.index_in_builder)),
+<a href=#581 id=581 data-nosnippet>581</a>            block_id_and_idx: <span class="prelude-val">None</span>,
+<a href=#582 id=582 data-nosnippet>582</a>        })
+<a href=#583 id=583 data-nosnippet>583</a>    }
+<a href=#584 id=584 data-nosnippet>584</a>
+<a href=#585 id=585 data-nosnippet>585</a>    <span class="doccomment">/// See comment on `BuilderCursor`
+<a href=#586 id=586 data-nosnippet>586</a>    </span><span class="kw">pub fn </span>builder_for_block(<span class="kw-2">&amp;</span><span class="self">self</span>, block: SpirvBlockCursor) -&gt; RefMut&lt;<span class="lifetime">'_</span>, Builder&gt; {
+<a href=#587 id=587 data-nosnippet>587</a>        <span class="self">self</span>.builder(BuilderCursor {
+<a href=#588 id=588 data-nosnippet>588</a>            fn_id_and_idx: <span class="prelude-val">Some</span>((block.parent_fn.id, block.parent_fn.index_in_builder)),
+<a href=#589 id=589 data-nosnippet>589</a>            block_id_and_idx: <span class="prelude-val">Some</span>((block.id, block.index_in_builder)),
+<a href=#590 id=590 data-nosnippet>590</a>        })
+<a href=#591 id=591 data-nosnippet>591</a>    }
 <a href=#592 id=592 data-nosnippet>592</a>
-<a href=#593 id=593 data-nosnippet>593</a>            <span class="kw">if </span>!spirt_has_const_op {
-<a href=#594 id=594 data-nosnippet>594</a>                <span class="kw">let </span>zombie = builder.undef(ty, <span class="prelude-val">None</span>);
-<a href=#595 id=595 data-nosnippet>595</a>                cx.zombie_with_span(
-<a href=#596 id=596 data-nosnippet>596</a>                    zombie,
-<a href=#597 id=597 data-nosnippet>597</a>                    DUMMY_SP,
-<a href=#598 id=598 data-nosnippet>598</a>                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"unsupported constant of type `{}`"</span>, cx.debug_type(ty)),
-<a href=#599 id=599 data-nosnippet>599</a>                );
-<a href=#600 id=600 data-nosnippet>600</a>                <span class="kw">return </span>zombie;
-<a href=#601 id=601 data-nosnippet>601</a>            }
-<a href=#602 id=602 data-nosnippet>602</a>
-<a href=#603 id=603 data-nosnippet>603</a>            <span class="kw">let </span>id = builder.id();
-<a href=#604 id=604 data-nosnippet>604</a>            builder
-<a href=#605 id=605 data-nosnippet>605</a>                .module_mut()
-<a href=#606 id=606 data-nosnippet>606</a>                .types_global_values
-<a href=#607 id=607 data-nosnippet>607</a>                .push(Instruction::new(
-<a href=#608 id=608 data-nosnippet>608</a>                    Op::SpecConstantOp,
-<a href=#609 id=609 data-nosnippet>609</a>                    <span class="prelude-val">Some</span>(ty),
-<a href=#610 id=610 data-nosnippet>610</a>                    <span class="prelude-val">Some</span>(id),
-<a href=#611 id=611 data-nosnippet>611</a>                    [
-<a href=#612 id=612 data-nosnippet>612</a>                        Operand::LiteralSpecConstantOpInteger(op),
-<a href=#613 id=613 data-nosnippet>613</a>                        Operand::IdRef(lhs),
-<a href=#614 id=614 data-nosnippet>614</a>                    ]
-<a href=#615 id=615 data-nosnippet>615</a>                    .into_iter()
-<a href=#616 id=616 data-nosnippet>616</a>                    .chain(maybe_rhs.map(Operand::IdRef))
-<a href=#617 id=617 data-nosnippet>617</a>                    .collect(),
-<a href=#618 id=618 data-nosnippet>618</a>                ));
-<a href=#619 id=619 data-nosnippet>619</a>            id
-<a href=#620 id=620 data-nosnippet>620</a>        };
-<a href=#621 id=621 data-nosnippet>621</a>
-<a href=#622 id=622 data-nosnippet>622</a>        <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder(BuilderCursor::default());
-<a href=#623 id=623 data-nosnippet>623</a>        <span class="kw">let </span>id = <span class="kw">match </span>val {
-<a href=#624 id=624 data-nosnippet>624</a>            SpirvConst::Scalar(v) =&gt; <span class="kw">match </span>scalar_ty.unwrap() {
-<a href=#625 id=625 data-nosnippet>625</a>                SpirvType::Integer(..=<span class="number">32</span>, <span class="kw">_</span>) | SpirvType::Float(..=<span class="number">32</span>) =&gt; {
-<a href=#626 id=626 data-nosnippet>626</a>                    builder.constant_bit32(ty, v <span class="kw">as </span>u32)
-<a href=#627 id=627 data-nosnippet>627</a>                }
-<a href=#628 id=628 data-nosnippet>628</a>                SpirvType::Integer(<span class="number">64</span>, <span class="kw">_</span>) | SpirvType::Float(<span class="number">64</span>) =&gt; {
-<a href=#629 id=629 data-nosnippet>629</a>                    builder.constant_bit64(ty, v <span class="kw">as </span>u64)
-<a href=#630 id=630 data-nosnippet>630</a>                }
-<a href=#631 id=631 data-nosnippet>631</a>                SpirvType::Integer(<span class="number">128</span>, <span class="bool-val">false</span>) =&gt; {
-<a href=#632 id=632 data-nosnippet>632</a>                    <span class="comment">// HACK(eddyb) avoid borrow conflicts.
-<a href=#633 id=633 data-nosnippet>633</a>                    </span>drop(builder);
+<a href=#593 id=593 data-nosnippet>593</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>def_constant_cx(
+<a href=#594 id=594 data-nosnippet>594</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#595 id=595 data-nosnippet>595</a>        ty: Word,
+<a href=#596 id=596 data-nosnippet>596</a>        val: SpirvConst&lt;<span class="lifetime">'_</span>, <span class="lifetime">'tcx</span>&gt;,
+<a href=#597 id=597 data-nosnippet>597</a>        cx: <span class="kw-2">&amp;</span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt;,
+<a href=#598 id=598 data-nosnippet>598</a>    ) -&gt; SpirvValue {
+<a href=#599 id=599 data-nosnippet>599</a>        <span class="kw">let </span>scalar_ty = <span class="kw">match </span>val {
+<a href=#600 id=600 data-nosnippet>600</a>            SpirvConst::Scalar(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(cx.lookup_type(ty)),
+<a href=#601 id=601 data-nosnippet>601</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#602 id=602 data-nosnippet>602</a>        };
+<a href=#603 id=603 data-nosnippet>603</a>
+<a href=#604 id=604 data-nosnippet>604</a>        <span class="comment">// HACK(eddyb) this is done so late (just before interning `val`) to
+<a href=#605 id=605 data-nosnippet>605</a>        // minimize any potential misuse from direct `def_constant` calls.
+<a href=#606 id=606 data-nosnippet>606</a>        </span><span class="kw">let </span>val = <span class="kw">match </span>(val, scalar_ty) {
+<a href=#607 id=607 data-nosnippet>607</a>            (SpirvConst::Scalar(val), <span class="prelude-val">Some</span>(SpirvType::Integer(bits, signed))) =&gt; {
+<a href=#608 id=608 data-nosnippet>608</a>                <span class="kw">let </span>size = Size::from_bits(bits);
+<a href=#609 id=609 data-nosnippet>609</a>                SpirvConst::Scalar(<span class="kw">if </span>signed {
+<a href=#610 id=610 data-nosnippet>610</a>                    size.sign_extend(val) <span class="kw">as </span>u128
+<a href=#611 id=611 data-nosnippet>611</a>                } <span class="kw">else </span>{
+<a href=#612 id=612 data-nosnippet>612</a>                    size.truncate(val)
+<a href=#613 id=613 data-nosnippet>613</a>                })
+<a href=#614 id=614 data-nosnippet>614</a>            }
+<a href=#615 id=615 data-nosnippet>615</a>            <span class="kw">_ </span>=&gt; val,
+<a href=#616 id=616 data-nosnippet>616</a>        };
+<a href=#617 id=617 data-nosnippet>617</a>
+<a href=#618 id=618 data-nosnippet>618</a>        <span class="kw">let </span>val_with_type = WithType { ty, val };
+<a href=#619 id=619 data-nosnippet>619</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(entry) = <span class="self">self</span>.const_to_id.borrow().get(<span class="kw-2">&amp;</span>val_with_type) {
+<a href=#620 id=620 data-nosnippet>620</a>            <span class="comment">// FIXME(eddyb) deduplicate this `if`-`else` and its other copies.
+<a href=#621 id=621 data-nosnippet>621</a>            </span><span class="kw">let </span>kind = <span class="kw">if </span>entry.legal.is_ok() {
+<a href=#622 id=622 data-nosnippet>622</a>                SpirvValueKind::Def(entry.val)
+<a href=#623 id=623 data-nosnippet>623</a>            } <span class="kw">else </span>{
+<a href=#624 id=624 data-nosnippet>624</a>                SpirvValueKind::IllegalConst(entry.val)
+<a href=#625 id=625 data-nosnippet>625</a>            };
+<a href=#626 id=626 data-nosnippet>626</a>            <span class="kw">return </span>SpirvValue { kind, ty };
+<a href=#627 id=627 data-nosnippet>627</a>        }
+<a href=#628 id=628 data-nosnippet>628</a>        <span class="kw">let </span>val = val_with_type.val;
+<a href=#629 id=629 data-nosnippet>629</a>
+<a href=#630 id=630 data-nosnippet>630</a>        <span class="comment">// FIXME(eddyb) make this an extension method on `rspirv::dr::Builder`?
+<a href=#631 id=631 data-nosnippet>631</a>        </span><span class="kw">let </span>const_op = |builder: <span class="kw-2">&amp;mut </span>Builder, op, lhs, maybe_rhs: <span class="prelude-ty">Option</span>&lt;<span class="kw">_</span>&gt;| {
+<a href=#632 id=632 data-nosnippet>632</a>            <span class="comment">// HACK(eddyb) remove after `OpSpecConstantOp` support gets added to SPIR-T.
+<a href=#633 id=633 data-nosnippet>633</a>            </span><span class="kw">let </span>spirt_has_const_op = <span class="bool-val">false</span>;
 <a href=#634 id=634 data-nosnippet>634</a>
-<a href=#635 id=635 data-nosnippet>635</a>                    <span class="kw">let </span>const_64_u32_id = cx.const_u32(<span class="number">64</span>).def_cx(cx);
-<a href=#636 id=636 data-nosnippet>636</a>                    <span class="kw">let </span>[lo_id, hi_id] =
-<a href=#637 id=637 data-nosnippet>637</a>                        [v <span class="kw">as </span>u64, (v &gt;&gt; <span class="number">64</span>) <span class="kw">as </span>u64].map(|half| cx.const_u64(half).def_cx(cx));
-<a href=#638 id=638 data-nosnippet>638</a>
-<a href=#639 id=639 data-nosnippet>639</a>                    builder = <span class="self">self</span>.builder(BuilderCursor::default());
-<a href=#640 id=640 data-nosnippet>640</a>                    <span class="kw">let </span><span class="kw-2">mut </span>const_op =
-<a href=#641 id=641 data-nosnippet>641</a>                        |op, lhs, maybe_rhs| const_op(<span class="kw-2">&amp;mut </span>builder, op, lhs, maybe_rhs);
-<a href=#642 id=642 data-nosnippet>642</a>                    <span class="kw">let </span>[lo_u128_id, hi_shifted_u128_id] =
-<a href=#643 id=643 data-nosnippet>643</a>                        [(lo_id, <span class="prelude-val">None</span>), (hi_id, <span class="prelude-val">Some</span>(const_64_u32_id))].map(
-<a href=#644 id=644 data-nosnippet>644</a>                            |(half_u64_id, shift)| {
-<a href=#645 id=645 data-nosnippet>645</a>                                <span class="kw">let </span><span class="kw-2">mut </span>half_u128_id = const_op(Op::UConvert, half_u64_id, <span class="prelude-val">None</span>);
-<a href=#646 id=646 data-nosnippet>646</a>                                <span class="kw">if let </span><span class="prelude-val">Some</span>(shift_amount_id) = shift {
-<a href=#647 id=647 data-nosnippet>647</a>                                    half_u128_id = const_op(
-<a href=#648 id=648 data-nosnippet>648</a>                                        Op::ShiftLeftLogical,
-<a href=#649 id=649 data-nosnippet>649</a>                                        half_u128_id,
-<a href=#650 id=650 data-nosnippet>650</a>                                        <span class="prelude-val">Some</span>(shift_amount_id),
-<a href=#651 id=651 data-nosnippet>651</a>                                    );
-<a href=#652 id=652 data-nosnippet>652</a>                                }
-<a href=#653 id=653 data-nosnippet>653</a>                                half_u128_id
-<a href=#654 id=654 data-nosnippet>654</a>                            },
-<a href=#655 id=655 data-nosnippet>655</a>                        );
-<a href=#656 id=656 data-nosnippet>656</a>                    const_op(Op::BitwiseOr, lo_u128_id, <span class="prelude-val">Some</span>(hi_shifted_u128_id))
-<a href=#657 id=657 data-nosnippet>657</a>                }
-<a href=#658 id=658 data-nosnippet>658</a>                SpirvType::Integer(<span class="number">128</span>, <span class="bool-val">true</span>) | SpirvType::Float(<span class="number">128</span>) =&gt; {
-<a href=#659 id=659 data-nosnippet>659</a>                    <span class="comment">// HACK(eddyb) avoid borrow conflicts.
-<a href=#660 id=660 data-nosnippet>660</a>                    </span>drop(builder);
-<a href=#661 id=661 data-nosnippet>661</a>
-<a href=#662 id=662 data-nosnippet>662</a>                    <span class="kw">let </span>v_u128_id = cx.const_u128(v).def_cx(cx);
+<a href=#635 id=635 data-nosnippet>635</a>            <span class="kw">if </span>!spirt_has_const_op {
+<a href=#636 id=636 data-nosnippet>636</a>                <span class="kw">let </span>zombie = builder.undef(ty, <span class="prelude-val">None</span>);
+<a href=#637 id=637 data-nosnippet>637</a>                cx.zombie_with_span(
+<a href=#638 id=638 data-nosnippet>638</a>                    zombie,
+<a href=#639 id=639 data-nosnippet>639</a>                    DUMMY_SP,
+<a href=#640 id=640 data-nosnippet>640</a>                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"unsupported constant of type `{}`"</span>, cx.debug_type(ty)),
+<a href=#641 id=641 data-nosnippet>641</a>                );
+<a href=#642 id=642 data-nosnippet>642</a>                <span class="kw">return </span>zombie;
+<a href=#643 id=643 data-nosnippet>643</a>            }
+<a href=#644 id=644 data-nosnippet>644</a>
+<a href=#645 id=645 data-nosnippet>645</a>            <span class="kw">let </span>id = builder.id();
+<a href=#646 id=646 data-nosnippet>646</a>            builder
+<a href=#647 id=647 data-nosnippet>647</a>                .module_mut()
+<a href=#648 id=648 data-nosnippet>648</a>                .types_global_values
+<a href=#649 id=649 data-nosnippet>649</a>                .push(Instruction::new(
+<a href=#650 id=650 data-nosnippet>650</a>                    Op::SpecConstantOp,
+<a href=#651 id=651 data-nosnippet>651</a>                    <span class="prelude-val">Some</span>(ty),
+<a href=#652 id=652 data-nosnippet>652</a>                    <span class="prelude-val">Some</span>(id),
+<a href=#653 id=653 data-nosnippet>653</a>                    [
+<a href=#654 id=654 data-nosnippet>654</a>                        Operand::LiteralSpecConstantOpInteger(op),
+<a href=#655 id=655 data-nosnippet>655</a>                        Operand::IdRef(lhs),
+<a href=#656 id=656 data-nosnippet>656</a>                    ]
+<a href=#657 id=657 data-nosnippet>657</a>                    .into_iter()
+<a href=#658 id=658 data-nosnippet>658</a>                    .chain(maybe_rhs.map(Operand::IdRef))
+<a href=#659 id=659 data-nosnippet>659</a>                    .collect(),
+<a href=#660 id=660 data-nosnippet>660</a>                ));
+<a href=#661 id=661 data-nosnippet>661</a>            id
+<a href=#662 id=662 data-nosnippet>662</a>        };
 <a href=#663 id=663 data-nosnippet>663</a>
-<a href=#664 id=664 data-nosnippet>664</a>                    builder = <span class="self">self</span>.builder(BuilderCursor::default());
-<a href=#665 id=665 data-nosnippet>665</a>                    const_op(<span class="kw-2">&amp;mut </span>builder, Op::Bitcast, v_u128_id, <span class="prelude-val">None</span>)
-<a href=#666 id=666 data-nosnippet>666</a>                }
-<a href=#667 id=667 data-nosnippet>667</a>                SpirvType::Bool =&gt; <span class="kw">match </span>v {
-<a href=#668 id=668 data-nosnippet>668</a>                    <span class="number">0 </span>=&gt; builder.constant_false(ty),
-<a href=#669 id=669 data-nosnippet>669</a>                    <span class="number">1 </span>=&gt; builder.constant_true(ty),
-<a href=#670 id=670 data-nosnippet>670</a>                    <span class="kw">_ </span>=&gt; cx
-<a href=#671 id=671 data-nosnippet>671</a>                        .tcx
-<a href=#672 id=672 data-nosnippet>672</a>                        .dcx()
-<a href=#673 id=673 data-nosnippet>673</a>                        .fatal(<span class="macro">format!</span>(<span class="string">"invalid constant value for bool: {v}"</span>)),
-<a href=#674 id=674 data-nosnippet>674</a>                },
-<a href=#675 id=675 data-nosnippet>675</a>                other =&gt; cx.tcx.dcx().fatal(<span class="macro">format!</span>(
-<a href=#676 id=676 data-nosnippet>676</a>                    <span class="string">"SpirvConst::Scalar does not support type {}"</span>,
-<a href=#677 id=677 data-nosnippet>677</a>                    other.debug(ty, cx)
-<a href=#678 id=678 data-nosnippet>678</a>                )),
-<a href=#679 id=679 data-nosnippet>679</a>            },
+<a href=#664 id=664 data-nosnippet>664</a>        <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.global_builder();
+<a href=#665 id=665 data-nosnippet>665</a>        <span class="kw">let </span>id = <span class="kw">match </span>val {
+<a href=#666 id=666 data-nosnippet>666</a>            SpirvConst::Scalar(v) =&gt; <span class="kw">match </span>scalar_ty.unwrap() {
+<a href=#667 id=667 data-nosnippet>667</a>                SpirvType::Integer(..=<span class="number">32</span>, <span class="kw">_</span>) | SpirvType::Float(..=<span class="number">32</span>) =&gt; {
+<a href=#668 id=668 data-nosnippet>668</a>                    builder.constant_bit32(ty, v <span class="kw">as </span>u32)
+<a href=#669 id=669 data-nosnippet>669</a>                }
+<a href=#670 id=670 data-nosnippet>670</a>                SpirvType::Integer(<span class="number">64</span>, <span class="kw">_</span>) | SpirvType::Float(<span class="number">64</span>) =&gt; {
+<a href=#671 id=671 data-nosnippet>671</a>                    builder.constant_bit64(ty, v <span class="kw">as </span>u64)
+<a href=#672 id=672 data-nosnippet>672</a>                }
+<a href=#673 id=673 data-nosnippet>673</a>                SpirvType::Integer(<span class="number">128</span>, <span class="bool-val">false</span>) =&gt; {
+<a href=#674 id=674 data-nosnippet>674</a>                    <span class="comment">// HACK(eddyb) avoid borrow conflicts.
+<a href=#675 id=675 data-nosnippet>675</a>                    </span>drop(builder);
+<a href=#676 id=676 data-nosnippet>676</a>
+<a href=#677 id=677 data-nosnippet>677</a>                    <span class="kw">let </span>const_64_u32_id = cx.const_u32(<span class="number">64</span>).def_cx(cx);
+<a href=#678 id=678 data-nosnippet>678</a>                    <span class="kw">let </span>[lo_id, hi_id] =
+<a href=#679 id=679 data-nosnippet>679</a>                        [v <span class="kw">as </span>u64, (v &gt;&gt; <span class="number">64</span>) <span class="kw">as </span>u64].map(|half| cx.const_u64(half).def_cx(cx));
 <a href=#680 id=680 data-nosnippet>680</a>
-<a href=#681 id=681 data-nosnippet>681</a>            SpirvConst::Null =&gt; builder.constant_null(ty),
-<a href=#682 id=682 data-nosnippet>682</a>            SpirvConst::Undef
-<a href=#683 id=683 data-nosnippet>683</a>            | SpirvConst::ZombieUndefForFnAddr
-<a href=#684 id=684 data-nosnippet>684</a>            | SpirvConst::ConstDataFromAlloc(<span class="kw">_</span>) =&gt; builder.undef(ty, <span class="prelude-val">None</span>),
-<a href=#685 id=685 data-nosnippet>685</a>
-<a href=#686 id=686 data-nosnippet>686</a>            SpirvConst::Composite(v) =&gt; builder.constant_composite(ty, v.iter().copied()),
-<a href=#687 id=687 data-nosnippet>687</a>
-<a href=#688 id=688 data-nosnippet>688</a>            SpirvConst::PtrTo { pointee } =&gt; {
-<a href=#689 id=689 data-nosnippet>689</a>                builder.variable(ty, <span class="prelude-val">None</span>, StorageClass::Private, <span class="prelude-val">Some</span>(pointee))
-<a href=#690 id=690 data-nosnippet>690</a>            }
-<a href=#691 id=691 data-nosnippet>691</a>        };
-<a href=#692 id=692 data-nosnippet>692</a>        <span class="attr">#[allow(clippy::match_same_arms)]
-<a href=#693 id=693 data-nosnippet>693</a>        </span><span class="kw">let </span>legal = <span class="kw">match </span>val {
-<a href=#694 id=694 data-nosnippet>694</a>            SpirvConst::Scalar(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
-<a href=#695 id=695 data-nosnippet>695</a>
-<a href=#696 id=696 data-nosnippet>696</a>            SpirvConst::Null =&gt; {
-<a href=#697 id=697 data-nosnippet>697</a>                <span class="comment">// FIXME(eddyb) check that the type supports `OpConstantNull`.
-<a href=#698 id=698 data-nosnippet>698</a>                </span><span class="prelude-val">Ok</span>(())
-<a href=#699 id=699 data-nosnippet>699</a>            }
-<a href=#700 id=700 data-nosnippet>700</a>            SpirvConst::Undef =&gt; {
-<a href=#701 id=701 data-nosnippet>701</a>                <span class="comment">// FIXME(eddyb) check that the type supports `OpUndef`.
-<a href=#702 id=702 data-nosnippet>702</a>                </span><span class="prelude-val">Ok</span>(())
-<a href=#703 id=703 data-nosnippet>703</a>            }
-<a href=#704 id=704 data-nosnippet>704</a>
-<a href=#705 id=705 data-nosnippet>705</a>            SpirvConst::ZombieUndefForFnAddr =&gt; {
-<a href=#706 id=706 data-nosnippet>706</a>                <span class="comment">// This can be considered legal as it's already marked as zombie.
-<a href=#707 id=707 data-nosnippet>707</a>                // FIXME(eddyb) is it possible for the original zombie to lack a
-<a href=#708 id=708 data-nosnippet>708</a>                // span, and should we go through `IllegalConst` in order to be
-<a href=#709 id=709 data-nosnippet>709</a>                // able to attach a proper usesite span?
-<a href=#710 id=710 data-nosnippet>710</a>                </span><span class="prelude-val">Ok</span>(())
-<a href=#711 id=711 data-nosnippet>711</a>            }
-<a href=#712 id=712 data-nosnippet>712</a>
-<a href=#713 id=713 data-nosnippet>713</a>            SpirvConst::Composite(v) =&gt; v
-<a href=#714 id=714 data-nosnippet>714</a>                .iter()
-<a href=#715 id=715 data-nosnippet>715</a>                .map(|field| {
-<a href=#716 id=716 data-nosnippet>716</a>                    <span class="kw">let </span>field_entry = <span class="kw-2">&amp;</span><span class="self">self</span>.id_to_const.borrow()[field];
-<a href=#717 id=717 data-nosnippet>717</a>                    field_entry.legal.and(
-<a href=#718 id=718 data-nosnippet>718</a>                        <span class="comment">// `field` is itself some legal `SpirvConst`, but can we have
-<a href=#719 id=719 data-nosnippet>719</a>                        // it as part of an `OpConstantComposite`?
-<a href=#720 id=720 data-nosnippet>720</a>                        </span><span class="kw">match </span>field_entry.val {
-<a href=#721 id=721 data-nosnippet>721</a>                            SpirvConst::PtrTo { .. } =&gt; <span class="prelude-val">Err</span>(IllegalConst::Shallow(
-<a href=#722 id=722 data-nosnippet>722</a>                                LeafIllegalConst::CompositeContainsPtrTo,
-<a href=#723 id=723 data-nosnippet>723</a>                            )),
-<a href=#724 id=724 data-nosnippet>724</a>                            <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(()),
-<a href=#725 id=725 data-nosnippet>725</a>                        },
-<a href=#726 id=726 data-nosnippet>726</a>                    )
-<a href=#727 id=727 data-nosnippet>727</a>                })
-<a href=#728 id=728 data-nosnippet>728</a>                .reduce(|a, b| {
-<a href=#729 id=729 data-nosnippet>729</a>                    <span class="kw">match </span>(a, b) {
-<a href=#730 id=730 data-nosnippet>730</a>                        (<span class="prelude-val">Ok</span>(()), <span class="prelude-val">Ok</span>(())) =&gt; <span class="prelude-val">Ok</span>(()),
-<a href=#731 id=731 data-nosnippet>731</a>                        (<span class="prelude-val">Err</span>(illegal), <span class="prelude-val">Ok</span>(())) | (<span class="prelude-val">Ok</span>(()), <span class="prelude-val">Err</span>(illegal)) =&gt; <span class="prelude-val">Err</span>(illegal),
-<a href=#732 id=732 data-nosnippet>732</a>
-<a href=#733 id=733 data-nosnippet>733</a>                        <span class="comment">// Combining two causes of an illegal `SpirvConst` has to
-<a href=#734 id=734 data-nosnippet>734</a>                        // take into account which is "worse", i.e. which imposes
-<a href=#735 id=735 data-nosnippet>735</a>                        // more restrictions on how the resulting value can be used.
-<a href=#736 id=736 data-nosnippet>736</a>                        // `Indirect` is worse than `Shallow` because it cannot be
-<a href=#737 id=737 data-nosnippet>737</a>                        // materialized at runtime in the same way `Shallow` can be.
-<a href=#738 id=738 data-nosnippet>738</a>                        </span>(<span class="prelude-val">Err</span>(illegal @ IllegalConst::Indirect(<span class="kw">_</span>)), <span class="prelude-val">Err</span>(<span class="kw">_</span>))
-<a href=#739 id=739 data-nosnippet>739</a>                        | (<span class="prelude-val">Err</span>(<span class="kw">_</span>), <span class="prelude-val">Err</span>(illegal @ IllegalConst::Indirect(<span class="kw">_</span>)))
-<a href=#740 id=740 data-nosnippet>740</a>                        | (
-<a href=#741 id=741 data-nosnippet>741</a>                            <span class="prelude-val">Err</span>(illegal @ IllegalConst::Shallow(<span class="kw">_</span>)),
-<a href=#742 id=742 data-nosnippet>742</a>                            <span class="prelude-val">Err</span>(IllegalConst::Shallow(<span class="kw">_</span>)),
-<a href=#743 id=743 data-nosnippet>743</a>                        ) =&gt; <span class="prelude-val">Err</span>(illegal),
-<a href=#744 id=744 data-nosnippet>744</a>                    }
-<a href=#745 id=745 data-nosnippet>745</a>                })
-<a href=#746 id=746 data-nosnippet>746</a>                .unwrap_or(<span class="prelude-val">Ok</span>(())),
-<a href=#747 id=747 data-nosnippet>747</a>
-<a href=#748 id=748 data-nosnippet>748</a>            SpirvConst::PtrTo { pointee } =&gt; <span class="kw">match </span><span class="self">self</span>.id_to_const.borrow()[<span class="kw-2">&amp;</span>pointee].legal {
-<a href=#749 id=749 data-nosnippet>749</a>                <span class="prelude-val">Ok</span>(()) =&gt; <span class="prelude-val">Ok</span>(()),
-<a href=#750 id=750 data-nosnippet>750</a>
-<a href=#751 id=751 data-nosnippet>751</a>                <span class="comment">// `Shallow` becomes `Indirect` when placed behind a pointer.
-<a href=#752 id=752 data-nosnippet>752</a>                </span><span class="prelude-val">Err</span>(IllegalConst::Shallow(cause) | IllegalConst::Indirect(cause)) =&gt; {
-<a href=#753 id=753 data-nosnippet>753</a>                    <span class="prelude-val">Err</span>(IllegalConst::Indirect(cause))
-<a href=#754 id=754 data-nosnippet>754</a>                }
-<a href=#755 id=755 data-nosnippet>755</a>            },
-<a href=#756 id=756 data-nosnippet>756</a>
-<a href=#757 id=757 data-nosnippet>757</a>            SpirvConst::ConstDataFromAlloc(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(IllegalConst::Shallow(
-<a href=#758 id=758 data-nosnippet>758</a>                LeafIllegalConst::UntypedConstDataFromAlloc,
-<a href=#759 id=759 data-nosnippet>759</a>            )),
-<a href=#760 id=760 data-nosnippet>760</a>        };
-<a href=#761 id=761 data-nosnippet>761</a>        <span class="kw">let </span>val = val.tcx_arena_alloc_slices(cx);
-<a href=#762 id=762 data-nosnippet>762</a>        <span class="macro">assert_matches!</span>(
-<a href=#763 id=763 data-nosnippet>763</a>            <span class="self">self</span>.const_to_id
-<a href=#764 id=764 data-nosnippet>764</a>                .borrow_mut()
-<a href=#765 id=765 data-nosnippet>765</a>                .insert(WithType { ty, val }, WithConstLegality { val: id, legal }),
-<a href=#766 id=766 data-nosnippet>766</a>            <span class="prelude-val">None
-<a href=#767 id=767 data-nosnippet>767</a>        </span>);
-<a href=#768 id=768 data-nosnippet>768</a>        <span class="macro">assert_matches!</span>(
-<a href=#769 id=769 data-nosnippet>769</a>            <span class="self">self</span>.id_to_const
-<a href=#770 id=770 data-nosnippet>770</a>                .borrow_mut()
-<a href=#771 id=771 data-nosnippet>771</a>                .insert(id, WithConstLegality { val, legal }),
-<a href=#772 id=772 data-nosnippet>772</a>            <span class="prelude-val">None
-<a href=#773 id=773 data-nosnippet>773</a>        </span>);
-<a href=#774 id=774 data-nosnippet>774</a>        <span class="comment">// FIXME(eddyb) deduplicate this `if`-`else` and its other copies.
-<a href=#775 id=775 data-nosnippet>775</a>        </span><span class="kw">let </span>kind = <span class="kw">if </span>legal.is_ok() {
-<a href=#776 id=776 data-nosnippet>776</a>            SpirvValueKind::Def(id)
-<a href=#777 id=777 data-nosnippet>777</a>        } <span class="kw">else </span>{
-<a href=#778 id=778 data-nosnippet>778</a>            SpirvValueKind::IllegalConst(id)
-<a href=#779 id=779 data-nosnippet>779</a>        };
-<a href=#780 id=780 data-nosnippet>780</a>        SpirvValue { kind, ty }
-<a href=#781 id=781 data-nosnippet>781</a>    }
-<a href=#782 id=782 data-nosnippet>782</a>
-<a href=#783 id=783 data-nosnippet>783</a>    <span class="kw">pub fn </span>lookup_const_by_id(<span class="kw-2">&amp;</span><span class="self">self</span>, id: Word) -&gt; <span class="prelude-ty">Option</span>&lt;SpirvConst&lt;<span class="lifetime">'tcx</span>, <span class="lifetime">'tcx</span>&gt;&gt; {
-<a href=#784 id=784 data-nosnippet>784</a>        <span class="prelude-val">Some</span>(<span class="self">self</span>.id_to_const.borrow().get(<span class="kw-2">&amp;</span>id)<span class="question-mark">?</span>.val)
-<a href=#785 id=785 data-nosnippet>785</a>    }
-<a href=#786 id=786 data-nosnippet>786</a>
-<a href=#787 id=787 data-nosnippet>787</a>    <span class="kw">pub fn </span>lookup_const(<span class="kw-2">&amp;</span><span class="self">self</span>, def: SpirvValue) -&gt; <span class="prelude-ty">Option</span>&lt;SpirvConst&lt;<span class="lifetime">'tcx</span>, <span class="lifetime">'tcx</span>&gt;&gt; {
-<a href=#788 id=788 data-nosnippet>788</a>        <span class="kw">match </span>def.kind {
-<a href=#789 id=789 data-nosnippet>789</a>            SpirvValueKind::Def(id) | SpirvValueKind::IllegalConst(id) =&gt; {
-<a href=#790 id=790 data-nosnippet>790</a>                <span class="self">self</span>.lookup_const_by_id(id)
-<a href=#791 id=791 data-nosnippet>791</a>            }
-<a href=#792 id=792 data-nosnippet>792</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#793 id=793 data-nosnippet>793</a>        }
-<a href=#794 id=794 data-nosnippet>794</a>    }
-<a href=#795 id=795 data-nosnippet>795</a>
-<a href=#796 id=796 data-nosnippet>796</a>    <span class="kw">pub fn </span>lookup_const_scalar(<span class="kw-2">&amp;</span><span class="self">self</span>, def: SpirvValue) -&gt; <span class="prelude-ty">Option</span>&lt;u128&gt; {
-<a href=#797 id=797 data-nosnippet>797</a>        <span class="kw">match </span><span class="self">self</span>.lookup_const(def)<span class="question-mark">? </span>{
-<a href=#798 id=798 data-nosnippet>798</a>            SpirvConst::Scalar(v) =&gt; <span class="prelude-val">Some</span>(v),
-<a href=#799 id=799 data-nosnippet>799</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#800 id=800 data-nosnippet>800</a>        }
-<a href=#801 id=801 data-nosnippet>801</a>    }
-<a href=#802 id=802 data-nosnippet>802</a>
-<a href=#803 id=803 data-nosnippet>803</a>    <span class="kw">pub fn </span>file_line_col_range_for_debuginfo(
-<a href=#804 id=804 data-nosnippet>804</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#805 id=805 data-nosnippet>805</a>        span: Span,
-<a href=#806 id=806 data-nosnippet>806</a>    ) -&gt; (DebugFileSpirv&lt;<span class="lifetime">'tcx</span>&gt;, Range&lt;(u32, u32)&gt;) {
-<a href=#807 id=807 data-nosnippet>807</a>        <span class="comment">// HACK(eddyb) this is similar to what `#[track_caller]` does, and it
-<a href=#808 id=808 data-nosnippet>808</a>        // allows us to point to the use site of a macro, instead of inside the
-<a href=#809 id=809 data-nosnippet>809</a>        // macro (but ideally we would record the entire macro backtrace).
-<a href=#810 id=810 data-nosnippet>810</a>        </span><span class="kw">let </span>span = span.ctxt().outer_expn().expansion_cause().unwrap_or(span);
-<a href=#811 id=811 data-nosnippet>811</a>
-<a href=#812 id=812 data-nosnippet>812</a>        <span class="kw">let </span>(lo, hi) = (span.lo(), span.hi());
-<a href=#813 id=813 data-nosnippet>813</a>
-<a href=#814 id=814 data-nosnippet>814</a>        <span class="kw">let </span>lo_loc = <span class="self">self</span>.source_map.lookup_char_pos(lo);
-<a href=#815 id=815 data-nosnippet>815</a>        <span class="kw">let </span>lo_line_col = (lo_loc.line <span class="kw">as </span>u32, lo_loc.col_display <span class="kw">as </span>u32);
-<a href=#816 id=816 data-nosnippet>816</a>
-<a href=#817 id=817 data-nosnippet>817</a>        <span class="comment">// Only use `hi` if the span is actually a range within a file.
-<a href=#818 id=818 data-nosnippet>818</a>        </span><span class="kw">let </span>hi_line_col = <span class="kw">if </span>lo &lt;= hi {
-<a href=#819 id=819 data-nosnippet>819</a>            <span class="kw">let </span>hi_loc = <span class="self">self</span>.source_map.lookup_char_pos(hi);
-<a href=#820 id=820 data-nosnippet>820</a>            <span class="kw">if </span>lo_loc.file.start_pos == hi_loc.file.start_pos {
-<a href=#821 id=821 data-nosnippet>821</a>                (hi_loc.line <span class="kw">as </span>u32, hi_loc.col_display <span class="kw">as </span>u32)
-<a href=#822 id=822 data-nosnippet>822</a>            } <span class="kw">else </span>{
-<a href=#823 id=823 data-nosnippet>823</a>                lo_line_col
-<a href=#824 id=824 data-nosnippet>824</a>            }
-<a href=#825 id=825 data-nosnippet>825</a>        } <span class="kw">else </span>{
-<a href=#826 id=826 data-nosnippet>826</a>            lo_line_col
-<a href=#827 id=827 data-nosnippet>827</a>        };
+<a href=#681 id=681 data-nosnippet>681</a>                    builder = <span class="self">self</span>.global_builder();
+<a href=#682 id=682 data-nosnippet>682</a>                    <span class="kw">let </span><span class="kw-2">mut </span>const_op =
+<a href=#683 id=683 data-nosnippet>683</a>                        |op, lhs, maybe_rhs| const_op(<span class="kw-2">&amp;mut </span>builder, op, lhs, maybe_rhs);
+<a href=#684 id=684 data-nosnippet>684</a>                    <span class="kw">let </span>[lo_u128_id, hi_shifted_u128_id] =
+<a href=#685 id=685 data-nosnippet>685</a>                        [(lo_id, <span class="prelude-val">None</span>), (hi_id, <span class="prelude-val">Some</span>(const_64_u32_id))].map(
+<a href=#686 id=686 data-nosnippet>686</a>                            |(half_u64_id, shift)| {
+<a href=#687 id=687 data-nosnippet>687</a>                                <span class="kw">let </span><span class="kw-2">mut </span>half_u128_id = const_op(Op::UConvert, half_u64_id, <span class="prelude-val">None</span>);
+<a href=#688 id=688 data-nosnippet>688</a>                                <span class="kw">if let </span><span class="prelude-val">Some</span>(shift_amount_id) = shift {
+<a href=#689 id=689 data-nosnippet>689</a>                                    half_u128_id = const_op(
+<a href=#690 id=690 data-nosnippet>690</a>                                        Op::ShiftLeftLogical,
+<a href=#691 id=691 data-nosnippet>691</a>                                        half_u128_id,
+<a href=#692 id=692 data-nosnippet>692</a>                                        <span class="prelude-val">Some</span>(shift_amount_id),
+<a href=#693 id=693 data-nosnippet>693</a>                                    );
+<a href=#694 id=694 data-nosnippet>694</a>                                }
+<a href=#695 id=695 data-nosnippet>695</a>                                half_u128_id
+<a href=#696 id=696 data-nosnippet>696</a>                            },
+<a href=#697 id=697 data-nosnippet>697</a>                        );
+<a href=#698 id=698 data-nosnippet>698</a>                    const_op(Op::BitwiseOr, lo_u128_id, <span class="prelude-val">Some</span>(hi_shifted_u128_id))
+<a href=#699 id=699 data-nosnippet>699</a>                }
+<a href=#700 id=700 data-nosnippet>700</a>                SpirvType::Integer(<span class="number">128</span>, <span class="bool-val">true</span>) | SpirvType::Float(<span class="number">128</span>) =&gt; {
+<a href=#701 id=701 data-nosnippet>701</a>                    <span class="comment">// HACK(eddyb) avoid borrow conflicts.
+<a href=#702 id=702 data-nosnippet>702</a>                    </span>drop(builder);
+<a href=#703 id=703 data-nosnippet>703</a>
+<a href=#704 id=704 data-nosnippet>704</a>                    <span class="kw">let </span>v_u128_id = cx.const_u128(v).def_cx(cx);
+<a href=#705 id=705 data-nosnippet>705</a>
+<a href=#706 id=706 data-nosnippet>706</a>                    builder = <span class="self">self</span>.global_builder();
+<a href=#707 id=707 data-nosnippet>707</a>                    const_op(<span class="kw-2">&amp;mut </span>builder, Op::Bitcast, v_u128_id, <span class="prelude-val">None</span>)
+<a href=#708 id=708 data-nosnippet>708</a>                }
+<a href=#709 id=709 data-nosnippet>709</a>                SpirvType::Bool =&gt; <span class="kw">match </span>v {
+<a href=#710 id=710 data-nosnippet>710</a>                    <span class="number">0 </span>=&gt; builder.constant_false(ty),
+<a href=#711 id=711 data-nosnippet>711</a>                    <span class="number">1 </span>=&gt; builder.constant_true(ty),
+<a href=#712 id=712 data-nosnippet>712</a>                    <span class="kw">_ </span>=&gt; cx
+<a href=#713 id=713 data-nosnippet>713</a>                        .tcx
+<a href=#714 id=714 data-nosnippet>714</a>                        .dcx()
+<a href=#715 id=715 data-nosnippet>715</a>                        .fatal(<span class="macro">format!</span>(<span class="string">"invalid constant value for bool: {v}"</span>)),
+<a href=#716 id=716 data-nosnippet>716</a>                },
+<a href=#717 id=717 data-nosnippet>717</a>                other =&gt; cx.tcx.dcx().fatal(<span class="macro">format!</span>(
+<a href=#718 id=718 data-nosnippet>718</a>                    <span class="string">"SpirvConst::Scalar does not support type {}"</span>,
+<a href=#719 id=719 data-nosnippet>719</a>                    other.debug(ty, cx)
+<a href=#720 id=720 data-nosnippet>720</a>                )),
+<a href=#721 id=721 data-nosnippet>721</a>            },
+<a href=#722 id=722 data-nosnippet>722</a>
+<a href=#723 id=723 data-nosnippet>723</a>            SpirvConst::Null =&gt; builder.constant_null(ty),
+<a href=#724 id=724 data-nosnippet>724</a>            SpirvConst::Undef
+<a href=#725 id=725 data-nosnippet>725</a>            | SpirvConst::ZombieUndefForFnAddr
+<a href=#726 id=726 data-nosnippet>726</a>            | SpirvConst::ConstDataFromAlloc(<span class="kw">_</span>) =&gt; builder.undef(ty, <span class="prelude-val">None</span>),
+<a href=#727 id=727 data-nosnippet>727</a>
+<a href=#728 id=728 data-nosnippet>728</a>            SpirvConst::Composite(v) =&gt; builder.constant_composite(ty, v.iter().copied()),
+<a href=#729 id=729 data-nosnippet>729</a>
+<a href=#730 id=730 data-nosnippet>730</a>            SpirvConst::PtrTo { pointee } =&gt; {
+<a href=#731 id=731 data-nosnippet>731</a>                builder.variable(ty, <span class="prelude-val">None</span>, StorageClass::Private, <span class="prelude-val">Some</span>(pointee))
+<a href=#732 id=732 data-nosnippet>732</a>            }
+<a href=#733 id=733 data-nosnippet>733</a>        };
+<a href=#734 id=734 data-nosnippet>734</a>        <span class="attr">#[allow(clippy::match_same_arms)]
+<a href=#735 id=735 data-nosnippet>735</a>        </span><span class="kw">let </span>legal = <span class="kw">match </span>val {
+<a href=#736 id=736 data-nosnippet>736</a>            SpirvConst::Scalar(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(()),
+<a href=#737 id=737 data-nosnippet>737</a>
+<a href=#738 id=738 data-nosnippet>738</a>            SpirvConst::Null =&gt; {
+<a href=#739 id=739 data-nosnippet>739</a>                <span class="comment">// FIXME(eddyb) check that the type supports `OpConstantNull`.
+<a href=#740 id=740 data-nosnippet>740</a>                </span><span class="prelude-val">Ok</span>(())
+<a href=#741 id=741 data-nosnippet>741</a>            }
+<a href=#742 id=742 data-nosnippet>742</a>            SpirvConst::Undef =&gt; {
+<a href=#743 id=743 data-nosnippet>743</a>                <span class="comment">// FIXME(eddyb) check that the type supports `OpUndef`.
+<a href=#744 id=744 data-nosnippet>744</a>                </span><span class="prelude-val">Ok</span>(())
+<a href=#745 id=745 data-nosnippet>745</a>            }
+<a href=#746 id=746 data-nosnippet>746</a>
+<a href=#747 id=747 data-nosnippet>747</a>            SpirvConst::ZombieUndefForFnAddr =&gt; {
+<a href=#748 id=748 data-nosnippet>748</a>                <span class="comment">// This can be considered legal as it's already marked as zombie.
+<a href=#749 id=749 data-nosnippet>749</a>                // FIXME(eddyb) is it possible for the original zombie to lack a
+<a href=#750 id=750 data-nosnippet>750</a>                // span, and should we go through `IllegalConst` in order to be
+<a href=#751 id=751 data-nosnippet>751</a>                // able to attach a proper usesite span?
+<a href=#752 id=752 data-nosnippet>752</a>                </span><span class="prelude-val">Ok</span>(())
+<a href=#753 id=753 data-nosnippet>753</a>            }
+<a href=#754 id=754 data-nosnippet>754</a>
+<a href=#755 id=755 data-nosnippet>755</a>            SpirvConst::Composite(v) =&gt; v
+<a href=#756 id=756 data-nosnippet>756</a>                .iter()
+<a href=#757 id=757 data-nosnippet>757</a>                .map(|field| {
+<a href=#758 id=758 data-nosnippet>758</a>                    <span class="kw">let </span>field_entry = <span class="kw-2">&amp;</span><span class="self">self</span>.id_to_const.borrow()[field];
+<a href=#759 id=759 data-nosnippet>759</a>                    field_entry.legal.and(
+<a href=#760 id=760 data-nosnippet>760</a>                        <span class="comment">// `field` is itself some legal `SpirvConst`, but can we have
+<a href=#761 id=761 data-nosnippet>761</a>                        // it as part of an `OpConstantComposite`?
+<a href=#762 id=762 data-nosnippet>762</a>                        </span><span class="kw">match </span>field_entry.val {
+<a href=#763 id=763 data-nosnippet>763</a>                            SpirvConst::PtrTo { .. } =&gt; <span class="prelude-val">Err</span>(IllegalConst::Shallow(
+<a href=#764 id=764 data-nosnippet>764</a>                                LeafIllegalConst::CompositeContainsPtrTo,
+<a href=#765 id=765 data-nosnippet>765</a>                            )),
+<a href=#766 id=766 data-nosnippet>766</a>                            <span class="kw">_ </span>=&gt; <span class="prelude-val">Ok</span>(()),
+<a href=#767 id=767 data-nosnippet>767</a>                        },
+<a href=#768 id=768 data-nosnippet>768</a>                    )
+<a href=#769 id=769 data-nosnippet>769</a>                })
+<a href=#770 id=770 data-nosnippet>770</a>                .reduce(|a, b| {
+<a href=#771 id=771 data-nosnippet>771</a>                    <span class="kw">match </span>(a, b) {
+<a href=#772 id=772 data-nosnippet>772</a>                        (<span class="prelude-val">Ok</span>(()), <span class="prelude-val">Ok</span>(())) =&gt; <span class="prelude-val">Ok</span>(()),
+<a href=#773 id=773 data-nosnippet>773</a>                        (<span class="prelude-val">Err</span>(illegal), <span class="prelude-val">Ok</span>(())) | (<span class="prelude-val">Ok</span>(()), <span class="prelude-val">Err</span>(illegal)) =&gt; <span class="prelude-val">Err</span>(illegal),
+<a href=#774 id=774 data-nosnippet>774</a>
+<a href=#775 id=775 data-nosnippet>775</a>                        <span class="comment">// Combining two causes of an illegal `SpirvConst` has to
+<a href=#776 id=776 data-nosnippet>776</a>                        // take into account which is "worse", i.e. which imposes
+<a href=#777 id=777 data-nosnippet>777</a>                        // more restrictions on how the resulting value can be used.
+<a href=#778 id=778 data-nosnippet>778</a>                        // `Indirect` is worse than `Shallow` because it cannot be
+<a href=#779 id=779 data-nosnippet>779</a>                        // materialized at runtime in the same way `Shallow` can be.
+<a href=#780 id=780 data-nosnippet>780</a>                        </span>(<span class="prelude-val">Err</span>(illegal @ IllegalConst::Indirect(<span class="kw">_</span>)), <span class="prelude-val">Err</span>(<span class="kw">_</span>))
+<a href=#781 id=781 data-nosnippet>781</a>                        | (<span class="prelude-val">Err</span>(<span class="kw">_</span>), <span class="prelude-val">Err</span>(illegal @ IllegalConst::Indirect(<span class="kw">_</span>)))
+<a href=#782 id=782 data-nosnippet>782</a>                        | (
+<a href=#783 id=783 data-nosnippet>783</a>                            <span class="prelude-val">Err</span>(illegal @ IllegalConst::Shallow(<span class="kw">_</span>)),
+<a href=#784 id=784 data-nosnippet>784</a>                            <span class="prelude-val">Err</span>(IllegalConst::Shallow(<span class="kw">_</span>)),
+<a href=#785 id=785 data-nosnippet>785</a>                        ) =&gt; <span class="prelude-val">Err</span>(illegal),
+<a href=#786 id=786 data-nosnippet>786</a>                    }
+<a href=#787 id=787 data-nosnippet>787</a>                })
+<a href=#788 id=788 data-nosnippet>788</a>                .unwrap_or(<span class="prelude-val">Ok</span>(())),
+<a href=#789 id=789 data-nosnippet>789</a>
+<a href=#790 id=790 data-nosnippet>790</a>            SpirvConst::PtrTo { pointee } =&gt; <span class="kw">match </span><span class="self">self</span>.id_to_const.borrow()[<span class="kw-2">&amp;</span>pointee].legal {
+<a href=#791 id=791 data-nosnippet>791</a>                <span class="prelude-val">Ok</span>(()) =&gt; <span class="prelude-val">Ok</span>(()),
+<a href=#792 id=792 data-nosnippet>792</a>
+<a href=#793 id=793 data-nosnippet>793</a>                <span class="comment">// `Shallow` becomes `Indirect` when placed behind a pointer.
+<a href=#794 id=794 data-nosnippet>794</a>                </span><span class="prelude-val">Err</span>(IllegalConst::Shallow(cause) | IllegalConst::Indirect(cause)) =&gt; {
+<a href=#795 id=795 data-nosnippet>795</a>                    <span class="prelude-val">Err</span>(IllegalConst::Indirect(cause))
+<a href=#796 id=796 data-nosnippet>796</a>                }
+<a href=#797 id=797 data-nosnippet>797</a>            },
+<a href=#798 id=798 data-nosnippet>798</a>
+<a href=#799 id=799 data-nosnippet>799</a>            SpirvConst::ConstDataFromAlloc(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(IllegalConst::Shallow(
+<a href=#800 id=800 data-nosnippet>800</a>                LeafIllegalConst::UntypedConstDataFromAlloc,
+<a href=#801 id=801 data-nosnippet>801</a>            )),
+<a href=#802 id=802 data-nosnippet>802</a>        };
+<a href=#803 id=803 data-nosnippet>803</a>        <span class="kw">let </span>val = val.tcx_arena_alloc_slices(cx);
+<a href=#804 id=804 data-nosnippet>804</a>        <span class="macro">assert_matches!</span>(
+<a href=#805 id=805 data-nosnippet>805</a>            <span class="self">self</span>.const_to_id
+<a href=#806 id=806 data-nosnippet>806</a>                .borrow_mut()
+<a href=#807 id=807 data-nosnippet>807</a>                .insert(WithType { ty, val }, WithConstLegality { val: id, legal }),
+<a href=#808 id=808 data-nosnippet>808</a>            <span class="prelude-val">None
+<a href=#809 id=809 data-nosnippet>809</a>        </span>);
+<a href=#810 id=810 data-nosnippet>810</a>        <span class="macro">assert_matches!</span>(
+<a href=#811 id=811 data-nosnippet>811</a>            <span class="self">self</span>.id_to_const
+<a href=#812 id=812 data-nosnippet>812</a>                .borrow_mut()
+<a href=#813 id=813 data-nosnippet>813</a>                .insert(id, WithConstLegality { val, legal }),
+<a href=#814 id=814 data-nosnippet>814</a>            <span class="prelude-val">None
+<a href=#815 id=815 data-nosnippet>815</a>        </span>);
+<a href=#816 id=816 data-nosnippet>816</a>        <span class="comment">// FIXME(eddyb) deduplicate this `if`-`else` and its other copies.
+<a href=#817 id=817 data-nosnippet>817</a>        </span><span class="kw">let </span>kind = <span class="kw">if </span>legal.is_ok() {
+<a href=#818 id=818 data-nosnippet>818</a>            SpirvValueKind::Def(id)
+<a href=#819 id=819 data-nosnippet>819</a>        } <span class="kw">else </span>{
+<a href=#820 id=820 data-nosnippet>820</a>            SpirvValueKind::IllegalConst(id)
+<a href=#821 id=821 data-nosnippet>821</a>        };
+<a href=#822 id=822 data-nosnippet>822</a>        SpirvValue { kind, ty }
+<a href=#823 id=823 data-nosnippet>823</a>    }
+<a href=#824 id=824 data-nosnippet>824</a>
+<a href=#825 id=825 data-nosnippet>825</a>    <span class="kw">pub fn </span>lookup_const_by_id(<span class="kw-2">&amp;</span><span class="self">self</span>, id: Word) -&gt; <span class="prelude-ty">Option</span>&lt;SpirvConst&lt;<span class="lifetime">'tcx</span>, <span class="lifetime">'tcx</span>&gt;&gt; {
+<a href=#826 id=826 data-nosnippet>826</a>        <span class="prelude-val">Some</span>(<span class="self">self</span>.id_to_const.borrow().get(<span class="kw-2">&amp;</span>id)<span class="question-mark">?</span>.val)
+<a href=#827 id=827 data-nosnippet>827</a>    }
 <a href=#828 id=828 data-nosnippet>828</a>
-<a href=#829 id=829 data-nosnippet>829</a>        (<span class="self">self</span>.def_debug_file(lo_loc.file), lo_line_col..hi_line_col)
-<a href=#830 id=830 data-nosnippet>830</a>    }
-<a href=#831 id=831 data-nosnippet>831</a>
-<a href=#832 id=832 data-nosnippet>832</a>    <span class="kw">fn </span>def_debug_file(<span class="kw-2">&amp;</span><span class="self">self</span>, sf: Arc&lt;SourceFile&gt;) -&gt; DebugFileSpirv&lt;<span class="lifetime">'tcx</span>&gt; {
-<a href=#833 id=833 data-nosnippet>833</a>        <span class="kw-2">*</span><span class="self">self
-<a href=#834 id=834 data-nosnippet>834</a>            </span>.debug_file_cache
-<a href=#835 id=835 data-nosnippet>835</a>            .borrow_mut()
-<a href=#836 id=836 data-nosnippet>836</a>            .entry(DebugFileKey(sf))
-<a href=#837 id=837 data-nosnippet>837</a>            .or_insert_with_key(|DebugFileKey(sf)| {
-<a href=#838 id=838 data-nosnippet>838</a>                <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder(Default::default());
-<a href=#839 id=839 data-nosnippet>839</a>
-<a href=#840 id=840 data-nosnippet>840</a>                <span class="comment">// FIXME(eddyb) it would be nicer if we could just rely on
-<a href=#841 id=841 data-nosnippet>841</a>                // `RealFileName::to_string_lossy` returning `Cow&lt;'_, str&gt;`,
-<a href=#842 id=842 data-nosnippet>842</a>                // but sadly that `'_` is the lifetime of the temporary `Arc`,
-<a href=#843 id=843 data-nosnippet>843</a>                // not `'tcx`, so we have to arena-allocate to get `&amp;'tcx str`.
-<a href=#844 id=844 data-nosnippet>844</a>                </span><span class="kw">let </span>file_name = <span class="kw">match </span><span class="kw-2">&amp;</span>sf.name {
-<a href=#845 id=845 data-nosnippet>845</a>                    FileName::Real(name) =&gt; {
-<a href=#846 id=846 data-nosnippet>846</a>                        name.to_string_lossy(FileNameDisplayPreference::Remapped)
-<a href=#847 id=847 data-nosnippet>847</a>                    }
-<a href=#848 id=848 data-nosnippet>848</a>                    <span class="kw">_ </span>=&gt; sf.name.prefer_remapped_unconditionaly().to_string().into(),
-<a href=#849 id=849 data-nosnippet>849</a>                };
-<a href=#850 id=850 data-nosnippet>850</a>                <span class="kw">let </span>file_name = {
-<a href=#851 id=851 data-nosnippet>851</a>                    <span class="comment">// FIXME(eddyb) it should be possible to arena-allocate a
-<a href=#852 id=852 data-nosnippet>852</a>                    // `&amp;str` directly, but it would require upstream changes,
-<a href=#853 id=853 data-nosnippet>853</a>                    // and strings are handled by string interning in `rustc`.
-<a href=#854 id=854 data-nosnippet>854</a>                    </span><span class="kw">fn </span>arena_alloc_slice&lt;<span class="lifetime">'tcx</span>, T: Copy&gt;(
-<a href=#855 id=855 data-nosnippet>855</a>                        dropless_arena: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>DroplessArena,
-<a href=#856 id=856 data-nosnippet>856</a>                        xs: <span class="kw-2">&amp;</span>[T],
-<a href=#857 id=857 data-nosnippet>857</a>                    ) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>[T] {
-<a href=#858 id=858 data-nosnippet>858</a>                        <span class="kw">if </span>xs.is_empty() {
-<a href=#859 id=859 data-nosnippet>859</a>                            <span class="kw-2">&amp;</span>[]
-<a href=#860 id=860 data-nosnippet>860</a>                        } <span class="kw">else </span>{
-<a href=#861 id=861 data-nosnippet>861</a>                            dropless_arena.alloc_slice(xs)
-<a href=#862 id=862 data-nosnippet>862</a>                        }
-<a href=#863 id=863 data-nosnippet>863</a>                    }
-<a href=#864 id=864 data-nosnippet>864</a>                    str::from_utf8(arena_alloc_slice(<span class="self">self</span>.dropless_arena, file_name.as_bytes()))
-<a href=#865 id=865 data-nosnippet>865</a>                        .unwrap()
-<a href=#866 id=866 data-nosnippet>866</a>                };
-<a href=#867 id=867 data-nosnippet>867</a>                <span class="kw">let </span>file_name_op_string_id = builder.string(file_name.to_owned());
-<a href=#868 id=868 data-nosnippet>868</a>
-<a href=#869 id=869 data-nosnippet>869</a>                <span class="kw">let </span>file_contents = <span class="self">self
-<a href=#870 id=870 data-nosnippet>870</a>                    </span>.source_map
-<a href=#871 id=871 data-nosnippet>871</a>                    .span_to_snippet(Span::with_root_ctxt(sf.start_pos, sf.end_position()))
-<a href=#872 id=872 data-nosnippet>872</a>                    .ok();
+<a href=#829 id=829 data-nosnippet>829</a>    <span class="kw">pub fn </span>lookup_const(<span class="kw-2">&amp;</span><span class="self">self</span>, def: SpirvValue) -&gt; <span class="prelude-ty">Option</span>&lt;SpirvConst&lt;<span class="lifetime">'tcx</span>, <span class="lifetime">'tcx</span>&gt;&gt; {
+<a href=#830 id=830 data-nosnippet>830</a>        <span class="kw">match </span>def.kind {
+<a href=#831 id=831 data-nosnippet>831</a>            SpirvValueKind::Def(id) | SpirvValueKind::IllegalConst(id) =&gt; {
+<a href=#832 id=832 data-nosnippet>832</a>                <span class="self">self</span>.lookup_const_by_id(id)
+<a href=#833 id=833 data-nosnippet>833</a>            }
+<a href=#834 id=834 data-nosnippet>834</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#835 id=835 data-nosnippet>835</a>        }
+<a href=#836 id=836 data-nosnippet>836</a>    }
+<a href=#837 id=837 data-nosnippet>837</a>
+<a href=#838 id=838 data-nosnippet>838</a>    <span class="kw">pub fn </span>lookup_const_scalar(<span class="kw-2">&amp;</span><span class="self">self</span>, def: SpirvValue) -&gt; <span class="prelude-ty">Option</span>&lt;u128&gt; {
+<a href=#839 id=839 data-nosnippet>839</a>        <span class="kw">match </span><span class="self">self</span>.lookup_const(def)<span class="question-mark">? </span>{
+<a href=#840 id=840 data-nosnippet>840</a>            SpirvConst::Scalar(v) =&gt; <span class="prelude-val">Some</span>(v),
+<a href=#841 id=841 data-nosnippet>841</a>            <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#842 id=842 data-nosnippet>842</a>        }
+<a href=#843 id=843 data-nosnippet>843</a>    }
+<a href=#844 id=844 data-nosnippet>844</a>
+<a href=#845 id=845 data-nosnippet>845</a>    <span class="kw">pub fn </span>file_line_col_range_for_debuginfo(
+<a href=#846 id=846 data-nosnippet>846</a>        <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#847 id=847 data-nosnippet>847</a>        span: Span,
+<a href=#848 id=848 data-nosnippet>848</a>    ) -&gt; (DebugFileSpirv&lt;<span class="lifetime">'tcx</span>&gt;, Range&lt;(u32, u32)&gt;) {
+<a href=#849 id=849 data-nosnippet>849</a>        <span class="comment">// HACK(eddyb) this is similar to what `#[track_caller]` does, and it
+<a href=#850 id=850 data-nosnippet>850</a>        // allows us to point to the use site of a macro, instead of inside the
+<a href=#851 id=851 data-nosnippet>851</a>        // macro (but ideally we would record the entire macro backtrace).
+<a href=#852 id=852 data-nosnippet>852</a>        </span><span class="kw">let </span>span = span.ctxt().outer_expn().expansion_cause().unwrap_or(span);
+<a href=#853 id=853 data-nosnippet>853</a>
+<a href=#854 id=854 data-nosnippet>854</a>        <span class="kw">let </span>(lo, hi) = (span.lo(), span.hi());
+<a href=#855 id=855 data-nosnippet>855</a>
+<a href=#856 id=856 data-nosnippet>856</a>        <span class="kw">let </span>lo_loc = <span class="self">self</span>.source_map.lookup_char_pos(lo);
+<a href=#857 id=857 data-nosnippet>857</a>        <span class="kw">let </span>lo_line_col = (lo_loc.line <span class="kw">as </span>u32, lo_loc.col_display <span class="kw">as </span>u32);
+<a href=#858 id=858 data-nosnippet>858</a>
+<a href=#859 id=859 data-nosnippet>859</a>        <span class="comment">// Only use `hi` if the span is actually a range within a file.
+<a href=#860 id=860 data-nosnippet>860</a>        </span><span class="kw">let </span>hi_line_col = <span class="kw">if </span>lo &lt;= hi {
+<a href=#861 id=861 data-nosnippet>861</a>            <span class="kw">let </span>hi_loc = <span class="self">self</span>.source_map.lookup_char_pos(hi);
+<a href=#862 id=862 data-nosnippet>862</a>            <span class="kw">if </span>lo_loc.file.start_pos == hi_loc.file.start_pos {
+<a href=#863 id=863 data-nosnippet>863</a>                (hi_loc.line <span class="kw">as </span>u32, hi_loc.col_display <span class="kw">as </span>u32)
+<a href=#864 id=864 data-nosnippet>864</a>            } <span class="kw">else </span>{
+<a href=#865 id=865 data-nosnippet>865</a>                lo_line_col
+<a href=#866 id=866 data-nosnippet>866</a>            }
+<a href=#867 id=867 data-nosnippet>867</a>        } <span class="kw">else </span>{
+<a href=#868 id=868 data-nosnippet>868</a>            lo_line_col
+<a href=#869 id=869 data-nosnippet>869</a>        };
+<a href=#870 id=870 data-nosnippet>870</a>
+<a href=#871 id=871 data-nosnippet>871</a>        (<span class="self">self</span>.def_debug_file(lo_loc.file), lo_line_col..hi_line_col)
+<a href=#872 id=872 data-nosnippet>872</a>    }
 <a href=#873 id=873 data-nosnippet>873</a>
-<a href=#874 id=874 data-nosnippet>874</a>                <span class="comment">// HACK(eddyb) this logic is duplicated from `spirt::spv::lift`.
-<a href=#875 id=875 data-nosnippet>875</a>                </span><span class="kw">let </span>op_source_and_continued_chunks = file_contents.as_ref().map(|contents| {
-<a href=#876 id=876 data-nosnippet>876</a>                    <span class="comment">// The maximum word count is `2**16 - 1`, the first word is
-<a href=#877 id=877 data-nosnippet>877</a>                    // taken up by the opcode &amp; word count, and one extra byte is
-<a href=#878 id=878 data-nosnippet>878</a>                    // taken up by the nil byte at the end of the LiteralString.
-<a href=#879 id=879 data-nosnippet>879</a>                    </span><span class="kw">const </span>MAX_OP_SOURCE_CONT_CONTENTS_LEN: usize = (<span class="number">0xffff </span>- <span class="number">1</span>) * <span class="number">4 </span>- <span class="number">1</span>;
-<a href=#880 id=880 data-nosnippet>880</a>
-<a href=#881 id=881 data-nosnippet>881</a>                    <span class="comment">// `OpSource` has 3 more operands than `OpSourceContinued`,
-<a href=#882 id=882 data-nosnippet>882</a>                    // and each of them take up exactly one word.
-<a href=#883 id=883 data-nosnippet>883</a>                    </span><span class="kw">const </span>MAX_OP_SOURCE_CONTENTS_LEN: usize =
-<a href=#884 id=884 data-nosnippet>884</a>                        MAX_OP_SOURCE_CONT_CONTENTS_LEN - <span class="number">3 </span>* <span class="number">4</span>;
-<a href=#885 id=885 data-nosnippet>885</a>
-<a href=#886 id=886 data-nosnippet>886</a>                    <span class="kw">let </span>(op_source_str, <span class="kw-2">mut </span>all_op_source_continued_str) =
-<a href=#887 id=887 data-nosnippet>887</a>                        contents.split_at(contents.len().min(MAX_OP_SOURCE_CONTENTS_LEN));
-<a href=#888 id=888 data-nosnippet>888</a>
-<a href=#889 id=889 data-nosnippet>889</a>                    <span class="comment">// FIXME(eddyb) `spirt::spv::lift` should use this.
-<a href=#890 id=890 data-nosnippet>890</a>                    </span><span class="kw">let </span>all_op_source_continued_str_chunks = iter::from_fn(<span class="kw">move </span>|| {
-<a href=#891 id=891 data-nosnippet>891</a>                        <span class="kw">let </span>contents_rest = <span class="kw-2">&amp;mut </span>all_op_source_continued_str;
-<a href=#892 id=892 data-nosnippet>892</a>                        <span class="kw">if </span>contents_rest.is_empty() {
-<a href=#893 id=893 data-nosnippet>893</a>                            <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#894 id=894 data-nosnippet>894</a>                        }
-<a href=#895 id=895 data-nosnippet>895</a>
-<a href=#896 id=896 data-nosnippet>896</a>                        <span class="comment">// FIXME(eddyb) test with UTF-8! this `split_at` should
-<a href=#897 id=897 data-nosnippet>897</a>                        // actually take *less* than the full possible size, to
-<a href=#898 id=898 data-nosnippet>898</a>                        // avoid cutting a UTF-8 sequence.
-<a href=#899 id=899 data-nosnippet>899</a>                        </span><span class="kw">let </span>(cont_chunk, rest) = contents_rest
-<a href=#900 id=900 data-nosnippet>900</a>                            .split_at(contents_rest.len().min(MAX_OP_SOURCE_CONT_CONTENTS_LEN));
-<a href=#901 id=901 data-nosnippet>901</a>                        <span class="kw-2">*</span>contents_rest = rest;
-<a href=#902 id=902 data-nosnippet>902</a>                        <span class="prelude-val">Some</span>(cont_chunk)
-<a href=#903 id=903 data-nosnippet>903</a>                    });
-<a href=#904 id=904 data-nosnippet>904</a>                    (op_source_str, all_op_source_continued_str_chunks)
-<a href=#905 id=905 data-nosnippet>905</a>                });
-<a href=#906 id=906 data-nosnippet>906</a>
-<a href=#907 id=907 data-nosnippet>907</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>((op_source_str, all_op_source_continued_str_chunks)) =
-<a href=#908 id=908 data-nosnippet>908</a>                    op_source_and_continued_chunks
-<a href=#909 id=909 data-nosnippet>909</a>                {
-<a href=#910 id=910 data-nosnippet>910</a>                    builder.source(
-<a href=#911 id=911 data-nosnippet>911</a>                        SourceLanguage::Unknown,
-<a href=#912 id=912 data-nosnippet>912</a>                        <span class="number">0</span>,
-<a href=#913 id=913 data-nosnippet>913</a>                        <span class="prelude-val">Some</span>(file_name_op_string_id),
-<a href=#914 id=914 data-nosnippet>914</a>                        <span class="prelude-val">Some</span>(op_source_str),
-<a href=#915 id=915 data-nosnippet>915</a>                    );
-<a href=#916 id=916 data-nosnippet>916</a>                    <span class="kw">for </span>cont_chunk <span class="kw">in </span>all_op_source_continued_str_chunks {
-<a href=#917 id=917 data-nosnippet>917</a>                        builder.source_continued(cont_chunk);
-<a href=#918 id=918 data-nosnippet>918</a>                    }
-<a href=#919 id=919 data-nosnippet>919</a>                }
-<a href=#920 id=920 data-nosnippet>920</a>
-<a href=#921 id=921 data-nosnippet>921</a>                DebugFileSpirv {
-<a href=#922 id=922 data-nosnippet>922</a>                    file_name,
-<a href=#923 id=923 data-nosnippet>923</a>                    file_name_op_string_id,
-<a href=#924 id=924 data-nosnippet>924</a>                }
-<a href=#925 id=925 data-nosnippet>925</a>            })
-<a href=#926 id=926 data-nosnippet>926</a>    }
+<a href=#874 id=874 data-nosnippet>874</a>    <span class="kw">fn </span>def_debug_file(<span class="kw-2">&amp;</span><span class="self">self</span>, sf: Arc&lt;SourceFile&gt;) -&gt; DebugFileSpirv&lt;<span class="lifetime">'tcx</span>&gt; {
+<a href=#875 id=875 data-nosnippet>875</a>        <span class="kw-2">*</span><span class="self">self
+<a href=#876 id=876 data-nosnippet>876</a>            </span>.debug_file_cache
+<a href=#877 id=877 data-nosnippet>877</a>            .borrow_mut()
+<a href=#878 id=878 data-nosnippet>878</a>            .entry(DebugFileKey(sf))
+<a href=#879 id=879 data-nosnippet>879</a>            .or_insert_with_key(|DebugFileKey(sf)| {
+<a href=#880 id=880 data-nosnippet>880</a>                <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.global_builder();
+<a href=#881 id=881 data-nosnippet>881</a>
+<a href=#882 id=882 data-nosnippet>882</a>                <span class="comment">// FIXME(eddyb) it would be nicer if we could just rely on
+<a href=#883 id=883 data-nosnippet>883</a>                // `RealFileName::to_string_lossy` returning `Cow&lt;'_, str&gt;`,
+<a href=#884 id=884 data-nosnippet>884</a>                // but sadly that `'_` is the lifetime of the temporary `Arc`,
+<a href=#885 id=885 data-nosnippet>885</a>                // not `'tcx`, so we have to arena-allocate to get `&amp;'tcx str`.
+<a href=#886 id=886 data-nosnippet>886</a>                </span><span class="kw">let </span>file_name = <span class="kw">match </span><span class="kw-2">&amp;</span>sf.name {
+<a href=#887 id=887 data-nosnippet>887</a>                    FileName::Real(name) =&gt; {
+<a href=#888 id=888 data-nosnippet>888</a>                        name.to_string_lossy(FileNameDisplayPreference::Remapped)
+<a href=#889 id=889 data-nosnippet>889</a>                    }
+<a href=#890 id=890 data-nosnippet>890</a>                    <span class="kw">_ </span>=&gt; sf.name.prefer_remapped_unconditionaly().to_string().into(),
+<a href=#891 id=891 data-nosnippet>891</a>                };
+<a href=#892 id=892 data-nosnippet>892</a>                <span class="kw">let </span>file_name = {
+<a href=#893 id=893 data-nosnippet>893</a>                    <span class="comment">// FIXME(eddyb) it should be possible to arena-allocate a
+<a href=#894 id=894 data-nosnippet>894</a>                    // `&amp;str` directly, but it would require upstream changes,
+<a href=#895 id=895 data-nosnippet>895</a>                    // and strings are handled by string interning in `rustc`.
+<a href=#896 id=896 data-nosnippet>896</a>                    </span><span class="kw">fn </span>arena_alloc_slice&lt;<span class="lifetime">'tcx</span>, T: Copy&gt;(
+<a href=#897 id=897 data-nosnippet>897</a>                        dropless_arena: <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>DroplessArena,
+<a href=#898 id=898 data-nosnippet>898</a>                        xs: <span class="kw-2">&amp;</span>[T],
+<a href=#899 id=899 data-nosnippet>899</a>                    ) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'tcx </span>[T] {
+<a href=#900 id=900 data-nosnippet>900</a>                        <span class="kw">if </span>xs.is_empty() {
+<a href=#901 id=901 data-nosnippet>901</a>                            <span class="kw-2">&amp;</span>[]
+<a href=#902 id=902 data-nosnippet>902</a>                        } <span class="kw">else </span>{
+<a href=#903 id=903 data-nosnippet>903</a>                            dropless_arena.alloc_slice(xs)
+<a href=#904 id=904 data-nosnippet>904</a>                        }
+<a href=#905 id=905 data-nosnippet>905</a>                    }
+<a href=#906 id=906 data-nosnippet>906</a>                    str::from_utf8(arena_alloc_slice(<span class="self">self</span>.dropless_arena, file_name.as_bytes()))
+<a href=#907 id=907 data-nosnippet>907</a>                        .unwrap()
+<a href=#908 id=908 data-nosnippet>908</a>                };
+<a href=#909 id=909 data-nosnippet>909</a>                <span class="kw">let </span>file_name_op_string_id = builder.string(file_name.to_owned());
+<a href=#910 id=910 data-nosnippet>910</a>
+<a href=#911 id=911 data-nosnippet>911</a>                <span class="kw">let </span>file_contents = <span class="self">self
+<a href=#912 id=912 data-nosnippet>912</a>                    </span>.source_map
+<a href=#913 id=913 data-nosnippet>913</a>                    .span_to_snippet(Span::with_root_ctxt(sf.start_pos, sf.end_position()))
+<a href=#914 id=914 data-nosnippet>914</a>                    .ok();
+<a href=#915 id=915 data-nosnippet>915</a>
+<a href=#916 id=916 data-nosnippet>916</a>                <span class="comment">// HACK(eddyb) this logic is duplicated from `spirt::spv::lift`.
+<a href=#917 id=917 data-nosnippet>917</a>                </span><span class="kw">let </span>op_source_and_continued_chunks = file_contents.as_ref().map(|contents| {
+<a href=#918 id=918 data-nosnippet>918</a>                    <span class="comment">// The maximum word count is `2**16 - 1`, the first word is
+<a href=#919 id=919 data-nosnippet>919</a>                    // taken up by the opcode &amp; word count, and one extra byte is
+<a href=#920 id=920 data-nosnippet>920</a>                    // taken up by the nil byte at the end of the LiteralString.
+<a href=#921 id=921 data-nosnippet>921</a>                    </span><span class="kw">const </span>MAX_OP_SOURCE_CONT_CONTENTS_LEN: usize = (<span class="number">0xffff </span>- <span class="number">1</span>) * <span class="number">4 </span>- <span class="number">1</span>;
+<a href=#922 id=922 data-nosnippet>922</a>
+<a href=#923 id=923 data-nosnippet>923</a>                    <span class="comment">// `OpSource` has 3 more operands than `OpSourceContinued`,
+<a href=#924 id=924 data-nosnippet>924</a>                    // and each of them take up exactly one word.
+<a href=#925 id=925 data-nosnippet>925</a>                    </span><span class="kw">const </span>MAX_OP_SOURCE_CONTENTS_LEN: usize =
+<a href=#926 id=926 data-nosnippet>926</a>                        MAX_OP_SOURCE_CONT_CONTENTS_LEN - <span class="number">3 </span>* <span class="number">4</span>;
 <a href=#927 id=927 data-nosnippet>927</a>
-<a href=#928 id=928 data-nosnippet>928</a>    <span class="kw">pub fn </span>set_global_initializer(<span class="kw-2">&amp;</span><span class="self">self</span>, global: Word, initializer: Word) {
-<a href=#929 id=929 data-nosnippet>929</a>        <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder.borrow_mut();
-<a href=#930 id=930 data-nosnippet>930</a>        <span class="kw">let </span>module = builder.module_mut();
-<a href=#931 id=931 data-nosnippet>931</a>        <span class="kw">let </span>index = module
-<a href=#932 id=932 data-nosnippet>932</a>            .types_global_values
-<a href=#933 id=933 data-nosnippet>933</a>            .iter()
-<a href=#934 id=934 data-nosnippet>934</a>            .enumerate()
-<a href=#935 id=935 data-nosnippet>935</a>            .find_map(|(index, inst)| {
-<a href=#936 id=936 data-nosnippet>936</a>                <span class="kw">if </span>inst.result_id == <span class="prelude-val">Some</span>(global) {
-<a href=#937 id=937 data-nosnippet>937</a>                    <span class="prelude-val">Some</span>(index)
-<a href=#938 id=938 data-nosnippet>938</a>                } <span class="kw">else </span>{
-<a href=#939 id=939 data-nosnippet>939</a>                    <span class="prelude-val">None
-<a href=#940 id=940 data-nosnippet>940</a>                </span>}
-<a href=#941 id=941 data-nosnippet>941</a>            })
-<a href=#942 id=942 data-nosnippet>942</a>            .expect(<span class="string">"set_global_initializer global not found"</span>);
-<a href=#943 id=943 data-nosnippet>943</a>        <span class="comment">// Remove and push it to the end, to keep spir-v definition order.
-<a href=#944 id=944 data-nosnippet>944</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>inst = module.types_global_values.remove(index);
-<a href=#945 id=945 data-nosnippet>945</a>        <span class="macro">assert_eq!</span>(inst.class.opcode, Op::Variable);
-<a href=#946 id=946 data-nosnippet>946</a>        <span class="macro">assert_eq!</span>(
-<a href=#947 id=947 data-nosnippet>947</a>            inst.operands.len(),
-<a href=#948 id=948 data-nosnippet>948</a>            <span class="number">1</span>,
-<a href=#949 id=949 data-nosnippet>949</a>            <span class="string">"global already has initializer defined: {global}"
-<a href=#950 id=950 data-nosnippet>950</a>        </span>);
-<a href=#951 id=951 data-nosnippet>951</a>        inst.operands.push(Operand::IdRef(initializer));
-<a href=#952 id=952 data-nosnippet>952</a>        module.types_global_values.push(inst);
-<a href=#953 id=953 data-nosnippet>953</a>    }
-<a href=#954 id=954 data-nosnippet>954</a>
-<a href=#955 id=955 data-nosnippet>955</a>    <span class="kw">pub fn </span>select_block_by_id(<span class="kw-2">&amp;</span><span class="self">self</span>, id: Word) -&gt; BuilderCursor {
-<a href=#956 id=956 data-nosnippet>956</a>        <span class="kw">fn </span>block_matches(block: <span class="kw-2">&amp;</span>Block, id: Word) -&gt; bool {
-<a href=#957 id=957 data-nosnippet>957</a>            block.label.as_ref().and_then(|b| b.result_id) == <span class="prelude-val">Some</span>(id)
-<a href=#958 id=958 data-nosnippet>958</a>        }
-<a href=#959 id=959 data-nosnippet>959</a>
-<a href=#960 id=960 data-nosnippet>960</a>        <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder.borrow_mut();
-<a href=#961 id=961 data-nosnippet>961</a>        <span class="kw">let </span>module = builder.module_ref();
+<a href=#928 id=928 data-nosnippet>928</a>                    <span class="kw">let </span>(op_source_str, <span class="kw-2">mut </span>all_op_source_continued_str) =
+<a href=#929 id=929 data-nosnippet>929</a>                        contents.split_at(contents.len().min(MAX_OP_SOURCE_CONTENTS_LEN));
+<a href=#930 id=930 data-nosnippet>930</a>
+<a href=#931 id=931 data-nosnippet>931</a>                    <span class="comment">// FIXME(eddyb) `spirt::spv::lift` should use this.
+<a href=#932 id=932 data-nosnippet>932</a>                    </span><span class="kw">let </span>all_op_source_continued_str_chunks = iter::from_fn(<span class="kw">move </span>|| {
+<a href=#933 id=933 data-nosnippet>933</a>                        <span class="kw">let </span>contents_rest = <span class="kw-2">&amp;mut </span>all_op_source_continued_str;
+<a href=#934 id=934 data-nosnippet>934</a>                        <span class="kw">if </span>contents_rest.is_empty() {
+<a href=#935 id=935 data-nosnippet>935</a>                            <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#936 id=936 data-nosnippet>936</a>                        }
+<a href=#937 id=937 data-nosnippet>937</a>
+<a href=#938 id=938 data-nosnippet>938</a>                        <span class="comment">// FIXME(eddyb) test with UTF-8! this `split_at` should
+<a href=#939 id=939 data-nosnippet>939</a>                        // actually take *less* than the full possible size, to
+<a href=#940 id=940 data-nosnippet>940</a>                        // avoid cutting a UTF-8 sequence.
+<a href=#941 id=941 data-nosnippet>941</a>                        </span><span class="kw">let </span>(cont_chunk, rest) = contents_rest
+<a href=#942 id=942 data-nosnippet>942</a>                            .split_at(contents_rest.len().min(MAX_OP_SOURCE_CONT_CONTENTS_LEN));
+<a href=#943 id=943 data-nosnippet>943</a>                        <span class="kw-2">*</span>contents_rest = rest;
+<a href=#944 id=944 data-nosnippet>944</a>                        <span class="prelude-val">Some</span>(cont_chunk)
+<a href=#945 id=945 data-nosnippet>945</a>                    });
+<a href=#946 id=946 data-nosnippet>946</a>                    (op_source_str, all_op_source_continued_str_chunks)
+<a href=#947 id=947 data-nosnippet>947</a>                });
+<a href=#948 id=948 data-nosnippet>948</a>
+<a href=#949 id=949 data-nosnippet>949</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>((op_source_str, all_op_source_continued_str_chunks)) =
+<a href=#950 id=950 data-nosnippet>950</a>                    op_source_and_continued_chunks
+<a href=#951 id=951 data-nosnippet>951</a>                {
+<a href=#952 id=952 data-nosnippet>952</a>                    builder.source(
+<a href=#953 id=953 data-nosnippet>953</a>                        SourceLanguage::Unknown,
+<a href=#954 id=954 data-nosnippet>954</a>                        <span class="number">0</span>,
+<a href=#955 id=955 data-nosnippet>955</a>                        <span class="prelude-val">Some</span>(file_name_op_string_id),
+<a href=#956 id=956 data-nosnippet>956</a>                        <span class="prelude-val">Some</span>(op_source_str),
+<a href=#957 id=957 data-nosnippet>957</a>                    );
+<a href=#958 id=958 data-nosnippet>958</a>                    <span class="kw">for </span>cont_chunk <span class="kw">in </span>all_op_source_continued_str_chunks {
+<a href=#959 id=959 data-nosnippet>959</a>                        builder.source_continued(cont_chunk);
+<a href=#960 id=960 data-nosnippet>960</a>                    }
+<a href=#961 id=961 data-nosnippet>961</a>                }
 <a href=#962 id=962 data-nosnippet>962</a>
-<a href=#963 id=963 data-nosnippet>963</a>        <span class="comment">// The user is probably selecting a block in the current function, so search that first.
-<a href=#964 id=964 data-nosnippet>964</a>        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(selected_function) = builder.selected_function() {
-<a href=#965 id=965 data-nosnippet>965</a>            <span class="comment">// make no-ops really fast
-<a href=#966 id=966 data-nosnippet>966</a>            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(selected_block) = builder.selected_block() {
-<a href=#967 id=967 data-nosnippet>967</a>                <span class="kw">let </span>block = <span class="kw-2">&amp;</span>module.functions[selected_function].blocks[selected_block];
-<a href=#968 id=968 data-nosnippet>968</a>                <span class="kw">if </span>block_matches(block, id) {
-<a href=#969 id=969 data-nosnippet>969</a>                    <span class="kw">return </span>BuilderCursor {
-<a href=#970 id=970 data-nosnippet>970</a>                        function: <span class="prelude-val">Some</span>(selected_function),
-<a href=#971 id=971 data-nosnippet>971</a>                        block: <span class="prelude-val">Some</span>(selected_block),
-<a href=#972 id=972 data-nosnippet>972</a>                    };
-<a href=#973 id=973 data-nosnippet>973</a>                }
-<a href=#974 id=974 data-nosnippet>974</a>            }
-<a href=#975 id=975 data-nosnippet>975</a>
-<a href=#976 id=976 data-nosnippet>976</a>            <span class="kw">for </span>(index, block) <span class="kw">in </span>module.functions[selected_function]
-<a href=#977 id=977 data-nosnippet>977</a>                .blocks
-<a href=#978 id=978 data-nosnippet>978</a>                .iter()
-<a href=#979 id=979 data-nosnippet>979</a>                .enumerate()
-<a href=#980 id=980 data-nosnippet>980</a>            {
-<a href=#981 id=981 data-nosnippet>981</a>                <span class="kw">if </span>block_matches(block, id) {
-<a href=#982 id=982 data-nosnippet>982</a>                    builder.select_block(<span class="prelude-val">Some</span>(index)).unwrap();
-<a href=#983 id=983 data-nosnippet>983</a>                    <span class="kw">return </span>BuilderCursor {
-<a href=#984 id=984 data-nosnippet>984</a>                        function: <span class="prelude-val">Some</span>(selected_function),
-<a href=#985 id=985 data-nosnippet>985</a>                        block: <span class="prelude-val">Some</span>(index),
-<a href=#986 id=986 data-nosnippet>986</a>                    };
-<a href=#987 id=987 data-nosnippet>987</a>                }
-<a href=#988 id=988 data-nosnippet>988</a>            }
-<a href=#989 id=989 data-nosnippet>989</a>        }
-<a href=#990 id=990 data-nosnippet>990</a>
-<a href=#991 id=991 data-nosnippet>991</a>        <span class="comment">// Search the whole module.
-<a href=#992 id=992 data-nosnippet>992</a>        </span><span class="kw">for </span>(function_index, function) <span class="kw">in </span>module.functions.iter().enumerate() {
-<a href=#993 id=993 data-nosnippet>993</a>            <span class="kw">for </span>(block_index, block) <span class="kw">in </span>function.blocks.iter().enumerate() {
-<a href=#994 id=994 data-nosnippet>994</a>                <span class="kw">if </span>block_matches(block, id) {
-<a href=#995 id=995 data-nosnippet>995</a>                    builder.select_function(<span class="prelude-val">Some</span>(function_index)).unwrap();
-<a href=#996 id=996 data-nosnippet>996</a>                    builder.select_block(<span class="prelude-val">Some</span>(block_index)).unwrap();
-<a href=#997 id=997 data-nosnippet>997</a>                    <span class="kw">return </span>BuilderCursor {
-<a href=#998 id=998 data-nosnippet>998</a>                        function: <span class="prelude-val">Some</span>(function_index),
-<a href=#999 id=999 data-nosnippet>999</a>                        block: <span class="prelude-val">Some</span>(block_index),
-<a href=#1000 id=1000 data-nosnippet>1000</a>                    };
-<a href=#1001 id=1001 data-nosnippet>1001</a>                }
-<a href=#1002 id=1002 data-nosnippet>1002</a>            }
-<a href=#1003 id=1003 data-nosnippet>1003</a>        }
-<a href=#1004 id=1004 data-nosnippet>1004</a>
-<a href=#1005 id=1005 data-nosnippet>1005</a>        <span class="macro">bug!</span>(<span class="string">"Block not found: {}"</span>, id);
-<a href=#1006 id=1006 data-nosnippet>1006</a>    }
-<a href=#1007 id=1007 data-nosnippet>1007</a>}</code></pre></div></section></main></body></html>
+<a href=#963 id=963 data-nosnippet>963</a>                DebugFileSpirv {
+<a href=#964 id=964 data-nosnippet>964</a>                    file_name,
+<a href=#965 id=965 data-nosnippet>965</a>                    file_name_op_string_id,
+<a href=#966 id=966 data-nosnippet>966</a>                }
+<a href=#967 id=967 data-nosnippet>967</a>            })
+<a href=#968 id=968 data-nosnippet>968</a>    }
+<a href=#969 id=969 data-nosnippet>969</a>
+<a href=#970 id=970 data-nosnippet>970</a>    <span class="kw">pub fn </span>set_global_initializer(<span class="kw-2">&amp;</span><span class="self">self</span>, global: Word, initializer: Word) {
+<a href=#971 id=971 data-nosnippet>971</a>        <span class="kw">let </span><span class="kw-2">mut </span>builder = <span class="self">self</span>.builder.borrow_mut();
+<a href=#972 id=972 data-nosnippet>972</a>        <span class="kw">let </span>module = builder.module_mut();
+<a href=#973 id=973 data-nosnippet>973</a>        <span class="kw">let </span>index = module
+<a href=#974 id=974 data-nosnippet>974</a>            .types_global_values
+<a href=#975 id=975 data-nosnippet>975</a>            .iter()
+<a href=#976 id=976 data-nosnippet>976</a>            .enumerate()
+<a href=#977 id=977 data-nosnippet>977</a>            .find_map(|(index, inst)| {
+<a href=#978 id=978 data-nosnippet>978</a>                <span class="kw">if </span>inst.result_id == <span class="prelude-val">Some</span>(global) {
+<a href=#979 id=979 data-nosnippet>979</a>                    <span class="prelude-val">Some</span>(index)
+<a href=#980 id=980 data-nosnippet>980</a>                } <span class="kw">else </span>{
+<a href=#981 id=981 data-nosnippet>981</a>                    <span class="prelude-val">None
+<a href=#982 id=982 data-nosnippet>982</a>                </span>}
+<a href=#983 id=983 data-nosnippet>983</a>            })
+<a href=#984 id=984 data-nosnippet>984</a>            .expect(<span class="string">"set_global_initializer global not found"</span>);
+<a href=#985 id=985 data-nosnippet>985</a>        <span class="comment">// Remove and push it to the end, to keep spir-v definition order.
+<a href=#986 id=986 data-nosnippet>986</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>inst = module.types_global_values.remove(index);
+<a href=#987 id=987 data-nosnippet>987</a>        <span class="macro">assert_eq!</span>(inst.class.opcode, Op::Variable);
+<a href=#988 id=988 data-nosnippet>988</a>        <span class="macro">assert_eq!</span>(
+<a href=#989 id=989 data-nosnippet>989</a>            inst.operands.len(),
+<a href=#990 id=990 data-nosnippet>990</a>            <span class="number">1</span>,
+<a href=#991 id=991 data-nosnippet>991</a>            <span class="string">"global already has initializer defined: {global}"
+<a href=#992 id=992 data-nosnippet>992</a>        </span>);
+<a href=#993 id=993 data-nosnippet>993</a>        inst.operands.push(Operand::IdRef(initializer));
+<a href=#994 id=994 data-nosnippet>994</a>        module.types_global_values.push(inst);
+<a href=#995 id=995 data-nosnippet>995</a>    }
+<a href=#996 id=996 data-nosnippet>996</a>}</code></pre></div></section></main></body></html>
