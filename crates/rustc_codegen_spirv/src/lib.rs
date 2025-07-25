@@ -309,10 +309,17 @@ impl ThinBufferMethods for SpirvModuleBuffer {
 impl SpirvCodegenBackend {
     fn optimize_common(
         _cgcx: &CodegenContext<Self>,
-        _module: &mut ModuleCodegen<<Self as WriteBackendMethods>::Module>,
+        module: &mut ModuleCodegen<<Self as WriteBackendMethods>::Module>,
     ) -> Result<(), FatalError> {
-        // FIXME(eddyb) actually run as many optimization passes as possible,
-        // before ever serializing `.spv` files that will later get linked.
+        // Apply DCE ("dead code elimination") to modules before ever serializing
+        // them as `.spv` files (technically, `.rcgu.o` files inside `.rlib`s),
+        // that will later get linked (potentially many times, esp. if this is
+        // some big upstream library, e.g. `core` itself), and will therefore
+        // benefit from not having to clean up all sorts of unreachable helpers.
+        linker::dce::dce(&mut module.module_llvm);
+
+        // FIXME(eddyb) run as many optimization passes as possible, not just DCE.
+
         Ok(())
     }
 }

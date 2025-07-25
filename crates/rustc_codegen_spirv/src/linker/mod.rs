@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod test;
 
-mod dce;
+pub(crate) mod dce;
 mod destructure_composites;
 mod duplicates;
 mod entry_interface;
@@ -277,13 +277,6 @@ pub fn link(
         output
     };
 
-    // FIXME(eddyb) do this before ever saving the original `.spv`s to disk.
-    {
-        let _timer = sess.timer("link_dce-post-merge");
-        dce::dce(&mut output);
-    }
-
-    // HACK(eddyb) this has to be after DCE, to not break SPIR-T w/ dead decorations.
     if let Some(dir) = &opts.dump_post_merge {
         dump_spv_and_spirt(&output, dir.join(disambiguated_crate_name_for_dumps));
     }
