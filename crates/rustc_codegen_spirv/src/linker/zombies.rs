@@ -1,16 +1,14 @@
 //! See documentation on `CodegenCx::zombie` for a description of the zombie system.
 
-use super::{get_name, get_names};
+use super::get_names;
 use crate::custom_decorations::{CustomDecoration, SpanRegenerator, ZombieDecoration};
 use crate::custom_insts::{self, CustomOp};
 use rspirv::dr::{Instruction, Module, Operand};
 use rspirv::spirv::{Op, Word};
-use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexMap};
+use rustc_data_structures::fx::{FxHashMap, FxIndexMap};
 use rustc_errors::Diag;
 use rustc_session::Session;
 use rustc_span::{DUMMY_SP, Span};
-use smallvec::SmallVec;
-use tracing::{Level, debug};
 
 #[derive(Copy, Clone)]
 struct Zombie<'a> {
@@ -322,7 +320,7 @@ impl<'a> ZombieReporter<'a> {
     }
 }
 
-pub fn report_and_remove_zombies(sess: &Session, module: &mut Module) -> super::Result<()> {
+pub fn report_zombies(sess: &Session, module: &Module) -> super::Result<()> {
     let mut zombies = Zombies {
         // FIXME(eddyb) avoid repeating this across different passes/helpers.
         custom_ext_inst_set_import: module
@@ -341,89 +339,5 @@ pub fn report_and_remove_zombies(sess: &Session, module: &mut Module) -> super::
     // Note: This is O(n^2).
     while zombies.spread(module) {}
 
-    let result = ZombieReporter::new(sess, module, &zombies).report_all();
-    if tracing::enabled!(target: "print_all_zombie", Level::DEBUG) {
-        let mut span_regen = SpanRegenerator::new(sess.source_map(), module);
-        for &zombie_id in zombies.id_to_zombie_kind.keys() {
-            let mut zombie_leaf_id = zombie_id;
-            let mut infection_chain = SmallVec::<[_; 4]>::new();
-            loop {
-                zombie_leaf_id = match zombies.get_zombie_by_id(zombie_leaf_id).unwrap().kind {
-                    ZombieKind::Leaf => break,
-                    // FIXME(eddyb) this is all very lossy and should probably go away.
-                    ZombieKind::Uses(zombie_uses) => zombie_uses[0].used_zombie_id,
-                };
-                infection_chain.push(zombie_leaf_id);
-            }
-
-            let reason = span_regen.zombie_for_id(zombie_leaf_id).unwrap().reason;
-            debug!(
-                target: "print_all_zombie",
-                "zombie'd %{zombie_id} because {reason}"
-            );
-            if !infection_chain.is_empty() {
-                debug!(
-                    target: "print_all_zombie",
-                    " (infected via {:?})", infection_chain
-                );
-            }
-            debug!(target: "print_all_zombie", "");
-        }
-    }
-
-    if tracing::enabled!(target: "print_zombie", Level::DEBUG) {
-        let mut span_regen = SpanRegenerator::new(sess.source_map(), module);
-        let names = get_names(module);
-        for f in &module.functions {
-            if let Some(zombie) = zombies.get_zombie_by_id(f.def_id().unwrap()) {
-                let mut zombie_leaf_id = zombie.id;
-                loop {
-                    zombie_leaf_id = match zombies.get_zombie_by_id(zombie_leaf_id).unwrap().kind {
-                        ZombieKind::Leaf => break,
-                        // FIXME(eddyb) this is all very lossy and should probably go away.
-                        ZombieKind::Uses(zombie_uses) => zombie_uses[0].used_zombie_id,
-                    };
-                }
-
-                let name = get_name(&names, f.def_id().unwrap());
-                let reason = span_regen.zombie_for_id(zombie_leaf_id).unwrap().reason;
-                debug!(
-                    target: "print_zombie",
-                    "function removed {name:?} because {reason:?}"
-                );
-            }
-        }
-    }
-
-    // FIXME(eddyb) this should be unnecessary, either something is unused, and
-    // it will get DCE'd *anyway*, or it caused an error.
-    {
-        // HACK(eddyb) cannot use the original map because it borrows the `Module`.
-        let all_zombies: FxHashSet<_> = zombies.id_to_zombie_kind.into_keys().collect();
-        let keep = |inst: &Instruction| {
-            if let Some(result_id) = inst.result_id {
-                !all_zombies.contains(&result_id)
-            } else {
-                let mut inst_ids = inst
-                    .result_type
-                    .into_iter()
-                    .chain(inst.operands.iter().filter_map(|op| op.id_ref_any()));
-                !inst_ids.any(|id| all_zombies.contains(&id))
-            }
-        };
-        module.capabilities.retain(keep);
-        module.extensions.retain(keep);
-        module.ext_inst_imports.retain(keep);
-        module.memory_model = module.memory_model.take().filter(keep);
-        module.entry_points.retain(keep);
-        module.execution_modes.retain(keep);
-        module.debug_string_source.retain(keep);
-        module.debug_names.retain(keep);
-        module.debug_module_processed.retain(keep);
-        module.annotations.retain(keep);
-        module.types_global_values.retain(keep);
-        module.functions.retain(|f| keep(f.def.as_ref().unwrap()));
-    }
-
-    result
+    ZombieReporter::new(sess, module, &zombies).report_all()
 }
