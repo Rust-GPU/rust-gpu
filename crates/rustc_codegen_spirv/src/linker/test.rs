@@ -1,5 +1,5 @@
 use super::{LinkResult, link};
-use rspirv::dr::{Loader, Module};
+use rspirv::dr::Module;
 use rustc_errors::registry::Registry;
 use rustc_session::CompilerIO;
 use rustc_session::config::{Input, OutputFilenames, OutputTypes};
@@ -59,9 +59,7 @@ fn validate(spirv: &[u32]) {
 }
 
 fn load(bytes: &[u8]) -> Module {
-    let mut loader = Loader::new();
-    rspirv::binary::parse_bytes(bytes, &mut loader).unwrap();
-    loader.module()
+    crate::link::with_rspirv_loader(|loader| rspirv::binary::parse_bytes(bytes, loader)).unwrap()
 }
 
 // FIXME(eddyb) shouldn't this be named just `link`? (`assemble_spirv` is separate)

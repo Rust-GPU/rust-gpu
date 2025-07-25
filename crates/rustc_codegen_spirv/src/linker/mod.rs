@@ -22,8 +22,8 @@ use crate::codegen_cx::{ModuleOutputType, SpirvMetadata};
 use crate::custom_decorations::{CustomDecoration, SrcLocDecoration, ZombieDecoration};
 use crate::custom_insts;
 use either::Either;
-use rspirv::binary::{Assemble, Consumer};
-use rspirv::dr::{Block, Loader, Module, ModuleHeader, Operand};
+use rspirv::binary::Assemble;
+use rspirv::dr::{Block, Module, ModuleHeader, Operand};
 use rspirv::spirv::{Op, StorageClass, Word};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
@@ -255,15 +255,21 @@ pub fn link(
         }
 
         // merge the binaries
-        let mut loader = Loader::new();
+        let mut output = crate::link::with_rspirv_loader(|loader| {
+            for module in inputs {
+                for inst in module.all_inst_iter() {
+                    use rspirv::binary::ParseAction;
+                    match loader.consume_instruction(inst.clone()) {
+                        ParseAction::Continue => {}
+                        ParseAction::Stop => unreachable!(),
+                        ParseAction::Error(err) => return Err(err),
+                    }
+                }
+            }
+            Ok(())
+        })
+        .unwrap();
 
-        for module in inputs {
-            module.all_inst_iter().for_each(|inst| {
-                loader.consume_instruction(inst.clone());
-            });
-        }
-
-        let mut output = loader.module();
         let mut header = ModuleHeader::new(bound + 1);
         header.set_version(version.0, version.1);
         header.generator = 0x001B_0000;
@@ -583,9 +589,10 @@ pub fn link(
         // FIXME(eddyb) dump both SPIR-T and `spv_words` if there's an error here.
         output = {
             let _timer = sess.timer("parse-spv_words-from-spirt");
-            let mut loader = Loader::new();
-            rspirv::binary::parse_words(&spv_words, &mut loader).unwrap();
-            loader.module()
+            crate::link::with_rspirv_loader(|loader| {
+                rspirv::binary::parse_words(&spv_words, loader)
+            })
+            .unwrap()
         };
     }
 
