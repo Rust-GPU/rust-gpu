@@ -2,7 +2,7 @@
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use crate::codegen_cx::{CodegenArgs, SpirvMetadata};
-use crate::{SpirvCodegenBackend, SpirvModuleBuffer, SpirvThinBuffer, linker};
+use crate::{SpirvCodegenBackend, SpirvModuleBuffer, linker};
 use ar::{Archive, GnuBuilder, Header};
 use rspirv::binary::Assemble;
 use rspirv::dr::Module;
@@ -548,6 +548,16 @@ fn create_archive(files: &[&Path], metadata: &[u8], out_filename: &Path) {
     builder.into_inner().unwrap();
 }
 
+// HACK(eddyb) hiding the actual implementation to avoid `rspirv::dr::Loader`
+// being hardcoded (as future work may need to customize it for various reasons).
+pub fn with_rspirv_loader<E>(
+    f: impl FnOnce(&mut dyn rspirv::binary::Consumer) -> Result<(), E>,
+) -> Result<rspirv::dr::Module, E> {
+    let mut loader = rspirv::dr::Loader::new();
+    f(&mut loader)?;
+    Ok(loader.module())
+}
+
 /// This is the actual guts of linking: the rest of the link-related functions are just digging through rustc's
 /// shenanigans to collect all the object files we need to link.
 fn do_link(
@@ -562,11 +572,8 @@ fn do_link(
 
     let mut modules = Vec::new();
     let mut add_module = |file_name: &OsStr, bytes: &[u8]| {
-        let module = {
-            let mut loader = rspirv::dr::Loader::new();
-            rspirv::binary::parse_bytes(bytes, &mut loader).unwrap();
-            loader.module()
-        };
+        let module =
+            with_rspirv_loader(|loader| rspirv::binary::parse_bytes(bytes, loader)).unwrap();
         if let Some(dir) = &cg_args.dump_pre_link {
             // FIXME(eddyb) is it a good idea to re-`assemble` the `rspirv::dr`
             // module, or should this just save the original bytes?
@@ -625,7 +632,7 @@ fn do_link(
 // TODO: WorkProduct impl
 pub(crate) fn run_thin(
     cgcx: &CodegenContext<SpirvCodegenBackend>,
-    modules: Vec<(String, SpirvThinBuffer)>,
+    modules: Vec<(String, SpirvModuleBuffer)>,
     cached_modules: Vec<(SerializedModule<SpirvModuleBuffer>, WorkProduct)>,
 ) -> Result<(Vec<LtoModuleCodegen<SpirvCodegenBackend>>, Vec<WorkProduct>), FatalError> {
     if cgcx.opts.cg.linker_plugin_lto.enabled() {
