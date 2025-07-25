@@ -19,5 +19,3 @@ arguments](./codegen-args.md) to aid observability. As of
 have been removed and replaced with the following:
 
 - `--specializer-debug` &rarr; `RUSTGPU_LOG=rustc_codegen_spirv::specializer=debug`
-- `--print-zombie` &rarr; `RUSTGPU_LOG=print_zombie=debug`
-- `--print-all-zombie` &rarr; `RUSTGPU_LOG=print_all_zombie=debug`

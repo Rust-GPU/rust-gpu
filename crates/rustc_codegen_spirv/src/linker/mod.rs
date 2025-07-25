@@ -308,8 +308,8 @@ pub fn link(
         simple_passes::check_fragment_insts(sess, &output)?;
     }
 
-    // HACK(eddyb) this has to run before the `report_and_remove_zombies` pass,
-    // so that any zombies that are passed as call arguments, but eventually unused,
+    // HACK(eddyb) this has to run before the `report_zombies` pass, so that
+    // any zombies that are passed as call arguments, but eventually unused,
     // won't be (incorrectly) considered used.
     {
         let _timer = sess.timer("link_remove_unused_params");
@@ -317,8 +317,8 @@ pub fn link(
     }
 
     if opts.early_report_zombies {
-        let _timer = sess.timer("link_report_and_remove_zombies");
-        zombies::report_and_remove_zombies(sess, &mut output)?;
+        let _timer = sess.timer("link_report_zombies");
+        zombies::report_zombies(sess, &output)?;
     }
 
     if opts.infer_storage_classes {
