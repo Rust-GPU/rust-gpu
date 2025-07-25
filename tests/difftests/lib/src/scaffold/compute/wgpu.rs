@@ -59,6 +59,7 @@ where
                 #[cfg(not(target_os = "linux"))]
                 backends: wgpu::Backends::PRIMARY,
                 flags: Default::default(),
+                memory_budget_thresholds: Default::default(),
                 backend_options: wgpu::BackendOptions {
                     #[cfg(target_os = "windows")]
                     dx12: wgpu::Dx12BackendOptions {

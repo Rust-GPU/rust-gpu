@@ -188,7 +188,7 @@ impl DifferenceDisplay for RawDiffer {
             .modify((0, 1), Span::column(3))
             .modify((0, 4), Span::column(3))
             // Remove the borders between merged cells
-            .with(tabled::settings::style::BorderSpanCorrection);
+            .with(tabled::settings::themes::BorderCorrection::span());
 
         let mut result = table.to_string();
 
