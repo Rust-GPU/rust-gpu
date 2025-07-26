@@ -124,8 +124,7 @@ fn main() {
         mouse_button_press_time: [f32::NEG_INFINITY; 3],
     };
 
-    // Limit to max ~60 fps update rate
-    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+    window.set_target_fps(60);
 
     let start_time = Instant::now();
 
