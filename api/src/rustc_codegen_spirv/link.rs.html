@@ -2,7 +2,7 @@
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">use </span><span class="kw">crate</span>::maybe_pqp_cg_ssa <span class="kw">as </span>rustc_codegen_ssa;
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::codegen_cx::{CodegenArgs, SpirvMetadata};
-<a href=#5 id=5 data-nosnippet>5</a><span class="kw">use crate</span>::{SpirvCodegenBackend, SpirvModuleBuffer, SpirvThinBuffer, linker};
+<a href=#5 id=5 data-nosnippet>5</a><span class="kw">use crate</span>::{SpirvCodegenBackend, SpirvModuleBuffer, linker};
 <a href=#6 id=6 data-nosnippet>6</a><span class="kw">use </span>ar::{Archive, GnuBuilder, Header};
 <a href=#7 id=7 data-nosnippet>7</a><span class="kw">use </span>rspirv::binary::Assemble;
 <a href=#8 id=8 data-nosnippet>8</a><span class="kw">use </span>rspirv::dr::Module;
@@ -548,124 +548,131 @@
 <a href=#548 id=548 data-nosnippet>548</a>    builder.into_inner().unwrap();
 <a href=#549 id=549 data-nosnippet>549</a>}
 <a href=#550 id=550 data-nosnippet>550</a>
-<a href=#551 id=551 data-nosnippet>551</a><span class="doccomment">/// This is the actual guts of linking: the rest of the link-related functions are just digging through rustc's
-<a href=#552 id=552 data-nosnippet>552</a>/// shenanigans to collect all the object files we need to link.
-<a href=#553 id=553 data-nosnippet>553</a></span><span class="kw">fn </span>do_link(
-<a href=#554 id=554 data-nosnippet>554</a>    sess: <span class="kw-2">&amp;</span>Session,
-<a href=#555 id=555 data-nosnippet>555</a>    cg_args: <span class="kw-2">&amp;</span>CodegenArgs,
-<a href=#556 id=556 data-nosnippet>556</a>    objects: <span class="kw-2">&amp;</span>[PathBuf],
-<a href=#557 id=557 data-nosnippet>557</a>    rlibs: <span class="kw-2">&amp;</span>[PathBuf],
-<a href=#558 id=558 data-nosnippet>558</a>    outputs: <span class="kw-2">&amp;</span>OutputFilenames,
-<a href=#559 id=559 data-nosnippet>559</a>    disambiguated_crate_name_for_dumps: <span class="kw-2">&amp;</span>OsStr,
-<a href=#560 id=560 data-nosnippet>560</a>) -&gt; linker::LinkResult {
-<a href=#561 id=561 data-nosnippet>561</a>    <span class="kw">let </span>load_modules_timer = sess.timer(<span class="string">"link_load_modules"</span>);
-<a href=#562 id=562 data-nosnippet>562</a>
-<a href=#563 id=563 data-nosnippet>563</a>    <span class="kw">let </span><span class="kw-2">mut </span>modules = Vec::new();
-<a href=#564 id=564 data-nosnippet>564</a>    <span class="kw">let </span><span class="kw-2">mut </span>add_module = |file_name: <span class="kw-2">&amp;</span>OsStr, bytes: <span class="kw-2">&amp;</span>[u8]| {
-<a href=#565 id=565 data-nosnippet>565</a>        <span class="kw">let </span>module = {
-<a href=#566 id=566 data-nosnippet>566</a>            <span class="kw">let </span><span class="kw-2">mut </span>loader = rspirv::dr::Loader::new();
-<a href=#567 id=567 data-nosnippet>567</a>            rspirv::binary::parse_bytes(bytes, <span class="kw-2">&amp;mut </span>loader).unwrap();
-<a href=#568 id=568 data-nosnippet>568</a>            loader.module()
-<a href=#569 id=569 data-nosnippet>569</a>        };
-<a href=#570 id=570 data-nosnippet>570</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = <span class="kw-2">&amp;</span>cg_args.dump_pre_link {
-<a href=#571 id=571 data-nosnippet>571</a>            <span class="comment">// FIXME(eddyb) is it a good idea to re-`assemble` the `rspirv::dr`
-<a href=#572 id=572 data-nosnippet>572</a>            // module, or should this just save the original bytes?
-<a href=#573 id=573 data-nosnippet>573</a>            </span>std::fs::write(
-<a href=#574 id=574 data-nosnippet>574</a>                dir.join(file_name).with_extension(<span class="string">"spv"</span>),
-<a href=#575 id=575 data-nosnippet>575</a>                spirv_tools::binary::from_binary(<span class="kw-2">&amp;</span>module.assemble()),
-<a href=#576 id=576 data-nosnippet>576</a>            )
-<a href=#577 id=577 data-nosnippet>577</a>            .unwrap();
-<a href=#578 id=578 data-nosnippet>578</a>        }
-<a href=#579 id=579 data-nosnippet>579</a>        modules.push(module);
-<a href=#580 id=580 data-nosnippet>580</a>    };
-<a href=#581 id=581 data-nosnippet>581</a>
-<a href=#582 id=582 data-nosnippet>582</a>    <span class="comment">// `objects` are the plain obj files we need to link - usually produced by the final crate.
-<a href=#583 id=583 data-nosnippet>583</a>    </span><span class="kw">for </span>obj <span class="kw">in </span>objects {
-<a href=#584 id=584 data-nosnippet>584</a>        add_module(obj.file_name().unwrap(), <span class="kw-2">&amp;</span>std::fs::read(obj).unwrap());
-<a href=#585 id=585 data-nosnippet>585</a>    }
-<a href=#586 id=586 data-nosnippet>586</a>
-<a href=#587 id=587 data-nosnippet>587</a>    <span class="comment">// `rlibs` are archive files we've created in `create_archive`, usually produced by crates that are being
-<a href=#588 id=588 data-nosnippet>588</a>    // referenced. We need to unpack them and add the modules inside.
-<a href=#589 id=589 data-nosnippet>589</a>    </span><span class="kw">for </span>rlib <span class="kw">in </span>rlibs {
-<a href=#590 id=590 data-nosnippet>590</a>        <span class="kw">let </span><span class="kw-2">mut </span>archive = Archive::new(File::open(rlib).unwrap());
-<a href=#591 id=591 data-nosnippet>591</a>        <span class="kw">while let </span><span class="prelude-val">Some</span>(entry) = archive.next_entry() {
-<a href=#592 id=592 data-nosnippet>592</a>            <span class="kw">let </span><span class="kw-2">mut </span>entry = entry.unwrap();
-<a href=#593 id=593 data-nosnippet>593</a>            <span class="kw">if </span>entry.header().identifier() != METADATA_FILENAME.as_bytes() {
-<a href=#594 id=594 data-nosnippet>594</a>                <span class="comment">// std::fs::read adds 1 to the size, so do the same here - see comment:
-<a href=#595 id=595 data-nosnippet>595</a>                // https://github.com/rust-lang/rust/blob/72868e017bdade60603a25889e253f556305f996/library/std/src/fs.rs#L200-L202
-<a href=#596 id=596 data-nosnippet>596</a>                </span><span class="kw">let </span><span class="kw-2">mut </span>bytes = Vec::with_capacity(entry.header().size() <span class="kw">as </span>usize + <span class="number">1</span>);
-<a href=#597 id=597 data-nosnippet>597</a>                entry.read_to_end(<span class="kw-2">&amp;mut </span>bytes).unwrap();
-<a href=#598 id=598 data-nosnippet>598</a>
-<a href=#599 id=599 data-nosnippet>599</a>                <span class="kw">let </span>file_name = std::str::from_utf8(entry.header().identifier()).unwrap();
-<a href=#600 id=600 data-nosnippet>600</a>                add_module(OsStr::new(file_name), <span class="kw-2">&amp;</span>bytes);
-<a href=#601 id=601 data-nosnippet>601</a>            }
-<a href=#602 id=602 data-nosnippet>602</a>        }
-<a href=#603 id=603 data-nosnippet>603</a>    }
-<a href=#604 id=604 data-nosnippet>604</a>
-<a href=#605 id=605 data-nosnippet>605</a>    drop(load_modules_timer);
-<a href=#606 id=606 data-nosnippet>606</a>
-<a href=#607 id=607 data-nosnippet>607</a>    <span class="comment">// Do the link...
-<a href=#608 id=608 data-nosnippet>608</a>    </span><span class="kw">let </span>link_result = linker::link(
-<a href=#609 id=609 data-nosnippet>609</a>        sess,
-<a href=#610 id=610 data-nosnippet>610</a>        modules,
-<a href=#611 id=611 data-nosnippet>611</a>        <span class="kw-2">&amp;</span>cg_args.linker_opts,
-<a href=#612 id=612 data-nosnippet>612</a>        outputs,
-<a href=#613 id=613 data-nosnippet>613</a>        disambiguated_crate_name_for_dumps,
-<a href=#614 id=614 data-nosnippet>614</a>    );
-<a href=#615 id=615 data-nosnippet>615</a>
-<a href=#616 id=616 data-nosnippet>616</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(v) = link_result {
-<a href=#617 id=617 data-nosnippet>617</a>        v
-<a href=#618 id=618 data-nosnippet>618</a>    } <span class="kw">else </span>{
-<a href=#619 id=619 data-nosnippet>619</a>        sess.dcx().abort_if_errors();
-<a href=#620 id=620 data-nosnippet>620</a>        <span class="macro">bug!</span>(<span class="string">"Linker errored, but no error reported"</span>);
-<a href=#621 id=621 data-nosnippet>621</a>    }
-<a href=#622 id=622 data-nosnippet>622</a>}
-<a href=#623 id=623 data-nosnippet>623</a>
-<a href=#624 id=624 data-nosnippet>624</a><span class="doccomment">/// As of right now, this is essentially a no-op, just plumbing through all the files.
-<a href=#625 id=625 data-nosnippet>625</a></span><span class="comment">// TODO: WorkProduct impl
-<a href=#626 id=626 data-nosnippet>626</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>run_thin(
-<a href=#627 id=627 data-nosnippet>627</a>    cgcx: <span class="kw-2">&amp;</span>CodegenContext&lt;SpirvCodegenBackend&gt;,
-<a href=#628 id=628 data-nosnippet>628</a>    modules: Vec&lt;(String, SpirvThinBuffer)&gt;,
-<a href=#629 id=629 data-nosnippet>629</a>    cached_modules: Vec&lt;(SerializedModule&lt;SpirvModuleBuffer&gt;, WorkProduct)&gt;,
-<a href=#630 id=630 data-nosnippet>630</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;LtoModuleCodegen&lt;SpirvCodegenBackend&gt;&gt;, Vec&lt;WorkProduct&gt;), FatalError&gt; {
-<a href=#631 id=631 data-nosnippet>631</a>    <span class="kw">if </span>cgcx.opts.cg.linker_plugin_lto.enabled() {
-<a href=#632 id=632 data-nosnippet>632</a>        <span class="macro">unreachable!</span>(<span class="string">"We should never reach this case if the LTO step is deferred to the linker"</span>);
-<a href=#633 id=633 data-nosnippet>633</a>    }
-<a href=#634 id=634 data-nosnippet>634</a>    <span class="macro">assert!</span>(
-<a href=#635 id=635 data-nosnippet>635</a>        cgcx.lto == Lto::ThinLocal,
-<a href=#636 id=636 data-nosnippet>636</a>        <span class="string">"no actual LTO implemented in Rust-GPU"
-<a href=#637 id=637 data-nosnippet>637</a>    </span>);
-<a href=#638 id=638 data-nosnippet>638</a>    <span class="kw">let </span><span class="kw-2">mut </span>thin_buffers = Vec::with_capacity(modules.len());
-<a href=#639 id=639 data-nosnippet>639</a>    <span class="kw">let </span><span class="kw-2">mut </span>module_names = Vec::with_capacity(modules.len() + cached_modules.len());
-<a href=#640 id=640 data-nosnippet>640</a>
-<a href=#641 id=641 data-nosnippet>641</a>    <span class="kw">for </span>(name, buffer) <span class="kw">in </span>modules {
-<a href=#642 id=642 data-nosnippet>642</a>        <span class="kw">let </span>cname = CString::new(name.clone()).unwrap();
-<a href=#643 id=643 data-nosnippet>643</a>        thin_buffers.push(buffer);
-<a href=#644 id=644 data-nosnippet>644</a>        module_names.push(cname);
-<a href=#645 id=645 data-nosnippet>645</a>    }
-<a href=#646 id=646 data-nosnippet>646</a>
-<a href=#647 id=647 data-nosnippet>647</a>    <span class="kw">let </span><span class="kw-2">mut </span>serialized_modules = Vec::with_capacity(cached_modules.len());
-<a href=#648 id=648 data-nosnippet>648</a>
-<a href=#649 id=649 data-nosnippet>649</a>    <span class="kw">for </span>(sm, wp) <span class="kw">in </span>cached_modules {
-<a href=#650 id=650 data-nosnippet>650</a>        <span class="kw">let </span>_slice_u8 = sm.data();
-<a href=#651 id=651 data-nosnippet>651</a>        serialized_modules.push(sm);
-<a href=#652 id=652 data-nosnippet>652</a>        module_names.push(CString::new(wp.cgu_name).unwrap());
-<a href=#653 id=653 data-nosnippet>653</a>    }
-<a href=#654 id=654 data-nosnippet>654</a>
-<a href=#655 id=655 data-nosnippet>655</a>    <span class="kw">let </span>shared = Arc::new(ThinShared {
-<a href=#656 id=656 data-nosnippet>656</a>        data: (),
-<a href=#657 id=657 data-nosnippet>657</a>        thin_buffers,
-<a href=#658 id=658 data-nosnippet>658</a>        serialized_modules,
-<a href=#659 id=659 data-nosnippet>659</a>        module_names,
-<a href=#660 id=660 data-nosnippet>660</a>    });
+<a href=#551 id=551 data-nosnippet>551</a><span class="comment">// HACK(eddyb) hiding the actual implementation to avoid `rspirv::dr::Loader`
+<a href=#552 id=552 data-nosnippet>552</a>// being hardcoded (as future work may need to customize it for various reasons).
+<a href=#553 id=553 data-nosnippet>553</a></span><span class="kw">pub fn </span>with_rspirv_loader&lt;E&gt;(
+<a href=#554 id=554 data-nosnippet>554</a>    f: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span><span class="kw">dyn </span>rspirv::binary::Consumer) -&gt; <span class="prelude-ty">Result</span>&lt;(), E&gt;,
+<a href=#555 id=555 data-nosnippet>555</a>) -&gt; <span class="prelude-ty">Result</span>&lt;rspirv::dr::Module, E&gt; {
+<a href=#556 id=556 data-nosnippet>556</a>    <span class="kw">let </span><span class="kw-2">mut </span>loader = rspirv::dr::Loader::new();
+<a href=#557 id=557 data-nosnippet>557</a>    f(<span class="kw-2">&amp;mut </span>loader)<span class="question-mark">?</span>;
+<a href=#558 id=558 data-nosnippet>558</a>    <span class="prelude-val">Ok</span>(loader.module())
+<a href=#559 id=559 data-nosnippet>559</a>}
+<a href=#560 id=560 data-nosnippet>560</a>
+<a href=#561 id=561 data-nosnippet>561</a><span class="doccomment">/// This is the actual guts of linking: the rest of the link-related functions are just digging through rustc's
+<a href=#562 id=562 data-nosnippet>562</a>/// shenanigans to collect all the object files we need to link.
+<a href=#563 id=563 data-nosnippet>563</a></span><span class="kw">fn </span>do_link(
+<a href=#564 id=564 data-nosnippet>564</a>    sess: <span class="kw-2">&amp;</span>Session,
+<a href=#565 id=565 data-nosnippet>565</a>    cg_args: <span class="kw-2">&amp;</span>CodegenArgs,
+<a href=#566 id=566 data-nosnippet>566</a>    objects: <span class="kw-2">&amp;</span>[PathBuf],
+<a href=#567 id=567 data-nosnippet>567</a>    rlibs: <span class="kw-2">&amp;</span>[PathBuf],
+<a href=#568 id=568 data-nosnippet>568</a>    outputs: <span class="kw-2">&amp;</span>OutputFilenames,
+<a href=#569 id=569 data-nosnippet>569</a>    disambiguated_crate_name_for_dumps: <span class="kw-2">&amp;</span>OsStr,
+<a href=#570 id=570 data-nosnippet>570</a>) -&gt; linker::LinkResult {
+<a href=#571 id=571 data-nosnippet>571</a>    <span class="kw">let </span>load_modules_timer = sess.timer(<span class="string">"link_load_modules"</span>);
+<a href=#572 id=572 data-nosnippet>572</a>
+<a href=#573 id=573 data-nosnippet>573</a>    <span class="kw">let </span><span class="kw-2">mut </span>modules = Vec::new();
+<a href=#574 id=574 data-nosnippet>574</a>    <span class="kw">let </span><span class="kw-2">mut </span>add_module = |file_name: <span class="kw-2">&amp;</span>OsStr, bytes: <span class="kw-2">&amp;</span>[u8]| {
+<a href=#575 id=575 data-nosnippet>575</a>        <span class="kw">let </span>module =
+<a href=#576 id=576 data-nosnippet>576</a>            with_rspirv_loader(|loader| rspirv::binary::parse_bytes(bytes, loader)).unwrap();
+<a href=#577 id=577 data-nosnippet>577</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = <span class="kw-2">&amp;</span>cg_args.dump_pre_link {
+<a href=#578 id=578 data-nosnippet>578</a>            <span class="comment">// FIXME(eddyb) is it a good idea to re-`assemble` the `rspirv::dr`
+<a href=#579 id=579 data-nosnippet>579</a>            // module, or should this just save the original bytes?
+<a href=#580 id=580 data-nosnippet>580</a>            </span>std::fs::write(
+<a href=#581 id=581 data-nosnippet>581</a>                dir.join(file_name).with_extension(<span class="string">"spv"</span>),
+<a href=#582 id=582 data-nosnippet>582</a>                spirv_tools::binary::from_binary(<span class="kw-2">&amp;</span>module.assemble()),
+<a href=#583 id=583 data-nosnippet>583</a>            )
+<a href=#584 id=584 data-nosnippet>584</a>            .unwrap();
+<a href=#585 id=585 data-nosnippet>585</a>        }
+<a href=#586 id=586 data-nosnippet>586</a>        modules.push(module);
+<a href=#587 id=587 data-nosnippet>587</a>    };
+<a href=#588 id=588 data-nosnippet>588</a>
+<a href=#589 id=589 data-nosnippet>589</a>    <span class="comment">// `objects` are the plain obj files we need to link - usually produced by the final crate.
+<a href=#590 id=590 data-nosnippet>590</a>    </span><span class="kw">for </span>obj <span class="kw">in </span>objects {
+<a href=#591 id=591 data-nosnippet>591</a>        add_module(obj.file_name().unwrap(), <span class="kw-2">&amp;</span>std::fs::read(obj).unwrap());
+<a href=#592 id=592 data-nosnippet>592</a>    }
+<a href=#593 id=593 data-nosnippet>593</a>
+<a href=#594 id=594 data-nosnippet>594</a>    <span class="comment">// `rlibs` are archive files we've created in `create_archive`, usually produced by crates that are being
+<a href=#595 id=595 data-nosnippet>595</a>    // referenced. We need to unpack them and add the modules inside.
+<a href=#596 id=596 data-nosnippet>596</a>    </span><span class="kw">for </span>rlib <span class="kw">in </span>rlibs {
+<a href=#597 id=597 data-nosnippet>597</a>        <span class="kw">let </span><span class="kw-2">mut </span>archive = Archive::new(File::open(rlib).unwrap());
+<a href=#598 id=598 data-nosnippet>598</a>        <span class="kw">while let </span><span class="prelude-val">Some</span>(entry) = archive.next_entry() {
+<a href=#599 id=599 data-nosnippet>599</a>            <span class="kw">let </span><span class="kw-2">mut </span>entry = entry.unwrap();
+<a href=#600 id=600 data-nosnippet>600</a>            <span class="kw">if </span>entry.header().identifier() != METADATA_FILENAME.as_bytes() {
+<a href=#601 id=601 data-nosnippet>601</a>                <span class="comment">// std::fs::read adds 1 to the size, so do the same here - see comment:
+<a href=#602 id=602 data-nosnippet>602</a>                // https://github.com/rust-lang/rust/blob/72868e017bdade60603a25889e253f556305f996/library/std/src/fs.rs#L200-L202
+<a href=#603 id=603 data-nosnippet>603</a>                </span><span class="kw">let </span><span class="kw-2">mut </span>bytes = Vec::with_capacity(entry.header().size() <span class="kw">as </span>usize + <span class="number">1</span>);
+<a href=#604 id=604 data-nosnippet>604</a>                entry.read_to_end(<span class="kw-2">&amp;mut </span>bytes).unwrap();
+<a href=#605 id=605 data-nosnippet>605</a>
+<a href=#606 id=606 data-nosnippet>606</a>                <span class="kw">let </span>file_name = std::str::from_utf8(entry.header().identifier()).unwrap();
+<a href=#607 id=607 data-nosnippet>607</a>                add_module(OsStr::new(file_name), <span class="kw-2">&amp;</span>bytes);
+<a href=#608 id=608 data-nosnippet>608</a>            }
+<a href=#609 id=609 data-nosnippet>609</a>        }
+<a href=#610 id=610 data-nosnippet>610</a>    }
+<a href=#611 id=611 data-nosnippet>611</a>
+<a href=#612 id=612 data-nosnippet>612</a>    drop(load_modules_timer);
+<a href=#613 id=613 data-nosnippet>613</a>
+<a href=#614 id=614 data-nosnippet>614</a>    <span class="comment">// Do the link...
+<a href=#615 id=615 data-nosnippet>615</a>    </span><span class="kw">let </span>link_result = linker::link(
+<a href=#616 id=616 data-nosnippet>616</a>        sess,
+<a href=#617 id=617 data-nosnippet>617</a>        modules,
+<a href=#618 id=618 data-nosnippet>618</a>        <span class="kw-2">&amp;</span>cg_args.linker_opts,
+<a href=#619 id=619 data-nosnippet>619</a>        outputs,
+<a href=#620 id=620 data-nosnippet>620</a>        disambiguated_crate_name_for_dumps,
+<a href=#621 id=621 data-nosnippet>621</a>    );
+<a href=#622 id=622 data-nosnippet>622</a>
+<a href=#623 id=623 data-nosnippet>623</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(v) = link_result {
+<a href=#624 id=624 data-nosnippet>624</a>        v
+<a href=#625 id=625 data-nosnippet>625</a>    } <span class="kw">else </span>{
+<a href=#626 id=626 data-nosnippet>626</a>        sess.dcx().abort_if_errors();
+<a href=#627 id=627 data-nosnippet>627</a>        <span class="macro">bug!</span>(<span class="string">"Linker errored, but no error reported"</span>);
+<a href=#628 id=628 data-nosnippet>628</a>    }
+<a href=#629 id=629 data-nosnippet>629</a>}
+<a href=#630 id=630 data-nosnippet>630</a>
+<a href=#631 id=631 data-nosnippet>631</a><span class="doccomment">/// As of right now, this is essentially a no-op, just plumbing through all the files.
+<a href=#632 id=632 data-nosnippet>632</a></span><span class="comment">// TODO: WorkProduct impl
+<a href=#633 id=633 data-nosnippet>633</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>run_thin(
+<a href=#634 id=634 data-nosnippet>634</a>    cgcx: <span class="kw-2">&amp;</span>CodegenContext&lt;SpirvCodegenBackend&gt;,
+<a href=#635 id=635 data-nosnippet>635</a>    modules: Vec&lt;(String, SpirvModuleBuffer)&gt;,
+<a href=#636 id=636 data-nosnippet>636</a>    cached_modules: Vec&lt;(SerializedModule&lt;SpirvModuleBuffer&gt;, WorkProduct)&gt;,
+<a href=#637 id=637 data-nosnippet>637</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(Vec&lt;LtoModuleCodegen&lt;SpirvCodegenBackend&gt;&gt;, Vec&lt;WorkProduct&gt;), FatalError&gt; {
+<a href=#638 id=638 data-nosnippet>638</a>    <span class="kw">if </span>cgcx.opts.cg.linker_plugin_lto.enabled() {
+<a href=#639 id=639 data-nosnippet>639</a>        <span class="macro">unreachable!</span>(<span class="string">"We should never reach this case if the LTO step is deferred to the linker"</span>);
+<a href=#640 id=640 data-nosnippet>640</a>    }
+<a href=#641 id=641 data-nosnippet>641</a>    <span class="macro">assert!</span>(
+<a href=#642 id=642 data-nosnippet>642</a>        cgcx.lto == Lto::ThinLocal,
+<a href=#643 id=643 data-nosnippet>643</a>        <span class="string">"no actual LTO implemented in Rust-GPU"
+<a href=#644 id=644 data-nosnippet>644</a>    </span>);
+<a href=#645 id=645 data-nosnippet>645</a>    <span class="kw">let </span><span class="kw-2">mut </span>thin_buffers = Vec::with_capacity(modules.len());
+<a href=#646 id=646 data-nosnippet>646</a>    <span class="kw">let </span><span class="kw-2">mut </span>module_names = Vec::with_capacity(modules.len() + cached_modules.len());
+<a href=#647 id=647 data-nosnippet>647</a>
+<a href=#648 id=648 data-nosnippet>648</a>    <span class="kw">for </span>(name, buffer) <span class="kw">in </span>modules {
+<a href=#649 id=649 data-nosnippet>649</a>        <span class="kw">let </span>cname = CString::new(name.clone()).unwrap();
+<a href=#650 id=650 data-nosnippet>650</a>        thin_buffers.push(buffer);
+<a href=#651 id=651 data-nosnippet>651</a>        module_names.push(cname);
+<a href=#652 id=652 data-nosnippet>652</a>    }
+<a href=#653 id=653 data-nosnippet>653</a>
+<a href=#654 id=654 data-nosnippet>654</a>    <span class="kw">let </span><span class="kw-2">mut </span>serialized_modules = Vec::with_capacity(cached_modules.len());
+<a href=#655 id=655 data-nosnippet>655</a>
+<a href=#656 id=656 data-nosnippet>656</a>    <span class="kw">for </span>(sm, wp) <span class="kw">in </span>cached_modules {
+<a href=#657 id=657 data-nosnippet>657</a>        <span class="kw">let </span>_slice_u8 = sm.data();
+<a href=#658 id=658 data-nosnippet>658</a>        serialized_modules.push(sm);
+<a href=#659 id=659 data-nosnippet>659</a>        module_names.push(CString::new(wp.cgu_name).unwrap());
+<a href=#660 id=660 data-nosnippet>660</a>    }
 <a href=#661 id=661 data-nosnippet>661</a>
-<a href=#662 id=662 data-nosnippet>662</a>    <span class="kw">let </span><span class="kw-2">mut </span>opt_jobs = <span class="macro">vec!</span>[];
-<a href=#663 id=663 data-nosnippet>663</a>    <span class="kw">for </span>(module_index, <span class="kw">_</span>) <span class="kw">in </span>shared.module_names.iter().enumerate() {
-<a href=#664 id=664 data-nosnippet>664</a>        opt_jobs.push(LtoModuleCodegen::Thin(ThinModule {
-<a href=#665 id=665 data-nosnippet>665</a>            shared: shared.clone(),
-<a href=#666 id=666 data-nosnippet>666</a>            idx: module_index,
-<a href=#667 id=667 data-nosnippet>667</a>        }));
-<a href=#668 id=668 data-nosnippet>668</a>    }
-<a href=#669 id=669 data-nosnippet>669</a>
-<a href=#670 id=670 data-nosnippet>670</a>    <span class="prelude-val">Ok</span>((opt_jobs, <span class="macro">vec!</span>[]))
-<a href=#671 id=671 data-nosnippet>671</a>}</code></pre></div></section></main></body></html>
+<a href=#662 id=662 data-nosnippet>662</a>    <span class="kw">let </span>shared = Arc::new(ThinShared {
+<a href=#663 id=663 data-nosnippet>663</a>        data: (),
+<a href=#664 id=664 data-nosnippet>664</a>        thin_buffers,
+<a href=#665 id=665 data-nosnippet>665</a>        serialized_modules,
+<a href=#666 id=666 data-nosnippet>666</a>        module_names,
+<a href=#667 id=667 data-nosnippet>667</a>    });
+<a href=#668 id=668 data-nosnippet>668</a>
+<a href=#669 id=669 data-nosnippet>669</a>    <span class="kw">let </span><span class="kw-2">mut </span>opt_jobs = <span class="macro">vec!</span>[];
+<a href=#670 id=670 data-nosnippet>670</a>    <span class="kw">for </span>(module_index, <span class="kw">_</span>) <span class="kw">in </span>shared.module_names.iter().enumerate() {
+<a href=#671 id=671 data-nosnippet>671</a>        opt_jobs.push(LtoModuleCodegen::Thin(ThinModule {
+<a href=#672 id=672 data-nosnippet>672</a>            shared: shared.clone(),
+<a href=#673 id=673 data-nosnippet>673</a>            idx: module_index,
+<a href=#674 id=674 data-nosnippet>674</a>        }));
+<a href=#675 id=675 data-nosnippet>675</a>    }
+<a href=#676 id=676 data-nosnippet>676</a>
+<a href=#677 id=677 data-nosnippet>677</a>    <span class="prelude-val">Ok</span>((opt_jobs, <span class="macro">vec!</span>[]))
+<a href=#678 id=678 data-nosnippet>678</a>}</code></pre></div></section></main></body></html>
