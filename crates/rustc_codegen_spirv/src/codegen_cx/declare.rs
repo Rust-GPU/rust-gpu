@@ -394,7 +394,7 @@ impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
                 other.debug(g.ty, self)
             )),
         };
-        let v = self.create_const_alloc(alloc, value_ty);
+        let v = self.try_read_from_const_alloc(alloc, value_ty).unwrap();
         assert_ty_eq!(self, value_ty, v.ty);
         self.builder
             .set_global_initializer(g.def_cx(self), v.def_cx(self));
