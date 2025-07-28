@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["inflate"],"struct":["FullReset","InflateState","MinReset","ZeroReset"],"trait":["ResetPolicy"]};

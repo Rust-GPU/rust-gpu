@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["FlushCompress","FlushDecompress","Status"],"mod":["bufread","read","write"],"struct":["Compress","CompressError","Compression","Crc","CrcReader","CrcWriter","Decompress","DecompressError","GzBuilder","GzHeader"]};

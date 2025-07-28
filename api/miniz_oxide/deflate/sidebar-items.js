@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["CompressionLevel"],"fn":["compress_to_vec","compress_to_vec_zlib"],"mod":["core","stream"]};

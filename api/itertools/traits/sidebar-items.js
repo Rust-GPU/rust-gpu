@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["HomogeneousTuple"]};
+window.SIDEBAR_ITEMS = {"trait":["HomogeneousTuple","IteratorIndex"]};

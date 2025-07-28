@@ -1,0 +1,145 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="github crates-io docs-rs"><title>serde_untagged - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="serde_untagged" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../serde_untagged/index.html">serde_<wbr>untagged</a><span class="version">0.1.7</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example-string-or-struct" title="Example: string or struct">Example: string or struct</a></li><li><a href="#example-unit-variant-or-bool" title="Example: unit variant or bool">Example: unit variant or bool</a></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>serde_untagged</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/serde_untagged/lib.rs.html#1-970">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p><a href="https://github.com/dtolnay/serde-untagged"><img src="https://img.shields.io/badge/github-8da0cb?style=for-the-badge&amp;labelColor=555555&amp;logo=github" alt="github" /></a> <a href="https://crates.io/crates/serde-untagged"><img src="https://img.shields.io/badge/crates.io-fc8d62?style=for-the-badge&amp;labelColor=555555&amp;logo=rust" alt="crates-io" /></a> <a href="https://docs.rs/serde-untagged"><img src="https://img.shields.io/badge/docs.rs-66c2a5?style=for-the-badge&amp;labelColor=555555&amp;logo=docs.rs" alt="docs-rs" /></a></p>
+<br>
+<p>This crate provides a Serde <code>Visitor</code> implementation that is useful for
+deserializing untagged enums.</p>
+<p>Untagged enum <code>Deserialize</code> impls look like this:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>serde::de::{Deserialize, Deserializer};
+<span class="kw">use </span>serde_untagged::UntaggedEnumVisitor;
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; Deserialize&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$MyType </span>{
+    <span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, D::Error&gt;
+    <span class="kw">where
+        </span>D: Deserializer&lt;<span class="lifetime">'de</span>&gt;,
+    {
+        UntaggedEnumVisitor::new()
+            <span class="comment">/*
+             *
+             */
+            </span>.deserialize(deserializer)
+    }
+}</code></pre></div>
+<p>Inside the <code>/* ... */</code>, we list each type that the untagged enum needs to
+support deserializing from, giving a closure that turns the input into
+$MyType. The following types are supported:</p>
+<ul>
+<li>bool</li>
+<li>i8, i16, i32, i64, i128, u8, u16, u32, u64, u128</li>
+<li>f32</li>
+<li>f64</li>
+<li>char</li>
+<li>string</li>
+<li>borrowed_str</li>
+<li>bytes</li>
+<li>borrowed_bytes</li>
+<li>byte_buf</li>
+<li>unit</li>
+<li>seq</li>
+<li>map</li>
+</ul>
+<h2 id="example-string-or-struct"><a class="doc-anchor" href="#example-string-or-struct">§</a>Example: string or struct</h2>
+<p>Cargo’s <code>http.ssl-version</code> configuration supports deserialization from the
+following two representations:</p>
+<div class="example-wrap"><pre class="language-toml"><code>[http]
+ssl-version = &quot;tlsv1.3&quot;</code></pre></div><div class="example-wrap"><pre class="language-toml"><code>[http]
+ssl-version.min = &quot;tlsv1.2&quot;
+ssl-version.max = &quot;tlsv1.3&quot;</code></pre></div>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>serde::de::{Deserialize, Deserializer};
+<span class="kw">use </span>serde_derive::Deserialize;
+<span class="kw">use </span>serde_untagged::UntaggedEnumVisitor;
+
+<span class="kw">pub enum </span>SslVersionConfig {
+    Single(String),
+    Range(SslVersionConfigRange),
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; Deserialize&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>SslVersionConfig {
+    <span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, D::Error&gt;
+    <span class="kw">where
+        </span>D: Deserializer&lt;<span class="lifetime">'de</span>&gt;,
+    {
+        UntaggedEnumVisitor::new()
+            .string(|single| <span class="prelude-val">Ok</span>(SslVersionConfig::Single(single.to_owned())))
+            .map(|map| map.deserialize().map(SslVersionConfig::Range))
+            .deserialize(deserializer)
+    }
+}
+
+<span class="attr">#[derive(Deserialize)]
+</span><span class="kw">pub struct </span>SslVersionConfigRange {
+    <span class="kw">pub </span>min: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    <span class="kw">pub </span>max: <span class="prelude-ty">Option</span>&lt;String&gt;,
+}</code></pre></div>
+<h2 id="example-unit-variant-or-bool"><a class="doc-anchor" href="#example-unit-variant-or-bool">§</a>Example: unit variant or bool</h2>
+<p>Cargo’s LTO setting in profiles supports the 5 values <code>false</code>, <code>true</code>,
+<code>"fat"</code>, <code>"thin"</code>, and <code>"off"</code>.</p>
+<div class="example-wrap"><pre class="language-toml"><code>[profile.release]
+lto = &quot;thin&quot;</code></pre></div>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>serde::de::{Deserialize, Deserializer, IntoDeserializer};
+<span class="kw">use </span>serde_derive::Deserialize;
+<span class="kw">use </span>serde_untagged::UntaggedEnumVisitor;
+
+<span class="kw">pub enum </span>LinkTimeOptimization {
+    Enabled(bool),
+    Enum(LinkTimeOptimizationString),
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; Deserialize&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>LinkTimeOptimization {
+    <span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, D::Error&gt;
+    <span class="kw">where
+        </span>D: Deserializer&lt;<span class="lifetime">'de</span>&gt;,
+    {
+        UntaggedEnumVisitor::new()
+            .bool(|b| <span class="prelude-val">Ok</span>(LinkTimeOptimization::Enabled(b)))
+            .string(|string| {
+                <span class="kw">let </span>de = string.into_deserializer();
+                LinkTimeOptimizationString::deserialize(de).map(LinkTimeOptimization::Enum)
+            })
+            .deserialize(deserializer)
+    }
+}
+
+<span class="attr">#[derive(Deserialize)]
+#[serde(rename = <span class="string">"lowercase"</span>)]
+</span><span class="kw">pub enum </span>LinkTimeOptimizationString {
+    Fat,
+    Thin,
+    Off,
+}</code></pre></div>
+<p>Since <code>lto = true</code> means the same thing as <code>lto = "fat"</code> to Cargo, there are
+really only 4 distinct options. This type could be implemented alternatively
+as:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>serde::de::{Deserialize, Deserializer, Unexpected};
+<span class="kw">use </span>serde_untagged::UntaggedEnumVisitor;
+
+<span class="kw">pub enum </span>LinkTimeOptimization {
+    ThinLocal,  <span class="comment">// false
+    </span>Fat,        <span class="comment">// true or "fat"
+    </span>Thin,       <span class="comment">// "thin"
+    </span>Off,        <span class="comment">// "off"
+</span>}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'de</span>&gt; Deserialize&lt;<span class="lifetime">'de</span>&gt; <span class="kw">for </span>LinkTimeOptimization {
+    <span class="kw">fn </span>deserialize&lt;D&gt;(deserializer: D) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, D::Error&gt;
+    <span class="kw">where
+        </span>D: Deserializer&lt;<span class="lifetime">'de</span>&gt;,
+    {
+        UntaggedEnumVisitor::new()
+            .bool(|b| <span class="kw">match </span>b {
+                <span class="bool-val">false </span>=&gt; <span class="prelude-val">Ok</span>(LinkTimeOptimization::ThinLocal),
+                <span class="bool-val">true </span>=&gt; <span class="prelude-val">Ok</span>(LinkTimeOptimization::Fat),
+            })
+            .string(|string| <span class="kw">match </span>string {
+                <span class="string">"fat" </span>=&gt; <span class="prelude-val">Ok</span>(LinkTimeOptimization::Fat),
+                <span class="string">"thin" </span>=&gt; <span class="prelude-val">Ok</span>(LinkTimeOptimization::Thin),
+                <span class="string">"off" </span>=&gt; <span class="prelude-val">Ok</span>(LinkTimeOptimization::Off),
+                <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(serde::de::Error::invalid_value(
+                    Unexpected::Str(string),
+                    <span class="kw-2">&amp;</span><span class="string">r#""fat" or "thin" or "off""#</span>,
+                )),
+            })
+            .deserialize(deserializer)
+    }
+}</code></pre></div>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="de/index.html" title="mod serde_untagged::de">de</a></dt></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.UntaggedEnumVisitor.html" title="struct serde_untagged::UntaggedEnumVisitor">Untagged<wbr>Enum<wbr>Visitor</a></dt></dl></section></div></main></body></html>

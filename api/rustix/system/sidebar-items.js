@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["sethostname","uname"],"struct":["Uname"]};
+window.SIDEBAR_ITEMS = {"fn":["setdomainname","sethostname","uname"],"struct":["Uname"]};

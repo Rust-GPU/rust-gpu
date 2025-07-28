@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["bit_reader","bit_reader_reverse","block_decoder","decodebuffer","dictionary","literals_section_decoder","scratch","sequence_execution","sequence_section_decoder"]};

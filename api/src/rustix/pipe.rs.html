@@ -1,224 +1,222 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustix-0.38.42/src/pipe.rs`."><title>pipe.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustix/</div>pipe.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! `pipe` and related APIs.
-<a href=#2 id=2 data-nosnippet>2</a>//!
-<a href=#3 id=3 data-nosnippet>3</a>//! # Safety
-<a href=#4 id=4 data-nosnippet>4</a>//!
-<a href=#5 id=5 data-nosnippet>5</a>//! `vmsplice` is an unsafe function.
-<a href=#6 id=6 data-nosnippet>6</a>
-<a href=#7 id=7 data-nosnippet>7</a></span><span class="attr">#![allow(unsafe_code)]
-<a href=#8 id=8 data-nosnippet>8</a>
-<a href=#9 id=9 data-nosnippet>9</a></span><span class="kw">use </span><span class="kw">crate</span>::fd::OwnedFd;
-<a href=#10 id=10 data-nosnippet>10</a><span class="kw">use crate</span>::{backend, io};
-<a href=#11 id=11 data-nosnippet>11</a><span class="attr">#[cfg(not(any(
-<a href=#12 id=12 data-nosnippet>12</a>    solarish,
-<a href=#13 id=13 data-nosnippet>13</a>    windows,
-<a href=#14 id=14 data-nosnippet>14</a>    target_os = <span class="string">"espidf"</span>,
-<a href=#15 id=15 data-nosnippet>15</a>    target_os = <span class="string">"haiku"</span>,
-<a href=#16 id=16 data-nosnippet>16</a>    target_os = <span class="string">"redox"</span>,
-<a href=#17 id=17 data-nosnippet>17</a>    target_os = <span class="string">"vita"</span>,
-<a href=#18 id=18 data-nosnippet>18</a>    target_os = <span class="string">"wasi"</span>,
-<a href=#19 id=19 data-nosnippet>19</a>)))]
-<a href=#20 id=20 data-nosnippet>20</a></span><span class="kw">use </span>backend::c;
-<a href=#21 id=21 data-nosnippet>21</a><span class="attr">#[cfg(linux_kernel)]
-<a href=#22 id=22 data-nosnippet>22</a></span><span class="kw">use </span>backend::fd::AsFd;
-<a href=#23 id=23 data-nosnippet>23</a>
-<a href=#24 id=24 data-nosnippet>24</a><span class="attr">#[cfg(not(apple))]
-<a href=#25 id=25 data-nosnippet>25</a></span><span class="kw">pub use </span>backend::pipe::types::PipeFlags;
-<a href=#26 id=26 data-nosnippet>26</a>
-<a href=#27 id=27 data-nosnippet>27</a><span class="attr">#[cfg(linux_kernel)]
-<a href=#28 id=28 data-nosnippet>28</a></span><span class="kw">pub use </span>backend::pipe::types::{IoSliceRaw, SpliceFlags};
-<a href=#29 id=29 data-nosnippet>29</a>
-<a href=#30 id=30 data-nosnippet>30</a><span class="doccomment">/// `PIPE_BUF`—The maximum length at which writes to a pipe are atomic.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rustix-1.0.8/src/pipe.rs`."><title>pipe.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rustix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">rustix/</div>pipe.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! `pipe` and related APIs.
+<a href=#2 id=2 data-nosnippet>2</a>
+<a href=#3 id=3 data-nosnippet>3</a></span><span class="attr">#![allow(unsafe_code)]
+<a href=#4 id=4 data-nosnippet>4</a>
+<a href=#5 id=5 data-nosnippet>5</a></span><span class="kw">use </span><span class="kw">crate</span>::fd::OwnedFd;
+<a href=#6 id=6 data-nosnippet>6</a><span class="kw">use crate</span>::{backend, io};
+<a href=#7 id=7 data-nosnippet>7</a><span class="attr">#[cfg(not(any(
+<a href=#8 id=8 data-nosnippet>8</a>    solarish,
+<a href=#9 id=9 data-nosnippet>9</a>    windows,
+<a href=#10 id=10 data-nosnippet>10</a>    target_os = <span class="string">"espidf"</span>,
+<a href=#11 id=11 data-nosnippet>11</a>    target_os = <span class="string">"haiku"</span>,
+<a href=#12 id=12 data-nosnippet>12</a>    target_os = <span class="string">"redox"</span>,
+<a href=#13 id=13 data-nosnippet>13</a>    target_os = <span class="string">"vita"</span>,
+<a href=#14 id=14 data-nosnippet>14</a>    target_os = <span class="string">"wasi"</span>,
+<a href=#15 id=15 data-nosnippet>15</a>)))]
+<a href=#16 id=16 data-nosnippet>16</a></span><span class="kw">use </span>backend::c;
+<a href=#17 id=17 data-nosnippet>17</a><span class="attr">#[cfg(linux_kernel)]
+<a href=#18 id=18 data-nosnippet>18</a></span><span class="kw">use </span>backend::fd::AsFd;
+<a href=#19 id=19 data-nosnippet>19</a>
+<a href=#20 id=20 data-nosnippet>20</a><span class="attr">#[cfg(not(apple))]
+<a href=#21 id=21 data-nosnippet>21</a></span><span class="kw">pub use </span>backend::pipe::types::PipeFlags;
+<a href=#22 id=22 data-nosnippet>22</a>
+<a href=#23 id=23 data-nosnippet>23</a><span class="attr">#[cfg(linux_kernel)]
+<a href=#24 id=24 data-nosnippet>24</a></span><span class="kw">pub use </span>backend::pipe::types::{IoSliceRaw, SpliceFlags};
+<a href=#25 id=25 data-nosnippet>25</a>
+<a href=#26 id=26 data-nosnippet>26</a><span class="doccomment">/// `PIPE_BUF`—The maximum length at which writes to a pipe are atomic.
+<a href=#27 id=27 data-nosnippet>27</a>///
+<a href=#28 id=28 data-nosnippet>28</a>/// # References
+<a href=#29 id=29 data-nosnippet>29</a>///  - [Linux]
+<a href=#30 id=30 data-nosnippet>30</a>///  - [POSIX]
 <a href=#31 id=31 data-nosnippet>31</a>///
-<a href=#32 id=32 data-nosnippet>32</a>/// # References
-<a href=#33 id=33 data-nosnippet>33</a>///  - [Linux]
-<a href=#34 id=34 data-nosnippet>34</a>///  - [POSIX]
-<a href=#35 id=35 data-nosnippet>35</a>///
-<a href=#36 id=36 data-nosnippet>36</a>/// [Linux]: https://man7.org/linux/man-pages/man7/pipe.7.html
-<a href=#37 id=37 data-nosnippet>37</a>/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/write.html
-<a href=#38 id=38 data-nosnippet>38</a></span><span class="attr">#[cfg(not(any(
-<a href=#39 id=39 data-nosnippet>39</a>    solarish,
-<a href=#40 id=40 data-nosnippet>40</a>    windows,
-<a href=#41 id=41 data-nosnippet>41</a>    target_os = <span class="string">"espidf"</span>,
-<a href=#42 id=42 data-nosnippet>42</a>    target_os = <span class="string">"haiku"</span>,
-<a href=#43 id=43 data-nosnippet>43</a>    target_os = <span class="string">"hurd"</span>,
-<a href=#44 id=44 data-nosnippet>44</a>    target_os = <span class="string">"redox"</span>,
-<a href=#45 id=45 data-nosnippet>45</a>    target_os = <span class="string">"vita"</span>,
-<a href=#46 id=46 data-nosnippet>46</a>    target_os = <span class="string">"wasi"</span>,
-<a href=#47 id=47 data-nosnippet>47</a>)))]
-<a href=#48 id=48 data-nosnippet>48</a></span><span class="kw">pub const </span>PIPE_BUF: usize = c::PIPE_BUF;
-<a href=#49 id=49 data-nosnippet>49</a>
-<a href=#50 id=50 data-nosnippet>50</a><span class="doccomment">/// `pipe()`—Creates a pipe.
+<a href=#32 id=32 data-nosnippet>32</a>/// [Linux]: https://man7.org/linux/man-pages/man7/pipe.7.html
+<a href=#33 id=33 data-nosnippet>33</a>/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/write.html
+<a href=#34 id=34 data-nosnippet>34</a></span><span class="attr">#[cfg(not(any(
+<a href=#35 id=35 data-nosnippet>35</a>    solarish,
+<a href=#36 id=36 data-nosnippet>36</a>    windows,
+<a href=#37 id=37 data-nosnippet>37</a>    target_os = <span class="string">"espidf"</span>,
+<a href=#38 id=38 data-nosnippet>38</a>    target_os = <span class="string">"haiku"</span>,
+<a href=#39 id=39 data-nosnippet>39</a>    target_os = <span class="string">"horizon"</span>,
+<a href=#40 id=40 data-nosnippet>40</a>    target_os = <span class="string">"hurd"</span>,
+<a href=#41 id=41 data-nosnippet>41</a>    target_os = <span class="string">"redox"</span>,
+<a href=#42 id=42 data-nosnippet>42</a>    target_os = <span class="string">"vita"</span>,
+<a href=#43 id=43 data-nosnippet>43</a>    target_os = <span class="string">"wasi"</span>,
+<a href=#44 id=44 data-nosnippet>44</a>)))]
+<a href=#45 id=45 data-nosnippet>45</a></span><span class="kw">pub const </span>PIPE_BUF: usize = c::PIPE_BUF;
+<a href=#46 id=46 data-nosnippet>46</a>
+<a href=#47 id=47 data-nosnippet>47</a><span class="doccomment">/// `pipe()`—Creates a pipe.
+<a href=#48 id=48 data-nosnippet>48</a>///
+<a href=#49 id=49 data-nosnippet>49</a>/// This function creates a pipe and returns two file descriptors, for the
+<a href=#50 id=50 data-nosnippet>50</a>/// reading and writing ends of the pipe, respectively.
 <a href=#51 id=51 data-nosnippet>51</a>///
-<a href=#52 id=52 data-nosnippet>52</a>/// This function creates a pipe and returns two file descriptors, for the
-<a href=#53 id=53 data-nosnippet>53</a>/// reading and writing ends of the pipe, respectively.
-<a href=#54 id=54 data-nosnippet>54</a>///
-<a href=#55 id=55 data-nosnippet>55</a>/// # References
-<a href=#56 id=56 data-nosnippet>56</a>///  - [POSIX]
-<a href=#57 id=57 data-nosnippet>57</a>///  - [Linux]
-<a href=#58 id=58 data-nosnippet>58</a>///  - [Apple]
-<a href=#59 id=59 data-nosnippet>59</a>///  - [FreeBSD]
-<a href=#60 id=60 data-nosnippet>60</a>///  - [NetBSD]
-<a href=#61 id=61 data-nosnippet>61</a>///  - [OpenBSD]
-<a href=#62 id=62 data-nosnippet>62</a>///  - [DragonFly BSD]
-<a href=#63 id=63 data-nosnippet>63</a>///  - [illumos]
-<a href=#64 id=64 data-nosnippet>64</a>///  - [glibc]
-<a href=#65 id=65 data-nosnippet>65</a>///
-<a href=#66 id=66 data-nosnippet>66</a>/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/pipe.html
-<a href=#67 id=67 data-nosnippet>67</a>/// [Linux]: https://man7.org/linux/man-pages/man2/pipe.2.html
-<a href=#68 id=68 data-nosnippet>68</a>/// [Apple]: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/pipe.2.html
-<a href=#69 id=69 data-nosnippet>69</a>/// [FreeBSD]: https://man.freebsd.org/cgi/man.cgi?query=pipe&amp;sektion=2
-<a href=#70 id=70 data-nosnippet>70</a>/// [NetBSD]: https://man.netbsd.org/pipe.2
-<a href=#71 id=71 data-nosnippet>71</a>/// [OpenBSD]: https://man.openbsd.org/pipe.2
-<a href=#72 id=72 data-nosnippet>72</a>/// [DragonFly BSD]: https://man.dragonflybsd.org/?command=pipe&amp;section=2
-<a href=#73 id=73 data-nosnippet>73</a>/// [illumos]: https://illumos.org/man/2/pipe
-<a href=#74 id=74 data-nosnippet>74</a>/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/Creating-a-Pipe.html
-<a href=#75 id=75 data-nosnippet>75</a></span><span class="attr">#[inline]
-<a href=#76 id=76 data-nosnippet>76</a></span><span class="kw">pub fn </span>pipe() -&gt; io::Result&lt;(OwnedFd, OwnedFd)&gt; {
-<a href=#77 id=77 data-nosnippet>77</a>    backend::pipe::syscalls::pipe()
-<a href=#78 id=78 data-nosnippet>78</a>}
-<a href=#79 id=79 data-nosnippet>79</a>
-<a href=#80 id=80 data-nosnippet>80</a><span class="doccomment">/// `pipe2(flags)`—Creates a pipe, with flags.
-<a href=#81 id=81 data-nosnippet>81</a>///
-<a href=#82 id=82 data-nosnippet>82</a>/// This function creates a pipe and returns two file descriptors, for the
-<a href=#83 id=83 data-nosnippet>83</a>/// reading and writing ends of the pipe, respectively.
-<a href=#84 id=84 data-nosnippet>84</a>///
-<a href=#85 id=85 data-nosnippet>85</a>/// # References
-<a href=#86 id=86 data-nosnippet>86</a>///  - [Linux]
-<a href=#87 id=87 data-nosnippet>87</a>///  - [FreeBSD]
-<a href=#88 id=88 data-nosnippet>88</a>///  - [NetBSD]
-<a href=#89 id=89 data-nosnippet>89</a>///  - [OpenBSD]
-<a href=#90 id=90 data-nosnippet>90</a>///  - [DragonFly BSD]
-<a href=#91 id=91 data-nosnippet>91</a>///  - [illumos]
-<a href=#92 id=92 data-nosnippet>92</a>///
-<a href=#93 id=93 data-nosnippet>93</a>/// [Linux]: https://man7.org/linux/man-pages/man2/pipe2.2.html
-<a href=#94 id=94 data-nosnippet>94</a>/// [FreeBSD]: https://man.freebsd.org/cgi/man.cgi?query=pipe2&amp;sektion=2
-<a href=#95 id=95 data-nosnippet>95</a>/// [NetBSD]: https://man.netbsd.org/pipe2.2
-<a href=#96 id=96 data-nosnippet>96</a>/// [OpenBSD]: https://man.openbsd.org/pipe2.2
-<a href=#97 id=97 data-nosnippet>97</a>/// [DragonFly BSD]: https://man.dragonflybsd.org/?command=pipe2&amp;section=2
-<a href=#98 id=98 data-nosnippet>98</a>/// [illumos]: https://illumos.org/man/2/pipe2
-<a href=#99 id=99 data-nosnippet>99</a></span><span class="attr">#[cfg(not(any(
-<a href=#100 id=100 data-nosnippet>100</a>    apple,
-<a href=#101 id=101 data-nosnippet>101</a>    target_os = <span class="string">"aix"</span>,
-<a href=#102 id=102 data-nosnippet>102</a>    target_os = <span class="string">"espidf"</span>,
-<a href=#103 id=103 data-nosnippet>103</a>    target_os = <span class="string">"haiku"</span>,
-<a href=#104 id=104 data-nosnippet>104</a>    target_os = <span class="string">"nto"
-<a href=#105 id=105 data-nosnippet>105</a></span>)))]
-<a href=#106 id=106 data-nosnippet>106</a>#[inline]
-<a href=#107 id=107 data-nosnippet>107</a>#[doc(alias = <span class="string">"pipe2"</span>)]
-<a href=#108 id=108 data-nosnippet>108</a></span><span class="kw">pub fn </span>pipe_with(flags: PipeFlags) -&gt; io::Result&lt;(OwnedFd, OwnedFd)&gt; {
-<a href=#109 id=109 data-nosnippet>109</a>    backend::pipe::syscalls::pipe_with(flags)
-<a href=#110 id=110 data-nosnippet>110</a>}
-<a href=#111 id=111 data-nosnippet>111</a>
-<a href=#112 id=112 data-nosnippet>112</a><span class="doccomment">/// `splice(fd_in, off_in, fd_out, off_out, len, flags)`—Transfer data
-<a href=#113 id=113 data-nosnippet>113</a>/// between a file and a pipe.
-<a href=#114 id=114 data-nosnippet>114</a>///
-<a href=#115 id=115 data-nosnippet>115</a>/// This function transfers up to `len` bytes of data from the file descriptor
-<a href=#116 id=116 data-nosnippet>116</a>/// `fd_in` to the file descriptor `fd_out`, where one of the file descriptors
-<a href=#117 id=117 data-nosnippet>117</a>/// must refer to a pipe.
-<a href=#118 id=118 data-nosnippet>118</a>///
-<a href=#119 id=119 data-nosnippet>119</a>/// `off_*` must be `None` if the corresponding fd refers to a pipe. Otherwise
-<a href=#120 id=120 data-nosnippet>120</a>/// its value points to the starting offset to the file, from which the data is
-<a href=#121 id=121 data-nosnippet>121</a>/// read/written. On success, the number of bytes read/written is added to the
-<a href=#122 id=122 data-nosnippet>122</a>/// offset.
-<a href=#123 id=123 data-nosnippet>123</a>///
-<a href=#124 id=124 data-nosnippet>124</a>/// Passing `None` causes the read/write to start from the file offset, and the
-<a href=#125 id=125 data-nosnippet>125</a>/// file offset is adjusted appropriately.
-<a href=#126 id=126 data-nosnippet>126</a>///
-<a href=#127 id=127 data-nosnippet>127</a>/// # References
-<a href=#128 id=128 data-nosnippet>128</a>///  - [Linux]
-<a href=#129 id=129 data-nosnippet>129</a>///
-<a href=#130 id=130 data-nosnippet>130</a>/// [Linux]: https://man7.org/linux/man-pages/man2/splice.2.html
-<a href=#131 id=131 data-nosnippet>131</a></span><span class="attr">#[cfg(linux_kernel)]
-<a href=#132 id=132 data-nosnippet>132</a>#[inline]
-<a href=#133 id=133 data-nosnippet>133</a></span><span class="kw">pub fn </span>splice&lt;FdIn: AsFd, FdOut: AsFd&gt;(
-<a href=#134 id=134 data-nosnippet>134</a>    fd_in: FdIn,
-<a href=#135 id=135 data-nosnippet>135</a>    off_in: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>u64&gt;,
-<a href=#136 id=136 data-nosnippet>136</a>    fd_out: FdOut,
-<a href=#137 id=137 data-nosnippet>137</a>    off_out: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>u64&gt;,
-<a href=#138 id=138 data-nosnippet>138</a>    len: usize,
-<a href=#139 id=139 data-nosnippet>139</a>    flags: SpliceFlags,
-<a href=#140 id=140 data-nosnippet>140</a>) -&gt; io::Result&lt;usize&gt; {
-<a href=#141 id=141 data-nosnippet>141</a>    backend::pipe::syscalls::splice(fd_in.as_fd(), off_in, fd_out.as_fd(), off_out, len, flags)
-<a href=#142 id=142 data-nosnippet>142</a>}
-<a href=#143 id=143 data-nosnippet>143</a>
-<a href=#144 id=144 data-nosnippet>144</a><span class="doccomment">/// `vmsplice(fd, bufs, flags)`—Transfer data between memory and a pipe.
-<a href=#145 id=145 data-nosnippet>145</a>///
-<a href=#146 id=146 data-nosnippet>146</a>/// If `fd` is the write end of the pipe, the function maps the memory pointer
-<a href=#147 id=147 data-nosnippet>147</a>/// at by `bufs` to the pipe.
-<a href=#148 id=148 data-nosnippet>148</a>///
-<a href=#149 id=149 data-nosnippet>149</a>/// If `fd` is the read end of the pipe, the function writes data from the pipe
-<a href=#150 id=150 data-nosnippet>150</a>/// to said memory.
-<a href=#151 id=151 data-nosnippet>151</a>///
-<a href=#152 id=152 data-nosnippet>152</a>/// # Safety
+<a href=#52 id=52 data-nosnippet>52</a>/// See [`pipe_with`] to pass additional flags.
+<a href=#53 id=53 data-nosnippet>53</a>///
+<a href=#54 id=54 data-nosnippet>54</a>/// # References
+<a href=#55 id=55 data-nosnippet>55</a>///  - [POSIX]
+<a href=#56 id=56 data-nosnippet>56</a>///  - [Linux]
+<a href=#57 id=57 data-nosnippet>57</a>///  - [Apple]
+<a href=#58 id=58 data-nosnippet>58</a>///  - [FreeBSD]
+<a href=#59 id=59 data-nosnippet>59</a>///  - [NetBSD]
+<a href=#60 id=60 data-nosnippet>60</a>///  - [OpenBSD]
+<a href=#61 id=61 data-nosnippet>61</a>///  - [DragonFly BSD]
+<a href=#62 id=62 data-nosnippet>62</a>///  - [illumos]
+<a href=#63 id=63 data-nosnippet>63</a>///  - [glibc]
+<a href=#64 id=64 data-nosnippet>64</a>///
+<a href=#65 id=65 data-nosnippet>65</a>/// [POSIX]: https://pubs.opengroup.org/onlinepubs/9799919799/functions/pipe.html
+<a href=#66 id=66 data-nosnippet>66</a>/// [Linux]: https://man7.org/linux/man-pages/man2/pipe.2.html
+<a href=#67 id=67 data-nosnippet>67</a>/// [Apple]: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/pipe.2.html
+<a href=#68 id=68 data-nosnippet>68</a>/// [FreeBSD]: https://man.freebsd.org/cgi/man.cgi?query=pipe&amp;sektion=2
+<a href=#69 id=69 data-nosnippet>69</a>/// [NetBSD]: https://man.netbsd.org/pipe.2
+<a href=#70 id=70 data-nosnippet>70</a>/// [OpenBSD]: https://man.openbsd.org/pipe.2
+<a href=#71 id=71 data-nosnippet>71</a>/// [DragonFly BSD]: https://man.dragonflybsd.org/?command=pipe&amp;section=2
+<a href=#72 id=72 data-nosnippet>72</a>/// [illumos]: https://illumos.org/man/2/pipe
+<a href=#73 id=73 data-nosnippet>73</a>/// [glibc]: https://sourceware.org/glibc/manual/latest/html_node/Creating-a-Pipe.html
+<a href=#74 id=74 data-nosnippet>74</a></span><span class="attr">#[inline]
+<a href=#75 id=75 data-nosnippet>75</a></span><span class="kw">pub fn </span>pipe() -&gt; io::Result&lt;(OwnedFd, OwnedFd)&gt; {
+<a href=#76 id=76 data-nosnippet>76</a>    backend::pipe::syscalls::pipe()
+<a href=#77 id=77 data-nosnippet>77</a>}
+<a href=#78 id=78 data-nosnippet>78</a>
+<a href=#79 id=79 data-nosnippet>79</a><span class="doccomment">/// `pipe2(flags)`—Creates a pipe, with flags.
+<a href=#80 id=80 data-nosnippet>80</a>///
+<a href=#81 id=81 data-nosnippet>81</a>/// `pipe_with` is the same as [`pipe`] but adds an additional flags operand.
+<a href=#82 id=82 data-nosnippet>82</a>///
+<a href=#83 id=83 data-nosnippet>83</a>/// This function creates a pipe and returns two file descriptors, for the
+<a href=#84 id=84 data-nosnippet>84</a>/// reading and writing ends of the pipe, respectively.
+<a href=#85 id=85 data-nosnippet>85</a>///
+<a href=#86 id=86 data-nosnippet>86</a>/// # References
+<a href=#87 id=87 data-nosnippet>87</a>///  - [Linux]
+<a href=#88 id=88 data-nosnippet>88</a>///  - [FreeBSD]
+<a href=#89 id=89 data-nosnippet>89</a>///  - [NetBSD]
+<a href=#90 id=90 data-nosnippet>90</a>///  - [OpenBSD]
+<a href=#91 id=91 data-nosnippet>91</a>///  - [DragonFly BSD]
+<a href=#92 id=92 data-nosnippet>92</a>///  - [illumos]
+<a href=#93 id=93 data-nosnippet>93</a>///
+<a href=#94 id=94 data-nosnippet>94</a>/// [Linux]: https://man7.org/linux/man-pages/man2/pipe2.2.html
+<a href=#95 id=95 data-nosnippet>95</a>/// [FreeBSD]: https://man.freebsd.org/cgi/man.cgi?query=pipe2&amp;sektion=2
+<a href=#96 id=96 data-nosnippet>96</a>/// [NetBSD]: https://man.netbsd.org/pipe2.2
+<a href=#97 id=97 data-nosnippet>97</a>/// [OpenBSD]: https://man.openbsd.org/pipe2.2
+<a href=#98 id=98 data-nosnippet>98</a>/// [DragonFly BSD]: https://man.dragonflybsd.org/?command=pipe2&amp;section=2
+<a href=#99 id=99 data-nosnippet>99</a>/// [illumos]: https://illumos.org/man/2/pipe2
+<a href=#100 id=100 data-nosnippet>100</a></span><span class="attr">#[cfg(not(any(
+<a href=#101 id=101 data-nosnippet>101</a>    apple,
+<a href=#102 id=102 data-nosnippet>102</a>    target_os = <span class="string">"aix"</span>,
+<a href=#103 id=103 data-nosnippet>103</a>    target_os = <span class="string">"espidf"</span>,
+<a href=#104 id=104 data-nosnippet>104</a>    target_os = <span class="string">"haiku"</span>,
+<a href=#105 id=105 data-nosnippet>105</a>    target_os = <span class="string">"horizon"</span>,
+<a href=#106 id=106 data-nosnippet>106</a>    target_os = <span class="string">"nto"
+<a href=#107 id=107 data-nosnippet>107</a></span>)))]
+<a href=#108 id=108 data-nosnippet>108</a>#[inline]
+<a href=#109 id=109 data-nosnippet>109</a>#[doc(alias = <span class="string">"pipe2"</span>)]
+<a href=#110 id=110 data-nosnippet>110</a></span><span class="kw">pub fn </span>pipe_with(flags: PipeFlags) -&gt; io::Result&lt;(OwnedFd, OwnedFd)&gt; {
+<a href=#111 id=111 data-nosnippet>111</a>    backend::pipe::syscalls::pipe_with(flags)
+<a href=#112 id=112 data-nosnippet>112</a>}
+<a href=#113 id=113 data-nosnippet>113</a>
+<a href=#114 id=114 data-nosnippet>114</a><span class="doccomment">/// `splice(fd_in, off_in, fd_out, off_out, len, flags)`—Transfer data
+<a href=#115 id=115 data-nosnippet>115</a>/// between a file and a pipe.
+<a href=#116 id=116 data-nosnippet>116</a>///
+<a href=#117 id=117 data-nosnippet>117</a>/// This function transfers up to `len` bytes of data from the file descriptor
+<a href=#118 id=118 data-nosnippet>118</a>/// `fd_in` to the file descriptor `fd_out`, where one of the file descriptors
+<a href=#119 id=119 data-nosnippet>119</a>/// must refer to a pipe.
+<a href=#120 id=120 data-nosnippet>120</a>///
+<a href=#121 id=121 data-nosnippet>121</a>/// `off_*` must be `None` if the corresponding fd refers to a pipe. Otherwise
+<a href=#122 id=122 data-nosnippet>122</a>/// its value points to the starting offset to the file, from which the data is
+<a href=#123 id=123 data-nosnippet>123</a>/// read/written. On success, the number of bytes read/written is added to the
+<a href=#124 id=124 data-nosnippet>124</a>/// offset.
+<a href=#125 id=125 data-nosnippet>125</a>///
+<a href=#126 id=126 data-nosnippet>126</a>/// Passing `None` causes the read/write to start from the file offset, and the
+<a href=#127 id=127 data-nosnippet>127</a>/// file offset is adjusted appropriately.
+<a href=#128 id=128 data-nosnippet>128</a>///
+<a href=#129 id=129 data-nosnippet>129</a>/// # References
+<a href=#130 id=130 data-nosnippet>130</a>///  - [Linux]
+<a href=#131 id=131 data-nosnippet>131</a>///
+<a href=#132 id=132 data-nosnippet>132</a>/// [Linux]: https://man7.org/linux/man-pages/man2/splice.2.html
+<a href=#133 id=133 data-nosnippet>133</a></span><span class="attr">#[cfg(linux_kernel)]
+<a href=#134 id=134 data-nosnippet>134</a>#[inline]
+<a href=#135 id=135 data-nosnippet>135</a></span><span class="kw">pub fn </span>splice&lt;FdIn: AsFd, FdOut: AsFd&gt;(
+<a href=#136 id=136 data-nosnippet>136</a>    fd_in: FdIn,
+<a href=#137 id=137 data-nosnippet>137</a>    off_in: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>u64&gt;,
+<a href=#138 id=138 data-nosnippet>138</a>    fd_out: FdOut,
+<a href=#139 id=139 data-nosnippet>139</a>    off_out: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>u64&gt;,
+<a href=#140 id=140 data-nosnippet>140</a>    len: usize,
+<a href=#141 id=141 data-nosnippet>141</a>    flags: SpliceFlags,
+<a href=#142 id=142 data-nosnippet>142</a>) -&gt; io::Result&lt;usize&gt; {
+<a href=#143 id=143 data-nosnippet>143</a>    backend::pipe::syscalls::splice(fd_in.as_fd(), off_in, fd_out.as_fd(), off_out, len, flags)
+<a href=#144 id=144 data-nosnippet>144</a>}
+<a href=#145 id=145 data-nosnippet>145</a>
+<a href=#146 id=146 data-nosnippet>146</a><span class="doccomment">/// `vmsplice(fd, bufs, flags)`—Transfer data between memory and a pipe.
+<a href=#147 id=147 data-nosnippet>147</a>///
+<a href=#148 id=148 data-nosnippet>148</a>/// If `fd` is the write end of the pipe, the function maps the memory pointer
+<a href=#149 id=149 data-nosnippet>149</a>/// at by `bufs` to the pipe.
+<a href=#150 id=150 data-nosnippet>150</a>///
+<a href=#151 id=151 data-nosnippet>151</a>/// If `fd` is the read end of the pipe, the function writes data from the pipe
+<a href=#152 id=152 data-nosnippet>152</a>/// to said memory.
 <a href=#153 id=153 data-nosnippet>153</a>///
-<a href=#154 id=154 data-nosnippet>154</a>/// If the memory must not be mutated (such as when `bufs` were originally
-<a href=#155 id=155 data-nosnippet>155</a>/// immutable slices), it is up to the caller to ensure that the write end of
-<a href=#156 id=156 data-nosnippet>156</a>/// the pipe is placed in `fd`.
-<a href=#157 id=157 data-nosnippet>157</a>///
-<a href=#158 id=158 data-nosnippet>158</a>/// Additionally if `SpliceFlags::GIFT` is set, the caller must also ensure
-<a href=#159 id=159 data-nosnippet>159</a>/// that the contents of `bufs` in never modified following the call, and that
-<a href=#160 id=160 data-nosnippet>160</a>/// all of the pointers in `bufs` are page aligned, and the lengths are
-<a href=#161 id=161 data-nosnippet>161</a>/// multiples of a page size in bytes.
-<a href=#162 id=162 data-nosnippet>162</a>///
-<a href=#163 id=163 data-nosnippet>163</a>/// # References
-<a href=#164 id=164 data-nosnippet>164</a>///  - [Linux]
-<a href=#165 id=165 data-nosnippet>165</a>///
-<a href=#166 id=166 data-nosnippet>166</a>/// [Linux]: https://man7.org/linux/man-pages/man2/vmsplice.2.html
-<a href=#167 id=167 data-nosnippet>167</a></span><span class="attr">#[cfg(linux_kernel)]
-<a href=#168 id=168 data-nosnippet>168</a>#[inline]
-<a href=#169 id=169 data-nosnippet>169</a></span><span class="kw">pub unsafe fn </span>vmsplice&lt;PipeFd: AsFd&gt;(
-<a href=#170 id=170 data-nosnippet>170</a>    fd: PipeFd,
-<a href=#171 id=171 data-nosnippet>171</a>    bufs: <span class="kw-2">&amp;</span>[IoSliceRaw&lt;<span class="lifetime">'_</span>&gt;],
-<a href=#172 id=172 data-nosnippet>172</a>    flags: SpliceFlags,
-<a href=#173 id=173 data-nosnippet>173</a>) -&gt; io::Result&lt;usize&gt; {
-<a href=#174 id=174 data-nosnippet>174</a>    backend::pipe::syscalls::vmsplice(fd.as_fd(), bufs, flags)
-<a href=#175 id=175 data-nosnippet>175</a>}
-<a href=#176 id=176 data-nosnippet>176</a>
-<a href=#177 id=177 data-nosnippet>177</a><span class="doccomment">/// `tee(fd_in, fd_out, len, flags)`—Copy data between pipes without
-<a href=#178 id=178 data-nosnippet>178</a>/// consuming it.
-<a href=#179 id=179 data-nosnippet>179</a>///
-<a href=#180 id=180 data-nosnippet>180</a>/// This reads up to `len` bytes from `in_fd` without consuming them, and
-<a href=#181 id=181 data-nosnippet>181</a>/// writes them to `out_fd`.
-<a href=#182 id=182 data-nosnippet>182</a>///
-<a href=#183 id=183 data-nosnippet>183</a>/// # References
-<a href=#184 id=184 data-nosnippet>184</a>///  - [Linux]
-<a href=#185 id=185 data-nosnippet>185</a>///
-<a href=#186 id=186 data-nosnippet>186</a>/// [Linux]: https://man7.org/linux/man-pages/man2/tee.2.html
-<a href=#187 id=187 data-nosnippet>187</a></span><span class="attr">#[cfg(linux_kernel)]
-<a href=#188 id=188 data-nosnippet>188</a>#[inline]
-<a href=#189 id=189 data-nosnippet>189</a></span><span class="kw">pub fn </span>tee&lt;FdIn: AsFd, FdOut: AsFd&gt;(
-<a href=#190 id=190 data-nosnippet>190</a>    fd_in: FdIn,
-<a href=#191 id=191 data-nosnippet>191</a>    fd_out: FdOut,
-<a href=#192 id=192 data-nosnippet>192</a>    len: usize,
-<a href=#193 id=193 data-nosnippet>193</a>    flags: SpliceFlags,
-<a href=#194 id=194 data-nosnippet>194</a>) -&gt; io::Result&lt;usize&gt; {
-<a href=#195 id=195 data-nosnippet>195</a>    backend::pipe::syscalls::tee(fd_in.as_fd(), fd_out.as_fd(), len, flags)
-<a href=#196 id=196 data-nosnippet>196</a>}
-<a href=#197 id=197 data-nosnippet>197</a>
-<a href=#198 id=198 data-nosnippet>198</a><span class="doccomment">/// `fnctl(fd, F_GETPIPE_SZ)`—Return the buffer capacity of a pipe.
-<a href=#199 id=199 data-nosnippet>199</a>///
-<a href=#200 id=200 data-nosnippet>200</a>/// # References
-<a href=#201 id=201 data-nosnippet>201</a>///  - [Linux]
-<a href=#202 id=202 data-nosnippet>202</a>///
-<a href=#203 id=203 data-nosnippet>203</a>/// [Linux]: https://man7.org/linux/man-pages/man2/fcntl.2.html
-<a href=#204 id=204 data-nosnippet>204</a></span><span class="attr">#[cfg(linux_kernel)]
-<a href=#205 id=205 data-nosnippet>205</a>#[inline]
-<a href=#206 id=206 data-nosnippet>206</a></span><span class="kw">pub fn </span>fcntl_getpipe_size&lt;Fd: AsFd&gt;(fd: Fd) -&gt; io::Result&lt;usize&gt; {
-<a href=#207 id=207 data-nosnippet>207</a>    backend::pipe::syscalls::fcntl_getpipe_size(fd.as_fd())
-<a href=#208 id=208 data-nosnippet>208</a>}
-<a href=#209 id=209 data-nosnippet>209</a>
-<a href=#210 id=210 data-nosnippet>210</a><span class="doccomment">/// `fnctl(fd, F_SETPIPE_SZ)`—Set the buffer capacity of a pipe.
-<a href=#211 id=211 data-nosnippet>211</a>///
-<a href=#212 id=212 data-nosnippet>212</a>/// The OS may decide to use a larger size than `size`. To know the precise
-<a href=#213 id=213 data-nosnippet>213</a>/// size, call [`fcntl_getpipe_size`] after setting the size. In future
-<a href=#214 id=214 data-nosnippet>214</a>/// versions of rustix, this function will return the new size.
-<a href=#215 id=215 data-nosnippet>215</a>///
-<a href=#216 id=216 data-nosnippet>216</a>/// # References
-<a href=#217 id=217 data-nosnippet>217</a>///  - [Linux]
-<a href=#218 id=218 data-nosnippet>218</a>///
-<a href=#219 id=219 data-nosnippet>219</a>/// [Linux]: https://man7.org/linux/man-pages/man2/fcntl.2.html
-<a href=#220 id=220 data-nosnippet>220</a></span><span class="attr">#[cfg(linux_kernel)]
-<a href=#221 id=221 data-nosnippet>221</a>#[inline]
-<a href=#222 id=222 data-nosnippet>222</a></span><span class="kw">pub fn </span>fcntl_setpipe_size&lt;Fd: AsFd&gt;(fd: Fd, size: usize) -&gt; io::Result&lt;()&gt; {
-<a href=#223 id=223 data-nosnippet>223</a>    backend::pipe::syscalls::fcntl_setpipe_size(fd.as_fd(), size)
-<a href=#224 id=224 data-nosnippet>224</a>}</code></pre></div></section></main></body></html>
+<a href=#154 id=154 data-nosnippet>154</a>/// # Safety
+<a href=#155 id=155 data-nosnippet>155</a>///
+<a href=#156 id=156 data-nosnippet>156</a>/// If the memory must not be mutated (such as when `bufs` were originally
+<a href=#157 id=157 data-nosnippet>157</a>/// immutable slices), it is up to the caller to ensure that the write end of
+<a href=#158 id=158 data-nosnippet>158</a>/// the pipe is placed in `fd`.
+<a href=#159 id=159 data-nosnippet>159</a>///
+<a href=#160 id=160 data-nosnippet>160</a>/// Additionally if `SpliceFlags::GIFT` is set, the caller must also ensure
+<a href=#161 id=161 data-nosnippet>161</a>/// that the contents of `bufs` in never modified following the call, and that
+<a href=#162 id=162 data-nosnippet>162</a>/// all of the pointers in `bufs` are page aligned, and the lengths are
+<a href=#163 id=163 data-nosnippet>163</a>/// multiples of a page size in bytes.
+<a href=#164 id=164 data-nosnippet>164</a>///
+<a href=#165 id=165 data-nosnippet>165</a>/// # References
+<a href=#166 id=166 data-nosnippet>166</a>///  - [Linux]
+<a href=#167 id=167 data-nosnippet>167</a>///
+<a href=#168 id=168 data-nosnippet>168</a>/// [Linux]: https://man7.org/linux/man-pages/man2/vmsplice.2.html
+<a href=#169 id=169 data-nosnippet>169</a></span><span class="attr">#[cfg(linux_kernel)]
+<a href=#170 id=170 data-nosnippet>170</a>#[inline]
+<a href=#171 id=171 data-nosnippet>171</a></span><span class="kw">pub unsafe fn </span>vmsplice&lt;PipeFd: AsFd&gt;(
+<a href=#172 id=172 data-nosnippet>172</a>    fd: PipeFd,
+<a href=#173 id=173 data-nosnippet>173</a>    bufs: <span class="kw-2">&amp;</span>[IoSliceRaw&lt;<span class="lifetime">'_</span>&gt;],
+<a href=#174 id=174 data-nosnippet>174</a>    flags: SpliceFlags,
+<a href=#175 id=175 data-nosnippet>175</a>) -&gt; io::Result&lt;usize&gt; {
+<a href=#176 id=176 data-nosnippet>176</a>    backend::pipe::syscalls::vmsplice(fd.as_fd(), bufs, flags)
+<a href=#177 id=177 data-nosnippet>177</a>}
+<a href=#178 id=178 data-nosnippet>178</a>
+<a href=#179 id=179 data-nosnippet>179</a><span class="doccomment">/// `tee(fd_in, fd_out, len, flags)`—Copy data between pipes without
+<a href=#180 id=180 data-nosnippet>180</a>/// consuming it.
+<a href=#181 id=181 data-nosnippet>181</a>///
+<a href=#182 id=182 data-nosnippet>182</a>/// This reads up to `len` bytes from `in_fd` without consuming them, and
+<a href=#183 id=183 data-nosnippet>183</a>/// writes them to `out_fd`.
+<a href=#184 id=184 data-nosnippet>184</a>///
+<a href=#185 id=185 data-nosnippet>185</a>/// # References
+<a href=#186 id=186 data-nosnippet>186</a>///  - [Linux]
+<a href=#187 id=187 data-nosnippet>187</a>///
+<a href=#188 id=188 data-nosnippet>188</a>/// [Linux]: https://man7.org/linux/man-pages/man2/tee.2.html
+<a href=#189 id=189 data-nosnippet>189</a></span><span class="attr">#[cfg(linux_kernel)]
+<a href=#190 id=190 data-nosnippet>190</a>#[inline]
+<a href=#191 id=191 data-nosnippet>191</a></span><span class="kw">pub fn </span>tee&lt;FdIn: AsFd, FdOut: AsFd&gt;(
+<a href=#192 id=192 data-nosnippet>192</a>    fd_in: FdIn,
+<a href=#193 id=193 data-nosnippet>193</a>    fd_out: FdOut,
+<a href=#194 id=194 data-nosnippet>194</a>    len: usize,
+<a href=#195 id=195 data-nosnippet>195</a>    flags: SpliceFlags,
+<a href=#196 id=196 data-nosnippet>196</a>) -&gt; io::Result&lt;usize&gt; {
+<a href=#197 id=197 data-nosnippet>197</a>    backend::pipe::syscalls::tee(fd_in.as_fd(), fd_out.as_fd(), len, flags)
+<a href=#198 id=198 data-nosnippet>198</a>}
+<a href=#199 id=199 data-nosnippet>199</a>
+<a href=#200 id=200 data-nosnippet>200</a><span class="doccomment">/// `fnctl(fd, F_GETPIPE_SZ)`—Return the buffer capacity of a pipe.
+<a href=#201 id=201 data-nosnippet>201</a>///
+<a href=#202 id=202 data-nosnippet>202</a>/// # References
+<a href=#203 id=203 data-nosnippet>203</a>///  - [Linux]
+<a href=#204 id=204 data-nosnippet>204</a>///
+<a href=#205 id=205 data-nosnippet>205</a>/// [Linux]: https://man7.org/linux/man-pages/man2/fcntl.2.html
+<a href=#206 id=206 data-nosnippet>206</a></span><span class="attr">#[cfg(linux_kernel)]
+<a href=#207 id=207 data-nosnippet>207</a>#[inline]
+<a href=#208 id=208 data-nosnippet>208</a></span><span class="kw">pub fn </span>fcntl_getpipe_size&lt;Fd: AsFd&gt;(fd: Fd) -&gt; io::Result&lt;usize&gt; {
+<a href=#209 id=209 data-nosnippet>209</a>    backend::pipe::syscalls::fcntl_getpipe_size(fd.as_fd())
+<a href=#210 id=210 data-nosnippet>210</a>}
+<a href=#211 id=211 data-nosnippet>211</a>
+<a href=#212 id=212 data-nosnippet>212</a><span class="doccomment">/// `fnctl(fd, F_SETPIPE_SZ)`—Set the buffer capacity of a pipe.
+<a href=#213 id=213 data-nosnippet>213</a>///
+<a href=#214 id=214 data-nosnippet>214</a>/// # References
+<a href=#215 id=215 data-nosnippet>215</a>///  - [Linux]
+<a href=#216 id=216 data-nosnippet>216</a>///
+<a href=#217 id=217 data-nosnippet>217</a>/// [Linux]: https://man7.org/linux/man-pages/man2/fcntl.2.html
+<a href=#218 id=218 data-nosnippet>218</a></span><span class="attr">#[cfg(linux_kernel)]
+<a href=#219 id=219 data-nosnippet>219</a>#[inline]
+<a href=#220 id=220 data-nosnippet>220</a></span><span class="kw">pub fn </span>fcntl_setpipe_size&lt;Fd: AsFd&gt;(fd: Fd, size: usize) -&gt; io::Result&lt;usize&gt; {
+<a href=#221 id=221 data-nosnippet>221</a>    backend::pipe::syscalls::fcntl_setpipe_size(fd.as_fd(), size)
+<a href=#222 id=222 data-nosnippet>222</a>}</code></pre></div></section></main></body></html>

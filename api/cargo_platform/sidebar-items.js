@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Cfg","CfgExpr","ParseErrorKind","Platform"],"struct":["ParseError"]};
+window.SIDEBAR_ITEMS = {"enum":["Cfg","CfgExpr","ParseErrorKind","Platform"],"struct":["Ident","ParseError"]};

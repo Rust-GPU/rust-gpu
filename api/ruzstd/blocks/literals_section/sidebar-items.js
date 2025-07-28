@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["LiteralsSectionParseError","LiteralsSectionType"],"struct":["LiteralsSection"]};

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/object-0.36.7/src/elf.rs`."><title>elf.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">object/</div>elf.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! ELF definitions.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/object-0.37.1/src/elf.rs`."><title>elf.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="object" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">object/</div>elf.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! ELF definitions.
 <a href=#2 id=2 data-nosnippet>2</a>//!
 <a href=#3 id=3 data-nosnippet>3</a>//! These definitions are independent of read/write support, although we do implement
 <a href=#4 id=4 data-nosnippet>4</a>//! some traits useful for those.
@@ -5843,648 +5843,683 @@
 <a href=#5843 id=5843 data-nosnippet>5843</a><span class="kw">pub const </span>R_RISCV_TLS_DTPREL64: u32 = <span class="number">9</span>;
 <a href=#5844 id=5844 data-nosnippet>5844</a><span class="kw">pub const </span>R_RISCV_TLS_TPREL32: u32 = <span class="number">10</span>;
 <a href=#5845 id=5845 data-nosnippet>5845</a><span class="kw">pub const </span>R_RISCV_TLS_TPREL64: u32 = <span class="number">11</span>;
-<a href=#5846 id=5846 data-nosnippet>5846</a><span class="kw">pub const </span>R_RISCV_BRANCH: u32 = <span class="number">16</span>;
-<a href=#5847 id=5847 data-nosnippet>5847</a><span class="kw">pub const </span>R_RISCV_JAL: u32 = <span class="number">17</span>;
-<a href=#5848 id=5848 data-nosnippet>5848</a><span class="kw">pub const </span>R_RISCV_CALL: u32 = <span class="number">18</span>;
-<a href=#5849 id=5849 data-nosnippet>5849</a><span class="kw">pub const </span>R_RISCV_CALL_PLT: u32 = <span class="number">19</span>;
-<a href=#5850 id=5850 data-nosnippet>5850</a><span class="kw">pub const </span>R_RISCV_GOT_HI20: u32 = <span class="number">20</span>;
-<a href=#5851 id=5851 data-nosnippet>5851</a><span class="kw">pub const </span>R_RISCV_TLS_GOT_HI20: u32 = <span class="number">21</span>;
-<a href=#5852 id=5852 data-nosnippet>5852</a><span class="kw">pub const </span>R_RISCV_TLS_GD_HI20: u32 = <span class="number">22</span>;
-<a href=#5853 id=5853 data-nosnippet>5853</a><span class="kw">pub const </span>R_RISCV_PCREL_HI20: u32 = <span class="number">23</span>;
-<a href=#5854 id=5854 data-nosnippet>5854</a><span class="kw">pub const </span>R_RISCV_PCREL_LO12_I: u32 = <span class="number">24</span>;
-<a href=#5855 id=5855 data-nosnippet>5855</a><span class="kw">pub const </span>R_RISCV_PCREL_LO12_S: u32 = <span class="number">25</span>;
-<a href=#5856 id=5856 data-nosnippet>5856</a><span class="kw">pub const </span>R_RISCV_HI20: u32 = <span class="number">26</span>;
-<a href=#5857 id=5857 data-nosnippet>5857</a><span class="kw">pub const </span>R_RISCV_LO12_I: u32 = <span class="number">27</span>;
-<a href=#5858 id=5858 data-nosnippet>5858</a><span class="kw">pub const </span>R_RISCV_LO12_S: u32 = <span class="number">28</span>;
-<a href=#5859 id=5859 data-nosnippet>5859</a><span class="kw">pub const </span>R_RISCV_TPREL_HI20: u32 = <span class="number">29</span>;
-<a href=#5860 id=5860 data-nosnippet>5860</a><span class="kw">pub const </span>R_RISCV_TPREL_LO12_I: u32 = <span class="number">30</span>;
-<a href=#5861 id=5861 data-nosnippet>5861</a><span class="kw">pub const </span>R_RISCV_TPREL_LO12_S: u32 = <span class="number">31</span>;
-<a href=#5862 id=5862 data-nosnippet>5862</a><span class="kw">pub const </span>R_RISCV_TPREL_ADD: u32 = <span class="number">32</span>;
-<a href=#5863 id=5863 data-nosnippet>5863</a><span class="kw">pub const </span>R_RISCV_ADD8: u32 = <span class="number">33</span>;
-<a href=#5864 id=5864 data-nosnippet>5864</a><span class="kw">pub const </span>R_RISCV_ADD16: u32 = <span class="number">34</span>;
-<a href=#5865 id=5865 data-nosnippet>5865</a><span class="kw">pub const </span>R_RISCV_ADD32: u32 = <span class="number">35</span>;
-<a href=#5866 id=5866 data-nosnippet>5866</a><span class="kw">pub const </span>R_RISCV_ADD64: u32 = <span class="number">36</span>;
-<a href=#5867 id=5867 data-nosnippet>5867</a><span class="kw">pub const </span>R_RISCV_SUB8: u32 = <span class="number">37</span>;
-<a href=#5868 id=5868 data-nosnippet>5868</a><span class="kw">pub const </span>R_RISCV_SUB16: u32 = <span class="number">38</span>;
-<a href=#5869 id=5869 data-nosnippet>5869</a><span class="kw">pub const </span>R_RISCV_SUB32: u32 = <span class="number">39</span>;
-<a href=#5870 id=5870 data-nosnippet>5870</a><span class="kw">pub const </span>R_RISCV_SUB64: u32 = <span class="number">40</span>;
-<a href=#5871 id=5871 data-nosnippet>5871</a><span class="kw">pub const </span>R_RISCV_GNU_VTINHERIT: u32 = <span class="number">41</span>;
-<a href=#5872 id=5872 data-nosnippet>5872</a><span class="kw">pub const </span>R_RISCV_GNU_VTENTRY: u32 = <span class="number">42</span>;
-<a href=#5873 id=5873 data-nosnippet>5873</a><span class="kw">pub const </span>R_RISCV_ALIGN: u32 = <span class="number">43</span>;
-<a href=#5874 id=5874 data-nosnippet>5874</a><span class="kw">pub const </span>R_RISCV_RVC_BRANCH: u32 = <span class="number">44</span>;
-<a href=#5875 id=5875 data-nosnippet>5875</a><span class="kw">pub const </span>R_RISCV_RVC_JUMP: u32 = <span class="number">45</span>;
-<a href=#5876 id=5876 data-nosnippet>5876</a><span class="kw">pub const </span>R_RISCV_RVC_LUI: u32 = <span class="number">46</span>;
-<a href=#5877 id=5877 data-nosnippet>5877</a><span class="kw">pub const </span>R_RISCV_GPREL_I: u32 = <span class="number">47</span>;
-<a href=#5878 id=5878 data-nosnippet>5878</a><span class="kw">pub const </span>R_RISCV_GPREL_S: u32 = <span class="number">48</span>;
-<a href=#5879 id=5879 data-nosnippet>5879</a><span class="kw">pub const </span>R_RISCV_TPREL_I: u32 = <span class="number">49</span>;
-<a href=#5880 id=5880 data-nosnippet>5880</a><span class="kw">pub const </span>R_RISCV_TPREL_S: u32 = <span class="number">50</span>;
-<a href=#5881 id=5881 data-nosnippet>5881</a><span class="kw">pub const </span>R_RISCV_RELAX: u32 = <span class="number">51</span>;
-<a href=#5882 id=5882 data-nosnippet>5882</a><span class="kw">pub const </span>R_RISCV_SUB6: u32 = <span class="number">52</span>;
-<a href=#5883 id=5883 data-nosnippet>5883</a><span class="kw">pub const </span>R_RISCV_SET6: u32 = <span class="number">53</span>;
-<a href=#5884 id=5884 data-nosnippet>5884</a><span class="kw">pub const </span>R_RISCV_SET8: u32 = <span class="number">54</span>;
-<a href=#5885 id=5885 data-nosnippet>5885</a><span class="kw">pub const </span>R_RISCV_SET16: u32 = <span class="number">55</span>;
-<a href=#5886 id=5886 data-nosnippet>5886</a><span class="kw">pub const </span>R_RISCV_SET32: u32 = <span class="number">56</span>;
-<a href=#5887 id=5887 data-nosnippet>5887</a><span class="kw">pub const </span>R_RISCV_32_PCREL: u32 = <span class="number">57</span>;
-<a href=#5888 id=5888 data-nosnippet>5888</a><span class="kw">pub const </span>R_RISCV_IRELATIVE: u32 = <span class="number">58</span>;
-<a href=#5889 id=5889 data-nosnippet>5889</a><span class="kw">pub const </span>R_RISCV_PLT32: u32 = <span class="number">59</span>;
-<a href=#5890 id=5890 data-nosnippet>5890</a><span class="kw">pub const </span>R_RISCV_SET_ULEB128: u32 = <span class="number">60</span>;
-<a href=#5891 id=5891 data-nosnippet>5891</a><span class="kw">pub const </span>R_RISCV_SUB_ULEB128: u32 = <span class="number">61</span>;
-<a href=#5892 id=5892 data-nosnippet>5892</a><span class="kw">pub const </span>R_RISCV_TLSDESC_HI20: u32 = <span class="number">62</span>;
-<a href=#5893 id=5893 data-nosnippet>5893</a><span class="kw">pub const </span>R_RISCV_TLSDESC_LOAD_LO12: u32 = <span class="number">63</span>;
-<a href=#5894 id=5894 data-nosnippet>5894</a><span class="kw">pub const </span>R_RISCV_TLSDESC_ADD_LO12: u32 = <span class="number">64</span>;
-<a href=#5895 id=5895 data-nosnippet>5895</a><span class="kw">pub const </span>R_RISCV_TLSDESC_CALL: u32 = <span class="number">65</span>;
-<a href=#5896 id=5896 data-nosnippet>5896</a>
-<a href=#5897 id=5897 data-nosnippet>5897</a><span class="comment">// BPF values `Rel*::r_type`.
-<a href=#5898 id=5898 data-nosnippet>5898</a></span><span class="doccomment">/// No reloc
-<a href=#5899 id=5899 data-nosnippet>5899</a></span><span class="kw">pub const </span>R_BPF_NONE: u32 = <span class="number">0</span>;
-<a href=#5900 id=5900 data-nosnippet>5900</a><span class="kw">pub const </span>R_BPF_64_64: u32 = <span class="number">1</span>;
-<a href=#5901 id=5901 data-nosnippet>5901</a><span class="kw">pub const </span>R_BPF_64_32: u32 = <span class="number">10</span>;
-<a href=#5902 id=5902 data-nosnippet>5902</a>
-<a href=#5903 id=5903 data-nosnippet>5903</a><span class="comment">// SBF values `Rel*::r_type`.
-<a href=#5904 id=5904 data-nosnippet>5904</a></span><span class="doccomment">/// No reloc
-<a href=#5905 id=5905 data-nosnippet>5905</a></span><span class="kw">pub const </span>R_SBF_NONE: u32 = <span class="number">0</span>;
-<a href=#5906 id=5906 data-nosnippet>5906</a><span class="kw">pub const </span>R_SBF_64_64: u32 = <span class="number">1</span>;
-<a href=#5907 id=5907 data-nosnippet>5907</a><span class="kw">pub const </span>R_SBF_64_32: u32 = <span class="number">10</span>;
-<a href=#5908 id=5908 data-nosnippet>5908</a>
-<a href=#5909 id=5909 data-nosnippet>5909</a><span class="comment">// Imagination Meta values `Rel*::r_type`.
-<a href=#5910 id=5910 data-nosnippet>5910</a>
-<a href=#5911 id=5911 data-nosnippet>5911</a></span><span class="kw">pub const </span>R_METAG_HIADDR16: u32 = <span class="number">0</span>;
-<a href=#5912 id=5912 data-nosnippet>5912</a><span class="kw">pub const </span>R_METAG_LOADDR16: u32 = <span class="number">1</span>;
-<a href=#5913 id=5913 data-nosnippet>5913</a><span class="doccomment">/// 32bit absolute address
-<a href=#5914 id=5914 data-nosnippet>5914</a></span><span class="kw">pub const </span>R_METAG_ADDR32: u32 = <span class="number">2</span>;
-<a href=#5915 id=5915 data-nosnippet>5915</a><span class="doccomment">/// No reloc
-<a href=#5916 id=5916 data-nosnippet>5916</a></span><span class="kw">pub const </span>R_METAG_NONE: u32 = <span class="number">3</span>;
-<a href=#5917 id=5917 data-nosnippet>5917</a><span class="kw">pub const </span>R_METAG_RELBRANCH: u32 = <span class="number">4</span>;
-<a href=#5918 id=5918 data-nosnippet>5918</a><span class="kw">pub const </span>R_METAG_GETSETOFF: u32 = <span class="number">5</span>;
-<a href=#5919 id=5919 data-nosnippet>5919</a>
-<a href=#5920 id=5920 data-nosnippet>5920</a><span class="comment">// Backward compatibility
-<a href=#5921 id=5921 data-nosnippet>5921</a></span><span class="kw">pub const </span>R_METAG_REG32OP1: u32 = <span class="number">6</span>;
-<a href=#5922 id=5922 data-nosnippet>5922</a><span class="kw">pub const </span>R_METAG_REG32OP2: u32 = <span class="number">7</span>;
-<a href=#5923 id=5923 data-nosnippet>5923</a><span class="kw">pub const </span>R_METAG_REG32OP3: u32 = <span class="number">8</span>;
-<a href=#5924 id=5924 data-nosnippet>5924</a><span class="kw">pub const </span>R_METAG_REG16OP1: u32 = <span class="number">9</span>;
-<a href=#5925 id=5925 data-nosnippet>5925</a><span class="kw">pub const </span>R_METAG_REG16OP2: u32 = <span class="number">10</span>;
-<a href=#5926 id=5926 data-nosnippet>5926</a><span class="kw">pub const </span>R_METAG_REG16OP3: u32 = <span class="number">11</span>;
-<a href=#5927 id=5927 data-nosnippet>5927</a><span class="kw">pub const </span>R_METAG_REG32OP4: u32 = <span class="number">12</span>;
-<a href=#5928 id=5928 data-nosnippet>5928</a>
-<a href=#5929 id=5929 data-nosnippet>5929</a><span class="kw">pub const </span>R_METAG_HIOG: u32 = <span class="number">13</span>;
-<a href=#5930 id=5930 data-nosnippet>5930</a><span class="kw">pub const </span>R_METAG_LOOG: u32 = <span class="number">14</span>;
-<a href=#5931 id=5931 data-nosnippet>5931</a>
-<a href=#5932 id=5932 data-nosnippet>5932</a><span class="kw">pub const </span>R_METAG_REL8: u32 = <span class="number">15</span>;
-<a href=#5933 id=5933 data-nosnippet>5933</a><span class="kw">pub const </span>R_METAG_REL16: u32 = <span class="number">16</span>;
-<a href=#5934 id=5934 data-nosnippet>5934</a>
-<a href=#5935 id=5935 data-nosnippet>5935</a><span class="kw">pub const </span>R_METAG_GNU_VTINHERIT: u32 = <span class="number">30</span>;
-<a href=#5936 id=5936 data-nosnippet>5936</a><span class="kw">pub const </span>R_METAG_GNU_VTENTRY: u32 = <span class="number">31</span>;
-<a href=#5937 id=5937 data-nosnippet>5937</a>
-<a href=#5938 id=5938 data-nosnippet>5938</a><span class="comment">// PIC relocations
-<a href=#5939 id=5939 data-nosnippet>5939</a></span><span class="kw">pub const </span>R_METAG_HI16_GOTOFF: u32 = <span class="number">32</span>;
-<a href=#5940 id=5940 data-nosnippet>5940</a><span class="kw">pub const </span>R_METAG_LO16_GOTOFF: u32 = <span class="number">33</span>;
-<a href=#5941 id=5941 data-nosnippet>5941</a><span class="kw">pub const </span>R_METAG_GETSET_GOTOFF: u32 = <span class="number">34</span>;
-<a href=#5942 id=5942 data-nosnippet>5942</a><span class="kw">pub const </span>R_METAG_GETSET_GOT: u32 = <span class="number">35</span>;
-<a href=#5943 id=5943 data-nosnippet>5943</a><span class="kw">pub const </span>R_METAG_HI16_GOTPC: u32 = <span class="number">36</span>;
-<a href=#5944 id=5944 data-nosnippet>5944</a><span class="kw">pub const </span>R_METAG_LO16_GOTPC: u32 = <span class="number">37</span>;
-<a href=#5945 id=5945 data-nosnippet>5945</a><span class="kw">pub const </span>R_METAG_HI16_PLT: u32 = <span class="number">38</span>;
-<a href=#5946 id=5946 data-nosnippet>5946</a><span class="kw">pub const </span>R_METAG_LO16_PLT: u32 = <span class="number">39</span>;
-<a href=#5947 id=5947 data-nosnippet>5947</a><span class="kw">pub const </span>R_METAG_RELBRANCH_PLT: u32 = <span class="number">40</span>;
-<a href=#5948 id=5948 data-nosnippet>5948</a><span class="kw">pub const </span>R_METAG_GOTOFF: u32 = <span class="number">41</span>;
-<a href=#5949 id=5949 data-nosnippet>5949</a><span class="kw">pub const </span>R_METAG_PLT: u32 = <span class="number">42</span>;
-<a href=#5950 id=5950 data-nosnippet>5950</a><span class="kw">pub const </span>R_METAG_COPY: u32 = <span class="number">43</span>;
-<a href=#5951 id=5951 data-nosnippet>5951</a><span class="kw">pub const </span>R_METAG_JMP_SLOT: u32 = <span class="number">44</span>;
-<a href=#5952 id=5952 data-nosnippet>5952</a><span class="kw">pub const </span>R_METAG_RELATIVE: u32 = <span class="number">45</span>;
-<a href=#5953 id=5953 data-nosnippet>5953</a><span class="kw">pub const </span>R_METAG_GLOB_DAT: u32 = <span class="number">46</span>;
-<a href=#5954 id=5954 data-nosnippet>5954</a>
-<a href=#5955 id=5955 data-nosnippet>5955</a><span class="comment">// TLS relocations
-<a href=#5956 id=5956 data-nosnippet>5956</a></span><span class="kw">pub const </span>R_METAG_TLS_GD: u32 = <span class="number">47</span>;
-<a href=#5957 id=5957 data-nosnippet>5957</a><span class="kw">pub const </span>R_METAG_TLS_LDM: u32 = <span class="number">48</span>;
-<a href=#5958 id=5958 data-nosnippet>5958</a><span class="kw">pub const </span>R_METAG_TLS_LDO_HI16: u32 = <span class="number">49</span>;
-<a href=#5959 id=5959 data-nosnippet>5959</a><span class="kw">pub const </span>R_METAG_TLS_LDO_LO16: u32 = <span class="number">50</span>;
-<a href=#5960 id=5960 data-nosnippet>5960</a><span class="kw">pub const </span>R_METAG_TLS_LDO: u32 = <span class="number">51</span>;
-<a href=#5961 id=5961 data-nosnippet>5961</a><span class="kw">pub const </span>R_METAG_TLS_IE: u32 = <span class="number">52</span>;
-<a href=#5962 id=5962 data-nosnippet>5962</a><span class="kw">pub const </span>R_METAG_TLS_IENONPIC: u32 = <span class="number">53</span>;
-<a href=#5963 id=5963 data-nosnippet>5963</a><span class="kw">pub const </span>R_METAG_TLS_IENONPIC_HI16: u32 = <span class="number">54</span>;
-<a href=#5964 id=5964 data-nosnippet>5964</a><span class="kw">pub const </span>R_METAG_TLS_IENONPIC_LO16: u32 = <span class="number">55</span>;
-<a href=#5965 id=5965 data-nosnippet>5965</a><span class="kw">pub const </span>R_METAG_TLS_TPOFF: u32 = <span class="number">56</span>;
-<a href=#5966 id=5966 data-nosnippet>5966</a><span class="kw">pub const </span>R_METAG_TLS_DTPMOD: u32 = <span class="number">57</span>;
-<a href=#5967 id=5967 data-nosnippet>5967</a><span class="kw">pub const </span>R_METAG_TLS_DTPOFF: u32 = <span class="number">58</span>;
-<a href=#5968 id=5968 data-nosnippet>5968</a><span class="kw">pub const </span>R_METAG_TLS_LE: u32 = <span class="number">59</span>;
-<a href=#5969 id=5969 data-nosnippet>5969</a><span class="kw">pub const </span>R_METAG_TLS_LE_HI16: u32 = <span class="number">60</span>;
-<a href=#5970 id=5970 data-nosnippet>5970</a><span class="kw">pub const </span>R_METAG_TLS_LE_LO16: u32 = <span class="number">61</span>;
-<a href=#5971 id=5971 data-nosnippet>5971</a>
-<a href=#5972 id=5972 data-nosnippet>5972</a><span class="comment">// NDS32 values `Rel*::r_type`.
-<a href=#5973 id=5973 data-nosnippet>5973</a></span><span class="kw">pub const </span>R_NDS32_NONE: u32 = <span class="number">0</span>;
-<a href=#5974 id=5974 data-nosnippet>5974</a><span class="kw">pub const </span>R_NDS32_32_RELA: u32 = <span class="number">20</span>;
-<a href=#5975 id=5975 data-nosnippet>5975</a><span class="kw">pub const </span>R_NDS32_COPY: u32 = <span class="number">39</span>;
-<a href=#5976 id=5976 data-nosnippet>5976</a><span class="kw">pub const </span>R_NDS32_GLOB_DAT: u32 = <span class="number">40</span>;
-<a href=#5977 id=5977 data-nosnippet>5977</a><span class="kw">pub const </span>R_NDS32_JMP_SLOT: u32 = <span class="number">41</span>;
-<a href=#5978 id=5978 data-nosnippet>5978</a><span class="kw">pub const </span>R_NDS32_RELATIVE: u32 = <span class="number">42</span>;
-<a href=#5979 id=5979 data-nosnippet>5979</a><span class="kw">pub const </span>R_NDS32_TLS_TPOFF: u32 = <span class="number">102</span>;
-<a href=#5980 id=5980 data-nosnippet>5980</a><span class="kw">pub const </span>R_NDS32_TLS_DESC: u32 = <span class="number">119</span>;
-<a href=#5981 id=5981 data-nosnippet>5981</a>
-<a href=#5982 id=5982 data-nosnippet>5982</a><span class="comment">// LoongArch values `FileHeader*::e_flags`.
-<a href=#5983 id=5983 data-nosnippet>5983</a></span><span class="doccomment">/// Additional properties of the base ABI type, including the FP calling
-<a href=#5984 id=5984 data-nosnippet>5984</a>/// convention.
-<a href=#5985 id=5985 data-nosnippet>5985</a></span><span class="kw">pub const </span>EF_LARCH_ABI_MODIFIER_MASK: u32 = <span class="number">0x7</span>;
-<a href=#5986 id=5986 data-nosnippet>5986</a><span class="doccomment">/// Uses GPRs and the stack for parameter passing
-<a href=#5987 id=5987 data-nosnippet>5987</a></span><span class="kw">pub const </span>EF_LARCH_ABI_SOFT_FLOAT: u32 = <span class="number">0x1</span>;
-<a href=#5988 id=5988 data-nosnippet>5988</a><span class="doccomment">/// Uses GPRs, 32-bit FPRs and the stack for parameter passing
-<a href=#5989 id=5989 data-nosnippet>5989</a></span><span class="kw">pub const </span>EF_LARCH_ABI_SINGLE_FLOAT: u32 = <span class="number">0x2</span>;
-<a href=#5990 id=5990 data-nosnippet>5990</a><span class="doccomment">/// Uses GPRs, 64-bit FPRs and the stack for parameter passing
-<a href=#5991 id=5991 data-nosnippet>5991</a></span><span class="kw">pub const </span>EF_LARCH_ABI_DOUBLE_FLOAT: u32 = <span class="number">0x3</span>;
-<a href=#5992 id=5992 data-nosnippet>5992</a><span class="doccomment">/// Uses relocation types directly writing to immediate slots
-<a href=#5993 id=5993 data-nosnippet>5993</a></span><span class="kw">pub const </span>EF_LARCH_OBJABI_V1: u32 = <span class="number">0x40</span>;
-<a href=#5994 id=5994 data-nosnippet>5994</a>
-<a href=#5995 id=5995 data-nosnippet>5995</a><span class="comment">// LoongArch values `Rel*::r_type`.
-<a href=#5996 id=5996 data-nosnippet>5996</a></span><span class="doccomment">/// No reloc
-<a href=#5997 id=5997 data-nosnippet>5997</a></span><span class="kw">pub const </span>R_LARCH_NONE: u32 = <span class="number">0</span>;
-<a href=#5998 id=5998 data-nosnippet>5998</a><span class="doccomment">/// Runtime address resolving
-<a href=#5999 id=5999 data-nosnippet>5999</a></span><span class="kw">pub const </span>R_LARCH_32: u32 = <span class="number">1</span>;
-<a href=#6000 id=6000 data-nosnippet>6000</a><span class="doccomment">/// Runtime address resolving
-<a href=#6001 id=6001 data-nosnippet>6001</a></span><span class="kw">pub const </span>R_LARCH_64: u32 = <span class="number">2</span>;
-<a href=#6002 id=6002 data-nosnippet>6002</a><span class="doccomment">/// Runtime fixup for load-address
-<a href=#6003 id=6003 data-nosnippet>6003</a></span><span class="kw">pub const </span>R_LARCH_RELATIVE: u32 = <span class="number">3</span>;
-<a href=#6004 id=6004 data-nosnippet>6004</a><span class="doccomment">/// Runtime memory copy in executable
-<a href=#6005 id=6005 data-nosnippet>6005</a></span><span class="kw">pub const </span>R_LARCH_COPY: u32 = <span class="number">4</span>;
-<a href=#6006 id=6006 data-nosnippet>6006</a><span class="doccomment">/// Runtime PLT supporting
-<a href=#6007 id=6007 data-nosnippet>6007</a></span><span class="kw">pub const </span>R_LARCH_JUMP_SLOT: u32 = <span class="number">5</span>;
-<a href=#6008 id=6008 data-nosnippet>6008</a><span class="doccomment">/// Runtime relocation for TLS-GD
-<a href=#6009 id=6009 data-nosnippet>6009</a></span><span class="kw">pub const </span>R_LARCH_TLS_DTPMOD32: u32 = <span class="number">6</span>;
-<a href=#6010 id=6010 data-nosnippet>6010</a><span class="doccomment">/// Runtime relocation for TLS-GD
-<a href=#6011 id=6011 data-nosnippet>6011</a></span><span class="kw">pub const </span>R_LARCH_TLS_DTPMOD64: u32 = <span class="number">7</span>;
-<a href=#6012 id=6012 data-nosnippet>6012</a><span class="doccomment">/// Runtime relocation for TLS-GD
-<a href=#6013 id=6013 data-nosnippet>6013</a></span><span class="kw">pub const </span>R_LARCH_TLS_DTPREL32: u32 = <span class="number">8</span>;
-<a href=#6014 id=6014 data-nosnippet>6014</a><span class="doccomment">/// Runtime relocation for TLS-GD
-<a href=#6015 id=6015 data-nosnippet>6015</a></span><span class="kw">pub const </span>R_LARCH_TLS_DTPREL64: u32 = <span class="number">9</span>;
-<a href=#6016 id=6016 data-nosnippet>6016</a><span class="doccomment">/// Runtime relocation for TLE-IE
-<a href=#6017 id=6017 data-nosnippet>6017</a></span><span class="kw">pub const </span>R_LARCH_TLS_TPREL32: u32 = <span class="number">10</span>;
-<a href=#6018 id=6018 data-nosnippet>6018</a><span class="doccomment">/// Runtime relocation for TLE-IE
-<a href=#6019 id=6019 data-nosnippet>6019</a></span><span class="kw">pub const </span>R_LARCH_TLS_TPREL64: u32 = <span class="number">11</span>;
-<a href=#6020 id=6020 data-nosnippet>6020</a><span class="doccomment">/// Runtime local indirect function resolving
-<a href=#6021 id=6021 data-nosnippet>6021</a></span><span class="kw">pub const </span>R_LARCH_IRELATIVE: u32 = <span class="number">12</span>;
-<a href=#6022 id=6022 data-nosnippet>6022</a><span class="doccomment">/// Mark la.abs: load absolute address for static link.
-<a href=#6023 id=6023 data-nosnippet>6023</a></span><span class="kw">pub const </span>R_LARCH_MARK_LA: u32 = <span class="number">20</span>;
-<a href=#6024 id=6024 data-nosnippet>6024</a><span class="doccomment">/// Mark external label branch: access PC relative address for static link.
-<a href=#6025 id=6025 data-nosnippet>6025</a></span><span class="kw">pub const </span>R_LARCH_MARK_PCREL: u32 = <span class="number">21</span>;
-<a href=#6026 id=6026 data-nosnippet>6026</a><span class="doccomment">/// Push PC-relative offset
-<a href=#6027 id=6027 data-nosnippet>6027</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_PCREL: u32 = <span class="number">22</span>;
-<a href=#6028 id=6028 data-nosnippet>6028</a><span class="doccomment">/// Push constant or absolute address
-<a href=#6029 id=6029 data-nosnippet>6029</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_ABSOLUTE: u32 = <span class="number">23</span>;
-<a href=#6030 id=6030 data-nosnippet>6030</a><span class="doccomment">/// Duplicate stack top
-<a href=#6031 id=6031 data-nosnippet>6031</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_DUP: u32 = <span class="number">24</span>;
-<a href=#6032 id=6032 data-nosnippet>6032</a><span class="doccomment">/// Push for access GOT entry
-<a href=#6033 id=6033 data-nosnippet>6033</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_GPREL: u32 = <span class="number">25</span>;
-<a href=#6034 id=6034 data-nosnippet>6034</a><span class="doccomment">/// Push for TLS-LE
-<a href=#6035 id=6035 data-nosnippet>6035</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_TLS_TPREL: u32 = <span class="number">26</span>;
-<a href=#6036 id=6036 data-nosnippet>6036</a><span class="doccomment">/// Push for TLS-IE
-<a href=#6037 id=6037 data-nosnippet>6037</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_TLS_GOT: u32 = <span class="number">27</span>;
-<a href=#6038 id=6038 data-nosnippet>6038</a><span class="doccomment">/// Push for TLS-GD
-<a href=#6039 id=6039 data-nosnippet>6039</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_TLS_GD: u32 = <span class="number">28</span>;
-<a href=#6040 id=6040 data-nosnippet>6040</a><span class="doccomment">/// Push for external function calling
-<a href=#6041 id=6041 data-nosnippet>6041</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_PLT_PCREL: u32 = <span class="number">29</span>;
-<a href=#6042 id=6042 data-nosnippet>6042</a><span class="doccomment">/// Assert stack top
-<a href=#6043 id=6043 data-nosnippet>6043</a></span><span class="kw">pub const </span>R_LARCH_SOP_ASSERT: u32 = <span class="number">30</span>;
-<a href=#6044 id=6044 data-nosnippet>6044</a><span class="doccomment">/// Stack top logical not (unary)
-<a href=#6045 id=6045 data-nosnippet>6045</a></span><span class="kw">pub const </span>R_LARCH_SOP_NOT: u32 = <span class="number">31</span>;
-<a href=#6046 id=6046 data-nosnippet>6046</a><span class="doccomment">/// Stack top subtraction (binary)
-<a href=#6047 id=6047 data-nosnippet>6047</a></span><span class="kw">pub const </span>R_LARCH_SOP_SUB: u32 = <span class="number">32</span>;
-<a href=#6048 id=6048 data-nosnippet>6048</a><span class="doccomment">/// Stack top left shift (binary)
-<a href=#6049 id=6049 data-nosnippet>6049</a></span><span class="kw">pub const </span>R_LARCH_SOP_SL: u32 = <span class="number">33</span>;
-<a href=#6050 id=6050 data-nosnippet>6050</a><span class="doccomment">/// Stack top right shift (binary)
-<a href=#6051 id=6051 data-nosnippet>6051</a></span><span class="kw">pub const </span>R_LARCH_SOP_SR: u32 = <span class="number">34</span>;
-<a href=#6052 id=6052 data-nosnippet>6052</a><span class="doccomment">/// Stack top addition (binary)
-<a href=#6053 id=6053 data-nosnippet>6053</a></span><span class="kw">pub const </span>R_LARCH_SOP_ADD: u32 = <span class="number">35</span>;
-<a href=#6054 id=6054 data-nosnippet>6054</a><span class="doccomment">/// Stack top bitwise and (binary)
-<a href=#6055 id=6055 data-nosnippet>6055</a></span><span class="kw">pub const </span>R_LARCH_SOP_AND: u32 = <span class="number">36</span>;
-<a href=#6056 id=6056 data-nosnippet>6056</a><span class="doccomment">/// Stack top selection (tertiary)
-<a href=#6057 id=6057 data-nosnippet>6057</a></span><span class="kw">pub const </span>R_LARCH_SOP_IF_ELSE: u32 = <span class="number">37</span>;
-<a href=#6058 id=6058 data-nosnippet>6058</a><span class="doccomment">/// Pop stack top to fill 5-bit signed immediate operand
-<a href=#6059 id=6059 data-nosnippet>6059</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_10_5: u32 = <span class="number">38</span>;
-<a href=#6060 id=6060 data-nosnippet>6060</a><span class="doccomment">/// Pop stack top to fill 12-bit unsigned immediate operand
-<a href=#6061 id=6061 data-nosnippet>6061</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_U_10_12: u32 = <span class="number">39</span>;
-<a href=#6062 id=6062 data-nosnippet>6062</a><span class="doccomment">/// Pop stack top to fill 12-bit signed immediate operand
-<a href=#6063 id=6063 data-nosnippet>6063</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_10_12: u32 = <span class="number">40</span>;
-<a href=#6064 id=6064 data-nosnippet>6064</a><span class="doccomment">/// Pop stack top to fill 16-bit signed immediate operand
-<a href=#6065 id=6065 data-nosnippet>6065</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_10_16: u32 = <span class="number">41</span>;
-<a href=#6066 id=6066 data-nosnippet>6066</a><span class="doccomment">/// Pop stack top to fill 18-bit signed immediate operand with two trailing
-<a href=#6067 id=6067 data-nosnippet>6067</a>/// zeros implied
-<a href=#6068 id=6068 data-nosnippet>6068</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_10_16_S2: u32 = <span class="number">42</span>;
-<a href=#6069 id=6069 data-nosnippet>6069</a><span class="doccomment">/// Pop stack top to fill 20-bit signed immediate operand
-<a href=#6070 id=6070 data-nosnippet>6070</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_5_20: u32 = <span class="number">43</span>;
-<a href=#6071 id=6071 data-nosnippet>6071</a><span class="doccomment">/// Pop stack top to fill 23-bit signed immediate operand with two trailing
-<a href=#6072 id=6072 data-nosnippet>6072</a>/// zeros implied
-<a href=#6073 id=6073 data-nosnippet>6073</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_0_5_10_16_S2: u32 = <span class="number">44</span>;
-<a href=#6074 id=6074 data-nosnippet>6074</a><span class="doccomment">/// Pop stack top to fill 28-bit signed immediate operand with two trailing
-<a href=#6075 id=6075 data-nosnippet>6075</a>/// zeros implied
-<a href=#6076 id=6076 data-nosnippet>6076</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_0_10_10_16_S2: u32 = <span class="number">45</span>;
-<a href=#6077 id=6077 data-nosnippet>6077</a><span class="doccomment">/// Pop stack top to fill an instruction
-<a href=#6078 id=6078 data-nosnippet>6078</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_U: u32 = <span class="number">46</span>;
-<a href=#6079 id=6079 data-nosnippet>6079</a><span class="doccomment">/// 8-bit in-place addition
-<a href=#6080 id=6080 data-nosnippet>6080</a></span><span class="kw">pub const </span>R_LARCH_ADD8: u32 = <span class="number">47</span>;
-<a href=#6081 id=6081 data-nosnippet>6081</a><span class="doccomment">/// 16-bit in-place addition
-<a href=#6082 id=6082 data-nosnippet>6082</a></span><span class="kw">pub const </span>R_LARCH_ADD16: u32 = <span class="number">48</span>;
-<a href=#6083 id=6083 data-nosnippet>6083</a><span class="doccomment">/// 24-bit in-place addition
-<a href=#6084 id=6084 data-nosnippet>6084</a></span><span class="kw">pub const </span>R_LARCH_ADD24: u32 = <span class="number">49</span>;
-<a href=#6085 id=6085 data-nosnippet>6085</a><span class="doccomment">/// 32-bit in-place addition
-<a href=#6086 id=6086 data-nosnippet>6086</a></span><span class="kw">pub const </span>R_LARCH_ADD32: u32 = <span class="number">50</span>;
-<a href=#6087 id=6087 data-nosnippet>6087</a><span class="doccomment">/// 64-bit in-place addition
-<a href=#6088 id=6088 data-nosnippet>6088</a></span><span class="kw">pub const </span>R_LARCH_ADD64: u32 = <span class="number">51</span>;
-<a href=#6089 id=6089 data-nosnippet>6089</a><span class="doccomment">/// 8-bit in-place subtraction
-<a href=#6090 id=6090 data-nosnippet>6090</a></span><span class="kw">pub const </span>R_LARCH_SUB8: u32 = <span class="number">52</span>;
-<a href=#6091 id=6091 data-nosnippet>6091</a><span class="doccomment">/// 16-bit in-place subtraction
-<a href=#6092 id=6092 data-nosnippet>6092</a></span><span class="kw">pub const </span>R_LARCH_SUB16: u32 = <span class="number">53</span>;
-<a href=#6093 id=6093 data-nosnippet>6093</a><span class="doccomment">/// 24-bit in-place subtraction
-<a href=#6094 id=6094 data-nosnippet>6094</a></span><span class="kw">pub const </span>R_LARCH_SUB24: u32 = <span class="number">54</span>;
-<a href=#6095 id=6095 data-nosnippet>6095</a><span class="doccomment">/// 32-bit in-place subtraction
-<a href=#6096 id=6096 data-nosnippet>6096</a></span><span class="kw">pub const </span>R_LARCH_SUB32: u32 = <span class="number">55</span>;
-<a href=#6097 id=6097 data-nosnippet>6097</a><span class="doccomment">/// 64-bit in-place subtraction
-<a href=#6098 id=6098 data-nosnippet>6098</a></span><span class="kw">pub const </span>R_LARCH_SUB64: u32 = <span class="number">56</span>;
-<a href=#6099 id=6099 data-nosnippet>6099</a><span class="doccomment">/// GNU C++ vtable hierarchy
-<a href=#6100 id=6100 data-nosnippet>6100</a></span><span class="kw">pub const </span>R_LARCH_GNU_VTINHERIT: u32 = <span class="number">57</span>;
-<a href=#6101 id=6101 data-nosnippet>6101</a><span class="doccomment">/// GNU C++ vtable member usage
-<a href=#6102 id=6102 data-nosnippet>6102</a></span><span class="kw">pub const </span>R_LARCH_GNU_VTENTRY: u32 = <span class="number">58</span>;
-<a href=#6103 id=6103 data-nosnippet>6103</a><span class="doccomment">/// 18-bit PC-relative jump offset with two trailing zeros
-<a href=#6104 id=6104 data-nosnippet>6104</a></span><span class="kw">pub const </span>R_LARCH_B16: u32 = <span class="number">64</span>;
-<a href=#6105 id=6105 data-nosnippet>6105</a><span class="doccomment">/// 23-bit PC-relative jump offset with two trailing zeros
-<a href=#6106 id=6106 data-nosnippet>6106</a></span><span class="kw">pub const </span>R_LARCH_B21: u32 = <span class="number">65</span>;
-<a href=#6107 id=6107 data-nosnippet>6107</a><span class="doccomment">/// 28-bit PC-relative jump offset with two trailing zeros
-<a href=#6108 id=6108 data-nosnippet>6108</a></span><span class="kw">pub const </span>R_LARCH_B26: u32 = <span class="number">66</span>;
-<a href=#6109 id=6109 data-nosnippet>6109</a><span class="doccomment">/// 12..=31 bits of 32/64-bit absolute address
-<a href=#6110 id=6110 data-nosnippet>6110</a></span><span class="kw">pub const </span>R_LARCH_ABS_HI20: u32 = <span class="number">67</span>;
-<a href=#6111 id=6111 data-nosnippet>6111</a><span class="doccomment">/// 0..=11 bits of 32/64-bit absolute address
-<a href=#6112 id=6112 data-nosnippet>6112</a></span><span class="kw">pub const </span>R_LARCH_ABS_LO12: u32 = <span class="number">68</span>;
-<a href=#6113 id=6113 data-nosnippet>6113</a><span class="doccomment">/// 32..=51 bits of 64-bit absolute address
-<a href=#6114 id=6114 data-nosnippet>6114</a></span><span class="kw">pub const </span>R_LARCH_ABS64_LO20: u32 = <span class="number">69</span>;
-<a href=#6115 id=6115 data-nosnippet>6115</a><span class="doccomment">/// 52..=63 bits of 64-bit absolute address
-<a href=#6116 id=6116 data-nosnippet>6116</a></span><span class="kw">pub const </span>R_LARCH_ABS64_HI12: u32 = <span class="number">70</span>;
-<a href=#6117 id=6117 data-nosnippet>6117</a><span class="doccomment">/// The signed 32-bit offset `offs` from `PC &amp; 0xfffff000` to
-<a href=#6118 id=6118 data-nosnippet>6118</a>/// `(S + A + 0x800) &amp; 0xfffff000`, with 12 trailing zeros removed.
-<a href=#6119 id=6119 data-nosnippet>6119</a>///
-<a href=#6120 id=6120 data-nosnippet>6120</a>/// We define the *PC relative anchor* for `S + A` as `PC + offs` (`offs`
-<a href=#6121 id=6121 data-nosnippet>6121</a>/// is sign-extended to VA bits).
-<a href=#6122 id=6122 data-nosnippet>6122</a></span><span class="kw">pub const </span>R_LARCH_PCALA_HI20: u32 = <span class="number">71</span>;
-<a href=#6123 id=6123 data-nosnippet>6123</a><span class="doccomment">/// Same as R_LARCH_ABS_LO12.  0..=11 bits of the 32/64-bit offset from the
-<a href=#6124 id=6124 data-nosnippet>6124</a>/// [PC relative anchor][R_LARCH_PCALA_HI20].
-<a href=#6125 id=6125 data-nosnippet>6125</a></span><span class="kw">pub const </span>R_LARCH_PCALA_LO12: u32 = <span class="number">72</span>;
-<a href=#6126 id=6126 data-nosnippet>6126</a><span class="doccomment">/// 32..=51 bits of the 64-bit offset from the
-<a href=#6127 id=6127 data-nosnippet>6127</a>/// [PC relative anchor][R_LARCH_PCALA_HI20].
-<a href=#6128 id=6128 data-nosnippet>6128</a></span><span class="kw">pub const </span>R_LARCH_PCALA64_LO20: u32 = <span class="number">73</span>;
-<a href=#6129 id=6129 data-nosnippet>6129</a><span class="doccomment">/// 52..=63 bits of the 64-bit offset from the
-<a href=#6130 id=6130 data-nosnippet>6130</a>/// [PC relative anchor][R_LARCH_PCALA_HI20].
-<a href=#6131 id=6131 data-nosnippet>6131</a></span><span class="kw">pub const </span>R_LARCH_PCALA64_HI12: u32 = <span class="number">74</span>;
-<a href=#6132 id=6132 data-nosnippet>6132</a><span class="doccomment">/// The signed 32-bit offset `offs` from `PC &amp; 0xfffff000` to
-<a href=#6133 id=6133 data-nosnippet>6133</a>/// `(GP + G + 0x800) &amp; 0xfffff000`, with 12 trailing zeros removed.
-<a href=#6134 id=6134 data-nosnippet>6134</a>///
-<a href=#6135 id=6135 data-nosnippet>6135</a>/// We define the *PC relative anchor* for the GOT entry at `GP + G` as
-<a href=#6136 id=6136 data-nosnippet>6136</a>/// `PC + offs` (`offs` is sign-extended to VA bits).
-<a href=#6137 id=6137 data-nosnippet>6137</a></span><span class="kw">pub const </span>R_LARCH_GOT_PC_HI20: u32 = <span class="number">75</span>;
-<a href=#6138 id=6138 data-nosnippet>6138</a><span class="doccomment">/// 0..=11 bits of the 32/64-bit offset from the
-<a href=#6139 id=6139 data-nosnippet>6139</a>/// [PC relative anchor][R_LARCH_GOT_PC_HI20] to the GOT entry.
-<a href=#6140 id=6140 data-nosnippet>6140</a></span><span class="kw">pub const </span>R_LARCH_GOT_PC_LO12: u32 = <span class="number">76</span>;
-<a href=#6141 id=6141 data-nosnippet>6141</a><span class="doccomment">/// 32..=51 bits of the 64-bit offset from the
-<a href=#6142 id=6142 data-nosnippet>6142</a>/// [PC relative anchor][R_LARCH_GOT_PC_HI20] to the GOT entry.
-<a href=#6143 id=6143 data-nosnippet>6143</a></span><span class="kw">pub const </span>R_LARCH_GOT64_PC_LO20: u32 = <span class="number">77</span>;
-<a href=#6144 id=6144 data-nosnippet>6144</a><span class="doccomment">/// 52..=63 bits of the 64-bit offset from the
-<a href=#6145 id=6145 data-nosnippet>6145</a>/// [PC relative anchor][R_LARCH_GOT_PC_HI20] to the GOT entry.
-<a href=#6146 id=6146 data-nosnippet>6146</a></span><span class="kw">pub const </span>R_LARCH_GOT64_PC_HI12: u32 = <span class="number">78</span>;
-<a href=#6147 id=6147 data-nosnippet>6147</a><span class="doccomment">/// 12..=31 bits of 32/64-bit GOT entry absolute address
-<a href=#6148 id=6148 data-nosnippet>6148</a></span><span class="kw">pub const </span>R_LARCH_GOT_HI20: u32 = <span class="number">79</span>;
-<a href=#6149 id=6149 data-nosnippet>6149</a><span class="doccomment">/// 0..=11 bits of 32/64-bit GOT entry absolute address
-<a href=#6150 id=6150 data-nosnippet>6150</a></span><span class="kw">pub const </span>R_LARCH_GOT_LO12: u32 = <span class="number">80</span>;
-<a href=#6151 id=6151 data-nosnippet>6151</a><span class="doccomment">/// 32..=51 bits of 64-bit GOT entry absolute address
-<a href=#6152 id=6152 data-nosnippet>6152</a></span><span class="kw">pub const </span>R_LARCH_GOT64_LO20: u32 = <span class="number">81</span>;
-<a href=#6153 id=6153 data-nosnippet>6153</a><span class="doccomment">/// 52..=63 bits of 64-bit GOT entry absolute address
-<a href=#6154 id=6154 data-nosnippet>6154</a></span><span class="kw">pub const </span>R_LARCH_GOT64_HI12: u32 = <span class="number">82</span>;
-<a href=#6155 id=6155 data-nosnippet>6155</a><span class="doccomment">/// 12..=31 bits of TLS LE 32/64-bit offset from thread pointer
-<a href=#6156 id=6156 data-nosnippet>6156</a></span><span class="kw">pub const </span>R_LARCH_TLS_LE_HI20: u32 = <span class="number">83</span>;
-<a href=#6157 id=6157 data-nosnippet>6157</a><span class="doccomment">/// 0..=11 bits of TLS LE 32/64-bit offset from thread pointer
-<a href=#6158 id=6158 data-nosnippet>6158</a></span><span class="kw">pub const </span>R_LARCH_TLS_LE_LO12: u32 = <span class="number">84</span>;
-<a href=#6159 id=6159 data-nosnippet>6159</a><span class="doccomment">/// 32..=51 bits of TLS LE 64-bit offset from thread pointer
-<a href=#6160 id=6160 data-nosnippet>6160</a></span><span class="kw">pub const </span>R_LARCH_TLS_LE64_LO20: u32 = <span class="number">85</span>;
-<a href=#6161 id=6161 data-nosnippet>6161</a><span class="doccomment">/// 52..=63 bits of TLS LE 64-bit offset from thread pointer
-<a href=#6162 id=6162 data-nosnippet>6162</a></span><span class="kw">pub const </span>R_LARCH_TLS_LE64_HI12: u32 = <span class="number">86</span>;
-<a href=#6163 id=6163 data-nosnippet>6163</a><span class="doccomment">/// The signed 32-bit offset `offs` from `PC &amp; 0xfffff000` to
-<a href=#6164 id=6164 data-nosnippet>6164</a>/// `(GP + IE + 0x800) &amp; 0xfffff000`, with 12 trailing zeros removed.
-<a href=#6165 id=6165 data-nosnippet>6165</a>///
-<a href=#6166 id=6166 data-nosnippet>6166</a>/// We define the *PC relative anchor* for the TLS IE GOT entry at
-<a href=#6167 id=6167 data-nosnippet>6167</a>/// `GP + IE` as `PC + offs` (`offs` is sign-extended to VA bits).
-<a href=#6168 id=6168 data-nosnippet>6168</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE_PC_HI20: u32 = <span class="number">87</span>;
-<a href=#6169 id=6169 data-nosnippet>6169</a><span class="doccomment">/// 0..=12 bits of the 32/64-bit offset from the
-<a href=#6170 id=6170 data-nosnippet>6170</a>/// [PC-relative anchor][R_LARCH_TLS_IE_PC_HI20] to the TLS IE GOT entry.
-<a href=#6171 id=6171 data-nosnippet>6171</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE_PC_LO12: u32 = <span class="number">88</span>;
-<a href=#6172 id=6172 data-nosnippet>6172</a><span class="doccomment">/// 32..=51 bits of the 64-bit offset from the
-<a href=#6173 id=6173 data-nosnippet>6173</a>/// [PC-relative anchor][R_LARCH_TLS_IE_PC_HI20] to the TLS IE GOT entry.
-<a href=#6174 id=6174 data-nosnippet>6174</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE64_PC_LO20: u32 = <span class="number">89</span>;
-<a href=#6175 id=6175 data-nosnippet>6175</a><span class="doccomment">/// 52..=63 bits of the 64-bit offset from the
-<a href=#6176 id=6176 data-nosnippet>6176</a>/// [PC-relative anchor][R_LARCH_TLS_IE_PC_HI20] to the TLS IE GOT entry.
-<a href=#6177 id=6177 data-nosnippet>6177</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE64_PC_HI12: u32 = <span class="number">90</span>;
-<a href=#6178 id=6178 data-nosnippet>6178</a><span class="doccomment">/// 12..=31 bits of TLS IE GOT entry 32/64-bit absolute address
-<a href=#6179 id=6179 data-nosnippet>6179</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE_HI20: u32 = <span class="number">91</span>;
-<a href=#6180 id=6180 data-nosnippet>6180</a><span class="doccomment">/// 0..=11 bits of TLS IE GOT entry 32/64-bit absolute address
-<a href=#6181 id=6181 data-nosnippet>6181</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE_LO12: u32 = <span class="number">92</span>;
-<a href=#6182 id=6182 data-nosnippet>6182</a><span class="doccomment">/// 32..=51 bits of TLS IE GOT entry 64-bit absolute address
-<a href=#6183 id=6183 data-nosnippet>6183</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE64_LO20: u32 = <span class="number">93</span>;
-<a href=#6184 id=6184 data-nosnippet>6184</a><span class="doccomment">/// 51..=63 bits of TLS IE GOT entry 64-bit absolute address
-<a href=#6185 id=6185 data-nosnippet>6185</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE64_HI12: u32 = <span class="number">94</span>;
-<a href=#6186 id=6186 data-nosnippet>6186</a><span class="doccomment">/// 12..=31 bits of the offset from `PC` to `GP + GD + 0x800`, where
-<a href=#6187 id=6187 data-nosnippet>6187</a>/// `GP + GD` is a TLS LD GOT entry
-<a href=#6188 id=6188 data-nosnippet>6188</a></span><span class="kw">pub const </span>R_LARCH_TLS_LD_PC_HI20: u32 = <span class="number">95</span>;
-<a href=#6189 id=6189 data-nosnippet>6189</a><span class="doccomment">/// 12..=31 bits of TLS LD GOT entry 32/64-bit absolute address
-<a href=#6190 id=6190 data-nosnippet>6190</a></span><span class="kw">pub const </span>R_LARCH_TLS_LD_HI20: u32 = <span class="number">96</span>;
-<a href=#6191 id=6191 data-nosnippet>6191</a><span class="doccomment">/// 12..=31 bits of the 32/64-bit PC-relative offset to the PC-relative
-<a href=#6192 id=6192 data-nosnippet>6192</a>/// anchor for the TLE GD GOT entry.
-<a href=#6193 id=6193 data-nosnippet>6193</a></span><span class="kw">pub const </span>R_LARCH_TLS_GD_PC_HI20: u32 = <span class="number">97</span>;
-<a href=#6194 id=6194 data-nosnippet>6194</a><span class="doccomment">/// 12..=31 bits of TLS GD GOT entry 32/64-bit absolute address
-<a href=#6195 id=6195 data-nosnippet>6195</a></span><span class="kw">pub const </span>R_LARCH_TLS_GD_HI20: u32 = <span class="number">98</span>;
-<a href=#6196 id=6196 data-nosnippet>6196</a><span class="doccomment">/// 32-bit PC relative
-<a href=#6197 id=6197 data-nosnippet>6197</a></span><span class="kw">pub const </span>R_LARCH_32_PCREL: u32 = <span class="number">99</span>;
-<a href=#6198 id=6198 data-nosnippet>6198</a><span class="doccomment">/// Paired with a normal relocation at the same address to indicate the
-<a href=#6199 id=6199 data-nosnippet>6199</a>/// instruction can be relaxed
-<a href=#6200 id=6200 data-nosnippet>6200</a></span><span class="kw">pub const </span>R_LARCH_RELAX: u32 = <span class="number">100</span>;
-<a href=#6201 id=6201 data-nosnippet>6201</a><span class="doccomment">/// Reserved
-<a href=#6202 id=6202 data-nosnippet>6202</a></span><span class="kw">pub const </span>R_LARCH_DELETE: u32 = <span class="number">101</span>;
-<a href=#6203 id=6203 data-nosnippet>6203</a><span class="doccomment">/// Delete some bytes to ensure the instruction at PC + A aligned to
-<a href=#6204 id=6204 data-nosnippet>6204</a>/// `A.next_power_of_two()`-byte boundary
-<a href=#6205 id=6205 data-nosnippet>6205</a></span><span class="kw">pub const </span>R_LARCH_ALIGN: u32 = <span class="number">102</span>;
-<a href=#6206 id=6206 data-nosnippet>6206</a><span class="doccomment">/// 22-bit PC-relative offset with two trailing zeros
-<a href=#6207 id=6207 data-nosnippet>6207</a></span><span class="kw">pub const </span>R_LARCH_PCREL20_S2: u32 = <span class="number">103</span>;
-<a href=#6208 id=6208 data-nosnippet>6208</a><span class="doccomment">/// Reserved
-<a href=#6209 id=6209 data-nosnippet>6209</a></span><span class="kw">pub const </span>R_LARCH_CFA: u32 = <span class="number">104</span>;
-<a href=#6210 id=6210 data-nosnippet>6210</a><span class="doccomment">/// 6-bit in-place addition
-<a href=#6211 id=6211 data-nosnippet>6211</a></span><span class="kw">pub const </span>R_LARCH_ADD6: u32 = <span class="number">105</span>;
-<a href=#6212 id=6212 data-nosnippet>6212</a><span class="doccomment">/// 6-bit in-place subtraction
-<a href=#6213 id=6213 data-nosnippet>6213</a></span><span class="kw">pub const </span>R_LARCH_SUB6: u32 = <span class="number">106</span>;
-<a href=#6214 id=6214 data-nosnippet>6214</a><span class="doccomment">/// LEB128 in-place addition
-<a href=#6215 id=6215 data-nosnippet>6215</a></span><span class="kw">pub const </span>R_LARCH_ADD_ULEB128: u32 = <span class="number">107</span>;
-<a href=#6216 id=6216 data-nosnippet>6216</a><span class="doccomment">/// LEB128 in-place subtraction
-<a href=#6217 id=6217 data-nosnippet>6217</a></span><span class="kw">pub const </span>R_LARCH_SUB_ULEB128: u32 = <span class="number">108</span>;
-<a href=#6218 id=6218 data-nosnippet>6218</a><span class="doccomment">/// 64-bit PC relative
-<a href=#6219 id=6219 data-nosnippet>6219</a></span><span class="kw">pub const </span>R_LARCH_64_PCREL: u32 = <span class="number">109</span>;
-<a href=#6220 id=6220 data-nosnippet>6220</a><span class="doccomment">/// 18..=37 bits of `S + A - PC` into the `pcaddu18i` instruction at `PC`,
-<a href=#6221 id=6221 data-nosnippet>6221</a>/// and 2..=17 bits of `S + A - PC` into the `jirl` instruction at `PC + 4`
-<a href=#6222 id=6222 data-nosnippet>6222</a></span><span class="kw">pub const </span>R_LARCH_CALL36: u32 = <span class="number">110</span>;
-<a href=#6223 id=6223 data-nosnippet>6223</a>
-<a href=#6224 id=6224 data-nosnippet>6224</a><span class="comment">// Xtensa values Rel*::r_type`.
-<a href=#6225 id=6225 data-nosnippet>6225</a></span><span class="kw">pub const </span>R_XTENSA_NONE: u32 = <span class="number">0</span>;
-<a href=#6226 id=6226 data-nosnippet>6226</a><span class="kw">pub const </span>R_XTENSA_32: u32 = <span class="number">1</span>;
-<a href=#6227 id=6227 data-nosnippet>6227</a><span class="kw">pub const </span>R_XTENSA_RTLD: u32 = <span class="number">2</span>;
-<a href=#6228 id=6228 data-nosnippet>6228</a><span class="kw">pub const </span>R_XTENSA_GLOB_DAT: u32 = <span class="number">3</span>;
-<a href=#6229 id=6229 data-nosnippet>6229</a><span class="kw">pub const </span>R_XTENSA_JMP_SLOT: u32 = <span class="number">4</span>;
-<a href=#6230 id=6230 data-nosnippet>6230</a><span class="kw">pub const </span>R_XTENSA_RELATIVE: u32 = <span class="number">5</span>;
-<a href=#6231 id=6231 data-nosnippet>6231</a><span class="kw">pub const </span>R_XTENSA_PLT: u32 = <span class="number">6</span>;
-<a href=#6232 id=6232 data-nosnippet>6232</a><span class="kw">pub const </span>R_XTENSA_OP0: u32 = <span class="number">8</span>;
-<a href=#6233 id=6233 data-nosnippet>6233</a><span class="kw">pub const </span>R_XTENSA_OP1: u32 = <span class="number">9</span>;
-<a href=#6234 id=6234 data-nosnippet>6234</a><span class="kw">pub const </span>R_XTENSA_OP2: u32 = <span class="number">10</span>;
-<a href=#6235 id=6235 data-nosnippet>6235</a><span class="kw">pub const </span>R_XTENSA_ASM_EXPAND: u32 = <span class="number">11</span>;
-<a href=#6236 id=6236 data-nosnippet>6236</a><span class="kw">pub const </span>R_XTENSA_ASM_SIMPLIFY: u32 = <span class="number">12</span>;
-<a href=#6237 id=6237 data-nosnippet>6237</a><span class="kw">pub const </span>R_XTENSA_32_PCREL: u32 = <span class="number">14</span>;
-<a href=#6238 id=6238 data-nosnippet>6238</a><span class="kw">pub const </span>R_XTENSA_GNU_VTINHERIT: u32 = <span class="number">15</span>;
-<a href=#6239 id=6239 data-nosnippet>6239</a><span class="kw">pub const </span>R_XTENSA_GNU_VTENTRY: u32 = <span class="number">16</span>;
-<a href=#6240 id=6240 data-nosnippet>6240</a><span class="kw">pub const </span>R_XTENSA_DIFF8: u32 = <span class="number">17</span>;
-<a href=#6241 id=6241 data-nosnippet>6241</a><span class="kw">pub const </span>R_XTENSA_DIFF16: u32 = <span class="number">18</span>;
-<a href=#6242 id=6242 data-nosnippet>6242</a><span class="kw">pub const </span>R_XTENSA_DIFF32: u32 = <span class="number">19</span>;
-<a href=#6243 id=6243 data-nosnippet>6243</a><span class="kw">pub const </span>R_XTENSA_SLOT0_OP: u32 = <span class="number">20</span>;
-<a href=#6244 id=6244 data-nosnippet>6244</a><span class="kw">pub const </span>R_XTENSA_SLOT1_OP: u32 = <span class="number">21</span>;
-<a href=#6245 id=6245 data-nosnippet>6245</a><span class="kw">pub const </span>R_XTENSA_SLOT2_OP: u32 = <span class="number">22</span>;
-<a href=#6246 id=6246 data-nosnippet>6246</a><span class="kw">pub const </span>R_XTENSA_SLOT3_OP: u32 = <span class="number">23</span>;
-<a href=#6247 id=6247 data-nosnippet>6247</a><span class="kw">pub const </span>R_XTENSA_SLOT4_OP: u32 = <span class="number">24</span>;
-<a href=#6248 id=6248 data-nosnippet>6248</a><span class="kw">pub const </span>R_XTENSA_SLOT5_OP: u32 = <span class="number">25</span>;
-<a href=#6249 id=6249 data-nosnippet>6249</a><span class="kw">pub const </span>R_XTENSA_SLOT6_OP: u32 = <span class="number">26</span>;
-<a href=#6250 id=6250 data-nosnippet>6250</a><span class="kw">pub const </span>R_XTENSA_SLOT7_OP: u32 = <span class="number">27</span>;
-<a href=#6251 id=6251 data-nosnippet>6251</a><span class="kw">pub const </span>R_XTENSA_SLOT8_OP: u32 = <span class="number">28</span>;
-<a href=#6252 id=6252 data-nosnippet>6252</a><span class="kw">pub const </span>R_XTENSA_SLOT9_OP: u32 = <span class="number">29</span>;
-<a href=#6253 id=6253 data-nosnippet>6253</a><span class="kw">pub const </span>R_XTENSA_SLOT10_OP: u32 = <span class="number">30</span>;
-<a href=#6254 id=6254 data-nosnippet>6254</a><span class="kw">pub const </span>R_XTENSA_SLOT11_OP: u32 = <span class="number">31</span>;
-<a href=#6255 id=6255 data-nosnippet>6255</a><span class="kw">pub const </span>R_XTENSA_SLOT12_OP: u32 = <span class="number">32</span>;
-<a href=#6256 id=6256 data-nosnippet>6256</a><span class="kw">pub const </span>R_XTENSA_SLOT13_OP: u32 = <span class="number">33</span>;
-<a href=#6257 id=6257 data-nosnippet>6257</a><span class="kw">pub const </span>R_XTENSA_SLOT14_OP: u32 = <span class="number">34</span>;
-<a href=#6258 id=6258 data-nosnippet>6258</a><span class="kw">pub const </span>R_XTENSA_SLOT0_ALT: u32 = <span class="number">35</span>;
-<a href=#6259 id=6259 data-nosnippet>6259</a><span class="kw">pub const </span>R_XTENSA_SLOT1_ALT: u32 = <span class="number">36</span>;
-<a href=#6260 id=6260 data-nosnippet>6260</a><span class="kw">pub const </span>R_XTENSA_SLOT2_ALT: u32 = <span class="number">37</span>;
-<a href=#6261 id=6261 data-nosnippet>6261</a><span class="kw">pub const </span>R_XTENSA_SLOT3_ALT: u32 = <span class="number">38</span>;
-<a href=#6262 id=6262 data-nosnippet>6262</a><span class="kw">pub const </span>R_XTENSA_SLOT4_ALT: u32 = <span class="number">39</span>;
-<a href=#6263 id=6263 data-nosnippet>6263</a><span class="kw">pub const </span>R_XTENSA_SLOT5_ALT: u32 = <span class="number">40</span>;
-<a href=#6264 id=6264 data-nosnippet>6264</a><span class="kw">pub const </span>R_XTENSA_SLOT6_ALT: u32 = <span class="number">41</span>;
-<a href=#6265 id=6265 data-nosnippet>6265</a><span class="kw">pub const </span>R_XTENSA_SLOT7_ALT: u32 = <span class="number">42</span>;
-<a href=#6266 id=6266 data-nosnippet>6266</a><span class="kw">pub const </span>R_XTENSA_SLOT8_ALT: u32 = <span class="number">43</span>;
-<a href=#6267 id=6267 data-nosnippet>6267</a><span class="kw">pub const </span>R_XTENSA_SLOT9_ALT: u32 = <span class="number">44</span>;
-<a href=#6268 id=6268 data-nosnippet>6268</a><span class="kw">pub const </span>R_XTENSA_SLOT10_ALT: u32 = <span class="number">45</span>;
-<a href=#6269 id=6269 data-nosnippet>6269</a><span class="kw">pub const </span>R_XTENSA_SLOT11_ALT: u32 = <span class="number">46</span>;
-<a href=#6270 id=6270 data-nosnippet>6270</a><span class="kw">pub const </span>R_XTENSA_SLOT12_ALT: u32 = <span class="number">47</span>;
-<a href=#6271 id=6271 data-nosnippet>6271</a><span class="kw">pub const </span>R_XTENSA_SLOT13_ALT: u32 = <span class="number">48</span>;
-<a href=#6272 id=6272 data-nosnippet>6272</a><span class="kw">pub const </span>R_XTENSA_SLOT14_ALT: u32 = <span class="number">49</span>;
-<a href=#6273 id=6273 data-nosnippet>6273</a><span class="kw">pub const </span>R_XTENSA_TLSDESC_FN: u32 = <span class="number">50</span>;
-<a href=#6274 id=6274 data-nosnippet>6274</a><span class="kw">pub const </span>R_XTENSA_TLSDESC_ARG: u32 = <span class="number">51</span>;
-<a href=#6275 id=6275 data-nosnippet>6275</a><span class="kw">pub const </span>R_XTENSA_TLS_DTPOFF: u32 = <span class="number">52</span>;
-<a href=#6276 id=6276 data-nosnippet>6276</a><span class="kw">pub const </span>R_XTENSA_TLS_TPOFF: u32 = <span class="number">53</span>;
-<a href=#6277 id=6277 data-nosnippet>6277</a><span class="kw">pub const </span>R_XTENSA_TLS_FUNC: u32 = <span class="number">54</span>;
-<a href=#6278 id=6278 data-nosnippet>6278</a><span class="kw">pub const </span>R_XTENSA_TLS_ARG: u32 = <span class="number">55</span>;
-<a href=#6279 id=6279 data-nosnippet>6279</a><span class="kw">pub const </span>R_XTENSA_TLS_CALL: u32 = <span class="number">56</span>;
-<a href=#6280 id=6280 data-nosnippet>6280</a><span class="kw">pub const </span>R_XTENSA_PDIFF8: u32 = <span class="number">57</span>;
-<a href=#6281 id=6281 data-nosnippet>6281</a><span class="kw">pub const </span>R_XTENSA_PDIFF16: u32 = <span class="number">58</span>;
-<a href=#6282 id=6282 data-nosnippet>6282</a><span class="kw">pub const </span>R_XTENSA_PDIFF32: u32 = <span class="number">59</span>;
-<a href=#6283 id=6283 data-nosnippet>6283</a><span class="kw">pub const </span>R_XTENSA_NDIFF8: u32 = <span class="number">60</span>;
-<a href=#6284 id=6284 data-nosnippet>6284</a><span class="kw">pub const </span>R_XTENSA_NDIFF16: u32 = <span class="number">61</span>;
-<a href=#6285 id=6285 data-nosnippet>6285</a><span class="kw">pub const </span>R_XTENSA_NDIFF32: u32 = <span class="number">62</span>;
-<a href=#6286 id=6286 data-nosnippet>6286</a>
-<a href=#6287 id=6287 data-nosnippet>6287</a><span class="comment">// E2K values for `FileHeader*::e_flags`.
-<a href=#6288 id=6288 data-nosnippet>6288</a></span><span class="kw">pub const </span>EF_E2K_IPD: u32 = <span class="number">3</span>;
-<a href=#6289 id=6289 data-nosnippet>6289</a><span class="kw">pub const </span>EF_E2K_X86APP: u32 = <span class="number">4</span>;
-<a href=#6290 id=6290 data-nosnippet>6290</a><span class="kw">pub const </span>EF_E2K_4MB_PAGES: u32 = <span class="number">8</span>;
-<a href=#6291 id=6291 data-nosnippet>6291</a><span class="kw">pub const </span>EF_E2K_INCOMPAT: u32 = <span class="number">16</span>;
-<a href=#6292 id=6292 data-nosnippet>6292</a><span class="kw">pub const </span>EF_E2K_PM: u32 = <span class="number">32</span>;
-<a href=#6293 id=6293 data-nosnippet>6293</a><span class="kw">pub const </span>EF_E2K_PACK_SEGMENTS: u32 = <span class="number">64</span>;
-<a href=#6294 id=6294 data-nosnippet>6294</a>
-<a href=#6295 id=6295 data-nosnippet>6295</a><span class="doccomment">/// Encode `E_E2K_MACH_*` into `FileHeader*::e_flags`.
-<a href=#6296 id=6296 data-nosnippet>6296</a></span><span class="kw">pub const fn </span>ef_e2k_mach_to_flag(e_flags: u32, x: u32) -&gt; u32 {
-<a href=#6297 id=6297 data-nosnippet>6297</a>    (e_flags &amp; <span class="number">0xffffff</span>) | (x &lt;&lt; <span class="number">24</span>)
-<a href=#6298 id=6298 data-nosnippet>6298</a>}
-<a href=#6299 id=6299 data-nosnippet>6299</a>
-<a href=#6300 id=6300 data-nosnippet>6300</a><span class="doccomment">/// Decode `E_E2K_MACH_*` from `FileHeader*::e_flags`.
-<a href=#6301 id=6301 data-nosnippet>6301</a></span><span class="kw">pub const fn </span>ef_e2k_flag_to_mach(e_flags: u32) -&gt; u32 {
-<a href=#6302 id=6302 data-nosnippet>6302</a>    e_flags &gt;&gt; <span class="number">24
-<a href=#6303 id=6303 data-nosnippet>6303</a></span>}
-<a href=#6304 id=6304 data-nosnippet>6304</a>
-<a href=#6305 id=6305 data-nosnippet>6305</a><span class="comment">// Codes of supported E2K machines.
-<a href=#6306 id=6306 data-nosnippet>6306</a>
-<a href=#6307 id=6307 data-nosnippet>6307</a></span><span class="doccomment">/// -march=generic code.
-<a href=#6308 id=6308 data-nosnippet>6308</a>///
-<a href=#6309 id=6309 data-nosnippet>6309</a>/// Legacy. Shouldn't be created nowadays.
-<a href=#6310 id=6310 data-nosnippet>6310</a></span><span class="kw">pub const </span>E_E2K_MACH_BASE: u32 = <span class="number">0</span>;
-<a href=#6311 id=6311 data-nosnippet>6311</a><span class="doccomment">/// -march=elbrus-v1 code.
-<a href=#6312 id=6312 data-nosnippet>6312</a>///
-<a href=#6313 id=6313 data-nosnippet>6313</a>/// Legacy. Shouldn't be created nowadays.
-<a href=#6314 id=6314 data-nosnippet>6314</a></span><span class="kw">pub const </span>E_E2K_MACH_EV1: u32 = <span class="number">1</span>;
-<a href=#6315 id=6315 data-nosnippet>6315</a><span class="doccomment">/// -march=elbrus-v2 code.
-<a href=#6316 id=6316 data-nosnippet>6316</a></span><span class="kw">pub const </span>E_E2K_MACH_EV2: u32 = <span class="number">2</span>;
-<a href=#6317 id=6317 data-nosnippet>6317</a><span class="doccomment">/// -march=elbrus-v3 code.
-<a href=#6318 id=6318 data-nosnippet>6318</a></span><span class="kw">pub const </span>E_E2K_MACH_EV3: u32 = <span class="number">3</span>;
-<a href=#6319 id=6319 data-nosnippet>6319</a><span class="doccomment">/// -march=elbrus-v4 code.
-<a href=#6320 id=6320 data-nosnippet>6320</a></span><span class="kw">pub const </span>E_E2K_MACH_EV4: u32 = <span class="number">4</span>;
-<a href=#6321 id=6321 data-nosnippet>6321</a><span class="doccomment">/// -march=elbrus-v5 code.
-<a href=#6322 id=6322 data-nosnippet>6322</a></span><span class="kw">pub const </span>E_E2K_MACH_EV5: u32 = <span class="number">5</span>;
-<a href=#6323 id=6323 data-nosnippet>6323</a><span class="doccomment">/// -march=elbrus-v6 code.
-<a href=#6324 id=6324 data-nosnippet>6324</a></span><span class="kw">pub const </span>E_E2K_MACH_EV6: u32 = <span class="number">6</span>;
-<a href=#6325 id=6325 data-nosnippet>6325</a><span class="doccomment">/// -march=elbrus-v7 code.
-<a href=#6326 id=6326 data-nosnippet>6326</a></span><span class="kw">pub const </span>E_E2K_MACH_EV7: u32 = <span class="number">7</span>;
-<a href=#6327 id=6327 data-nosnippet>6327</a><span class="doccomment">/// -mtune=elbrus-8c code.
-<a href=#6328 id=6328 data-nosnippet>6328</a></span><span class="kw">pub const </span>E_E2K_MACH_8C: u32 = <span class="number">19</span>;
-<a href=#6329 id=6329 data-nosnippet>6329</a><span class="doccomment">/// -mtune=elbrus-1c+ code.
-<a href=#6330 id=6330 data-nosnippet>6330</a></span><span class="kw">pub const </span>E_E2K_MACH_1CPLUS: u32 = <span class="number">20</span>;
-<a href=#6331 id=6331 data-nosnippet>6331</a><span class="doccomment">/// -mtune=elbrus-12c code.
-<a href=#6332 id=6332 data-nosnippet>6332</a></span><span class="kw">pub const </span>E_E2K_MACH_12C: u32 = <span class="number">21</span>;
-<a href=#6333 id=6333 data-nosnippet>6333</a><span class="doccomment">/// -mtune=elbrus-16c code.
-<a href=#6334 id=6334 data-nosnippet>6334</a></span><span class="kw">pub const </span>E_E2K_MACH_16C: u32 = <span class="number">22</span>;
-<a href=#6335 id=6335 data-nosnippet>6335</a><span class="doccomment">/// -mtune=elbrus-2c3 code.
-<a href=#6336 id=6336 data-nosnippet>6336</a></span><span class="kw">pub const </span>E_E2K_MACH_2C3: u32 = <span class="number">23</span>;
-<a href=#6337 id=6337 data-nosnippet>6337</a><span class="doccomment">/// -mtune=elbrus-48c code.
-<a href=#6338 id=6338 data-nosnippet>6338</a></span><span class="kw">pub const </span>E_E2K_MACH_48C: u32 = <span class="number">24</span>;
-<a href=#6339 id=6339 data-nosnippet>6339</a><span class="doccomment">/// -mtune=elbrus-8v7 code.
-<a href=#6340 id=6340 data-nosnippet>6340</a></span><span class="kw">pub const </span>E_E2K_MACH_8V7: u32 = <span class="number">25</span>;
+<a href=#5846 id=5846 data-nosnippet>5846</a><span class="kw">pub const </span>R_RISCV_TLSDESC: u32 = <span class="number">12</span>;
+<a href=#5847 id=5847 data-nosnippet>5847</a><span class="kw">pub const </span>R_RISCV_BRANCH: u32 = <span class="number">16</span>;
+<a href=#5848 id=5848 data-nosnippet>5848</a><span class="kw">pub const </span>R_RISCV_JAL: u32 = <span class="number">17</span>;
+<a href=#5849 id=5849 data-nosnippet>5849</a><span class="kw">pub const </span>R_RISCV_CALL: u32 = <span class="number">18</span>;
+<a href=#5850 id=5850 data-nosnippet>5850</a><span class="kw">pub const </span>R_RISCV_CALL_PLT: u32 = <span class="number">19</span>;
+<a href=#5851 id=5851 data-nosnippet>5851</a><span class="kw">pub const </span>R_RISCV_GOT_HI20: u32 = <span class="number">20</span>;
+<a href=#5852 id=5852 data-nosnippet>5852</a><span class="kw">pub const </span>R_RISCV_TLS_GOT_HI20: u32 = <span class="number">21</span>;
+<a href=#5853 id=5853 data-nosnippet>5853</a><span class="kw">pub const </span>R_RISCV_TLS_GD_HI20: u32 = <span class="number">22</span>;
+<a href=#5854 id=5854 data-nosnippet>5854</a><span class="kw">pub const </span>R_RISCV_PCREL_HI20: u32 = <span class="number">23</span>;
+<a href=#5855 id=5855 data-nosnippet>5855</a><span class="kw">pub const </span>R_RISCV_PCREL_LO12_I: u32 = <span class="number">24</span>;
+<a href=#5856 id=5856 data-nosnippet>5856</a><span class="kw">pub const </span>R_RISCV_PCREL_LO12_S: u32 = <span class="number">25</span>;
+<a href=#5857 id=5857 data-nosnippet>5857</a><span class="kw">pub const </span>R_RISCV_HI20: u32 = <span class="number">26</span>;
+<a href=#5858 id=5858 data-nosnippet>5858</a><span class="kw">pub const </span>R_RISCV_LO12_I: u32 = <span class="number">27</span>;
+<a href=#5859 id=5859 data-nosnippet>5859</a><span class="kw">pub const </span>R_RISCV_LO12_S: u32 = <span class="number">28</span>;
+<a href=#5860 id=5860 data-nosnippet>5860</a><span class="kw">pub const </span>R_RISCV_TPREL_HI20: u32 = <span class="number">29</span>;
+<a href=#5861 id=5861 data-nosnippet>5861</a><span class="kw">pub const </span>R_RISCV_TPREL_LO12_I: u32 = <span class="number">30</span>;
+<a href=#5862 id=5862 data-nosnippet>5862</a><span class="kw">pub const </span>R_RISCV_TPREL_LO12_S: u32 = <span class="number">31</span>;
+<a href=#5863 id=5863 data-nosnippet>5863</a><span class="kw">pub const </span>R_RISCV_TPREL_ADD: u32 = <span class="number">32</span>;
+<a href=#5864 id=5864 data-nosnippet>5864</a><span class="kw">pub const </span>R_RISCV_ADD8: u32 = <span class="number">33</span>;
+<a href=#5865 id=5865 data-nosnippet>5865</a><span class="kw">pub const </span>R_RISCV_ADD16: u32 = <span class="number">34</span>;
+<a href=#5866 id=5866 data-nosnippet>5866</a><span class="kw">pub const </span>R_RISCV_ADD32: u32 = <span class="number">35</span>;
+<a href=#5867 id=5867 data-nosnippet>5867</a><span class="kw">pub const </span>R_RISCV_ADD64: u32 = <span class="number">36</span>;
+<a href=#5868 id=5868 data-nosnippet>5868</a><span class="kw">pub const </span>R_RISCV_SUB8: u32 = <span class="number">37</span>;
+<a href=#5869 id=5869 data-nosnippet>5869</a><span class="kw">pub const </span>R_RISCV_SUB16: u32 = <span class="number">38</span>;
+<a href=#5870 id=5870 data-nosnippet>5870</a><span class="kw">pub const </span>R_RISCV_SUB32: u32 = <span class="number">39</span>;
+<a href=#5871 id=5871 data-nosnippet>5871</a><span class="kw">pub const </span>R_RISCV_SUB64: u32 = <span class="number">40</span>;
+<a href=#5872 id=5872 data-nosnippet>5872</a><span class="kw">pub const </span>R_RISCV_GOT32_PCREL: u32 = <span class="number">41</span>;
+<a href=#5873 id=5873 data-nosnippet>5873</a><span class="comment">// 42 Reserved was R_RISCV_GNU_VTENTRY
+<a href=#5874 id=5874 data-nosnippet>5874</a></span><span class="kw">pub const </span>R_RISCV_ALIGN: u32 = <span class="number">43</span>;
+<a href=#5875 id=5875 data-nosnippet>5875</a><span class="kw">pub const </span>R_RISCV_RVC_BRANCH: u32 = <span class="number">44</span>;
+<a href=#5876 id=5876 data-nosnippet>5876</a><span class="kw">pub const </span>R_RISCV_RVC_JUMP: u32 = <span class="number">45</span>;
+<a href=#5877 id=5877 data-nosnippet>5877</a><span class="kw">pub const </span>R_RISCV_RVC_LUI: u32 = <span class="number">46</span>;
+<a href=#5878 id=5878 data-nosnippet>5878</a><span class="kw">pub const </span>R_RISCV_GPREL_I: u32 = <span class="number">47</span>;
+<a href=#5879 id=5879 data-nosnippet>5879</a><span class="kw">pub const </span>R_RISCV_GPREL_S: u32 = <span class="number">48</span>;
+<a href=#5880 id=5880 data-nosnippet>5880</a><span class="kw">pub const </span>R_RISCV_TPREL_I: u32 = <span class="number">49</span>;
+<a href=#5881 id=5881 data-nosnippet>5881</a><span class="kw">pub const </span>R_RISCV_TPREL_S: u32 = <span class="number">50</span>;
+<a href=#5882 id=5882 data-nosnippet>5882</a><span class="kw">pub const </span>R_RISCV_RELAX: u32 = <span class="number">51</span>;
+<a href=#5883 id=5883 data-nosnippet>5883</a><span class="kw">pub const </span>R_RISCV_SUB6: u32 = <span class="number">52</span>;
+<a href=#5884 id=5884 data-nosnippet>5884</a><span class="kw">pub const </span>R_RISCV_SET6: u32 = <span class="number">53</span>;
+<a href=#5885 id=5885 data-nosnippet>5885</a><span class="kw">pub const </span>R_RISCV_SET8: u32 = <span class="number">54</span>;
+<a href=#5886 id=5886 data-nosnippet>5886</a><span class="kw">pub const </span>R_RISCV_SET16: u32 = <span class="number">55</span>;
+<a href=#5887 id=5887 data-nosnippet>5887</a><span class="kw">pub const </span>R_RISCV_SET32: u32 = <span class="number">56</span>;
+<a href=#5888 id=5888 data-nosnippet>5888</a><span class="kw">pub const </span>R_RISCV_32_PCREL: u32 = <span class="number">57</span>;
+<a href=#5889 id=5889 data-nosnippet>5889</a><span class="kw">pub const </span>R_RISCV_IRELATIVE: u32 = <span class="number">58</span>;
+<a href=#5890 id=5890 data-nosnippet>5890</a><span class="kw">pub const </span>R_RISCV_PLT32: u32 = <span class="number">59</span>;
+<a href=#5891 id=5891 data-nosnippet>5891</a><span class="kw">pub const </span>R_RISCV_SET_ULEB128: u32 = <span class="number">60</span>;
+<a href=#5892 id=5892 data-nosnippet>5892</a><span class="kw">pub const </span>R_RISCV_SUB_ULEB128: u32 = <span class="number">61</span>;
+<a href=#5893 id=5893 data-nosnippet>5893</a><span class="kw">pub const </span>R_RISCV_TLSDESC_HI20: u32 = <span class="number">62</span>;
+<a href=#5894 id=5894 data-nosnippet>5894</a><span class="kw">pub const </span>R_RISCV_TLSDESC_LOAD_LO12: u32 = <span class="number">63</span>;
+<a href=#5895 id=5895 data-nosnippet>5895</a><span class="kw">pub const </span>R_RISCV_TLSDESC_ADD_LO12: u32 = <span class="number">64</span>;
+<a href=#5896 id=5896 data-nosnippet>5896</a><span class="kw">pub const </span>R_RISCV_TLSDESC_CALL: u32 = <span class="number">65</span>;
+<a href=#5897 id=5897 data-nosnippet>5897</a>
+<a href=#5898 id=5898 data-nosnippet>5898</a><span class="comment">// BPF values `Rel*::r_type`.
+<a href=#5899 id=5899 data-nosnippet>5899</a></span><span class="doccomment">/// No reloc
+<a href=#5900 id=5900 data-nosnippet>5900</a></span><span class="kw">pub const </span>R_BPF_NONE: u32 = <span class="number">0</span>;
+<a href=#5901 id=5901 data-nosnippet>5901</a><span class="kw">pub const </span>R_BPF_64_64: u32 = <span class="number">1</span>;
+<a href=#5902 id=5902 data-nosnippet>5902</a><span class="kw">pub const </span>R_BPF_64_32: u32 = <span class="number">10</span>;
+<a href=#5903 id=5903 data-nosnippet>5903</a>
+<a href=#5904 id=5904 data-nosnippet>5904</a><span class="comment">// SBF values `Rel*::r_type`.
+<a href=#5905 id=5905 data-nosnippet>5905</a></span><span class="doccomment">/// No reloc
+<a href=#5906 id=5906 data-nosnippet>5906</a></span><span class="kw">pub const </span>R_SBF_NONE: u32 = <span class="number">0</span>;
+<a href=#5907 id=5907 data-nosnippet>5907</a><span class="kw">pub const </span>R_SBF_64_64: u32 = <span class="number">1</span>;
+<a href=#5908 id=5908 data-nosnippet>5908</a><span class="kw">pub const </span>R_SBF_64_32: u32 = <span class="number">10</span>;
+<a href=#5909 id=5909 data-nosnippet>5909</a>
+<a href=#5910 id=5910 data-nosnippet>5910</a><span class="comment">// Imagination Meta values `Rel*::r_type`.
+<a href=#5911 id=5911 data-nosnippet>5911</a>
+<a href=#5912 id=5912 data-nosnippet>5912</a></span><span class="kw">pub const </span>R_METAG_HIADDR16: u32 = <span class="number">0</span>;
+<a href=#5913 id=5913 data-nosnippet>5913</a><span class="kw">pub const </span>R_METAG_LOADDR16: u32 = <span class="number">1</span>;
+<a href=#5914 id=5914 data-nosnippet>5914</a><span class="doccomment">/// 32bit absolute address
+<a href=#5915 id=5915 data-nosnippet>5915</a></span><span class="kw">pub const </span>R_METAG_ADDR32: u32 = <span class="number">2</span>;
+<a href=#5916 id=5916 data-nosnippet>5916</a><span class="doccomment">/// No reloc
+<a href=#5917 id=5917 data-nosnippet>5917</a></span><span class="kw">pub const </span>R_METAG_NONE: u32 = <span class="number">3</span>;
+<a href=#5918 id=5918 data-nosnippet>5918</a><span class="kw">pub const </span>R_METAG_RELBRANCH: u32 = <span class="number">4</span>;
+<a href=#5919 id=5919 data-nosnippet>5919</a><span class="kw">pub const </span>R_METAG_GETSETOFF: u32 = <span class="number">5</span>;
+<a href=#5920 id=5920 data-nosnippet>5920</a>
+<a href=#5921 id=5921 data-nosnippet>5921</a><span class="comment">// Backward compatibility
+<a href=#5922 id=5922 data-nosnippet>5922</a></span><span class="kw">pub const </span>R_METAG_REG32OP1: u32 = <span class="number">6</span>;
+<a href=#5923 id=5923 data-nosnippet>5923</a><span class="kw">pub const </span>R_METAG_REG32OP2: u32 = <span class="number">7</span>;
+<a href=#5924 id=5924 data-nosnippet>5924</a><span class="kw">pub const </span>R_METAG_REG32OP3: u32 = <span class="number">8</span>;
+<a href=#5925 id=5925 data-nosnippet>5925</a><span class="kw">pub const </span>R_METAG_REG16OP1: u32 = <span class="number">9</span>;
+<a href=#5926 id=5926 data-nosnippet>5926</a><span class="kw">pub const </span>R_METAG_REG16OP2: u32 = <span class="number">10</span>;
+<a href=#5927 id=5927 data-nosnippet>5927</a><span class="kw">pub const </span>R_METAG_REG16OP3: u32 = <span class="number">11</span>;
+<a href=#5928 id=5928 data-nosnippet>5928</a><span class="kw">pub const </span>R_METAG_REG32OP4: u32 = <span class="number">12</span>;
+<a href=#5929 id=5929 data-nosnippet>5929</a>
+<a href=#5930 id=5930 data-nosnippet>5930</a><span class="kw">pub const </span>R_METAG_HIOG: u32 = <span class="number">13</span>;
+<a href=#5931 id=5931 data-nosnippet>5931</a><span class="kw">pub const </span>R_METAG_LOOG: u32 = <span class="number">14</span>;
+<a href=#5932 id=5932 data-nosnippet>5932</a>
+<a href=#5933 id=5933 data-nosnippet>5933</a><span class="kw">pub const </span>R_METAG_REL8: u32 = <span class="number">15</span>;
+<a href=#5934 id=5934 data-nosnippet>5934</a><span class="kw">pub const </span>R_METAG_REL16: u32 = <span class="number">16</span>;
+<a href=#5935 id=5935 data-nosnippet>5935</a>
+<a href=#5936 id=5936 data-nosnippet>5936</a><span class="kw">pub const </span>R_METAG_GNU_VTINHERIT: u32 = <span class="number">30</span>;
+<a href=#5937 id=5937 data-nosnippet>5937</a><span class="kw">pub const </span>R_METAG_GNU_VTENTRY: u32 = <span class="number">31</span>;
+<a href=#5938 id=5938 data-nosnippet>5938</a>
+<a href=#5939 id=5939 data-nosnippet>5939</a><span class="comment">// PIC relocations
+<a href=#5940 id=5940 data-nosnippet>5940</a></span><span class="kw">pub const </span>R_METAG_HI16_GOTOFF: u32 = <span class="number">32</span>;
+<a href=#5941 id=5941 data-nosnippet>5941</a><span class="kw">pub const </span>R_METAG_LO16_GOTOFF: u32 = <span class="number">33</span>;
+<a href=#5942 id=5942 data-nosnippet>5942</a><span class="kw">pub const </span>R_METAG_GETSET_GOTOFF: u32 = <span class="number">34</span>;
+<a href=#5943 id=5943 data-nosnippet>5943</a><span class="kw">pub const </span>R_METAG_GETSET_GOT: u32 = <span class="number">35</span>;
+<a href=#5944 id=5944 data-nosnippet>5944</a><span class="kw">pub const </span>R_METAG_HI16_GOTPC: u32 = <span class="number">36</span>;
+<a href=#5945 id=5945 data-nosnippet>5945</a><span class="kw">pub const </span>R_METAG_LO16_GOTPC: u32 = <span class="number">37</span>;
+<a href=#5946 id=5946 data-nosnippet>5946</a><span class="kw">pub const </span>R_METAG_HI16_PLT: u32 = <span class="number">38</span>;
+<a href=#5947 id=5947 data-nosnippet>5947</a><span class="kw">pub const </span>R_METAG_LO16_PLT: u32 = <span class="number">39</span>;
+<a href=#5948 id=5948 data-nosnippet>5948</a><span class="kw">pub const </span>R_METAG_RELBRANCH_PLT: u32 = <span class="number">40</span>;
+<a href=#5949 id=5949 data-nosnippet>5949</a><span class="kw">pub const </span>R_METAG_GOTOFF: u32 = <span class="number">41</span>;
+<a href=#5950 id=5950 data-nosnippet>5950</a><span class="kw">pub const </span>R_METAG_PLT: u32 = <span class="number">42</span>;
+<a href=#5951 id=5951 data-nosnippet>5951</a><span class="kw">pub const </span>R_METAG_COPY: u32 = <span class="number">43</span>;
+<a href=#5952 id=5952 data-nosnippet>5952</a><span class="kw">pub const </span>R_METAG_JMP_SLOT: u32 = <span class="number">44</span>;
+<a href=#5953 id=5953 data-nosnippet>5953</a><span class="kw">pub const </span>R_METAG_RELATIVE: u32 = <span class="number">45</span>;
+<a href=#5954 id=5954 data-nosnippet>5954</a><span class="kw">pub const </span>R_METAG_GLOB_DAT: u32 = <span class="number">46</span>;
+<a href=#5955 id=5955 data-nosnippet>5955</a>
+<a href=#5956 id=5956 data-nosnippet>5956</a><span class="comment">// TLS relocations
+<a href=#5957 id=5957 data-nosnippet>5957</a></span><span class="kw">pub const </span>R_METAG_TLS_GD: u32 = <span class="number">47</span>;
+<a href=#5958 id=5958 data-nosnippet>5958</a><span class="kw">pub const </span>R_METAG_TLS_LDM: u32 = <span class="number">48</span>;
+<a href=#5959 id=5959 data-nosnippet>5959</a><span class="kw">pub const </span>R_METAG_TLS_LDO_HI16: u32 = <span class="number">49</span>;
+<a href=#5960 id=5960 data-nosnippet>5960</a><span class="kw">pub const </span>R_METAG_TLS_LDO_LO16: u32 = <span class="number">50</span>;
+<a href=#5961 id=5961 data-nosnippet>5961</a><span class="kw">pub const </span>R_METAG_TLS_LDO: u32 = <span class="number">51</span>;
+<a href=#5962 id=5962 data-nosnippet>5962</a><span class="kw">pub const </span>R_METAG_TLS_IE: u32 = <span class="number">52</span>;
+<a href=#5963 id=5963 data-nosnippet>5963</a><span class="kw">pub const </span>R_METAG_TLS_IENONPIC: u32 = <span class="number">53</span>;
+<a href=#5964 id=5964 data-nosnippet>5964</a><span class="kw">pub const </span>R_METAG_TLS_IENONPIC_HI16: u32 = <span class="number">54</span>;
+<a href=#5965 id=5965 data-nosnippet>5965</a><span class="kw">pub const </span>R_METAG_TLS_IENONPIC_LO16: u32 = <span class="number">55</span>;
+<a href=#5966 id=5966 data-nosnippet>5966</a><span class="kw">pub const </span>R_METAG_TLS_TPOFF: u32 = <span class="number">56</span>;
+<a href=#5967 id=5967 data-nosnippet>5967</a><span class="kw">pub const </span>R_METAG_TLS_DTPMOD: u32 = <span class="number">57</span>;
+<a href=#5968 id=5968 data-nosnippet>5968</a><span class="kw">pub const </span>R_METAG_TLS_DTPOFF: u32 = <span class="number">58</span>;
+<a href=#5969 id=5969 data-nosnippet>5969</a><span class="kw">pub const </span>R_METAG_TLS_LE: u32 = <span class="number">59</span>;
+<a href=#5970 id=5970 data-nosnippet>5970</a><span class="kw">pub const </span>R_METAG_TLS_LE_HI16: u32 = <span class="number">60</span>;
+<a href=#5971 id=5971 data-nosnippet>5971</a><span class="kw">pub const </span>R_METAG_TLS_LE_LO16: u32 = <span class="number">61</span>;
+<a href=#5972 id=5972 data-nosnippet>5972</a>
+<a href=#5973 id=5973 data-nosnippet>5973</a><span class="comment">// NDS32 values `Rel*::r_type`.
+<a href=#5974 id=5974 data-nosnippet>5974</a></span><span class="kw">pub const </span>R_NDS32_NONE: u32 = <span class="number">0</span>;
+<a href=#5975 id=5975 data-nosnippet>5975</a><span class="kw">pub const </span>R_NDS32_32_RELA: u32 = <span class="number">20</span>;
+<a href=#5976 id=5976 data-nosnippet>5976</a><span class="kw">pub const </span>R_NDS32_COPY: u32 = <span class="number">39</span>;
+<a href=#5977 id=5977 data-nosnippet>5977</a><span class="kw">pub const </span>R_NDS32_GLOB_DAT: u32 = <span class="number">40</span>;
+<a href=#5978 id=5978 data-nosnippet>5978</a><span class="kw">pub const </span>R_NDS32_JMP_SLOT: u32 = <span class="number">41</span>;
+<a href=#5979 id=5979 data-nosnippet>5979</a><span class="kw">pub const </span>R_NDS32_RELATIVE: u32 = <span class="number">42</span>;
+<a href=#5980 id=5980 data-nosnippet>5980</a><span class="kw">pub const </span>R_NDS32_TLS_TPOFF: u32 = <span class="number">102</span>;
+<a href=#5981 id=5981 data-nosnippet>5981</a><span class="kw">pub const </span>R_NDS32_TLS_DESC: u32 = <span class="number">119</span>;
+<a href=#5982 id=5982 data-nosnippet>5982</a>
+<a href=#5983 id=5983 data-nosnippet>5983</a><span class="comment">// LoongArch values `FileHeader*::e_flags`.
+<a href=#5984 id=5984 data-nosnippet>5984</a></span><span class="doccomment">/// Additional properties of the base ABI type, including the FP calling
+<a href=#5985 id=5985 data-nosnippet>5985</a>/// convention.
+<a href=#5986 id=5986 data-nosnippet>5986</a></span><span class="kw">pub const </span>EF_LARCH_ABI_MODIFIER_MASK: u32 = <span class="number">0x7</span>;
+<a href=#5987 id=5987 data-nosnippet>5987</a><span class="doccomment">/// Uses GPRs and the stack for parameter passing
+<a href=#5988 id=5988 data-nosnippet>5988</a></span><span class="kw">pub const </span>EF_LARCH_ABI_SOFT_FLOAT: u32 = <span class="number">0x1</span>;
+<a href=#5989 id=5989 data-nosnippet>5989</a><span class="doccomment">/// Uses GPRs, 32-bit FPRs and the stack for parameter passing
+<a href=#5990 id=5990 data-nosnippet>5990</a></span><span class="kw">pub const </span>EF_LARCH_ABI_SINGLE_FLOAT: u32 = <span class="number">0x2</span>;
+<a href=#5991 id=5991 data-nosnippet>5991</a><span class="doccomment">/// Uses GPRs, 64-bit FPRs and the stack for parameter passing
+<a href=#5992 id=5992 data-nosnippet>5992</a></span><span class="kw">pub const </span>EF_LARCH_ABI_DOUBLE_FLOAT: u32 = <span class="number">0x3</span>;
+<a href=#5993 id=5993 data-nosnippet>5993</a><span class="doccomment">/// Uses relocation types directly writing to immediate slots
+<a href=#5994 id=5994 data-nosnippet>5994</a></span><span class="kw">pub const </span>EF_LARCH_OBJABI_V1: u32 = <span class="number">0x40</span>;
+<a href=#5995 id=5995 data-nosnippet>5995</a>
+<a href=#5996 id=5996 data-nosnippet>5996</a><span class="comment">// LoongArch values `Rel*::r_type`.
+<a href=#5997 id=5997 data-nosnippet>5997</a></span><span class="doccomment">/// No reloc
+<a href=#5998 id=5998 data-nosnippet>5998</a></span><span class="kw">pub const </span>R_LARCH_NONE: u32 = <span class="number">0</span>;
+<a href=#5999 id=5999 data-nosnippet>5999</a><span class="doccomment">/// Runtime address resolving
+<a href=#6000 id=6000 data-nosnippet>6000</a></span><span class="kw">pub const </span>R_LARCH_32: u32 = <span class="number">1</span>;
+<a href=#6001 id=6001 data-nosnippet>6001</a><span class="doccomment">/// Runtime address resolving
+<a href=#6002 id=6002 data-nosnippet>6002</a></span><span class="kw">pub const </span>R_LARCH_64: u32 = <span class="number">2</span>;
+<a href=#6003 id=6003 data-nosnippet>6003</a><span class="doccomment">/// Runtime fixup for load-address
+<a href=#6004 id=6004 data-nosnippet>6004</a></span><span class="kw">pub const </span>R_LARCH_RELATIVE: u32 = <span class="number">3</span>;
+<a href=#6005 id=6005 data-nosnippet>6005</a><span class="doccomment">/// Runtime memory copy in executable
+<a href=#6006 id=6006 data-nosnippet>6006</a></span><span class="kw">pub const </span>R_LARCH_COPY: u32 = <span class="number">4</span>;
+<a href=#6007 id=6007 data-nosnippet>6007</a><span class="doccomment">/// Runtime PLT supporting
+<a href=#6008 id=6008 data-nosnippet>6008</a></span><span class="kw">pub const </span>R_LARCH_JUMP_SLOT: u32 = <span class="number">5</span>;
+<a href=#6009 id=6009 data-nosnippet>6009</a><span class="doccomment">/// Runtime relocation for TLS-GD
+<a href=#6010 id=6010 data-nosnippet>6010</a></span><span class="kw">pub const </span>R_LARCH_TLS_DTPMOD32: u32 = <span class="number">6</span>;
+<a href=#6011 id=6011 data-nosnippet>6011</a><span class="doccomment">/// Runtime relocation for TLS-GD
+<a href=#6012 id=6012 data-nosnippet>6012</a></span><span class="kw">pub const </span>R_LARCH_TLS_DTPMOD64: u32 = <span class="number">7</span>;
+<a href=#6013 id=6013 data-nosnippet>6013</a><span class="doccomment">/// Runtime relocation for TLS-GD
+<a href=#6014 id=6014 data-nosnippet>6014</a></span><span class="kw">pub const </span>R_LARCH_TLS_DTPREL32: u32 = <span class="number">8</span>;
+<a href=#6015 id=6015 data-nosnippet>6015</a><span class="doccomment">/// Runtime relocation for TLS-GD
+<a href=#6016 id=6016 data-nosnippet>6016</a></span><span class="kw">pub const </span>R_LARCH_TLS_DTPREL64: u32 = <span class="number">9</span>;
+<a href=#6017 id=6017 data-nosnippet>6017</a><span class="doccomment">/// Runtime relocation for TLE-IE
+<a href=#6018 id=6018 data-nosnippet>6018</a></span><span class="kw">pub const </span>R_LARCH_TLS_TPREL32: u32 = <span class="number">10</span>;
+<a href=#6019 id=6019 data-nosnippet>6019</a><span class="doccomment">/// Runtime relocation for TLE-IE
+<a href=#6020 id=6020 data-nosnippet>6020</a></span><span class="kw">pub const </span>R_LARCH_TLS_TPREL64: u32 = <span class="number">11</span>;
+<a href=#6021 id=6021 data-nosnippet>6021</a><span class="doccomment">/// Runtime local indirect function resolving
+<a href=#6022 id=6022 data-nosnippet>6022</a></span><span class="kw">pub const </span>R_LARCH_IRELATIVE: u32 = <span class="number">12</span>;
+<a href=#6023 id=6023 data-nosnippet>6023</a><span class="doccomment">/// Mark la.abs: load absolute address for static link.
+<a href=#6024 id=6024 data-nosnippet>6024</a></span><span class="kw">pub const </span>R_LARCH_MARK_LA: u32 = <span class="number">20</span>;
+<a href=#6025 id=6025 data-nosnippet>6025</a><span class="doccomment">/// Mark external label branch: access PC relative address for static link.
+<a href=#6026 id=6026 data-nosnippet>6026</a></span><span class="kw">pub const </span>R_LARCH_MARK_PCREL: u32 = <span class="number">21</span>;
+<a href=#6027 id=6027 data-nosnippet>6027</a><span class="doccomment">/// Push PC-relative offset
+<a href=#6028 id=6028 data-nosnippet>6028</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_PCREL: u32 = <span class="number">22</span>;
+<a href=#6029 id=6029 data-nosnippet>6029</a><span class="doccomment">/// Push constant or absolute address
+<a href=#6030 id=6030 data-nosnippet>6030</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_ABSOLUTE: u32 = <span class="number">23</span>;
+<a href=#6031 id=6031 data-nosnippet>6031</a><span class="doccomment">/// Duplicate stack top
+<a href=#6032 id=6032 data-nosnippet>6032</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_DUP: u32 = <span class="number">24</span>;
+<a href=#6033 id=6033 data-nosnippet>6033</a><span class="doccomment">/// Push for access GOT entry
+<a href=#6034 id=6034 data-nosnippet>6034</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_GPREL: u32 = <span class="number">25</span>;
+<a href=#6035 id=6035 data-nosnippet>6035</a><span class="doccomment">/// Push for TLS-LE
+<a href=#6036 id=6036 data-nosnippet>6036</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_TLS_TPREL: u32 = <span class="number">26</span>;
+<a href=#6037 id=6037 data-nosnippet>6037</a><span class="doccomment">/// Push for TLS-IE
+<a href=#6038 id=6038 data-nosnippet>6038</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_TLS_GOT: u32 = <span class="number">27</span>;
+<a href=#6039 id=6039 data-nosnippet>6039</a><span class="doccomment">/// Push for TLS-GD
+<a href=#6040 id=6040 data-nosnippet>6040</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_TLS_GD: u32 = <span class="number">28</span>;
+<a href=#6041 id=6041 data-nosnippet>6041</a><span class="doccomment">/// Push for external function calling
+<a href=#6042 id=6042 data-nosnippet>6042</a></span><span class="kw">pub const </span>R_LARCH_SOP_PUSH_PLT_PCREL: u32 = <span class="number">29</span>;
+<a href=#6043 id=6043 data-nosnippet>6043</a><span class="doccomment">/// Assert stack top
+<a href=#6044 id=6044 data-nosnippet>6044</a></span><span class="kw">pub const </span>R_LARCH_SOP_ASSERT: u32 = <span class="number">30</span>;
+<a href=#6045 id=6045 data-nosnippet>6045</a><span class="doccomment">/// Stack top logical not (unary)
+<a href=#6046 id=6046 data-nosnippet>6046</a></span><span class="kw">pub const </span>R_LARCH_SOP_NOT: u32 = <span class="number">31</span>;
+<a href=#6047 id=6047 data-nosnippet>6047</a><span class="doccomment">/// Stack top subtraction (binary)
+<a href=#6048 id=6048 data-nosnippet>6048</a></span><span class="kw">pub const </span>R_LARCH_SOP_SUB: u32 = <span class="number">32</span>;
+<a href=#6049 id=6049 data-nosnippet>6049</a><span class="doccomment">/// Stack top left shift (binary)
+<a href=#6050 id=6050 data-nosnippet>6050</a></span><span class="kw">pub const </span>R_LARCH_SOP_SL: u32 = <span class="number">33</span>;
+<a href=#6051 id=6051 data-nosnippet>6051</a><span class="doccomment">/// Stack top right shift (binary)
+<a href=#6052 id=6052 data-nosnippet>6052</a></span><span class="kw">pub const </span>R_LARCH_SOP_SR: u32 = <span class="number">34</span>;
+<a href=#6053 id=6053 data-nosnippet>6053</a><span class="doccomment">/// Stack top addition (binary)
+<a href=#6054 id=6054 data-nosnippet>6054</a></span><span class="kw">pub const </span>R_LARCH_SOP_ADD: u32 = <span class="number">35</span>;
+<a href=#6055 id=6055 data-nosnippet>6055</a><span class="doccomment">/// Stack top bitwise and (binary)
+<a href=#6056 id=6056 data-nosnippet>6056</a></span><span class="kw">pub const </span>R_LARCH_SOP_AND: u32 = <span class="number">36</span>;
+<a href=#6057 id=6057 data-nosnippet>6057</a><span class="doccomment">/// Stack top selection (tertiary)
+<a href=#6058 id=6058 data-nosnippet>6058</a></span><span class="kw">pub const </span>R_LARCH_SOP_IF_ELSE: u32 = <span class="number">37</span>;
+<a href=#6059 id=6059 data-nosnippet>6059</a><span class="doccomment">/// Pop stack top to fill 5-bit signed immediate operand
+<a href=#6060 id=6060 data-nosnippet>6060</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_10_5: u32 = <span class="number">38</span>;
+<a href=#6061 id=6061 data-nosnippet>6061</a><span class="doccomment">/// Pop stack top to fill 12-bit unsigned immediate operand
+<a href=#6062 id=6062 data-nosnippet>6062</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_U_10_12: u32 = <span class="number">39</span>;
+<a href=#6063 id=6063 data-nosnippet>6063</a><span class="doccomment">/// Pop stack top to fill 12-bit signed immediate operand
+<a href=#6064 id=6064 data-nosnippet>6064</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_10_12: u32 = <span class="number">40</span>;
+<a href=#6065 id=6065 data-nosnippet>6065</a><span class="doccomment">/// Pop stack top to fill 16-bit signed immediate operand
+<a href=#6066 id=6066 data-nosnippet>6066</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_10_16: u32 = <span class="number">41</span>;
+<a href=#6067 id=6067 data-nosnippet>6067</a><span class="doccomment">/// Pop stack top to fill 18-bit signed immediate operand with two trailing
+<a href=#6068 id=6068 data-nosnippet>6068</a>/// zeros implied
+<a href=#6069 id=6069 data-nosnippet>6069</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_10_16_S2: u32 = <span class="number">42</span>;
+<a href=#6070 id=6070 data-nosnippet>6070</a><span class="doccomment">/// Pop stack top to fill 20-bit signed immediate operand
+<a href=#6071 id=6071 data-nosnippet>6071</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_5_20: u32 = <span class="number">43</span>;
+<a href=#6072 id=6072 data-nosnippet>6072</a><span class="doccomment">/// Pop stack top to fill 23-bit signed immediate operand with two trailing
+<a href=#6073 id=6073 data-nosnippet>6073</a>/// zeros implied
+<a href=#6074 id=6074 data-nosnippet>6074</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_0_5_10_16_S2: u32 = <span class="number">44</span>;
+<a href=#6075 id=6075 data-nosnippet>6075</a><span class="doccomment">/// Pop stack top to fill 28-bit signed immediate operand with two trailing
+<a href=#6076 id=6076 data-nosnippet>6076</a>/// zeros implied
+<a href=#6077 id=6077 data-nosnippet>6077</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_S_0_10_10_16_S2: u32 = <span class="number">45</span>;
+<a href=#6078 id=6078 data-nosnippet>6078</a><span class="doccomment">/// Pop stack top to fill an instruction
+<a href=#6079 id=6079 data-nosnippet>6079</a></span><span class="kw">pub const </span>R_LARCH_SOP_POP_32_U: u32 = <span class="number">46</span>;
+<a href=#6080 id=6080 data-nosnippet>6080</a><span class="doccomment">/// 8-bit in-place addition
+<a href=#6081 id=6081 data-nosnippet>6081</a></span><span class="kw">pub const </span>R_LARCH_ADD8: u32 = <span class="number">47</span>;
+<a href=#6082 id=6082 data-nosnippet>6082</a><span class="doccomment">/// 16-bit in-place addition
+<a href=#6083 id=6083 data-nosnippet>6083</a></span><span class="kw">pub const </span>R_LARCH_ADD16: u32 = <span class="number">48</span>;
+<a href=#6084 id=6084 data-nosnippet>6084</a><span class="doccomment">/// 24-bit in-place addition
+<a href=#6085 id=6085 data-nosnippet>6085</a></span><span class="kw">pub const </span>R_LARCH_ADD24: u32 = <span class="number">49</span>;
+<a href=#6086 id=6086 data-nosnippet>6086</a><span class="doccomment">/// 32-bit in-place addition
+<a href=#6087 id=6087 data-nosnippet>6087</a></span><span class="kw">pub const </span>R_LARCH_ADD32: u32 = <span class="number">50</span>;
+<a href=#6088 id=6088 data-nosnippet>6088</a><span class="doccomment">/// 64-bit in-place addition
+<a href=#6089 id=6089 data-nosnippet>6089</a></span><span class="kw">pub const </span>R_LARCH_ADD64: u32 = <span class="number">51</span>;
+<a href=#6090 id=6090 data-nosnippet>6090</a><span class="doccomment">/// 8-bit in-place subtraction
+<a href=#6091 id=6091 data-nosnippet>6091</a></span><span class="kw">pub const </span>R_LARCH_SUB8: u32 = <span class="number">52</span>;
+<a href=#6092 id=6092 data-nosnippet>6092</a><span class="doccomment">/// 16-bit in-place subtraction
+<a href=#6093 id=6093 data-nosnippet>6093</a></span><span class="kw">pub const </span>R_LARCH_SUB16: u32 = <span class="number">53</span>;
+<a href=#6094 id=6094 data-nosnippet>6094</a><span class="doccomment">/// 24-bit in-place subtraction
+<a href=#6095 id=6095 data-nosnippet>6095</a></span><span class="kw">pub const </span>R_LARCH_SUB24: u32 = <span class="number">54</span>;
+<a href=#6096 id=6096 data-nosnippet>6096</a><span class="doccomment">/// 32-bit in-place subtraction
+<a href=#6097 id=6097 data-nosnippet>6097</a></span><span class="kw">pub const </span>R_LARCH_SUB32: u32 = <span class="number">55</span>;
+<a href=#6098 id=6098 data-nosnippet>6098</a><span class="doccomment">/// 64-bit in-place subtraction
+<a href=#6099 id=6099 data-nosnippet>6099</a></span><span class="kw">pub const </span>R_LARCH_SUB64: u32 = <span class="number">56</span>;
+<a href=#6100 id=6100 data-nosnippet>6100</a><span class="doccomment">/// GNU C++ vtable hierarchy
+<a href=#6101 id=6101 data-nosnippet>6101</a></span><span class="kw">pub const </span>R_LARCH_GNU_VTINHERIT: u32 = <span class="number">57</span>;
+<a href=#6102 id=6102 data-nosnippet>6102</a><span class="doccomment">/// GNU C++ vtable member usage
+<a href=#6103 id=6103 data-nosnippet>6103</a></span><span class="kw">pub const </span>R_LARCH_GNU_VTENTRY: u32 = <span class="number">58</span>;
+<a href=#6104 id=6104 data-nosnippet>6104</a><span class="doccomment">/// 18-bit PC-relative jump offset with two trailing zeros
+<a href=#6105 id=6105 data-nosnippet>6105</a></span><span class="kw">pub const </span>R_LARCH_B16: u32 = <span class="number">64</span>;
+<a href=#6106 id=6106 data-nosnippet>6106</a><span class="doccomment">/// 23-bit PC-relative jump offset with two trailing zeros
+<a href=#6107 id=6107 data-nosnippet>6107</a></span><span class="kw">pub const </span>R_LARCH_B21: u32 = <span class="number">65</span>;
+<a href=#6108 id=6108 data-nosnippet>6108</a><span class="doccomment">/// 28-bit PC-relative jump offset with two trailing zeros
+<a href=#6109 id=6109 data-nosnippet>6109</a></span><span class="kw">pub const </span>R_LARCH_B26: u32 = <span class="number">66</span>;
+<a href=#6110 id=6110 data-nosnippet>6110</a><span class="doccomment">/// 12..=31 bits of 32/64-bit absolute address
+<a href=#6111 id=6111 data-nosnippet>6111</a></span><span class="kw">pub const </span>R_LARCH_ABS_HI20: u32 = <span class="number">67</span>;
+<a href=#6112 id=6112 data-nosnippet>6112</a><span class="doccomment">/// 0..=11 bits of 32/64-bit absolute address
+<a href=#6113 id=6113 data-nosnippet>6113</a></span><span class="kw">pub const </span>R_LARCH_ABS_LO12: u32 = <span class="number">68</span>;
+<a href=#6114 id=6114 data-nosnippet>6114</a><span class="doccomment">/// 32..=51 bits of 64-bit absolute address
+<a href=#6115 id=6115 data-nosnippet>6115</a></span><span class="kw">pub const </span>R_LARCH_ABS64_LO20: u32 = <span class="number">69</span>;
+<a href=#6116 id=6116 data-nosnippet>6116</a><span class="doccomment">/// 52..=63 bits of 64-bit absolute address
+<a href=#6117 id=6117 data-nosnippet>6117</a></span><span class="kw">pub const </span>R_LARCH_ABS64_HI12: u32 = <span class="number">70</span>;
+<a href=#6118 id=6118 data-nosnippet>6118</a><span class="doccomment">/// The signed 32-bit offset `offs` from `PC &amp; 0xfffff000` to
+<a href=#6119 id=6119 data-nosnippet>6119</a>/// `(S + A + 0x800) &amp; 0xfffff000`, with 12 trailing zeros removed.
+<a href=#6120 id=6120 data-nosnippet>6120</a>///
+<a href=#6121 id=6121 data-nosnippet>6121</a>/// We define the *PC relative anchor* for `S + A` as `PC + offs` (`offs`
+<a href=#6122 id=6122 data-nosnippet>6122</a>/// is sign-extended to VA bits).
+<a href=#6123 id=6123 data-nosnippet>6123</a></span><span class="kw">pub const </span>R_LARCH_PCALA_HI20: u32 = <span class="number">71</span>;
+<a href=#6124 id=6124 data-nosnippet>6124</a><span class="doccomment">/// Same as R_LARCH_ABS_LO12.  0..=11 bits of the 32/64-bit offset from the
+<a href=#6125 id=6125 data-nosnippet>6125</a>/// [PC relative anchor][R_LARCH_PCALA_HI20].
+<a href=#6126 id=6126 data-nosnippet>6126</a></span><span class="kw">pub const </span>R_LARCH_PCALA_LO12: u32 = <span class="number">72</span>;
+<a href=#6127 id=6127 data-nosnippet>6127</a><span class="doccomment">/// 32..=51 bits of the 64-bit offset from the
+<a href=#6128 id=6128 data-nosnippet>6128</a>/// [PC relative anchor][R_LARCH_PCALA_HI20].
+<a href=#6129 id=6129 data-nosnippet>6129</a></span><span class="kw">pub const </span>R_LARCH_PCALA64_LO20: u32 = <span class="number">73</span>;
+<a href=#6130 id=6130 data-nosnippet>6130</a><span class="doccomment">/// 52..=63 bits of the 64-bit offset from the
+<a href=#6131 id=6131 data-nosnippet>6131</a>/// [PC relative anchor][R_LARCH_PCALA_HI20].
+<a href=#6132 id=6132 data-nosnippet>6132</a></span><span class="kw">pub const </span>R_LARCH_PCALA64_HI12: u32 = <span class="number">74</span>;
+<a href=#6133 id=6133 data-nosnippet>6133</a><span class="doccomment">/// The signed 32-bit offset `offs` from `PC &amp; 0xfffff000` to
+<a href=#6134 id=6134 data-nosnippet>6134</a>/// `(GP + G + 0x800) &amp; 0xfffff000`, with 12 trailing zeros removed.
+<a href=#6135 id=6135 data-nosnippet>6135</a>///
+<a href=#6136 id=6136 data-nosnippet>6136</a>/// We define the *PC relative anchor* for the GOT entry at `GP + G` as
+<a href=#6137 id=6137 data-nosnippet>6137</a>/// `PC + offs` (`offs` is sign-extended to VA bits).
+<a href=#6138 id=6138 data-nosnippet>6138</a></span><span class="kw">pub const </span>R_LARCH_GOT_PC_HI20: u32 = <span class="number">75</span>;
+<a href=#6139 id=6139 data-nosnippet>6139</a><span class="doccomment">/// 0..=11 bits of the 32/64-bit offset from the
+<a href=#6140 id=6140 data-nosnippet>6140</a>/// [PC relative anchor][R_LARCH_GOT_PC_HI20] to the GOT entry.
+<a href=#6141 id=6141 data-nosnippet>6141</a></span><span class="kw">pub const </span>R_LARCH_GOT_PC_LO12: u32 = <span class="number">76</span>;
+<a href=#6142 id=6142 data-nosnippet>6142</a><span class="doccomment">/// 32..=51 bits of the 64-bit offset from the
+<a href=#6143 id=6143 data-nosnippet>6143</a>/// [PC relative anchor][R_LARCH_GOT_PC_HI20] to the GOT entry.
+<a href=#6144 id=6144 data-nosnippet>6144</a></span><span class="kw">pub const </span>R_LARCH_GOT64_PC_LO20: u32 = <span class="number">77</span>;
+<a href=#6145 id=6145 data-nosnippet>6145</a><span class="doccomment">/// 52..=63 bits of the 64-bit offset from the
+<a href=#6146 id=6146 data-nosnippet>6146</a>/// [PC relative anchor][R_LARCH_GOT_PC_HI20] to the GOT entry.
+<a href=#6147 id=6147 data-nosnippet>6147</a></span><span class="kw">pub const </span>R_LARCH_GOT64_PC_HI12: u32 = <span class="number">78</span>;
+<a href=#6148 id=6148 data-nosnippet>6148</a><span class="doccomment">/// 12..=31 bits of 32/64-bit GOT entry absolute address
+<a href=#6149 id=6149 data-nosnippet>6149</a></span><span class="kw">pub const </span>R_LARCH_GOT_HI20: u32 = <span class="number">79</span>;
+<a href=#6150 id=6150 data-nosnippet>6150</a><span class="doccomment">/// 0..=11 bits of 32/64-bit GOT entry absolute address
+<a href=#6151 id=6151 data-nosnippet>6151</a></span><span class="kw">pub const </span>R_LARCH_GOT_LO12: u32 = <span class="number">80</span>;
+<a href=#6152 id=6152 data-nosnippet>6152</a><span class="doccomment">/// 32..=51 bits of 64-bit GOT entry absolute address
+<a href=#6153 id=6153 data-nosnippet>6153</a></span><span class="kw">pub const </span>R_LARCH_GOT64_LO20: u32 = <span class="number">81</span>;
+<a href=#6154 id=6154 data-nosnippet>6154</a><span class="doccomment">/// 52..=63 bits of 64-bit GOT entry absolute address
+<a href=#6155 id=6155 data-nosnippet>6155</a></span><span class="kw">pub const </span>R_LARCH_GOT64_HI12: u32 = <span class="number">82</span>;
+<a href=#6156 id=6156 data-nosnippet>6156</a><span class="doccomment">/// 12..=31 bits of TLS LE 32/64-bit offset from thread pointer
+<a href=#6157 id=6157 data-nosnippet>6157</a></span><span class="kw">pub const </span>R_LARCH_TLS_LE_HI20: u32 = <span class="number">83</span>;
+<a href=#6158 id=6158 data-nosnippet>6158</a><span class="doccomment">/// 0..=11 bits of TLS LE 32/64-bit offset from thread pointer
+<a href=#6159 id=6159 data-nosnippet>6159</a></span><span class="kw">pub const </span>R_LARCH_TLS_LE_LO12: u32 = <span class="number">84</span>;
+<a href=#6160 id=6160 data-nosnippet>6160</a><span class="doccomment">/// 32..=51 bits of TLS LE 64-bit offset from thread pointer
+<a href=#6161 id=6161 data-nosnippet>6161</a></span><span class="kw">pub const </span>R_LARCH_TLS_LE64_LO20: u32 = <span class="number">85</span>;
+<a href=#6162 id=6162 data-nosnippet>6162</a><span class="doccomment">/// 52..=63 bits of TLS LE 64-bit offset from thread pointer
+<a href=#6163 id=6163 data-nosnippet>6163</a></span><span class="kw">pub const </span>R_LARCH_TLS_LE64_HI12: u32 = <span class="number">86</span>;
+<a href=#6164 id=6164 data-nosnippet>6164</a><span class="doccomment">/// The signed 32-bit offset `offs` from `PC &amp; 0xfffff000` to
+<a href=#6165 id=6165 data-nosnippet>6165</a>/// `(GP + IE + 0x800) &amp; 0xfffff000`, with 12 trailing zeros removed.
+<a href=#6166 id=6166 data-nosnippet>6166</a>///
+<a href=#6167 id=6167 data-nosnippet>6167</a>/// We define the *PC relative anchor* for the TLS IE GOT entry at
+<a href=#6168 id=6168 data-nosnippet>6168</a>/// `GP + IE` as `PC + offs` (`offs` is sign-extended to VA bits).
+<a href=#6169 id=6169 data-nosnippet>6169</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE_PC_HI20: u32 = <span class="number">87</span>;
+<a href=#6170 id=6170 data-nosnippet>6170</a><span class="doccomment">/// 0..=12 bits of the 32/64-bit offset from the
+<a href=#6171 id=6171 data-nosnippet>6171</a>/// [PC-relative anchor][R_LARCH_TLS_IE_PC_HI20] to the TLS IE GOT entry.
+<a href=#6172 id=6172 data-nosnippet>6172</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE_PC_LO12: u32 = <span class="number">88</span>;
+<a href=#6173 id=6173 data-nosnippet>6173</a><span class="doccomment">/// 32..=51 bits of the 64-bit offset from the
+<a href=#6174 id=6174 data-nosnippet>6174</a>/// [PC-relative anchor][R_LARCH_TLS_IE_PC_HI20] to the TLS IE GOT entry.
+<a href=#6175 id=6175 data-nosnippet>6175</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE64_PC_LO20: u32 = <span class="number">89</span>;
+<a href=#6176 id=6176 data-nosnippet>6176</a><span class="doccomment">/// 52..=63 bits of the 64-bit offset from the
+<a href=#6177 id=6177 data-nosnippet>6177</a>/// [PC-relative anchor][R_LARCH_TLS_IE_PC_HI20] to the TLS IE GOT entry.
+<a href=#6178 id=6178 data-nosnippet>6178</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE64_PC_HI12: u32 = <span class="number">90</span>;
+<a href=#6179 id=6179 data-nosnippet>6179</a><span class="doccomment">/// 12..=31 bits of TLS IE GOT entry 32/64-bit absolute address
+<a href=#6180 id=6180 data-nosnippet>6180</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE_HI20: u32 = <span class="number">91</span>;
+<a href=#6181 id=6181 data-nosnippet>6181</a><span class="doccomment">/// 0..=11 bits of TLS IE GOT entry 32/64-bit absolute address
+<a href=#6182 id=6182 data-nosnippet>6182</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE_LO12: u32 = <span class="number">92</span>;
+<a href=#6183 id=6183 data-nosnippet>6183</a><span class="doccomment">/// 32..=51 bits of TLS IE GOT entry 64-bit absolute address
+<a href=#6184 id=6184 data-nosnippet>6184</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE64_LO20: u32 = <span class="number">93</span>;
+<a href=#6185 id=6185 data-nosnippet>6185</a><span class="doccomment">/// 51..=63 bits of TLS IE GOT entry 64-bit absolute address
+<a href=#6186 id=6186 data-nosnippet>6186</a></span><span class="kw">pub const </span>R_LARCH_TLS_IE64_HI12: u32 = <span class="number">94</span>;
+<a href=#6187 id=6187 data-nosnippet>6187</a><span class="doccomment">/// 12..=31 bits of the offset from `PC` to `GP + GD + 0x800`, where
+<a href=#6188 id=6188 data-nosnippet>6188</a>/// `GP + GD` is a TLS LD GOT entry
+<a href=#6189 id=6189 data-nosnippet>6189</a></span><span class="kw">pub const </span>R_LARCH_TLS_LD_PC_HI20: u32 = <span class="number">95</span>;
+<a href=#6190 id=6190 data-nosnippet>6190</a><span class="doccomment">/// 12..=31 bits of TLS LD GOT entry 32/64-bit absolute address
+<a href=#6191 id=6191 data-nosnippet>6191</a></span><span class="kw">pub const </span>R_LARCH_TLS_LD_HI20: u32 = <span class="number">96</span>;
+<a href=#6192 id=6192 data-nosnippet>6192</a><span class="doccomment">/// 12..=31 bits of the 32/64-bit PC-relative offset to the PC-relative
+<a href=#6193 id=6193 data-nosnippet>6193</a>/// anchor for the TLE GD GOT entry.
+<a href=#6194 id=6194 data-nosnippet>6194</a></span><span class="kw">pub const </span>R_LARCH_TLS_GD_PC_HI20: u32 = <span class="number">97</span>;
+<a href=#6195 id=6195 data-nosnippet>6195</a><span class="doccomment">/// 12..=31 bits of TLS GD GOT entry 32/64-bit absolute address
+<a href=#6196 id=6196 data-nosnippet>6196</a></span><span class="kw">pub const </span>R_LARCH_TLS_GD_HI20: u32 = <span class="number">98</span>;
+<a href=#6197 id=6197 data-nosnippet>6197</a><span class="doccomment">/// 32-bit PC relative
+<a href=#6198 id=6198 data-nosnippet>6198</a></span><span class="kw">pub const </span>R_LARCH_32_PCREL: u32 = <span class="number">99</span>;
+<a href=#6199 id=6199 data-nosnippet>6199</a><span class="doccomment">/// Paired with a normal relocation at the same address to indicate the
+<a href=#6200 id=6200 data-nosnippet>6200</a>/// instruction can be relaxed
+<a href=#6201 id=6201 data-nosnippet>6201</a></span><span class="kw">pub const </span>R_LARCH_RELAX: u32 = <span class="number">100</span>;
+<a href=#6202 id=6202 data-nosnippet>6202</a><span class="doccomment">/// Reserved
+<a href=#6203 id=6203 data-nosnippet>6203</a></span><span class="kw">pub const </span>R_LARCH_DELETE: u32 = <span class="number">101</span>;
+<a href=#6204 id=6204 data-nosnippet>6204</a><span class="doccomment">/// Delete some bytes to ensure the instruction at PC + A aligned to
+<a href=#6205 id=6205 data-nosnippet>6205</a>/// `A.next_power_of_two()`-byte boundary
+<a href=#6206 id=6206 data-nosnippet>6206</a></span><span class="kw">pub const </span>R_LARCH_ALIGN: u32 = <span class="number">102</span>;
+<a href=#6207 id=6207 data-nosnippet>6207</a><span class="doccomment">/// 22-bit PC-relative offset with two trailing zeros
+<a href=#6208 id=6208 data-nosnippet>6208</a></span><span class="kw">pub const </span>R_LARCH_PCREL20_S2: u32 = <span class="number">103</span>;
+<a href=#6209 id=6209 data-nosnippet>6209</a><span class="doccomment">/// Reserved
+<a href=#6210 id=6210 data-nosnippet>6210</a></span><span class="kw">pub const </span>R_LARCH_CFA: u32 = <span class="number">104</span>;
+<a href=#6211 id=6211 data-nosnippet>6211</a><span class="doccomment">/// 6-bit in-place addition
+<a href=#6212 id=6212 data-nosnippet>6212</a></span><span class="kw">pub const </span>R_LARCH_ADD6: u32 = <span class="number">105</span>;
+<a href=#6213 id=6213 data-nosnippet>6213</a><span class="doccomment">/// 6-bit in-place subtraction
+<a href=#6214 id=6214 data-nosnippet>6214</a></span><span class="kw">pub const </span>R_LARCH_SUB6: u32 = <span class="number">106</span>;
+<a href=#6215 id=6215 data-nosnippet>6215</a><span class="doccomment">/// LEB128 in-place addition
+<a href=#6216 id=6216 data-nosnippet>6216</a></span><span class="kw">pub const </span>R_LARCH_ADD_ULEB128: u32 = <span class="number">107</span>;
+<a href=#6217 id=6217 data-nosnippet>6217</a><span class="doccomment">/// LEB128 in-place subtraction
+<a href=#6218 id=6218 data-nosnippet>6218</a></span><span class="kw">pub const </span>R_LARCH_SUB_ULEB128: u32 = <span class="number">108</span>;
+<a href=#6219 id=6219 data-nosnippet>6219</a><span class="doccomment">/// 64-bit PC relative
+<a href=#6220 id=6220 data-nosnippet>6220</a></span><span class="kw">pub const </span>R_LARCH_64_PCREL: u32 = <span class="number">109</span>;
+<a href=#6221 id=6221 data-nosnippet>6221</a><span class="doccomment">/// 18..=37 bits of `S + A - PC` into the `pcaddu18i` instruction at `PC`,
+<a href=#6222 id=6222 data-nosnippet>6222</a>/// and 2..=17 bits of `S + A - PC` into the `jirl` instruction at `PC + 4`
+<a href=#6223 id=6223 data-nosnippet>6223</a></span><span class="kw">pub const </span>R_LARCH_CALL36: u32 = <span class="number">110</span>;
+<a href=#6224 id=6224 data-nosnippet>6224</a><span class="doccomment">/// 12..=31 bits of 32/64-bit PC-relative offset to TLS DESC GOT entry
+<a href=#6225 id=6225 data-nosnippet>6225</a></span><span class="kw">pub const </span>R_LARCH_TLS_DESC_PC_HI20: u32 = <span class="number">111</span>;
+<a href=#6226 id=6226 data-nosnippet>6226</a><span class="doccomment">/// 0..=11 bits of 32/64-bit TLS DESC GOT entry address
+<a href=#6227 id=6227 data-nosnippet>6227</a></span><span class="kw">pub const </span>R_LARCH_TLS_DESC_PC_LO12: u32 = <span class="number">112</span>;
+<a href=#6228 id=6228 data-nosnippet>6228</a><span class="doccomment">/// 32..=51 bits of 64-bit PC-relative offset to TLS DESC GOT entry
+<a href=#6229 id=6229 data-nosnippet>6229</a></span><span class="kw">pub const </span>R_LARCH_TLS_DESC64_PC_LO20: u32 = <span class="number">113</span>;
+<a href=#6230 id=6230 data-nosnippet>6230</a><span class="doccomment">/// 52..=63 bits of 64-bit PC-relative offset to TLS DESC GOT entry
+<a href=#6231 id=6231 data-nosnippet>6231</a></span><span class="kw">pub const </span>R_LARCH_TLS_DESC64_PC_HI12: u32 = <span class="number">114</span>;
+<a href=#6232 id=6232 data-nosnippet>6232</a><span class="doccomment">/// 12..=31 bits of 32/64-bit TLS DESC GOT entry absolute address
+<a href=#6233 id=6233 data-nosnippet>6233</a></span><span class="kw">pub const </span>R_LARCH_TLS_DESC_HI20: u32 = <span class="number">115</span>;
+<a href=#6234 id=6234 data-nosnippet>6234</a><span class="doccomment">/// 0..=11 bits of 32/64-bit TLS DESC GOT entry absolute address
+<a href=#6235 id=6235 data-nosnippet>6235</a></span><span class="kw">pub const </span>R_LARCH_TLS_DESC_LO12: u32 = <span class="number">116</span>;
+<a href=#6236 id=6236 data-nosnippet>6236</a><span class="doccomment">/// 32..=51 bits of 64-bit TLS DESC GOT entry absolute address
+<a href=#6237 id=6237 data-nosnippet>6237</a></span><span class="kw">pub const </span>R_LARCH_TLS_DESC64_LO20: u32 = <span class="number">117</span>;
+<a href=#6238 id=6238 data-nosnippet>6238</a><span class="doccomment">/// 52..=63 bits of 64-bit TLS DESC GOT entry absolute address
+<a href=#6239 id=6239 data-nosnippet>6239</a></span><span class="kw">pub const </span>R_LARCH_TLS_DESC64_HI12: u32 = <span class="number">118</span>;
+<a href=#6240 id=6240 data-nosnippet>6240</a><span class="doccomment">/// Used on ld.{w,d} for TLS DESC to get the resolve function address
+<a href=#6241 id=6241 data-nosnippet>6241</a>/// from GOT entry
+<a href=#6242 id=6242 data-nosnippet>6242</a></span><span class="kw">pub const </span>R_LARCH_TLS_DESC_LD: u32 = <span class="number">119</span>;
+<a href=#6243 id=6243 data-nosnippet>6243</a><span class="doccomment">/// Used on jirl for TLS DESC to call the resolve function
+<a href=#6244 id=6244 data-nosnippet>6244</a></span><span class="kw">pub const </span>R_LARCH_TLS_DESC_CALL: u32 = <span class="number">120</span>;
+<a href=#6245 id=6245 data-nosnippet>6245</a><span class="doccomment">/// 12..=31 bits of TLS LE 32/64-bit offset from TP register, can be relaxed
+<a href=#6246 id=6246 data-nosnippet>6246</a></span><span class="kw">pub const </span>R_LARCH_TLS_LE_HI20_R: u32 = <span class="number">121</span>;
+<a href=#6247 id=6247 data-nosnippet>6247</a><span class="doccomment">/// TLS LE thread pointer usage, can be relaxed
+<a href=#6248 id=6248 data-nosnippet>6248</a></span><span class="kw">pub const </span>R_LARCH_TLS_LE_ADD_R: u32 = <span class="number">122</span>;
+<a href=#6249 id=6249 data-nosnippet>6249</a><span class="doccomment">/// 0..=11 bits of TLS LE 32/64-bit offset from TP register, sign-extended,
+<a href=#6250 id=6250 data-nosnippet>6250</a>/// can be relaxed.
+<a href=#6251 id=6251 data-nosnippet>6251</a></span><span class="kw">pub const </span>R_LARCH_TLS_LE_LO12_R: u32 = <span class="number">123</span>;
+<a href=#6252 id=6252 data-nosnippet>6252</a><span class="doccomment">/// 22-bit PC-relative offset to TLS LD GOT entry
+<a href=#6253 id=6253 data-nosnippet>6253</a></span><span class="kw">pub const </span>R_LARCH_TLS_LD_PCREL20_S2: u32 = <span class="number">124</span>;
+<a href=#6254 id=6254 data-nosnippet>6254</a><span class="doccomment">/// 22-bit PC-relative offset to TLS GD GOT entry
+<a href=#6255 id=6255 data-nosnippet>6255</a></span><span class="kw">pub const </span>R_LARCH_TLS_GD_PCREL20_S2: u32 = <span class="number">125</span>;
+<a href=#6256 id=6256 data-nosnippet>6256</a><span class="doccomment">/// 22-bit PC-relative offset to TLS DESC GOT entry
+<a href=#6257 id=6257 data-nosnippet>6257</a></span><span class="kw">pub const </span>R_LARCH_TLS_DESC_PCREL20_S2: u32 = <span class="number">126</span>;
+<a href=#6258 id=6258 data-nosnippet>6258</a>
+<a href=#6259 id=6259 data-nosnippet>6259</a><span class="comment">// Xtensa values Rel*::r_type`.
+<a href=#6260 id=6260 data-nosnippet>6260</a></span><span class="kw">pub const </span>R_XTENSA_NONE: u32 = <span class="number">0</span>;
+<a href=#6261 id=6261 data-nosnippet>6261</a><span class="kw">pub const </span>R_XTENSA_32: u32 = <span class="number">1</span>;
+<a href=#6262 id=6262 data-nosnippet>6262</a><span class="kw">pub const </span>R_XTENSA_RTLD: u32 = <span class="number">2</span>;
+<a href=#6263 id=6263 data-nosnippet>6263</a><span class="kw">pub const </span>R_XTENSA_GLOB_DAT: u32 = <span class="number">3</span>;
+<a href=#6264 id=6264 data-nosnippet>6264</a><span class="kw">pub const </span>R_XTENSA_JMP_SLOT: u32 = <span class="number">4</span>;
+<a href=#6265 id=6265 data-nosnippet>6265</a><span class="kw">pub const </span>R_XTENSA_RELATIVE: u32 = <span class="number">5</span>;
+<a href=#6266 id=6266 data-nosnippet>6266</a><span class="kw">pub const </span>R_XTENSA_PLT: u32 = <span class="number">6</span>;
+<a href=#6267 id=6267 data-nosnippet>6267</a><span class="kw">pub const </span>R_XTENSA_OP0: u32 = <span class="number">8</span>;
+<a href=#6268 id=6268 data-nosnippet>6268</a><span class="kw">pub const </span>R_XTENSA_OP1: u32 = <span class="number">9</span>;
+<a href=#6269 id=6269 data-nosnippet>6269</a><span class="kw">pub const </span>R_XTENSA_OP2: u32 = <span class="number">10</span>;
+<a href=#6270 id=6270 data-nosnippet>6270</a><span class="kw">pub const </span>R_XTENSA_ASM_EXPAND: u32 = <span class="number">11</span>;
+<a href=#6271 id=6271 data-nosnippet>6271</a><span class="kw">pub const </span>R_XTENSA_ASM_SIMPLIFY: u32 = <span class="number">12</span>;
+<a href=#6272 id=6272 data-nosnippet>6272</a><span class="kw">pub const </span>R_XTENSA_32_PCREL: u32 = <span class="number">14</span>;
+<a href=#6273 id=6273 data-nosnippet>6273</a><span class="kw">pub const </span>R_XTENSA_GNU_VTINHERIT: u32 = <span class="number">15</span>;
+<a href=#6274 id=6274 data-nosnippet>6274</a><span class="kw">pub const </span>R_XTENSA_GNU_VTENTRY: u32 = <span class="number">16</span>;
+<a href=#6275 id=6275 data-nosnippet>6275</a><span class="kw">pub const </span>R_XTENSA_DIFF8: u32 = <span class="number">17</span>;
+<a href=#6276 id=6276 data-nosnippet>6276</a><span class="kw">pub const </span>R_XTENSA_DIFF16: u32 = <span class="number">18</span>;
+<a href=#6277 id=6277 data-nosnippet>6277</a><span class="kw">pub const </span>R_XTENSA_DIFF32: u32 = <span class="number">19</span>;
+<a href=#6278 id=6278 data-nosnippet>6278</a><span class="kw">pub const </span>R_XTENSA_SLOT0_OP: u32 = <span class="number">20</span>;
+<a href=#6279 id=6279 data-nosnippet>6279</a><span class="kw">pub const </span>R_XTENSA_SLOT1_OP: u32 = <span class="number">21</span>;
+<a href=#6280 id=6280 data-nosnippet>6280</a><span class="kw">pub const </span>R_XTENSA_SLOT2_OP: u32 = <span class="number">22</span>;
+<a href=#6281 id=6281 data-nosnippet>6281</a><span class="kw">pub const </span>R_XTENSA_SLOT3_OP: u32 = <span class="number">23</span>;
+<a href=#6282 id=6282 data-nosnippet>6282</a><span class="kw">pub const </span>R_XTENSA_SLOT4_OP: u32 = <span class="number">24</span>;
+<a href=#6283 id=6283 data-nosnippet>6283</a><span class="kw">pub const </span>R_XTENSA_SLOT5_OP: u32 = <span class="number">25</span>;
+<a href=#6284 id=6284 data-nosnippet>6284</a><span class="kw">pub const </span>R_XTENSA_SLOT6_OP: u32 = <span class="number">26</span>;
+<a href=#6285 id=6285 data-nosnippet>6285</a><span class="kw">pub const </span>R_XTENSA_SLOT7_OP: u32 = <span class="number">27</span>;
+<a href=#6286 id=6286 data-nosnippet>6286</a><span class="kw">pub const </span>R_XTENSA_SLOT8_OP: u32 = <span class="number">28</span>;
+<a href=#6287 id=6287 data-nosnippet>6287</a><span class="kw">pub const </span>R_XTENSA_SLOT9_OP: u32 = <span class="number">29</span>;
+<a href=#6288 id=6288 data-nosnippet>6288</a><span class="kw">pub const </span>R_XTENSA_SLOT10_OP: u32 = <span class="number">30</span>;
+<a href=#6289 id=6289 data-nosnippet>6289</a><span class="kw">pub const </span>R_XTENSA_SLOT11_OP: u32 = <span class="number">31</span>;
+<a href=#6290 id=6290 data-nosnippet>6290</a><span class="kw">pub const </span>R_XTENSA_SLOT12_OP: u32 = <span class="number">32</span>;
+<a href=#6291 id=6291 data-nosnippet>6291</a><span class="kw">pub const </span>R_XTENSA_SLOT13_OP: u32 = <span class="number">33</span>;
+<a href=#6292 id=6292 data-nosnippet>6292</a><span class="kw">pub const </span>R_XTENSA_SLOT14_OP: u32 = <span class="number">34</span>;
+<a href=#6293 id=6293 data-nosnippet>6293</a><span class="kw">pub const </span>R_XTENSA_SLOT0_ALT: u32 = <span class="number">35</span>;
+<a href=#6294 id=6294 data-nosnippet>6294</a><span class="kw">pub const </span>R_XTENSA_SLOT1_ALT: u32 = <span class="number">36</span>;
+<a href=#6295 id=6295 data-nosnippet>6295</a><span class="kw">pub const </span>R_XTENSA_SLOT2_ALT: u32 = <span class="number">37</span>;
+<a href=#6296 id=6296 data-nosnippet>6296</a><span class="kw">pub const </span>R_XTENSA_SLOT3_ALT: u32 = <span class="number">38</span>;
+<a href=#6297 id=6297 data-nosnippet>6297</a><span class="kw">pub const </span>R_XTENSA_SLOT4_ALT: u32 = <span class="number">39</span>;
+<a href=#6298 id=6298 data-nosnippet>6298</a><span class="kw">pub const </span>R_XTENSA_SLOT5_ALT: u32 = <span class="number">40</span>;
+<a href=#6299 id=6299 data-nosnippet>6299</a><span class="kw">pub const </span>R_XTENSA_SLOT6_ALT: u32 = <span class="number">41</span>;
+<a href=#6300 id=6300 data-nosnippet>6300</a><span class="kw">pub const </span>R_XTENSA_SLOT7_ALT: u32 = <span class="number">42</span>;
+<a href=#6301 id=6301 data-nosnippet>6301</a><span class="kw">pub const </span>R_XTENSA_SLOT8_ALT: u32 = <span class="number">43</span>;
+<a href=#6302 id=6302 data-nosnippet>6302</a><span class="kw">pub const </span>R_XTENSA_SLOT9_ALT: u32 = <span class="number">44</span>;
+<a href=#6303 id=6303 data-nosnippet>6303</a><span class="kw">pub const </span>R_XTENSA_SLOT10_ALT: u32 = <span class="number">45</span>;
+<a href=#6304 id=6304 data-nosnippet>6304</a><span class="kw">pub const </span>R_XTENSA_SLOT11_ALT: u32 = <span class="number">46</span>;
+<a href=#6305 id=6305 data-nosnippet>6305</a><span class="kw">pub const </span>R_XTENSA_SLOT12_ALT: u32 = <span class="number">47</span>;
+<a href=#6306 id=6306 data-nosnippet>6306</a><span class="kw">pub const </span>R_XTENSA_SLOT13_ALT: u32 = <span class="number">48</span>;
+<a href=#6307 id=6307 data-nosnippet>6307</a><span class="kw">pub const </span>R_XTENSA_SLOT14_ALT: u32 = <span class="number">49</span>;
+<a href=#6308 id=6308 data-nosnippet>6308</a><span class="kw">pub const </span>R_XTENSA_TLSDESC_FN: u32 = <span class="number">50</span>;
+<a href=#6309 id=6309 data-nosnippet>6309</a><span class="kw">pub const </span>R_XTENSA_TLSDESC_ARG: u32 = <span class="number">51</span>;
+<a href=#6310 id=6310 data-nosnippet>6310</a><span class="kw">pub const </span>R_XTENSA_TLS_DTPOFF: u32 = <span class="number">52</span>;
+<a href=#6311 id=6311 data-nosnippet>6311</a><span class="kw">pub const </span>R_XTENSA_TLS_TPOFF: u32 = <span class="number">53</span>;
+<a href=#6312 id=6312 data-nosnippet>6312</a><span class="kw">pub const </span>R_XTENSA_TLS_FUNC: u32 = <span class="number">54</span>;
+<a href=#6313 id=6313 data-nosnippet>6313</a><span class="kw">pub const </span>R_XTENSA_TLS_ARG: u32 = <span class="number">55</span>;
+<a href=#6314 id=6314 data-nosnippet>6314</a><span class="kw">pub const </span>R_XTENSA_TLS_CALL: u32 = <span class="number">56</span>;
+<a href=#6315 id=6315 data-nosnippet>6315</a><span class="kw">pub const </span>R_XTENSA_PDIFF8: u32 = <span class="number">57</span>;
+<a href=#6316 id=6316 data-nosnippet>6316</a><span class="kw">pub const </span>R_XTENSA_PDIFF16: u32 = <span class="number">58</span>;
+<a href=#6317 id=6317 data-nosnippet>6317</a><span class="kw">pub const </span>R_XTENSA_PDIFF32: u32 = <span class="number">59</span>;
+<a href=#6318 id=6318 data-nosnippet>6318</a><span class="kw">pub const </span>R_XTENSA_NDIFF8: u32 = <span class="number">60</span>;
+<a href=#6319 id=6319 data-nosnippet>6319</a><span class="kw">pub const </span>R_XTENSA_NDIFF16: u32 = <span class="number">61</span>;
+<a href=#6320 id=6320 data-nosnippet>6320</a><span class="kw">pub const </span>R_XTENSA_NDIFF32: u32 = <span class="number">62</span>;
+<a href=#6321 id=6321 data-nosnippet>6321</a>
+<a href=#6322 id=6322 data-nosnippet>6322</a><span class="comment">// E2K values for `FileHeader*::e_flags`.
+<a href=#6323 id=6323 data-nosnippet>6323</a></span><span class="kw">pub const </span>EF_E2K_IPD: u32 = <span class="number">3</span>;
+<a href=#6324 id=6324 data-nosnippet>6324</a><span class="kw">pub const </span>EF_E2K_X86APP: u32 = <span class="number">4</span>;
+<a href=#6325 id=6325 data-nosnippet>6325</a><span class="kw">pub const </span>EF_E2K_4MB_PAGES: u32 = <span class="number">8</span>;
+<a href=#6326 id=6326 data-nosnippet>6326</a><span class="kw">pub const </span>EF_E2K_INCOMPAT: u32 = <span class="number">16</span>;
+<a href=#6327 id=6327 data-nosnippet>6327</a><span class="kw">pub const </span>EF_E2K_PM: u32 = <span class="number">32</span>;
+<a href=#6328 id=6328 data-nosnippet>6328</a><span class="kw">pub const </span>EF_E2K_PACK_SEGMENTS: u32 = <span class="number">64</span>;
+<a href=#6329 id=6329 data-nosnippet>6329</a>
+<a href=#6330 id=6330 data-nosnippet>6330</a><span class="doccomment">/// Encode `E_E2K_MACH_*` into `FileHeader*::e_flags`.
+<a href=#6331 id=6331 data-nosnippet>6331</a></span><span class="kw">pub const fn </span>ef_e2k_mach_to_flag(e_flags: u32, x: u32) -&gt; u32 {
+<a href=#6332 id=6332 data-nosnippet>6332</a>    (e_flags &amp; <span class="number">0xffffff</span>) | (x &lt;&lt; <span class="number">24</span>)
+<a href=#6333 id=6333 data-nosnippet>6333</a>}
+<a href=#6334 id=6334 data-nosnippet>6334</a>
+<a href=#6335 id=6335 data-nosnippet>6335</a><span class="doccomment">/// Decode `E_E2K_MACH_*` from `FileHeader*::e_flags`.
+<a href=#6336 id=6336 data-nosnippet>6336</a></span><span class="kw">pub const fn </span>ef_e2k_flag_to_mach(e_flags: u32) -&gt; u32 {
+<a href=#6337 id=6337 data-nosnippet>6337</a>    e_flags &gt;&gt; <span class="number">24
+<a href=#6338 id=6338 data-nosnippet>6338</a></span>}
+<a href=#6339 id=6339 data-nosnippet>6339</a>
+<a href=#6340 id=6340 data-nosnippet>6340</a><span class="comment">// Codes of supported E2K machines.
 <a href=#6341 id=6341 data-nosnippet>6341</a>
-<a href=#6342 id=6342 data-nosnippet>6342</a><span class="comment">// E2K values `Rel*::r_type`.
-<a href=#6343 id=6343 data-nosnippet>6343</a>
-<a href=#6344 id=6344 data-nosnippet>6344</a></span><span class="doccomment">/// Direct 32 bit.
-<a href=#6345 id=6345 data-nosnippet>6345</a></span><span class="kw">pub const </span>R_E2K_32_ABS: u32 = <span class="number">0</span>;
-<a href=#6346 id=6346 data-nosnippet>6346</a><span class="doccomment">/// PC relative 32 bit.
-<a href=#6347 id=6347 data-nosnippet>6347</a></span><span class="kw">pub const </span>R_E2K_32_PC: u32 = <span class="number">2</span>;
-<a href=#6348 id=6348 data-nosnippet>6348</a><span class="doccomment">/// 32-bit offset of AP GOT entry.
-<a href=#6349 id=6349 data-nosnippet>6349</a></span><span class="kw">pub const </span>R_E2K_AP_GOT: u32 = <span class="number">3</span>;
-<a href=#6350 id=6350 data-nosnippet>6350</a><span class="doccomment">/// 32-bit offset of PL GOT entry.
-<a href=#6351 id=6351 data-nosnippet>6351</a></span><span class="kw">pub const </span>R_E2K_PL_GOT: u32 = <span class="number">4</span>;
-<a href=#6352 id=6352 data-nosnippet>6352</a><span class="doccomment">/// Create PLT entry.
-<a href=#6353 id=6353 data-nosnippet>6353</a></span><span class="kw">pub const </span>R_E2K_32_JMP_SLOT: u32 = <span class="number">8</span>;
-<a href=#6354 id=6354 data-nosnippet>6354</a><span class="doccomment">/// Copy relocation, 32-bit case.
-<a href=#6355 id=6355 data-nosnippet>6355</a></span><span class="kw">pub const </span>R_E2K_32_COPY: u32 = <span class="number">9</span>;
-<a href=#6356 id=6356 data-nosnippet>6356</a><span class="doccomment">/// Adjust by program base, 32-bit case.
-<a href=#6357 id=6357 data-nosnippet>6357</a></span><span class="kw">pub const </span>R_E2K_32_RELATIVE: u32 = <span class="number">10</span>;
-<a href=#6358 id=6358 data-nosnippet>6358</a><span class="doccomment">/// Adjust indirectly by program base, 32-bit case.
-<a href=#6359 id=6359 data-nosnippet>6359</a></span><span class="kw">pub const </span>R_E2K_32_IRELATIVE: u32 = <span class="number">11</span>;
-<a href=#6360 id=6360 data-nosnippet>6360</a><span class="doccomment">/// Size of symbol plus 32-bit addend.
-<a href=#6361 id=6361 data-nosnippet>6361</a></span><span class="kw">pub const </span>R_E2K_32_SIZE: u32 = <span class="number">12</span>;
-<a href=#6362 id=6362 data-nosnippet>6362</a><span class="doccomment">/// Symbol value if resolved by the definition in the same
-<a href=#6363 id=6363 data-nosnippet>6363</a>/// compilation unit or NULL otherwise, 32-bit case.
-<a href=#6364 id=6364 data-nosnippet>6364</a></span><span class="kw">pub const </span>R_E2K_32_DYNOPT: u32 = <span class="number">13</span>;
-<a href=#6365 id=6365 data-nosnippet>6365</a><span class="doccomment">/// Direct 64 bit.
-<a href=#6366 id=6366 data-nosnippet>6366</a></span><span class="kw">pub const </span>R_E2K_64_ABS: u32 = <span class="number">50</span>;
-<a href=#6367 id=6367 data-nosnippet>6367</a><span class="doccomment">/// Direct 64 bit for literal.
-<a href=#6368 id=6368 data-nosnippet>6368</a></span><span class="kw">pub const </span>R_E2K_64_ABS_LIT: u32 = <span class="number">51</span>;
-<a href=#6369 id=6369 data-nosnippet>6369</a><span class="doccomment">/// PC relative 64 bit for literal.
-<a href=#6370 id=6370 data-nosnippet>6370</a></span><span class="kw">pub const </span>R_E2K_64_PC_LIT: u32 = <span class="number">54</span>;
-<a href=#6371 id=6371 data-nosnippet>6371</a><span class="doccomment">/// Create PLT entry, 64-bit case.
-<a href=#6372 id=6372 data-nosnippet>6372</a></span><span class="kw">pub const </span>R_E2K_64_JMP_SLOT: u32 = <span class="number">63</span>;
-<a href=#6373 id=6373 data-nosnippet>6373</a><span class="doccomment">/// Copy relocation, 64-bit case.
-<a href=#6374 id=6374 data-nosnippet>6374</a></span><span class="kw">pub const </span>R_E2K_64_COPY: u32 = <span class="number">64</span>;
-<a href=#6375 id=6375 data-nosnippet>6375</a><span class="doccomment">/// Adjust by program base, 64-bit case.
-<a href=#6376 id=6376 data-nosnippet>6376</a></span><span class="kw">pub const </span>R_E2K_64_RELATIVE: u32 = <span class="number">65</span>;
-<a href=#6377 id=6377 data-nosnippet>6377</a><span class="doccomment">/// Adjust by program base for literal, 64-bit case.
-<a href=#6378 id=6378 data-nosnippet>6378</a></span><span class="kw">pub const </span>R_E2K_64_RELATIVE_LIT: u32 = <span class="number">66</span>;
-<a href=#6379 id=6379 data-nosnippet>6379</a><span class="doccomment">/// Adjust indirectly by program base, 64-bit case.
-<a href=#6380 id=6380 data-nosnippet>6380</a></span><span class="kw">pub const </span>R_E2K_64_IRELATIVE: u32 = <span class="number">67</span>;
-<a href=#6381 id=6381 data-nosnippet>6381</a><span class="doccomment">/// Size of symbol plus 64-bit addend.
-<a href=#6382 id=6382 data-nosnippet>6382</a></span><span class="kw">pub const </span>R_E2K_64_SIZE: u32 = <span class="number">68</span>;
-<a href=#6383 id=6383 data-nosnippet>6383</a><span class="doccomment">/// 64-bit offset of the symbol from GOT.
-<a href=#6384 id=6384 data-nosnippet>6384</a></span><span class="kw">pub const </span>R_E2K_64_GOTOFF: u32 = <span class="number">69</span>;
-<a href=#6385 id=6385 data-nosnippet>6385</a>
-<a href=#6386 id=6386 data-nosnippet>6386</a><span class="doccomment">/// GOT entry for ID of module containing symbol.
-<a href=#6387 id=6387 data-nosnippet>6387</a></span><span class="kw">pub const </span>R_E2K_TLS_GDMOD: u32 = <span class="number">70</span>;
-<a href=#6388 id=6388 data-nosnippet>6388</a><span class="doccomment">/// GOT entry for offset in module TLS block.
-<a href=#6389 id=6389 data-nosnippet>6389</a></span><span class="kw">pub const </span>R_E2K_TLS_GDREL: u32 = <span class="number">71</span>;
-<a href=#6390 id=6390 data-nosnippet>6390</a><span class="doccomment">/// Static TLS block offset GOT entry.
-<a href=#6391 id=6391 data-nosnippet>6391</a></span><span class="kw">pub const </span>R_E2K_TLS_IE: u32 = <span class="number">74</span>;
-<a href=#6392 id=6392 data-nosnippet>6392</a><span class="doccomment">/// Offset relative to static TLS block, 32-bit case.
-<a href=#6393 id=6393 data-nosnippet>6393</a></span><span class="kw">pub const </span>R_E2K_32_TLS_LE: u32 = <span class="number">75</span>;
-<a href=#6394 id=6394 data-nosnippet>6394</a><span class="doccomment">/// Offset relative to static TLS block, 64-bit case.
-<a href=#6395 id=6395 data-nosnippet>6395</a></span><span class="kw">pub const </span>R_E2K_64_TLS_LE: u32 = <span class="number">76</span>;
-<a href=#6396 id=6396 data-nosnippet>6396</a><span class="doccomment">/// ID of module containing symbol, 32-bit case.
-<a href=#6397 id=6397 data-nosnippet>6397</a></span><span class="kw">pub const </span>R_E2K_TLS_32_DTPMOD: u32 = <span class="number">80</span>;
-<a href=#6398 id=6398 data-nosnippet>6398</a><span class="doccomment">/// Offset in module TLS block, 32-bit case.
-<a href=#6399 id=6399 data-nosnippet>6399</a></span><span class="kw">pub const </span>R_E2K_TLS_32_DTPREL: u32 = <span class="number">81</span>;
-<a href=#6400 id=6400 data-nosnippet>6400</a><span class="doccomment">/// ID of module containing symbol, 64-bit case.
-<a href=#6401 id=6401 data-nosnippet>6401</a></span><span class="kw">pub const </span>R_E2K_TLS_64_DTPMOD: u32 = <span class="number">82</span>;
-<a href=#6402 id=6402 data-nosnippet>6402</a><span class="doccomment">/// Offset in module TLS block, 64-bit case.
-<a href=#6403 id=6403 data-nosnippet>6403</a></span><span class="kw">pub const </span>R_E2K_TLS_64_DTPREL: u32 = <span class="number">83</span>;
-<a href=#6404 id=6404 data-nosnippet>6404</a><span class="doccomment">/// Offset in static TLS block, 32-bit case.
-<a href=#6405 id=6405 data-nosnippet>6405</a></span><span class="kw">pub const </span>R_E2K_TLS_32_TPREL: u32 = <span class="number">84</span>;
-<a href=#6406 id=6406 data-nosnippet>6406</a><span class="doccomment">/// Offset in static TLS block, 64-bit case.
-<a href=#6407 id=6407 data-nosnippet>6407</a></span><span class="kw">pub const </span>R_E2K_TLS_64_TPREL: u32 = <span class="number">85</span>;
-<a href=#6408 id=6408 data-nosnippet>6408</a>
-<a href=#6409 id=6409 data-nosnippet>6409</a><span class="doccomment">/// Direct AP.
-<a href=#6410 id=6410 data-nosnippet>6410</a></span><span class="kw">pub const </span>R_E2K_AP: u32 = <span class="number">100</span>;
-<a href=#6411 id=6411 data-nosnippet>6411</a><span class="doccomment">/// Direct PL.
-<a href=#6412 id=6412 data-nosnippet>6412</a></span><span class="kw">pub const </span>R_E2K_PL: u32 = <span class="number">101</span>;
-<a href=#6413 id=6413 data-nosnippet>6413</a>
-<a href=#6414 id=6414 data-nosnippet>6414</a><span class="doccomment">/// 32-bit offset of the symbol's entry in GOT.
-<a href=#6415 id=6415 data-nosnippet>6415</a></span><span class="kw">pub const </span>R_E2K_GOT: u32 = <span class="number">108</span>;
-<a href=#6416 id=6416 data-nosnippet>6416</a><span class="doccomment">/// 32-bit offset of the symbol from GOT.
-<a href=#6417 id=6417 data-nosnippet>6417</a></span><span class="kw">pub const </span>R_E2K_GOTOFF: u32 = <span class="number">109</span>;
-<a href=#6418 id=6418 data-nosnippet>6418</a><span class="doccomment">/// PC relative 28 bit for DISP.
-<a href=#6419 id=6419 data-nosnippet>6419</a></span><span class="kw">pub const </span>R_E2K_DISP: u32 = <span class="number">110</span>;
-<a href=#6420 id=6420 data-nosnippet>6420</a><span class="doccomment">/// Prefetch insn line containing the label (symbol).
-<a href=#6421 id=6421 data-nosnippet>6421</a></span><span class="kw">pub const </span>R_E2K_PREF: u32 = <span class="number">111</span>;
-<a href=#6422 id=6422 data-nosnippet>6422</a><span class="doccomment">/// No reloc.
-<a href=#6423 id=6423 data-nosnippet>6423</a></span><span class="kw">pub const </span>R_E2K_NONE: u32 = <span class="number">112</span>;
-<a href=#6424 id=6424 data-nosnippet>6424</a><span class="doccomment">/// 32-bit offset of the symbol's entry in .got.plt.
-<a href=#6425 id=6425 data-nosnippet>6425</a></span><span class="kw">pub const </span>R_E2K_GOTPLT: u32 = <span class="number">114</span>;
-<a href=#6426 id=6426 data-nosnippet>6426</a><span class="doccomment">/// Is symbol resolved locally during the link.
-<a href=#6427 id=6427 data-nosnippet>6427</a>/// The result is encoded in 5-bit ALS.src1.
-<a href=#6428 id=6428 data-nosnippet>6428</a></span><span class="kw">pub const </span>R_E2K_ISLOCAL: u32 = <span class="number">115</span>;
-<a href=#6429 id=6429 data-nosnippet>6429</a><span class="doccomment">/// Is symbol resloved locally during the link.
-<a href=#6430 id=6430 data-nosnippet>6430</a>/// The result is encoded in a long 32-bit LTS.
-<a href=#6431 id=6431 data-nosnippet>6431</a></span><span class="kw">pub const </span>R_E2K_ISLOCAL32: u32 = <span class="number">118</span>;
-<a href=#6432 id=6432 data-nosnippet>6432</a><span class="doccomment">/// The symbol's offset from GOT encoded within a 64-bit literal.
-<a href=#6433 id=6433 data-nosnippet>6433</a></span><span class="kw">pub const </span>R_E2K_64_GOTOFF_LIT: u32 = <span class="number">256</span>;
-<a href=#6434 id=6434 data-nosnippet>6434</a><span class="doccomment">/// Symbol value if resolved by the definition in the same
-<a href=#6435 id=6435 data-nosnippet>6435</a>/// compilation unit or NULL otherwise, 64-bit case.
-<a href=#6436 id=6436 data-nosnippet>6436</a></span><span class="kw">pub const </span>R_E2K_64_DYNOPT: u32 = <span class="number">257</span>;
-<a href=#6437 id=6437 data-nosnippet>6437</a><span class="doccomment">/// PC relative 64 bit in data.
-<a href=#6438 id=6438 data-nosnippet>6438</a></span><span class="kw">pub const </span>R_E2K_64_PC: u32 = <span class="number">258</span>;
-<a href=#6439 id=6439 data-nosnippet>6439</a>
-<a href=#6440 id=6440 data-nosnippet>6440</a><span class="comment">// E2K values for `Dyn32::d_tag`.
-<a href=#6441 id=6441 data-nosnippet>6441</a>
-<a href=#6442 id=6442 data-nosnippet>6442</a></span><span class="kw">pub const </span>DT_E2K_LAZY: u32 = DT_LOPROC + <span class="number">1</span>;
-<a href=#6443 id=6443 data-nosnippet>6443</a><span class="kw">pub const </span>DT_E2K_LAZY_GOT: u32 = DT_LOPROC + <span class="number">3</span>;
-<a href=#6444 id=6444 data-nosnippet>6444</a>
-<a href=#6445 id=6445 data-nosnippet>6445</a><span class="kw">pub const </span>DT_E2K_INIT_GOT: u32 = DT_LOPROC + <span class="number">0x101c</span>;
-<a href=#6446 id=6446 data-nosnippet>6446</a><span class="kw">pub const </span>DT_E2K_EXPORT_PL: u32 = DT_LOPROC + <span class="number">0x101d</span>;
-<a href=#6447 id=6447 data-nosnippet>6447</a><span class="kw">pub const </span>DT_E2K_EXPORT_PLSZ: u32 = DT_LOPROC + <span class="number">0x101e</span>;
-<a href=#6448 id=6448 data-nosnippet>6448</a><span class="kw">pub const </span>DT_E2K_REAL_PLTGOT: u32 = DT_LOPROC + <span class="number">0x101f</span>;
-<a href=#6449 id=6449 data-nosnippet>6449</a><span class="kw">pub const </span>DT_E2K_NO_SELFINIT: u32 = DT_LOPROC + <span class="number">0x1020</span>;
-<a href=#6450 id=6450 data-nosnippet>6450</a>
-<a href=#6451 id=6451 data-nosnippet>6451</a><span class="kw">pub const </span>DT_E2K_NUM: u32 = <span class="number">0x1021</span>;
-<a href=#6452 id=6452 data-nosnippet>6452</a>
-<a href=#6453 id=6453 data-nosnippet>6453</a><span class="attr">#[allow(non_upper_case_globals)]
-<a href=#6454 id=6454 data-nosnippet>6454</a></span><span class="kw">pub const </span>Tag_File: u8 = <span class="number">1</span>;
-<a href=#6455 id=6455 data-nosnippet>6455</a><span class="attr">#[allow(non_upper_case_globals)]
-<a href=#6456 id=6456 data-nosnippet>6456</a></span><span class="kw">pub const </span>Tag_Section: u8 = <span class="number">2</span>;
-<a href=#6457 id=6457 data-nosnippet>6457</a><span class="attr">#[allow(non_upper_case_globals)]
-<a href=#6458 id=6458 data-nosnippet>6458</a></span><span class="kw">pub const </span>Tag_Symbol: u8 = <span class="number">3</span>;
-<a href=#6459 id=6459 data-nosnippet>6459</a>
-<a href=#6460 id=6460 data-nosnippet>6460</a><span class="macro">unsafe_impl_endian_pod!</span>(
-<a href=#6461 id=6461 data-nosnippet>6461</a>    FileHeader32,
-<a href=#6462 id=6462 data-nosnippet>6462</a>    FileHeader64,
-<a href=#6463 id=6463 data-nosnippet>6463</a>    SectionHeader32,
-<a href=#6464 id=6464 data-nosnippet>6464</a>    SectionHeader64,
-<a href=#6465 id=6465 data-nosnippet>6465</a>    CompressionHeader32,
-<a href=#6466 id=6466 data-nosnippet>6466</a>    CompressionHeader64,
-<a href=#6467 id=6467 data-nosnippet>6467</a>    Sym32,
-<a href=#6468 id=6468 data-nosnippet>6468</a>    Sym64,
-<a href=#6469 id=6469 data-nosnippet>6469</a>    Syminfo32,
-<a href=#6470 id=6470 data-nosnippet>6470</a>    Syminfo64,
-<a href=#6471 id=6471 data-nosnippet>6471</a>    Rel32,
-<a href=#6472 id=6472 data-nosnippet>6472</a>    Rel64,
-<a href=#6473 id=6473 data-nosnippet>6473</a>    Rela32,
-<a href=#6474 id=6474 data-nosnippet>6474</a>    Rela64,
-<a href=#6475 id=6475 data-nosnippet>6475</a>    Relr32,
-<a href=#6476 id=6476 data-nosnippet>6476</a>    Relr64,
-<a href=#6477 id=6477 data-nosnippet>6477</a>    ProgramHeader32,
-<a href=#6478 id=6478 data-nosnippet>6478</a>    ProgramHeader64,
-<a href=#6479 id=6479 data-nosnippet>6479</a>    Dyn32,
-<a href=#6480 id=6480 data-nosnippet>6480</a>    Dyn64,
-<a href=#6481 id=6481 data-nosnippet>6481</a>    Versym,
-<a href=#6482 id=6482 data-nosnippet>6482</a>    Verdef,
-<a href=#6483 id=6483 data-nosnippet>6483</a>    Verdaux,
-<a href=#6484 id=6484 data-nosnippet>6484</a>    Verneed,
-<a href=#6485 id=6485 data-nosnippet>6485</a>    Vernaux,
-<a href=#6486 id=6486 data-nosnippet>6486</a>    NoteHeader32,
-<a href=#6487 id=6487 data-nosnippet>6487</a>    NoteHeader64,
-<a href=#6488 id=6488 data-nosnippet>6488</a>    HashHeader,
-<a href=#6489 id=6489 data-nosnippet>6489</a>    GnuHashHeader,
-<a href=#6490 id=6490 data-nosnippet>6490</a>);</code></pre></div></section></main></body></html>
+<a href=#6342 id=6342 data-nosnippet>6342</a></span><span class="doccomment">/// -march=generic code.
+<a href=#6343 id=6343 data-nosnippet>6343</a>///
+<a href=#6344 id=6344 data-nosnippet>6344</a>/// Legacy. Shouldn't be created nowadays.
+<a href=#6345 id=6345 data-nosnippet>6345</a></span><span class="kw">pub const </span>E_E2K_MACH_BASE: u32 = <span class="number">0</span>;
+<a href=#6346 id=6346 data-nosnippet>6346</a><span class="doccomment">/// -march=elbrus-v1 code.
+<a href=#6347 id=6347 data-nosnippet>6347</a>///
+<a href=#6348 id=6348 data-nosnippet>6348</a>/// Legacy. Shouldn't be created nowadays.
+<a href=#6349 id=6349 data-nosnippet>6349</a></span><span class="kw">pub const </span>E_E2K_MACH_EV1: u32 = <span class="number">1</span>;
+<a href=#6350 id=6350 data-nosnippet>6350</a><span class="doccomment">/// -march=elbrus-v2 code.
+<a href=#6351 id=6351 data-nosnippet>6351</a></span><span class="kw">pub const </span>E_E2K_MACH_EV2: u32 = <span class="number">2</span>;
+<a href=#6352 id=6352 data-nosnippet>6352</a><span class="doccomment">/// -march=elbrus-v3 code.
+<a href=#6353 id=6353 data-nosnippet>6353</a></span><span class="kw">pub const </span>E_E2K_MACH_EV3: u32 = <span class="number">3</span>;
+<a href=#6354 id=6354 data-nosnippet>6354</a><span class="doccomment">/// -march=elbrus-v4 code.
+<a href=#6355 id=6355 data-nosnippet>6355</a></span><span class="kw">pub const </span>E_E2K_MACH_EV4: u32 = <span class="number">4</span>;
+<a href=#6356 id=6356 data-nosnippet>6356</a><span class="doccomment">/// -march=elbrus-v5 code.
+<a href=#6357 id=6357 data-nosnippet>6357</a></span><span class="kw">pub const </span>E_E2K_MACH_EV5: u32 = <span class="number">5</span>;
+<a href=#6358 id=6358 data-nosnippet>6358</a><span class="doccomment">/// -march=elbrus-v6 code.
+<a href=#6359 id=6359 data-nosnippet>6359</a></span><span class="kw">pub const </span>E_E2K_MACH_EV6: u32 = <span class="number">6</span>;
+<a href=#6360 id=6360 data-nosnippet>6360</a><span class="doccomment">/// -march=elbrus-v7 code.
+<a href=#6361 id=6361 data-nosnippet>6361</a></span><span class="kw">pub const </span>E_E2K_MACH_EV7: u32 = <span class="number">7</span>;
+<a href=#6362 id=6362 data-nosnippet>6362</a><span class="doccomment">/// -mtune=elbrus-8c code.
+<a href=#6363 id=6363 data-nosnippet>6363</a></span><span class="kw">pub const </span>E_E2K_MACH_8C: u32 = <span class="number">19</span>;
+<a href=#6364 id=6364 data-nosnippet>6364</a><span class="doccomment">/// -mtune=elbrus-1c+ code.
+<a href=#6365 id=6365 data-nosnippet>6365</a></span><span class="kw">pub const </span>E_E2K_MACH_1CPLUS: u32 = <span class="number">20</span>;
+<a href=#6366 id=6366 data-nosnippet>6366</a><span class="doccomment">/// -mtune=elbrus-12c code.
+<a href=#6367 id=6367 data-nosnippet>6367</a></span><span class="kw">pub const </span>E_E2K_MACH_12C: u32 = <span class="number">21</span>;
+<a href=#6368 id=6368 data-nosnippet>6368</a><span class="doccomment">/// -mtune=elbrus-16c code.
+<a href=#6369 id=6369 data-nosnippet>6369</a></span><span class="kw">pub const </span>E_E2K_MACH_16C: u32 = <span class="number">22</span>;
+<a href=#6370 id=6370 data-nosnippet>6370</a><span class="doccomment">/// -mtune=elbrus-2c3 code.
+<a href=#6371 id=6371 data-nosnippet>6371</a></span><span class="kw">pub const </span>E_E2K_MACH_2C3: u32 = <span class="number">23</span>;
+<a href=#6372 id=6372 data-nosnippet>6372</a><span class="doccomment">/// -mtune=elbrus-48c code.
+<a href=#6373 id=6373 data-nosnippet>6373</a></span><span class="kw">pub const </span>E_E2K_MACH_48C: u32 = <span class="number">24</span>;
+<a href=#6374 id=6374 data-nosnippet>6374</a><span class="doccomment">/// -mtune=elbrus-8v7 code.
+<a href=#6375 id=6375 data-nosnippet>6375</a></span><span class="kw">pub const </span>E_E2K_MACH_8V7: u32 = <span class="number">25</span>;
+<a href=#6376 id=6376 data-nosnippet>6376</a>
+<a href=#6377 id=6377 data-nosnippet>6377</a><span class="comment">// E2K values `Rel*::r_type`.
+<a href=#6378 id=6378 data-nosnippet>6378</a>
+<a href=#6379 id=6379 data-nosnippet>6379</a></span><span class="doccomment">/// Direct 32 bit.
+<a href=#6380 id=6380 data-nosnippet>6380</a></span><span class="kw">pub const </span>R_E2K_32_ABS: u32 = <span class="number">0</span>;
+<a href=#6381 id=6381 data-nosnippet>6381</a><span class="doccomment">/// PC relative 32 bit.
+<a href=#6382 id=6382 data-nosnippet>6382</a></span><span class="kw">pub const </span>R_E2K_32_PC: u32 = <span class="number">2</span>;
+<a href=#6383 id=6383 data-nosnippet>6383</a><span class="doccomment">/// 32-bit offset of AP GOT entry.
+<a href=#6384 id=6384 data-nosnippet>6384</a></span><span class="kw">pub const </span>R_E2K_AP_GOT: u32 = <span class="number">3</span>;
+<a href=#6385 id=6385 data-nosnippet>6385</a><span class="doccomment">/// 32-bit offset of PL GOT entry.
+<a href=#6386 id=6386 data-nosnippet>6386</a></span><span class="kw">pub const </span>R_E2K_PL_GOT: u32 = <span class="number">4</span>;
+<a href=#6387 id=6387 data-nosnippet>6387</a><span class="doccomment">/// Create PLT entry.
+<a href=#6388 id=6388 data-nosnippet>6388</a></span><span class="kw">pub const </span>R_E2K_32_JMP_SLOT: u32 = <span class="number">8</span>;
+<a href=#6389 id=6389 data-nosnippet>6389</a><span class="doccomment">/// Copy relocation, 32-bit case.
+<a href=#6390 id=6390 data-nosnippet>6390</a></span><span class="kw">pub const </span>R_E2K_32_COPY: u32 = <span class="number">9</span>;
+<a href=#6391 id=6391 data-nosnippet>6391</a><span class="doccomment">/// Adjust by program base, 32-bit case.
+<a href=#6392 id=6392 data-nosnippet>6392</a></span><span class="kw">pub const </span>R_E2K_32_RELATIVE: u32 = <span class="number">10</span>;
+<a href=#6393 id=6393 data-nosnippet>6393</a><span class="doccomment">/// Adjust indirectly by program base, 32-bit case.
+<a href=#6394 id=6394 data-nosnippet>6394</a></span><span class="kw">pub const </span>R_E2K_32_IRELATIVE: u32 = <span class="number">11</span>;
+<a href=#6395 id=6395 data-nosnippet>6395</a><span class="doccomment">/// Size of symbol plus 32-bit addend.
+<a href=#6396 id=6396 data-nosnippet>6396</a></span><span class="kw">pub const </span>R_E2K_32_SIZE: u32 = <span class="number">12</span>;
+<a href=#6397 id=6397 data-nosnippet>6397</a><span class="doccomment">/// Symbol value if resolved by the definition in the same
+<a href=#6398 id=6398 data-nosnippet>6398</a>/// compilation unit or NULL otherwise, 32-bit case.
+<a href=#6399 id=6399 data-nosnippet>6399</a></span><span class="kw">pub const </span>R_E2K_32_DYNOPT: u32 = <span class="number">13</span>;
+<a href=#6400 id=6400 data-nosnippet>6400</a><span class="doccomment">/// Direct 64 bit.
+<a href=#6401 id=6401 data-nosnippet>6401</a></span><span class="kw">pub const </span>R_E2K_64_ABS: u32 = <span class="number">50</span>;
+<a href=#6402 id=6402 data-nosnippet>6402</a><span class="doccomment">/// Direct 64 bit for literal.
+<a href=#6403 id=6403 data-nosnippet>6403</a></span><span class="kw">pub const </span>R_E2K_64_ABS_LIT: u32 = <span class="number">51</span>;
+<a href=#6404 id=6404 data-nosnippet>6404</a><span class="doccomment">/// PC relative 64 bit for literal.
+<a href=#6405 id=6405 data-nosnippet>6405</a></span><span class="kw">pub const </span>R_E2K_64_PC_LIT: u32 = <span class="number">54</span>;
+<a href=#6406 id=6406 data-nosnippet>6406</a><span class="doccomment">/// Create PLT entry, 64-bit case.
+<a href=#6407 id=6407 data-nosnippet>6407</a></span><span class="kw">pub const </span>R_E2K_64_JMP_SLOT: u32 = <span class="number">63</span>;
+<a href=#6408 id=6408 data-nosnippet>6408</a><span class="doccomment">/// Copy relocation, 64-bit case.
+<a href=#6409 id=6409 data-nosnippet>6409</a></span><span class="kw">pub const </span>R_E2K_64_COPY: u32 = <span class="number">64</span>;
+<a href=#6410 id=6410 data-nosnippet>6410</a><span class="doccomment">/// Adjust by program base, 64-bit case.
+<a href=#6411 id=6411 data-nosnippet>6411</a></span><span class="kw">pub const </span>R_E2K_64_RELATIVE: u32 = <span class="number">65</span>;
+<a href=#6412 id=6412 data-nosnippet>6412</a><span class="doccomment">/// Adjust by program base for literal, 64-bit case.
+<a href=#6413 id=6413 data-nosnippet>6413</a></span><span class="kw">pub const </span>R_E2K_64_RELATIVE_LIT: u32 = <span class="number">66</span>;
+<a href=#6414 id=6414 data-nosnippet>6414</a><span class="doccomment">/// Adjust indirectly by program base, 64-bit case.
+<a href=#6415 id=6415 data-nosnippet>6415</a></span><span class="kw">pub const </span>R_E2K_64_IRELATIVE: u32 = <span class="number">67</span>;
+<a href=#6416 id=6416 data-nosnippet>6416</a><span class="doccomment">/// Size of symbol plus 64-bit addend.
+<a href=#6417 id=6417 data-nosnippet>6417</a></span><span class="kw">pub const </span>R_E2K_64_SIZE: u32 = <span class="number">68</span>;
+<a href=#6418 id=6418 data-nosnippet>6418</a><span class="doccomment">/// 64-bit offset of the symbol from GOT.
+<a href=#6419 id=6419 data-nosnippet>6419</a></span><span class="kw">pub const </span>R_E2K_64_GOTOFF: u32 = <span class="number">69</span>;
+<a href=#6420 id=6420 data-nosnippet>6420</a>
+<a href=#6421 id=6421 data-nosnippet>6421</a><span class="doccomment">/// GOT entry for ID of module containing symbol.
+<a href=#6422 id=6422 data-nosnippet>6422</a></span><span class="kw">pub const </span>R_E2K_TLS_GDMOD: u32 = <span class="number">70</span>;
+<a href=#6423 id=6423 data-nosnippet>6423</a><span class="doccomment">/// GOT entry for offset in module TLS block.
+<a href=#6424 id=6424 data-nosnippet>6424</a></span><span class="kw">pub const </span>R_E2K_TLS_GDREL: u32 = <span class="number">71</span>;
+<a href=#6425 id=6425 data-nosnippet>6425</a><span class="doccomment">/// Static TLS block offset GOT entry.
+<a href=#6426 id=6426 data-nosnippet>6426</a></span><span class="kw">pub const </span>R_E2K_TLS_IE: u32 = <span class="number">74</span>;
+<a href=#6427 id=6427 data-nosnippet>6427</a><span class="doccomment">/// Offset relative to static TLS block, 32-bit case.
+<a href=#6428 id=6428 data-nosnippet>6428</a></span><span class="kw">pub const </span>R_E2K_32_TLS_LE: u32 = <span class="number">75</span>;
+<a href=#6429 id=6429 data-nosnippet>6429</a><span class="doccomment">/// Offset relative to static TLS block, 64-bit case.
+<a href=#6430 id=6430 data-nosnippet>6430</a></span><span class="kw">pub const </span>R_E2K_64_TLS_LE: u32 = <span class="number">76</span>;
+<a href=#6431 id=6431 data-nosnippet>6431</a><span class="doccomment">/// ID of module containing symbol, 32-bit case.
+<a href=#6432 id=6432 data-nosnippet>6432</a></span><span class="kw">pub const </span>R_E2K_TLS_32_DTPMOD: u32 = <span class="number">80</span>;
+<a href=#6433 id=6433 data-nosnippet>6433</a><span class="doccomment">/// Offset in module TLS block, 32-bit case.
+<a href=#6434 id=6434 data-nosnippet>6434</a></span><span class="kw">pub const </span>R_E2K_TLS_32_DTPREL: u32 = <span class="number">81</span>;
+<a href=#6435 id=6435 data-nosnippet>6435</a><span class="doccomment">/// ID of module containing symbol, 64-bit case.
+<a href=#6436 id=6436 data-nosnippet>6436</a></span><span class="kw">pub const </span>R_E2K_TLS_64_DTPMOD: u32 = <span class="number">82</span>;
+<a href=#6437 id=6437 data-nosnippet>6437</a><span class="doccomment">/// Offset in module TLS block, 64-bit case.
+<a href=#6438 id=6438 data-nosnippet>6438</a></span><span class="kw">pub const </span>R_E2K_TLS_64_DTPREL: u32 = <span class="number">83</span>;
+<a href=#6439 id=6439 data-nosnippet>6439</a><span class="doccomment">/// Offset in static TLS block, 32-bit case.
+<a href=#6440 id=6440 data-nosnippet>6440</a></span><span class="kw">pub const </span>R_E2K_TLS_32_TPREL: u32 = <span class="number">84</span>;
+<a href=#6441 id=6441 data-nosnippet>6441</a><span class="doccomment">/// Offset in static TLS block, 64-bit case.
+<a href=#6442 id=6442 data-nosnippet>6442</a></span><span class="kw">pub const </span>R_E2K_TLS_64_TPREL: u32 = <span class="number">85</span>;
+<a href=#6443 id=6443 data-nosnippet>6443</a>
+<a href=#6444 id=6444 data-nosnippet>6444</a><span class="doccomment">/// Direct AP.
+<a href=#6445 id=6445 data-nosnippet>6445</a></span><span class="kw">pub const </span>R_E2K_AP: u32 = <span class="number">100</span>;
+<a href=#6446 id=6446 data-nosnippet>6446</a><span class="doccomment">/// Direct PL.
+<a href=#6447 id=6447 data-nosnippet>6447</a></span><span class="kw">pub const </span>R_E2K_PL: u32 = <span class="number">101</span>;
+<a href=#6448 id=6448 data-nosnippet>6448</a>
+<a href=#6449 id=6449 data-nosnippet>6449</a><span class="doccomment">/// 32-bit offset of the symbol's entry in GOT.
+<a href=#6450 id=6450 data-nosnippet>6450</a></span><span class="kw">pub const </span>R_E2K_GOT: u32 = <span class="number">108</span>;
+<a href=#6451 id=6451 data-nosnippet>6451</a><span class="doccomment">/// 32-bit offset of the symbol from GOT.
+<a href=#6452 id=6452 data-nosnippet>6452</a></span><span class="kw">pub const </span>R_E2K_GOTOFF: u32 = <span class="number">109</span>;
+<a href=#6453 id=6453 data-nosnippet>6453</a><span class="doccomment">/// PC relative 28 bit for DISP.
+<a href=#6454 id=6454 data-nosnippet>6454</a></span><span class="kw">pub const </span>R_E2K_DISP: u32 = <span class="number">110</span>;
+<a href=#6455 id=6455 data-nosnippet>6455</a><span class="doccomment">/// Prefetch insn line containing the label (symbol).
+<a href=#6456 id=6456 data-nosnippet>6456</a></span><span class="kw">pub const </span>R_E2K_PREF: u32 = <span class="number">111</span>;
+<a href=#6457 id=6457 data-nosnippet>6457</a><span class="doccomment">/// No reloc.
+<a href=#6458 id=6458 data-nosnippet>6458</a></span><span class="kw">pub const </span>R_E2K_NONE: u32 = <span class="number">112</span>;
+<a href=#6459 id=6459 data-nosnippet>6459</a><span class="doccomment">/// 32-bit offset of the symbol's entry in .got.plt.
+<a href=#6460 id=6460 data-nosnippet>6460</a></span><span class="kw">pub const </span>R_E2K_GOTPLT: u32 = <span class="number">114</span>;
+<a href=#6461 id=6461 data-nosnippet>6461</a><span class="doccomment">/// Is symbol resolved locally during the link.
+<a href=#6462 id=6462 data-nosnippet>6462</a>/// The result is encoded in 5-bit ALS.src1.
+<a href=#6463 id=6463 data-nosnippet>6463</a></span><span class="kw">pub const </span>R_E2K_ISLOCAL: u32 = <span class="number">115</span>;
+<a href=#6464 id=6464 data-nosnippet>6464</a><span class="doccomment">/// Is symbol resloved locally during the link.
+<a href=#6465 id=6465 data-nosnippet>6465</a>/// The result is encoded in a long 32-bit LTS.
+<a href=#6466 id=6466 data-nosnippet>6466</a></span><span class="kw">pub const </span>R_E2K_ISLOCAL32: u32 = <span class="number">118</span>;
+<a href=#6467 id=6467 data-nosnippet>6467</a><span class="doccomment">/// The symbol's offset from GOT encoded within a 64-bit literal.
+<a href=#6468 id=6468 data-nosnippet>6468</a></span><span class="kw">pub const </span>R_E2K_64_GOTOFF_LIT: u32 = <span class="number">256</span>;
+<a href=#6469 id=6469 data-nosnippet>6469</a><span class="doccomment">/// Symbol value if resolved by the definition in the same
+<a href=#6470 id=6470 data-nosnippet>6470</a>/// compilation unit or NULL otherwise, 64-bit case.
+<a href=#6471 id=6471 data-nosnippet>6471</a></span><span class="kw">pub const </span>R_E2K_64_DYNOPT: u32 = <span class="number">257</span>;
+<a href=#6472 id=6472 data-nosnippet>6472</a><span class="doccomment">/// PC relative 64 bit in data.
+<a href=#6473 id=6473 data-nosnippet>6473</a></span><span class="kw">pub const </span>R_E2K_64_PC: u32 = <span class="number">258</span>;
+<a href=#6474 id=6474 data-nosnippet>6474</a>
+<a href=#6475 id=6475 data-nosnippet>6475</a><span class="comment">// E2K values for `Dyn32::d_tag`.
+<a href=#6476 id=6476 data-nosnippet>6476</a>
+<a href=#6477 id=6477 data-nosnippet>6477</a></span><span class="kw">pub const </span>DT_E2K_LAZY: u32 = DT_LOPROC + <span class="number">1</span>;
+<a href=#6478 id=6478 data-nosnippet>6478</a><span class="kw">pub const </span>DT_E2K_LAZY_GOT: u32 = DT_LOPROC + <span class="number">3</span>;
+<a href=#6479 id=6479 data-nosnippet>6479</a>
+<a href=#6480 id=6480 data-nosnippet>6480</a><span class="kw">pub const </span>DT_E2K_INIT_GOT: u32 = DT_LOPROC + <span class="number">0x101c</span>;
+<a href=#6481 id=6481 data-nosnippet>6481</a><span class="kw">pub const </span>DT_E2K_EXPORT_PL: u32 = DT_LOPROC + <span class="number">0x101d</span>;
+<a href=#6482 id=6482 data-nosnippet>6482</a><span class="kw">pub const </span>DT_E2K_EXPORT_PLSZ: u32 = DT_LOPROC + <span class="number">0x101e</span>;
+<a href=#6483 id=6483 data-nosnippet>6483</a><span class="kw">pub const </span>DT_E2K_REAL_PLTGOT: u32 = DT_LOPROC + <span class="number">0x101f</span>;
+<a href=#6484 id=6484 data-nosnippet>6484</a><span class="kw">pub const </span>DT_E2K_NO_SELFINIT: u32 = DT_LOPROC + <span class="number">0x1020</span>;
+<a href=#6485 id=6485 data-nosnippet>6485</a>
+<a href=#6486 id=6486 data-nosnippet>6486</a><span class="kw">pub const </span>DT_E2K_NUM: u32 = <span class="number">0x1021</span>;
+<a href=#6487 id=6487 data-nosnippet>6487</a>
+<a href=#6488 id=6488 data-nosnippet>6488</a><span class="attr">#[allow(non_upper_case_globals)]
+<a href=#6489 id=6489 data-nosnippet>6489</a></span><span class="kw">pub const </span>Tag_File: u8 = <span class="number">1</span>;
+<a href=#6490 id=6490 data-nosnippet>6490</a><span class="attr">#[allow(non_upper_case_globals)]
+<a href=#6491 id=6491 data-nosnippet>6491</a></span><span class="kw">pub const </span>Tag_Section: u8 = <span class="number">2</span>;
+<a href=#6492 id=6492 data-nosnippet>6492</a><span class="attr">#[allow(non_upper_case_globals)]
+<a href=#6493 id=6493 data-nosnippet>6493</a></span><span class="kw">pub const </span>Tag_Symbol: u8 = <span class="number">3</span>;
+<a href=#6494 id=6494 data-nosnippet>6494</a>
+<a href=#6495 id=6495 data-nosnippet>6495</a><span class="macro">unsafe_impl_endian_pod!</span>(
+<a href=#6496 id=6496 data-nosnippet>6496</a>    FileHeader32,
+<a href=#6497 id=6497 data-nosnippet>6497</a>    FileHeader64,
+<a href=#6498 id=6498 data-nosnippet>6498</a>    SectionHeader32,
+<a href=#6499 id=6499 data-nosnippet>6499</a>    SectionHeader64,
+<a href=#6500 id=6500 data-nosnippet>6500</a>    CompressionHeader32,
+<a href=#6501 id=6501 data-nosnippet>6501</a>    CompressionHeader64,
+<a href=#6502 id=6502 data-nosnippet>6502</a>    Sym32,
+<a href=#6503 id=6503 data-nosnippet>6503</a>    Sym64,
+<a href=#6504 id=6504 data-nosnippet>6504</a>    Syminfo32,
+<a href=#6505 id=6505 data-nosnippet>6505</a>    Syminfo64,
+<a href=#6506 id=6506 data-nosnippet>6506</a>    Rel32,
+<a href=#6507 id=6507 data-nosnippet>6507</a>    Rel64,
+<a href=#6508 id=6508 data-nosnippet>6508</a>    Rela32,
+<a href=#6509 id=6509 data-nosnippet>6509</a>    Rela64,
+<a href=#6510 id=6510 data-nosnippet>6510</a>    Relr32,
+<a href=#6511 id=6511 data-nosnippet>6511</a>    Relr64,
+<a href=#6512 id=6512 data-nosnippet>6512</a>    ProgramHeader32,
+<a href=#6513 id=6513 data-nosnippet>6513</a>    ProgramHeader64,
+<a href=#6514 id=6514 data-nosnippet>6514</a>    Dyn32,
+<a href=#6515 id=6515 data-nosnippet>6515</a>    Dyn64,
+<a href=#6516 id=6516 data-nosnippet>6516</a>    Versym,
+<a href=#6517 id=6517 data-nosnippet>6517</a>    Verdef,
+<a href=#6518 id=6518 data-nosnippet>6518</a>    Verdaux,
+<a href=#6519 id=6519 data-nosnippet>6519</a>    Verneed,
+<a href=#6520 id=6520 data-nosnippet>6520</a>    Vernaux,
+<a href=#6521 id=6521 data-nosnippet>6521</a>    NoteHeader32,
+<a href=#6522 id=6522 data-nosnippet>6522</a>    NoteHeader64,
+<a href=#6523 id=6523 data-nosnippet>6523</a>    HashHeader,
+<a href=#6524 id=6524 data-nosnippet>6524</a>    GnuHashHeader,
+<a href=#6525 id=6525 data-nosnippet>6525</a>);</code></pre></div></section></main></body></html>

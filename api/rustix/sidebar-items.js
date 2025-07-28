@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["cmsg_space","cstr"],"mod":["event","fd","ffi","fs","io","ioctl","mm","net","param","path","pipe","process","pty","rand","shm","stdio","system","termios","thread","time"]};
+window.SIDEBAR_ITEMS = {"macro":["cmsg_space","cstr"],"mod":["buffer","event","fd","ffi","fs","io","ioctl","mm","net","not_implemented","param","path","pipe","process","pty","rand","shm","stdio","system","termios","thread","time"]};
