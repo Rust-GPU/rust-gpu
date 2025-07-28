@@ -33,6 +33,8 @@ impl TargetsExt for SpirvTargetEnv {
             | SpirvTargetEnv::Vulkan_1_2
             | SpirvTargetEnv::Vulkan_1_3
             | SpirvTargetEnv::Vulkan_1_4 => MemoryModel::Vulkan,
+
+            SpirvTargetEnv::Naga_Wgsl => MemoryModel::Vulkan,
         }
     }
 
@@ -57,6 +59,8 @@ impl TargetsExt for SpirvTargetEnv {
             SpirvTargetEnv::Vulkan_1_2 => spirv_tools::TargetEnv::Vulkan_1_2,
             SpirvTargetEnv::Vulkan_1_3 => spirv_tools::TargetEnv::Vulkan_1_3,
             SpirvTargetEnv::Vulkan_1_4 => spirv_tools::TargetEnv::Vulkan_1_4,
+
+            SpirvTargetEnv::Naga_Wgsl => spirv_tools::TargetEnv::Vulkan_1_2,
         }
     }
 

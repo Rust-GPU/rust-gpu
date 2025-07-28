@@ -59,6 +59,9 @@ impl SpirvTargetEnv {
             SpirvTargetEnv::Vulkan_1_4 => {
                 include_str!("../target-specs/spirv-unknown-vulkan1.4.json")
             }
+            SpirvTargetEnv::Naga_Wgsl => {
+                include_str!("../target-specs/spirv-unknown-naga-wgsl.json")
+            }
         }
     }
 }

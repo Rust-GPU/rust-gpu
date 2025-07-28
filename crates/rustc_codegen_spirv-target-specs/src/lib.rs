@@ -60,6 +60,8 @@ pub enum SpirvTargetEnv {
     Vulkan_1_3,
     #[strum(to_string = "vulkan1.4")]
     Vulkan_1_4,
+    #[strum(to_string = "naga-wgsl")]
+    Naga_Wgsl,
 }
 
 #[derive(Clone, Error, Eq, PartialEq)]
