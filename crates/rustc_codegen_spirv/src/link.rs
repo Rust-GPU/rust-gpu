@@ -3,6 +3,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use crate::codegen_cx::{CodegenArgs, SpirvMetadata};
 use crate::linker;
+use crate::naga_transpile::should_transpile;
 use crate::target::{SpirvTarget, SpirvTargetVariant};
 use ar::{Archive, GnuBuilder, Header};
 use rspirv::binary::Assemble;
@@ -318,6 +319,10 @@ fn post_link_single_module(
         }
 
         drop(save_modules_timer);
+    }
+
+    if let Some(transpile) = should_transpile(sess) {
+        transpile(sess, cg_args, &spv_binary, out_filename).ok();
     }
 }
 

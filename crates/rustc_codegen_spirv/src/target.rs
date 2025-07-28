@@ -5,11 +5,16 @@ use std::cmp::Ordering;
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
+use strum::{Display, EnumString, IntoStaticStr};
 
 #[derive(Clone, Eq, PartialEq)]
 pub enum TargetError {
+    /// If during parsing a target variant returns `UnknownTarget`, further variants will attempt to parse the string.
+    /// Returning another error means that you have recognized the target but something else is invalid, and we should
+    /// abort the parsing with your error.
     UnknownTarget(String),
     InvalidTargetVersion(SpirvTarget),
+    InvalidNagaVariant(String),
 }
 
 impl Display for TargetError {
@@ -20,6 +25,9 @@ impl Display for TargetError {
             }
             TargetError::InvalidTargetVersion(target) => {
                 write!(f, "Invalid version in target `{}`", target.env())
+            }
+            TargetError::InvalidNagaVariant(target) => {
+                write!(f, "Unknown naga out variant `{target}`")
             }
         }
     }
@@ -439,6 +447,63 @@ impl Display for OpenGLTarget {
     }
 }
 
+/// A naga target
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub struct NagaTarget {
+    pub out: NagaOut,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, IntoStaticStr, Display, EnumString)]
+#[allow(clippy::upper_case_acronyms)]
+pub enum NagaOut {
+    #[strum(to_string = "wgsl")]
+    WGSL,
+}
+
+impl NagaTarget {
+    pub const NAGA_WGSL: Self = NagaTarget::new(NagaOut::WGSL);
+    pub const ALL_NAGA_TARGETS: &'static [Self] = &[Self::NAGA_WGSL];
+    /// emit spirv like naga targets were this target
+    pub const EMIT_SPIRV_LIKE: SpirvTarget = SpirvTarget::VULKAN_1_3;
+
+    pub const fn new(out: NagaOut) -> Self {
+        Self { out }
+    }
+}
+
+impl SpirvTargetVariant for NagaTarget {
+    fn validate(&self) -> Result<(), TargetError> {
+        Ok(())
+    }
+
+    fn to_spirv_tools(&self) -> spirv_tools::TargetEnv {
+        Self::EMIT_SPIRV_LIKE.to_spirv_tools()
+    }
+
+    fn spirv_version(&self) -> SpirvVersion {
+        Self::EMIT_SPIRV_LIKE.spirv_version()
+    }
+}
+
+impl FromStr for NagaTarget {
+    type Err = TargetError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let s = s
+            .strip_prefix("naga-")
+            .ok_or_else(|| TargetError::UnknownTarget(s.to_owned()))?;
+        Ok(Self::new(FromStr::from_str(s).map_err(|_e| {
+            TargetError::InvalidNagaVariant(s.to_owned())
+        })?))
+    }
+}
+
+impl Display for NagaTarget {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "naga-{}", self.out)
+    }
+}
+
 /// A rust-gpu target
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[non_exhaustive]
@@ -446,6 +511,7 @@ pub enum SpirvTarget {
     Universal(UniversalTarget),
     Vulkan(VulkanTarget),
     OpenGL(OpenGLTarget),
+    Naga(NagaTarget),
 }
 
 impl SpirvTarget {
@@ -467,12 +533,15 @@ impl SpirvTarget {
     pub const OPENGL_4_2: Self = Self::OpenGL(OpenGLTarget::OPENGL_4_2);
     pub const OPENGL_4_3: Self = Self::OpenGL(OpenGLTarget::OPENGL_4_3);
     pub const OPENGL_4_5: Self = Self::OpenGL(OpenGLTarget::OPENGL_4_5);
+    pub const NAGA_WGSL: Self = Self::Naga(NagaTarget::NAGA_WGSL);
 
+    #[allow(clippy::match_same_arms)]
     pub const fn memory_model(&self) -> MemoryModel {
         match self {
             SpirvTarget::Universal(_) => MemoryModel::Simple,
             SpirvTarget::Vulkan(_) => MemoryModel::Vulkan,
             SpirvTarget::OpenGL(_) => MemoryModel::GLSL450,
+            SpirvTarget::Naga(_) => MemoryModel::Vulkan,
         }
     }
 }
@@ -483,6 +552,7 @@ impl SpirvTargetVariant for SpirvTarget {
             SpirvTarget::Universal(t) => t.validate(),
             SpirvTarget::Vulkan(t) => t.validate(),
             SpirvTarget::OpenGL(t) => t.validate(),
+            SpirvTarget::Naga(t) => t.validate(),
         }
     }
 
@@ -491,6 +561,7 @@ impl SpirvTargetVariant for SpirvTarget {
             SpirvTarget::Universal(t) => t.to_spirv_tools(),
             SpirvTarget::Vulkan(t) => t.to_spirv_tools(),
             SpirvTarget::OpenGL(t) => t.to_spirv_tools(),
+            SpirvTarget::Naga(t) => t.to_spirv_tools(),
         }
     }
 
@@ -499,6 +570,7 @@ impl SpirvTargetVariant for SpirvTarget {
             SpirvTarget::Universal(t) => t.spirv_version(),
             SpirvTarget::Vulkan(t) => t.spirv_version(),
             SpirvTarget::OpenGL(t) => t.spirv_version(),
+            SpirvTarget::Naga(t) => t.spirv_version(),
         }
     }
 }
@@ -512,6 +584,9 @@ impl SpirvTarget {
         }
         if matches!(result, Err(TargetError::UnknownTarget(..))) {
             result = OpenGLTarget::from_str(s).map(Self::OpenGL);
+        }
+        if matches!(result, Err(TargetError::UnknownTarget(..))) {
+            result = NagaTarget::from_str(s).map(Self::Naga);
         }
         result
     }
@@ -533,6 +608,7 @@ impl SpirvTarget {
             SpirvTarget::Universal(t) => t.to_string(),
             SpirvTarget::Vulkan(t) => t.to_string(),
             SpirvTarget::OpenGL(t) => t.to_string(),
+            SpirvTarget::Naga(t) => t.to_string(),
         }
     }
 
@@ -555,6 +631,7 @@ impl SpirvTarget {
                     .iter()
                     .map(|t| Self::OpenGL(*t)),
             )
+            .chain(NagaTarget::ALL_NAGA_TARGETS.iter().map(|t| Self::Naga(*t)))
     }
 }
 

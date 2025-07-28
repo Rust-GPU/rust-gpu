@@ -127,6 +127,7 @@ mod custom_decorations;
 mod custom_insts;
 mod link;
 mod linker;
+mod naga_transpile;
 mod spirv_type;
 mod spirv_type_constraints;
 mod symbols;
