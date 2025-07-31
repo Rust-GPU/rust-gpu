@@ -150,10 +150,7 @@ fn maybe_watch(
                 }
             } else {
                 spirv_builder::ShaderPanicStrategy::SilentExit
-            })
-            // HACK(eddyb) needed because of `debugPrintf` instrumentation limitations
-            // (see https://github.com/KhronosGroup/SPIRV-Tools/issues/4892).
-            .multimodule(has_debug_printf);
+            });
 
         fn handle_compile_result(compile_result: CompileResult) -> CompiledShaderModules {
             let load_spv_module = |path| {

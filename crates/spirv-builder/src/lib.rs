@@ -179,46 +179,72 @@ pub enum ShaderPanicStrategy {
     /// Like `SilentExit`, but also using `debugPrintf` to report the panic in
     /// a way that can reach the user, before returning from the entry-point.
     ///
-    /// Will automatically require the `SPV_KHR_non_semantic_info` extension,
-    /// as `debugPrintf` uses a "non-semantic extended instruction set".
+    /// Quick setup for enabling `debugPrintf` output (to stdout) at runtime:
+    /// - **set these environment variables**:
+    ///   - `VK_LOADER_LAYERS_ENABLE=VK_LAYER_KHRONOS_validation`
+    ///   - `VK_LAYER_PRINTF_ONLY_PRESET=1`
+    ///   - `VK_LAYER_PRINTF_TO_STDOUT=1` (not always needed, but can help)
+    /// - if using `wgpu`, enable `wgpu::Features::SPIRV_SHADER_PASSTHROUGH`,
+    ///   and use `create_shader_module_passthrough` instead of `create_shader_module`
+    /// - in case of errors, or no output (from a `panic!()`/`debug_printf!()`),
+    ///   keep reading below for additional information and alternatives
     ///
-    /// If you have multiple entry-points, you *may* need to also enable the
-    /// `multimodule` node (see <https://github.com/KhronosGroup/SPIRV-Tools/issues/4892>).
+    /// ---
     ///
-    /// **Note**: actually obtaining the `debugPrintf` output requires:
-    /// * Vulkan Validation Layers (from e.g. the Vulkan SDK)
-    ///   * (they contain the `debugPrintf` implementation, a SPIR-V -> SPIR-V translation)
-    ///   * **set the `VK_LOADER_LAYERS_ENABLE=VK_LAYER_KHRONOS_validation`
-    ///     environment variable** to easily enable them without any code changes
-    ///   * alternatively, `"VK_LAYER_KHRONOS_validation"` can be passed during
-    ///     instance creation, to enable them programmatically
-    /// * Validation Layers' `debugPrintf` support:
-    ///   * **set the `VK_LAYER_ENABLES=VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT`
-    ///     environment variable** to easily enable the `debugPrintf` support
-    ///   * alternatively, `VkValidationFeaturesEXT` during instance creation,
-    ///     or the `khronos_validation.enables` field in `vk_layer_settings.txt`,
-    ///     can be used to enable `VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT`
-    ///     (see also <https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/debug_printf.md>)
-    /// * for outputting the `debugPrintf` messages sent back from the GPU:
-    ///   * **set the `DEBUG_PRINTF_TO_STDOUT=1` environment variable** if you don't
-    ///     plan on customizing the reporting (see below for alternatives)
-    /// * for `wgpu`:
-    ///   * **required**: `wgpu::Features::SPIRV_SHADER_PASSTHROUGH` (Naga lacks `debugPrintf`)
-    ///   * *optional*: building in debug mode (and/or with debug-assertions enabled),
-    ///     to enable `wgpu` logging/debug support
-    ///     * (the debug assertions requirement may be lifted in future `wgpu` versions)
-    ///     * this uses `VK_EXT_debug_utils` internally, and is a better-integrated
-    ///       alternative to just setting `DEBUG_PRINTF_TO_STDOUT=1`
-    ///     * `RUST_LOG=wgpu_hal::vulkan=info` (or equivalent) will enable said
-    ///       output (as `debugPrintf` messages have the "info" level)
-    ///     * `RUST_LOG` controls `env_logger`, which isn't itself required,
-    ///       but *some* `log`/`tracing` subscriber is needed to get any output
-    /// * for Vulkan (e.g. via `ash`):
-    ///   * **required**: enabling the `VK_KHR_shader_non_semantic_info` Vulkan *Device* extension
-    ///   * *optional*: as described above, enabling the Validation Layers and
-    ///     their `debugPrintf` support can be done during instance creation
-    ///   * *optional*: integrating [`VK_EXT_debug_utils`](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_debug_utils.html)
-    ///     allows more reporting flexibility than `DEBUG_PRINTF_TO_STDOUT=1`)
+    /// **Note**: enabling this automatically adds the `SPV_KHR_non_semantic_info`
+    /// extension, as `debugPrintf` is from a "non-semantic extended instruction set".
+    ///
+    /// **Note**: `debugPrintf` output reaching the user involves:
+    /// - being able to load the shader in the first place:
+    ///   - for `wgpu`, use "SPIR-V shader passthrough" (Naga lacks `debugPrintf`):
+    ///     - enable `wgpu::Features::SPIRV_SHADER_PASSTHROUGH`
+    ///     - replace `create_shader_module` calls with `create_shader_module_passthrough`
+    ///   - *in theory*, the `VK_KHR_shader_non_semantic_info` Vulkan *Device* extension
+    ///     (or requiring at least Vulkan 1.3, which incorporated it)
+    ///     - *however*, Validation Layers don't actually check this anymore,
+    ///       since Vulkan SDK version 1.4.313.0 (and drivers shouldn't care either)
+    /// - **general configurability** of [Vulkan SDK](https://vulkan.lunarg.com/sdk/home)
+    ///   and/or [Vulkan Loader](https://github.com/KhronosGroup/Vulkan-Loader)
+    ///   - *(this list doubles as a legend for shorthands used later below)*
+    ///   - **env**: setting environment variables on the fly
+    ///     - easiest for quick testing, no code changes/rebuilding needed
+    ///     - e.g. `FOO=1 cargo run ...` (in UNIX-style shells)
+    ///   - **instance**: programmatic control via `vkCreateInstance()` params
+    ///     - best for integration with app-specific debugging functionality
+    ///     - limited to direct Vulkan usage (e.g. `ash`, not `wgpu`)
+    ///     - `VK_EXT_layer_settings` as a `VK_LAYER_*` environment variables
+    ///       analogue, e.g. `VK_LAYER_FOO` controlled by a `VkLayerSettingEXT`
+    ///       with `"foo"` as `pSettingName` (and an appropriate `type`/value),
+    ///       included in `VkLayerSettingsCreateInfoEXT`'s `pSettings`
+    ///   - on-disk configuration and interactive tooling, e.g.:
+    ///     - `vk_layer_settings.txt` files, either hand-written, or generated by
+    ///       the "Vulkan Configurator" GUI tool (included with the Vulkan SDK)
+    ///     - third-party Vulkan debuggers like `RenderDoc`
+    /// - [Vulkan Validation Layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers)
+    ///   - (they contain the `debugPrintf` implementation, a SPIR-V -> SPIR-V translation)
+    ///   - enabled by one of (as per "**general configurability**" above):
+    ///     - **env**: `VK_LOADER_LAYERS_ENABLE=VK_LAYER_KHRONOS_validation`
+    ///     - **instance**: `"VK_LAYER_KHRONOS_validation"` in the list of layers
+    ///     - via `wgpu`: `wgpu::InstanceFlags::VALIDATION`
+    /// - Validation Layers' `debugPrintf` support
+    ///   ([official docs](https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/debug_printf.md)):
+    ///   - enabled by one of (as per "**general configurability**" above):
+    ///     - **env**: `VK_LAYER_PRINTF_ENABLE=1` (validation + `debugPrintf`)
+    ///     - **env**: `VK_LAYER_PRINTF_ONLY_PRESET=1` (*only* `debugPrintf`, no validation)
+    ///     - **instance**: `"printf_enable"` / `"printf_only_preset"` via `VkLayerSettingEXT`
+    ///       (i.e. analogues for the two environment variables)
+    ///     - **instance**: `VkValidationFeaturesEXT` with `pEnabledValidationFeatures`
+    ///       containing `VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT`
+    /// - outputting the `debugPrintf` messages sent back from the GPU:
+    ///   - defaults to common validation logging (itself defaulting to stdout)
+    ///   - **env**: `VK_LAYER_PRINTF_TO_STDOUT=1` (and its **instance** analogue)
+    ///     forces direct printing to stdout, bypassing `VK_EXT_debug_utils` etc.
+    ///   - validation logging can itself be controlled via `VK_EXT_debug_utils`
+    ///   - `wgpu` built in debug mode (and/or with debug-assertions enabled):
+    ///     - it uses `VK_EXT_debug_utils` internally, exposing it via `log`
+    ///     - with e.g. `env_logger`, `RUST_LOG=info` suffices for `debugPrintf`
+    ///       messages (as they specifically have the "info" level)
+    ///     - other `log`/`tracing` subscribers should be configured similarly
     #[cfg_attr(feature = "clap", clap(skip))]
     DebugPrintfThenExit {
         /// Whether to also print the entry-point inputs (excluding buffers/resources),
