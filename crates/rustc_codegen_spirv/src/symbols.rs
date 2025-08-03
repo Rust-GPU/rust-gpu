@@ -1,7 +1,7 @@
 use crate::attr::{Entry, ExecutionModeExtra, IntrinsicType, SpecConstant, SpirvAttribute};
 use crate::builder::libm_intrinsics;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
-use rustc_ast::ast::{LitIntType, LitKind, MetaItemInner, MetaItemLit};
+use rustc_ast::ast::{LitKind, MetaItemInner, MetaItemLit};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_hir::Attribute;
 use rustc_span::Span;
@@ -563,7 +563,7 @@ fn parse_attr_int_value(arg: &MetaItemInner) -> Result<u32, ParseAttrError> {
     };
     match arg.name_value_literal() {
         Some(&MetaItemLit {
-            kind: LitKind::Int(x, LitIntType::Unsuffixed),
+            kind: LitKind::Int(x, ..),
             ..
         }) if x <= u32::MAX as u128 => Ok(x.get() as u32),
         _ => Err((arg.span, "attribute value must be integer".to_string())),
@@ -581,7 +581,7 @@ fn parse_local_size_attr(arg: &MetaItemInner) -> Result<[u32; 3], ParseAttrError
             for (idx, lit) in tuple.iter().enumerate() {
                 match lit {
                     MetaItemInner::Lit(MetaItemLit {
-                        kind: LitKind::Int(x, LitIntType::Unsuffixed),
+                        kind: LitKind::Int(x, ..),
                         ..
                     }) if *x <= u32::MAX as u128 => local_size[idx] = x.get() as u32,
                     _ => return Err((lit.span(), "must be a u32 literal".to_string())),
