@@ -17,6 +17,7 @@
 // ignore-vulkan1.2
 // ignore-vulkan1.3
 // ignore-vulkan1.4
+// ignore-naga
 
 use core::arch::asm;
 use spirv_std::spirv;
