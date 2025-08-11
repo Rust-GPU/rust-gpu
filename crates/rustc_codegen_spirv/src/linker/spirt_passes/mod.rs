@@ -120,7 +120,7 @@ pub(super) fn run_func_passes<P>(
     passes: &[impl AsRef<str>],
     // FIXME(eddyb) this is a very poor approximation of a "profiler" abstraction.
     mut before_pass: impl FnMut(&'static str, &Module) -> P,
-    mut after_pass: impl FnMut(&'static str, &Module, P),
+    mut after_pass: impl FnMut(Option<&Module>, P),
 ) {
     let cx = &module.cx();
 
@@ -156,15 +156,15 @@ pub(super) fn run_func_passes<P>(
 
             let profiler = before_pass("qptr::lower_from_spv_ptrs", module);
             spirt::passes::qptr::lower_from_spv_ptrs(module, layout_config);
-            after_pass("qptr::lower_from_spv_ptrs", module, profiler);
+            after_pass(Some(module), profiler);
 
             let profiler = before_pass("qptr::analyze_uses", module);
             spirt::passes::qptr::analyze_uses(module, layout_config);
-            after_pass("qptr::analyze_uses", module, profiler);
+            after_pass(Some(module), profiler);
 
             let profiler = before_pass("qptr::lift_to_spv_ptrs", module);
             spirt::passes::qptr::lift_to_spv_ptrs(module, layout_config);
-            after_pass("qptr::lift_to_spv_ptrs", module, profiler);
+            after_pass(Some(module), profiler);
 
             continue;
         }
@@ -187,7 +187,7 @@ pub(super) fn run_func_passes<P>(
                 remove_unused_values_in_func(cx, func_def_body);
             }
         }
-        after_pass(full_name, module, profiler);
+        after_pass(Some(module), profiler);
     }
 }
 
