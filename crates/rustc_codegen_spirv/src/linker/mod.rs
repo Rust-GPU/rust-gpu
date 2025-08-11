@@ -29,6 +29,7 @@ use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
 use rustc_session::Session;
 use rustc_session::config::OutputFilenames;
+use std::cell::Cell;
 use std::collections::BTreeMap;
 use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
@@ -502,42 +503,53 @@ pub fn link(
 
             module,
             per_pass_module_for_dumping: vec![],
+            in_progress_pass_name: Cell::new(Some("lower_from_spv")),
             any_spirt_bugs: false,
         };
         let module = &mut *dump_guard.module;
-        // FIXME(eddyb) set the name into `dump_guard` to be able to access it on panic.
-        let before_pass = |pass| sess.timer(pass);
-        let mut after_pass = |pass, module: &spirt::Module, timer| {
+        // FIXME(eddyb) consider returning a `Drop`-implementing type instead?
+        let before_pass = |pass_name| {
+            let outer_pass_name = dump_guard.in_progress_pass_name.replace(Some(pass_name));
+
+            // FIXME(eddyb) could it make sense to allow these to nest?
+            assert_eq!(outer_pass_name, None);
+
+            sess.timer(pass_name)
+        };
+        let mut after_pass = |module: Option<&spirt::Module>, timer| {
             drop(timer);
-            if opts.dump_spirt_passes.is_some() {
+            let pass_name = dump_guard.in_progress_pass_name.take().unwrap();
+            if let Some(module) = module
+                && opts.dump_spirt_passes.is_some()
+            {
                 dump_guard
                     .per_pass_module_for_dumping
-                    .push((pass, module.clone()));
+                    .push((pass_name.into(), module.clone()));
             }
         };
         // HACK(eddyb) don't dump the unstructured state if not requested, as
         // after SPIR-T 0.4.0 it's extremely verbose (due to def-use hermeticity).
-        if opts.spirt_keep_unstructured_cfg_in_dumps || !opts.structurize {
-            after_pass("lower_from_spv", module, lower_from_spv_timer);
-        } else {
-            drop(lower_from_spv_timer);
-        }
+        after_pass(
+            (opts.spirt_keep_unstructured_cfg_in_dumps || !opts.structurize).then_some(&*module),
+            lower_from_spv_timer,
+        );
 
         // NOTE(eddyb) this *must* run on unstructured CFGs, to do its job.
         // FIXME(eddyb) no longer relying on structurization, try porting this
         // to replace custom aborts in `Block`s and inject `ExitInvocation`s
         // after them (truncating the `Block` and/or parent region if necessary).
         {
-            let _timer = before_pass(
+            let timer = before_pass(
                 "spirt_passes::controlflow::convert_custom_aborts_to_unstructured_returns_in_entry_points",
             );
             spirt_passes::controlflow::convert_custom_aborts_to_unstructured_returns_in_entry_points(opts, module);
+            after_pass(None, timer);
         }
 
         if opts.structurize {
             let timer = before_pass("spirt::legalize::structurize_func_cfgs");
             spirt::passes::legalize::structurize_func_cfgs(module);
-            after_pass("structurize_func_cfgs", module, timer);
+            after_pass(Some(module), timer);
         }
 
         if !opts.spirt_passes.is_empty() {
@@ -553,11 +565,11 @@ pub fn link(
         {
             let timer = before_pass("spirt_passes::validate");
             spirt_passes::validate::validate(module);
-            after_pass("validate", module, timer);
+            after_pass(Some(module), timer);
         }
 
         {
-            let _timer = before_pass("spirt_passes::diagnostics::report_diagnostics");
+            let timer = before_pass("spirt_passes::diagnostics::report_diagnostics");
             spirt_passes::diagnostics::report_diagnostics(sess, opts, module).map_err(
                 |spirt_passes::diagnostics::ReportedDiagnostics {
                      rustc_errors_guarantee,
@@ -567,17 +579,21 @@ pub fn link(
                     rustc_errors_guarantee
                 },
             )?;
+            after_pass(None, timer);
         }
 
         // Replace our custom debuginfo instructions just before lifting to SPIR-V.
         {
-            let _timer = before_pass("spirt_passes::debuginfo::convert_custom_debuginfo_to_spv");
+            let timer = before_pass("spirt_passes::debuginfo::convert_custom_debuginfo_to_spv");
             spirt_passes::debuginfo::convert_custom_debuginfo_to_spv(module);
+            after_pass(None, timer);
         }
 
         let spv_words = {
-            let _timer = before_pass("spirt::Module::lift_to_spv_module_emitter");
-            module.lift_to_spv_module_emitter().unwrap().words
+            let timer = before_pass("spirt::Module::lift_to_spv_module_emitter");
+            let spv_words = module.lift_to_spv_module_emitter().unwrap().words;
+            after_pass(None, timer);
+            spv_words
         };
         // FIXME(eddyb) dump both SPIR-T and `spv_words` if there's an error here.
         output = {
@@ -756,13 +772,26 @@ struct SpirtDumpGuard<'a> {
     disambiguated_crate_name_for_dumps: &'a OsStr,
 
     module: &'a mut spirt::Module,
-    per_pass_module_for_dumping: Vec<(&'static str, spirt::Module)>,
+    per_pass_module_for_dumping: Vec<(Cow<'static, str>, spirt::Module)>,
+    in_progress_pass_name: Cell<Option<&'static str>>,
     any_spirt_bugs: bool,
 }
 
 impl Drop for SpirtDumpGuard<'_> {
     fn drop(&mut self) {
-        self.any_spirt_bugs |= std::thread::panicking();
+        if std::thread::panicking() {
+            self.any_spirt_bugs = true;
+
+            // HACK(eddyb) the active pass panicked, make sure to include its
+            // (potentially corrupted) state, which will hopefully be printed
+            // later below (with protection against panicking during printing).
+            if let Some(pass_name) = self.in_progress_pass_name.get() {
+                self.per_pass_module_for_dumping.push((
+                    format!("{pass_name} [PANICKED]").into(),
+                    self.module.clone(),
+                ));
+            }
+        }
 
         let mut dump_spirt_file_path =
             self.linker_options
@@ -782,55 +811,90 @@ impl Drop for SpirtDumpGuard<'_> {
         if self.any_spirt_bugs && dump_spirt_file_path.is_none() {
             if self.per_pass_module_for_dumping.is_empty() {
                 self.per_pass_module_for_dumping
-                    .push(("", self.module.clone()));
+                    .push(("".into(), self.module.clone()));
             }
             dump_spirt_file_path = Some(self.outputs.temp_path_for_diagnostic("spirt"));
         }
 
-        if let Some(dump_spirt_file_path) = &dump_spirt_file_path {
-            for (_, module) in &mut self.per_pass_module_for_dumping {
-                self.linker_options.spirt_cleanup_for_dumping(module);
-            }
+        let Some(dump_spirt_file_path) = &dump_spirt_file_path else {
+            return;
+        };
 
-            // FIXME(eddyb) catch panics during pretty-printing itself, and
-            // tell the user to use `--dump-spirt-passes` (and resolve the
-            // second FIXME below so it does anything) - also, that may need
+        for (_, module) in &mut self.per_pass_module_for_dumping {
+            // FIXME(eddyb) consider catching panics in this?
+            self.linker_options.spirt_cleanup_for_dumping(module);
+        }
+
+        let cx = self.module.cx();
+        let versions = self
+            .per_pass_module_for_dumping
+            .iter()
+            .map(|(pass_name, module)| (format!("after {pass_name}"), module));
+
+        let mut panicked_printing_after_passes = None;
+        for truncate_version_count in (1..=versions.len()).rev() {
+            // FIXME(eddyb) tell the user to use `--dump-spirt-passes` if that
+            // wasn't active but a panic happens - on top of that, it may need
             // quieting the panic handler, likely controlled by a `thread_local!`
-            // (while the panic handler is global), but that would be useful
+            // (while the panic handler is global), and that would also be useful
             // for collecting a panic message (assuming any of this is worth it).
-            // FIXME(eddyb) when per-pass versions are available, try building
-            // plans for individual versions, or maybe repeat `Plan::for_versions`
-            // without the last version if it initially panicked?
-            let plan = spirt::print::Plan::for_versions(
-                self.module.cx_ref(),
-                self.per_pass_module_for_dumping
-                    .iter()
-                    .map(|(pass, module)| (format!("after {pass}"), module)),
-            );
-            let pretty = plan.pretty_print();
+            // HACK(eddyb) for now, keeping the panic handler works out, as the
+            // panic messages would at least be seen by the user.
+            let printed_or_panicked =
+                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    let pretty = spirt::print::Plan::for_versions(
+                        &cx,
+                        versions.clone().take(truncate_version_count),
+                    )
+                    .pretty_print();
 
-            // FIXME(eddyb) don't allocate whole `String`s here.
-            std::fs::write(dump_spirt_file_path, pretty.to_string()).unwrap();
-            std::fs::write(
-                dump_spirt_file_path.with_extension("spirt.html"),
-                pretty
-                    .render_to_html()
-                    .with_dark_mode_support()
-                    .to_html_doc(),
-            )
-            .unwrap();
-            if self.any_spirt_bugs {
-                let mut note = self.sess.dcx().struct_note("SPIR-T bugs were encountered");
-                note.help(format!(
-                    "pretty-printed SPIR-T was saved to {}.html",
-                    dump_spirt_file_path.display()
-                ));
-                if self.linker_options.dump_spirt_passes.is_none() {
-                    note.help("re-run with `RUSTGPU_CODEGEN_ARGS=\"--dump-spirt-passes=$PWD\"` for more details");
+                    // FIXME(eddyb) don't allocate whole `String`s here.
+                    std::fs::write(dump_spirt_file_path, pretty.to_string()).unwrap();
+                    std::fs::write(
+                        dump_spirt_file_path.with_extension("spirt.html"),
+                        pretty
+                            .render_to_html()
+                            .with_dark_mode_support()
+                            .to_html_doc(),
+                    )
+                    .unwrap();
+                }));
+            match printed_or_panicked {
+                Ok(()) => {
+                    if truncate_version_count != versions.len() {
+                        panicked_printing_after_passes = Some(
+                            self.per_pass_module_for_dumping[truncate_version_count..]
+                                .iter()
+                                .map(|(pass_name, _)| format!("`{pass_name}`"))
+                                .collect::<Vec<_>>()
+                                .join(", "),
+                        );
+                    }
+                    break;
                 }
-                note.note("pretty-printed SPIR-T is preferred when reporting Rust-GPU issues");
-                note.emit();
+                Err(panic) => {
+                    if truncate_version_count == 1 {
+                        std::panic::resume_unwind(panic);
+                    }
+                }
             }
+        }
+        if self.any_spirt_bugs || panicked_printing_after_passes.is_some() {
+            let mut note = self.sess.dcx().struct_note("SPIR-T bugs were encountered");
+            if let Some(pass_names) = panicked_printing_after_passes {
+                note.warn(format!(
+                    "SPIR-T pretty-printing panicked after: {pass_names}"
+                ));
+            }
+            note.help(format!(
+                "pretty-printed SPIR-T was saved to {}.html",
+                dump_spirt_file_path.display()
+            ));
+            if self.linker_options.dump_spirt_passes.is_none() {
+                note.help("re-run with `RUSTGPU_CODEGEN_ARGS=\"--dump-spirt-passes=$PWD\"` for more details");
+            }
+            note.note("pretty-printed SPIR-T is preferred when reporting Rust-GPU issues");
+            note.emit();
         }
     }
 }
