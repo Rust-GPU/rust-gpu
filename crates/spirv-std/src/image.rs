@@ -162,6 +162,35 @@ impl<
         }
         result.truncate_into()
     }
+
+    /// Fetch a single texel at a mipmap `level` with a sampler set at compile time
+    #[crate::macros::gpu_only]
+    #[doc(alias = "OpImageFetch")]
+    pub fn fetch_with_level<I>(
+        &self,
+        coordinate: impl ImageCoordinate<I, DIM, ARRAYED>,
+        level: u32,
+    ) -> SampledType::SampleResult
+    where
+        I: Integer,
+    {
+        let mut result = SampledType::Vec4::default();
+        unsafe {
+            asm! {
+                "OpDecorate %image NonUniform",
+                "OpDecorate %result NonUniform",
+                "%image = OpLoad _ {this}",
+                "%coordinate = OpLoad _ {coordinate}",
+                "%result = OpImageFetch typeof*{result} %image %coordinate Lod {level}",
+                "OpStore {result} %result",
+                result = in(reg) &mut result,
+                this = in(reg) self,
+                coordinate = in(reg) &coordinate,
+                level = in(reg) level,
+            }
+        }
+        result.truncate_into()
+    }
 }
 
 impl<
