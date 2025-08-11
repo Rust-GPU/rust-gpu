@@ -163,13 +163,13 @@ impl<
         result.truncate_into()
     }
 
-    /// Fetch a single texel at a mipmap `level` with a sampler set at compile time
+    /// Fetch a single texel at a mipmap `lod` with a sampler set at compile time
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageFetch")]
-    pub fn fetch_with_level<I>(
+    pub fn fetch_with_lod<I>(
         &self,
         coordinate: impl ImageCoordinate<I, DIM, ARRAYED>,
-        level: u32,
+        lod: u32,
     ) -> SampledType::SampleResult
     where
         I: Integer,
@@ -181,12 +181,12 @@ impl<
                 "OpDecorate %result NonUniform",
                 "%image = OpLoad _ {this}",
                 "%coordinate = OpLoad _ {coordinate}",
-                "%result = OpImageFetch typeof*{result} %image %coordinate Lod {level}",
+                "%result = OpImageFetch typeof*{result} %image %coordinate Lod {lod}",
                 "OpStore {result} %result",
                 result = in(reg) &mut result,
                 this = in(reg) self,
                 coordinate = in(reg) &coordinate,
-                level = in(reg) level,
+                lod = in(reg) lod,
             }
         }
         result.truncate_into()
