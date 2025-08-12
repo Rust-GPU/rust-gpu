@@ -164,6 +164,8 @@ impl<
     }
 
     /// Fetch a single texel at a mipmap `lod` with a sampler set at compile time
+    ///
+    /// `lod` is also known as `level` in WGSL's `textureLoad`
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageFetch")]
     pub fn fetch_with_lod<I>(
