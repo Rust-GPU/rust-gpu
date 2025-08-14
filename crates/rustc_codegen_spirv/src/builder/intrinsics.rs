@@ -9,7 +9,7 @@ use crate::custom_insts::CustomInst;
 use crate::spirv_type::SpirvType;
 use rspirv::dr::Operand;
 use rspirv::spirv::GLOp;
-use rustc_codegen_ssa::mir::operand::OperandRef;
+use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{BuilderMethods, IntrinsicCallBuilderMethods};
 use rustc_middle::ty::layout::LayoutOf;
@@ -240,6 +240,33 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
 
             sym::ctpop => self.count_ones(args[0].immediate()),
             sym::bitreverse => self.bit_reverse(args[0].immediate()),
+            sym::black_box => {
+                // TODO(LegNeato): do something more sophisticated that prevents DCE
+                self.tcx
+                    .dcx()
+                    .warn("black_box intrinsic does not prevent optimization in Rust GPU");
+
+                let layout = self.layout_of(arg_tys[0]);
+                let llty = layout.spirv_type(self.span(), self);
+
+                match args[0].val {
+                    // Pass through scalars
+                    OperandValue::Immediate(v) => v,
+
+                    // Preserve both elements by spilling + reloading
+                    OperandValue::Pair(..) => {
+                        let tmp = self.alloca(layout.size, layout.align.abi);
+                        self.store(args[0].immediate(), tmp, layout.align.abi);
+                        self.load(llty, tmp, layout.align.abi)
+                    }
+
+                    // For lvalues, load
+                    OperandValue::Ref(place) => self.load(llty, place.llval, place.align),
+
+                    // For ZSTs, return undef of the right type
+                    OperandValue::ZeroSized => self.undef(llty),
+                }
+            }
             sym::bswap => {
                 // https://github.com/KhronosGroup/SPIRV-LLVM/pull/221/files
                 // TODO: Definitely add tests to make sure this impl is right.
