@@ -120,7 +120,7 @@
 <a href=#120 id=120 data-nosnippet>120</a>    passes: <span class="kw-2">&amp;</span>[<span class="kw">impl </span>AsRef&lt;str&gt;],
 <a href=#121 id=121 data-nosnippet>121</a>    <span class="comment">// FIXME(eddyb) this is a very poor approximation of a "profiler" abstraction.
 <a href=#122 id=122 data-nosnippet>122</a>    </span><span class="kw-2">mut </span>before_pass: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, <span class="kw-2">&amp;</span>Module) -&gt; P,
-<a href=#123 id=123 data-nosnippet>123</a>    <span class="kw-2">mut </span>after_pass: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, <span class="kw-2">&amp;</span>Module, P),
+<a href=#123 id=123 data-nosnippet>123</a>    <span class="kw-2">mut </span>after_pass: <span class="kw">impl </span>FnMut(<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Module&gt;, P),
 <a href=#124 id=124 data-nosnippet>124</a>) {
 <a href=#125 id=125 data-nosnippet>125</a>    <span class="kw">let </span>cx = <span class="kw-2">&amp;</span>module.cx();
 <a href=#126 id=126 data-nosnippet>126</a>
@@ -156,15 +156,15 @@
 <a href=#156 id=156 data-nosnippet>156</a>
 <a href=#157 id=157 data-nosnippet>157</a>            <span class="kw">let </span>profiler = before_pass(<span class="string">"qptr::lower_from_spv_ptrs"</span>, module);
 <a href=#158 id=158 data-nosnippet>158</a>            spirt::passes::qptr::lower_from_spv_ptrs(module, layout_config);
-<a href=#159 id=159 data-nosnippet>159</a>            after_pass(<span class="string">"qptr::lower_from_spv_ptrs"</span>, module, profiler);
+<a href=#159 id=159 data-nosnippet>159</a>            after_pass(<span class="prelude-val">Some</span>(module), profiler);
 <a href=#160 id=160 data-nosnippet>160</a>
 <a href=#161 id=161 data-nosnippet>161</a>            <span class="kw">let </span>profiler = before_pass(<span class="string">"qptr::analyze_uses"</span>, module);
 <a href=#162 id=162 data-nosnippet>162</a>            spirt::passes::qptr::analyze_uses(module, layout_config);
-<a href=#163 id=163 data-nosnippet>163</a>            after_pass(<span class="string">"qptr::analyze_uses"</span>, module, profiler);
+<a href=#163 id=163 data-nosnippet>163</a>            after_pass(<span class="prelude-val">Some</span>(module), profiler);
 <a href=#164 id=164 data-nosnippet>164</a>
 <a href=#165 id=165 data-nosnippet>165</a>            <span class="kw">let </span>profiler = before_pass(<span class="string">"qptr::lift_to_spv_ptrs"</span>, module);
 <a href=#166 id=166 data-nosnippet>166</a>            spirt::passes::qptr::lift_to_spv_ptrs(module, layout_config);
-<a href=#167 id=167 data-nosnippet>167</a>            after_pass(<span class="string">"qptr::lift_to_spv_ptrs"</span>, module, profiler);
+<a href=#167 id=167 data-nosnippet>167</a>            after_pass(<span class="prelude-val">Some</span>(module), profiler);
 <a href=#168 id=168 data-nosnippet>168</a>
 <a href=#169 id=169 data-nosnippet>169</a>            <span class="kw">continue</span>;
 <a href=#170 id=170 data-nosnippet>170</a>        }
@@ -187,7 +187,7 @@
 <a href=#187 id=187 data-nosnippet>187</a>                </span>remove_unused_values_in_func(cx, func_def_body);
 <a href=#188 id=188 data-nosnippet>188</a>            }
 <a href=#189 id=189 data-nosnippet>189</a>        }
-<a href=#190 id=190 data-nosnippet>190</a>        after_pass(full_name, module, profiler);
+<a href=#190 id=190 data-nosnippet>190</a>        after_pass(<span class="prelude-val">Some</span>(module), profiler);
 <a href=#191 id=191 data-nosnippet>191</a>    }
 <a href=#192 id=192 data-nosnippet>192</a>}
 <a href=#193 id=193 data-nosnippet>193</a>
