@@ -161,20 +161,14 @@ impl<'tcx> CodegenCx<'tcx> {
                 .insert(def_id, mode);
         }
 
-        if self.tcx.crate_name(def_id.krate) == self.sym.libm {
+        // Check for usage of `libm` intrinsics outside of `libm` itself
+        if self.tcx.crate_name(def_id.krate) == self.sym.libm && !def_id.is_local() {
             let item_name = self.tcx.item_name(def_id);
-            let intrinsic = self.sym.libm_intrinsics.get(&item_name);
-            if self.tcx.visibility(def_id) == ty::Visibility::Public {
-                match intrinsic {
-                    Some(&intrinsic) => {
-                        self.libm_intrinsics.borrow_mut().insert(def_id, intrinsic);
-                    }
-                    None => {
-                        self.tcx.dcx().err(format!(
-                            "missing libm intrinsic {symbol_name}, which is {instance}"
-                        ));
-                    }
-                }
+            if let Some(&intrinsic) = self.sym.libm_intrinsics.get(&item_name) {
+                self.libm_intrinsics.borrow_mut().insert(def_id, intrinsic);
+            } else {
+                let message = format!("missing libm intrinsic {symbol_name}, which is {instance}");
+                self.tcx.dcx().err(message);
             }
         }
 
