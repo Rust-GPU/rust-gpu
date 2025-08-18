@@ -95,7 +95,7 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         template: &[InlineAsmTemplatePiece],
         operands: &[InlineAsmOperandRef<'tcx, Self>],
         options: InlineAsmOptions,
-        _line_spans: &[Span],
+        line_spans: &[Span],
         _instance: Instance<'_>,
         _dest: Option<Self::BasicBlock>,
         _catch_funclet: Option<(Self::BasicBlock, Option<&Self::Funclet>)>,
@@ -211,7 +211,17 @@ impl<'a, 'tcx> AsmBuilderMethods<'tcx> for Builder<'a, 'tcx> {
         }
 
         let mut asm_block = AsmBlock::Open;
-        for line in tokens {
+        for (line_idx, line) in tokens.into_iter().enumerate() {
+            match asm_block {
+                AsmBlock::Open => {
+                    self.set_span(line_spans.get(line_idx).copied().unwrap_or_default());
+                }
+                // FIXME(eddyb) this line is most likely an `OpLabel`, following
+                // a terminator, and calling `set_span` here will attempt to add
+                // debuginfo in the previous block (i.e. after the terminator),
+                // which is an unfortunate interaction, but perhaps avoidable?
+                AsmBlock::End(_) => {}
+            }
             self.codegen_asm(
                 &mut id_map,
                 &mut defined_ids,
