@@ -17,7 +17,7 @@ pub fn main(#[spirv(descriptor_set = 0, binding = 0, storage_buffer)] out: &mut 
     }
 }
 
-pub fn disassemble() -> [u32; 8] {
+pub fn disassemble() -> [u32; 12] {
     // Test with various types
     let x = 42i32;
     let y = black_box(x);
@@ -35,6 +35,8 @@ pub fn disassemble() -> [u32; 8] {
     let data = 100u32;
     let ref_data = black_box(&data);
 
+    let ref_slice = black_box(v.as_slice());
+
     [
         y as u32,
         f32::to_bits(b),
@@ -44,5 +46,9 @@ pub fn disassemble() -> [u32; 8] {
         w[3],
         result,
         *ref_data,
+        ref_slice[0],
+        ref_slice[1],
+        ref_slice[2],
+        ref_slice[3],
     ]
 }
