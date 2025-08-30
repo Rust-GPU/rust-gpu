@@ -1,5 +1,6 @@
 // build-fail
 // compile-flags: -Ctarget-feature=+rayTracingKHR,+ext:SPV_KHR_ray_tracing
+// ignore-naga
 
 use spirv_std::spirv;
 
