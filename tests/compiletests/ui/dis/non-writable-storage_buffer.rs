@@ -21,6 +21,7 @@
 // ignore-spv1.4
 // ignore-spv1.5
 // ignore-spv1.6
+// ignore-naga
 
 use spirv_std::spirv;
 

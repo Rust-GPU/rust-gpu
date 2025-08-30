@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -C target-feature=+RuntimeDescriptorArray,+ext:SPV_EXT_descriptor_indexing
+// ignore-naga
 
 use spirv_std::spirv;
 use spirv_std::{Image, RuntimeArray, Sampler};
