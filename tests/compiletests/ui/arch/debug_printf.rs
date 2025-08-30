@@ -1,5 +1,6 @@
 // build-pass
 // compile-flags: -Ctarget-feature=+ext:SPV_KHR_non_semantic_info
+// ignore-naga
 
 use spirv_std::spirv;
 use spirv_std::{

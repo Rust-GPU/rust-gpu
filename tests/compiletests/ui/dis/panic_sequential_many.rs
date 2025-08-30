@@ -18,6 +18,8 @@
 // normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"
 // FIXME(eddyb) handle this one in the test runner.
 // normalize-stderr-test "\S*/lib/rustlib/" -> "$$SYSROOT/lib/rustlib/"
+//
+// ignore-naga
 
 // HACK(eddyb) `compiletest` handles `ui\dis\`, but not `ui\\dis\\`, on Windows.
 // normalize-stderr-test "ui/dis/" -> "$$DIR/"

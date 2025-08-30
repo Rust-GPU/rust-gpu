@@ -20,6 +20,7 @@
 // ignore-spv1.4
 // ignore-spv1.5
 // ignore-spv1.6
+// ignore-naga
 
 use core::arch::asm;
 use spirv_std::spirv;
