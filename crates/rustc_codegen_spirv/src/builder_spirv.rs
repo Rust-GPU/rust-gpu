@@ -5,7 +5,7 @@ use crate::builder;
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use crate::symbols::Symbols;
-use crate::target::SpirvTarget;
+use crate::target::TargetsExt;
 use crate::target_feature::TargetFeature;
 use rspirv::dr::{Builder, Instruction, Module, Operand};
 use rspirv::spirv::{
@@ -14,6 +14,7 @@ use rspirv::spirv::{
 use rspirv::{binary::Assemble, binary::Disassemble};
 use rustc_abi::Size;
 use rustc_arena::DroplessArena;
+use rustc_codegen_spirv_target_specs::SpirvTargetEnv;
 use rustc_codegen_ssa::traits::ConstCodegenMethods as _;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_middle::bug;
@@ -451,7 +452,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
     pub fn new(
         tcx: TyCtxt<'tcx>,
         sym: &Symbols,
-        target: &SpirvTarget,
+        target: &SpirvTargetEnv,
         features: &[TargetFeature],
     ) -> Self {
         let version = target.spirv_version();
