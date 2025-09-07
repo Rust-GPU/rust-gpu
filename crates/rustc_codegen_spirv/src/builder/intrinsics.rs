@@ -250,20 +250,13 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 let llty = layout.spirv_type(self.span(), self);
 
                 match args[0].val {
-                    // Pass through scalars
+                    // Scalars pass through unchanged
                     OperandValue::Immediate(v) => v,
-
-                    // Preserve both elements by spilling + reloading
-                    OperandValue::Pair(..) => {
-                        let tmp = self.alloca(layout.size, layout.align.abi);
-                        self.store(args[0].immediate(), tmp, layout.align.abi);
-                        self.load(llty, tmp, layout.align.abi)
-                    }
-
-                    // For lvalues, load
+                    // Pack scalar pairs to a single SSA aggregate
+                    OperandValue::Pair(..) => args[0].immediate_or_packed_pair(self),
+                    // Lvalues get loaded
                     OperandValue::Ref(place) => self.load(llty, place.llval, place.align),
-
-                    // For ZSTs, return undef of the right type
+                    // ZSTs become undef of the right type
                     OperandValue::ZeroSized => self.undef(llty),
                 }
             }
