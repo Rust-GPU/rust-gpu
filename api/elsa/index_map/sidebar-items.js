@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["FrozenIndexMap"]};
+window.SIDEBAR_ITEMS = {"struct":["FrozenIndexMap"],"trait":["Equivalent"]};

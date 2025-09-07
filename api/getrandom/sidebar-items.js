@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["getrandom","getrandom_uninit"],"struct":["Error"]};
+window.SIDEBAR_ITEMS = {"fn":["fill","fill_uninit","u32","u64"],"struct":["Error"]};

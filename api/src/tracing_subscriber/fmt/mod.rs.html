@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-subscriber-0.3.19/src/fmt/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="tracing_subscriber" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">tracing_subscriber/fmt/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! A `Subscriber` for formatting and logging `tracing` data.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tracing-subscriber-0.3.20/src/fmt/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="tracing_subscriber" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">tracing_subscriber/fmt/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! A `Subscriber` for formatting and logging `tracing` data.
 <a href=#2 id=2 data-nosnippet>2</a>//!
 <a href=#3 id=3 data-nosnippet>3</a>//! # Overview
 <a href=#4 id=4 data-nosnippet>4</a>//!
@@ -16,7 +16,7 @@
 <a href=#16 id=16 data-nosnippet>16</a>//! tracing-subscriber = "0.3"
 <a href=#17 id=17 data-nosnippet>17</a>//! ```
 <a href=#18 id=18 data-nosnippet>18</a>//!
-<a href=#19 id=19 data-nosnippet>19</a>//! *Compiler support: [requires `rustc` 1.63+][msrv]*
+<a href=#19 id=19 data-nosnippet>19</a>//! *Compiler support: [requires `rustc` 1.65+][msrv]*
 <a href=#20 id=20 data-nosnippet>20</a>//!
 <a href=#21 id=21 data-nosnippet>21</a>//! [msrv]: super#supported-rust-versions
 <a href=#22 id=22 data-nosnippet>22</a>//!
@@ -36,9 +36,9 @@
 <a href=#36 id=36 data-nosnippet>36</a>//!
 <a href=#37 id=37 data-nosnippet>37</a>//! For example:
 <a href=#38 id=38 data-nosnippet>38</a>//! - Setting `RUST_LOG=debug` enables all `Span`s and `Event`s
-<a href=#39 id=39 data-nosnippet>39</a>//!     set to the log level `DEBUG` or higher
+<a href=#39 id=39 data-nosnippet>39</a>//!   set to the log level `DEBUG` or higher
 <a href=#40 id=40 data-nosnippet>40</a>//! - Setting `RUST_LOG=my_crate=trace` enables `Span`s and `Event`s
-<a href=#41 id=41 data-nosnippet>41</a>//!     in `my_crate` at all log levels
+<a href=#41 id=41 data-nosnippet>41</a>//!   in `my_crate` at all log levels
 <a href=#42 id=42 data-nosnippet>42</a>//!
 <a href=#43 id=43 data-nosnippet>43</a>//! **Note**: This should **not** be called by libraries. Libraries should use
 <a href=#44 id=44 data-nosnippet>44</a>//! [`tracing`] to publish `tracing` `Event`s.
@@ -570,22 +570,22 @@
 <a href=#570 id=570 data-nosnippet>570</a>    /// The following options are available:
 <a href=#571 id=571 data-nosnippet>571</a>    ///
 <a href=#572 id=572 data-nosnippet>572</a>    /// - `FmtSpan::NONE`: No events will be synthesized when spans are
-<a href=#573 id=573 data-nosnippet>573</a>    ///    created, entered, exited, or closed. Data from spans will still be
-<a href=#574 id=574 data-nosnippet>574</a>    ///    included as the context for formatted events. This is the default.
+<a href=#573 id=573 data-nosnippet>573</a>    ///   created, entered, exited, or closed. Data from spans will still be
+<a href=#574 id=574 data-nosnippet>574</a>    ///   included as the context for formatted events. This is the default.
 <a href=#575 id=575 data-nosnippet>575</a>    /// - `FmtSpan::NEW`: An event will be synthesized when spans are created.
 <a href=#576 id=576 data-nosnippet>576</a>    /// - `FmtSpan::ENTER`: An event will be synthesized when spans are entered.
 <a href=#577 id=577 data-nosnippet>577</a>    /// - `FmtSpan::EXIT`: An event will be synthesized when spans are exited.
 <a href=#578 id=578 data-nosnippet>578</a>    /// - `FmtSpan::CLOSE`: An event will be synthesized when a span closes. If
-<a href=#579 id=579 data-nosnippet>579</a>    ///    [timestamps are enabled][time] for this formatter, the generated
-<a href=#580 id=580 data-nosnippet>580</a>    ///    event will contain fields with the span's _busy time_ (the total
-<a href=#581 id=581 data-nosnippet>581</a>    ///    time for which it was entered) and _idle time_ (the total time that
-<a href=#582 id=582 data-nosnippet>582</a>    ///    the span existed but was not entered).
+<a href=#579 id=579 data-nosnippet>579</a>    ///   [timestamps are enabled][time] for this formatter, the generated
+<a href=#580 id=580 data-nosnippet>580</a>    ///   event will contain fields with the span's _busy time_ (the total
+<a href=#581 id=581 data-nosnippet>581</a>    ///   time for which it was entered) and _idle time_ (the total time that
+<a href=#582 id=582 data-nosnippet>582</a>    ///   the span existed but was not entered).
 <a href=#583 id=583 data-nosnippet>583</a>    /// - `FmtSpan::ACTIVE`: An event will be synthesized when spans are entered
-<a href=#584 id=584 data-nosnippet>584</a>    ///    or exited.
+<a href=#584 id=584 data-nosnippet>584</a>    ///   or exited.
 <a href=#585 id=585 data-nosnippet>585</a>    /// - `FmtSpan::FULL`: Events will be synthesized whenever a span is
-<a href=#586 id=586 data-nosnippet>586</a>    ///    created, entered, exited, or closed. If timestamps are enabled, the
-<a href=#587 id=587 data-nosnippet>587</a>    ///    close event will contain the span's busy and idle time, as
-<a href=#588 id=588 data-nosnippet>588</a>    ///    described above.
+<a href=#586 id=586 data-nosnippet>586</a>    ///   created, entered, exited, or closed. If timestamps are enabled, the
+<a href=#587 id=587 data-nosnippet>587</a>    ///   close event will contain the span's busy and idle time, as
+<a href=#588 id=588 data-nosnippet>588</a>    ///   described above.
 <a href=#589 id=589 data-nosnippet>589</a>    ///
 <a href=#590 id=590 data-nosnippet>590</a>    /// The options can be enabled in any combination. For instance, the following
 <a href=#591 id=591 data-nosnippet>591</a>    /// will synthesize events whenever spans are created and closed:

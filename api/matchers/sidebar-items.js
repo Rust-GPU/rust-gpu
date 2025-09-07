@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Error","Matcher","Pattern"],"trait":["ToMatcher"]};
+window.SIDEBAR_ITEMS = {"struct":["BuildError","Matcher","Pattern"]};

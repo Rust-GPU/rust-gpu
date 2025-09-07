@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml-0.8.22/src/ser/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="toml" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">toml/ser/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Serializing Rust structures into TOML.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml-0.8.23/src/ser/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="toml" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">toml/ser/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Serializing Rust structures into TOML.
 <a href=#2 id=2 data-nosnippet>2</a>//!
 <a href=#3 id=3 data-nosnippet>3</a>//! This module contains all the Serde support for serializing Rust structures
 <a href=#4 id=4 data-nosnippet>4</a>//! into TOML documents (as strings). Note that some top-level functions here
@@ -191,10 +191,10 @@
 <a href=#191 id=191 data-nosnippet>191</a>    <span class="kw">type </span>SerializeSeq = array::SerializeDocumentArray&lt;<span class="lifetime">'d</span>&gt;;
 <a href=#192 id=192 data-nosnippet>192</a>    <span class="kw">type </span>SerializeTuple = array::SerializeDocumentArray&lt;<span class="lifetime">'d</span>&gt;;
 <a href=#193 id=193 data-nosnippet>193</a>    <span class="kw">type </span>SerializeTupleStruct = array::SerializeDocumentArray&lt;<span class="lifetime">'d</span>&gt;;
-<a href=#194 id=194 data-nosnippet>194</a>    <span class="kw">type </span>SerializeTupleVariant = array::SerializeDocumentArray&lt;<span class="lifetime">'d</span>&gt;;
+<a href=#194 id=194 data-nosnippet>194</a>    <span class="kw">type </span>SerializeTupleVariant = array::SerializeDocumentTupleVariant&lt;<span class="lifetime">'d</span>&gt;;
 <a href=#195 id=195 data-nosnippet>195</a>    <span class="kw">type </span>SerializeMap = map::SerializeDocumentTable&lt;<span class="lifetime">'d</span>&gt;;
 <a href=#196 id=196 data-nosnippet>196</a>    <span class="kw">type </span>SerializeStruct = map::SerializeDocumentTable&lt;<span class="lifetime">'d</span>&gt;;
-<a href=#197 id=197 data-nosnippet>197</a>    <span class="kw">type </span>SerializeStructVariant = serde::ser::Impossible&lt;<span class="self">Self</span>::Ok, <span class="self">Self</span>::Error&gt;;
+<a href=#197 id=197 data-nosnippet>197</a>    <span class="kw">type </span>SerializeStructVariant = map::SerializeDocumentStructVariant&lt;<span class="lifetime">'d</span>&gt;;
 <a href=#198 id=198 data-nosnippet>198</a>
 <a href=#199 id=199 data-nosnippet>199</a>    <span class="kw">fn </span>serialize_bool(<span class="self">self</span>, v: bool) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::Ok, <span class="self">Self</span>::Error&gt; {
 <a href=#200 id=200 data-nosnippet>200</a>        write_document(
@@ -415,62 +415,70 @@
 <a href=#415 id=415 data-nosnippet>415</a>
 <a href=#416 id=416 data-nosnippet>416</a>    <span class="kw">fn </span>serialize_tuple_variant(
 <a href=#417 id=417 data-nosnippet>417</a>        <span class="self">self</span>,
-<a href=#418 id=418 data-nosnippet>418</a>        _name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#419 id=419 data-nosnippet>419</a>        _variant_index: u32,
-<a href=#420 id=420 data-nosnippet>420</a>        _variant: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#418 id=418 data-nosnippet>418</a>        name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#419 id=419 data-nosnippet>419</a>        variant_index: u32,
+<a href=#420 id=420 data-nosnippet>420</a>        variant: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
 <a href=#421 id=421 data-nosnippet>421</a>        len: usize,
 <a href=#422 id=422 data-nosnippet>422</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::SerializeTupleVariant, <span class="self">Self</span>::Error&gt; {
-<a href=#423 id=423 data-nosnippet>423</a>        <span class="self">self</span>.serialize_seq(<span class="prelude-val">Some</span>(len))
-<a href=#424 id=424 data-nosnippet>424</a>    }
-<a href=#425 id=425 data-nosnippet>425</a>
-<a href=#426 id=426 data-nosnippet>426</a>    <span class="kw">fn </span>serialize_map(<span class="self">self</span>, len: <span class="prelude-ty">Option</span>&lt;usize&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::SerializeMap, <span class="self">Self</span>::Error&gt; {
-<a href=#427 id=427 data-nosnippet>427</a>        <span class="kw">let </span>ser = toml_edit::ser::ValueSerializer::new()
-<a href=#428 id=428 data-nosnippet>428</a>            .serialize_map(len)
-<a href=#429 id=429 data-nosnippet>429</a>            .map_err(Error::wrap)<span class="question-mark">?</span>;
-<a href=#430 id=430 data-nosnippet>430</a>        <span class="kw">let </span>ser = map::SerializeDocumentTable::new(<span class="self">self</span>, ser);
-<a href=#431 id=431 data-nosnippet>431</a>        <span class="prelude-val">Ok</span>(ser)
-<a href=#432 id=432 data-nosnippet>432</a>    }
-<a href=#433 id=433 data-nosnippet>433</a>
-<a href=#434 id=434 data-nosnippet>434</a>    <span class="kw">fn </span>serialize_struct(
-<a href=#435 id=435 data-nosnippet>435</a>        <span class="self">self</span>,
-<a href=#436 id=436 data-nosnippet>436</a>        _name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#437 id=437 data-nosnippet>437</a>        len: usize,
-<a href=#438 id=438 data-nosnippet>438</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::SerializeStruct, <span class="self">Self</span>::Error&gt; {
-<a href=#439 id=439 data-nosnippet>439</a>        <span class="self">self</span>.serialize_map(<span class="prelude-val">Some</span>(len))
-<a href=#440 id=440 data-nosnippet>440</a>    }
-<a href=#441 id=441 data-nosnippet>441</a>
-<a href=#442 id=442 data-nosnippet>442</a>    <span class="kw">fn </span>serialize_struct_variant(
-<a href=#443 id=443 data-nosnippet>443</a>        <span class="self">self</span>,
-<a href=#444 id=444 data-nosnippet>444</a>        name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#445 id=445 data-nosnippet>445</a>        _variant_index: u32,
-<a href=#446 id=446 data-nosnippet>446</a>        _variant: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
-<a href=#447 id=447 data-nosnippet>447</a>        _len: usize,
-<a href=#448 id=448 data-nosnippet>448</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::SerializeStructVariant, <span class="self">Self</span>::Error&gt; {
-<a href=#449 id=449 data-nosnippet>449</a>        <span class="prelude-val">Err</span>(Error::unsupported_type(<span class="prelude-val">Some</span>(name)))
-<a href=#450 id=450 data-nosnippet>450</a>    }
-<a href=#451 id=451 data-nosnippet>451</a>}
-<a href=#452 id=452 data-nosnippet>452</a>
-<a href=#453 id=453 data-nosnippet>453</a><span class="attr">#[cfg(feature = <span class="string">"display"</span>)]
-<a href=#454 id=454 data-nosnippet>454</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_document(
-<a href=#455 id=455 data-nosnippet>455</a>    dst: <span class="kw-2">&amp;mut </span>String,
-<a href=#456 id=456 data-nosnippet>456</a>    <span class="kw-2">mut </span>settings: <span class="kw">crate</span>::fmt::DocumentFormatter,
-<a href=#457 id=457 data-nosnippet>457</a>    value: <span class="prelude-ty">Result</span>&lt;toml_edit::Value, <span class="kw">crate</span>::edit::ser::Error&gt;,
-<a href=#458 id=458 data-nosnippet>458</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
-<a href=#459 id=459 data-nosnippet>459</a>    <span class="kw">use </span>std::fmt::Write;
-<a href=#460 id=460 data-nosnippet>460</a>    <span class="kw">use </span>toml_edit::visit_mut::VisitMut <span class="kw">as _</span>;
-<a href=#461 id=461 data-nosnippet>461</a>
-<a href=#462 id=462 data-nosnippet>462</a>    <span class="kw">let </span>value = value.map_err(Error::wrap)<span class="question-mark">?</span>;
-<a href=#463 id=463 data-nosnippet>463</a>    <span class="kw">let </span><span class="kw-2">mut </span>table = <span class="kw">match </span>toml_edit::Item::Value(value).into_table() {
-<a href=#464 id=464 data-nosnippet>464</a>        <span class="prelude-val">Ok</span>(i) =&gt; i,
-<a href=#465 id=465 data-nosnippet>465</a>        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
-<a href=#466 id=466 data-nosnippet>466</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::unsupported_type(<span class="prelude-val">None</span>));
-<a href=#467 id=467 data-nosnippet>467</a>        }
-<a href=#468 id=468 data-nosnippet>468</a>    };
+<a href=#423 id=423 data-nosnippet>423</a>        <span class="kw">let </span>ser = toml_edit::ser::ValueSerializer::new()
+<a href=#424 id=424 data-nosnippet>424</a>            .serialize_tuple_variant(name, variant_index, variant, len)
+<a href=#425 id=425 data-nosnippet>425</a>            .map_err(Error::wrap)<span class="question-mark">?</span>;
+<a href=#426 id=426 data-nosnippet>426</a>        <span class="kw">let </span>ser = array::SerializeDocumentTupleVariant::new(<span class="self">self</span>, ser);
+<a href=#427 id=427 data-nosnippet>427</a>        <span class="prelude-val">Ok</span>(ser)
+<a href=#428 id=428 data-nosnippet>428</a>    }
+<a href=#429 id=429 data-nosnippet>429</a>
+<a href=#430 id=430 data-nosnippet>430</a>    <span class="kw">fn </span>serialize_map(<span class="self">self</span>, len: <span class="prelude-ty">Option</span>&lt;usize&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::SerializeMap, <span class="self">Self</span>::Error&gt; {
+<a href=#431 id=431 data-nosnippet>431</a>        <span class="kw">let </span>ser = toml_edit::ser::ValueSerializer::new()
+<a href=#432 id=432 data-nosnippet>432</a>            .serialize_map(len)
+<a href=#433 id=433 data-nosnippet>433</a>            .map_err(Error::wrap)<span class="question-mark">?</span>;
+<a href=#434 id=434 data-nosnippet>434</a>        <span class="kw">let </span>ser = map::SerializeDocumentTable::new(<span class="self">self</span>, ser);
+<a href=#435 id=435 data-nosnippet>435</a>        <span class="prelude-val">Ok</span>(ser)
+<a href=#436 id=436 data-nosnippet>436</a>    }
+<a href=#437 id=437 data-nosnippet>437</a>
+<a href=#438 id=438 data-nosnippet>438</a>    <span class="kw">fn </span>serialize_struct(
+<a href=#439 id=439 data-nosnippet>439</a>        <span class="self">self</span>,
+<a href=#440 id=440 data-nosnippet>440</a>        _name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#441 id=441 data-nosnippet>441</a>        len: usize,
+<a href=#442 id=442 data-nosnippet>442</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::SerializeStruct, <span class="self">Self</span>::Error&gt; {
+<a href=#443 id=443 data-nosnippet>443</a>        <span class="self">self</span>.serialize_map(<span class="prelude-val">Some</span>(len))
+<a href=#444 id=444 data-nosnippet>444</a>    }
+<a href=#445 id=445 data-nosnippet>445</a>
+<a href=#446 id=446 data-nosnippet>446</a>    <span class="kw">fn </span>serialize_struct_variant(
+<a href=#447 id=447 data-nosnippet>447</a>        <span class="self">self</span>,
+<a href=#448 id=448 data-nosnippet>448</a>        name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#449 id=449 data-nosnippet>449</a>        variant_index: u32,
+<a href=#450 id=450 data-nosnippet>450</a>        variant: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#451 id=451 data-nosnippet>451</a>        len: usize,
+<a href=#452 id=452 data-nosnippet>452</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>::SerializeStructVariant, <span class="self">Self</span>::Error&gt; {
+<a href=#453 id=453 data-nosnippet>453</a>        <span class="kw">let </span>ser = toml_edit::ser::ValueSerializer::new()
+<a href=#454 id=454 data-nosnippet>454</a>            .serialize_struct_variant(name, variant_index, variant, len)
+<a href=#455 id=455 data-nosnippet>455</a>            .map_err(Error::wrap)<span class="question-mark">?</span>;
+<a href=#456 id=456 data-nosnippet>456</a>        <span class="kw">let </span>ser = map::SerializeDocumentStructVariant::new(<span class="self">self</span>, ser);
+<a href=#457 id=457 data-nosnippet>457</a>        <span class="prelude-val">Ok</span>(ser)
+<a href=#458 id=458 data-nosnippet>458</a>    }
+<a href=#459 id=459 data-nosnippet>459</a>}
+<a href=#460 id=460 data-nosnippet>460</a>
+<a href=#461 id=461 data-nosnippet>461</a><span class="attr">#[cfg(feature = <span class="string">"display"</span>)]
+<a href=#462 id=462 data-nosnippet>462</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>write_document(
+<a href=#463 id=463 data-nosnippet>463</a>    dst: <span class="kw-2">&amp;mut </span>String,
+<a href=#464 id=464 data-nosnippet>464</a>    <span class="kw-2">mut </span>settings: <span class="kw">crate</span>::fmt::DocumentFormatter,
+<a href=#465 id=465 data-nosnippet>465</a>    value: <span class="prelude-ty">Result</span>&lt;toml_edit::Value, <span class="kw">crate</span>::edit::ser::Error&gt;,
+<a href=#466 id=466 data-nosnippet>466</a>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Error&gt; {
+<a href=#467 id=467 data-nosnippet>467</a>    <span class="kw">use </span>std::fmt::Write;
+<a href=#468 id=468 data-nosnippet>468</a>    <span class="kw">use </span>toml_edit::visit_mut::VisitMut <span class="kw">as _</span>;
 <a href=#469 id=469 data-nosnippet>469</a>
-<a href=#470 id=470 data-nosnippet>470</a>    settings.visit_table_mut(<span class="kw-2">&amp;mut </span>table);
-<a href=#471 id=471 data-nosnippet>471</a>
-<a href=#472 id=472 data-nosnippet>472</a>    <span class="kw">let </span>doc: toml_edit::DocumentMut = table.into();
-<a href=#473 id=473 data-nosnippet>473</a>    <span class="macro">write!</span>(dst, <span class="string">"{doc}"</span>).unwrap();
-<a href=#474 id=474 data-nosnippet>474</a>
-<a href=#475 id=475 data-nosnippet>475</a>    <span class="prelude-val">Ok</span>(())
-<a href=#476 id=476 data-nosnippet>476</a>}</code></pre></div></section></main></body></html>
+<a href=#470 id=470 data-nosnippet>470</a>    <span class="kw">let </span>value = value.map_err(Error::wrap)<span class="question-mark">?</span>;
+<a href=#471 id=471 data-nosnippet>471</a>    <span class="kw">let </span><span class="kw-2">mut </span>table = <span class="kw">match </span>toml_edit::Item::Value(value).into_table() {
+<a href=#472 id=472 data-nosnippet>472</a>        <span class="prelude-val">Ok</span>(i) =&gt; i,
+<a href=#473 id=473 data-nosnippet>473</a>        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
+<a href=#474 id=474 data-nosnippet>474</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::unsupported_type(<span class="prelude-val">None</span>));
+<a href=#475 id=475 data-nosnippet>475</a>        }
+<a href=#476 id=476 data-nosnippet>476</a>    };
+<a href=#477 id=477 data-nosnippet>477</a>
+<a href=#478 id=478 data-nosnippet>478</a>    settings.visit_table_mut(<span class="kw-2">&amp;mut </span>table);
+<a href=#479 id=479 data-nosnippet>479</a>
+<a href=#480 id=480 data-nosnippet>480</a>    <span class="kw">let </span>doc: toml_edit::DocumentMut = table.into();
+<a href=#481 id=481 data-nosnippet>481</a>    <span class="macro">write!</span>(dst, <span class="string">"{doc}"</span>).unwrap();
+<a href=#482 id=482 data-nosnippet>482</a>
+<a href=#483 id=483 data-nosnippet>483</a>    <span class="prelude-val">Ok</span>(())
+<a href=#484 id=484 data-nosnippet>484</a>}</code></pre></div></section></main></body></html>

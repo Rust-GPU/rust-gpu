@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.92/src/rcvec.rs`."><title>rcvec.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="proc_macro2" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">proc_macro2/</div>rcvec.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::rc::Rc;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/proc-macro2-1.0.101/src/rcvec.rs`."><title>rcvec.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="proc_macro2" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">proc_macro2/</div>rcvec.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::rc::Rc;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>alloc::vec;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>core::mem;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>core::panic::RefUnwindSafe;
@@ -102,44 +102,45 @@
 <a href=#102 id=102 data-nosnippet>102</a>        <span class="self">self</span>.inner.extend(iter);
 <a href=#103 id=103 data-nosnippet>103</a>    }
 <a href=#104 id=104 data-nosnippet>104</a>
-<a href=#105 id=105 data-nosnippet>105</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>pop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
-<a href=#106 id=106 data-nosnippet>106</a>        <span class="self">self</span>.inner.pop()
+<a href=#105 id=105 data-nosnippet>105</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>as_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; RcVecMut&lt;T&gt; {
+<a href=#106 id=106 data-nosnippet>106</a>        RcVecMut { inner: <span class="self">self</span>.inner }
 <a href=#107 id=107 data-nosnippet>107</a>    }
 <a href=#108 id=108 data-nosnippet>108</a>
-<a href=#109 id=109 data-nosnippet>109</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>as_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; RcVecMut&lt;T&gt; {
-<a href=#110 id=110 data-nosnippet>110</a>        RcVecMut { inner: <span class="self">self</span>.inner }
-<a href=#111 id=111 data-nosnippet>111</a>    }
-<a href=#112 id=112 data-nosnippet>112</a>}
-<a href=#113 id=113 data-nosnippet>113</a>
-<a href=#114 id=114 data-nosnippet>114</a><span class="kw">impl</span>&lt;T&gt; Clone <span class="kw">for </span>RcVec&lt;T&gt; {
-<a href=#115 id=115 data-nosnippet>115</a>    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
-<a href=#116 id=116 data-nosnippet>116</a>        RcVec {
-<a href=#117 id=117 data-nosnippet>117</a>            inner: Rc::clone(<span class="kw-2">&amp;</span><span class="self">self</span>.inner),
-<a href=#118 id=118 data-nosnippet>118</a>        }
-<a href=#119 id=119 data-nosnippet>119</a>    }
-<a href=#120 id=120 data-nosnippet>120</a>}
-<a href=#121 id=121 data-nosnippet>121</a>
-<a href=#122 id=122 data-nosnippet>122</a><span class="kw">impl</span>&lt;T&gt; IntoIterator <span class="kw">for </span>RcVecBuilder&lt;T&gt; {
-<a href=#123 id=123 data-nosnippet>123</a>    <span class="kw">type </span>Item = T;
-<a href=#124 id=124 data-nosnippet>124</a>    <span class="kw">type </span>IntoIter = RcVecIntoIter&lt;T&gt;;
-<a href=#125 id=125 data-nosnippet>125</a>
-<a href=#126 id=126 data-nosnippet>126</a>    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
-<a href=#127 id=127 data-nosnippet>127</a>        RcVecIntoIter {
-<a href=#128 id=128 data-nosnippet>128</a>            inner: <span class="self">self</span>.inner.into_iter(),
-<a href=#129 id=129 data-nosnippet>129</a>        }
-<a href=#130 id=130 data-nosnippet>130</a>    }
-<a href=#131 id=131 data-nosnippet>131</a>}
-<a href=#132 id=132 data-nosnippet>132</a>
-<a href=#133 id=133 data-nosnippet>133</a><span class="kw">impl</span>&lt;T&gt; Iterator <span class="kw">for </span>RcVecIntoIter&lt;T&gt; {
-<a href=#134 id=134 data-nosnippet>134</a>    <span class="kw">type </span>Item = T;
-<a href=#135 id=135 data-nosnippet>135</a>
-<a href=#136 id=136 data-nosnippet>136</a>    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
-<a href=#137 id=137 data-nosnippet>137</a>        <span class="self">self</span>.inner.next()
-<a href=#138 id=138 data-nosnippet>138</a>    }
-<a href=#139 id=139 data-nosnippet>139</a>
-<a href=#140 id=140 data-nosnippet>140</a>    <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
-<a href=#141 id=141 data-nosnippet>141</a>        <span class="self">self</span>.inner.size_hint()
-<a href=#142 id=142 data-nosnippet>142</a>    }
-<a href=#143 id=143 data-nosnippet>143</a>}
-<a href=#144 id=144 data-nosnippet>144</a>
-<a href=#145 id=145 data-nosnippet>145</a><span class="kw">impl</span>&lt;T&gt; RefUnwindSafe <span class="kw">for </span>RcVec&lt;T&gt; <span class="kw">where </span>T: RefUnwindSafe {}</code></pre></div></section></main></body></html>
+<a href=#109 id=109 data-nosnippet>109</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>take(<span class="self">self</span>) -&gt; RcVecBuilder&lt;T&gt; {
+<a href=#110 id=110 data-nosnippet>110</a>        <span class="kw">let </span>vec = mem::take(<span class="self">self</span>.inner);
+<a href=#111 id=111 data-nosnippet>111</a>        RcVecBuilder { inner: vec }
+<a href=#112 id=112 data-nosnippet>112</a>    }
+<a href=#113 id=113 data-nosnippet>113</a>}
+<a href=#114 id=114 data-nosnippet>114</a>
+<a href=#115 id=115 data-nosnippet>115</a><span class="kw">impl</span>&lt;T&gt; Clone <span class="kw">for </span>RcVec&lt;T&gt; {
+<a href=#116 id=116 data-nosnippet>116</a>    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+<a href=#117 id=117 data-nosnippet>117</a>        RcVec {
+<a href=#118 id=118 data-nosnippet>118</a>            inner: Rc::clone(<span class="kw-2">&amp;</span><span class="self">self</span>.inner),
+<a href=#119 id=119 data-nosnippet>119</a>        }
+<a href=#120 id=120 data-nosnippet>120</a>    }
+<a href=#121 id=121 data-nosnippet>121</a>}
+<a href=#122 id=122 data-nosnippet>122</a>
+<a href=#123 id=123 data-nosnippet>123</a><span class="kw">impl</span>&lt;T&gt; IntoIterator <span class="kw">for </span>RcVecBuilder&lt;T&gt; {
+<a href=#124 id=124 data-nosnippet>124</a>    <span class="kw">type </span>Item = T;
+<a href=#125 id=125 data-nosnippet>125</a>    <span class="kw">type </span>IntoIter = RcVecIntoIter&lt;T&gt;;
+<a href=#126 id=126 data-nosnippet>126</a>
+<a href=#127 id=127 data-nosnippet>127</a>    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+<a href=#128 id=128 data-nosnippet>128</a>        RcVecIntoIter {
+<a href=#129 id=129 data-nosnippet>129</a>            inner: <span class="self">self</span>.inner.into_iter(),
+<a href=#130 id=130 data-nosnippet>130</a>        }
+<a href=#131 id=131 data-nosnippet>131</a>    }
+<a href=#132 id=132 data-nosnippet>132</a>}
+<a href=#133 id=133 data-nosnippet>133</a>
+<a href=#134 id=134 data-nosnippet>134</a><span class="kw">impl</span>&lt;T&gt; Iterator <span class="kw">for </span>RcVecIntoIter&lt;T&gt; {
+<a href=#135 id=135 data-nosnippet>135</a>    <span class="kw">type </span>Item = T;
+<a href=#136 id=136 data-nosnippet>136</a>
+<a href=#137 id=137 data-nosnippet>137</a>    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+<a href=#138 id=138 data-nosnippet>138</a>        <span class="self">self</span>.inner.next()
+<a href=#139 id=139 data-nosnippet>139</a>    }
+<a href=#140 id=140 data-nosnippet>140</a>
+<a href=#141 id=141 data-nosnippet>141</a>    <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+<a href=#142 id=142 data-nosnippet>142</a>        <span class="self">self</span>.inner.size_hint()
+<a href=#143 id=143 data-nosnippet>143</a>    }
+<a href=#144 id=144 data-nosnippet>144</a>}
+<a href=#145 id=145 data-nosnippet>145</a>
+<a href=#146 id=146 data-nosnippet>146</a><span class="kw">impl</span>&lt;T&gt; RefUnwindSafe <span class="kw">for </span>RcVec&lt;T&gt; <span class="kw">where </span>T: RefUnwindSafe {}</code></pre></div></section></main></body></html>
