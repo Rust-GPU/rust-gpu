@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-0.11.4/src/map/borrowed.rs`."><title>borrowed.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="zerovec" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">zerovec/map/</div>borrowed.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// This file is part of ICU4X. For terms of use, please see the file
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/zerovec-0.11.2/src/map/borrowed.rs`."><title>borrowed.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="zerovec" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">zerovec/map/</div>borrowed.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// This file is part of ICU4X. For terms of use, please see the file
 <a href=#2 id=2 data-nosnippet>2</a>// called LICENSE at the top level of the ICU4X source tree
 <a href=#3 id=3 data-nosnippet>3</a>// (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -222,13 +222,13 @@
 <a href=#222 id=222 data-nosnippet>222</a>
 <a href=#223 id=223 data-nosnippet>223</a>    <span class="doccomment">/// Produce an ordered iterator over keys
 <a href=#224 id=224 data-nosnippet>224</a>    </span><span class="kw">pub fn </span>iter_keys(<span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>&lt;K <span class="kw">as </span>ZeroMapKV&lt;<span class="lifetime">'a</span>&gt;&gt;::GetType&gt; {
-<a href=#225 id=225 data-nosnippet>225</a>        <span class="attr">#[expect(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len()
+<a href=#225 id=225 data-nosnippet>225</a>        <span class="attr">#[allow(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len()
 <a href=#226 id=226 data-nosnippet>226</a>        </span>(<span class="number">0</span>..<span class="self">self</span>.keys.zvl_len()).map(<span class="kw">move </span>|idx| <span class="self">self</span>.keys.zvl_get(idx).unwrap())
 <a href=#227 id=227 data-nosnippet>227</a>    }
 <a href=#228 id=228 data-nosnippet>228</a>
 <a href=#229 id=229 data-nosnippet>229</a>    <span class="doccomment">/// Produce an iterator over values, ordered by keys
 <a href=#230 id=230 data-nosnippet>230</a>    </span><span class="kw">pub fn </span>iter_values(<span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>&lt;V <span class="kw">as </span>ZeroMapKV&lt;<span class="lifetime">'a</span>&gt;&gt;::GetType&gt; {
-<a href=#231 id=231 data-nosnippet>231</a>        <span class="attr">#[expect(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len() == values.zvl_len()
+<a href=#231 id=231 data-nosnippet>231</a>        <span class="attr">#[allow(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len() == values.zvl_len()
 <a href=#232 id=232 data-nosnippet>232</a>        </span>(<span class="number">0</span>..<span class="self">self</span>.values.zvl_len()).map(<span class="kw">move </span>|idx| <span class="self">self</span>.values.zvl_get(idx).unwrap())
 <a href=#233 id=233 data-nosnippet>233</a>    }
 <a href=#234 id=234 data-nosnippet>234</a>}
@@ -257,9 +257,9 @@
 <a href=#257 id=257 data-nosnippet>257</a>    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span><span class="lifetime">'a </span>&lt;K <span class="kw">as </span>ZeroMapKV&lt;<span class="lifetime">'a</span>&gt;&gt;::GetType, V)&gt; {
 <a href=#258 id=258 data-nosnippet>258</a>        (<span class="number">0</span>..<span class="self">self</span>.keys.zvl_len()).map(<span class="kw">move </span>|idx| {
 <a href=#259 id=259 data-nosnippet>259</a>            (
-<a href=#260 id=260 data-nosnippet>260</a>                <span class="attr">#[expect(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len()
+<a href=#260 id=260 data-nosnippet>260</a>                <span class="attr">#[allow(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len()
 <a href=#261 id=261 data-nosnippet>261</a>                </span><span class="self">self</span>.keys.zvl_get(idx).unwrap(),
-<a href=#262 id=262 data-nosnippet>262</a>                <span class="attr">#[expect(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len() = values.zvl_len()
+<a href=#262 id=262 data-nosnippet>262</a>                <span class="attr">#[allow(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len() = values.zvl_len()
 <a href=#263 id=263 data-nosnippet>263</a>                </span><span class="self">self</span>.values.get(idx).unwrap(),
 <a href=#264 id=264 data-nosnippet>264</a>            )
 <a href=#265 id=265 data-nosnippet>265</a>        })
@@ -273,45 +273,46 @@
 <a href=#273 id=273 data-nosnippet>273</a>{
 <a href=#274 id=274 data-nosnippet>274</a>    <span class="doccomment">/// Similar to [`Self::iter()`] except it returns a direct copy of the keys values instead of references
 <a href=#275 id=275 data-nosnippet>275</a>    /// to `K::ULE` and `V::ULE`, in cases when `K` and `V` are fixed-size
-<a href=#276 id=276 data-nosnippet>276</a>    </span><span class="kw">pub fn </span>iter_copied(<span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (K, V)&gt; + <span class="lifetime">'a </span>{
-<a href=#277 id=277 data-nosnippet>277</a>        <span class="kw">let </span>len = <span class="self">self</span>.keys.zvl_len();
-<a href=#278 id=278 data-nosnippet>278</a>        (<span class="number">0</span>..len).map(<span class="kw">move </span>|idx| {
-<a href=#279 id=279 data-nosnippet>279</a>            (
-<a href=#280 id=280 data-nosnippet>280</a>                <span class="attr">#[expect(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len()
-<a href=#281 id=281 data-nosnippet>281</a>                </span>ZeroSlice::get(<span class="self">self</span>.keys, idx).unwrap(),
-<a href=#282 id=282 data-nosnippet>282</a>                <span class="attr">#[expect(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len() = values.zvl_len()
-<a href=#283 id=283 data-nosnippet>283</a>                </span>ZeroSlice::get(<span class="self">self</span>.values, idx).unwrap(),
-<a href=#284 id=284 data-nosnippet>284</a>            )
-<a href=#285 id=285 data-nosnippet>285</a>        })
-<a href=#286 id=286 data-nosnippet>286</a>    }
-<a href=#287 id=287 data-nosnippet>287</a>}
-<a href=#288 id=288 data-nosnippet>288</a>
-<a href=#289 id=289 data-nosnippet>289</a><span class="comment">// We can't use the default PartialEq because ZeroMap is invariant
-<a href=#290 id=290 data-nosnippet>290</a>// so otherwise rustc will not automatically allow you to compare ZeroMaps
-<a href=#291 id=291 data-nosnippet>291</a>// with different lifetimes
-<a href=#292 id=292 data-nosnippet>292</a></span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>, K, V&gt; PartialEq&lt;ZeroMapBorrowed&lt;<span class="lifetime">'b</span>, K, V&gt;&gt; <span class="kw">for </span>ZeroMapBorrowed&lt;<span class="lifetime">'a</span>, K, V&gt;
-<a href=#293 id=293 data-nosnippet>293</a><span class="kw">where
-<a href=#294 id=294 data-nosnippet>294</a>    </span>K: <span class="kw">for</span>&lt;<span class="lifetime">'c</span>&gt; ZeroMapKV&lt;<span class="lifetime">'c</span>&gt; + <span class="question-mark">?</span>Sized,
-<a href=#295 id=295 data-nosnippet>295</a>    V: <span class="kw">for</span>&lt;<span class="lifetime">'c</span>&gt; ZeroMapKV&lt;<span class="lifetime">'c</span>&gt; + <span class="question-mark">?</span>Sized,
-<a href=#296 id=296 data-nosnippet>296</a>    &lt;K <span class="kw">as </span>ZeroMapKV&lt;<span class="lifetime">'a</span>&gt;&gt;::Slice: PartialEq&lt;&lt;K <span class="kw">as </span>ZeroMapKV&lt;<span class="lifetime">'b</span>&gt;&gt;::Slice&gt;,
-<a href=#297 id=297 data-nosnippet>297</a>    &lt;V <span class="kw">as </span>ZeroMapKV&lt;<span class="lifetime">'a</span>&gt;&gt;::Slice: PartialEq&lt;&lt;V <span class="kw">as </span>ZeroMapKV&lt;<span class="lifetime">'b</span>&gt;&gt;::Slice&gt;,
-<a href=#298 id=298 data-nosnippet>298</a>{
-<a href=#299 id=299 data-nosnippet>299</a>    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>ZeroMapBorrowed&lt;<span class="lifetime">'b</span>, K, V&gt;) -&gt; bool {
-<a href=#300 id=300 data-nosnippet>300</a>        <span class="self">self</span>.keys.eq(other.keys) &amp;&amp; <span class="self">self</span>.values.eq(other.values)
-<a href=#301 id=301 data-nosnippet>301</a>    }
-<a href=#302 id=302 data-nosnippet>302</a>}
-<a href=#303 id=303 data-nosnippet>303</a>
-<a href=#304 id=304 data-nosnippet>304</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; fmt::Debug <span class="kw">for </span>ZeroMapBorrowed&lt;<span class="lifetime">'a</span>, K, V&gt;
-<a href=#305 id=305 data-nosnippet>305</a><span class="kw">where
-<a href=#306 id=306 data-nosnippet>306</a>    </span>K: ZeroMapKV&lt;<span class="lifetime">'a</span>&gt; + <span class="question-mark">?</span>Sized,
-<a href=#307 id=307 data-nosnippet>307</a>    V: ZeroMapKV&lt;<span class="lifetime">'a</span>&gt; + <span class="question-mark">?</span>Sized,
-<a href=#308 id=308 data-nosnippet>308</a>    K::Slice: fmt::Debug,
-<a href=#309 id=309 data-nosnippet>309</a>    V::Slice: fmt::Debug,
-<a href=#310 id=310 data-nosnippet>310</a>{
-<a href=#311 id=311 data-nosnippet>311</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
-<a href=#312 id=312 data-nosnippet>312</a>        f.debug_struct(<span class="string">"ZeroMapBorrowed"</span>)
-<a href=#313 id=313 data-nosnippet>313</a>            .field(<span class="string">"keys"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.keys)
-<a href=#314 id=314 data-nosnippet>314</a>            .field(<span class="string">"values"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.values)
-<a href=#315 id=315 data-nosnippet>315</a>            .finish()
-<a href=#316 id=316 data-nosnippet>316</a>    }
-<a href=#317 id=317 data-nosnippet>317</a>}</code></pre></div></section></main></body></html>
+<a href=#276 id=276 data-nosnippet>276</a>    </span><span class="attr">#[allow(clippy::needless_lifetimes)] </span><span class="comment">// Lifetime is necessary in impl Trait
+<a href=#277 id=277 data-nosnippet>277</a>    </span><span class="kw">pub fn </span>iter_copied(<span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (K, V)&gt; + <span class="lifetime">'a </span>{
+<a href=#278 id=278 data-nosnippet>278</a>        <span class="kw">let </span>len = <span class="self">self</span>.keys.zvl_len();
+<a href=#279 id=279 data-nosnippet>279</a>        (<span class="number">0</span>..len).map(<span class="kw">move </span>|idx| {
+<a href=#280 id=280 data-nosnippet>280</a>            (
+<a href=#281 id=281 data-nosnippet>281</a>                <span class="attr">#[allow(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len()
+<a href=#282 id=282 data-nosnippet>282</a>                </span>ZeroSlice::get(<span class="self">self</span>.keys, idx).unwrap(),
+<a href=#283 id=283 data-nosnippet>283</a>                <span class="attr">#[allow(clippy::unwrap_used)] </span><span class="comment">// idx in 0..keys.zvl_len() = values.zvl_len()
+<a href=#284 id=284 data-nosnippet>284</a>                </span>ZeroSlice::get(<span class="self">self</span>.values, idx).unwrap(),
+<a href=#285 id=285 data-nosnippet>285</a>            )
+<a href=#286 id=286 data-nosnippet>286</a>        })
+<a href=#287 id=287 data-nosnippet>287</a>    }
+<a href=#288 id=288 data-nosnippet>288</a>}
+<a href=#289 id=289 data-nosnippet>289</a>
+<a href=#290 id=290 data-nosnippet>290</a><span class="comment">// We can't use the default PartialEq because ZeroMap is invariant
+<a href=#291 id=291 data-nosnippet>291</a>// so otherwise rustc will not automatically allow you to compare ZeroMaps
+<a href=#292 id=292 data-nosnippet>292</a>// with different lifetimes
+<a href=#293 id=293 data-nosnippet>293</a></span><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'b</span>, K, V&gt; PartialEq&lt;ZeroMapBorrowed&lt;<span class="lifetime">'b</span>, K, V&gt;&gt; <span class="kw">for </span>ZeroMapBorrowed&lt;<span class="lifetime">'a</span>, K, V&gt;
+<a href=#294 id=294 data-nosnippet>294</a><span class="kw">where
+<a href=#295 id=295 data-nosnippet>295</a>    </span>K: <span class="kw">for</span>&lt;<span class="lifetime">'c</span>&gt; ZeroMapKV&lt;<span class="lifetime">'c</span>&gt; + <span class="question-mark">?</span>Sized,
+<a href=#296 id=296 data-nosnippet>296</a>    V: <span class="kw">for</span>&lt;<span class="lifetime">'c</span>&gt; ZeroMapKV&lt;<span class="lifetime">'c</span>&gt; + <span class="question-mark">?</span>Sized,
+<a href=#297 id=297 data-nosnippet>297</a>    &lt;K <span class="kw">as </span>ZeroMapKV&lt;<span class="lifetime">'a</span>&gt;&gt;::Slice: PartialEq&lt;&lt;K <span class="kw">as </span>ZeroMapKV&lt;<span class="lifetime">'b</span>&gt;&gt;::Slice&gt;,
+<a href=#298 id=298 data-nosnippet>298</a>    &lt;V <span class="kw">as </span>ZeroMapKV&lt;<span class="lifetime">'a</span>&gt;&gt;::Slice: PartialEq&lt;&lt;V <span class="kw">as </span>ZeroMapKV&lt;<span class="lifetime">'b</span>&gt;&gt;::Slice&gt;,
+<a href=#299 id=299 data-nosnippet>299</a>{
+<a href=#300 id=300 data-nosnippet>300</a>    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>ZeroMapBorrowed&lt;<span class="lifetime">'b</span>, K, V&gt;) -&gt; bool {
+<a href=#301 id=301 data-nosnippet>301</a>        <span class="self">self</span>.keys.eq(other.keys) &amp;&amp; <span class="self">self</span>.values.eq(other.values)
+<a href=#302 id=302 data-nosnippet>302</a>    }
+<a href=#303 id=303 data-nosnippet>303</a>}
+<a href=#304 id=304 data-nosnippet>304</a>
+<a href=#305 id=305 data-nosnippet>305</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, K, V&gt; fmt::Debug <span class="kw">for </span>ZeroMapBorrowed&lt;<span class="lifetime">'a</span>, K, V&gt;
+<a href=#306 id=306 data-nosnippet>306</a><span class="kw">where
+<a href=#307 id=307 data-nosnippet>307</a>    </span>K: ZeroMapKV&lt;<span class="lifetime">'a</span>&gt; + <span class="question-mark">?</span>Sized,
+<a href=#308 id=308 data-nosnippet>308</a>    V: ZeroMapKV&lt;<span class="lifetime">'a</span>&gt; + <span class="question-mark">?</span>Sized,
+<a href=#309 id=309 data-nosnippet>309</a>    K::Slice: fmt::Debug,
+<a href=#310 id=310 data-nosnippet>310</a>    V::Slice: fmt::Debug,
+<a href=#311 id=311 data-nosnippet>311</a>{
+<a href=#312 id=312 data-nosnippet>312</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
+<a href=#313 id=313 data-nosnippet>313</a>        f.debug_struct(<span class="string">"ZeroMapBorrowed"</span>)
+<a href=#314 id=314 data-nosnippet>314</a>            .field(<span class="string">"keys"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.keys)
+<a href=#315 id=315 data-nosnippet>315</a>            .field(<span class="string">"values"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.values)
+<a href=#316 id=316 data-nosnippet>316</a>            .finish()
+<a href=#317 id=317 data-nosnippet>317</a>    }
+<a href=#318 id=318 data-nosnippet>318</a>}</code></pre></div></section></main></body></html>

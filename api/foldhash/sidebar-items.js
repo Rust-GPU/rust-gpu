@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["fast","quality"],"struct":["SharedSeed"]};
+window.SIDEBAR_ITEMS = {"mod":["fast","quality"]};

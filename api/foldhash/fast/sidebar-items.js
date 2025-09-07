@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["FixedState","FoldHasher","RandomState","SeedableRandomState"]};
+window.SIDEBAR_ITEMS = {"struct":["FixedState","FoldHasher","RandomState"]};

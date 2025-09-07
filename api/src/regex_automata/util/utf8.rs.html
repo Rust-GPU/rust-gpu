@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.10/src/util/utf8.rs`."><title>utf8.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/util/</div>utf8.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.9/src/util/utf8.rs`."><title>utf8.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/util/</div>utf8.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/*!
 <a href=#2 id=2 data-nosnippet>2</a>Utilities for dealing with UTF-8.
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a>This module provides some UTF-8 related helper routines, including an
@@ -99,93 +99,98 @@
 <a href=#99 id=99 data-nosnippet>99</a>/// `None`.
 <a href=#100 id=100 data-nosnippet>100</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
 <a href=#101 id=101 data-nosnippet>101</a></span><span class="kw">fn </span>len(byte: u8) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
-<a href=#102 id=102 data-nosnippet>102</a>    <span class="kw">match </span>byte {
-<a href=#103 id=103 data-nosnippet>103</a>        <span class="number">0b0000_0000</span>..=<span class="number">0b0111_1111 </span>=&gt; <span class="prelude-val">Some</span>(<span class="number">1</span>),
-<a href=#104 id=104 data-nosnippet>104</a>        <span class="number">0b1000_0000</span>..=<span class="number">0b1011_1111 </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#105 id=105 data-nosnippet>105</a>        <span class="number">0b1100_0000</span>..=<span class="number">0b1101_1111 </span>=&gt; <span class="prelude-val">Some</span>(<span class="number">2</span>),
-<a href=#106 id=106 data-nosnippet>106</a>        <span class="number">0b1110_0000</span>..=<span class="number">0b1110_1111 </span>=&gt; <span class="prelude-val">Some</span>(<span class="number">3</span>),
-<a href=#107 id=107 data-nosnippet>107</a>        <span class="number">0b1111_0000</span>..=<span class="number">0b1111_0111 </span>=&gt; <span class="prelude-val">Some</span>(<span class="number">4</span>),
-<a href=#108 id=108 data-nosnippet>108</a>        <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#109 id=109 data-nosnippet>109</a>    }
-<a href=#110 id=110 data-nosnippet>110</a>}
-<a href=#111 id=111 data-nosnippet>111</a>
-<a href=#112 id=112 data-nosnippet>112</a><span class="doccomment">/// Returns true if and only if the given offset in the given bytes falls on a
-<a href=#113 id=113 data-nosnippet>113</a>/// valid UTF-8 encoded codepoint boundary.
-<a href=#114 id=114 data-nosnippet>114</a>///
-<a href=#115 id=115 data-nosnippet>115</a>/// If `bytes` is not valid UTF-8, then the behavior of this routine is
-<a href=#116 id=116 data-nosnippet>116</a>/// unspecified.
-<a href=#117 id=117 data-nosnippet>117</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
-<a href=#118 id=118 data-nosnippet>118</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_boundary(bytes: <span class="kw-2">&amp;</span>[u8], i: usize) -&gt; bool {
-<a href=#119 id=119 data-nosnippet>119</a>    <span class="kw">match </span>bytes.get(i) {
-<a href=#120 id=120 data-nosnippet>120</a>        <span class="comment">// The position at the end of the bytes always represents an empty
-<a href=#121 id=121 data-nosnippet>121</a>        // string, which is a valid boundary. But anything after that doesn't
-<a href=#122 id=122 data-nosnippet>122</a>        // make much sense to call valid a boundary.
-<a href=#123 id=123 data-nosnippet>123</a>        </span><span class="prelude-val">None </span>=&gt; i == bytes.len(),
-<a href=#124 id=124 data-nosnippet>124</a>        <span class="comment">// Other than ASCII (where the most significant bit is never set),
-<a href=#125 id=125 data-nosnippet>125</a>        // valid starting bytes always have their most significant two bits
-<a href=#126 id=126 data-nosnippet>126</a>        // set, where as continuation bytes never have their second most
-<a href=#127 id=127 data-nosnippet>127</a>        // significant bit set. Therefore, this only returns true when bytes[i]
-<a href=#128 id=128 data-nosnippet>128</a>        // corresponds to a byte that begins a valid UTF-8 encoding of a
-<a href=#129 id=129 data-nosnippet>129</a>        // Unicode scalar value.
-<a href=#130 id=130 data-nosnippet>130</a>        </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>b) =&gt; b &lt;= <span class="number">0b0111_1111 </span>|| b &gt;= <span class="number">0b1100_0000</span>,
-<a href=#131 id=131 data-nosnippet>131</a>    }
-<a href=#132 id=132 data-nosnippet>132</a>}
-<a href=#133 id=133 data-nosnippet>133</a>
-<a href=#134 id=134 data-nosnippet>134</a><span class="doccomment">/// Returns true if and only if the given byte is either a valid leading UTF-8
-<a href=#135 id=135 data-nosnippet>135</a>/// byte, or is otherwise an invalid byte that can never appear anywhere in a
-<a href=#136 id=136 data-nosnippet>136</a>/// valid UTF-8 sequence.
-<a href=#137 id=137 data-nosnippet>137</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
-<a href=#138 id=138 data-nosnippet>138</a></span><span class="kw">fn </span>is_leading_or_invalid_byte(b: u8) -&gt; bool {
-<a href=#139 id=139 data-nosnippet>139</a>    <span class="comment">// In the ASCII case, the most significant bit is never set. The leading
-<a href=#140 id=140 data-nosnippet>140</a>    // byte of a 2/3/4-byte sequence always has the top two most significant
-<a href=#141 id=141 data-nosnippet>141</a>    // bits set. For bytes that can never appear anywhere in valid UTF-8, this
-<a href=#142 id=142 data-nosnippet>142</a>    // also returns true, since every such byte has its two most significant
-<a href=#143 id=143 data-nosnippet>143</a>    // bits set:
-<a href=#144 id=144 data-nosnippet>144</a>    //
-<a href=#145 id=145 data-nosnippet>145</a>    //     \xC0 :: 11000000
-<a href=#146 id=146 data-nosnippet>146</a>    //     \xC1 :: 11000001
-<a href=#147 id=147 data-nosnippet>147</a>    //     \xF5 :: 11110101
-<a href=#148 id=148 data-nosnippet>148</a>    //     \xF6 :: 11110110
-<a href=#149 id=149 data-nosnippet>149</a>    //     \xF7 :: 11110111
-<a href=#150 id=150 data-nosnippet>150</a>    //     \xF8 :: 11111000
-<a href=#151 id=151 data-nosnippet>151</a>    //     \xF9 :: 11111001
-<a href=#152 id=152 data-nosnippet>152</a>    //     \xFA :: 11111010
-<a href=#153 id=153 data-nosnippet>153</a>    //     \xFB :: 11111011
-<a href=#154 id=154 data-nosnippet>154</a>    //     \xFC :: 11111100
-<a href=#155 id=155 data-nosnippet>155</a>    //     \xFD :: 11111101
-<a href=#156 id=156 data-nosnippet>156</a>    //     \xFE :: 11111110
-<a href=#157 id=157 data-nosnippet>157</a>    //     \xFF :: 11111111
-<a href=#158 id=158 data-nosnippet>158</a>    </span>(b &amp; <span class="number">0b1100_0000</span>) != <span class="number">0b1000_0000
-<a href=#159 id=159 data-nosnippet>159</a></span>}
-<a href=#160 id=160 data-nosnippet>160</a>
-<a href=#161 id=161 data-nosnippet>161</a><span class="comment">/*
-<a href=#162 id=162 data-nosnippet>162</a>/// Returns the smallest possible index of the next valid UTF-8 sequence
-<a href=#163 id=163 data-nosnippet>163</a>/// starting after `i`.
-<a href=#164 id=164 data-nosnippet>164</a>///
-<a href=#165 id=165 data-nosnippet>165</a>/// For all inputs, including invalid UTF-8 and any value of `i`, the return
-<a href=#166 id=166 data-nosnippet>166</a>/// value is guaranteed to be greater than `i`. (If there is no value greater
-<a href=#167 id=167 data-nosnippet>167</a>/// than `i` that fits in `usize`, then this panics.)
-<a href=#168 id=168 data-nosnippet>168</a>///
-<a href=#169 id=169 data-nosnippet>169</a>/// Generally speaking, this should only be called on `text` when it is
-<a href=#170 id=170 data-nosnippet>170</a>/// permitted to assume that it is valid UTF-8 and where either `i &gt;=
-<a href=#171 id=171 data-nosnippet>171</a>/// text.len()` or where `text[i]` is a leading byte of a UTF-8 sequence.
-<a href=#172 id=172 data-nosnippet>172</a>///
-<a href=#173 id=173 data-nosnippet>173</a>/// NOTE: This method was used in a previous conception of iterators where we
-<a href=#174 id=174 data-nosnippet>174</a>/// specifically tried to skip over empty matches that split a codepoint by
-<a href=#175 id=175 data-nosnippet>175</a>/// simply requiring that our next search begin at the beginning of codepoint.
-<a href=#176 id=176 data-nosnippet>176</a>/// But we ended up changing that technique to always advance by 1 byte and
-<a href=#177 id=177 data-nosnippet>177</a>/// then filter out matches that split a codepoint after-the-fact. Thus, we no
-<a href=#178 id=178 data-nosnippet>178</a>/// longer use this method. But I've kept it around in case we want to switch
-<a href=#179 id=179 data-nosnippet>179</a>/// back to this approach. Its guarantees are a little subtle, so I'd prefer
-<a href=#180 id=180 data-nosnippet>180</a>/// not to rebuild it from whole cloth.
-<a href=#181 id=181 data-nosnippet>181</a>pub(crate) fn next(text: &amp;[u8], i: usize) -&gt; usize {
-<a href=#182 id=182 data-nosnippet>182</a>    let b = match text.get(i) {
-<a href=#183 id=183 data-nosnippet>183</a>        None =&gt; return i.checked_add(1).unwrap(),
-<a href=#184 id=184 data-nosnippet>184</a>        Some(&amp;b) =&gt; b,
-<a href=#185 id=185 data-nosnippet>185</a>    };
-<a href=#186 id=186 data-nosnippet>186</a>    // For cases where we see an invalid UTF-8 byte, there isn't much we can do
-<a href=#187 id=187 data-nosnippet>187</a>    // other than just start at the next byte.
-<a href=#188 id=188 data-nosnippet>188</a>    let inc = len(b).unwrap_or(1);
-<a href=#189 id=189 data-nosnippet>189</a>    i.checked_add(inc).unwrap()
-<a href=#190 id=190 data-nosnippet>190</a>}
-<a href=#191 id=191 data-nosnippet>191</a>*/</span></code></pre></div></section></main></body></html>
+<a href=#102 id=102 data-nosnippet>102</a>    <span class="kw">if </span>byte &lt;= <span class="number">0x7F </span>{
+<a href=#103 id=103 data-nosnippet>103</a>        <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="number">1</span>);
+<a href=#104 id=104 data-nosnippet>104</a>    } <span class="kw">else if </span>byte &amp; <span class="number">0b1100_0000 </span>== <span class="number">0b1000_0000 </span>{
+<a href=#105 id=105 data-nosnippet>105</a>        <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#106 id=106 data-nosnippet>106</a>    } <span class="kw">else if </span>byte &lt;= <span class="number">0b1101_1111 </span>{
+<a href=#107 id=107 data-nosnippet>107</a>        <span class="prelude-val">Some</span>(<span class="number">2</span>)
+<a href=#108 id=108 data-nosnippet>108</a>    } <span class="kw">else if </span>byte &lt;= <span class="number">0b1110_1111 </span>{
+<a href=#109 id=109 data-nosnippet>109</a>        <span class="prelude-val">Some</span>(<span class="number">3</span>)
+<a href=#110 id=110 data-nosnippet>110</a>    } <span class="kw">else if </span>byte &lt;= <span class="number">0b1111_0111 </span>{
+<a href=#111 id=111 data-nosnippet>111</a>        <span class="prelude-val">Some</span>(<span class="number">4</span>)
+<a href=#112 id=112 data-nosnippet>112</a>    } <span class="kw">else </span>{
+<a href=#113 id=113 data-nosnippet>113</a>        <span class="prelude-val">None
+<a href=#114 id=114 data-nosnippet>114</a>    </span>}
+<a href=#115 id=115 data-nosnippet>115</a>}
+<a href=#116 id=116 data-nosnippet>116</a>
+<a href=#117 id=117 data-nosnippet>117</a><span class="doccomment">/// Returns true if and only if the given offset in the given bytes falls on a
+<a href=#118 id=118 data-nosnippet>118</a>/// valid UTF-8 encoded codepoint boundary.
+<a href=#119 id=119 data-nosnippet>119</a>///
+<a href=#120 id=120 data-nosnippet>120</a>/// If `bytes` is not valid UTF-8, then the behavior of this routine is
+<a href=#121 id=121 data-nosnippet>121</a>/// unspecified.
+<a href=#122 id=122 data-nosnippet>122</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+<a href=#123 id=123 data-nosnippet>123</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>is_boundary(bytes: <span class="kw-2">&amp;</span>[u8], i: usize) -&gt; bool {
+<a href=#124 id=124 data-nosnippet>124</a>    <span class="kw">match </span>bytes.get(i) {
+<a href=#125 id=125 data-nosnippet>125</a>        <span class="comment">// The position at the end of the bytes always represents an empty
+<a href=#126 id=126 data-nosnippet>126</a>        // string, which is a valid boundary. But anything after that doesn't
+<a href=#127 id=127 data-nosnippet>127</a>        // make much sense to call valid a boundary.
+<a href=#128 id=128 data-nosnippet>128</a>        </span><span class="prelude-val">None </span>=&gt; i == bytes.len(),
+<a href=#129 id=129 data-nosnippet>129</a>        <span class="comment">// Other than ASCII (where the most significant bit is never set),
+<a href=#130 id=130 data-nosnippet>130</a>        // valid starting bytes always have their most significant two bits
+<a href=#131 id=131 data-nosnippet>131</a>        // set, where as continuation bytes never have their second most
+<a href=#132 id=132 data-nosnippet>132</a>        // significant bit set. Therefore, this only returns true when bytes[i]
+<a href=#133 id=133 data-nosnippet>133</a>        // corresponds to a byte that begins a valid UTF-8 encoding of a
+<a href=#134 id=134 data-nosnippet>134</a>        // Unicode scalar value.
+<a href=#135 id=135 data-nosnippet>135</a>        </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>b) =&gt; b &lt;= <span class="number">0b0111_1111 </span>|| b &gt;= <span class="number">0b1100_0000</span>,
+<a href=#136 id=136 data-nosnippet>136</a>    }
+<a href=#137 id=137 data-nosnippet>137</a>}
+<a href=#138 id=138 data-nosnippet>138</a>
+<a href=#139 id=139 data-nosnippet>139</a><span class="doccomment">/// Returns true if and only if the given byte is either a valid leading UTF-8
+<a href=#140 id=140 data-nosnippet>140</a>/// byte, or is otherwise an invalid byte that can never appear anywhere in a
+<a href=#141 id=141 data-nosnippet>141</a>/// valid UTF-8 sequence.
+<a href=#142 id=142 data-nosnippet>142</a></span><span class="attr">#[cfg_attr(feature = <span class="string">"perf-inline"</span>, inline(always))]
+<a href=#143 id=143 data-nosnippet>143</a></span><span class="kw">fn </span>is_leading_or_invalid_byte(b: u8) -&gt; bool {
+<a href=#144 id=144 data-nosnippet>144</a>    <span class="comment">// In the ASCII case, the most significant bit is never set. The leading
+<a href=#145 id=145 data-nosnippet>145</a>    // byte of a 2/3/4-byte sequence always has the top two most significant
+<a href=#146 id=146 data-nosnippet>146</a>    // bits set. For bytes that can never appear anywhere in valid UTF-8, this
+<a href=#147 id=147 data-nosnippet>147</a>    // also returns true, since every such byte has its two most significant
+<a href=#148 id=148 data-nosnippet>148</a>    // bits set:
+<a href=#149 id=149 data-nosnippet>149</a>    //
+<a href=#150 id=150 data-nosnippet>150</a>    //     \xC0 :: 11000000
+<a href=#151 id=151 data-nosnippet>151</a>    //     \xC1 :: 11000001
+<a href=#152 id=152 data-nosnippet>152</a>    //     \xF5 :: 11110101
+<a href=#153 id=153 data-nosnippet>153</a>    //     \xF6 :: 11110110
+<a href=#154 id=154 data-nosnippet>154</a>    //     \xF7 :: 11110111
+<a href=#155 id=155 data-nosnippet>155</a>    //     \xF8 :: 11111000
+<a href=#156 id=156 data-nosnippet>156</a>    //     \xF9 :: 11111001
+<a href=#157 id=157 data-nosnippet>157</a>    //     \xFA :: 11111010
+<a href=#158 id=158 data-nosnippet>158</a>    //     \xFB :: 11111011
+<a href=#159 id=159 data-nosnippet>159</a>    //     \xFC :: 11111100
+<a href=#160 id=160 data-nosnippet>160</a>    //     \xFD :: 11111101
+<a href=#161 id=161 data-nosnippet>161</a>    //     \xFE :: 11111110
+<a href=#162 id=162 data-nosnippet>162</a>    //     \xFF :: 11111111
+<a href=#163 id=163 data-nosnippet>163</a>    </span>(b &amp; <span class="number">0b1100_0000</span>) != <span class="number">0b1000_0000
+<a href=#164 id=164 data-nosnippet>164</a></span>}
+<a href=#165 id=165 data-nosnippet>165</a>
+<a href=#166 id=166 data-nosnippet>166</a><span class="comment">/*
+<a href=#167 id=167 data-nosnippet>167</a>/// Returns the smallest possible index of the next valid UTF-8 sequence
+<a href=#168 id=168 data-nosnippet>168</a>/// starting after `i`.
+<a href=#169 id=169 data-nosnippet>169</a>///
+<a href=#170 id=170 data-nosnippet>170</a>/// For all inputs, including invalid UTF-8 and any value of `i`, the return
+<a href=#171 id=171 data-nosnippet>171</a>/// value is guaranteed to be greater than `i`. (If there is no value greater
+<a href=#172 id=172 data-nosnippet>172</a>/// than `i` that fits in `usize`, then this panics.)
+<a href=#173 id=173 data-nosnippet>173</a>///
+<a href=#174 id=174 data-nosnippet>174</a>/// Generally speaking, this should only be called on `text` when it is
+<a href=#175 id=175 data-nosnippet>175</a>/// permitted to assume that it is valid UTF-8 and where either `i &gt;=
+<a href=#176 id=176 data-nosnippet>176</a>/// text.len()` or where `text[i]` is a leading byte of a UTF-8 sequence.
+<a href=#177 id=177 data-nosnippet>177</a>///
+<a href=#178 id=178 data-nosnippet>178</a>/// NOTE: This method was used in a previous conception of iterators where we
+<a href=#179 id=179 data-nosnippet>179</a>/// specifically tried to skip over empty matches that split a codepoint by
+<a href=#180 id=180 data-nosnippet>180</a>/// simply requiring that our next search begin at the beginning of codepoint.
+<a href=#181 id=181 data-nosnippet>181</a>/// But we ended up changing that technique to always advance by 1 byte and
+<a href=#182 id=182 data-nosnippet>182</a>/// then filter out matches that split a codepoint after-the-fact. Thus, we no
+<a href=#183 id=183 data-nosnippet>183</a>/// longer use this method. But I've kept it around in case we want to switch
+<a href=#184 id=184 data-nosnippet>184</a>/// back to this approach. Its guarantees are a little subtle, so I'd prefer
+<a href=#185 id=185 data-nosnippet>185</a>/// not to rebuild it from whole cloth.
+<a href=#186 id=186 data-nosnippet>186</a>pub(crate) fn next(text: &amp;[u8], i: usize) -&gt; usize {
+<a href=#187 id=187 data-nosnippet>187</a>    let b = match text.get(i) {
+<a href=#188 id=188 data-nosnippet>188</a>        None =&gt; return i.checked_add(1).unwrap(),
+<a href=#189 id=189 data-nosnippet>189</a>        Some(&amp;b) =&gt; b,
+<a href=#190 id=190 data-nosnippet>190</a>    };
+<a href=#191 id=191 data-nosnippet>191</a>    // For cases where we see an invalid UTF-8 byte, there isn't much we can do
+<a href=#192 id=192 data-nosnippet>192</a>    // other than just start at the next byte.
+<a href=#193 id=193 data-nosnippet>193</a>    let inc = len(b).unwrap_or(1);
+<a href=#194 id=194 data-nosnippet>194</a>    i.checked_add(inc).unwrap()
+<a href=#195 id=195 data-nosnippet>195</a>}
+<a href=#196 id=196 data-nosnippet>196</a>*/</span></code></pre></div></section></main></body></html>

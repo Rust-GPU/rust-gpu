@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-1.11.2/src/regex/bytes.rs`."><title>bytes.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex/regex/</div>bytes.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::{borrow::Cow, string::String, sync::Arc, vec::Vec};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-1.11.1/src/regex/bytes.rs`."><title>bytes.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="regex" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex/regex/</div>bytes.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>alloc::{borrow::Cow, string::String, sync::Arc, vec::Vec};
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>regex_automata::{meta, util::captures, Input, PatternID};
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -336,7 +336,7 @@
 <a href=#336 id=336 data-nosnippet>336</a>    /// The `0`th capture group is always unnamed, so it must always be
 <a href=#337 id=337 data-nosnippet>337</a>    /// accessed with `get(0)` or `[0]`.
 <a href=#338 id=338 data-nosnippet>338</a>    ///
-<a href=#339 id=339 data-nosnippet>339</a>    /// Finally, one other way to get the matched substrings is with the
+<a href=#339 id=339 data-nosnippet>339</a>    /// Finally, one other way to to get the matched substrings is with the
 <a href=#340 id=340 data-nosnippet>340</a>    /// [`Captures::extract`] API:
 <a href=#341 id=341 data-nosnippet>341</a>    ///
 <a href=#342 id=342 data-nosnippet>342</a>    /// ```
@@ -982,7 +982,7 @@
 <a href=#982 id=982 data-nosnippet>982</a>    <span class="doccomment">/// Returns the end byte offset of the first match in the haystack given.
 <a href=#983 id=983 data-nosnippet>983</a>    ///
 <a href=#984 id=984 data-nosnippet>984</a>    /// This method may have the same performance characteristics as
-<a href=#985 id=985 data-nosnippet>985</a>    /// `is_match`. Behaviorally, it doesn't just report whether it match
+<a href=#985 id=985 data-nosnippet>985</a>    /// `is_match`. Behaviorlly, it doesn't just report whether it match
 <a href=#986 id=986 data-nosnippet>986</a>    /// occurs, but also the end offset for a match. In particular, the offset
 <a href=#987 id=987 data-nosnippet>987</a>    /// returned *may be shorter* than the proper end of the leftmost-first
 <a href=#988 id=988 data-nosnippet>988</a>    /// match that you would find via [`Regex::find`].
@@ -1733,7 +1733,7 @@
 <a href=#1733 id=1733 data-nosnippet>1733</a>    /// use regex::bytes::Regex;
 <a href=#1734 id=1734 data-nosnippet>1734</a>    ///
 <a href=#1735 id=1735 data-nosnippet>1735</a>    /// let re = Regex::new(r"([0-9]{4})-([0-9]{2})-([0-9]{2})").unwrap();
-<a href=#1736 id=1736 data-nosnippet>1736</a>    /// let hay = b"On 2010-03-14, I became a Tennessee lamb.";
+<a href=#1736 id=1736 data-nosnippet>1736</a>    /// let hay = b"On 2010-03-14, I became a Tenneessee lamb.";
 <a href=#1737 id=1737 data-nosnippet>1737</a>    /// let Some((full, [year, month, day])) =
 <a href=#1738 id=1738 data-nosnippet>1738</a>    ///     re.captures(hay).map(|caps| caps.extract()) else { return };
 <a href=#1739 id=1739 data-nosnippet>1739</a>    /// assert_eq!(b"2010-03-14", full);
@@ -1787,7 +1787,7 @@
 <a href=#1787 id=1787 data-nosnippet>1787</a>            .expect(<span class="string">"number of capture groups can vary in a match"</span>)
 <a href=#1788 id=1788 data-nosnippet>1788</a>            .checked_sub(<span class="number">1</span>)
 <a href=#1789 id=1789 data-nosnippet>1789</a>            .expect(<span class="string">"number of groups is always greater than zero"</span>);
-<a href=#1790 id=1790 data-nosnippet>1790</a>        <span class="macro">assert_eq!</span>(N, len, <span class="string">"asked for {N} groups, but must ask for {len}"</span>);
+<a href=#1790 id=1790 data-nosnippet>1790</a>        <span class="macro">assert_eq!</span>(N, len, <span class="string">"asked for {} groups, but must ask for {}"</span>, N, len);
 <a href=#1791 id=1791 data-nosnippet>1791</a>        <span class="comment">// The regex-automata variant of extract is a bit more permissive.
 <a href=#1792 id=1792 data-nosnippet>1792</a>        // It doesn't require the number of matching capturing groups to be
 <a href=#1793 id=1793 data-nosnippet>1793</a>        // static, and you can even request fewer groups than what's there. So
@@ -1842,7 +1842,7 @@
 <a href=#1842 id=1842 data-nosnippet>1842</a>    /// let re = Regex::new(
 <a href=#1843 id=1843 data-nosnippet>1843</a>    ///     r"(?&lt;day&gt;[0-9]{2})-(?&lt;month&gt;[0-9]{2})-(?&lt;year&gt;[0-9]{4})",
 <a href=#1844 id=1844 data-nosnippet>1844</a>    /// ).unwrap();
-<a href=#1845 id=1845 data-nosnippet>1845</a>    /// let hay = b"On 14-03-2010, I became a Tennessee lamb.";
+<a href=#1845 id=1845 data-nosnippet>1845</a>    /// let hay = b"On 14-03-2010, I became a Tenneessee lamb.";
 <a href=#1846 id=1846 data-nosnippet>1846</a>    /// let caps = re.captures(hay).unwrap();
 <a href=#1847 id=1847 data-nosnippet>1847</a>    ///
 <a href=#1848 id=1848 data-nosnippet>1848</a>    /// let mut dst = vec![];
@@ -1942,7 +1942,7 @@
 <a href=#1942 id=1942 data-nosnippet>1942</a>            <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter) -&gt; core::fmt::Result {
 <a href=#1943 id=1943 data-nosnippet>1943</a>                <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
 <a href=#1944 id=1944 data-nosnippet>1944</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(name) = <span class="self">self</span>.<span class="number">1 </span>{
-<a href=#1945 id=1945 data-nosnippet>1945</a>                    <span class="macro">write!</span>(f, <span class="string">"/{name:?}"</span>)<span class="question-mark">?</span>;
+<a href=#1945 id=1945 data-nosnippet>1945</a>                    <span class="macro">write!</span>(f, <span class="string">"/{:?}"</span>, name)<span class="question-mark">?</span>;
 <a href=#1946 id=1946 data-nosnippet>1946</a>                }
 <a href=#1947 id=1947 data-nosnippet>1947</a>                <span class="prelude-val">Ok</span>(())
 <a href=#1948 id=1948 data-nosnippet>1948</a>            }
@@ -2606,7 +2606,7 @@
 <a href=#2606 id=2606 data-nosnippet>2606</a>/// no `$` anywhere, then interpolation definitely does not need to be done. In
 <a href=#2607 id=2607 data-nosnippet>2607</a>/// that case, the given string is returned as a borrowed `Cow`.
 <a href=#2608 id=2608 data-nosnippet>2608</a>///
-<a href=#2609 id=2609 data-nosnippet>2609</a>/// This is meant to be used to implement the `Replacer::no_expansion` method
+<a href=#2609 id=2609 data-nosnippet>2609</a>/// This is meant to be used to implement the `Replacer::no_expandsion` method
 <a href=#2610 id=2610 data-nosnippet>2610</a>/// in its various trait impls.
 <a href=#2611 id=2611 data-nosnippet>2611</a></span><span class="kw">fn </span>no_expansion&lt;T: AsRef&lt;[u8]&gt;&gt;(replacement: <span class="kw-2">&amp;</span>T) -&gt; <span class="prelude-ty">Option</span>&lt;Cow&lt;<span class="lifetime">'_</span>, [u8]&gt;&gt; {
 <a href=#2612 id=2612 data-nosnippet>2612</a>    <span class="kw">let </span>replacement = replacement.as_ref();
@@ -2646,7 +2646,7 @@
 <a href=#2646 id=2646 data-nosnippet>2646</a>    </span><span class="kw">fn </span>test_debug_output_valid_utf8() {
 <a href=#2647 id=2647 data-nosnippet>2647</a>        <span class="kw">let </span>haystack = <span class="string">b"Hello, world!"</span>;
 <a href=#2648 id=2648 data-nosnippet>2648</a>        <span class="kw">let </span>m = Match::new(haystack, <span class="number">7</span>, <span class="number">12</span>);
-<a href=#2649 id=2649 data-nosnippet>2649</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{m:?}"</span>);
+<a href=#2649 id=2649 data-nosnippet>2649</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, m);
 <a href=#2650 id=2650 data-nosnippet>2650</a>
 <a href=#2651 id=2651 data-nosnippet>2651</a>        <span class="macro">assert_eq!</span>(
 <a href=#2652 id=2652 data-nosnippet>2652</a>            debug_str,
@@ -2658,7 +2658,7 @@
 <a href=#2658 id=2658 data-nosnippet>2658</a>    </span><span class="kw">fn </span>test_debug_output_invalid_utf8() {
 <a href=#2659 id=2659 data-nosnippet>2659</a>        <span class="kw">let </span>haystack = <span class="string">b"Hello, \xFFworld!"</span>;
 <a href=#2660 id=2660 data-nosnippet>2660</a>        <span class="kw">let </span>m = Match::new(haystack, <span class="number">7</span>, <span class="number">13</span>);
-<a href=#2661 id=2661 data-nosnippet>2661</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{m:?}"</span>);
+<a href=#2661 id=2661 data-nosnippet>2661</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, m);
 <a href=#2662 id=2662 data-nosnippet>2662</a>
 <a href=#2663 id=2663 data-nosnippet>2663</a>        <span class="macro">assert_eq!</span>(
 <a href=#2664 id=2664 data-nosnippet>2664</a>            debug_str,
@@ -2671,7 +2671,7 @@
 <a href=#2671 id=2671 data-nosnippet>2671</a>        <span class="kw">let </span>haystack =
 <a href=#2672 id=2672 data-nosnippet>2672</a>            <span class="string">"Hello, 😊 world! 안녕하세요? مرحبا بالعالم!"</span>.as_bytes();
 <a href=#2673 id=2673 data-nosnippet>2673</a>        <span class="kw">let </span>m = Match::new(haystack, <span class="number">0</span>, haystack.len());
-<a href=#2674 id=2674 data-nosnippet>2674</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{m:?}"</span>);
+<a href=#2674 id=2674 data-nosnippet>2674</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, m);
 <a href=#2675 id=2675 data-nosnippet>2675</a>
 <a href=#2676 id=2676 data-nosnippet>2676</a>        <span class="macro">assert_eq!</span>(
 <a href=#2677 id=2677 data-nosnippet>2677</a>            debug_str,
@@ -2683,7 +2683,7 @@
 <a href=#2683 id=2683 data-nosnippet>2683</a>    </span><span class="kw">fn </span>test_debug_output_ascii_escape() {
 <a href=#2684 id=2684 data-nosnippet>2684</a>        <span class="kw">let </span>haystack = <span class="string">b"Hello,\tworld!\nThis is a \x1b[31mtest\x1b[0m."</span>;
 <a href=#2685 id=2685 data-nosnippet>2685</a>        <span class="kw">let </span>m = Match::new(haystack, <span class="number">0</span>, haystack.len());
-<a href=#2686 id=2686 data-nosnippet>2686</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{m:?}"</span>);
+<a href=#2686 id=2686 data-nosnippet>2686</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, m);
 <a href=#2687 id=2687 data-nosnippet>2687</a>
 <a href=#2688 id=2688 data-nosnippet>2688</a>        <span class="macro">assert_eq!</span>(
 <a href=#2689 id=2689 data-nosnippet>2689</a>            debug_str,
@@ -2695,7 +2695,7 @@
 <a href=#2695 id=2695 data-nosnippet>2695</a>    </span><span class="kw">fn </span>test_debug_output_match_in_middle() {
 <a href=#2696 id=2696 data-nosnippet>2696</a>        <span class="kw">let </span>haystack = <span class="string">b"The quick brown fox jumps over the lazy dog."</span>;
 <a href=#2697 id=2697 data-nosnippet>2697</a>        <span class="kw">let </span>m = Match::new(haystack, <span class="number">16</span>, <span class="number">19</span>);
-<a href=#2698 id=2698 data-nosnippet>2698</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{m:?}"</span>);
+<a href=#2698 id=2698 data-nosnippet>2698</a>        <span class="kw">let </span>debug_str = <span class="macro">format!</span>(<span class="string">"{:?}"</span>, m);
 <a href=#2699 id=2699 data-nosnippet>2699</a>
 <a href=#2700 id=2700 data-nosnippet>2700</a>        <span class="macro">assert_eq!</span>(debug_str, <span class="string">r#"Match { start: 16, end: 19, bytes: "fox" }"#</span>);
 <a href=#2701 id=2701 data-nosnippet>2701</a>    }

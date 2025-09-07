@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ConvertError"],"struct":["AlignmentError","AllocError","SizeError","ValidityError"],"type":["AlignedTryCastError","CastError","TryCastError","TryReadError"]};

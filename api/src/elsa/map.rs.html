@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/elsa-1.11.2/src/map.rs`."><title>map.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="elsa" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">elsa/</div>map.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::borrow::Borrow;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/elsa-1.10.0/src/map.rs`."><title>map.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="elsa" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">elsa/</div>map.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::borrow::Borrow;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>std::cell::{Cell, UnsafeCell};
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>std::collections::hash_map::RandomState;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>std::collections::BTreeMap;
@@ -97,10 +97,10 @@
 <a href=#97 id=97 data-nosnippet>97</a>    /// assert_eq!(map.get(&amp;1), Some(&amp;"a"));
 <a href=#98 id=98 data-nosnippet>98</a>    /// assert_eq!(map.get(&amp;2), None);
 <a href=#99 id=99 data-nosnippet>99</a>    /// ```
-<a href=#100 id=100 data-nosnippet>100</a>    </span><span class="kw">pub fn </span>get&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V::Target&gt;
+<a href=#100 id=100 data-nosnippet>100</a>    </span><span class="kw">pub fn </span>get&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V::Target&gt;
 <a href=#101 id=101 data-nosnippet>101</a>    <span class="kw">where
 <a href=#102 id=102 data-nosnippet>102</a>        </span>K: Borrow&lt;Q&gt;,
-<a href=#103 id=103 data-nosnippet>103</a>        Q: Hash + Eq + <span class="question-mark">?</span>Sized,
+<a href=#103 id=103 data-nosnippet>103</a>        Q: Hash + Eq,
 <a href=#104 id=104 data-nosnippet>104</a>    {
 <a href=#105 id=105 data-nosnippet>105</a>        <span class="macro">assert!</span>(!<span class="self">self</span>.in_use.get());
 <a href=#106 id=106 data-nosnippet>106</a>        <span class="self">self</span>.in_use.set(<span class="bool-val">true</span>);
@@ -128,10 +128,10 @@
 <a href=#128 id=128 data-nosnippet>128</a>    /// assert_eq!(map.map_get(&amp;1, Clone::clone), Some(Box::new("a")));
 <a href=#129 id=129 data-nosnippet>129</a>    /// assert_eq!(map.map_get(&amp;2, Clone::clone), None);
 <a href=#130 id=130 data-nosnippet>130</a>    /// ```
-<a href=#131 id=131 data-nosnippet>131</a>    </span><span class="kw">pub fn </span>map_get&lt;Q, T, F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q, f: F) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
+<a href=#131 id=131 data-nosnippet>131</a>    </span><span class="kw">pub fn </span>map_get&lt;Q: <span class="question-mark">?</span>Sized, T, F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q, f: F) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
 <a href=#132 id=132 data-nosnippet>132</a>    <span class="kw">where
 <a href=#133 id=133 data-nosnippet>133</a>        </span>K: Borrow&lt;Q&gt;,
-<a href=#134 id=134 data-nosnippet>134</a>        Q: Hash + Eq + <span class="question-mark">?</span>Sized,
+<a href=#134 id=134 data-nosnippet>134</a>        Q: Hash + Eq,
 <a href=#135 id=135 data-nosnippet>135</a>        F: FnOnce(<span class="kw-2">&amp;</span>V) -&gt; T,
 <a href=#136 id=136 data-nosnippet>136</a>    {
 <a href=#137 id=137 data-nosnippet>137</a>        <span class="macro">assert!</span>(!<span class="self">self</span>.in_use.get());
@@ -192,10 +192,10 @@
 <a href=#192 id=192 data-nosnippet>192</a>    /// assert_eq!(map.get_key_value(&amp;"1"), Some((&amp;"1", &amp;"a")));
 <a href=#193 id=193 data-nosnippet>193</a>    /// assert_eq!(map.get_key_value(&amp;"2"), None);
 <a href=#194 id=194 data-nosnippet>194</a>    /// ```
-<a href=#195 id=195 data-nosnippet>195</a>    </span><span class="kw">pub fn </span>get_key_value&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>K::Target, <span class="kw-2">&amp;</span>V::Target)&gt;
+<a href=#195 id=195 data-nosnippet>195</a>    </span><span class="kw">pub fn </span>get_key_value&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>K::Target, <span class="kw-2">&amp;</span>V::Target)&gt;
 <a href=#196 id=196 data-nosnippet>196</a>    <span class="kw">where
 <a href=#197 id=197 data-nosnippet>197</a>        </span>K: Borrow&lt;Q&gt;,
-<a href=#198 id=198 data-nosnippet>198</a>        Q: Hash + Eq + <span class="question-mark">?</span>Sized,
+<a href=#198 id=198 data-nosnippet>198</a>        Q: Hash + Eq,
 <a href=#199 id=199 data-nosnippet>199</a>    {
 <a href=#200 id=200 data-nosnippet>200</a>        <span class="macro">assert!</span>(!<span class="self">self</span>.in_use.get());
 <a href=#201 id=201 data-nosnippet>201</a>        <span class="self">self</span>.in_use.set(<span class="bool-val">true</span>);
@@ -279,7 +279,7 @@
 <a href=#279 id=279 data-nosnippet>279</a>            in_use: Cell::from(<span class="bool-val">false</span>),
 <a href=#280 id=280 data-nosnippet>280</a>        };
 <a href=#281 id=281 data-nosnippet>281</a>        <span class="self">self</span>.in_use.set(<span class="bool-val">false</span>);
-<a href=#282 id=282 data-nosnippet>282</a>        self_clone
+<a href=#282 id=282 data-nosnippet>282</a>        <span class="kw">return </span>self_clone;
 <a href=#283 id=283 data-nosnippet>283</a>    }
 <a href=#284 id=284 data-nosnippet>284</a>}
 <a href=#285 id=285 data-nosnippet>285</a>
@@ -311,9 +311,9 @@
 <a href=#311 id=311 data-nosnippet>311</a><span class="comment">// safety: UnsafeCell implies !Sync
 <a href=#312 id=312 data-nosnippet>312</a>
 <a href=#313 id=313 data-nosnippet>313</a></span><span class="kw">impl</span>&lt;K: Clone + Ord, V: StableDeref&gt; FrozenBTreeMap&lt;K, V&gt; {
-<a href=#314 id=314 data-nosnippet>314</a>    <span class="kw">pub const fn </span>new() -&gt; <span class="self">Self </span>{
+<a href=#314 id=314 data-nosnippet>314</a>    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
 <a href=#315 id=315 data-nosnippet>315</a>        <span class="self">Self </span>{
-<a href=#316 id=316 data-nosnippet>316</a>            map: UnsafeCell::new(BTreeMap::new()),
+<a href=#316 id=316 data-nosnippet>316</a>            map: UnsafeCell::new(Default::default()),
 <a href=#317 id=317 data-nosnippet>317</a>            in_use: Cell::new(<span class="bool-val">false</span>),
 <a href=#318 id=318 data-nosnippet>318</a>        }
 <a href=#319 id=319 data-nosnippet>319</a>    }
@@ -384,10 +384,10 @@
 <a href=#384 id=384 data-nosnippet>384</a>    /// assert_eq!(map.get(&amp;1), Some(&amp;"a"));
 <a href=#385 id=385 data-nosnippet>385</a>    /// assert_eq!(map.get(&amp;2), None);
 <a href=#386 id=386 data-nosnippet>386</a>    /// ```
-<a href=#387 id=387 data-nosnippet>387</a>    </span><span class="kw">pub fn </span>get&lt;Q&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V::Target&gt;
+<a href=#387 id=387 data-nosnippet>387</a>    </span><span class="kw">pub fn </span>get&lt;Q: <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V::Target&gt;
 <a href=#388 id=388 data-nosnippet>388</a>    <span class="kw">where
 <a href=#389 id=389 data-nosnippet>389</a>        </span>K: Borrow&lt;Q&gt;,
-<a href=#390 id=390 data-nosnippet>390</a>        Q: Ord + <span class="question-mark">?</span>Sized,
+<a href=#390 id=390 data-nosnippet>390</a>        Q: Ord,
 <a href=#391 id=391 data-nosnippet>391</a>    {
 <a href=#392 id=392 data-nosnippet>392</a>        <span class="macro">assert!</span>(!<span class="self">self</span>.in_use.get());
 <a href=#393 id=393 data-nosnippet>393</a>        <span class="self">self</span>.in_use.set(<span class="bool-val">true</span>);
@@ -415,10 +415,10 @@
 <a href=#415 id=415 data-nosnippet>415</a>    /// assert_eq!(map.map_get(&amp;1, Clone::clone), Some(Box::new("a")));
 <a href=#416 id=416 data-nosnippet>416</a>    /// assert_eq!(map.map_get(&amp;2, Clone::clone), None);
 <a href=#417 id=417 data-nosnippet>417</a>    /// ```
-<a href=#418 id=418 data-nosnippet>418</a>    </span><span class="kw">pub fn </span>map_get&lt;Q, T, F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q, f: F) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
+<a href=#418 id=418 data-nosnippet>418</a>    </span><span class="kw">pub fn </span>map_get&lt;Q: <span class="question-mark">?</span>Sized, T, F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>Q, f: F) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;
 <a href=#419 id=419 data-nosnippet>419</a>    <span class="kw">where
 <a href=#420 id=420 data-nosnippet>420</a>        </span>K: Borrow&lt;Q&gt;,
-<a href=#421 id=421 data-nosnippet>421</a>        Q: Ord + <span class="question-mark">?</span>Sized,
+<a href=#421 id=421 data-nosnippet>421</a>        Q: Ord,
 <a href=#422 id=422 data-nosnippet>422</a>        F: FnOnce(<span class="kw-2">&amp;</span>V) -&gt; T,
 <a href=#423 id=423 data-nosnippet>423</a>    {
 <a href=#424 id=424 data-nosnippet>424</a>        <span class="macro">assert!</span>(!<span class="self">self</span>.in_use.get());
@@ -531,7 +531,7 @@
 <a href=#531 id=531 data-nosnippet>531</a>            in_use: Cell::from(<span class="bool-val">false</span>),
 <a href=#532 id=532 data-nosnippet>532</a>        };
 <a href=#533 id=533 data-nosnippet>533</a>        <span class="self">self</span>.in_use.set(<span class="bool-val">false</span>);
-<a href=#534 id=534 data-nosnippet>534</a>        self_clone
+<a href=#534 id=534 data-nosnippet>534</a>        <span class="kw">return </span>self_clone;
 <a href=#535 id=535 data-nosnippet>535</a>    }
 <a href=#536 id=536 data-nosnippet>536</a>}
 <a href=#537 id=537 data-nosnippet>537</a>

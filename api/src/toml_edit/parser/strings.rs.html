@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_edit-0.22.27/src/parser/strings.rs`."><title>strings.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="toml_edit" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">toml_edit/parser/</div>strings.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::borrow::Cow;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_edit-0.22.26/src/parser/strings.rs`."><title>strings.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="toml_edit" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">toml_edit/parser/</div>strings.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::borrow::Cow;
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>std::char;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>std::ops::RangeInclusive;
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -82,7 +82,7 @@
 <a href=#82 id=82 data-nosnippet>82</a>}
 <a href=#83 id=83 data-nosnippet>83</a>
 <a href=#84 id=84 data-nosnippet>84</a><span class="comment">// basic-unescaped = wschar / %x21 / %x23-5B / %x5D-7E / non-ascii
-<a href=#85 id=85 data-nosnippet>85</a></span><span class="kw">const </span>BASIC_UNESCAPED: (
+<a href=#85 id=85 data-nosnippet>85</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>BASIC_UNESCAPED: (
 <a href=#86 id=86 data-nosnippet>86</a>    (u8, u8),
 <a href=#87 id=87 data-nosnippet>87</a>    u8,
 <a href=#88 id=88 data-nosnippet>88</a>    RangeInclusive&lt;u8&gt;,
@@ -96,7 +96,7 @@
 <a href=#96 id=96 data-nosnippet>96</a>}
 <a href=#97 id=97 data-nosnippet>97</a>
 <a href=#98 id=98 data-nosnippet>98</a><span class="comment">// escape = %x5C                    ; \
-<a href=#99 id=99 data-nosnippet>99</a></span><span class="kw">const </span>ESCAPE: u8 = <span class="string">b'\\'</span>;
+<a href=#99 id=99 data-nosnippet>99</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ESCAPE: u8 = <span class="string">b'\\'</span>;
 <a href=#100 id=100 data-nosnippet>100</a>
 <a href=#101 id=101 data-nosnippet>101</a><span class="comment">// escape-seq-char =  %x22         ; "    quotation mark  U+0022
 <a href=#102 id=102 data-nosnippet>102</a>// escape-seq-char =/ %x5C         ; \    reverse solidus U+005C
@@ -135,7 +135,7 @@
 <a href=#135 id=135 data-nosnippet>135</a>    .parse_next(input)
 <a href=#136 id=136 data-nosnippet>136</a>}
 <a href=#137 id=137 data-nosnippet>137</a>
-<a href=#138 id=138 data-nosnippet>138</a><span class="kw">fn </span>hexescape&lt;<span class="kw">const </span>N: usize&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; ModalResult&lt;char&gt; {
+<a href=#138 id=138 data-nosnippet>138</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>hexescape&lt;<span class="kw">const </span>N: usize&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; ModalResult&lt;char&gt; {
 <a href=#139 id=139 data-nosnippet>139</a>    take_while(<span class="number">0</span>..=N, HEXDIG)
 <a href=#140 id=140 data-nosnippet>140</a>        .verify(|b: <span class="kw-2">&amp;</span>[u8]| b.len() == N)
 <a href=#141 id=141 data-nosnippet>141</a>        .map(|b: <span class="kw-2">&amp;</span>[u8]| <span class="kw">unsafe </span>{ from_utf8_unchecked(b, <span class="string">"`is_ascii_digit` filters out on-ASCII"</span>) })
@@ -162,7 +162,7 @@
 <a href=#162 id=162 data-nosnippet>162</a>}
 <a href=#163 id=163 data-nosnippet>163</a>
 <a href=#164 id=164 data-nosnippet>164</a><span class="comment">// ml-basic-string-delim = 3quotation-mark
-<a href=#165 id=165 data-nosnippet>165</a></span><span class="kw">const </span>ML_BASIC_STRING_DELIM: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"\"\"\""</span>;
+<a href=#165 id=165 data-nosnippet>165</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ML_BASIC_STRING_DELIM: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"\"\"\""</span>;
 <a href=#166 id=166 data-nosnippet>166</a>
 <a href=#167 id=167 data-nosnippet>167</a><span class="comment">// ml-basic-body = *mlb-content *( mlb-quotes 1*mlb-content ) [ mlb-quotes ]
 <a href=#168 id=168 data-nosnippet>168</a></span><span class="kw">fn </span>ml_basic_body&lt;<span class="lifetime">'i</span>&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'i</span>&gt;) -&gt; ModalResult&lt;Cow&lt;<span class="lifetime">'i</span>, str&gt;&gt; {
@@ -233,7 +233,7 @@
 <a href=#233 id=233 data-nosnippet>233</a>}
 <a href=#234 id=234 data-nosnippet>234</a>
 <a href=#235 id=235 data-nosnippet>235</a><span class="comment">// mlb-unescaped = wschar / %x21 / %x23-5B / %x5D-7E / non-ascii
-<a href=#236 id=236 data-nosnippet>236</a></span><span class="kw">const </span>MLB_UNESCAPED: (
+<a href=#236 id=236 data-nosnippet>236</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MLB_UNESCAPED: (
 <a href=#237 id=237 data-nosnippet>237</a>    (u8, u8),
 <a href=#238 id=238 data-nosnippet>238</a>    u8,
 <a href=#239 id=239 data-nosnippet>239</a>    RangeInclusive&lt;u8&gt;,
@@ -274,7 +274,7 @@
 <a href=#274 id=274 data-nosnippet>274</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>APOSTROPHE: u8 = <span class="string">b'\''</span>;
 <a href=#275 id=275 data-nosnippet>275</a>
 <a href=#276 id=276 data-nosnippet>276</a><span class="comment">// literal-char = %x09 / %x20-26 / %x28-7E / non-ascii
-<a href=#277 id=277 data-nosnippet>277</a></span><span class="kw">const </span>LITERAL_CHAR: (
+<a href=#277 id=277 data-nosnippet>277</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>LITERAL_CHAR: (
 <a href=#278 id=278 data-nosnippet>278</a>    u8,
 <a href=#279 id=279 data-nosnippet>279</a>    RangeInclusive&lt;u8&gt;,
 <a href=#280 id=280 data-nosnippet>280</a>    RangeInclusive&lt;u8&gt;,
@@ -305,7 +305,7 @@
 <a href=#305 id=305 data-nosnippet>305</a>}
 <a href=#306 id=306 data-nosnippet>306</a>
 <a href=#307 id=307 data-nosnippet>307</a><span class="comment">// ml-literal-string-delim = 3apostrophe
-<a href=#308 id=308 data-nosnippet>308</a></span><span class="kw">const </span>ML_LITERAL_STRING_DELIM: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"'''"</span>;
+<a href=#308 id=308 data-nosnippet>308</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>ML_LITERAL_STRING_DELIM: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"'''"</span>;
 <a href=#309 id=309 data-nosnippet>309</a>
 <a href=#310 id=310 data-nosnippet>310</a><span class="comment">// ml-literal-body = *mll-content *( mll-quotes 1*mll-content ) [ mll-quotes ]
 <a href=#311 id=311 data-nosnippet>311</a></span><span class="kw">fn </span>ml_literal_body&lt;<span class="lifetime">'i</span>&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'i</span>&gt;) -&gt; ModalResult&lt;<span class="kw-2">&amp;</span><span class="lifetime">'i </span>str&gt; {

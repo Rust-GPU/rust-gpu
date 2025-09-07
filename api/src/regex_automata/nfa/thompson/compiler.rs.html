@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.10/src/nfa/thompson/compiler.rs`."><title>compiler.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../../static.files/storage-4e99c027.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/nfa/thompson/</div>compiler.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>core::{borrow::Borrow, cell::RefCell};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/regex-automata-0.4.9/src/nfa/thompson/compiler.rs`."><title>compiler.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="regex_automata" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../../static.files/storage-4e99c027.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">regex_automata/nfa/thompson/</div>compiler.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>core::{borrow::Borrow, cell::RefCell};
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>alloc::{sync::Arc, vec, vec::Vec};
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -230,9 +230,9 @@
 <a href=#230 id=230 data-nosnippet>230</a>    /// # if cfg!(miri) { return Ok(()); } // miri takes too long
 <a href=#231 id=231 data-nosnippet>231</a>    /// use regex_automata::nfa::thompson::NFA;
 <a href=#232 id=232 data-nosnippet>232</a>    ///
-<a href=#233 id=233 data-nosnippet>233</a>    /// // 300KB isn't enough!
+<a href=#233 id=233 data-nosnippet>233</a>    /// // 400KB isn't enough!
 <a href=#234 id=234 data-nosnippet>234</a>    /// NFA::compiler()
-<a href=#235 id=235 data-nosnippet>235</a>    ///     .configure(NFA::config().nfa_size_limit(Some(300_000)))
+<a href=#235 id=235 data-nosnippet>235</a>    ///     .configure(NFA::config().nfa_size_limit(Some(400_000)))
 <a href=#236 id=236 data-nosnippet>236</a>    ///     .build(r"\w{20}")
 <a href=#237 id=237 data-nosnippet>237</a>    ///     .unwrap_err();
 <a href=#238 id=238 data-nosnippet>238</a>    ///
@@ -1041,7 +1041,7 @@
 <a href=#1041 id=1041 data-nosnippet>1041</a>    <span class="doccomment">/// Compile an alternation of the given HIR values.
 <a href=#1042 id=1042 data-nosnippet>1042</a>    ///
 <a href=#1043 id=1043 data-nosnippet>1043</a>    /// This is like 'c_alt_iter', but it accepts a slice of HIR values instead
-<a href=#1044 id=1044 data-nosnippet>1044</a>    /// of an iterator of compiled NFA sub-graphs. The point of accepting a
+<a href=#1044 id=1044 data-nosnippet>1044</a>    /// of an iterator of compiled NFA subgraphs. The point of accepting a
 <a href=#1045 id=1045 data-nosnippet>1045</a>    /// slice here is that it opens up some optimization opportunities. For
 <a href=#1046 id=1046 data-nosnippet>1046</a>    /// example, if all of the HIR values are literals, then this routine might
 <a href=#1047 id=1047 data-nosnippet>1047</a>    /// re-shuffle them to make NFA epsilon closures substantially faster.
@@ -1500,7 +1500,7 @@
 <a href=#1500 id=1500 data-nosnippet>1500</a>    ///
 <a href=#1501 id=1501 data-nosnippet>1501</a>    /// A more comprehensive compression scheme can be accomplished by using
 <a href=#1502 id=1502 data-nosnippet>1502</a>    /// a range trie to efficiently sort a reverse sequence of UTF-8 byte
-<a href=#1503 id=1503 data-nosnippet>1503</a>    /// ranges, and then use Daciuk's algorithm via `Utf8Compiler`.
+<a href=#1503 id=1503 data-nosnippet>1503</a>    /// rqanges, and then use Daciuk's algorithm via `Utf8Compiler`.
 <a href=#1504 id=1504 data-nosnippet>1504</a>    ///
 <a href=#1505 id=1505 data-nosnippet>1505</a>    /// This is the technique used when "NFA shrinking" is disabled.
 <a href=#1506 id=1506 data-nosnippet>1506</a>    ///
@@ -1665,7 +1665,7 @@
 <a href=#1665 id=1665 data-nosnippet>1665</a>        capture_index: u32,
 <a href=#1666 id=1666 data-nosnippet>1666</a>        name: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
 <a href=#1667 id=1667 data-nosnippet>1667</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;StateID, BuildError&gt; {
-<a href=#1668 id=1668 data-nosnippet>1668</a>        <span class="kw">let </span>name = name.map(Arc::from);
+<a href=#1668 id=1668 data-nosnippet>1668</a>        <span class="kw">let </span>name = name.map(|n| Arc::from(n));
 <a href=#1669 id=1669 data-nosnippet>1669</a>        <span class="self">self</span>.builder.borrow_mut().add_capture_start(
 <a href=#1670 id=1670 data-nosnippet>1670</a>            StateID::ZERO,
 <a href=#1671 id=1671 data-nosnippet>1671</a>            capture_index,
@@ -1702,7 +1702,7 @@
 <a href=#1702 id=1702 data-nosnippet>1702</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) end: StateID,
 <a href=#1703 id=1703 data-nosnippet>1703</a>}
 <a href=#1704 id=1704 data-nosnippet>1704</a>
-<a href=#1705 id=1705 data-nosnippet>1705</a><span class="doccomment">/// A UTF-8 compiler based on Daciuk's algorithm for compiling minimal DFAs
+<a href=#1705 id=1705 data-nosnippet>1705</a><span class="doccomment">/// A UTF-8 compiler based on Daciuk's algorithm for compilining minimal DFAs
 <a href=#1706 id=1706 data-nosnippet>1706</a>/// from a lexicographically sorted sequence of strings in linear time.
 <a href=#1707 id=1707 data-nosnippet>1707</a>///
 <a href=#1708 id=1708 data-nosnippet>1708</a>/// The trick here is that any Unicode codepoint range can be converted to

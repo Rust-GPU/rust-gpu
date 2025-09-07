@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["BuildError","Builder","Config","DFA"]};
