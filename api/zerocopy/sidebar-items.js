@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["include_value","transmute","transmute_mut","transmute_ref"],"struct":["Ref","Unalign"],"trait":["AsBytes","ByteSlice","ByteSliceMut","FromBytes","FromZeroes","Unaligned"]};
+window.SIDEBAR_ITEMS = {"macro":["include_value","transmute","transmute_mut","transmute_ref","try_transmute","try_transmute_mut","try_transmute_ref"],"mod":["byte_slice","byteorder","error"],"struct":["Ref","Split","Unalign"],"trait":["FromBytes","FromZeros","Immutable","IntoBytes","KnownLayout","SplitAt","TryFromBytes","Unaligned"]};

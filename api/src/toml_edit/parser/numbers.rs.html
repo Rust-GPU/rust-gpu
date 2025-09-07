@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_edit-0.22.26/src/parser/numbers.rs`."><title>numbers.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="toml_edit" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">toml_edit/parser/</div>numbers.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::ops::RangeInclusive;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/toml_edit-0.22.27/src/parser/numbers.rs`."><title>numbers.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="toml_edit" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../../static.files/storage-4e99c027.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">toml_edit/parser/</div>numbers.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::ops::RangeInclusive;
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>winnow::combinator::alt;
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span>winnow::combinator::cut_err;
@@ -209,7 +209,7 @@
 <a href=#209 id=209 data-nosnippet>209</a>    .parse_next(input)
 <a href=#210 id=210 data-nosnippet>210</a>}
 <a href=#211 id=211 data-nosnippet>211</a>
-<a href=#212 id=212 data-nosnippet>212</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>float_&lt;<span class="lifetime">'i</span>&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'i</span>&gt;) -&gt; ModalResult&lt;<span class="kw-2">&amp;</span><span class="lifetime">'i </span>str&gt; {
+<a href=#212 id=212 data-nosnippet>212</a><span class="kw">fn </span>float_&lt;<span class="lifetime">'i</span>&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'i</span>&gt;) -&gt; ModalResult&lt;<span class="kw-2">&amp;</span><span class="lifetime">'i </span>str&gt; {
 <a href=#213 id=213 data-nosnippet>213</a>    (
 <a href=#214 id=214 data-nosnippet>214</a>        dec_int,
 <a href=#215 id=215 data-nosnippet>215</a>        alt((exp.void(), (frac.void(), opt(exp.void())).void())),
@@ -226,7 +226,7 @@
 <a href=#226 id=226 data-nosnippet>226</a>
 <a href=#227 id=227 data-nosnippet>227</a><span class="comment">// frac = decimal-point zero-prefixable-int
 <a href=#228 id=228 data-nosnippet>228</a>// decimal-point = %x2E               ; .
-<a href=#229 id=229 data-nosnippet>229</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>frac&lt;<span class="lifetime">'i</span>&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'i</span>&gt;) -&gt; ModalResult&lt;<span class="kw-2">&amp;</span><span class="lifetime">'i </span>str&gt; {
+<a href=#229 id=229 data-nosnippet>229</a></span><span class="kw">fn </span>frac&lt;<span class="lifetime">'i</span>&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'i</span>&gt;) -&gt; ModalResult&lt;<span class="kw-2">&amp;</span><span class="lifetime">'i </span>str&gt; {
 <a href=#230 id=230 data-nosnippet>230</a>    (
 <a href=#231 id=231 data-nosnippet>231</a>        <span class="string">b'.'</span>,
 <a href=#232 id=232 data-nosnippet>232</a>        cut_err(zero_prefixable_int)
@@ -243,7 +243,7 @@
 <a href=#243 id=243 data-nosnippet>243</a>}
 <a href=#244 id=244 data-nosnippet>244</a>
 <a href=#245 id=245 data-nosnippet>245</a><span class="comment">// zero-prefixable-int = DIGIT *( DIGIT / underscore DIGIT )
-<a href=#246 id=246 data-nosnippet>246</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>zero_prefixable_int&lt;<span class="lifetime">'i</span>&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'i</span>&gt;) -&gt; ModalResult&lt;<span class="kw-2">&amp;</span><span class="lifetime">'i </span>str&gt; {
+<a href=#246 id=246 data-nosnippet>246</a></span><span class="kw">fn </span>zero_prefixable_int&lt;<span class="lifetime">'i</span>&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'i</span>&gt;) -&gt; ModalResult&lt;<span class="kw-2">&amp;</span><span class="lifetime">'i </span>str&gt; {
 <a href=#247 id=247 data-nosnippet>247</a>    (
 <a href=#248 id=248 data-nosnippet>248</a>        digit,
 <a href=#249 id=249 data-nosnippet>249</a>        repeat(
@@ -267,7 +267,7 @@
 <a href=#267 id=267 data-nosnippet>267</a>
 <a href=#268 id=268 data-nosnippet>268</a><span class="comment">// exp = "e" float-exp-part
 <a href=#269 id=269 data-nosnippet>269</a>// float-exp-part = [ minus / plus ] zero-prefixable-int
-<a href=#270 id=270 data-nosnippet>270</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>exp&lt;<span class="lifetime">'i</span>&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'i</span>&gt;) -&gt; ModalResult&lt;<span class="kw-2">&amp;</span><span class="lifetime">'i </span>str&gt; {
+<a href=#270 id=270 data-nosnippet>270</a></span><span class="kw">fn </span>exp&lt;<span class="lifetime">'i</span>&gt;(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'i</span>&gt;) -&gt; ModalResult&lt;<span class="kw-2">&amp;</span><span class="lifetime">'i </span>str&gt; {
 <a href=#271 id=271 data-nosnippet>271</a>    (
 <a href=#272 id=272 data-nosnippet>272</a>        one_of((<span class="string">b'e'</span>, <span class="string">b'E'</span>)),
 <a href=#273 id=273 data-nosnippet>273</a>        opt(one_of([<span class="string">b'+'</span>, <span class="string">b'-'</span>])),
@@ -284,7 +284,7 @@
 <a href=#284 id=284 data-nosnippet>284</a>}
 <a href=#285 id=285 data-nosnippet>285</a>
 <a href=#286 id=286 data-nosnippet>286</a><span class="comment">// special-float = [ minus / plus ] ( inf / nan )
-<a href=#287 id=287 data-nosnippet>287</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>special_float(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; ModalResult&lt;f64&gt; {
+<a href=#287 id=287 data-nosnippet>287</a></span><span class="kw">fn </span>special_float(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; ModalResult&lt;f64&gt; {
 <a href=#288 id=288 data-nosnippet>288</a>    (opt(one_of((<span class="string">b'+'</span>, <span class="string">b'-'</span>))), alt((inf, nan)))
 <a href=#289 id=289 data-nosnippet>289</a>        .map(|(s, f)| <span class="kw">match </span>s {
 <a href=#290 id=290 data-nosnippet>290</a>            <span class="prelude-val">Some</span>(<span class="string">b'+'</span>) | <span class="prelude-val">None </span>=&gt; f,
@@ -305,13 +305,13 @@
 <a href=#305 id=305 data-nosnippet>305</a><span class="kw">const </span>NAN: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"nan"</span>;
 <a href=#306 id=306 data-nosnippet>306</a>
 <a href=#307 id=307 data-nosnippet>307</a><span class="comment">// DIGIT = %x30-39 ; 0-9
-<a href=#308 id=308 data-nosnippet>308</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>digit(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; ModalResult&lt;u8&gt; {
+<a href=#308 id=308 data-nosnippet>308</a></span><span class="kw">fn </span>digit(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; ModalResult&lt;u8&gt; {
 <a href=#309 id=309 data-nosnippet>309</a>    one_of(DIGIT).parse_next(input)
 <a href=#310 id=310 data-nosnippet>310</a>}
 <a href=#311 id=311 data-nosnippet>311</a><span class="kw">const </span>DIGIT: RangeInclusive&lt;u8&gt; = <span class="string">b'0'</span>..=<span class="string">b'9'</span>;
 <a href=#312 id=312 data-nosnippet>312</a>
 <a href=#313 id=313 data-nosnippet>313</a><span class="comment">// HEXDIG = DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
-<a href=#314 id=314 data-nosnippet>314</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>hexdig(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; ModalResult&lt;u8&gt; {
+<a href=#314 id=314 data-nosnippet>314</a></span><span class="kw">fn </span>hexdig(input: <span class="kw-2">&amp;mut </span>Input&lt;<span class="lifetime">'_</span>&gt;) -&gt; ModalResult&lt;u8&gt; {
 <a href=#315 id=315 data-nosnippet>315</a>    one_of(HEXDIG).parse_next(input)
 <a href=#316 id=316 data-nosnippet>316</a>}
 <a href=#317 id=317 data-nosnippet>317</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>HEXDIG: (RangeInclusive&lt;u8&gt;, RangeInclusive&lt;u8&gt;, RangeInclusive&lt;u8&gt;) =

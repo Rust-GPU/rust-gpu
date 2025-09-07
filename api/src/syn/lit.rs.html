@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.94/src/lit.rs`."><title>lit.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>lit.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/Users/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.106/src/lit.rs`."><title>lit.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0-nightly (be19eda0d 2025-06-22)" data-channel="nightly" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>lit.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">use </span><span class="kw">crate</span>::lookahead;
 <a href=#3 id=3 data-nosnippet>3</a><span class="attr">#[cfg(feature = <span class="string">"parsing"</span>)]
 <a href=#4 id=4 data-nosnippet>4</a></span><span class="kw">use </span><span class="kw">crate</span>::parse::{Parse, Parser};
@@ -1281,589 +1281,580 @@
 <a href=#1281 id=1281 data-nosnippet>1281</a>        }
 <a href=#1282 id=1282 data-nosnippet>1282</a>    }
 <a href=#1283 id=1283 data-nosnippet>1283</a>
-<a href=#1284 id=1284 data-nosnippet>1284</a>    <span class="comment">// Clippy false positive
-<a href=#1285 id=1285 data-nosnippet>1285</a>    // https://github.com/rust-lang-nursery/rust-clippy/issues/2329
-<a href=#1286 id=1286 data-nosnippet>1286</a>    </span><span class="attr">#[allow(clippy::needless_continue)]
-<a href=#1287 id=1287 data-nosnippet>1287</a>    </span><span class="kw">fn </span>parse_lit_str_cooked(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; (Box&lt;str&gt;, Box&lt;str&gt;) {
-<a href=#1288 id=1288 data-nosnippet>1288</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'"'</span>);
-<a href=#1289 id=1289 data-nosnippet>1289</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
-<a href=#1290 id=1290 data-nosnippet>1290</a>
-<a href=#1291 id=1291 data-nosnippet>1291</a>        <span class="kw">let </span><span class="kw-2">mut </span>content = String::new();
-<a href=#1292 id=1292 data-nosnippet>1292</a>        <span class="lifetime">'outer</span>: <span class="kw">loop </span>{
-<a href=#1293 id=1293 data-nosnippet>1293</a>            <span class="kw">let </span>ch = <span class="kw">match </span>byte(s, <span class="number">0</span>) {
-<a href=#1294 id=1294 data-nosnippet>1294</a>                <span class="string">b'"' </span>=&gt; <span class="kw">break</span>,
-<a href=#1295 id=1295 data-nosnippet>1295</a>                <span class="string">b'\\' </span>=&gt; {
-<a href=#1296 id=1296 data-nosnippet>1296</a>                    <span class="kw">let </span>b = byte(s, <span class="number">1</span>);
-<a href=#1297 id=1297 data-nosnippet>1297</a>                    s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
-<a href=#1298 id=1298 data-nosnippet>1298</a>                    <span class="kw">match </span>b {
-<a href=#1299 id=1299 data-nosnippet>1299</a>                        <span class="string">b'x' </span>=&gt; {
-<a href=#1300 id=1300 data-nosnippet>1300</a>                            <span class="kw">let </span>(byte, rest) = backslash_x(s);
-<a href=#1301 id=1301 data-nosnippet>1301</a>                            s = rest;
-<a href=#1302 id=1302 data-nosnippet>1302</a>                            <span class="macro">assert!</span>(byte &lt;= <span class="number">0x7F</span>, <span class="string">"invalid \\x byte in string literal"</span>);
-<a href=#1303 id=1303 data-nosnippet>1303</a>                            char::from_u32(u32::from(byte)).unwrap()
-<a href=#1304 id=1304 data-nosnippet>1304</a>                        }
-<a href=#1305 id=1305 data-nosnippet>1305</a>                        <span class="string">b'u' </span>=&gt; {
-<a href=#1306 id=1306 data-nosnippet>1306</a>                            <span class="kw">let </span>(ch, rest) = backslash_u(s);
-<a href=#1307 id=1307 data-nosnippet>1307</a>                            s = rest;
-<a href=#1308 id=1308 data-nosnippet>1308</a>                            ch
-<a href=#1309 id=1309 data-nosnippet>1309</a>                        }
-<a href=#1310 id=1310 data-nosnippet>1310</a>                        <span class="string">b'n' </span>=&gt; <span class="string">'\n'</span>,
-<a href=#1311 id=1311 data-nosnippet>1311</a>                        <span class="string">b'r' </span>=&gt; <span class="string">'\r'</span>,
-<a href=#1312 id=1312 data-nosnippet>1312</a>                        <span class="string">b't' </span>=&gt; <span class="string">'\t'</span>,
-<a href=#1313 id=1313 data-nosnippet>1313</a>                        <span class="string">b'\\' </span>=&gt; <span class="string">'\\'</span>,
-<a href=#1314 id=1314 data-nosnippet>1314</a>                        <span class="string">b'0' </span>=&gt; <span class="string">'\0'</span>,
-<a href=#1315 id=1315 data-nosnippet>1315</a>                        <span class="string">b'\'' </span>=&gt; <span class="string">'\''</span>,
-<a href=#1316 id=1316 data-nosnippet>1316</a>                        <span class="string">b'"' </span>=&gt; <span class="string">'"'</span>,
-<a href=#1317 id=1317 data-nosnippet>1317</a>                        <span class="string">b'\r' </span>| <span class="string">b'\n' </span>=&gt; <span class="kw">loop </span>{
-<a href=#1318 id=1318 data-nosnippet>1318</a>                            <span class="kw">let </span>b = byte(s, <span class="number">0</span>);
-<a href=#1319 id=1319 data-nosnippet>1319</a>                            <span class="kw">match </span>b {
-<a href=#1320 id=1320 data-nosnippet>1320</a>                                <span class="string">b' ' </span>| <span class="string">b'\t' </span>| <span class="string">b'\n' </span>| <span class="string">b'\r' </span>=&gt; s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..],
-<a href=#1321 id=1321 data-nosnippet>1321</a>                                <span class="kw">_ </span>=&gt; <span class="kw">continue </span><span class="lifetime">'outer</span>,
-<a href=#1322 id=1322 data-nosnippet>1322</a>                            }
-<a href=#1323 id=1323 data-nosnippet>1323</a>                        },
-<a href=#1324 id=1324 data-nosnippet>1324</a>                        b =&gt; <span class="macro">panic!</span>(
-<a href=#1325 id=1325 data-nosnippet>1325</a>                            <span class="string">"unexpected byte '{}' after \\ character in string literal"</span>,
-<a href=#1326 id=1326 data-nosnippet>1326</a>                            ascii::escape_default(b),
-<a href=#1327 id=1327 data-nosnippet>1327</a>                        ),
-<a href=#1328 id=1328 data-nosnippet>1328</a>                    }
-<a href=#1329 id=1329 data-nosnippet>1329</a>                }
-<a href=#1330 id=1330 data-nosnippet>1330</a>                <span class="string">b'\r' </span>=&gt; {
-<a href=#1331 id=1331 data-nosnippet>1331</a>                    <span class="macro">assert_eq!</span>(byte(s, <span class="number">1</span>), <span class="string">b'\n'</span>, <span class="string">"bare CR not allowed in string"</span>);
-<a href=#1332 id=1332 data-nosnippet>1332</a>                    s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
-<a href=#1333 id=1333 data-nosnippet>1333</a>                    <span class="string">'\n'
-<a href=#1334 id=1334 data-nosnippet>1334</a>                </span>}
-<a href=#1335 id=1335 data-nosnippet>1335</a>                <span class="kw">_ </span>=&gt; {
-<a href=#1336 id=1336 data-nosnippet>1336</a>                    <span class="kw">let </span>ch = next_chr(s);
-<a href=#1337 id=1337 data-nosnippet>1337</a>                    s = <span class="kw-2">&amp;</span>s[ch.len_utf8()..];
-<a href=#1338 id=1338 data-nosnippet>1338</a>                    ch
-<a href=#1339 id=1339 data-nosnippet>1339</a>                }
-<a href=#1340 id=1340 data-nosnippet>1340</a>            };
-<a href=#1341 id=1341 data-nosnippet>1341</a>            content.push(ch);
-<a href=#1342 id=1342 data-nosnippet>1342</a>        }
-<a href=#1343 id=1343 data-nosnippet>1343</a>
-<a href=#1344 id=1344 data-nosnippet>1344</a>        <span class="macro">assert!</span>(s.starts_with(<span class="string">'"'</span>));
-<a href=#1345 id=1345 data-nosnippet>1345</a>        <span class="kw">let </span>content = content.into_boxed_str();
-<a href=#1346 id=1346 data-nosnippet>1346</a>        <span class="kw">let </span>suffix = s[<span class="number">1</span>..].to_owned().into_boxed_str();
-<a href=#1347 id=1347 data-nosnippet>1347</a>        (content, suffix)
-<a href=#1348 id=1348 data-nosnippet>1348</a>    }
-<a href=#1349 id=1349 data-nosnippet>1349</a>
-<a href=#1350 id=1350 data-nosnippet>1350</a>    <span class="kw">fn </span>parse_lit_str_raw(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; (Box&lt;str&gt;, Box&lt;str&gt;) {
-<a href=#1351 id=1351 data-nosnippet>1351</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'r'</span>);
-<a href=#1352 id=1352 data-nosnippet>1352</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
-<a href=#1353 id=1353 data-nosnippet>1353</a>
-<a href=#1354 id=1354 data-nosnippet>1354</a>        <span class="kw">let </span><span class="kw-2">mut </span>pounds = <span class="number">0</span>;
-<a href=#1355 id=1355 data-nosnippet>1355</a>        <span class="kw">while </span>byte(s, pounds) == <span class="string">b'#' </span>{
-<a href=#1356 id=1356 data-nosnippet>1356</a>            pounds += <span class="number">1</span>;
-<a href=#1357 id=1357 data-nosnippet>1357</a>        }
-<a href=#1358 id=1358 data-nosnippet>1358</a>        <span class="macro">assert_eq!</span>(byte(s, pounds), <span class="string">b'"'</span>);
-<a href=#1359 id=1359 data-nosnippet>1359</a>        <span class="kw">let </span>close = s.rfind(<span class="string">'"'</span>).unwrap();
-<a href=#1360 id=1360 data-nosnippet>1360</a>        <span class="kw">for </span>end <span class="kw">in </span>s[close + <span class="number">1</span>..close + <span class="number">1 </span>+ pounds].bytes() {
-<a href=#1361 id=1361 data-nosnippet>1361</a>            <span class="macro">assert_eq!</span>(end, <span class="string">b'#'</span>);
-<a href=#1362 id=1362 data-nosnippet>1362</a>        }
-<a href=#1363 id=1363 data-nosnippet>1363</a>
-<a href=#1364 id=1364 data-nosnippet>1364</a>        <span class="kw">let </span>content = s[pounds + <span class="number">1</span>..close].to_owned().into_boxed_str();
-<a href=#1365 id=1365 data-nosnippet>1365</a>        <span class="kw">let </span>suffix = s[close + <span class="number">1 </span>+ pounds..].to_owned().into_boxed_str();
-<a href=#1366 id=1366 data-nosnippet>1366</a>        (content, suffix)
-<a href=#1367 id=1367 data-nosnippet>1367</a>    }
-<a href=#1368 id=1368 data-nosnippet>1368</a>
-<a href=#1369 id=1369 data-nosnippet>1369</a>    <span class="comment">// Returns (content, suffix).
-<a href=#1370 id=1370 data-nosnippet>1370</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_byte_str(s: <span class="kw-2">&amp;</span>str) -&gt; (Vec&lt;u8&gt;, Box&lt;str&gt;) {
-<a href=#1371 id=1371 data-nosnippet>1371</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'b'</span>);
-<a href=#1372 id=1372 data-nosnippet>1372</a>        <span class="kw">match </span>byte(s, <span class="number">1</span>) {
-<a href=#1373 id=1373 data-nosnippet>1373</a>            <span class="string">b'"' </span>=&gt; parse_lit_byte_str_cooked(s),
-<a href=#1374 id=1374 data-nosnippet>1374</a>            <span class="string">b'r' </span>=&gt; parse_lit_byte_str_raw(s),
-<a href=#1375 id=1375 data-nosnippet>1375</a>            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-<a href=#1376 id=1376 data-nosnippet>1376</a>        }
-<a href=#1377 id=1377 data-nosnippet>1377</a>    }
-<a href=#1378 id=1378 data-nosnippet>1378</a>
-<a href=#1379 id=1379 data-nosnippet>1379</a>    <span class="comment">// Clippy false positive
-<a href=#1380 id=1380 data-nosnippet>1380</a>    // https://github.com/rust-lang-nursery/rust-clippy/issues/2329
-<a href=#1381 id=1381 data-nosnippet>1381</a>    </span><span class="attr">#[allow(clippy::needless_continue)]
-<a href=#1382 id=1382 data-nosnippet>1382</a>    </span><span class="kw">fn </span>parse_lit_byte_str_cooked(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; (Vec&lt;u8&gt;, Box&lt;str&gt;) {
-<a href=#1383 id=1383 data-nosnippet>1383</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'b'</span>);
-<a href=#1384 id=1384 data-nosnippet>1384</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">1</span>), <span class="string">b'"'</span>);
-<a href=#1385 id=1385 data-nosnippet>1385</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
-<a href=#1386 id=1386 data-nosnippet>1386</a>
-<a href=#1387 id=1387 data-nosnippet>1387</a>        <span class="comment">// We're going to want to have slices which don't respect codepoint boundaries.
-<a href=#1388 id=1388 data-nosnippet>1388</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>v = s.as_bytes();
-<a href=#1389 id=1389 data-nosnippet>1389</a>
-<a href=#1390 id=1390 data-nosnippet>1390</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
-<a href=#1391 id=1391 data-nosnippet>1391</a>        <span class="lifetime">'outer</span>: <span class="kw">loop </span>{
-<a href=#1392 id=1392 data-nosnippet>1392</a>            <span class="kw">let </span>byte = <span class="kw">match </span>byte(v, <span class="number">0</span>) {
-<a href=#1393 id=1393 data-nosnippet>1393</a>                <span class="string">b'"' </span>=&gt; <span class="kw">break</span>,
-<a href=#1394 id=1394 data-nosnippet>1394</a>                <span class="string">b'\\' </span>=&gt; {
-<a href=#1395 id=1395 data-nosnippet>1395</a>                    <span class="kw">let </span>b = byte(v, <span class="number">1</span>);
-<a href=#1396 id=1396 data-nosnippet>1396</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">2</span>..];
-<a href=#1397 id=1397 data-nosnippet>1397</a>                    <span class="kw">match </span>b {
-<a href=#1398 id=1398 data-nosnippet>1398</a>                        <span class="string">b'x' </span>=&gt; {
-<a href=#1399 id=1399 data-nosnippet>1399</a>                            <span class="kw">let </span>(b, rest) = backslash_x(v);
-<a href=#1400 id=1400 data-nosnippet>1400</a>                            v = rest;
-<a href=#1401 id=1401 data-nosnippet>1401</a>                            b
-<a href=#1402 id=1402 data-nosnippet>1402</a>                        }
-<a href=#1403 id=1403 data-nosnippet>1403</a>                        <span class="string">b'n' </span>=&gt; <span class="string">b'\n'</span>,
-<a href=#1404 id=1404 data-nosnippet>1404</a>                        <span class="string">b'r' </span>=&gt; <span class="string">b'\r'</span>,
-<a href=#1405 id=1405 data-nosnippet>1405</a>                        <span class="string">b't' </span>=&gt; <span class="string">b'\t'</span>,
-<a href=#1406 id=1406 data-nosnippet>1406</a>                        <span class="string">b'\\' </span>=&gt; <span class="string">b'\\'</span>,
-<a href=#1407 id=1407 data-nosnippet>1407</a>                        <span class="string">b'0' </span>=&gt; <span class="string">b'\0'</span>,
-<a href=#1408 id=1408 data-nosnippet>1408</a>                        <span class="string">b'\'' </span>=&gt; <span class="string">b'\''</span>,
-<a href=#1409 id=1409 data-nosnippet>1409</a>                        <span class="string">b'"' </span>=&gt; <span class="string">b'"'</span>,
-<a href=#1410 id=1410 data-nosnippet>1410</a>                        <span class="string">b'\r' </span>| <span class="string">b'\n' </span>=&gt; <span class="kw">loop </span>{
-<a href=#1411 id=1411 data-nosnippet>1411</a>                            <span class="kw">let </span>byte = byte(v, <span class="number">0</span>);
-<a href=#1412 id=1412 data-nosnippet>1412</a>                            <span class="kw">if </span><span class="macro">matches!</span>(byte, <span class="string">b' ' </span>| <span class="string">b'\t' </span>| <span class="string">b'\n' </span>| <span class="string">b'\r'</span>) {
-<a href=#1413 id=1413 data-nosnippet>1413</a>                                v = <span class="kw-2">&amp;</span>v[<span class="number">1</span>..];
-<a href=#1414 id=1414 data-nosnippet>1414</a>                            } <span class="kw">else </span>{
-<a href=#1415 id=1415 data-nosnippet>1415</a>                                <span class="kw">continue </span><span class="lifetime">'outer</span>;
-<a href=#1416 id=1416 data-nosnippet>1416</a>                            }
-<a href=#1417 id=1417 data-nosnippet>1417</a>                        },
-<a href=#1418 id=1418 data-nosnippet>1418</a>                        b =&gt; <span class="macro">panic!</span>(
-<a href=#1419 id=1419 data-nosnippet>1419</a>                            <span class="string">"unexpected byte '{}' after \\ character in byte-string literal"</span>,
-<a href=#1420 id=1420 data-nosnippet>1420</a>                            ascii::escape_default(b),
-<a href=#1421 id=1421 data-nosnippet>1421</a>                        ),
-<a href=#1422 id=1422 data-nosnippet>1422</a>                    }
-<a href=#1423 id=1423 data-nosnippet>1423</a>                }
-<a href=#1424 id=1424 data-nosnippet>1424</a>                <span class="string">b'\r' </span>=&gt; {
-<a href=#1425 id=1425 data-nosnippet>1425</a>                    <span class="macro">assert_eq!</span>(byte(v, <span class="number">1</span>), <span class="string">b'\n'</span>, <span class="string">"bare CR not allowed in string"</span>);
-<a href=#1426 id=1426 data-nosnippet>1426</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">2</span>..];
-<a href=#1427 id=1427 data-nosnippet>1427</a>                    <span class="string">b'\n'
-<a href=#1428 id=1428 data-nosnippet>1428</a>                </span>}
-<a href=#1429 id=1429 data-nosnippet>1429</a>                b =&gt; {
-<a href=#1430 id=1430 data-nosnippet>1430</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">1</span>..];
-<a href=#1431 id=1431 data-nosnippet>1431</a>                    b
-<a href=#1432 id=1432 data-nosnippet>1432</a>                }
-<a href=#1433 id=1433 data-nosnippet>1433</a>            };
-<a href=#1434 id=1434 data-nosnippet>1434</a>            out.push(byte);
-<a href=#1435 id=1435 data-nosnippet>1435</a>        }
-<a href=#1436 id=1436 data-nosnippet>1436</a>
-<a href=#1437 id=1437 data-nosnippet>1437</a>        <span class="macro">assert_eq!</span>(byte(v, <span class="number">0</span>), <span class="string">b'"'</span>);
-<a href=#1438 id=1438 data-nosnippet>1438</a>        <span class="kw">let </span>suffix = s[s.len() - v.len() + <span class="number">1</span>..].to_owned().into_boxed_str();
-<a href=#1439 id=1439 data-nosnippet>1439</a>        (out, suffix)
+<a href=#1284 id=1284 data-nosnippet>1284</a>    <span class="kw">fn </span>parse_lit_str_cooked(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; (Box&lt;str&gt;, Box&lt;str&gt;) {
+<a href=#1285 id=1285 data-nosnippet>1285</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'"'</span>);
+<a href=#1286 id=1286 data-nosnippet>1286</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
+<a href=#1287 id=1287 data-nosnippet>1287</a>
+<a href=#1288 id=1288 data-nosnippet>1288</a>        <span class="kw">let </span><span class="kw-2">mut </span>content = String::new();
+<a href=#1289 id=1289 data-nosnippet>1289</a>        <span class="lifetime">'outer</span>: <span class="kw">loop </span>{
+<a href=#1290 id=1290 data-nosnippet>1290</a>            <span class="kw">let </span>ch = <span class="kw">match </span>byte(s, <span class="number">0</span>) {
+<a href=#1291 id=1291 data-nosnippet>1291</a>                <span class="string">b'"' </span>=&gt; <span class="kw">break</span>,
+<a href=#1292 id=1292 data-nosnippet>1292</a>                <span class="string">b'\\' </span>=&gt; {
+<a href=#1293 id=1293 data-nosnippet>1293</a>                    <span class="kw">let </span>b = byte(s, <span class="number">1</span>);
+<a href=#1294 id=1294 data-nosnippet>1294</a>                    s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
+<a href=#1295 id=1295 data-nosnippet>1295</a>                    <span class="kw">match </span>b {
+<a href=#1296 id=1296 data-nosnippet>1296</a>                        <span class="string">b'x' </span>=&gt; {
+<a href=#1297 id=1297 data-nosnippet>1297</a>                            <span class="kw">let </span>(byte, rest) = backslash_x(s);
+<a href=#1298 id=1298 data-nosnippet>1298</a>                            s = rest;
+<a href=#1299 id=1299 data-nosnippet>1299</a>                            <span class="macro">assert!</span>(byte &lt;= <span class="number">0x7F</span>, <span class="string">"invalid \\x byte in string literal"</span>);
+<a href=#1300 id=1300 data-nosnippet>1300</a>                            char::from_u32(u32::from(byte)).unwrap()
+<a href=#1301 id=1301 data-nosnippet>1301</a>                        }
+<a href=#1302 id=1302 data-nosnippet>1302</a>                        <span class="string">b'u' </span>=&gt; {
+<a href=#1303 id=1303 data-nosnippet>1303</a>                            <span class="kw">let </span>(ch, rest) = backslash_u(s);
+<a href=#1304 id=1304 data-nosnippet>1304</a>                            s = rest;
+<a href=#1305 id=1305 data-nosnippet>1305</a>                            ch
+<a href=#1306 id=1306 data-nosnippet>1306</a>                        }
+<a href=#1307 id=1307 data-nosnippet>1307</a>                        <span class="string">b'n' </span>=&gt; <span class="string">'\n'</span>,
+<a href=#1308 id=1308 data-nosnippet>1308</a>                        <span class="string">b'r' </span>=&gt; <span class="string">'\r'</span>,
+<a href=#1309 id=1309 data-nosnippet>1309</a>                        <span class="string">b't' </span>=&gt; <span class="string">'\t'</span>,
+<a href=#1310 id=1310 data-nosnippet>1310</a>                        <span class="string">b'\\' </span>=&gt; <span class="string">'\\'</span>,
+<a href=#1311 id=1311 data-nosnippet>1311</a>                        <span class="string">b'0' </span>=&gt; <span class="string">'\0'</span>,
+<a href=#1312 id=1312 data-nosnippet>1312</a>                        <span class="string">b'\'' </span>=&gt; <span class="string">'\''</span>,
+<a href=#1313 id=1313 data-nosnippet>1313</a>                        <span class="string">b'"' </span>=&gt; <span class="string">'"'</span>,
+<a href=#1314 id=1314 data-nosnippet>1314</a>                        <span class="string">b'\r' </span>| <span class="string">b'\n' </span>=&gt; <span class="kw">loop </span>{
+<a href=#1315 id=1315 data-nosnippet>1315</a>                            <span class="kw">let </span>b = byte(s, <span class="number">0</span>);
+<a href=#1316 id=1316 data-nosnippet>1316</a>                            <span class="kw">match </span>b {
+<a href=#1317 id=1317 data-nosnippet>1317</a>                                <span class="string">b' ' </span>| <span class="string">b'\t' </span>| <span class="string">b'\n' </span>| <span class="string">b'\r' </span>=&gt; s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..],
+<a href=#1318 id=1318 data-nosnippet>1318</a>                                <span class="kw">_ </span>=&gt; <span class="kw">continue </span><span class="lifetime">'outer</span>,
+<a href=#1319 id=1319 data-nosnippet>1319</a>                            }
+<a href=#1320 id=1320 data-nosnippet>1320</a>                        },
+<a href=#1321 id=1321 data-nosnippet>1321</a>                        b =&gt; <span class="macro">panic!</span>(
+<a href=#1322 id=1322 data-nosnippet>1322</a>                            <span class="string">"unexpected byte '{}' after \\ character in string literal"</span>,
+<a href=#1323 id=1323 data-nosnippet>1323</a>                            ascii::escape_default(b),
+<a href=#1324 id=1324 data-nosnippet>1324</a>                        ),
+<a href=#1325 id=1325 data-nosnippet>1325</a>                    }
+<a href=#1326 id=1326 data-nosnippet>1326</a>                }
+<a href=#1327 id=1327 data-nosnippet>1327</a>                <span class="string">b'\r' </span>=&gt; {
+<a href=#1328 id=1328 data-nosnippet>1328</a>                    <span class="macro">assert_eq!</span>(byte(s, <span class="number">1</span>), <span class="string">b'\n'</span>, <span class="string">"bare CR not allowed in string"</span>);
+<a href=#1329 id=1329 data-nosnippet>1329</a>                    s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
+<a href=#1330 id=1330 data-nosnippet>1330</a>                    <span class="string">'\n'
+<a href=#1331 id=1331 data-nosnippet>1331</a>                </span>}
+<a href=#1332 id=1332 data-nosnippet>1332</a>                <span class="kw">_ </span>=&gt; {
+<a href=#1333 id=1333 data-nosnippet>1333</a>                    <span class="kw">let </span>ch = next_chr(s);
+<a href=#1334 id=1334 data-nosnippet>1334</a>                    s = <span class="kw-2">&amp;</span>s[ch.len_utf8()..];
+<a href=#1335 id=1335 data-nosnippet>1335</a>                    ch
+<a href=#1336 id=1336 data-nosnippet>1336</a>                }
+<a href=#1337 id=1337 data-nosnippet>1337</a>            };
+<a href=#1338 id=1338 data-nosnippet>1338</a>            content.push(ch);
+<a href=#1339 id=1339 data-nosnippet>1339</a>        }
+<a href=#1340 id=1340 data-nosnippet>1340</a>
+<a href=#1341 id=1341 data-nosnippet>1341</a>        <span class="macro">assert!</span>(s.starts_with(<span class="string">'"'</span>));
+<a href=#1342 id=1342 data-nosnippet>1342</a>        <span class="kw">let </span>content = content.into_boxed_str();
+<a href=#1343 id=1343 data-nosnippet>1343</a>        <span class="kw">let </span>suffix = s[<span class="number">1</span>..].to_owned().into_boxed_str();
+<a href=#1344 id=1344 data-nosnippet>1344</a>        (content, suffix)
+<a href=#1345 id=1345 data-nosnippet>1345</a>    }
+<a href=#1346 id=1346 data-nosnippet>1346</a>
+<a href=#1347 id=1347 data-nosnippet>1347</a>    <span class="kw">fn </span>parse_lit_str_raw(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; (Box&lt;str&gt;, Box&lt;str&gt;) {
+<a href=#1348 id=1348 data-nosnippet>1348</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'r'</span>);
+<a href=#1349 id=1349 data-nosnippet>1349</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
+<a href=#1350 id=1350 data-nosnippet>1350</a>
+<a href=#1351 id=1351 data-nosnippet>1351</a>        <span class="kw">let </span><span class="kw-2">mut </span>pounds = <span class="number">0</span>;
+<a href=#1352 id=1352 data-nosnippet>1352</a>        <span class="kw">while </span>byte(s, pounds) == <span class="string">b'#' </span>{
+<a href=#1353 id=1353 data-nosnippet>1353</a>            pounds += <span class="number">1</span>;
+<a href=#1354 id=1354 data-nosnippet>1354</a>        }
+<a href=#1355 id=1355 data-nosnippet>1355</a>        <span class="macro">assert_eq!</span>(byte(s, pounds), <span class="string">b'"'</span>);
+<a href=#1356 id=1356 data-nosnippet>1356</a>        <span class="kw">let </span>close = s.rfind(<span class="string">'"'</span>).unwrap();
+<a href=#1357 id=1357 data-nosnippet>1357</a>        <span class="kw">for </span>end <span class="kw">in </span>s[close + <span class="number">1</span>..close + <span class="number">1 </span>+ pounds].bytes() {
+<a href=#1358 id=1358 data-nosnippet>1358</a>            <span class="macro">assert_eq!</span>(end, <span class="string">b'#'</span>);
+<a href=#1359 id=1359 data-nosnippet>1359</a>        }
+<a href=#1360 id=1360 data-nosnippet>1360</a>
+<a href=#1361 id=1361 data-nosnippet>1361</a>        <span class="kw">let </span>content = s[pounds + <span class="number">1</span>..close].to_owned().into_boxed_str();
+<a href=#1362 id=1362 data-nosnippet>1362</a>        <span class="kw">let </span>suffix = s[close + <span class="number">1 </span>+ pounds..].to_owned().into_boxed_str();
+<a href=#1363 id=1363 data-nosnippet>1363</a>        (content, suffix)
+<a href=#1364 id=1364 data-nosnippet>1364</a>    }
+<a href=#1365 id=1365 data-nosnippet>1365</a>
+<a href=#1366 id=1366 data-nosnippet>1366</a>    <span class="comment">// Returns (content, suffix).
+<a href=#1367 id=1367 data-nosnippet>1367</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_byte_str(s: <span class="kw-2">&amp;</span>str) -&gt; (Vec&lt;u8&gt;, Box&lt;str&gt;) {
+<a href=#1368 id=1368 data-nosnippet>1368</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'b'</span>);
+<a href=#1369 id=1369 data-nosnippet>1369</a>        <span class="kw">match </span>byte(s, <span class="number">1</span>) {
+<a href=#1370 id=1370 data-nosnippet>1370</a>            <span class="string">b'"' </span>=&gt; parse_lit_byte_str_cooked(s),
+<a href=#1371 id=1371 data-nosnippet>1371</a>            <span class="string">b'r' </span>=&gt; parse_lit_byte_str_raw(s),
+<a href=#1372 id=1372 data-nosnippet>1372</a>            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+<a href=#1373 id=1373 data-nosnippet>1373</a>        }
+<a href=#1374 id=1374 data-nosnippet>1374</a>    }
+<a href=#1375 id=1375 data-nosnippet>1375</a>
+<a href=#1376 id=1376 data-nosnippet>1376</a>    <span class="kw">fn </span>parse_lit_byte_str_cooked(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; (Vec&lt;u8&gt;, Box&lt;str&gt;) {
+<a href=#1377 id=1377 data-nosnippet>1377</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'b'</span>);
+<a href=#1378 id=1378 data-nosnippet>1378</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">1</span>), <span class="string">b'"'</span>);
+<a href=#1379 id=1379 data-nosnippet>1379</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
+<a href=#1380 id=1380 data-nosnippet>1380</a>
+<a href=#1381 id=1381 data-nosnippet>1381</a>        <span class="comment">// We're going to want to have slices which don't respect codepoint boundaries.
+<a href=#1382 id=1382 data-nosnippet>1382</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>v = s.as_bytes();
+<a href=#1383 id=1383 data-nosnippet>1383</a>
+<a href=#1384 id=1384 data-nosnippet>1384</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
+<a href=#1385 id=1385 data-nosnippet>1385</a>        <span class="lifetime">'outer</span>: <span class="kw">loop </span>{
+<a href=#1386 id=1386 data-nosnippet>1386</a>            <span class="kw">let </span>byte = <span class="kw">match </span>byte(v, <span class="number">0</span>) {
+<a href=#1387 id=1387 data-nosnippet>1387</a>                <span class="string">b'"' </span>=&gt; <span class="kw">break</span>,
+<a href=#1388 id=1388 data-nosnippet>1388</a>                <span class="string">b'\\' </span>=&gt; {
+<a href=#1389 id=1389 data-nosnippet>1389</a>                    <span class="kw">let </span>b = byte(v, <span class="number">1</span>);
+<a href=#1390 id=1390 data-nosnippet>1390</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">2</span>..];
+<a href=#1391 id=1391 data-nosnippet>1391</a>                    <span class="kw">match </span>b {
+<a href=#1392 id=1392 data-nosnippet>1392</a>                        <span class="string">b'x' </span>=&gt; {
+<a href=#1393 id=1393 data-nosnippet>1393</a>                            <span class="kw">let </span>(b, rest) = backslash_x(v);
+<a href=#1394 id=1394 data-nosnippet>1394</a>                            v = rest;
+<a href=#1395 id=1395 data-nosnippet>1395</a>                            b
+<a href=#1396 id=1396 data-nosnippet>1396</a>                        }
+<a href=#1397 id=1397 data-nosnippet>1397</a>                        <span class="string">b'n' </span>=&gt; <span class="string">b'\n'</span>,
+<a href=#1398 id=1398 data-nosnippet>1398</a>                        <span class="string">b'r' </span>=&gt; <span class="string">b'\r'</span>,
+<a href=#1399 id=1399 data-nosnippet>1399</a>                        <span class="string">b't' </span>=&gt; <span class="string">b'\t'</span>,
+<a href=#1400 id=1400 data-nosnippet>1400</a>                        <span class="string">b'\\' </span>=&gt; <span class="string">b'\\'</span>,
+<a href=#1401 id=1401 data-nosnippet>1401</a>                        <span class="string">b'0' </span>=&gt; <span class="string">b'\0'</span>,
+<a href=#1402 id=1402 data-nosnippet>1402</a>                        <span class="string">b'\'' </span>=&gt; <span class="string">b'\''</span>,
+<a href=#1403 id=1403 data-nosnippet>1403</a>                        <span class="string">b'"' </span>=&gt; <span class="string">b'"'</span>,
+<a href=#1404 id=1404 data-nosnippet>1404</a>                        <span class="string">b'\r' </span>| <span class="string">b'\n' </span>=&gt; <span class="kw">loop </span>{
+<a href=#1405 id=1405 data-nosnippet>1405</a>                            <span class="kw">let </span>byte = byte(v, <span class="number">0</span>);
+<a href=#1406 id=1406 data-nosnippet>1406</a>                            <span class="kw">if </span><span class="macro">matches!</span>(byte, <span class="string">b' ' </span>| <span class="string">b'\t' </span>| <span class="string">b'\n' </span>| <span class="string">b'\r'</span>) {
+<a href=#1407 id=1407 data-nosnippet>1407</a>                                v = <span class="kw-2">&amp;</span>v[<span class="number">1</span>..];
+<a href=#1408 id=1408 data-nosnippet>1408</a>                            } <span class="kw">else </span>{
+<a href=#1409 id=1409 data-nosnippet>1409</a>                                <span class="kw">continue </span><span class="lifetime">'outer</span>;
+<a href=#1410 id=1410 data-nosnippet>1410</a>                            }
+<a href=#1411 id=1411 data-nosnippet>1411</a>                        },
+<a href=#1412 id=1412 data-nosnippet>1412</a>                        b =&gt; <span class="macro">panic!</span>(
+<a href=#1413 id=1413 data-nosnippet>1413</a>                            <span class="string">"unexpected byte '{}' after \\ character in byte-string literal"</span>,
+<a href=#1414 id=1414 data-nosnippet>1414</a>                            ascii::escape_default(b),
+<a href=#1415 id=1415 data-nosnippet>1415</a>                        ),
+<a href=#1416 id=1416 data-nosnippet>1416</a>                    }
+<a href=#1417 id=1417 data-nosnippet>1417</a>                }
+<a href=#1418 id=1418 data-nosnippet>1418</a>                <span class="string">b'\r' </span>=&gt; {
+<a href=#1419 id=1419 data-nosnippet>1419</a>                    <span class="macro">assert_eq!</span>(byte(v, <span class="number">1</span>), <span class="string">b'\n'</span>, <span class="string">"bare CR not allowed in string"</span>);
+<a href=#1420 id=1420 data-nosnippet>1420</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">2</span>..];
+<a href=#1421 id=1421 data-nosnippet>1421</a>                    <span class="string">b'\n'
+<a href=#1422 id=1422 data-nosnippet>1422</a>                </span>}
+<a href=#1423 id=1423 data-nosnippet>1423</a>                b =&gt; {
+<a href=#1424 id=1424 data-nosnippet>1424</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">1</span>..];
+<a href=#1425 id=1425 data-nosnippet>1425</a>                    b
+<a href=#1426 id=1426 data-nosnippet>1426</a>                }
+<a href=#1427 id=1427 data-nosnippet>1427</a>            };
+<a href=#1428 id=1428 data-nosnippet>1428</a>            out.push(byte);
+<a href=#1429 id=1429 data-nosnippet>1429</a>        }
+<a href=#1430 id=1430 data-nosnippet>1430</a>
+<a href=#1431 id=1431 data-nosnippet>1431</a>        <span class="macro">assert_eq!</span>(byte(v, <span class="number">0</span>), <span class="string">b'"'</span>);
+<a href=#1432 id=1432 data-nosnippet>1432</a>        <span class="kw">let </span>suffix = s[s.len() - v.len() + <span class="number">1</span>..].to_owned().into_boxed_str();
+<a href=#1433 id=1433 data-nosnippet>1433</a>        (out, suffix)
+<a href=#1434 id=1434 data-nosnippet>1434</a>    }
+<a href=#1435 id=1435 data-nosnippet>1435</a>
+<a href=#1436 id=1436 data-nosnippet>1436</a>    <span class="kw">fn </span>parse_lit_byte_str_raw(s: <span class="kw-2">&amp;</span>str) -&gt; (Vec&lt;u8&gt;, Box&lt;str&gt;) {
+<a href=#1437 id=1437 data-nosnippet>1437</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'b'</span>);
+<a href=#1438 id=1438 data-nosnippet>1438</a>        <span class="kw">let </span>(value, suffix) = parse_lit_str_raw(<span class="kw-2">&amp;</span>s[<span class="number">1</span>..]);
+<a href=#1439 id=1439 data-nosnippet>1439</a>        (String::from(value).into_bytes(), suffix)
 <a href=#1440 id=1440 data-nosnippet>1440</a>    }
 <a href=#1441 id=1441 data-nosnippet>1441</a>
-<a href=#1442 id=1442 data-nosnippet>1442</a>    <span class="kw">fn </span>parse_lit_byte_str_raw(s: <span class="kw-2">&amp;</span>str) -&gt; (Vec&lt;u8&gt;, Box&lt;str&gt;) {
-<a href=#1443 id=1443 data-nosnippet>1443</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'b'</span>);
-<a href=#1444 id=1444 data-nosnippet>1444</a>        <span class="kw">let </span>(value, suffix) = parse_lit_str_raw(<span class="kw-2">&amp;</span>s[<span class="number">1</span>..]);
-<a href=#1445 id=1445 data-nosnippet>1445</a>        (String::from(value).into_bytes(), suffix)
-<a href=#1446 id=1446 data-nosnippet>1446</a>    }
-<a href=#1447 id=1447 data-nosnippet>1447</a>
-<a href=#1448 id=1448 data-nosnippet>1448</a>    <span class="comment">// Returns (content, suffix).
-<a href=#1449 id=1449 data-nosnippet>1449</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_c_str(s: <span class="kw-2">&amp;</span>str) -&gt; (CString, Box&lt;str&gt;) {
-<a href=#1450 id=1450 data-nosnippet>1450</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'c'</span>);
-<a href=#1451 id=1451 data-nosnippet>1451</a>        <span class="kw">match </span>byte(s, <span class="number">1</span>) {
-<a href=#1452 id=1452 data-nosnippet>1452</a>            <span class="string">b'"' </span>=&gt; parse_lit_c_str_cooked(s),
-<a href=#1453 id=1453 data-nosnippet>1453</a>            <span class="string">b'r' </span>=&gt; parse_lit_c_str_raw(s),
-<a href=#1454 id=1454 data-nosnippet>1454</a>            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
-<a href=#1455 id=1455 data-nosnippet>1455</a>        }
-<a href=#1456 id=1456 data-nosnippet>1456</a>    }
-<a href=#1457 id=1457 data-nosnippet>1457</a>
-<a href=#1458 id=1458 data-nosnippet>1458</a>    <span class="comment">// Clippy false positive
-<a href=#1459 id=1459 data-nosnippet>1459</a>    // https://github.com/rust-lang-nursery/rust-clippy/issues/2329
-<a href=#1460 id=1460 data-nosnippet>1460</a>    </span><span class="attr">#[allow(clippy::needless_continue)]
-<a href=#1461 id=1461 data-nosnippet>1461</a>    </span><span class="kw">fn </span>parse_lit_c_str_cooked(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; (CString, Box&lt;str&gt;) {
-<a href=#1462 id=1462 data-nosnippet>1462</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'c'</span>);
-<a href=#1463 id=1463 data-nosnippet>1463</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">1</span>), <span class="string">b'"'</span>);
-<a href=#1464 id=1464 data-nosnippet>1464</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
-<a href=#1465 id=1465 data-nosnippet>1465</a>
-<a href=#1466 id=1466 data-nosnippet>1466</a>        <span class="comment">// We're going to want to have slices which don't respect codepoint boundaries.
-<a href=#1467 id=1467 data-nosnippet>1467</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>v = s.as_bytes();
-<a href=#1468 id=1468 data-nosnippet>1468</a>
-<a href=#1469 id=1469 data-nosnippet>1469</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
-<a href=#1470 id=1470 data-nosnippet>1470</a>        <span class="lifetime">'outer</span>: <span class="kw">loop </span>{
-<a href=#1471 id=1471 data-nosnippet>1471</a>            <span class="kw">let </span>byte = <span class="kw">match </span>byte(v, <span class="number">0</span>) {
-<a href=#1472 id=1472 data-nosnippet>1472</a>                <span class="string">b'"' </span>=&gt; <span class="kw">break</span>,
-<a href=#1473 id=1473 data-nosnippet>1473</a>                <span class="string">b'\\' </span>=&gt; {
-<a href=#1474 id=1474 data-nosnippet>1474</a>                    <span class="kw">let </span>b = byte(v, <span class="number">1</span>);
-<a href=#1475 id=1475 data-nosnippet>1475</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">2</span>..];
-<a href=#1476 id=1476 data-nosnippet>1476</a>                    <span class="kw">match </span>b {
-<a href=#1477 id=1477 data-nosnippet>1477</a>                        <span class="string">b'x' </span>=&gt; {
-<a href=#1478 id=1478 data-nosnippet>1478</a>                            <span class="kw">let </span>(b, rest) = backslash_x(v);
-<a href=#1479 id=1479 data-nosnippet>1479</a>                            <span class="macro">assert!</span>(b != <span class="number">0</span>, <span class="string">"\\x00 is not allowed in C-string literal"</span>);
-<a href=#1480 id=1480 data-nosnippet>1480</a>                            v = rest;
-<a href=#1481 id=1481 data-nosnippet>1481</a>                            b
-<a href=#1482 id=1482 data-nosnippet>1482</a>                        }
-<a href=#1483 id=1483 data-nosnippet>1483</a>                        <span class="string">b'u' </span>=&gt; {
-<a href=#1484 id=1484 data-nosnippet>1484</a>                            <span class="kw">let </span>(ch, rest) = backslash_u(v);
-<a href=#1485 id=1485 data-nosnippet>1485</a>                            <span class="macro">assert!</span>(ch != <span class="string">'\0'</span>, <span class="string">"\\u{{0}} is not allowed in C-string literal"</span>);
-<a href=#1486 id=1486 data-nosnippet>1486</a>                            v = rest;
-<a href=#1487 id=1487 data-nosnippet>1487</a>                            out.extend_from_slice(ch.encode_utf8(<span class="kw-2">&amp;mut </span>[<span class="number">0u8</span>; <span class="number">4</span>]).as_bytes());
-<a href=#1488 id=1488 data-nosnippet>1488</a>                            <span class="kw">continue </span><span class="lifetime">'outer</span>;
-<a href=#1489 id=1489 data-nosnippet>1489</a>                        }
-<a href=#1490 id=1490 data-nosnippet>1490</a>                        <span class="string">b'n' </span>=&gt; <span class="string">b'\n'</span>,
-<a href=#1491 id=1491 data-nosnippet>1491</a>                        <span class="string">b'r' </span>=&gt; <span class="string">b'\r'</span>,
-<a href=#1492 id=1492 data-nosnippet>1492</a>                        <span class="string">b't' </span>=&gt; <span class="string">b'\t'</span>,
-<a href=#1493 id=1493 data-nosnippet>1493</a>                        <span class="string">b'\\' </span>=&gt; <span class="string">b'\\'</span>,
-<a href=#1494 id=1494 data-nosnippet>1494</a>                        <span class="string">b'\'' </span>=&gt; <span class="string">b'\''</span>,
-<a href=#1495 id=1495 data-nosnippet>1495</a>                        <span class="string">b'"' </span>=&gt; <span class="string">b'"'</span>,
-<a href=#1496 id=1496 data-nosnippet>1496</a>                        <span class="string">b'\r' </span>| <span class="string">b'\n' </span>=&gt; <span class="kw">loop </span>{
-<a href=#1497 id=1497 data-nosnippet>1497</a>                            <span class="kw">let </span>byte = byte(v, <span class="number">0</span>);
-<a href=#1498 id=1498 data-nosnippet>1498</a>                            <span class="kw">if </span><span class="macro">matches!</span>(byte, <span class="string">b' ' </span>| <span class="string">b'\t' </span>| <span class="string">b'\n' </span>| <span class="string">b'\r'</span>) {
-<a href=#1499 id=1499 data-nosnippet>1499</a>                                v = <span class="kw-2">&amp;</span>v[<span class="number">1</span>..];
-<a href=#1500 id=1500 data-nosnippet>1500</a>                            } <span class="kw">else </span>{
-<a href=#1501 id=1501 data-nosnippet>1501</a>                                <span class="kw">continue </span><span class="lifetime">'outer</span>;
-<a href=#1502 id=1502 data-nosnippet>1502</a>                            }
-<a href=#1503 id=1503 data-nosnippet>1503</a>                        },
-<a href=#1504 id=1504 data-nosnippet>1504</a>                        b =&gt; <span class="macro">panic!</span>(
-<a href=#1505 id=1505 data-nosnippet>1505</a>                            <span class="string">"unexpected byte '{}' after \\ character in byte literal"</span>,
-<a href=#1506 id=1506 data-nosnippet>1506</a>                            ascii::escape_default(b),
-<a href=#1507 id=1507 data-nosnippet>1507</a>                        ),
-<a href=#1508 id=1508 data-nosnippet>1508</a>                    }
+<a href=#1442 id=1442 data-nosnippet>1442</a>    <span class="comment">// Returns (content, suffix).
+<a href=#1443 id=1443 data-nosnippet>1443</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_c_str(s: <span class="kw-2">&amp;</span>str) -&gt; (CString, Box&lt;str&gt;) {
+<a href=#1444 id=1444 data-nosnippet>1444</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'c'</span>);
+<a href=#1445 id=1445 data-nosnippet>1445</a>        <span class="kw">match </span>byte(s, <span class="number">1</span>) {
+<a href=#1446 id=1446 data-nosnippet>1446</a>            <span class="string">b'"' </span>=&gt; parse_lit_c_str_cooked(s),
+<a href=#1447 id=1447 data-nosnippet>1447</a>            <span class="string">b'r' </span>=&gt; parse_lit_c_str_raw(s),
+<a href=#1448 id=1448 data-nosnippet>1448</a>            <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+<a href=#1449 id=1449 data-nosnippet>1449</a>        }
+<a href=#1450 id=1450 data-nosnippet>1450</a>    }
+<a href=#1451 id=1451 data-nosnippet>1451</a>
+<a href=#1452 id=1452 data-nosnippet>1452</a>    <span class="kw">fn </span>parse_lit_c_str_cooked(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; (CString, Box&lt;str&gt;) {
+<a href=#1453 id=1453 data-nosnippet>1453</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'c'</span>);
+<a href=#1454 id=1454 data-nosnippet>1454</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">1</span>), <span class="string">b'"'</span>);
+<a href=#1455 id=1455 data-nosnippet>1455</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
+<a href=#1456 id=1456 data-nosnippet>1456</a>
+<a href=#1457 id=1457 data-nosnippet>1457</a>        <span class="comment">// We're going to want to have slices which don't respect codepoint boundaries.
+<a href=#1458 id=1458 data-nosnippet>1458</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>v = s.as_bytes();
+<a href=#1459 id=1459 data-nosnippet>1459</a>
+<a href=#1460 id=1460 data-nosnippet>1460</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
+<a href=#1461 id=1461 data-nosnippet>1461</a>        <span class="lifetime">'outer</span>: <span class="kw">loop </span>{
+<a href=#1462 id=1462 data-nosnippet>1462</a>            <span class="kw">let </span>byte = <span class="kw">match </span>byte(v, <span class="number">0</span>) {
+<a href=#1463 id=1463 data-nosnippet>1463</a>                <span class="string">b'"' </span>=&gt; <span class="kw">break</span>,
+<a href=#1464 id=1464 data-nosnippet>1464</a>                <span class="string">b'\\' </span>=&gt; {
+<a href=#1465 id=1465 data-nosnippet>1465</a>                    <span class="kw">let </span>b = byte(v, <span class="number">1</span>);
+<a href=#1466 id=1466 data-nosnippet>1466</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">2</span>..];
+<a href=#1467 id=1467 data-nosnippet>1467</a>                    <span class="kw">match </span>b {
+<a href=#1468 id=1468 data-nosnippet>1468</a>                        <span class="string">b'x' </span>=&gt; {
+<a href=#1469 id=1469 data-nosnippet>1469</a>                            <span class="kw">let </span>(b, rest) = backslash_x(v);
+<a href=#1470 id=1470 data-nosnippet>1470</a>                            <span class="macro">assert!</span>(b != <span class="number">0</span>, <span class="string">"\\x00 is not allowed in C-string literal"</span>);
+<a href=#1471 id=1471 data-nosnippet>1471</a>                            v = rest;
+<a href=#1472 id=1472 data-nosnippet>1472</a>                            b
+<a href=#1473 id=1473 data-nosnippet>1473</a>                        }
+<a href=#1474 id=1474 data-nosnippet>1474</a>                        <span class="string">b'u' </span>=&gt; {
+<a href=#1475 id=1475 data-nosnippet>1475</a>                            <span class="kw">let </span>(ch, rest) = backslash_u(v);
+<a href=#1476 id=1476 data-nosnippet>1476</a>                            <span class="macro">assert!</span>(ch != <span class="string">'\0'</span>, <span class="string">"\\u{{0}} is not allowed in C-string literal"</span>);
+<a href=#1477 id=1477 data-nosnippet>1477</a>                            v = rest;
+<a href=#1478 id=1478 data-nosnippet>1478</a>                            out.extend_from_slice(ch.encode_utf8(<span class="kw-2">&amp;mut </span>[<span class="number">0u8</span>; <span class="number">4</span>]).as_bytes());
+<a href=#1479 id=1479 data-nosnippet>1479</a>                            <span class="kw">continue </span><span class="lifetime">'outer</span>;
+<a href=#1480 id=1480 data-nosnippet>1480</a>                        }
+<a href=#1481 id=1481 data-nosnippet>1481</a>                        <span class="string">b'n' </span>=&gt; <span class="string">b'\n'</span>,
+<a href=#1482 id=1482 data-nosnippet>1482</a>                        <span class="string">b'r' </span>=&gt; <span class="string">b'\r'</span>,
+<a href=#1483 id=1483 data-nosnippet>1483</a>                        <span class="string">b't' </span>=&gt; <span class="string">b'\t'</span>,
+<a href=#1484 id=1484 data-nosnippet>1484</a>                        <span class="string">b'\\' </span>=&gt; <span class="string">b'\\'</span>,
+<a href=#1485 id=1485 data-nosnippet>1485</a>                        <span class="string">b'\'' </span>=&gt; <span class="string">b'\''</span>,
+<a href=#1486 id=1486 data-nosnippet>1486</a>                        <span class="string">b'"' </span>=&gt; <span class="string">b'"'</span>,
+<a href=#1487 id=1487 data-nosnippet>1487</a>                        <span class="string">b'\r' </span>| <span class="string">b'\n' </span>=&gt; <span class="kw">loop </span>{
+<a href=#1488 id=1488 data-nosnippet>1488</a>                            <span class="kw">let </span>byte = byte(v, <span class="number">0</span>);
+<a href=#1489 id=1489 data-nosnippet>1489</a>                            <span class="kw">if </span><span class="macro">matches!</span>(byte, <span class="string">b' ' </span>| <span class="string">b'\t' </span>| <span class="string">b'\n' </span>| <span class="string">b'\r'</span>) {
+<a href=#1490 id=1490 data-nosnippet>1490</a>                                v = <span class="kw-2">&amp;</span>v[<span class="number">1</span>..];
+<a href=#1491 id=1491 data-nosnippet>1491</a>                            } <span class="kw">else </span>{
+<a href=#1492 id=1492 data-nosnippet>1492</a>                                <span class="kw">continue </span><span class="lifetime">'outer</span>;
+<a href=#1493 id=1493 data-nosnippet>1493</a>                            }
+<a href=#1494 id=1494 data-nosnippet>1494</a>                        },
+<a href=#1495 id=1495 data-nosnippet>1495</a>                        b =&gt; <span class="macro">panic!</span>(
+<a href=#1496 id=1496 data-nosnippet>1496</a>                            <span class="string">"unexpected byte '{}' after \\ character in byte literal"</span>,
+<a href=#1497 id=1497 data-nosnippet>1497</a>                            ascii::escape_default(b),
+<a href=#1498 id=1498 data-nosnippet>1498</a>                        ),
+<a href=#1499 id=1499 data-nosnippet>1499</a>                    }
+<a href=#1500 id=1500 data-nosnippet>1500</a>                }
+<a href=#1501 id=1501 data-nosnippet>1501</a>                <span class="string">b'\r' </span>=&gt; {
+<a href=#1502 id=1502 data-nosnippet>1502</a>                    <span class="macro">assert_eq!</span>(byte(v, <span class="number">1</span>), <span class="string">b'\n'</span>, <span class="string">"bare CR not allowed in string"</span>);
+<a href=#1503 id=1503 data-nosnippet>1503</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">2</span>..];
+<a href=#1504 id=1504 data-nosnippet>1504</a>                    <span class="string">b'\n'
+<a href=#1505 id=1505 data-nosnippet>1505</a>                </span>}
+<a href=#1506 id=1506 data-nosnippet>1506</a>                b =&gt; {
+<a href=#1507 id=1507 data-nosnippet>1507</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">1</span>..];
+<a href=#1508 id=1508 data-nosnippet>1508</a>                    b
 <a href=#1509 id=1509 data-nosnippet>1509</a>                }
-<a href=#1510 id=1510 data-nosnippet>1510</a>                <span class="string">b'\r' </span>=&gt; {
-<a href=#1511 id=1511 data-nosnippet>1511</a>                    <span class="macro">assert_eq!</span>(byte(v, <span class="number">1</span>), <span class="string">b'\n'</span>, <span class="string">"bare CR not allowed in string"</span>);
-<a href=#1512 id=1512 data-nosnippet>1512</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">2</span>..];
-<a href=#1513 id=1513 data-nosnippet>1513</a>                    <span class="string">b'\n'
-<a href=#1514 id=1514 data-nosnippet>1514</a>                </span>}
-<a href=#1515 id=1515 data-nosnippet>1515</a>                b =&gt; {
-<a href=#1516 id=1516 data-nosnippet>1516</a>                    v = <span class="kw-2">&amp;</span>v[<span class="number">1</span>..];
-<a href=#1517 id=1517 data-nosnippet>1517</a>                    b
-<a href=#1518 id=1518 data-nosnippet>1518</a>                }
-<a href=#1519 id=1519 data-nosnippet>1519</a>            };
-<a href=#1520 id=1520 data-nosnippet>1520</a>            out.push(byte);
-<a href=#1521 id=1521 data-nosnippet>1521</a>        }
-<a href=#1522 id=1522 data-nosnippet>1522</a>
-<a href=#1523 id=1523 data-nosnippet>1523</a>        <span class="macro">assert_eq!</span>(byte(v, <span class="number">0</span>), <span class="string">b'"'</span>);
-<a href=#1524 id=1524 data-nosnippet>1524</a>        <span class="kw">let </span>suffix = s[s.len() - v.len() + <span class="number">1</span>..].to_owned().into_boxed_str();
-<a href=#1525 id=1525 data-nosnippet>1525</a>        (CString::new(out).unwrap(), suffix)
-<a href=#1526 id=1526 data-nosnippet>1526</a>    }
-<a href=#1527 id=1527 data-nosnippet>1527</a>
-<a href=#1528 id=1528 data-nosnippet>1528</a>    <span class="kw">fn </span>parse_lit_c_str_raw(s: <span class="kw-2">&amp;</span>str) -&gt; (CString, Box&lt;str&gt;) {
-<a href=#1529 id=1529 data-nosnippet>1529</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'c'</span>);
-<a href=#1530 id=1530 data-nosnippet>1530</a>        <span class="kw">let </span>(value, suffix) = parse_lit_str_raw(<span class="kw-2">&amp;</span>s[<span class="number">1</span>..]);
-<a href=#1531 id=1531 data-nosnippet>1531</a>        (CString::new(String::from(value)).unwrap(), suffix)
-<a href=#1532 id=1532 data-nosnippet>1532</a>    }
-<a href=#1533 id=1533 data-nosnippet>1533</a>
-<a href=#1534 id=1534 data-nosnippet>1534</a>    <span class="comment">// Returns (value, suffix).
-<a href=#1535 id=1535 data-nosnippet>1535</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_byte(s: <span class="kw-2">&amp;</span>str) -&gt; (u8, Box&lt;str&gt;) {
-<a href=#1536 id=1536 data-nosnippet>1536</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'b'</span>);
-<a href=#1537 id=1537 data-nosnippet>1537</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">1</span>), <span class="string">b'\''</span>);
-<a href=#1538 id=1538 data-nosnippet>1538</a>
-<a href=#1539 id=1539 data-nosnippet>1539</a>        <span class="comment">// We're going to want to have slices which don't respect codepoint boundaries.
-<a href=#1540 id=1540 data-nosnippet>1540</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>v = s[<span class="number">2</span>..].as_bytes();
-<a href=#1541 id=1541 data-nosnippet>1541</a>
-<a href=#1542 id=1542 data-nosnippet>1542</a>        <span class="kw">let </span>b = <span class="kw">match </span>byte(v, <span class="number">0</span>) {
-<a href=#1543 id=1543 data-nosnippet>1543</a>            <span class="string">b'\\' </span>=&gt; {
-<a href=#1544 id=1544 data-nosnippet>1544</a>                <span class="kw">let </span>b = byte(v, <span class="number">1</span>);
-<a href=#1545 id=1545 data-nosnippet>1545</a>                v = <span class="kw-2">&amp;</span>v[<span class="number">2</span>..];
-<a href=#1546 id=1546 data-nosnippet>1546</a>                <span class="kw">match </span>b {
-<a href=#1547 id=1547 data-nosnippet>1547</a>                    <span class="string">b'x' </span>=&gt; {
-<a href=#1548 id=1548 data-nosnippet>1548</a>                        <span class="kw">let </span>(b, rest) = backslash_x(v);
-<a href=#1549 id=1549 data-nosnippet>1549</a>                        v = rest;
-<a href=#1550 id=1550 data-nosnippet>1550</a>                        b
-<a href=#1551 id=1551 data-nosnippet>1551</a>                    }
-<a href=#1552 id=1552 data-nosnippet>1552</a>                    <span class="string">b'n' </span>=&gt; <span class="string">b'\n'</span>,
-<a href=#1553 id=1553 data-nosnippet>1553</a>                    <span class="string">b'r' </span>=&gt; <span class="string">b'\r'</span>,
-<a href=#1554 id=1554 data-nosnippet>1554</a>                    <span class="string">b't' </span>=&gt; <span class="string">b'\t'</span>,
-<a href=#1555 id=1555 data-nosnippet>1555</a>                    <span class="string">b'\\' </span>=&gt; <span class="string">b'\\'</span>,
-<a href=#1556 id=1556 data-nosnippet>1556</a>                    <span class="string">b'0' </span>=&gt; <span class="string">b'\0'</span>,
-<a href=#1557 id=1557 data-nosnippet>1557</a>                    <span class="string">b'\'' </span>=&gt; <span class="string">b'\''</span>,
-<a href=#1558 id=1558 data-nosnippet>1558</a>                    <span class="string">b'"' </span>=&gt; <span class="string">b'"'</span>,
-<a href=#1559 id=1559 data-nosnippet>1559</a>                    b =&gt; <span class="macro">panic!</span>(
-<a href=#1560 id=1560 data-nosnippet>1560</a>                        <span class="string">"unexpected byte '{}' after \\ character in byte literal"</span>,
-<a href=#1561 id=1561 data-nosnippet>1561</a>                        ascii::escape_default(b),
-<a href=#1562 id=1562 data-nosnippet>1562</a>                    ),
-<a href=#1563 id=1563 data-nosnippet>1563</a>                }
-<a href=#1564 id=1564 data-nosnippet>1564</a>            }
-<a href=#1565 id=1565 data-nosnippet>1565</a>            b =&gt; {
-<a href=#1566 id=1566 data-nosnippet>1566</a>                v = <span class="kw-2">&amp;</span>v[<span class="number">1</span>..];
-<a href=#1567 id=1567 data-nosnippet>1567</a>                b
-<a href=#1568 id=1568 data-nosnippet>1568</a>            }
-<a href=#1569 id=1569 data-nosnippet>1569</a>        };
-<a href=#1570 id=1570 data-nosnippet>1570</a>
-<a href=#1571 id=1571 data-nosnippet>1571</a>        <span class="macro">assert_eq!</span>(byte(v, <span class="number">0</span>), <span class="string">b'\''</span>);
-<a href=#1572 id=1572 data-nosnippet>1572</a>        <span class="kw">let </span>suffix = s[s.len() - v.len() + <span class="number">1</span>..].to_owned().into_boxed_str();
-<a href=#1573 id=1573 data-nosnippet>1573</a>        (b, suffix)
-<a href=#1574 id=1574 data-nosnippet>1574</a>    }
-<a href=#1575 id=1575 data-nosnippet>1575</a>
-<a href=#1576 id=1576 data-nosnippet>1576</a>    <span class="comment">// Returns (value, suffix).
-<a href=#1577 id=1577 data-nosnippet>1577</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_char(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; (char, Box&lt;str&gt;) {
-<a href=#1578 id=1578 data-nosnippet>1578</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'\''</span>);
-<a href=#1579 id=1579 data-nosnippet>1579</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
-<a href=#1580 id=1580 data-nosnippet>1580</a>
-<a href=#1581 id=1581 data-nosnippet>1581</a>        <span class="kw">let </span>ch = <span class="kw">match </span>byte(s, <span class="number">0</span>) {
-<a href=#1582 id=1582 data-nosnippet>1582</a>            <span class="string">b'\\' </span>=&gt; {
-<a href=#1583 id=1583 data-nosnippet>1583</a>                <span class="kw">let </span>b = byte(s, <span class="number">1</span>);
-<a href=#1584 id=1584 data-nosnippet>1584</a>                s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
-<a href=#1585 id=1585 data-nosnippet>1585</a>                <span class="kw">match </span>b {
-<a href=#1586 id=1586 data-nosnippet>1586</a>                    <span class="string">b'x' </span>=&gt; {
-<a href=#1587 id=1587 data-nosnippet>1587</a>                        <span class="kw">let </span>(byte, rest) = backslash_x(s);
-<a href=#1588 id=1588 data-nosnippet>1588</a>                        s = rest;
-<a href=#1589 id=1589 data-nosnippet>1589</a>                        <span class="macro">assert!</span>(byte &lt;= <span class="number">0x7F</span>, <span class="string">"invalid \\x byte in character literal"</span>);
-<a href=#1590 id=1590 data-nosnippet>1590</a>                        char::from_u32(u32::from(byte)).unwrap()
-<a href=#1591 id=1591 data-nosnippet>1591</a>                    }
-<a href=#1592 id=1592 data-nosnippet>1592</a>                    <span class="string">b'u' </span>=&gt; {
-<a href=#1593 id=1593 data-nosnippet>1593</a>                        <span class="kw">let </span>(ch, rest) = backslash_u(s);
-<a href=#1594 id=1594 data-nosnippet>1594</a>                        s = rest;
-<a href=#1595 id=1595 data-nosnippet>1595</a>                        ch
-<a href=#1596 id=1596 data-nosnippet>1596</a>                    }
-<a href=#1597 id=1597 data-nosnippet>1597</a>                    <span class="string">b'n' </span>=&gt; <span class="string">'\n'</span>,
-<a href=#1598 id=1598 data-nosnippet>1598</a>                    <span class="string">b'r' </span>=&gt; <span class="string">'\r'</span>,
-<a href=#1599 id=1599 data-nosnippet>1599</a>                    <span class="string">b't' </span>=&gt; <span class="string">'\t'</span>,
-<a href=#1600 id=1600 data-nosnippet>1600</a>                    <span class="string">b'\\' </span>=&gt; <span class="string">'\\'</span>,
-<a href=#1601 id=1601 data-nosnippet>1601</a>                    <span class="string">b'0' </span>=&gt; <span class="string">'\0'</span>,
-<a href=#1602 id=1602 data-nosnippet>1602</a>                    <span class="string">b'\'' </span>=&gt; <span class="string">'\''</span>,
-<a href=#1603 id=1603 data-nosnippet>1603</a>                    <span class="string">b'"' </span>=&gt; <span class="string">'"'</span>,
-<a href=#1604 id=1604 data-nosnippet>1604</a>                    b =&gt; <span class="macro">panic!</span>(
-<a href=#1605 id=1605 data-nosnippet>1605</a>                        <span class="string">"unexpected byte '{}' after \\ character in character literal"</span>,
-<a href=#1606 id=1606 data-nosnippet>1606</a>                        ascii::escape_default(b),
-<a href=#1607 id=1607 data-nosnippet>1607</a>                    ),
-<a href=#1608 id=1608 data-nosnippet>1608</a>                }
-<a href=#1609 id=1609 data-nosnippet>1609</a>            }
-<a href=#1610 id=1610 data-nosnippet>1610</a>            <span class="kw">_ </span>=&gt; {
-<a href=#1611 id=1611 data-nosnippet>1611</a>                <span class="kw">let </span>ch = next_chr(s);
-<a href=#1612 id=1612 data-nosnippet>1612</a>                s = <span class="kw-2">&amp;</span>s[ch.len_utf8()..];
-<a href=#1613 id=1613 data-nosnippet>1613</a>                ch
-<a href=#1614 id=1614 data-nosnippet>1614</a>            }
-<a href=#1615 id=1615 data-nosnippet>1615</a>        };
-<a href=#1616 id=1616 data-nosnippet>1616</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'\''</span>);
-<a href=#1617 id=1617 data-nosnippet>1617</a>        <span class="kw">let </span>suffix = s[<span class="number">1</span>..].to_owned().into_boxed_str();
-<a href=#1618 id=1618 data-nosnippet>1618</a>        (ch, suffix)
-<a href=#1619 id=1619 data-nosnippet>1619</a>    }
-<a href=#1620 id=1620 data-nosnippet>1620</a>
-<a href=#1621 id=1621 data-nosnippet>1621</a>    <span class="kw">fn </span>backslash_x&lt;S&gt;(s: <span class="kw-2">&amp;</span>S) -&gt; (u8, <span class="kw-2">&amp;</span>S)
-<a href=#1622 id=1622 data-nosnippet>1622</a>    <span class="kw">where
-<a href=#1623 id=1623 data-nosnippet>1623</a>        </span>S: Index&lt;RangeFrom&lt;usize&gt;, Output = S&gt; + AsRef&lt;[u8]&gt; + <span class="question-mark">?</span>Sized,
-<a href=#1624 id=1624 data-nosnippet>1624</a>    {
-<a href=#1625 id=1625 data-nosnippet>1625</a>        <span class="kw">let </span><span class="kw-2">mut </span>ch = <span class="number">0</span>;
-<a href=#1626 id=1626 data-nosnippet>1626</a>        <span class="kw">let </span>b0 = byte(s, <span class="number">0</span>);
-<a href=#1627 id=1627 data-nosnippet>1627</a>        <span class="kw">let </span>b1 = byte(s, <span class="number">1</span>);
-<a href=#1628 id=1628 data-nosnippet>1628</a>        ch += <span class="number">0x10
-<a href=#1629 id=1629 data-nosnippet>1629</a>            </span>* <span class="kw">match </span>b0 {
-<a href=#1630 id=1630 data-nosnippet>1630</a>                <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; b0 - <span class="string">b'0'</span>,
-<a href=#1631 id=1631 data-nosnippet>1631</a>                <span class="string">b'a'</span>..=<span class="string">b'f' </span>=&gt; <span class="number">10 </span>+ (b0 - <span class="string">b'a'</span>),
-<a href=#1632 id=1632 data-nosnippet>1632</a>                <span class="string">b'A'</span>..=<span class="string">b'F' </span>=&gt; <span class="number">10 </span>+ (b0 - <span class="string">b'A'</span>),
-<a href=#1633 id=1633 data-nosnippet>1633</a>                <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"unexpected non-hex character after \\x"</span>),
-<a href=#1634 id=1634 data-nosnippet>1634</a>            };
-<a href=#1635 id=1635 data-nosnippet>1635</a>        ch += <span class="kw">match </span>b1 {
-<a href=#1636 id=1636 data-nosnippet>1636</a>            <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; b1 - <span class="string">b'0'</span>,
-<a href=#1637 id=1637 data-nosnippet>1637</a>            <span class="string">b'a'</span>..=<span class="string">b'f' </span>=&gt; <span class="number">10 </span>+ (b1 - <span class="string">b'a'</span>),
-<a href=#1638 id=1638 data-nosnippet>1638</a>            <span class="string">b'A'</span>..=<span class="string">b'F' </span>=&gt; <span class="number">10 </span>+ (b1 - <span class="string">b'A'</span>),
-<a href=#1639 id=1639 data-nosnippet>1639</a>            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"unexpected non-hex character after \\x"</span>),
-<a href=#1640 id=1640 data-nosnippet>1640</a>        };
-<a href=#1641 id=1641 data-nosnippet>1641</a>        (ch, <span class="kw-2">&amp;</span>s[<span class="number">2</span>..])
-<a href=#1642 id=1642 data-nosnippet>1642</a>    }
+<a href=#1510 id=1510 data-nosnippet>1510</a>            };
+<a href=#1511 id=1511 data-nosnippet>1511</a>            out.push(byte);
+<a href=#1512 id=1512 data-nosnippet>1512</a>        }
+<a href=#1513 id=1513 data-nosnippet>1513</a>
+<a href=#1514 id=1514 data-nosnippet>1514</a>        <span class="macro">assert_eq!</span>(byte(v, <span class="number">0</span>), <span class="string">b'"'</span>);
+<a href=#1515 id=1515 data-nosnippet>1515</a>        <span class="kw">let </span>suffix = s[s.len() - v.len() + <span class="number">1</span>..].to_owned().into_boxed_str();
+<a href=#1516 id=1516 data-nosnippet>1516</a>        (CString::new(out).unwrap(), suffix)
+<a href=#1517 id=1517 data-nosnippet>1517</a>    }
+<a href=#1518 id=1518 data-nosnippet>1518</a>
+<a href=#1519 id=1519 data-nosnippet>1519</a>    <span class="kw">fn </span>parse_lit_c_str_raw(s: <span class="kw-2">&amp;</span>str) -&gt; (CString, Box&lt;str&gt;) {
+<a href=#1520 id=1520 data-nosnippet>1520</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'c'</span>);
+<a href=#1521 id=1521 data-nosnippet>1521</a>        <span class="kw">let </span>(value, suffix) = parse_lit_str_raw(<span class="kw-2">&amp;</span>s[<span class="number">1</span>..]);
+<a href=#1522 id=1522 data-nosnippet>1522</a>        (CString::new(String::from(value)).unwrap(), suffix)
+<a href=#1523 id=1523 data-nosnippet>1523</a>    }
+<a href=#1524 id=1524 data-nosnippet>1524</a>
+<a href=#1525 id=1525 data-nosnippet>1525</a>    <span class="comment">// Returns (value, suffix).
+<a href=#1526 id=1526 data-nosnippet>1526</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_byte(s: <span class="kw-2">&amp;</span>str) -&gt; (u8, Box&lt;str&gt;) {
+<a href=#1527 id=1527 data-nosnippet>1527</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'b'</span>);
+<a href=#1528 id=1528 data-nosnippet>1528</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">1</span>), <span class="string">b'\''</span>);
+<a href=#1529 id=1529 data-nosnippet>1529</a>
+<a href=#1530 id=1530 data-nosnippet>1530</a>        <span class="comment">// We're going to want to have slices which don't respect codepoint boundaries.
+<a href=#1531 id=1531 data-nosnippet>1531</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>v = <span class="kw-2">&amp;</span>s.as_bytes()[<span class="number">2</span>..];
+<a href=#1532 id=1532 data-nosnippet>1532</a>
+<a href=#1533 id=1533 data-nosnippet>1533</a>        <span class="kw">let </span>b = <span class="kw">match </span>byte(v, <span class="number">0</span>) {
+<a href=#1534 id=1534 data-nosnippet>1534</a>            <span class="string">b'\\' </span>=&gt; {
+<a href=#1535 id=1535 data-nosnippet>1535</a>                <span class="kw">let </span>b = byte(v, <span class="number">1</span>);
+<a href=#1536 id=1536 data-nosnippet>1536</a>                v = <span class="kw-2">&amp;</span>v[<span class="number">2</span>..];
+<a href=#1537 id=1537 data-nosnippet>1537</a>                <span class="kw">match </span>b {
+<a href=#1538 id=1538 data-nosnippet>1538</a>                    <span class="string">b'x' </span>=&gt; {
+<a href=#1539 id=1539 data-nosnippet>1539</a>                        <span class="kw">let </span>(b, rest) = backslash_x(v);
+<a href=#1540 id=1540 data-nosnippet>1540</a>                        v = rest;
+<a href=#1541 id=1541 data-nosnippet>1541</a>                        b
+<a href=#1542 id=1542 data-nosnippet>1542</a>                    }
+<a href=#1543 id=1543 data-nosnippet>1543</a>                    <span class="string">b'n' </span>=&gt; <span class="string">b'\n'</span>,
+<a href=#1544 id=1544 data-nosnippet>1544</a>                    <span class="string">b'r' </span>=&gt; <span class="string">b'\r'</span>,
+<a href=#1545 id=1545 data-nosnippet>1545</a>                    <span class="string">b't' </span>=&gt; <span class="string">b'\t'</span>,
+<a href=#1546 id=1546 data-nosnippet>1546</a>                    <span class="string">b'\\' </span>=&gt; <span class="string">b'\\'</span>,
+<a href=#1547 id=1547 data-nosnippet>1547</a>                    <span class="string">b'0' </span>=&gt; <span class="string">b'\0'</span>,
+<a href=#1548 id=1548 data-nosnippet>1548</a>                    <span class="string">b'\'' </span>=&gt; <span class="string">b'\''</span>,
+<a href=#1549 id=1549 data-nosnippet>1549</a>                    <span class="string">b'"' </span>=&gt; <span class="string">b'"'</span>,
+<a href=#1550 id=1550 data-nosnippet>1550</a>                    b =&gt; <span class="macro">panic!</span>(
+<a href=#1551 id=1551 data-nosnippet>1551</a>                        <span class="string">"unexpected byte '{}' after \\ character in byte literal"</span>,
+<a href=#1552 id=1552 data-nosnippet>1552</a>                        ascii::escape_default(b),
+<a href=#1553 id=1553 data-nosnippet>1553</a>                    ),
+<a href=#1554 id=1554 data-nosnippet>1554</a>                }
+<a href=#1555 id=1555 data-nosnippet>1555</a>            }
+<a href=#1556 id=1556 data-nosnippet>1556</a>            b =&gt; {
+<a href=#1557 id=1557 data-nosnippet>1557</a>                v = <span class="kw-2">&amp;</span>v[<span class="number">1</span>..];
+<a href=#1558 id=1558 data-nosnippet>1558</a>                b
+<a href=#1559 id=1559 data-nosnippet>1559</a>            }
+<a href=#1560 id=1560 data-nosnippet>1560</a>        };
+<a href=#1561 id=1561 data-nosnippet>1561</a>
+<a href=#1562 id=1562 data-nosnippet>1562</a>        <span class="macro">assert_eq!</span>(byte(v, <span class="number">0</span>), <span class="string">b'\''</span>);
+<a href=#1563 id=1563 data-nosnippet>1563</a>        <span class="kw">let </span>suffix = s[s.len() - v.len() + <span class="number">1</span>..].to_owned().into_boxed_str();
+<a href=#1564 id=1564 data-nosnippet>1564</a>        (b, suffix)
+<a href=#1565 id=1565 data-nosnippet>1565</a>    }
+<a href=#1566 id=1566 data-nosnippet>1566</a>
+<a href=#1567 id=1567 data-nosnippet>1567</a>    <span class="comment">// Returns (value, suffix).
+<a href=#1568 id=1568 data-nosnippet>1568</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_char(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; (char, Box&lt;str&gt;) {
+<a href=#1569 id=1569 data-nosnippet>1569</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'\''</span>);
+<a href=#1570 id=1570 data-nosnippet>1570</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
+<a href=#1571 id=1571 data-nosnippet>1571</a>
+<a href=#1572 id=1572 data-nosnippet>1572</a>        <span class="kw">let </span>ch = <span class="kw">match </span>byte(s, <span class="number">0</span>) {
+<a href=#1573 id=1573 data-nosnippet>1573</a>            <span class="string">b'\\' </span>=&gt; {
+<a href=#1574 id=1574 data-nosnippet>1574</a>                <span class="kw">let </span>b = byte(s, <span class="number">1</span>);
+<a href=#1575 id=1575 data-nosnippet>1575</a>                s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
+<a href=#1576 id=1576 data-nosnippet>1576</a>                <span class="kw">match </span>b {
+<a href=#1577 id=1577 data-nosnippet>1577</a>                    <span class="string">b'x' </span>=&gt; {
+<a href=#1578 id=1578 data-nosnippet>1578</a>                        <span class="kw">let </span>(byte, rest) = backslash_x(s);
+<a href=#1579 id=1579 data-nosnippet>1579</a>                        s = rest;
+<a href=#1580 id=1580 data-nosnippet>1580</a>                        <span class="macro">assert!</span>(byte &lt;= <span class="number">0x7F</span>, <span class="string">"invalid \\x byte in character literal"</span>);
+<a href=#1581 id=1581 data-nosnippet>1581</a>                        char::from_u32(u32::from(byte)).unwrap()
+<a href=#1582 id=1582 data-nosnippet>1582</a>                    }
+<a href=#1583 id=1583 data-nosnippet>1583</a>                    <span class="string">b'u' </span>=&gt; {
+<a href=#1584 id=1584 data-nosnippet>1584</a>                        <span class="kw">let </span>(ch, rest) = backslash_u(s);
+<a href=#1585 id=1585 data-nosnippet>1585</a>                        s = rest;
+<a href=#1586 id=1586 data-nosnippet>1586</a>                        ch
+<a href=#1587 id=1587 data-nosnippet>1587</a>                    }
+<a href=#1588 id=1588 data-nosnippet>1588</a>                    <span class="string">b'n' </span>=&gt; <span class="string">'\n'</span>,
+<a href=#1589 id=1589 data-nosnippet>1589</a>                    <span class="string">b'r' </span>=&gt; <span class="string">'\r'</span>,
+<a href=#1590 id=1590 data-nosnippet>1590</a>                    <span class="string">b't' </span>=&gt; <span class="string">'\t'</span>,
+<a href=#1591 id=1591 data-nosnippet>1591</a>                    <span class="string">b'\\' </span>=&gt; <span class="string">'\\'</span>,
+<a href=#1592 id=1592 data-nosnippet>1592</a>                    <span class="string">b'0' </span>=&gt; <span class="string">'\0'</span>,
+<a href=#1593 id=1593 data-nosnippet>1593</a>                    <span class="string">b'\'' </span>=&gt; <span class="string">'\''</span>,
+<a href=#1594 id=1594 data-nosnippet>1594</a>                    <span class="string">b'"' </span>=&gt; <span class="string">'"'</span>,
+<a href=#1595 id=1595 data-nosnippet>1595</a>                    b =&gt; <span class="macro">panic!</span>(
+<a href=#1596 id=1596 data-nosnippet>1596</a>                        <span class="string">"unexpected byte '{}' after \\ character in character literal"</span>,
+<a href=#1597 id=1597 data-nosnippet>1597</a>                        ascii::escape_default(b),
+<a href=#1598 id=1598 data-nosnippet>1598</a>                    ),
+<a href=#1599 id=1599 data-nosnippet>1599</a>                }
+<a href=#1600 id=1600 data-nosnippet>1600</a>            }
+<a href=#1601 id=1601 data-nosnippet>1601</a>            <span class="kw">_ </span>=&gt; {
+<a href=#1602 id=1602 data-nosnippet>1602</a>                <span class="kw">let </span>ch = next_chr(s);
+<a href=#1603 id=1603 data-nosnippet>1603</a>                s = <span class="kw-2">&amp;</span>s[ch.len_utf8()..];
+<a href=#1604 id=1604 data-nosnippet>1604</a>                ch
+<a href=#1605 id=1605 data-nosnippet>1605</a>            }
+<a href=#1606 id=1606 data-nosnippet>1606</a>        };
+<a href=#1607 id=1607 data-nosnippet>1607</a>        <span class="macro">assert_eq!</span>(byte(s, <span class="number">0</span>), <span class="string">b'\''</span>);
+<a href=#1608 id=1608 data-nosnippet>1608</a>        <span class="kw">let </span>suffix = s[<span class="number">1</span>..].to_owned().into_boxed_str();
+<a href=#1609 id=1609 data-nosnippet>1609</a>        (ch, suffix)
+<a href=#1610 id=1610 data-nosnippet>1610</a>    }
+<a href=#1611 id=1611 data-nosnippet>1611</a>
+<a href=#1612 id=1612 data-nosnippet>1612</a>    <span class="kw">fn </span>backslash_x&lt;S&gt;(s: <span class="kw-2">&amp;</span>S) -&gt; (u8, <span class="kw-2">&amp;</span>S)
+<a href=#1613 id=1613 data-nosnippet>1613</a>    <span class="kw">where
+<a href=#1614 id=1614 data-nosnippet>1614</a>        </span>S: Index&lt;RangeFrom&lt;usize&gt;, Output = S&gt; + AsRef&lt;[u8]&gt; + <span class="question-mark">?</span>Sized,
+<a href=#1615 id=1615 data-nosnippet>1615</a>    {
+<a href=#1616 id=1616 data-nosnippet>1616</a>        <span class="kw">let </span><span class="kw-2">mut </span>ch = <span class="number">0</span>;
+<a href=#1617 id=1617 data-nosnippet>1617</a>        <span class="kw">let </span>b0 = byte(s, <span class="number">0</span>);
+<a href=#1618 id=1618 data-nosnippet>1618</a>        <span class="kw">let </span>b1 = byte(s, <span class="number">1</span>);
+<a href=#1619 id=1619 data-nosnippet>1619</a>        ch += <span class="number">0x10
+<a href=#1620 id=1620 data-nosnippet>1620</a>            </span>* <span class="kw">match </span>b0 {
+<a href=#1621 id=1621 data-nosnippet>1621</a>                <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; b0 - <span class="string">b'0'</span>,
+<a href=#1622 id=1622 data-nosnippet>1622</a>                <span class="string">b'a'</span>..=<span class="string">b'f' </span>=&gt; <span class="number">10 </span>+ (b0 - <span class="string">b'a'</span>),
+<a href=#1623 id=1623 data-nosnippet>1623</a>                <span class="string">b'A'</span>..=<span class="string">b'F' </span>=&gt; <span class="number">10 </span>+ (b0 - <span class="string">b'A'</span>),
+<a href=#1624 id=1624 data-nosnippet>1624</a>                <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"unexpected non-hex character after \\x"</span>),
+<a href=#1625 id=1625 data-nosnippet>1625</a>            };
+<a href=#1626 id=1626 data-nosnippet>1626</a>        ch += <span class="kw">match </span>b1 {
+<a href=#1627 id=1627 data-nosnippet>1627</a>            <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; b1 - <span class="string">b'0'</span>,
+<a href=#1628 id=1628 data-nosnippet>1628</a>            <span class="string">b'a'</span>..=<span class="string">b'f' </span>=&gt; <span class="number">10 </span>+ (b1 - <span class="string">b'a'</span>),
+<a href=#1629 id=1629 data-nosnippet>1629</a>            <span class="string">b'A'</span>..=<span class="string">b'F' </span>=&gt; <span class="number">10 </span>+ (b1 - <span class="string">b'A'</span>),
+<a href=#1630 id=1630 data-nosnippet>1630</a>            <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"unexpected non-hex character after \\x"</span>),
+<a href=#1631 id=1631 data-nosnippet>1631</a>        };
+<a href=#1632 id=1632 data-nosnippet>1632</a>        (ch, <span class="kw-2">&amp;</span>s[<span class="number">2</span>..])
+<a href=#1633 id=1633 data-nosnippet>1633</a>    }
+<a href=#1634 id=1634 data-nosnippet>1634</a>
+<a href=#1635 id=1635 data-nosnippet>1635</a>    <span class="kw">fn </span>backslash_u&lt;S&gt;(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>S) -&gt; (char, <span class="kw-2">&amp;</span>S)
+<a href=#1636 id=1636 data-nosnippet>1636</a>    <span class="kw">where
+<a href=#1637 id=1637 data-nosnippet>1637</a>        </span>S: Index&lt;RangeFrom&lt;usize&gt;, Output = S&gt; + AsRef&lt;[u8]&gt; + <span class="question-mark">?</span>Sized,
+<a href=#1638 id=1638 data-nosnippet>1638</a>    {
+<a href=#1639 id=1639 data-nosnippet>1639</a>        <span class="kw">if </span>byte(s, <span class="number">0</span>) != <span class="string">b'{' </span>{
+<a href=#1640 id=1640 data-nosnippet>1640</a>            <span class="macro">panic!</span>(<span class="string">"{}"</span>, <span class="string">"expected { after \\u"</span>);
+<a href=#1641 id=1641 data-nosnippet>1641</a>        }
+<a href=#1642 id=1642 data-nosnippet>1642</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
 <a href=#1643 id=1643 data-nosnippet>1643</a>
-<a href=#1644 id=1644 data-nosnippet>1644</a>    <span class="kw">fn </span>backslash_u&lt;S&gt;(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>S) -&gt; (char, <span class="kw-2">&amp;</span>S)
-<a href=#1645 id=1645 data-nosnippet>1645</a>    <span class="kw">where
-<a href=#1646 id=1646 data-nosnippet>1646</a>        </span>S: Index&lt;RangeFrom&lt;usize&gt;, Output = S&gt; + AsRef&lt;[u8]&gt; + <span class="question-mark">?</span>Sized,
-<a href=#1647 id=1647 data-nosnippet>1647</a>    {
-<a href=#1648 id=1648 data-nosnippet>1648</a>        <span class="kw">if </span>byte(s, <span class="number">0</span>) != <span class="string">b'{' </span>{
-<a href=#1649 id=1649 data-nosnippet>1649</a>            <span class="macro">panic!</span>(<span class="string">"{}"</span>, <span class="string">"expected { after \\u"</span>);
-<a href=#1650 id=1650 data-nosnippet>1650</a>        }
-<a href=#1651 id=1651 data-nosnippet>1651</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
-<a href=#1652 id=1652 data-nosnippet>1652</a>
-<a href=#1653 id=1653 data-nosnippet>1653</a>        <span class="kw">let </span><span class="kw-2">mut </span>ch = <span class="number">0</span>;
-<a href=#1654 id=1654 data-nosnippet>1654</a>        <span class="kw">let </span><span class="kw-2">mut </span>digits = <span class="number">0</span>;
-<a href=#1655 id=1655 data-nosnippet>1655</a>        <span class="kw">loop </span>{
-<a href=#1656 id=1656 data-nosnippet>1656</a>            <span class="kw">let </span>b = byte(s, <span class="number">0</span>);
-<a href=#1657 id=1657 data-nosnippet>1657</a>            <span class="kw">let </span>digit = <span class="kw">match </span>b {
-<a href=#1658 id=1658 data-nosnippet>1658</a>                <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; b - <span class="string">b'0'</span>,
-<a href=#1659 id=1659 data-nosnippet>1659</a>                <span class="string">b'a'</span>..=<span class="string">b'f' </span>=&gt; <span class="number">10 </span>+ b - <span class="string">b'a'</span>,
-<a href=#1660 id=1660 data-nosnippet>1660</a>                <span class="string">b'A'</span>..=<span class="string">b'F' </span>=&gt; <span class="number">10 </span>+ b - <span class="string">b'A'</span>,
-<a href=#1661 id=1661 data-nosnippet>1661</a>                <span class="string">b'_' </span><span class="kw">if </span>digits &gt; <span class="number">0 </span>=&gt; {
-<a href=#1662 id=1662 data-nosnippet>1662</a>                    s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
-<a href=#1663 id=1663 data-nosnippet>1663</a>                    <span class="kw">continue</span>;
-<a href=#1664 id=1664 data-nosnippet>1664</a>                }
-<a href=#1665 id=1665 data-nosnippet>1665</a>                <span class="string">b'}' </span><span class="kw">if </span>digits == <span class="number">0 </span>=&gt; <span class="macro">panic!</span>(<span class="string">"invalid empty unicode escape"</span>),
-<a href=#1666 id=1666 data-nosnippet>1666</a>                <span class="string">b'}' </span>=&gt; <span class="kw">break</span>,
-<a href=#1667 id=1667 data-nosnippet>1667</a>                <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"unexpected non-hex character after \\u"</span>),
-<a href=#1668 id=1668 data-nosnippet>1668</a>            };
-<a href=#1669 id=1669 data-nosnippet>1669</a>            <span class="kw">if </span>digits == <span class="number">6 </span>{
-<a href=#1670 id=1670 data-nosnippet>1670</a>                <span class="macro">panic!</span>(<span class="string">"overlong unicode escape (must have at most 6 hex digits)"</span>);
-<a href=#1671 id=1671 data-nosnippet>1671</a>            }
-<a href=#1672 id=1672 data-nosnippet>1672</a>            ch <span class="kw-2">*</span>= <span class="number">0x10</span>;
-<a href=#1673 id=1673 data-nosnippet>1673</a>            ch += u32::from(digit);
-<a href=#1674 id=1674 data-nosnippet>1674</a>            digits += <span class="number">1</span>;
-<a href=#1675 id=1675 data-nosnippet>1675</a>            s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
-<a href=#1676 id=1676 data-nosnippet>1676</a>        }
-<a href=#1677 id=1677 data-nosnippet>1677</a>        <span class="macro">assert!</span>(byte(s, <span class="number">0</span>) == <span class="string">b'}'</span>);
-<a href=#1678 id=1678 data-nosnippet>1678</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
-<a href=#1679 id=1679 data-nosnippet>1679</a>
-<a href=#1680 id=1680 data-nosnippet>1680</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(ch) = char::from_u32(ch) {
-<a href=#1681 id=1681 data-nosnippet>1681</a>            (ch, s)
-<a href=#1682 id=1682 data-nosnippet>1682</a>        } <span class="kw">else </span>{
-<a href=#1683 id=1683 data-nosnippet>1683</a>            <span class="macro">panic!</span>(<span class="string">"character code {:x} is not a valid unicode character"</span>, ch);
-<a href=#1684 id=1684 data-nosnippet>1684</a>        }
-<a href=#1685 id=1685 data-nosnippet>1685</a>    }
-<a href=#1686 id=1686 data-nosnippet>1686</a>
-<a href=#1687 id=1687 data-nosnippet>1687</a>    <span class="comment">// Returns base 10 digits and suffix.
-<a href=#1688 id=1688 data-nosnippet>1688</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_int(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;(Box&lt;str&gt;, Box&lt;str&gt;)&gt; {
-<a href=#1689 id=1689 data-nosnippet>1689</a>        <span class="kw">let </span>negative = byte(s, <span class="number">0</span>) == <span class="string">b'-'</span>;
-<a href=#1690 id=1690 data-nosnippet>1690</a>        <span class="kw">if </span>negative {
-<a href=#1691 id=1691 data-nosnippet>1691</a>            s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
-<a href=#1692 id=1692 data-nosnippet>1692</a>        }
-<a href=#1693 id=1693 data-nosnippet>1693</a>
-<a href=#1694 id=1694 data-nosnippet>1694</a>        <span class="kw">let </span>base = <span class="kw">match </span>(byte(s, <span class="number">0</span>), byte(s, <span class="number">1</span>)) {
-<a href=#1695 id=1695 data-nosnippet>1695</a>            (<span class="string">b'0'</span>, <span class="string">b'x'</span>) =&gt; {
-<a href=#1696 id=1696 data-nosnippet>1696</a>                s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
-<a href=#1697 id=1697 data-nosnippet>1697</a>                <span class="number">16
-<a href=#1698 id=1698 data-nosnippet>1698</a>            </span>}
-<a href=#1699 id=1699 data-nosnippet>1699</a>            (<span class="string">b'0'</span>, <span class="string">b'o'</span>) =&gt; {
-<a href=#1700 id=1700 data-nosnippet>1700</a>                s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
-<a href=#1701 id=1701 data-nosnippet>1701</a>                <span class="number">8
-<a href=#1702 id=1702 data-nosnippet>1702</a>            </span>}
-<a href=#1703 id=1703 data-nosnippet>1703</a>            (<span class="string">b'0'</span>, <span class="string">b'b'</span>) =&gt; {
-<a href=#1704 id=1704 data-nosnippet>1704</a>                s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
-<a href=#1705 id=1705 data-nosnippet>1705</a>                <span class="number">2
-<a href=#1706 id=1706 data-nosnippet>1706</a>            </span>}
-<a href=#1707 id=1707 data-nosnippet>1707</a>            (<span class="string">b'0'</span>..=<span class="string">b'9'</span>, <span class="kw">_</span>) =&gt; <span class="number">10</span>,
-<a href=#1708 id=1708 data-nosnippet>1708</a>            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
-<a href=#1709 id=1709 data-nosnippet>1709</a>        };
-<a href=#1710 id=1710 data-nosnippet>1710</a>
-<a href=#1711 id=1711 data-nosnippet>1711</a>        <span class="kw">let </span><span class="kw-2">mut </span>value = BigInt::new();
-<a href=#1712 id=1712 data-nosnippet>1712</a>        <span class="kw">let </span><span class="kw-2">mut </span>has_digit = <span class="bool-val">false</span>;
-<a href=#1713 id=1713 data-nosnippet>1713</a>        <span class="lifetime">'outer</span>: <span class="kw">loop </span>{
-<a href=#1714 id=1714 data-nosnippet>1714</a>            <span class="kw">let </span>b = byte(s, <span class="number">0</span>);
-<a href=#1715 id=1715 data-nosnippet>1715</a>            <span class="kw">let </span>digit = <span class="kw">match </span>b {
-<a href=#1716 id=1716 data-nosnippet>1716</a>                <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; b - <span class="string">b'0'</span>,
-<a href=#1717 id=1717 data-nosnippet>1717</a>                <span class="string">b'a'</span>..=<span class="string">b'f' </span><span class="kw">if </span>base &gt; <span class="number">10 </span>=&gt; b - <span class="string">b'a' </span>+ <span class="number">10</span>,
-<a href=#1718 id=1718 data-nosnippet>1718</a>                <span class="string">b'A'</span>..=<span class="string">b'F' </span><span class="kw">if </span>base &gt; <span class="number">10 </span>=&gt; b - <span class="string">b'A' </span>+ <span class="number">10</span>,
-<a href=#1719 id=1719 data-nosnippet>1719</a>                <span class="string">b'_' </span>=&gt; {
-<a href=#1720 id=1720 data-nosnippet>1720</a>                    s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
-<a href=#1721 id=1721 data-nosnippet>1721</a>                    <span class="kw">continue</span>;
-<a href=#1722 id=1722 data-nosnippet>1722</a>                }
-<a href=#1723 id=1723 data-nosnippet>1723</a>                <span class="comment">// If looking at a floating point literal, we don't want to
-<a href=#1724 id=1724 data-nosnippet>1724</a>                // consider it an integer.
-<a href=#1725 id=1725 data-nosnippet>1725</a>                </span><span class="string">b'.' </span><span class="kw">if </span>base == <span class="number">10 </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
-<a href=#1726 id=1726 data-nosnippet>1726</a>                <span class="string">b'e' </span>| <span class="string">b'E' </span><span class="kw">if </span>base == <span class="number">10 </span>=&gt; {
-<a href=#1727 id=1727 data-nosnippet>1727</a>                    <span class="kw">let </span><span class="kw-2">mut </span>has_exp = <span class="bool-val">false</span>;
-<a href=#1728 id=1728 data-nosnippet>1728</a>                    <span class="kw">for </span>(i, b) <span class="kw">in </span>s[<span class="number">1</span>..].bytes().enumerate() {
-<a href=#1729 id=1729 data-nosnippet>1729</a>                        <span class="kw">match </span>b {
-<a href=#1730 id=1730 data-nosnippet>1730</a>                            <span class="string">b'_' </span>=&gt; {}
-<a href=#1731 id=1731 data-nosnippet>1731</a>                            <span class="string">b'-' </span>| <span class="string">b'+' </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
-<a href=#1732 id=1732 data-nosnippet>1732</a>                            <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; has_exp = <span class="bool-val">true</span>,
-<a href=#1733 id=1733 data-nosnippet>1733</a>                            <span class="kw">_ </span>=&gt; {
-<a href=#1734 id=1734 data-nosnippet>1734</a>                                <span class="kw">let </span>suffix = <span class="kw-2">&amp;</span>s[<span class="number">1 </span>+ i..];
-<a href=#1735 id=1735 data-nosnippet>1735</a>                                <span class="kw">if </span>has_exp &amp;&amp; <span class="kw">crate</span>::ident::xid_ok(suffix) {
-<a href=#1736 id=1736 data-nosnippet>1736</a>                                    <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#1737 id=1737 data-nosnippet>1737</a>                                } <span class="kw">else </span>{
-<a href=#1738 id=1738 data-nosnippet>1738</a>                                    <span class="kw">break </span><span class="lifetime">'outer</span>;
-<a href=#1739 id=1739 data-nosnippet>1739</a>                                }
-<a href=#1740 id=1740 data-nosnippet>1740</a>                            }
-<a href=#1741 id=1741 data-nosnippet>1741</a>                        }
-<a href=#1742 id=1742 data-nosnippet>1742</a>                    }
-<a href=#1743 id=1743 data-nosnippet>1743</a>                    <span class="kw">if </span>has_exp {
-<a href=#1744 id=1744 data-nosnippet>1744</a>                        <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#1745 id=1745 data-nosnippet>1745</a>                    } <span class="kw">else </span>{
-<a href=#1746 id=1746 data-nosnippet>1746</a>                        <span class="kw">break</span>;
-<a href=#1747 id=1747 data-nosnippet>1747</a>                    }
-<a href=#1748 id=1748 data-nosnippet>1748</a>                }
-<a href=#1749 id=1749 data-nosnippet>1749</a>                <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
-<a href=#1750 id=1750 data-nosnippet>1750</a>            };
-<a href=#1751 id=1751 data-nosnippet>1751</a>
-<a href=#1752 id=1752 data-nosnippet>1752</a>            <span class="kw">if </span>digit &gt;= base {
-<a href=#1753 id=1753 data-nosnippet>1753</a>                <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#1754 id=1754 data-nosnippet>1754</a>            }
-<a href=#1755 id=1755 data-nosnippet>1755</a>
-<a href=#1756 id=1756 data-nosnippet>1756</a>            has_digit = <span class="bool-val">true</span>;
-<a href=#1757 id=1757 data-nosnippet>1757</a>            value <span class="kw-2">*</span>= base;
-<a href=#1758 id=1758 data-nosnippet>1758</a>            value += digit;
-<a href=#1759 id=1759 data-nosnippet>1759</a>            s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
-<a href=#1760 id=1760 data-nosnippet>1760</a>        }
-<a href=#1761 id=1761 data-nosnippet>1761</a>
-<a href=#1762 id=1762 data-nosnippet>1762</a>        <span class="kw">if </span>!has_digit {
-<a href=#1763 id=1763 data-nosnippet>1763</a>            <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#1764 id=1764 data-nosnippet>1764</a>        }
-<a href=#1765 id=1765 data-nosnippet>1765</a>
-<a href=#1766 id=1766 data-nosnippet>1766</a>        <span class="kw">let </span>suffix = s;
-<a href=#1767 id=1767 data-nosnippet>1767</a>        <span class="kw">if </span>suffix.is_empty() || <span class="kw">crate</span>::ident::xid_ok(suffix) {
-<a href=#1768 id=1768 data-nosnippet>1768</a>            <span class="kw">let </span><span class="kw-2">mut </span>repr = value.to_string();
-<a href=#1769 id=1769 data-nosnippet>1769</a>            <span class="kw">if </span>negative {
-<a href=#1770 id=1770 data-nosnippet>1770</a>                repr.insert(<span class="number">0</span>, <span class="string">'-'</span>);
-<a href=#1771 id=1771 data-nosnippet>1771</a>            }
-<a href=#1772 id=1772 data-nosnippet>1772</a>            <span class="prelude-val">Some</span>((repr.into_boxed_str(), suffix.to_owned().into_boxed_str()))
-<a href=#1773 id=1773 data-nosnippet>1773</a>        } <span class="kw">else </span>{
-<a href=#1774 id=1774 data-nosnippet>1774</a>            <span class="prelude-val">None
-<a href=#1775 id=1775 data-nosnippet>1775</a>        </span>}
-<a href=#1776 id=1776 data-nosnippet>1776</a>    }
-<a href=#1777 id=1777 data-nosnippet>1777</a>
-<a href=#1778 id=1778 data-nosnippet>1778</a>    <span class="comment">// Returns base 10 digits and suffix.
-<a href=#1779 id=1779 data-nosnippet>1779</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_float(input: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;(Box&lt;str&gt;, Box&lt;str&gt;)&gt; {
-<a href=#1780 id=1780 data-nosnippet>1780</a>        <span class="comment">// Rust's floating point literals are very similar to the ones parsed by
-<a href=#1781 id=1781 data-nosnippet>1781</a>        // the standard library, except that rust's literals can contain
-<a href=#1782 id=1782 data-nosnippet>1782</a>        // ignorable underscores. Let's remove those underscores.
-<a href=#1783 id=1783 data-nosnippet>1783</a>
-<a href=#1784 id=1784 data-nosnippet>1784</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>bytes = input.to_owned().into_bytes();
-<a href=#1785 id=1785 data-nosnippet>1785</a>
-<a href=#1786 id=1786 data-nosnippet>1786</a>        <span class="kw">let </span>start = (<span class="kw-2">*</span>bytes.first()<span class="question-mark">? </span>== <span class="string">b'-'</span>) <span class="kw">as </span>usize;
-<a href=#1787 id=1787 data-nosnippet>1787</a>        <span class="kw">match </span>bytes.get(start)<span class="question-mark">? </span>{
-<a href=#1788 id=1788 data-nosnippet>1788</a>            <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; {}
-<a href=#1789 id=1789 data-nosnippet>1789</a>            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
-<a href=#1790 id=1790 data-nosnippet>1790</a>        }
-<a href=#1791 id=1791 data-nosnippet>1791</a>
-<a href=#1792 id=1792 data-nosnippet>1792</a>        <span class="kw">let </span><span class="kw-2">mut </span>read = start;
-<a href=#1793 id=1793 data-nosnippet>1793</a>        <span class="kw">let </span><span class="kw-2">mut </span>write = start;
-<a href=#1794 id=1794 data-nosnippet>1794</a>        <span class="kw">let </span><span class="kw-2">mut </span>has_dot = <span class="bool-val">false</span>;
-<a href=#1795 id=1795 data-nosnippet>1795</a>        <span class="kw">let </span><span class="kw-2">mut </span>has_e = <span class="bool-val">false</span>;
-<a href=#1796 id=1796 data-nosnippet>1796</a>        <span class="kw">let </span><span class="kw-2">mut </span>has_sign = <span class="bool-val">false</span>;
-<a href=#1797 id=1797 data-nosnippet>1797</a>        <span class="kw">let </span><span class="kw-2">mut </span>has_exponent = <span class="bool-val">false</span>;
-<a href=#1798 id=1798 data-nosnippet>1798</a>        <span class="kw">while </span>read &lt; bytes.len() {
-<a href=#1799 id=1799 data-nosnippet>1799</a>            <span class="kw">match </span>bytes[read] {
-<a href=#1800 id=1800 data-nosnippet>1800</a>                <span class="string">b'_' </span>=&gt; {
-<a href=#1801 id=1801 data-nosnippet>1801</a>                    <span class="comment">// Don't increase write
-<a href=#1802 id=1802 data-nosnippet>1802</a>                    </span>read += <span class="number">1</span>;
-<a href=#1803 id=1803 data-nosnippet>1803</a>                    <span class="kw">continue</span>;
-<a href=#1804 id=1804 data-nosnippet>1804</a>                }
-<a href=#1805 id=1805 data-nosnippet>1805</a>                <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; {
-<a href=#1806 id=1806 data-nosnippet>1806</a>                    <span class="kw">if </span>has_e {
-<a href=#1807 id=1807 data-nosnippet>1807</a>                        has_exponent = <span class="bool-val">true</span>;
-<a href=#1808 id=1808 data-nosnippet>1808</a>                    }
-<a href=#1809 id=1809 data-nosnippet>1809</a>                    bytes[write] = bytes[read];
-<a href=#1810 id=1810 data-nosnippet>1810</a>                }
-<a href=#1811 id=1811 data-nosnippet>1811</a>                <span class="string">b'.' </span>=&gt; {
-<a href=#1812 id=1812 data-nosnippet>1812</a>                    <span class="kw">if </span>has_e || has_dot {
-<a href=#1813 id=1813 data-nosnippet>1813</a>                        <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#1814 id=1814 data-nosnippet>1814</a>                    }
-<a href=#1815 id=1815 data-nosnippet>1815</a>                    has_dot = <span class="bool-val">true</span>;
-<a href=#1816 id=1816 data-nosnippet>1816</a>                    bytes[write] = <span class="string">b'.'</span>;
-<a href=#1817 id=1817 data-nosnippet>1817</a>                }
-<a href=#1818 id=1818 data-nosnippet>1818</a>                <span class="string">b'e' </span>| <span class="string">b'E' </span>=&gt; {
-<a href=#1819 id=1819 data-nosnippet>1819</a>                    <span class="kw">match </span>bytes[read + <span class="number">1</span>..]
-<a href=#1820 id=1820 data-nosnippet>1820</a>                        .iter()
-<a href=#1821 id=1821 data-nosnippet>1821</a>                        .find(|b| <span class="kw-2">**</span>b != <span class="string">b'_'</span>)
-<a href=#1822 id=1822 data-nosnippet>1822</a>                        .unwrap_or(<span class="kw-2">&amp;</span><span class="string">b'\0'</span>)
-<a href=#1823 id=1823 data-nosnippet>1823</a>                    {
-<a href=#1824 id=1824 data-nosnippet>1824</a>                        <span class="string">b'-' </span>| <span class="string">b'+' </span>| <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; {}
-<a href=#1825 id=1825 data-nosnippet>1825</a>                        <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
-<a href=#1826 id=1826 data-nosnippet>1826</a>                    }
-<a href=#1827 id=1827 data-nosnippet>1827</a>                    <span class="kw">if </span>has_e {
-<a href=#1828 id=1828 data-nosnippet>1828</a>                        <span class="kw">if </span>has_exponent {
-<a href=#1829 id=1829 data-nosnippet>1829</a>                            <span class="kw">break</span>;
-<a href=#1830 id=1830 data-nosnippet>1830</a>                        } <span class="kw">else </span>{
-<a href=#1831 id=1831 data-nosnippet>1831</a>                            <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#1832 id=1832 data-nosnippet>1832</a>                        }
-<a href=#1833 id=1833 data-nosnippet>1833</a>                    }
-<a href=#1834 id=1834 data-nosnippet>1834</a>                    has_e = <span class="bool-val">true</span>;
-<a href=#1835 id=1835 data-nosnippet>1835</a>                    bytes[write] = <span class="string">b'e'</span>;
-<a href=#1836 id=1836 data-nosnippet>1836</a>                }
-<a href=#1837 id=1837 data-nosnippet>1837</a>                <span class="string">b'-' </span>| <span class="string">b'+' </span>=&gt; {
-<a href=#1838 id=1838 data-nosnippet>1838</a>                    <span class="kw">if </span>has_sign || has_exponent || !has_e {
-<a href=#1839 id=1839 data-nosnippet>1839</a>                        <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#1840 id=1840 data-nosnippet>1840</a>                    }
-<a href=#1841 id=1841 data-nosnippet>1841</a>                    has_sign = <span class="bool-val">true</span>;
-<a href=#1842 id=1842 data-nosnippet>1842</a>                    <span class="kw">if </span>bytes[read] == <span class="string">b'-' </span>{
-<a href=#1843 id=1843 data-nosnippet>1843</a>                        bytes[write] = bytes[read];
-<a href=#1844 id=1844 data-nosnippet>1844</a>                    } <span class="kw">else </span>{
-<a href=#1845 id=1845 data-nosnippet>1845</a>                        <span class="comment">// Omit '+'
-<a href=#1846 id=1846 data-nosnippet>1846</a>                        </span>read += <span class="number">1</span>;
-<a href=#1847 id=1847 data-nosnippet>1847</a>                        <span class="kw">continue</span>;
-<a href=#1848 id=1848 data-nosnippet>1848</a>                    }
-<a href=#1849 id=1849 data-nosnippet>1849</a>                }
-<a href=#1850 id=1850 data-nosnippet>1850</a>                <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
-<a href=#1851 id=1851 data-nosnippet>1851</a>            }
-<a href=#1852 id=1852 data-nosnippet>1852</a>            read += <span class="number">1</span>;
-<a href=#1853 id=1853 data-nosnippet>1853</a>            write += <span class="number">1</span>;
-<a href=#1854 id=1854 data-nosnippet>1854</a>        }
-<a href=#1855 id=1855 data-nosnippet>1855</a>
-<a href=#1856 id=1856 data-nosnippet>1856</a>        <span class="kw">if </span>has_e &amp;&amp; !has_exponent {
-<a href=#1857 id=1857 data-nosnippet>1857</a>            <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#1858 id=1858 data-nosnippet>1858</a>        }
-<a href=#1859 id=1859 data-nosnippet>1859</a>
-<a href=#1860 id=1860 data-nosnippet>1860</a>        <span class="kw">let </span><span class="kw-2">mut </span>digits = String::from_utf8(bytes).unwrap();
-<a href=#1861 id=1861 data-nosnippet>1861</a>        <span class="kw">let </span>suffix = digits.split_off(read);
-<a href=#1862 id=1862 data-nosnippet>1862</a>        digits.truncate(write);
-<a href=#1863 id=1863 data-nosnippet>1863</a>        <span class="kw">if </span>suffix.is_empty() || <span class="kw">crate</span>::ident::xid_ok(<span class="kw-2">&amp;</span>suffix) {
-<a href=#1864 id=1864 data-nosnippet>1864</a>            <span class="prelude-val">Some</span>((digits.into_boxed_str(), suffix.into_boxed_str()))
-<a href=#1865 id=1865 data-nosnippet>1865</a>        } <span class="kw">else </span>{
-<a href=#1866 id=1866 data-nosnippet>1866</a>            <span class="prelude-val">None
-<a href=#1867 id=1867 data-nosnippet>1867</a>        </span>}
-<a href=#1868 id=1868 data-nosnippet>1868</a>    }
-<a href=#1869 id=1869 data-nosnippet>1869</a>}</code></pre></div></section></main></body></html>
+<a href=#1644 id=1644 data-nosnippet>1644</a>        <span class="kw">let </span><span class="kw-2">mut </span>ch = <span class="number">0</span>;
+<a href=#1645 id=1645 data-nosnippet>1645</a>        <span class="kw">let </span><span class="kw-2">mut </span>digits = <span class="number">0</span>;
+<a href=#1646 id=1646 data-nosnippet>1646</a>        <span class="kw">loop </span>{
+<a href=#1647 id=1647 data-nosnippet>1647</a>            <span class="kw">let </span>b = byte(s, <span class="number">0</span>);
+<a href=#1648 id=1648 data-nosnippet>1648</a>            <span class="kw">let </span>digit = <span class="kw">match </span>b {
+<a href=#1649 id=1649 data-nosnippet>1649</a>                <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; b - <span class="string">b'0'</span>,
+<a href=#1650 id=1650 data-nosnippet>1650</a>                <span class="string">b'a'</span>..=<span class="string">b'f' </span>=&gt; <span class="number">10 </span>+ b - <span class="string">b'a'</span>,
+<a href=#1651 id=1651 data-nosnippet>1651</a>                <span class="string">b'A'</span>..=<span class="string">b'F' </span>=&gt; <span class="number">10 </span>+ b - <span class="string">b'A'</span>,
+<a href=#1652 id=1652 data-nosnippet>1652</a>                <span class="string">b'_' </span><span class="kw">if </span>digits &gt; <span class="number">0 </span>=&gt; {
+<a href=#1653 id=1653 data-nosnippet>1653</a>                    s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
+<a href=#1654 id=1654 data-nosnippet>1654</a>                    <span class="kw">continue</span>;
+<a href=#1655 id=1655 data-nosnippet>1655</a>                }
+<a href=#1656 id=1656 data-nosnippet>1656</a>                <span class="string">b'}' </span><span class="kw">if </span>digits == <span class="number">0 </span>=&gt; <span class="macro">panic!</span>(<span class="string">"invalid empty unicode escape"</span>),
+<a href=#1657 id=1657 data-nosnippet>1657</a>                <span class="string">b'}' </span>=&gt; <span class="kw">break</span>,
+<a href=#1658 id=1658 data-nosnippet>1658</a>                <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(<span class="string">"unexpected non-hex character after \\u"</span>),
+<a href=#1659 id=1659 data-nosnippet>1659</a>            };
+<a href=#1660 id=1660 data-nosnippet>1660</a>            <span class="kw">if </span>digits == <span class="number">6 </span>{
+<a href=#1661 id=1661 data-nosnippet>1661</a>                <span class="macro">panic!</span>(<span class="string">"overlong unicode escape (must have at most 6 hex digits)"</span>);
+<a href=#1662 id=1662 data-nosnippet>1662</a>            }
+<a href=#1663 id=1663 data-nosnippet>1663</a>            ch <span class="kw-2">*</span>= <span class="number">0x10</span>;
+<a href=#1664 id=1664 data-nosnippet>1664</a>            ch += u32::from(digit);
+<a href=#1665 id=1665 data-nosnippet>1665</a>            digits += <span class="number">1</span>;
+<a href=#1666 id=1666 data-nosnippet>1666</a>            s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
+<a href=#1667 id=1667 data-nosnippet>1667</a>        }
+<a href=#1668 id=1668 data-nosnippet>1668</a>        <span class="macro">assert!</span>(byte(s, <span class="number">0</span>) == <span class="string">b'}'</span>);
+<a href=#1669 id=1669 data-nosnippet>1669</a>        s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
+<a href=#1670 id=1670 data-nosnippet>1670</a>
+<a href=#1671 id=1671 data-nosnippet>1671</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(ch) = char::from_u32(ch) {
+<a href=#1672 id=1672 data-nosnippet>1672</a>            (ch, s)
+<a href=#1673 id=1673 data-nosnippet>1673</a>        } <span class="kw">else </span>{
+<a href=#1674 id=1674 data-nosnippet>1674</a>            <span class="macro">panic!</span>(<span class="string">"character code {:x} is not a valid unicode character"</span>, ch);
+<a href=#1675 id=1675 data-nosnippet>1675</a>        }
+<a href=#1676 id=1676 data-nosnippet>1676</a>    }
+<a href=#1677 id=1677 data-nosnippet>1677</a>
+<a href=#1678 id=1678 data-nosnippet>1678</a>    <span class="comment">// Returns base 10 digits and suffix.
+<a href=#1679 id=1679 data-nosnippet>1679</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_int(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;(Box&lt;str&gt;, Box&lt;str&gt;)&gt; {
+<a href=#1680 id=1680 data-nosnippet>1680</a>        <span class="kw">let </span>negative = byte(s, <span class="number">0</span>) == <span class="string">b'-'</span>;
+<a href=#1681 id=1681 data-nosnippet>1681</a>        <span class="kw">if </span>negative {
+<a href=#1682 id=1682 data-nosnippet>1682</a>            s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
+<a href=#1683 id=1683 data-nosnippet>1683</a>        }
+<a href=#1684 id=1684 data-nosnippet>1684</a>
+<a href=#1685 id=1685 data-nosnippet>1685</a>        <span class="kw">let </span>base = <span class="kw">match </span>(byte(s, <span class="number">0</span>), byte(s, <span class="number">1</span>)) {
+<a href=#1686 id=1686 data-nosnippet>1686</a>            (<span class="string">b'0'</span>, <span class="string">b'x'</span>) =&gt; {
+<a href=#1687 id=1687 data-nosnippet>1687</a>                s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
+<a href=#1688 id=1688 data-nosnippet>1688</a>                <span class="number">16
+<a href=#1689 id=1689 data-nosnippet>1689</a>            </span>}
+<a href=#1690 id=1690 data-nosnippet>1690</a>            (<span class="string">b'0'</span>, <span class="string">b'o'</span>) =&gt; {
+<a href=#1691 id=1691 data-nosnippet>1691</a>                s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
+<a href=#1692 id=1692 data-nosnippet>1692</a>                <span class="number">8
+<a href=#1693 id=1693 data-nosnippet>1693</a>            </span>}
+<a href=#1694 id=1694 data-nosnippet>1694</a>            (<span class="string">b'0'</span>, <span class="string">b'b'</span>) =&gt; {
+<a href=#1695 id=1695 data-nosnippet>1695</a>                s = <span class="kw-2">&amp;</span>s[<span class="number">2</span>..];
+<a href=#1696 id=1696 data-nosnippet>1696</a>                <span class="number">2
+<a href=#1697 id=1697 data-nosnippet>1697</a>            </span>}
+<a href=#1698 id=1698 data-nosnippet>1698</a>            (<span class="string">b'0'</span>..=<span class="string">b'9'</span>, <span class="kw">_</span>) =&gt; <span class="number">10</span>,
+<a href=#1699 id=1699 data-nosnippet>1699</a>            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+<a href=#1700 id=1700 data-nosnippet>1700</a>        };
+<a href=#1701 id=1701 data-nosnippet>1701</a>
+<a href=#1702 id=1702 data-nosnippet>1702</a>        <span class="kw">let </span><span class="kw-2">mut </span>value = BigInt::new();
+<a href=#1703 id=1703 data-nosnippet>1703</a>        <span class="kw">let </span><span class="kw-2">mut </span>has_digit = <span class="bool-val">false</span>;
+<a href=#1704 id=1704 data-nosnippet>1704</a>        <span class="lifetime">'outer</span>: <span class="kw">loop </span>{
+<a href=#1705 id=1705 data-nosnippet>1705</a>            <span class="kw">let </span>b = byte(s, <span class="number">0</span>);
+<a href=#1706 id=1706 data-nosnippet>1706</a>            <span class="kw">let </span>digit = <span class="kw">match </span>b {
+<a href=#1707 id=1707 data-nosnippet>1707</a>                <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; b - <span class="string">b'0'</span>,
+<a href=#1708 id=1708 data-nosnippet>1708</a>                <span class="string">b'a'</span>..=<span class="string">b'f' </span><span class="kw">if </span>base &gt; <span class="number">10 </span>=&gt; b - <span class="string">b'a' </span>+ <span class="number">10</span>,
+<a href=#1709 id=1709 data-nosnippet>1709</a>                <span class="string">b'A'</span>..=<span class="string">b'F' </span><span class="kw">if </span>base &gt; <span class="number">10 </span>=&gt; b - <span class="string">b'A' </span>+ <span class="number">10</span>,
+<a href=#1710 id=1710 data-nosnippet>1710</a>                <span class="string">b'_' </span>=&gt; {
+<a href=#1711 id=1711 data-nosnippet>1711</a>                    s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
+<a href=#1712 id=1712 data-nosnippet>1712</a>                    <span class="kw">continue</span>;
+<a href=#1713 id=1713 data-nosnippet>1713</a>                }
+<a href=#1714 id=1714 data-nosnippet>1714</a>                <span class="comment">// If looking at a floating point literal, we don't want to
+<a href=#1715 id=1715 data-nosnippet>1715</a>                // consider it an integer.
+<a href=#1716 id=1716 data-nosnippet>1716</a>                </span><span class="string">b'.' </span><span class="kw">if </span>base == <span class="number">10 </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+<a href=#1717 id=1717 data-nosnippet>1717</a>                <span class="string">b'e' </span>| <span class="string">b'E' </span><span class="kw">if </span>base == <span class="number">10 </span>=&gt; {
+<a href=#1718 id=1718 data-nosnippet>1718</a>                    <span class="kw">let </span><span class="kw-2">mut </span>has_exp = <span class="bool-val">false</span>;
+<a href=#1719 id=1719 data-nosnippet>1719</a>                    <span class="kw">for </span>(i, b) <span class="kw">in </span>s[<span class="number">1</span>..].bytes().enumerate() {
+<a href=#1720 id=1720 data-nosnippet>1720</a>                        <span class="kw">match </span>b {
+<a href=#1721 id=1721 data-nosnippet>1721</a>                            <span class="string">b'_' </span>=&gt; {}
+<a href=#1722 id=1722 data-nosnippet>1722</a>                            <span class="string">b'-' </span>| <span class="string">b'+' </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+<a href=#1723 id=1723 data-nosnippet>1723</a>                            <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; has_exp = <span class="bool-val">true</span>,
+<a href=#1724 id=1724 data-nosnippet>1724</a>                            <span class="kw">_ </span>=&gt; {
+<a href=#1725 id=1725 data-nosnippet>1725</a>                                <span class="kw">let </span>suffix = <span class="kw-2">&amp;</span>s[<span class="number">1 </span>+ i..];
+<a href=#1726 id=1726 data-nosnippet>1726</a>                                <span class="kw">if </span>has_exp &amp;&amp; <span class="kw">crate</span>::ident::xid_ok(suffix) {
+<a href=#1727 id=1727 data-nosnippet>1727</a>                                    <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#1728 id=1728 data-nosnippet>1728</a>                                } <span class="kw">else </span>{
+<a href=#1729 id=1729 data-nosnippet>1729</a>                                    <span class="kw">break </span><span class="lifetime">'outer</span>;
+<a href=#1730 id=1730 data-nosnippet>1730</a>                                }
+<a href=#1731 id=1731 data-nosnippet>1731</a>                            }
+<a href=#1732 id=1732 data-nosnippet>1732</a>                        }
+<a href=#1733 id=1733 data-nosnippet>1733</a>                    }
+<a href=#1734 id=1734 data-nosnippet>1734</a>                    <span class="kw">if </span>has_exp {
+<a href=#1735 id=1735 data-nosnippet>1735</a>                        <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#1736 id=1736 data-nosnippet>1736</a>                    } <span class="kw">else </span>{
+<a href=#1737 id=1737 data-nosnippet>1737</a>                        <span class="kw">break</span>;
+<a href=#1738 id=1738 data-nosnippet>1738</a>                    }
+<a href=#1739 id=1739 data-nosnippet>1739</a>                }
+<a href=#1740 id=1740 data-nosnippet>1740</a>                <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
+<a href=#1741 id=1741 data-nosnippet>1741</a>            };
+<a href=#1742 id=1742 data-nosnippet>1742</a>
+<a href=#1743 id=1743 data-nosnippet>1743</a>            <span class="kw">if </span>digit &gt;= base {
+<a href=#1744 id=1744 data-nosnippet>1744</a>                <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#1745 id=1745 data-nosnippet>1745</a>            }
+<a href=#1746 id=1746 data-nosnippet>1746</a>
+<a href=#1747 id=1747 data-nosnippet>1747</a>            has_digit = <span class="bool-val">true</span>;
+<a href=#1748 id=1748 data-nosnippet>1748</a>            value <span class="kw-2">*</span>= base;
+<a href=#1749 id=1749 data-nosnippet>1749</a>            value += digit;
+<a href=#1750 id=1750 data-nosnippet>1750</a>            s = <span class="kw-2">&amp;</span>s[<span class="number">1</span>..];
+<a href=#1751 id=1751 data-nosnippet>1751</a>        }
+<a href=#1752 id=1752 data-nosnippet>1752</a>
+<a href=#1753 id=1753 data-nosnippet>1753</a>        <span class="kw">if </span>!has_digit {
+<a href=#1754 id=1754 data-nosnippet>1754</a>            <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#1755 id=1755 data-nosnippet>1755</a>        }
+<a href=#1756 id=1756 data-nosnippet>1756</a>
+<a href=#1757 id=1757 data-nosnippet>1757</a>        <span class="kw">let </span>suffix = s;
+<a href=#1758 id=1758 data-nosnippet>1758</a>        <span class="kw">if </span>suffix.is_empty() || <span class="kw">crate</span>::ident::xid_ok(suffix) {
+<a href=#1759 id=1759 data-nosnippet>1759</a>            <span class="kw">let </span><span class="kw-2">mut </span>repr = value.to_string();
+<a href=#1760 id=1760 data-nosnippet>1760</a>            <span class="kw">if </span>negative {
+<a href=#1761 id=1761 data-nosnippet>1761</a>                repr.insert(<span class="number">0</span>, <span class="string">'-'</span>);
+<a href=#1762 id=1762 data-nosnippet>1762</a>            }
+<a href=#1763 id=1763 data-nosnippet>1763</a>            <span class="prelude-val">Some</span>((repr.into_boxed_str(), suffix.to_owned().into_boxed_str()))
+<a href=#1764 id=1764 data-nosnippet>1764</a>        } <span class="kw">else </span>{
+<a href=#1765 id=1765 data-nosnippet>1765</a>            <span class="prelude-val">None
+<a href=#1766 id=1766 data-nosnippet>1766</a>        </span>}
+<a href=#1767 id=1767 data-nosnippet>1767</a>    }
+<a href=#1768 id=1768 data-nosnippet>1768</a>
+<a href=#1769 id=1769 data-nosnippet>1769</a>    <span class="comment">// Returns base 10 digits and suffix.
+<a href=#1770 id=1770 data-nosnippet>1770</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>parse_lit_float(input: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;(Box&lt;str&gt;, Box&lt;str&gt;)&gt; {
+<a href=#1771 id=1771 data-nosnippet>1771</a>        <span class="comment">// Rust's floating point literals are very similar to the ones parsed by
+<a href=#1772 id=1772 data-nosnippet>1772</a>        // the standard library, except that rust's literals can contain
+<a href=#1773 id=1773 data-nosnippet>1773</a>        // ignorable underscores. Let's remove those underscores.
+<a href=#1774 id=1774 data-nosnippet>1774</a>
+<a href=#1775 id=1775 data-nosnippet>1775</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>bytes = input.to_owned().into_bytes();
+<a href=#1776 id=1776 data-nosnippet>1776</a>
+<a href=#1777 id=1777 data-nosnippet>1777</a>        <span class="kw">let </span>start = (<span class="kw-2">*</span>bytes.first()<span class="question-mark">? </span>== <span class="string">b'-'</span>) <span class="kw">as </span>usize;
+<a href=#1778 id=1778 data-nosnippet>1778</a>        <span class="kw">match </span>bytes.get(start)<span class="question-mark">? </span>{
+<a href=#1779 id=1779 data-nosnippet>1779</a>            <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; {}
+<a href=#1780 id=1780 data-nosnippet>1780</a>            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+<a href=#1781 id=1781 data-nosnippet>1781</a>        }
+<a href=#1782 id=1782 data-nosnippet>1782</a>
+<a href=#1783 id=1783 data-nosnippet>1783</a>        <span class="kw">let </span><span class="kw-2">mut </span>read = start;
+<a href=#1784 id=1784 data-nosnippet>1784</a>        <span class="kw">let </span><span class="kw-2">mut </span>write = start;
+<a href=#1785 id=1785 data-nosnippet>1785</a>        <span class="kw">let </span><span class="kw-2">mut </span>has_dot = <span class="bool-val">false</span>;
+<a href=#1786 id=1786 data-nosnippet>1786</a>        <span class="kw">let </span><span class="kw-2">mut </span>has_e = <span class="bool-val">false</span>;
+<a href=#1787 id=1787 data-nosnippet>1787</a>        <span class="kw">let </span><span class="kw-2">mut </span>has_sign = <span class="bool-val">false</span>;
+<a href=#1788 id=1788 data-nosnippet>1788</a>        <span class="kw">let </span><span class="kw-2">mut </span>has_exponent = <span class="bool-val">false</span>;
+<a href=#1789 id=1789 data-nosnippet>1789</a>        <span class="kw">while </span>read &lt; bytes.len() {
+<a href=#1790 id=1790 data-nosnippet>1790</a>            <span class="kw">match </span>bytes[read] {
+<a href=#1791 id=1791 data-nosnippet>1791</a>                <span class="string">b'_' </span>=&gt; {
+<a href=#1792 id=1792 data-nosnippet>1792</a>                    <span class="comment">// Don't increase write
+<a href=#1793 id=1793 data-nosnippet>1793</a>                    </span>read += <span class="number">1</span>;
+<a href=#1794 id=1794 data-nosnippet>1794</a>                    <span class="kw">continue</span>;
+<a href=#1795 id=1795 data-nosnippet>1795</a>                }
+<a href=#1796 id=1796 data-nosnippet>1796</a>                <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; {
+<a href=#1797 id=1797 data-nosnippet>1797</a>                    <span class="kw">if </span>has_e {
+<a href=#1798 id=1798 data-nosnippet>1798</a>                        has_exponent = <span class="bool-val">true</span>;
+<a href=#1799 id=1799 data-nosnippet>1799</a>                    }
+<a href=#1800 id=1800 data-nosnippet>1800</a>                    bytes[write] = bytes[read];
+<a href=#1801 id=1801 data-nosnippet>1801</a>                }
+<a href=#1802 id=1802 data-nosnippet>1802</a>                <span class="string">b'.' </span>=&gt; {
+<a href=#1803 id=1803 data-nosnippet>1803</a>                    <span class="kw">if </span>has_e || has_dot {
+<a href=#1804 id=1804 data-nosnippet>1804</a>                        <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#1805 id=1805 data-nosnippet>1805</a>                    }
+<a href=#1806 id=1806 data-nosnippet>1806</a>                    has_dot = <span class="bool-val">true</span>;
+<a href=#1807 id=1807 data-nosnippet>1807</a>                    bytes[write] = <span class="string">b'.'</span>;
+<a href=#1808 id=1808 data-nosnippet>1808</a>                }
+<a href=#1809 id=1809 data-nosnippet>1809</a>                <span class="string">b'e' </span>| <span class="string">b'E' </span>=&gt; {
+<a href=#1810 id=1810 data-nosnippet>1810</a>                    <span class="kw">match </span>bytes[read + <span class="number">1</span>..]
+<a href=#1811 id=1811 data-nosnippet>1811</a>                        .iter()
+<a href=#1812 id=1812 data-nosnippet>1812</a>                        .find(|b| <span class="kw-2">**</span>b != <span class="string">b'_'</span>)
+<a href=#1813 id=1813 data-nosnippet>1813</a>                        .unwrap_or(<span class="kw-2">&amp;</span><span class="string">b'\0'</span>)
+<a href=#1814 id=1814 data-nosnippet>1814</a>                    {
+<a href=#1815 id=1815 data-nosnippet>1815</a>                        <span class="string">b'-' </span>| <span class="string">b'+' </span>| <span class="string">b'0'</span>..=<span class="string">b'9' </span>=&gt; {}
+<a href=#1816 id=1816 data-nosnippet>1816</a>                        <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
+<a href=#1817 id=1817 data-nosnippet>1817</a>                    }
+<a href=#1818 id=1818 data-nosnippet>1818</a>                    <span class="kw">if </span>has_e {
+<a href=#1819 id=1819 data-nosnippet>1819</a>                        <span class="kw">if </span>has_exponent {
+<a href=#1820 id=1820 data-nosnippet>1820</a>                            <span class="kw">break</span>;
+<a href=#1821 id=1821 data-nosnippet>1821</a>                        } <span class="kw">else </span>{
+<a href=#1822 id=1822 data-nosnippet>1822</a>                            <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#1823 id=1823 data-nosnippet>1823</a>                        }
+<a href=#1824 id=1824 data-nosnippet>1824</a>                    }
+<a href=#1825 id=1825 data-nosnippet>1825</a>                    has_e = <span class="bool-val">true</span>;
+<a href=#1826 id=1826 data-nosnippet>1826</a>                    bytes[write] = <span class="string">b'e'</span>;
+<a href=#1827 id=1827 data-nosnippet>1827</a>                }
+<a href=#1828 id=1828 data-nosnippet>1828</a>                <span class="string">b'-' </span>| <span class="string">b'+' </span>=&gt; {
+<a href=#1829 id=1829 data-nosnippet>1829</a>                    <span class="kw">if </span>has_sign || has_exponent || !has_e {
+<a href=#1830 id=1830 data-nosnippet>1830</a>                        <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#1831 id=1831 data-nosnippet>1831</a>                    }
+<a href=#1832 id=1832 data-nosnippet>1832</a>                    has_sign = <span class="bool-val">true</span>;
+<a href=#1833 id=1833 data-nosnippet>1833</a>                    <span class="kw">if </span>bytes[read] == <span class="string">b'-' </span>{
+<a href=#1834 id=1834 data-nosnippet>1834</a>                        bytes[write] = bytes[read];
+<a href=#1835 id=1835 data-nosnippet>1835</a>                    } <span class="kw">else </span>{
+<a href=#1836 id=1836 data-nosnippet>1836</a>                        <span class="comment">// Omit '+'
+<a href=#1837 id=1837 data-nosnippet>1837</a>                        </span>read += <span class="number">1</span>;
+<a href=#1838 id=1838 data-nosnippet>1838</a>                        <span class="kw">continue</span>;
+<a href=#1839 id=1839 data-nosnippet>1839</a>                    }
+<a href=#1840 id=1840 data-nosnippet>1840</a>                }
+<a href=#1841 id=1841 data-nosnippet>1841</a>                <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
+<a href=#1842 id=1842 data-nosnippet>1842</a>            }
+<a href=#1843 id=1843 data-nosnippet>1843</a>            read += <span class="number">1</span>;
+<a href=#1844 id=1844 data-nosnippet>1844</a>            write += <span class="number">1</span>;
+<a href=#1845 id=1845 data-nosnippet>1845</a>        }
+<a href=#1846 id=1846 data-nosnippet>1846</a>
+<a href=#1847 id=1847 data-nosnippet>1847</a>        <span class="kw">if </span>has_e &amp;&amp; !has_exponent {
+<a href=#1848 id=1848 data-nosnippet>1848</a>            <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#1849 id=1849 data-nosnippet>1849</a>        }
+<a href=#1850 id=1850 data-nosnippet>1850</a>
+<a href=#1851 id=1851 data-nosnippet>1851</a>        <span class="kw">let </span><span class="kw-2">mut </span>digits = String::from_utf8(bytes).unwrap();
+<a href=#1852 id=1852 data-nosnippet>1852</a>        <span class="kw">let </span>suffix = digits.split_off(read);
+<a href=#1853 id=1853 data-nosnippet>1853</a>        digits.truncate(write);
+<a href=#1854 id=1854 data-nosnippet>1854</a>        <span class="kw">if </span>suffix.is_empty() || <span class="kw">crate</span>::ident::xid_ok(<span class="kw-2">&amp;</span>suffix) {
+<a href=#1855 id=1855 data-nosnippet>1855</a>            <span class="prelude-val">Some</span>((digits.into_boxed_str(), suffix.into_boxed_str()))
+<a href=#1856 id=1856 data-nosnippet>1856</a>        } <span class="kw">else </span>{
+<a href=#1857 id=1857 data-nosnippet>1857</a>            <span class="prelude-val">None
+<a href=#1858 id=1858 data-nosnippet>1858</a>        </span>}
+<a href=#1859 id=1859 data-nosnippet>1859</a>    }
+<a href=#1860 id=1860 data-nosnippet>1860</a>}</code></pre></div></section></main></body></html>
