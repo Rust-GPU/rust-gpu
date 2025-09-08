@@ -1,9 +1,11 @@
-use crate::layout::eval_layouts;
+use crate::layout::{LAYOUT_COUNT, LAYOUT_LEN, eval_layouts};
 use difftest::config::Config;
 
 pub fn run() {
     let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
-    config
-        .write_result(bytemuck::bytes_of(&eval_layouts()))
-        .unwrap()
+    let mut out = vec![0; LAYOUT_LEN];
+    for gid in 0..LAYOUT_COUNT {
+        eval_layouts(gid as u32, &mut out);
+    }
+    config.write_result(&out).unwrap()
 }
