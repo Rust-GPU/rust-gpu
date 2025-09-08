@@ -5,7 +5,6 @@
 use core::hint::black_box;
 use spirv_std::spirv;
 
-// Minimal kernel that writes the disassembly function result to a buffer
 #[spirv(compute(threads(1)))]
 pub fn main(#[spirv(descriptor_set = 0, binding = 0, storage_buffer)] out: &mut [u32]) {
     let r = disassemble();
