@@ -92,15 +92,6 @@ pub(crate) fn provide(providers: &mut Providers) {
             // <https://github.com/rust-lang/rust/commit/eaaa03faf77b157907894a4207d8378ecaec7b45>
             arg.make_direct_deprecated();
 
-            // FIXME(eddyb) detect `#[rust_gpu::vector::v1]` more specifically,
-            // to avoid affecting anything should actually be passed as a pair.
-            if let PassMode::Pair(..) = arg.mode {
-                // HACK(eddyb) this avoids breaking e.g. `&[T]` pairs.
-                if let TyKind::Adt(..) = arg.layout.ty.kind() {
-                    arg.mode = PassMode::Direct(ArgAttributes::new());
-                }
-            }
-
             // Avoid pointlessly passing ZSTs, just like the official Rust ABI.
             if arg.layout.is_zst() {
                 arg.mode = PassMode::Ignore;
@@ -490,7 +481,7 @@ pub fn scalar_pair_element_backend_type<'tcx>(
     ty: TyAndLayout<'tcx>,
     index: usize,
 ) -> Word {
-    let [a, b] = match ty.layout.backend_repr() {
+    let [a, b] = match ty.backend_repr {
         BackendRepr::ScalarPair(a, b) => [a, b],
         other => span_bug!(
             span,
