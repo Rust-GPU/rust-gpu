@@ -134,10 +134,44 @@ impl<'tcx> CodegenCx<'tcx> {
         SpirvType::Integer(ptr_size, false).def(DUMMY_SP, self)
     }
 
+    /// Find the largest integer with the given alignment or less, preferring
+    /// supported types over unsupported ones (only used as a last resort).
+    //
+    // HACK(eddyb) this is a copy of `Integer::approximate_align` that also
+    // checks for SPIR-V capabilities being enabled.
+    pub fn integer_approximate_align_prefer_legal(&self, wanted: Align) -> Integer {
+        use Integer::*;
+
+        // HACK(eddyb) this loop shouldn't really exist like this - instead,
+        // which integer types are supported should be kept in `ContextCx`
+        // (e.g. pair of `ArrayVec<[Integer; 5]>`s, or even an iterable bitset),
+        // or even a `log2(align)`-indexed precomputed `int_approx_align` array
+        // (w/o storing the tail of equal results for increasing alignments).
+        let mut illegal_fallback = None;
+        for candidate in [I64, I32, I16] {
+            if candidate.align(self).abi > wanted || candidate.size().bytes() > wanted.bytes() {
+                continue;
+            }
+
+            let legal_candidate = crate::spirv_type::integer_type_capability(candidate)
+                .map_or(true, |cap| self.builder.has_capability(cap));
+            if legal_candidate {
+                return candidate;
+            }
+
+            // HACK(eddyb) the loop only keeps going in case a smaller integer
+            // is actually supported.
+            if illegal_fallback.is_none() {
+                illegal_fallback = Some(candidate);
+            }
+        }
+        illegal_fallback.unwrap_or(I8)
+    }
+
     /// Return a SPIR-V type that has at most the required alignment,
     /// and exactly the required size, as a best-effort padding array.
     pub(crate) fn type_padding_filler(&self, size: Size, align: Align) -> Word {
-        let unit = Integer::approximate_align(self, align);
+        let unit = self.integer_approximate_align_prefer_legal(align);
         let size = size.bytes();
         let unit_size = unit.size().bytes();
         assert_eq!(size % unit_size, 0);

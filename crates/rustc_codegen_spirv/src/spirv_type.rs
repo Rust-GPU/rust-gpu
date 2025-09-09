@@ -3,8 +3,8 @@ use crate::builder_spirv::SpirvValue;
 use crate::codegen_cx::CodegenCx;
 use indexmap::IndexSet;
 use rspirv::dr::Operand;
-use rspirv::spirv::{Decoration, Dim, ImageFormat, StorageClass, Word};
-use rustc_abi::{AddressSpace, Align, HasDataLayout as _, Size};
+use rspirv::spirv::{Capability, Decoration, Dim, ImageFormat, StorageClass, Word};
+use rustc_abi::{AddressSpace, Align, HasDataLayout as _, Integer, Size};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_middle::span_bug;
 use rustc_span::def_id::DefId;
@@ -95,6 +95,17 @@ pub enum SpirvType<'tcx> {
 
     AccelerationStructureKhr,
     RayQueryKhr,
+}
+
+// FIXME(eddyb) find a better place for this.
+pub(crate) fn integer_type_capability(i: Integer) -> Option<Capability> {
+    Some(match i {
+        Integer::I8 => Capability::Int8,
+        Integer::I16 => Capability::Int16,
+        Integer::I32 => return None,
+        Integer::I64 => Capability::Int64,
+        Integer::I128 => Capability::ArbitraryPrecisionIntegersINTEL,
+    })
 }
 
 impl SpirvType<'_> {
