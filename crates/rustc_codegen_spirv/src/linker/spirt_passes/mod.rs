@@ -160,18 +160,18 @@ pub(super) fn run_func_passes<P>(
 
         // HACK(eddyb) not really a function pass.
         if name == "qptr" {
-            let layout_config = &spirt::qptr::LayoutConfig {
+            let layout_config = &spirt::mem::LayoutConfig {
                 abstract_bool_size_align: (1, 1),
                 logical_ptr_size_align: (4, 4),
-                ..spirt::qptr::LayoutConfig::VULKAN_SCALAR_LAYOUT
+                ..spirt::mem::LayoutConfig::VULKAN_SCALAR_LAYOUT
             };
 
             let profiler = before_pass("qptr::lower_from_spv_ptrs", module);
             spirt::passes::qptr::lower_from_spv_ptrs(module, layout_config);
             after_pass(Some(module), profiler);
 
-            let profiler = before_pass("qptr::analyze_uses", module);
-            spirt::passes::qptr::analyze_uses(module, layout_config);
+            let profiler = before_pass("mem::analyze_accesses", module);
+            spirt::passes::qptr::analyze_mem_accesses(module, layout_config);
             after_pass(Some(module), profiler);
 
             let profiler = before_pass("qptr::lift_to_spv_ptrs", module);

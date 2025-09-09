@@ -167,9 +167,10 @@ impl Transformer for Validator<'_> {
         let valid = match &inst_def.kind {
             DataInstKind::SpvInst(spv_inst) => self.validate_spv_inst(spv_inst),
 
-            DataInstKind::FuncCall(_) | DataInstKind::QPtr(_) | DataInstKind::SpvExtInst { .. } => {
-                Ok(())
-            }
+            DataInstKind::FuncCall(_)
+            | DataInstKind::Mem(_)
+            | DataInstKind::QPtr(_)
+            | DataInstKind::SpvExtInst { .. } => Ok(()),
         };
         if let Err(diag) = valid {
             inst_def.attrs.push_diag(self.cx, diag);
