@@ -1778,7 +1778,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         let result_type = self.layout_of(ty).spirv_type(self.span(), self);
         let pair_result_type = {
             let field_types = [result_type, result_type];
-            let (field_offsets, size, align) = crate::abi::auto_struct_layout(self, &field_types);
+            let (field_offsets, size, align) =
+                crate::abi::auto_struct_layout(self, &field_types, false);
             SpirvType::Adt {
                 def_id: None,
                 size,

@@ -183,11 +183,12 @@ impl ConstCodegenMethods for CodegenCx<'_> {
             self.const_usize(len as u64),
         )
     }
-    fn const_struct(&self, elts: &[Self::Value], _packed: bool) -> Self::Value {
+    fn const_struct(&self, elts: &[Self::Value], packed: bool) -> Self::Value {
         // Presumably this will get bitcasted to the right type?
         // FIXME(eddyb) use `AccumulateVec`s just like `rustc` itself does.
         let field_types = elts.iter().map(|f| f.ty).collect::<Vec<_>>();
-        let (field_offsets, size, align) = crate::abi::auto_struct_layout(self, &field_types);
+        let (field_offsets, size, align) =
+            crate::abi::auto_struct_layout(self, &field_types, packed);
         let struct_ty = SpirvType::Adt {
             def_id: None,
             size,

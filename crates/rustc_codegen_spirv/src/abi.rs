@@ -620,15 +620,20 @@ fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>
 pub fn auto_struct_layout(
     cx: &CodegenCx<'_>,
     field_types: &[Word],
+    packed: bool,
 ) -> (Vec<Size>, Option<Size>, Align) {
     // FIXME(eddyb) use `AccumulateVec`s just like `rustc` itself does.
     let mut field_offsets = Vec::with_capacity(field_types.len());
     let mut offset = Some(Size::ZERO);
-    let mut max_align = Align::from_bytes(0).unwrap();
+    let mut max_align = Align::ONE;
     for &field_type in field_types {
         let spirv_type = cx.lookup_type(field_type);
         let field_size = spirv_type.sizeof(cx);
-        let field_align = spirv_type.alignof(cx);
+        let field_align = if packed {
+            Align::ONE
+        } else {
+            spirv_type.alignof(cx)
+        };
         let this_offset = offset
             .expect("Unsized values can only be the last field in a struct")
             .align_to(field_align);
