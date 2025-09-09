@@ -4,7 +4,7 @@
 - [Contributing to Rust-GPU]()
   - [Building](./building-rust-gpu.md)
   - [Testing](./testing.md)
-  - [Debugging](./tracing)
+  - [Debugging]()
     - [Tracing](./tracing.md)
     - [Minimizing bugs in SPIR-V](./spirv-minimization.md)
   - ["Codegen args" (flags/options) supported by the Rust-GPU codegen backend](./codegen-args.md)
