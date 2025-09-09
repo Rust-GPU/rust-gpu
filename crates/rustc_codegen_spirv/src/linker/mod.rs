@@ -109,7 +109,7 @@ fn apply_rewrite_rules<'a>(
                 )
         });
     for id in all_ids_mut {
-        if let Some(&rewrite) = rewrite_rules.get(id) {
+        while let Some(&rewrite) = rewrite_rules.get(id) {
             *id = rewrite;
         }
     }
