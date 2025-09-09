@@ -3351,28 +3351,37 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             self.fatal("TODO: Funclets are not supported");
         }
 
-        // NOTE(eddyb) see the comment on `SpirvValueKind::FnAddr`, this should
-        // be fixed upstream, so we never see any "function pointer" values being
-        // created just to perform direct calls.
+        let mut func_call_opcode = Op::FunctionCall;
         let (callee_val, result_type, argument_types) = match self.lookup_type(callee.ty) {
             SpirvType::Pointer { pointee } => match self.lookup_type(pointee) {
                 SpirvType::Function {
                     return_type,
                     arguments,
-                } => (
-                    if let SpirvValueKind::FnAddr { function, .. } = callee.kind {
-                        assert_ty_eq!(self, callee_ty, pointee);
-                        function
-                    }
-                    // Truly indirect call.
-                    else {
-                        let fn_ptr_val = callee.def(self);
-                        self.zombie(fn_ptr_val, "indirect calls are not supported in SPIR-V");
-                        fn_ptr_val
-                    },
-                    return_type,
-                    arguments,
-                ),
+                } => {
+                    let direct_callee = self.builder.lookup_const(callee).and_then(
+                        |const_callee| match const_callee {
+                            SpirvConst::PtrToFunc {
+                                func_id,
+                                mangled_func_name: _,
+                            } => {
+                                assert_ty_eq!(self, callee_ty, pointee);
+                                Some(func_id)
+                            }
+                            _ => None,
+                        },
+                    );
+                    (
+                        direct_callee.unwrap_or_else(|| {
+                            // Truly indirect call.
+                            let fn_ptr_val = callee.def(self);
+                            self.zombie(fn_ptr_val, "indirect calls are not supported in SPIR-V");
+                            func_call_opcode = Op::FunctionPointerCallINTEL;
+                            fn_ptr_val
+                        }),
+                        return_type,
+                        arguments,
+                    )
+                }
                 _ => bug!(
                     "call expected `fn` pointer to point to function type, got `{}`",
                     self.debug_type(pointee)
@@ -3466,11 +3475,26 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         }
 
         // Default: emit a regular function call
-        let args = args.iter().map(|arg| arg.def(self)).collect::<Vec<_>>();
-        self.emit()
-            .function_call(result_type, None, callee_val, args)
-            .unwrap()
-            .with_type(result_type)
+        let operands = [callee_val]
+            .into_iter()
+            .chain(args.iter().map(|arg| arg.def(self)))
+            .map(Operand::IdRef)
+            .collect();
+
+        let mut builder = self.emit();
+        let result_id = builder.id();
+        builder
+            .insert_into_block(
+                InsertPoint::End,
+                Instruction::new(
+                    func_call_opcode,
+                    Some(result_type),
+                    Some(result_id),
+                    operands,
+                ),
+            )
+            .unwrap();
+        result_id.with_type(result_type)
     }
 
     fn zext(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value {
