@@ -169,6 +169,9 @@ pub(super) fn run_func_passes<P>(
             after_pass(Some(module), profiler);
 
             let profiler = before_pass("qptr::partition_and_propagate", module);
+
+            let mut iterations = 0;
+            let start = std::time::Instant::now();
             loop {
                 // FIXME(eddyb) do a "counting and/or hashing traversal" or similar,
                 // after a few iterations (or track counts of all changes to the
@@ -176,6 +179,16 @@ pub(super) fn run_func_passes<P>(
                 // configuration, where `remove_unused_values_in_func` *exactly*
                 // undoes everything done previously in each iteration, could
                 // even call this a "Sisyphus detector".
+                if iterations >= 100 {
+                    // FIXME(eddyb) maybe attach a SPIR-T diagnostic instead?
+                    eprintln!(
+                        "[WARNING] qptr::partition_and_propagate: giving up on fixpoint after {iterations} iterations (took {:?})",
+                        start.elapsed()
+                    );
+                    break;
+                }
+                iterations += 1;
+
                 spirt::passes::qptr::partition_and_propagate(module, SPIRT_MEM_LAYOUT_CONFIG);
                 // HACK(eddyb) `partition_and_propagate` can create inputs/outputs
                 // into/from regions/nodes, that may not actually be later used,
