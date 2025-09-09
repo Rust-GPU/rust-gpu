@@ -11,7 +11,7 @@ use crate::custom_insts::CustomInst;
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::dr::{InsertPoint, Instruction, Operand};
-use rspirv::spirv::{Capability, MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
+use rspirv::spirv::{MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
 use rustc_abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
 use rustc_apfloat::{Float, Round, Status, ieee};
 use rustc_codegen_ssa::MemFlags;
@@ -568,26 +568,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         self.switch_to_block(exit_bb);
     }
 
-    #[instrument(level = "trace", skip(self))]
-    fn zombie_convert_ptr_to_u(&self, def: Word) {
-        self.zombie(def, "cannot convert pointers to integers");
-    }
-
-    #[instrument(level = "trace", skip(self))]
-    fn zombie_convert_u_to_ptr(&self, def: Word) {
-        self.zombie(def, "cannot convert integers to pointers");
-    }
-
-    #[instrument(level = "trace", skip(self))]
-    fn zombie_ptr_equal(&self, def: Word, inst: &str) {
-        if !self.builder.has_capability(Capability::VariablePointers) {
-            self.zombie(
-                def,
-                &format!("{inst} without OpCapability VariablePointers"),
-            );
-        }
-    }
-
     /// Convenience wrapper for `adjust_pointer_for_sized_access`, falling back
     /// on choosing `ty` as the leaf's type (and casting `ptr` to a pointer to it).
     //
@@ -1003,6 +983,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         // isn't really supported (and will error if actually used from a shader).
         //
         // FIXME(eddyb) supersede via SPIR-T pointer legalization (e.g. `qptr`).
+        // TODO(eddyb) update comments like this post-`qptr`.
         trace!("ptr_offset_strided: falling back to (illegal) `OpPtrAccessChain`");
 
         let result_ptr = if is_inbounds {
@@ -1013,10 +994,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 .ptr_access_chain(ptr.ty, None, ptr_id, index.def(self), vec![])
         }
         .unwrap();
-        self.zombie(
-            result_ptr,
-            "cannot offset a pointer to an arbitrary element",
-        );
         result_ptr.with_type(ptr.ty)
     }
 
@@ -1044,7 +1021,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         let non_zero_ptr_base_index =
             ptr_base_index.filter(|&idx| self.builder.lookup_const_scalar(idx) != Some(0));
         if let Some(ptr_base_index) = non_zero_ptr_base_index {
-            let result = if is_inbounds {
+            if is_inbounds {
                 builder.in_bounds_ptr_access_chain(
                     result_type,
                     None,
@@ -1061,9 +1038,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     indices,
                 )
             }
-            .unwrap();
-            self.zombie(result, "cannot offset a pointer to an arbitrary element");
-            result
+            .unwrap()
         } else {
             if is_inbounds {
                 builder.in_bounds_access_chain(result_type, None, pointer, indices)
@@ -2225,13 +2200,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         if val.ty == dest_ty {
             val
         } else {
-            let result = self
-                .emit()
+            self.emit()
                 .convert_ptr_to_u(dest_ty, None, val.def(self))
                 .unwrap()
-                .with_type(dest_ty);
-            self.zombie_convert_ptr_to_u(result.def(self));
-            result
+                .with_type(dest_ty)
         }
     }
 
@@ -2245,13 +2217,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         if val.ty == dest_ty {
             val
         } else {
-            let result = self
-                .emit()
+            self.emit()
                 .convert_u_to_ptr(dest_ty, None, val.def(self))
                 .unwrap()
-                .with_type(dest_ty);
-            self.zombie_convert_u_to_ptr(result.def(self));
-            result
+                .with_type(dest_ty)
         }
     }
 
@@ -2339,32 +2308,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 return self.pointercast(val, dest_ty);
             }
 
-            trace!(
-                "before emitting: val ty: {} -> dest ty: {}",
-                self.debug_type(val.ty),
-                self.debug_type(dest_ty)
-            );
-
-            let result = self
-                .emit()
+            self.emit()
                 .bitcast(dest_ty, None, val.def(self))
                 .unwrap()
-                .with_type(dest_ty);
-
-            if val_is_ptr || dest_is_ptr {
-                self.zombie(
-                    result.def(self),
-                    &format!(
-                        "cannot cast between pointer and non-pointer types\
-                         \nfrom `{}`\
-                         \n  to `{}`",
-                        self.debug_type(val.ty),
-                        self.debug_type(dest_ty)
-                    ),
-                );
-            }
-
-            result
+                .with_type(dest_ty)
         }
     }
 
@@ -2533,17 +2480,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             let ptr_id = ptr.def(self);
             let bitcast_result_id = self.emit().bitcast(dest_ty, None, ptr_id).unwrap();
 
-            self.zombie(
-                bitcast_result_id,
-                &format!(
-                    "cannot cast between pointer types\
-                         \nfrom `{}`\
-                         \n  to `{}`",
-                    self.debug_type(ptr.ty),
-                    self.debug_type(dest_ty)
-                ),
-            );
-
             SpirvValue {
                 zombie_waiting_for_span: false,
                 kind: SpirvValueKind::Def {
@@ -2665,23 +2601,17 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 // FIXME(eddyb) consider always emitting `OpPtrEqual` w/ `qptr`.
                 IntEQ => {
                     if self.emit().version().unwrap() > (1, 3) {
-                        self.emit()
-                            .ptr_equal(b, None, lhs.def(self), rhs.def(self))
-                            .inspect(|&result| {
-                                self.zombie_ptr_equal(result, "OpPtrEqual");
-                            })
+                        self.emit().ptr_equal(b, None, lhs.def(self), rhs.def(self))
                     } else {
                         let int_ty = self.type_usize();
                         let lhs = self
                             .emit()
                             .convert_ptr_to_u(int_ty, None, lhs.def(self))
                             .unwrap();
-                        self.zombie_convert_ptr_to_u(lhs);
                         let rhs = self
                             .emit()
                             .convert_ptr_to_u(int_ty, None, rhs.def(self))
                             .unwrap();
-                        self.zombie_convert_ptr_to_u(rhs);
                         self.emit().i_equal(b, None, lhs, rhs)
                     }
                 }
@@ -2690,21 +2620,16 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     if self.emit().version().unwrap() > (1, 3) {
                         self.emit()
                             .ptr_not_equal(b, None, lhs.def(self), rhs.def(self))
-                            .inspect(|&result| {
-                                self.zombie_ptr_equal(result, "OpPtrNotEqual");
-                            })
                     } else {
                         let int_ty = self.type_usize();
                         let lhs = self
                             .emit()
                             .convert_ptr_to_u(int_ty, None, lhs.def(self))
                             .unwrap();
-                        self.zombie_convert_ptr_to_u(lhs);
                         let rhs = self
                             .emit()
                             .convert_ptr_to_u(int_ty, None, rhs.def(self))
                             .unwrap();
-                        self.zombie_convert_ptr_to_u(rhs);
                         self.emit().i_not_equal(b, None, lhs, rhs)
                     }
                 }
@@ -2714,12 +2639,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         .emit()
                         .convert_ptr_to_u(int_ty, None, lhs.def(self))
                         .unwrap();
-                    self.zombie_convert_ptr_to_u(lhs);
                     let rhs = self
                         .emit()
                         .convert_ptr_to_u(int_ty, None, rhs.def(self))
                         .unwrap();
-                    self.zombie_convert_ptr_to_u(rhs);
                     self.emit().u_greater_than(b, None, lhs, rhs)
                 }
                 IntUGE => {
@@ -2728,12 +2651,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         .emit()
                         .convert_ptr_to_u(int_ty, None, lhs.def(self))
                         .unwrap();
-                    self.zombie_convert_ptr_to_u(lhs);
                     let rhs = self
                         .emit()
                         .convert_ptr_to_u(int_ty, None, rhs.def(self))
                         .unwrap();
-                    self.zombie_convert_ptr_to_u(rhs);
                     self.emit().u_greater_than_equal(b, None, lhs, rhs)
                 }
                 IntULT => {
@@ -2742,12 +2663,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         .emit()
                         .convert_ptr_to_u(int_ty, None, lhs.def(self))
                         .unwrap();
-                    self.zombie_convert_ptr_to_u(lhs);
                     let rhs = self
                         .emit()
                         .convert_ptr_to_u(int_ty, None, rhs.def(self))
                         .unwrap();
-                    self.zombie_convert_ptr_to_u(rhs);
                     self.emit().u_less_than(b, None, lhs, rhs)
                 }
                 IntULE => {
@@ -2756,12 +2675,10 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         .emit()
                         .convert_ptr_to_u(int_ty, None, lhs.def(self))
                         .unwrap();
-                    self.zombie_convert_ptr_to_u(lhs);
                     let rhs = self
                         .emit()
                         .convert_ptr_to_u(int_ty, None, rhs.def(self))
                         .unwrap();
-                    self.zombie_convert_ptr_to_u(rhs);
                     self.emit().u_less_than_equal(b, None, lhs, rhs)
                 }
                 IntSGT => self.fatal("TODO: pointer operator IntSGT not implemented yet"),
@@ -2978,7 +2895,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     empty(),
                 )
                 .unwrap();
-            self.zombie(dst.def(self), "cannot memcpy dynamically sized data");
         }
     }
 
@@ -3425,7 +3341,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         direct_callee.unwrap_or_else(|| {
                             // Truly indirect call.
                             let fn_ptr_val = callee.def(self);
-                            self.zombie(fn_ptr_val, "indirect calls are not supported in SPIR-V");
                             func_call_opcode = Op::FunctionPointerCallINTEL;
                             fn_ptr_val
                         }),
