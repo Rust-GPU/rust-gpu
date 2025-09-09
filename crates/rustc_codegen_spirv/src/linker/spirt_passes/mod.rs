@@ -9,14 +9,14 @@ mod reduce;
 pub(crate) mod validate;
 
 use lazy_static::lazy_static;
-use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexSet};
+use rustc_data_structures::fx::FxIndexSet;
+use rustc_index::bit_set::DenseBitSet as BitSet;
 use smallvec::SmallVec;
 use spirt::func_at::FuncAt;
-use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::{InnerVisit, Visitor};
 use spirt::{
     AttrSet, Const, Context, DataInstKind, DeclDef, EntityOrientedDenseMap, Func, FuncDefBody,
-    GlobalVar, Module, Node, NodeKind, Region, Type, Value, spv,
+    GlobalVar, Module, Node, NodeKind, Region, Type, Value, Var, VarKind, spv,
 };
 use std::collections::VecDeque;
 use std::str;
@@ -322,54 +322,45 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
         // FIXME(eddyb) maybe this kind of "parent map" should be provided by SPIR-T?
         loop_body_to_loop: EntityOrientedDenseMap<Region, Node>,
 
-        // FIXME(eddyb) entity-keyed dense sets might be better for performance,
-        // but would require separate sets/maps for separate `Value` cases.
-        used: FxHashSet<Value>,
+        // FIXME(eddyb) there should be a (sparse) bitset version of this.
+        used: EntityOrientedDenseMap<Var, ()>,
 
-        queue: VecDeque<Value>,
+        queue: VecDeque<Var>,
     }
     impl Propagator {
         fn mark_used(&mut self, v: Value) {
-            if let Value::Const(_) = v {
-                return;
-            }
-            if let Value::RegionInput {
-                region,
-                input_idx: _,
-            } = v
-                && region == self.func_body_region
-            {
-                return;
-            }
-            if self.used.insert(v) {
-                self.queue.push_back(v);
+            match v {
+                Value::Const(_) => {}
+                Value::Var(v) => {
+                    if self.used.insert(v, ()).is_none() {
+                        self.queue.push_back(v);
+                    }
+                }
             }
         }
         fn propagate_used(&mut self, func: FuncAt<'_, ()>) {
             while let Some(v) = self.queue.pop_front() {
-                match v {
-                    Value::Const(_) => unreachable!(),
-                    Value::RegionInput { region, input_idx } => {
-                        let loop_node = self.loop_body_to_loop[region];
-                        // NOTE(eddyb) only `Loop`s' bodies can have inputs right now.
+                match func.at(v).decl().kind() {
+                    VarKind::RegionInput { region, input_idx } => {
+                        // NOTE(eddyb) only the whole function's body region,
+                        // and `Loop`s' bodies, can have inputs right now.
+                        let Some(&loop_node) = self.loop_body_to_loop.get(region) else {
+                            assert!(region == self.func_body_region);
+                            continue;
+                        };
+
                         let initial_inputs = &func.at(loop_node).def().inputs;
                         self.mark_used(initial_inputs[input_idx as usize]);
                         self.mark_used(func.at(region).def().outputs[input_idx as usize]);
                     }
-                    Value::NodeOutput { node, output_idx } => {
+                    VarKind::NodeOutput { node, output_idx } => {
                         let node_def = func.at(node).def();
-                        if let NodeKind::Loop { repeat_condition } = node_def.kind {
-                            self.mark_used(repeat_condition);
-                        } else {
-                            for &input in &node_def.inputs {
-                                self.mark_used(input);
-                            }
-                            if let NodeKind::Select(_) = node_def.kind {
-                                for &case in &node_def.child_regions {
-                                    self.mark_used(
-                                        func.at(case).def().outputs[output_idx as usize],
-                                    );
-                                }
+                        for &input in &node_def.inputs {
+                            self.mark_used(input);
+                        }
+                        if let NodeKind::Select(_) = node_def.kind {
+                            for &case in &node_def.child_regions {
+                                self.mark_used(func.at(case).def().outputs[output_idx as usize]);
                             }
                         }
                     }
@@ -405,7 +396,7 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
     // HACK(eddyb) this kind of random-access is easier than using `spirt::transform`.
     let mut all_nodes_with_parent_region = vec![];
 
-    let used_values = {
+    let used_vars = {
         let mut visitor = VisitAllRegionsAndNodes {
             state: propagator,
             visit_region: |_propagator: &mut Propagator, func_at_region: FuncAt<'_, Region>| {
@@ -449,14 +440,23 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                         for &v in &node_def.inputs {
                             mark_used_and_propagate(v);
                         }
+                    } else if node_def.outputs.is_empty() {
+                        // FIXME(eddyb) this is an utter mess, made worse
+                        // by loop nodes not being enough like RVSDG.
+                        if let NodeKind::Loop { repeat_condition } = node_def.kind {
+                            mark_used_and_propagate(repeat_condition);
+                        } else {
+                            // HACK(eddyb) still need to mark the instruction's
+                            // inputs as used, while it has no output `Value`.
+                            for &input in &node_def.inputs {
+                                mark_used_and_propagate(input);
+                            }
+                        }
                     } else {
                         // HACK(eddyb) sanity check pre-disaggregate.
-                        assert!(node_def.outputs.len() <= 1);
+                        assert_eq!(node_def.outputs.len(), 1);
 
-                        mark_used_and_propagate(Value::NodeOutput {
-                            node: func_at_node.position,
-                            output_idx: 0,
-                        });
+                        mark_used_and_propagate(Value::Var(node_def.outputs[0]));
                     }
                 }
             },
@@ -473,74 +473,52 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
         propagator.used
     };
 
-    // FIXME(eddyb) entity-keyed dense maps might be better for performance,
-    // but would require separate maps for separate `Value` cases.
-    let mut value_replacements = FxHashMap::default();
-
     // Remove anything that didn't end up marked as used (directly or indirectly).
     for (node, parent_region) in all_nodes_with_parent_region {
-        let node_def = func_def_body.at(node).def();
+        let func = func_def_body.at_mut(());
+        let node_def = &mut func.nodes[node];
         match &node_def.kind {
-            NodeKind::Select(_) => {
-                // FIXME(eddyb) remove this cloning.
-                let cases = node_def.child_regions.clone();
+            NodeKind::Select(_) | NodeKind::Loop { .. } => {
+                let vars = match node_def.kind {
+                    NodeKind::Select(_) => &mut node_def.outputs,
+                    NodeKind::Loop { .. } => &mut func.regions[node_def.child_regions[0]].inputs,
+                    _ => unreachable!(),
+                };
 
-                let mut new_idx = 0;
-                for original_idx in 0..node_def.outputs.len() {
-                    let original_output = Value::NodeOutput {
-                        node,
-                        output_idx: original_idx as u32,
-                    };
-
-                    if !used_values.contains(&original_output) {
-                        // Remove the output definition and corresponding value from all cases.
-                        func_def_body.at_mut(node).def().outputs.remove(new_idx);
-                        for &case in &cases {
-                            func_def_body.at_mut(case).def().outputs.remove(new_idx);
-                        }
-                        continue;
-                    }
-
-                    // Record remappings for any still-used outputs that got "shifted over".
-                    if original_idx != new_idx {
-                        let new_output = Value::NodeOutput {
-                            node,
-                            output_idx: new_idx as u32,
-                        };
-                        value_replacements.insert(original_output, new_output);
-                    }
-                    new_idx += 1;
+                fn indexed_retain<T, const N: usize>(
+                    v: &mut SmallVec<[T; N]>,
+                    mut f: impl FnMut(usize, &T) -> bool,
+                ) {
+                    let mut indices = 0..;
+                    v.retain(|x| f(indices.next().unwrap(), x));
                 }
-            }
 
-            NodeKind::Loop { .. } => {
-                let body = node_def.child_regions[0];
+                let mut removed_vars = None;
+                let original_var_count = vars.len();
+                indexed_retain(vars, |var_idx, &var| {
+                    let used = used_vars.get(var).is_some();
+                    if !used {
+                        removed_vars
+                            .get_or_insert_with(|| BitSet::new_empty(original_var_count))
+                            .insert(var_idx);
+                    }
+                    used
+                });
 
-                let mut new_idx = 0;
-                for original_idx in 0..node_def.inputs.len() {
-                    let original_input = Value::RegionInput {
-                        region: body,
-                        input_idx: original_idx as u32,
-                    };
-
-                    if !used_values.contains(&original_input) {
-                        // Remove the input definition and corresponding values.
-                        func_def_body.at_mut(node).def().inputs.remove(new_idx);
-                        let body_def = func_def_body.at_mut(body).def();
-                        body_def.inputs.remove(new_idx);
-                        body_def.outputs.remove(new_idx);
-                        continue;
+                // Only update `VarDecl`s and `Value`s if any `Var`s were removed.
+                if let Some(removed_vars) = removed_vars {
+                    for (var_idx, &var) in vars.iter().enumerate() {
+                        func.vars[var].def_idx = var_idx.try_into().unwrap();
                     }
 
-                    // Record remappings for any still-used inputs that got "shifted over".
-                    if original_idx != new_idx {
-                        let new_input = Value::RegionInput {
-                            region: body,
-                            input_idx: new_idx as u32,
-                        };
-                        value_replacements.insert(original_input, new_input);
+                    let prune_values =
+                        |values: &mut _| indexed_retain(values, |i, _| !removed_vars.contains(i));
+                    if let NodeKind::Loop { .. } = node_def.kind {
+                        prune_values(&mut node_def.inputs);
                     }
-                    new_idx += 1;
+                    for &child_region in &node_def.child_regions {
+                        prune_values(&mut func.regions[child_region].outputs);
+                    }
                 }
             }
 
@@ -554,24 +532,20 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                 let used = match &node_def.kind {
                     DataInstKind::SpvInst(spv_inst) if spv_inst.opcode == wk.OpNop => false,
 
-                    _ => used_values.contains(&Value::NodeOutput {
-                        node,
-                        output_idx: 0,
-                    }),
+                    _ => {
+                        node_def.outputs.is_empty()
+                            || node_def
+                                .outputs
+                                .iter()
+                                .any(|&output_var| used_vars.get(output_var).is_some())
+                    }
                 };
                 if !used {
-                    func_def_body.regions[parent_region]
+                    func.regions[parent_region]
                         .children
-                        .remove(node, &mut func_def_body.nodes);
+                        .remove(node, func.nodes);
                 }
             }
         }
-    }
-
-    if !value_replacements.is_empty() {
-        func_def_body.inner_in_place_transform_with(&mut ReplaceValueWith(|v| match v {
-            Value::Const(_) => None,
-            _ => value_replacements.get(&v).copied(),
-        }));
     }
 }

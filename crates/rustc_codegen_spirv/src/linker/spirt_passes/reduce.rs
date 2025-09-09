@@ -1,3 +1,4 @@
+use itertools::{Either, Itertools as _};
 use rustc_data_structures::fx::FxHashMap;
 use smallvec::SmallVec;
 use spirt::cf::SelectionKind;
@@ -6,14 +7,13 @@ use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::InnerVisit;
 use spirt::{
     Const, ConstDef, ConstKind, Context, DataInst, DataInstDef, DataInstKind,
-    EntityOrientedDenseMap, FuncDefBody, Node, NodeDef, NodeKind, NodeOutputDecl, Region,
-    RegionInputDecl, Type, TypeDef, TypeKind, Value, spv,
+    EntityOrientedDenseMap, FuncDefBody, Node, NodeDef, NodeKind, Region, Type,
+    TypeDef, TypeKind, Value, Var, VarDecl, VarKind, spv,
 };
-use std::collections::hash_map::Entry;
 use std::iter;
+use std::rc::Rc;
 
 use super::{ReplaceValueWith, VisitAllRegionsAndNodes};
-use std::rc::Rc;
 
 /// Apply "reduction rules" to `func_def_body`, replacing (pure) computations
 /// with one of their inputs or a constant (e.g. `x + 0 => x` or `1 + 2 => 3`),
@@ -24,9 +24,12 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
 
     let parent_map = ParentMap::new(func_def_body);
 
-    // FIXME(eddyb) entity-keyed dense maps might be better for performance,
-    // but would require separate maps for separate `Value` cases.
-    let mut value_replacements = FxHashMap::default();
+    // FIXME(eddyb) perhaps come up with a centralized abstraction for this
+    // (in theory `VarDecl`s could indicate aliases, but that's a tradeoff).
+    let mut var_replacements: EntityOrientedDenseMap<Var, Value> = Default::default();
+
+    // HACK(eddyb) `EntityOrientedDenseMap` doesn't track its own count.
+    let mut var_replacement_count = 0;
 
     let mut reduction_cache = FxHashMap::default();
 
@@ -49,7 +52,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
     }
 
     loop {
-        let old_value_replacements_len = value_replacements.len();
+        let old_var_replacement_count = var_replacement_count;
 
         // HACK(eddyb) we want to transform `DataInstDef`s, while having the ability
         // to (mutably) traverse the function, but `in_place_transform_data_inst_def`
@@ -67,24 +70,24 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
             } => {
                 // FIXME(eddyb) this should probably be ran in the queue loop
                 // below, to more quickly benefit from previous reductions.
-                for i in 0..u32::try_from(outputs.len()).unwrap() {
-                    let output = Value::NodeOutput {
-                        node: func_at_node.position,
-                        output_idx: i,
-                    };
-                    if let Entry::Vacant(entry) = value_replacements.entry(output) {
+                for (i, &output_var) in outputs.iter().enumerate() {
+                    if let entry @ None = var_replacements.entry(output_var) {
                         let per_case_value = cases
                             .iter()
-                            .map(|&case| func_at_node.at(case).def().outputs[i as usize]);
+                            .map(|&case| func_at_node.at(case).def().outputs[i]);
                         if let Some(reduced) = try_reduce_select(
                             cx,
+                            func_at_node.at(()),
                             &parent_map,
                             func_at_node.position,
                             kind,
                             inputs[0],
                             per_case_value,
                         ) {
-                            entry.insert(reduced);
+                            *entry = Some(reduced);
+
+                            // FIXME(eddyb) manual tracking is fragile.
+                            var_replacement_count += 1;
                         }
                     }
                 }
@@ -140,18 +143,19 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
 
                 // FIXME(eddyb) this should probably be ran in the queue loop
                 // below, to more quickly benefit from previous reductions.
-                let body_outputs = &func_at_node.at(body).def().outputs;
-                for (i, (&initial_input, &body_output)) in
-                    inputs.iter().zip(body_outputs).enumerate()
+                let body_def = func_at_node.at(body).def();
+                for (&body_input_var, (&initial_input, &body_output)) in body_def
+                    .inputs
+                    .iter()
+                    .zip_eq(inputs.iter().zip_eq(&body_def.outputs))
                 {
-                    let body_input = Value::RegionInput {
-                        region: body,
-                        input_idx: i as u32,
-                    };
-                    if body_output == body_input {
-                        value_replacements
-                            .entry(body_input)
-                            .or_insert(initial_input);
+                    if body_output == Value::Var(body_input_var)
+                        && let entry @ None = var_replacements.entry(body_input_var)
+                    {
+                        *entry = Some(initial_input);
+
+                        // FIXME(eddyb) manual tracking is fragile.
+                        var_replacement_count += 1;
                     }
                 }
             }
@@ -170,7 +174,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                     | DataInstKind::SpvExtInst { .. },
                 ..
             } => {
-                if let Ok(redu) = Reducible::try_from(func_at_node.def()) {
+                if let Ok(redu) = Reducible::try_from(func_at_node) {
                     let redu_target = ReductionTarget::DataInst(func_at_node.position);
                     reduction_queue.push((redu_target, redu));
                 }
@@ -194,26 +198,26 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
             if let Some(v) = redu.try_reduce(
                 cx,
                 func_def_body.at_mut(()),
-                &value_replacements,
+                &var_replacements,
                 &parent_map,
                 &mut reduction_cache,
             ) {
                 any_changes = true;
                 match redu_target {
                     ReductionTarget::DataInst(inst) => {
-                        value_replacements.insert(
-                            Value::NodeOutput {
-                                node: inst,
-                                output_idx: 0,
-                            },
-                            v,
-                        );
+                        let inst_def = func_def_body.at_mut(inst).def();
+                        let newly_inserted =
+                            var_replacements.insert(inst_def.outputs[0], v).is_none();
+                        if newly_inserted {
+                            // FIXME(eddyb) manual tracking is fragile.
+                            var_replacement_count += 1;
+                        }
 
                         // Replace the reduced `DataInstDef` itself with `OpNop`,
                         // removing the ability to use its "name" as a value.
                         //
                         // FIXME(eddyb) remove the instruction entirely.
-                        *func_def_body.at_mut(inst).def() = DataInstDef {
+                        *inst_def = DataInstDef {
                             attrs: Default::default(),
                             kind: DataInstKind::SpvInst(wk.OpNop.into()),
                             inputs: [].into_iter().collect(),
@@ -238,7 +242,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
             }
         }
 
-        if !any_changes && old_value_replacements_len == value_replacements.len() {
+        if !any_changes && old_var_replacement_count == var_replacement_count {
             break;
         }
 
@@ -247,7 +251,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
             loop {
                 match v {
                     Value::Const(_) => break,
-                    _ => match value_replacements.get(&v) {
+                    Value::Var(var) => match var_replacements.get(var) {
                         Some(&new) => v = new,
                         None => break,
                     },
@@ -297,6 +301,10 @@ impl ParentMap {
 /// regardless of which case gets (dynamically) taken.
 fn try_reduce_select(
     cx: &Context,
+
+    // FIXME(eddyb) come up with a better convention for this!
+    func: FuncAt<'_, ()>,
+
     parent_map: &ParentMap,
     select_node: Node,
     // FIXME(eddyb) are these redundant with the `Node` above?
@@ -316,7 +324,7 @@ fn try_reduce_select(
             }
             _ => None,
         },
-        _ => None,
+        Value::Var(_) => None,
     };
 
     // Ignore `OpUndef`s, as they can be legally substituted with any other value.
@@ -347,9 +355,10 @@ fn try_reduce_select(
                 // HACK(eddyb) closure here serves as `try` block.
                 let is_x_valid_outside_select = || {
                     // Constants are always valid.
-                    if let Value::Const(_) = x {
-                        return Some(());
-                    }
+                    let x = match x {
+                        Value::Const(_) => return Some(()),
+                        Value::Var(x) => x,
+                    };
 
                     // HACK(eddyb) if the same value appears in two different
                     // cases, it's definitely dominating the whole `Select`.
@@ -359,10 +368,9 @@ fn try_reduce_select(
 
                     // In general, `x` dominating the `Select` is what would
                     // allow lifting an use of it outside the `Select`.
-                    let region_defining_x = match x {
-                        Value::Const(_) => unreachable!(),
-                        Value::RegionInput { region, .. } => region,
-                        Value::NodeOutput { node, .. } => *parent_map.node_parent.get(node)?,
+                    let region_defining_x = match func.vars[x].kind() {
+                        VarKind::RegionInput { region, .. } => region,
+                        VarKind::NodeOutput { node, .. } => *parent_map.node_parent.get(node)?,
                     };
 
                     // Fast-reject: if `x` is defined immediately inside one of
@@ -476,16 +484,17 @@ impl<V> Reducible<V> {
     }
 }
 
-impl TryFrom<&DataInstDef> for Reducible {
+impl TryFrom<FuncAt<'_, DataInst>> for Reducible {
     type Error = ();
-    fn try_from(inst_def: &DataInstDef) -> Result<Self, ()> {
+    fn try_from(func_at_inst: FuncAt<'_, DataInst>) -> Result<Self, ()> {
+        let inst_def = func_at_inst.def();
         if let DataInstKind::SpvInst(spv_inst) = &inst_def.kind {
             let op = PureOp::try_from(spv_inst)?;
 
             // HACK(eddyb) all supported instructions should be single-output.
             assert_eq!(inst_def.outputs.len(), 1);
 
-            let output_type = inst_def.outputs[0].ty;
+            let output_type = func_at_inst.at(inst_def.outputs[0]).decl().ty;
             if let [input] = inst_def.inputs[..] {
                 return Ok(Self {
                     op,
@@ -500,24 +509,42 @@ impl TryFrom<&DataInstDef> for Reducible {
 
 impl Reducible {
     // HACK(eddyb) `IntToBool` is the only reason this can return `None`.
-    fn try_into_inst(self) -> Option<DataInstDef> {
+    fn try_materialize_as_new_node_and_output(
+        self,
+        cx: &Context,
+        func: FuncAtMut<'_, ()>,
+    ) -> Option<(Node, Var)> {
         let Self {
             op,
             output_type,
             input,
         } = self;
-        Some(DataInstDef {
-            attrs: Default::default(),
-            kind: DataInstKind::SpvInst(op.try_into().ok()?),
-            inputs: [input].into_iter().collect(),
-            child_regions: [].into_iter().collect(),
-            outputs: [NodeOutputDecl {
+
+        let node = func.nodes.define(
+            cx,
+            NodeDef {
+                attrs: Default::default(),
+                kind: DataInstKind::SpvInst(op.try_into().ok()?),
+                inputs: [input].into_iter().collect(),
+                child_regions: [].into_iter().collect(),
+                outputs: [].into_iter().collect(),
+            }
+            .into(),
+        );
+
+        // FIXME(eddyb) automate this (insertion cursor?).
+        let output_var = func.vars.define(
+            cx,
+            VarDecl {
                 attrs: Default::default(),
                 ty: output_type,
-            }]
-            .into_iter()
-            .collect(),
-        })
+                def_parent: Either::Right(node),
+                def_idx: 0,
+            },
+        );
+        func.nodes[node].outputs.push(output_var);
+
+        Some((node, output_var))
     }
 }
 
@@ -677,7 +704,7 @@ impl Reducible {
         // FIXME(eddyb) come up with a better convention for this!
         func: FuncAtMut<'_, ()>,
 
-        value_replacements: &FxHashMap<Value, Value>,
+        var_replacements: &EntityOrientedDenseMap<Var, Value>,
 
         parent_map: &ParentMap,
 
@@ -685,20 +712,27 @@ impl Reducible {
     ) -> Option<Value> {
         // FIXME(eddyb) should we care about the cache *before* this loop below?
 
-        // HACK(eddyb) eagerly apply `value_replacements`.
+        // HACK(eddyb) eagerly apply `var_replacements`.
         // FIXME(eddyb) this could do the union-find trick of shortening chains
         // the first time they're encountered, but also, if this process was more
         // "demand-driven" (recursing into use->def, instead of processing defs),
         // it might not require any of this complication.
-        while let Some(&replacement) = value_replacements.get(&self.input) {
-            self.input = replacement;
+        loop {
+            let replacement = match self.input {
+                Value::Const(_) => None,
+                Value::Var(v) => var_replacements.get(v),
+            };
+            match replacement {
+                Some(&replacement) => self.input = replacement,
+                None => break,
+            }
         }
 
         if let Some(&cached) = cache.get(&self) {
             return cached;
         }
 
-        let result = self.try_reduce_uncached(cx, func, value_replacements, parent_map, cache);
+        let result = self.try_reduce_uncached(cx, func, var_replacements, parent_map, cache);
 
         cache.insert(self, result);
 
@@ -712,15 +746,19 @@ impl Reducible {
         // FIXME(eddyb) come up with a better convention for this!
         mut func: FuncAtMut<'_, ()>,
 
-        value_replacements: &FxHashMap<Value, Value>,
+        var_replacements: &EntityOrientedDenseMap<Var, Value>,
 
         parent_map: &ParentMap,
 
         cache: &mut FxHashMap<Self, Option<Value>>,
     ) -> Option<Value> {
-        match self.input {
-            Value::Const(ct) => self.with_input(ct).try_reduce_const(cx).map(Value::Const),
-            Value::RegionInput {
+        let input = match self.input {
+            Value::Const(ct) => return self.with_input(ct).try_reduce_const(cx).map(Value::Const),
+            Value::Var(v) => v,
+        };
+
+        match func.vars[input].kind() {
+            VarKind::RegionInput {
                 region,
                 input_idx: state_idx,
             } => {
@@ -733,11 +771,12 @@ impl Reducible {
 
                 let output_from_initial_state = self
                     .with_input(input_from_initial_state)
-                    .try_reduce(cx, func.reborrow(), value_replacements, parent_map, cache)?;
+                    .try_reduce(cx, func.reborrow(), var_replacements, parent_map, cache)?;
                 // HACK(eddyb) this is here because it can fail, see the comment
                 // on `output_from_updated_state` for what's actually going on.
-                let output_from_updated_state_inst =
-                    self.with_input(input_from_updated_state).try_into_inst()?;
+                let (output_from_updated_state_inst, output_from_updated_state) = self
+                    .with_input(input_from_updated_state)
+                    .try_materialize_as_new_node_and_output(cx, func.reborrow())?;
 
                 // Now that the reduction succeeded for the initial state,
                 // we can proceed with augmenting the loop with the extra state.
@@ -747,12 +786,17 @@ impl Reducible {
                     .inputs
                     .push(output_from_initial_state);
 
-                let loop_state_decls = &mut func.reborrow().at(region).def().inputs;
-                let new_loop_state_idx = u32::try_from(loop_state_decls.len()).unwrap();
-                loop_state_decls.push(RegionInputDecl {
-                    attrs: Default::default(),
-                    ty: self.output_type,
-                });
+                let loop_state_vars = &mut func.regions[region].inputs;
+                let new_loop_state_var = func.vars.define(
+                    cx,
+                    VarDecl {
+                        attrs: Default::default(),
+                        ty: self.output_type,
+                        def_parent: Either::Left(region),
+                        def_idx: loop_state_vars.len().try_into().unwrap(),
+                    },
+                );
+                loop_state_vars.push(new_loop_state_var);
 
                 // HACK(eddyb) generating the instruction wholesale again is not
                 // the most efficient way to go about this, but avoiding getting
@@ -760,27 +804,19 @@ impl Reducible {
                 //
                 // FIXME(eddyb) attempt to replace this with early-inserting in
                 // `cache` *then* returning.
-                let output_from_updated_state =
-                    func.nodes.define(cx, output_from_updated_state_inst.into());
                 func.reborrow()
                     .at(region)
                     .def()
                     .outputs
-                    .push(Value::NodeOutput {
-                        node: output_from_updated_state,
-                        output_idx: 0,
-                    });
+                    .push(Value::Var(output_from_updated_state));
 
                 func.regions[region]
                     .children
-                    .insert_last(output_from_updated_state, func.nodes);
+                    .insert_last(output_from_updated_state_inst, func.nodes);
 
-                Some(Value::RegionInput {
-                    region,
-                    input_idx: new_loop_state_idx,
-                })
+                Some(Value::Var(new_loop_state_var))
             }
-            Value::NodeOutput { node, output_idx } => {
+            VarKind::NodeOutput { node, output_idx } => {
                 let node_def = &*func.reborrow().at(node).def();
 
                 if let NodeKind::Select(_) = node_def.kind {
@@ -795,7 +831,7 @@ impl Reducible {
                             self.with_input(per_case_input).try_reduce(
                                 cx,
                                 func.reborrow(),
-                                value_replacements,
+                                var_replacements,
                                 parent_map,
                                 cache,
                             )
@@ -804,38 +840,44 @@ impl Reducible {
 
                     // Try to avoid introducing a new output, by reducing the merge
                     // of the per-case output values to a single value, if possible.
-                    let node_def = func.reborrow().at(node).def();
-                    let kind = match &node_def.kind {
-                        NodeKind::Select(kind) => kind,
-                        _ => unreachable!(),
-                    };
-                    if let Some(v) = try_reduce_select(
-                        cx,
-                        parent_map,
-                        node,
-                        kind,
-                        node_def.inputs[0],
-                        per_case_new_output.iter().copied(),
-                    ) {
-                        return Some(v);
+                    {
+                        let func = func.reborrow().freeze();
+                        let node_def = func.at(node).def();
+                        let kind = match &node_def.kind {
+                            NodeKind::Select(kind) => kind,
+                            _ => unreachable!(),
+                        };
+                        if let Some(v) = try_reduce_select(
+                            cx,
+                            func,
+                            parent_map,
+                            node,
+                            kind,
+                            node_def.inputs[0],
+                            per_case_new_output.iter().copied(),
+                        ) {
+                            return Some(v);
+                        }
                     }
 
                     // Merge the per-case output values into a new output.
-                    let node_output_decls = &mut func.reborrow().at(node).def().outputs;
-                    let new_output_idx = u32::try_from(node_output_decls.len()).unwrap();
-                    node_output_decls.push(NodeOutputDecl {
-                        attrs: Default::default(),
-                        ty: self.output_type,
-                    });
+                    let node_output_vars = &mut func.nodes[node].outputs;
+                    let new_output_var = func.vars.define(
+                        cx,
+                        VarDecl {
+                            attrs: Default::default(),
+                            ty: self.output_type,
+                            def_parent: Either::Right(node),
+                            def_idx: node_output_vars.len().try_into().unwrap(),
+                        },
+                    );
+                    node_output_vars.push(new_output_var);
                     for (&case, new_output) in cases.iter().zip(per_case_new_output) {
-                        let per_case_outputs = &mut func.reborrow().at(case).def().outputs;
-                        assert_eq!(per_case_outputs.len(), new_output_idx as usize);
+                        let per_case_outputs = &mut func.regions[case].outputs;
                         per_case_outputs.push(new_output);
+                        assert_eq!(per_case_outputs.len(), node_output_vars.len());
                     }
-                    Some(Value::NodeOutput {
-                        node,
-                        output_idx: new_output_idx,
-                    })
+                    Some(Value::Var(new_output_var))
                 } else {
                     // HACK(eddyb) sanity check pre-disaggregate.
                     if node_def.outputs.len() != 1 || output_idx != 0 {
@@ -849,7 +891,7 @@ impl Reducible {
                         ReductionStep::Complete(v) => Some(v),
                         // FIXME(eddyb) actually use a loop instead of recursing here.
                         ReductionStep::Partial(redu) => {
-                            redu.try_reduce(cx, func, value_replacements, parent_map, cache)
+                            redu.try_reduce(cx, func, var_replacements, parent_map, cache)
                         }
                     }
                 }

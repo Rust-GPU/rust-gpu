@@ -9,8 +9,8 @@ use spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Trans
 use spirt::visit::InnerVisit as _;
 use spirt::{
     AddrSpace, Attr, AttrSetDef, Const, ConstKind, Context, DataInst, DataInstDef, DataInstKind,
-    DeclDef, Diag, Func, FuncDecl, GlobalVar, GlobalVarDecl, Module, Node, NodeKind,
-    NodeOutputDecl, Region, Type, TypeDef, TypeKind, TypeOrConst, Value, spv,
+    DeclDef, Diag, Func, FuncDecl, GlobalVar, GlobalVarDecl, Module, Node, NodeKind, Region, Type,
+    TypeDef, TypeKind, TypeOrConst, Value, VarDecl, spv,
 };
 use std::cmp::Ordering;
 use std::collections::VecDeque;
@@ -217,22 +217,19 @@ impl Transformer for SelectiveEraser<'_> {
         // semantic, and understand the semantic ones.
         let attrs = data_inst_def.attrs;
 
-        let mk_bitcast_def = |in_value, out_type| DataInstDef {
+        let mk_incomplete_bitcast_def = |in_value| DataInstDef {
             attrs,
             kind: DataInstKind::SpvInst(wk.OpBitcast.into()),
             inputs: [in_value].into_iter().collect(),
             child_regions: [].into_iter().collect(),
-            outputs: [NodeOutputDecl {
-                attrs: Default::default(),
-                ty: out_type,
-            }]
-            .into_iter()
-            .collect(),
+            outputs: [].into_iter().collect(),
         };
 
         if spv_inst.opcode == wk.OpLoad {
             let pointee_type = pointee_type_of_ptr_val(data_inst_def.inputs[0]);
-            let value_type = data_inst_def.outputs[0].ty;
+            let output_var = data_inst_def.outputs[0];
+            let value_type = func.at(output_var).decl().ty;
+
             // FIXME(eddyb) leave a BUG diagnostic in the `None` case?
             if pointee_type.is_some_and(|ty| {
                 ty != value_type && ty == self.erase_explicit_layout_in_type(value_type)
@@ -244,27 +241,29 @@ impl Transformer for SelectiveEraser<'_> {
                 let fixed_load_inst = func.nodes.define(
                     cx,
                     DataInstDef {
-                        child_regions: [].into_iter().collect(),
-                        outputs: [NodeOutputDecl {
-                            attrs: Default::default(),
-                            ty: pointee_type.unwrap(),
-                        }]
-                        .into_iter()
-                        .collect(),
+                        outputs: [].into_iter().collect(),
                         ..DataInstDef::clone(&func.nodes[data_inst])
                     }
                     .into(),
                 );
+                let fixed_load_output_var = func.vars.define(
+                    cx,
+                    VarDecl {
+                        attrs: Default::default(),
+                        ty: pointee_type.unwrap(),
+                        def_parent: Either::Right(fixed_load_inst),
+                        def_idx: 0,
+                    },
+                );
+                func.nodes[fixed_load_inst]
+                    .outputs
+                    .push(fixed_load_output_var);
 
                 parent_region_children.insert_before(fixed_load_inst, data_inst, func.nodes);
 
-                *func.nodes[data_inst] = mk_bitcast_def(
-                    Value::NodeOutput {
-                        node: fixed_load_inst,
-                        output_idx: 0,
-                    },
-                    value_type,
-                );
+                *func.nodes[data_inst] =
+                    mk_incomplete_bitcast_def(Value::Var(fixed_load_output_var));
+                func.nodes[data_inst].outputs.push(output_var);
 
                 self.disaggregate_bitcast(func.at(data_inst));
             }
@@ -288,21 +287,28 @@ impl Transformer for SelectiveEraser<'_> {
                     let parent_region_children =
                         &mut func.regions[self.parent_region.unwrap()].children;
 
-                    let stored_value_cast_inst = func.nodes.define(
+                    let stored_value_cast_inst = func
+                        .nodes
+                        .define(cx, mk_incomplete_bitcast_def(original_stored_value).into());
+                    let stored_value_cast_output_var = func.vars.define(
                         cx,
-                        mk_bitcast_def(original_stored_value, pointee_type.unwrap()).into(),
+                        VarDecl {
+                            attrs: Default::default(),
+                            ty: pointee_type.unwrap(),
+                            def_parent: Either::Right(stored_value_cast_inst),
+                            def_idx: 0,
+                        },
                     );
-
+                    func.nodes[stored_value_cast_inst]
+                        .outputs
+                        .push(stored_value_cast_output_var);
                     parent_region_children.insert_before(
                         stored_value_cast_inst,
                         data_inst,
                         func.nodes,
                     );
 
-                    func.nodes[data_inst].inputs[1] = Value::NodeOutput {
-                        node: stored_value_cast_inst,
-                        output_idx: 0,
-                    };
+                    func.nodes[data_inst].inputs[1] = Value::Var(stored_value_cast_output_var);
 
                     self.disaggregate_bitcast(func.at(stored_value_cast_inst));
                 }
@@ -356,28 +362,36 @@ impl Transformer for SelectiveEraser<'_> {
                         }),
                         inputs: [src_ptr].into_iter().collect(),
                         child_regions: [].into_iter().collect(),
-                        outputs: [NodeOutputDecl {
-                            attrs: Default::default(),
-                            ty: src_pointee_type.unwrap(),
-                        }]
-                        .into_iter()
-                        .collect(),
+                        outputs: [].into_iter().collect(),
                     }
                     .into(),
                 );
+                let load_output_var = func.vars.define(
+                    cx,
+                    VarDecl {
+                        attrs: Default::default(),
+                        ty: src_pointee_type.unwrap(),
+                        def_parent: Either::Right(load_inst),
+                        def_idx: 0,
+                    },
+                );
+                func.nodes[load_inst].outputs.push(load_output_var);
                 parent_region_children.insert_before(load_inst, data_inst, func.nodes);
 
                 let cast_inst = func.nodes.define(
                     cx,
-                    mk_bitcast_def(
-                        Value::NodeOutput {
-                            node: load_inst,
-                            output_idx: 0,
-                        },
-                        dst_pointee_type.unwrap(),
-                    )
-                    .into(),
+                    mk_incomplete_bitcast_def(Value::Var(load_output_var)).into(),
                 );
+                let cast_output_var = func.vars.define(
+                    cx,
+                    VarDecl {
+                        attrs: Default::default(),
+                        ty: dst_pointee_type.unwrap(),
+                        def_parent: Either::Right(cast_inst),
+                        def_idx: 0,
+                    },
+                );
+                func.nodes[cast_inst].outputs.push(cast_output_var);
                 parent_region_children.insert_before(cast_inst, data_inst, func.nodes);
 
                 *func.nodes[data_inst] = DataInstDef {
@@ -386,15 +400,7 @@ impl Transformer for SelectiveEraser<'_> {
                         opcode: wk.OpStore,
                         imms: dst_imms,
                     }),
-                    inputs: [
-                        dst_ptr,
-                        Value::NodeOutput {
-                            node: cast_inst,
-                            output_idx: 0,
-                        },
-                    ]
-                    .into_iter()
-                    .collect(),
+                    inputs: [dst_ptr, Value::Var(cast_output_var)].into_iter().collect(),
                     child_regions: [].into_iter().collect(),
                     outputs: [].into_iter().collect(),
                 };
@@ -499,10 +505,11 @@ impl<'a> SelectiveEraser<'a> {
 
         assert!(cast_def.kind == DataInstKind::SpvInst(wk.OpBitcast.into()));
         let in_value = cast_def.inputs[0];
-        let out_type = cast_def.outputs[0].ty;
+        let out_var = cast_def.outputs[0];
 
         let mut func = func_at_cast_inst.reborrow();
         let in_type = func.reborrow().freeze().at(in_value).type_of(cx);
+        let out_type = func.vars[out_var].ty;
 
         // FIXME(eddyb) there has to be a nicer way to write this??
         fn equal<T: Eq>([a, b]: [T; 2]) -> bool {
@@ -556,52 +563,58 @@ impl<'a> SelectiveEraser<'a> {
                         }),
                         inputs: [in_value].into_iter().collect(),
                         child_regions: [].into_iter().collect(),
-                        outputs: [NodeOutputDecl {
-                            attrs: Default::default(),
-                            ty: component_in_type,
-                        }]
-                        .into_iter()
-                        .collect(),
+                        outputs: [].into_iter().collect(),
                     }
                     .into(),
                 );
+                let component_extract_output_var = func.vars.define(
+                    cx,
+                    VarDecl {
+                        attrs: Default::default(),
+                        ty: component_in_type,
+                        def_parent: Either::Right(component_extract_inst),
+                        def_idx: 0,
+                    },
+                );
+                func.nodes[component_extract_inst]
+                    .outputs
+                    .push(component_extract_output_var);
                 parent_region_children.insert_before(component_extract_inst, cast_inst, func.nodes);
 
-                let component_cast_inst = component_cast_types.map(|[_, component_out_type]| {
+                let component_cast = component_cast_types.map(|[_, component_out_type]| {
                     let inst = func.nodes.define(
                         cx,
                         DataInstDef {
                             attrs,
                             kind: DataInstKind::SpvInst(wk.OpBitcast.into()),
-                            inputs: [Value::NodeOutput {
-                                node: component_extract_inst,
-                                output_idx: 0,
-                            }]
-                            .into_iter()
-                            .collect(),
+                            inputs: [Value::Var(component_extract_output_var)]
+                                .into_iter()
+                                .collect(),
                             child_regions: [].into_iter().collect(),
-                            outputs: [NodeOutputDecl {
-                                attrs: Default::default(),
-                                ty: component_out_type,
-                            }]
-                            .into_iter()
-                            .collect(),
+                            outputs: [].into_iter().collect(),
                         }
                         .into(),
                     );
+                    let output_var = func.vars.define(
+                        cx,
+                        VarDecl {
+                            attrs: Default::default(),
+                            ty: component_out_type,
+                            def_parent: Either::Right(inst),
+                            def_idx: 0,
+                        },
+                    );
+                    func.nodes[inst].outputs.push(output_var);
                     parent_region_children.insert_before(inst, cast_inst, func.nodes);
 
-                    inst
+                    (inst, output_var)
                 });
 
-                if let Some(component_cast_inst) = component_cast_inst {
+                if let Some((component_cast_inst, _)) = component_cast {
                     self.disaggregate_bitcast(func.reborrow().at(component_cast_inst));
                 }
 
-                Value::NodeOutput {
-                    node: component_cast_inst.unwrap_or(component_extract_inst),
-                    output_idx: 0,
-                }
+                Value::Var(component_cast.map_or(component_extract_output_var, |(_, v)| v))
             })
             .collect();
 
@@ -610,12 +623,7 @@ impl<'a> SelectiveEraser<'a> {
             kind: DataInstKind::SpvInst(wk.OpCompositeConstruct.into()),
             inputs: components,
             child_regions: [].into_iter().collect(),
-            outputs: [NodeOutputDecl {
-                attrs: Default::default(),
-                ty: out_type,
-            }]
-            .into_iter()
-            .collect(),
+            outputs: [out_var].into_iter().collect(),
         };
     }
 
@@ -629,18 +637,21 @@ impl<'a> SelectiveEraser<'a> {
         let data_inst_def = func_at_inst.def();
 
         // FIXME(eddyb) consider preserving the actual type change in the error.
-        let any_types_will_change = (data_inst_def.outputs.iter().map(|o| o.ty))
-            .chain(
-                data_inst_def
-                    .inputs
-                    .iter()
-                    .map(|&v| func_at_inst.at(v).type_of(cx)),
-            )
-            .any(|ty| {
-                let mut new_ty = ty;
-                self.transform_type_use(ty).apply_to(&mut new_ty);
-                new_ty != ty
-            });
+        let any_types_will_change = (data_inst_def
+            .outputs
+            .iter()
+            .map(|&o| func_at_inst.at(o).decl().ty))
+        .chain(
+            data_inst_def
+                .inputs
+                .iter()
+                .map(|&v| func_at_inst.at(v).type_of(cx)),
+        )
+        .any(|ty| {
+            let mut new_ty = ty;
+            self.transform_type_use(ty).apply_to(&mut new_ty);
+            new_ty != ty
+        });
         if !any_types_will_change {
             return Ok(());
         }

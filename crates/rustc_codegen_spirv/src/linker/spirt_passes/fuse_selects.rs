@@ -1,3 +1,5 @@
+use itertools::Itertools as _;
+use rustc_data_structures::fx::FxHashMap;
 use smallvec::SmallVec;
 use spirt::cf::SelectionKind;
 use spirt::func_at::FuncAt;
@@ -20,6 +22,9 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
         },
         visit_node: |_: &mut (), _| {},
     });
+
+    // HACK(eddyb) reusing allocations for `Var` -> `Value` mappings.
+    let mut reusable_var_replacements = FxHashMap::default();
 
     for region in all_regions {
         // HACK(eddyb) buffering the `Node`s to remove from this region,
@@ -62,24 +67,30 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
                                 // in the second one's case, with the specific values
                                 // (e.g. `let y = if c { x } ...; if c { f(y) }`
                                 // has to become `let y = if c { f(x); x } ...`).
-                                //
-                                // FIXME(eddyb) avoid cloning here.
-                                let outputs_of_base_case =
-                                    func.reborrow().at(base_case).def().outputs.clone();
+                                let outputs_of_base_case = &func.regions[base_case].outputs;
+
+                                // HACK(eddyb) due to no `func.vars` access through
+                                // `ReplaceValueWith`, this is the next best thing.
+                                let mut var_replacements = reusable_var_replacements;
+                                assert_eq!(var_replacements.len(), 0);
+                                var_replacements.extend(
+                                    func.nodes[base_node]
+                                        .outputs
+                                        .iter()
+                                        .copied()
+                                        .zip_eq(outputs_of_base_case.iter().copied()),
+                                );
                                 func.reborrow()
                                     .at(children_of_case_to_fuse)
                                     .into_iter()
                                     .inner_in_place_transform_with(&mut ReplaceValueWith(
                                         |v| match v {
-                                            Value::NodeOutput { node, output_idx }
-                                                if node == base_node =>
-                                            {
-                                                Some(outputs_of_base_case[output_idx as usize])
-                                            }
-
-                                            _ => None,
+                                            Value::Const(_) => None,
+                                            Value::Var(v) => var_replacements.get(&v).copied(),
                                         },
                                     ));
+                                var_replacements.clear();
+                                reusable_var_replacements = var_replacements;
 
                                 func.regions[base_case]
                                     .children

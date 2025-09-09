@@ -110,13 +110,11 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                         && let ConstKind::PtrToGlobalVar(gv) = cx[ct].kind
                         && interface_global_vars.contains(&gv)
                     {
+                        let output_var = data_inst_def.outputs[0];
                         return Some((
                             gv,
-                            data_inst_def.outputs[0].ty,
-                            Value::NodeOutput {
-                                node: func_at_inst.position,
-                                output_idx: 0,
-                            },
+                            func_at_inst.at(output_var).decl().ty,
+                            Value::Var(output_var),
                         ));
                     }
                     None
@@ -203,6 +201,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             let func = FuncAt {
                 regions: &func_def_body.regions,
                 nodes: &func_def_body.nodes,
+                vars: &func_def_body.vars,
 
                 position: (),
             };
@@ -250,7 +249,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                     }) => {
                         let const_kind = |v: Value| match v {
                             Value::Const(ct) => &cx[ct].kind,
-                            _ => unreachable!(),
+                            Value::Var(_) => unreachable!(),
                         };
                         let const_str = |v: Value| match const_kind(v) {
                             &ConstKind::SpvStringLiteralForExtInst(s) => s,

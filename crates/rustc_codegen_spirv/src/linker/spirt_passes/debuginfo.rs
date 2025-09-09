@@ -240,7 +240,7 @@ impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
                 if let Some(custom_inst) = maybe_custom_inst {
                     let expect_const = |v| match v {
                         Value::Const(ct) => ct,
-                        _ => unreachable!(),
+                        Value::Var(_) => unreachable!(),
                     };
                     let const_str = |v| match self.cx[expect_const(v)].kind {
                         ConstKind::SpvStringLiteralForExtInst(s) => s,
