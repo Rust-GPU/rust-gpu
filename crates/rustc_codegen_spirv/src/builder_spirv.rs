@@ -202,15 +202,9 @@ pub enum SpirvConst<'a, 'tcx> {
     },
 
     /// Constant `OpBitcast` (via `OpSpecConstantOp`).
-    //
-    // FIXME(eddyb) actually support `OpSpecConstantOp` in SPIR-T and emit it
-    // (right now this uses `OpUndef` to avoid breaking SPIR-T).
     BitCast(Word),
 
     /// Constant `OpPtrAccessChain` (via `OpSpecConstantOp`).
-    //
-    // FIXME(eddyb) actually support `OpSpecConstantOp` in SPIR-T and emit it
-    // (right now this uses `OpUndef` to avoid breaking SPIR-T).
     PtrByteOffset {
         ptr: Word,
         offset: Size,
@@ -617,19 +611,6 @@ impl<'tcx> BuilderSpirv<'tcx> {
 
         // FIXME(eddyb) make this an extension method on `rspirv::dr::Builder`?
         let const_op = |builder: &mut Builder, op, lhs, maybe_rhs: Option<_>| {
-            // HACK(eddyb) remove after `OpSpecConstantOp` support gets added to SPIR-T.
-            let spirt_has_const_op = false;
-
-            if !spirt_has_const_op {
-                let zombie = builder.undef(ty, None);
-                cx.zombie_with_span(
-                    zombie,
-                    DUMMY_SP,
-                    &format!("unsupported constant of type `{}`", cx.debug_type(ty)),
-                );
-                return zombie;
-            }
-
             let id = builder.id();
             builder
                 .module_mut()
@@ -722,25 +703,17 @@ impl<'tcx> BuilderSpirv<'tcx> {
                 func_id,
                 mangled_func_name: _,
             } => {
-                // HACK(eddyb) remove after `OpConstantFunctionPointerINTEL` support gets added to SPIR-T.
-                let spirt_has_const_fn_ptr = false;
-
-                if !spirt_has_const_fn_ptr {
-                    // NOTE(eddyb) zombie will be emitted by `SpirvValue::def_with_span`.
-                    builder.undef(ty, None)
-                } else {
-                    let id = builder.id();
-                    builder
-                        .module_mut()
-                        .types_global_values
-                        .push(Instruction::new(
-                            Op::ConstantFunctionPointerINTEL,
-                            Some(ty),
-                            Some(id),
-                            [Operand::IdRef(func_id)].into(),
-                        ));
-                    id
-                }
+                let id = builder.id();
+                builder
+                    .module_mut()
+                    .types_global_values
+                    .push(Instruction::new(
+                        Op::ConstantFunctionPointerINTEL,
+                        Some(ty),
+                        Some(id),
+                        [Operand::IdRef(func_id)].into(),
+                    ));
+                id
             }
 
             SpirvConst::BitCast(v) => const_op(&mut builder, Op::Bitcast, v, None),
@@ -857,7 +830,10 @@ impl<'tcx> BuilderSpirv<'tcx> {
                 // kinds in which a constant can be illegal, and due to the lack
                 // of an actual (`OpSpecConstantOp`-based) materialization, any
                 // zombies from the value being bitcast would otherwise be lost.
-                // FIXME(eddyb) remove this hack once `OpSpecConstantOp` is used.
+                //
+                // TODO(eddyb) this shouldn't be needed anymore, now that the
+                // bitcast is materialized via `OpSpecConstantOp`, but for some
+                // yet-unknown reason, the cast gets preferentially reported!
                 Err(from_const.legal.err().unwrap_or(IllegalConst::Shallow(
                     LeafIllegalConst::BitCast {
                         from_ty: from_const.val.1.ty,
