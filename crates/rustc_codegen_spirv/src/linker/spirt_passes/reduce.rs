@@ -72,12 +72,8 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
 
             NodeDef {
                 attrs: _,
-                kind:
-                    NodeKind::Select {
-                        kind,
-                        scrutinee,
-                        cases,
-                    },
+                inputs,
+                kind: NodeKind::Select { kind, cases },
                 outputs,
             } => {
                 // FIXME(eddyb) this should probably be ran in the queue loop
@@ -96,7 +92,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                             &parent_map,
                             func_at_node.position,
                             kind,
-                            *scrutinee,
+                            inputs[0],
                             per_case_value,
                         ) {
                             entry.insert(reduced);
@@ -137,7 +133,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                                     type_and_const_inputs: iter::empty().collect(),
                                 },
                             }),
-                            input: *scrutinee,
+                            input: inputs[0],
                         };
                         let redu_target = ReductionTarget::SwitchToIfElse(func_at_node.position);
                         reduction_queue.push((redu_target, redu));
@@ -146,19 +142,15 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
             }
 
             NodeDef {
-                kind:
-                    NodeKind::Loop {
-                        body,
-                        initial_inputs,
-                        ..
-                    },
+                inputs,
+                kind: NodeKind::Loop { body, .. },
                 ..
             } => {
                 // FIXME(eddyb) this should probably be ran in the queue loop
                 // below, to more quickly benefit from previous reductions.
                 let body_outputs = &func_at_node.at(*body).def().outputs;
                 for (i, (&initial_input, &body_output)) in
-                    initial_inputs.iter().zip(body_outputs).enumerate()
+                    inputs.iter().zip(body_outputs).enumerate()
                 {
                     let body_input = Value::RegionInput {
                         region: *body,
@@ -222,9 +214,9 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                                 [_default, case_0, case_1] => {
                                     node_def.kind = NodeKind::Select {
                                         kind: SelectionKind::BoolCond,
-                                        scrutinee: v,
                                         cases: [case_1, case_0].iter().copied().collect(),
                                     };
+                                    node_def.inputs[0] = v;
                                 }
                                 _ => unreachable!(),
                             },
@@ -729,18 +721,9 @@ impl Reducible {
                 input_idx: state_idx,
             } => {
                 let loop_node = *parent_map.region_parent.get(region)?;
-                // HACK(eddyb) this can't be a closure due to lifetime elision.
-                fn loop_initial_states(
-                    func_at_loop_node: FuncAtMut<'_, Node>,
-                ) -> &mut SmallVec<[Value; 2]> {
-                    match &mut func_at_loop_node.def().kind {
-                        NodeKind::Loop { initial_inputs, .. } => initial_inputs,
-                        _ => unreachable!(),
-                    }
-                }
 
                 let input_from_initial_state =
-                    loop_initial_states(func.reborrow().at(loop_node))[state_idx as usize];
+                    func.reborrow().at(loop_node).def().inputs[state_idx as usize];
                 let input_from_updated_state =
                     func.reborrow().at(region).def().outputs[state_idx as usize];
 
@@ -754,7 +737,11 @@ impl Reducible {
 
                 // Now that the reduction succeeded for the initial state,
                 // we can proceed with augmenting the loop with the extra state.
-                loop_initial_states(func.reborrow().at(loop_node)).push(output_from_initial_state);
+                func.reborrow()
+                    .at(loop_node)
+                    .def()
+                    .inputs
+                    .push(output_from_initial_state);
 
                 let loop_state_decls = &mut func.reborrow().at(region).def().inputs;
                 let new_loop_state_idx = u32::try_from(loop_state_decls.len()).unwrap();
@@ -794,6 +781,7 @@ impl Reducible {
                             cx,
                             NodeDef {
                                 attrs: Default::default(),
+                                inputs: Default::default(),
                                 kind: NodeKind::Block {
                                     insts: Default::default(),
                                 },
@@ -845,10 +833,9 @@ impl Reducible {
 
                 // Try to avoid introducing a new output, by reducing the merge
                 // of the per-case output values to a single value, if possible.
-                let (kind, scrutinee) = match &func.reborrow().at(node).def().kind {
-                    NodeKind::Select {
-                        kind, scrutinee, ..
-                    } => (kind, *scrutinee),
+                let node_def = func.reborrow().at(node).def();
+                let kind = match &node_def.kind {
+                    NodeKind::Select { kind, .. } => kind,
                     _ => unreachable!(),
                 };
                 if let Some(v) = try_reduce_select(
@@ -856,7 +843,7 @@ impl Reducible {
                     parent_map,
                     node,
                     kind,
-                    scrutinee,
+                    node_def.inputs[0],
                     per_case_new_output.iter().copied(),
                 ) {
                     return Some(v);

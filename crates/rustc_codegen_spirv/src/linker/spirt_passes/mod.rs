@@ -351,11 +351,8 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                     Value::Const(_) => unreachable!(),
                     Value::RegionInput { region, input_idx } => {
                         let loop_node = self.loop_body_to_loop[region];
-                        let initial_inputs = match &func.at(loop_node).def().kind {
-                            NodeKind::Loop { initial_inputs, .. } => initial_inputs,
-                            // NOTE(eddyb) only `Loop`s' bodies can have inputs right now.
-                            _ => unreachable!(),
-                        };
+                        // NOTE(eddyb) only `Loop`s' bodies can have inputs right now.
+                        let initial_inputs = &func.at(loop_node).def().inputs;
                         self.mark_used(initial_inputs[input_idx as usize]);
                         self.mark_used(func.at(region).def().outputs[input_idx as usize]);
                     }
@@ -416,7 +413,8 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                     propagator.mark_used(v);
                     propagator.propagate_used(func_at_node.at(()));
                 };
-                match &func_at_node.def().kind {
+                let node_def = func_at_node.def();
+                match &node_def.kind {
                     &NodeKind::Block { insts } => {
                         for func_at_inst in func_at_node.at(insts) {
                             // Ignore pure instructions (i.e. they're only used
@@ -432,17 +430,13 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                         }
                     }
 
-                    &NodeKind::Select { scrutinee: v, .. }
-                    | &NodeKind::Loop {
-                        repeat_condition: v,
-                        ..
-                    } => mark_used_and_propagate(v),
+                    &NodeKind::Loop {
+                        repeat_condition, ..
+                    } => mark_used_and_propagate(repeat_condition),
 
-                    NodeKind::ExitInvocation {
-                        kind: spirt::cf::ExitInvocationKind::SpvInst(_),
-                        inputs,
-                    } => {
-                        for &v in inputs {
+                    NodeKind::Select { .. }
+                    | NodeKind::ExitInvocation(spirt::cf::ExitInvocationKind::SpvInst(_)) => {
+                        for &v in &node_def.inputs {
                             mark_used_and_propagate(v);
                         }
                     }
@@ -532,15 +526,11 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                 }
             }
 
-            NodeKind::Loop {
-                body,
-                initial_inputs,
-                ..
-            } => {
+            NodeKind::Loop { body, .. } => {
                 let body = *body;
 
                 let mut new_idx = 0;
-                for original_idx in 0..initial_inputs.len() {
+                for original_idx in 0..node_def.inputs.len() {
                     let original_input = Value::RegionInput {
                         region: body,
                         input_idx: original_idx as u32,
@@ -548,12 +538,7 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
 
                     if !used_values.contains(&original_input) {
                         // Remove the input definition and corresponding values.
-                        match &mut func_def_body.at_mut(node).def().kind {
-                            NodeKind::Loop { initial_inputs, .. } => {
-                                initial_inputs.remove(new_idx);
-                            }
-                            _ => unreachable!(),
-                        }
+                        func_def_body.at_mut(node).def().inputs.remove(new_idx);
                         let body_def = func_def_body.at_mut(body).def();
                         body_def.inputs.remove(new_idx);
                         body_def.outputs.remove(new_idx);

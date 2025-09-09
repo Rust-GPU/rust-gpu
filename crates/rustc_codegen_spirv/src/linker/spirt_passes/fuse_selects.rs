@@ -24,13 +24,13 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
         let mut func_at_children_iter = func_def_body.at_mut(region).at_children().into_iter();
         while let Some(func_at_child) = func_at_children_iter.next() {
             let base_node = func_at_child.position;
+            let base_node_def = func_at_child.def();
             if let NodeKind::Select {
                 kind: SelectionKind::BoolCond,
-                scrutinee,
                 cases,
-            } = &func_at_child.def().kind
+            } = &base_node_def.kind
             {
-                let &base_cond = scrutinee;
+                let base_cond = base_node_def.inputs[0];
                 let base_cases = cases.clone();
 
                 // Scan ahead for candidate `Select`s (with the same condition).
@@ -46,9 +46,8 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
 
                         NodeKind::Select {
                             kind: SelectionKind::BoolCond,
-                            scrutinee: fusion_candidate_cond,
                             cases: fusion_candidate_cases,
-                        } if *fusion_candidate_cond == base_cond => {
+                        } if fusion_candidate_def.inputs[0] == base_cond => {
                             // FIXME(eddyb) handle outputs from the second `Select`.
                             if !fusion_candidate_def.outputs.is_empty() {
                                 break;
