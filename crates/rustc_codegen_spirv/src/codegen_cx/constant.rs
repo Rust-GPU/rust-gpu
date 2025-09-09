@@ -3,7 +3,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::CodegenCx;
 use crate::abi::ConvSpirvType;
-use crate::builder_spirv::{SpirvConst, SpirvValue, SpirvValueExt, SpirvValueKind};
+use crate::builder_spirv::{SpirvConst, SpirvValue, SpirvValueExt};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools as _;
 use rspirv::spirv::Word;
@@ -336,8 +336,7 @@ impl<'tcx> CodegenCx<'tcx> {
     pub fn const_bitcast(&self, val: SpirvValue, ty: Word) -> SpirvValue {
         // HACK(eddyb) special-case `const_data_from_alloc` + `static_addr_of`
         // as the old `from_const_alloc` (now `OperandRef::from_const_alloc`).
-        if let SpirvValueKind::IllegalConst(_) = val.kind
-            && let Some(SpirvConst::PtrTo { pointee }) = self.builder.lookup_const(val)
+        if let Some(SpirvConst::PtrTo { pointee }) = self.builder.lookup_const(val)
             && let Some(SpirvConst::ConstDataFromAlloc(alloc)) =
                 self.builder.lookup_const_by_id(pointee)
             && let SpirvType::Pointer { pointee } = self.lookup_type(ty)

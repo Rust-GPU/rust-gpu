@@ -2440,13 +2440,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
     #[instrument(level = "trace", skip(self), fields(ptr, ptr_ty = ?self.debug_type(ptr.ty), dest_ty = ?self.debug_type(dest_ty)))]
     fn pointercast(&mut self, ptr: Self::Value, dest_ty: Self::Type) -> Self::Value {
-        // HACK(eddyb) reuse the special-casing in `const_bitcast`, which relies
-        // on adding a pointer type to an untyped pointer (to some const data).
-        if let SpirvValueKind::IllegalConst(_) = ptr.kind {
-            trace!("illegal const");
-            return self.const_bitcast(ptr, dest_ty);
-        }
-
         if ptr.ty == dest_ty {
             trace!("ptr.ty == dest_ty");
             return ptr;
@@ -2505,6 +2498,19 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 self.debug_type(ptr_pointee),
                 self.debug_type(dest_pointee),
             );
+
+            // HACK(eddyb) reuse the special-casing in `const_bitcast`, which relies
+            // on adding a pointer type to an untyped pointer (to some const data).
+            if self.builder.lookup_const(ptr).is_some() {
+                // FIXME(eddyb) remove the condition on `zombie_waiting_for_span`,
+                // and constant-fold all pointer bitcasts, regardless of "legality",
+                // once `strip_ptrcasts` can undo `const_bitcast`, as well.
+                if ptr.zombie_waiting_for_span {
+                    trace!("illegal const");
+                    return self.const_bitcast(ptr, dest_ty);
+                }
+            }
+
             // Defer the cast so that it has a chance to be avoided.
             let original_ptr = ptr.def(self);
             let bitcast_result_id = self.emit().bitcast(dest_ty, None, original_ptr).unwrap();
