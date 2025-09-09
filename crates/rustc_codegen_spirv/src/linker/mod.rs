@@ -32,6 +32,7 @@ use std::cell::Cell;
 use std::collections::BTreeMap;
 use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
+use std::time::Instant;
 
 pub type Result<T> = std::result::Result<T, ErrorGuaranteed>;
 
@@ -40,6 +41,7 @@ pub struct Options {
     pub compact_ids: bool,
     pub early_report_zombies: bool,
     pub infer_storage_classes: bool,
+    pub legacy_mem2reg: bool,
     pub structurize: bool,
     pub spirt_passes: Vec<String>,
 
@@ -396,13 +398,15 @@ pub fn link(
         for func in &mut output.functions {
             simple_passes::block_ordering_pass(func);
             // Note: mem2reg requires functions to be in RPO order (i.e. block_ordering_pass)
-            mem2reg::mem2reg(
-                output.header.as_mut().unwrap(),
-                &mut output.types_global_values,
-                &pointer_to_pointee,
-                &constants,
-                func,
-            );
+            if opts.legacy_mem2reg {
+                mem2reg::mem2reg(
+                    output.header.as_mut().unwrap(),
+                    &mut output.types_global_values,
+                    &pointer_to_pointee,
+                    &constants,
+                    func,
+                );
+            }
         }
     }
 
@@ -461,13 +465,15 @@ pub fn link(
         for func in &mut output.functions {
             simple_passes::block_ordering_pass(func);
             // Note: mem2reg requires functions to be in RPO order (i.e. block_ordering_pass)
-            mem2reg::mem2reg(
-                output.header.as_mut().unwrap(),
-                &mut output.types_global_values,
-                &pointer_to_pointee,
-                &constants,
-                func,
-            );
+            if opts.legacy_mem2reg {
+                mem2reg::mem2reg(
+                    output.header.as_mut().unwrap(),
+                    &mut output.types_global_values,
+                    &pointer_to_pointee,
+                    &constants,
+                    func,
+                );
+            }
         }
     }
 
@@ -521,19 +527,35 @@ pub fn link(
             // FIXME(eddyb) could it make sense to allow these to nest?
             assert_eq!(outer_pass_name, None);
 
-            sess.timer(pass_name)
+            (sess.timer(pass_name), Instant::now())
         };
-        let mut after_pass = |module: Option<&spirt::Module>, maybe_timer| {
-            drop(maybe_timer);
-            let pass_name = dump_guard.in_progress_pass_name.take().unwrap();
-            if let Some(module) = module
-                && matches!(opts.dump_spirt, Some((_, DumpSpirtMode::AllPasses)))
-            {
-                dump_guard
-                    .per_pass_module_for_dumping
-                    .push((pass_name.into(), module.clone()));
-            }
-        };
+        let mut after_pass =
+            |module: Option<&spirt::Module>, maybe_timer_and_start_time: Option<(_, Instant)>| {
+                let maybe_elapsed = maybe_timer_and_start_time
+                    .as_ref()
+                    .map(|(_, start_time)| start_time.elapsed());
+                drop(maybe_timer_and_start_time);
+                let pass_name = dump_guard.in_progress_pass_name.take().unwrap();
+                if let Some(module) = module
+                    && matches!(opts.dump_spirt, Some((_, DumpSpirtMode::AllPasses)))
+                {
+                    let pass_name = match maybe_elapsed {
+                        Some(elapsed) => {
+                            let elapsed_secs = elapsed.as_secs_f64();
+                            if elapsed_secs >= 1.0 {
+                                format!("{pass_name} ({:.3}s)", elapsed.as_secs_f64()).into()
+                            } else {
+                                format!("{pass_name} ({:.1}ms)", elapsed.as_secs_f64() * 1000.0)
+                                    .into()
+                            }
+                        }
+                        None => pass_name.into(),
+                    };
+                    dump_guard
+                        .per_pass_module_for_dumping
+                        .push((pass_name, module.clone()));
+                }
+            };
         // HACK(eddyb) don't dump the unstructured state if not requested, as
         // after SPIR-T 0.4.0 it's extremely verbose (due to def-use hermeticity).
         after_pass(

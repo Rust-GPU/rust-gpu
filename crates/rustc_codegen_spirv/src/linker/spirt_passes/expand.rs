@@ -1698,6 +1698,7 @@ impl TypeDrivenExpansion for ExpandUnsupportedIntegers<'_> {
 
                     [].into_iter().collect()
                 }
+                MemOp::Copy { .. } => return Err(()),
             },
             // FIXME(eddyb) `OpSelect` is a problem (maybe SPIR-T should allow
             // a `Select` node with no child regions, and one input per case?).

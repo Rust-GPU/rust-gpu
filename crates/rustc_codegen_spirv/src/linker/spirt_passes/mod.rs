@@ -183,6 +183,32 @@ pub(super) fn run_func_passes<P>(
             spirt::passes::qptr::lower_from_spv_ptrs(module, SPIRT_MEM_LAYOUT_CONFIG);
             after_pass(Some(module), profiler);
 
+            let profiler = before_pass("qptr::partition_and_propagate", module);
+            loop {
+                // FIXME(eddyb) do a "counting and/or hashing traversal" or similar,
+                // after a few iterations (or track counts of all changes to the
+                // function, but that's more intrusive), to detect a "bistable"
+                // configuration, where `remove_unused_values_in_func` *exactly*
+                // undoes everything done previously in each iteration, could
+                // even call this a "Sisyphus detector".
+                spirt::passes::qptr::partition_and_propagate(module, SPIRT_MEM_LAYOUT_CONFIG);
+                // HACK(eddyb) `partition_and_propagate` can create inputs/outputs
+                // into/from regions/nodes, that may not actually be later used,
+                // so this is a stop-gap solution to prevent many spurious phis, but
+                // more importantly, to prevent control-flow propagation of `qptr`s.
+                let mut any_changes = false;
+                for &func in &all_funcs {
+                    if let DeclDef::Present(func_def_body) = &mut module.funcs[func].def {
+                        // FIXME(eddyb) avoid doing this except where changes occurred.
+                        any_changes |= remove_unused_values_in_func(func_def_body);
+                    }
+                }
+                if !any_changes {
+                    break;
+                }
+            }
+            after_pass(Some(module), profiler);
+
             // HACK(eddyb) see `if needs_qptr_lifting` for where this is handled.
             needs_qptr_lifting = true;
 
@@ -352,10 +378,11 @@ const _: () = {
 /// a function body (both `DataInst`s and `Region` inputs/outputs).
 //
 // FIXME(eddyb) should this be a dedicated pass?
-fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
+// HACK(eddyb) returns `true` if any changes were made
+fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) -> bool {
     // Avoid having to support unstructured control-flow.
     if func_def_body.unstructured_cfg.is_some() {
-        return;
+        return false;
     }
 
     let wk = &SpvSpecWithExtras::get().well_known;
@@ -492,7 +519,7 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                     | NodeKind::Loop { .. }
                     | NodeKind::ExitInvocation(spirt::cf::ExitInvocationKind::SpvInst(_))
                     | DataInstKind::FuncCall(_)
-                    | DataInstKind::Mem(MemOp::Store { .. })
+                    | DataInstKind::Mem(MemOp::Store { .. } | MemOp::Copy { .. })
                     | DataInstKind::ThunkBind(_)
                     | DataInstKind::SpvExtInst { .. } => false,
                 };
@@ -537,6 +564,8 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
         propagator.used
     };
 
+    let mut any_changes = false;
+
     // Remove anything that didn't end up marked as used (directly or indirectly).
     for (node, parent_region) in all_nodes_in_region_post_order_with_parent_region {
         let mut remove_node = false;
@@ -573,6 +602,8 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
 
                 // Only update `VarDecl`s and `Value`s if any `Var`s were removed.
                 if let Some(removed_vars) = removed_vars {
+                    any_changes = true;
+
                     for (var_idx, &var) in vars.iter().enumerate() {
                         func.vars[var].def_idx = var_idx.try_into().unwrap();
                     }
@@ -630,6 +661,8 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
             }
         }
         if remove_node {
+            any_changes = true;
+
             func.regions[parent_region]
                 .children
                 .remove(node, func.nodes);
@@ -646,4 +679,6 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
             };
         }
     }
+
+    any_changes
 }

@@ -431,6 +431,11 @@ impl CodegenArgs {
                 "no-infer-storage-classes",
                 "disables SPIR-V Storage Class inference",
             );
+            opts.optflag(
+                "",
+                "no-legacy-mem2reg",
+                "disables legacy (pre-SPIR-T) mem2reg pass",
+            );
             opts.optflag("", "no-structurize", "disables CFG structurization");
 
             opts.optmulti(
@@ -626,6 +631,7 @@ impl CodegenArgs {
             compact_ids: !matches.opt_present("no-compact-ids"),
             early_report_zombies: !matches.opt_present("no-early-report-zombies"),
             infer_storage_classes: !matches.opt_present("no-infer-storage-classes"),
+            legacy_mem2reg: !matches.opt_present("no-legacy-mem2reg"),
             structurize: !matches.opt_present("no-structurize"),
             spirt_passes: matches
                 .opt_strs("spirt-passes")
