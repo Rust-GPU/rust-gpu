@@ -194,7 +194,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             .expect("Abort->OpReturn can only be done on unstructured CFGs")
             .rev_post_order(func_def_body);
         for region in rpo_regions {
-            let region_def = &func_def_body.control_regions[region];
+            let region_def = &func_def_body.regions[region];
             let control_node_def = match region_def.children.iter().last {
                 Some(last_node) => &mut func_def_body.control_nodes[last_node],
                 _ => continue,
@@ -218,7 +218,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             // mutably borrowing other parts of `FuncDefBody`.
             let func_at_block_insts = FuncAt {
                 control_nodes: &EntityDefs::new(),
-                control_regions: &EntityDefs::new(),
+                regions: &EntityDefs::new(),
                 data_insts: &func_def_body.data_insts,
 
                 position: *block_insts,

@@ -14,9 +14,9 @@ use spirt::func_at::FuncAt;
 use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::{InnerVisit, Visitor};
 use spirt::{
-    AttrSet, Const, Context, ControlNode, ControlNodeKind, ControlRegion, DataInstDef,
-    DataInstForm, DataInstFormDef, DataInstKind, DeclDef, EntityOrientedDenseMap, Func,
-    FuncDefBody, GlobalVar, Module, Type, Value, spv,
+    AttrSet, Const, Context, ControlNode, ControlNodeKind, DataInstDef, DataInstForm,
+    DataInstFormDef, DataInstKind, DeclDef, EntityOrientedDenseMap, Func, FuncDefBody, GlobalVar,
+    Module, Region, Type, Value, spv,
 };
 use std::collections::VecDeque;
 use std::iter;
@@ -249,20 +249,16 @@ impl Visitor<'_> for ReachableUseCollector<'_> {
 }
 
 // FIXME(eddyb) maybe this should be provided by `spirt::visit`.
-struct VisitAllControlRegionsAndNodes<S, VCR, VCN> {
+struct VisitAllRegionsAndNodes<S, VCR, VCN> {
     state: S,
-    visit_control_region: VCR,
+    visit_region: VCR,
     visit_control_node: VCN,
 }
 const _: () = {
     use spirt::{func_at::*, visit::*, *};
 
-    impl<
-        'a,
-        S,
-        VCR: FnMut(&mut S, FuncAt<'a, ControlRegion>),
-        VCN: FnMut(&mut S, FuncAt<'a, ControlNode>),
-    > Visitor<'a> for VisitAllControlRegionsAndNodes<S, VCR, VCN>
+    impl<'a, S, VCR: FnMut(&mut S, FuncAt<'a, Region>), VCN: FnMut(&mut S, FuncAt<'a, ControlNode>)>
+        Visitor<'a> for VisitAllRegionsAndNodes<S, VCR, VCN>
     {
         // FIXME(eddyb) this is excessive, maybe different kinds of
         // visitors should exist for module-level and func-level?
@@ -273,9 +269,9 @@ const _: () = {
         fn visit_global_var_use(&mut self, _: GlobalVar) {}
         fn visit_func_use(&mut self, _: Func) {}
 
-        fn visit_control_region_def(&mut self, func_at_control_region: FuncAt<'a, ControlRegion>) {
-            (self.visit_control_region)(&mut self.state, func_at_control_region);
-            func_at_control_region.inner_visit_with(self);
+        fn visit_region_def(&mut self, func_at_region: FuncAt<'a, Region>) {
+            (self.visit_region)(&mut self.state, func_at_region);
+            func_at_region.inner_visit_with(self);
         }
         fn visit_control_node_def(&mut self, func_at_control_node: FuncAt<'a, ControlNode>) {
             (self.visit_control_node)(&mut self.state, func_at_control_node);
@@ -297,7 +293,7 @@ const _: () = {
 };
 
 /// Clean up after a pass by removing unused (pure) `Value` definitions from
-/// a function body (both `DataInst`s and `ControlRegion` inputs/outputs).
+/// a function body (both `DataInst`s and `Region` inputs/outputs).
 //
 // FIXME(eddyb) should this be a dedicated pass?
 fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
@@ -309,10 +305,10 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
     let wk = &SpvSpecWithExtras::get().well_known;
 
     struct Propagator {
-        func_body_region: ControlRegion,
+        func_body_region: Region,
 
         // FIXME(eddyb) maybe this kind of "parent map" should be provided by SPIR-T?
-        loop_body_to_loop: EntityOrientedDenseMap<ControlRegion, ControlNode>,
+        loop_body_to_loop: EntityOrientedDenseMap<Region, ControlNode>,
 
         // FIXME(eddyb) entity-keyed dense sets might be better for performance,
         // but would require separate sets/maps for separate `Value` cases.
@@ -325,7 +321,7 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
             if let Value::Const(_) = v {
                 return;
             }
-            if let Value::ControlRegionInput {
+            if let Value::RegionInput {
                 region,
                 input_idx: _,
             } = v
@@ -341,7 +337,7 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
             while let Some(v) = self.queue.pop_front() {
                 match v {
                     Value::Const(_) => unreachable!(),
-                    Value::ControlRegionInput { region, input_idx } => {
+                    Value::RegionInput { region, input_idx } => {
                         let loop_node = self.loop_body_to_loop[region];
                         let initial_inputs = match &func.at(loop_node).def().kind {
                             ControlNodeKind::Loop { initial_inputs, .. } => initial_inputs,
@@ -377,14 +373,14 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
     // HACK(eddyb) it's simpler to first ensure `loop_body_to_loop` is computed,
     // just to allow the later unordered propagation to always work.
     let propagator = {
-        let mut visitor = VisitAllControlRegionsAndNodes {
+        let mut visitor = VisitAllRegionsAndNodes {
             state: Propagator {
                 func_body_region: func_def_body.body,
                 loop_body_to_loop: Default::default(),
                 used: Default::default(),
                 queue: Default::default(),
             },
-            visit_control_region: |_: &mut _, _| {},
+            visit_region: |_: &mut _, _| {},
             visit_control_node:
                 |propagator: &mut Propagator, func_at_control_node: FuncAt<'_, ControlNode>| {
                     if let ControlNodeKind::Loop { body, .. } = func_at_control_node.def().kind {
@@ -402,9 +398,9 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
     let mut all_control_nodes = vec![];
 
     let used_values = {
-        let mut visitor = VisitAllControlRegionsAndNodes {
+        let mut visitor = VisitAllRegionsAndNodes {
             state: propagator,
-            visit_control_region: |_: &mut _, _| {},
+            visit_region: |_: &mut _, _| {},
             visit_control_node:
                 |propagator: &mut Propagator, func_at_control_node: FuncAt<'_, ControlNode>| {
                     all_control_nodes.push(func_at_control_node.position);
@@ -551,7 +547,7 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
 
                 let mut new_idx = 0;
                 for original_idx in 0..initial_inputs.len() {
-                    let original_input = Value::ControlRegionInput {
+                    let original_input = Value::RegionInput {
                         region: body,
                         input_idx: original_idx as u32,
                     };
@@ -572,7 +568,7 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
 
                     // Record remappings for any still-used inputs that got "shifted over".
                     if original_idx != new_idx {
-                        let new_input = Value::ControlRegionInput {
+                        let new_input = Value::RegionInput {
                             region: body,
                             input_idx: new_idx as u32,
                         };
