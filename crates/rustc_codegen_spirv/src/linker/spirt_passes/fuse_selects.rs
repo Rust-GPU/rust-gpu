@@ -25,13 +25,9 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
         while let Some(func_at_child) = func_at_children_iter.next() {
             let base_node = func_at_child.position;
             let base_node_def = func_at_child.def();
-            if let NodeKind::Select {
-                kind: SelectionKind::BoolCond,
-                cases,
-            } = &base_node_def.kind
-            {
+            if let NodeKind::Select(SelectionKind::BoolCond) = &base_node_def.kind {
                 let base_cond = base_node_def.inputs[0];
-                let base_cases = cases.clone();
+                let base_cases = base_node_def.child_regions.clone();
 
                 // Scan ahead for candidate `Select`s (with the same condition).
                 let mut fusion_candidate_iter = func_at_children_iter.reborrow();
@@ -44,16 +40,15 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
                         // e.g. `remove_unused_values_in_func`).
                         NodeKind::Block { insts } if insts.is_empty() => {}
 
-                        NodeKind::Select {
-                            kind: SelectionKind::BoolCond,
-                            cases: fusion_candidate_cases,
-                        } if fusion_candidate_def.inputs[0] == base_cond => {
+                        NodeKind::Select(SelectionKind::BoolCond)
+                            if fusion_candidate_def.inputs[0] == base_cond =>
+                        {
                             // FIXME(eddyb) handle outputs from the second `Select`.
                             if !fusion_candidate_def.outputs.is_empty() {
                                 break;
                             }
 
-                            let cases_to_fuse = fusion_candidate_cases.clone();
+                            let cases_to_fuse = fusion_candidate_def.child_regions.clone();
 
                             // Concatenate the `Select`s' respective cases
                             // ("then" with "then", "else" with "else", etc.).

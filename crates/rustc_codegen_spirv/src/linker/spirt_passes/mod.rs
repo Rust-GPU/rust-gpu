@@ -357,12 +357,8 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                         self.mark_used(func.at(region).def().outputs[input_idx as usize]);
                     }
                     Value::NodeOutput { node, output_idx } => {
-                        let cases = match &func.at(node).def().kind {
-                            NodeKind::Select { cases, .. } => cases,
-                            // NOTE(eddyb) only `Select`s can have outputs right now.
-                            _ => unreachable!(),
-                        };
-                        for &case in cases {
+                        // NOTE(eddyb) only `Select`s can have outputs right now.
+                        for &case in &func.at(node).def().child_regions {
                             self.mark_used(func.at(case).def().outputs[output_idx as usize]);
                         }
                     }
@@ -388,10 +384,11 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
             },
             visit_region: |_: &mut _, _| {},
             visit_node: |propagator: &mut Propagator, func_at_node: FuncAt<'_, Node>| {
-                if let NodeKind::Loop { body, .. } = func_at_node.def().kind {
+                let node_def = func_at_node.def();
+                if let NodeKind::Loop { .. } = node_def.kind {
                     propagator
                         .loop_body_to_loop
-                        .insert(body, func_at_node.position);
+                        .insert(node_def.child_regions[0], func_at_node.position);
                 }
             },
         };
@@ -494,9 +491,9 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                 }
             }
 
-            NodeKind::Select { cases, .. } => {
+            NodeKind::Select(_) => {
                 // FIXME(eddyb) remove this cloning.
-                let cases = cases.clone();
+                let cases = node_def.child_regions.clone();
 
                 let mut new_idx = 0;
                 for original_idx in 0..node_def.outputs.len() {
@@ -526,8 +523,8 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                 }
             }
 
-            NodeKind::Loop { body, .. } => {
-                let body = *body;
+            NodeKind::Loop { .. } => {
+                let body = node_def.child_regions[0];
 
                 let mut new_idx = 0;
                 for original_idx in 0..node_def.inputs.len() {

@@ -10,7 +10,7 @@ use spirt::{
     RegionInputDecl, Type, TypeDef, TypeKind, Value, spv,
 };
 use std::collections::hash_map::Entry;
-use std::{iter, slice};
+use std::iter;
 
 use super::{ReplaceValueWith, VisitAllRegionsAndNodes};
 use std::rc::Rc;
@@ -72,8 +72,9 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
 
             NodeDef {
                 attrs: _,
+                kind: NodeKind::Select(kind),
                 inputs,
-                kind: NodeKind::Select { kind, cases },
+                child_regions: cases,
                 outputs,
             } => {
                 // FIXME(eddyb) this should probably be ran in the queue loop
@@ -142,18 +143,21 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
             }
 
             NodeDef {
+                kind: NodeKind::Loop { .. },
                 inputs,
-                kind: NodeKind::Loop { body, .. },
+                child_regions,
                 ..
             } => {
+                let body = child_regions[0];
+
                 // FIXME(eddyb) this should probably be ran in the queue loop
                 // below, to more quickly benefit from previous reductions.
-                let body_outputs = &func_at_node.at(*body).def().outputs;
+                let body_outputs = &func_at_node.at(body).def().outputs;
                 for (i, (&initial_input, &body_output)) in
                     inputs.iter().zip(body_outputs).enumerate()
                 {
                     let body_input = Value::RegionInput {
-                        region: *body,
+                        region: body,
                         input_idx: i as u32,
                     };
                     if body_output == body_input {
@@ -209,17 +213,12 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                     // HACK(eddyb) see comment in `handle_node` for more details.
                     ReductionTarget::SwitchToIfElse(node) => {
                         let node_def = func_def_body.at_mut(node).def();
-                        match &node_def.kind {
-                            NodeKind::Select { cases, .. } => match cases[..] {
-                                [_default, case_0, case_1] => {
-                                    node_def.kind = NodeKind::Select {
-                                        kind: SelectionKind::BoolCond,
-                                        cases: [case_1, case_0].iter().copied().collect(),
-                                    };
-                                    node_def.inputs[0] = v;
-                                }
-                                _ => unreachable!(),
-                            },
+                        match node_def.child_regions[..] {
+                            [_default, case_0, case_1] => {
+                                node_def.kind = NodeKind::Select(SelectionKind::BoolCond);
+                                node_def.inputs[0] = v;
+                                node_def.child_regions = [case_1, case_0].iter().copied().collect();
+                            }
                             _ => unreachable!(),
                         }
                     }
@@ -271,20 +270,7 @@ impl ParentMap {
                 }
             },
             visit_node: |this: &mut Self, func_at_node: FuncAt<'_, Node>| {
-                let child_regions = match &func_at_node.def().kind {
-                    &NodeKind::Block { insts } => {
-                        for func_at_inst in func_at_node.at(insts) {
-                            this.data_inst_parent
-                                .insert(func_at_inst.position, func_at_node.position);
-                        }
-                        &[][..]
-                    }
-
-                    NodeKind::Select { cases, .. } => cases,
-                    NodeKind::Loop { body, .. } => slice::from_ref(body),
-                    NodeKind::ExitInvocation { .. } => &[][..],
-                };
-                for &child_region in child_regions {
+                for &child_region in &func_at_node.def().child_regions {
                     this.region_parent
                         .insert(child_region, func_at_node.position);
                 }
@@ -781,10 +767,11 @@ impl Reducible {
                             cx,
                             NodeDef {
                                 attrs: Default::default(),
-                                inputs: Default::default(),
                                 kind: NodeKind::Block {
                                     insts: Default::default(),
                                 },
+                                inputs: Default::default(),
+                                child_regions: Default::default(),
                                 outputs: Default::default(),
                             }
                             .into(),
@@ -807,11 +794,7 @@ impl Reducible {
                 })
             }
             Value::NodeOutput { node, output_idx } => {
-                let cases = match &func.reborrow().at(node).def().kind {
-                    NodeKind::Select { cases, .. } => cases,
-                    // NOTE(eddyb) only `Select`s can have outputs right now.
-                    _ => unreachable!(),
-                };
+                let cases = &func.reborrow().at(node).def().child_regions;
 
                 // FIXME(eddyb) remove all the cloning and undo additions of new
                 // outputs "upstream", if they end up unused (or let DCE do it?).
@@ -835,7 +818,7 @@ impl Reducible {
                 // of the per-case output values to a single value, if possible.
                 let node_def = func.reborrow().at(node).def();
                 let kind = match &node_def.kind {
-                    NodeKind::Select { kind, .. } => kind,
+                    NodeKind::Select(kind) => kind,
                     _ => unreachable!(),
                 };
                 if let Some(v) = try_reduce_select(
