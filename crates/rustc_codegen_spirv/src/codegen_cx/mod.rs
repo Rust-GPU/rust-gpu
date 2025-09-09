@@ -486,11 +486,6 @@ impl CodegenArgs {
             );
             opts.optflag(
                 "",
-                "spirt-strip-custom-debuginfo-from-dumps",
-                "strip custom debuginfo instructions when dumping SPIR-T",
-            );
-            opts.optflag(
-                "",
                 "spirt-keep-debug-sources-in-dumps",
                 "keep file contents debuginfo when dumping SPIR-T",
             );
@@ -665,8 +660,6 @@ impl CodegenArgs {
                 }
                 [None, None] => None,
             },
-            spirt_strip_custom_debuginfo_from_dumps: matches
-                .opt_present("spirt-strip-custom-debuginfo-from-dumps"),
             spirt_keep_debug_sources_in_dumps: matches
                 .opt_present("spirt-keep-debug-sources-in-dumps"),
             spirt_keep_unstructured_cfg_in_dumps: matches

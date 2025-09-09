@@ -1,20 +1,14 @@
-use crate::custom_decorations::{
-    CustomDecoration, SpanRegenerator, SrcLocDecoration, ZombieDecoration,
-};
-use crate::custom_insts::{self, CustomInst, CustomOp};
+use crate::custom_decorations::{SpanRegenerator, SrcLocDecoration};
 use rustc_data_structures::fx::FxIndexSet;
 use rustc_errors::EmissionGuarantee;
 use rustc_session::Session;
-use rustc_span::{DUMMY_SP, Span};
+use rustc_span::Span;
 use smallvec::SmallVec;
-use spirt::func_at::FuncAt;
 use spirt::visit::{InnerVisit, Visitor};
 use spirt::{
-    Attr, AttrSet, AttrSetDef, Const, ConstKind, Context, DataInstDef, DataInstForm, DataInstKind,
-    Diag, DiagLevel, ExportKey, Exportee, Func, FuncDecl, GlobalVar, InternedStr, Module, Node,
-    NodeKind, Type, Value, spv,
+    Attr, AttrSet, Const, ConstKind, Context, DataInstDef, DataInstForm, DataInstKind, DbgSrcLoc,
+    Diag, DiagLevel, ExportKey, Exportee, Func, GlobalVar, InternedStr, Module, Type, spv,
 };
-use std::marker::PhantomData;
 use std::{mem, str};
 
 pub(crate) struct ReportedDiagnostics {
@@ -24,17 +18,14 @@ pub(crate) struct ReportedDiagnostics {
 
 pub(crate) fn report_diagnostics(
     sess: &Session,
-    linker_options: &crate::linker::Options,
     module: &Module,
 ) -> Result<(), ReportedDiagnostics> {
     let cx = &module.cx();
 
     let mut reporter = DiagnosticReporter {
         sess,
-        linker_options,
 
         cx,
-        custom_ext_inst_set: cx.intern(&custom_insts::CUSTOM_EXT_INST_SET[..]),
 
         module,
 
@@ -57,7 +48,6 @@ pub(crate) fn report_diagnostics(
             reporter.use_stack.push(UseOrigin::IntraFunc {
                 func_attrs: func_decl.attrs,
                 special_func: Some(SpecialFunc::Exported(export_key)),
-                last_debug_src_loc_inst: None,
                 inst_attrs: AttrSet::default(),
                 origin: IntraFuncUseOrigin::Other,
             });
@@ -81,77 +71,12 @@ pub(crate) fn report_diagnostics(
         })
 }
 
-// HACK(eddyb) version of `decorations::LazilyDecoded` that works for SPIR-T.
-struct LazilyDecoded<D> {
-    encoded: String,
-    _marker: PhantomData<D>,
-}
-
-impl<D> LazilyDecoded<D> {
-    fn decode<'a>(&'a self) -> D
-    where
-        D: CustomDecoration<'a>,
-    {
-        D::decode(&self.encoded)
-    }
-}
-
-pub(super) fn decode_spv_lit_str_with<R>(imms: &[spv::Imm], f: impl FnOnce(&str) -> R) -> R {
-    let wk = &super::SpvSpecWithExtras::get().well_known;
-
-    // FIXME(eddyb) deduplicate with `spirt::spv::extract_literal_string`.
-    let words = imms.iter().enumerate().map(|(i, &imm)| match (i, imm) {
-        (0, spirt::spv::Imm::Short(k, w) | spirt::spv::Imm::LongStart(k, w))
-        | (1.., spirt::spv::Imm::LongCont(k, w)) => {
-            assert_eq!(k, wk.LiteralString);
-            w
-        }
-        _ => unreachable!(),
-    });
-    let bytes: SmallVec<[u8; 64]> = words
-        .flat_map(u32::to_le_bytes)
-        .take_while(|&byte| byte != 0)
-        .collect();
-
-    f(str::from_utf8(&bytes).expect("invalid UTF-8 in string literal"))
-}
-
-fn try_decode_custom_decoration<'a, D: CustomDecoration<'a>>(
-    attrs_def: &AttrSetDef,
-) -> Option<LazilyDecoded<D>> {
-    let wk = &super::SpvSpecWithExtras::get().well_known;
-
-    attrs_def.attrs.iter().find_map(|attr| {
-        let spv_inst = match attr {
-            Attr::SpvAnnotation(spv_inst) if spv_inst.opcode == wk.OpDecorateString => spv_inst,
-            _ => return None,
-        };
-        let str_imms = spv_inst
-            .imms
-            .strip_prefix(&[spv::Imm::Short(wk.Decoration, wk.UserTypeGOOGLE)])?;
-
-        decode_spv_lit_str_with(str_imms, |prefixed_encoded| {
-            let encoded = prefixed_encoded.strip_prefix(D::ENCODING_PREFIX)?;
-
-            Some(LazilyDecoded {
-                encoded: encoded.to_string(),
-                _marker: PhantomData,
-            })
-        })
-    })
-}
-
 // FIXME(eddyb) this looks a lot like `ReachableUseCollector`, maybe some
 // automation should be built around "deep visitors" in general?
 struct DiagnosticReporter<'a> {
     sess: &'a Session,
-    linker_options: &'a crate::linker::Options,
 
     cx: &'a Context,
-
-    /// Interned name for our custom "extended instruction set"
-    /// (see `crate::custom_insts` for more details).
-    custom_ext_inst_set: InternedStr,
 
     module: &'a Module,
 
@@ -176,10 +101,6 @@ enum UseOrigin<'a> {
         func_attrs: AttrSet,
         special_func: Option<SpecialFunc<'a>>,
 
-        /// Active debug "source location" instruction at the time of the use, if any
-        /// (only `CustomInst::SetDebugSrcLoc` is supported).
-        last_debug_src_loc_inst: Option<&'a DataInstDef>,
-
         inst_attrs: AttrSet,
         origin: IntraFuncUseOrigin,
     },
@@ -191,115 +112,60 @@ enum SpecialFunc<'a> {
     Exported(&'a ExportKey),
 
     /// This function doesn't have its own `FuncDecl`, but rather is an inlined
-    /// callee (i.e. instructions sandwiched by `{Push,Pop}InlinedCallFrame`).
+    /// callee (i.e. through `DbgSrcLoc`'s `inlined_callee_name_and_call_site`).
     Inlined { callee_name: InternedStr },
 }
 
+#[derive(Copy, Clone)]
 enum IntraFuncUseOrigin {
     CallCallee,
     Other,
 }
 
 impl SpanRegenerator<'_> {
-    fn spirt_attrs_to_rustc_span(&mut self, cx: &Context, attrs: AttrSet) -> Option<Span> {
-        let attrs_def = &cx[attrs];
-        attrs_def
-            .attrs
-            .iter()
-            .find_map(|attr| match attr {
-                &Attr::SpvDebugLine {
-                    file_path,
-                    line,
-                    col,
-                } => self.src_loc_to_rustc(SrcLocDecoration {
-                    file_name: &cx[file_path.0],
-                    line_start: line,
-                    line_end: line,
-                    col_start: col,
-                    col_end: col,
+    fn dbg_src_loc_to_rustc_span_and_outer_scope<'a>(
+        &mut self,
+        cx: &Context,
+        dbg_src_loc: Option<DbgSrcLoc>,
+    ) -> (Span, Option<UseOrigin<'a>>) {
+        let (span, outer_scope) = match dbg_src_loc {
+            Some(DbgSrcLoc {
+                file_path,
+                start_line_col: (line_start, col_start),
+                end_line_col: (line_end, col_end),
+                inlined_callee_name_and_call_site,
+            }) => (
+                self.src_loc_to_rustc(SrcLocDecoration {
+                    file_name: &cx[file_path],
+                    line_start,
+                    col_start,
+                    line_end,
+                    col_end,
                 }),
-                _ => None,
-            })
-            .or_else(|| {
-                self.src_loc_to_rustc(
-                    try_decode_custom_decoration::<SrcLocDecoration<'_>>(attrs_def)?.decode(),
-                )
-            })
+                inlined_callee_name_and_call_site.map(|(callee_name, call_site_attrs)| {
+                    UseOrigin::IntraFunc {
+                        func_attrs: AttrSet::default(),
+                        special_func: Some(SpecialFunc::Inlined { callee_name }),
+                        inst_attrs: call_site_attrs,
+                        origin: IntraFuncUseOrigin::Other,
+                    }
+                }),
+            ),
+            None => (None, None),
+        };
+        (span.unwrap_or_default(), outer_scope)
     }
 }
 
 impl UseOrigin<'_> {
-    fn to_rustc_span(&self, cx: &Context, span_regen: &mut SpanRegenerator<'_>) -> Option<Span> {
+    fn dbg_src_loc(&self, cx: &Context) -> Option<DbgSrcLoc> {
         match *self {
-            Self::Global { attrs, .. } => span_regen.spirt_attrs_to_rustc_span(cx, attrs),
+            Self::Global { attrs, .. } => attrs.dbg_src_loc(cx),
             Self::IntraFunc {
                 func_attrs,
-                last_debug_src_loc_inst,
                 inst_attrs,
                 ..
-            } => span_regen
-                .spirt_attrs_to_rustc_span(cx, inst_attrs)
-                .or_else(|| {
-                    let debug_inst_def = last_debug_src_loc_inst?;
-
-                    let wk = &super::SpvSpecWithExtras::get().well_known;
-
-                    // FIXME(eddyb) deduplicate with `spirt_passes::diagnostics`.
-                    let custom_op = match cx[debug_inst_def.form].kind {
-                        DataInstKind::SpvExtInst {
-                            ext_set,
-                            inst: ext_inst,
-                        } => {
-                            // FIXME(eddyb) inefficient (ideally the `InternedStr`
-                            // should be available), but this is the error case.
-                            assert_eq!(&cx[ext_set], &custom_insts::CUSTOM_EXT_INST_SET[..]);
-
-                            CustomOp::decode(ext_inst)
-                        }
-                        _ => unreachable!(),
-                    };
-                    let (file, line_start, line_end, col_start, col_end) =
-                        match custom_op.with_operands(&debug_inst_def.inputs) {
-                            CustomInst::SetDebugSrcLoc {
-                                file,
-                                line_start,
-                                line_end,
-                                col_start,
-                                col_end,
-                            } => (file, line_start, line_end, col_start, col_end),
-                            _ => unreachable!(),
-                        };
-                    let const_kind = |v: Value| match v {
-                        Value::Const(ct) => &cx[ct].kind,
-                        _ => unreachable!(),
-                    };
-                    let const_str = |v: Value| match const_kind(v) {
-                        &ConstKind::SpvStringLiteralForExtInst(s) => s,
-                        _ => unreachable!(),
-                    };
-                    let const_u32 = |v: Value| match const_kind(v) {
-                        ConstKind::SpvInst {
-                            spv_inst_and_const_inputs,
-                        } => {
-                            let (spv_inst, _const_inputs) = &**spv_inst_and_const_inputs;
-                            assert!(spv_inst.opcode == wk.OpConstant);
-                            match spv_inst.imms[..] {
-                                [spv::Imm::Short(_, x)] => x,
-                                _ => unreachable!(),
-                            }
-                        }
-                        _ => unreachable!(),
-                    };
-
-                    span_regen.src_loc_to_rustc(SrcLocDecoration {
-                        file_name: &cx[const_str(file)],
-                        line_start: const_u32(line_start),
-                        line_end: const_u32(line_end),
-                        col_start: const_u32(col_start),
-                        col_end: const_u32(col_end),
-                    })
-                })
-                .or_else(|| span_regen.spirt_attrs_to_rustc_span(cx, func_attrs)),
+            } => (inst_attrs.dbg_src_loc(cx)).or_else(|| func_attrs.dbg_src_loc(cx)),
         }
     }
 
@@ -317,7 +183,7 @@ impl UseOrigin<'_> {
                 .iter()
                 .find_map(|attr| match attr {
                     Attr::SpvAnnotation(spv_inst) if spv_inst.opcode == wk.OpName => {
-                        Some(decode_spv_lit_str_with(&spv_inst.imms, |name| {
+                        Some(super::decode_spv_lit_str_with(&spv_inst.imms, |name| {
                             format!("`{name}`")
                         }))
                     }
@@ -332,7 +198,6 @@ impl UseOrigin<'_> {
             Self::IntraFunc {
                 func_attrs,
                 special_func,
-                last_debug_src_loc_inst: _,
                 inst_attrs: _,
                 origin,
             } => {
@@ -347,7 +212,7 @@ impl UseOrigin<'_> {
                                     assert_eq!(em_kind, wk.ExecutionModel);
                                     let em =
                                         spv::print::operand_from_imms([em]).concat_to_plain_text();
-                                    decode_spv_lit_str_with(name_imms, |name| {
+                                    super::decode_spv_lit_str_with(name_imms, |name| {
                                         format!(
                                             "{} entry-point `{name}`",
                                             em.strip_prefix("ExecutionModel.").unwrap()
@@ -370,17 +235,22 @@ impl UseOrigin<'_> {
             }
         };
 
-        let span = self.to_rustc_span(cx, span_regen).unwrap_or(DUMMY_SP);
+        let (span, outer_scope) =
+            span_regen.dbg_src_loc_to_rustc_span_and_outer_scope(cx, self.dbg_src_loc(cx));
         err.span_note(span, note);
+        if let Some(outer_scope) = outer_scope {
+            outer_scope.note(cx, span_regen, err);
+        }
     }
 }
 
 impl DiagnosticReporter<'_> {
-    fn report_from_attrs(&mut self, attrs: AttrSet) {
-        if attrs == AttrSet::default() {
-            return;
-        }
-
+    fn diag_build_note_all_and_emit<G: EmissionGuarantee>(
+        &mut self,
+        attrs: AttrSet,
+        f: impl FnOnce(rustc_errors::DiagCtxtHandle<'_>, Span) -> rustc_errors::Diag<'_, G>,
+        g: impl FnOnce(G::EmitResult) -> crate::linker::Result<()>,
+    ) {
         // Split off the last entry in `self.use_stack` if it's for the definition
         // that `attrs` come from - this should almost always be the case, except
         // for instructions inside a function body, or visitor bugs.
@@ -403,36 +273,32 @@ impl DiagnosticReporter<'_> {
                 (Some(current), stack)
             });
 
-        let attrs_def = &self.cx[attrs];
-        if !self.linker_options.early_report_zombies
-            && let Some(zombie) = try_decode_custom_decoration::<ZombieDecoration<'_>>(attrs_def)
-        {
-            let ZombieDecoration { reason } = zombie.decode();
-            let def_span = current_def
-                .and_then(|def| def.to_rustc_span(self.cx, &mut self.span_regen))
-                .or_else(|| {
-                    // If there's no clear source for the span, try to get
-                    // it from the same attrs as the zombie, which could
-                    // be missing from `use_stack` in some edge cases
-                    // (such as zombied function parameters).
-                    self.span_regen.spirt_attrs_to_rustc_span(self.cx, attrs)
-                })
-                .unwrap_or(DUMMY_SP);
-            let mut err = self
-                .sess
-                .dcx()
-                .struct_span_err(def_span, reason.to_string());
-            for use_origin in use_stack_for_def.iter().rev() {
-                use_origin.note(self.cx, &mut self.span_regen, &mut err);
-            }
-            self.overall_result = Err(err.emit());
-        }
+        let (def_span, def_outer_scope) =
+            self.span_regen.dbg_src_loc_to_rustc_span_and_outer_scope(
+                self.cx,
+                current_def
+                    .and_then(|def| def.dbg_src_loc(self.cx))
+                    .or_else(|| {
+                        // If there's no clear source for the span, try to get
+                        // it from the same attrs as the diagnostic, which could
+                        // be missing from `use_stack` in some edge cases
+                        // (e.g. function parameters).
+                        attrs.dbg_src_loc(self.cx)
+                    }),
+            );
 
-        let diags = attrs_def.attrs.iter().flat_map(|attr| match attr {
-            Attr::Diagnostics(diags) => diags.0.iter(),
-            _ => [].iter(),
-        });
-        for diag in diags {
+        let mut diag = f(self.sess.dcx(), def_span);
+        if let Some(def_outer_scope) = def_outer_scope {
+            def_outer_scope.note(self.cx, &mut self.span_regen, &mut diag);
+        }
+        for use_origin in use_stack_for_def.iter().rev() {
+            use_origin.note(self.cx, &mut self.span_regen, &mut diag);
+        }
+        self.overall_result = self.overall_result.and(g(diag.emit()));
+    }
+
+    fn report_from_attrs(&mut self, attrs: AttrSet) {
+        for diag in attrs.diags(self.cx) {
             let Diag { level, message } = diag;
 
             let prefix = match level {
@@ -456,25 +322,18 @@ impl DiagnosticReporter<'_> {
                 "".to_string()
             };
 
-            let def_span = current_def
-                .and_then(|def| def.to_rustc_span(self.cx, &mut self.span_regen))
-                .unwrap_or(DUMMY_SP);
-
             let msg = [prefix, msg.to_string(), suffix].concat();
             match level {
-                DiagLevel::Bug(_) | DiagLevel::Error => {
-                    let mut err = self.sess.dcx().struct_span_err(def_span, msg);
-                    for use_origin in use_stack_for_def.iter().rev() {
-                        use_origin.note(self.cx, &mut self.span_regen, &mut err);
-                    }
-                    self.overall_result = Err(err.emit());
-                }
-                DiagLevel::Warning => {
-                    let mut warn = self.sess.dcx().struct_span_warn(def_span, msg);
-                    for use_origin in use_stack_for_def.iter().rev() {
-                        use_origin.note(self.cx, &mut self.span_regen, &mut warn);
-                    }
-                }
+                DiagLevel::Bug(_) | DiagLevel::Error => self.diag_build_note_all_and_emit(
+                    attrs,
+                    |dcx, def_span| dcx.struct_span_err(def_span, msg),
+                    Err,
+                ),
+                DiagLevel::Warning => self.diag_build_note_all_and_emit(
+                    attrs,
+                    |dcx, def_span| dcx.struct_span_warn(def_span, msg),
+                    Ok,
+                ),
             }
             self.any_spirt_bugs = matches!(level, DiagLevel::Bug(_));
         }
@@ -543,64 +402,11 @@ impl<'a> Visitor<'a> for DiagnosticReporter<'a> {
             self.use_stack.push(UseOrigin::IntraFunc {
                 func_attrs: func_decl.attrs,
                 special_func: None,
-                last_debug_src_loc_inst: None,
                 inst_attrs: AttrSet::default(),
                 origin: IntraFuncUseOrigin::Other,
             });
             self.visit_func_decl(func_decl);
             self.use_stack.pop();
-        }
-    }
-
-    fn visit_func_decl(&mut self, func_decl: &'a FuncDecl) {
-        // Intra-function the `use_stack` can gather extra entries, and there's
-        // a risk they'd pile up without being popped, so here's a sanity check.
-        let original_use_stack_len = self.use_stack.len();
-
-        func_decl.inner_visit_with(self);
-
-        assert!(self.use_stack.len() >= original_use_stack_len);
-        let extra = self.use_stack.len() - original_use_stack_len;
-        if extra > 0 {
-            // HACK(eddyb) synthesize a diagnostic to report right away.
-            self.report_from_attrs(
-                AttrSet::default().append_diag(
-                    self.cx,
-                    Diag::bug([format!(
-                        "{extra} extraneous `use_stack` frame(s) found \
-                         (missing `PopInlinedCallFrame`?)"
-                    )
-                    .into()]),
-                ),
-            );
-        }
-        self.use_stack.truncate(original_use_stack_len);
-    }
-
-    fn visit_node_def(&mut self, func_at_node: FuncAt<'a, Node>) {
-        let original_use_stack_len = self.use_stack.len();
-
-        func_at_node.inner_visit_with(self);
-
-        // HACK(eddyb) avoid `use_stack` from growing due to having some
-        // `PushInlinedCallFrame` without matching `PopInlinedCallFrame`.
-        self.use_stack.truncate(original_use_stack_len);
-
-        // HACK(eddyb) this relies on the fact that `NodeKind::Block` maps
-        // to one original SPIR-V block, which may not necessarily be true, and
-        // steps should be taken elsewhere to explicitly unset debuginfo, instead
-        // of relying on the end of a SPIR-V block implicitly unsetting it all.
-        // NOTE(eddyb) allowing debuginfo to apply *outside* of a `Block` could
-        // be useful in allowing *some* structured control-flow to have debuginfo,
-        // but that would likely require more work on the SPIR-T side.
-        if let NodeKind::Block { .. } = func_at_node.def().kind {
-            match self.use_stack.last_mut() {
-                Some(UseOrigin::IntraFunc {
-                    last_debug_src_loc_inst,
-                    ..
-                }) => *last_debug_src_loc_inst = None,
-                _ => unreachable!(),
-            }
         }
     }
 
@@ -611,82 +417,8 @@ impl<'a> Visitor<'a> for DiagnosticReporter<'a> {
         };
 
         match self.use_stack.last_mut() {
-            Some(UseOrigin::IntraFunc {
-                inst_attrs,
-                last_debug_src_loc_inst,
-                ..
-            }) => {
+            Some(UseOrigin::IntraFunc { inst_attrs, .. }) => {
                 *inst_attrs = data_inst_def.attrs;
-
-                // FIXME(eddyb) deduplicate with `spirt_passes::debuginfo`.
-                if let DataInstKind::SpvExtInst {
-                    ext_set,
-                    inst: ext_inst,
-                } = self.cx[data_inst_def.form].kind
-                    && ext_set == self.custom_ext_inst_set
-                {
-                    match CustomOp::decode(ext_inst) {
-                        CustomOp::SetDebugSrcLoc => {
-                            *last_debug_src_loc_inst = Some(data_inst_def);
-                        }
-                        CustomOp::ClearDebugSrcLoc => {
-                            *last_debug_src_loc_inst = None;
-                        }
-                        op => match op.with_operands(&data_inst_def.inputs) {
-                            CustomInst::SetDebugSrcLoc { .. } | CustomInst::ClearDebugSrcLoc => {
-                                unreachable!()
-                            }
-                            CustomInst::PushInlinedCallFrame { callee_name } => {
-                                // Treat this like a call, in the caller.
-                                replace_origin(self, IntraFuncUseOrigin::CallCallee);
-
-                                let const_kind = |v: Value| match v {
-                                    Value::Const(ct) => &self.cx[ct].kind,
-                                    _ => unreachable!(),
-                                };
-                                let const_str = |v: Value| match const_kind(v) {
-                                    &ConstKind::SpvStringLiteralForExtInst(s) => s,
-                                    _ => unreachable!(),
-                                };
-                                self.use_stack.push(UseOrigin::IntraFunc {
-                                    func_attrs: AttrSet::default(),
-                                    special_func: Some(SpecialFunc::Inlined {
-                                        callee_name: const_str(callee_name),
-                                    }),
-                                    last_debug_src_loc_inst: None,
-                                    inst_attrs: AttrSet::default(),
-                                    origin: IntraFuncUseOrigin::Other,
-                                });
-                            }
-                            CustomInst::PopInlinedCallFrame => {
-                                match self.use_stack.last() {
-                                    Some(UseOrigin::IntraFunc { special_func, .. }) => {
-                                        if let Some(SpecialFunc::Inlined { .. }) = special_func {
-                                            self.use_stack.pop().unwrap();
-                                            // Undo what `PushInlinedCallFrame` did to the
-                                            // original `UseOrigin::IntraFunc`.
-                                            replace_origin(self, IntraFuncUseOrigin::Other);
-                                        } else {
-                                            // HACK(eddyb) synthesize a diagnostic to report right away.
-                                            self.report_from_attrs(
-                                                AttrSet::default().append_diag(
-                                                    self.cx,
-                                                    Diag::bug([
-                                                        "`PopInlinedCallFrame` without an \
-                                                             inlined call frame in `use_stack`"
-                                                            .into(),
-                                                    ]),
-                                                ),
-                                            );
-                                        }
-                                    }
-                                    _ => unreachable!(),
-                                }
-                            }
-                            CustomInst::Abort { .. } => {}
-                        },
-                    }
-                }
             }
             _ => unreachable!(),
         }
