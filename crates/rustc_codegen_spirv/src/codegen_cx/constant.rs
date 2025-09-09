@@ -3,7 +3,7 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::CodegenCx;
 use crate::abi::ConvSpirvType;
-use crate::builder_spirv::{SpirvConst, SpirvValue, SpirvValueExt};
+use crate::builder_spirv::{SpirvConst, SpirvValue};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools as _;
 use rspirv::spirv::Word;
@@ -231,16 +231,7 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                 let data = int.to_uint(int.size());
 
                 if let Primitive::Pointer(_) = layout.primitive() {
-                    if data == 0 {
-                        self.constant_null(ty)
-                    } else {
-                        let result = self.undef(ty);
-                        self.zombie_no_span(
-                            result.def_cx(self),
-                            "pointer has non-null integer address",
-                        );
-                        result
-                    }
+                    self.const_bitcast(self.const_usize(data.try_into().unwrap()), ty)
                 } else {
                     self.def_constant(ty, SpirvConst::Scalar(data))
                 }
@@ -319,24 +310,48 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         self.def_constant(void_type, SpirvConst::ConstDataFromAlloc(alloc))
     }
 
-    fn const_ptr_byte_offset(&self, val: Self::Value, offset: Size) -> Self::Value {
+    fn const_ptr_byte_offset(&self, ptr: Self::Value, offset: Size) -> Self::Value {
+        let ptr = ptr.strip_ptrcasts();
+
         if offset == Size::ZERO {
-            val
-        } else {
-            // FIXME(eddyb) implement via `OpSpecConstantOp`.
-            // FIXME(eddyb) this zombies the original value without creating a new one.
-            let result = val;
-            self.zombie_no_span(result.def_cx(self), "const_ptr_byte_offset");
-            result
+            return ptr;
         }
+
+        self.def_constant(
+            ptr.ty,
+            SpirvConst::PtrByteOffset {
+                ptr: ptr.def_cx(self),
+                offset,
+            },
+        )
     }
 }
 
 impl<'tcx> CodegenCx<'tcx> {
     pub fn const_bitcast(&self, val: SpirvValue, ty: Word) -> SpirvValue {
+        if val.ty == ty {
+            return val;
+        }
+
+        // FIXME(eddyb) also strip other kinds of bitcasts (if useful at all?).
+        let val = val.strip_ptrcasts();
+
+        if val.ty == ty {
+            return val;
+        }
+
+        let val_ct_def = self.builder.lookup_const(val);
+
+        // FIXME(eddyb) constant-fold scalar -> scalar as well, not just nulls.
+        if let Some(SpirvConst::Scalar(0)) = val_ct_def
+            && let SpirvType::Pointer { .. } = self.lookup_type(ty)
+        {
+            return self.const_null(ty);
+        }
+
         // HACK(eddyb) special-case `const_data_from_alloc` + `static_addr_of`
         // as the old `from_const_alloc` (now `OperandRef::from_const_alloc`).
-        if let Some(SpirvConst::PtrTo { pointee }) = self.builder.lookup_const(val)
+        if let Some(SpirvConst::PtrTo { pointee }) = val_ct_def
             && let Some(SpirvConst::ConstDataFromAlloc(alloc)) =
                 self.builder.lookup_const_by_id(pointee)
             && let SpirvType::Pointer { pointee } = self.lookup_type(ty)
@@ -345,15 +360,7 @@ impl<'tcx> CodegenCx<'tcx> {
             return self.static_addr_of(init, alloc.inner().align, None);
         }
 
-        if val.ty == ty {
-            val
-        } else {
-            // FIXME(eddyb) implement via `OpSpecConstantOp`.
-            // FIXME(eddyb) this zombies the original value without creating a new one.
-            let result = val.def_cx(self).with_type(ty);
-            self.zombie_no_span(result.def_cx(self), "const_bitcast");
-            result
-        }
+        self.def_constant(ty, SpirvConst::BitCast(val.def_cx(self)))
     }
 
     // This function comes from `ty::layout`'s `layout_of_uncached`,

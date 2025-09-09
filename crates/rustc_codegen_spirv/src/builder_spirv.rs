@@ -14,7 +14,7 @@ use rspirv::spirv::{
 use rspirv::{binary::Assemble, binary::Disassemble};
 use rustc_abi::Size;
 use rustc_arena::DroplessArena;
-use rustc_codegen_ssa::traits::ConstCodegenMethods as _;
+use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods as _, ConstCodegenMethods as _};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_middle::mir::interpret::ConstAllocation;
 use rustc_middle::ty::TyCtxt;
@@ -183,6 +183,21 @@ pub enum SpirvConst<'a, 'tcx> {
     //
     // FIXME(eddyb) replace this with `qptr` handling of constant data.
     ConstDataFromAlloc(ConstAllocation<'tcx>),
+
+    /// Constant `OpBitcast` (via `OpSpecConstantOp`).
+    //
+    // FIXME(eddyb) actually support `OpSpecConstantOp` in SPIR-T and emit it
+    // (right now this uses `OpUndef` to avoid breaking SPIR-T).
+    BitCast(Word),
+
+    /// Constant `OpPtrAccessChain` (via `OpSpecConstantOp`).
+    //
+    // FIXME(eddyb) actually support `OpSpecConstantOp` in SPIR-T and emit it
+    // (right now this uses `OpUndef` to avoid breaking SPIR-T).
+    PtrByteOffset {
+        ptr: Word,
+        offset: Size,
+    },
 }
 
 impl<'tcx> SpirvConst<'_, 'tcx> {
@@ -213,11 +228,14 @@ impl<'tcx> SpirvConst<'_, 'tcx> {
             SpirvConst::Composite(fields) => SpirvConst::Composite(arena_alloc_slice(cx, fields)),
 
             SpirvConst::ConstDataFromAlloc(alloc) => SpirvConst::ConstDataFromAlloc(alloc),
+
+            SpirvConst::BitCast(v) => SpirvConst::BitCast(v),
+            SpirvConst::PtrByteOffset { ptr, offset } => SpirvConst::PtrByteOffset { ptr, offset },
         }
     }
 }
 
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 struct WithType<V> {
     ty: Word,
     val: V,
@@ -237,6 +255,16 @@ enum LeafIllegalConst {
     //
     // FIXME(eddyb) replace this with `qptr` handling of constant data.
     UntypedConstDataFromAlloc,
+
+    /// `SpirvConst::BitCast` needs to error, even when materialized to SPIR-V.
+    //
+    // FIXME(eddyb) replace this with `qptr` handling of constant data/exprs.
+    BitCast { from_ty: Word },
+
+    /// `SpirvConst::PtrByteOffset` needs to error, even when materialized to SPIR-V.
+    //
+    // FIXME(eddyb) replace this with `qptr` handling of constant data/exprs.
+    PtrByteOffset,
 }
 
 impl LeafIllegalConst {
@@ -249,6 +277,8 @@ impl LeafIllegalConst {
                 "`const_data_from_alloc` result wasn't passed through `static_addr_of`, \
                  then `const_bitcast` (which would've given it a type)"
             }
+            Self::BitCast { .. } => "constants cannot contain bitcasts",
+            Self::PtrByteOffset => "constants cannot contain pointers with arbitrary byte offsets",
         }
     }
 }
@@ -656,7 +686,37 @@ impl<'tcx> BuilderSpirv<'tcx> {
             SpirvConst::PtrTo { pointee } => {
                 builder.variable(ty, None, StorageClass::Private, Some(pointee))
             }
+
+            SpirvConst::BitCast(v) => const_op(&mut builder, Op::Bitcast, v, None),
+            SpirvConst::PtrByteOffset { ptr, offset } => {
+                // HACK(eddyb) avoid borrow conflicts.
+                drop(builder);
+
+                let byte_ptr_type = cx.type_ptr_to(cx.type_i8());
+                let (op, lhs, rhs) = if ty == byte_ptr_type {
+                    (
+                        Op::PtrAccessChain,
+                        ptr,
+                        Some(cx.const_usize(offset.bytes()).def_cx(cx)),
+                    )
+                } else {
+                    // HACK(eddyb) can't easily offset without casting first to `*i8`.
+                    let ptr = self.id_to_const_and_val.borrow()[&ptr].val.1;
+                    (
+                        Op::Bitcast,
+                        cx.const_ptr_byte_offset(cx.const_bitcast(ptr, byte_ptr_type), offset)
+                            .def_cx(cx),
+                        None,
+                    )
+                };
+
+                builder = self.builder(BuilderCursor::default());
+                const_op(&mut builder, op, lhs, rhs)
+            }
         };
+
+        let mut original_ptr_before_casts = None;
+
         #[allow(clippy::match_same_arms)]
         let legal = match val {
             SpirvConst::Scalar(_) => Ok(()),
@@ -727,6 +787,33 @@ impl<'tcx> BuilderSpirv<'tcx> {
             SpirvConst::ConstDataFromAlloc(_) => Err(IllegalConst::Shallow(
                 LeafIllegalConst::UntypedConstDataFromAlloc,
             )),
+
+            SpirvConst::BitCast(from_id) => {
+                let from_const = self.id_to_const_and_val.borrow()[&from_id];
+
+                if let (SpirvType::Pointer { .. }, SpirvType::Pointer { .. }) =
+                    (cx.lookup_type(from_const.val.1.ty), cx.lookup_type(ty))
+                {
+                    let original_ptr = from_const.val.1.strip_ptrcasts();
+                    let original_ptr_id = original_ptr.def_cx(cx);
+                    original_ptr_before_casts = Some(original_ptr.map_kind(|_| original_ptr_id));
+                }
+
+                // HACK(eddyb) a bitcast is one of the least interesting/useful
+                // kinds in which a constant can be illegal, and due to the lack
+                // of an actual (`OpSpecConstantOp`-based) materialization, any
+                // zombies from the value being bitcast would otherwise be lost.
+                // FIXME(eddyb) remove this hack once `OpSpecConstantOp` is used.
+                Err(from_const.legal.err().unwrap_or(IllegalConst::Shallow(
+                    LeafIllegalConst::BitCast {
+                        from_ty: from_const.val.1.ty,
+                    },
+                )))
+            }
+
+            SpirvConst::PtrByteOffset { .. } => {
+                Err(IllegalConst::Shallow(LeafIllegalConst::PtrByteOffset))
+            }
         };
 
         // FIXME(eddyb) avoid dragging "const (il)legality" around, as well
@@ -736,7 +823,20 @@ impl<'tcx> BuilderSpirv<'tcx> {
             let msg = match illegal {
                 IllegalConst::Shallow(cause) | IllegalConst::Indirect(cause) => cause.message(),
             };
-            cx.zombie_no_span(id, msg);
+            if let IllegalConst::Shallow(LeafIllegalConst::BitCast { from_ty }) = illegal {
+                cx.zombie_no_span(
+                    id,
+                    &format!(
+                        "{msg}\
+                            \nfrom `{}`\
+                            \n  to `{}`",
+                        cx.debug_type(from_ty),
+                        cx.debug_type(ty)
+                    ),
+                );
+            } else {
+                cx.zombie_no_span(id, msg);
+            }
         }
 
         let val = val.tcx_arena_alloc_slices(cx);
@@ -746,7 +846,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
             zombie_waiting_for_span: legal.is_err(),
             kind: SpirvValueKind::Def {
                 id,
-                original_ptr_before_casts: None,
+                original_ptr_before_casts,
             },
             ty,
         };
