@@ -3,7 +3,7 @@ use spirt::func_at::FuncAtMut;
 use spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Transformer};
 use spirt::{
     Const, ConstDef, ConstKind, Context, DataInst, DataInstKind, Diag, Func, GlobalVar, Module,
-    ModuleDialect, Type, TypeDef, TypeKind, spv,
+    ModuleDialect, Node, NodeKind, Type, TypeDef, TypeKind, cf, spv,
 };
 use std::collections::VecDeque;
 
@@ -163,23 +163,29 @@ impl Transformer for Validator<'_> {
         }
     }
 
-    fn in_place_transform_data_inst_def(&mut self, mut func_at_data_inst: FuncAtMut<'_, DataInst>) {
-        func_at_data_inst
-            .reborrow()
-            .inner_in_place_transform_with(self);
+    fn in_place_transform_node_def(&mut self, mut func_at_node: FuncAtMut<'_, Node>) {
+        func_at_node.reborrow().inner_in_place_transform_with(self);
 
-        let inst_def = func_at_data_inst.def();
-        let valid = match &inst_def.kind {
-            DataInstKind::SpvInst(spv_inst) => self.validate_spv_inst(spv_inst),
+        let node_def = func_at_node.def();
+        let valid = match &node_def.kind {
+            NodeKind::ExitInvocation(cf::ExitInvocationKind::SpvInst(spv_inst))
+            | DataInstKind::SpvInst(spv_inst) => self.validate_spv_inst(spv_inst),
 
-            DataInstKind::FuncCall(_)
+            NodeKind::Block { .. }
+            | NodeKind::Select(_)
+            | NodeKind::Loop { .. }
+            | DataInstKind::FuncCall(_)
             | DataInstKind::Mem(_)
             | DataInstKind::QPtr(_)
             | DataInstKind::SpvExtInst { .. } => Ok(()),
         };
         if let Err(diag) = valid {
-            inst_def.attrs.push_diag(self.cx, diag);
+            node_def.attrs.push_diag(self.cx, diag);
         }
+    }
+
+    fn in_place_transform_data_inst_def(&mut self, func_at_data_inst: FuncAtMut<'_, DataInst>) {
+        self.in_place_transform_node_def(func_at_data_inst);
     }
 }
 

@@ -247,12 +247,12 @@ impl Transformer for SelectiveEraser<'_> {
                 ty != value_type && ty == self.erase_explicit_layout_in_type(value_type)
             }) {
                 let func = func_at_data_inst.at(());
-                let NodeKind::Block { insts } = &mut func.nodes[self.parent_block.unwrap()].kind
-                else {
+                let parent_block = self.parent_block.unwrap();
+                let NodeKind::Block { mut insts } = func.nodes[parent_block].kind else {
                     unreachable!()
                 };
 
-                let fixed_load_inst = func.data_insts.define(
+                let fixed_load_inst = func.nodes.define(
                     cx,
                     DataInstDef {
                         child_regions: [].into_iter().collect(),
@@ -262,12 +262,15 @@ impl Transformer for SelectiveEraser<'_> {
                         }]
                         .into_iter()
                         .collect(),
-                        ..DataInstDef::clone(&func.data_insts[data_inst])
+                        ..DataInstDef::clone(&func.nodes[data_inst])
                     }
                     .into(),
                 );
-                insts.insert_before(fixed_load_inst, data_inst, func.data_insts);
-                *func.data_insts[data_inst] = mk_bitcast_def(
+
+                insts.insert_before(fixed_load_inst, data_inst, func.nodes);
+                func.nodes[parent_block].kind = NodeKind::Block { insts };
+
+                *func.nodes[data_inst] = mk_bitcast_def(
                     Value::DataInstOutput {
                         inst: fixed_load_inst,
                         output_idx: 0,
@@ -285,7 +288,7 @@ impl Transformer for SelectiveEraser<'_> {
                 ty != value_type && ty == self.erase_explicit_layout_in_type(value_type)
             }) {
                 let func = func_at_data_inst.at(());
-                let stored_value = &mut func.data_insts[data_inst].inputs[1];
+                let stored_value = &mut func.nodes[data_inst].inputs[1];
 
                 if let Value::Const(ct) = stored_value {
                     EraseExplicitLayout(self)
@@ -294,17 +297,19 @@ impl Transformer for SelectiveEraser<'_> {
                 } else {
                     let original_stored_value = *stored_value;
 
-                    let NodeKind::Block { insts } =
-                        &mut func.nodes[self.parent_block.unwrap()].kind
-                    else {
+                    let parent_block = self.parent_block.unwrap();
+                    let NodeKind::Block { mut insts } = func.nodes[parent_block].kind else {
                         unreachable!()
                     };
-                    let stored_value_cast_inst = func.data_insts.define(
+                    let stored_value_cast_inst = func.nodes.define(
                         cx,
                         mk_bitcast_def(original_stored_value, pointee_type.unwrap()).into(),
                     );
-                    insts.insert_before(stored_value_cast_inst, data_inst, func.data_insts);
-                    func.data_insts[data_inst].inputs[1] = Value::DataInstOutput {
+
+                    insts.insert_before(stored_value_cast_inst, data_inst, func.nodes);
+                    func.nodes[parent_block].kind = NodeKind::Block { insts };
+
+                    func.nodes[data_inst].inputs[1] = Value::DataInstOutput {
                         inst: stored_value_cast_inst,
                         output_idx: 0,
                     };
@@ -347,12 +352,12 @@ impl Transformer for SelectiveEraser<'_> {
                     [dst_imms, src_imms].map(|imms| imms.iter().copied().collect());
 
                 let func = func_at_data_inst.at(());
-                let NodeKind::Block { insts } = &mut func.nodes[self.parent_block.unwrap()].kind
-                else {
+                let parent_block = self.parent_block.unwrap();
+                let NodeKind::Block { mut insts } = func.nodes[parent_block].kind else {
                     unreachable!()
                 };
 
-                let load_inst = func.data_insts.define(
+                let load_inst = func.nodes.define(
                     cx,
                     DataInstDef {
                         attrs,
@@ -371,8 +376,7 @@ impl Transformer for SelectiveEraser<'_> {
                     }
                     .into(),
                 );
-                insts.insert_before(load_inst, data_inst, func.data_insts);
-                let cast_inst = func.data_insts.define(
+                let cast_inst = func.nodes.define(
                     cx,
                     mk_bitcast_def(
                         Value::DataInstOutput {
@@ -383,9 +387,12 @@ impl Transformer for SelectiveEraser<'_> {
                     )
                     .into(),
                 );
-                insts.insert_before(cast_inst, data_inst, func.data_insts);
 
-                *func.data_insts[data_inst] = DataInstDef {
+                insts.insert_before(load_inst, data_inst, func.nodes);
+                insts.insert_before(cast_inst, data_inst, func.nodes);
+                func.nodes[parent_block].kind = NodeKind::Block { insts };
+
+                *func.nodes[data_inst] = DataInstDef {
                     attrs,
                     kind: DataInstKind::SpvInst(spv::Inst {
                         opcode: wk.OpStore,
@@ -534,6 +541,7 @@ impl<'a> SelectiveEraser<'a> {
             return;
         };
 
+        let parent_block = self.parent_block.unwrap();
         let components = (in_component_types.zip_eq(out_component_types).enumerate())
             .map(|(component_idx, (component_in_type, component_out_type))| {
                 let component_idx = u32::try_from(component_idx).unwrap();
@@ -546,7 +554,7 @@ impl<'a> SelectiveEraser<'a> {
                     ));
                 }
 
-                let component_extract_inst = func.data_insts.define(
+                let component_extract_inst = func.nodes.define(
                     cx,
                     DataInstDef {
                         attrs,
@@ -568,14 +576,13 @@ impl<'a> SelectiveEraser<'a> {
                     .into(),
                 );
 
-                let NodeKind::Block { insts } = &mut func.nodes[self.parent_block.unwrap()].kind
-                else {
+                let NodeKind::Block { mut insts } = func.nodes[parent_block].kind else {
                     unreachable!()
                 };
-                insts.insert_before(component_extract_inst, cast_inst, func.data_insts);
+                insts.insert_before(component_extract_inst, cast_inst, func.nodes);
 
                 let component_cast_inst = component_cast_types.map(|[_, component_out_type]| {
-                    let inst = func.data_insts.define(
+                    let inst = func.nodes.define(
                         cx,
                         DataInstDef {
                             attrs,
@@ -596,10 +603,12 @@ impl<'a> SelectiveEraser<'a> {
                         }
                         .into(),
                     );
-                    insts.insert_before(inst, cast_inst, func.data_insts);
+                    insts.insert_before(inst, cast_inst, func.nodes);
 
                     inst
                 });
+
+                func.nodes[parent_block].kind = NodeKind::Block { insts };
 
                 if let Some(component_cast_inst) = component_cast_inst {
                     self.disaggregate_bitcast(func.reborrow().at(component_cast_inst));
@@ -653,14 +662,17 @@ impl<'a> SelectiveEraser<'a> {
         }
 
         let spv_inst = match &data_inst_def.kind {
-            DataInstKind::FuncCall(_) => return Ok(()),
+            NodeKind::Block { .. }
+            | NodeKind::Select(_)
+            | NodeKind::Loop { .. }
+            | NodeKind::ExitInvocation(_) => unreachable!(),
 
+            DataInstKind::FuncCall(_) => return Ok(()),
             DataInstKind::SpvInst(spv_inst)
                 if [wk.OpLoad, wk.OpStore, wk.OpCopyMemory].contains(&spv_inst.opcode) =>
             {
                 return Ok(());
             }
-
             DataInstKind::Mem(_) => {
                 return Err(Diag::bug([
                     "unhandled pointer type change in unexpected `mem` instruction".into(),
@@ -679,7 +691,6 @@ impl<'a> SelectiveEraser<'a> {
                 )
                 .into()]));
             }
-
             DataInstKind::SpvInst(spv_inst) => spv_inst,
         };
 

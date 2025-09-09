@@ -376,8 +376,11 @@ impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
         // Finally remove the `DataInst`s buffered for removal earlier.
         let func = func_at_region.reborrow().at(());
         for (parent_block, inst) in insts_to_remove {
-            match &mut func.nodes[parent_block].kind {
-                NodeKind::Block { insts } => insts.remove(inst, func.data_insts),
+            match func.nodes[parent_block].kind {
+                NodeKind::Block { mut insts } => {
+                    insts.remove(inst, func.nodes);
+                    func.nodes[parent_block].kind = NodeKind::Block { insts };
+                }
                 _ => unreachable!(),
             }
         }

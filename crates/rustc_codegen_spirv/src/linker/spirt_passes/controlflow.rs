@@ -4,8 +4,8 @@ use crate::custom_insts::{self, CustomInst, CustomOp};
 use smallvec::SmallVec;
 use spirt::func_at::FuncAt;
 use spirt::{
-    Attr, AttrSet, ConstDef, ConstKind, DataInstKind, DbgSrcLoc, DeclDef, EntityDefs, ExportKey,
-    Exportee, Module, NodeKind, Type, TypeDef, TypeKind, TypeOrConst, Value, cf, spv,
+    Attr, AttrSet, ConstDef, ConstKind, DataInstKind, DbgSrcLoc, DeclDef, ExportKey, Exportee,
+    Module, NodeKind, Type, TypeDef, TypeKind, TypeOrConst, Value, cf, spv,
 };
 use std::fmt::Write as _;
 
@@ -197,11 +197,11 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             .rev_post_order(func_def_body);
         for region in rpo_regions {
             let region_def = &func_def_body.regions[region];
-            let node_def = match region_def.children.iter().last {
-                Some(last_node) => &mut func_def_body.nodes[last_node],
-                _ => continue,
+            let Some(last_node) = region_def.children.iter().last else {
+                continue;
             };
-            let block_insts = match &mut node_def.kind {
+            let last_node_def = &func_def_body.nodes[last_node];
+            let mut block_insts = match last_node_def.kind {
                 NodeKind::Block { insts } => insts,
                 _ => continue,
             };
@@ -219,11 +219,10 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             // HACK(eddyb) this allows accessing the `DataInst` iterator while
             // mutably borrowing other parts of `FuncDefBody`.
             let func_at_block_insts = FuncAt {
-                nodes: &EntityDefs::new(),
-                regions: &EntityDefs::new(),
-                data_insts: &func_def_body.data_insts,
+                regions: &func_def_body.regions,
+                nodes: &func_def_body.nodes,
 
-                position: *block_insts,
+                position: block_insts,
             };
             let custom_terminator_inst = func_at_block_insts
                 .into_iter()
@@ -367,7 +366,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
 
                         fmt += "\n";
 
-                        let abort_inst_def = &mut func_def_body.data_insts[abort_inst];
+                        let abort_inst_def = &mut func_def_body.nodes[abort_inst];
                         abort_inst_def.kind = DataInstKind::SpvExtInst {
                             ext_set: cx.intern("NonSemantic.DebugPrintf"),
                             inst: 1,
@@ -383,7 +382,8 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                     }
                     None => {}
                 }
-                block_insts.remove(abort_inst, &mut func_def_body.data_insts);
+                block_insts.remove(abort_inst, &mut func_def_body.nodes);
+                func_def_body.nodes[last_node].kind = NodeKind::Block { insts: block_insts };
             }
         }
     }

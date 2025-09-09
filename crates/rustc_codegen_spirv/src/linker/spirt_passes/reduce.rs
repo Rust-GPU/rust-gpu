@@ -172,6 +172,16 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                 kind: NodeKind::ExitInvocation { .. },
                 ..
             } => {}
+
+            &DataInstDef {
+                kind:
+                    DataInstKind::FuncCall(_)
+                    | DataInstKind::Mem(_)
+                    | DataInstKind::QPtr(_)
+                    | DataInstKind::SpvInst(_)
+                    | DataInstKind::SpvExtInst { .. },
+                ..
+            } => unreachable!(),
         };
         func_def_body.inner_visit_with(&mut VisitAllRegionsAndNodes {
             state: (),
@@ -759,9 +769,8 @@ impl Reducible {
                 //
                 // FIXME(eddyb) attempt to replace this with early-inserting in
                 // `cache` *then* returning.
-                let output_from_updated_state = func
-                    .data_insts
-                    .define(cx, output_from_updated_state_inst.into());
+                let output_from_updated_state =
+                    func.nodes.define(cx, output_from_updated_state_inst.into());
                 func.reborrow()
                     .at(region)
                     .def()
@@ -801,9 +810,10 @@ impl Reducible {
                             .insert_last(new_block, func.nodes);
                         new_block
                     });
-                match &mut func.nodes[loop_body_last_block].kind {
-                    NodeKind::Block { insts } => {
-                        insts.insert_last(output_from_updated_state, func.data_insts);
+                match func.nodes[loop_body_last_block].kind {
+                    NodeKind::Block { mut insts } => {
+                        insts.insert_last(output_from_updated_state, func.nodes);
+                        func.nodes[loop_body_last_block].kind = NodeKind::Block { insts };
                     }
                     _ => unreachable!(),
                 }
