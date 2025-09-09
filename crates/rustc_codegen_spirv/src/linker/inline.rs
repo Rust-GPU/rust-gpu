@@ -133,6 +133,32 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
         .map(Ok)
         .collect();
 
+    let mut mem2reg_pointer_to_pointee = FxHashMap::default();
+    let mut mem2reg_constants = FxHashMap::default();
+    {
+        let mut u32 = None;
+        for inst in &module.types_global_values {
+            match inst.class.opcode {
+                Op::TypePointer => {
+                    mem2reg_pointer_to_pointee
+                        .insert(inst.result_id.unwrap(), inst.operands[1].unwrap_id_ref());
+                }
+                Op::TypeInt
+                    if inst.operands[0].unwrap_literal_bit32() == 32
+                        && inst.operands[1].unwrap_literal_bit32() == 0 =>
+                {
+                    assert!(u32.is_none());
+                    u32 = Some(inst.result_id.unwrap());
+                }
+                Op::Constant if u32.is_some() && inst.result_type == u32 => {
+                    let value = inst.operands[0].unwrap_literal_bit32();
+                    mem2reg_constants.insert(inst.result_id.unwrap(), value);
+                }
+                _ => {}
+            }
+        }
+    }
+
     // Inline functions in post-order (aka inside-out aka bottom-up) - that is,
     // callees are processed before their callers, to avoid duplicating work.
     for func_idx in call_graph.post_order() {
@@ -144,6 +170,19 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
             custom_ext_inst_set_import,
         }
         .remove_duplicate_debuginfo_in_function(&mut function);
+
+        {
+            super::simple_passes::block_ordering_pass(&mut function);
+            // Note: mem2reg requires functions to be in RPO order (i.e. block_ordering_pass)
+            super::mem2reg::mem2reg(
+                inliner.header,
+                &mut module.types_global_values,
+                &mem2reg_pointer_to_pointee,
+                &mem2reg_constants,
+                &mut function,
+            );
+            super::destructure_composites::destructure_composites(&mut function);
+        }
 
         functions[func_idx] = Ok(function);
     }
