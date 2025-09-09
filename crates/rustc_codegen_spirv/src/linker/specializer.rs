@@ -52,9 +52,10 @@
 use crate::linker::ipo::CallGraph;
 use crate::spirv_type_constraints::{self, InstSig, StorageClassPat, TyListPat, TyPat};
 use indexmap::{IndexMap, IndexSet};
+use itertools::Itertools as _;
 use rspirv::dr::{Builder, Function, Instruction, Module, Operand};
 use rspirv::spirv::{Op, StorageClass, Word};
-use rustc_data_structures::fx::{FxHashMap, FxHashSet};
+use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexMap};
 use smallvec::SmallVec;
 use std::collections::{BTreeMap, VecDeque};
 use std::ops::{Range, RangeTo};
@@ -563,29 +564,84 @@ impl<S: Specialization> Specializer<S> {
             .iter()
             .chain(module.functions.iter().filter_map(|f| f.def.as_ref()));
 
+        // HACK(eddyb) this is done as a pre-filter for the benefit of the extra
+        // toposort step done in the middle below.
         let mut forward_declared_pointers = FxHashSet::default();
-        for inst in types_global_values_and_functions {
-            let result_id = if inst.class.opcode == Op::TypeForwardPointer {
-                forward_declared_pointers.insert(inst.operands[0].unwrap_id_ref());
-                inst.operands[0].unwrap_id_ref()
-            } else {
-                let result_id = inst.result_id.unwrap_or_else(|| {
-                    unreachable!(
-                        "Op{:?} is in `types_global_values` but not have a result ID",
-                        inst.class.opcode
-                    );
-                });
-                if forward_declared_pointers.remove(&result_id) {
-                    // HACK(eddyb) this is a forward-declared pointer, pretend
-                    // it's not "generic" at all to avoid breaking the rest of
-                    // the logic - see module-level docs for how this should be
-                    // handled in the future to support recursive data types.
-                    assert_eq!(inst.class.opcode, Op::TypePointer);
+        let types_global_values_and_functions_with_result_id = types_global_values_and_functions
+            .filter_map(|inst| {
+                let result_id = if inst.class.opcode == Op::TypeForwardPointer {
+                    forward_declared_pointers.insert(inst.operands[0].unwrap_id_ref());
+                    inst.operands[0].unwrap_id_ref()
+                } else {
+                    let result_id = inst.result_id.unwrap_or_else(|| {
+                        unreachable!(
+                            "Op{:?} is in `types_global_values` but not have a result ID",
+                            inst.class.opcode
+                        );
+                    });
+                    if forward_declared_pointers.remove(&result_id) {
+                        // HACK(eddyb) this is a forward-declared pointer, pretend
+                        // it's not "generic" at all to avoid breaking the rest of
+                        // the logic - see module-level docs for how this should be
+                        // handled in the future to support recursive data types.
+                        assert_eq!(inst.class.opcode, Op::TypePointer);
+                        return None;
+                    }
+                    result_id
+                };
+                Some((result_id, inst))
+            });
+
+        // HACK(eddyb) ad-hoc toposort (i.e. def-before-use, no forward refs),
+        // due to `OpConstantFunctionPointerINTEL` forward refs (to functions).
+        let types_global_values_and_functions_with_result_id = {
+            let unsorted: FxIndexMap<_, _> =
+                types_global_values_and_functions_with_result_id.collect();
+            let mut sorted = FxIndexMap::default();
+            let mut stack = vec![];
+            for (&result_id, &inst) in &unsorted {
+                if sorted.contains_key(&result_id) {
                     continue;
                 }
-                result_id
-            };
 
+                fn new_stack_entry(
+                    result_id: Word,
+                    inst: &Instruction,
+                ) -> (impl Iterator<Item = Word>, (Word, &Instruction)) {
+                    let operands = if inst.class.opcode == Op::TypeForwardPointer {
+                        // HACK(eddyb) avoid accidental cycles due to how the ID
+                        // is used as the `result_id` (see earlier comments too).
+                        &[]
+                    } else {
+                        &inst.operands[..]
+                    };
+                    let used_ids = inst
+                        .result_type
+                        .into_iter()
+                        .chain(operands.iter().filter_map(|o| o.id_ref_any()));
+                    (used_ids, (result_id, inst))
+                }
+
+                stack.push(new_stack_entry(result_id, inst));
+                while let Some((used_ids, _)) = stack.last_mut() {
+                    if let Some(used_id) = used_ids.next() {
+                        if !sorted.contains_key(&used_id)
+                            && let Some(used_inst) = unsorted.get(&used_id)
+                        {
+                            stack.push(new_stack_entry(used_id, used_inst));
+                        }
+                    } else {
+                        let (_, (result_id, inst)) = stack.pop().unwrap();
+                        sorted.insert(result_id, inst);
+                    }
+                }
+            }
+            sorted.into_iter()
+        };
+
+        drop(forward_declared_pointers);
+
+        for (result_id, inst) in types_global_values_and_functions_with_result_id {
             // Record all integer `OpConstant`s (used for `IndexComposite`).
             if inst.class.opcode == Op::Constant
                 && let Operand::LiteralBit32(x) = inst.operands[0]
@@ -1496,28 +1552,14 @@ enum InferError {
 }
 
 impl InferError {
-    fn report(self, inst: &Instruction) {
+    fn report(self, inst: impl fmt::Display) {
         // FIXME(eddyb) better error reporting than this.
-        match self {
+        let err = FmtBy(|f| match &self {
             Self::Conflict(a, b) => {
-                error!("inference conflict: {a:?} vs {b:?}");
+                write!(f, "inference conflict:\n{a:?} vs {b:?}")
             }
-        }
-        error!("    in ");
-        // FIXME(eddyb) deduplicate this with other instruction printing logic.
-        if let Some(result_id) = inst.result_id {
-            error!("%{result_id} = ");
-        }
-        error!("Op{:?}", inst.class.opcode);
-        for operand in inst
-            .result_type
-            .map(Operand::IdRef)
-            .iter()
-            .chain(inst.operands.iter())
-        {
-            error!(" {operand}");
-        }
-        error!("");
+        });
+        error!("{err}\n  in\n{inst}");
 
         std::process::exit(1);
     }
@@ -1925,40 +1967,32 @@ impl<'a, S: Specialization> InferCx<'a, S> {
         };
 
         let debug_dump_if_enabled = |cx: &Self, prefix| {
-            let result_type = match inst.class.opcode {
-                // HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
-                Op::Function => Some(
-                    InferOperand::from_operand_and_generic_args(
-                        &Operand::IdRef(inst.result_type.unwrap()),
-                        inputs_generic_args.clone(),
-                        cx,
-                    )
-                    .0,
-                ),
-                _ => type_of_result.clone(),
-            };
-            let inputs = InferOperandList {
-                operands: &inst.operands,
-                all_generic_args: inputs_generic_args.clone(),
-                transform: None,
-            };
-
             if inst_loc != InstructionLocation::Module {
                 debug!("    ");
             }
-            debug!("{prefix}");
-            if let Some(result_id) = inst.result_id {
-                debug!("%{result_id} = ");
-            }
-            debug!("Op{:?}", inst.class.opcode);
-            for operand in result_type.into_iter().chain(inputs.iter(cx)) {
-                debug!(" {}", operand.display_with_infer_cx(cx));
-            }
-            debug!("");
+
+            debug!(
+                "{prefix}{}\n",
+                cx.display_instruction_during_instantiation(
+                    inst,
+                    type_of_result.clone(),
+                    inputs_generic_args.clone()
+                )
+            );
         };
 
         // If we have some instruction signatures for `inst`, enforce them.
-        if let Some(sigs) = spirv_type_constraints::instruction_signatures(inst.class.opcode) {
+        let sigs = {
+            // HACK(eddyb) grab the right opcode for the signature.
+            let opcode = match (inst.class.opcode, &inst.operands[..]) {
+                (Op::SpecConstantOp, &[Operand::LiteralSpecConstantOpInteger(opcode), ..]) => {
+                    opcode
+                }
+                _ => inst.class.opcode,
+            };
+            spirv_type_constraints::instruction_signatures(opcode)
+        };
+        if let Some(sigs) = sigs {
             // HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
             // (specifically, `type_of_result` isn't *Result Type* for `OpFunction`)
             assert_ne!(inst.class.opcode, Op::Function);
@@ -1990,7 +2024,11 @@ impl<'a, S: Specialization> InferCx<'a, S> {
             debug!("    found {:?}", m.debug_with_infer_cx(self));
 
             if let Err(e) = self.equate_match_findings(m) {
-                e.report(inst);
+                e.report(self.display_instruction_during_instantiation(
+                    inst,
+                    type_of_result.clone(),
+                    inputs_generic_args.clone(),
+                ));
             }
 
             debug_dump_if_enabled(self, " <- ");
@@ -2009,6 +2047,62 @@ impl<'a, S: Specialization> InferCx<'a, S> {
                 InferOperand::Unknown | InferOperand::Concrete(_) => {}
             }
         }
+    }
+
+    // FIXME(eddyb) this is shared between debug logging and proper errors.
+    fn display_instruction_during_instantiation(
+        &self,
+        inst: &'a Instruction,
+        type_of_result: Option<InferOperand>,
+        inputs_generic_args: Range<InferVar>,
+    ) -> impl fmt::Display {
+        FmtBy(move |f| {
+            let result_type = match inst.class.opcode {
+                // HACK(eddyb) workaround for `OpFunction`, see earlier HACK comment.
+                Op::Function => Some(
+                    InferOperand::from_operand_and_generic_args(
+                        &Operand::IdRef(inst.result_type.unwrap()),
+                        inputs_generic_args.clone(),
+                        self,
+                    )
+                    .0,
+                ),
+                _ => type_of_result.clone(),
+            };
+            let inputs = InferOperandList {
+                operands: &inst.operands,
+                all_generic_args: inputs_generic_args.clone(),
+                transform: None,
+            };
+            let input_ty_list = InferOperandList {
+                operands: &inst.operands,
+                all_generic_args: inputs_generic_args.clone(),
+                transform: Some(InferOperandListTransform::TypeOfId),
+            };
+
+            if let Some(result_id) = inst.result_id {
+                write!(f, "%{result_id} = ")?;
+            }
+            writeln!(f, "Op{:?}", inst.class.opcode)?;
+
+            let mut input_tys = input_ty_list.iter(self);
+            for (operand, original_operand) in result_type
+                .map(|ty| (ty, None))
+                .into_iter()
+                .chain(inputs.iter(self).zip_eq(inst.operands.iter().map(Some)))
+            {
+                write!(f, " {}", operand.display_with_infer_cx(self))?;
+                if original_operand.and_then(|o| o.id_ref_any()).is_some() {
+                    let operand_ty = input_tys.next().unwrap();
+                    if operand_ty != InferOperand::Unknown {
+                        write!(f, " : {}", operand_ty.display_with_infer_cx(self))?;
+                    }
+                }
+                writeln!(f)?;
+            }
+
+            Ok(())
+        })
     }
 
     /// Instantiate `func`'s definition and all instructions in its body,
@@ -2096,7 +2190,9 @@ impl<'a, S: Specialization> InferCx<'a, S> {
                             self.type_of_result.get(&ret_val_id).cloned(),
                         ) && let Err(e) = self.equate_infer_operands(expected, found)
                         {
-                            e.report(inst);
+                            e.report(FmtBy(|f| {
+                                write!(f, "Op{:?} %{ret_val_id}", inst.class.opcode)
+                            }));
                         }
                     }
 

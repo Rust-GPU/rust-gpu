@@ -25,6 +25,11 @@ pub fn remove_unused_params(module: Module) -> Module {
             continue;
         }
 
+        // HACK(eddyb) skip functions that are turned into function pointers.
+        if call_graph.used_indirectly.contains(&func_idx) {
+            continue;
+        }
+
         let func = &module.functions[func_idx];
 
         let params_id_to_idx: FxHashMap<Word, usize> = func

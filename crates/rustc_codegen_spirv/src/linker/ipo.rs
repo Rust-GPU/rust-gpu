@@ -13,6 +13,9 @@ type FuncIdx = usize;
 pub struct CallGraph {
     pub entry_points: IndexSet<FuncIdx>,
 
+    // HACK(eddyb) tracking functions with `OpConstantFunctionPointerINTEL`s.
+    pub used_indirectly: IndexSet<FuncIdx>,
+
     /// `callees[i].contains(j)` implies `functions[i]` calls `functions[j]`.
     pub callees: Vec<IndexSet<FuncIdx>>,
 }
@@ -36,6 +39,12 @@ impl CallGraph {
                 func_id_to_idx[&entry.operands[1].unwrap_id_ref()]
             })
             .collect();
+        let used_indirectly = module
+            .types_global_values
+            .iter()
+            .filter(|inst| inst.class.opcode == Op::ConstantFunctionPointerINTEL)
+            .map(|inst| func_id_to_idx[&inst.operands[0].unwrap_id_ref()])
+            .collect();
         let callees = module
             .functions
             .iter()
@@ -57,6 +66,7 @@ impl CallGraph {
         (
             Self {
                 entry_points,
+                used_indirectly,
                 callees,
             },
             func_id_to_idx,
