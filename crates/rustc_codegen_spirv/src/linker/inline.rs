@@ -574,22 +574,22 @@ impl Inliner<'_, '_> {
     ) {
         let mut block_idx = 0;
         while block_idx < function.blocks.len() {
-            // If we successfully inlined a block, then repeat processing on the same block, in
-            // case the newly inlined block has more inlined calls.
-            // TODO: This is quadratic
-            if !self.inline_block(function, block_idx, functions) {
-                // TODO(eddyb) skip past the inlined callee without rescanning it.
-                block_idx += 1;
+            match self.inline_block(function, block_idx, functions) {
+                Some(post_call_block_idx) => block_idx = post_call_block_idx,
+                None => block_idx += 1,
             }
         }
     }
 
+    // HACK(eddyb) returns `Some(post_call_block_idx)` in case of success, where
+    // `post_call_block_idx` is the index of the first block of the `caller`,
+    // that follows all the inlined callee's blocks.
     fn inline_block(
         &mut self,
         caller: &mut Function,
         block_idx: usize,
         functions: &[Result<Function, FuncIsBeingInlined>],
-    ) -> bool {
+    ) -> Option<usize> {
         // Find the first inlined OpFunctionCall
         let call = caller.blocks[block_idx]
             .instructions
@@ -629,10 +629,7 @@ impl Inliner<'_, '_> {
                     }
                 }
             });
-        let (call_index, call_inst, callee) = match call {
-            None => return false,
-            Some(call) => call,
-        };
+        let (call_index, call_inst, callee) = call?;
 
         // Propagate "may abort" from callee to caller (i.e. as aborts get inlined).
         if self
@@ -784,8 +781,8 @@ impl Inliner<'_, '_> {
         }
 
         // Insert the post-call block, after all the inlined callee blocks.
+        let post_call_block_idx = pre_call_block_idx + num_non_entry_inlined_callee_blocks + 1;
         {
-            let post_call_block_idx = pre_call_block_idx + num_non_entry_inlined_callee_blocks + 1;
             let post_call_block = Block {
                 label: Some(Instruction::new(Op::Label, None, Some(return_jump), vec![])),
                 instructions: post_call_block_insts,
@@ -928,7 +925,7 @@ impl Inliner<'_, '_> {
             );
         }
 
-        true
+        Some(post_call_block_idx)
     }
 
     fn add_clone_id_rules(&mut self, rewrite_rules: &mut FxHashMap<Word, Word>, blocks: &[Block]) {
