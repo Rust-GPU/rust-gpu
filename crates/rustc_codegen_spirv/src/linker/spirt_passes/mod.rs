@@ -15,8 +15,8 @@ use spirt::func_at::FuncAt;
 use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::{InnerVisit, Visitor};
 use spirt::{
-    AttrSet, Const, Context, DataInstDef, DataInstKind, DeclDef, EntityOrientedDenseMap, Func,
-    FuncDefBody, GlobalVar, Module, Node, NodeKind, Region, Type, Value, spv,
+    AttrSet, Const, Context, DataInstKind, DeclDef, EntityOrientedDenseMap, Func, FuncDefBody,
+    GlobalVar, Module, Node, NodeKind, Region, Type, Value, spv,
 };
 use std::collections::VecDeque;
 use std::str;
@@ -357,14 +357,20 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                         self.mark_used(func.at(region).def().outputs[input_idx as usize]);
                     }
                     Value::NodeOutput { node, output_idx } => {
-                        // NOTE(eddyb) only `Select`s can have outputs right now.
-                        for &case in &func.at(node).def().child_regions {
-                            self.mark_used(func.at(case).def().outputs[output_idx as usize]);
-                        }
-                    }
-                    Value::DataInstOutput { inst, .. } => {
-                        for &input in &func.at(inst).def().inputs {
-                            self.mark_used(input);
+                        let node_def = func.at(node).def();
+                        if let NodeKind::Loop { repeat_condition } = node_def.kind {
+                            self.mark_used(repeat_condition);
+                        } else {
+                            for &input in &node_def.inputs {
+                                self.mark_used(input);
+                            }
+                            if let NodeKind::Select(_) = node_def.kind {
+                                for &case in &node_def.child_regions {
+                                    self.mark_used(
+                                        func.at(case).def().outputs[output_idx as usize],
+                                    );
+                                }
+                            }
                         }
                     }
                 }
@@ -397,55 +403,61 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
     };
 
     // HACK(eddyb) this kind of random-access is easier than using `spirt::transform`.
-    let mut all_nodes = vec![];
+    let mut all_nodes_with_parent_region = vec![];
 
     let used_values = {
         let mut visitor = VisitAllRegionsAndNodes {
             state: propagator,
-            visit_region: |_: &mut _, _| {},
+            visit_region: |_propagator: &mut Propagator, func_at_region: FuncAt<'_, Region>| {
+                // HACK(eddyb) parent region tracked for convenient removal,
+                // but it might make more sense to iterate regions directly.
+                let region = func_at_region.position;
+                all_nodes_with_parent_region.extend(
+                    func_at_region
+                        .at_children()
+                        .into_iter()
+                        .map(|func_at_node| (func_at_node.position, region)),
+                );
+            },
             visit_node: |propagator: &mut Propagator, func_at_node: FuncAt<'_, Node>| {
-                all_nodes.push(func_at_node.position);
-
                 let mut mark_used_and_propagate = |v| {
                     propagator.mark_used(v);
                     propagator.propagate_used(func_at_node.at(()));
                 };
                 let node_def = func_at_node.def();
-                match &node_def.kind {
-                    &NodeKind::Block { insts } => {
-                        for func_at_inst in func_at_node.at(insts) {
-                            // Ignore pure instructions (i.e. they're only used
-                            // if their output value is used, from somewhere else).
-                            if let DataInstKind::SpvInst(spv_inst) = &func_at_inst.def().kind {
-                                // HACK(eddyb) small selection relevant for now,
-                                // but should be extended using e.g. a bitset.
-                                if [wk.OpNop, wk.OpCompositeInsert].contains(&spv_inst.opcode) {
-                                    continue;
-                                }
-                            }
-                            mark_used_and_propagate(Value::DataInstOutput {
-                                inst: func_at_inst.position,
-                                output_idx: 0,
-                            });
-                        }
+                let is_pure = match &node_def.kind {
+                    // HACK(eddyb) small selection relevant for now,
+                    // but should be extended using e.g. a bitset.
+                    DataInstKind::SpvInst(spv_inst) => {
+                        [wk.OpNop, wk.OpCompositeInsert].contains(&spv_inst.opcode)
                     }
 
-                    &NodeKind::Loop {
-                        repeat_condition, ..
-                    } => mark_used_and_propagate(repeat_condition),
-
                     NodeKind::Select { .. }
-                    | NodeKind::ExitInvocation(spirt::cf::ExitInvocationKind::SpvInst(_)) => {
+                    | NodeKind::Loop { .. }
+                    | NodeKind::ExitInvocation(spirt::cf::ExitInvocationKind::SpvInst(_))
+                    | DataInstKind::FuncCall(_)
+                    | DataInstKind::Mem(_)
+                    | DataInstKind::QPtr(_)
+                    | DataInstKind::SpvExtInst { .. } => false,
+                };
+                // Ignore pure instructions (i.e. they're only used
+                // if their output value is used, from somewhere else).
+                if !is_pure {
+                    // HACK(eddyb) `Select` nodes propagate through to their
+                    // cases, so we don't want to do that.
+                    if let NodeKind::Select(_) = node_def.kind {
                         for &v in &node_def.inputs {
                             mark_used_and_propagate(v);
                         }
-                    }
+                    } else {
+                        // HACK(eddyb) sanity check pre-disaggregate.
+                        assert!(node_def.outputs.len() <= 1);
 
-                    DataInstKind::FuncCall(_)
-                    | DataInstKind::Mem(_)
-                    | DataInstKind::QPtr(_)
-                    | DataInstKind::SpvInst(_)
-                    | DataInstKind::SpvExtInst { .. } => unreachable!(),
+                        mark_used_and_propagate(Value::NodeOutput {
+                            node: func_at_node.position,
+                            output_idx: 0,
+                        });
+                    }
                 }
             },
         };
@@ -466,44 +478,9 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
     let mut value_replacements = FxHashMap::default();
 
     // Remove anything that didn't end up marked as used (directly or indirectly).
-    for node in all_nodes {
+    for (node, parent_region) in all_nodes_with_parent_region {
         let node_def = func_def_body.at(node).def();
         match &node_def.kind {
-            &NodeKind::Block { insts } => {
-                let mut all_nops = true;
-                let mut func_at_inst_iter = func_def_body.at_mut(insts).into_iter();
-                while let Some(mut func_at_inst) = func_at_inst_iter.next() {
-                    if let DataInstKind::SpvInst(spv_inst) = &func_at_inst.reborrow().def().kind
-                        && spv_inst.opcode == wk.OpNop
-                    {
-                        continue;
-                    }
-                    if !used_values.contains(&Value::DataInstOutput {
-                        inst: func_at_inst.position,
-                        output_idx: 0,
-                    }) {
-                        // Replace the removed `DataInstDef` itself with `OpNop`,
-                        // removing the ability to use its "name" as a value.
-                        *func_at_inst.def() = DataInstDef {
-                            attrs: Default::default(),
-                            kind: DataInstKind::SpvInst(wk.OpNop.into()),
-                            inputs: [].into_iter().collect(),
-                            child_regions: [].into_iter().collect(),
-                            outputs: [].into_iter().collect(),
-                        };
-                        continue;
-                    }
-                    all_nops = false;
-                }
-                // HACK(eddyb) because we can't remove list elements yet, we
-                // instead replace blocks of `OpNop`s with empty ones.
-                if all_nops {
-                    func_def_body.at_mut(node).def().kind = NodeKind::Block {
-                        insts: Default::default(),
-                    };
-                }
-            }
-
             NodeKind::Select(_) => {
                 // FIXME(eddyb) remove this cloning.
                 let cases = node_def.child_regions.clone();
@@ -573,7 +550,21 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
             | DataInstKind::Mem(_)
             | DataInstKind::QPtr(_)
             | DataInstKind::SpvInst(_)
-            | DataInstKind::SpvExtInst { .. } => unreachable!(),
+            | DataInstKind::SpvExtInst { .. } => {
+                let used = match &node_def.kind {
+                    DataInstKind::SpvInst(spv_inst) if spv_inst.opcode == wk.OpNop => false,
+
+                    _ => used_values.contains(&Value::NodeOutput {
+                        node,
+                        output_idx: 0,
+                    }),
+                };
+                if !used {
+                    func_def_body.regions[parent_region]
+                        .children
+                        .remove(node, &mut func_def_body.nodes);
+                }
+            }
         }
     }
 

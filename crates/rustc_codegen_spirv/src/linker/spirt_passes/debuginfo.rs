@@ -10,7 +10,7 @@ use spirt::transform::{InnerInPlaceTransform as _, Transformed, Transformer};
 use spirt::visit::InnerVisit;
 use spirt::{
     Attr, AttrSet, AttrSetDef, Const, ConstKind, Context, DataInstKind, DbgSrcLoc, Diag,
-    InternedStr, Module, NodeKind, Region, Type, Value, spv,
+    InternedStr, Module, Region, Type, Value, spv,
 };
 use std::marker::PhantomData;
 use std::str;
@@ -201,9 +201,9 @@ impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
     }
 
     fn in_place_transform_region_def(&mut self, mut func_at_region: FuncAtMut<'_, Region>) {
-        // HACK(eddyb) buffering the `DataInst`s to remove from this region's blocks,
+        // HACK(eddyb) buffering the `Node`s to remove from this region,
         // as iterating and modifying a list at the same time isn't supported.
-        let mut insts_to_remove = SmallVec::<[_; 8]>::new();
+        let mut nodes_to_remove = SmallVec::<[_; 8]>::new();
 
         // HACK(eddyb) this relies on the fact that each original SPIR-V block
         // can't be broken up into separate regions (at least for now), which
@@ -218,44 +218,26 @@ impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
         let mut inlined_callee_name_and_call_site = None;
 
         let mut children = func_at_region.reborrow().at_children().into_iter();
-        while let Some(mut func_at_node) = children.next() {
+        while let Some(func_at_node) = children.next() {
             let node = func_at_node.position;
+            let mut mark_for_removal = || nodes_to_remove.push(node);
 
-            // HACK(eddyb) flatten only `Block`s (into their `DataInst`s).
-            let mut func_at_insts_or_node = match func_at_node.reborrow().def().kind {
-                NodeKind::Block { insts } => Either::Left(func_at_node.at(insts).into_iter()),
-                _ => Either::Right([func_at_node].into_iter()),
-            };
-            loop {
-                let Some(mut func_at_inst_or_node) = func_at_insts_or_node
-                    .as_mut()
-                    .map_either(|it| it.next(), |it| it.next())
-                    .factor_none()
-                else {
-                    break;
-                };
+            let node_def = func_at_node.def();
+            let attrs = &mut node_def.attrs;
 
+            // FIXME(eddyb) unindent.
+            {
                 // FIXME(eddyb) deduplicate with `spirt_passes::diagnostics`.
-                let maybe_custom_inst =
-                    func_at_inst_or_node
-                        .as_mut()
-                        .left()
-                        .and_then(|func_at_inst| {
-                            let data_inst_def = func_at_inst.reborrow().freeze().def();
-                            match data_inst_def.kind {
-                                DataInstKind::SpvExtInst {
-                                    ext_set,
-                                    inst: ext_inst,
-                                } if ext_set == self.custom_ext_inst_set => Some(
-                                    CustomOp::decode(ext_inst).with_operands(&data_inst_def.inputs),
-                                ),
-                                _ => None,
-                            }
-                        });
+                let maybe_custom_inst = match node_def.kind {
+                    DataInstKind::SpvExtInst {
+                        ext_set,
+                        inst: ext_inst,
+                    } if ext_set == self.custom_ext_inst_set => {
+                        Some(CustomOp::decode(ext_inst).with_operands(&node_def.inputs))
+                    }
+                    _ => None,
+                };
                 if let Some(custom_inst) = maybe_custom_inst {
-                    let func_at_inst = func_at_inst_or_node.as_mut().left().unwrap().reborrow();
-                    let inst = func_at_inst.position;
-                    let mut mark_for_removal = || insts_to_remove.push((node, inst));
                     let expect_const = |v| match v {
                         Value::Const(ct) => ct,
                         _ => unreachable!(),
@@ -344,7 +326,7 @@ impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
                                 mark_for_removal();
                                 continue;
                             } else {
-                                func_at_inst.def().attrs.push_diag(
+                                attrs.push_diag(
                                     self.cx,
                                     Diag::bug([
                                         "`PopInlinedCallFrame` without matching `PushInlinedCallFrame`"
@@ -363,9 +345,6 @@ impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
                     }
                 }
 
-                let attrs = func_at_inst_or_node
-                    .either(|fai| &mut fai.def().attrs, |facn| &mut facn.def().attrs);
-
                 // Set the equivalent `Attr::DbgSrcLoc` attribute.
                 if let Some(dbg_src_loc) = dbg_src_loc {
                     attrs.set_dbg_src_loc(self.cx, dbg_src_loc);
@@ -373,16 +352,12 @@ impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
             }
         }
 
-        // Finally remove the `DataInst`s buffered for removal earlier.
+        // Finally remove the `Node`s buffered for removal earlier.
+        let region = func_at_region.position;
         let func = func_at_region.reborrow().at(());
-        for (parent_block, inst) in insts_to_remove {
-            match func.nodes[parent_block].kind {
-                NodeKind::Block { mut insts } => {
-                    insts.remove(inst, func.nodes);
-                    func.nodes[parent_block].kind = NodeKind::Block { insts };
-                }
-                _ => unreachable!(),
-            }
+        let region_children = &mut func.regions[region].children;
+        for node in nodes_to_remove {
+            region_children.remove(node, func.nodes);
         }
 
         func_at_region.inner_in_place_transform_with(self);

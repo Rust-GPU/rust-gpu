@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 use spirt::func_at::FuncAt;
 use spirt::{
     Attr, AttrSet, ConstDef, ConstKind, DataInstKind, DbgSrcLoc, DeclDef, ExportKey, Exportee,
-    Module, NodeKind, Type, TypeDef, TypeKind, TypeOrConst, Value, cf, spv,
+    Module, Type, TypeDef, TypeKind, TypeOrConst, Value, cf, spv,
 };
 use std::fmt::Write as _;
 
@@ -99,16 +99,8 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             // Collect entry-point inputs `OpLoad`ed by the entry block.
             // HACK(eddyb) this relies on Rust-GPU always eagerly loading inputs.
             let loaded_inputs = func_def_body
-                .at(func_def_body
-                    .at_body()
-                    .at_children()
-                    .into_iter()
-                    .next()
-                    .and_then(|func_at_first_node| match func_at_first_node.def().kind {
-                        NodeKind::Block { insts } => Some(insts),
-                        _ => None,
-                    })
-                    .unwrap_or_default())
+                .at_body()
+                .at_children()
                 .into_iter()
                 .filter_map(|func_at_inst| {
                     let data_inst_def = func_at_inst.def();
@@ -121,8 +113,8 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                         return Some((
                             gv,
                             data_inst_def.outputs[0].ty,
-                            Value::DataInstOutput {
-                                inst: func_at_inst.position,
+                            Value::NodeOutput {
+                                node: func_at_inst.position,
                                 output_idx: 0,
                             },
                         ));
@@ -196,16 +188,6 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             .expect("Abort->OpReturn can only be done on unstructured CFGs")
             .rev_post_order(func_def_body);
         for region in rpo_regions {
-            let region_def = &func_def_body.regions[region];
-            let Some(last_node) = region_def.children.iter().last else {
-                continue;
-            };
-            let last_node_def = &func_def_body.nodes[last_node];
-            let mut block_insts = match last_node_def.kind {
-                NodeKind::Block { insts } => insts,
-                _ => continue,
-            };
-
             let terminator = &mut func_def_body
                 .unstructured_cfg
                 .as_mut()
@@ -216,15 +198,18 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                 _ => continue,
             }
 
-            // HACK(eddyb) this allows accessing the `DataInst` iterator while
-            // mutably borrowing other parts of `FuncDefBody`.
-            let func_at_block_insts = FuncAt {
+            // HACK(eddyb) this allows using `FuncAt` while mutably borrowing
+            // `func_def_body.unstructured_cfg`.
+            let func = FuncAt {
                 regions: &func_def_body.regions,
                 nodes: &func_def_body.nodes,
 
-                position: block_insts,
+                position: (),
             };
-            let custom_terminator_inst = func_at_block_insts
+
+            let custom_terminator_inst = func
+                .at(region)
+                .at_children()
                 .into_iter()
                 .next_back()
                 .and_then(|func_at_inst| {
@@ -382,8 +367,9 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                     }
                     None => {}
                 }
-                block_insts.remove(abort_inst, &mut func_def_body.nodes);
-                func_def_body.nodes[last_node].kind = NodeKind::Block { insts: block_insts };
+                func_def_body.regions[region]
+                    .children
+                    .remove(abort_inst, &mut func_def_body.nodes);
             }
         }
     }

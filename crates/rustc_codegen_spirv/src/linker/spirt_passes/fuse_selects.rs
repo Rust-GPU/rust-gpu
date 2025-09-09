@@ -1,3 +1,4 @@
+use smallvec::SmallVec;
 use spirt::cf::SelectionKind;
 use spirt::func_at::FuncAt;
 use spirt::transform::InnerInPlaceTransform;
@@ -21,6 +22,10 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
     });
 
     for region in all_regions {
+        // HACK(eddyb) buffering the `Node`s to remove from this region,
+        // as iterating and modifying a list at the same time isn't supported.
+        let mut nodes_to_remove = SmallVec::<[_; 8]>::new();
+
         let mut func_at_children_iter = func_def_body.at_mut(region).at_children().into_iter();
         while let Some(func_at_child) = func_at_children_iter.next() {
             let base_node = func_at_child.position;
@@ -36,10 +41,6 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
                     let mut func = func_at_fusion_candidate.at(());
                     let fusion_candidate_def = func.reborrow().at(fusion_candidate).def();
                     match &fusion_candidate_def.kind {
-                        // HACK(eddyb) ignore empty blocks (created by
-                        // e.g. `remove_unused_values_in_func`).
-                        NodeKind::Block { insts } if insts.is_empty() => {}
-
                         NodeKind::Select(SelectionKind::BoolCond)
                             if fusion_candidate_def.inputs[0] == base_cond =>
                         {
@@ -85,17 +86,18 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
                                     .append(children_of_case_to_fuse, func.nodes);
                             }
 
-                            // HACK(eddyb) because we can't remove list elements yet,
-                            // we instead replace the `Select` with an empty `Block`.
-                            func.reborrow().at(fusion_candidate).def().kind = NodeKind::Block {
-                                insts: Default::default(),
-                            };
+                            nodes_to_remove.push(fusion_candidate);
                         }
 
                         _ => break,
                     }
                 }
             }
+        }
+
+        let region_children = &mut func_def_body.regions[region].children;
+        for node in nodes_to_remove {
+            region_children.remove(node, &mut func_def_body.nodes);
         }
     }
 }

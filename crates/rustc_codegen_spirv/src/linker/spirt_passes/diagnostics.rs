@@ -7,8 +7,8 @@ use smallvec::SmallVec;
 use spirt::func_at::FuncAt;
 use spirt::visit::{InnerVisit, Visitor};
 use spirt::{
-    Attr, AttrSet, Const, ConstKind, Context, DataInst, DataInstKind, DbgSrcLoc, Diag, DiagLevel,
-    ExportKey, Exportee, Func, GlobalVar, InternedStr, Module, Type, spv,
+    Attr, AttrSet, Const, ConstKind, Context, DataInstKind, DbgSrcLoc, Diag, DiagLevel, ExportKey,
+    Exportee, Func, GlobalVar, InternedStr, Module, Node, Type, spv,
 };
 use std::{mem, str};
 
@@ -406,13 +406,13 @@ impl<'a> Visitor<'a> for DiagnosticReporter<'a> {
         }
     }
 
-    fn visit_data_inst_def(&mut self, func_at_inst: FuncAt<'a, DataInst>) {
+    fn visit_node_def(&mut self, func_at_node: FuncAt<'a, Node>) {
         let replace_origin = |this: &mut Self, new_origin| match this.use_stack.last_mut() {
             Some(UseOrigin::IntraFunc { origin, .. }) => mem::replace(origin, new_origin),
             _ => unreachable!(),
         };
 
-        let data_inst_def = func_at_inst.def();
+        let data_inst_def = func_at_node.def();
 
         match self.use_stack.last_mut() {
             Some(UseOrigin::IntraFunc { inst_attrs, .. }) => {
@@ -429,6 +429,6 @@ impl<'a> Visitor<'a> for DiagnosticReporter<'a> {
             replace_origin(self, old_origin);
         }
 
-        func_at_inst.inner_visit_with(self);
+        func_at_node.inner_visit_with(self);
     }
 }

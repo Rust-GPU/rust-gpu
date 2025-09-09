@@ -2,7 +2,7 @@ use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexSet};
 use spirt::func_at::FuncAtMut;
 use spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Transformer};
 use spirt::{
-    Const, ConstDef, ConstKind, Context, DataInst, DataInstKind, Diag, Func, GlobalVar, Module,
+    Const, ConstDef, ConstKind, Context, DataInstKind, Diag, Func, GlobalVar, Module,
     ModuleDialect, Node, NodeKind, Type, TypeDef, TypeKind, cf, spv,
 };
 use std::collections::VecDeque;
@@ -171,8 +171,7 @@ impl Transformer for Validator<'_> {
             NodeKind::ExitInvocation(cf::ExitInvocationKind::SpvInst(spv_inst))
             | DataInstKind::SpvInst(spv_inst) => self.validate_spv_inst(spv_inst),
 
-            NodeKind::Block { .. }
-            | NodeKind::Select(_)
+            NodeKind::Select(_)
             | NodeKind::Loop { .. }
             | DataInstKind::FuncCall(_)
             | DataInstKind::Mem(_)
@@ -182,10 +181,6 @@ impl Transformer for Validator<'_> {
         if let Err(diag) = valid {
             node_def.attrs.push_diag(self.cx, diag);
         }
-    }
-
-    fn in_place_transform_data_inst_def(&mut self, func_at_data_inst: FuncAtMut<'_, DataInst>) {
-        self.in_place_transform_node_def(func_at_data_inst);
     }
 }
 
