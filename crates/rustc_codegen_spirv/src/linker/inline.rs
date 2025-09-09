@@ -139,6 +139,12 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
         let mut function = mem::replace(&mut functions[func_idx], Err(FuncIsBeingInlined)).unwrap();
         inliner.inline_fn(&mut function, &functions);
         fuse_trivial_branches(&mut function);
+
+        super::duplicates::DebuginfoDeduplicator {
+            custom_ext_inst_set_import,
+        }
+        .remove_duplicate_debuginfo_in_function(&mut function);
+
         functions[func_idx] = Ok(function);
     }
 

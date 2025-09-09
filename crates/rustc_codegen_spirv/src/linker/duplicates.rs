@@ -283,7 +283,20 @@ pub fn remove_duplicate_debuginfo(module: &mut Module) {
         })
         .map(|inst| inst.result_id.unwrap());
 
+    let deduper = DebuginfoDeduplicator {
+        custom_ext_inst_set_import,
+    };
     for func in &mut module.functions {
+        deduper.remove_duplicate_debuginfo_in_function(func);
+    }
+}
+
+pub struct DebuginfoDeduplicator {
+    pub custom_ext_inst_set_import: Option<Word>,
+}
+
+impl DebuginfoDeduplicator {
+    pub fn remove_duplicate_debuginfo_in_function(&self, func: &mut rspirv::dr::Function) {
         for block in &mut func.blocks {
             // Ignore the terminator, it's effectively "outside" debuginfo.
             let (_, insts) = block.instructions.split_last_mut().unwrap();
@@ -339,7 +352,8 @@ pub fn remove_duplicate_debuginfo(module: &mut Module) {
                 let inst = &insts[inst_idx];
                 let custom_op = match inst.class.opcode {
                     Op::ExtInst
-                        if Some(inst.operands[0].unwrap_id_ref()) == custom_ext_inst_set_import =>
+                        if Some(inst.operands[0].unwrap_id_ref())
+                            == self.custom_ext_inst_set_import =>
                     {
                         Some(CustomOp::decode_from_ext_inst(inst))
                     }
