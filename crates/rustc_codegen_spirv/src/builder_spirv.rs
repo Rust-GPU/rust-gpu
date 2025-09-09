@@ -35,11 +35,6 @@ use std::{fs::File, io::Write, path::Path};
 pub enum SpirvValueKind {
     Def(Word),
 
-    /// The ID of a global instruction matching a `SpirvConst`, but which cannot
-    /// pass validation. Used to error (or attach zombie spans), at the usesites
-    /// of such constants, instead of where they're generated (and cached).
-    IllegalConst(Word),
-
     // FIXME(eddyb) this shouldn't be needed, but `rustc_codegen_ssa` still relies
     // on converting `Function`s to `Value`s even for direct calls, the `Builder`
     // should just have direct and indirect `call` variants (or a `Callee` enum).
@@ -96,7 +91,7 @@ impl SpirvValue {
 
     pub fn const_fold_load(self, cx: &CodegenCx<'_>) -> Option<Self> {
         match self.kind {
-            SpirvValueKind::Def(id) | SpirvValueKind::IllegalConst(id) => {
+            SpirvValueKind::Def(id) => {
                 let &entry = cx.builder.id_to_const.borrow().get(&id)?;
                 match entry.val {
                     SpirvConst::PtrTo { pointee } => {
@@ -104,15 +99,9 @@ impl SpirvValue {
                             SpirvType::Pointer { pointee } => pointee,
                             ty => bug!("load called on value that wasn't a pointer: {:?}", ty),
                         };
-                        // FIXME(eddyb) deduplicate this `if`-`else` and its other copies.
-                        let kind = if entry.legal.is_ok() {
-                            SpirvValueKind::Def(pointee)
-                        } else {
-                            SpirvValueKind::IllegalConst(pointee)
-                        };
                         Some(SpirvValue {
                             zombie_waiting_for_span: entry.legal.is_err(),
-                            kind,
+                            kind: SpirvValueKind::Def(pointee),
                             ty,
                         })
                     }
@@ -152,7 +141,6 @@ impl SpirvValue {
             }
 
             SpirvValueKind::Def(id)
-            | SpirvValueKind::IllegalConst(id)
             | SpirvValueKind::LogicalPtrCast {
                 original_ptr: _,
                 original_ptr_ty: _,
@@ -573,15 +561,9 @@ impl<'tcx> BuilderSpirv<'tcx> {
 
         let val_with_type = WithType { ty, val };
         if let Some(entry) = self.const_to_id.borrow().get(&val_with_type) {
-            // FIXME(eddyb) deduplicate this `if`-`else` and its other copies.
-            let kind = if entry.legal.is_ok() {
-                SpirvValueKind::Def(entry.val)
-            } else {
-                SpirvValueKind::IllegalConst(entry.val)
-            };
             return SpirvValue {
                 zombie_waiting_for_span: entry.legal.is_err(),
-                kind,
+                kind: SpirvValueKind::Def(entry.val),
                 ty,
             };
         }
@@ -784,15 +766,9 @@ impl<'tcx> BuilderSpirv<'tcx> {
                 .insert(id, WithConstLegality { val, legal }),
             None
         );
-        // FIXME(eddyb) deduplicate this `if`-`else` and its other copies.
-        let kind = if legal.is_ok() {
-            SpirvValueKind::Def(id)
-        } else {
-            SpirvValueKind::IllegalConst(id)
-        };
         SpirvValue {
             zombie_waiting_for_span: legal.is_err(),
-            kind,
+            kind: SpirvValueKind::Def(id),
             ty,
         }
     }
@@ -803,9 +779,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
 
     pub fn lookup_const(&self, def: SpirvValue) -> Option<SpirvConst<'tcx, 'tcx>> {
         match def.kind {
-            SpirvValueKind::Def(id) | SpirvValueKind::IllegalConst(id) => {
-                self.lookup_const_by_id(id)
-            }
+            SpirvValueKind::Def(id) => self.lookup_const_by_id(id),
             _ => None,
         }
     }
