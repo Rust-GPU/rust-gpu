@@ -15,13 +15,13 @@ use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
 use rustc_index::Idx;
 use rustc_middle::query::Providers;
+use rustc_middle::span_bug;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
 use rustc_middle::ty::{
     self, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, PolyFnSig, Ty, TyCtxt,
     TyKind, UintTy,
 };
 use rustc_middle::ty::{GenericArgsRef, ScalarInt};
-use rustc_middle::{bug, span_bug};
 use rustc_span::DUMMY_SP;
 use rustc_span::def_id::DefId;
 use rustc_span::{Span, Symbol};
@@ -437,7 +437,13 @@ fn trans_scalar<'tcx>(
             SpirvType::Float(float_kind.size().bits() as u32).def(span, cx)
         }
         Primitive::Pointer(addr_space) => {
-            let pointee_ty = dig_scalar_pointee(cx, ty, offset);
+            let Ok(Some(pointee_ty)) = dig_scalar_pointee(cx, ty, offset) else {
+                return SpirvType::Pointer {
+                    pointee: None,
+                    addr_space,
+                }
+                .def(span, cx);
+            };
             // Pointers can be recursive. So, record what we're currently translating, and if we're already translating
             // the same type, emit an OpTypePointer and use that ID.
             if let Some(predefined_result) = cx
@@ -456,6 +462,9 @@ fn trans_scalar<'tcx>(
     }
 }
 
+// HACK(eddyb) error type for `dig_scalar_pointee`, though not a real "error".
+struct PointeeTypeMismatch;
+
 // This is a really weird function, strap in...
 // So, rustc_codegen_ssa is designed around scalar pointers being opaque, you shouldn't know the type behind the
 // pointer. Unfortunately, that's impossible for us, we need to know the underlying pointee type for various reasons. In
@@ -470,7 +479,7 @@ fn dig_scalar_pointee<'tcx>(
     cx: &CodegenCx<'tcx>,
     layout: TyAndLayout<'tcx>,
     offset: Size,
-) -> PointeeTy<'tcx> {
+) -> Result<Option<PointeeTy<'tcx>>, PointeeTypeMismatch> {
     if let FieldsShape::Primitive = layout.fields {
         assert_eq!(offset, Size::ZERO);
         let pointee = match *layout.ty.kind() {
@@ -478,9 +487,9 @@ fn dig_scalar_pointee<'tcx>(
                 PointeeTy::Ty(cx.layout_of(pointee_ty))
             }
             TyKind::FnPtr(sig_tys, hdr) => PointeeTy::Fn(sig_tys.with(hdr)),
-            _ => bug!("Pointer is not `&T`, `*T` or `fn` pointer: {:#?}", layout),
+            _ => return Ok(None),
         };
-        return pointee;
+        return Ok(Some(pointee));
     }
 
     let all_fields = (match &layout.variants {
@@ -507,25 +516,14 @@ fn dig_scalar_pointee<'tcx>(
             continue;
         }
         if (field_offset..field_offset + field.size).contains(&offset) {
-            let new_pointee = dig_scalar_pointee(cx, field, offset - field_offset);
-            match pointee {
-                Some(old_pointee) if old_pointee != new_pointee => {
-                    cx.tcx.dcx().fatal(format!(
-                        "dig_scalar_pointee: unsupported Pointer with different \
-                         pointee types ({old_pointee:?} vs {new_pointee:?}) at offset {offset:?} in {layout:#?}"
-                    ));
-                }
-                _ => pointee = Some(new_pointee),
+            let new_pointee = dig_scalar_pointee(cx, field, offset - field_offset)?;
+            if pointee.is_some() && pointee != new_pointee {
+                return Err(PointeeTypeMismatch);
             }
+            pointee = new_pointee;
         }
     }
-    pointee.unwrap_or_else(|| {
-        bug!(
-            "field containing Pointer scalar at offset {:?} not found in {:#?}",
-            offset,
-            layout
-        )
-    })
+    Ok(pointee)
 }
 
 // FIXME(eddyb) all `ty: TyAndLayout` variables should be `layout: TyAndLayout`,
