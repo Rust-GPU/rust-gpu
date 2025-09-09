@@ -12,13 +12,14 @@ use lazy_static::lazy_static;
 use rustc_data_structures::fx::FxIndexSet;
 use rustc_index::bit_set::DenseBitSet as BitSet;
 use smallvec::SmallVec;
+use spirt::cf::SelectionKind;
 use spirt::func_at::FuncAt;
 use spirt::mem::MemOp;
 use spirt::qptr::QPtrOp;
 use spirt::visit::{InnerVisit, Visitor};
 use spirt::{
     AttrSet, Const, Context, DataInstKind, DeclDef, EntityOrientedDenseMap, Func, FuncDefBody,
-    GlobalVar, Module, Node, NodeKind, Region, Type, Value, Var, VarKind, spv,
+    GlobalVar, Module, Node, NodeDef, NodeKind, Region, Type, Value, Var, VarKind, spv,
 };
 use std::collections::VecDeque;
 use std::str;
@@ -98,6 +99,13 @@ macro_rules! def_spv_spec_with_extra_well_known {
 def_spv_spec_with_extra_well_known! {
     opcode: spv::spec::Opcode = [
         OpCopyMemory,
+
+        OpSelect,
+
+        OpConstantNull,
+        OpSpecConstantOp,
+        OpConvertUToPtr,
+        OpConvertPtrToU,
     ],
     operand_kind: spv::spec::OperandKind = [
         Capability,
@@ -116,6 +124,21 @@ def_spv_spec_with_extra_well_known! {
         PhysicalStorageBuffer,
     ],
 }
+
+const SPIRT_MEM_LAYOUT_CONFIG: &spirt::mem::LayoutConfig = &spirt::mem::LayoutConfig {
+    abstract_bool_size_align: (1, 1),
+    logical_ptr_size_align: (4, 4),
+    ..spirt::mem::LayoutConfig::VULKAN_SCALAR_LAYOUT_LE
+};
+const QPTR_SIZED_UINT: spirt::scalar::Type = {
+    let (qptr_size, _) = SPIRT_MEM_LAYOUT_CONFIG.logical_ptr_size_align;
+    spirt::scalar::Type::UInt(
+        match spirt::scalar::IntWidth::try_from_bits(qptr_size * 8) {
+            Some(w) => w,
+            None => unreachable!(),
+        },
+    )
+};
 
 /// Run intra-function passes on all `Func` definitions in the `Module`.
 //
@@ -148,28 +171,19 @@ pub(super) fn run_func_passes<P>(
         collector.seen_funcs
     };
 
+    let mut needs_qptr_lifting = false;
+
     for name in passes {
         let name = name.as_ref();
 
         // HACK(eddyb) not really a function pass.
         if name == "qptr" {
-            let layout_config = &spirt::mem::LayoutConfig {
-                abstract_bool_size_align: (1, 1),
-                logical_ptr_size_align: (4, 4),
-                ..spirt::mem::LayoutConfig::VULKAN_SCALAR_LAYOUT_LE
-            };
-
             let profiler = before_pass("qptr::lower_from_spv_ptrs", module);
-            spirt::passes::qptr::lower_from_spv_ptrs(module, layout_config);
+            spirt::passes::qptr::lower_from_spv_ptrs(module, SPIRT_MEM_LAYOUT_CONFIG);
             after_pass(Some(module), profiler);
 
-            let profiler = before_pass("mem::analyze_accesses", module);
-            spirt::passes::qptr::analyze_mem_accesses(module, layout_config);
-            after_pass(Some(module), profiler);
-
-            let profiler = before_pass("qptr::lift_to_spv_ptrs", module);
-            spirt::passes::qptr::lift_to_spv_ptrs(module, layout_config);
-            after_pass(Some(module), profiler);
+            // HACK(eddyb) see `if needs_qptr_lifting` for where this is handled.
+            needs_qptr_lifting = true;
 
             continue;
         }
@@ -192,6 +206,19 @@ pub(super) fn run_func_passes<P>(
                 remove_unused_values_in_func(func_def_body);
             }
         }
+        after_pass(Some(module), profiler);
+    }
+
+    // HACK(eddyb) `qptr` is less of a "pass" and more of a "dialect", and it
+    // largely doesn't make sense to have additional transformations between
+    // "lifting `qptr` back to `OpTypePointer`s" and "lifting SPIR-T to SPIR-V".
+    if needs_qptr_lifting {
+        let profiler = before_pass("mem::analyze_accesses", module);
+        spirt::passes::qptr::analyze_mem_accesses(module, SPIRT_MEM_LAYOUT_CONFIG);
+        after_pass(Some(module), profiler);
+
+        let profiler = before_pass("qptr::lift_to_spv_ptrs", module);
+        spirt::passes::qptr::lift_to_spv_ptrs(module, SPIRT_MEM_LAYOUT_CONFIG);
         after_pass(Some(module), profiler);
     }
 }
@@ -255,16 +282,24 @@ impl Visitor<'_> for ReachableUseCollector<'_> {
 }
 
 // FIXME(eddyb) maybe this should be provided by `spirt::visit`.
-struct VisitAllRegionsAndNodes<S, VCR, VCN> {
+struct VisitAllRegionsAndNodes<S, ENCR, EXCR, ENCN, EXCN> {
     state: S,
-    visit_region: VCR,
-    visit_node: VCN,
+    enter_region: ENCR,
+    exit_region: EXCR,
+    enter_node: ENCN,
+    exit_node: EXCN,
 }
 const _: () = {
     use spirt::{func_at::*, visit::*, *};
 
-    impl<'a, S, VCR: FnMut(&mut S, FuncAt<'a, Region>), VCN: FnMut(&mut S, FuncAt<'a, Node>)>
-        Visitor<'a> for VisitAllRegionsAndNodes<S, VCR, VCN>
+    impl<
+        'a,
+        S,
+        ENCR: FnMut(&mut S, FuncAt<'a, Region>),
+        EXCR: FnMut(&mut S, FuncAt<'a, Region>),
+        ENCN: FnMut(&mut S, FuncAt<'a, Node>),
+        EXCN: FnMut(&mut S, FuncAt<'a, Node>),
+    > Visitor<'a> for VisitAllRegionsAndNodes<S, ENCR, EXCR, ENCN, EXCN>
     {
         // FIXME(eddyb) this is excessive, maybe different kinds of
         // visitors should exist for module-level and func-level?
@@ -275,12 +310,14 @@ const _: () = {
         fn visit_func_use(&mut self, _: Func) {}
 
         fn visit_region_def(&mut self, func_at_region: FuncAt<'a, Region>) {
-            (self.visit_region)(&mut self.state, func_at_region);
+            (self.enter_region)(&mut self.state, func_at_region);
             func_at_region.inner_visit_with(self);
+            (self.exit_region)(&mut self.state, func_at_region);
         }
         fn visit_node_def(&mut self, func_at_node: FuncAt<'a, Node>) {
-            (self.visit_node)(&mut self.state, func_at_node);
+            (self.enter_node)(&mut self.state, func_at_node);
             func_at_node.inner_visit_with(self);
+            (self.exit_node)(&mut self.state, func_at_node);
         }
     }
 };
@@ -372,8 +409,9 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                 used: Default::default(),
                 queue: Default::default(),
             },
-            visit_region: |_: &mut _, _| {},
-            visit_node: |propagator: &mut Propagator, func_at_node: FuncAt<'_, Node>| {
+            enter_region: |_: &mut _, _| {},
+            exit_region: |_: &mut _, _| {},
+            enter_node: |propagator: &mut Propagator, func_at_node: FuncAt<'_, Node>| {
                 let node_def = func_at_node.def();
                 if let NodeKind::Loop { .. } = node_def.kind {
                     propagator
@@ -381,29 +419,32 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                         .insert(node_def.child_regions[0], func_at_node.position);
                 }
             },
+            exit_node: |_: &mut _, _| {},
         };
         func_def_body.inner_visit_with(&mut visitor);
         visitor.state
     };
 
     // HACK(eddyb) this kind of random-access is easier than using `spirt::transform`.
-    let mut all_nodes_with_parent_region = vec![];
+    let mut all_nodes_in_region_post_order_with_parent_region = vec![];
 
     let used_vars = {
         let mut visitor = VisitAllRegionsAndNodes {
             state: propagator,
-            visit_region: |_propagator: &mut Propagator, func_at_region: FuncAt<'_, Region>| {
+            enter_region: |_: &mut _, _| {},
+            exit_region: |_propagator: &mut Propagator, func_at_region: FuncAt<'_, Region>| {
                 // HACK(eddyb) parent region tracked for convenient removal,
                 // but it might make more sense to iterate regions directly.
                 let region = func_at_region.position;
-                all_nodes_with_parent_region.extend(
+                all_nodes_in_region_post_order_with_parent_region.extend(
                     func_at_region
                         .at_children()
                         .into_iter()
                         .map(|func_at_node| (func_at_node.position, region)),
                 );
             },
-            visit_node: |propagator: &mut Propagator, func_at_node: FuncAt<'_, Node>| {
+            enter_node: |_: &mut _, _| {},
+            exit_node: |propagator: &mut Propagator, func_at_node: FuncAt<'_, Node>| {
                 let mut mark_used_and_propagate = |v| {
                     propagator.mark_used(v);
                     propagator.propagate_used(func_at_node.at(()));
@@ -412,7 +453,13 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                 let is_pure = match &node_def.kind {
                     DataInstKind::Scalar(_)
                     | DataInstKind::Vector(_)
-                    | DataInstKind::Mem(MemOp::FuncLocalVar(_))
+                    | DataInstKind::Mem(
+                        MemOp::FuncLocalVar(_)
+                        // HACK(eddyb) removing dead loads allows
+                        // unblocking `qptr::partition_and_propagate`
+                        // when the load doesn't fit a previous store.
+                        | MemOp::Load { .. },
+                    )
                     | DataInstKind::QPtr(
                         QPtrOp::HandleArrayIndex
                         | QPtrOp::BufferData
@@ -424,14 +471,14 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                     // HACK(eddyb) small selection relevant for now,
                     // but should be extended using e.g. a bitset.
                     DataInstKind::SpvInst(spv_inst, _) => {
-                        [wk.OpNop, wk.OpCompositeInsert].contains(&spv_inst.opcode)
+                        [wk.OpNop, wk.OpSelect, wk.OpBitcast].contains(&spv_inst.opcode)
                     }
 
                     NodeKind::Select { .. }
                     | NodeKind::Loop { .. }
                     | NodeKind::ExitInvocation(spirt::cf::ExitInvocationKind::SpvInst(_))
                     | DataInstKind::FuncCall(_)
-                    | DataInstKind::Mem(MemOp::Load { .. } | MemOp::Store { .. })
+                    | DataInstKind::Mem(MemOp::Store { .. })
                     | DataInstKind::ThunkBind(_)
                     | DataInstKind::SpvExtInst { .. } => false,
                 };
@@ -477,7 +524,9 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
     };
 
     // Remove anything that didn't end up marked as used (directly or indirectly).
-    for (node, parent_region) in all_nodes_with_parent_region {
+    for (node, parent_region) in all_nodes_in_region_post_order_with_parent_region {
+        let mut remove_node = false;
+
         let func = func_def_body.at_mut(());
         let node_def = &mut func.nodes[node];
         match &node_def.kind {
@@ -523,6 +572,23 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                         prune_values(&mut func.regions[child_region].outputs);
                     }
                 }
+
+                // FIXME(eddyb) reacting to empty regions which *could* be the
+                // result of node removals (performed earlier in this pass) means
+                // this could cause even more value definitions to become unused
+                // (specifically the `scrutinee` of the `Select`), but that can't
+                // be easily detected without a second pass over the function,
+                // *or* propagating and removing at the same time, which would
+                // require iterating in reverse, to visit all possible uses of
+                // a definition, before the definition itself.
+                if let NodeKind::Select(_) = node_def.kind {
+                    let all_cases_empty = node_def.child_regions.iter().all(|&case| {
+                        let case_def = &func.regions[case];
+                        case_def.outputs.is_empty() && case_def.children.is_empty()
+                    });
+
+                    remove_node = all_cases_empty;
+                }
             }
 
             NodeKind::ExitInvocation { .. } => {}
@@ -546,12 +612,24 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                                 .any(|&output_var| used_vars.get(output_var).is_some())
                     }
                 };
-                if !used {
-                    func.regions[parent_region]
-                        .children
-                        .remove(node, func.nodes);
-                }
+                remove_node = !used;
             }
+        }
+        if remove_node {
+            func.regions[parent_region]
+                .children
+                .remove(node, func.nodes);
+
+            // HACK(eddyb) there isn't a good "dummy" to use here,
+            // but really the only thing we care about is no
+            // heap allocations remain around.
+            *func_def_body.at_mut(node).def() = NodeDef {
+                attrs: Default::default(),
+                kind: NodeKind::Select(SelectionKind::BoolCond),
+                inputs: Default::default(),
+                child_regions: Default::default(),
+                outputs: Default::default(),
+            };
         }
     }
 }

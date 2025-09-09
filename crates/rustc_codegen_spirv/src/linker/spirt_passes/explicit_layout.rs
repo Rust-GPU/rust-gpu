@@ -166,12 +166,14 @@ impl Transformer for SelectiveEraser<'_> {
             let mut errors_to_attach = vec![];
             func_def_body.inner_visit_with(&mut super::VisitAllRegionsAndNodes {
                 state: (),
-                visit_region: |_: &mut _, _| {},
-                visit_node: |_: &mut _, func_at_node: FuncAt<'_, Node>| {
+                enter_region: |_: &mut _, _| {},
+                exit_region: |_: &mut _, _| {},
+                enter_node: |_: &mut _, func_at_node: FuncAt<'_, Node>| {
                     if let Err(e) = self.pre_check_node(func_at_node) {
                         errors_to_attach.push((func_at_node.position, e));
                     }
                 },
+                exit_node: |_: &mut _, _| {},
             });
             for (node, err) in errors_to_attach {
                 func_def_body
