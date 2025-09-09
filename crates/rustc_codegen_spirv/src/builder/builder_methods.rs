@@ -3411,10 +3411,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         if buffer_store_intrinsic {
             self.codegen_buffer_store_intrinsic(fn_abi, args);
             let void_ty = SpirvType::Void.def(rustc_span::DUMMY_SP, self);
-            return SpirvValue {
-                kind: SpirvValueKind::IllegalTypeUsed(void_ty),
-                ty: void_ty,
-            };
+            return self.undef(void_ty);
         }
 
         if let Some((source_ty, target_ty)) = from_trait_impl {
