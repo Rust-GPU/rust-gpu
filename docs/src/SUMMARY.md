@@ -15,3 +15,11 @@
   - [Attribute syntax](./attributes.md)
   - [Inline Assembly](./inline-asm.md)
   - [Image type syntax](./image.md)
+
+# Primer on the graphics ecosystem
+
+- [Graphics APIs](ecosystem/graphics_api.md)
+- [Shading Languages](ecosystem/shading_lang.md)
+- [Shader Transpilers](ecosystem/transpiler.md)
+- [Translation Layers](ecosystem/translation.md)
+- [Modern shader compilers](ecosystem/modern.md)
