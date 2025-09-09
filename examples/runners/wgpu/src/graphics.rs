@@ -155,6 +155,12 @@ async fn run(
                 )
             });
 
+        // HACK(eddyb) this (alongside `.add_srgb_suffix()` calls elsewhere)
+        // forces sRGB output, even on WebGPU (which handles it differently).
+        surface_config
+            .view_formats
+            .push(surface_config.format.add_srgb_suffix());
+
         // FIXME(eddyb) should this be toggled by a CLI arg?
         // NOTE(eddyb) VSync was disabled in the past, but without VSync,
         // especially for simpler shaders, you can easily hit thousands
@@ -185,7 +191,7 @@ async fn run(
         &pipeline_layout,
         surface_with_config.as_ref().map_or_else(
             |pending| pending.preferred_format,
-            |(_, surface_config)| surface_config.format,
+            |(_, surface_config)| surface_config.format.add_srgb_suffix(),
         ),
         compiled_shader_modules,
     );
@@ -288,9 +294,10 @@ async fn run(
                             return;
                         }
                     };
-                    let output_view = output
-                        .texture
-                        .create_view(&wgpu::TextureViewDescriptor::default());
+                    let output_view = output.texture.create_view(&wgpu::TextureViewDescriptor {
+                        format: Some(surface_config.format.add_srgb_suffix()),
+                        ..wgpu::TextureViewDescriptor::default()
+                    });
                     let mut encoder = device
                         .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
                     {
