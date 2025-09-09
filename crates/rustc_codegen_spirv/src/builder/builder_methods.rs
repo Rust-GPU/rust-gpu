@@ -11,7 +11,7 @@ use crate::custom_insts::CustomInst;
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::dr::{InsertPoint, Instruction, Operand};
-use rspirv::spirv::{MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
+use rspirv::spirv::{MemoryAccess, MemoryModel, MemorySemantics, Op, Scope, StorageClass, Word};
 use rustc_abi::{Align, BackendRepr, Scalar, Size, WrappingRange};
 use rustc_apfloat::{Float, Round, Status, ieee};
 use rustc_codegen_ssa::MemFlags;
@@ -1883,10 +1883,19 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     }
 
     fn volatile_load(&mut self, ty: Self::Type, ptr: Self::Value) -> Self::Value {
-        // TODO: Implement this
-        let result = self.load(ty, ptr, Align::from_bytes(0).unwrap());
-        self.zombie(result.def(self), "volatile load is not supported yet");
-        result
+        let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, ty);
+        let loaded_val = self
+            .emit()
+            .load(
+                access_ty,
+                None,
+                ptr.def(self),
+                Some(MemoryAccess::VOLATILE),
+                empty(),
+            )
+            .unwrap()
+            .with_type(access_ty);
+        self.bitcast(loaded_val, ty)
     }
 
     fn atomic_load(

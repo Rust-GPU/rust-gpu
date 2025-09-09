@@ -72,7 +72,23 @@ impl<'tcx> CodegenCx<'tcx> {
     ) -> SpirvFunctionCursor {
         let def_id = instance.def_id();
 
-        let control = attrs_to_spirv(self.tcx.codegen_fn_attrs(def_id));
+        // HACK(eddyb) this is a bit roundabout, but the easiest way to get a
+        // fully absolute path that contains at least as much information as
+        // `instance.to_string()` (at least with `-C symbol-mangling-version=v0`).
+        // While we could use the mangled symbol instead, like we do for linkage,
+        // `OpName` is more of a debugging aid, so not having to separately
+        // demangle the SPIR-V can help. However, if some tools assume `OpName`
+        // is always a valid identifier, we may have to offer the mangled name
+        // (as some sort of opt-in, or toggled based on the platform, etc.).
+        let symbol_name = self.tcx.symbol_name(instance).name;
+        let demangled_symbol_name = format!("{:#}", rustc_demangle::demangle(symbol_name));
+
+        let codegen_fn_attrs = self.tcx.codegen_fn_attrs(def_id);
+        let mut control = attrs_to_spirv(codegen_fn_attrs);
+        if codegen_fn_attrs.inline == InlineAttr::None && instance.def.requires_inline(self.tcx) {
+            control.insert(FunctionControl::INLINE);
+        }
+
         let fn_abi = self.fn_abi_of_instance(instance, ty::List::empty());
         let span = self.tcx.def_span(def_id);
         let function_type = fn_abi.spirv_type(span, self);
@@ -120,16 +136,6 @@ impl<'tcx> CodegenCx<'tcx> {
             .annotations
             .extend(src_loc_inst);
 
-        // HACK(eddyb) this is a bit roundabout, but the easiest way to get a
-        // fully absolute path that contains at least as much information as
-        // `instance.to_string()` (at least with `-C symbol-mangling-version=v0`).
-        // While we could use the mangled symbol instead, like we do for linkage,
-        // `OpName` is more of a debugging aid, so not having to separately
-        // demangle the SPIR-V can help. However, if some tools assume `OpName`
-        // is always a valid identifier, we may have to offer the mangled name
-        // (as some sort of opt-in, or toggled based on the platform, etc.).
-        let symbol_name = self.tcx.symbol_name(instance).name;
-        let demangled_symbol_name = format!("{:#}", rustc_demangle::demangle(symbol_name));
         self.emit_global().name(fn_id, &demangled_symbol_name);
 
         if let Some(linkage) = linkage {
