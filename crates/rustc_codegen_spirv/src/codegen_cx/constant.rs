@@ -224,18 +224,7 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                 let alloc_id = prov.alloc_id();
                 let (base_addr, _base_addr_space) = match self.tcx.global_alloc(alloc_id) {
                     GlobalAlloc::Memory(alloc) => {
-                        let pointee = match self.lookup_type(ty) {
-                            SpirvType::Pointer { pointee } => pointee,
-                            other => self.tcx.dcx().fatal(format!(
-                                "GlobalAlloc::Memory type not implemented: {}",
-                                other.debug(ty, self)
-                            )),
-                        };
-                        // FIXME(eddyb) always use `const_data_from_alloc`, and
-                        // defer the actual `try_read_from_const_alloc` step.
-                        let init = self
-                            .try_read_from_const_alloc(alloc, pointee)
-                            .unwrap_or_else(|| self.const_data_from_alloc(alloc));
+                        let init = self.const_data_from_alloc(alloc);
                         let value = self.static_addr_of(init, alloc.inner().align, None);
                         (value, AddressSpace::DATA)
                     }
@@ -253,18 +242,7 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                                 }),
                             )))
                             .unwrap_memory();
-                        let pointee = match self.lookup_type(ty) {
-                            SpirvType::Pointer { pointee } => pointee,
-                            other => self.tcx.dcx().fatal(format!(
-                                "GlobalAlloc::VTable type not implemented: {}",
-                                other.debug(ty, self)
-                            )),
-                        };
-                        // FIXME(eddyb) always use `const_data_from_alloc`, and
-                        // defer the actual `try_read_from_const_alloc` step.
-                        let init = self
-                            .try_read_from_const_alloc(alloc, pointee)
-                            .unwrap_or_else(|| self.const_data_from_alloc(alloc));
+                        let init = self.const_data_from_alloc(alloc);
                         let value = self.static_addr_of(init, alloc.inner().align, None);
                         (value, AddressSpace::DATA)
                     }
