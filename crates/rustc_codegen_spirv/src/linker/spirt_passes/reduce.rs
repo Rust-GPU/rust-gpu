@@ -80,9 +80,10 @@ mod sealed {
     }
 }
 
-// HACK(eddyb) this exists only because the relevant changes ended up not being
+// HACK(eddyb) these exist only because the relevant changes ended up not being
 // necessary in the end, but they might still be useful in the future.
-const PREDICATION_FOR_SELECT_PER_CASE_OUTPUTS: bool = false;
+const ENABLE_PREDICATION_FOR_SELECT_PER_CASE_OUTPUTS: bool = false;
+const ENABLE_REDUCES_PROBLEMATIC_WRT_QPTR_LEGALIZE: bool = false;
 
 /// Apply "reduction rules" to `func_def_body`, replacing (pure) computations
 /// with one of their inputs or a constant (e.g. `x + 0 => x` or `1 + 2 => 3`),
@@ -490,7 +491,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                     let node_def = &func_def_body.nodes[node];
                     match &node_def.kind {
                         NodeKind::Select(kind) => {
-                            if PREDICATION_FOR_SELECT_PER_CASE_OUTPUTS {
+                            if ENABLE_PREDICATION_FOR_SELECT_PER_CASE_OUTPUTS {
                                 // FIXME(eddyb) DRY.
                                 let case_consts = match kind {
                                     SelectionKind::BoolCond => {
@@ -1066,7 +1067,7 @@ fn try_reduce_predicated(
                 output_idx: v_idx,
             },
             _,
-        ) if PREDICATION_FOR_SELECT_PER_CASE_OUTPUTS => {
+        ) if ENABLE_PREDICATION_FOR_SELECT_PER_CASE_OUTPUTS => {
             let v_node_def = func.at(v_node).def();
             if let NodeKind::Select(kind) = &v_node_def.kind {
                 // FIXME(eddyb) DRY.
@@ -1548,7 +1549,7 @@ impl Reducible<Const> {
                     None
                 }
             }
-            (PureOp::BitCast, _) => {
+            (PureOp::BitCast, _) if ENABLE_REDUCES_PROBLEMATIC_WRT_QPTR_LEGALIZE => {
                 let (spv_inst, const_inputs) = if input.as_scalar(cx).map(|ct| ct.bits()) == Some(0)
                 {
                     (wk.OpConstantNull.into(), [].into_iter().collect())
