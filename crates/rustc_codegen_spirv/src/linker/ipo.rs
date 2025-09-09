@@ -4,7 +4,7 @@
 
 use indexmap::IndexSet;
 use rspirv::dr::Module;
-use rspirv::spirv::Op;
+use rspirv::spirv::{Op, Word};
 use rustc_data_structures::fx::FxHashMap;
 
 // FIXME(eddyb) use newtyped indices and `IndexVec`.
@@ -19,6 +19,9 @@ pub struct CallGraph {
 
 impl CallGraph {
     pub fn collect(module: &Module) -> Self {
+        Self::collect_with_func_id_to_idx(module).0
+    }
+    pub fn collect_with_func_id_to_idx(module: &Module) -> (Self, FxHashMap<Word, FuncIdx>) {
         let func_id_to_idx: FxHashMap<_, _> = module
             .functions
             .iter()
@@ -51,10 +54,13 @@ impl CallGraph {
                     .collect()
             })
             .collect();
-        Self {
-            entry_points,
-            callees,
-        }
+        (
+            Self {
+                entry_points,
+                callees,
+            },
+            func_id_to_idx,
+        )
     }
 
     /// Order functions using a post-order traversal, i.e. callees before callers.
