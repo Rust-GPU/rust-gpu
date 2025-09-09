@@ -6,8 +6,8 @@ use rustc_span::Span;
 use smallvec::SmallVec;
 use spirt::visit::{InnerVisit, Visitor};
 use spirt::{
-    Attr, AttrSet, Const, ConstKind, Context, DataInstDef, DataInstForm, DataInstKind, DbgSrcLoc,
-    Diag, DiagLevel, ExportKey, Exportee, Func, GlobalVar, InternedStr, Module, Type, spv,
+    Attr, AttrSet, Const, ConstKind, Context, DataInstDef, DataInstKind, DbgSrcLoc, Diag,
+    DiagLevel, ExportKey, Exportee, Func, GlobalVar, InternedStr, Module, Type, spv,
 };
 use std::{mem, str};
 
@@ -377,11 +377,6 @@ impl<'a> Visitor<'a> for DiagnosticReporter<'a> {
             }
         }
     }
-    fn visit_data_inst_form_use(&mut self, data_inst_form: DataInstForm) {
-        // NOTE(eddyb) this contains no deduplication because each `DataInstDef`
-        // will have any diagnostics reported separately.
-        self.visit_data_inst_form_def(&self.cx[data_inst_form]);
-    }
 
     fn visit_global_var_use(&mut self, gv: GlobalVar) {
         if self.seen_global_vars.insert(gv) {
@@ -423,7 +418,7 @@ impl<'a> Visitor<'a> for DiagnosticReporter<'a> {
             _ => unreachable!(),
         }
 
-        if let DataInstKind::FuncCall(func) = self.cx[data_inst_def.form].kind {
+        if let DataInstKind::FuncCall(func) = data_inst_def.kind {
             // HACK(eddyb) visit `func` early, to control its `use_stack`, with
             // the later visit from `inner_visit_with` ignored as a duplicate.
             let old_origin = replace_origin(self, IntraFuncUseOrigin::CallCallee);
