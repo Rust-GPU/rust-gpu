@@ -2507,11 +2507,25 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             );
             // Defer the cast so that it has a chance to be avoided.
             let original_ptr = ptr.def(self);
+            let bitcast_result_id = self.emit().bitcast(dest_ty, None, original_ptr).unwrap();
+
+            self.zombie(
+                bitcast_result_id,
+                &format!(
+                    "cannot cast between pointer types\
+                         \nfrom `{}`\
+                         \n  to `{}`",
+                    self.debug_type(ptr.ty),
+                    self.debug_type(dest_ty)
+                ),
+            );
+
             SpirvValue {
+                zombie_waiting_for_span: false,
                 kind: SpirvValueKind::LogicalPtrCast {
                     original_ptr,
                     original_ptr_ty: ptr.ty,
-                    bitcast_result_id: self.emit().bitcast(dest_ty, None, original_ptr).unwrap(),
+                    bitcast_result_id,
                 },
                 ty: dest_ty,
             }

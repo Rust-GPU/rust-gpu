@@ -245,9 +245,9 @@ impl<'tcx> CodegenCx<'tcx> {
     /// is stripped from the binary.
     ///
     /// Errors will only be emitted (by `linker::zombies`) for reachable zombies.
-    pub fn zombie_with_span(&self, word: Word, span: Span, reason: &str) {
+    pub fn zombie_with_span(&self, id: Word, span: Span, reason: &str) {
         self.zombie_decorations.borrow_mut().insert(
-            word,
+            id,
             (
                 ZombieDecoration {
                     // FIXME(eddyb) this could take advantage of `Cow` and use
@@ -258,8 +258,16 @@ impl<'tcx> CodegenCx<'tcx> {
             ),
         );
     }
-    pub fn zombie_no_span(&self, word: Word, reason: &str) {
-        self.zombie_with_span(word, DUMMY_SP, reason);
+    pub fn zombie_no_span(&self, id: Word, reason: &str) {
+        self.zombie_with_span(id, DUMMY_SP, reason);
+    }
+
+    pub fn add_span_to_zombie_if_missing(&self, id: Word, span: Span) {
+        if span != DUMMY_SP
+            && let Some((_, src_loc @ None)) = self.zombie_decorations.borrow_mut().get_mut(&id)
+        {
+            *src_loc = SrcLocDecoration::from_rustc_span(span, &self.builder);
+        }
     }
 
     pub fn finalize_module(self) -> Module {
@@ -870,6 +878,7 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
         self.def_constant(ty, SpirvConst::ZombieUndefForFnAddr);
 
         SpirvValue {
+            zombie_waiting_for_span: false,
             kind: SpirvValueKind::FnAddr {
                 function: function.id,
             },

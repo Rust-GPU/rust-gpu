@@ -70,6 +70,13 @@ pub enum SpirvValueKind {
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SpirvValue {
+    // HACK(eddyb) used to cheaply check whether this is a SPIR-V value ID
+    // with a "zombie" (deferred error) attached to it, that may need a `Span`
+    // still (e.g. such as constants, which can't easily take a `Span`).
+    // FIXME(eddyb) a whole `bool` field is sadly inefficient, but anything
+    // which may make `SpirvValue` smaller requires far too much impl effort.
+    pub zombie_waiting_for_span: bool,
+
     pub kind: SpirvValueKind,
     pub ty: Word,
 }
@@ -103,7 +110,11 @@ impl SpirvValue {
                         } else {
                             SpirvValueKind::IllegalConst(pointee)
                         };
-                        Some(SpirvValue { kind, ty })
+                        Some(SpirvValue {
+                            zombie_waiting_for_span: entry.legal.is_err(),
+                            kind,
+                            ty,
+                        })
                     }
                     _ => None,
                 }
@@ -127,38 +138,7 @@ impl SpirvValue {
     }
 
     pub fn def_with_span(self, cx: &CodegenCx<'_>, span: Span) -> Word {
-        match self.kind {
-            SpirvValueKind::Def(id) => id,
-
-            SpirvValueKind::IllegalConst(id) => {
-                let entry = &cx.builder.id_to_const.borrow()[&id];
-                let msg = match entry.legal.unwrap_err() {
-                    IllegalConst::Shallow(cause) => {
-                        if let (
-                            LeafIllegalConst::CompositeContainsPtrTo,
-                            SpirvConst::Composite(_fields),
-                        ) = (cause, &entry.val)
-                        {
-                            // FIXME(eddyb) materialize this at runtime, using
-                            // `OpCompositeConstruct` (transitively, i.e. after
-                            // putting every field through `SpirvValue::def`),
-                            // if we have a `Builder` to do that in.
-                            // FIXME(eddyb) this isn't possible right now, as
-                            // the builder would be dynamically "locked" anyway
-                            // (i.e. attempting to do `bx.emit()` would panic).
-                        }
-
-                        cause.message()
-                    }
-
-                    IllegalConst::Indirect(cause) => cause.message(),
-                };
-
-                cx.zombie_with_span(id, span, msg);
-
-                id
-            }
-
+        let id = match self.kind {
             SpirvValueKind::FnAddr { .. } => {
                 cx.builder
                     .const_to_id
@@ -171,26 +151,18 @@ impl SpirvValue {
                     .val
             }
 
-            SpirvValueKind::LogicalPtrCast {
+            SpirvValueKind::Def(id)
+            | SpirvValueKind::IllegalConst(id)
+            | SpirvValueKind::LogicalPtrCast {
                 original_ptr: _,
-                original_ptr_ty,
-                bitcast_result_id,
-            } => {
-                cx.zombie_with_span(
-                    bitcast_result_id,
-                    span,
-                    &format!(
-                        "cannot cast between pointer types\
-                         \nfrom `{}`\
-                         \n  to `{}`",
-                        cx.debug_type(original_ptr_ty),
-                        cx.debug_type(self.ty)
-                    ),
-                );
-
-                bitcast_result_id
-            }
+                original_ptr_ty: _,
+                bitcast_result_id: id,
+            } => id,
+        };
+        if self.zombie_waiting_for_span {
+            cx.add_span_to_zombie_if_missing(id, span);
         }
+        id
     }
 }
 
@@ -201,6 +173,7 @@ pub trait SpirvValueExt {
 impl SpirvValueExt for Word {
     fn with_type(self, ty: Word) -> SpirvValue {
         SpirvValue {
+            zombie_waiting_for_span: false,
             kind: SpirvValueKind::Def(self),
             ty,
         }
@@ -606,7 +579,11 @@ impl<'tcx> BuilderSpirv<'tcx> {
             } else {
                 SpirvValueKind::IllegalConst(entry.val)
             };
-            return SpirvValue { kind, ty };
+            return SpirvValue {
+                zombie_waiting_for_span: entry.legal.is_err(),
+                kind,
+                ty,
+            };
         }
         let val = val_with_type.val;
 
@@ -783,6 +760,17 @@ impl<'tcx> BuilderSpirv<'tcx> {
                 LeafIllegalConst::UntypedConstDataFromAlloc,
             )),
         };
+
+        // FIXME(eddyb) avoid dragging "const (il)legality" around, as well
+        // (sadly that does require that `SpirvConst` -> SPIR-V be injective,
+        // e.g. `OpUndef` can never be used for unrepresentable constants).
+        if let Err(illegal) = legal {
+            let msg = match illegal {
+                IllegalConst::Shallow(cause) | IllegalConst::Indirect(cause) => cause.message(),
+            };
+            cx.zombie_no_span(id, msg);
+        }
+
         let val = val.tcx_arena_alloc_slices(cx);
         assert_matches!(
             self.const_to_id
@@ -802,7 +790,11 @@ impl<'tcx> BuilderSpirv<'tcx> {
         } else {
             SpirvValueKind::IllegalConst(id)
         };
-        SpirvValue { kind, ty }
+        SpirvValue {
+            zombie_waiting_for_span: legal.is_err(),
+            kind,
+            ty,
+        }
     }
 
     pub fn lookup_const_by_id(&self, id: Word) -> Option<SpirvConst<'tcx, 'tcx>> {
