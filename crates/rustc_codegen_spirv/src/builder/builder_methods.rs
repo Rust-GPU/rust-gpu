@@ -376,7 +376,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     fn memset_const_pattern(&self, ty: &SpirvType<'tcx>, fill_byte: u8) -> Word {
         match *ty {
             SpirvType::Void => self.fatal("memset invalid on void pattern"),
-            SpirvType::Bool => self.fatal("memset invalid on bool pattern"),
+            SpirvType::Bool => match fill_byte {
+                0..=1 => self.constant_bool(self.span(), fill_byte != 0).def(self),
+                _ => self.fatal(format!("memset({fill_byte}) invalid on bool pattern")),
+            },
             SpirvType::Integer(width, false) => match width {
                 8 => self.constant_u8(self.span(), fill_byte).def(self),
                 16 => self

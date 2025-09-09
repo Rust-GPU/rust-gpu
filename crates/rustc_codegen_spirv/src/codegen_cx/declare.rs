@@ -99,7 +99,9 @@ impl<'tcx> CodegenCx<'tcx> {
         // HACK(eddyb) some tiny free functions in `alloc::raw_vec` really should
         // get inlined but don't because they are merely generic and our inliner
         // doesn't have any heuristics based on size/complexity of the callee.
-        if demangled_symbol_name.starts_with("alloc::raw_vec::") && demangled_symbol_name.contains("_cap") {
+        if demangled_symbol_name.starts_with("alloc::raw_vec::")
+            && demangled_symbol_name.contains("_cap")
+        {
             control.insert(FunctionControl::INLINE);
         }
 
