@@ -543,9 +543,10 @@ impl<'tcx> CodegenCx<'tcx> {
                     SpirvType::Array { count, .. } => {
                         u64::try_from(self.builder.lookup_const_scalar(count).unwrap()).unwrap()
                     }
-                    SpirvType::RuntimeArray { .. } => {
-                        (alloc.inner().size() - offset).bytes() / stride.bytes()
-                    }
+                    SpirvType::RuntimeArray { .. } => (alloc.inner().size() - offset)
+                        .bytes()
+                        .checked_div(stride.bytes())
+                        .unwrap_or(0),
                     _ => unreachable!(),
                 };
 
