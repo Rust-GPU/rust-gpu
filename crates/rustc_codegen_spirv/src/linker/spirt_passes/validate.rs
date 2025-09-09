@@ -2,8 +2,8 @@ use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexSet};
 use spirt::func_at::FuncAtMut;
 use spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Transformer};
 use spirt::{
-    Const, ConstDef, ConstKind, Context, DataInst, DataInstForm, DataInstKind, Diag, Func,
-    GlobalVar, Module, ModuleDialect, Type, TypeDef, TypeKind, spv,
+    Const, ConstDef, ConstKind, Context, DataInst, DataInstKind, Diag, Func, GlobalVar, Module,
+    ModuleDialect, Type, TypeDef, TypeKind, spv,
 };
 use std::collections::VecDeque;
 
@@ -25,7 +25,6 @@ pub fn validate(module: &mut Module) {
 
         transformed_types: FxHashMap::default(),
         transformed_consts: FxHashMap::default(),
-        transformed_data_inst_forms: FxHashMap::default(),
         seen_global_vars: FxHashSet::default(),
         global_var_queue: VecDeque::new(),
         seen_funcs: FxHashSet::default(),
@@ -64,7 +63,6 @@ struct Validator<'a> {
     // FIXME(eddyb) build some automation to avoid ever repeating these.
     transformed_types: FxHashMap<Type, Transformed<Type>>,
     transformed_consts: FxHashMap<Const, Transformed<Const>>,
-    transformed_data_inst_forms: FxHashMap<DataInstForm, Transformed<DataInstForm>>,
     seen_global_vars: FxHashSet<GlobalVar>,
     global_var_queue: VecDeque<GlobalVar>,
     seen_funcs: FxHashSet<Func>,
@@ -91,20 +89,6 @@ impl Transformer for Validator<'_> {
             .transform_const_def(&self.cx[ct])
             .map(|ct_def| self.cx.intern(ct_def));
         self.transformed_consts.insert(ct, transformed);
-        transformed
-    }
-    fn transform_data_inst_form_use(
-        &mut self,
-        data_inst_form: DataInstForm,
-    ) -> Transformed<DataInstForm> {
-        if let Some(&cached) = self.transformed_data_inst_forms.get(&data_inst_form) {
-            return cached;
-        }
-        let transformed = self
-            .transform_data_inst_form_def(&self.cx[data_inst_form])
-            .map(|data_inst_form_def| self.cx.intern(data_inst_form_def));
-        self.transformed_data_inst_forms
-            .insert(data_inst_form, transformed);
         transformed
     }
 
@@ -180,7 +164,7 @@ impl Transformer for Validator<'_> {
             .inner_in_place_transform_with(self);
 
         let inst_def = func_at_data_inst.def();
-        let valid = match &self.cx[inst_def.form].kind {
+        let valid = match &inst_def.kind {
             DataInstKind::SpvInst(spv_inst) => self.validate_spv_inst(spv_inst),
 
             DataInstKind::FuncCall(_) | DataInstKind::QPtr(_) | DataInstKind::SpvExtInst { .. } => {

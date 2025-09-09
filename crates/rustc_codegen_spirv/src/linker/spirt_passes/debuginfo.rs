@@ -9,8 +9,8 @@ use spirt::func_at::FuncAtMut;
 use spirt::transform::{InnerInPlaceTransform as _, Transformed, Transformer};
 use spirt::visit::InnerVisit;
 use spirt::{
-    Attr, AttrSet, AttrSetDef, Const, ConstKind, Context, DataInstForm, DataInstKind, DbgSrcLoc,
-    Diag, InternedStr, Module, Node, NodeKind, Type, Value, spv,
+    Attr, AttrSet, AttrSetDef, Const, ConstKind, Context, DataInstKind, DbgSrcLoc, Diag,
+    InternedStr, Module, Node, NodeKind, Type, Value, spv,
 };
 use std::marker::PhantomData;
 use std::str;
@@ -33,7 +33,6 @@ pub fn convert_custom_decorations_and_debuginfo_to_spirt(
 
             seen_types: FxIndexSet::default(),
             seen_consts: FxIndexSet::default(),
-            seen_data_inst_forms: FxIndexSet::default(),
             seen_global_vars: FxIndexSet::default(),
             seen_funcs: FxIndexSet::default(),
         };
@@ -51,7 +50,6 @@ pub fn convert_custom_decorations_and_debuginfo_to_spirt(
         custom_ext_inst_set: cx.intern(&custom_insts::CUSTOM_EXT_INST_SET[..]),
         transformed_types: FxHashMap::default(),
         transformed_consts: FxHashMap::default(),
-        transformed_data_inst_forms: FxHashMap::default(),
     };
     for gv in all_global_vars {
         transformer.in_place_transform_global_var_decl(&mut module.global_vars[gv]);
@@ -132,7 +130,6 @@ struct CustomDecorationsAndDebuginfoToSpirt<'a> {
     // FIXME(eddyb) build some automation to avoid ever repeating these.
     transformed_types: FxHashMap<Type, Transformed<Type>>,
     transformed_consts: FxHashMap<Const, Transformed<Const>>,
-    transformed_data_inst_forms: FxHashMap<DataInstForm, Transformed<DataInstForm>>,
 }
 
 impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
@@ -155,20 +152,6 @@ impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
             .transform_const_def(&self.cx[ct])
             .map(|ct_def| self.cx.intern(ct_def));
         self.transformed_consts.insert(ct, transformed);
-        transformed
-    }
-    fn transform_data_inst_form_use(
-        &mut self,
-        data_inst_form: DataInstForm,
-    ) -> Transformed<DataInstForm> {
-        if let Some(&cached) = self.transformed_data_inst_forms.get(&data_inst_form) {
-            return cached;
-        }
-        let transformed = self
-            .transform_data_inst_form_def(&self.cx[data_inst_form])
-            .map(|data_inst_form_def| self.cx.intern(data_inst_form_def));
-        self.transformed_data_inst_forms
-            .insert(data_inst_form, transformed);
         transformed
     }
 
@@ -243,7 +226,7 @@ impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
                 let data_inst_def = func_at_inst.def();
 
                 // FIXME(eddyb) deduplicate with `spirt_passes::diagnostics`.
-                let maybe_custom_inst = match self.cx[data_inst_def.form].kind {
+                let maybe_custom_inst = match data_inst_def.kind {
                     DataInstKind::SpvExtInst {
                         ext_set,
                         inst: ext_inst,

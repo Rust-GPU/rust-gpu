@@ -4,7 +4,7 @@ use spirt::func_at::{FuncAt, FuncAtMut};
 use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::InnerVisit;
 use spirt::{
-    Const, ConstDef, ConstKind, Context, DataInst, DataInstDef, DataInstFormDef, DataInstKind,
+    Const, ConstDef, ConstKind, Context, DataInst, DataInstDef, DataInstKind,
     EntityOrientedDenseMap, FuncDefBody, Node, NodeDef, NodeKind, NodeOutputDecl, Region,
     RegionInputDecl, SelectionKind, Type, TypeDef, TypeKind, Value, spv,
 };
@@ -62,7 +62,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                 ..
             } => {
                 for func_at_inst in func_at_node.at(insts) {
-                    if let Ok(redu) = Reducible::try_from((cx, func_at_inst.def())) {
+                    if let Ok(redu) = Reducible::try_from(func_at_inst.def()) {
                         let redu_target = ReductionTarget::DataInst(func_at_inst.position);
                         reduction_queue.push((redu_target, redu));
                     }
@@ -204,15 +204,11 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
 
                         // Replace the reduced `DataInstDef` itself with `OpNop`,
                         // removing the ability to use its "name" as a value.
-                        //
-                        // FIXME(eddyb) cache the interned `OpNop`.
                         *func_def_body.at_mut(inst).def() = DataInstDef {
                             attrs: Default::default(),
-                            form: cx.intern(DataInstFormDef {
-                                kind: DataInstKind::SpvInst(wk.OpNop.into()),
-                                output_type: None,
-                            }),
+                            kind: DataInstKind::SpvInst(wk.OpNop.into()),
                             inputs: iter::empty().collect(),
+                            output_type: None,
                         };
                     }
 
@@ -492,14 +488,12 @@ impl<V> Reducible<V> {
     }
 }
 
-// FIXME(eddyb) instead of taking a `&Context`, could `Reducible` hold a `DataInstForm`?
-impl TryFrom<(&Context, &DataInstDef)> for Reducible {
+impl TryFrom<&DataInstDef> for Reducible {
     type Error = ();
-    fn try_from((cx, inst_def): (&Context, &DataInstDef)) -> Result<Self, ()> {
-        let inst_form_def = &cx[inst_def.form];
-        if let DataInstKind::SpvInst(spv_inst) = &inst_form_def.kind {
+    fn try_from(inst_def: &DataInstDef) -> Result<Self, ()> {
+        if let DataInstKind::SpvInst(spv_inst) = &inst_def.kind {
             let op = PureOp::try_from(spv_inst)?;
-            let output_type = inst_form_def.output_type.unwrap();
+            let output_type = inst_def.output_type.unwrap();
             if let [input] = inst_def.inputs[..] {
                 return Ok(Self {
                     op,
@@ -514,7 +508,7 @@ impl TryFrom<(&Context, &DataInstDef)> for Reducible {
 
 impl Reducible {
     // HACK(eddyb) `IntToBool` is the only reason this can return `None`.
-    fn try_into_inst(self, cx: &Context) -> Option<DataInstDef> {
+    fn try_into_inst(self) -> Option<DataInstDef> {
         let Self {
             op,
             output_type,
@@ -522,11 +516,9 @@ impl Reducible {
         } = self;
         Some(DataInstDef {
             attrs: Default::default(),
-            form: cx.intern(DataInstFormDef {
-                kind: DataInstKind::SpvInst(op.try_into().ok()?),
-                output_type: Some(output_type),
-            }),
+            kind: DataInstKind::SpvInst(op.try_into().ok()?),
             inputs: iter::once(input).collect(),
+            output_type: Some(output_type),
         })
     }
 }
@@ -642,11 +634,11 @@ enum ReductionStep {
 
 impl Reducible<&DataInstDef> {
     // FIXME(eddyb) force the input to actually be itself some kind of pure op.
-    fn try_reduce_output_of_data_inst(&self, cx: &Context) -> Option<ReductionStep> {
+    fn try_reduce_output_of_data_inst(&self, _cx: &Context) -> Option<ReductionStep> {
         let wk = &super::SpvSpecWithExtras::get().well_known;
 
         let input_inst_def = self.input;
-        if let DataInstKind::SpvInst(input_spv_inst) = &cx[input_inst_def.form].kind {
+        if let DataInstKind::SpvInst(input_spv_inst) = &input_inst_def.kind {
             // NOTE(eddyb) do not destroy information left in e.g. comments.
             #[allow(clippy::match_same_arms)]
             match self.op {
@@ -755,9 +747,8 @@ impl Reducible {
                     .try_reduce(cx, func.reborrow(), value_replacements, parent_map, cache)?;
                 // HACK(eddyb) this is here because it can fail, see the comment
                 // on `output_from_updated_state` for what's actually going on.
-                let output_from_updated_state_inst = self
-                    .with_input(input_from_updated_state)
-                    .try_into_inst(cx)?;
+                let output_from_updated_state_inst =
+                    self.with_input(input_from_updated_state).try_into_inst()?;
 
                 // Now that the reduction succeeded for the initial state,
                 // we can proceed with augmenting the loop with the extra state.
