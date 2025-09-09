@@ -13,9 +13,13 @@ use super::simple_passes::outgoing_edges;
 use super::{apply_rewrite_rules, id};
 use rspirv::dr::{Block, Function, Instruction, ModuleHeader, Operand};
 use rspirv::spirv::{Op, Word};
-use rustc_data_structures::fx::{FxHashMap, FxHashSet};
+use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexMap};
 use rustc_middle::bug;
 use std::collections::hash_map;
+
+// HACK(eddyb) newtype instead of type alias to avoid mistakes.
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+struct LabelId(Word);
 
 pub fn mem2reg(
     header: &mut ModuleHeader,
@@ -24,8 +28,16 @@ pub fn mem2reg(
     constants: &FxHashMap<Word, u32>,
     func: &mut Function,
 ) {
-    let reachable = compute_reachable(&func.blocks);
-    let preds = compute_preds(&func.blocks, &reachable);
+    // HACK(eddyb) this ad-hoc indexing might be useful elsewhere as well, but
+    // it's made completely irrelevant by SPIR-T so only applies to legacy code.
+    let mut blocks: FxIndexMap<_, _> = func
+        .blocks
+        .iter_mut()
+        .map(|block| (LabelId(block.label_id().unwrap()), block))
+        .collect();
+
+    let reachable = compute_reachable(&blocks);
+    let preds = compute_preds(&blocks, &reachable);
     let idom = compute_idom(&preds, &reachable);
     let dominance_frontier = compute_dominance_frontier(&preds, &idom);
     loop {
@@ -34,31 +46,27 @@ pub fn mem2reg(
             types_global_values,
             pointer_to_pointee,
             constants,
-            &mut func.blocks,
+            &mut blocks,
             &dominance_frontier,
         );
         if !changed {
             break;
         }
         // mem2reg produces minimal SSA form, not pruned, so DCE the dead ones
-        super::dce::dce_phi(func);
+        super::dce::dce_phi(&mut blocks);
     }
 }
 
-fn label_to_index(blocks: &[Block], id: Word) -> usize {
-    blocks
-        .iter()
-        .position(|b| b.label_id().unwrap() == id)
-        .unwrap()
-}
-
-fn compute_reachable(blocks: &[Block]) -> Vec<bool> {
-    fn recurse(blocks: &[Block], reachable: &mut [bool], block: usize) {
+fn compute_reachable(blocks: &FxIndexMap<LabelId, &mut Block>) -> Vec<bool> {
+    fn recurse(blocks: &FxIndexMap<LabelId, &mut Block>, reachable: &mut [bool], block: usize) {
         if !reachable[block] {
             reachable[block] = true;
-            for dest_id in outgoing_edges(&blocks[block]) {
-                let dest_idx = label_to_index(blocks, dest_id);
-                recurse(blocks, reachable, dest_idx);
+            for dest_id in outgoing_edges(blocks[block]) {
+                recurse(
+                    blocks,
+                    reachable,
+                    blocks.get_index_of(&LabelId(dest_id)).unwrap(),
+                );
             }
         }
     }
@@ -67,17 +75,19 @@ fn compute_reachable(blocks: &[Block]) -> Vec<bool> {
     reachable
 }
 
-fn compute_preds(blocks: &[Block], reachable_blocks: &[bool]) -> Vec<Vec<usize>> {
+fn compute_preds(
+    blocks: &FxIndexMap<LabelId, &mut Block>,
+    reachable_blocks: &[bool],
+) -> Vec<Vec<usize>> {
     let mut result = vec![vec![]; blocks.len()];
     // Do not count unreachable blocks as valid preds of blocks
     for (source_idx, source) in blocks
-        .iter()
+        .values()
         .enumerate()
         .filter(|&(b, _)| reachable_blocks[b])
     {
         for dest_id in outgoing_edges(source) {
-            let dest_idx = label_to_index(blocks, dest_id);
-            result[dest_idx].push(source_idx);
+            result[blocks.get_index_of(&LabelId(dest_id)).unwrap()].push(source_idx);
         }
     }
     result
@@ -161,7 +171,7 @@ fn insert_phis_all(
     types_global_values: &mut Vec<Instruction>,
     pointer_to_pointee: &FxHashMap<Word, Word>,
     constants: &FxHashMap<Word, u32>,
-    blocks: &mut [Block],
+    blocks: &mut FxIndexMap<LabelId, &mut Block>,
     dominance_frontier: &[FxHashSet<usize>],
 ) -> bool {
     let var_maps_and_types = blocks[0]
@@ -198,7 +208,11 @@ fn insert_phis_all(
             rewrite_rules: FxHashMap::default(),
         };
         renamer.rename(0, None);
-        apply_rewrite_rules(&renamer.rewrite_rules, blocks);
+        // FIXME(eddyb) shouldn't this full rescan of the function be done once?
+        apply_rewrite_rules(
+            &renamer.rewrite_rules,
+            blocks.values_mut().map(|block| &mut **block),
+        );
         remove_nops(blocks);
     }
     remove_old_variables(blocks, &var_maps_and_types);
@@ -216,7 +230,7 @@ struct VarInfo {
 fn collect_access_chains(
     pointer_to_pointee: &FxHashMap<Word, Word>,
     constants: &FxHashMap<Word, u32>,
-    blocks: &[Block],
+    blocks: &FxIndexMap<LabelId, &mut Block>,
     base_var: Word,
     base_var_ty: Word,
 ) -> Option<FxHashMap<Word, VarInfo>> {
@@ -249,7 +263,7 @@ fn collect_access_chains(
     // Loop in case a previous block references a later AccessChain
     loop {
         let mut changed = false;
-        for inst in blocks.iter().flat_map(|b| &b.instructions) {
+        for inst in blocks.values().flat_map(|b| &b.instructions) {
             for (index, op) in inst.operands.iter().enumerate() {
                 if let Operand::IdRef(id) = op
                     && variables.contains_key(id)
@@ -303,10 +317,10 @@ fn collect_access_chains(
 // same var map (e.g. `s.x = s.y;`).
 fn split_copy_memory(
     header: &mut ModuleHeader,
-    blocks: &mut [Block],
+    blocks: &mut FxIndexMap<LabelId, &mut Block>,
     var_map: &FxHashMap<Word, VarInfo>,
 ) {
-    for block in blocks {
+    for block in blocks.values_mut() {
         let mut inst_index = 0;
         while inst_index < block.instructions.len() {
             let inst = &block.instructions[inst_index];
@@ -365,7 +379,7 @@ fn has_store(block: &Block, var_map: &FxHashMap<Word, VarInfo>) -> bool {
 }
 
 fn insert_phis(
-    blocks: &[Block],
+    blocks: &FxIndexMap<LabelId, &mut Block>,
     dominance_frontier: &[FxHashSet<usize>],
     var_map: &FxHashMap<Word, VarInfo>,
 ) -> FxHashSet<usize> {
@@ -374,7 +388,7 @@ fn insert_phis(
     let mut ever_on_work_list = FxHashSet::default();
     let mut work_list = Vec::new();
     let mut blocks_with_phi = FxHashSet::default();
-    for (block_idx, block) in blocks.iter().enumerate() {
+    for (block_idx, block) in blocks.values().enumerate() {
         if has_store(block, var_map) {
             ever_on_work_list.insert(block_idx);
             work_list.push(block_idx);
@@ -419,10 +433,10 @@ fn top_stack_or_undef(
     }
 }
 
-struct Renamer<'a> {
+struct Renamer<'a, 'b> {
     header: &'a mut ModuleHeader,
     types_global_values: &'a mut Vec<Instruction>,
-    blocks: &'a mut [Block],
+    blocks: &'a mut FxIndexMap<LabelId, &'b mut Block>,
     blocks_with_phi: FxHashSet<usize>,
     base_var_type: Word,
     var_map: &'a FxHashMap<Word, VarInfo>,
@@ -432,7 +446,7 @@ struct Renamer<'a> {
     rewrite_rules: FxHashMap<Word, Word>,
 }
 
-impl Renamer<'_> {
+impl Renamer<'_, '_> {
     // Returns the phi definition.
     fn insert_phi_value(&mut self, block: usize, from_block: usize) -> Word {
         let from_block_label = self.blocks[from_block].label_id().unwrap();
@@ -554,9 +568,8 @@ impl Renamer<'_> {
             }
         }
 
-        for dest_id in outgoing_edges(&self.blocks[block]).collect::<Vec<_>>() {
-            // TODO: Don't do this find
-            let dest_idx = label_to_index(self.blocks, dest_id);
+        for dest_id in outgoing_edges(self.blocks[block]).collect::<Vec<_>>() {
+            let dest_idx = self.blocks.get_index_of(&LabelId(dest_id)).unwrap();
             self.rename(dest_idx, Some(block));
         }
 
@@ -566,8 +579,8 @@ impl Renamer<'_> {
     }
 }
 
-fn remove_nops(blocks: &mut [Block]) {
-    for block in blocks {
+fn remove_nops(blocks: &mut FxIndexMap<LabelId, &mut Block>) {
+    for block in blocks.values_mut() {
         block
             .instructions
             .retain(|inst| inst.class.opcode != Op::Nop);
@@ -575,7 +588,7 @@ fn remove_nops(blocks: &mut [Block]) {
 }
 
 fn remove_old_variables(
-    blocks: &mut [Block],
+    blocks: &mut FxIndexMap<LabelId, &mut Block>,
     var_maps_and_types: &[(FxHashMap<u32, VarInfo>, u32)],
 ) {
     blocks[0].instructions.retain(|inst| {
@@ -586,7 +599,7 @@ fn remove_old_variables(
                 .all(|(var_map, _)| !var_map.contains_key(&result_id))
         }
     });
-    for block in blocks {
+    for block in blocks.values_mut() {
         block.instructions.retain(|inst| {
             !matches!(inst.class.opcode, Op::AccessChain | Op::InBoundsAccessChain)
                 || inst.operands.iter().all(|op| {
