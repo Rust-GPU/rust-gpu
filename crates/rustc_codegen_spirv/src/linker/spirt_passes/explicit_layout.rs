@@ -8,9 +8,9 @@ use spirt::func_at::{FuncAt, FuncAtMut};
 use spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Transformer};
 use spirt::visit::InnerVisit as _;
 use spirt::{
-    AddrSpace, Attr, AttrSetDef, Const, ConstKind, Context, ControlNode, ControlNodeKind, DataInst,
-    DataInstDef, DataInstForm, DataInstFormDef, DataInstKind, DeclDef, Diag, Func, FuncDecl,
-    GlobalVar, GlobalVarDecl, Module, Type, TypeDef, TypeKind, TypeOrConst, Value, spv,
+    AddrSpace, Attr, AttrSetDef, Const, ConstKind, Context, DataInst, DataInstDef, DataInstForm,
+    DataInstFormDef, DataInstKind, DeclDef, Diag, Func, FuncDecl, GlobalVar, GlobalVarDecl, Module,
+    Node, NodeKind, Type, TypeDef, TypeKind, TypeOrConst, Value, spv,
 };
 use std::cmp::Ordering;
 use std::collections::VecDeque;
@@ -81,7 +81,7 @@ struct SelectiveEraser<'a> {
 
     // HACK(eddyb) this is to allow `in_place_transform_data_inst_def` inject
     // new instructions into its parent block.
-    parent_block: Option<ControlNode>,
+    parent_block: Option<Node>,
 }
 
 impl Transformer for SelectiveEraser<'_> {
@@ -179,8 +179,8 @@ impl Transformer for SelectiveEraser<'_> {
             func_def_body.inner_visit_with(&mut super::VisitAllRegionsAndNodes {
                 state: (),
                 visit_region: |_: &mut _, _| {},
-                visit_control_node: |_: &mut _, func_at_node: FuncAt<'_, ControlNode>| {
-                    if let ControlNodeKind::Block { insts } = func_at_node.def().kind {
+                visit_node: |_: &mut _, func_at_node: FuncAt<'_, Node>| {
+                    if let NodeKind::Block { insts } = func_at_node.def().kind {
                         for func_at_inst in func_at_node.at(insts) {
                             if let Err(e) = self.pre_check_data_inst(func_at_inst) {
                                 errors_to_attach.push((func_at_inst.position, e));
@@ -201,15 +201,12 @@ impl Transformer for SelectiveEraser<'_> {
         func_decl.inner_in_place_transform_with(self);
     }
 
-    fn in_place_transform_control_node_def(
-        &mut self,
-        mut func_at_control_node: FuncAtMut<'_, ControlNode>,
-    ) {
+    fn in_place_transform_node_def(&mut self, mut func_at_node: FuncAtMut<'_, Node>) {
         let old_parent_block = self.parent_block.take();
-        if let ControlNodeKind::Block { .. } = func_at_control_node.reborrow().def().kind {
-            self.parent_block = Some(func_at_control_node.position);
+        if let NodeKind::Block { .. } = func_at_node.reborrow().def().kind {
+            self.parent_block = Some(func_at_node.position);
         }
-        func_at_control_node.inner_in_place_transform_with(self);
+        func_at_node.inner_in_place_transform_with(self);
         self.parent_block = old_parent_block;
     }
 
@@ -263,8 +260,7 @@ impl Transformer for SelectiveEraser<'_> {
                 ty != value_type && ty == self.erase_explicit_layout_in_type(value_type)
             }) {
                 let func = func_at_data_inst.at(());
-                let ControlNodeKind::Block { insts } =
-                    &mut func.control_nodes[self.parent_block.unwrap()].kind
+                let NodeKind::Block { insts } = &mut func.nodes[self.parent_block.unwrap()].kind
                 else {
                     unreachable!()
                 };
@@ -304,8 +300,8 @@ impl Transformer for SelectiveEraser<'_> {
                 } else {
                     let original_stored_value = *stored_value;
 
-                    let ControlNodeKind::Block { insts } =
-                        &mut func.control_nodes[self.parent_block.unwrap()].kind
+                    let NodeKind::Block { insts } =
+                        &mut func.nodes[self.parent_block.unwrap()].kind
                     else {
                         unreachable!()
                     };
@@ -352,8 +348,7 @@ impl Transformer for SelectiveEraser<'_> {
                     };
 
                 let func = func_at_data_inst.at(());
-                let ControlNodeKind::Block { insts } =
-                    &mut func.control_nodes[self.parent_block.unwrap()].kind
+                let NodeKind::Block { insts } = &mut func.nodes[self.parent_block.unwrap()].kind
                 else {
                     unreachable!()
                 };
@@ -553,8 +548,7 @@ impl<'a> SelectiveEraser<'a> {
                     .into(),
                 );
 
-                let ControlNodeKind::Block { insts } =
-                    &mut func.control_nodes[self.parent_block.unwrap()].kind
+                let NodeKind::Block { insts } = &mut func.nodes[self.parent_block.unwrap()].kind
                 else {
                     unreachable!()
                 };

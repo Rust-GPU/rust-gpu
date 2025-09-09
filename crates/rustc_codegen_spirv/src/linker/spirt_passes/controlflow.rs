@@ -4,8 +4,8 @@ use crate::custom_insts::{self, CustomInst, CustomOp};
 use smallvec::SmallVec;
 use spirt::func_at::FuncAt;
 use spirt::{
-    Attr, AttrSet, ConstDef, ConstKind, ControlNodeKind, DataInstFormDef, DataInstKind, DeclDef,
-    EntityDefs, ExportKey, Exportee, Module, Type, TypeDef, TypeKind, TypeOrConst, Value, cfg, spv,
+    Attr, AttrSet, ConstDef, ConstKind, DataInstFormDef, DataInstKind, DeclDef, EntityDefs,
+    ExportKey, Exportee, Module, NodeKind, Type, TypeDef, TypeKind, TypeOrConst, Value, cfg, spv,
 };
 use std::fmt::Write as _;
 
@@ -105,7 +105,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                     .into_iter()
                     .next()
                     .and_then(|func_at_first_node| match func_at_first_node.def().kind {
-                        ControlNodeKind::Block { insts } => Some(insts),
+                        NodeKind::Block { insts } => Some(insts),
                         _ => None,
                     })
                     .unwrap_or_default())
@@ -195,12 +195,12 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             .rev_post_order(func_def_body);
         for region in rpo_regions {
             let region_def = &func_def_body.regions[region];
-            let control_node_def = match region_def.children.iter().last {
-                Some(last_node) => &mut func_def_body.control_nodes[last_node],
+            let node_def = match region_def.children.iter().last {
+                Some(last_node) => &mut func_def_body.nodes[last_node],
                 _ => continue,
             };
-            let block_insts = match &mut control_node_def.kind {
-                ControlNodeKind::Block { insts } => insts,
+            let block_insts = match &mut node_def.kind {
+                NodeKind::Block { insts } => insts,
                 _ => continue,
             };
 
@@ -217,7 +217,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             // HACK(eddyb) this allows accessing the `DataInst` iterator while
             // mutably borrowing other parts of `FuncDefBody`.
             let func_at_block_insts = FuncAt {
-                control_nodes: &EntityDefs::new(),
+                nodes: &EntityDefs::new(),
                 regions: &EntityDefs::new(),
                 data_insts: &func_def_body.data_insts,
 

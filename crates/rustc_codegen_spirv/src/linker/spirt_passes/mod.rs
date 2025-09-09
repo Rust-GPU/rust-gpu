@@ -14,9 +14,9 @@ use spirt::func_at::FuncAt;
 use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::{InnerVisit, Visitor};
 use spirt::{
-    AttrSet, Const, Context, ControlNode, ControlNodeKind, DataInstDef, DataInstForm,
-    DataInstFormDef, DataInstKind, DeclDef, EntityOrientedDenseMap, Func, FuncDefBody, GlobalVar,
-    Module, Region, Type, Value, spv,
+    AttrSet, Const, Context, DataInstDef, DataInstForm, DataInstFormDef, DataInstKind, DeclDef,
+    EntityOrientedDenseMap, Func, FuncDefBody, GlobalVar, Module, Node, NodeKind, Region, Type,
+    Value, spv,
 };
 use std::collections::VecDeque;
 use std::iter;
@@ -252,12 +252,12 @@ impl Visitor<'_> for ReachableUseCollector<'_> {
 struct VisitAllRegionsAndNodes<S, VCR, VCN> {
     state: S,
     visit_region: VCR,
-    visit_control_node: VCN,
+    visit_node: VCN,
 }
 const _: () = {
     use spirt::{func_at::*, visit::*, *};
 
-    impl<'a, S, VCR: FnMut(&mut S, FuncAt<'a, Region>), VCN: FnMut(&mut S, FuncAt<'a, ControlNode>)>
+    impl<'a, S, VCR: FnMut(&mut S, FuncAt<'a, Region>), VCN: FnMut(&mut S, FuncAt<'a, Node>)>
         Visitor<'a> for VisitAllRegionsAndNodes<S, VCR, VCN>
     {
         // FIXME(eddyb) this is excessive, maybe different kinds of
@@ -273,9 +273,9 @@ const _: () = {
             (self.visit_region)(&mut self.state, func_at_region);
             func_at_region.inner_visit_with(self);
         }
-        fn visit_control_node_def(&mut self, func_at_control_node: FuncAt<'a, ControlNode>) {
-            (self.visit_control_node)(&mut self.state, func_at_control_node);
-            func_at_control_node.inner_visit_with(self);
+        fn visit_node_def(&mut self, func_at_node: FuncAt<'a, Node>) {
+            (self.visit_node)(&mut self.state, func_at_node);
+            func_at_node.inner_visit_with(self);
         }
     }
 };
@@ -308,7 +308,7 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
         func_body_region: Region,
 
         // FIXME(eddyb) maybe this kind of "parent map" should be provided by SPIR-T?
-        loop_body_to_loop: EntityOrientedDenseMap<Region, ControlNode>,
+        loop_body_to_loop: EntityOrientedDenseMap<Region, Node>,
 
         // FIXME(eddyb) entity-keyed dense sets might be better for performance,
         // but would require separate sets/maps for separate `Value` cases.
@@ -340,19 +340,16 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                     Value::RegionInput { region, input_idx } => {
                         let loop_node = self.loop_body_to_loop[region];
                         let initial_inputs = match &func.at(loop_node).def().kind {
-                            ControlNodeKind::Loop { initial_inputs, .. } => initial_inputs,
+                            NodeKind::Loop { initial_inputs, .. } => initial_inputs,
                             // NOTE(eddyb) only `Loop`s' bodies can have inputs right now.
                             _ => unreachable!(),
                         };
                         self.mark_used(initial_inputs[input_idx as usize]);
                         self.mark_used(func.at(region).def().outputs[input_idx as usize]);
                     }
-                    Value::ControlNodeOutput {
-                        control_node,
-                        output_idx,
-                    } => {
-                        let cases = match &func.at(control_node).def().kind {
-                            ControlNodeKind::Select { cases, .. } => cases,
+                    Value::NodeOutput { node, output_idx } => {
+                        let cases = match &func.at(node).def().kind {
+                            NodeKind::Select { cases, .. } => cases,
                             // NOTE(eddyb) only `Select`s can have outputs right now.
                             _ => unreachable!(),
                         };
@@ -381,70 +378,66 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                 queue: Default::default(),
             },
             visit_region: |_: &mut _, _| {},
-            visit_control_node:
-                |propagator: &mut Propagator, func_at_control_node: FuncAt<'_, ControlNode>| {
-                    if let ControlNodeKind::Loop { body, .. } = func_at_control_node.def().kind {
-                        propagator
-                            .loop_body_to_loop
-                            .insert(body, func_at_control_node.position);
-                    }
-                },
+            visit_node: |propagator: &mut Propagator, func_at_node: FuncAt<'_, Node>| {
+                if let NodeKind::Loop { body, .. } = func_at_node.def().kind {
+                    propagator
+                        .loop_body_to_loop
+                        .insert(body, func_at_node.position);
+                }
+            },
         };
         func_def_body.inner_visit_with(&mut visitor);
         visitor.state
     };
 
     // HACK(eddyb) this kind of random-access is easier than using `spirt::transform`.
-    let mut all_control_nodes = vec![];
+    let mut all_nodes = vec![];
 
     let used_values = {
         let mut visitor = VisitAllRegionsAndNodes {
             state: propagator,
             visit_region: |_: &mut _, _| {},
-            visit_control_node:
-                |propagator: &mut Propagator, func_at_control_node: FuncAt<'_, ControlNode>| {
-                    all_control_nodes.push(func_at_control_node.position);
+            visit_node: |propagator: &mut Propagator, func_at_node: FuncAt<'_, Node>| {
+                all_nodes.push(func_at_node.position);
 
-                    let mut mark_used_and_propagate = |v| {
-                        propagator.mark_used(v);
-                        propagator.propagate_used(func_at_control_node.at(()));
-                    };
-                    match &func_at_control_node.def().kind {
-                        &ControlNodeKind::Block { insts } => {
-                            for func_at_inst in func_at_control_node.at(insts) {
-                                // Ignore pure instructions (i.e. they're only used
-                                // if their output value is used, from somewhere else).
-                                if let DataInstKind::SpvInst(spv_inst) =
-                                    &cx[func_at_inst.def().form].kind
-                                {
-                                    // HACK(eddyb) small selection relevant for now,
-                                    // but should be extended using e.g. a bitset.
-                                    if [wk.OpNop, wk.OpCompositeInsert].contains(&spv_inst.opcode) {
-                                        continue;
-                                    }
+                let mut mark_used_and_propagate = |v| {
+                    propagator.mark_used(v);
+                    propagator.propagate_used(func_at_node.at(()));
+                };
+                match &func_at_node.def().kind {
+                    &NodeKind::Block { insts } => {
+                        for func_at_inst in func_at_node.at(insts) {
+                            // Ignore pure instructions (i.e. they're only used
+                            // if their output value is used, from somewhere else).
+                            if let DataInstKind::SpvInst(spv_inst) =
+                                &cx[func_at_inst.def().form].kind
+                            {
+                                // HACK(eddyb) small selection relevant for now,
+                                // but should be extended using e.g. a bitset.
+                                if [wk.OpNop, wk.OpCompositeInsert].contains(&spv_inst.opcode) {
+                                    continue;
                                 }
-                                mark_used_and_propagate(Value::DataInstOutput(
-                                    func_at_inst.position,
-                                ));
                             }
-                        }
-
-                        &ControlNodeKind::Select { scrutinee: v, .. }
-                        | &ControlNodeKind::Loop {
-                            repeat_condition: v,
-                            ..
-                        } => mark_used_and_propagate(v),
-
-                        ControlNodeKind::ExitInvocation {
-                            kind: spirt::cfg::ExitInvocationKind::SpvInst(_),
-                            inputs,
-                        } => {
-                            for &v in inputs {
-                                mark_used_and_propagate(v);
-                            }
+                            mark_used_and_propagate(Value::DataInstOutput(func_at_inst.position));
                         }
                     }
-                },
+
+                    &NodeKind::Select { scrutinee: v, .. }
+                    | &NodeKind::Loop {
+                        repeat_condition: v,
+                        ..
+                    } => mark_used_and_propagate(v),
+
+                    NodeKind::ExitInvocation {
+                        kind: spirt::cfg::ExitInvocationKind::SpvInst(_),
+                        inputs,
+                    } => {
+                        for &v in inputs {
+                            mark_used_and_propagate(v);
+                        }
+                    }
+                }
+            },
         };
         func_def_body.inner_visit_with(&mut visitor);
 
@@ -463,10 +456,10 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
     let mut value_replacements = FxHashMap::default();
 
     // Remove anything that didn't end up marked as used (directly or indirectly).
-    for control_node in all_control_nodes {
-        let control_node_def = func_def_body.at(control_node).def();
-        match &control_node_def.kind {
-            &ControlNodeKind::Block { insts } => {
+    for node in all_nodes {
+        let node_def = func_def_body.at(node).def();
+        match &node_def.kind {
+            &NodeKind::Block { insts } => {
                 let mut all_nops = true;
                 let mut func_at_inst_iter = func_def_body.at_mut(insts).into_iter();
                 while let Some(mut func_at_inst) = func_at_inst_iter.next() {
@@ -496,30 +489,26 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                 // HACK(eddyb) because we can't remove list elements yet, we
                 // instead replace blocks of `OpNop`s with empty ones.
                 if all_nops {
-                    func_def_body.at_mut(control_node).def().kind = ControlNodeKind::Block {
+                    func_def_body.at_mut(node).def().kind = NodeKind::Block {
                         insts: Default::default(),
                     };
                 }
             }
 
-            ControlNodeKind::Select { cases, .. } => {
+            NodeKind::Select { cases, .. } => {
                 // FIXME(eddyb) remove this cloning.
                 let cases = cases.clone();
 
                 let mut new_idx = 0;
-                for original_idx in 0..control_node_def.outputs.len() {
-                    let original_output = Value::ControlNodeOutput {
-                        control_node,
+                for original_idx in 0..node_def.outputs.len() {
+                    let original_output = Value::NodeOutput {
+                        node,
                         output_idx: original_idx as u32,
                     };
 
                     if !used_values.contains(&original_output) {
                         // Remove the output definition and corresponding value from all cases.
-                        func_def_body
-                            .at_mut(control_node)
-                            .def()
-                            .outputs
-                            .remove(new_idx);
+                        func_def_body.at_mut(node).def().outputs.remove(new_idx);
                         for &case in &cases {
                             func_def_body.at_mut(case).def().outputs.remove(new_idx);
                         }
@@ -528,8 +517,8 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
 
                     // Record remappings for any still-used outputs that got "shifted over".
                     if original_idx != new_idx {
-                        let new_output = Value::ControlNodeOutput {
-                            control_node,
+                        let new_output = Value::NodeOutput {
+                            node,
                             output_idx: new_idx as u32,
                         };
                         value_replacements.insert(original_output, new_output);
@@ -538,7 +527,7 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                 }
             }
 
-            ControlNodeKind::Loop {
+            NodeKind::Loop {
                 body,
                 initial_inputs,
                 ..
@@ -554,8 +543,8 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
 
                     if !used_values.contains(&original_input) {
                         // Remove the input definition and corresponding values.
-                        match &mut func_def_body.at_mut(control_node).def().kind {
-                            ControlNodeKind::Loop { initial_inputs, .. } => {
+                        match &mut func_def_body.at_mut(node).def().kind {
+                            NodeKind::Loop { initial_inputs, .. } => {
                                 initial_inputs.remove(new_idx);
                             }
                             _ => unreachable!(),
@@ -578,7 +567,7 @@ fn remove_unused_values_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                 }
             }
 
-            ControlNodeKind::ExitInvocation { .. } => {}
+            NodeKind::ExitInvocation { .. } => {}
         }
     }
 

@@ -10,9 +10,9 @@ use smallvec::SmallVec;
 use spirt::func_at::FuncAt;
 use spirt::visit::{InnerVisit, Visitor};
 use spirt::{
-    Attr, AttrSet, AttrSetDef, Const, ConstKind, Context, ControlNode, ControlNodeKind,
-    DataInstDef, DataInstForm, DataInstKind, Diag, DiagLevel, ExportKey, Exportee, Func, FuncDecl,
-    GlobalVar, InternedStr, Module, Type, Value, spv,
+    Attr, AttrSet, AttrSetDef, Const, ConstKind, Context, DataInstDef, DataInstForm, DataInstKind,
+    Diag, DiagLevel, ExportKey, Exportee, Func, FuncDecl, GlobalVar, InternedStr, Module, Node,
+    NodeKind, Type, Value, spv,
 };
 use std::marker::PhantomData;
 use std::{mem, str};
@@ -577,23 +577,23 @@ impl<'a> Visitor<'a> for DiagnosticReporter<'a> {
         self.use_stack.truncate(original_use_stack_len);
     }
 
-    fn visit_control_node_def(&mut self, func_at_control_node: FuncAt<'a, ControlNode>) {
+    fn visit_node_def(&mut self, func_at_node: FuncAt<'a, Node>) {
         let original_use_stack_len = self.use_stack.len();
 
-        func_at_control_node.inner_visit_with(self);
+        func_at_node.inner_visit_with(self);
 
         // HACK(eddyb) avoid `use_stack` from growing due to having some
         // `PushInlinedCallFrame` without matching `PopInlinedCallFrame`.
         self.use_stack.truncate(original_use_stack_len);
 
-        // HACK(eddyb) this relies on the fact that `ControlNodeKind::Block` maps
+        // HACK(eddyb) this relies on the fact that `NodeKind::Block` maps
         // to one original SPIR-V block, which may not necessarily be true, and
         // steps should be taken elsewhere to explicitly unset debuginfo, instead
         // of relying on the end of a SPIR-V block implicitly unsetting it all.
         // NOTE(eddyb) allowing debuginfo to apply *outside* of a `Block` could
         // be useful in allowing *some* structured control-flow to have debuginfo,
         // but that would likely require more work on the SPIR-T side.
-        if let ControlNodeKind::Block { .. } = func_at_control_node.def().kind {
+        if let NodeKind::Block { .. } = func_at_node.def().kind {
             match self.use_stack.last_mut() {
                 Some(UseOrigin::IntraFunc {
                     last_debug_src_loc_inst,

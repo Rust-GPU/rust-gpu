@@ -1,7 +1,7 @@
 use spirt::func_at::FuncAt;
 use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::InnerVisit;
-use spirt::{Context, ControlNodeKind, FuncDefBody, Region, SelectionKind, Value};
+use spirt::{Context, FuncDefBody, NodeKind, Region, SelectionKind, Value};
 use std::mem;
 
 use super::{ReplaceValueWith, VisitAllRegionsAndNodes};
@@ -16,14 +16,14 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
         visit_region: |_: &mut (), func_at_region: FuncAt<'_, Region>| {
             all_regions.push(func_at_region.position);
         },
-        visit_control_node: |_: &mut (), _| {},
+        visit_node: |_: &mut (), _| {},
     });
 
     for region in all_regions {
         let mut func_at_children_iter = func_def_body.at_mut(region).at_children().into_iter();
         while let Some(func_at_child) = func_at_children_iter.next() {
-            let base_control_node = func_at_child.position;
-            if let ControlNodeKind::Select {
+            let base_node = func_at_child.position;
+            if let NodeKind::Select {
                 kind: SelectionKind::BoolCond,
                 scrutinee,
                 cases,
@@ -41,9 +41,9 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
                     match &fusion_candidate_def.kind {
                         // HACK(eddyb) ignore empty blocks (created by
                         // e.g. `remove_unused_values_in_func`).
-                        ControlNodeKind::Block { insts } if insts.is_empty() => {}
+                        NodeKind::Block { insts } if insts.is_empty() => {}
 
-                        ControlNodeKind::Select {
+                        NodeKind::Select {
                             kind: SelectionKind::BoolCond,
                             scrutinee: fusion_candidate_cond,
                             cases: fusion_candidate_cases,
@@ -75,10 +75,9 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
                                     .into_iter()
                                     .inner_in_place_transform_with(&mut ReplaceValueWith(
                                         |v| match v {
-                                            Value::ControlNodeOutput {
-                                                control_node,
-                                                output_idx,
-                                            } if control_node == base_control_node => {
+                                            Value::NodeOutput { node, output_idx }
+                                                if node == base_node =>
+                                            {
                                                 Some(outputs_of_base_case[output_idx as usize])
                                             }
 
@@ -88,15 +87,14 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
 
                                 func.regions[base_case]
                                     .children
-                                    .append(children_of_case_to_fuse, func.control_nodes);
+                                    .append(children_of_case_to_fuse, func.nodes);
                             }
 
                             // HACK(eddyb) because we can't remove list elements yet,
                             // we instead replace the `Select` with an empty `Block`.
-                            func.reborrow().at(fusion_candidate).def().kind =
-                                ControlNodeKind::Block {
-                                    insts: Default::default(),
-                                };
+                            func.reborrow().at(fusion_candidate).def().kind = NodeKind::Block {
+                                insts: Default::default(),
+                            };
                         }
 
                         _ => break,
