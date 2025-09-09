@@ -3,7 +3,7 @@ use spirt::func_at::FuncAtMut;
 use spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Transformer};
 use spirt::{
     Const, ConstDef, ConstKind, Context, DataInstKind, Diag, Func, GlobalVar, Module,
-    ModuleDialect, Node, NodeKind, Type, TypeDef, TypeKind, cf, spv,
+    ModuleDialect, Node, NodeKind, Type, TypeDef, TypeKind, cf, scalar, spv,
 };
 use std::collections::VecDeque;
 
@@ -109,6 +109,47 @@ impl Transformer for Validator<'_> {
 
     fn transform_type_def(&mut self, ty_def: &TypeDef) -> Transformed<TypeDef> {
         let valid = match &ty_def.kind {
+            TypeKind::Scalar(ty) => {
+                // HACK(eddyb) even if this seems wasteful in its allocation of
+                // strings, they should only happen once each per module, and
+                // also it wouldn't be hard to switch to some "small str" crate.
+                let check = |type_prefix: &str, cap_prefix: &str| {
+                    let width = ty.bit_width();
+                    if width == 32 {
+                        return Ok(());
+                    }
+
+                    let cap_name = format!("{cap_prefix}{width}");
+                    let cap = self.spv_spec_caps.lookup(&cap_name).map(u32::from);
+                    if cap.is_some_and(|cap| self.module_spv_dialect.capabilities.contains(&cap)) {
+                        return Ok(());
+                    }
+
+                    // FIXME(eddyb) find a consistent style between all the error messages
+                    // (mentioning `OpCapability` seems unfortunate, for example).
+                    let type_name = format!("{type_prefix}{width}");
+                    let msg = match cap {
+                        None => format!("`{type_name}` type unsupported in SPIR-V"),
+                        Some(_) => {
+                            format!("`{type_name}` type used without `OpCapability {cap_name}`")
+                        }
+                    };
+                    Err(Diag::err([msg.into()]))
+                };
+                match ty {
+                    scalar::Type::Bool => Ok(()),
+                    scalar::Type::SInt(_) => check("i", "Int"),
+                    scalar::Type::UInt(_) => check("u", "Int"),
+                    scalar::Type::Float(_) => check("f", "Float"),
+                }
+            }
+            TypeKind::Vector(ty) => {
+                // FIXME(eddyb) consider checking the element count against the
+                // list of supported values (and extensions for some of them).
+                let _elem_count = ty.elem_count;
+                Ok(())
+            }
+
             TypeKind::SpvInst {
                 spv_inst,
                 type_and_const_inputs: _,
@@ -146,6 +187,8 @@ impl Transformer for Validator<'_> {
             }
 
             ConstKind::Undef
+            | ConstKind::Scalar(_)
+            | ConstKind::Vector(_)
             | ConstKind::PtrToGlobalVar(_)
             | ConstKind::SpvStringLiteralForExtInst(_) => Ok(()),
         };
@@ -175,6 +218,8 @@ impl Transformer for Validator<'_> {
 
             NodeKind::Select(_)
             | NodeKind::Loop { .. }
+            | DataInstKind::Scalar(_)
+            | DataInstKind::Vector(_)
             | DataInstKind::FuncCall(_)
             | DataInstKind::Mem(_)
             | DataInstKind::QPtr(_)
@@ -286,39 +331,6 @@ impl Validator<'_> {
             exts_providing_inst,
             caps_enabling_insts,
         )?;
-
-        // HACK(eddyb) even if this seems wasteful in its allocation of
-        // strings, they should only happen once each per module, and
-        // also it wouldn't be hard to switch to some "small str" crate.
-        let int_or_float = |type_name: &str, cap_name: &str| {
-            // FIXME(eddyb) find a consistent style between all the error messages
-            // (mentioning `OpCapability` seems unfortunate, for example).
-            match self.spv_spec_caps.lookup(cap_name).map(u32::from) {
-                None => Err(format!("`{type_name}` type unsupported in SPIR-V")),
-                Some(cap) if !self.module_spv_dialect.capabilities.contains(&cap) => Err(format!(
-                    "`{type_name}` type used without `OpCapability {cap_name}`"
-                )),
-                Some(_) => Ok(()),
-            }
-            .map_err(|msg| Diag::err([msg.into()]))
-        };
-        match spv_inst.imms[..] {
-            [spv::Imm::Short(_, width), spv::Imm::Short(_, signedness)]
-                if spv_inst.opcode == self.wk.OpTypeInt && width != 32 =>
-            {
-                let signed = signedness != 0;
-                int_or_float(
-                    &format!("{}{width}", if signed { "i" } else { "u" }),
-                    &format!("Int{width}"),
-                )?;
-            }
-            [spv::Imm::Short(_, width)]
-                if spv_inst.opcode == self.wk.OpTypeFloat && width != 32 =>
-            {
-                int_or_float(&format!("f{width}"), &format!("Float{width}"))?;
-            }
-            _ => {}
-        }
 
         // FIXME(eddyb) implement this after exposing enough of the information
         // via `spirt::spv::spec` (will likely need some way to efficiently store

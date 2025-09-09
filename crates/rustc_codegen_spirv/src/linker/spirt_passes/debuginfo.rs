@@ -46,7 +46,6 @@ pub fn convert_custom_decorations_and_debuginfo_to_spirt(
     let mut transformer = CustomDecorationsAndDebuginfoToSpirt {
         linker_options,
         cx,
-        wk: &super::SpvSpecWithExtras::get().well_known,
         custom_ext_inst_set: cx.intern(&custom_insts::CUSTOM_EXT_INST_SET[..]),
         transformed_types: FxHashMap::default(),
         transformed_consts: FxHashMap::default(),
@@ -121,7 +120,6 @@ struct CustomDecorationsAndDebuginfoToSpirt<'a> {
     linker_options: &'a crate::linker::Options,
 
     cx: &'a Context,
-    wk: &'static super::SpvWellKnownWithExtras,
 
     /// Interned name for our custom "extended instruction set"
     /// (see `crate::custom_insts` for more details).
@@ -246,18 +244,12 @@ impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
                         ConstKind::SpvStringLiteralForExtInst(s) => s,
                         _ => unreachable!(),
                     };
-                    let const_u32 = |v| match &self.cx[expect_const(v)].kind {
-                        ConstKind::SpvInst {
-                            spv_inst_and_const_inputs,
-                        } => {
-                            let (spv_inst, _const_inputs) = &**spv_inst_and_const_inputs;
-                            assert!(spv_inst.opcode == self.wk.OpConstant);
-                            match spv_inst.imms[..] {
-                                [spv::Imm::Short(_, x)] => x,
-                                _ => unreachable!(),
-                            }
-                        }
-                        _ => unreachable!(),
+                    let const_u32 = |v| {
+                        expect_const(v)
+                            .as_scalar(self.cx)
+                            .unwrap()
+                            .int_as_u32()
+                            .unwrap()
                     };
                     match custom_inst {
                         CustomInst::SetDebugSrcLoc {

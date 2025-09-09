@@ -8,9 +8,9 @@ use spirt::func_at::{FuncAt, FuncAtMut};
 use spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Transformer};
 use spirt::visit::InnerVisit as _;
 use spirt::{
-    AddrSpace, Attr, AttrSetDef, Const, ConstKind, Context, DataInst, DataInstDef, DataInstKind,
-    DeclDef, Diag, Func, FuncDecl, GlobalVar, GlobalVarDecl, Module, Node, NodeKind, Region, Type,
-    TypeDef, TypeKind, TypeOrConst, Value, VarDecl, spv,
+    AddrSpace, Attr, AttrSetDef, Const, Context, DataInst, DataInstDef, DataInstKind, DeclDef,
+    Diag, Func, FuncDecl, GlobalVar, GlobalVarDecl, Module, Node, NodeKind, Region, Type, TypeDef,
+    TypeKind, TypeOrConst, Value, VarDecl, spv,
 };
 use std::cmp::Ordering;
 use std::collections::VecDeque;
@@ -430,23 +430,6 @@ impl<'a> SelectiveEraser<'a> {
         .contains(&addr_space)
     }
 
-    // FIXME(eddyb) properly distinguish between zero-extension and sign-extension.
-    fn const_as_u32(&self, ct: Const) -> Option<u32> {
-        if let ConstKind::SpvInst {
-            spv_inst_and_const_inputs,
-        } = &self.cx[ct].kind
-        {
-            let (spv_inst, _const_inputs) = &**spv_inst_and_const_inputs;
-            if spv_inst.opcode == self.wk.OpConstant && spv_inst.imms.len() == 1 {
-                match spv_inst.imms[..] {
-                    [spv::Imm::Short(_, x)] => return Some(x),
-                    _ => unreachable!(),
-                }
-            }
-        }
-        None
-    }
-
     fn aggregate_component_types(
         &self,
         ty: Type,
@@ -475,7 +458,7 @@ impl<'a> SelectiveEraser<'a> {
                 else {
                     unreachable!()
                 };
-                let count = self.const_as_u32(count)?;
+                let count = count.as_scalar(cx)?.int_as_u32()?;
                 Some(Either::Right((0..count).map(move |_| elem_type)))
             }
             _ => None,
@@ -668,6 +651,7 @@ impl<'a> SelectiveEraser<'a> {
             {
                 return Ok(());
             }
+            DataInstKind::Scalar(_) | DataInstKind::Vector(_) => unreachable!(),
             DataInstKind::Mem(_) => {
                 return Err(Diag::bug([
                     "unhandled pointer type change in unexpected `mem` instruction".into(),

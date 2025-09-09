@@ -7,11 +7,10 @@ use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::InnerVisit;
 use spirt::{
     Const, ConstDef, ConstKind, Context, DataInst, DataInstDef, DataInstKind,
-    EntityOrientedDenseMap, FuncDefBody, Node, NodeDef, NodeKind, Region, Type, TypeDef, TypeKind,
-    Value, Var, VarDecl, VarKind, spv,
+    EntityOrientedDenseMap, FuncDefBody, Node, NodeDef, NodeKind, Region, Type, Value, Var,
+    VarDecl, VarKind, scalar, spv, vector,
 };
 use std::iter;
-use std::rc::Rc;
 
 use super::{ReplaceValueWith, VisitAllRegionsAndNodes};
 
@@ -92,39 +91,22 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                     }
                 }
 
-                // HACK(eddyb) turn `switch x { case 0: A; case 1: B; default: ... }`
+                // HACK(eddyb) turn `switch x { 0 => A, 1 => B, _ => ... }`
                 // into `if ... {B} else {A}`, when `x` ends up limited in `0..=1`,
                 // (such `switch`es come from e.g. `match`-ing enums w/ 2 variants)
                 // allowing us to bypass SPIR-T current (and temporary) lossiness
-                // wrt `default: OpUnreachable` (i.e. we prove the `default:` can't
+                // wrt `_ => OpUnreachable` (i.e. we prove the default case can't
                 // be entered based on `x` not having values other than `0` or `1`)
-                if let SelectionKind::SpvInst(spv_inst) = kind
-                    && spv_inst.opcode == wk.OpSwitch
+                if let SelectionKind::Switch { case_consts } = kind
                     && cases.len() == 3
                 {
-                    // FIXME(eddyb) this kind of `OpSwitch` decoding logic should
-                    // be done by SPIR-T ahead of time, not here.
-                    let num_logical_imms = cases.len() - 1;
-                    assert_eq!(spv_inst.imms.len() % num_logical_imms, 0);
-                    let logical_imm_size = spv_inst.imms.len() / num_logical_imms;
-                    // FIXME(eddyb) collect to array instead.
-                    let logical_imms_as_u32s: SmallVec<[_; 2]> = spv_inst
-                        .imms
-                        .chunks(logical_imm_size)
-                        .map(spv_imm_checked_trunc32)
-                        .collect();
+                    let case_consts: &[_; 2] = case_consts[..].try_into().unwrap();
 
                     // FIMXE(eddyb) support more values than just `0..=1`.
-                    if logical_imms_as_u32s[..] == [Some(0), Some(1)] {
+                    if case_consts.map(|ct| ct.int_as_u32()) == [Some(0), Some(1)] {
                         let redu = Reducible {
                             op: PureOp::IntToBool,
-                            output_type: cx.intern(TypeDef {
-                                attrs: Default::default(),
-                                kind: TypeKind::SpvInst {
-                                    spv_inst: wk.OpTypeBool.into(),
-                                    type_and_const_inputs: iter::empty().collect(),
-                                },
-                            }),
+                            output_type: cx.intern(scalar::Type::Bool),
                             input: inputs[0],
                         };
                         let redu_target = ReductionTarget::SwitchToIfElse(func_at_node.position);
@@ -167,7 +149,9 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
 
             &DataInstDef {
                 kind:
-                    DataInstKind::FuncCall(_)
+                    DataInstKind::Scalar(_)
+                    | DataInstKind::Vector(_)
+                    | DataInstKind::FuncCall(_)
                     | DataInstKind::Mem(_)
                     | DataInstKind::QPtr(_)
                     | DataInstKind::ThunkBind(_)
@@ -231,7 +215,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                     ReductionTarget::SwitchToIfElse(node) => {
                         let node_def = func_def_body.at_mut(node).def();
                         match node_def.child_regions[..] {
-                            [_default, case_0, case_1] => {
+                            [case_0, case_1, _default] => {
                                 node_def.kind = NodeKind::Select(SelectionKind::BoolCond);
                                 node_def.inputs[0] = v;
                                 node_def.child_regions = [case_1, case_0].iter().copied().collect();
@@ -313,38 +297,30 @@ fn try_reduce_select(
     scrutinee: Value,
     cases: impl Iterator<Item = Value>,
 ) -> Option<Value> {
-    let wk = &super::SpvSpecWithExtras::get().well_known;
-
-    let as_spv_const = |v: Value| match v {
-        Value::Const(ct) => match &cx[ct].kind {
-            ConstKind::SpvInst {
-                spv_inst_and_const_inputs,
-            } => {
-                let (spv_inst, _const_inputs) = &**spv_inst_and_const_inputs;
-                Some(spv_inst.opcode)
-            }
-            _ => None,
-        },
+    let as_const = |v: Value| match v {
+        Value::Const(ct) => Some(ct),
         Value::Var(_) => None,
     };
 
     // Ignore `undef`s, as they can be legally substituted with any other value.
     let mut first_undef = None;
     let mut non_undef_cases = cases.filter(|&case| {
-        let is_undef = matches!(case, Value::Const(ct) if matches!(cx[ct].kind, ConstKind::Undef));
+        let is_undef = as_const(case).map(|ct| &cx[ct].kind) == Some(&ConstKind::Undef);
         if is_undef && first_undef.is_none() {
             first_undef = Some(case);
         }
         !is_undef
     });
+    // FIXME(eddyb) false positive (no pre-existing tuple, only multi-value `match`ing).
+    #[allow(clippy::tuple_array_conversions)]
     match (non_undef_cases.next(), non_undef_cases.next()) {
         (None, _) => first_undef,
 
         // `Select(c: bool, true, false)` can be replaced with just `c`.
         (Some(x), Some(y))
             if matches!(kind, SelectionKind::BoolCond)
-                && as_spv_const(x) == Some(wk.OpConstantTrue)
-                && as_spv_const(y) == Some(wk.OpConstantFalse) =>
+                && [x, y].map(|v| as_const(v)?.as_scalar(cx))
+                    == [Some(&scalar::Const::TRUE), Some(&scalar::Const::FALSE)] =>
         {
             assert!(non_undef_cases.next().is_none() && first_undef.is_none());
 
@@ -417,7 +393,12 @@ fn try_reduce_select(
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 enum PureOp {
     BitCast,
-    CompositeExtract {
+    // FIXME(eddyb) include all of `vector::Op` (or obsolete with `flow`).
+    VectorExtract {
+        elem_idx: u8,
+    },
+    // FIXME(eddyb) will be obsoleted by disaggregation.
+    AggregateExtract {
         elem_idx: spv::Imm,
     },
 
@@ -432,38 +413,51 @@ enum PureOp {
     IntToBool,
 }
 
-impl TryFrom<&spv::Inst> for PureOp {
+impl TryFrom<&DataInstKind> for PureOp {
     type Error = ();
-    fn try_from(spv_inst: &spv::Inst) -> Result<Self, ()> {
-        let wk = &super::SpvSpecWithExtras::get().well_known;
+    fn try_from(kind: &DataInstKind) -> Result<Self, ()> {
+        match kind {
+            &DataInstKind::Vector(vector::Op::Whole(vector::WholeOp::Extract { elem_idx })) => {
+                Ok(Self::VectorExtract { elem_idx })
+            }
+            DataInstKind::SpvInst(spv_inst) => {
+                let wk = &super::SpvSpecWithExtras::get().well_known;
 
-        let op = spv_inst.opcode;
-        Ok(match spv_inst.imms[..] {
-            [] if op == wk.OpBitcast => Self::BitCast,
+                let op = spv_inst.opcode;
+                Ok(match spv_inst.imms[..] {
+                    [] if op == wk.OpBitcast => Self::BitCast,
 
-            // FIXME(eddyb) support more than one index at a time, somehow.
-            [elem_idx] if op == wk.OpCompositeExtract => Self::CompositeExtract { elem_idx },
+                    // FIXME(eddyb) support more than one index at a time, somehow.
+                    [elem_idx] if op == wk.OpCompositeExtract => {
+                        Self::AggregateExtract { elem_idx }
+                    }
 
-            _ => return Err(()),
-        })
+                    _ => return Err(()),
+                })
+            }
+            _ => Err(()),
+        }
     }
 }
 
-impl TryFrom<PureOp> for spv::Inst {
+impl TryFrom<PureOp> for DataInstKind {
     type Error = ();
     fn try_from(op: PureOp) -> Result<Self, ()> {
         let wk = &super::SpvSpecWithExtras::get().well_known;
 
         let (opcode, imms) = match op {
             PureOp::BitCast => (wk.OpBitcast, iter::empty().collect()),
-            PureOp::CompositeExtract { elem_idx } => {
+            PureOp::VectorExtract { elem_idx } => {
+                return Ok(vector::Op::from(vector::WholeOp::Extract { elem_idx }).into());
+            }
+            PureOp::AggregateExtract { elem_idx } => {
                 (wk.OpCompositeExtract, iter::once(elem_idx).collect())
             }
 
             // HACK(eddyb) this is the only reason this is `TryFrom` not `From`.
             PureOp::IntToBool => return Err(()),
         };
-        Ok(Self { opcode, imms })
+        Ok(DataInstKind::SpvInst(spv::Inst { opcode, imms }))
     }
 }
 
@@ -489,20 +483,18 @@ impl TryFrom<FuncAt<'_, DataInst>> for Reducible {
     type Error = ();
     fn try_from(func_at_inst: FuncAt<'_, DataInst>) -> Result<Self, ()> {
         let inst_def = func_at_inst.def();
-        if let DataInstKind::SpvInst(spv_inst) = &inst_def.kind {
-            let op = PureOp::try_from(spv_inst)?;
+        let op = PureOp::try_from(&inst_def.kind)?;
 
-            // HACK(eddyb) all supported instructions should be single-output.
-            assert_eq!(inst_def.outputs.len(), 1);
+        // HACK(eddyb) all supported instructions should be single-output.
+        assert_eq!(inst_def.outputs.len(), 1);
 
-            let output_type = func_at_inst.at(inst_def.outputs[0]).decl().ty;
-            if let [input] = inst_def.inputs[..] {
-                return Ok(Self {
-                    op,
-                    output_type,
-                    input,
-                });
-            }
+        let output_type = func_at_inst.at(inst_def.outputs[0]).decl().ty;
+        if let [input] = inst_def.inputs[..] {
+            return Ok(Self {
+                op,
+                output_type,
+                input,
+            });
         }
         Err(())
     }
@@ -525,7 +517,7 @@ impl Reducible {
             cx,
             NodeDef {
                 attrs: Default::default(),
-                kind: DataInstKind::SpvInst(op.try_into().ok()?),
+                kind: op.try_into().ok()?,
                 inputs: [input].into_iter().collect(),
                 child_regions: [].into_iter().collect(),
                 outputs: [].into_iter().collect(),
@@ -549,24 +541,6 @@ impl Reducible {
     }
 }
 
-/// Returns `Some(lowest32)` iff `imms` contains one *logical* SPIR-V immediate
-/// representing a (little-endian) integer which truncates (if wider than 32 bits)
-/// to `lowest32`, losslessly (i.e. the rest of the bits are all zeros).
-//
-// FIXME(eddyb) move this into some kind of utility/common helpers place.
-fn spv_imm_checked_trunc32(imms: &[spv::Imm]) -> Option<u32> {
-    match imms {
-        &[spv::Imm::Short(_, lowest32)] | &[spv::Imm::LongStart(_, lowest32), ..]
-            if imms[1..]
-                .iter()
-                .all(|imm| matches!(imm, spv::Imm::LongCont(_, 0))) =>
-        {
-            Some(lowest32)
-        }
-        _ => None,
-    }
-}
-
 impl Reducible<Const> {
     // FIXME(eddyb) in theory this should always return `Some`.
     fn try_reduce_const(&self, cx: &Context) -> Option<Const> {
@@ -580,66 +554,44 @@ impl Reducible<Const> {
                 kind: ct_def.kind.clone(),
             })),
 
-            (
-                PureOp::BitCast,
-                ConstKind::SpvInst {
-                    spv_inst_and_const_inputs,
-                },
-            ) if spv_inst_and_const_inputs.0.opcode == wk.OpConstant => {
-                // `OpTypeInt`/`OpTypeFloat` bit width.
-                let scalar_width = |ty: Type| match &cx[ty].kind {
-                    TypeKind::SpvInst { spv_inst, .. }
-                        if [wk.OpTypeInt, wk.OpTypeFloat].contains(&spv_inst.opcode) =>
-                    {
-                        Some(spv_inst.imms[0])
-                    }
-                    _ => None,
-                };
-
-                match (scalar_width(ct_def.ty), scalar_width(self.output_type)) {
-                    (Some(from), Some(to)) if from == to => Some(cx.intern(ConstDef {
+            (PureOp::BitCast, ConstKind::Scalar(ct)) => {
+                let output_type = self.output_type.as_scalar(cx)?;
+                if ct.ty().bit_width() == output_type.bit_width() {
+                    Some(cx.intern(ConstDef {
                         attrs: ct_def.attrs,
                         ty: self.output_type,
-                        kind: ct_def.kind.clone(),
-                    })),
-                    _ => None,
+                        kind: ConstKind::Scalar(scalar::Const::try_from_bits(
+                            output_type,
+                            ct.bits(),
+                        )?),
+                    }))
+                } else {
+                    None
                 }
             }
 
+            (PureOp::VectorExtract { elem_idx }, ConstKind::Vector(ct)) => {
+                Some(cx.intern(ct.get_elem(elem_idx.into())?))
+            }
+
             (
-                PureOp::CompositeExtract {
+                PureOp::AggregateExtract {
                     elem_idx: spv::Imm::Short(_, elem_idx),
                 },
                 ConstKind::SpvInst {
                     spv_inst_and_const_inputs,
                 },
-            ) if spv_inst_and_const_inputs.0.opcode == wk.OpConstantComposite => {
-                let (_spv_inst, const_inputs) = &**spv_inst_and_const_inputs;
-                Some(const_inputs[elem_idx as usize])
+            ) => {
+                let (spv_inst, const_inputs) = &**spv_inst_and_const_inputs;
+                if spv_inst.opcode == wk.OpConstantComposite {
+                    Some(const_inputs[elem_idx as usize])
+                } else {
+                    None
+                }
             }
 
-            (
-                PureOp::IntToBool,
-                ConstKind::SpvInst {
-                    spv_inst_and_const_inputs,
-                },
-            ) if spv_inst_and_const_inputs.0.opcode == wk.OpConstant => {
-                let (spv_inst, _const_inputs) = &**spv_inst_and_const_inputs;
-                let bool_const_op = match spv_imm_checked_trunc32(&spv_inst.imms[..]) {
-                    Some(0) => wk.OpConstantFalse,
-                    Some(1) => wk.OpConstantTrue,
-                    _ => return None,
-                };
-                Some(cx.intern(ConstDef {
-                    attrs: Default::default(),
-                    ty: self.output_type,
-                    kind: ConstKind::SpvInst {
-                        spv_inst_and_const_inputs: Rc::new((
-                            bool_const_op.into(),
-                            iter::empty().collect(),
-                        )),
-                    },
-                }))
+            (PureOp::IntToBool, ConstKind::Scalar(ct)) => {
+                Some(cx.intern(scalar::Const::try_from_bits(scalar::Type::Bool, ct.bits())?))
             }
 
             _ => None,
@@ -659,32 +611,48 @@ impl Reducible<&DataInstDef> {
         let wk = &super::SpvSpecWithExtras::get().well_known;
 
         let input_inst_def = self.input;
-        if let DataInstKind::SpvInst(input_spv_inst) = &input_inst_def.kind {
-            // NOTE(eddyb) do not destroy information left in e.g. comments.
-            #[allow(clippy::match_same_arms)]
-            match self.op {
-                PureOp::BitCast => {
-                    // FIXME(eddyb) reduce chains of bitcasts.
-                }
+        // NOTE(eddyb) do not destroy information left in e.g. comments.
+        #[allow(clippy::match_same_arms)]
+        match (self.op, &input_inst_def.kind) {
+            (PureOp::BitCast, _) => {
+                // FIXME(eddyb) reduce chains of bitcasts.
+            }
 
-                PureOp::CompositeExtract { elem_idx } => {
-                    if input_spv_inst.opcode == wk.OpCompositeInsert
-                        && input_spv_inst.imms.len() == 1
-                    {
-                        let new_elem = input_inst_def.inputs[0];
-                        let prev_composite = input_inst_def.inputs[1];
-                        return Some(if input_spv_inst.imms[0] == elem_idx {
-                            ReductionStep::Complete(new_elem)
-                        } else {
-                            ReductionStep::Partial(self.with_input(prev_composite))
-                        });
-                    }
-                }
+            (
+                PureOp::VectorExtract {
+                    elem_idx: extract_idx,
+                },
+                &DataInstKind::Vector(vector::Op::Whole(vector::WholeOp::Insert {
+                    elem_idx: insert_idx,
+                })),
+            ) => {
+                let new_elem = input_inst_def.inputs[0];
+                let prev_vector = input_inst_def.inputs[1];
+                return Some(if insert_idx == extract_idx {
+                    ReductionStep::Complete(new_elem)
+                } else {
+                    ReductionStep::Partial(self.with_input(prev_vector))
+                });
+            }
+            (PureOp::VectorExtract { .. }, _) => {}
 
-                PureOp::IntToBool => {
-                    // FIXME(eddyb) look into what instructions might end up
-                    // being used to transform booleans into integers.
-                }
+            (PureOp::AggregateExtract { elem_idx }, DataInstKind::SpvInst(input_spv_inst))
+                if input_spv_inst.opcode == wk.OpCompositeInsert
+                    && input_spv_inst.imms.len() == 1 =>
+            {
+                let new_elem = input_inst_def.inputs[0];
+                let prev_composite = input_inst_def.inputs[1];
+                return Some(if input_spv_inst.imms[0] == elem_idx {
+                    ReductionStep::Complete(new_elem)
+                } else {
+                    ReductionStep::Partial(self.with_input(prev_composite))
+                });
+            }
+            (PureOp::AggregateExtract { .. }, _) => {}
+
+            (PureOp::IntToBool, _) => {
+                // FIXME(eddyb) look into what instructions might end up
+                // being used to transform booleans into integers.
             }
         }
 
