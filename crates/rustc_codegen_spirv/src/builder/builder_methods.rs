@@ -2512,8 +2512,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             }
 
             // Defer the cast so that it has a chance to be avoided.
-            let original_ptr = ptr.def(self);
-            let bitcast_result_id = self.emit().bitcast(dest_ty, None, original_ptr).unwrap();
+            let ptr_id = ptr.def(self);
+            let bitcast_result_id = self.emit().bitcast(dest_ty, None, ptr_id).unwrap();
 
             self.zombie(
                 bitcast_result_id,
@@ -2528,10 +2528,13 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
             SpirvValue {
                 zombie_waiting_for_span: false,
-                kind: SpirvValueKind::LogicalPtrCast {
-                    original_ptr,
-                    original_ptr_ty: ptr.ty,
-                    bitcast_result_id,
+                kind: SpirvValueKind::Def {
+                    id: bitcast_result_id,
+                    original_ptr_before_casts: Some(SpirvValue {
+                        zombie_waiting_for_span: ptr.zombie_waiting_for_span,
+                        kind: ptr_id,
+                        ty: ptr.ty,
+                    }),
                 },
                 ty: dest_ty,
             }
@@ -3359,7 +3362,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     return_type,
                     arguments,
                 } => (
-                    if let SpirvValueKind::FnAddr { function } = callee.kind {
+                    if let SpirvValueKind::FnAddr { function, .. } = callee.kind {
                         assert_ty_eq!(self, callee_ty, pointee);
                         function
                     }

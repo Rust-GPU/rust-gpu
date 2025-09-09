@@ -875,12 +875,15 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
         // Create these `OpUndef`s up front, instead of on-demand in `SpirvValue::def`,
         // because `SpirvValue::def` can't use `cx.emit()`.
-        self.def_constant(ty, SpirvConst::ZombieUndefForFnAddr);
+        let zombie_id = self
+            .def_constant(ty, SpirvConst::ZombieUndefForFnAddr)
+            .def_with_span(self, span);
 
         SpirvValue {
             zombie_waiting_for_span: false,
             kind: SpirvValueKind::FnAddr {
                 function: function.id,
+                zombie_id,
             },
             ty,
         }

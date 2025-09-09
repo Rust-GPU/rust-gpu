@@ -16,7 +16,6 @@ use rustc_abi::Size;
 use rustc_arena::DroplessArena;
 use rustc_codegen_ssa::traits::ConstCodegenMethods as _;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
-use rustc_middle::bug;
 use rustc_middle::mir::interpret::ConstAllocation;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::source_map::SourceMap;
@@ -31,40 +30,37 @@ use std::str;
 use std::sync::Arc;
 use std::{fs::File, io::Write, path::Path};
 
+// HACK(eddyb) silence warnings that are inaccurate wrt future changes.
+#[non_exhaustive]
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum SpirvValueKind {
-    Def(Word),
+    Def {
+        id: Word,
+
+        /// If `id` is a pointer cast, this will be `Some`, and contain all the
+        /// information necessary to regenerate the original `SpirvValue` before
+        /// *any* pointer casts were applied, effectively deferring the casts
+        /// (as long as all downstream uses apply `.strip_ptrcasts()` first),
+        /// and bypassing errors they might cause (due to SPIR-V limitations).
+        //
+        // FIXME(eddyb) wouldn't it be easier to use this for *any* bitcasts?
+        // (with some caveats around dedicated int<->ptr casts vs bitcasts)
+        original_ptr_before_casts: Option<SpirvValue<Word>>,
+    },
 
     // FIXME(eddyb) this shouldn't be needed, but `rustc_codegen_ssa` still relies
     // on converting `Function`s to `Value`s even for direct calls, the `Builder`
     // should just have direct and indirect `call` variants (or a `Callee` enum).
     FnAddr {
         function: Word,
-    },
 
-    /// Deferred pointer cast, for the `Logical` addressing model (which doesn't
-    /// really support raw pointers in the way Rust expects to be able to use).
-    ///
-    /// The cast's target pointer type is the `ty` of the `SpirvValue` that has
-    /// `LogicalPtrCast` as its `kind`, as it would be redundant to have it here.
-    LogicalPtrCast {
-        /// Pointer value being cast.
-        original_ptr: Word,
-
-        /// Pointer type of `original_ptr`.
-        original_ptr_ty: Word,
-
-        /// Result ID for the `OpBitcast` instruction representing the cast,
-        /// to attach zombies to.
-        //
-        // HACK(eddyb) having an `OpBitcast` only works by being DCE'd away,
-        // or by being replaced with a noop in `qptr::lower`.
-        bitcast_result_id: Word,
+        // FIXME(eddyb) replace this ad-hoc zombie with a proper `SpirvConst`.
+        zombie_id: Word,
     },
 }
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct SpirvValue {
+pub struct SpirvValue<K = SpirvValueKind> {
     // HACK(eddyb) used to cheaply check whether this is a SPIR-V value ID
     // with a "zombie" (deferred error) attached to it, that may need a `Span`
     // still (e.g. such as constants, which can't easily take a `Span`).
@@ -72,43 +68,48 @@ pub struct SpirvValue {
     // which may make `SpirvValue` smaller requires far too much impl effort.
     pub zombie_waiting_for_span: bool,
 
-    pub kind: SpirvValueKind,
+    pub kind: K,
     pub ty: Word,
+}
+
+impl<K> SpirvValue<K> {
+    fn map_kind<K2>(self, f: impl FnOnce(K) -> K2) -> SpirvValue<K2> {
+        let SpirvValue {
+            zombie_waiting_for_span,
+            kind,
+            ty,
+        } = self;
+        SpirvValue {
+            zombie_waiting_for_span,
+            kind: f(kind),
+            ty,
+        }
+    }
 }
 
 impl SpirvValue {
     pub fn strip_ptrcasts(self) -> Self {
         match self.kind {
-            SpirvValueKind::LogicalPtrCast {
-                original_ptr,
-                original_ptr_ty,
-                bitcast_result_id: _,
-            } => original_ptr.with_type(original_ptr_ty),
+            SpirvValueKind::Def {
+                id: _,
+                original_ptr_before_casts: Some(original_ptr),
+            } => original_ptr.map_kind(|id| SpirvValueKind::Def {
+                id,
+                original_ptr_before_casts: None,
+            }),
 
             _ => self,
         }
     }
 
     pub fn const_fold_load(self, cx: &CodegenCx<'_>) -> Option<Self> {
-        match self.kind {
-            SpirvValueKind::Def(id) => {
-                let &entry = cx.builder.id_to_const.borrow().get(&id)?;
-                match entry.val {
-                    SpirvConst::PtrTo { pointee } => {
-                        let ty = match cx.lookup_type(self.ty) {
-                            SpirvType::Pointer { pointee } => pointee,
-                            ty => bug!("load called on value that wasn't a pointer: {:?}", ty),
-                        };
-                        Some(SpirvValue {
-                            zombie_waiting_for_span: entry.legal.is_err(),
-                            kind: SpirvValueKind::Def(pointee),
-                            ty,
-                        })
-                    }
-                    _ => None,
-                }
+        match cx.builder.lookup_const(self)? {
+            SpirvConst::PtrTo { pointee } => {
+                // HACK(eddyb) this obtains a `SpirvValue` from the ID it contains,
+                // so there's some conceptual inefficiency there, but it does
+                // prevent any of the other details from being lost accidentally.
+                Some(cx.builder.id_to_const_and_val.borrow().get(&pointee)?.val.1)
             }
-
             _ => None,
         }
     }
@@ -128,24 +129,7 @@ impl SpirvValue {
 
     pub fn def_with_span(self, cx: &CodegenCx<'_>, span: Span) -> Word {
         let id = match self.kind {
-            SpirvValueKind::FnAddr { .. } => {
-                cx.builder
-                    .const_to_id
-                    .borrow()
-                    .get(&WithType {
-                        ty: self.ty,
-                        val: SpirvConst::ZombieUndefForFnAddr,
-                    })
-                    .expect("FnAddr didn't go through proper undef registration")
-                    .val
-            }
-
-            SpirvValueKind::Def(id)
-            | SpirvValueKind::LogicalPtrCast {
-                original_ptr: _,
-                original_ptr_ty: _,
-                bitcast_result_id: id,
-            } => id,
+            SpirvValueKind::Def { id, .. } | SpirvValueKind::FnAddr { zombie_id: id, .. } => id,
         };
         if self.zombie_waiting_for_span {
             cx.add_span_to_zombie_if_missing(id, span);
@@ -162,7 +146,10 @@ impl SpirvValueExt for Word {
     fn with_type(self, ty: Word) -> SpirvValue {
         SpirvValue {
             zombie_waiting_for_span: false,
-            kind: SpirvValueKind::Def(self),
+            kind: SpirvValueKind::Def {
+                id: self,
+                original_ptr_before_casts: None,
+            },
             ty,
         }
     }
@@ -380,11 +367,12 @@ pub struct BuilderSpirv<'tcx> {
     builder: RefCell<Builder>,
 
     // Bidirectional maps between `SpirvConst` and the ID of the defined global
-    // (e.g. `OpConstant...`) instruction.
-    // NOTE(eddyb) both maps have `WithConstLegality` around their keys, which
-    // allows getting that legality information without additional lookups.
-    const_to_id: RefCell<FxHashMap<WithType<SpirvConst<'tcx, 'tcx>>, WithConstLegality<Word>>>,
-    id_to_const: RefCell<FxHashMap<Word, WithConstLegality<SpirvConst<'tcx, 'tcx>>>>,
+    // (e.g. `OpConstant...`) instruction, with additional information in values
+    // (i.e. each map is keyed by only some part of the other map's value type),
+    // as needed to streamline operations (e.g. avoiding rederiving `SpirvValue`).
+    const_to_val: RefCell<FxHashMap<WithType<SpirvConst<'tcx, 'tcx>>, SpirvValue>>,
+    id_to_const_and_val:
+        RefCell<FxHashMap<Word, WithConstLegality<(SpirvConst<'tcx, 'tcx>, SpirvValue)>>>,
 
     debug_file_cache: RefCell<FxHashMap<DebugFileKey, DebugFileSpirv<'tcx>>>,
 
@@ -455,8 +443,8 @@ impl<'tcx> BuilderSpirv<'tcx> {
             source_map: tcx.sess.source_map(),
             dropless_arena: &tcx.arena.dropless,
             builder: RefCell::new(builder),
-            const_to_id: Default::default(),
-            id_to_const: Default::default(),
+            const_to_val: Default::default(),
+            id_to_const_and_val: Default::default(),
             debug_file_cache: Default::default(),
             enabled_capabilities,
         }
@@ -560,12 +548,8 @@ impl<'tcx> BuilderSpirv<'tcx> {
         };
 
         let val_with_type = WithType { ty, val };
-        if let Some(entry) = self.const_to_id.borrow().get(&val_with_type) {
-            return SpirvValue {
-                zombie_waiting_for_span: entry.legal.is_err(),
-                kind: SpirvValueKind::Def(entry.val),
-                ty,
-            };
+        if let Some(&v) = self.const_to_val.borrow().get(&val_with_type) {
+            return v;
         }
         let val = val_with_type.val;
 
@@ -697,11 +681,11 @@ impl<'tcx> BuilderSpirv<'tcx> {
             SpirvConst::Composite(v) => v
                 .iter()
                 .map(|field| {
-                    let field_entry = &self.id_to_const.borrow()[field];
+                    let field_entry = &self.id_to_const_and_val.borrow()[field];
                     field_entry.legal.and(
                         // `field` is itself some legal `SpirvConst`, but can we have
                         // it as part of an `OpConstantComposite`?
-                        match field_entry.val {
+                        match field_entry.val.0 {
                             SpirvConst::PtrTo { .. } => Err(IllegalConst::Shallow(
                                 LeafIllegalConst::CompositeContainsPtrTo,
                             )),
@@ -729,14 +713,16 @@ impl<'tcx> BuilderSpirv<'tcx> {
                 })
                 .unwrap_or(Ok(())),
 
-            SpirvConst::PtrTo { pointee } => match self.id_to_const.borrow()[&pointee].legal {
-                Ok(()) => Ok(()),
+            SpirvConst::PtrTo { pointee } => {
+                match self.id_to_const_and_val.borrow()[&pointee].legal {
+                    Ok(()) => Ok(()),
 
-                // `Shallow` becomes `Indirect` when placed behind a pointer.
-                Err(IllegalConst::Shallow(cause) | IllegalConst::Indirect(cause)) => {
-                    Err(IllegalConst::Indirect(cause))
+                    // `Shallow` becomes `Indirect` when placed behind a pointer.
+                    Err(IllegalConst::Shallow(cause) | IllegalConst::Indirect(cause)) => {
+                        Err(IllegalConst::Indirect(cause))
+                    }
                 }
-            },
+            }
 
             SpirvConst::ConstDataFromAlloc(_) => Err(IllegalConst::Shallow(
                 LeafIllegalConst::UntypedConstDataFromAlloc,
@@ -754,32 +740,44 @@ impl<'tcx> BuilderSpirv<'tcx> {
         }
 
         let val = val.tcx_arena_alloc_slices(cx);
-        assert_matches!(
-            self.const_to_id
-                .borrow_mut()
-                .insert(WithType { ty, val }, WithConstLegality { val: id, legal }),
-            None
-        );
-        assert_matches!(
-            self.id_to_const
-                .borrow_mut()
-                .insert(id, WithConstLegality { val, legal }),
-            None
-        );
-        SpirvValue {
+
+        // FIXME(eddyb) the `val`/`v` name clash is a bit unfortunate.
+        let v = SpirvValue {
             zombie_waiting_for_span: legal.is_err(),
-            kind: SpirvValueKind::Def(id),
+            kind: SpirvValueKind::Def {
+                id,
+                original_ptr_before_casts: None,
+            },
             ty,
-        }
+        };
+
+        assert_matches!(
+            self.const_to_val
+                .borrow_mut()
+                .insert(WithType { ty, val }, v),
+            None
+        );
+        assert_matches!(
+            self.id_to_const_and_val.borrow_mut().insert(
+                id,
+                WithConstLegality {
+                    val: (val, v),
+                    legal
+                }
+            ),
+            None
+        );
+
+        v
     }
 
     pub fn lookup_const_by_id(&self, id: Word) -> Option<SpirvConst<'tcx, 'tcx>> {
-        Some(self.id_to_const.borrow().get(&id)?.val)
+        Some(self.id_to_const_and_val.borrow().get(&id)?.val.0)
     }
 
     pub fn lookup_const(&self, def: SpirvValue) -> Option<SpirvConst<'tcx, 'tcx>> {
         match def.kind {
-            SpirvValueKind::Def(id) => self.lookup_const_by_id(id),
+            SpirvValueKind::Def { id, .. } => self.lookup_const_by_id(id),
             _ => None,
         }
     }
