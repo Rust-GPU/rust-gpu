@@ -415,18 +415,18 @@ impl CodegenArgs {
             );
             opts.optflag(
                 "",
-                "no-early-report-zombies",
-                "delays reporting zombies (to allow more legalization)",
+                "early-report-zombies",
+                "disables zombies reporting delay",
             );
             opts.optflag(
                 "",
-                "no-infer-storage-classes",
-                "disables SPIR-V Storage Class inference",
+                "infer-storage-classes",
+                "re-enables SPIR-V Storage Class inference",
             );
             opts.optflag(
                 "",
-                "no-legacy-mem2reg",
-                "disables legacy (pre-SPIR-T) mem2reg pass",
+                "legacy-mem2reg",
+                "re-enables legacy (pre-SPIR-T) mem2reg pass",
             );
             opts.optflag("", "no-structurize", "disables CFG structurization");
 
@@ -621,9 +621,9 @@ impl CodegenArgs {
         let linker_opts = crate::linker::Options {
             // FIXME(eddyb) clean up this `no-` "negation prefix" situation.
             compact_ids: !matches.opt_present("no-compact-ids"),
-            early_report_zombies: !matches.opt_present("no-early-report-zombies"),
-            infer_storage_classes: !matches.opt_present("no-infer-storage-classes"),
-            legacy_mem2reg: !matches.opt_present("no-legacy-mem2reg"),
+            early_report_zombies: matches.opt_present("early-report-zombies"),
+            infer_storage_classes: matches.opt_present("infer-storage-classes"),
+            legacy_mem2reg: matches.opt_present("legacy-mem2reg"),
             structurize: !matches.opt_present("no-structurize"),
             spirt_passes: matches
                 .opt_strs("spirt-passes")

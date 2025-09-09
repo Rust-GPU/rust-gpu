@@ -118,21 +118,6 @@ Disables compaction of SPIR-V IDs at the end of linking. Causes absolutely ginor
 emitted. Useful if you're println debugging IDs in the linker (although spirv-opt will compact them
 anyway, be careful).
 
-### `--no-early-report-zombies`
-
-Delays reporting zombies (aka "deferred errors") even further, to allow more legalization.
-Currently this also replaces the zombie reporting with a SPIR-T-based version
-(which may become the default in the future).
-
-### `--no-infer-storage-classes`
-
-Disables the old SPIR-V "Storage Class" (i.e. address space) inference pass,
-to allow testing alternatives to it (such as SPIR-T `qptr` passes).
-
-Note that this will produce illegal SPIR-V by default, and you need e.g.
-`--spirt-passes=qptr` in order to regain legal "Storage Class" assignments  
-(see [SPIR-T `qptr` PR](https://github.com/EmbarkStudios/spirt/pull/24) for more information on `qptr` in general)
-
 ### `--no-structurize`
 
 Disables CFG structurization. Probably results in invalid modules.

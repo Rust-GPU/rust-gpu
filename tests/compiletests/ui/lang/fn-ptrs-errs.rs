@@ -1,7 +1,7 @@
 // Simple test demonstrating the errors from `fn` pointer / `dyn Trait` types.
 
 // revisions: default spirt_diags
-//[spirt_diags] compile-flags: -C llvm-args=--no-early-report-zombies
+//[default] compile-flags: -C llvm-args=--early-report-zombies
 
 // build-fail
 

@@ -1,6 +1,4 @@
 // build-pass
-// compile-flags: -C llvm-args=--no-early-report-zombies
-// compile-flags: -C llvm-args=--spirt-passes=qptr
 // compile-flags: -C llvm-args=--disassemble-entry=main
 
 use spirv_std::spirv;
