@@ -2449,7 +2449,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         let ptr = ptr.strip_ptrcasts();
 
         trace!(
-            "ptr type after strippint pointer cases: {}",
+            "ptr type after stripping pointer casts: {}",
             self.debug_type(ptr.ty),
         );
 
@@ -2499,16 +2499,13 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 self.debug_type(dest_pointee),
             );
 
-            // HACK(eddyb) reuse the special-casing in `const_bitcast`, which relies
-            // on adding a pointer type to an untyped pointer (to some const data).
+            // Prefer constant(-folding) pointer casts, over runtime casts,
+            // once all recovery options have been exhasuted (see above).
+            // HACK(eddyb) this also reuses the special-casing in `const_bitcast`,
+            // which relies on combining a pointee type with untyped const data.
             if self.builder.lookup_const(ptr).is_some() {
-                // FIXME(eddyb) remove the condition on `zombie_waiting_for_span`,
-                // and constant-fold all pointer bitcasts, regardless of "legality",
-                // once `strip_ptrcasts` can undo `const_bitcast`, as well.
-                if ptr.zombie_waiting_for_span {
-                    trace!("illegal const");
-                    return self.const_bitcast(ptr, dest_ty);
-                }
+                trace!("const_bitcast");
+                return self.const_bitcast(ptr, dest_ty);
             }
 
             // Defer the cast so that it has a chance to be avoided.

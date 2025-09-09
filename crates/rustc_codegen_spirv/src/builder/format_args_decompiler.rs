@@ -319,7 +319,7 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                             pieces_len_id,
                             rt_args_slice_ptr_id,
                             rt_args_len_id,
-                            fmt_placeholders_slice_ptr_id,
+                            _fmt_placeholders_slice_ptr_id,
                             fmt_placeholders_len_id,
                         ] if (pieces_len, rt_args_count) == (!0, !0) => {
                             let [pieces_len, rt_args_len, fmt_placeholders_len] =
@@ -336,33 +336,25 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                                     }
                                 };
 
-                            let prepare_args_insts = try_rev_take(2).ok_or_else(|| {
+                            let prepare_args_insts = try_rev_take(1).ok_or_else(|| {
                                 FormatArgsNotRecognized(
-										"fmt::Arguments::new_v1_formatted call: ran out of instructions".into(),
-									)
+                                    "fmt::Arguments::new_v1_formatted call: ran out of instructions".into(),
+                                )
                             })?;
-                            let (rt_args_slice_ptr_id, _fmt_placeholders_slice_ptr_id) =
-                                match prepare_args_insts[..] {
-                                    [
-                                        Inst::Bitcast(rt_args_cast_out_id, rt_args_cast_in_id),
-                                        Inst::Bitcast(
-                                            placeholders_cast_out_id,
-                                            placeholders_cast_in_id,
-                                        ),
-                                    ] if rt_args_cast_out_id == rt_args_slice_ptr_id
-                                        && placeholders_cast_out_id
-                                            == fmt_placeholders_slice_ptr_id =>
-                                    {
-                                        (rt_args_cast_in_id, placeholders_cast_in_id)
-                                    }
-                                    _ => {
-                                        let mut insts = prepare_args_insts;
-                                        insts.extend(fmt_args_new_call_insts);
-                                        return Err(FormatArgsNotRecognized(format!(
-                                            "fmt::Arguments::new_v1_formatted call sequence ({insts:?})",
-                                        )));
-                                    }
-                                };
+                            let rt_args_slice_ptr_id = match prepare_args_insts[..] {
+                                [Inst::Bitcast(rt_args_cast_out_id, rt_args_cast_in_id)]
+                                    if rt_args_cast_out_id == rt_args_slice_ptr_id =>
+                                {
+                                    rt_args_cast_in_id
+                                }
+                                _ => {
+                                    let mut insts = prepare_args_insts;
+                                    insts.extend(fmt_args_new_call_insts);
+                                    return Err(FormatArgsNotRecognized(format!(
+                                        "fmt::Arguments::new_v1_formatted call sequence ({insts:?})",
+                                    )));
+                                }
+                            };
 
                             decoded_format_args.has_unknown_fmt_placeholder_to_args_mapping =
                                 Some(fmt_placeholders_len);
