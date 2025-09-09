@@ -1871,6 +1871,18 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     }
 
     fn load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
+        // HACK(eddyb) prefer casting the pointer, if it's a constant, because
+        // its success bypasses runtime `OpBitcast`s from potentially illegal
+        // constants (sadly, nothing else might try to cast the pointer itself).
+        if self.builder.lookup_const(ptr).is_some()
+            && let Some(loaded_val) = self
+                .const_bitcast(ptr, self.type_ptr_to(ty))
+                .const_fold_load(self)
+            && loaded_val.ty == ty
+        {
+            return loaded_val;
+        }
+
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, ty);
         let loaded_val = ptr.const_fold_load(self).unwrap_or_else(|| {
             self.emit()
@@ -2893,10 +2905,22 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             let dst_adj = self.adjust_pointer_for_sized_access(dst, const_size);
             let src_adj = self.adjust_pointer_for_sized_access(src, const_size);
             match (dst_adj, src_adj) {
-                // HACK(eddyb) fill in missing `dst`/`src` with the other side.
-                (Some((dst, access_ty)), None) => {
+                (Some((dst, dst_access_ty)), Some((src, src_access_ty)))
+                    if dst_access_ty == src_access_ty =>
+                {
+                    trace!("BOTH adjusted memcpy");
+                    Some((dst, src))
+                }
+
+                // HACK(eddyb) fill in missing `dst`/`src` with the other side
+                // (including `src` having the wrong type but being constant,
+                // which can still reach the special-casing in `const_bitcast`).
+                (Some((dst, access_ty)), _)
+                    if src_adj.is_none() || self.builder.lookup_const(src).is_some() =>
+                {
                     trace!(
-                        "DESTINATION adjusted memcpy calling pointercast: dst ty: {}, access ty: {}",
+                        "DESTINATION adjusted memcpy calling pointercast: \
+                         dst ty: {}, access ty: {}",
                         self.debug_type(dst.ty),
                         self.debug_type(access_ty)
                     );
@@ -2904,19 +2928,18 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 }
                 (None, Some((src, access_ty))) => {
                     trace!(
-                        "SOURCE adjusted memcpy calling pointercast: dst ty: {} -> access ty: {}, src ty: {}",
+                        "SOURCE adjusted memcpy calling pointercast: \
+                         dst ty: {} -> access ty: {}, src ty: {}",
                         self.debug_type(dst.ty),
                         self.debug_type(access_ty),
                         self.debug_type(src.ty)
                     );
                     Some((self.pointercast(dst, self.type_ptr_to(access_ty)), src))
                 }
-                (Some((dst, dst_access_ty)), Some((src, src_access_ty)))
-                    if dst_access_ty == src_access_ty =>
-                {
-                    trace!("BOTH adjusted memcpy calling pointercast");
-                    Some((dst, src))
-                }
+
+                // HACK(eddyb) unreachable, but only via guard expression above.
+                (Some(_), None) => unreachable!(),
+
                 (None, None) | (Some(_), Some(_)) => None,
             }
         });

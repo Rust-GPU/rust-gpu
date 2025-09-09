@@ -7,7 +7,9 @@ use crate::spirv_type::SpirvType;
 use itertools::Itertools as _;
 use rspirv::spirv::Word;
 use rustc_abi::{self as abi, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
-use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods};
+use rustc_codegen_ssa::traits::{
+    BaseTypeCodegenMethods as _, ConstCodegenMethods, MiscCodegenMethods,
+};
 use rustc_middle::mir::interpret::{AllocError, ConstAllocation, GlobalAlloc, Scalar, alloc_range};
 use rustc_span::{DUMMY_SP, Span};
 
@@ -104,6 +106,20 @@ impl<'tcx> CodegenCx<'tcx> {
 
     pub fn undef(&self, ty: Word) -> SpirvValue {
         self.def_constant(ty, SpirvConst::Undef)
+    }
+
+    // FIXME(eddyb) this is much less efficient than e.g. LLVM's byte strings.
+    pub fn const_bytes(&self, bytes: &[u8]) -> SpirvValue {
+        // FIXME(eddyb) `type_iN` methods return *unsigned* integer types,
+        // which is probably desirable, and it also suggests that maybe the
+        // SPIR-T-like `sN`/`uN` convention should be used for SPIR-V types,
+        // instead of Rust-like `iN`/`uN`, to avoid some of the ambiguity.
+        let u8_ty = self.type_i8();
+
+        self.constant_composite(
+            self.type_array(u8_ty, bytes.len().try_into().unwrap()),
+            bytes.iter().map(|&b| self.const_u8(b).def_cx(self)),
+        )
     }
 }
 
@@ -224,6 +240,18 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                 let alloc_id = prov.alloc_id();
                 let (base_addr, _base_addr_space) = match self.tcx.global_alloc(alloc_id) {
                     GlobalAlloc::Memory(alloc) => {
+                        // For ZSTs directly codegen an aligned pointer.
+                        // This avoids generating a zero-sized constant value and actually needing a
+                        // real address at runtime.
+                        //
+                        // FIXME(eddyb) see `prefer_int_const_ptrs_over_zst_statics`.
+                        if alloc.inner().len() == 0 && self.prefer_int_const_ptrs_over_zst_statics()
+                        {
+                            assert_eq!(offset.bytes(), 0);
+                            return self
+                                .const_bitcast(self.const_usize(alloc.inner().align.bytes()), ty);
+                        }
+
                         (self.static_addr_of_alloc(alloc, None), AddressSpace::DATA)
                     }
                     GlobalAlloc::Function { instance } => (
@@ -288,6 +316,24 @@ impl ConstCodegenMethods for CodegenCx<'_> {
 }
 
 impl<'tcx> CodegenCx<'tcx> {
+    /// `&ZST` constants can be represented in two possible ways:
+    /// - integer pointer e.g. `const_bitcast(const_usize(1))` for `&()`
+    ///   (in the general case, `ptr::dangling::<ZST>()`, i.e. a similar cast,
+    ///   except the `1` has to be replaced by the actual `align_of::<ZST>()`)
+    /// - pointer to some `static S: ZST` equivalent, i.e. `static_addr_of`
+    ///   (which is wasteful/unnecessary for a ZST, as far as Rust is concerned)
+    ///
+    /// Currently the choice is hardcoded to the latter, instead of the Rust
+    /// preference for integer pointers, but this function mainly exists to
+    /// allow the logic for integer pointers to be kept, even if inactive.
+    //
+    // FIXME(eddyb) maybe gate this choice on whether `qptr` is enabled?
+    fn prefer_int_const_ptrs_over_zst_statics(&self) -> bool {
+        let _cx = self;
+
+        false
+    }
+
     pub fn const_bitcast(&self, val: SpirvValue, ty: Word) -> SpirvValue {
         if val.ty == ty {
             return val;
@@ -313,19 +359,17 @@ impl<'tcx> CodegenCx<'tcx> {
         // as the old `from_const_alloc` (now `OperandRef::from_const_alloc`).
         // FIXME(eddyb) replace this with `qptr` handling of constant data.
         if let Some(SpirvConst::PtrTo {
-            // HACK(eddyb) the `pointee: None` condition preserves the old
-            // behavior, even in the face of unconditional constant-folding
-            // of `pointercast` (and `.strip_ptrcasts()` being able to undo it).
-            pointee: None,
+            pointee: _,
             pointee_alloc,
         }) = val_ct_def
+            && pointee_alloc.inner().mutability.is_not()
             && let SpirvType::Pointer { pointee, .. } = self.lookup_type(ty)
             && let Some(init) = self.try_read_from_const_alloc(pointee_alloc, pointee)
         {
             return self.def_constant(
                 ty,
                 SpirvConst::PtrTo {
-                    pointee: Some(init.def_cx(self)),
+                    pointee: init.def_cx(self),
                     pointee_alloc,
                 },
             );
@@ -601,6 +645,148 @@ impl<'tcx> CodegenCx<'tcx> {
                 );
                 (result, ty_def.sizeof(self).unwrap_or(Size::ZERO))
             }
+        }
+    }
+
+    // HACK(eddyb) this copies `rustc_codegen_llvm::consts::const_alloc_to_llvm`,
+    // almost exactly, with only references to LLVM (in names and comments), and
+    // types (`CodegenCx`, `Value`, etc.), adjusted to fit `rustc_codegen_spirv`.
+    //
+    // FIXME(eddyb) this should be in `rustc_codegen_ssa`, perhaps requiring new
+    // helpers/heuristics around the chunks of plain bytes/undef, but removing
+    // the need for backends to implement `alloc.provenance().ptrs()` lowering.
+    //
+    pub(crate) fn const_alloc_to_backend(
+        &self,
+        alloc: ConstAllocation<'_>,
+        is_static: bool,
+    ) -> SpirvValue {
+        // HACK(eddyb) `use`s from `rustc_codegen_llvm::consts`.
+        use rustc_abi::{Scalar, WrappingRange};
+        use rustc_middle::mir::interpret::{
+            Allocation, InitChunk, Pointer, Scalar as InterpScalar, read_target_uint,
+        };
+        use std::ops::Range;
+
+        let alloc = alloc.inner();
+        // We expect that callers of const_alloc_to_backend will instead directly codegen a pointer or
+        // integer for any &ZST where the ZST is a constant (i.e. not a static). We should never be
+        // producing empty global vars as they're just adding noise to binaries and forcing less
+        // optimal codegen.
+        //
+        // Statics have a guaranteed meaningful address so it's less clear that we want to do
+        // something like this; it's also harder.
+        //
+        // FIXME(eddyb) see `prefer_int_const_ptrs_over_zst_statics`.
+        if !is_static && self.prefer_int_const_ptrs_over_zst_statics() {
+            assert!(alloc.len() != 0);
+        }
+        let mut llvals = Vec::with_capacity(alloc.provenance().ptrs().len() + 1);
+        let dl = self.data_layout();
+        let pointer_size = dl.pointer_size.bytes() as usize;
+
+        // Note: this function may call `inspect_with_uninit_and_ptr_outside_interpreter`, so `range`
+        // must be within the bounds of `alloc` and not contain or overlap a pointer provenance.
+        fn append_chunks_of_init_and_uninit_bytes(
+            llvals: &mut Vec<SpirvValue>,
+            cx: &CodegenCx<'_>,
+            alloc: &Allocation,
+            range: Range<usize>,
+        ) {
+            let chunks = alloc.init_mask().range_as_init_chunks(range.clone().into());
+
+            let chunk_to_llval = move |chunk| match chunk {
+                InitChunk::Init(range) => {
+                    let range = (range.start.bytes() as usize)..(range.end.bytes() as usize);
+                    let bytes = alloc.inspect_with_uninit_and_ptr_outside_interpreter(range);
+                    cx.const_bytes(bytes)
+                }
+                InitChunk::Uninit(range) => {
+                    let len = range.end.bytes() - range.start.bytes();
+                    cx.const_undef(cx.type_array(cx.type_i8(), len))
+                }
+            };
+
+            // Generating partially-uninit consts is limited to small numbers of chunks,
+            // to avoid the cost of generating large complex const expressions.
+            // For example, `[(u32, u8); 1024 * 1024]` contains uninit padding in each element, and
+            // would result in `{ [5 x i8] zeroinitializer, [3 x i8] undef, ...repeat 1M times... }`.
+            let max = cx.sess().opts.unstable_opts.uninit_const_chunk_threshold;
+            let allow_uninit_chunks = chunks.clone().take(max.saturating_add(1)).count() <= max;
+
+            if allow_uninit_chunks {
+                llvals.extend(chunks.map(chunk_to_llval));
+            } else {
+                // If this allocation contains any uninit bytes, codegen as if it was initialized
+                // (using some arbitrary value for uninit bytes).
+                let bytes = alloc.inspect_with_uninit_and_ptr_outside_interpreter(range);
+                llvals.push(cx.const_bytes(bytes));
+            }
+        }
+
+        let mut next_offset = 0;
+        for &(offset, prov) in alloc.provenance().ptrs().iter() {
+            let offset = offset.bytes();
+            assert_eq!(offset as usize as u64, offset);
+            let offset = offset as usize;
+            if offset > next_offset {
+                // This `inspect` is okay since we have checked that there is no provenance, it
+                // is within the bounds of the allocation, and it doesn't affect interpreter execution
+                // (we inspect the result after interpreter execution).
+                append_chunks_of_init_and_uninit_bytes(
+                    &mut llvals,
+                    self,
+                    alloc,
+                    next_offset..offset,
+                );
+            }
+            let ptr_offset = read_target_uint(
+                dl.endian,
+                // This `inspect` is okay since it is within the bounds of the allocation, it doesn't
+                // affect interpreter execution (we inspect the result after interpreter execution),
+                // and we properly interpret the provenance as a relocation pointer offset.
+                alloc.inspect_with_uninit_and_ptr_outside_interpreter(
+                    offset..(offset + pointer_size),
+                ),
+            )
+            .expect("const_alloc_to_backend: could not read relocation pointer")
+                as u64;
+
+            let address_space = self.tcx.global_alloc(prov.alloc_id()).address_space(self);
+
+            llvals.push(self.scalar_to_backend(
+                InterpScalar::from_pointer(
+                    Pointer::new(prov, Size::from_bytes(ptr_offset)),
+                    &self.tcx,
+                ),
+                Scalar::Initialized {
+                    value: Primitive::Pointer(address_space),
+                    valid_range: WrappingRange::full(dl.pointer_size),
+                },
+                self.type_ptr_ext(address_space),
+            ));
+            next_offset = offset + pointer_size;
+        }
+        if alloc.len() >= next_offset {
+            let range = next_offset..alloc.len();
+            // This `inspect` is okay since we have check that it is after all provenance, it is
+            // within the bounds of the allocation, and it doesn't affect interpreter execution (we
+            // inspect the result after interpreter execution).
+            append_chunks_of_init_and_uninit_bytes(&mut llvals, self, alloc, range);
+        }
+
+        // NOTE(eddyb) original comment below, but similar reasoning might apply
+        // to other backends - also, the struct is only a concatenation gadget.
+        //
+        // Avoid wrapping in a struct if there is only a single value. This ensures
+        // that LLVM is able to perform the string merging optimization if the constant
+        // is a valid C string. LLVM only considers bare arrays for this optimization,
+        // not arrays wrapped in a struct. LLVM handles this at:
+        // https://github.com/rust-lang/llvm-project/blob/acaea3d2bb8f351b740db7ebce7d7a40b9e21488/llvm/lib/Target/TargetLoweringObjectFile.cpp#L249-L280
+        if let &[data] = &*llvals {
+            data
+        } else {
+            self.const_struct(&llvals, true)
         }
     }
 }

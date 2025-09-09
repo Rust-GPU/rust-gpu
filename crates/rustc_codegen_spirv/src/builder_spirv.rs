@@ -109,14 +109,7 @@ impl SpirvValue {
                 // HACK(eddyb) this obtains a `SpirvValue` from the ID it contains,
                 // so there's some conceptual inefficiency there, but it does
                 // prevent any of the other details from being lost accidentally.
-                Some(
-                    cx.builder
-                        .id_to_const_and_val
-                        .borrow()
-                        .get(&pointee?)?
-                        .val
-                        .1,
-                )
+                Some(cx.builder.id_to_const_and_val.borrow().get(&pointee)?.val.1)
             }
             _ => None,
         }
@@ -181,8 +174,7 @@ pub enum SpirvConst<'a, 'tcx> {
     /// Pointer to constant data, i.e. `&pointee`, represented as an `OpVariable`
     /// in the `Private` storage class, and with `pointee` as its initializer.
     PtrTo {
-        // HACK(eddyb) may be `None`, in which case only `pointee_alloc` matters.
-        pointee: Option<Word>,
+        pointee: Word,
 
         // HACK(eddyb) this allows deferring the actual value generation until
         // after a pointer to this value is cast to its final pointer type.
@@ -293,12 +285,6 @@ enum LeafIllegalConst<'tcx> {
     // FIXME(eddyb) legalize function pointers (and emulate recursion) in SPIR-T.
     PtrToFunc { mangled_func_name: &'tcx str },
 
-    /// `ConstDataFromAlloc` constant, which cannot currently be materialized
-    /// to SPIR-V (and requires to be wrapped in `PtrTo` and bitcast, first).
-    //
-    // FIXME(eddyb) replace this with `qptr` handling of constant data.
-    UntypedConstDataFromAlloc,
-
     /// `SpirvConst::BitCast` needs to error, even when materialized to SPIR-V.
     //
     // FIXME(eddyb) replace this with `qptr` handling of constant data/exprs.
@@ -320,11 +306,6 @@ impl LeafIllegalConst<'_> {
                 let demangled_func_name =
                     format!("{:#}", rustc_demangle::demangle(mangled_func_name));
                 format!("unsupported function pointer to `{demangled_func_name}`").into()
-            }
-            Self::UntypedConstDataFromAlloc => {
-                "`const_data_from_alloc` result wasn't passed through `static_addr_of`, \
-                 then `const_bitcast` (which would've given it a type)"
-                    .into()
             }
             Self::BitCast { .. } => "constants cannot contain bitcasts".into(),
             Self::PtrByteOffset => {
@@ -728,16 +709,12 @@ impl<'tcx> BuilderSpirv<'tcx> {
             },
 
             SpirvConst::Null => builder.constant_null(ty),
-            SpirvConst::Undef
-            | SpirvConst::PtrTo {
-                pointee: None,
-                pointee_alloc: _,
-            } => builder.undef(ty, None),
+            SpirvConst::Undef => builder.undef(ty, None),
 
             SpirvConst::Composite(v) => builder.constant_composite(ty, v.iter().copied()),
 
             SpirvConst::PtrTo {
-                pointee: Some(pointee),
+                pointee,
                 pointee_alloc: _,
             } => builder.variable(ty, None, StorageClass::Private, Some(pointee)),
 
@@ -845,7 +822,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
                 .unwrap_or(Ok(())),
 
             SpirvConst::PtrTo {
-                pointee: Some(pointee),
+                pointee,
                 pointee_alloc: _,
             } => {
                 match self.id_to_const_and_val.borrow()[&pointee].legal {
@@ -864,13 +841,6 @@ impl<'tcx> BuilderSpirv<'tcx> {
             } => Err(IllegalConst::Shallow(LeafIllegalConst::PtrToFunc {
                 mangled_func_name,
             })),
-
-            SpirvConst::PtrTo {
-                pointee: None,
-                pointee_alloc: _,
-            } => Err(IllegalConst::Shallow(
-                LeafIllegalConst::UntypedConstDataFromAlloc,
-            )),
 
             SpirvConst::BitCast(from_id) => {
                 let from_const = self.id_to_const_and_val.borrow()[&from_id];

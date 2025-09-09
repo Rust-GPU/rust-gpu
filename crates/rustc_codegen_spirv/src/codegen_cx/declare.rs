@@ -13,9 +13,7 @@ use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
 use rustc_abi::{AddressSpace, Align};
 use rustc_attr_data_structures::InlineAttr;
-use rustc_codegen_ssa::traits::{
-    BaseTypeCodegenMethods as _, PreDefineCodegenMethods, StaticCodegenMethods,
-};
+use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
 use rustc_middle::mir::interpret::ConstAllocation;
@@ -374,10 +372,12 @@ impl<'tcx> CodegenCx<'tcx> {
         alloc: ConstAllocation<'tcx>,
         _kind: Option<&str>,
     ) -> SpirvValue {
+        // FIXME(eddyb) do not ignore `alloc.align` or `alloc.mutability`!
+        let init = self.const_alloc_to_backend(alloc, /*static*/ false);
         self.def_constant(
-            self.type_ptr(),
+            self.type_ptr_to(init.ty),
             SpirvConst::PtrTo {
-                pointee: None,
+                pointee: init.def_cx(self),
                 pointee_alloc: alloc,
             },
         )
