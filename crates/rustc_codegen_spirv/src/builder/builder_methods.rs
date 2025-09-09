@@ -2808,7 +2808,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     fn memcpy(
         &mut self,
         dst: Self::Value,
-        _dst_align: Align,
+        dst_align: Align,
         src: Self::Value,
         _src_align: Align,
         size: Self::Value,
@@ -2884,7 +2884,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         if let Some((dst, src)) = typed_copy_dst_src {
             if let Some(const_value) = src.const_fold_load(self) {
                 trace!("storing const value");
-                self.store(const_value, dst, Align::from_bytes(0).unwrap());
+                self.store(const_value, dst, dst_align);
             } else {
                 trace!("copying memory using OpCopyMemory");
                 self.emit()

@@ -237,8 +237,8 @@ impl ConstCodegenMethods for CodegenCx<'_> {
             }
             Scalar::Ptr(ptr, _) => {
                 let (prov, offset) = ptr.into_parts();
-                let alloc_id = prov.alloc_id();
-                let (base_addr, _base_addr_space) = match self.tcx.global_alloc(alloc_id) {
+                let global_alloc = self.tcx.global_alloc(prov.alloc_id());
+                let base_addr = match global_alloc {
                     GlobalAlloc::Memory(alloc) => {
                         // For ZSTs directly codegen an aligned pointer.
                         // This avoids generating a zero-sized constant value and actually needing a
@@ -252,12 +252,9 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                                 .const_bitcast(self.const_usize(alloc.inner().align.bytes()), ty);
                         }
 
-                        (self.static_addr_of_alloc(alloc, None), AddressSpace::DATA)
+                        self.static_addr_of_alloc(alloc, None)
                     }
-                    GlobalAlloc::Function { instance } => (
-                        self.get_fn_addr(instance),
-                        self.data_layout().instruction_address_space,
-                    ),
+                    GlobalAlloc::Function { instance } => self.get_fn_addr(instance),
                     GlobalAlloc::VTable(vty, dyn_ty) => {
                         let alloc = self
                             .tcx
@@ -268,14 +265,16 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                                 }),
                             )))
                             .unwrap_memory();
-                        (self.static_addr_of_alloc(alloc, None), AddressSpace::DATA)
+                        self.static_addr_of_alloc(alloc, None)
                     }
                     GlobalAlloc::Static(def_id) => {
                         assert!(self.tcx.is_static(def_id));
                         assert!(!self.tcx.is_thread_local_static(def_id));
-                        (self.get_static(def_id), AddressSpace::DATA)
+                        self.get_static(def_id)
                     }
                 };
+                // FIXME(eddyb) figure out if the addrspace can ever matter here.
+                let _base_addr_space = global_alloc.address_space(self);
                 self.const_bitcast(self.const_ptr_byte_offset(base_addr, offset), ty)
             }
         }
@@ -352,29 +351,6 @@ impl<'tcx> CodegenCx<'tcx> {
             && let SpirvType::Pointer { .. } = self.lookup_type(ty)
         {
             return self.const_null(ty);
-        }
-
-        // HACK(eddyb) special-case `const_data_from_alloc` + `static_addr_of`
-        // as the old `from_const_alloc` (now `OperandRef::from_const_alloc`).
-        // FIXME(eddyb) replace this with `qptr` handling of constant data.
-        if let Some(SpirvConst::PtrTo {
-            pointee: _,
-            pointee_alloc,
-        }) = val_ct_def
-            && pointee_alloc.inner().mutability.is_not()
-            && let SpirvType::Pointer {
-                pointee: Some(pointee),
-                ..
-            } = self.lookup_type(ty)
-            && let Some(init) = self.try_read_from_const_alloc(pointee_alloc, pointee)
-        {
-            return self.def_constant(
-                ty,
-                SpirvConst::PtrTo {
-                    pointee: init.def_cx(self),
-                    pointee_alloc,
-                },
-            );
         }
 
         self.def_constant(ty, SpirvConst::BitCast(val.def_cx(self)))

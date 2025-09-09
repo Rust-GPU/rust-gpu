@@ -60,26 +60,41 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
         // HACK(eddyb) work around mutable borrowing conflicts.
         let cx = builder.cx;
 
-        let const_u32_as_usize = |ct_id| match cx.builder.lookup_const_by_id(ct_id)? {
-            SpirvConst::Scalar(x) => Some(u32::try_from(x).ok()? as usize),
+        let lookup_const_scalar = |ct_id| match cx.builder.lookup_const_by_id(ct_id)? {
+            SpirvConst::Scalar(x) => Some(x),
             _ => None,
         };
-        let const_slice_as_elem_ids = |ptr_id: Word, len: usize| {
-            if let SpirvConst::PtrTo { pointee, .. } = cx.builder.lookup_const_by_id(ptr_id)?
-                && let SpirvConst::Composite(elems) = cx.builder.lookup_const_by_id(pointee)?
+        let const_composite_as_elem_ids = |ct_id: Word, len: usize| {
+            if let SpirvConst::Composite(elems) = cx.builder.lookup_const_by_id(ct_id)?
                 && elems.len() == len
             {
                 return Some(elems);
             }
             None
         };
-        let const_str_as_utf8 = |&[str_ptr_id, str_len_id]: &[Word; 2]| {
-            let str_len = const_u32_as_usize(str_len_id)?;
-            let piece_str_bytes = const_slice_as_elem_ids(str_ptr_id, str_len)?
+        let const_composite_ptr_as_elem_ids = |ptr_id: Word, len: usize| {
+            let mut ptr = cx.builder.lookup_const_by_id(ptr_id)?;
+            while let SpirvConst::BitCast(ptr_id) = ptr {
+                ptr = cx.builder.lookup_const_by_id(ptr_id)?;
+            }
+            if let SpirvConst::PtrTo { pointee, .. } = ptr {
+                const_composite_as_elem_ids(pointee, len)
+            } else {
+                None
+            }
+        };
+        let const_str_ptr_as_utf8 = |str_ptr_id: Word, str_len: usize| {
+            let piece_str_bytes = const_composite_ptr_as_elem_ids(str_ptr_id, str_len)?
                 .iter()
-                .map(|&id| u8::try_from(const_u32_as_usize(id)?).ok())
+                .map(|&id| u8::try_from(lookup_const_scalar(id)?).ok())
                 .collect::<Option<Vec<u8>>>()?;
             String::from_utf8(piece_str_bytes).ok()
+        };
+        let const_str_ptr_value_as_utf8 = |&[str_ptr_id, str_len_id]: &[Word; 2]| {
+            const_str_ptr_as_utf8(
+                str_ptr_id,
+                usize::try_from(lookup_const_scalar(str_len_id)?).ok()?,
+            )
         };
 
         // HACK(eddyb) `panic_explicit` doesn't take any regular arguments,
@@ -105,7 +120,7 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
         {
             // Optional `&'static panic::Location<'static>`.
             if other_args.len() <= 1
-                && let Some(const_msg) = const_str_as_utf8(&[a_id, b_id])
+                && let Some(const_msg) = const_str_ptr_value_as_utf8(&[a_id, b_id])
             {
                 decoded_format_args.const_pieces = Some([const_msg].into_iter().collect());
                 return Ok(decoded_format_args);
@@ -245,10 +260,7 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                     .map(|operand| operand.id_ref_any())
                     .collect::<Option<SmallVec<[_; 4]>>>()?;
 
-                let const_as_u32 = |id| match cx.builder.lookup_const_by_id(id)? {
-                    SpirvConst::Scalar(x) => u32::try_from(x).ok(),
-                    _ => None,
-                };
+                let const_as_u32 = |id| u32::try_from(lookup_const_scalar(id)?).ok();
 
                 // Decode the instruction into one of our `Inst`s.
                 Some(
@@ -324,7 +336,7 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                         ] if (pieces_len, rt_args_count) == (!0, !0) => {
                             let [pieces_len, rt_args_len, fmt_placeholders_len] =
                                 match [pieces_len_id, rt_args_len_id, fmt_placeholders_len_id]
-                                    .map(const_u32_as_usize)
+                                    .map(|id| usize::try_from(lookup_const_scalar(id)?).ok())
                                 {
                                     [Some(a), Some(b), Some(c)] => [a, b, c],
                                     _ => {
@@ -342,10 +354,10 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                                 )
                             })?;
                             let rt_args_slice_ptr_id = match prepare_args_insts[..] {
-                                [Inst::Bitcast(rt_args_cast_out_id, rt_args_cast_in_id)]
-                                    if rt_args_cast_out_id == rt_args_slice_ptr_id =>
+                                [Inst::Bitcast(cast_out_id, cast_in_id)]
+                                    if cast_out_id == rt_args_slice_ptr_id =>
                                 {
-                                    rt_args_cast_in_id
+                                    cast_in_id
                                 }
                                 _ => {
                                     let mut insts = prepare_args_insts;
@@ -621,11 +633,13 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             _ => pieces_slice_ptr_id,
         };
         decoded_format_args.const_pieces =
-            match const_slice_as_elem_ids(pieces_slice_ptr_id, pieces_len) {
+            match const_composite_ptr_as_elem_ids(pieces_slice_ptr_id, pieces_len) {
                 Some(piece_ids) => piece_ids
                     .iter()
                     .map(|&piece_id| match cx.builder.lookup_const_by_id(piece_id)? {
-                        SpirvConst::Composite(piece) => const_str_as_utf8(piece.try_into().ok()?),
+                        SpirvConst::Composite(piece) => {
+                            const_str_ptr_value_as_utf8(piece.try_into().ok()?)
+                        }
                         _ => None,
                     })
                     .collect::<Option<_>>(),
@@ -649,12 +663,49 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                         // HACK(eddyb) consume the peeked instructions.
                         try_rev_take(4).unwrap();
 
-                        const_str_as_utf8(&[st0_val, st1_val]).map(|s| [s].into_iter().collect())
+                        const_str_ptr_value_as_utf8(&[st0_val, st1_val])
+                            .map(|s| [s].into_iter().collect())
                     }
                     _ => None,
                 },
                 None => None,
-            };
+            }
+            .or_else(|| {
+                // TODO(eddyb) this might not even be the correct place
+                // for this code, but rebasing on the ~1.89 rustup did
+                // result in an awkward conflict between two changes.
+
+                // HACK(eddyb) this is the same as the above, but for a
+                // specific pattern of `[&str; N]` constants being kept
+                // as a flattened sequence, alternating between:
+                // - pointers (assuming they use `PtrTo` constants)
+                // - byte arrays (holding the length of each `&str`)
+                const_composite_ptr_as_elem_ids(pieces_slice_ptr_id, pieces_len * 2)?
+                    .chunks_exact(2)
+                    .map(|piece_parts| {
+                        let &[str_ptr_id, str_len_bytes_id] = piece_parts else {
+                            unreachable!();
+                        };
+                        let str_len = const_composite_as_elem_ids(
+                            str_len_bytes_id,
+                            cx.tcx.data_layout.pointer_size.bytes().try_into().unwrap(),
+                        )?
+                        .iter()
+                        .map(|&id| u8::try_from(lookup_const_scalar(id)?).ok())
+                        .try_rfold(0usize, |tail_acc, head_byte| {
+                            let head_byte = head_byte?;
+                            // HACK(eddyb) manual little-endian decoding.
+                            let merged = (tail_acc << 8) | usize::from(head_byte);
+                            // FIXME(eddyb) manual overflow check needed
+                            // due to `a.checked_shl(b)` only caring about
+                            // `b`'s value (relative to `a`'s width).
+                            ((merged >> 8) == tail_acc).then_some(merged)
+                        })?;
+
+                        const_str_ptr_as_utf8(str_ptr_id, str_len)
+                    })
+                    .collect::<Option<_>>()
+            });
 
         // Keep all instructions up to (but not including) the last one
         // confirmed above to be the first instruction of `format_args!`.
