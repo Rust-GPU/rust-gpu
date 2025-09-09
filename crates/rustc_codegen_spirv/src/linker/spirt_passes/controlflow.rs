@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 use spirt::func_at::FuncAt;
 use spirt::{
     Attr, AttrSet, ConstDef, ConstKind, DataInstKind, DbgSrcLoc, DeclDef, EntityDefs, ExportKey,
-    Exportee, Module, NodeKind, Type, TypeDef, TypeKind, TypeOrConst, Value, cfg, spv,
+    Exportee, Module, NodeKind, Type, TypeDef, TypeKind, TypeOrConst, Value, cf, spv,
 };
 use std::fmt::Write as _;
 
@@ -209,7 +209,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                 .unwrap()
                 .control_inst_on_exit_from[region];
             match terminator.kind {
-                cfg::ControlInstKind::Unreachable => {}
+                cf::unstructured::ControlInstKind::Unreachable => {}
                 _ => continue,
             }
 
@@ -249,13 +249,13 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             )) = custom_terminator_inst
             {
                 let abort_inst = func_at_abort_inst.position;
-                terminator.kind = cfg::ControlInstKind::ExitInvocation(
-                    cfg::ExitInvocationKind::SpvInst(wk.OpReturn.into()),
+                terminator.kind = cf::unstructured::ControlInstKind::ExitInvocation(
+                    cf::ExitInvocationKind::SpvInst(wk.OpReturn.into()),
                 );
 
                 match abort_strategy {
                     Some(Strategy::Unreachable) => {
-                        terminator.kind = cfg::ControlInstKind::Unreachable;
+                        terminator.kind = cf::unstructured::ControlInstKind::Unreachable;
                     }
                     Some(Strategy::DebugPrintf {
                         inputs: _,

@@ -1,7 +1,8 @@
+use spirt::cf::SelectionKind;
 use spirt::func_at::FuncAt;
 use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::InnerVisit;
-use spirt::{Context, FuncDefBody, NodeKind, Region, SelectionKind, Value};
+use spirt::{Context, FuncDefBody, NodeKind, Region, Value};
 use std::mem;
 
 use super::{ReplaceValueWith, VisitAllRegionsAndNodes};

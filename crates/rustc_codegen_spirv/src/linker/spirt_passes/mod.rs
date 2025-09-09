@@ -439,7 +439,7 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                     } => mark_used_and_propagate(v),
 
                     NodeKind::ExitInvocation {
-                        kind: spirt::cfg::ExitInvocationKind::SpvInst(_),
+                        kind: spirt::cf::ExitInvocationKind::SpvInst(_),
                         inputs,
                     } => {
                         for &v in inputs {

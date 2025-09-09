@@ -1,12 +1,13 @@
 use rustc_data_structures::fx::FxHashMap;
 use smallvec::SmallVec;
+use spirt::cf::SelectionKind;
 use spirt::func_at::{FuncAt, FuncAtMut};
 use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::InnerVisit;
 use spirt::{
     Const, ConstDef, ConstKind, Context, DataInst, DataInstDef, DataInstKind,
     EntityOrientedDenseMap, FuncDefBody, Node, NodeDef, NodeKind, NodeOutputDecl, Region,
-    RegionInputDecl, SelectionKind, Type, TypeDef, TypeKind, Value, spv,
+    RegionInputDecl, Type, TypeDef, TypeKind, Value, spv,
 };
 use std::collections::hash_map::Entry;
 use std::{iter, slice};
