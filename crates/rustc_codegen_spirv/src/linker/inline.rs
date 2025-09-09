@@ -473,6 +473,7 @@ fn should_inline(
                         .caller
                         .parameters
                         .iter()
+                        .filter(|_| false)
                         .chain(
                             call_site.caller.blocks[0]
                                 .instructions
