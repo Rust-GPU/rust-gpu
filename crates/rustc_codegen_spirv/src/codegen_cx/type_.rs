@@ -278,7 +278,6 @@ impl BaseTypeCodegenMethods for CodegenCx<'_> {
     }
     fn element_type(&self, ty: Self::Type) -> Self::Type {
         match self.lookup_type(ty) {
-            SpirvType::Pointer { pointee, .. } => pointee,
             SpirvType::Vector { element, .. } => element,
             spirv_type => self.tcx.dcx().fatal(format!(
                 "element_type called on invalid type: {spirv_type:?}"

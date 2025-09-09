@@ -7,47 +7,6 @@
 //! For now, this is only used for pointer type storage classes, because
 //! Rust's pointer/reference types don't have an "address space" distinction,
 //! and we also wouldn't want users to annotate every single type anyway.
-//!
-//! # Future plans
-//!
-//! Recursive data types (using `OpTypeForwardPointer`) are not supported, but
-//! here is an outline of how that could work:
-//! * groups of mutually-recursive `OpTypeForwardPointer`s are computed via SCCs
-//! * each mutual-recursive group gets a single "generic" parameter count, that all
-//!   pointer types in the group will use, and which is the sum of the "generic"
-//!   parameters of all the leaves referenced by the pointer types in the group,
-//!   ignoring the pointer types in the group themselves
-//! * once the pointer types have been assigned their "g"eneric parameter count,
-//!   the non-pointer types in each SCC - i.e. (indirectly) referenced by one of
-//!   the pointer types in the group, and which in turn (indirectly) references
-//!   a pointer type in the group - can have their "generic" parameters computed
-//!   as normal, taking care to record where in the combined lists of "generic"
-//!   parameters, any of the pointer types in the group show up
-//! * each pointer type in the group will "fan out" a copy of its full set of
-//!   "generic" parameters to every (indirect) mention of any pointer type in
-//!   the group, using an additional parameter remapping, for which `Generic`:
-//!   * requires this extra documentation:
-//!     ```
-//!     /// The one exception are `OpTypePointer`s involved in recursive data types
-//!     /// (i.e. they were declared by `OpTypeForwardPointer`s, and their pointees are
-//!     /// `OpTypeStruct`s that have the same pointer type as a leaf).
-//!     /// As the pointee `OpTypeStruct` has more parameters than the pointer (each leaf
-//!     /// use of the same pointer type requires its own copy of the pointer parameters),
-//!     /// a mapping (`expand_params`) indicates how to create the flattened list.
-//!     ```
-//!   * and this extra field:
-//!     ```
-//!     /// For every entry in the regular flattened list of parameters expected by
-//!     /// operands, this contains the parameter index (i.e. `0..self.param_count`)
-//!     /// to use for that parameter.
-//!     ///
-//!     /// For example, to duplicate `5` parameters into `10`, `expand_params`
-//!     /// would be `[0, 1, 2, 3, 4, 0, 1, 2, 3, 4]`.
-//!     ///
-//!     /// See also `Generic` documentation above for why this is needed
-//!     /// (i.e. to replicate parameters for recursive data types).
-//!     expand_params: Option<Vec<usize>>,
-//!     ```
 
 use crate::linker::ipo::CallGraph;
 use crate::spirv_type_constraints::{self, InstSig, StorageClassPat, TyListPat, TyPat};
@@ -55,7 +14,7 @@ use indexmap::{IndexMap, IndexSet};
 use itertools::Itertools as _;
 use rspirv::dr::{Builder, Function, Instruction, Module, Operand};
 use rspirv::spirv::{Op, StorageClass, Word};
-use rustc_data_structures::fx::{FxHashMap, FxHashSet, FxIndexMap};
+use rustc_data_structures::fx::{FxHashMap, FxIndexMap};
 use smallvec::SmallVec;
 use std::collections::{BTreeMap, VecDeque};
 use std::ops::{Range, RangeTo};
@@ -566,30 +525,16 @@ impl<S: Specialization> Specializer<S> {
 
         // HACK(eddyb) this is done as a pre-filter for the benefit of the extra
         // toposort step done in the middle below.
-        let mut forward_declared_pointers = FxHashSet::default();
         let types_global_values_and_functions_with_result_id = types_global_values_and_functions
-            .filter_map(|inst| {
-                let result_id = if inst.class.opcode == Op::TypeForwardPointer {
-                    forward_declared_pointers.insert(inst.operands[0].unwrap_id_ref());
-                    inst.operands[0].unwrap_id_ref()
-                } else {
-                    let result_id = inst.result_id.unwrap_or_else(|| {
-                        unreachable!(
-                            "Op{:?} is in `types_global_values` but not have a result ID",
-                            inst.class.opcode
-                        );
-                    });
-                    if forward_declared_pointers.remove(&result_id) {
-                        // HACK(eddyb) this is a forward-declared pointer, pretend
-                        // it's not "generic" at all to avoid breaking the rest of
-                        // the logic - see module-level docs for how this should be
-                        // handled in the future to support recursive data types.
-                        assert_eq!(inst.class.opcode, Op::TypePointer);
-                        return None;
-                    }
-                    result_id
-                };
-                Some((result_id, inst))
+            .map(|inst| {
+                assert_ne!(inst.class.opcode, Op::TypeForwardPointer);
+                let result_id = inst.result_id.unwrap_or_else(|| {
+                    unreachable!(
+                        "Op{:?} is in `types_global_values` but not have a result ID",
+                        inst.class.opcode
+                    );
+                });
+                (result_id, inst)
             });
 
         // HACK(eddyb) ad-hoc toposort (i.e. def-before-use, no forward refs),
@@ -608,17 +553,10 @@ impl<S: Specialization> Specializer<S> {
                     result_id: Word,
                     inst: &Instruction,
                 ) -> (impl Iterator<Item = Word>, (Word, &Instruction)) {
-                    let operands = if inst.class.opcode == Op::TypeForwardPointer {
-                        // HACK(eddyb) avoid accidental cycles due to how the ID
-                        // is used as the `result_id` (see earlier comments too).
-                        &[]
-                    } else {
-                        &inst.operands[..]
-                    };
                     let used_ids = inst
                         .result_type
                         .into_iter()
-                        .chain(operands.iter().filter_map(|o| o.id_ref_any()));
+                        .chain(inst.operands.iter().filter_map(|o| o.id_ref_any()));
                     (used_ids, (result_id, inst))
                 }
 
@@ -638,8 +576,6 @@ impl<S: Specialization> Specializer<S> {
             }
             sorted.into_iter()
         };
-
-        drop(forward_declared_pointers);
 
         for (result_id, inst) in types_global_values_and_functions_with_result_id {
             // Record all integer `OpConstant`s (used for `IndexComposite`).

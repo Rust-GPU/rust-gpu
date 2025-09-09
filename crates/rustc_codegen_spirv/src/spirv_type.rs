@@ -1,4 +1,4 @@
-use crate::abi::{RecursivePointeeCache, TyLayoutNameKey};
+use crate::abi::{PointeeCycleDetector, TyLayoutNameKey};
 use crate::builder_spirv::SpirvValue;
 use crate::codegen_cx::CodegenCx;
 use indexmap::IndexSet;
@@ -12,7 +12,6 @@ use rustc_span::{Span, Symbol};
 use std::cell::RefCell;
 use std::fmt;
 use std::iter;
-use std::sync::{LazyLock, Mutex};
 
 /// Spir-v types are represented as simple Words, which are the `result_id` of instructions like
 /// `OpTypeInteger`. Sometimes, however, we want to inspect one of these Words and ask questions
@@ -68,7 +67,7 @@ pub enum SpirvType<'tcx> {
         is_physical: bool,
     },
     Pointer {
-        pointee: Word,
+        pointee: Option<Word>,
 
         /// Address space, according to the Rust compiler, i.e. one of:
         /// - `AddressSpace::DATA` for `*T`, `&T`, etc. (all except `fn` pointer)
@@ -197,11 +196,16 @@ impl SpirvType<'_> {
             Self::Pointer {
                 pointee,
                 addr_space,
-            } => cx.emit_global().type_pointer(
-                id,
-                cx.addr_space_to_storage_class(addr_space, def_span),
-                pointee,
-            ),
+            } => {
+                // FIXME(eddyb) use `OpTypeUntypedPointerKHR` from `SPV_KHR_untyped_pointers`.
+                let pointee = pointee.unwrap_or_else(|| SpirvType::Void.def(def_span, cx));
+
+                cx.emit_global().type_pointer(
+                    id,
+                    cx.addr_space_to_storage_class(addr_space, def_span),
+                    pointee,
+                )
+            }
             Self::Function {
                 return_type,
                 arguments,
@@ -248,31 +252,6 @@ impl SpirvType<'_> {
                 );
                 result
             }
-        };
-        cx.type_cache_def(result, self.tcx_arena_alloc_slices(cx), def_span);
-        result
-    }
-
-    /// `def_with_id` is used by the `RecursivePointeeCache` to handle `OpTypeForwardPointer`: when
-    /// emitting the subsequent `OpTypePointer`, the ID is already known and must be re-used.
-    pub fn def_with_id(self, cx: &CodegenCx<'_>, def_span: Span, id: Word) -> Word {
-        if let Some(cached) = cx.type_cache.get(&self) {
-            assert_eq!(cached, id);
-            return cached;
-        }
-        let result = match self {
-            Self::Pointer {
-                pointee,
-                addr_space,
-            } => cx.emit_global().type_pointer(
-                Some(id),
-                cx.addr_space_to_storage_class(addr_space, def_span),
-                pointee,
-            ),
-            ref other => cx
-                .tcx
-                .dcx()
-                .fatal(format!("def_with_id invalid for type {other:?}")),
         };
         cx.type_cache_def(result, self.tcx_arena_alloc_slices(cx), def_span);
         result
@@ -513,22 +492,9 @@ pub struct SpirvTypePrinter<'a, 'tcx> {
     cx: &'a CodegenCx<'tcx>,
 }
 
-/// Types can be recursive, e.g. a struct can contain a pointer to itself. So, we need to keep
-/// track of a stack of what types are currently being printed, to not infinitely loop.
-/// Unfortunately, unlike `fmt::Display`, we can't easily pass down the "stack" of
-/// currently-being-printed types, so we use a global static.
-static DEBUG_STACK: LazyLock<Mutex<Vec<Word>>> = LazyLock::new(|| Mutex::new(Vec::new()));
-
 impl fmt::Debug for SpirvTypePrinter<'_, '_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        {
-            let mut debug_stack = DEBUG_STACK.lock().unwrap();
-            if debug_stack.contains(&self.id) {
-                return write!(f, "<recursive type id={}>", self.id);
-            }
-            debug_stack.push(self.id);
-        }
-        let res = match self.ty {
+        match self.ty {
             SpirvType::Void => f.debug_struct("Void").field("id", &self.id).finish(),
             SpirvType::Bool => f.debug_struct("Bool").field("id", &self.id).finish(),
             SpirvType::Integer(width, signedness) => f
@@ -620,7 +586,7 @@ impl fmt::Debug for SpirvTypePrinter<'_, '_> {
             } => f
                 .debug_struct("Pointer")
                 .field("id", &self.id)
-                .field("pointee", &self.cx.debug_type(pointee))
+                .field("pointee", &pointee.map(|ty| self.cx.debug_type(ty)))
                 .field("addr_space", &addr_space)
                 .finish(),
             SpirvType::Function {
@@ -669,43 +635,19 @@ impl fmt::Debug for SpirvTypePrinter<'_, '_> {
                 .finish(),
             SpirvType::AccelerationStructureKhr => f.debug_struct("AccelerationStructure").finish(),
             SpirvType::RayQueryKhr => f.debug_struct("RayQuery").finish(),
-        };
-        {
-            let mut debug_stack = DEBUG_STACK.lock().unwrap();
-            debug_stack.pop();
         }
-        res
     }
 }
 
-/// Types can be recursive, e.g. a struct can contain a pointer to itself. So, we need to keep
-/// track of a stack of what types are currently being printed, to not infinitely loop. So, we only
-/// use `fmt::Display::fmt` as an "entry point", and then call through to our own (recursive)
-/// custom function that has a parameter for the current stack. Make sure to not call Display on a
-/// type inside the custom function!
+// HACK(eddyb) disambiguated alias for `fmt::Display::fmt`.
+impl SpirvTypePrinter<'_, '_> {
+    fn display(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
+}
+
 impl fmt::Display for SpirvTypePrinter<'_, '_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.display(&mut Vec::new(), f)
-    }
-}
-
-impl SpirvTypePrinter<'_, '_> {
-    fn display(&self, stack: &mut Vec<Word>, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fn ty(
-            cx: &CodegenCx<'_>,
-            stack: &mut Vec<Word>,
-            f: &mut fmt::Formatter<'_>,
-            ty: Word,
-        ) -> fmt::Result {
-            if stack.contains(&ty) {
-                f.write_str("<recursive type>")
-            } else {
-                stack.push(ty);
-                let result = cx.debug_type(ty).display(stack, f);
-                assert_eq!(ty, stack.pop().unwrap());
-                result
-            }
-        }
         match self.ty {
             SpirvType::Void => f.write_str("void"),
             SpirvType::Bool => f.write_str("bool"),
@@ -750,13 +692,13 @@ impl SpirvTypePrinter<'_, '_> {
                     if let Some(field_names) = field_names {
                         write!(f, "{}: ", field_names[index])?;
                     }
-                    ty(self.cx, stack, f, field)?;
+                    self.cx.debug_type(field).display(f)?;
                     write!(f, "{suffix}")?;
                 }
                 f.write_str(" }")
             }
             SpirvType::Vector { element, count, .. } | SpirvType::Matrix { element, count } => {
-                ty(self.cx, stack, f, element)?;
+                self.cx.debug_type(element).display(f)?;
                 write!(f, "x{count}")
             }
             SpirvType::Array {
@@ -768,7 +710,7 @@ impl SpirvTypePrinter<'_, '_> {
                 let len = self.cx.builder.lookup_const_scalar(count);
                 let len = len.expect("Array type has invalid count value");
                 f.write_str("[")?;
-                ty(self.cx, stack, f, element)?;
+                self.cx.debug_type(element).display(f)?;
                 write!(f, "; {len}]")
             }
             SpirvType::RuntimeArray {
@@ -777,7 +719,7 @@ impl SpirvTypePrinter<'_, '_> {
                 is_physical: _,
             } => {
                 f.write_str("[")?;
-                ty(self.cx, stack, f, element)?;
+                self.cx.debug_type(element).display(f)?;
                 f.write_str("]")
             }
             SpirvType::Pointer {
@@ -795,7 +737,11 @@ impl SpirvTypePrinter<'_, '_> {
                         write!(f, "*{{??? unrecognized {addr_space:?} ???}} ")?;
                     }
                 }
-                ty(self.cx, stack, f, pointee)
+                match pointee {
+                    Some(pointee) => self.cx.debug_type(pointee).display(f),
+                    // FIXME(eddyb) elsewhere (e.g. LLVM) calls this `ptr`.
+                    None => f.write_str("_"),
+                }
             }
             SpirvType::Function {
                 return_type,
@@ -808,11 +754,11 @@ impl SpirvTypePrinter<'_, '_> {
                     } else {
                         ", "
                     };
-                    ty(self.cx, stack, f, arg)?;
+                    self.cx.debug_type(arg).display(f)?;
                     write!(f, "{suffix}")?;
                 }
                 f.write_str(") -> ")?;
-                ty(self.cx, stack, f, return_type)
+                self.cx.debug_type(return_type).display(f)
             }
             SpirvType::Image {
                 sampled_type,
@@ -839,7 +785,7 @@ impl SpirvTypePrinter<'_, '_> {
                 .finish(),
             SpirvType::InterfaceBlock { inner_type } => {
                 f.write_str("interface block { ")?;
-                ty(self.cx, stack, f, inner_type)?;
+                self.cx.debug_type(inner_type).display(f)?;
                 f.write_str(" }")
             }
             SpirvType::AccelerationStructureKhr => f.write_str("AccelerationStructureKhr"),
@@ -853,8 +799,9 @@ pub struct TypeCache<'tcx> {
     pub id_to_spirv_type: RefCell<FxHashMap<Word, SpirvType<'tcx>>>,
     pub spirv_type_to_id: RefCell<FxHashMap<SpirvType<'tcx>, Word>>,
 
-    /// Recursive pointer breaking
-    pub recursive_pointee_cache: RecursivePointeeCache<'tcx>,
+    /// Cyclically recursive pointer detection.
+    pub pointee_cycle_detector: PointeeCycleDetector<'tcx>,
+
     /// Set of names for a type (only `SpirvType::Adt` currently).
     /// The same `OpType*` may have multiple names if it's e.g. a generic
     /// `struct` where the generic parameters result in the same field types.

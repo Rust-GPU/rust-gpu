@@ -363,7 +363,10 @@ impl<'tcx> CodegenCx<'tcx> {
             pointee_alloc,
         }) = val_ct_def
             && pointee_alloc.inner().mutability.is_not()
-            && let SpirvType::Pointer { pointee, .. } = self.lookup_type(ty)
+            && let SpirvType::Pointer {
+                pointee: Some(pointee),
+                ..
+            } = self.lookup_type(ty)
             && let Some(init) = self.try_read_from_const_alloc(pointee_alloc, pointee)
         {
             return self.def_constant(

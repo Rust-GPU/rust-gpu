@@ -22,7 +22,7 @@ use rustc_codegen_ssa::mir::operand::{OperandRef, OperandValue};
 use rustc_codegen_ssa::mir::place::PlaceRef;
 use rustc_codegen_ssa::traits::{
     BackendTypes, BaseTypeCodegenMethods, BuilderMethods, ConstCodegenMethods,
-    LayoutTypeCodegenMethods, OverflowOp,
+    DerivedTypeCodegenMethods as _, LayoutTypeCodegenMethods, OverflowOp,
 };
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::CodegenFnAttrs;
@@ -622,7 +622,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     ) -> Option<(SpirvValue, <Self as BackendTypes>::Type)> {
         let ptr = ptr.strip_ptrcasts();
         let mut leaf_ty = match self.lookup_type(ptr.ty) {
-            SpirvType::Pointer { pointee, .. } => pointee,
+            SpirvType::Pointer { pointee, .. } => pointee?,
             other => self.fatal(format!("`ptr` is non-pointer type: {other:?}")),
         };
 
@@ -907,43 +907,43 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             return ptr;
         }
 
-        // Strategy 2: try recovering an `OpAccessChain` from a constant offset.
-        if let Some(const_offset) = const_offset {
-            // Remove any (redundant) pointer casts applied to the input `ptr`,
-            // to obtain the "most original" pointer (which ideally will be e.g.
-            // a whole `OpVariable`, or the result of a previous `OpAccessChain`).
-            let original_ptr = ptr.strip_ptrcasts();
-            let original_pointee_ty = match self.lookup_type(original_ptr.ty) {
-                SpirvType::Pointer { pointee, .. } => pointee,
-                other => self.fatal(format!("pointer arithmetic on non-pointer type {other:?}")),
-            };
+        // Remove any (redundant) pointer casts applied to the input `ptr`,
+        // to obtain the "most original" pointer (which ideally will be e.g.
+        // a whole `OpVariable`, or the result of a previous `OpAccessChain`).
+        let original_ptr = ptr.strip_ptrcasts();
+        let original_pointee_ty = match self.lookup_type(original_ptr.ty) {
+            SpirvType::Pointer { pointee, .. } => pointee,
+            other => self.fatal(format!("pointer arithmetic on non-pointer type {other:?}")),
+        };
 
-            if let Some((const_indices, leaf_pointee_ty)) = self.recover_access_chain_from_offset(
+        // Strategy 2: try recovering an `OpAccessChain` from a constant offset.
+        if let (Some(original_pointee_ty), Some(const_offset)) = (original_pointee_ty, const_offset)
+            && let Some((const_indices, leaf_pointee_ty)) = self.recover_access_chain_from_offset(
                 original_pointee_ty,
                 const_offset,
                 Some(Size::ZERO)..=None,
                 None,
-            ) {
-                trace!(
-                    "ptr_offset_strided: strategy 2 picked: offset {const_offset:?} \
+            )
+        {
+            trace!(
+                "ptr_offset_strided: strategy 2 picked: offset {const_offset:?} \
                      => access chain w/ {const_indices:?}"
-                );
+            );
 
-                let leaf_ptr_ty = self.type_ptr_to(leaf_pointee_ty);
-                let original_ptr_id = original_ptr.def(self);
-                let const_indices_ids = const_indices
-                    .into_iter()
-                    .map(|idx| self.constant_u32(self.span(), idx).def(self))
-                    .collect();
+            let leaf_ptr_ty = self.type_ptr_to(leaf_pointee_ty);
+            let original_ptr_id = original_ptr.def(self);
+            let const_indices_ids = const_indices
+                .into_iter()
+                .map(|idx| self.constant_u32(self.span(), idx).def(self))
+                .collect();
 
-                return self.emit_access_chain(
-                    leaf_ptr_ty,
-                    original_ptr_id,
-                    None,
-                    const_indices_ids,
-                    is_inbounds,
-                );
-            }
+            return self.emit_access_chain(
+                leaf_ptr_ty,
+                original_ptr_id,
+                None,
+                const_indices_ids,
+                is_inbounds,
+            );
         }
 
         // Strategy 3: try merging onto an `OpAccessChain` of matching type,
@@ -2480,32 +2480,31 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             return ptr;
         }
 
-        let ptr_pointee = match self.lookup_type(ptr.ty) {
-            SpirvType::Pointer { pointee, .. } => pointee,
-            other => self.fatal(format!(
-                "pointercast called on non-pointer source type: {other:?}"
-            )),
+        // HACK(eddyb) this is basically a `try` block.
+        let try_recover_access_chain = || {
+            let ptr_pointee = match self.lookup_type(ptr.ty) {
+                SpirvType::Pointer { pointee, .. } => pointee?,
+                other => self.fatal(format!(
+                    "pointercast called on non-pointer source type: {other:?}"
+                )),
+            };
+            let dest_pointee = match self.lookup_type(dest_ty) {
+                SpirvType::Pointer { pointee, .. } => pointee?,
+                other => self.fatal(format!(
+                    "pointercast called on non-pointer dest type: {other:?}"
+                )),
+            };
+            let dest_pointee_size = self.lookup_type(dest_pointee).sizeof(self);
+            self.recover_access_chain_from_offset(
+                ptr_pointee,
+                Size::ZERO,
+                dest_pointee_size..=dest_pointee_size,
+                Some(dest_pointee),
+            )
         };
-        let dest_pointee = match self.lookup_type(dest_ty) {
-            SpirvType::Pointer { pointee, .. } => pointee,
-            other => self.fatal(format!(
-                "pointercast called on non-pointer dest type: {other:?}"
-            )),
-        };
-        let dest_pointee_size = self.lookup_type(dest_pointee).sizeof(self);
 
-        if let Some((indices, _)) = self.recover_access_chain_from_offset(
-            ptr_pointee,
-            Size::ZERO,
-            dest_pointee_size..=dest_pointee_size,
-            Some(dest_pointee),
-        ) {
+        if let Some((indices, _)) = try_recover_access_chain() {
             trace!("`recover_access_chain_from_offset` returned something");
-            trace!(
-                "ptr_pointee: {}, dest_pointee {}",
-                self.debug_type(ptr_pointee),
-                self.debug_type(dest_pointee),
-            );
             let indices = indices
                 .into_iter()
                 .map(|idx| self.constant_u32(self.span(), idx).def(self))
@@ -2516,11 +2515,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 .with_type(dest_ty)
         } else {
             trace!("`recover_access_chain_from_offset` returned `None`");
-            trace!(
-                "ptr_pointee: {}, dest_pointee {}",
-                self.debug_type(ptr_pointee),
-                self.debug_type(dest_pointee),
-            );
 
             // Prefer constant(-folding) pointer casts, over runtime casts,
             // once all recovery options have been exhasuted (see above).
@@ -3001,7 +2995,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         ptr: Self::Value,
         fill_byte: Self::Value,
         size: Self::Value,
-        _align: Align,
+        align: Align,
         flags: MemFlags,
     ) {
         if flags != MemFlags::empty() {
@@ -3016,7 +3010,16 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             .and_then(|size| Some(Size::from_bytes(u64::try_from(size).ok()?)));
 
         let elem_ty = match self.lookup_type(ptr.ty) {
-            SpirvType::Pointer { pointee, .. } => pointee,
+            SpirvType::Pointer { pointee, .. } => pointee.unwrap_or_else(|| {
+                // FIXME(eddyb) dedup w/ `type_padding_filler`.
+                let unit = self.integer_approximate_align_prefer_legal(align);
+                // FIXME(eddyb) what does this imply for runtime size?
+                if let Some(size) = const_size {
+                    let unit_size = unit.size().bytes();
+                    assert_eq!(size.bytes() % unit_size, 0);
+                }
+                self.type_from_integer(unit)
+            }),
             _ => self.fatal(format!(
                 "memset called on non-pointer type: {}",
                 self.debug_type(ptr.ty)
@@ -3393,7 +3396,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
         let mut func_call_opcode = Op::FunctionCall;
         let (callee_val, result_type, argument_types) = match self.lookup_type(callee.ty) {
-            SpirvType::Pointer { pointee, .. } => match self.lookup_type(pointee) {
+            // FIXME(eddyb) avoid using `SpirvType::Pointer` for function ptrs.
+            SpirvType::Pointer {
+                pointee: Some(pointee),
+                ..
+            } => match self.lookup_type(pointee) {
                 SpirvType::Function {
                     return_type,
                     arguments,

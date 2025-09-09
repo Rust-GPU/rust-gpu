@@ -121,11 +121,17 @@ pub(crate) fn provide(providers: &mut Providers) {
 /// progress of translating, and break the recursion that way. This struct manages that state
 /// tracking.
 #[derive(Default)]
-pub struct RecursivePointeeCache<'tcx> {
-    map: RefCell<FxHashMap<PointeeTy<'tcx>, PointeeDefState>>,
+pub struct PointeeCycleDetector<'tcx> {
+    // FIXME(eddyb) this should not be responsible for caching the resulting ID!
+    map: RefCell<FxHashMap<PointeeTy<'tcx>, CycleDetectionState<Word>>>,
 }
 
-impl<'tcx> RecursivePointeeCache<'tcx> {
+enum CycleDetectionState<T> {
+    InProgress,
+    Done(T),
+}
+
+impl<'tcx> PointeeCycleDetector<'tcx> {
     fn begin(
         &self,
         cx: &CodegenCx<'tcx>,
@@ -137,32 +143,25 @@ impl<'tcx> RecursivePointeeCache<'tcx> {
             // State: This is the first time we've seen this type. Record that we're beginning to translate this type,
             // and start doing the translation.
             Entry::Vacant(entry) => {
-                entry.insert(PointeeDefState::Defining);
+                entry.insert(CycleDetectionState::InProgress);
                 None
             }
             Entry::Occupied(mut entry) => match *entry.get() {
                 // State: This is the second time we've seen this type, and we're already translating this type. If we
                 // were to try to translate the type now, we'd get a stack overflow, due to continually recursing. So,
-                // emit an OpTypeForwardPointer, and use that ID. (This is the juicy part of this algorithm)
-                PointeeDefState::Defining => {
-                    let new_id = cx.emit_global().id();
-
-                    cx.emit_global().type_forward_pointer(
-                        new_id,
-                        cx.addr_space_to_storage_class(addr_space, span),
-                    );
-                    entry.insert(PointeeDefState::DefiningWithForward(new_id));
-                    cx.zombie_with_span(
-                        new_id,
-                        span,
-                        "cannot create self-referential types, even through pointers",
-                    );
-                    Some(new_id)
+                // emit an OpTypePointer, and use that ID. (This is the juicy part of this algorithm)
+                CycleDetectionState::InProgress => {
+                    let id = SpirvType::Pointer {
+                        pointee: None,
+                        addr_space,
+                    }
+                    .def(span, cx);
+                    entry.insert(CycleDetectionState::Done(id));
+                    Some(id)
                 }
                 // State: This is the third or more time we've seen this type, and we've already emitted an
-                // OpTypeForwardPointer. Just use the ID we've already emitted. (Alternatively, we already defined this
-                // type, so just use that.)
-                PointeeDefState::DefiningWithForward(id) | PointeeDefState::Defined(id) => Some(id),
+                // OpTypePointer. Just use the ID we've already emitted.
+                CycleDetectionState::Done(id) => Some(id),
             },
         }
     }
@@ -178,33 +177,23 @@ impl<'tcx> RecursivePointeeCache<'tcx> {
         match self.map.borrow_mut().entry(pointee) {
             // We should have hit begin() on this type already, which always inserts an entry.
             Entry::Vacant(_) => {
-                span_bug!(span, "RecursivePointeeCache::end should always have entry")
+                span_bug!(span, "PointeeCycleDetector::end should always have entry")
             }
             Entry::Occupied(mut entry) => match *entry.get() {
                 // State: There have been no recursive references to this type while defining it, and so no
-                // OpTypeForwardPointer has been emitted. This is the most common case.
-                PointeeDefState::Defining => {
+                // OpTypePointer has been emitted. This is the most common case.
+                CycleDetectionState::InProgress => {
                     let id = SpirvType::Pointer {
-                        pointee: pointee_spv,
+                        pointee: Some(pointee_spv),
                         addr_space,
                     }
                     .def(span, cx);
-                    entry.insert(PointeeDefState::Defined(id));
+                    entry.insert(CycleDetectionState::Done(id));
                     id
                 }
-                // State: There was a recursive reference to this type, and so an OpTypeForwardPointer has been emitted.
+                // State: There was a recursive reference to this type, and so an OpTypePointer has been emitted.
                 // Make sure to use the same ID.
-                PointeeDefState::DefiningWithForward(id) => {
-                    entry.insert(PointeeDefState::Defined(id));
-                    SpirvType::Pointer {
-                        pointee: pointee_spv,
-                        addr_space,
-                    }
-                    .def_with_id(cx, span, id)
-                }
-                PointeeDefState::Defined(_) => {
-                    span_bug!(span, "RecursivePointeeCache::end defined pointer twice")
-                }
+                CycleDetectionState::Done(id) => id,
             },
         }
     }
@@ -224,13 +213,6 @@ impl fmt::Display for PointeeTy<'_> {
         }
     }
 }
-
-enum PointeeDefState {
-    Defining,
-    DefiningWithForward(Word),
-    Defined(Word),
-}
-
 /// Various type-like things can be converted to a spirv type - normal types, function types, etc. - and this trait
 /// provides a uniform way of translating them.
 pub trait ConvSpirvType<'tcx> {
@@ -457,17 +439,17 @@ fn trans_scalar<'tcx>(
         Primitive::Pointer(addr_space) => {
             let pointee_ty = dig_scalar_pointee(cx, ty, offset);
             // Pointers can be recursive. So, record what we're currently translating, and if we're already translating
-            // the same type, emit an OpTypeForwardPointer and use that ID.
+            // the same type, emit an OpTypePointer and use that ID.
             if let Some(predefined_result) = cx
                 .type_cache
-                .recursive_pointee_cache
+                .pointee_cycle_detector
                 .begin(cx, span, pointee_ty, addr_space)
             {
                 predefined_result
             } else {
                 let pointee = pointee_ty.spirv_type(span, cx);
                 cx.type_cache
-                    .recursive_pointee_cache
+                    .pointee_cycle_detector
                     .end(cx, span, pointee_ty, pointee, addr_space)
             }
         }

@@ -1012,7 +1012,8 @@ impl<'tcx> CodegenCx<'tcx> {
                 | SpirvType::Array { element, .. }
                 | SpirvType::RuntimeArray { element, .. }
                 | SpirvType::Pointer {
-                    pointee: element, ..
+                    pointee: Some(element),
+                    ..
                 }
                 | SpirvType::InterfaceBlock {
                     inner_type: element,

@@ -119,7 +119,6 @@ fn gather_names(debug_names: &[Instruction]) -> FxHashMap<Word, String> {
 
 fn make_dedupe_key(
     inst: &Instruction,
-    unresolved_forward_pointers: &FxHashSet<Word>,
     annotations: &FxHashMap<Word, Vec<u32>>,
     names: &FxHashMap<Word, String>,
 ) -> Vec<u32> {
@@ -132,17 +131,7 @@ fn make_dedupe_key(
         data.push(id);
     }
     for op in &inst.operands {
-        if let Operand::IdRef(id) = op {
-            if unresolved_forward_pointers.contains(id) {
-                // TODO: This is implementing forward pointers incorrectly. All unresolved forward pointers will
-                // compare equal.
-                Operand::IdRef(0).assemble_into(&mut data);
-            } else {
-                op.assemble_into(&mut data);
-            }
-        } else {
-            op.assemble_into(&mut data);
-        }
+        op.assemble_into(&mut data);
     }
     if let Some(id) = inst.result_id {
         if let Some(annos) = annotations.get(&id) {
@@ -193,25 +182,14 @@ pub fn remove_duplicate_types(module: &mut Module) {
     // Importantly, result_id is left out. This means that any instruction that declares the same
     // type, but with different result_id, will result in the same key.
     let mut key_to_result_id = FxHashMap::default();
-    // TODO: This is implementing forward pointers incorrectly.
-    let mut unresolved_forward_pointers = FxHashSet::default();
 
     // Collect a map from type ID to an annotation "key blob" (to append to the type key)
     let annotations = gather_annotations(&module.annotations);
     let names = gather_names(&module.debug_names);
 
     for inst in &mut module.types_global_values {
-        if inst.class.opcode == Op::TypeForwardPointer
-            && let Operand::IdRef(id) = inst.operands[0]
-        {
-            unresolved_forward_pointers.insert(id);
-            continue;
-        }
-        if inst.class.opcode == Op::TypePointer
-            && unresolved_forward_pointers.contains(&inst.result_id.unwrap())
-        {
-            unresolved_forward_pointers.remove(&inst.result_id.unwrap());
-        }
+        assert_ne!(inst.class.opcode, Op::TypeForwardPointer);
+
         // This is an important spot: Say that we come upon a duplicated aggregate type (one that references
         // other types). Its arguments may be duplicated themselves, and so building the key directly will fail
         // to match up with the first type. However, **because forward references are not allowed**, we're
@@ -222,7 +200,7 @@ pub fn remove_duplicate_types(module: &mut Module) {
         // all_inst_iter_mut pass below. However, the code is a lil bit cleaner this way I guess.
         rewrite_inst_with_rules(inst, &rewrite_rules);
 
-        let key = make_dedupe_key(inst, &unresolved_forward_pointers, &annotations, &names);
+        let key = make_dedupe_key(inst, &annotations, &names);
 
         match key_to_result_id.entry(key) {
             hash_map::Entry::Vacant(entry) => {
