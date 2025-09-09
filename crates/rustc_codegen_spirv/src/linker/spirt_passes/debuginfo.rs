@@ -230,6 +230,7 @@ impl Transformer for CustomDecorationsAndDebuginfoToSpirt<'_> {
                     DataInstKind::SpvExtInst {
                         ext_set,
                         inst: ext_inst,
+                        lowering: _,
                     } if ext_set == self.custom_ext_inst_set => {
                         Some(CustomOp::decode(ext_inst).with_operands(&node_def.inputs))
                     }

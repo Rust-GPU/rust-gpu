@@ -8,9 +8,9 @@ use spirt::func_at::{FuncAt, FuncAtMut};
 use spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Transformer};
 use spirt::visit::InnerVisit as _;
 use spirt::{
-    AddrSpace, Attr, AttrSetDef, Const, Context, DataInst, DataInstDef, DataInstKind, DeclDef,
-    Diag, Func, FuncDecl, GlobalVar, GlobalVarDecl, Module, Node, NodeKind, Region, Type, TypeDef,
-    TypeKind, TypeOrConst, Value, VarDecl, spv,
+    AddrSpace, Attr, AttrSetDef, Const, ConstDef, Context, DataInst, DataInstDef, DataInstKind,
+    DeclDef, Diag, DiagLevel, Func, FuncDecl, GlobalVar, GlobalVarDecl, Module, Node, NodeKind,
+    Region, Type, TypeDef, TypeKind, TypeOrConst, Value, VarDecl, spv,
 };
 use std::cmp::Ordering;
 use std::collections::VecDeque;
@@ -125,6 +125,7 @@ impl Transformer for SelectiveEraser<'_> {
             TypeKind::SpvInst {
                 spv_inst,
                 type_and_const_inputs: _,
+                value_lowering: _,
             } if spv_inst.opcode == wk.OpTypePointer => match spv_inst.imms[..] {
                 [spv::Imm::Short(sc_kind, sc)] => {
                     assert_eq!(sc_kind, wk.StorageClass);
@@ -146,6 +147,11 @@ impl Transformer for SelectiveEraser<'_> {
         let needs_erasure_of_explicit_layout =
             !self.addr_space_allows_explicit_layout(gv_decl.addr_space);
         if needs_erasure_of_explicit_layout {
+            // HACK(eddyb) bypass `EraseExplicitLayout::transform_type_use` checks,
+            // specifically for the pointer-to-global type, while keeping them
+            // for anything involving shapes or initializers.
+            self.transform_type_use(gv_decl.type_of_ptr_to)
+                .apply_to(&mut gv_decl.type_of_ptr_to);
             gv_decl.inner_in_place_transform_with(&mut EraseExplicitLayout(self));
         } else {
             gv_decl.inner_in_place_transform_with(self);
@@ -202,6 +208,7 @@ impl Transformer for SelectiveEraser<'_> {
             TypeKind::SpvInst {
                 spv_inst,
                 type_and_const_inputs,
+                value_lowering: _,
             } if spv_inst.opcode == wk.OpTypePointer => match type_and_const_inputs[..] {
                 [TypeOrConst::Type(elem_type)] => Some(elem_type),
                 _ => unreachable!(),
@@ -209,7 +216,7 @@ impl Transformer for SelectiveEraser<'_> {
             _ => None,
         };
 
-        let DataInstKind::SpvInst(spv_inst) = &data_inst_def.kind else {
+        let DataInstKind::SpvInst(spv_inst, lowering) = &data_inst_def.kind else {
             return;
         };
 
@@ -217,119 +224,59 @@ impl Transformer for SelectiveEraser<'_> {
         // semantic, and understand the semantic ones.
         let attrs = data_inst_def.attrs;
 
-        let mk_incomplete_bitcast_def = |in_value| DataInstDef {
-            attrs,
-            kind: DataInstKind::SpvInst(wk.OpBitcast.into()),
-            inputs: [in_value].into_iter().collect(),
-            child_regions: [].into_iter().collect(),
-            outputs: [].into_iter().collect(),
-        };
-
         if spv_inst.opcode == wk.OpLoad {
-            let pointee_type = pointee_type_of_ptr_val(data_inst_def.inputs[0]);
-            let output_var = data_inst_def.outputs[0];
-            let value_type = func.at(output_var).decl().ty;
-
-            // FIXME(eddyb) leave a BUG diagnostic in the `None` case?
-            if pointee_type.is_some_and(|ty| {
-                ty != value_type && ty == self.erase_explicit_layout_in_type(value_type)
-            }) {
-                let func = func_at_data_inst.at(());
-                let parent_region_children =
-                    &mut func.regions[self.parent_region.unwrap()].children;
-
-                let fixed_load_inst = func.nodes.define(
-                    cx,
-                    DataInstDef {
-                        outputs: [].into_iter().collect(),
-                        ..DataInstDef::clone(&func.nodes[data_inst])
-                    }
-                    .into(),
-                );
-                let fixed_load_output_var = func.vars.define(
-                    cx,
-                    VarDecl {
-                        attrs: Default::default(),
-                        ty: pointee_type.unwrap(),
-                        def_parent: Either::Right(fixed_load_inst),
-                        def_idx: 0,
-                    },
-                );
-                func.nodes[fixed_load_inst]
-                    .outputs
-                    .push(fixed_load_output_var);
-
-                parent_region_children.insert_before(fixed_load_inst, data_inst, func.nodes);
-
-                *func.nodes[data_inst] =
-                    mk_incomplete_bitcast_def(Value::Var(fixed_load_output_var));
-                func.nodes[data_inst].outputs.push(output_var);
-
-                self.disaggregate_bitcast(func.at(data_inst));
+            if let Some(pointee_type) = pointee_type_of_ptr_val(data_inst_def.inputs[0])
+                && let Some(aggregate_type) = &lowering.disaggregated_output
+                && pointee_type != *aggregate_type
+                && pointee_type == self.erase_explicit_layout_in_type(*aggregate_type)
+            {
+                let DataInstKind::SpvInst(_, lowering) = &mut func_at_data_inst.def().kind else {
+                    unreachable!();
+                };
+                lowering.disaggregated_output = Some(pointee_type);
             }
         } else if spv_inst.opcode == wk.OpStore {
-            let pointee_type = pointee_type_of_ptr_val(data_inst_def.inputs[0]);
-            let value_type = type_of_val(data_inst_def.inputs[1]);
-            // FIXME(eddyb) leave a BUG diagnostic in the `None` case?
-            if pointee_type.is_some_and(|ty| {
-                ty != value_type && ty == self.erase_explicit_layout_in_type(value_type)
-            }) {
-                let func = func_at_data_inst.at(());
-                let stored_value = &mut func.nodes[data_inst].inputs[1];
-
-                if let Value::Const(ct) = stored_value {
-                    EraseExplicitLayout(self)
-                        .transform_const_use(*ct)
-                        .apply_to(ct);
-                } else {
-                    let original_stored_value = *stored_value;
-
-                    let parent_region_children =
-                        &mut func.regions[self.parent_region.unwrap()].children;
-
-                    let stored_value_cast_inst = func
-                        .nodes
-                        .define(cx, mk_incomplete_bitcast_def(original_stored_value).into());
-                    let stored_value_cast_output_var = func.vars.define(
-                        cx,
-                        VarDecl {
-                            attrs: Default::default(),
-                            ty: pointee_type.unwrap(),
-                            def_parent: Either::Right(stored_value_cast_inst),
-                            def_idx: 0,
-                        },
-                    );
-                    func.nodes[stored_value_cast_inst]
-                        .outputs
-                        .push(stored_value_cast_output_var);
-                    parent_region_children.insert_before(
-                        stored_value_cast_inst,
-                        data_inst,
-                        func.nodes,
-                    );
-
-                    func.nodes[data_inst].inputs[1] = Value::Var(stored_value_cast_output_var);
-
-                    self.disaggregate_bitcast(func.at(stored_value_cast_inst));
-                }
+            if let Some(pointee_type) = pointee_type_of_ptr_val(data_inst_def.inputs[0])
+                && let [
+                    (disaggregated_range @ std::ops::Range { start: 1, end: _ }, aggregate_type),
+                ] = &lowering.disaggregated_inputs[..]
+                && (disaggregated_range.end as usize) == data_inst_def.inputs.len()
+                && pointee_type != *aggregate_type
+                && pointee_type == self.erase_explicit_layout_in_type(*aggregate_type)
+            {
+                let DataInstKind::SpvInst(_, lowering) = &mut func_at_data_inst.def().kind else {
+                    unreachable!();
+                };
+                lowering.disaggregated_inputs[0].1 = pointee_type;
             }
         } else if spv_inst.opcode == wk.OpCopyMemory {
             let dst_ptr = data_inst_def.inputs[0];
             let src_ptr = data_inst_def.inputs[1];
-            let [dst_pointee_type, src_pointee_type] =
-                [dst_ptr, src_ptr].map(pointee_type_of_ptr_val);
             // FIXME(eddyb) leave a BUG diagnostic in the `None` case?
-            let mismatched_dst_src_types = match [dst_pointee_type, src_pointee_type] {
+            let mismatched_dst_src_types = match [dst_ptr, src_ptr].map(pointee_type_of_ptr_val) {
                 [Some(a), Some(b)] => {
-                    // FIXME(eddyb) there has to be a nicer way to write this??
-                    fn equal<T: Eq>([a, b]: [T; 2]) -> bool {
-                        a == b
-                    }
-                    !equal([a, b]) && equal([a, b].map(|ty| self.erase_explicit_layout_in_type(ty)))
+                    Some([a, b]).filter(|&[a, b]| {
+                        // FIXME(eddyb) there has to be a nicer way to write this??
+                        fn equal<T: Eq>([a, b]: [T; 2]) -> bool {
+                            a == b
+                        }
+                        !equal([a, b])
+                            && equal([a, b].map(|ty| self.erase_explicit_layout_in_type(ty)))
+                            && [a, b].iter().all(|&ty| {
+                                matches!(
+                                    &cx[ty].kind,
+                                    TypeKind::SpvInst {
+                                        value_lowering: spv::ValueLowering::Disaggregate(_),
+                                        ..
+                                    }
+                                )
+                            })
+                            && equal([a, b].map(|ty| cx[ty].disaggregated_leaf_count()))
+                    })
                 }
-                _ => false,
+                _ => None,
             };
-            if mismatched_dst_src_types {
+            if let Some([dst_pointee_type, src_pointee_type]) = mismatched_dst_src_types {
                 let is_memory_access_imm =
                     |imm| matches!(imm, &spv::Imm::Short(k, _) if k == wk.MemoryAccess);
 
@@ -356,56 +303,73 @@ impl Transformer for SelectiveEraser<'_> {
                     cx,
                     DataInstDef {
                         attrs,
-                        kind: DataInstKind::SpvInst(spv::Inst {
-                            opcode: wk.OpLoad,
-                            imms: src_imms,
-                        }),
+                        kind: DataInstKind::SpvInst(
+                            spv::Inst {
+                                opcode: wk.OpLoad,
+                                imms: src_imms,
+                            },
+                            spv::InstLowering {
+                                disaggregated_output: Some(src_pointee_type),
+                                disaggregated_inputs: [].into_iter().collect(),
+                            },
+                        ),
                         inputs: [src_ptr].into_iter().collect(),
                         child_regions: [].into_iter().collect(),
                         outputs: [].into_iter().collect(),
                     }
                     .into(),
                 );
-                let load_output_var = func.vars.define(
-                    cx,
-                    VarDecl {
-                        attrs: Default::default(),
-                        ty: src_pointee_type.unwrap(),
-                        def_parent: Either::Right(load_inst),
-                        def_idx: 0,
-                    },
+                func.nodes[load_inst].outputs.extend(
+                    src_pointee_type
+                        .disaggregated_leaf_types(cx)
+                        .enumerate()
+                        .map(|(i, ty)| {
+                            func.vars.define(
+                                cx,
+                                VarDecl {
+                                    attrs: Default::default(),
+                                    ty,
+                                    def_parent: Either::Right(load_inst),
+                                    def_idx: i.try_into().unwrap(),
+                                },
+                            )
+                        }),
                 );
-                func.nodes[load_inst].outputs.push(load_output_var);
                 parent_region_children.insert_before(load_inst, data_inst, func.nodes);
-
-                let cast_inst = func.nodes.define(
-                    cx,
-                    mk_incomplete_bitcast_def(Value::Var(load_output_var)).into(),
-                );
-                let cast_output_var = func.vars.define(
-                    cx,
-                    VarDecl {
-                        attrs: Default::default(),
-                        ty: dst_pointee_type.unwrap(),
-                        def_parent: Either::Right(cast_inst),
-                        def_idx: 0,
-                    },
-                );
-                func.nodes[cast_inst].outputs.push(cast_output_var);
-                parent_region_children.insert_before(cast_inst, data_inst, func.nodes);
 
                 *func.nodes[data_inst] = DataInstDef {
                     attrs,
-                    kind: DataInstKind::SpvInst(spv::Inst {
-                        opcode: wk.OpStore,
-                        imms: dst_imms,
-                    }),
-                    inputs: [dst_ptr, Value::Var(cast_output_var)].into_iter().collect(),
+                    kind: DataInstKind::SpvInst(
+                        spv::Inst {
+                            opcode: wk.OpStore,
+                            imms: dst_imms,
+                        },
+                        spv::InstLowering {
+                            disaggregated_output: None,
+                            disaggregated_inputs: [(
+                                1..u32::try_from(
+                                    1 + cx[dst_pointee_type].disaggregated_leaf_count(),
+                                )
+                                .unwrap(),
+                                dst_pointee_type,
+                            )]
+                            .into_iter()
+                            .collect(),
+                        },
+                    ),
+                    inputs: [dst_ptr]
+                        .into_iter()
+                        .chain(
+                            func.nodes[load_inst]
+                                .outputs
+                                .iter()
+                                .copied()
+                                .map(Value::Var),
+                        )
+                        .collect(),
                     child_regions: [].into_iter().collect(),
                     outputs: [].into_iter().collect(),
                 };
-
-                self.disaggregate_bitcast(func.at(cast_inst));
             }
         }
     }
@@ -430,184 +394,11 @@ impl<'a> SelectiveEraser<'a> {
         .contains(&addr_space)
     }
 
-    fn aggregate_component_types(
-        &self,
-        ty: Type,
-    ) -> Option<impl ExactSizeIterator<Item = Type> + Clone + 'a> {
-        let cx = self.cx;
-        let wk = self.wk;
-
-        match &cx[ty].kind {
-            TypeKind::SpvInst {
-                spv_inst,
-                type_and_const_inputs,
-            } if spv_inst.opcode == wk.OpTypeStruct => {
-                Some(Either::Left(type_and_const_inputs.iter().map(
-                    |&ty_or_ct| match ty_or_ct {
-                        TypeOrConst::Type(ty) => ty,
-                        TypeOrConst::Const(_) => unreachable!(),
-                    },
-                )))
-            }
-            TypeKind::SpvInst {
-                spv_inst,
-                type_and_const_inputs,
-            } if spv_inst.opcode == wk.OpTypeArray => {
-                let [TypeOrConst::Type(elem_type), TypeOrConst::Const(count)] =
-                    type_and_const_inputs[..]
-                else {
-                    unreachable!()
-                };
-                let count = count.as_scalar(cx)?.int_as_u32()?;
-                Some(Either::Right((0..count).map(move |_| elem_type)))
-            }
-            _ => None,
-        }
-    }
-
     fn erase_explicit_layout_in_type(&mut self, mut ty: Type) -> Type {
         EraseExplicitLayout(self)
             .transform_type_use(ty)
             .apply_to(&mut ty);
         ty
-    }
-
-    // HACK(eddyb) this expands an illegal `OpBitcast` of a struct/array, into
-    // leaf values from the source aggregate that are then recomposed into the
-    // target aggregate - this should go away when SPIR-T `disaggregate` lands.
-    fn disaggregate_bitcast(&mut self, mut func_at_cast_inst: FuncAtMut<'_, DataInst>) {
-        let cx = self.cx;
-        let wk = self.wk;
-
-        let cast_inst = func_at_cast_inst.position;
-        let cast_def = func_at_cast_inst.reborrow().freeze().def().clone();
-
-        // FIXME(eddyb) filter attributes into debuginfo and
-        // semantic, and understand the semantic ones.
-        let attrs = cast_def.attrs;
-
-        assert!(cast_def.kind == DataInstKind::SpvInst(wk.OpBitcast.into()));
-        let in_value = cast_def.inputs[0];
-        let out_var = cast_def.outputs[0];
-
-        let mut func = func_at_cast_inst.reborrow();
-        let in_type = func.reborrow().freeze().at(in_value).type_of(cx);
-        let out_type = func.vars[out_var].ty;
-
-        // FIXME(eddyb) there has to be a nicer way to write this??
-        fn equal<T: Eq>([a, b]: [T; 2]) -> bool {
-            a == b
-        }
-
-        let [in_component_types, out_component_types] = Some([in_type, out_type])
-            .filter(|&types| {
-                !equal(types) && equal(types.map(|ty| self.erase_explicit_layout_in_type(ty)))
-            })
-            .map(|types| types.map(|ty| self.aggregate_component_types(ty)))
-            .unwrap_or_default();
-
-        // NOTE(eddyb) such sanity checks should always succeed, because of the
-        // "in/out types are equal after erasure" check, earlier above.
-        assert_eq!(
-            in_component_types.as_ref().map(|iter| iter.len()),
-            out_component_types.as_ref().map(|iter| iter.len()),
-        );
-
-        let [Some(in_component_types), Some(out_component_types)] =
-            [in_component_types, out_component_types]
-        else {
-            return;
-        };
-
-        let components = (in_component_types.zip_eq(out_component_types).enumerate())
-            .map(|(component_idx, (component_in_type, component_out_type))| {
-                let component_idx = u32::try_from(component_idx).unwrap();
-
-                let component_cast_types =
-                    Some([component_in_type, component_out_type]).filter(|&types| !equal(types));
-                if let Some(component_cast_types) = component_cast_types {
-                    assert!(equal(
-                        component_cast_types.map(|ty| self.erase_explicit_layout_in_type(ty))
-                    ));
-                }
-
-                let parent_region_children =
-                    &mut func.regions[self.parent_region.unwrap()].children;
-
-                let component_extract_inst = func.nodes.define(
-                    cx,
-                    DataInstDef {
-                        attrs,
-                        kind: DataInstKind::SpvInst(spv::Inst {
-                            opcode: wk.OpCompositeExtract,
-                            imms: [spv::Imm::Short(wk.LiteralInteger, component_idx)]
-                                .into_iter()
-                                .collect(),
-                        }),
-                        inputs: [in_value].into_iter().collect(),
-                        child_regions: [].into_iter().collect(),
-                        outputs: [].into_iter().collect(),
-                    }
-                    .into(),
-                );
-                let component_extract_output_var = func.vars.define(
-                    cx,
-                    VarDecl {
-                        attrs: Default::default(),
-                        ty: component_in_type,
-                        def_parent: Either::Right(component_extract_inst),
-                        def_idx: 0,
-                    },
-                );
-                func.nodes[component_extract_inst]
-                    .outputs
-                    .push(component_extract_output_var);
-                parent_region_children.insert_before(component_extract_inst, cast_inst, func.nodes);
-
-                let component_cast = component_cast_types.map(|[_, component_out_type]| {
-                    let inst = func.nodes.define(
-                        cx,
-                        DataInstDef {
-                            attrs,
-                            kind: DataInstKind::SpvInst(wk.OpBitcast.into()),
-                            inputs: [Value::Var(component_extract_output_var)]
-                                .into_iter()
-                                .collect(),
-                            child_regions: [].into_iter().collect(),
-                            outputs: [].into_iter().collect(),
-                        }
-                        .into(),
-                    );
-                    let output_var = func.vars.define(
-                        cx,
-                        VarDecl {
-                            attrs: Default::default(),
-                            ty: component_out_type,
-                            def_parent: Either::Right(inst),
-                            def_idx: 0,
-                        },
-                    );
-                    func.nodes[inst].outputs.push(output_var);
-                    parent_region_children.insert_before(inst, cast_inst, func.nodes);
-
-                    (inst, output_var)
-                });
-
-                if let Some((component_cast_inst, _)) = component_cast {
-                    self.disaggregate_bitcast(func.reborrow().at(component_cast_inst));
-                }
-
-                Value::Var(component_cast.map_or(component_extract_output_var, |(_, v)| v))
-            })
-            .collect();
-
-        *func.at(cast_inst).def() = DataInstDef {
-            attrs,
-            kind: DataInstKind::SpvInst(wk.OpCompositeConstruct.into()),
-            inputs: components,
-            child_regions: [].into_iter().collect(),
-            outputs: [out_var].into_iter().collect(),
-        };
     }
 
     // HACK(eddyb) this runs on every `DataInst` in a function body, before the
@@ -646,7 +437,7 @@ impl<'a> SelectiveEraser<'a> {
             | DataInstKind::FuncCall(_)
             | DataInstKind::ThunkBind(_) => return Ok(()),
 
-            DataInstKind::SpvInst(spv_inst)
+            DataInstKind::SpvInst(spv_inst, _)
                 if [wk.OpLoad, wk.OpStore, wk.OpCopyMemory].contains(&spv_inst.opcode) =>
             {
                 return Ok(());
@@ -662,7 +453,11 @@ impl<'a> SelectiveEraser<'a> {
                     "unhandled pointer type change in unexpected `qptr` instruction".into(),
                 ]));
             }
-            &DataInstKind::SpvExtInst { ext_set, inst } => {
+            &DataInstKind::SpvExtInst {
+                ext_set,
+                inst,
+                lowering: _,
+            } => {
                 let ext_set = &cx[ext_set];
                 return Err(Diag::bug([format!(
                     "unhandled pointer type change in extended SPIR-V \
@@ -670,7 +465,7 @@ impl<'a> SelectiveEraser<'a> {
                 )
                 .into()]));
             }
-            DataInstKind::SpvInst(spv_inst) => spv_inst,
+            DataInstKind::SpvInst(spv_inst, _) => spv_inst,
         };
 
         let sigs = crate::spirv_type_constraints::instruction_signatures(
@@ -782,9 +577,53 @@ impl Transformer for EraseExplicitLayout<'_, '_> {
         if let Some(&cached) = self.0.cached_erased_explicit_layout_types.get(&ty) {
             return cached;
         }
-        let transformed = self
-            .transform_type_def(&self.0.cx[ty])
-            .map(|ty_def| self.0.cx.intern(ty_def));
+        let transformed = self.transform_type_def(&self.0.cx[ty]).map(|new_ty_def| {
+            let cx = self.0.cx;
+
+            let new_ty: Type = cx.intern(new_ty_def);
+            let new_ty_def = &cx[new_ty];
+            let spv_value_lowering = match &new_ty_def.kind {
+                TypeKind::Scalar(_)
+                | TypeKind::Vector(_)
+                | TypeKind::QPtr
+                | TypeKind::Thunk
+                | TypeKind::SpvStringLiteralForExtInst => &spv::ValueLowering::Direct,
+                TypeKind::SpvInst { value_lowering, .. } => value_lowering,
+            };
+
+            match spv_value_lowering {
+                // HACK(eddyb) this avoids having to ever generate `OpBitcast`s
+                // (in Vulkan, only `PhysicalStorageBuffer` pointers could be
+                // be an aggregate leaf, and refer to another aggregate type,
+                // but they use explicit layout so they shouldn't reach this).
+                spv::ValueLowering::Direct => {
+                    let mut new_ty_def = TypeDef {
+                        attrs: new_ty_def.attrs,
+                        kind: new_ty_def.kind.clone(),
+                    };
+                    // FIXME(eddyb) also take into account any inner diagnostics.
+                    let already_has_errors = new_ty_def
+                        .attrs
+                        .diags(cx)
+                        .iter()
+                        .any(|diag| matches!(diag.level, DiagLevel::Bug(_) | DiagLevel::Error));
+                    if !already_has_errors {
+                        new_ty_def.attrs.push_diag(
+                            cx,
+                            Diag::bug([
+                                "unexpected (non-aggregate type) layout erasure (`".into(),
+                                ty.into(),
+                                "` -> `".into(),
+                                new_ty.into(),
+                                "`)".into(),
+                            ]),
+                        );
+                    }
+                    cx.intern(new_ty_def)
+                }
+                spv::ValueLowering::Disaggregate(_) => new_ty,
+            }
+        });
         self.0
             .cached_erased_explicit_layout_types
             .insert(ty, transformed);
@@ -794,9 +633,38 @@ impl Transformer for EraseExplicitLayout<'_, '_> {
         if let Some(&cached) = self.0.cached_erased_explicit_layout_consts.get(&ct) {
             return cached;
         }
-        let transformed = self
-            .transform_const_def(&self.0.cx[ct])
-            .map(|ct_def| self.0.cx.intern(ct_def));
+        let transformed = self.transform_const_def(&self.0.cx[ct]).map(|new_ct_def| {
+            let cx = self.0.cx;
+
+            let new_ct: Const = cx.intern(new_ct_def);
+            let new_ct_def = &cx[new_ct];
+            let mut new_ct_def = ConstDef {
+                attrs: new_ct_def.attrs,
+                ty: new_ct_def.ty,
+                kind: new_ct_def.kind.clone(),
+            };
+            // FIXME(eddyb) also take into account any inner diagnostics.
+            let already_has_errors = new_ct_def
+                .attrs
+                .diags(cx)
+                .iter()
+                .any(|diag| matches!(diag.level, DiagLevel::Bug(_) | DiagLevel::Error));
+            if !already_has_errors {
+                // HACK(eddyb) see also `transform_type_use` above and its similar
+                // (but conditional) diagnostic (is caching consts even needed now?).
+                new_ct_def.attrs.push_diag(
+                    cx,
+                    Diag::bug([
+                        "unexpected (const) layout erasure (`".into(),
+                        ct.into(),
+                        "` -> `".into(),
+                        new_ct.into(),
+                        "`)".into(),
+                    ]),
+                );
+            }
+            cx.intern(new_ct_def)
+        });
         self.0
             .cached_erased_explicit_layout_consts
             .insert(ct, transformed);
@@ -822,6 +690,7 @@ impl Transformer for EraseExplicitLayout<'_, '_> {
             TypeKind::SpvInst {
                 spv_inst,
                 type_and_const_inputs: _,
+                value_lowering: _,
             } if spv_inst.opcode == wk.OpTypePointer => {
                 return self.0.transform_type_def(ty_def);
             }

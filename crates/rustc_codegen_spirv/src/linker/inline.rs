@@ -181,7 +181,6 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
                 &mem2reg_constants,
                 &mut function,
             );
-            super::destructure_composites::destructure_composites(&mut function);
         }
 
         functions[func_idx] = Ok(function);

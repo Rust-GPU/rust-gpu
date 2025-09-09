@@ -70,10 +70,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
         };
 
         let func_decl = &mut module.funcs[func];
-        assert!(match &cx[func_decl.ret_type].kind {
-            TypeKind::SpvInst { spv_inst, .. } => spv_inst.opcode == wk.OpTypeVoid,
-            _ => false,
-        });
+        assert!(func_decl.ret_types.is_empty());
 
         let func_def_body = match &mut func_decl.def {
             DeclDef::Present(def) => def,
@@ -104,15 +101,19 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                 .into_iter()
                 .filter_map(|func_at_inst| {
                     let data_inst_def = func_at_inst.def();
-                    if let DataInstKind::SpvInst(spv_inst) = &data_inst_def.kind
+                    if let DataInstKind::SpvInst(spv_inst, lowering) = &data_inst_def.kind
                         && spv_inst.opcode == wk.OpLoad
+                        && lowering.disaggregated_output.is_none()
                         && let Value::Const(ct) = data_inst_def.inputs[0]
-                        && let ConstKind::PtrToGlobalVar(gv) = cx[ct].kind
-                        && interface_global_vars.contains(&gv)
+                        && let ConstKind::PtrToGlobalVar {
+                            global_var,
+                            offset: None,
+                        } = cx[ct].kind
+                        && interface_global_vars.contains(&global_var)
                     {
                         let output_var = data_inst_def.outputs[0];
                         return Some((
-                            gv,
+                            global_var,
                             func_at_inst.at(output_var).decl().ty,
                             Value::Var(output_var),
                         ));
@@ -196,14 +197,14 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                 .and_then(|func_at_inst| {
                     let data_inst_def = func_at_inst.def();
                     match data_inst_def.kind {
-                        DataInstKind::SpvExtInst { ext_set, inst }
-                            if ext_set == custom_ext_inst_set =>
-                        {
-                            Some((
-                                func_at_inst,
-                                CustomOp::decode(inst).with_operands(&data_inst_def.inputs),
-                            ))
-                        }
+                        DataInstKind::SpvExtInst {
+                            ext_set,
+                            inst,
+                            lowering: _,
+                        } if ext_set == custom_ext_inst_set => Some((
+                            func_at_inst,
+                            CustomOp::decode(inst).with_operands(&data_inst_def.inputs),
+                        )),
                         _ => None,
                     }
                 })
@@ -328,6 +329,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                         abort_inst_def.kind = DataInstKind::SpvExtInst {
                             ext_set: cx.intern("NonSemantic.DebugPrintf"),
                             inst: 1,
+                            lowering: Default::default(),
                         };
                         abort_inst_def.inputs = [Value::Const(mk_const_str(cx.intern(fmt)))]
                             .into_iter()

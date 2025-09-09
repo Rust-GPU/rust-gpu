@@ -155,7 +155,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                     | DataInstKind::Mem(_)
                     | DataInstKind::QPtr(_)
                     | DataInstKind::ThunkBind(_)
-                    | DataInstKind::SpvInst(_)
+                    | DataInstKind::SpvInst { .. }
                     | DataInstKind::SpvExtInst { .. },
                 ..
             } => {
@@ -204,7 +204,10 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                         // FIXME(eddyb) remove the instruction entirely.
                         *inst_def = DataInstDef {
                             attrs: Default::default(),
-                            kind: DataInstKind::SpvInst(wk.OpNop.into()),
+                            kind: DataInstKind::SpvInst(
+                                wk.OpNop.into(),
+                                spv::InstLowering::default(),
+                            ),
                             inputs: [].into_iter().collect(),
                             child_regions: [].into_iter().collect(),
                             outputs: [].into_iter().collect(),
@@ -397,10 +400,6 @@ enum PureOp {
     VectorExtract {
         elem_idx: u8,
     },
-    // FIXME(eddyb) will be obsoleted by disaggregation.
-    AggregateExtract {
-        elem_idx: spv::Imm,
-    },
 
     /// Maps `0` to `false`, and `1` to `true`, but any other input values won't
     /// allow reduction, which is used to signal `0..=1` isn't being guaranteed.
@@ -420,17 +419,18 @@ impl TryFrom<&DataInstKind> for PureOp {
             &DataInstKind::Vector(vector::Op::Whole(vector::WholeOp::Extract { elem_idx })) => {
                 Ok(Self::VectorExtract { elem_idx })
             }
-            DataInstKind::SpvInst(spv_inst) => {
+            DataInstKind::SpvInst(spv_inst, lowering) => {
+                if lowering.disaggregated_output.is_some()
+                    || !lowering.disaggregated_inputs.is_empty()
+                {
+                    return Err(());
+                }
+
                 let wk = &super::SpvSpecWithExtras::get().well_known;
 
                 let op = spv_inst.opcode;
                 Ok(match spv_inst.imms[..] {
                     [] if op == wk.OpBitcast => Self::BitCast,
-
-                    // FIXME(eddyb) support more than one index at a time, somehow.
-                    [elem_idx] if op == wk.OpCompositeExtract => {
-                        Self::AggregateExtract { elem_idx }
-                    }
 
                     _ => return Err(()),
                 })
@@ -450,14 +450,14 @@ impl TryFrom<PureOp> for DataInstKind {
             PureOp::VectorExtract { elem_idx } => {
                 return Ok(vector::Op::from(vector::WholeOp::Extract { elem_idx }).into());
             }
-            PureOp::AggregateExtract { elem_idx } => {
-                (wk.OpCompositeExtract, iter::once(elem_idx).collect())
-            }
 
             // HACK(eddyb) this is the only reason this is `TryFrom` not `From`.
             PureOp::IntToBool => return Err(()),
         };
-        Ok(DataInstKind::SpvInst(spv::Inst { opcode, imms }))
+        Ok(DataInstKind::SpvInst(
+            spv::Inst { opcode, imms },
+            spv::InstLowering::default(),
+        ))
     }
 }
 
@@ -544,7 +544,7 @@ impl Reducible {
 impl Reducible<Const> {
     // FIXME(eddyb) in theory this should always return `Some`.
     fn try_reduce_const(&self, cx: &Context) -> Option<Const> {
-        let wk = &super::SpvSpecWithExtras::get().well_known;
+        let _wk = &super::SpvSpecWithExtras::get().well_known;
 
         let ct_def = &cx[self.input];
         match (self.op, &ct_def.kind) {
@@ -574,22 +574,6 @@ impl Reducible<Const> {
                 Some(cx.intern(ct.get_elem(elem_idx.into())?))
             }
 
-            (
-                PureOp::AggregateExtract {
-                    elem_idx: spv::Imm::Short(_, elem_idx),
-                },
-                ConstKind::SpvInst {
-                    spv_inst_and_const_inputs,
-                },
-            ) => {
-                let (spv_inst, const_inputs) = &**spv_inst_and_const_inputs;
-                if spv_inst.opcode == wk.OpConstantComposite {
-                    Some(const_inputs[elem_idx as usize])
-                } else {
-                    None
-                }
-            }
-
             (PureOp::IntToBool, ConstKind::Scalar(ct)) => {
                 Some(cx.intern(scalar::Const::try_from_bits(scalar::Type::Bool, ct.bits())?))
             }
@@ -607,8 +591,12 @@ enum ReductionStep {
 
 impl Reducible<&DataInstDef> {
     // FIXME(eddyb) force the input to actually be itself some kind of pure op.
-    fn try_reduce_output_of_data_inst(&self, _cx: &Context) -> Option<ReductionStep> {
-        let wk = &super::SpvSpecWithExtras::get().well_known;
+    fn try_reduce_output_of_data_inst(
+        &self,
+        _cx: &Context,
+        _output_idx: u32,
+    ) -> Option<ReductionStep> {
+        let _wk = &super::SpvSpecWithExtras::get().well_known;
 
         let input_inst_def = self.input;
         // NOTE(eddyb) do not destroy information left in e.g. comments.
@@ -635,20 +623,6 @@ impl Reducible<&DataInstDef> {
                 });
             }
             (PureOp::VectorExtract { .. }, _) => {}
-
-            (PureOp::AggregateExtract { elem_idx }, DataInstKind::SpvInst(input_spv_inst))
-                if input_spv_inst.opcode == wk.OpCompositeInsert
-                    && input_spv_inst.imms.len() == 1 =>
-            {
-                let new_elem = input_inst_def.inputs[0];
-                let prev_composite = input_inst_def.inputs[1];
-                return Some(if input_spv_inst.imms[0] == elem_idx {
-                    ReductionStep::Complete(new_elem)
-                } else {
-                    ReductionStep::Partial(self.with_input(prev_composite))
-                });
-            }
-            (PureOp::AggregateExtract { .. }, _) => {}
 
             (PureOp::IntToBool, _) => {
                 // FIXME(eddyb) look into what instructions might end up
@@ -843,14 +817,9 @@ impl Reducible {
                     }
                     Some(Value::Var(new_output_var))
                 } else {
-                    // HACK(eddyb) sanity check pre-disaggregate.
-                    if node_def.outputs.len() != 1 || output_idx != 0 {
-                        return None;
-                    }
-
                     match self
                         .with_input(node_def)
-                        .try_reduce_output_of_data_inst(cx)?
+                        .try_reduce_output_of_data_inst(cx, output_idx)?
                     {
                         ReductionStep::Complete(v) => Some(v),
                         // FIXME(eddyb) actually use a loop instead of recursing here.

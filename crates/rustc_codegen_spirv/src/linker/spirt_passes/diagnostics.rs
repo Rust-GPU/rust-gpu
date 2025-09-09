@@ -364,7 +364,7 @@ impl<'a> Visitor<'a> for DiagnosticReporter<'a> {
             let ct_def = &self.cx[ct];
             match ct_def.kind {
                 // HACK(eddyb) don't push an `UseOrigin` for `GlobalVar` pointers.
-                ConstKind::PtrToGlobalVar(_) if ct_def.attrs == AttrSet::default() => {
+                ConstKind::PtrToGlobalVar { .. } if ct_def.attrs == AttrSet::default() => {
                     self.visit_const_def(ct_def);
                 }
                 _ => {

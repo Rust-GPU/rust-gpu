@@ -153,6 +153,7 @@ impl Transformer for Validator<'_> {
             TypeKind::SpvInst {
                 spv_inst,
                 type_and_const_inputs: _,
+                value_lowering: _,
             } => self.validate_spv_inst(spv_inst),
 
             TypeKind::Thunk | TypeKind::QPtr | TypeKind::SpvStringLiteralForExtInst => Ok(()),
@@ -189,7 +190,7 @@ impl Transformer for Validator<'_> {
             ConstKind::Undef
             | ConstKind::Scalar(_)
             | ConstKind::Vector(_)
-            | ConstKind::PtrToGlobalVar(_)
+            | ConstKind::PtrToGlobalVar { .. }
             | ConstKind::SpvStringLiteralForExtInst(_) => Ok(()),
         };
         let transformed = ct_def.inner_transform_with(self);
@@ -214,7 +215,7 @@ impl Transformer for Validator<'_> {
         let node_def = func_at_node.def();
         let valid = match &node_def.kind {
             NodeKind::ExitInvocation(cf::ExitInvocationKind::SpvInst(spv_inst))
-            | DataInstKind::SpvInst(spv_inst) => self.validate_spv_inst(spv_inst),
+            | DataInstKind::SpvInst(spv_inst, _) => self.validate_spv_inst(spv_inst),
 
             NodeKind::Select(_)
             | NodeKind::Loop { .. }

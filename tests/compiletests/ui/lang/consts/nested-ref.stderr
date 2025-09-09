@@ -16,5 +16,63 @@ LL | fn deep_transpose(r: &'static &'static Mat2) -> Mat2 {
    = note: inlining was required due to illegal parameter type
    = note: called from `nested_ref::main`
 
-warning: 2 warnings emitted
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:613:29] unexpected (non-aggregate type) layout erasure (`spv.OpTypePointer(
+         spv.StorageClass.Private,
+         #[name = "glam::Mat2"]
+         #[spv.OpMemberName(Member: 0, Name: "x_axis")]
+         #[spv.OpMemberName(Member: 1, Name: "y_axis")]
+         #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+         #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 8))]
+         spv.OpTypeStruct(f32×2, f32×2),
+       )` -> `spv.OpTypePointer(
+         spv.StorageClass.Private,
+         #[name = "glam::Mat2"]
+         #[spv.OpMemberName(Member: 0, Name: "x_axis")]
+         #[spv.OpMemberName(Member: 1, Name: "y_axis")]
+         spv.OpTypeStruct(f32×2, f32×2),
+       )`)
+   |
+   = note: used by unnamed type
+note: used from within Fragment entry-point `main`
+  --> $DIR/nested-ref.rs:20:5
+   |
+LL |     r.transpose()
+   |     ^
+note: used from within `nested_ref::deep_transpose`
+  --> $DIR/nested-ref.rs:32:16
+   |
+LL |     *vec_out = deep_transpose(&ROT90) * *vec_in;
+   |                ^^^^^^^^^^^^^^^^^^^^^^
+note: used from within `nested_ref::main`
+  --> $DIR/nested-ref.rs:24:8
+   |
+LL | pub fn main(
+   |        ^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:657:21] unexpected (const) layout erasure (`&/* undefined global_var */_` -> `&/* undefined global_var */_`)
+   |
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main`
+  --> $DIR/nested-ref.rs:20:5
+   |
+LL |     r.transpose()
+   |     ^
+note: used from within `nested_ref::deep_transpose`
+  --> $DIR/nested-ref.rs:32:16
+   |
+LL |     *vec_out = deep_transpose(&ROT90) * *vec_in;
+   |                ^^^^^^^^^^^^^^^^^^^^^^
+note: used from within `nested_ref::main`
+  --> $DIR/nested-ref.rs:24:8
+   |
+LL | pub fn main(
+   |        ^^^^
+
+note: SPIR-T bugs were encountered
+   |
+   = help: pretty-printed SPIR-T was saved to $TEST_BUILD_DIR/lang/consts/nested-ref.vulkan1.spirt.html
+   = help: re-run with `RUSTGPU_CODEGEN_ARGS="--dump-spirt-passes=$PWD"` for more details
+   = note: pretty-printed SPIR-T is preferred when reporting Rust-GPU issues
+
+error: aborting due to 2 previous errors; 2 warnings emitted
 
