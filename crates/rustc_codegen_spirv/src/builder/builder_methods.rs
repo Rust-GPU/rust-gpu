@@ -1601,9 +1601,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     // Same note and TODO as exactudiv
     simple_op! {
         exactsdiv,
-        sint: s_div,
+        int: s_div,
         fold_const {
-            sint(a, b) => a.checked_div(b)?;
+            int(a, b) => a.checked_div(b)?;
         }
     }
     simple_op! {fdiv, float: f_div}
@@ -1649,9 +1649,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     }
     simple_uni_op! {
         neg,
-        sint: s_negate,
+        int: s_negate,
         fold_const {
-            sint(a) => a.checked_neg()?;
+            int(a) => a.checked_neg()?;
         }
     }
     simple_uni_op! {fneg, float: f_negate}

@@ -46,6 +46,12 @@ pub fn main_cs(
     #[spirv(global_invocation_id)] id: UVec3,
     #[spirv(storage_buffer, descriptor_set = 0, binding = 0)] prime_indices: &mut [u32],
 ) {
-    let index = id.x as usize;
+    let index = id.x as usize
+        + core::mem::size_of_val(
+            const {
+                struct S<T: ?Sized>(T);
+                &S([]) as &S<[()]>
+            },
+        );
     prime_indices[index] = collatz(prime_indices[index]).unwrap_or(u32::MAX);
 }
