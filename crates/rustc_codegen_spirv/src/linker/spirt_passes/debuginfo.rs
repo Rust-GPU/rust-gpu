@@ -6,8 +6,8 @@ use smallvec::SmallVec;
 use spirt::transform::{InnerInPlaceTransform, Transformer};
 use spirt::visit::InnerVisit;
 use spirt::{
-    Attr, AttrSetDef, ConstKind, Context, ControlNode, ControlNodeKind, DataInstKind, InternedStr,
-    Module, OrdAssertEq, Value, spv,
+    Attr, AttrSetDef, ConstKind, Context, DataInstKind, InternedStr, Module, Node, NodeKind,
+    OrdAssertEq, Value, spv,
 };
 
 /// Replace our custom extended instruction debuginfo with standard SPIR-V ones.
@@ -56,25 +56,25 @@ struct CustomDebuginfoToSpv<'a> {
 }
 
 impl Transformer for CustomDebuginfoToSpv<'_> {
-    fn in_place_transform_control_node_def(
+    fn in_place_transform_node_def(
         &mut self,
-        mut func_at_control_node: spirt::func_at::FuncAtMut<'_, ControlNode>,
+        mut func_at_node: spirt::func_at::FuncAtMut<'_, Node>,
     ) {
-        // HACK(eddyb) this relies on the fact that `ControlNodeKind::Block` maps
+        // HACK(eddyb) this relies on the fact that `NodeKind::Block` maps
         // to one original SPIR-V block, which may not necessarily be true, and
         // steps should be taken elsewhere to explicitly unset debuginfo, instead
         // of relying on the end of a SPIR-V block implicitly unsetting it all.
         // NOTE(eddyb) allowing debuginfo to apply *outside* of a `Block` could
         // be useful in allowing *some* structured control-flow to have debuginfo,
         // but that would likely require more work on the SPIR-T side.
-        if let ControlNodeKind::Block { mut insts } = func_at_control_node.reborrow().def().kind {
+        if let NodeKind::Block { mut insts } = func_at_node.reborrow().def().kind {
             let mut current_file_line_col = None;
 
             // HACK(eddyb) buffering the `DataInst`s to remove from this block,
             // as iterating and modifying a list at the same time isn't supported.
             let mut insts_to_remove = SmallVec::<[_; 8]>::new();
 
-            let mut func_at_inst_iter = func_at_control_node.reborrow().at(insts).into_iter();
+            let mut func_at_inst_iter = func_at_node.reborrow().at(insts).into_iter();
             while let Some(func_at_inst) = func_at_inst_iter.next() {
                 let inst = func_at_inst.position;
                 let data_inst_def = func_at_inst.def();
@@ -161,11 +161,11 @@ impl Transformer for CustomDebuginfoToSpv<'_> {
 
             // Finally remove the `DataInst`s buffered for removal earlier.
             for inst in insts_to_remove {
-                insts.remove(inst, func_at_control_node.data_insts);
+                insts.remove(inst, func_at_node.data_insts);
             }
-            func_at_control_node.reborrow().def().kind = ControlNodeKind::Block { insts };
+            func_at_node.reborrow().def().kind = NodeKind::Block { insts };
         }
 
-        func_at_control_node.inner_in_place_transform_with(self);
+        func_at_node.inner_in_place_transform_with(self);
     }
 }
