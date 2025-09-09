@@ -3,6 +3,7 @@
 pub(crate) mod controlflow;
 pub(crate) mod debuginfo;
 pub(crate) mod diagnostics;
+pub(crate) mod explicit_layout;
 mod fuse_selects;
 mod reduce;
 pub(crate) mod validate;
@@ -64,15 +65,16 @@ macro_rules! def_spv_spec_with_extra_well_known {
                         let spv_spec = spv::spec::Spec::get();
                         let wk = &spv_spec.well_known;
 
-                        let decorations = match wk.Decoration.def() {
+                        let [decorations, storage_classes] = [wk.Decoration, wk.StorageClass].map(|kind| match kind.def() {
                             spv::spec::OperandKindDef::ValueEnum { variants } => variants,
                             _ => unreachable!(),
-                        };
+                        });
 
                         let lookup_fns = PerWellKnownGroup {
                             opcode: |name| spv_spec.instructions.lookup(name).unwrap(),
                             operand_kind: |name| spv_spec.operand_kinds.lookup(name).unwrap(),
                             decoration: |name| decorations.lookup(name).unwrap().into(),
+                            storage_class: |name| storage_classes.lookup(name).unwrap().into(),
                         };
 
                         SpvSpecWithExtras {
@@ -100,14 +102,25 @@ def_spv_spec_with_extra_well_known! {
         OpBitcast,
         OpCompositeInsert,
         OpCompositeExtract,
+        OpCompositeConstruct,
+
+        OpCopyMemory,
     ],
     operand_kind: spv::spec::OperandKind = [
         Capability,
         ExecutionModel,
         ImageFormat,
+        MemoryAccess,
     ],
     decoration: u32 = [
         UserTypeGOOGLE,
+        MatrixStride,
+    ],
+    storage_class: u32 = [
+        PushConstant,
+        Uniform,
+        StorageBuffer,
+        PhysicalStorageBuffer,
     ],
 }
 
