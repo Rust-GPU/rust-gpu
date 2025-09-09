@@ -133,7 +133,7 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
         .map(Ok)
         .collect();
 
-    // Inline functions in post-order (aka inside-out aka bottom-out) - that is,
+    // Inline functions in post-order (aka inside-out aka bottom-up) - that is,
     // callees are processed before their callers, to avoid duplicating work.
     for func_idx in call_graph.post_order() {
         let mut function = mem::replace(&mut functions[func_idx], Err(FuncIsBeingInlined)).unwrap();
@@ -411,7 +411,7 @@ fn should_inline(
         }
 
         // If the call isn't passing a legal pointer argument (a "memory object",
-        // i.e. an `OpVariable` or one of the caller's `OpFunctionParameters),
+        // i.e. an `OpVariable` or one of the caller's `OpFunctionParameter`s),
         // then inlining is required to have a chance at producing legal SPIR-V.
         //
         // FIXME(eddyb) rewriting away the pointer could be another alternative.
@@ -826,7 +826,7 @@ impl Inliner<'_, '_> {
                 }
 
                 // `vars_and_debuginfo_range.end` indicates where `OpVariable`s
-                // end and other instructions start (module debuginfo), but to
+                // end and other instructions start (modulo debuginfo), but to
                 // split the block in two, both sides of the "cut" need "repair":
                 // - the variables are missing "inlined call frames" pops, that
                 //   may happen later in the block, and have to be synthesized
