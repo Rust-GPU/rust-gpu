@@ -4,16 +4,21 @@ use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 use super::CodegenCx;
 use crate::abi::ConvSpirvType;
 use crate::attr::AggregatedSpirvAttributes;
-use crate::builder_spirv::{SpirvConst, SpirvFunctionCursor, SpirvValue, SpirvValueExt};
+use crate::builder_spirv::{
+    SpirvConst, SpirvFunctionCursor, SpirvValue, SpirvValueExt, SpirvValueKind,
+};
 use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
 use rustc_abi::Align;
 use rustc_attr_data_structures::InlineAttr;
-use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
+use rustc_codegen_ssa::traits::{
+    BaseTypeCodegenMethods as _, PreDefineCodegenMethods, StaticCodegenMethods,
+};
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
+use rustc_middle::mir::interpret::ConstAllocation;
 use rustc_middle::mir::mono::{Linkage, MonoItem, Visibility};
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
@@ -357,14 +362,32 @@ impl<'tcx> PreDefineCodegenMethods<'tcx> for CodegenCx<'tcx> {
     }
 }
 
-impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
-    fn static_addr_of(&self, cv: Self::Value, _align: Align, _kind: Option<&str>) -> Self::Value {
+impl<'tcx> CodegenCx<'tcx> {
+    // FIXME(eddyb) remove after https://github.com/rust-lang/rust/pull/142960
+    // (or a similar PR relying on `ConstAllocation<'tcx>`) lands upstream.
+    pub(crate) fn static_addr_of_alloc(
+        &self,
+        alloc: ConstAllocation<'tcx>,
+        _kind: Option<&str>,
+    ) -> SpirvValue {
         self.def_constant(
-            self.type_ptr_to(cv.ty),
+            self.type_ptr(),
             SpirvConst::PtrTo {
-                pointee: cv.def_cx(self),
+                pointee: None,
+                pointee_alloc: alloc,
             },
         )
+    }
+}
+
+impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
+    fn static_addr_of(&self, cv: Self::Value, align: Align, kind: Option<&str>) -> Self::Value {
+        let SpirvValueKind::ConstDataFromAlloc { alloc_id } = cv.kind else {
+            bug!("expected result of `const_data_from_alloc` in `static_addr_of`");
+        };
+        let alloc = self.tcx.global_alloc(alloc_id).unwrap_memory();
+        assert_eq!(align, alloc.inner().align);
+        self.static_addr_of_alloc(alloc, kind)
     }
 
     fn codegen_static(&mut self, def_id: DefId) {

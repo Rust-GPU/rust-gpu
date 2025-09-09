@@ -2,12 +2,12 @@
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::CodegenCx;
-use crate::builder_spirv::{SpirvConst, SpirvValue};
+use crate::builder_spirv::{SpirvConst, SpirvValue, SpirvValueKind};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools as _;
 use rspirv::spirv::Word;
 use rustc_abi::{self as abi, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
-use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods};
+use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods};
 use rustc_middle::mir::interpret::{AllocError, ConstAllocation, GlobalAlloc, Scalar, alloc_range};
 use rustc_span::{DUMMY_SP, Span};
 
@@ -224,9 +224,7 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                 let alloc_id = prov.alloc_id();
                 let (base_addr, _base_addr_space) = match self.tcx.global_alloc(alloc_id) {
                     GlobalAlloc::Memory(alloc) => {
-                        let init = self.const_data_from_alloc(alloc);
-                        let value = self.static_addr_of(init, alloc.inner().align, None);
-                        (value, AddressSpace::DATA)
+                        (self.static_addr_of_alloc(alloc, None), AddressSpace::DATA)
                     }
                     GlobalAlloc::Function { instance } => (
                         self.get_fn_addr(instance),
@@ -242,9 +240,7 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                                 }),
                             )))
                             .unwrap_memory();
-                        let init = self.const_data_from_alloc(alloc);
-                        let value = self.static_addr_of(init, alloc.inner().align, None);
-                        (value, AddressSpace::DATA)
+                        (self.static_addr_of_alloc(alloc, None), AddressSpace::DATA)
                     }
                     GlobalAlloc::Static(def_id) => {
                         assert!(self.tcx.is_static(def_id));
@@ -257,18 +253,21 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         }
     }
 
-    // HACK(eddyb) this uses a symbolic `ConstDataFromAlloc`, to allow deferring
-    // the actual value generation until after a pointer to this value is cast
-    // to its final type (e.g. that will be loaded as).
-    // FIXME(eddyb) replace this with `qptr` handling of constant data.
     fn const_data_from_alloc(&self, alloc: ConstAllocation<'_>) -> Self::Value {
         // HACK(eddyb) the `ConstCodegenMethods` trait no longer guarantees the
         // lifetime that `alloc` is interned for, but since it *is* interned,
         // we can cheaply recover it (see also the `ty::Lift` infrastructure).
         let alloc = self.tcx.lift(alloc).unwrap();
 
-        let void_type = SpirvType::Void.def(DUMMY_SP, self);
-        self.def_constant(void_type, SpirvConst::ConstDataFromAlloc(alloc))
+        SpirvValue {
+            zombie_waiting_for_span: false,
+            kind: SpirvValueKind::ConstDataFromAlloc {
+                // HACK(eddyb) this isn't just `alloc` because that would require
+                // adding a `'tcx` parameter to `SpirvValue`.
+                alloc_id: self.tcx.reserve_and_set_memory_alloc(alloc),
+            },
+            ty: SpirvType::Void.def(DUMMY_SP, self),
+        }
     }
 
     fn const_ptr_byte_offset(&self, ptr: Self::Value, offset: Size) -> Self::Value {
@@ -312,13 +311,24 @@ impl<'tcx> CodegenCx<'tcx> {
 
         // HACK(eddyb) special-case `const_data_from_alloc` + `static_addr_of`
         // as the old `from_const_alloc` (now `OperandRef::from_const_alloc`).
-        if let Some(SpirvConst::PtrTo { pointee }) = val_ct_def
-            && let Some(SpirvConst::ConstDataFromAlloc(alloc)) =
-                self.builder.lookup_const_by_id(pointee)
+        // FIXME(eddyb) replace this with `qptr` handling of constant data.
+        if let Some(SpirvConst::PtrTo {
+            // HACK(eddyb) the `pointee: None` condition preserves the old
+            // behavior, even in the face of unconditional constant-folding
+            // of `pointercast` (and `.strip_ptrcasts()` being able to undo it).
+            pointee: None,
+            pointee_alloc,
+        }) = val_ct_def
             && let SpirvType::Pointer { pointee } = self.lookup_type(ty)
-            && let Some(init) = self.try_read_from_const_alloc(alloc, pointee)
+            && let Some(init) = self.try_read_from_const_alloc(pointee_alloc, pointee)
         {
-            return self.static_addr_of(init, alloc.inner().align, None);
+            return self.def_constant(
+                ty,
+                SpirvConst::PtrTo {
+                    pointee: Some(init.def_cx(self)),
+                    pointee_alloc,
+                },
+            );
         }
 
         self.def_constant(ty, SpirvConst::BitCast(val.def_cx(self)))
@@ -342,6 +352,7 @@ impl<'tcx> CodegenCx<'tcx> {
     /// returning that constant if its size covers the entirety of `alloc`.
     //
     // FIXME(eddyb) should this use something like `Result<_, PartialRead>`?
+    // FIXME(eddyb) replace this with `qptr` handling of constant data.
     pub fn try_read_from_const_alloc(
         &self,
         alloc: ConstAllocation<'tcx>,
@@ -355,6 +366,7 @@ impl<'tcx> CodegenCx<'tcx> {
     // the returned constant, i.e. `ty.sizeof()` can be either `Some(read_size)`,
     // or `None` - i.e. unsized, in which case only the returned `Size` records
     // how much was read from `alloc` to build the returned constant value.
+    // FIXME(eddyb) replace this with `qptr` handling of constant data.
     #[tracing::instrument(level = "trace", skip(self), fields(ty = ?self.debug_type(ty), offset))]
     fn read_from_const_alloc_at(
         &self,

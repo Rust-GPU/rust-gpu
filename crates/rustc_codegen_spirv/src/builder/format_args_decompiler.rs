@@ -65,7 +65,10 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             _ => None,
         };
         let const_slice_as_elem_ids = |ptr_id: Word, len: usize| {
-            if let SpirvConst::PtrTo { pointee } = cx.builder.lookup_const_by_id(ptr_id)?
+            if let SpirvConst::PtrTo {
+                pointee: Some(pointee),
+                ..
+            } = cx.builder.lookup_const_by_id(ptr_id)?
                 && let SpirvConst::Composite(elems) = cx.builder.lookup_const_by_id(pointee)?
                 && elems.len() == len
             {

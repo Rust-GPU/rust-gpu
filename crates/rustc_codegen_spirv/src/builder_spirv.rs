@@ -16,7 +16,8 @@ use rustc_abi::Size;
 use rustc_arena::DroplessArena;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods as _, ConstCodegenMethods as _};
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
-use rustc_middle::mir::interpret::ConstAllocation;
+use rustc_middle::mir::interpret::{AllocId, ConstAllocation};
+use rustc_middle::span_bug;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::source_map::SourceMap;
 use rustc_span::symbol::Symbol;
@@ -30,8 +31,6 @@ use std::str;
 use std::sync::Arc;
 use std::{fs::File, io::Write, path::Path};
 
-// HACK(eddyb) silence warnings that are inaccurate wrt future changes.
-#[non_exhaustive]
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum SpirvValueKind {
     Def {
@@ -56,6 +55,17 @@ pub enum SpirvValueKind {
 
         // FIXME(eddyb) replace this ad-hoc zombie with a proper `SpirvConst`.
         zombie_id: Word,
+    },
+
+    // HACK(eddyb) the result of `const_data_from_alloc`, that can only ever be
+    // used as the initializer value for `static_addr_of` (which, in turn, only
+    // accepts the result of `const_data_from_alloc`, no real values).
+    // FIXME(eddyb) remove after https://github.com/rust-lang/rust/pull/142960
+    // (or a similar PR fusing those two methods) lands upstream.
+    ConstDataFromAlloc {
+        // HACK(eddyb) this isn't `ConstAllocation` because that would require
+        // adding a `'tcx` parameter to `SpirvValue`.
+        alloc_id: AllocId,
     },
 }
 
@@ -104,11 +114,18 @@ impl SpirvValue {
 
     pub fn const_fold_load(self, cx: &CodegenCx<'_>) -> Option<Self> {
         match cx.builder.lookup_const(self)? {
-            SpirvConst::PtrTo { pointee } => {
+            SpirvConst::PtrTo { pointee, .. } => {
                 // HACK(eddyb) this obtains a `SpirvValue` from the ID it contains,
                 // so there's some conceptual inefficiency there, but it does
                 // prevent any of the other details from being lost accidentally.
-                Some(cx.builder.id_to_const_and_val.borrow().get(&pointee)?.val.1)
+                Some(
+                    cx.builder
+                        .id_to_const_and_val
+                        .borrow()
+                        .get(&pointee?)?
+                        .val
+                        .1,
+                )
             }
             _ => None,
         }
@@ -130,6 +147,11 @@ impl SpirvValue {
     pub fn def_with_span(self, cx: &CodegenCx<'_>, span: Span) -> Word {
         let id = match self.kind {
             SpirvValueKind::Def { id, .. } | SpirvValueKind::FnAddr { zombie_id: id, .. } => id,
+
+            SpirvValueKind::ConstDataFromAlloc { .. } => span_bug!(
+                span,
+                "`const_data_from_alloc` result should only be passed to `static_addr_of`"
+            ),
         };
         if self.zombie_waiting_for_span {
             cx.add_span_to_zombie_if_missing(id, span);
@@ -174,15 +196,15 @@ pub enum SpirvConst<'a, 'tcx> {
     /// Pointer to constant data, i.e. `&pointee`, represented as an `OpVariable`
     /// in the `Private` storage class, and with `pointee` as its initializer.
     PtrTo {
-        pointee: Word,
-    },
+        // HACK(eddyb) may be `None`, in which case only `pointee_alloc` matters.
+        pointee: Option<Word>,
 
-    /// Symbolic result for the `const_data_from_alloc` method, to allow deferring
-    /// the actual value generation until after a pointer to this value is cast
-    /// to its final type (e.g. that will be loaded as).
-    //
-    // FIXME(eddyb) replace this with `qptr` handling of constant data.
-    ConstDataFromAlloc(ConstAllocation<'tcx>),
+        // HACK(eddyb) this allows deferring the actual value generation until
+        // after a pointer to this value is cast to its final pointer type.
+        //
+        // FIXME(eddyb) replace this with `qptr` handling of constant data.
+        pointee_alloc: ConstAllocation<'tcx>,
+    },
 
     /// Constant `OpBitcast` (via `OpSpecConstantOp`).
     //
@@ -223,11 +245,15 @@ impl<'tcx> SpirvConst<'_, 'tcx> {
             SpirvConst::Null => SpirvConst::Null,
             SpirvConst::Undef => SpirvConst::Undef,
             SpirvConst::ZombieUndefForFnAddr => SpirvConst::ZombieUndefForFnAddr,
-            SpirvConst::PtrTo { pointee } => SpirvConst::PtrTo { pointee },
+            SpirvConst::PtrTo {
+                pointee,
+                pointee_alloc,
+            } => SpirvConst::PtrTo {
+                pointee,
+                pointee_alloc,
+            },
 
             SpirvConst::Composite(fields) => SpirvConst::Composite(arena_alloc_slice(cx, fields)),
-
-            SpirvConst::ConstDataFromAlloc(alloc) => SpirvConst::ConstDataFromAlloc(alloc),
 
             SpirvConst::BitCast(v) => SpirvConst::BitCast(v),
             SpirvConst::PtrByteOffset { ptr, offset } => SpirvConst::PtrByteOffset { ptr, offset },
@@ -679,13 +705,17 @@ impl<'tcx> BuilderSpirv<'tcx> {
             SpirvConst::Null => builder.constant_null(ty),
             SpirvConst::Undef
             | SpirvConst::ZombieUndefForFnAddr
-            | SpirvConst::ConstDataFromAlloc(_) => builder.undef(ty, None),
+            | SpirvConst::PtrTo {
+                pointee: None,
+                pointee_alloc: _,
+            } => builder.undef(ty, None),
 
             SpirvConst::Composite(v) => builder.constant_composite(ty, v.iter().copied()),
 
-            SpirvConst::PtrTo { pointee } => {
-                builder.variable(ty, None, StorageClass::Private, Some(pointee))
-            }
+            SpirvConst::PtrTo {
+                pointee: Some(pointee),
+                pointee_alloc: _,
+            } => builder.variable(ty, None, StorageClass::Private, Some(pointee)),
 
             SpirvConst::BitCast(v) => const_op(&mut builder, Op::Bitcast, v, None),
             SpirvConst::PtrByteOffset { ptr, offset } => {
@@ -773,7 +803,10 @@ impl<'tcx> BuilderSpirv<'tcx> {
                 })
                 .unwrap_or(Ok(())),
 
-            SpirvConst::PtrTo { pointee } => {
+            SpirvConst::PtrTo {
+                pointee: Some(pointee),
+                pointee_alloc: _,
+            } => {
                 match self.id_to_const_and_val.borrow()[&pointee].legal {
                     Ok(()) => Ok(()),
 
@@ -784,7 +817,10 @@ impl<'tcx> BuilderSpirv<'tcx> {
                 }
             }
 
-            SpirvConst::ConstDataFromAlloc(_) => Err(IllegalConst::Shallow(
+            SpirvConst::PtrTo {
+                pointee: None,
+                pointee_alloc: _,
+            } => Err(IllegalConst::Shallow(
                 LeafIllegalConst::UntypedConstDataFromAlloc,
             )),
 
