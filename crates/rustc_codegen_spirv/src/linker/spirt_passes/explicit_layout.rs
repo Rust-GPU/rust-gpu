@@ -176,9 +176,9 @@ impl Transformer for SelectiveEraser<'_> {
         // region input/node output declarations in the function body may change.
         if let DeclDef::Present(func_def_body) = &mut func_decl.def {
             let mut errors_to_attach = vec![];
-            func_def_body.inner_visit_with(&mut super::VisitAllControlRegionsAndNodes {
+            func_def_body.inner_visit_with(&mut super::VisitAllRegionsAndNodes {
                 state: (),
-                visit_control_region: |_: &mut _, _| {},
+                visit_region: |_: &mut _, _| {},
                 visit_control_node: |_: &mut _, func_at_node: FuncAt<'_, ControlNode>| {
                     if let ControlNodeKind::Block { insts } = func_at_node.def().kind {
                         for func_at_inst in func_at_node.at(insts) {

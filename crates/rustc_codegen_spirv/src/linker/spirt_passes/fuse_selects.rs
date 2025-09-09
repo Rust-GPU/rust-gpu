@@ -1,20 +1,20 @@
 use spirt::func_at::FuncAt;
 use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::InnerVisit;
-use spirt::{Context, ControlNodeKind, ControlRegion, FuncDefBody, SelectionKind, Value};
+use spirt::{Context, ControlNodeKind, FuncDefBody, Region, SelectionKind, Value};
 use std::mem;
 
-use super::{ReplaceValueWith, VisitAllControlRegionsAndNodes};
+use super::{ReplaceValueWith, VisitAllRegionsAndNodes};
 
 /// Combine consecutive `Select`s in `func_def_body`.
 pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBody) {
     // HACK(eddyb) this kind of random-access is easier than using `spirt::transform`.
     let mut all_regions = vec![];
 
-    func_def_body.inner_visit_with(&mut VisitAllControlRegionsAndNodes {
+    func_def_body.inner_visit_with(&mut VisitAllRegionsAndNodes {
         state: (),
-        visit_control_region: |_: &mut (), func_at_control_region: FuncAt<'_, ControlRegion>| {
-            all_regions.push(func_at_control_region.position);
+        visit_region: |_: &mut (), func_at_region: FuncAt<'_, Region>| {
+            all_regions.push(func_at_region.position);
         },
         visit_control_node: |_: &mut (), _| {},
     });
@@ -86,7 +86,7 @@ pub(crate) fn fuse_selects_in_func(_cx: &Context, func_def_body: &mut FuncDefBod
                                         },
                                     ));
 
-                                func.control_regions[base_case]
+                                func.regions[base_case]
                                     .children
                                     .append(children_of_case_to_fuse, func.control_nodes);
                             }

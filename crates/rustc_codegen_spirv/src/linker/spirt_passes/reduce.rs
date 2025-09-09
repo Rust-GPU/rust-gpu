@@ -5,14 +5,14 @@ use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::InnerVisit;
 use spirt::{
     Const, ConstDef, ConstKind, Context, ControlNode, ControlNodeDef, ControlNodeKind,
-    ControlNodeOutputDecl, ControlRegion, ControlRegionInputDecl, DataInst, DataInstDef,
-    DataInstFormDef, DataInstKind, EntityOrientedDenseMap, FuncDefBody, SelectionKind, Type,
-    TypeDef, TypeKind, Value, spv,
+    ControlNodeOutputDecl, DataInst, DataInstDef, DataInstFormDef, DataInstKind,
+    EntityOrientedDenseMap, FuncDefBody, Region, RegionInputDecl, SelectionKind, Type, TypeDef,
+    TypeKind, Value, spv,
 };
 use std::collections::hash_map::Entry;
 use std::{iter, slice};
 
-use super::{ReplaceValueWith, VisitAllControlRegionsAndNodes};
+use super::{ReplaceValueWith, VisitAllRegionsAndNodes};
 use std::rc::Rc;
 
 /// Apply "reduction rules" to `func_def_body`, replacing (pure) computations
@@ -161,7 +161,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                     for (i, (&initial_input, &body_output)) in
                         initial_inputs.iter().zip(body_outputs).enumerate()
                     {
-                        let body_input = Value::ControlRegionInput {
+                        let body_input = Value::RegionInput {
                             region: *body,
                             input_idx: i as u32,
                         };
@@ -178,9 +178,9 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                     ..
                 } => {}
             };
-        func_def_body.inner_visit_with(&mut VisitAllControlRegionsAndNodes {
+        func_def_body.inner_visit_with(&mut VisitAllRegionsAndNodes {
             state: (),
-            visit_control_region: |_: &mut (), _| {},
+            visit_region: |_: &mut (), _| {},
             visit_control_node: |_: &mut (), func_at_control_node| {
                 handle_control_node(func_at_control_node);
             },
@@ -269,23 +269,20 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
 #[derive(Default)]
 struct ParentMap {
     data_inst_parent: EntityOrientedDenseMap<DataInst, ControlNode>,
-    control_node_parent: EntityOrientedDenseMap<ControlNode, ControlRegion>,
-    control_region_parent: EntityOrientedDenseMap<ControlRegion, ControlNode>,
+    control_node_parent: EntityOrientedDenseMap<ControlNode, Region>,
+    region_parent: EntityOrientedDenseMap<Region, ControlNode>,
 }
 
 impl ParentMap {
     fn new(func_def_body: &FuncDefBody) -> Self {
-        let mut visitor = VisitAllControlRegionsAndNodes {
+        let mut visitor = VisitAllRegionsAndNodes {
             state: Self::default(),
-            visit_control_region:
-                |this: &mut Self, func_at_control_region: FuncAt<'_, ControlRegion>| {
-                    for func_at_child_control_node in func_at_control_region.at_children() {
-                        this.control_node_parent.insert(
-                            func_at_child_control_node.position,
-                            func_at_control_region.position,
-                        );
-                    }
-                },
+            visit_region: |this: &mut Self, func_at_region: FuncAt<'_, Region>| {
+                for func_at_child_control_node in func_at_region.at_children() {
+                    this.control_node_parent
+                        .insert(func_at_child_control_node.position, func_at_region.position);
+                }
+            },
             visit_control_node: |this: &mut Self, func_at_control_node: FuncAt<'_, ControlNode>| {
                 let child_regions = match &func_at_control_node.def().kind {
                     &ControlNodeKind::Block { insts } => {
@@ -301,7 +298,7 @@ impl ParentMap {
                     ControlNodeKind::ExitInvocation { .. } => &[][..],
                 };
                 for &child_region in child_regions {
-                    this.control_region_parent
+                    this.region_parent
                         .insert(child_region, func_at_control_node.position);
                 }
             },
@@ -380,7 +377,7 @@ fn try_reduce_select(
                     // allow lifting an use of it outside the `Select`.
                     let region_defining_x = match x {
                         Value::Const(_) => unreachable!(),
-                        Value::ControlRegionInput { region, .. } => region,
+                        Value::RegionInput { region, .. } => region,
                         Value::ControlNodeOutput { control_node, .. } => {
                             *parent_map.control_node_parent.get(control_node)?
                         }
@@ -391,8 +388,7 @@ fn try_reduce_select(
 
                     // Fast-reject: if `x` is defined immediately inside one of
                     // `select_control_node`'s cases, it's not a dominator.
-                    if parent_map.control_region_parent.get(region_defining_x)
-                        == Some(&select_control_node)
+                    if parent_map.region_parent.get(region_defining_x) == Some(&select_control_node)
                     {
                         return None;
                     }
@@ -412,11 +408,9 @@ fn try_reduce_select(
                         if region_containing_select == region_defining_x {
                             return Some(());
                         }
-                        region_containing_select = *parent_map.control_node_parent.get(
-                            *parent_map
-                                .control_region_parent
-                                .get(region_containing_select)?,
-                        )?;
+                        region_containing_select = *parent_map
+                            .control_node_parent
+                            .get(*parent_map.region_parent.get(region_containing_select)?)?;
                     }
                 };
                 if is_x_valid_outside_select().is_some() {
@@ -743,11 +737,11 @@ impl Reducible {
     ) -> Option<Value> {
         match self.input {
             Value::Const(ct) => self.with_input(ct).try_reduce_const(cx).map(Value::Const),
-            Value::ControlRegionInput {
+            Value::RegionInput {
                 region,
                 input_idx: state_idx,
             } => {
-                let loop_node = *parent_map.control_region_parent.get(region)?;
+                let loop_node = *parent_map.region_parent.get(region)?;
                 // HACK(eddyb) this can't be a closure due to lifetime elision.
                 fn loop_initial_states(
                     func_at_loop_node: FuncAtMut<'_, ControlNode>,
@@ -778,7 +772,7 @@ impl Reducible {
 
                 let loop_state_decls = &mut func.reborrow().at(region).def().inputs;
                 let new_loop_state_idx = u32::try_from(loop_state_decls.len()).unwrap();
-                loop_state_decls.push(ControlRegionInputDecl {
+                loop_state_decls.push(RegionInputDecl {
                     attrs: Default::default(),
                     ty: self.output_type,
                 });
@@ -823,7 +817,7 @@ impl Reducible {
                             }
                             .into(),
                         );
-                        func.control_regions[region]
+                        func.regions[region]
                             .children
                             .insert_last(new_block, func.control_nodes);
                         new_block
@@ -835,7 +829,7 @@ impl Reducible {
                     _ => unreachable!(),
                 }
 
-                Some(Value::ControlRegionInput {
+                Some(Value::RegionInput {
                     region,
                     input_idx: new_loop_state_idx,
                 })
