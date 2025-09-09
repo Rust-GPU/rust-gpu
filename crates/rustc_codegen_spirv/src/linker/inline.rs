@@ -17,6 +17,8 @@ use rustc_session::Session;
 use smallvec::SmallVec;
 use std::mem;
 
+type FunctionMap = FxHashMap<Word, Function>;
+
 // FIXME(eddyb) this is a bit silly, but this keeps being repeated everywhere.
 fn next_id(header: &mut ModuleHeader) -> Word {
     let result = header.bound;
@@ -28,9 +30,6 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
     // This algorithm gets real sad if there's recursion - but, good news, SPIR-V bans recursion
     deny_recursion_in_module(sess, module)?;
 
-    // Compute the call-graph that will drive (inside-out, aka bottom-up) inlining.
-    let (call_graph, func_id_to_idx) = CallGraph::collect_with_func_id_to_idx(module);
-
     let custom_ext_inst_set_import = module
         .ext_inst_imports
         .iter()
@@ -40,7 +39,62 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
         })
         .map(|inst| inst.result_id.unwrap());
 
-    /*
+    // HACK(eddyb) compute the set of functions that may `Abort` *transitively*,
+    // which is only needed because of how we inline (sometimes it's outside-in,
+    // aka top-down, instead of always being inside-out, aka bottom-up).
+    //
+    // (inlining is needed in the first place because our custom `Abort`
+    // instructions get lowered to a simple `OpReturn` in entry-points, but
+    // that requires that they get inlined all the way up to the entry-points)
+    let functions_that_may_abort = custom_ext_inst_set_import
+        .map(|custom_ext_inst_set_import| {
+            let mut may_abort_by_id = FxHashSet::default();
+
+            // FIXME(eddyb) use this `CallGraph` abstraction more during inlining.
+            let call_graph = CallGraph::collect(module);
+            for func_idx in call_graph.post_order() {
+                let func_id = module.functions[func_idx].def_id().unwrap();
+
+                let any_callee_may_abort = call_graph.callees[func_idx].iter().any(|&callee_idx| {
+                    may_abort_by_id.contains(&module.functions[callee_idx].def_id().unwrap())
+                });
+                if any_callee_may_abort {
+                    may_abort_by_id.insert(func_id);
+                    continue;
+                }
+
+                let may_abort_directly = module.functions[func_idx].blocks.iter().any(|block| {
+                    match &block.instructions[..] {
+                        [.., last_normal_inst, terminator_inst]
+                            if last_normal_inst.class.opcode == Op::ExtInst
+                                && last_normal_inst.operands[0].unwrap_id_ref()
+                                    == custom_ext_inst_set_import
+                                && CustomOp::decode_from_ext_inst(last_normal_inst)
+                                    == CustomOp::Abort =>
+                        {
+                            assert_eq!(terminator_inst.class.opcode, Op::Unreachable);
+                            true
+                        }
+
+                        _ => false,
+                    }
+                });
+                if may_abort_directly {
+                    may_abort_by_id.insert(func_id);
+                }
+            }
+
+            may_abort_by_id
+        })
+        .unwrap_or_default();
+
+    let functions = module
+        .functions
+        .iter()
+        .map(|f| (f.def_id().unwrap(), f.clone()))
+        .collect();
+    let legal_globals = LegalGlobal::gather_from_module(module);
+
     // Drop all the functions we'll be inlining. (This also means we won't waste time processing
     // inlines in functions that will get inlined)
     let mut dropped_ids = FxHashSet::default();
@@ -69,9 +123,6 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
             ));
         }
     }
-     */
-
-    let legal_globals = LegalGlobal::gather_from_module(module);
 
     let header = module.header.as_mut().unwrap();
     // FIXME(eddyb) clippy false positive (separate `map` required for borrowck).
@@ -103,8 +154,6 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
             id
         }),
 
-        func_id_to_idx,
-
         id_to_name: module
             .debug_names
             .iter()
@@ -124,61 +173,22 @@ pub fn inline(sess: &Session, module: &mut Module) -> super::Result<()> {
         annotations: &mut module.annotations,
         types_global_values: &mut module.types_global_values,
 
-        legal_globals,
-
-        // NOTE(eddyb) this is needed because our custom `Abort` instructions get
-        // lowered to a simple `OpReturn` in entry-points, but that requires that
-        // they get inlined all the way up to the entry-points in the first place.
-        functions_that_may_abort: module
-            .functions
-            .iter()
-            .filter_map(|func| {
-                let custom_ext_inst_set_import = custom_ext_inst_set_import?;
-                func.blocks
-                    .iter()
-                    .any(|block| match &block.instructions[..] {
-                        [.., last_normal_inst, terminator_inst]
-                            if last_normal_inst.class.opcode == Op::ExtInst
-                                && last_normal_inst.operands[0].unwrap_id_ref()
-                                    == custom_ext_inst_set_import
-                                && CustomOp::decode_from_ext_inst(last_normal_inst)
-                                    == CustomOp::Abort =>
-                        {
-                            assert_eq!(terminator_inst.class.opcode, Op::Unreachable);
-                            true
-                        }
-
-                        _ => false,
-                    })
-                    .then_some(func.def_id().unwrap())
-            })
-            .collect(),
+        functions: &functions,
+        legal_globals: &legal_globals,
+        functions_that_may_abort: &functions_that_may_abort,
     };
-
-    let mut functions: Vec<_> = mem::take(&mut module.functions)
-        .into_iter()
-        .map(Ok)
-        .collect();
-
-    // Inline functions in post-order (aka inside-out aka bottom-out) - that is,
-    // callees are processed before their callers, to avoid duplicating work.
-    for func_idx in call_graph.post_order() {
-        let mut function = mem::replace(&mut functions[func_idx], Err(FuncIsBeingInlined)).unwrap();
-        inliner.inline_fn(&mut function, &functions);
-        fuse_trivial_branches(&mut function);
-        functions[func_idx] = Ok(function);
+    for function in &mut module.functions {
+        inliner.inline_fn(function);
+        fuse_trivial_branches(function);
     }
 
-    module.functions = functions.into_iter().map(|func| func.unwrap()).collect();
-
-    /*
     // Drop OpName etc. for inlined functions
     module.debug_names.retain(|inst| {
         !inst
             .operands
             .iter()
             .any(|op| op.id_ref_any().is_some_and(|id| dropped_ids.contains(&id)))
-    });*/
+    });
 
     Ok(())
 }
@@ -446,26 +456,18 @@ fn should_inline(
     Ok(callee_control.contains(FunctionControl::INLINE))
 }
 
-/// Helper error type for `Inliner`'s `functions` field, indicating a `Function`
-/// was taken out of its slot because it's being inlined.
-#[derive(Debug)]
-struct FuncIsBeingInlined;
-
 // Steps:
 // Move OpVariable decls
 // Rewrite return
 // Renumber IDs
 // Insert blocks
 
-struct Inliner<'m> {
+struct Inliner<'m, 'map> {
     /// ID of `OpExtInstImport` for our custom "extended instruction set"
     /// (see `crate::custom_insts` for more details).
     custom_ext_inst_set_import: Word,
 
     op_type_void_id: Word,
-
-    /// Map from each function's ID to its index in `functions`.
-    func_id_to_idx: FxHashMap<Word, usize>,
 
     /// Pre-collected `OpName`s, that can be used to find any function's name
     /// during inlining (to be able to generate debuginfo that uses names).
@@ -483,12 +485,13 @@ struct Inliner<'m> {
     annotations: &'m mut Vec<Instruction>,
     types_global_values: &'m mut Vec<Instruction>,
 
-    legal_globals: FxHashMap<Word, LegalGlobal>,
-    functions_that_may_abort: FxHashSet<Word>,
+    functions: &'map FunctionMap,
+    legal_globals: &'map FxHashMap<Word, LegalGlobal>,
+    functions_that_may_abort: &'map FxHashSet<Word>,
     // rewrite_rules: FxHashMap<Word, Word>,
 }
 
-impl Inliner<'_> {
+impl Inliner<'_, '_> {
     fn id(&mut self) -> Word {
         next_id(self.header)
     }
@@ -533,29 +536,19 @@ impl Inliner<'_> {
         inst_id
     }
 
-    fn inline_fn(
-        &mut self,
-        function: &mut Function,
-        functions: &[Result<Function, FuncIsBeingInlined>],
-    ) {
+    fn inline_fn(&mut self, function: &mut Function) {
         let mut block_idx = 0;
         while block_idx < function.blocks.len() {
             // If we successfully inlined a block, then repeat processing on the same block, in
             // case the newly inlined block has more inlined calls.
             // TODO: This is quadratic
-            if !self.inline_block(function, block_idx, functions) {
-                // TODO(eddyb) skip past the inlined callee without rescanning it.
+            if !self.inline_block(function, block_idx) {
                 block_idx += 1;
             }
         }
     }
 
-    fn inline_block(
-        &mut self,
-        caller: &mut Function,
-        block_idx: usize,
-        functions: &[Result<Function, FuncIsBeingInlined>],
-    ) -> bool {
+    fn inline_block(&mut self, caller: &mut Function, block_idx: usize) -> bool {
         // Find the first inlined OpFunctionCall
         let call = caller.blocks[block_idx]
             .instructions
@@ -566,8 +559,8 @@ impl Inliner<'_> {
                 (
                     index,
                     inst,
-                    functions[self.func_id_to_idx[&inst.operands[0].id_ref_any().unwrap()]]
-                        .as_ref()
+                    self.functions
+                        .get(&inst.operands[0].id_ref_any().unwrap())
                         .unwrap(),
                 )
             })
@@ -577,8 +570,8 @@ impl Inliner<'_> {
                     call_inst: inst,
                 };
                 match should_inline(
-                    &self.legal_globals,
-                    &self.functions_that_may_abort,
+                    self.legal_globals,
+                    self.functions_that_may_abort,
                     f,
                     Some(call_site),
                 ) {
@@ -590,16 +583,6 @@ impl Inliner<'_> {
             None => return false,
             Some(call) => call,
         };
-
-        // Propagate "may abort" from callee to caller (i.e. as aborts get inlined).
-        if self
-            .functions_that_may_abort
-            .contains(&callee.def_id().unwrap())
-        {
-            self.functions_that_may_abort
-                .insert(caller.def_id().unwrap());
-        }
-
         let call_result_type = {
             let ty = call_inst.result_type.unwrap();
             if ty == self.op_type_void_id {
@@ -611,7 +594,6 @@ impl Inliner<'_> {
         let call_result_id = call_inst.result_id.unwrap();
 
         // Get the debuginfo instructions that apply to the call.
-        // TODO(eddyb) only one instruction should be necessary here w/ bottom-up.
         let custom_ext_inst_set_import = self.custom_ext_inst_set_import;
         let call_debug_insts = caller.blocks[block_idx].instructions[..call_index]
             .iter()
@@ -886,7 +868,6 @@ impl Inliner<'_> {
             ..
         } = *self;
 
-        // TODO(eddyb) kill this as it shouldn't be needed for bottom-up inline.
         // HACK(eddyb) this is terrible, but we have to deal with it because of
         // how this inliner is outside-in, instead of inside-out, meaning that
         // context builds up "outside" of the callee blocks, inside the caller.
