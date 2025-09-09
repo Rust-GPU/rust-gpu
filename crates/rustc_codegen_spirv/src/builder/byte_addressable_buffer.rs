@@ -124,7 +124,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     element,
                     count,
                 ),
-            SpirvType::Array { element, count } => {
+            SpirvType::Array {
+                element,
+                count,
+                stride: _,
+                is_physical: _,
+            } => {
                 let count = match self.builder.lookup_const_scalar(count) {
                     Some(count) => count as u32,
                     None => return self.load_err(original_type, result_type),
@@ -320,7 +325,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     element,
                     count,
                 ),
-            SpirvType::Array { element, count } => {
+            SpirvType::Array {
+                element,
+                count,
+                stride: _,
+                is_physical: _,
+            } => {
                 let count = match self.builder.lookup_const_scalar(count) {
                     Some(count) => count as u32,
                     None => return self.store_err(original_type, value),

@@ -425,7 +425,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 )
                 .def(self)
             }
-            SpirvType::Array { element, count } => {
+            SpirvType::Array {
+                element,
+                count,
+                stride: _,
+                is_physical: _,
+            } => {
                 let elem_pat = self.memset_const_pattern(&self.lookup_type(element), fill_byte);
                 let count = self.builder.lookup_const_scalar(count).unwrap() as usize;
                 self.constant_composite(ty.def(self.span(), self), iter::repeat_n(elem_pat, count))
@@ -467,7 +472,12 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 _ => self.fatal(format!("memset on float width {width} not implemented yet")),
             },
             SpirvType::Adt { .. } => self.fatal("memset on structs not implemented yet"),
-            SpirvType::Array { element, count } => {
+            SpirvType::Array {
+                element,
+                count,
+                stride: _,
+                is_physical: _,
+            } => {
                 let elem_pat = self.memset_dynamic_pattern(&self.lookup_type(element), fill_var);
                 let count = self.builder.lookup_const_scalar(count).unwrap() as usize;
                 self.emit()
@@ -756,7 +766,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 }
                 SpirvType::Vector { element, .. }
                 | SpirvType::Array { element, .. }
-                | SpirvType::RuntimeArray { element }
+                | SpirvType::RuntimeArray { element, .. }
                 | SpirvType::Matrix { element, .. } => {
                     trace!("recovering access chain from Vector, Array, RuntimeArray, or Matrix");
                     ty = element;

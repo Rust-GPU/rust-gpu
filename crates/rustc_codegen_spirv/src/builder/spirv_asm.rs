@@ -390,10 +390,23 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                 self.err("OpTypeArray in asm! is not supported yet");
                 return;
             }
-            Op::TypeRuntimeArray => SpirvType::RuntimeArray {
-                element: inst.operands[0].unwrap_id_ref(),
+            Op::TypeRuntimeArray => {
+                let element = inst.operands[0].unwrap_id_ref();
+                // FIXME(eddyb) why even have this distinction? (may break `qptr`)
+                let (stride, is_physical) = {
+                    let ty = self.lookup_type(element);
+                    match ty.physical_size(self) {
+                        Some(stride) => (stride, true),
+                        None => (ty.sizeof(self).unwrap(), false),
+                    }
+                };
+                SpirvType::RuntimeArray {
+                    element,
+                    stride,
+                    is_physical,
+                }
+                .def(self.span(), self)
             }
-            .def(self.span(), self),
             Op::TypePointer => {
                 let storage_class = inst.operands[0].unwrap_storage_class();
                 if storage_class != StorageClass::Generic {
@@ -788,7 +801,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                         };
                         ty = match cx.lookup_type(ty) {
                             SpirvType::Array { element, .. }
-                            | SpirvType::RuntimeArray { element }
+                            | SpirvType::RuntimeArray { element, .. }
                             // HACK(eddyb) this is pretty bad because it's not
                             // checking that the index is an `OpConstant 0`, but
                             // there's no other valid choice anyway.

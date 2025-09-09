@@ -213,10 +213,20 @@ impl BaseTypeCodegenMethods for CodegenCx<'_> {
         SpirvType::Float(128).def(DUMMY_SP, self)
     }
 
-    fn type_array(&self, ty: Self::Type, len: u64) -> Self::Type {
+    fn type_array(&self, element: Self::Type, len: u64) -> Self::Type {
+        // FIXME(eddyb) why even have this distinction? (may break `qptr`)
+        let (stride, is_physical) = {
+            let ty = self.lookup_type(element);
+            match ty.physical_size(self) {
+                Some(stride) => (stride, true),
+                None => (ty.sizeof(self).unwrap(), false),
+            }
+        };
         SpirvType::Array {
-            element: ty,
+            element,
             count: self.const_usize(len),
+            stride,
+            is_physical,
         }
         .def(DUMMY_SP, self)
     }

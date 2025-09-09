@@ -658,22 +658,21 @@ fn trans_aggregate<'tcx>(cx: &CodegenCx<'tcx>, span: Span, ty: TyAndLayout<'tcx>
                 assert_eq!(count, 0);
                 SpirvType::RuntimeArray {
                     element: element_type,
+                    stride,
+                    // FIXME(eddyb) why even have this distinction? (may break `qptr`)
+                    is_physical: cx.lookup_type(element_type).physical_size(cx) == Some(stride),
                 }
                 .def(span, cx)
             } else if count == 0 {
                 // spir-v doesn't support zero-sized arrays
                 create_zst(cx, span, ty)
             } else {
-                let count_const = cx.constant_u32(span, count as u32);
-                let element_spv = cx.lookup_type(element_type);
-                let stride_spv = element_spv
-                    .sizeof(cx)
-                    .expect("Unexpected unsized type in sized FieldsShape::Array")
-                    .align_to(element_spv.alignof(cx));
-                assert_eq!(stride_spv, stride);
                 SpirvType::Array {
                     element: element_type,
-                    count: count_const,
+                    count: cx.constant_u32(span, count as u32),
+                    stride,
+                    // FIXME(eddyb) why even have this distinction? (may break `qptr`)
+                    is_physical: cx.lookup_type(element_type).physical_size(cx) == Some(stride),
                 }
                 .def(span, cx)
             }
@@ -1020,8 +1019,14 @@ fn trans_intrinsic_type<'tcx>(
             // We use a generic param to indicate the underlying element type.
             // The SPIR-V element type will be generated from the first generic param.
             if let Some(elem_ty) = args.types().next() {
+                let elem = cx.layout_of(elem_ty);
+                let elem_spirv_type = elem.spirv_type(span, cx);
                 Ok(SpirvType::RuntimeArray {
-                    element: cx.layout_of(elem_ty).spirv_type(span, cx),
+                    element: elem_spirv_type,
+                    stride: elem.size,
+                    // FIXME(eddyb) why even have this distinction? (may break `qptr`)
+                    is_physical: cx.lookup_type(elem_spirv_type).physical_size(cx)
+                        == Some(elem.size),
                 }
                 .def(span, cx))
             } else {

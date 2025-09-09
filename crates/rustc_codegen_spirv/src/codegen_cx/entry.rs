@@ -266,7 +266,7 @@ impl<'tcx> CodegenCx<'tcx> {
         let value_spirv_type = value_layout.spirv_type(hir_param.ty_span, self);
         // Some types automatically specify a storage class. Compute that here.
         let element_ty = match self.lookup_type(value_spirv_type) {
-            SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element } => {
+            SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element, .. } => {
                 self.lookup_type(element)
             }
             ty => ty,
@@ -482,11 +482,7 @@ impl<'tcx> CodegenCx<'tcx> {
                 };
                 let param_word = if let Some(array_count) = array_count {
                     let array = (0..array_count).map(|i| single(id + i)).collect::<Vec<_>>();
-                    let array_ty = SpirvType::Array {
-                        element: u32_ty,
-                        count: self.constant_u32(DUMMY_SP, array_count),
-                    }
-                    .def(DUMMY_SP, self);
+                    let array_ty = self.type_array(u32_ty, array_count.into());
                     bx.emit()
                         .composite_construct(array_ty, None, array)
                         .unwrap()
@@ -550,7 +546,7 @@ impl<'tcx> CodegenCx<'tcx> {
             && {
                 // Peel off arrays first (used for "descriptor indexing").
                 let outermost_or_array_element = match self.lookup_type(value_spirv_type) {
-                    SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element } => {
+                    SpirvType::Array { element, .. } | SpirvType::RuntimeArray { element, .. } => {
                         element
                     }
                     _ => value_spirv_type,
@@ -1014,7 +1010,7 @@ impl<'tcx> CodegenCx<'tcx> {
                 SpirvType::Vector { element, .. }
                 | SpirvType::Matrix { element, .. }
                 | SpirvType::Array { element, .. }
-                | SpirvType::RuntimeArray { element }
+                | SpirvType::RuntimeArray { element, .. }
                 | SpirvType::Pointer {
                     pointee: element, ..
                 }

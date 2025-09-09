@@ -577,8 +577,13 @@ impl<'tcx> CodegenCx<'tcx> {
             SpirvType::Vector { element, .. }
             | SpirvType::Matrix { element, .. }
             | SpirvType::Array { element, .. }
-            | SpirvType::RuntimeArray { element } => {
-                let stride = self.lookup_type(element).sizeof(self).unwrap();
+            | SpirvType::RuntimeArray { element, .. } => {
+                let stride = match ty_def {
+                    SpirvType::Array { stride, .. } | SpirvType::RuntimeArray { stride, .. } => {
+                        stride
+                    }
+                    _ => self.lookup_type(element).sizeof(self).unwrap(),
+                };
 
                 let count = match ty_def {
                     SpirvType::Vector { count, .. } | SpirvType::Matrix { count, .. } => {
