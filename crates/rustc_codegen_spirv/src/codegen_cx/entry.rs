@@ -1015,7 +1015,9 @@ impl<'tcx> CodegenCx<'tcx> {
                 | SpirvType::Matrix { element, .. }
                 | SpirvType::Array { element, .. }
                 | SpirvType::RuntimeArray { element }
-                | SpirvType::Pointer { pointee: element }
+                | SpirvType::Pointer {
+                    pointee: element, ..
+                }
                 | SpirvType::InterfaceBlock {
                     inner_type: element,
                 } => recurse(cx, element, has_bool, must_be_flat),

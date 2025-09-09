@@ -5,10 +5,11 @@ use crate::attr::{AggregatedSpirvAttributes, IntrinsicType};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
-use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
+use rspirv::spirv::{Dim, ImageFormat, Word};
 use rustc_abi::ExternAbi as Abi;
 use rustc_abi::{
-    Align, BackendRepr, FieldIdx, FieldsShape, Primitive, Scalar, Size, VariantIdx, Variants,
+    AddressSpace, Align, BackendRepr, FieldIdx, FieldsShape, Primitive, Scalar, Size, VariantIdx,
+    Variants,
 };
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
@@ -125,7 +126,13 @@ pub struct RecursivePointeeCache<'tcx> {
 }
 
 impl<'tcx> RecursivePointeeCache<'tcx> {
-    fn begin(&self, cx: &CodegenCx<'tcx>, span: Span, pointee: PointeeTy<'tcx>) -> Option<Word> {
+    fn begin(
+        &self,
+        cx: &CodegenCx<'tcx>,
+        span: Span,
+        pointee: PointeeTy<'tcx>,
+        addr_space: AddressSpace,
+    ) -> Option<Word> {
         match self.map.borrow_mut().entry(pointee) {
             // State: This is the first time we've seen this type. Record that we're beginning to translate this type,
             // and start doing the translation.
@@ -139,11 +146,11 @@ impl<'tcx> RecursivePointeeCache<'tcx> {
                 // emit an OpTypeForwardPointer, and use that ID. (This is the juicy part of this algorithm)
                 PointeeDefState::Defining => {
                     let new_id = cx.emit_global().id();
-                    // NOTE(eddyb) we emit `StorageClass::Generic` here, but later
-                    // the linker will specialize the entire SPIR-V module to use
-                    // storage classes inferred from `OpVariable`s.
-                    cx.emit_global()
-                        .type_forward_pointer(new_id, StorageClass::Generic);
+
+                    cx.emit_global().type_forward_pointer(
+                        new_id,
+                        cx.addr_space_to_storage_class(addr_space, span),
+                    );
                     entry.insert(PointeeDefState::DefiningWithForward(new_id));
                     cx.zombie_with_span(
                         new_id,
@@ -166,6 +173,7 @@ impl<'tcx> RecursivePointeeCache<'tcx> {
         span: Span,
         pointee: PointeeTy<'tcx>,
         pointee_spv: Word,
+        addr_space: AddressSpace,
     ) -> Word {
         match self.map.borrow_mut().entry(pointee) {
             // We should have hit begin() on this type already, which always inserts an entry.
@@ -178,6 +186,7 @@ impl<'tcx> RecursivePointeeCache<'tcx> {
                 PointeeDefState::Defining => {
                     let id = SpirvType::Pointer {
                         pointee: pointee_spv,
+                        addr_space,
                     }
                     .def(span, cx);
                     entry.insert(PointeeDefState::Defined(id));
@@ -189,6 +198,7 @@ impl<'tcx> RecursivePointeeCache<'tcx> {
                     entry.insert(PointeeDefState::Defined(id));
                     SpirvType::Pointer {
                         pointee: pointee_spv,
+                        addr_space,
                     }
                     .def_with_id(cx, span, id)
                 }
@@ -444,21 +454,21 @@ fn trans_scalar<'tcx>(
         Primitive::Float(float_kind) => {
             SpirvType::Float(float_kind.size().bits() as u32).def(span, cx)
         }
-        Primitive::Pointer(_) => {
+        Primitive::Pointer(addr_space) => {
             let pointee_ty = dig_scalar_pointee(cx, ty, offset);
             // Pointers can be recursive. So, record what we're currently translating, and if we're already translating
             // the same type, emit an OpTypeForwardPointer and use that ID.
             if let Some(predefined_result) = cx
                 .type_cache
                 .recursive_pointee_cache
-                .begin(cx, span, pointee_ty)
+                .begin(cx, span, pointee_ty, addr_space)
             {
                 predefined_result
             } else {
                 let pointee = pointee_ty.spirv_type(span, cx);
                 cx.type_cache
                     .recursive_pointee_cache
-                    .end(cx, span, pointee_ty, pointee)
+                    .end(cx, span, pointee_ty, pointee, addr_space)
             }
         }
     }

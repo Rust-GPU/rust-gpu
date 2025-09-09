@@ -11,7 +11,7 @@ use crate::custom_decorations::{CustomDecoration, SrcLocDecoration};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
-use rustc_abi::Align;
+use rustc_abi::{AddressSpace, Align};
 use rustc_attr_data_structures::InlineAttr;
 use rustc_codegen_ssa::traits::{
     BaseTypeCodegenMethods as _, PreDefineCodegenMethods, StaticCodegenMethods,
@@ -292,7 +292,11 @@ impl<'tcx> CodegenCx<'tcx> {
     }
 
     fn declare_global(&self, span: Span, ty: Word) -> SpirvValue {
-        let ptr_ty = SpirvType::Pointer { pointee: ty }.def(span, self);
+        let ptr_ty = SpirvType::Pointer {
+            pointee: ty,
+            addr_space: AddressSpace::DATA,
+        }
+        .def(span, self);
         // FIXME(eddyb) figure out what the correct storage class is.
         let result = self
             .emit_global()
@@ -399,7 +403,7 @@ impl<'tcx> StaticCodegenMethods for CodegenCx<'tcx> {
             Err(_) => return,
         };
         let value_ty = match self.lookup_type(g.ty) {
-            SpirvType::Pointer { pointee } => pointee,
+            SpirvType::Pointer { pointee, .. } => pointee,
             other => self.tcx.dcx().fatal(format!(
                 "global had non-pointer type {}",
                 other.debug(g.ty, self)

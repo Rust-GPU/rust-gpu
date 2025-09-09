@@ -73,7 +73,7 @@ impl SpirvTarget {
             llvm_target: self.to_string().into(),
             metadata: Default::default(),
             pointer_width: 32,
-            data_layout: "e-m:e-p:32:32:32-i64:64-n8:16:32:64".into(),
+            data_layout: "e-m:e-P1-p:32:32:32-i64:64-n8:16:32:64".into(),
             arch: ARCH.into(),
             options: self.init_target_opts(),
         }

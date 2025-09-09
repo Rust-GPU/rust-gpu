@@ -319,7 +319,7 @@ impl<'tcx> CodegenCx<'tcx> {
             pointee: None,
             pointee_alloc,
         }) = val_ct_def
-            && let SpirvType::Pointer { pointee } = self.lookup_type(ty)
+            && let SpirvType::Pointer { pointee, .. } = self.lookup_type(ty)
             && let Some(init) = self.try_read_from_const_alloc(pointee_alloc, pointee)
         {
             return self.def_constant(

@@ -5,7 +5,7 @@ use super::CodegenCx;
 use crate::abi::ConvSpirvType;
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
-use rustc_abi::{AddressSpace, BackendRepr, Reg};
+use rustc_abi::{AddressSpace, BackendRepr, HasDataLayout as _, Reg};
 use rustc_codegen_ssa::common::TypeKind;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, LayoutTypeCodegenMethods};
 use rustc_middle::ty::Ty;
@@ -81,7 +81,10 @@ impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
     }
 
     fn fn_ptr_backend_type(&self, fn_abi: &FnAbi<'tcx, Ty<'tcx>>) -> Self::Type {
-        self.type_ptr_to(self.fn_decl_backend_type(fn_abi))
+        self.type_ptr_to_ext(
+            self.fn_decl_backend_type(fn_abi),
+            self.data_layout().instruction_address_space,
+        )
     }
 
     fn reg_backend_type(&self, ty: &Reg) -> Self::Type {
@@ -218,7 +221,7 @@ impl BaseTypeCodegenMethods for CodegenCx<'_> {
     }
     fn element_type(&self, ty: Self::Type) -> Self::Type {
         match self.lookup_type(ty) {
-            SpirvType::Pointer { pointee } => pointee,
+            SpirvType::Pointer { pointee, .. } => pointee,
             SpirvType::Vector { element, .. } => element,
             spirv_type => self.tcx.dcx().fatal(format!(
                 "element_type called on invalid type: {spirv_type:?}"
