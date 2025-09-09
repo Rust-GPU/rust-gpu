@@ -3,11 +3,10 @@
 use crate::custom_decorations::{CustomDecoration, SrcLocDecoration, ZombieDecoration};
 use crate::custom_insts::{self, CustomInst, CustomOp};
 use itertools::Either;
-use rustc_data_structures::fx::{FxHashMap, FxIndexSet};
+use rustc_data_structures::fx::FxHashMap;
 use smallvec::SmallVec;
 use spirt::func_at::FuncAtMut;
 use spirt::transform::{InnerInPlaceTransform as _, Transformed, Transformer};
-use spirt::visit::InnerVisit;
 use spirt::{
     Attr, AttrSet, AttrSetDef, Const, ConstKind, Context, DataInstKind, DbgSrcLoc, Diag,
     InternedStr, Module, Region, Type, Value, spv,
@@ -26,22 +25,7 @@ pub fn convert_custom_decorations_and_debuginfo_to_spirt(
     let cx = &module.cx();
 
     // FIXME(eddyb) reuse this collection work in some kind of "pass manager".
-    let (all_global_vars, all_funcs) = {
-        let mut collector = super::ReachableUseCollector {
-            cx,
-            module,
-
-            seen_types: FxIndexSet::default(),
-            seen_consts: FxIndexSet::default(),
-            seen_global_vars: FxIndexSet::default(),
-            seen_funcs: FxIndexSet::default(),
-        };
-        for (export_key, &exportee) in &module.exports {
-            export_key.inner_visit_with(&mut collector);
-            exportee.inner_visit_with(&mut collector);
-        }
-        (collector.seen_global_vars, collector.seen_funcs)
-    };
+    let all_uses = spirt::visit::AllUses::from_module(module);
 
     let mut transformer = CustomDecorationsAndDebuginfoToSpirt {
         linker_options,
@@ -50,10 +34,10 @@ pub fn convert_custom_decorations_and_debuginfo_to_spirt(
         transformed_types: FxHashMap::default(),
         transformed_consts: FxHashMap::default(),
     };
-    for gv in all_global_vars {
+    for gv in all_uses.global_vars {
         transformer.in_place_transform_global_var_decl(&mut module.global_vars[gv]);
     }
-    for func in all_funcs {
+    for func in all_uses.funcs {
         transformer.in_place_transform_func_decl(&mut module.funcs[func]);
     }
 }

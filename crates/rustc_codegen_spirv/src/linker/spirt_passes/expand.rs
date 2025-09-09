@@ -399,34 +399,23 @@ pub trait TypeDrivenExpansion {
         // FIXME(eddyb) also expand e.g. global initializers?
 
         // FIXME(eddyb) reuse this collection work in some kind of "pass manager".
-        let all_funcs = {
-            let mut collector = super::ReachableUseCollector {
-                cx,
-                module,
-
-                seen_types: FxIndexSet::default(),
-                seen_consts: FxIndexSet::default(),
-                seen_global_vars: FxIndexSet::default(),
-                seen_funcs: FxIndexSet::default(),
-            };
-            for (export_key, &exportee) in &module.exports {
-                export_key.inner_visit_with(&mut collector);
-                exportee.inner_visit_with(&mut collector);
-            }
-            collector.seen_funcs
-        };
+        let all_uses = spirt::visit::AllUses::from_module(module);
 
         // FIXME(eddyb) should this emit a warning, error, SPIR-T BUG diagnostic,
         // assert, etc.?
-        let any_unstructured_cfg = all_funcs.iter().any(|&func| match &module.funcs[func].def {
-            DeclDef::Imported(_) => false,
-            DeclDef::Present(func_def_body) => func_def_body.unstructured_cfg.is_some(),
-        });
+        let any_unstructured_cfg =
+            all_uses
+                .funcs
+                .iter()
+                .any(|&func| match &module.funcs[func].def {
+                    DeclDef::Imported(_) => false,
+                    DeclDef::Present(func_def_body) => func_def_body.unstructured_cfg.is_some(),
+                });
         if any_unstructured_cfg {
             return;
         }
 
-        for func in all_funcs {
+        for func in all_uses.funcs {
             IntraFuncExpander {
                 cx,
                 expansion: self,

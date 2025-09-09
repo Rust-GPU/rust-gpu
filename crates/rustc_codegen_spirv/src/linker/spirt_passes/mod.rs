@@ -10,17 +10,16 @@ mod reduce;
 pub(crate) mod validate;
 
 use lazy_static::lazy_static;
-use rustc_data_structures::fx::FxIndexSet;
 use rustc_index::bit_set::DenseBitSet as BitSet;
 use smallvec::SmallVec;
 use spirt::cf::SelectionKind;
 use spirt::func_at::FuncAt;
 use spirt::mem::MemOp;
 use spirt::qptr::QPtrOp;
-use spirt::visit::{InnerVisit, Visitor};
+use spirt::visit::InnerVisit;
 use spirt::{
-    AttrSet, Const, Context, DataInstKind, DeclDef, EntityOrientedDenseMap, Func, FuncDefBody,
-    GlobalVar, Module, Node, NodeDef, NodeKind, Region, Type, Value, Var, VarKind, spv,
+    DataInstKind, DeclDef, EntityOrientedDenseMap, FuncDefBody, Module, Node, NodeDef, NodeKind,
+    Region, Value, Var, VarKind, spv,
 };
 use std::collections::VecDeque;
 use std::str;
@@ -129,6 +128,7 @@ def_spv_spec_with_extra_well_known! {
 const SPIRT_MEM_LAYOUT_CONFIG: &spirt::mem::LayoutConfig = &spirt::mem::LayoutConfig {
     abstract_bool_size_align: (1, 1),
     logical_ptr_size_align: (4, 4),
+    logical_ptr_null_is_zero: true,
     ..spirt::mem::LayoutConfig::VULKAN_SCALAR_LAYOUT_LE
 };
 const QPTR_SIZED_UINT: spirt::scalar::Type = {
@@ -155,22 +155,7 @@ pub(super) fn run_func_passes<P>(
     let cx = &module.cx();
 
     // FIXME(eddyb) reuse this collection work in some kind of "pass manager".
-    let all_funcs = {
-        let mut collector = ReachableUseCollector {
-            cx,
-            module,
-
-            seen_types: FxIndexSet::default(),
-            seen_consts: FxIndexSet::default(),
-            seen_global_vars: FxIndexSet::default(),
-            seen_funcs: FxIndexSet::default(),
-        };
-        for (export_key, &exportee) in &module.exports {
-            export_key.inner_visit_with(&mut collector);
-            exportee.inner_visit_with(&mut collector);
-        }
-        collector.seen_funcs
-    };
+    let all_uses = spirt::visit::AllUses::from_module(module);
 
     let mut needs_qptr_lifting = false;
 
@@ -197,7 +182,7 @@ pub(super) fn run_func_passes<P>(
                 // so this is a stop-gap solution to prevent many spurious phis, but
                 // more importantly, to prevent control-flow propagation of `qptr`s.
                 let mut any_changes = false;
-                for &func in &all_funcs {
+                for &func in &all_uses.funcs {
                     if let DeclDef::Present(func_def_body) = &mut module.funcs[func].def {
                         // FIXME(eddyb) avoid doing this except where changes occurred.
                         any_changes |= remove_unused_values_in_func(func_def_body);
@@ -225,7 +210,7 @@ pub(super) fn run_func_passes<P>(
         };
 
         let profiler = before_pass(full_name, module);
-        for &func in &all_funcs {
+        for &func in &all_uses.funcs {
             if let DeclDef::Present(func_def_body) = &mut module.funcs[func].def {
                 pass_fn(cx, func_def_body);
 
@@ -253,6 +238,14 @@ pub(super) fn run_func_passes<P>(
     // largely doesn't make sense to have additional transformations between
     // "lifting `qptr` back to `OpTypePointer`s" and "lifting SPIR-T to SPIR-V".
     if needs_qptr_lifting {
+        let profiler = before_pass("qptr::legalize", module);
+        {
+            // FIXME(eddyb) add `spirt::passes::qptr` wrappers.
+            spirt::qptr::legalize::LegalizePtrs::new(cx.clone(), SPIRT_MEM_LAYOUT_CONFIG)
+                .legalize_module(module, &all_uses);
+        }
+        after_pass(Some(module), profiler);
+
         let profiler = before_pass("mem::analyze_accesses", module);
         spirt::passes::qptr::analyze_mem_accesses(module, SPIRT_MEM_LAYOUT_CONFIG);
         after_pass(Some(module), profiler);
@@ -281,44 +274,6 @@ fn decode_spv_lit_str_with<R>(imms: &[spv::Imm], f: impl FnOnce(&str) -> R) -> R
         .collect();
 
     f(str::from_utf8(&bytes).expect("invalid UTF-8 in string literal"))
-}
-
-// FIXME(eddyb) this is just copy-pasted from `spirt` and should be reusable.
-struct ReachableUseCollector<'a> {
-    cx: &'a Context,
-    module: &'a Module,
-
-    // FIXME(eddyb) build some automation to avoid ever repeating these.
-    seen_types: FxIndexSet<Type>,
-    seen_consts: FxIndexSet<Const>,
-    seen_global_vars: FxIndexSet<GlobalVar>,
-    seen_funcs: FxIndexSet<Func>,
-}
-
-impl Visitor<'_> for ReachableUseCollector<'_> {
-    // FIXME(eddyb) build some automation to avoid ever repeating these.
-    fn visit_attr_set_use(&mut self, _attrs: AttrSet) {}
-    fn visit_type_use(&mut self, ty: Type) {
-        if self.seen_types.insert(ty) {
-            self.visit_type_def(&self.cx[ty]);
-        }
-    }
-    fn visit_const_use(&mut self, ct: Const) {
-        if self.seen_consts.insert(ct) {
-            self.visit_const_def(&self.cx[ct]);
-        }
-    }
-
-    fn visit_global_var_use(&mut self, gv: GlobalVar) {
-        if self.seen_global_vars.insert(gv) {
-            self.visit_global_var_decl(&self.module.global_vars[gv]);
-        }
-    }
-    fn visit_func_use(&mut self, func: Func) {
-        if self.seen_funcs.insert(func) {
-            self.visit_func_decl(&self.module.funcs[func]);
-        }
-    }
 }
 
 // FIXME(eddyb) maybe this should be provided by `spirt::visit`.
