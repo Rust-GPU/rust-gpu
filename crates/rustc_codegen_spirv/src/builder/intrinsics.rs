@@ -352,7 +352,7 @@ impl<'a, 'tcx> IntrinsicCallBuilderMethods<'tcx> for Builder<'a, 'tcx> {
                 }
             }
 
-            sym::compare_bytes => self.undef_zombie(ret_ty, "memcmp not implemented"),
+            sym::raw_eq | sym::compare_bytes => self.undef_zombie(ret_ty, "memcmp not implemented"),
 
             _ => {
                 // Call the fallback body instead of generating the intrinsic code
