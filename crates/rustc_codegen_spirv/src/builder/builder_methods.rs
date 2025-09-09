@@ -601,6 +601,10 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     ) -> (SpirvValue, <Self as BackendTypes>::Type) {
         self.lookup_type(ty)
             .sizeof(self)
+            .filter(|_| {
+                // HACK(eddyb) prefer pointer casts with `qptr`.
+                self.codegen_args.linker_opts.infer_storage_classes
+            })
             .and_then(|size| self.adjust_pointer_for_sized_access(ptr, size))
             .unwrap_or_else(|| (self.pointercast(ptr, self.type_ptr_to(ty)), ty))
     }

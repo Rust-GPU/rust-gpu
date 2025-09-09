@@ -414,6 +414,10 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
             // instructions, for all runtime args, are each separate,
             // so the B×N later instructions are all processed first,
             // before moving (backwards) to the A×N earlier instructions.
+            //
+            // HACK(eddyb) pointer casts are preferred over GEPs, with `qptr`.
+            // FIXME(eddyb) remove old logic and update comments.
+            let pre_qptr = cx.codegen_args.linker_opts.infer_storage_classes;
 
             let rev_copies_to_rt_args_array_src_ptrs: SmallVec<[_; 4]> = (0..rt_args_count)
                 .rev()
@@ -479,11 +483,12 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                 .rev()
                 .zip_eq(rev_copies_to_rt_args_array_src_ptrs))
             .map(|(rt_arg_idx, copy_to_rt_args_array_src_ptr)| {
-                let rt_arg_new_call_insts = try_rev_take(4).ok_or_else(|| {
-                    FormatArgsNotRecognized(
-                        "fmt::rt::Argument::new call: ran out of instructions".into(),
-                    )
-                })?;
+                let rt_arg_new_call_insts =
+                    try_rev_take(if pre_qptr { 4 } else { 2 }).ok_or_else(|| {
+                        FormatArgsNotRecognized(
+                            "fmt::rt::Argument::new call: ran out of instructions".into(),
+                        )
+                    })?;
                 let (ref_arg_id, ty, spec) = match rt_arg_new_call_insts[..] {
                     [
                         Inst::Call(call_ret_id, callee_id, ref call_args),
@@ -494,6 +499,8 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                         && tmp_slot_ptr == copy_to_rt_args_array_src_ptr
                         && (st_dst_ptr, st_val) == (tmp_slot_field_ptr, field) =>
                     {
+                        assert!(pre_qptr);
+
                         cx.fmt_rt_arg_new_fn_ids_to_ty_and_spec
                             .borrow()
                             .get(&callee_id)
@@ -502,6 +509,22 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                                 _ => None,
                             })
                     }
+
+                    [
+                        Inst::Call(call_ret_id, callee_id, ref call_args),
+                        Inst::Store(st_dst_ptr, st_val),
+                    ] if st_dst_ptr == copy_to_rt_args_array_src_ptr && st_val == call_ret_id => {
+                        assert!(!pre_qptr);
+
+                        cx.fmt_rt_arg_new_fn_ids_to_ty_and_spec
+                            .borrow()
+                            .get(&callee_id)
+                            .and_then(|&(ty, spec)| match call_args[..] {
+                                [x] => Some((x, ty, spec)),
+                                _ => None,
+                            })
+                    }
+
                     _ => None,
                 }
                 .ok_or_else(|| {
