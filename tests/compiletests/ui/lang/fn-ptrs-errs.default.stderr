@@ -1,89 +1,823 @@
-error: unsupported function pointer to `fn_ptrs_errs::foo`
+error: SPIR-V `StorageClass.CodeSectionINTEL` operand requires one of these extensions: `SPV_INTEL_function_pointers`
+   |
+   = note: used by unnamed type
+note: used from within Fragment entry-point `main_foo`
   --> $DIR/fn-ptrs-errs.rs:20:5
    |
 LL |     *out_fn = foo;
    |     ^^^^^^^^^^^^^
-   |
 note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-V `OpConstantFunctionPointerINTEL` instruction requires one of these extensions: `SPV_INTEL_function_pointers`
+   |
+note: used from within Fragment entry-point `main_foo`
   --> $DIR/fn-ptrs-errs.rs:20:5
    |
 LL |     *out_fn = foo;
    |     ^^^^^^^^^^^^^
-note: called by `main_foo`
-  --> $DIR/fn-ptrs-errs.rs:19:8
-   |
-LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
-   |        ^^^^^^^^
-
-error: constants cannot contain bitcasts
-       from `*struct core::ops::Range<u32> { start: u32, end: u32 }`
-         to `*struct dyn core::iter::Iterator<Item = u32> {  }`
-  --> $DIR/fn-ptrs-errs.rs:21:5
-   |
-LL |     *out_dyn = &(0..10);
-   |     ^^^^^^^^^^^^^^^^^^^
-   |
 note: used from within `fn_ptrs_errs::main_foo`
-  --> $DIR/fn-ptrs-errs.rs:21:5
-   |
-LL |     *out_dyn = &(0..10);
-   |     ^^^^^^^^^^^^^^^^^^^
-note: called by `main_foo`
   --> $DIR/fn-ptrs-errs.rs:19:8
    |
 LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
    |        ^^^^^^^^
 
-error: unsupported function pointer to `<core::ops::range::Range<u32> as core::iter::traits::iterator::Iterator>::next`
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`spv.OpTypePointer(
+         spv.StorageClass.Private,
+         #[spv.Decoration.ArrayStride(ArrayStride: 4)]
+         spv.OpTypeArray(ElementType: u32, Length: 7u32),
+       )` -> `spv.OpTypePointer(spv.StorageClass.Private, spv.OpTypeArray(ElementType: u32, Length: 7u32))`)
+   |
+   = note: used by `&dyn core::iter::Iterator<Item = u32>`
+   = note: used by unnamed type
+note: used from within Fragment entry-point `main_foo`
   --> $DIR/fn-ptrs-errs.rs:21:5
    |
 LL |     *out_dyn = &(0..10);
    |     ^^^^^^^^^^^^^^^^^^^
-   |
 note: used from within `fn_ptrs_errs::main_foo`
-  --> $DIR/fn-ptrs-errs.rs:21:5
-   |
-LL |     *out_dyn = &(0..10);
-   |     ^^^^^^^^^^^^^^^^^^^
-note: called by `main_foo`
   --> $DIR/fn-ptrs-errs.rs:19:8
    |
 LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
    |        ^^^^^^^^
 
-error: unsupported function pointer to `fn_ptrs_errs::bar`
-  --> $DIR/fn-ptrs-errs.rs:26:5
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`spv.OpSpecConstantOp(OpBitcast(&/* undefined func */_)):
+         u32
+       ` -> `spv.OpSpecConstantOp(
+         OpBitcast(/*
+           BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`&/* undefined func */_` -> `&/* undefined func */_`)
+         */
+         &/* undefined func */_),
+       ): u32`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+           
+           type T1 = spv.OpTypePointer(
+             spv.StorageClass.CodeSectionINTEL,
+             spv.OpTypeFunction(ReturnType: T0, spv.OpTypePointer(spv.StorageClass.Function, T0)),
+           )
+           
+           type T2 = spv.OpTypeFunction(
+             ReturnType: T0,
+             spv.OpTypePointer(
+               spv.StorageClass.Function,
+               #[name = "core::option::Option<u32>"]
+               #[spv.OpMemberName(Member: 0, Name: "start")]
+               #[spv.OpMemberName(Member: 1, Name: "end")]
+               spv.OpTypeStruct(u32, u32),
+             ),
+           )
+           
+           /*
+             BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`T1` -> `spv.OpTypePointer(
+               spv.StorageClass.CodeSectionINTEL,
+               T2,
+             )`)
+           */
+           type T3 = spv.OpTypePointer(spv.StorageClass.CodeSectionINTEL, T2)
    |
-LL |     *out_fn = bar;
-   |     ^^^^^^^^^^^^^
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
    |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`&/* undefined func */_` -> `&/* undefined func */_`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+           
+           type T1 = spv.OpTypePointer(
+             spv.StorageClass.CodeSectionINTEL,
+             spv.OpTypeFunction(ReturnType: T0, spv.OpTypePointer(spv.StorageClass.Function, T0)),
+           )
+           
+           type T2 = spv.OpTypeFunction(
+             ReturnType: T0,
+             spv.OpTypePointer(
+               spv.StorageClass.Function,
+               #[name = "core::option::Option<u32>"]
+               #[spv.OpMemberName(Member: 0, Name: "start")]
+               #[spv.OpMemberName(Member: 1, Name: "end")]
+               spv.OpTypeStruct(u32, u32),
+             ),
+           )
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-V `OpConstantFunctionPointerINTEL` instruction requires one of these extensions: `SPV_INTEL_function_pointers`
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`spv.OpTypePointer(
+         spv.StorageClass.CodeSectionINTEL,
+         spv.OpTypeFunction(ReturnType: T0, spv.OpTypePointer(spv.StorageClass.Function, T0)),
+       )` -> `spv.OpTypePointer(
+         spv.StorageClass.CodeSectionINTEL,
+         spv.OpTypeFunction(
+           ReturnType: T0,
+           spv.OpTypePointer(
+             spv.StorageClass.Function,
+             #[name = "core::option::Option<u32>"]
+             #[spv.OpMemberName(Member: 0, Name: "start")]
+             #[spv.OpMemberName(Member: 1, Name: "end")]
+             spv.OpTypeStruct(u32, u32),
+           ),
+         ),
+       )`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-V `StorageClass.CodeSectionINTEL` operand requires one of these extensions: `SPV_INTEL_function_pointers`
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`spv.OpSpecConstantOp(OpBitcast(&/* undefined func */_)):
+         u32
+       ` -> `spv.OpSpecConstantOp(
+         OpBitcast(/*
+           BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`&/* undefined func */_` -> `&/* undefined func */_`)
+         */
+         &/* undefined func */_),
+       ): u32`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+           
+           #[spv.OpMemberName(Member: 0, Name: "0")]
+           #[spv.OpMemberName(Member: 1, Name: "1")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T`(usize, core::option::Option<usize>)` = spv.OpTypeStruct(u32, T0)
+           
+           type T1 = spv.OpTypePointer(
+             spv.StorageClass.CodeSectionINTEL,
+             spv.OpTypeFunction(ReturnType: T`(usize, core::option::Option<usize>)`, spv.OpTypePointer(spv.StorageClass.Function, T0)),
+           )
+           
+           type T2 = spv.OpTypeFunction(
+             ReturnType: T`(usize, core::option::Option<usize>)`,
+             spv.OpTypePointer(
+               spv.StorageClass.Function,
+               #[name = "core::option::Option<u32>"]
+               #[spv.OpMemberName(Member: 0, Name: "start")]
+               #[spv.OpMemberName(Member: 1, Name: "end")]
+               spv.OpTypeStruct(u32, u32),
+             ),
+           )
+           
+           /*
+             BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`T1` -> `spv.OpTypePointer(
+               spv.StorageClass.CodeSectionINTEL,
+               T2,
+             )`)
+           */
+           type T3 = spv.OpTypePointer(spv.StorageClass.CodeSectionINTEL, T2)
+   |
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`&/* undefined func */_` -> `&/* undefined func */_`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+           
+           #[spv.OpMemberName(Member: 0, Name: "0")]
+           #[spv.OpMemberName(Member: 1, Name: "1")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T`(usize, core::option::Option<usize>)` = spv.OpTypeStruct(u32, T0)
+           
+           type T1 = spv.OpTypePointer(
+             spv.StorageClass.CodeSectionINTEL,
+             spv.OpTypeFunction(ReturnType: T`(usize, core::option::Option<usize>)`, spv.OpTypePointer(spv.StorageClass.Function, T0)),
+           )
+           
+           type T2 = spv.OpTypeFunction(
+             ReturnType: T`(usize, core::option::Option<usize>)`,
+             spv.OpTypePointer(
+               spv.StorageClass.Function,
+               #[name = "core::option::Option<u32>"]
+               #[spv.OpMemberName(Member: 0, Name: "start")]
+               #[spv.OpMemberName(Member: 1, Name: "end")]
+               spv.OpTypeStruct(u32, u32),
+             ),
+           )
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`spv.OpTypePointer(
+         spv.StorageClass.CodeSectionINTEL,
+         spv.OpTypeFunction(ReturnType: T`(usize, core::option::Option<usize>)`, spv.OpTypePointer(spv.StorageClass.Function, T0)),
+       )` -> `spv.OpTypePointer(
+         spv.StorageClass.CodeSectionINTEL,
+         spv.OpTypeFunction(
+           ReturnType: T`(usize, core::option::Option<usize>)`,
+           spv.OpTypePointer(
+             spv.StorageClass.Function,
+             #[name = "core::option::Option<u32>"]
+             #[spv.OpMemberName(Member: 0, Name: "start")]
+             #[spv.OpMemberName(Member: 1, Name: "end")]
+             spv.OpTypeStruct(u32, u32),
+           ),
+         ),
+       )`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+           
+           #[spv.OpMemberName(Member: 0, Name: "0")]
+           #[spv.OpMemberName(Member: 1, Name: "1")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T`(usize, core::option::Option<usize>)` = spv.OpTypeStruct(u32, T0)
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`spv.OpSpecConstantOp(OpBitcast(&/* undefined func */_)):
+         u32
+       ` -> `spv.OpSpecConstantOp(
+         OpBitcast(/*
+           BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`&/* undefined func */_` -> `&/* undefined func */_`)
+         */
+         &/* undefined func */_),
+       ): u32`)
+         where
+           type T0 = spv.OpTypePointer(
+             spv.StorageClass.CodeSectionINTEL,
+             spv.OpTypeFunction(
+               ReturnType: u32,
+               spv.OpTypePointer(
+                 spv.StorageClass.Function,
+                 #[name = "core::option::Option<u32>"]
+                 #[spv.OpMemberName(Member: 0, Name: "start")]
+                 #[spv.OpMemberName(Member: 1, Name: "end")]
+                 #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+                 #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+                 spv.OpTypeStruct(u32, u32),
+               ),
+               u32,
+             ),
+           )
+           
+           type T1 = spv.OpTypeFunction(
+             ReturnType: u32,
+             spv.OpTypePointer(
+               spv.StorageClass.Function,
+               #[name = "core::option::Option<u32>"]
+               #[spv.OpMemberName(Member: 0, Name: "start")]
+               #[spv.OpMemberName(Member: 1, Name: "end")]
+               spv.OpTypeStruct(u32, u32),
+             ),
+             u32,
+           )
+           
+           /*
+             BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`T0` -> `spv.OpTypePointer(
+               spv.StorageClass.CodeSectionINTEL,
+               T1,
+             )`)
+           */
+           type T2 = spv.OpTypePointer(spv.StorageClass.CodeSectionINTEL, T1)
+   |
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`&/* undefined func */_` -> `&/* undefined func */_`)
+         where
+           type T0 = spv.OpTypePointer(
+             spv.StorageClass.CodeSectionINTEL,
+             spv.OpTypeFunction(
+               ReturnType: u32,
+               spv.OpTypePointer(
+                 spv.StorageClass.Function,
+                 #[name = "core::option::Option<u32>"]
+                 #[spv.OpMemberName(Member: 0, Name: "start")]
+                 #[spv.OpMemberName(Member: 1, Name: "end")]
+                 #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+                 #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+                 spv.OpTypeStruct(u32, u32),
+               ),
+               u32,
+             ),
+           )
+           
+           type T1 = spv.OpTypeFunction(
+             ReturnType: u32,
+             spv.OpTypePointer(
+               spv.StorageClass.Function,
+               #[name = "core::option::Option<u32>"]
+               #[spv.OpMemberName(Member: 0, Name: "start")]
+               #[spv.OpMemberName(Member: 1, Name: "end")]
+               spv.OpTypeStruct(u32, u32),
+             ),
+             u32,
+           )
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`spv.OpTypePointer(
+         spv.StorageClass.CodeSectionINTEL,
+         spv.OpTypeFunction(
+           ReturnType: u32,
+           spv.OpTypePointer(
+             spv.StorageClass.Function,
+             #[name = "core::option::Option<u32>"]
+             #[spv.OpMemberName(Member: 0, Name: "start")]
+             #[spv.OpMemberName(Member: 1, Name: "end")]
+             #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+             #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+             spv.OpTypeStruct(u32, u32),
+           ),
+           u32,
+         ),
+       )` -> `spv.OpTypePointer(
+         spv.StorageClass.CodeSectionINTEL,
+         spv.OpTypeFunction(
+           ReturnType: u32,
+           spv.OpTypePointer(
+             spv.StorageClass.Function,
+             #[name = "core::option::Option<u32>"]
+             #[spv.OpMemberName(Member: 0, Name: "start")]
+             #[spv.OpMemberName(Member: 1, Name: "end")]
+             spv.OpTypeStruct(u32, u32),
+           ),
+           u32,
+         ),
+       )`)
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`spv.OpSpecConstantOp(OpBitcast(&/* undefined func */_)):
+         u32
+       ` -> `spv.OpSpecConstantOp(
+         OpBitcast(/*
+           BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`&/* undefined func */_` -> `&/* undefined func */_`)
+         */
+         &/* undefined func */_),
+       ): u32`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+           
+           type T1 = spv.OpTypePointer(
+             spv.StorageClass.CodeSectionINTEL,
+             spv.OpTypeFunction(ReturnType: T0, spv.OpTypePointer(spv.StorageClass.Function, T0), u32),
+           )
+           
+           type T2 = spv.OpTypeFunction(
+             ReturnType: T0,
+             spv.OpTypePointer(
+               spv.StorageClass.Function,
+               #[name = "core::option::Option<u32>"]
+               #[spv.OpMemberName(Member: 0, Name: "start")]
+               #[spv.OpMemberName(Member: 1, Name: "end")]
+               spv.OpTypeStruct(u32, u32),
+             ),
+             u32,
+           )
+           
+           /*
+             BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`T1` -> `spv.OpTypePointer(
+               spv.StorageClass.CodeSectionINTEL,
+               T2,
+             )`)
+           */
+           type T3 = spv.OpTypePointer(spv.StorageClass.CodeSectionINTEL, T2)
+   |
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`&/* undefined func */_` -> `&/* undefined func */_`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+           
+           type T1 = spv.OpTypePointer(
+             spv.StorageClass.CodeSectionINTEL,
+             spv.OpTypeFunction(ReturnType: T0, spv.OpTypePointer(spv.StorageClass.Function, T0), u32),
+           )
+           
+           type T2 = spv.OpTypeFunction(
+             ReturnType: T0,
+             spv.OpTypePointer(
+               spv.StorageClass.Function,
+               #[name = "core::option::Option<u32>"]
+               #[spv.OpMemberName(Member: 0, Name: "start")]
+               #[spv.OpMemberName(Member: 1, Name: "end")]
+               spv.OpTypeStruct(u32, u32),
+             ),
+             u32,
+           )
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`spv.OpTypePointer(
+         spv.StorageClass.CodeSectionINTEL,
+         spv.OpTypeFunction(ReturnType: T0, spv.OpTypePointer(spv.StorageClass.Function, T0), u32),
+       )` -> `spv.OpTypePointer(
+         spv.StorageClass.CodeSectionINTEL,
+         spv.OpTypeFunction(
+           ReturnType: T0,
+           spv.OpTypePointer(
+             spv.StorageClass.Function,
+             #[name = "core::option::Option<u32>"]
+             #[spv.OpMemberName(Member: 0, Name: "start")]
+             #[spv.OpMemberName(Member: 1, Name: "end")]
+             spv.OpTypeStruct(u32, u32),
+           ),
+           u32,
+         ),
+       )`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_foo`
+  --> $DIR/fn-ptrs-errs.rs:21:5
+   |
+LL |     *out_dyn = &(0..10);
+   |     ^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_foo`
+  --> $DIR/fn-ptrs-errs.rs:19:8
+   |
+LL | pub fn main_foo(out_fn: &mut fn(), out_dyn: &mut &'static dyn Iterator<Item = u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`spv.OpTypePointer(
+         spv.StorageClass.Private,
+         #[spv.Decoration.ArrayStride(ArrayStride: 4)]
+         spv.OpTypeArray(ElementType: u32, Length: 6u32),
+       )` -> `spv.OpTypePointer(spv.StorageClass.Private, spv.OpTypeArray(ElementType: u32, Length: 6u32))`)
+   |
+   = note: used by `&dyn for<'a> core::ops::Fn(&'a mut core::ops::Range<u32>) -> core::option::Option<u32>`
+   = note: used by unnamed type
+note: used from within Fragment entry-point `main_bar`
+  --> $DIR/fn-ptrs-errs.rs:27:5
+   |
+LL |     *out_dyn = &|r| Some(r.end - r.start);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 note: used from within `fn_ptrs_errs::main_bar`
-  --> $DIR/fn-ptrs-errs.rs:26:5
-   |
-LL |     *out_fn = bar;
-   |     ^^^^^^^^^^^^^
-note: called by `main_bar`
   --> $DIR/fn-ptrs-errs.rs:25:8
    |
 LL | pub fn main_bar(out_fn: &mut fn(), out_dyn: &mut &'static dyn Fn(&mut Range<u32>) -> Option<u32>) {
    |        ^^^^^^^^
 
-error: unsupported function pointer to `<fn_ptrs_errs::main_bar::{closure#0} as core::ops::function::FnOnce<(&mut core::ops::range::Range<u32>,)>>::call_once::{shim:vtable#0}`
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`spv.OpSpecConstantOp(OpBitcast(&/* undefined func */_)):
+         u32
+       ` -> `spv.OpSpecConstantOp(
+         OpBitcast(/*
+           BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`&/* undefined func */_` -> `&/* undefined func */_`)
+         */
+         &/* undefined func */_),
+       ): u32`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+           
+           type T`{closure@$DIR/fn-ptrs-errs.rs:27:17: 27:20}` = spv.OpTypeStruct
+           
+           type T1 = spv.OpTypePointer(spv.StorageClass.Function, T`{closure@$DIR/fn-ptrs-errs.rs:27:17: 27:20}`)
+           
+           type T2 = spv.OpTypePointer(
+             spv.StorageClass.CodeSectionINTEL,
+             spv.OpTypeFunction(ReturnType: T0, T1, spv.OpTypePointer(spv.StorageClass.Function, T0)),
+           )
+           
+           type T3 = spv.OpTypeFunction(
+             ReturnType: T0,
+             T1,
+             spv.OpTypePointer(
+               spv.StorageClass.Function,
+               #[name = "core::option::Option<u32>"]
+               #[spv.OpMemberName(Member: 0, Name: "start")]
+               #[spv.OpMemberName(Member: 1, Name: "end")]
+               spv.OpTypeStruct(u32, u32),
+             ),
+           )
+           
+           /*
+             BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`T2` -> `spv.OpTypePointer(
+               spv.StorageClass.CodeSectionINTEL,
+               T3,
+             )`)
+           */
+           type T4 = spv.OpTypePointer(spv.StorageClass.CodeSectionINTEL, T3)
+   |
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_bar`
   --> $DIR/fn-ptrs-errs.rs:27:5
    |
 LL |     *out_dyn = &|r| Some(r.end - r.start);
    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-   |
 note: used from within `fn_ptrs_errs::main_bar`
-  --> $DIR/fn-ptrs-errs.rs:27:5
-   |
-LL |     *out_dyn = &|r| Some(r.end - r.start);
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-note: called by `main_bar`
   --> $DIR/fn-ptrs-errs.rs:25:8
    |
 LL | pub fn main_bar(out_fn: &mut fn(), out_dyn: &mut &'static dyn Fn(&mut Range<u32>) -> Option<u32>) {
    |        ^^^^^^^^
 
-error: aborting due to 5 previous errors
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:659:21] unexpected (const) layout erasure (`&/* undefined func */_` -> `&/* undefined func */_`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+           
+           type T`{closure@$DIR/fn-ptrs-errs.rs:27:17: 27:20}` = spv.OpTypeStruct
+           
+           type T1 = spv.OpTypePointer(spv.StorageClass.Function, T`{closure@$DIR/fn-ptrs-errs.rs:27:17: 27:20}`)
+           
+           type T2 = spv.OpTypePointer(
+             spv.StorageClass.CodeSectionINTEL,
+             spv.OpTypeFunction(ReturnType: T0, T1, spv.OpTypePointer(spv.StorageClass.Function, T0)),
+           )
+           
+           type T3 = spv.OpTypeFunction(
+             ReturnType: T0,
+             T1,
+             spv.OpTypePointer(
+               spv.StorageClass.Function,
+               #[name = "core::option::Option<u32>"]
+               #[spv.OpMemberName(Member: 0, Name: "start")]
+               #[spv.OpMemberName(Member: 1, Name: "end")]
+               spv.OpTypeStruct(u32, u32),
+             ),
+           )
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_bar`
+  --> $DIR/fn-ptrs-errs.rs:27:5
+   |
+LL |     *out_dyn = &|r| Some(r.end - r.start);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_bar`
+  --> $DIR/fn-ptrs-errs.rs:25:8
+   |
+LL | pub fn main_bar(out_fn: &mut fn(), out_dyn: &mut &'static dyn Fn(&mut Range<u32>) -> Option<u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-V `OpConstantFunctionPointerINTEL` instruction requires one of these extensions: `SPV_INTEL_function_pointers`
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_bar`
+  --> $DIR/fn-ptrs-errs.rs:27:5
+   |
+LL |     *out_dyn = &|r| Some(r.end - r.start);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_bar`
+  --> $DIR/fn-ptrs-errs.rs:25:8
+   |
+LL | pub fn main_bar(out_fn: &mut fn(), out_dyn: &mut &'static dyn Fn(&mut Range<u32>) -> Option<u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-T BUG [linker/spirt_passes/explicit_layout.rs:615:29] unexpected (non-aggregate type) layout erasure (`spv.OpTypePointer(
+         spv.StorageClass.CodeSectionINTEL,
+         spv.OpTypeFunction(ReturnType: T0, T1, spv.OpTypePointer(spv.StorageClass.Function, T0)),
+       )` -> `spv.OpTypePointer(
+         spv.StorageClass.CodeSectionINTEL,
+         spv.OpTypeFunction(
+           ReturnType: T0,
+           T1,
+           spv.OpTypePointer(
+             spv.StorageClass.Function,
+             #[name = "core::option::Option<u32>"]
+             #[spv.OpMemberName(Member: 0, Name: "start")]
+             #[spv.OpMemberName(Member: 1, Name: "end")]
+             spv.OpTypeStruct(u32, u32),
+           ),
+         ),
+       )`)
+         where
+           #[name = "core::option::Option<u32>"]
+           #[spv.OpMemberName(Member: 0, Name: "start")]
+           #[spv.OpMemberName(Member: 1, Name: "end")]
+           #[spv.OpMemberDecorate(Member: 0, spv.Decoration.Offset(ByteOffset: 0))]
+           #[spv.OpMemberDecorate(Member: 1, spv.Decoration.Offset(ByteOffset: 4))]
+           type T0 = spv.OpTypeStruct(u32, u32)
+           
+           type T`{closure@$DIR/fn-ptrs-errs.rs:27:17: 27:20}` = spv.OpTypeStruct
+           
+           type T1 = spv.OpTypePointer(spv.StorageClass.Function, T`{closure@$DIR/fn-ptrs-errs.rs:27:17: 27:20}`)
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_bar`
+  --> $DIR/fn-ptrs-errs.rs:27:5
+   |
+LL |     *out_dyn = &|r| Some(r.end - r.start);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_bar`
+  --> $DIR/fn-ptrs-errs.rs:25:8
+   |
+LL | pub fn main_bar(out_fn: &mut fn(), out_dyn: &mut &'static dyn Fn(&mut Range<u32>) -> Option<u32>) {
+   |        ^^^^^^^^
+
+error: SPIR-V `StorageClass.CodeSectionINTEL` operand requires one of these extensions: `SPV_INTEL_function_pointers`
+   |
+   = note: used by unnamed constant
+   = note: used by unnamed constant
+   = note: used by unnamed global variable
+note: used from within Fragment entry-point `main_bar`
+  --> $DIR/fn-ptrs-errs.rs:27:5
+   |
+LL |     *out_dyn = &|r| Some(r.end - r.start);
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+note: used from within `fn_ptrs_errs::main_bar`
+  --> $DIR/fn-ptrs-errs.rs:25:8
+   |
+LL | pub fn main_bar(out_fn: &mut fn(), out_dyn: &mut &'static dyn Fn(&mut Range<u32>) -> Option<u32>) {
+   |        ^^^^^^^^
+
+error: aborting due to 23 previous errors
 

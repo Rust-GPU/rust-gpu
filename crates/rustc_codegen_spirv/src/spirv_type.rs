@@ -859,8 +859,6 @@ impl<'tcx> CodegenCx<'tcx> {
             // storage classes inferred from `OpVariable`s.
             AddressSpace::DATA => StorageClass::Generic,
 
-            // NOTE(eddyb) all relevant zombies are emitted on values,
-            // *not* the type, to maximize the specificity of errors.
             _ if addr_space == self.data_layout().instruction_address_space => {
                 StorageClass::CodeSectionINTEL
             }

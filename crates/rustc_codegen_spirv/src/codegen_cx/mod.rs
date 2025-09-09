@@ -270,14 +270,6 @@ impl<'tcx> CodegenCx<'tcx> {
         self.zombie_with_span(id, DUMMY_SP, reason);
     }
 
-    pub fn add_span_to_zombie_if_missing(&self, id: Word, span: Span) {
-        if span != DUMMY_SP
-            && let Some((_, src_loc @ None)) = self.zombie_decorations.borrow_mut().get_mut(&id)
-        {
-            *src_loc = SrcLocDecoration::from_rustc_span(span, &self.builder);
-        }
-    }
-
     pub fn finalize_module(self) -> Module {
         let mut result = self.builder.finalize();
         result
@@ -882,7 +874,6 @@ impl<'tcx> MiscCodegenMethods<'tcx> for CodegenCx<'tcx> {
             ty,
             SpirvConst::PtrToFunc {
                 func_id: function.id,
-                mangled_func_name: self.tcx.symbol_name(instance).name,
             },
         )
     }

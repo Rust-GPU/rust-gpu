@@ -1,36 +1,26 @@
-error: constant arrays/structs cannot contain pointers to other constants
-  --> $DIR/nested-ref-in-composite.rs:20:17
+warning: `#[inline(never)]` function `nested_ref_in_composite::pair_deep_load` has been inlined
+  --> $DIR/nested-ref-in-composite.rs:9:4
    |
-LL |     *pair_out = pair_deep_load(&(&123, &3.14));
-   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL | fn pair_deep_load(r: &'static (&'static u32, &'static f32)) -> (u32, f32) {
+   |    ^^^^^^^^^^^^^^
    |
-note: used from within `nested_ref_in_composite::main_pair`
-  --> $DIR/nested-ref-in-composite.rs:20:17
-   |
-LL |     *pair_out = pair_deep_load(&(&123, &3.14));
-   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-note: called by `main_pair`
-  --> $DIR/nested-ref-in-composite.rs:19:8
-   |
-LL | pub fn main_pair(pair_out: &mut (u32, f32)) {
-   |        ^^^^^^^^^
+   = note: inlining was required due to illegal parameter type
+   = note: called from `nested_ref_in_composite::main_pair`
 
-error: constant arrays/structs cannot contain pointers to other constants
-  --> $DIR/nested-ref-in-composite.rs:25:19
+warning: `#[inline(never)]` function `nested_ref_in_composite::array3_deep_load` has been inlined
+  --> $DIR/nested-ref-in-composite.rs:14:4
    |
-LL |     *array3_out = array3_deep_load(&[&0, &1, &2]);
-   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+LL | fn array3_deep_load(r: &'static [&'static u32; 3]) -> [u32; 3] {
+   |    ^^^^^^^^^^^^^^^^
    |
-note: used from within `nested_ref_in_composite::main_array3`
-  --> $DIR/nested-ref-in-composite.rs:25:19
-   |
-LL |     *array3_out = array3_deep_load(&[&0, &1, &2]);
-   |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-note: called by `main_array3`
-  --> $DIR/nested-ref-in-composite.rs:24:8
-   |
-LL | pub fn main_array3(array3_out: &mut [u32; 3]) {
-   |        ^^^^^^^^^^^
+   = note: inlining was required due to illegal parameter type
+   = note: called from `nested_ref_in_composite::main_array3`
 
-error: aborting due to 2 previous errors
+error: error:0:0 - OpConstantComposite Constituent <id> '17[%17]' is not a constant or undef.
+         %20 = OpConstantComposite %__u32___f32_ %17 %19
+   |
+   = note: spirv-val failed
+   = note: module `$TEST_BUILD_DIR/lang/consts/nested-ref-in-composite.vulkan1.1`
+
+error: aborting due to 1 previous error; 2 warnings emitted
 

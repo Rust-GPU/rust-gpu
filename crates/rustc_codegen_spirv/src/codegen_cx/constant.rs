@@ -288,7 +288,6 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         let alloc = self.tcx.lift(alloc).unwrap();
 
         SpirvValue {
-            zombie_waiting_for_span: false,
             kind: SpirvValueKind::ConstDataFromAlloc {
                 // HACK(eddyb) this isn't just `alloc` because that would require
                 // adding a `'tcx` parameter to `SpirvValue`.

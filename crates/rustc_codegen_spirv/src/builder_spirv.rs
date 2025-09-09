@@ -23,7 +23,6 @@ use rustc_span::source_map::SourceMap;
 use rustc_span::symbol::Symbol;
 use rustc_span::{DUMMY_SP, FileName, FileNameDisplayPreference, SourceFile, Span};
 use std::assert_matches::assert_matches;
-use std::borrow::Cow;
 use std::cell::{RefCell, RefMut};
 use std::hash::{Hash, Hasher};
 use std::iter;
@@ -62,29 +61,14 @@ pub enum SpirvValueKind {
 
 #[derive(Copy, Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SpirvValue<K = SpirvValueKind> {
-    // HACK(eddyb) used to cheaply check whether this is a SPIR-V value ID
-    // with a "zombie" (deferred error) attached to it, that may need a `Span`
-    // still (e.g. such as constants, which can't easily take a `Span`).
-    // FIXME(eddyb) a whole `bool` field is sadly inefficient, but anything
-    // which may make `SpirvValue` smaller requires far too much impl effort.
-    pub zombie_waiting_for_span: bool,
-
     pub kind: K,
     pub ty: Word,
 }
 
 impl<K> SpirvValue<K> {
     fn map_kind<K2>(self, f: impl FnOnce(K) -> K2) -> SpirvValue<K2> {
-        let SpirvValue {
-            zombie_waiting_for_span,
-            kind,
-            ty,
-        } = self;
-        SpirvValue {
-            zombie_waiting_for_span,
-            kind: f(kind),
-            ty,
-        }
+        let SpirvValue { kind, ty } = self;
+        SpirvValue { kind: f(kind), ty }
     }
 }
 
@@ -109,7 +93,7 @@ impl SpirvValue {
                 // HACK(eddyb) this obtains a `SpirvValue` from the ID it contains,
                 // so there's some conceptual inefficiency there, but it does
                 // prevent any of the other details from being lost accidentally.
-                Some(cx.builder.id_to_const_and_val.borrow().get(&pointee)?.val.1)
+                Some(cx.builder.id_to_const_and_val.borrow().get(&pointee)?.1)
             }
             _ => None,
         }
@@ -128,19 +112,15 @@ impl SpirvValue {
         self.def_with_span(cx, DUMMY_SP)
     }
 
-    pub fn def_with_span(self, cx: &CodegenCx<'_>, span: Span) -> Word {
-        let id = match self.kind {
+    pub fn def_with_span(self, _cx: &CodegenCx<'_>, span: Span) -> Word {
+        match self.kind {
             SpirvValueKind::Def { id, .. } => id,
 
             SpirvValueKind::ConstDataFromAlloc { .. } => span_bug!(
                 span,
                 "`const_data_from_alloc` result should only be passed to `static_addr_of`"
             ),
-        };
-        if self.zombie_waiting_for_span {
-            cx.add_span_to_zombie_if_missing(id, span);
         }
-        id
     }
 }
 
@@ -151,7 +131,6 @@ pub trait SpirvValueExt {
 impl SpirvValueExt for Word {
     fn with_type(self, ty: Word) -> SpirvValue {
         SpirvValue {
-            zombie_waiting_for_span: false,
             kind: SpirvValueKind::Def {
                 id: self,
                 original_ptr_before_casts: None,
@@ -194,11 +173,6 @@ pub enum SpirvConst<'a, 'tcx> {
     #[allow(clippy::doc_markdown)]
     PtrToFunc {
         func_id: Word,
-
-        // HACK(eddyb) tracked only to allow a more useful zombie message.
-        // FIXME(eddyb) once zombies are replaced with errors emitted from a
-        // SPIR-T legality checker, the name can come from the function itself.
-        mangled_func_name: &'tcx str,
     },
 
     /// Constant `OpBitcast` (via `OpSpecConstantOp`).
@@ -240,13 +214,7 @@ impl<'tcx> SpirvConst<'_, 'tcx> {
                 pointee,
                 pointee_alloc,
             },
-            SpirvConst::PtrToFunc {
-                func_id,
-                mangled_func_name,
-            } => SpirvConst::PtrToFunc {
-                func_id,
-                mangled_func_name,
-            },
+            SpirvConst::PtrToFunc { func_id } => SpirvConst::PtrToFunc { func_id },
 
             SpirvConst::Composite(fields) => SpirvConst::Composite(arena_alloc_slice(cx, fields)),
 
@@ -260,73 +228,6 @@ impl<'tcx> SpirvConst<'_, 'tcx> {
 struct WithType<V> {
     ty: Word,
     val: V,
-}
-
-/// Primary causes for a `SpirvConst` to be deemed illegal.
-#[derive(Copy, Clone, Debug)]
-enum LeafIllegalConst<'tcx> {
-    /// `SpirvConst::Composite` containing a `SpirvConst::PtrTo` as a field.
-    /// This is illegal because `OpConstantComposite` must have other constants
-    /// as its operands, and `OpVariable`s are never considered constant.
-    // FIXME(eddyb) figure out if this is an accidental omission in SPIR-V.
-    CompositeContainsPtrTo,
-
-    /// `PtrToFunc` constant, which is not legal in SPIR-V (without the extension
-    /// `SPV_INTEL_function_pointers`, which is not expected to be realistically
-    /// present outside of Intel's OpenCL/SYCL implementation, and which will at
-    /// most be used to pass such constants through to SPIR-T for legalization).
-    //
-    // FIXME(eddyb) legalize function pointers (and emulate recursion) in SPIR-T.
-    PtrToFunc { mangled_func_name: &'tcx str },
-
-    /// `SpirvConst::BitCast` needs to error, even when materialized to SPIR-V.
-    //
-    // FIXME(eddyb) replace this with `qptr` handling of constant data/exprs.
-    BitCast { from_ty: Word },
-
-    /// `SpirvConst::PtrByteOffset` needs to error, even when materialized to SPIR-V.
-    //
-    // FIXME(eddyb) replace this with `qptr` handling of constant data/exprs.
-    PtrByteOffset,
-}
-
-impl LeafIllegalConst<'_> {
-    fn message(&self) -> Cow<'static, str> {
-        match *self {
-            Self::CompositeContainsPtrTo => {
-                "constant arrays/structs cannot contain pointers to other constants".into()
-            }
-            Self::PtrToFunc { mangled_func_name } => {
-                let demangled_func_name =
-                    format!("{:#}", rustc_demangle::demangle(mangled_func_name));
-                format!("unsupported function pointer to `{demangled_func_name}`").into()
-            }
-            Self::BitCast { .. } => "constants cannot contain bitcasts".into(),
-            Self::PtrByteOffset => {
-                "constants cannot contain pointers with arbitrary byte offsets".into()
-            }
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-enum IllegalConst<'tcx> {
-    /// This `SpirvConst` is (or contains) a "leaf" illegal constant. As there
-    /// is no indirection, some of these could still be materialized at runtime,
-    /// using e.g. `OpCompositeConstruct` instead of `OpConstantComposite`.
-    Shallow(LeafIllegalConst<'tcx>),
-
-    /// This `SpirvConst` is (or contains/points to) a `PtrTo` which points to
-    /// a "leaf" illegal constant. As the data would have to live for `'static`,
-    /// there is no way to materialize it as a pointer in SPIR-V. However, it
-    /// could still be legalized during codegen by e.g. folding loads from it.
-    Indirect(LeafIllegalConst<'tcx>),
-}
-
-#[derive(Copy, Clone, Debug)]
-struct WithConstLegality<'tcx, V> {
-    val: V,
-    legal: Result<(), IllegalConst<'tcx>>,
 }
 
 /// `HashMap` key type (for `debug_file_cache` in `BuilderSpirv`), which is
@@ -427,8 +328,7 @@ pub struct BuilderSpirv<'tcx> {
     // (i.e. each map is keyed by only some part of the other map's value type),
     // as needed to streamline operations (e.g. avoiding rederiving `SpirvValue`).
     const_to_val: RefCell<FxHashMap<WithType<SpirvConst<'tcx, 'tcx>>, SpirvValue>>,
-    id_to_const_and_val:
-        RefCell<FxHashMap<Word, WithConstLegality<'tcx, (SpirvConst<'tcx, 'tcx>, SpirvValue)>>>,
+    id_to_const_and_val: RefCell<FxHashMap<Word, (SpirvConst<'tcx, 'tcx>, SpirvValue)>>,
 
     debug_file_cache: RefCell<FxHashMap<DebugFileKey, DebugFileSpirv<'tcx>>>,
 
@@ -699,10 +599,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
                 pointee_alloc: _,
             } => builder.variable(ty, None, StorageClass::Private, Some(pointee)),
 
-            SpirvConst::PtrToFunc {
-                func_id,
-                mangled_func_name: _,
-            } => {
+            SpirvConst::PtrToFunc { func_id } => {
                 let id = builder.id();
                 builder
                     .module_mut()
@@ -730,7 +627,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
                     )
                 } else {
                     // HACK(eddyb) can't easily offset without casting first to `*i8`.
-                    let ptr = self.id_to_const_and_val.borrow()[&ptr].val.1;
+                    let ptr = self.id_to_const_and_val.borrow()[&ptr].1;
                     (
                         Op::Bitcast,
                         cx.const_ptr_byte_offset(cx.const_bitcast(ptr, byte_ptr_type), offset)
@@ -746,126 +643,15 @@ impl<'tcx> BuilderSpirv<'tcx> {
 
         let mut original_ptr_before_casts = None;
 
-        #[allow(clippy::match_same_arms)]
-        let legal = match val {
-            SpirvConst::Scalar(_) => Ok(()),
+        if let SpirvConst::BitCast(from_id) = val {
+            let (_from_const, from_val) = self.id_to_const_and_val.borrow()[&from_id];
 
-            SpirvConst::Null => {
-                // FIXME(eddyb) check that the type supports `OpConstantNull`.
-                Ok(())
-            }
-            SpirvConst::Undef => {
-                // FIXME(eddyb) check that the type supports `OpUndef`.
-                Ok(())
-            }
-
-            SpirvConst::Composite(v) => v
-                .iter()
-                .map(|field| {
-                    let field_entry = &self.id_to_const_and_val.borrow()[field];
-                    field_entry.legal.and(
-                        // `field` is itself some legal `SpirvConst`, but can we have
-                        // it as part of an `OpConstantComposite`?
-                        match field_entry.val.0 {
-                            SpirvConst::PtrTo { .. } => Err(IllegalConst::Shallow(
-                                LeafIllegalConst::CompositeContainsPtrTo,
-                            )),
-                            _ => Ok(()),
-                        },
-                    )
-                })
-                .reduce(|a, b| {
-                    match (a, b) {
-                        (Ok(()), Ok(())) => Ok(()),
-                        (Err(illegal), Ok(())) | (Ok(()), Err(illegal)) => Err(illegal),
-
-                        // Combining two causes of an illegal `SpirvConst` has to
-                        // take into account which is "worse", i.e. which imposes
-                        // more restrictions on how the resulting value can be used.
-                        // `Indirect` is worse than `Shallow` because it cannot be
-                        // materialized at runtime in the same way `Shallow` can be.
-                        (Err(illegal @ IllegalConst::Indirect(_)), Err(_))
-                        | (Err(_), Err(illegal @ IllegalConst::Indirect(_)))
-                        | (
-                            Err(illegal @ IllegalConst::Shallow(_)),
-                            Err(IllegalConst::Shallow(_)),
-                        ) => Err(illegal),
-                    }
-                })
-                .unwrap_or(Ok(())),
-
-            SpirvConst::PtrTo {
-                pointee,
-                pointee_alloc: _,
-            } => {
-                match self.id_to_const_and_val.borrow()[&pointee].legal {
-                    Ok(()) => Ok(()),
-
-                    // `Shallow` becomes `Indirect` when placed behind a pointer.
-                    Err(IllegalConst::Shallow(cause) | IllegalConst::Indirect(cause)) => {
-                        Err(IllegalConst::Indirect(cause))
-                    }
-                }
-            }
-
-            SpirvConst::PtrToFunc {
-                func_id: _,
-                mangled_func_name,
-            } => Err(IllegalConst::Shallow(LeafIllegalConst::PtrToFunc {
-                mangled_func_name,
-            })),
-
-            SpirvConst::BitCast(from_id) => {
-                let from_const = self.id_to_const_and_val.borrow()[&from_id];
-
-                if let (SpirvType::Pointer { .. }, SpirvType::Pointer { .. }) =
-                    (cx.lookup_type(from_const.val.1.ty), cx.lookup_type(ty))
-                {
-                    let original_ptr = from_const.val.1.strip_ptrcasts();
-                    let original_ptr_id = original_ptr.def_cx(cx);
-                    original_ptr_before_casts = Some(original_ptr.map_kind(|_| original_ptr_id));
-                }
-
-                // HACK(eddyb) a bitcast is one of the least interesting/useful
-                // kinds in which a constant can be illegal, and due to the lack
-                // of an actual (`OpSpecConstantOp`-based) materialization, any
-                // zombies from the value being bitcast would otherwise be lost.
-                //
-                // TODO(eddyb) this shouldn't be needed anymore, now that the
-                // bitcast is materialized via `OpSpecConstantOp`, but for some
-                // yet-unknown reason, the cast gets preferentially reported!
-                Err(from_const.legal.err().unwrap_or(IllegalConst::Shallow(
-                    LeafIllegalConst::BitCast {
-                        from_ty: from_const.val.1.ty,
-                    },
-                )))
-            }
-
-            SpirvConst::PtrByteOffset { .. } => {
-                Err(IllegalConst::Shallow(LeafIllegalConst::PtrByteOffset))
-            }
-        };
-
-        // FIXME(eddyb) avoid dragging "const (il)legality" around, as well
-        // (sadly that does require that `SpirvConst` -> SPIR-V be injective,
-        // e.g. `OpUndef` can never be used for unrepresentable constants).
-        if let Err(illegal) = legal {
-            let msg = match illegal {
-                IllegalConst::Shallow(cause) | IllegalConst::Indirect(cause) => cause.message(),
-            };
-            if let IllegalConst::Shallow(LeafIllegalConst::BitCast { from_ty }) = illegal {
-                cx.zombie_no_span(
-                    id,
-                    &format!(
-                        "{msg}\
-                            \nfrom `{}`\
-                            \n  to `{}`",
-                        cx.debug_type(from_ty),
-                        cx.debug_type(ty)
-                    ),
-                );
-            } else {
-                cx.zombie_no_span(id, &msg);
+            if let (SpirvType::Pointer { .. }, SpirvType::Pointer { .. }) =
+                (cx.lookup_type(from_val.ty), cx.lookup_type(ty))
+            {
+                let original_ptr = from_val.strip_ptrcasts();
+                let original_ptr_id = original_ptr.def_cx(cx);
+                original_ptr_before_casts = Some(original_ptr.map_kind(|_| original_ptr_id));
             }
         }
 
@@ -873,7 +659,6 @@ impl<'tcx> BuilderSpirv<'tcx> {
 
         // FIXME(eddyb) the `val`/`v` name clash is a bit unfortunate.
         let v = SpirvValue {
-            zombie_waiting_for_span: legal.is_err(),
             kind: SpirvValueKind::Def {
                 id,
                 original_ptr_before_casts,
@@ -888,13 +673,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
             None
         );
         assert_matches!(
-            self.id_to_const_and_val.borrow_mut().insert(
-                id,
-                WithConstLegality {
-                    val: (val, v),
-                    legal
-                }
-            ),
+            self.id_to_const_and_val.borrow_mut().insert(id, (val, v)),
             None
         );
 
@@ -902,7 +681,7 @@ impl<'tcx> BuilderSpirv<'tcx> {
     }
 
     pub fn lookup_const_by_id(&self, id: Word) -> Option<SpirvConst<'tcx, 'tcx>> {
-        Some(self.id_to_const_and_val.borrow().get(&id)?.val.0)
+        Some(self.id_to_const_and_val.borrow().get(&id)?.0)
     }
 
     pub fn lookup_const(&self, def: SpirvValue) -> Option<SpirvConst<'tcx, 'tcx>> {
