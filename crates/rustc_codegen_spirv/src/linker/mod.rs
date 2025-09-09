@@ -91,9 +91,12 @@ fn id(header: &mut ModuleHeader) -> Word {
     result
 }
 
-fn apply_rewrite_rules(rewrite_rules: &FxHashMap<Word, Word>, blocks: &mut [Block]) {
+fn apply_rewrite_rules<'a>(
+    rewrite_rules: &FxHashMap<Word, Word>,
+    blocks: impl IntoIterator<Item = &'a mut Block>,
+) {
     let all_ids_mut = blocks
-        .iter_mut()
+        .into_iter()
         .flat_map(|b| b.label.iter_mut().chain(b.instructions.iter_mut()))
         .flat_map(|inst| {
             inst.result_id
