@@ -2,7 +2,6 @@
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::CodegenCx;
-use crate::abi::ConvSpirvType;
 use crate::builder_spirv::{SpirvConst, SpirvValue};
 use crate::spirv_type::SpirvType;
 use itertools::Itertools as _;
@@ -10,7 +9,6 @@ use rspirv::spirv::Word;
 use rustc_abi::{self as abi, AddressSpace, Float, HasDataLayout, Integer, Primitive, Size};
 use rustc_codegen_ssa::traits::{ConstCodegenMethods, MiscCodegenMethods, StaticCodegenMethods};
 use rustc_middle::mir::interpret::{AllocError, ConstAllocation, GlobalAlloc, Scalar, alloc_range};
-use rustc_middle::ty::layout::LayoutOf;
 use rustc_span::{DUMMY_SP, Span};
 
 impl<'tcx> CodegenCx<'tcx> {
@@ -163,25 +161,9 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         self.constant_float(t, val)
     }
 
-    fn const_str(&self, s: &str) -> (Self::Value, Self::Value) {
-        let len = s.len();
-        let str_ty = self
-            .layout_of(self.tcx.types.str_)
-            .spirv_type(DUMMY_SP, self);
-        (
-            self.def_constant(
-                self.type_ptr_to(str_ty),
-                SpirvConst::PtrTo {
-                    pointee: self
-                        .constant_composite(
-                            str_ty,
-                            s.bytes().map(|b| self.const_u8(b).def_cx(self)),
-                        )
-                        .def_cx(self),
-                },
-            ),
-            self.const_usize(len as u64),
-        )
+    // FIXME(eddyb) remove this upstream (obsoleted by `const_data_from_alloc`).
+    fn const_str(&self, _s: &str) -> (Self::Value, Self::Value) {
+        unreachable!("`const_str` is never called by `rustc_codegen_ssa`");
     }
     fn const_struct(&self, elts: &[Self::Value], packed: bool) -> Self::Value {
         // Presumably this will get bitcasted to the right type?
