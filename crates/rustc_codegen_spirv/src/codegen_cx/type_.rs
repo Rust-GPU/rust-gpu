@@ -5,9 +5,12 @@ use super::CodegenCx;
 use crate::abi::ConvSpirvType;
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::Word;
-use rustc_abi::{AddressSpace, BackendRepr, HasDataLayout as _, Reg};
+use rustc_abi::{AddressSpace, Align, BackendRepr, HasDataLayout as _, Integer, Reg, Size};
 use rustc_codegen_ssa::common::TypeKind;
-use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, LayoutTypeCodegenMethods};
+use rustc_codegen_ssa::traits::{
+    BaseTypeCodegenMethods, ConstCodegenMethods as _, DerivedTypeCodegenMethods as _,
+    LayoutTypeCodegenMethods,
+};
 use rustc_middle::ty::Ty;
 use rustc_middle::ty::layout::{
     FnAbiError, FnAbiOfHelpers, FnAbiRequest, LayoutError, LayoutOfHelpers, TyAndLayout,
@@ -130,6 +133,16 @@ impl<'tcx> CodegenCx<'tcx> {
         let ptr_size = self.tcx.data_layout.pointer_size.bits() as u32;
         SpirvType::Integer(ptr_size, false).def(DUMMY_SP, self)
     }
+
+    /// Return a SPIR-V type that has at most the required alignment,
+    /// and exactly the required size, as a best-effort padding array.
+    pub(crate) fn type_padding_filler(&self, size: Size, align: Align) -> Word {
+        let unit = Integer::approximate_align(self, align);
+        let size = size.bytes();
+        let unit_size = unit.size().bytes();
+        assert_eq!(size % unit_size, 0);
+        self.type_array(self.type_from_integer(unit), size / unit_size)
+    }
 }
 
 impl BaseTypeCodegenMethods for CodegenCx<'_> {
@@ -169,7 +182,7 @@ impl BaseTypeCodegenMethods for CodegenCx<'_> {
     fn type_array(&self, ty: Self::Type, len: u64) -> Self::Type {
         SpirvType::Array {
             element: ty,
-            count: self.constant_u64(DUMMY_SP, len),
+            count: self.const_usize(len),
         }
         .def(DUMMY_SP, self)
     }

@@ -2940,7 +2940,12 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 // HACK(eddyb) unreachable, but only via guard expression above.
                 (Some(_), None) => unreachable!(),
 
-                (None, None) | (Some(_), Some(_)) => None,
+                // HACK(eddyb) favor the source when they disagree.
+                (Some((dst, _)), Some((src, src_access_ty))) => {
+                    Some((self.pointercast(dst, self.type_ptr_to(src_access_ty)), src))
+                }
+
+                (None, None) => None,
             }
         });
 
