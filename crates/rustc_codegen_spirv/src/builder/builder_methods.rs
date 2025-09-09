@@ -2642,6 +2642,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     .s_less_than_equal(b, None, lhs.def(self), rhs.def(self)),
             },
             SpirvType::Pointer { .. } => match op {
+                // FIXME(eddyb) consider always emitting `OpPtrEqual` w/ `qptr`.
                 IntEQ => {
                     if self.emit().version().unwrap() > (1, 3) {
                         self.emit()
@@ -2664,6 +2665,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                         self.emit().i_equal(b, None, lhs, rhs)
                     }
                 }
+                // FIXME(eddyb) consider always emitting `OpPtrNotEqual` w/ `qptr`.
                 IntNE => {
                     if self.emit().version().unwrap() > (1, 3) {
                         self.emit()
