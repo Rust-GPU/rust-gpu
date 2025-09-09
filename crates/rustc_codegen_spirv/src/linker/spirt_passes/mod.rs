@@ -19,7 +19,7 @@ use spirt::{
     FuncDefBody, GlobalVar, Module, Node, NodeKind, Region, Type, Value, spv,
 };
 use std::collections::VecDeque;
-use std::{iter, str};
+use std::str;
 
 // HACK(eddyb) `spv::spec::Spec` with extra `WellKnown`s (that should be upstreamed).
 macro_rules! def_spv_spec_with_extra_well_known {
@@ -362,7 +362,7 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                             self.mark_used(func.at(case).def().outputs[output_idx as usize]);
                         }
                     }
-                    Value::DataInstOutput(inst) => {
+                    Value::DataInstOutput { inst, .. } => {
                         for &input in &func.at(inst).def().inputs {
                             self.mark_used(input);
                         }
@@ -423,7 +423,10 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                                     continue;
                                 }
                             }
-                            mark_used_and_propagate(Value::DataInstOutput(func_at_inst.position));
+                            mark_used_and_propagate(Value::DataInstOutput {
+                                inst: func_at_inst.position,
+                                output_idx: 0,
+                            });
                         }
                     }
 
@@ -469,14 +472,18 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                     {
                         continue;
                     }
-                    if !used_values.contains(&Value::DataInstOutput(func_at_inst.position)) {
+                    if !used_values.contains(&Value::DataInstOutput {
+                        inst: func_at_inst.position,
+                        output_idx: 0,
+                    }) {
                         // Replace the removed `DataInstDef` itself with `OpNop`,
                         // removing the ability to use its "name" as a value.
                         *func_at_inst.def() = DataInstDef {
                             attrs: Default::default(),
                             kind: DataInstKind::SpvInst(wk.OpNop.into()),
-                            inputs: iter::empty().collect(),
-                            output_type: None,
+                            inputs: [].into_iter().collect(),
+                            child_regions: [].into_iter().collect(),
+                            outputs: [].into_iter().collect(),
                         };
                         continue;
                     }

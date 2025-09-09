@@ -198,15 +198,22 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                 any_changes = true;
                 match redu_target {
                     ReductionTarget::DataInst(inst) => {
-                        value_replacements.insert(Value::DataInstOutput(inst), v);
+                        value_replacements.insert(
+                            Value::DataInstOutput {
+                                inst,
+                                output_idx: 0,
+                            },
+                            v,
+                        );
 
                         // Replace the reduced `DataInstDef` itself with `OpNop`,
                         // removing the ability to use its "name" as a value.
                         *func_def_body.at_mut(inst).def() = DataInstDef {
                             attrs: Default::default(),
                             kind: DataInstKind::SpvInst(wk.OpNop.into()),
-                            inputs: iter::empty().collect(),
-                            output_type: None,
+                            inputs: [].into_iter().collect(),
+                            child_regions: [].into_iter().collect(),
+                            outputs: [].into_iter().collect(),
                         };
                     }
 
@@ -352,7 +359,7 @@ fn try_reduce_select(
                         Value::Const(_) => unreachable!(),
                         Value::RegionInput { region, .. } => region,
                         Value::NodeOutput { node, .. } => *parent_map.node_parent.get(node)?,
-                        Value::DataInstOutput(inst) => *parent_map
+                        Value::DataInstOutput { inst, .. } => *parent_map
                             .node_parent
                             .get(*parent_map.data_inst_parent.get(inst)?)?,
                     };
@@ -473,7 +480,11 @@ impl TryFrom<&DataInstDef> for Reducible {
     fn try_from(inst_def: &DataInstDef) -> Result<Self, ()> {
         if let DataInstKind::SpvInst(spv_inst) = &inst_def.kind {
             let op = PureOp::try_from(spv_inst)?;
-            let output_type = inst_def.output_type.unwrap();
+
+            // HACK(eddyb) all supported instructions should be single-output.
+            assert_eq!(inst_def.outputs.len(), 1);
+
+            let output_type = inst_def.outputs[0].ty;
             if let [input] = inst_def.inputs[..] {
                 return Ok(Self {
                     op,
@@ -497,8 +508,14 @@ impl Reducible {
         Some(DataInstDef {
             attrs: Default::default(),
             kind: DataInstKind::SpvInst(op.try_into().ok()?),
-            inputs: iter::once(input).collect(),
-            output_type: Some(output_type),
+            inputs: [input].into_iter().collect(),
+            child_regions: [].into_iter().collect(),
+            outputs: [NodeOutputDecl {
+                attrs: Default::default(),
+                ty: output_type,
+            }]
+            .into_iter()
+            .collect(),
         })
     }
 }
@@ -749,7 +766,10 @@ impl Reducible {
                     .at(region)
                     .def()
                     .outputs
-                    .push(Value::DataInstOutput(output_from_updated_state));
+                    .push(Value::DataInstOutput {
+                        inst: output_from_updated_state,
+                        output_idx: 0,
+                    });
 
                 // FIXME(eddyb) move this into some kind of utility/common helpers.
                 let loop_body_last_block = func
@@ -849,8 +869,14 @@ impl Reducible {
                     output_idx: new_output_idx,
                 })
             }
-            Value::DataInstOutput(inst) => {
+            Value::DataInstOutput { inst, output_idx } => {
                 let inst_def = &*func.reborrow().at(inst).def();
+
+                // HACK(eddyb) sanity check pre-disaggregate.
+                if inst_def.outputs.len() != 1 || output_idx != 0 {
+                    return None;
+                }
+
                 match self
                     .with_input(inst_def)
                     .try_reduce_output_of_data_inst(cx)?

@@ -120,8 +120,11 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                     {
                         return Some((
                             gv,
-                            data_inst_def.output_type.unwrap(),
-                            Value::DataInstOutput(func_at_inst.position),
+                            data_inst_def.outputs[0].ty,
+                            Value::DataInstOutput {
+                                inst: func_at_inst.position,
+                                output_idx: 0,
+                            },
                         ));
                     }
                     None

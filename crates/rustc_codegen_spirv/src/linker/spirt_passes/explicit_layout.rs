@@ -9,8 +9,8 @@ use spirt::transform::{InnerInPlaceTransform, InnerTransform, Transformed, Trans
 use spirt::visit::InnerVisit as _;
 use spirt::{
     AddrSpace, Attr, AttrSetDef, Const, ConstKind, Context, DataInst, DataInstDef, DataInstKind,
-    DeclDef, Diag, Func, FuncDecl, GlobalVar, GlobalVarDecl, Module, Node, NodeKind, Type, TypeDef,
-    TypeKind, TypeOrConst, Value, spv,
+    DeclDef, Diag, Func, FuncDecl, GlobalVar, GlobalVarDecl, Module, Node, NodeKind,
+    NodeOutputDecl, Type, TypeDef, TypeKind, TypeOrConst, Value, spv,
 };
 use std::cmp::Ordering;
 use std::collections::VecDeque;
@@ -230,12 +230,18 @@ impl Transformer for SelectiveEraser<'_> {
             attrs,
             kind: DataInstKind::SpvInst(wk.OpBitcast.into()),
             inputs: [in_value].into_iter().collect(),
-            output_type: Some(out_type),
+            child_regions: [].into_iter().collect(),
+            outputs: [NodeOutputDecl {
+                attrs: Default::default(),
+                ty: out_type,
+            }]
+            .into_iter()
+            .collect(),
         };
 
         if spv_inst.opcode == wk.OpLoad {
             let pointee_type = pointee_type_of_ptr_val(data_inst_def.inputs[0]);
-            let value_type = data_inst_def.output_type.unwrap();
+            let value_type = data_inst_def.outputs[0].ty;
             // FIXME(eddyb) leave a BUG diagnostic in the `None` case?
             if pointee_type.is_some_and(|ty| {
                 ty != value_type && ty == self.erase_explicit_layout_in_type(value_type)
@@ -249,14 +255,25 @@ impl Transformer for SelectiveEraser<'_> {
                 let fixed_load_inst = func.data_insts.define(
                     cx,
                     DataInstDef {
-                        output_type: Some(pointee_type.unwrap()),
+                        child_regions: [].into_iter().collect(),
+                        outputs: [NodeOutputDecl {
+                            attrs: Default::default(),
+                            ty: pointee_type.unwrap(),
+                        }]
+                        .into_iter()
+                        .collect(),
                         ..DataInstDef::clone(&func.data_insts[data_inst])
                     }
                     .into(),
                 );
                 insts.insert_before(fixed_load_inst, data_inst, func.data_insts);
-                *func.data_insts[data_inst] =
-                    mk_bitcast_def(Value::DataInstOutput(fixed_load_inst), value_type);
+                *func.data_insts[data_inst] = mk_bitcast_def(
+                    Value::DataInstOutput {
+                        inst: fixed_load_inst,
+                        output_idx: 0,
+                    },
+                    value_type,
+                );
 
                 self.disaggregate_bitcast(func.at(data_inst));
             }
@@ -287,8 +304,10 @@ impl Transformer for SelectiveEraser<'_> {
                         mk_bitcast_def(original_stored_value, pointee_type.unwrap()).into(),
                     );
                     insts.insert_before(stored_value_cast_inst, data_inst, func.data_insts);
-                    func.data_insts[data_inst].inputs[1] =
-                        Value::DataInstOutput(stored_value_cast_inst);
+                    func.data_insts[data_inst].inputs[1] = Value::DataInstOutput {
+                        inst: stored_value_cast_inst,
+                        output_idx: 0,
+                    };
 
                     self.disaggregate_bitcast(func.at(stored_value_cast_inst));
                 }
@@ -342,15 +361,27 @@ impl Transformer for SelectiveEraser<'_> {
                             imms: src_imms,
                         }),
                         inputs: [src_ptr].into_iter().collect(),
-                        output_type: Some(src_pointee_type.unwrap()),
+                        child_regions: [].into_iter().collect(),
+                        outputs: [NodeOutputDecl {
+                            attrs: Default::default(),
+                            ty: src_pointee_type.unwrap(),
+                        }]
+                        .into_iter()
+                        .collect(),
                     }
                     .into(),
                 );
                 insts.insert_before(load_inst, data_inst, func.data_insts);
                 let cast_inst = func.data_insts.define(
                     cx,
-                    mk_bitcast_def(Value::DataInstOutput(load_inst), dst_pointee_type.unwrap())
-                        .into(),
+                    mk_bitcast_def(
+                        Value::DataInstOutput {
+                            inst: load_inst,
+                            output_idx: 0,
+                        },
+                        dst_pointee_type.unwrap(),
+                    )
+                    .into(),
                 );
                 insts.insert_before(cast_inst, data_inst, func.data_insts);
 
@@ -360,10 +391,17 @@ impl Transformer for SelectiveEraser<'_> {
                         opcode: wk.OpStore,
                         imms: dst_imms,
                     }),
-                    inputs: [dst_ptr, Value::DataInstOutput(cast_inst)]
-                        .into_iter()
-                        .collect(),
-                    output_type: None,
+                    inputs: [
+                        dst_ptr,
+                        Value::DataInstOutput {
+                            inst: cast_inst,
+                            output_idx: 0,
+                        },
+                    ]
+                    .into_iter()
+                    .collect(),
+                    child_regions: [].into_iter().collect(),
+                    outputs: [].into_iter().collect(),
                 };
 
                 self.disaggregate_bitcast(func.at(cast_inst));
@@ -466,7 +504,7 @@ impl<'a> SelectiveEraser<'a> {
 
         assert!(cast_def.kind == DataInstKind::SpvInst(wk.OpBitcast.into()));
         let in_value = cast_def.inputs[0];
-        let out_type = cast_def.output_type.unwrap();
+        let out_type = cast_def.outputs[0].ty;
 
         let mut func = func_at_cast_inst.reborrow();
         let in_type = func.reborrow().freeze().at(in_value).type_of(cx);
@@ -519,7 +557,13 @@ impl<'a> SelectiveEraser<'a> {
                                 .collect(),
                         }),
                         inputs: [in_value].into_iter().collect(),
-                        output_type: Some(component_in_type),
+                        child_regions: [].into_iter().collect(),
+                        outputs: [NodeOutputDecl {
+                            attrs: Default::default(),
+                            ty: component_in_type,
+                        }]
+                        .into_iter()
+                        .collect(),
                     }
                     .into(),
                 );
@@ -536,10 +580,19 @@ impl<'a> SelectiveEraser<'a> {
                         DataInstDef {
                             attrs,
                             kind: DataInstKind::SpvInst(wk.OpBitcast.into()),
-                            inputs: [Value::DataInstOutput(component_extract_inst)]
-                                .into_iter()
-                                .collect(),
-                            output_type: Some(component_out_type),
+                            inputs: [Value::DataInstOutput {
+                                inst: component_extract_inst,
+                                output_idx: 0,
+                            }]
+                            .into_iter()
+                            .collect(),
+                            child_regions: [].into_iter().collect(),
+                            outputs: [NodeOutputDecl {
+                                attrs: Default::default(),
+                                ty: component_out_type,
+                            }]
+                            .into_iter()
+                            .collect(),
                         }
                         .into(),
                     );
@@ -552,7 +605,10 @@ impl<'a> SelectiveEraser<'a> {
                     self.disaggregate_bitcast(func.reborrow().at(component_cast_inst));
                 }
 
-                Value::DataInstOutput(component_cast_inst.unwrap_or(component_extract_inst))
+                Value::DataInstOutput {
+                    inst: component_cast_inst.unwrap_or(component_extract_inst),
+                    output_idx: 0,
+                }
             })
             .collect();
 
@@ -560,7 +616,13 @@ impl<'a> SelectiveEraser<'a> {
             attrs,
             kind: DataInstKind::SpvInst(wk.OpCompositeConstruct.into()),
             inputs: components,
-            output_type: Some(out_type),
+            child_regions: [].into_iter().collect(),
+            outputs: [NodeOutputDecl {
+                attrs: Default::default(),
+                ty: out_type,
+            }]
+            .into_iter()
+            .collect(),
         };
     }
 
@@ -574,7 +636,7 @@ impl<'a> SelectiveEraser<'a> {
         let data_inst_def = func_at_inst.def();
 
         // FIXME(eddyb) consider preserving the actual type change in the error.
-        let any_types_will_change = (data_inst_def.output_type.into_iter())
+        let any_types_will_change = (data_inst_def.outputs.iter().map(|o| o.ty))
             .chain(
                 data_inst_def
                     .inputs
