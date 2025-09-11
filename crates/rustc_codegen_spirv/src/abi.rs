@@ -18,8 +18,8 @@ use rustc_index::Idx;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
 use rustc_middle::ty::{
-    self, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, PolyFnSig, Ty, TyCtxt,
-    TyKind, UintTy,
+    self, AdtDef, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, PolyFnSig, Ty,
+    TyCtxt, TyKind, UintTy,
 };
 use rustc_middle::ty::{GenericArgsRef, ScalarInt};
 use rustc_middle::{bug, span_bug};
@@ -164,7 +164,12 @@ pub(crate) fn provide(providers: &mut Providers) {
         }
     }
 
-    providers.layout_of = |tcx, key| {
+    providers.layout_of = layout_of;
+
+    fn layout_of<'tcx>(
+        tcx: TyCtxt<'tcx>,
+        key: ty::PseudoCanonicalInput<'tcx, Ty<'tcx>>,
+    ) -> Result<TyAndLayout<'tcx>, &'tcx ty::layout::LayoutError<'tcx>> {
         // HACK(eddyb) to special-case any types at all, they must be normalized,
         // but when normalization would be needed, `layout_of`'s default provider
         // recurses (supposedly for caching reasons), i.e. its calls `layout_of`
@@ -174,7 +179,9 @@ pub(crate) fn provide(providers: &mut Providers) {
 
         // HACK(eddyb) bypassing upstream `#[repr(simd)]` changes (see also
         // the later comment above `check_well_formed`, for more details).
-        let reimplement_old_style_repr_simd = match ty.kind() {
+        let reimplement_old_style_repr_simd: Option<(&AdtDef<'tcx>, Ty<'tcx>, u64)> = match ty
+            .kind()
+        {
             ty::Adt(def, args) if def.repr().simd() && !def.repr().packed() && def.is_struct() => {
                 Some(def.non_enum_variant()).and_then(|v| {
                     let (count, e_ty) = v
@@ -268,7 +275,7 @@ pub(crate) fn provide(providers: &mut Providers) {
         }
 
         Ok(TyAndLayout { ty, layout })
-    };
+    }
 
     // HACK(eddyb) work around https://github.com/rust-lang/rust/pull/129403
     // banning "struct-style" `#[repr(simd)]` (in favor of "array-newtype-style"),
