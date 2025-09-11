@@ -6,7 +6,7 @@ use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
 use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
-use rustc_abi::ExternAbi as Abi;
+use rustc_abi::{AbiAlign, ExternAbi as Abi};
 use rustc_abi::{
     Align, BackendRepr, FieldIdx, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions,
     Scalar, Size, TagEncoding, VariantIdx, Variants,
@@ -223,8 +223,8 @@ pub(crate) fn provide(providers: &mut Providers) {
 
             // Compute the size and alignment of the vector:
             let size = e_ly.size.checked_mul(e_len, &cx).unwrap();
-            let align = e_ly.align;
-            let size = size.align_to(align.abi);
+            let align = adt_def.repr().align.unwrap_or(e_ly.align.abi);
+            let size = size.align_to(align);
 
             let layout = tcx.mk_layout(LayoutData {
                 variants: Variants::Single {
@@ -241,9 +241,9 @@ pub(crate) fn provide(providers: &mut Providers) {
                 largest_niche: e_ly.largest_niche,
                 uninhabited: false,
                 size,
-                align,
+                align: AbiAlign::new(align),
                 max_repr_align: None,
-                unadjusted_abi_align: align.abi,
+                unadjusted_abi_align: align,
                 randomization_seed: e_ly.randomization_seed.wrapping_add(Hash64::new(e_len)),
             });
 
@@ -324,7 +324,7 @@ pub(crate) fn provide(providers: &mut Providers) {
         let valid_non_array_simd_struct = trivial_struct.is_some_and(|adt_def| {
             let ReprOptions {
                 int: None,
-                align: None,
+                align: _,
                 pack: None,
                 flags: ReprFlags::IS_SIMD,
                 field_shuffle_seed: _,
