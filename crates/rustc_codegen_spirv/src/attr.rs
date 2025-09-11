@@ -2,7 +2,6 @@
 //!
 //! The attribute-checking parts of this try to follow `rustc_passes::check_attr`.
 
-use crate::codegen_cx::CodegenCx;
 use crate::symbols::Symbols;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
 use rustc_hir as hir;
@@ -147,16 +146,16 @@ impl AggregatedSpirvAttributes {
     ///
     /// Any errors for malformed/duplicate attributes will have been reported
     /// prior to codegen, by the `attr` check pass.
-    pub fn parse<'tcx>(cx: &CodegenCx<'tcx>, attrs: &'tcx [Attribute]) -> Self {
+    pub fn parse<'tcx>(tcx: TyCtxt<'tcx>, sym: &Symbols, attrs: &'tcx [Attribute]) -> Self {
         let mut aggregated_attrs = Self::default();
 
         // NOTE(eddyb) `span_delayed_bug` ensures that if attribute checking fails
         // to see an attribute error, it will cause an ICE instead.
-        for parse_attr_result in crate::symbols::parse_attrs_for_checking(&cx.sym, attrs) {
+        for parse_attr_result in crate::symbols::parse_attrs_for_checking(sym, attrs) {
             let (span, parsed_attr) = match parse_attr_result {
                 Ok(span_and_parsed_attr) => span_and_parsed_attr,
                 Err((span, msg)) => {
-                    cx.tcx.dcx().span_delayed_bug(span, msg);
+                    tcx.dcx().span_delayed_bug(span, msg);
                     continue;
                 }
             };
@@ -166,8 +165,7 @@ impl AggregatedSpirvAttributes {
                     prev_span: _,
                     category,
                 }) => {
-                    cx.tcx
-                        .dcx()
+                    tcx.dcx()
                         .span_delayed_bug(span, format!("multiple {category} attributes"));
                 }
             }

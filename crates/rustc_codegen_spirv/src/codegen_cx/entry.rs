@@ -433,7 +433,11 @@ impl<'tcx> CodegenCx<'tcx> {
         call_args: &mut Vec<SpirvValue>,
         decoration_locations: &mut FxHashMap<StorageClass, u32>,
     ) {
-        let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.hir_attrs(hir_param.hir_id));
+        let attrs = AggregatedSpirvAttributes::parse(
+            self.tcx,
+            &self.sym,
+            self.tcx.hir_attrs(hir_param.hir_id),
+        );
 
         let EntryParamDeducedFromRustRefOrValue {
             value_layout,
