@@ -8,8 +8,8 @@ use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 use rustc_abi::ExternAbi as Abi;
 use rustc_abi::{
-    Align, BackendRepr, FieldIdx, FieldsShape, HasDataLayout as _, LayoutData, Primitive,
-    ReprFlags, ReprOptions, Scalar, Size, TagEncoding, VariantIdx, Variants,
+    Align, BackendRepr, FieldIdx, FieldsShape, LayoutData, Primitive, ReprFlags, ReprOptions,
+    Scalar, Size, TagEncoding, VariantIdx, Variants,
 };
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
@@ -205,10 +205,9 @@ pub(crate) fn provide(providers: &mut Providers) {
                 tcx,
                 key.typing_env.with_post_analysis_normalized(tcx),
             );
-            let dl = cx.data_layout();
 
             // Compute the ABI of the element type:
-            let e_ly = cx.layout_of(e_ty)?;
+            let e_ly: TyAndLayout<'_> = cx.layout_of(e_ty)?;
             let BackendRepr::Scalar(e_repr) = e_ly.backend_repr else {
                 // This error isn't caught in typeck, e.g., if
                 // the element type of the vector is generic.
@@ -223,8 +222,8 @@ pub(crate) fn provide(providers: &mut Providers) {
             };
 
             // Compute the size and alignment of the vector:
-            let size = e_ly.size.checked_mul(e_len, dl).unwrap();
-            let align = dl.llvmlike_vector_align(size);
+            let size = e_ly.size.checked_mul(e_len, &cx).unwrap();
+            let align = e_ly.align;
             let size = size.align_to(align.abi);
 
             let layout = tcx.mk_layout(LayoutData {
