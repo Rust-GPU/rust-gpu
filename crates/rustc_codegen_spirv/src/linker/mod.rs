@@ -103,7 +103,7 @@ fn apply_rewrite_rules<'a>(
                 )
         });
     for id in all_ids_mut {
-        if let Some(&rewrite) = rewrite_rules.get(id) {
+        while let Some(&rewrite) = rewrite_rules.get(id) {
             *id = rewrite;
         }
     }
@@ -560,6 +560,12 @@ pub fn link(
                 |name, _module| before_pass(name),
                 &mut after_pass,
             );
+        }
+
+        {
+            let timer = before_pass("spirt_passes::explicit_layout::erase_when_invalid");
+            spirt_passes::explicit_layout::erase_when_invalid(module);
+            after_pass(Some(module), timer);
         }
 
         {
