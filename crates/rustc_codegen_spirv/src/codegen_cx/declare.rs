@@ -133,7 +133,8 @@ impl<'tcx> CodegenCx<'tcx> {
             self.set_linkage(fn_id, symbol_name.to_owned(), linkage);
         }
 
-        let attrs = AggregatedSpirvAttributes::parse(self, self.tcx.get_attrs_unchecked(def_id));
+        let attrs =
+            AggregatedSpirvAttributes::parse(self.tcx, &self.sym, self.tcx.get_all_attrs(def_id));
         if let Some(entry) = attrs.entry.map(|attr| attr.value) {
             // HACK(eddyb) early insert to let `shader_entry_stub` call this
             // very function via `get_fn_addr`.

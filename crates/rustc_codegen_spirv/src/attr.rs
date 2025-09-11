@@ -2,8 +2,7 @@
 //!
 //! The attribute-checking parts of this try to follow `rustc_passes::check_attr`.
 
-use crate::codegen_cx::CodegenCx;
-use crate::symbols::Symbols;
+use crate::symbols::{Symbols, parse_attrs_for_checking};
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
 use rustc_hir as hir;
 use rustc_hir::def_id::LocalModDefId;
@@ -66,6 +65,7 @@ pub enum IntrinsicType {
     RuntimeArray,
     TypedBuffer,
     Matrix,
+    Vector,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -147,16 +147,20 @@ impl AggregatedSpirvAttributes {
     ///
     /// Any errors for malformed/duplicate attributes will have been reported
     /// prior to codegen, by the `attr` check pass.
-    pub fn parse<'tcx>(cx: &CodegenCx<'tcx>, attrs: &'tcx [Attribute]) -> Self {
+    pub fn parse<'tcx>(
+        tcx: TyCtxt<'tcx>,
+        sym: &Symbols,
+        attrs: impl Iterator<Item = &'tcx Attribute>,
+    ) -> Self {
         let mut aggregated_attrs = Self::default();
 
         // NOTE(eddyb) `span_delayed_bug` ensures that if attribute checking fails
         // to see an attribute error, it will cause an ICE instead.
-        for parse_attr_result in crate::symbols::parse_attrs_for_checking(&cx.sym, attrs) {
+        for parse_attr_result in parse_attrs_for_checking(sym, attrs) {
             let (span, parsed_attr) = match parse_attr_result {
                 Ok(span_and_parsed_attr) => span_and_parsed_attr,
                 Err((span, msg)) => {
-                    cx.tcx.dcx().span_delayed_bug(span, msg);
+                    tcx.dcx().span_delayed_bug(span, msg);
                     continue;
                 }
             };
@@ -166,8 +170,7 @@ impl AggregatedSpirvAttributes {
                     prev_span: _,
                     category,
                 }) => {
-                    cx.tcx
-                        .dcx()
+                    tcx.dcx()
                         .span_delayed_bug(span, format!("multiple {category} attributes"));
                 }
             }
@@ -278,10 +281,8 @@ impl CheckSpirvAttrVisitor<'_> {
     fn check_spirv_attributes(&self, hir_id: HirId, target: Target) {
         let mut aggregated_attrs = AggregatedSpirvAttributes::default();
 
-        let parse_attrs = |attrs| crate::symbols::parse_attrs_for_checking(&self.sym, attrs);
-
         let attrs = self.tcx.hir_attrs(hir_id);
-        for parse_attr_result in parse_attrs(attrs) {
+        for parse_attr_result in parse_attrs_for_checking(&self.sym, attrs.into_iter()) {
             let (span, parsed_attr) = match parse_attr_result {
                 Ok(span_and_parsed_attr) => span_and_parsed_attr,
                 Err((span, msg)) => {
@@ -326,9 +327,12 @@ impl CheckSpirvAttrVisitor<'_> {
                 | SpirvAttribute::SpecConstant(_) => match target {
                     Target::Param => {
                         let parent_hir_id = self.tcx.parent_hir_id(hir_id);
-                        let parent_is_entry_point = parse_attrs(self.tcx.hir_attrs(parent_hir_id))
-                            .filter_map(|r| r.ok())
-                            .any(|(_, attr)| matches!(attr, SpirvAttribute::Entry(_)));
+                        let parent_is_entry_point = parse_attrs_for_checking(
+                            &self.sym,
+                            self.tcx.hir_attrs(parent_hir_id).iter(),
+                        )
+                        .filter_map(|r| r.ok())
+                        .any(|(_, attr)| matches!(attr, SpirvAttribute::Entry(_)));
                         if !parent_is_entry_point {
                             self.tcx.dcx().span_err(
                                 span,
