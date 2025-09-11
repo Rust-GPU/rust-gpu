@@ -441,11 +441,11 @@ impl Symbols {
 type ParseAttrError = (Span, String);
 
 // FIXME(eddyb) maybe move this to `attr`?
-pub(crate) fn parse_attrs_for_checking<'a>(
-    sym: &'a Symbols,
-    attrs: &'a [Attribute],
-) -> impl Iterator<Item = Result<(Span, SpirvAttribute), ParseAttrError>> + 'a {
-    attrs.iter().flat_map(move |attr| {
+pub(crate) fn parse_attrs_for_checking<'a, 'b>(
+    sym: &'b Symbols,
+    attrs: impl Iterator<Item = &'a Attribute> + 'b,
+) -> impl Iterator<Item = Result<(Span, SpirvAttribute), ParseAttrError>> + 'b {
+    attrs.flat_map(move |attr| {
         let (whole_attr_error, args) = match attr {
             Attribute::Unparsed(item) => {
                 // #[...]

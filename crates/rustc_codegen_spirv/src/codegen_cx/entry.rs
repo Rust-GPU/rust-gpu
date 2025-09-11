@@ -436,7 +436,7 @@ impl<'tcx> CodegenCx<'tcx> {
         let attrs = AggregatedSpirvAttributes::parse(
             self.tcx,
             &self.sym,
-            self.tcx.hir_attrs(hir_param.hir_id),
+            self.tcx.hir_attrs(hir_param.hir_id).iter(),
         );
 
         let EntryParamDeducedFromRustRefOrValue {
