@@ -373,6 +373,10 @@ impl Symbols {
                 "matrix",
                 SpirvAttribute::IntrinsicType(IntrinsicType::Matrix),
             ),
+            (
+                "vector",
+                SpirvAttribute::IntrinsicType(IntrinsicType::Vector),
+            ),
             ("buffer_load_intrinsic", SpirvAttribute::BufferLoadIntrinsic),
             (
                 "buffer_store_intrinsic",

@@ -65,6 +65,7 @@ pub enum IntrinsicType {
     RuntimeArray,
     TypedBuffer,
     Matrix,
+    Vector,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]

@@ -4,6 +4,7 @@
 use crate::attr::{AggregatedSpirvAttributes, IntrinsicType};
 use crate::codegen_cx::CodegenCx;
 use crate::spirv_type::SpirvType;
+use crate::symbols::Symbols;
 use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 use rustc_abi::{AbiAlign, ExternAbi as Abi};
@@ -16,10 +17,10 @@ use rustc_errors::ErrorGuaranteed;
 use rustc_hashes::Hash64;
 use rustc_index::Idx;
 use rustc_middle::query::Providers;
-use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
+use rustc_middle::ty::layout::{FnAbiOf, LayoutError, LayoutOf, TyAndLayout};
 use rustc_middle::ty::{
-    self, AdtDef, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, IntTy, PolyFnSig, Ty,
-    TyCtxt, TyKind, UintTy,
+    self, AdtDef, Const, CoroutineArgs, CoroutineArgsExt as _, FloatTy, GenericArgs, IntTy,
+    PolyFnSig, Ty, TyCtxt, TyKind, TypingEnv, UintTy,
 };
 use rustc_middle::ty::{GenericArgsRef, ScalarInt};
 use rustc_middle::{bug, span_bug};
@@ -169,85 +170,14 @@ pub(crate) fn provide(providers: &mut Providers) {
     fn layout_of<'tcx>(
         tcx: TyCtxt<'tcx>,
         key: ty::PseudoCanonicalInput<'tcx, Ty<'tcx>>,
-    ) -> Result<TyAndLayout<'tcx>, &'tcx ty::layout::LayoutError<'tcx>> {
+    ) -> Result<TyAndLayout<'tcx>, &'tcx LayoutError<'tcx>> {
         // HACK(eddyb) to special-case any types at all, they must be normalized,
         // but when normalization would be needed, `layout_of`'s default provider
         // recurses (supposedly for caching reasons), i.e. its calls `layout_of`
         // w/ the normalized type in input, which once again reaches this hook,
         // without ever needing any explicit normalization here.
-        let ty = key.value;
-
-        // HACK(eddyb) bypassing upstream `#[repr(simd)]` changes (see also
-        // the later comment above `check_well_formed`, for more details).
-        let reimplement_old_style_repr_simd: Option<(&AdtDef<'tcx>, Ty<'tcx>, u64)> = match ty
-            .kind()
-        {
-            ty::Adt(def, args) if def.repr().simd() && !def.repr().packed() && def.is_struct() => {
-                Some(def.non_enum_variant()).and_then(|v| {
-                    let (count, e_ty) = v
-                        .fields
-                        .iter()
-                        .map(|f| f.ty(tcx, args))
-                        .dedup_with_count()
-                        .exactly_one()
-                        .ok()?;
-                    let e_len = u64::try_from(count).ok().filter(|&e_len| e_len > 1)?;
-                    Some((def, e_ty, e_len))
-                })
-            }
-            _ => None,
-        };
-
-        // HACK(eddyb) tweaked copy of the old upstream logic for `#[repr(simd)]`:
-        // https://github.com/rust-lang/rust/blob/1.86.0/compiler/rustc_ty_utils/src/layout.rs#L464-L590
-        if let Some((adt_def, e_ty, e_len)) = reimplement_old_style_repr_simd {
-            let cx = rustc_middle::ty::layout::LayoutCx::new(
-                tcx,
-                key.typing_env.with_post_analysis_normalized(tcx),
-            );
-
-            // Compute the ABI of the element type:
-            let e_ly: TyAndLayout<'_> = cx.layout_of(e_ty)?;
-            let BackendRepr::Scalar(e_repr) = e_ly.backend_repr else {
-                // This error isn't caught in typeck, e.g., if
-                // the element type of the vector is generic.
-                tcx.dcx().span_fatal(
-                    tcx.def_span(adt_def.did()),
-                    format!(
-                        "SIMD type `{ty}` with a non-primitive-scalar \
-                     (integer/float/pointer) element type `{}`",
-                        e_ly.ty
-                    ),
-                );
-            };
-
-            // Compute the size and alignment of the vector:
-            let size = e_ly.size.checked_mul(e_len, &cx).unwrap();
-            let align = adt_def.repr().align.unwrap_or(e_ly.align.abi);
-            let size = size.align_to(align);
-
-            let layout = tcx.mk_layout(LayoutData {
-                variants: Variants::Single {
-                    index: rustc_abi::FIRST_VARIANT,
-                },
-                fields: FieldsShape::Array {
-                    stride: e_ly.size,
-                    count: e_len,
-                },
-                backend_repr: BackendRepr::SimdVector {
-                    element: e_repr,
-                    count: e_len,
-                },
-                largest_niche: e_ly.largest_niche,
-                uninhabited: false,
-                size,
-                align: AbiAlign::new(align),
-                max_repr_align: None,
-                unadjusted_abi_align: align,
-                randomization_seed: e_ly.randomization_seed.wrapping_add(Hash64::new(e_len)),
-            });
-
-            return Ok(TyAndLayout { ty, layout });
+        if let Some(layout) = layout_of_spirv_attr_special(tcx, key)? {
+            return Ok(layout);
         }
 
         let TyAndLayout { ty, mut layout } =
@@ -274,6 +204,135 @@ pub(crate) fn provide(providers: &mut Providers) {
         }
 
         Ok(TyAndLayout { ty, layout })
+    }
+
+    fn layout_of_spirv_attr_special<'tcx>(
+        tcx: TyCtxt<'tcx>,
+        key: ty::PseudoCanonicalInput<'tcx, Ty<'tcx>>,
+    ) -> Result<Option<TyAndLayout<'tcx>>, &'tcx LayoutError<'tcx>> {
+        let ty::PseudoCanonicalInput {
+            typing_env,
+            value: ty,
+        } = key;
+
+        match ty.kind() {
+            ty::Adt(def, args) => {
+                let def: &AdtDef<'tcx> = def;
+                let args: &'tcx GenericArgs<'tcx> = args;
+                let attrs = AggregatedSpirvAttributes::parse(
+                    tcx,
+                    &Symbols::get(),
+                    tcx.get_all_attrs(def.did()),
+                );
+
+                // add spirv-attr special layouts here
+                if let Some(layout) =
+                    layout_of_spirv_vector(tcx, typing_env, ty, def, args, &attrs)?
+                {
+                    return Ok(Some(layout));
+                }
+            }
+            _ => {}
+        }
+        Ok(None)
+    }
+
+    fn layout_of_spirv_vector<'tcx>(
+        tcx: TyCtxt<'tcx>,
+        typing_env: TypingEnv<'tcx>,
+        ty: Ty<'tcx>,
+        def: &AdtDef<'tcx>,
+        args: &'tcx GenericArgs<'tcx>,
+        attrs: &AggregatedSpirvAttributes,
+    ) -> Result<Option<TyAndLayout<'tcx>>, &'tcx LayoutError<'tcx>> {
+        let layout_err = |msg| {
+            &*tcx.arena.alloc(LayoutError::ReferencesError(
+                tcx.dcx().span_err(tcx.def_span(def.did()), msg),
+            ))
+        };
+
+        let has_spirv_vector_attr = attrs
+            .intrinsic_type
+            .as_ref()
+            .map_or(false, |attr| matches!(attr.value, IntrinsicType::Vector));
+        let has_repr_simd = def.repr().simd() && !def.repr().packed();
+        if !has_spirv_vector_attr && !has_repr_simd {
+            return Ok(None);
+        }
+
+        let elements = def
+            .non_enum_variant()
+            .fields
+            .iter()
+            .map(|f| f.ty(tcx, args))
+            .dedup_with_count()
+            .exactly_one()
+            .ok()
+            .and_then(|(count, e_ty)| {
+                u64::try_from(count)
+                    .ok()
+                    .filter(|&e_len| e_len >= 2)
+                    .map(|e_len| (e_len, e_ty))
+            });
+        let (e_len, e_ty) = match elements {
+            None => {
+                return if has_repr_simd {
+                    // core SIMD struct, not glam vector, don't do anything special
+                    Ok(None)
+                } else {
+                    Err(layout_err(format!(
+                        "spirv vector type `{ty}` must have at least 2 elements of a single element"
+                    )))
+                };
+            }
+            Some(len) => len,
+        };
+        if !def.is_struct() {
+            return Err(layout_err(format!(
+                "spirv vector type `{ty}` must be a struct"
+            )));
+        }
+
+        let lcx = ty::layout::LayoutCx::new(tcx, typing_env.with_post_analysis_normalized(tcx));
+
+        // Compute the ABI of the element type:
+        let e_ly: TyAndLayout<'_> = lcx.layout_of(e_ty)?;
+        let BackendRepr::Scalar(e_repr) = e_ly.backend_repr else {
+            // This error isn't caught in typeck, e.g., if
+            // the element type of the vector is generic.
+            return Err(layout_err(format!(
+                "spirv vector type `{ty}` must have a non-primitive-scalar (integer/float/pointer) element type, got `{}`",
+                e_ly.ty
+            )));
+        };
+
+        // Compute the size and alignment of the vector:
+        let size = e_ly.size.checked_mul(e_len, &lcx).unwrap();
+        let align = def.repr().align.unwrap_or(e_ly.align.abi);
+        let size = size.align_to(align);
+
+        let layout = tcx.mk_layout(LayoutData {
+            variants: Variants::Single {
+                index: rustc_abi::FIRST_VARIANT,
+            },
+            fields: FieldsShape::Array {
+                stride: e_ly.size,
+                count: e_len,
+            },
+            backend_repr: BackendRepr::SimdVector {
+                element: e_repr,
+                count: e_len,
+            },
+            largest_niche: e_ly.largest_niche,
+            uninhabited: false,
+            size,
+            align: AbiAlign::new(align),
+            max_repr_align: None,
+            unadjusted_abi_align: align,
+            randomization_seed: e_ly.randomization_seed.wrapping_add(Hash64::new(e_len)),
+        });
+
+        Ok(Some(TyAndLayout { ty, layout }))
     }
 
     // HACK(eddyb) work around https://github.com/rust-lang/rust/pull/129403
@@ -778,9 +837,9 @@ fn dig_scalar_pointee<'tcx>(
             match pointee {
                 Some(old_pointee) if old_pointee != new_pointee => {
                     cx.tcx.dcx().fatal(format!(
-                        "dig_scalar_pointee: unsupported Pointer with different \
+						"dig_scalar_pointee: unsupported Pointer with different \
                          pointee types ({old_pointee:?} vs {new_pointee:?}) at offset {offset:?} in {layout:#?}"
-                    ));
+					));
                 }
                 _ => pointee = Some(new_pointee),
             }
@@ -1264,6 +1323,9 @@ fn trans_intrinsic_type<'tcx>(
                 count: field_types.len() as u32,
             }
             .def(span, cx))
+        }
+        IntrinsicType::Vector => {
+            todo!()
         }
     }
 }
