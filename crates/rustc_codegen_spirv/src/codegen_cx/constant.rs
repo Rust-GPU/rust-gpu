@@ -200,10 +200,12 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         self.constant_composite(struct_ty, elts.iter().map(|f| f.def_cx(self)))
     }
     fn const_vector(&self, elts: &[Self::Value]) -> Self::Value {
-        let vector_ty = SpirvType::Vector {
-            element: elts[0].ty,
-            count: elts.len() as u32,
-        }
+        let vector_ty = SpirvType::simd_vector(
+            self,
+            DUMMY_SP,
+            self.lookup_type(elts[0].ty),
+            elts.len() as u32,
+        )
         .def(DUMMY_SP, self);
         self.constant_composite(vector_ty, elts.iter().map(|elt| elt.def_cx(self)))
     }

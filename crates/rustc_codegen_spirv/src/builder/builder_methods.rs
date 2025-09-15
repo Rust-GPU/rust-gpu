@@ -317,10 +317,12 @@ fn memset_dynamic_scalar(
     byte_width: usize,
     is_float: bool,
 ) -> Word {
-    let composite_type = SpirvType::Vector {
-        element: SpirvType::Integer(8, false).def(builder.span(), builder),
-        count: byte_width as u32,
-    }
+    let composite_type = SpirvType::simd_vector(
+        builder,
+        builder.span(),
+        SpirvType::Integer(8, false),
+        byte_width as u32,
+    )
     .def(builder.span(), builder);
     let composite = builder
         .emit()
@@ -417,7 +419,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 _ => self.fatal(format!("memset on float width {width} not implemented yet")),
             },
             SpirvType::Adt { .. } => self.fatal("memset on structs not implemented yet"),
-            SpirvType::Vector { element, count } | SpirvType::Matrix { element, count } => {
+            SpirvType::Vector { element, count, .. } | SpirvType::Matrix { element, count } => {
                 let elem_pat = self.memset_const_pattern(&self.lookup_type(element), fill_byte);
                 self.constant_composite(
                     ty.def(self.span(), self),
@@ -478,7 +480,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     )
                     .unwrap()
             }
-            SpirvType::Vector { element, count } | SpirvType::Matrix { element, count } => {
+            SpirvType::Vector { element, count, .. } | SpirvType::Matrix { element, count } => {
                 let elem_pat = self.memset_dynamic_pattern(&self.lookup_type(element), fill_var);
                 self.emit()
                     .composite_construct(
@@ -2976,11 +2978,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     }
 
     fn vector_splat(&mut self, num_elts: usize, elt: Self::Value) -> Self::Value {
-        let result_type = SpirvType::Vector {
-            element: elt.ty,
-            count: num_elts as u32,
-        }
-        .def(self.span(), self);
+        let result_type =
+            SpirvType::simd_vector(self, self.span(), self.lookup_type(elt.ty), num_elts as u32)
+                .def(self.span(), self);
         if self.builder.lookup_const(elt).is_some() {
             self.constant_composite(result_type, iter::repeat_n(elt.def(self), num_elts))
         } else {

@@ -45,6 +45,8 @@ pub enum SpirvType<'tcx> {
         element: Word,
         /// Note: vector count is literal.
         count: u32,
+        size: Size,
+        align: Align,
     },
     Matrix {
         element: Word,
@@ -131,7 +133,9 @@ impl SpirvType<'_> {
                 }
                 result
             }
-            Self::Vector { element, count } => cx.emit_global().type_vector_id(id, element, count),
+            Self::Vector { element, count, .. } => {
+                cx.emit_global().type_vector_id(id, element, count)
+            }
             Self::Matrix { element, count } => cx.emit_global().type_matrix_id(id, element, count),
             Self::Array { element, count } => {
                 let result = cx
@@ -280,9 +284,7 @@ impl SpirvType<'_> {
             Self::Bool => Size::from_bytes(1),
             Self::Integer(width, _) | Self::Float(width) => Size::from_bits(width),
             Self::Adt { size, .. } => size?,
-            Self::Vector { element, count } => {
-                cx.lookup_type(element).sizeof(cx)? * count.next_power_of_two() as u64
-            }
+            Self::Vector { size, .. } => size,
             Self::Matrix { element, count } => cx.lookup_type(element).sizeof(cx)? * count as u64,
             Self::Array { element, count } => {
                 cx.lookup_type(element).sizeof(cx)?
@@ -310,14 +312,7 @@ impl SpirvType<'_> {
 
             Self::Bool => Align::from_bytes(1).unwrap(),
             Self::Integer(width, _) | Self::Float(width) => Align::from_bits(width as u64).unwrap(),
-            Self::Adt { align, .. } => align,
-            // Vectors have size==align
-            Self::Vector { .. } => Align::from_bytes(
-                self.sizeof(cx)
-                    .expect("alignof: Vectors must be sized")
-                    .bytes(),
-            )
-            .expect("alignof: Vectors must have power-of-2 size"),
+            Self::Adt { align, .. } | Self::Vector { align, .. } => align,
             Self::Array { element, .. }
             | Self::RuntimeArray { element }
             | Self::Matrix { element, .. } => cx.lookup_type(element).alignof(cx),
@@ -382,7 +377,17 @@ impl SpirvType<'_> {
             SpirvType::Bool => SpirvType::Bool,
             SpirvType::Integer(width, signedness) => SpirvType::Integer(width, signedness),
             SpirvType::Float(width) => SpirvType::Float(width),
-            SpirvType::Vector { element, count } => SpirvType::Vector { element, count },
+            SpirvType::Vector {
+                element,
+                count,
+                size,
+                align,
+            } => SpirvType::Vector {
+                element,
+                count,
+                size,
+                align,
+            },
             SpirvType::Matrix { element, count } => SpirvType::Matrix { element, count },
             SpirvType::Array { element, count } => SpirvType::Array { element, count },
             SpirvType::RuntimeArray { element } => SpirvType::RuntimeArray { element },
@@ -433,6 +438,15 @@ impl SpirvType<'_> {
                 return_type,
                 arguments: arena_alloc_slice(cx, arguments),
             },
+        }
+    }
+
+    pub fn simd_vector(cx: &CodegenCx<'_>, span: Span, element: SpirvType<'_>, count: u32) -> Self {
+        Self::Vector {
+            element: element.def(span, cx),
+            count,
+            size: element.sizeof(cx).unwrap() * count as u64,
+            align: element.alignof(cx),
         }
     }
 }
@@ -501,11 +515,18 @@ impl fmt::Debug for SpirvTypePrinter<'_, '_> {
                     .field("field_names", &field_names)
                     .finish()
             }
-            SpirvType::Vector { element, count } => f
+            SpirvType::Vector {
+                element,
+                count,
+                size,
+                align,
+            } => f
                 .debug_struct("Vector")
                 .field("id", &self.id)
                 .field("element", &self.cx.debug_type(element))
                 .field("count", &count)
+                .field("size", &size)
+                .field("align", &align)
                 .finish(),
             SpirvType::Matrix { element, count } => f
                 .debug_struct("Matrix")
@@ -668,7 +689,7 @@ impl SpirvTypePrinter<'_, '_> {
                 }
                 f.write_str(" }")
             }
-            SpirvType::Vector { element, count } | SpirvType::Matrix { element, count } => {
+            SpirvType::Vector { element, count, .. } | SpirvType::Matrix { element, count } => {
                 ty(self.cx, stack, f, element)?;
                 write!(f, "x{count}")
             }
