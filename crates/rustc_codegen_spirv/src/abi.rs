@@ -648,6 +648,8 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 SpirvType::Vector {
                     element: elem_spirv,
                     count: count as u32,
+                    size: self.size,
+                    align: self.align.abi,
                 }
                 .def(span, cx)
             }
@@ -1229,43 +1231,92 @@ fn trans_intrinsic_type<'tcx>(
             }
         }
         IntrinsicType::Matrix => {
-            let span = def_id_for_spirv_type_adt(ty)
-                .map(|did| cx.tcx.def_span(did))
-                .expect("#[spirv(matrix)] must be added to a type which has DefId");
-
-            let field_types = (0..ty.fields.count())
-                .map(|i| ty.field(cx, i).spirv_type(span, cx))
-                .collect::<Vec<_>>();
-            if field_types.len() < 2 {
-                return Err(cx
-                    .tcx
-                    .dcx()
-                    .span_err(span, "#[spirv(matrix)] type must have at least two fields"));
-            }
-            let elem_type = field_types[0];
-            if !field_types.iter().all(|&ty| ty == elem_type) {
-                return Err(cx.tcx.dcx().span_err(
-                    span,
-                    "#[spirv(matrix)] type fields must all be the same type",
-                ));
-            }
-            match cx.lookup_type(elem_type) {
+            let (element, count) =
+                trans_glam_like_struct(cx, span, ty, args, "`#[spirv(matrix)]`")?;
+            match cx.lookup_type(element) {
                 SpirvType::Vector { .. } => (),
                 ty => {
                     return Err(cx
                         .tcx
                         .dcx()
-                        .struct_span_err(span, "#[spirv(matrix)] type fields must all be vectors")
-                        .with_note(format!("field type is {}", ty.debug(elem_type, cx)))
+                        .struct_span_err(span, "`#[spirv(matrix)]` type fields must all be vectors")
+                        .with_note(format!("field type is {}", ty.debug(element, cx)))
                         .emit());
                 }
             }
-
-            Ok(SpirvType::Matrix {
-                element: elem_type,
-                count: field_types.len() as u32,
+            Ok(SpirvType::Matrix { element, count }.def(span, cx))
+        }
+        IntrinsicType::Vector => {
+            let (element, count) =
+                trans_glam_like_struct(cx, span, ty, args, "`#[spirv(vector)]`")?;
+            match cx.lookup_type(element) {
+                SpirvType::Float { .. } | SpirvType::Integer { .. } => (),
+                ty => {
+                    return Err(cx
+                        .tcx
+                        .dcx()
+                        .struct_span_err(
+                            span,
+                            "`#[spirv(vector)]` type fields must all be floats or integers",
+                        )
+                        .with_note(format!("field type is {}", ty.debug(element, cx)))
+                        .emit());
+                }
+            }
+            Ok(SpirvType::Vector {
+                element,
+                count,
+                size: ty.size,
+                align: ty.align.abi,
             }
             .def(span, cx))
         }
+    }
+}
+
+/// A struct with multiple fields of the same kind
+/// Used for `#[spirv(vector)]` and `#[spirv(matrix)]`
+fn trans_glam_like_struct<'tcx>(
+    cx: &CodegenCx<'tcx>,
+    span: Span,
+    ty: TyAndLayout<'tcx>,
+    args: GenericArgsRef<'tcx>,
+    err_attr_name: &str,
+) -> Result<(Word, u32), ErrorGuaranteed> {
+    let tcx = cx.tcx;
+    if let Some(adt) = ty.ty.ty_adt_def()
+        && adt.is_struct()
+    {
+        let (count, element) = adt
+            .non_enum_variant()
+            .fields
+            .iter()
+            .map(|f| f.ty(tcx, args))
+            .dedup_with_count()
+            .exactly_one()
+            .map_err(|_e| {
+                tcx.dcx().span_err(
+                    span,
+                    format!("{err_attr_name} member types must all be the same"),
+                )
+            })?;
+
+        let element = cx.layout_of(element);
+        let element_word = element.spirv_type(span, cx);
+        let count = u32::try_from(count)
+            .ok()
+            .filter(|count| *count >= 2)
+            .ok_or_else(|| {
+                tcx.dcx().span_err(
+                    span,
+                    format!("{err_attr_name} must have at least 2 members"),
+                )
+            })?;
+
+        Ok((element_word, count))
+    } else {
+        Err(tcx
+            .dcx()
+            .span_err(span, "#[spirv(vector)] type must be a struct"))
     }
 }

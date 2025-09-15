@@ -114,7 +114,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let val = self.load_u32(array, dynamic_word_index, constant_word_offset);
                 self.bitcast(val, result_type)
             }
-            SpirvType::Vector { element, count } | SpirvType::Matrix { element, count } => self
+            SpirvType::Vector { element, count, .. } | SpirvType::Matrix { element, count } => self
                 .load_vec_mat_arr(
                     original_type,
                     result_type,
@@ -314,7 +314,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 let value_u32 = self.bitcast(value, u32_ty);
                 self.store_u32(array, dynamic_word_index, constant_word_offset, value_u32)
             }
-            SpirvType::Vector { element, count } | SpirvType::Matrix { element, count } => self
+            SpirvType::Vector { element, count, .. } | SpirvType::Matrix { element, count } => self
                 .store_vec_mat_arr(
                     original_type,
                     value,

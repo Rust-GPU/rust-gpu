@@ -15,6 +15,8 @@ pub struct Symbols {
     pub discriminant: Symbol,
     pub rust_gpu: Symbol,
     pub spirv_attr_with_version: Symbol,
+    pub vector: Symbol,
+    pub v1: Symbol,
     pub libm: Symbol,
     pub entry_point_name: Symbol,
     pub spv_khr_vulkan_memory_model: Symbol,
@@ -371,6 +373,10 @@ impl Symbols {
                 "matrix",
                 SpirvAttribute::IntrinsicType(IntrinsicType::Matrix),
             ),
+            (
+                "vector",
+                SpirvAttribute::IntrinsicType(IntrinsicType::Vector),
+            ),
             ("buffer_load_intrinsic", SpirvAttribute::BufferLoadIntrinsic),
             (
                 "buffer_store_intrinsic",
@@ -406,6 +412,8 @@ impl Symbols {
             discriminant: Symbol::intern("discriminant"),
             rust_gpu: Symbol::intern("rust_gpu"),
             spirv_attr_with_version: Symbol::intern(&spirv_attr_with_version()),
+            vector: Symbol::intern("vector"),
+            v1: Symbol::intern("v1"),
             libm: Symbol::intern("libm"),
             entry_point_name: Symbol::intern("entry_point_name"),
             spv_khr_vulkan_memory_model: Symbol::intern("SPV_KHR_vulkan_memory_model"),
