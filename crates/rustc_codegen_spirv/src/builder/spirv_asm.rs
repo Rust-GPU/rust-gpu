@@ -728,6 +728,7 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                         SpirvType::Vector {
                             element: ty,
                             count: 4,
+                            ..
                         },
                     )
                     | (
