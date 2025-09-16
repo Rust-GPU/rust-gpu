@@ -497,10 +497,11 @@ pub fn start(
             use winit::platform::web::WindowExtWebSys;
             // On wasm, append the canvas to the document body
             web_sys::window()
-                .and_then(|win| win.document())
-                .and_then(|doc| doc.body())
-                .and_then(|body| {
-                    body.append_child(&web_sys::Element::from(window.canvas()))
+                .and_then(|dom_window| {
+                    dom_window
+                        .document()?
+                        .body()?
+                        .append_child(&web_sys::Element::from(window.canvas()?))
                         .ok()
                 })
                 .expect("couldn't append canvas to document body");
