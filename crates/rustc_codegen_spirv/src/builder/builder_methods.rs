@@ -3017,6 +3017,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     fn insert_value(&mut self, agg_val: Self::Value, elt: Self::Value, idx: u64) -> Self::Value {
         let field_type = match self.lookup_type(agg_val.ty) {
             SpirvType::Adt { field_types, .. } => field_types[idx as usize],
+            SpirvType::Array { element, .. }
+            | SpirvType::Vector { element, .. }
+            | SpirvType::Matrix { element, .. } => element,
             other => self.fatal(format!("insert_value not implemented on type {other:?}")),
         };
 
