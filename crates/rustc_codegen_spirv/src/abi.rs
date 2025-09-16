@@ -982,6 +982,10 @@ fn def_id_for_spirv_type_adt(layout: TyAndLayout<'_>) -> Option<DefId> {
     }
 }
 
+fn span_for_spirv_type_adt(cx: &CodegenCx<'_>, layout: TyAndLayout<'_>) -> Option<Span> {
+    def_id_for_spirv_type_adt(layout).map(|did| cx.tcx.def_span(did))
+}
+
 /// Minimal and cheaply comparable/hashable subset of the information contained
 /// in `TyLayout` that can be used to generate a name (assuming a nominal type).
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
@@ -1231,6 +1235,7 @@ fn trans_intrinsic_type<'tcx>(
             }
         }
         IntrinsicType::Matrix => {
+            let span = span_for_spirv_type_adt(cx, ty).unwrap();
             let (element, count) =
                 trans_glam_like_struct(cx, span, ty, args, "`#[spirv(matrix)]`")?;
             match cx.lookup_type(element) {
@@ -1247,6 +1252,7 @@ fn trans_intrinsic_type<'tcx>(
             Ok(SpirvType::Matrix { element, count }.def(span, cx))
         }
         IntrinsicType::Vector => {
+            let span = span_for_spirv_type_adt(cx, ty).unwrap();
             let (element, count) =
                 trans_glam_like_struct(cx, span, ty, args, "`#[spirv(vector)]`")?;
             match cx.lookup_type(element) {
