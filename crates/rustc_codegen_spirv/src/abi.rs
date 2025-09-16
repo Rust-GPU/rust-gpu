@@ -1250,14 +1250,14 @@ fn trans_intrinsic_type<'tcx>(
             let (element, count) =
                 trans_glam_like_struct(cx, span, ty, args, "`#[spirv(vector)]`")?;
             match cx.lookup_type(element) {
-                SpirvType::Float { .. } | SpirvType::Integer { .. } => (),
+                SpirvType::Bool | SpirvType::Float { .. } | SpirvType::Integer { .. } => (),
                 ty => {
                     return Err(cx
                         .tcx
                         .dcx()
                         .struct_span_err(
                             span,
-                            "`#[spirv(vector)]` type fields must all be floats or integers",
+                            "`#[spirv(vector)]` type fields must all be floats, integers or bools",
                         )
                         .with_note(format!("field type is {}", ty.debug(element, cx)))
                         .emit());

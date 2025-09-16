@@ -49,6 +49,7 @@ impl_vector! {
     f64: glam::DVec2 => 2, glam::DVec3 => 3, glam::DVec4 => 4;
     u32: glam::UVec2 => 2, glam::UVec3 => 3, glam::UVec4 => 4;
     i32: glam::IVec2 => 2, glam::IVec3 => 3, glam::IVec4 => 4;
+    bool: glam::BVec2 => 2, glam::BVec3 => 3, glam::BVec4 => 4;
 }
 
 /// Trait that implements slicing of a vector into a scalar or vector of lower dimensions, by
