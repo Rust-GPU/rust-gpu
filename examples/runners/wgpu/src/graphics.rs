@@ -88,8 +88,10 @@ async fn run(
     window: Window,
     compiled_shader_modules: CompiledShaderModules,
 ) {
-    let backends =
-        wgpu::Backends::from_env().unwrap_or(wgpu::Backends::VULKAN | wgpu::Backends::METAL);
+    // FIXME(eddyb) should this just use `wgpu::Backends::PRIMARY`?
+    // (that also enables the DirectX 12 backend, not sure we want that one?)
+    let backends = wgpu::Backends::from_env()
+        .unwrap_or(wgpu::Backends::VULKAN | wgpu::Backends::METAL | wgpu::Backends::BROWSER_WEBGPU);
     let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
         backends,
         ..Default::default()
