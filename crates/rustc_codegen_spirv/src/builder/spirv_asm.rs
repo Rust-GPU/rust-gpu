@@ -367,14 +367,20 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                 SpirvType::Float(inst.operands[0].unwrap_literal_bit32()).def(self.span(), self)
             }
             Op::TypeStruct => {
-                self.err("OpTypeStruct in asm! is not supported yet");
+                self.err("`OpTypeStruct` in asm! is not supported");
                 return;
             }
-            Op::TypeVector => SpirvType::Vector {
-                element: inst.operands[0].unwrap_id_ref(),
-                count: inst.operands[1].unwrap_literal_bit32(),
+            Op::TypeVector => {
+                self.struct_err(
+                    "`OpTypeVector` in asm! is not supported, since `#[spirv(vector)]` structs can \
+                    create different vector types due to varying size and alignment",
+                )
+                .with_note(
+                    "pass `glam::VecN` as parameters and use `typeof{foo}` or `typeof*{foo}` (pointer to type) to resolve vector type",
+                )
+                .emit();
+                return;
             }
-            .def(self.span(), self),
             Op::TypeMatrix => SpirvType::Matrix {
                 element: inst.operands[0].unwrap_id_ref(),
                 count: inst.operands[1].unwrap_literal_bit32(),
@@ -759,12 +765,6 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
 
                 TyPat::Pointer(_, pat) => SpirvType::Pointer {
                     pointee: subst_ty_pat(cx, pat, ty_vars, leftover_operands)?,
-                }
-                .def(DUMMY_SP, cx),
-
-                TyPat::Vector4(pat) => SpirvType::Vector {
-                    element: subst_ty_pat(cx, pat, ty_vars, leftover_operands)?,
-                    count: 4,
                 }
                 .def(DUMMY_SP, cx),
 
