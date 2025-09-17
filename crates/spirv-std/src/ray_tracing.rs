@@ -4,9 +4,9 @@
 #![allow(clippy::bad_bit_mask)]
 
 use crate::matrix::Matrix4x3;
-use crate::vector::Vector;
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
+use glam::{UVec2, Vec2, Vec3};
 
 /// An acceleration structure type which is an opaque reference to an
 /// acceleration structure handle as defined in the client API specification.
@@ -48,7 +48,7 @@ impl AccelerationStructure {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpConvertUToAccelerationStructureKHR")]
     #[inline]
-    pub unsafe fn from_vec(id: impl Vector<u32, 2>) -> AccelerationStructure {
+    pub unsafe fn from_vec(id: UVec2) -> AccelerationStructure {
         unsafe {
             // FIXME(eddyb) `let mut result = T::default()` uses (for `asm!`), with this.
             let mut result_slot = core::mem::MaybeUninit::uninit();
@@ -102,9 +102,9 @@ impl AccelerationStructure {
         sbt_offset: i32,
         sbt_stride: i32,
         miss_index: i32,
-        ray_origin: impl Vector<f32, 3>,
+        ray_origin: Vec3,
         ray_tmin: f32,
-        ray_direction: impl Vector<f32, 3>,
+        ray_direction: Vec3,
         ray_tmax: f32,
         payload: &mut T,
     ) {
@@ -261,9 +261,9 @@ impl RayQuery {
         acceleration_structure: &AccelerationStructure,
         ray_flags: RayFlags,
         cull_mask: u32,
-        ray_origin: impl Vector<f32, 3>,
+        ray_origin: Vec3,
         ray_tmin: f32,
-        ray_direction: impl Vector<f32, 3>,
+        ray_direction: Vec3,
         ray_tmax: f32,
     ) {
         unsafe {
@@ -732,7 +732,7 @@ impl RayQuery {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpRayQueryGetIntersectionBarycentricsKHR")]
     #[inline]
-    pub unsafe fn get_candidate_intersection_barycentrics<V: Vector<f32, 2>>(&self) -> V {
+    pub unsafe fn get_candidate_intersection_barycentrics(&self) -> Vec2 {
         unsafe {
             let mut result = Default::default();
 
@@ -760,7 +760,7 @@ impl RayQuery {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpRayQueryGetIntersectionBarycentricsKHR")]
     #[inline]
-    pub unsafe fn get_committed_intersection_barycentrics<V: Vector<f32, 2>>(&self) -> V {
+    pub unsafe fn get_committed_intersection_barycentrics(&self) -> Vec2 {
         unsafe {
             let mut result = Default::default();
 
@@ -861,7 +861,7 @@ impl RayQuery {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpRayQueryGetIntersectionObjectRayDirectionKHR")]
     #[inline]
-    pub unsafe fn get_candidate_intersection_object_ray_direction<V: Vector<f32, 3>>(&self) -> V {
+    pub unsafe fn get_candidate_intersection_object_ray_direction(&self) -> Vec3 {
         unsafe {
             let mut result = Default::default();
 
@@ -888,7 +888,7 @@ impl RayQuery {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpRayQueryGetIntersectionObjectRayDirectionKHR")]
     #[inline]
-    pub unsafe fn get_committed_intersection_object_ray_direction<V: Vector<f32, 3>>(&self) -> V {
+    pub unsafe fn get_committed_intersection_object_ray_direction(&self) -> Vec3 {
         unsafe {
             let mut result = Default::default();
 
@@ -912,7 +912,7 @@ impl RayQuery {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpRayQueryGetIntersectionObjectRayOriginKHR")]
     #[inline]
-    pub unsafe fn get_candidate_intersection_object_ray_origin<V: Vector<f32, 3>>(&self) -> V {
+    pub unsafe fn get_candidate_intersection_object_ray_origin(&self) -> Vec3 {
         unsafe {
             let mut result = Default::default();
 
@@ -939,7 +939,7 @@ impl RayQuery {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpRayQueryGetIntersectionObjectRayOriginKHR")]
     #[inline]
-    pub unsafe fn get_committed_intersection_object_ray_origin<V: Vector<f32, 3>>(&self) -> V {
+    pub unsafe fn get_committed_intersection_object_ray_origin(&self) -> Vec3 {
         unsafe {
             let mut result = Default::default();
 
@@ -960,7 +960,7 @@ impl RayQuery {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpRayQueryGetWorldRayDirectionKHR")]
     #[inline]
-    pub unsafe fn get_world_ray_direction<V: Vector<f32, 3>>(&self) -> V {
+    pub unsafe fn get_world_ray_direction(&self) -> Vec3 {
         unsafe {
             let mut result = Default::default();
 
@@ -980,7 +980,7 @@ impl RayQuery {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpRayQueryGetWorldRayOriginKHR")]
     #[inline]
-    pub unsafe fn get_world_ray_origin<V: Vector<f32, 3>>(&self) -> V {
+    pub unsafe fn get_world_ray_origin(&self) -> Vec3 {
         unsafe {
             let mut result = Default::default();
 
@@ -1053,7 +1053,7 @@ impl RayQuery {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpRayQueryGetIntersectionTriangleVertexPositionsKHR")]
     #[inline]
-    pub unsafe fn get_intersection_triangle_vertex_positions<V: Vector<f32, 3>>(&self) -> [V; 3] {
+    pub unsafe fn get_intersection_triangle_vertex_positions(&self) -> [Vec3; 3] {
         unsafe {
             let mut result = Default::default();
 

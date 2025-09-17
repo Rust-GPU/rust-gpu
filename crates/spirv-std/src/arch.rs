@@ -12,6 +12,7 @@ use crate::{
 };
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
+use glam::UVec2;
 
 mod atomics;
 mod barrier;
@@ -175,9 +176,9 @@ pub fn read_clock_khr<const SCOPE: u32>() -> u64 {
 /// bits and the second component containing the 32 most significant bits.'
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpReadClockKHR")]
-pub fn read_clock_uvec2_khr<V: Vector<u32, 2>, const SCOPE: u32>() -> V {
+pub fn read_clock_uvec2_khr<const SCOPE: u32>() -> UVec2 {
     unsafe {
-        let mut result = V::default();
+        let mut result = UVec2::default();
 
         asm! {
             "%uint = OpTypeInt 32 0",
