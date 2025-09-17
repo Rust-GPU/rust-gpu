@@ -64,18 +64,16 @@ pub enum GroupOperation {
 #[doc(alias = "subgroupBarrier")]
 #[inline]
 pub fn subgroup_barrier() {
-    unsafe {
-        barrier::control_barrier::<
-            SUBGROUP,
-            SUBGROUP,
-            {
-                Semantics::ACQUIRE_RELEASE.bits()
-                    | Semantics::UNIFORM_MEMORY.bits()
-                    | Semantics::WORKGROUP_MEMORY.bits()
-                    | Semantics::IMAGE_MEMORY.bits()
-            },
-        >();
-    }
+    barrier::control_barrier::<
+        SUBGROUP,
+        SUBGROUP,
+        {
+            Semantics::ACQUIRE_RELEASE.bits()
+                | Semantics::UNIFORM_MEMORY.bits()
+                | Semantics::WORKGROUP_MEMORY.bits()
+                | Semantics::IMAGE_MEMORY.bits()
+        },
+    >();
 }
 
 /// The function `subgroupMemoryBarrier()` enforces the ordering of all memory
@@ -87,17 +85,15 @@ pub fn subgroup_barrier() {
 #[doc(alias = "subgroupMemoryBarrier")]
 #[inline]
 pub fn subgroup_memory_barrier() {
-    unsafe {
-        barrier::memory_barrier::<
-            SUBGROUP,
-            {
-                Semantics::ACQUIRE_RELEASE.bits()
-                    | Semantics::UNIFORM_MEMORY.bits()
-                    | Semantics::WORKGROUP_MEMORY.bits()
-                    | Semantics::IMAGE_MEMORY.bits()
-            },
-        >();
-    }
+    barrier::memory_barrier::<
+        SUBGROUP,
+        {
+            Semantics::ACQUIRE_RELEASE.bits()
+                | Semantics::UNIFORM_MEMORY.bits()
+                | Semantics::WORKGROUP_MEMORY.bits()
+                | Semantics::IMAGE_MEMORY.bits()
+        },
+    >();
 }
 
 /// The function `subgroupMemoryBarrierBuffer()` enforces the ordering of all
@@ -109,12 +105,10 @@ pub fn subgroup_memory_barrier() {
 #[doc(alias = "subgroupMemoryBarrierBuffer")]
 #[inline]
 pub fn subgroup_memory_barrier_buffer() {
-    unsafe {
-        barrier::memory_barrier::<
-            SUBGROUP,
-            { Semantics::ACQUIRE_RELEASE.bits() | Semantics::UNIFORM_MEMORY.bits() },
-        >();
-    }
+    barrier::memory_barrier::<
+        SUBGROUP,
+        { Semantics::ACQUIRE_RELEASE.bits() | Semantics::UNIFORM_MEMORY.bits() },
+    >();
 }
 
 /// The function `subgroupMemoryBarrierShared()` enforces the ordering of all
@@ -128,12 +122,10 @@ pub fn subgroup_memory_barrier_buffer() {
 #[doc(alias = "subgroupMemoryBarrierShared")]
 #[inline]
 pub fn subgroup_memory_barrier_shared() {
-    unsafe {
-        barrier::memory_barrier::<
-            SUBGROUP,
-            { Semantics::ACQUIRE_RELEASE.bits() | Semantics::WORKGROUP_MEMORY.bits() },
-        >();
-    }
+    barrier::memory_barrier::<
+        SUBGROUP,
+        { Semantics::ACQUIRE_RELEASE.bits() | Semantics::WORKGROUP_MEMORY.bits() },
+    >();
 }
 
 /// The function `subgroupMemoryBarrierImage()` enforces the ordering of all
@@ -145,12 +137,10 @@ pub fn subgroup_memory_barrier_shared() {
 #[doc(alias = "subgroupMemoryBarrierImage")]
 #[inline]
 pub fn subgroup_memory_barrier_image() {
-    unsafe {
-        barrier::memory_barrier::<
-            SUBGROUP,
-            { Semantics::ACQUIRE_RELEASE.bits() | Semantics::IMAGE_MEMORY.bits() },
-        >();
-    }
+    barrier::memory_barrier::<
+        SUBGROUP,
+        { Semantics::ACQUIRE_RELEASE.bits() | Semantics::IMAGE_MEMORY.bits() },
+    >();
 }
 
 /// Result is true only in the active invocation with the lowest id in the group, otherwise result is false.

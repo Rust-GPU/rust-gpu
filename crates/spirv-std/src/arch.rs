@@ -153,7 +153,7 @@ pub fn kill() -> ! {
 /// <https://htmlpreview.github.io/?https://github.com/KhronosGroup/SPIRV-Registry/blob/master/extensions/KHR/SPV_KHR_shader_clock.html>
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpReadClockKHR")]
-pub unsafe fn read_clock_khr<const SCOPE: u32>() -> u64 {
+pub fn read_clock_khr<const SCOPE: u32>() -> u64 {
     unsafe {
         let mut result: u64;
 
@@ -175,7 +175,7 @@ pub unsafe fn read_clock_khr<const SCOPE: u32>() -> u64 {
 /// bits and the second component containing the 32 most significant bits.'
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpReadClockKHR")]
-pub unsafe fn read_clock_uvec2_khr<V: Vector<u32, 2>, const SCOPE: u32>() -> V {
+pub fn read_clock_uvec2_khr<V: Vector<u32, 2>, const SCOPE: u32>() -> V {
     unsafe {
         let mut result = V::default();
 

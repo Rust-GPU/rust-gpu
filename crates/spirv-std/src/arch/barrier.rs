@@ -33,7 +33,7 @@ use core::arch::asm;
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpControlBarrier")]
 #[inline]
-pub unsafe fn control_barrier<
+pub fn control_barrier<
     const EXECUTION: u32, // Scope
     const MEMORY: u32,    // Scope
     const SEMANTICS: u32, // Semantics
@@ -70,7 +70,7 @@ pub unsafe fn control_barrier<
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpMemoryBarrier")]
 #[inline]
-pub unsafe fn memory_barrier<
+pub fn memory_barrier<
     const MEMORY: u32,    // Scope
     const SEMANTICS: u32, // Semantics
 >() {
@@ -93,16 +93,14 @@ pub unsafe fn memory_barrier<
 /// From <https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/groupmemorybarrier>
 #[spirv_std_macros::gpu_only]
 #[inline]
-pub unsafe fn workgroup_memory_barrier() {
-    unsafe {
-        memory_barrier::<
-            { crate::memory::Scope::Workgroup as u32 },
-            {
-                crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-            },
-        >();
-    }
+pub fn workgroup_memory_barrier() {
+    memory_barrier::<
+        { crate::memory::Scope::Workgroup as u32 },
+        {
+            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
+                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+        },
+    >();
 }
 
 /// Blocks execution of all threads in a group until all group shared accesses have been completed and all threads in the group have reached this call.
@@ -112,17 +110,15 @@ pub unsafe fn workgroup_memory_barrier() {
 /// From <https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/groupmemorybarrierwithgroupsync>
 #[spirv_std_macros::gpu_only]
 #[inline]
-pub unsafe fn workgroup_memory_barrier_with_group_sync() {
-    unsafe {
-        control_barrier::<
-            { crate::memory::Scope::Workgroup as u32 },
-            { crate::memory::Scope::Workgroup as u32 },
-            {
-                crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-            },
-        >();
-    }
+pub fn workgroup_memory_barrier_with_group_sync() {
+    control_barrier::<
+        { crate::memory::Scope::Workgroup as u32 },
+        { crate::memory::Scope::Workgroup as u32 },
+        {
+            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
+                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+        },
+    >();
 }
 
 /// Blocks execution of all threads in a group until all device memory accesses have been completed.
@@ -132,17 +128,15 @@ pub unsafe fn workgroup_memory_barrier_with_group_sync() {
 /// From <https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/devicememorybarrier>
 #[spirv_std_macros::gpu_only]
 #[inline]
-pub unsafe fn device_memory_barrier() {
-    unsafe {
-        memory_barrier::<
-            { crate::memory::Scope::Device as u32 },
-            {
-                crate::memory::Semantics::IMAGE_MEMORY.bits()
-                    | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-            },
-        >();
-    }
+pub fn device_memory_barrier() {
+    memory_barrier::<
+        { crate::memory::Scope::Device as u32 },
+        {
+            crate::memory::Semantics::IMAGE_MEMORY.bits()
+                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
+                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+        },
+    >();
 }
 
 /// Blocks execution of all threads in a group until all device memory accesses have been completed and all threads in the group have reached this call.
@@ -152,18 +146,16 @@ pub unsafe fn device_memory_barrier() {
 /// From <https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/devicememorybarrierwithgroupsync>
 #[spirv_std_macros::gpu_only]
 #[inline]
-pub unsafe fn device_memory_barrier_with_group_sync() {
-    unsafe {
-        control_barrier::<
-            { crate::memory::Scope::Workgroup as u32 },
-            { crate::memory::Scope::Device as u32 },
-            {
-                crate::memory::Semantics::IMAGE_MEMORY.bits()
-                    | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-            },
-        >();
-    }
+pub fn device_memory_barrier_with_group_sync() {
+    control_barrier::<
+        { crate::memory::Scope::Workgroup as u32 },
+        { crate::memory::Scope::Device as u32 },
+        {
+            crate::memory::Semantics::IMAGE_MEMORY.bits()
+                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
+                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+        },
+    >();
 }
 
 /// Blocks execution of all threads in a group until all memory accesses have been completed.
@@ -173,18 +165,16 @@ pub unsafe fn device_memory_barrier_with_group_sync() {
 /// From <https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/allmemorybarrier>
 #[spirv_std_macros::gpu_only]
 #[inline]
-pub unsafe fn all_memory_barrier() {
-    unsafe {
-        memory_barrier::<
-            { crate::memory::Scope::Device as u32 },
-            {
-                crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                    | crate::memory::Semantics::IMAGE_MEMORY.bits()
-                    | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-            },
-        >();
-    }
+pub fn all_memory_barrier() {
+    memory_barrier::<
+        { crate::memory::Scope::Device as u32 },
+        {
+            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
+                | crate::memory::Semantics::IMAGE_MEMORY.bits()
+                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
+                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+        },
+    >();
 }
 
 /// Blocks execution of all threads in a group until all memory accesses have been completed and all threads in the group have reached this call.
@@ -194,17 +184,15 @@ pub unsafe fn all_memory_barrier() {
 /// From <https://docs.microsoft.com/en-us/windows/win32/direct3dhlsl/allmemorybarrierwithgroupsync>
 #[spirv_std_macros::gpu_only]
 #[inline]
-pub unsafe fn all_memory_barrier_with_group_sync() {
-    unsafe {
-        control_barrier::<
-            { crate::memory::Scope::Workgroup as u32 },
-            { crate::memory::Scope::Device as u32 },
-            {
-                crate::memory::Semantics::WORKGROUP_MEMORY.bits()
-                    | crate::memory::Semantics::IMAGE_MEMORY.bits()
-                    | crate::memory::Semantics::UNIFORM_MEMORY.bits()
-                    | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
-            },
-        >();
-    }
+pub fn all_memory_barrier_with_group_sync() {
+    control_barrier::<
+        { crate::memory::Scope::Workgroup as u32 },
+        { crate::memory::Scope::Device as u32 },
+        {
+            crate::memory::Semantics::WORKGROUP_MEMORY.bits()
+                | crate::memory::Semantics::IMAGE_MEMORY.bits()
+                | crate::memory::Semantics::UNIFORM_MEMORY.bits()
+                | crate::memory::Semantics::ACQUIRE_RELEASE.bits()
+        },
+    >();
 }
