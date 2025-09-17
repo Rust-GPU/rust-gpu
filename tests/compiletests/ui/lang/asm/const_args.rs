@@ -9,7 +9,7 @@ fn asm() {
         const N: usize = 3;
         asm!(
             "%int = OpTypeInt 32 0",
-            "%type = OpTypeVector %int {len}",
+            "%value = OpConstant %int {len}",
             len = const N,
         );
     }
