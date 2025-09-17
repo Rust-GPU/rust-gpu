@@ -49,10 +49,8 @@ pub fn f16x2_to_vec2<V: Vector<f32, 2>>(int: u32) -> V {
     unsafe {
         asm!(
             "%glsl = OpExtInstImport \"GLSL.std.450\"",
-            "%float = OpTypeFloat 32",
-            "%vec2 = OpTypeVector %float 2",
             // 62 = UnpackHalf2x16
-            "%result = OpExtInst %vec2 %glsl 62 {int}",
+            "%result = OpExtInst typeof*{result} %glsl 62 {int}",
             "OpStore {result} %result",
             int = in(reg) int,
             result = in(reg) &mut result,
@@ -164,10 +162,8 @@ pub fn u8x4_to_vec4_snorm<V: Vector<f32, 4>>(int: u32) -> V {
     unsafe {
         asm!(
             "%glsl = OpExtInstImport \"GLSL.std.450\"",
-            "%float = OpTypeFloat 32",
-            "%vec4 = OpTypeVector %float 4",
             // 63 = UnpackSnorm4x8
-            "%result = OpExtInst %vec4 %glsl 63 {int}",
+            "%result = OpExtInst typeof*{result} %glsl 63 {int}",
             "OpStore {result} %result",
             int = in(reg) int,
             result = in(reg) &mut result,
@@ -185,10 +181,8 @@ pub fn u8x4_to_vec4_unorm<V: Vector<f32, 4>>(int: u32) -> V {
     unsafe {
         asm!(
             "%glsl = OpExtInstImport \"GLSL.std.450\"",
-            "%float = OpTypeFloat 32",
-            "%vec4 = OpTypeVector %float 4",
             // 64 = UnpackUnorm4x8
-            "%result = OpExtInst %vec4 %glsl 64 {int}",
+            "%result = OpExtInst typeof*{result} %glsl 64 {int}",
             "OpStore {result} %result",
             int = in(reg) int,
             result = in(reg) &mut result,
@@ -206,10 +200,8 @@ pub fn u16x2_to_vec2_snorm<V: Vector<f32, 2>>(int: u32) -> V {
     unsafe {
         asm!(
             "%glsl = OpExtInstImport \"GLSL.std.450\"",
-            "%float = OpTypeFloat 32",
-            "%vec2 = OpTypeVector %float 2",
             // 60 = UnpackSnorm2x16
-            "%result = OpExtInst %vec2 %glsl 60 {int}",
+            "%result = OpExtInst typeof*{result} %glsl 60 {int}",
             "OpStore {result} %result",
             int = in(reg) int,
             result = in(reg) &mut result,
@@ -227,10 +219,8 @@ pub fn u16x2_to_vec2_unorm<V: Vector<f32, 2>>(int: u32) -> V {
     unsafe {
         asm!(
             "%glsl = OpExtInstImport \"GLSL.std.450\"",
-            "%float = OpTypeFloat 32",
-            "%vec2 = OpTypeVector %float 2",
             // 61 = UnpackUnorm2x16
-            "%result = OpExtInst %vec2 %glsl 61 {int}",
+            "%result = OpExtInst typeof*{result} %glsl 61 {int}",
             "OpStore {result} %result",
             int = in(reg) int,
             result = in(reg) &mut result,
