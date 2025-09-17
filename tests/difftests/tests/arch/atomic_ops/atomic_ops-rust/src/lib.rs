@@ -31,9 +31,7 @@ pub fn main_cs(
     // Thread 0 stores the final values after all operations complete
     if tid == 0 {
         // Use atomic loads to ensure we read the final values
-        unsafe {
-            spirv_std::arch::workgroup_memory_barrier_with_group_sync();
-        }
+        spirv_std::arch::workgroup_memory_barrier_with_group_sync();
         output[0] = counters[0]; // Should be initial + 32
         output[1] = counters[1]; // Should be initial - 32
         output[2] = counters[2]; // Should be min(initial, 0)
