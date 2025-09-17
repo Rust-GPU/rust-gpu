@@ -2,6 +2,7 @@
 // compile-flags: -Ctarget-feature=+RayQueryKHR,+ext:SPV_KHR_ray_query
 
 use glam::Vec3;
+use spirv_std::matrix::Matrix4x3;
 use spirv_std::ray_tracing::{AccelerationStructure, RayFlags, RayQuery};
 use spirv_std::spirv;
 
@@ -10,7 +11,7 @@ pub fn main(#[spirv(descriptor_set = 0, binding = 0)] accel: &AccelerationStruct
     unsafe {
         spirv_std::ray_query!(let mut handle);
         handle.initialize(accel, RayFlags::NONE, 0, Vec3::ZERO, 0.0, Vec3::ZERO, 0.0);
-        let matrix: [glam::Vec3; 4] = handle.get_candidate_intersection_object_to_world();
-        let matrix: [glam::Vec3; 4] = handle.get_committed_intersection_object_to_world();
+        let matrix: Matrix4x3 = handle.get_candidate_intersection_object_to_world();
+        let matrix: Matrix4x3 = handle.get_committed_intersection_object_to_world();
     }
 }

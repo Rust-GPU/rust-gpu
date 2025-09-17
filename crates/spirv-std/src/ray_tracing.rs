@@ -3,6 +3,7 @@
 // NOTE(eddyb) "&-masking with zero", likely due to `NONE = 0` in `bitflags!`.
 #![allow(clippy::bad_bit_mask)]
 
+use crate::matrix::Matrix4x3;
 use crate::vector::Vector;
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
@@ -1002,22 +1003,14 @@ impl RayQuery {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpRayQueryGetIntersectionObjectToWorldKHR")]
     #[inline]
-    pub unsafe fn get_candidate_intersection_object_to_world<V: Vector<f32, 3>>(&self) -> [V; 4] {
+    pub unsafe fn get_candidate_intersection_object_to_world(&self) -> Matrix4x3 {
         unsafe {
             let mut result = Default::default();
 
             asm! {
                 "%u32 = OpTypeInt 32 0",
-                "%f32 = OpTypeFloat 32",
-                "%f32x3 = OpTypeVector %f32 3",
-                "%f32x3x4 = OpTypeMatrix %f32x3 4",
                 "%intersection = OpConstant %u32 0",
-                "%matrix = OpRayQueryGetIntersectionObjectToWorldKHR %f32x3x4 {ray_query} %intersection",
-                "%col0 = OpCompositeExtract %f32x3 %matrix 0",
-                "%col1 = OpCompositeExtract %f32x3 %matrix 1",
-                "%col2 = OpCompositeExtract %f32x3 %matrix 2",
-                "%col3 = OpCompositeExtract %f32x3 %matrix 3",
-                "%result = OpCompositeConstruct typeof*{result} %col0 %col1 %col2 %col3",
+                "%result = OpRayQueryGetIntersectionObjectToWorldKHR typeof*{result} {ray_query} %intersection",
                 "OpStore {result} %result",
                 ray_query = in(reg) self,
                 result = in(reg) &mut result,
@@ -1037,22 +1030,14 @@ impl RayQuery {
     #[spirv_std_macros::gpu_only]
     #[doc(alias = "OpRayQueryGetIntersectionObjectToWorldKHR")]
     #[inline]
-    pub unsafe fn get_committed_intersection_object_to_world<V: Vector<f32, 3>>(&self) -> [V; 4] {
+    pub unsafe fn get_committed_intersection_object_to_world(&self) -> Matrix4x3 {
         unsafe {
             let mut result = Default::default();
 
             asm! {
                 "%u32 = OpTypeInt 32 0",
-                "%f32 = OpTypeFloat 32",
-                "%f32x3 = OpTypeVector %f32 3",
-                "%f32x3x4 = OpTypeMatrix %f32x3 4",
                 "%intersection = OpConstant %u32 1",
-                "%matrix = OpRayQueryGetIntersectionObjectToWorldKHR %f32x3x4 {ray_query} %intersection",
-                "%col0 = OpCompositeExtract %f32x3 %matrix 0",
-                "%col1 = OpCompositeExtract %f32x3 %matrix 1",
-                "%col2 = OpCompositeExtract %f32x3 %matrix 2",
-                "%col3 = OpCompositeExtract %f32x3 %matrix 3",
-                "%result = OpCompositeConstruct typeof*{result} %col0 %col1 %col2 %col3",
+                "%result = OpRayQueryGetIntersectionObjectToWorldKHR typeof*{result} {ray_query} %intersection",
                 "OpStore {result} %result",
                 ray_query = in(reg) self,
                 result = in(reg) &mut result,
