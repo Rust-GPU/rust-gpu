@@ -54,7 +54,7 @@ pub fn main(
     if subgroup_local_invocation_id == 0 {
         shared[subgroup_id as usize] = sum;
     }
-    unsafe { spirv_std::arch::workgroup_memory_barrier_with_group_sync() };
+    spirv_std::arch::workgroup_memory_barrier_with_group_sync();
     let mut sum = 0;
     if subgroup_id == 0 {
         if subgroup_local_invocation_id < num_subgroups {

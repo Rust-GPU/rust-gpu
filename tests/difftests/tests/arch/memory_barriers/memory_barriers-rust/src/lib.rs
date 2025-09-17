@@ -19,9 +19,7 @@ pub fn main_cs(
         shared[lid] = input[tid];
 
         // Workgroup barrier to ensure all threads have loaded their data
-        unsafe {
-            workgroup_memory_barrier_with_group_sync();
-        }
+        workgroup_memory_barrier_with_group_sync();
 
         // Perform operations on shared memory
         let mut result = shared[lid];
@@ -53,17 +51,13 @@ pub fn main_cs(
         }
 
         // Another barrier before writing back
-        unsafe {
-            workgroup_memory_barrier_with_group_sync();
-        }
+        workgroup_memory_barrier_with_group_sync();
 
         // Write result back to shared memory
         shared[lid] = result;
 
         // Memory barrier to ensure writes are visible
-        unsafe {
-            workgroup_memory_barrier_with_group_sync();
-        }
+        workgroup_memory_barrier_with_group_sync();
 
         // Final read and output
         output[tid] = shared[lid];

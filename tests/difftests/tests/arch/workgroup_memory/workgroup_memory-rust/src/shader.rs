@@ -14,9 +14,7 @@ pub fn main_cs(
     shared[lid] = input[lid];
 
     // Synchronize to ensure all threads have loaded
-    unsafe {
-        workgroup_memory_barrier_with_group_sync();
-    }
+    workgroup_memory_barrier_with_group_sync();
 
     // Each thread sums its value with its neighbor (reduction step)
     if lid < 32 {
@@ -24,49 +22,37 @@ pub fn main_cs(
     }
 
     // Synchronize again
-    unsafe {
-        workgroup_memory_barrier_with_group_sync();
-    }
+    workgroup_memory_barrier_with_group_sync();
 
     if lid < 16 {
         shared[lid] += shared[lid + 16];
     }
 
-    unsafe {
-        workgroup_memory_barrier_with_group_sync();
-    }
+    workgroup_memory_barrier_with_group_sync();
 
     if lid < 8 {
         shared[lid] += shared[lid + 8];
     }
 
-    unsafe {
-        workgroup_memory_barrier_with_group_sync();
-    }
+    workgroup_memory_barrier_with_group_sync();
 
     if lid < 4 {
         shared[lid] += shared[lid + 4];
     }
 
-    unsafe {
-        workgroup_memory_barrier_with_group_sync();
-    }
+    workgroup_memory_barrier_with_group_sync();
 
     if lid < 2 {
         shared[lid] += shared[lid + 2];
     }
 
-    unsafe {
-        workgroup_memory_barrier_with_group_sync();
-    }
+    workgroup_memory_barrier_with_group_sync();
 
     if lid < 1 {
         shared[lid] += shared[lid + 1];
     }
 
-    unsafe {
-        workgroup_memory_barrier_with_group_sync();
-    }
+    workgroup_memory_barrier_with_group_sync();
 
     // Write final result
     if lid == 0 {
