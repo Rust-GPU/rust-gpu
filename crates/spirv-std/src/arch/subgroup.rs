@@ -372,10 +372,9 @@ pub fn subgroup_ballot(predicate: bool) -> SubgroupMask {
     unsafe {
         asm! {
             "%u32 = OpTypeInt 32 0",
-            "%groupmask = OpTypeVector %u32 4",
             "%subgroup = OpConstant %u32 {subgroup}",
             "%predicate = OpLoad _ {predicate}",
-            "%result = OpGroupNonUniformBallot %groupmask %subgroup %predicate",
+            "%result = OpGroupNonUniformBallot typeof*{result} %subgroup %predicate",
             "OpStore {result} %result",
             subgroup = const SUBGROUP,
             predicate = in(reg) &predicate,
