@@ -95,6 +95,7 @@ pub mod float;
 pub mod image;
 pub mod indirect_command;
 pub mod integer;
+pub mod matrix;
 pub mod memory;
 pub mod number;
 pub mod ray_tracing;
