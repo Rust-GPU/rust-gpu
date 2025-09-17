@@ -17,6 +17,11 @@ use core::arch::asm;
 /// by this instruction.
 ///
 /// This instruction is only valid in the *`MeshEXT`* Execution Model.
+///
+/// # Safety
+/// * Must be called **exactly once** in mesh shaders
+/// * Must be called in uniform control flow
+/// * Must not write any output before this instruction in invoked
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpSetMeshOutputsEXT")]
 #[inline]
@@ -54,6 +59,10 @@ pub unsafe fn set_mesh_outputs_ext(vertex_count: u32, primitive_count: u32) {
 /// This instruction must be the last instruction in a block.
 ///
 /// This instruction is only valid in the *`TaskEXT`* Execution Model.
+///
+/// # Safety
+/// * Must be called **exactly once** in task shaders
+/// * Must be called in uniform control flow
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpEmitMeshTasksEXT")]
 #[inline]
@@ -93,6 +102,10 @@ pub unsafe fn emit_mesh_tasks_ext(group_count_x: u32, group_count_y: u32, group_
 /// This instruction must be the last instruction in a block.
 ///
 /// This instruction is only valid in the *`TaskEXT`* Execution Model.
+///
+/// # Safety
+/// * Must be called **exactly once** in task shaders
+/// * Must be called in uniform control flow
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpEmitMeshTasksEXT")]
 #[inline]
