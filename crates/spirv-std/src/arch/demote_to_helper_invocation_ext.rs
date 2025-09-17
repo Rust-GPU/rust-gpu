@@ -19,7 +19,7 @@ use core::arch::asm;
 /// of [demote_to_helper_invocation].
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpDemoteToHelperInvocationEXT", alias = "discard")]
-pub unsafe fn demote_to_helper_invocation() {
+pub fn demote_to_helper_invocation() {
     unsafe {
         asm!("OpDemoteToHelperInvocationEXT");
     }
