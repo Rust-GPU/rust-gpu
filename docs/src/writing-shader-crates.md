@@ -132,7 +132,7 @@ rustflags = [
     "-Zbinary-dep-depinfo",
     "-Csymbol-mangling-version=v0",
     "-Zcrate-attr=feature(register_tool)",
-    "-Zcrate-attr=register_tool(rust_gpu)"
+    "-Zcrate-attr=register_tool(rustc_codegen_spirv)"
 ]
 
 [unstable]

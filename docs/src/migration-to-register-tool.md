@@ -29,17 +29,17 @@ You'll also need to remove the `feature(register_attr)` and `register_attr(spirv
 
 ```rust
 #![feature(register_tool)]
-#![register_tool(rust_gpu)]
+#![register_tool(rustc_codegen_spirv)]
 ```
 
 That's it. Your shaders should now compile like before.
 
 ## Technical Background
 
-Unfortunately, since the new Rust nightly toolchain in September 2022, `register_attr(spirv)` can no longer be used to register a global `spirv` attribute. Without this registration, the compiler would simply complain about `spirv` being an unknown attribute. However, the alternative, `register_tool`, requires us to scope the attribute in a namespace. For instance, as we've chosen the `rust_gpu` namespace, this would mean that you'd need to start writing `#[rust_gpu::spirv(..)]` instead, which would be quite tedious and would break a lot of code. And it's not possible to `use` a name from a tool namespace to bring it into scope.
+Unfortunately, since the new Rust nightly toolchain in September 2022, `register_attr(spirv)` can no longer be used to register a global `spirv` attribute. Without this registration, the compiler would simply complain about `spirv` being an unknown attribute. However, the alternative, `register_tool`, requires us to scope the attribute in a namespace. For instance, as we've chosen the `rustc_codegen_spirv` namespace, this would mean that you'd need to start writing `#[rustc_codegen_spirv::spirv(..)]` instead, which would be quite tedious and would break a lot of code. And it's not possible to `use` a name from a tool namespace to bring it into scope.
 
-Instead, we opted to implement a proc macro attribute called `spirv` instead[^1]. This macro attribute scans the item it is applied to, and translates any `#[spirv(..)]` it finds into `#[rust_gpu::spirv(..)]` which will be subsequently handled by the codegen backend. Because it is now a proc macro attribute exported from `spirv_std`, you need to do `use spirv_std::spirv` to make it globally visible in your crate. ***Note that we recommend using the `spirv` proc macro attribute itself rather than the `rust_gpu::spirv` attribute it translates to, as the latter is subject to change.***
+Instead, we opted to implement a proc macro attribute called `spirv` instead[^1]. This macro attribute scans the item it is applied to, and translates any `#[spirv(..)]` it finds into `#[rustc_codegen_spirv::spirv(..)]` which will be subsequently handled by the codegen backend. Because it is now a proc macro attribute exported from `spirv_std`, you need to do `use spirv_std::spirv` to make it globally visible in your crate. ***Note that we recommend using the `spirv` proc macro attribute itself rather than the `rustc_codegen_spirv::spirv` attribute it translates to, as the latter is subject to change.***
 
-We've also added the `feature(register_tool)` and `register_tool(rust_gpu)` crate attributes by default when compiling through `SpirvBuilder`. This will silence any error that you would otherwise get for applying a `rust_gpu` scoped attribute.
+We've also added the `feature(register_tool)` and `register_tool(rustc_codegen_spirv)` crate attributes by default when compiling through `SpirvBuilder`. This will silence any error that you would otherwise get for applying a `rustc_codegen_spirv` scoped attribute.
 
-[^1]: This is not entirely true. In reality, the `spirv` proc macro attribute already existed, but only for non-spirv builds. It was used to turn the `#[spirv(..)]` attribute into a no-op. The proc macro is now used on all platforms, and it emits `#[cfg_attr(target_arch="spirv", rust_gpu::spirv(..))]` for each usage of `#[spirv(..)]`.
+[^1]: This is not entirely true. In reality, the `spirv` proc macro attribute already existed, but only for non-spirv builds. It was used to turn the `#[spirv(..)]` attribute into a no-op. The proc macro is now used on all platforms, and it emits `#[cfg_attr(target_arch="spirv", rustc_codegen_spirv::spirv(..))]` for each usage of `#[spirv(..)]`.

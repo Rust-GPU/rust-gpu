@@ -363,7 +363,7 @@ fn rust_flags(codegen_backend_path: &Path) -> String {
         "-Zbinary-dep-depinfo",
         "-Csymbol-mangling-version=v0",
         "-Zcrate-attr=feature(register_tool)",
-        "-Zcrate-attr=register_tool(rust_gpu)",
+        "-Zcrate-attr=register_tool(rustc_codegen_spirv)",
         // HACK(eddyb) this is the same configuration that we test with, and
         // ensures no unwanted surprises from e.g. `core` debug assertions.
         "-Coverflow-checks=off",

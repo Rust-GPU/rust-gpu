@@ -140,14 +140,14 @@ pub fn Image(item: TokenStream) -> TokenStream {
 }
 
 /// Replaces all (nested) occurrences of the `#[spirv(..)]` attribute with
-/// `#[cfg_attr(target_arch="spirv", rust_gpu::spirv(..))]`.
+/// `#[cfg_attr(target_arch="spirv", rustc_codegen_spirv::spirv(..))]`.
 #[proc_macro_attribute]
 pub fn spirv(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut tokens: Vec<TokenTree> = Vec::new();
 
-    // prepend with #[rust_gpu::spirv(..)]
+    // prepend with #[rustc_codegen_spirv::spirv(..)]
     let attr: proc_macro2::TokenStream = attr.into();
-    tokens.extend(quote! { #[cfg_attr(target_arch="spirv", rust_gpu::spirv(#attr))] });
+    tokens.extend(quote! { #[cfg_attr(target_arch="spirv", rustc_codegen_spirv::spirv(#attr))] });
 
     let item: proc_macro2::TokenStream = item.into();
     for tt in item {
@@ -164,7 +164,7 @@ pub fn spirv(attr: TokenStream, item: TokenStream) -> TokenStream {
                             // group matches [spirv ...]
                             let inner = group.stream(); // group stream doesn't include the brackets
                             sub_tokens.extend(
-                                quote! { [cfg_attr(target_arch="spirv", rust_gpu::#inner)] },
+                                quote! { [cfg_attr(target_arch="spirv", rustc_codegen_spirv::#inner)] },
                             );
                         }
                         _ => sub_tokens.push(tt),
