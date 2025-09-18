@@ -25,10 +25,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Vulkan SDK
-        uses: humbletim/install-vulkan-sdk@v1.2
+        uses: jakoch/install-vulkan-sdk-action@v1
         with:
-          version: 1.4.309.0
+          vulkan_version: 1.4.309.0
+          install_runtime: true
           cache: true
+          stripdown: true
+
+          # FIXME(eddyb) consider using lavapipe instead, or even trying both.
+          install_swiftshader: true
+          # install_lavapipe: true
       - if: ${{ runner.os == 'Linux' }}
         name: Linux - Install native dependencies
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
@@ -84,10 +90,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Vulkan SDK
-        uses: humbletim/install-vulkan-sdk@v1.2
+        uses: jakoch/install-vulkan-sdk-action@v1
         with:
-          version: 1.4.309.0
+          vulkan_version: 1.4.309.0
+          install_runtime: true
           cache: true
+          stripdown: true
+
+          # FIXME(eddyb) consider using lavapipe instead, or even trying both.
+          install_swiftshader: true
+          # install_lavapipe: true
       - name: install rust-toolchain
         run: cargo version
       - name: cargo fetch --locked
@@ -125,10 +137,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Vulkan SDK
-        uses: humbletim/install-vulkan-sdk@v1.2
+        uses: jakoch/install-vulkan-sdk-action@v1
         with:
-          version: 1.4.309.0
+          vulkan_version: 1.4.309.0
+          install_runtime: true
           cache: true
+          stripdown: true
+
+          # FIXME(eddyb) consider using lavapipe instead, or even trying both.
+          install_swiftshader: true
+          # install_lavapipe: true
       - name: install rust-toolchain
         run: echo "TARGET=$(rustc --print host-tuple)" >> "$GITHUB_ENV"
       - name: cargo fetch --locked
@@ -145,10 +163,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Vulkan SDK
-        uses: humbletim/install-vulkan-sdk@v1.2
+        uses: jakoch/install-vulkan-sdk-action@v1
         with:
-          version: 1.4.309.0
+          vulkan_version: 1.4.309.0
+          install_runtime: true
           cache: true
+          stripdown: true
+
+          # FIXME(eddyb) consider using lavapipe instead, or even trying both.
+          install_swiftshader: true
+          # install_lavapipe: true
+      - if: ${{ runner.os == 'Windows' }}
+        name: Windows - Use SwiftShader as Vulkan driver
+        # FIXME(eddyb) ideally `jakoch/install-vulkan-sdk-action` should do this.
+        run: |
+          echo "C:/Swiftshader/" >> "$GITHUB_PATH"
+          echo "VK_DRIVER_FILES=C:/Swiftshader/vk_swiftshader_icd.json" >> "$GITHUB_ENV"
       - if: ${{ runner.os == 'Linux' }}
         name: Linux - Install native dependencies
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
@@ -199,10 +229,16 @@ jobs:
       - name: Install native dependencies
         run: sudo apt install libwayland-cursor0 libxkbcommon-dev libwayland-dev
       - name: Install Vulkan SDK
-        uses: humbletim/install-vulkan-sdk@v1.2
+        uses: jakoch/install-vulkan-sdk-action@v1
         with:
-          version: 1.4.309.0
+          vulkan_version: 1.4.309.0
+          install_runtime: true
           cache: true
+          stripdown: true
+
+          # FIXME(eddyb) consider using lavapipe instead, or even trying both.
+          install_swiftshader: true
+          # install_lavapipe: true
       - name: Install rustup components
         run: rustup component add rustfmt clippy
       # cargo version is a random command that forces the installation of rust-toolchain
