@@ -724,13 +724,6 @@ impl<'cx, 'tcx> Builder<'cx, 'tcx> {
                     (TyPat::Pointer(_, pat), SpirvType::Pointer { pointee: ty, .. })
                     | (TyPat::Vector(pat), SpirvType::Vector { element: ty, .. })
                     | (
-                        TyPat::Vector4(pat),
-                        SpirvType::Vector {
-                            element: ty,
-                            count: 4,
-                        },
-                    )
-                    | (
                         TyPat::Image(pat),
                         SpirvType::Image {
                             sampled_type: ty, ..
