@@ -862,7 +862,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         "-Zbinary-dep-depinfo".to_string(),
         "-Csymbol-mangling-version=v0".to_string(),
         "-Zcrate-attr=feature(register_tool)".to_string(),
-        "-Zcrate-attr=register_tool(rust_gpu)".to_string(),
+        "-Zcrate-attr=register_tool(rustc_codegen_spirv)".to_string(),
         // HACK(eddyb) this is the same configuration that we test with, and
         // ensures no unwanted surprises from e.g. `core` debug assertions.
         "-Coverflow-checks=off".to_string(),
