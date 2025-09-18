@@ -20,8 +20,7 @@ The runners:
   [wasm](https://webassembly.org/).
 - **ash:** runs the shader code on the GPU using
   [ash](https://crates.io/crates/ash), a Vulkan wrapper crate for Rust.
-- **CPU:** runs the shader code directly on the CPU, using rayon for
-  parallelism.
+- **CPU:** runs the shader code on the CPU, using rayon for parallelism.
 
 Not all shaders work with all runners. The following combinations are
 supported.
@@ -52,6 +51,12 @@ supported.
     down arrows to adjust the sun's intensity. Use F5 to recompile the shader
     code (but note that the image won't redraw afterwards unless the intensity is
     adjusted).
+  - `cargo run --release -p example-runner-ash -- --shader=sky` also runs the sky shader.
+  - `cargo run --release -p example-runner-ash -- --shader=simplest` runs the simplest shader.
+  - `cargo run --release -p example-runner-ash -- --shader=mouse` runs the
+    mouse shader. The click-and-drag functionality is missing and the image
+    only animates on mouse or keyboard input, but it still is a useful example.
+    A pull request to fix these shortcomings would be welcome!
 
 - CPU runner:
   - `cargo run --release -p example-runner-cpu` runs the sky shader.

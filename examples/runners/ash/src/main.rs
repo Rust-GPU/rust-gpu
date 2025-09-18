@@ -84,19 +84,51 @@ use std::{
     ffi::{CStr, CString},
     fs::File,
     os::raw::c_char,
+    path::PathBuf,
     sync::mpsc::{TryRecvError, TrySendError, sync_channel},
     thread,
 };
 
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 
 use spirv_builder::{MetadataPrintout, SpirvBuilder};
 
 use shared::ShaderConstants;
 
+// This runner currently doesn't run the `compute` shader example.
+#[derive(Debug, PartialEq, Eq, Copy, Clone, ValueEnum)]
+pub enum RustGPUShader {
+    Simplest,
+    Sky,
+    Mouse,
+}
+
+impl RustGPUShader {
+    // The form with dashes, e.g. `sky-shader`.
+    fn crate_name(&self) -> &'static str {
+        match self {
+            RustGPUShader::Simplest => "simplest-shader",
+            RustGPUShader::Sky => "sky-shader",
+            RustGPUShader::Mouse => "mouse-shader",
+        }
+    }
+
+    // The form with underscores, e.g. `sky_shader`.
+    fn crate_ident(&self) -> &'static str {
+        match self {
+            RustGPUShader::Simplest => "simplest_shader",
+            RustGPUShader::Sky => "sky_shader",
+            RustGPUShader::Mouse => "mouse_shader",
+        }
+    }
+}
+
 #[derive(Debug, Parser)]
 #[command()]
 pub struct Options {
+    #[arg(short, long, default_value = "sky")]
+    shader: RustGPUShader,
+
     /// Use Vulkan debug layer (requires Vulkan SDK installed)
     #[arg(short, long)]
     debug_layer: bool,
@@ -115,7 +147,7 @@ pub fn main() {
     }
 
     let options = Options::parse();
-    let shaders = compile_shaders();
+    let shaders = compile_shaders(&options.shader);
 
     // runtime setup
     let event_loop = EventLoop::new().unwrap();
@@ -138,17 +170,19 @@ pub fn main() {
     for SpvFile { name, data } in shaders {
         ctx.insert_shader_module(name, &data);
     }
+
+    let crate_ident = options.shader.crate_ident();
     ctx.build_pipelines(
         vk::PipelineCache::null(),
         vec![(
-            // HACK(eddyb) used to be `module: "sky_shader"` but we need `multimodule`
-            // for `debugPrintf` instrumentation to work (see `compile_shaders`).
+            // HACK(eddyb) we need `multimodule` for `debugPrintf`
+            // instrumentation to work (see `compile_shaders`).
             VertexShaderEntryPoint {
-                module: "sky_shader::main_vs".into(),
+                module: format!("{crate_ident}::main_vs"),
                 entry_point: "main_vs".into(),
             },
             FragmentShaderEntryPoint {
-                module: "sky_shader::main_fs".into(),
+                module: format!("{crate_ident}::main_fs"),
                 entry_point: "main_fs".into(),
             },
         )],
@@ -203,7 +237,7 @@ pub fn main() {
                             let compiler_sender = compiler_sender.clone();
                             thread::spawn(move || {
                                 if let Err(TrySendError::Disconnected(_)) =
-                                    compiler_sender.try_send(compile_shaders())
+                                    compiler_sender.try_send(compile_shaders(&options.shader))
                                 {
                                     panic!("compiler sender disconnected unexpectedly");
                                 };
@@ -236,29 +270,33 @@ pub fn main() {
         .unwrap();
 }
 
-pub fn compile_shaders() -> Vec<SpvFile> {
-    SpirvBuilder::new(
-        concat!(env!("CARGO_MANIFEST_DIR"), "/../../shaders/sky-shader"),
-        "spirv-unknown-vulkan1.1",
-    )
-    .print_metadata(MetadataPrintout::None)
-    .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::DebugPrintfThenExit {
-        print_inputs: true,
-        print_backtrace: true,
-    })
-    // HACK(eddyb) needed because of `debugPrintf` instrumentation limitations
-    // (see https://github.com/KhronosGroup/SPIRV-Tools/issues/4892).
-    .multimodule(true)
-    .build()
-    .unwrap()
-    .module
-    .unwrap_multi()
-    .iter()
-    .map(|(name, path)| SpvFile {
-        name: format!("sky_shader::{name}"),
-        data: read_spv(&mut File::open(path).unwrap()).unwrap(),
-    })
-    .collect()
+pub fn compile_shaders(shader: &RustGPUShader) -> Vec<SpvFile> {
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let crate_path = [manifest_dir, "..", "..", "shaders", shader.crate_name()]
+        .iter()
+        .copied()
+        .collect::<PathBuf>();
+    let crate_ident = shader.crate_ident();
+
+    SpirvBuilder::new(crate_path, "spirv-unknown-vulkan1.1")
+        .print_metadata(MetadataPrintout::None)
+        .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::DebugPrintfThenExit {
+            print_inputs: true,
+            print_backtrace: true,
+        })
+        // HACK(eddyb) needed because of `debugPrintf` instrumentation limitations
+        // (see https://github.com/KhronosGroup/SPIRV-Tools/issues/4892).
+        .multimodule(true)
+        .build()
+        .unwrap()
+        .module
+        .unwrap_multi()
+        .iter()
+        .map(|(name, path)| SpvFile {
+            name: format!("{crate_ident}::{name}"),
+            data: read_spv(&mut File::open(path).unwrap()).unwrap(),
+        })
+        .collect()
 }
 
 #[derive(Debug)]
@@ -685,6 +723,7 @@ pub struct RenderCtx {
     pub recompiling_shaders: bool,
     pub start: std::time::Instant,
 
+    // Only used for sky-shader.
     // NOTE(eddyb) this acts like an integration test for specialization constants.
     pub sky_fs_spec_id_0x5007_sun_intensity_extra_spec_const_factor: u32,
 }
