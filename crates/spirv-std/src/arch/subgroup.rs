@@ -13,10 +13,7 @@ const SUBGROUP: u32 = Scope::Subgroup as u32;
 
 /// `SubgroupMask` is a [`glam::UVec4`] representing a bitmask of all invocations within a subgroup.
 /// Mostly used in group ballot operations.
-#[repr(transparent)]
-#[derive(Copy, Clone, Default, Eq, PartialEq)]
-#[cfg_attr(feature = "bytemuck", derive(bytemuck::Zeroable, bytemuck::Pod))]
-pub struct SubgroupMask(pub glam::UVec4);
+pub type SubgroupMask = glam::UVec4;
 
 /// Defines the class of group operation.
 #[non_exhaustive]
