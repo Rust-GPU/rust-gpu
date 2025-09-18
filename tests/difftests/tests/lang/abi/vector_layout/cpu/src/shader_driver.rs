@@ -1,8 +1,10 @@
+use crate::glam_features::GlamFeatures;
 use crate::layout::{LAYOUT_COUNT, LAYOUT_LEN};
 use difftest::config::Config;
 use difftest::scaffold::compute::{BufferConfig, RustComputeShader, WgpuComputeTestMultiBuffer};
 
-pub fn run() {
+pub fn run(glam_feature: GlamFeatures) {
+    glam_feature.assert();
     let config = Config::from_path(std::env::args().nth(1).unwrap()).unwrap();
     let test = WgpuComputeTestMultiBuffer::new(
         RustComputeShader::default(),
