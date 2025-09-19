@@ -951,7 +951,7 @@ impl RenderCtx {
         let framebuffer = self.framebuffers[present_index as usize];
         let clear_values = [vk::ClearValue {
             color: vk::ClearColorValue {
-                float32: [0.0, 0.0, 1.0, 0.0],
+                float32: [0.0, 1.0, 0.0, 0.0],
             },
         }];
 
