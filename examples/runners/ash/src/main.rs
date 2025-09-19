@@ -210,22 +210,10 @@ pub fn main() {
                             });
                         }
                     }
-                    _ => {}
-                },
-                WindowEvent::KeyboardInput {
-                    event:
-                        winit::event::KeyEvent {
-                            physical_key: winit::keyboard::PhysicalKey::Code(key_code),
-                            state: winit::event::ElementState::Pressed,
-                            ..
-                        },
-                    ..
-                } => match key_code {
-                    winit::keyboard::KeyCode::NumpadAdd
-                    | winit::keyboard::KeyCode::NumpadSubtract => {
+                    winit::keyboard::NamedKey::ArrowUp | winit::keyboard::NamedKey::ArrowDown => {
                         let factor =
                             &mut ctx.sky_fs_spec_id_0x5007_sun_intensity_extra_spec_const_factor;
-                        *factor = if key_code == winit::keyboard::KeyCode::NumpadAdd {
+                        *factor = if key == winit::keyboard::NamedKey::ArrowUp {
                             factor.saturating_add(1)
                         } else {
                             factor.saturating_sub(1)
