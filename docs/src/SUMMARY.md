@@ -1,6 +1,15 @@
 # Summary
 
 - [Introduction](./introduction.md)
+- [User guide](./user-guide/intro.md)
+    -  [Crate structure](./user-guide/crate.md)
+        -  [Shader crate](./user-guide/crate-shader.md)
+        -  [Same crate](./user-guide/crate-same.md)
+    -  [Rust-GPU setup](./user-guide/rust-gpu.md)
+        -  [spirv-builder](./user-guide/spirv-builder.md)
+        -  [cargo-gpu cmdline](./user-guide/cargo-gpu-cmdline.md)
+        -  [cargo-gpu build script](./user-guide/cargo-gpu-build-script.md)
+    - [Your first shader](./user-guide/first-shader.md)
 - [Contributing to Rust-GPU]()
   - [Building](./building-rust-gpu.md)
   - [Testing](./testing.md)
