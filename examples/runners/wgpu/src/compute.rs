@@ -1,3 +1,13 @@
+//! This crate contains code to print the integer sequence at <https://oeis.org/A006877>:
+//!
+//! > In the '3x+1' problem, these values for the starting value set new records for number of
+//! > steps to reach 1.
+//!
+//! each starting value is paired with the number of steps to reach 1 (a.k.a the "Collatz
+//! sequence length").
+//!
+//! The individual Collatz sequence lengths are computed via a computer shader on the GPU.
+
 use crate::{CompiledShaderModules, Options, maybe_watch};
 
 use std::time::Duration;
@@ -252,6 +262,9 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
     drop(data);
     readback_buffer.unmap();
 
+    // Our `max` computation excludes `1`, so print that manually as the first number in the
+    // sequence.
+    println!("1: 0");
     let mut max = 0;
     for (src, out) in src_range.zip(result.iter().copied()) {
         if out == u32::MAX {
@@ -259,7 +272,6 @@ async fn start_internal(options: &Options, compiled_shader_modules: CompiledShad
             break;
         } else if out > max {
             max = out;
-            // Should produce <https://oeis.org/A006877>
             println!("{src}: {out}");
         }
     }
