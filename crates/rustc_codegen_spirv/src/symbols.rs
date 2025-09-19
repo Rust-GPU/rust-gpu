@@ -15,7 +15,7 @@ use std::rc::Rc;
 /// is to allocate all our keywords up front and intern them all, so we can do comparisons really easily and fast.
 pub struct Symbols {
     pub discriminant: Symbol,
-    pub rust_gpu: Symbol,
+    pub rustc_codegen_spirv: Symbol,
     pub spirv: Symbol,
     pub libm: Symbol,
     pub entry_point_name: Symbol,
@@ -406,7 +406,7 @@ impl Symbols {
         }
         Self {
             discriminant: Symbol::intern("discriminant"),
-            rust_gpu: Symbol::intern("rust_gpu"),
+            rustc_codegen_spirv: Symbol::intern("rustc_codegen_spirv"),
             spirv: Symbol::intern("spirv"),
             libm: Symbol::intern("libm"),
             entry_point_name: Symbol::intern("entry_point_name"),
@@ -450,34 +450,34 @@ pub(crate) fn parse_attrs_for_checking<'a>(
             Attribute::Unparsed(item) => {
                 // #[...]
                 let s = &item.path.segments;
-                if s.len() > 1 && s[0].name == sym.rust_gpu {
-                    // #[rust_gpu ...]
+                if s.len() > 1 && s[0].name == sym.rustc_codegen_spirv {
+                    // #[rustc_codegen_spirv ...]
                     if s.len() != 2 || s[1].name != sym.spirv {
-                        // #[rust_gpu::...] but not #[rust_gpu::spirv]
+                        // #[rustc_codegen_spirv::...] but not #[rustc_codegen_spirv::spirv]
                         (
                             Some(Err((
                                 attr.span(),
-                                "unknown `rust_gpu` attribute, expected `rust_gpu::spirv`"
+                                "unknown `rustc_codegen_spirv` attribute, expected `rustc_codegen_spirv::spirv`"
                                     .to_string(),
                             ))),
                             Default::default(),
                         )
                     } else if let Some(args) = attr.meta_item_list() {
-                        // #[rust_gpu::spirv(...)]
+                        // #[rustc_codegen_spirv::spirv(...)]
                         (None, args)
                     } else {
-                        // #[rust_gpu::spirv]
+                        // #[rustc_codegen_spirv::spirv]
                         (
                             Some(Err((
                                 attr.span(),
-                                "#[rust_gpu::spirv(..)] attribute must have at least one argument"
+                                "#[rustc_codegen_spirv::spirv(..)] attribute must have at least one argument"
                                     .to_string(),
                             ))),
                             Default::default(),
                         )
                     }
                 } else {
-                    // #[...] but not #[rust_gpu ...]
+                    // #[...] but not #[rustc_codegen_spirv ...]
                     (None, Default::default())
                 }
             }
