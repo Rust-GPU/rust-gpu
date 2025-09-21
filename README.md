@@ -55,7 +55,7 @@ pub fn main(
 }
 ```
 
-See [source](examples/shaders/sky-shader/src/lib.rs) for full details.
+See [the examples](examples/) for full details.
 
 ## Getting started
 
