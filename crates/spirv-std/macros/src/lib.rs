@@ -78,7 +78,7 @@ use proc_macro2::{Delimiter, Group, Span, TokenTree};
 
 use syn::{ImplItemFn, visit_mut::VisitMut};
 
-use quote::{ToTokens, quote};
+use quote::{ToTokens, TokenStreamExt, quote};
 use std::fmt::Write;
 
 /// A macro for creating SPIR-V `OpTypeImage` types. Always produces a
@@ -154,26 +154,31 @@ pub fn spirv(attr: TokenStream, item: TokenStream) -> TokenStream {
     for tt in item {
         match tt {
             TokenTree::Group(group) if group.delimiter() == Delimiter::Parenthesis => {
-                let mut sub_tokens = Vec::new();
+                let mut group_tokens = proc_macro2::TokenStream::new();
+                let mut last_token_hashtag = false;
                 for tt in group.stream() {
+                    let is_token_hashtag =
+                        matches!(&tt, TokenTree::Punct(punct) if punct.as_char() == '#');
                     match tt {
                         TokenTree::Group(group)
                             if group.delimiter() == Delimiter::Bracket
-                                && matches!(group.stream().into_iter().next(), Some(TokenTree::Ident(ident)) if ident == "spirv")
-                                && matches!(sub_tokens.last(), Some(TokenTree::Punct(p)) if p.as_char() == '#') =>
+                                && last_token_hashtag
+                                && matches!(group.stream().into_iter().next(), Some(TokenTree::Ident(ident)) if ident == "spirv") =>
                         {
                             // group matches [spirv ...]
-                            let inner = group.stream(); // group stream doesn't include the brackets
-                            sub_tokens.extend(
+                            // group stream doesn't include the brackets
+                            let inner = group.stream();
+                            group_tokens.extend(
                                 quote! { [cfg_attr(target_arch="spirv", rust_gpu::#inner)] },
                             );
                         }
-                        _ => sub_tokens.push(tt),
+                        _ => group_tokens.append(tt),
                     }
+                    last_token_hashtag = is_token_hashtag;
                 }
                 tokens.push(TokenTree::from(Group::new(
                     Delimiter::Parenthesis,
-                    sub_tokens.into_iter().collect(),
+                    group_tokens,
                 )));
             }
             _ => tokens.push(tt),
