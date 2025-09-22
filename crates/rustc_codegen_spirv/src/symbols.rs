@@ -1,5 +1,6 @@
 use crate::attr::{IntrinsicType, SpirvAttribute};
 use crate::builder::libm_intrinsics;
+use crate::spirv_attr_version::spirv_attr_with_version;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_span::symbol::Symbol;
@@ -13,7 +14,7 @@ use std::rc::Rc;
 pub struct Symbols {
     pub discriminant: Symbol,
     pub rust_gpu: Symbol,
-    pub spirv: Symbol,
+    pub spirv_attr_with_version: Symbol,
     pub libm: Symbol,
     pub entry_point_name: Symbol,
     pub spv_khr_vulkan_memory_model: Symbol,
@@ -404,7 +405,7 @@ impl Symbols {
         Self {
             discriminant: Symbol::intern("discriminant"),
             rust_gpu: Symbol::intern("rust_gpu"),
-            spirv: Symbol::intern("spirv"),
+            spirv_attr_with_version: Symbol::intern(&spirv_attr_with_version()),
             libm: Symbol::intern("libm"),
             entry_point_name: Symbol::intern("entry_point_name"),
             spv_khr_vulkan_memory_model: Symbol::intern("SPV_KHR_vulkan_memory_model"),

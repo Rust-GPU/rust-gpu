@@ -518,6 +518,7 @@ pub(crate) fn provide(providers: &mut Providers) {
 // FIXME(eddyb) find something nicer for the error type.
 type ParseAttrError = (Span, String);
 
+#[allow(clippy::get_first)]
 fn parse_attrs_for_checking<'a>(
     sym: &'a Symbols,
     attrs: &'a [Attribute],
@@ -530,12 +531,10 @@ fn parse_attrs_for_checking<'a>(
                 Attribute::Unparsed(item) => {
                     // #[...]
                     let s = &item.path.segments;
-                    if let Some(rust_gpu) = s.get(0)
-                        && rust_gpu.name == sym.rust_gpu
-                    {
+                    if let Some(rust_gpu) = s.get(0) && rust_gpu.name == sym.rust_gpu {
                         // #[rust_gpu ...]
                         match s.get(1) {
-                            Some(command) if command.name == sym.spirv => {
+                            Some(command) if command.name == sym.spirv_attr_with_version => {
                                 // #[rust_gpu::spirv ...]
                                 if let Some(args) = attr.meta_item_list() {
                                     // #[rust_gpu::spirv(...)]
@@ -551,10 +550,11 @@ fn parse_attrs_for_checking<'a>(
                             }
                             _ => {
                                 // #[rust_gpu::...] but not a know version
+                                let spirv = sym.spirv_attr_with_version.as_str();
                                 Err((
                                     attr.span(),
-                                    "unknown `rust_gpu` attribute, expected `rust_gpu::spirv`"
-                                        .to_string(),
+                                    format!("unknown `rust_gpu` attribute, expected `rust_gpu::{spirv}`. \
+                                Do the versions of `spirv-std` and `rustc_codegen_spirv` match?"),
                                 ))
                             }
                         }
