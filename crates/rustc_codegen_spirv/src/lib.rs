@@ -133,6 +133,8 @@ mod custom_decorations;
 mod custom_insts;
 mod link;
 mod linker;
+#[path = "../../spirv_attr_version.rs"]
+mod spirv_attr_version;
 mod spirv_type;
 mod spirv_type_constraints;
 mod symbols;
