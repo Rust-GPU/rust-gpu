@@ -14,6 +14,7 @@ use rustc_middle::hir::nested_filter;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::{Ident, Span, Symbol};
+use smallvec::SmallVec;
 use std::rc::Rc;
 
 // FIXME(eddyb) replace with `ArrayVec<[Word; 3]>`.
@@ -529,25 +530,33 @@ fn parse_attrs_for_checking<'a>(
                 Attribute::Unparsed(item) => {
                     // #[...]
                     let s = &item.path.segments;
-                    if s.len() > 1 && s[0].name == sym.rust_gpu {
+                    if let Some(rust_gpu) = s.get(0)
+                        && rust_gpu.name == sym.rust_gpu
+                    {
                         // #[rust_gpu ...]
-                        if s.len() != 2 || s[1].name != sym.spirv {
-                            // #[rust_gpu::...] but not #[rust_gpu::spirv]
-                            Err((
-                                attr.span(),
-                                "unknown `rust_gpu` attribute, expected `rust_gpu::spirv`"
-                                    .to_string(),
-                            ))
-                        } else if let Some(args) = attr.meta_item_list() {
-                            // #[rust_gpu::spirv(...)]
-                            Ok(args)
-                        } else {
-                            // #[rust_gpu::spirv]
-                            Err((
-                                attr.span(),
-                                "#[rust_gpu::spirv(..)] attribute must have at least one argument"
-                                    .to_string(),
-                            ))
+                        match s.get(1) {
+                            Some(command) if command.name == sym.spirv => {
+                                // #[rust_gpu::spirv ...]
+                                if let Some(args) = attr.meta_item_list() {
+                                    // #[rust_gpu::spirv(...)]
+                                    Ok(parse_spirv_attr(sym, args.iter()))
+                                } else {
+                                    // #[rust_gpu::spirv]
+                                    Err((
+                                        attr.span(),
+                                        "#[spirv(..)] attribute must have at least one argument"
+                                            .to_string(),
+                                    ))
+                                }
+                            }
+                            _ => {
+                                // #[rust_gpu::...] but not a know version
+                                Err((
+                                    attr.span(),
+                                    "unknown `rust_gpu` attribute, expected `rust_gpu::spirv`"
+                                        .to_string(),
+                                ))
+                            }
                         }
                     } else {
                         // #[...] but not #[rust_gpu ...]
@@ -558,50 +567,52 @@ fn parse_attrs_for_checking<'a>(
             }
         })
         .flat_map(|result| {
-            // parse each element of the inner list
-            let (v, e) = match result {
-                Ok(v) => (Some(v), None),
-                Err(e) => (None, Some(e)),
-            };
-            v.unwrap_or_default()
+            result
+                .unwrap_or_else(|err| SmallVec::from_iter([Err(err)]))
                 .into_iter()
-                .map(|ref arg| {
-                    let span = arg.span();
-                    let parsed_attr = if arg.has_name(sym.descriptor_set) {
-                        SpirvAttribute::DescriptorSet(parse_attr_int_value(arg)?)
-                    } else if arg.has_name(sym.binding) {
-                        SpirvAttribute::Binding(parse_attr_int_value(arg)?)
-                    } else if arg.has_name(sym.input_attachment_index) {
-                        SpirvAttribute::InputAttachmentIndex(parse_attr_int_value(arg)?)
-                    } else if arg.has_name(sym.spec_constant) {
-                        SpirvAttribute::SpecConstant(parse_spec_constant_attr(sym, arg)?)
-                    } else {
-                        let name = match arg.ident() {
-                            Some(i) => i,
-                            None => {
-                                return Err((
-                                    span,
-                                    "#[spirv(..)] attribute argument must be single identifier"
-                                        .to_string(),
-                                ));
-                            }
-                        };
-                        sym.attributes.get(&name.name).map_or_else(
-                            || Err((name.span, "unknown argument to spirv attribute".to_string())),
-                            |a| {
-                                Ok(match a {
-                                    SpirvAttribute::Entry(entry) => SpirvAttribute::Entry(
-                                        parse_entry_attrs(sym, arg, &name, entry.execution_model)?,
-                                    ),
-                                    _ => a.clone(),
-                                })
-                            },
-                        )?
-                    };
-                    Ok((span, parsed_attr))
-                })
-                .chain(e.map(|e| Err(e)))
         })
+}
+
+fn parse_spirv_attr<'a>(
+    sym: &Symbols,
+    iter: impl Iterator<Item = &'a MetaItemInner>,
+) -> SmallVec<[Result<(Span, SpirvAttribute), ParseAttrError>; 4]> {
+    iter.map(|arg| {
+        let span = arg.span();
+        let parsed_attr =
+            if arg.has_name(sym.descriptor_set) {
+                SpirvAttribute::DescriptorSet(parse_attr_int_value(arg)?)
+            } else if arg.has_name(sym.binding) {
+                SpirvAttribute::Binding(parse_attr_int_value(arg)?)
+            } else if arg.has_name(sym.input_attachment_index) {
+                SpirvAttribute::InputAttachmentIndex(parse_attr_int_value(arg)?)
+            } else if arg.has_name(sym.spec_constant) {
+                SpirvAttribute::SpecConstant(parse_spec_constant_attr(sym, arg)?)
+            } else {
+                let name = match arg.ident() {
+                    Some(i) => i,
+                    None => {
+                        return Err((
+                            span,
+                            "#[spirv(..)] attribute argument must be single identifier".to_string(),
+                        ));
+                    }
+                };
+                sym.attributes.get(&name.name).map_or_else(
+                    || Err((name.span, "unknown argument to spirv attribute".to_string())),
+                    |a| {
+                        Ok(match a {
+                            SpirvAttribute::Entry(entry) => SpirvAttribute::Entry(
+                                parse_entry_attrs(sym, arg, &name, entry.execution_model)?,
+                            ),
+                            _ => a.clone(),
+                        })
+                    },
+                )?
+            };
+        Ok((span, parsed_attr))
+    })
+    .collect()
 }
 
 fn parse_spec_constant_attr(
