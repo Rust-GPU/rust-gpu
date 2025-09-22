@@ -59,7 +59,7 @@ full reference can be found in the
 ### Disassembly
 
 All disassembly will be dumped to stderr, which makes the testing framework compare it to the 
-contents of `path/to/test.rs.stdout`.
+contents of `path/to/test.rs.stderr`.
 
 * `// compile-flags: -C llvm-args=--disassemble` disassemble the entire shader
 * `// compile-flags: -C llvm-args=--disassemble-globals` disassemble only globals and function declarations, excludes function contents
