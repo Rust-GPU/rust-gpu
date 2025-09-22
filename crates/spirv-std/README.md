@@ -2,7 +2,7 @@
 
 Core functions, traits, and more that make up a “standard library” for SPIR-V for use in [rust-gpu](https://github.com/rust-gpu/rust-gpu#readme).
 
-This crate gives a `rust-gpu` shader access to the required `#![spirv(..)]` attribute, as well as povide all kinds of APIs that allows a shader to access GPU resources such as textures and buffers. Optionally, through the use of the `"glam"` feature, it includes some boilerplate trait implementations to make `glam` vector types compatible with these APIs.
+This crate gives a `rust-gpu` shader access to the required `#![spirv(..)]` attribute, as well as provide all kinds of APIs that allows a shader to access GPU resources such as textures and buffers. Optionally, through the use of the `"glam"` feature, it includes some boilerplate trait implementations to make `glam` vector types compatible with these APIs.
 
 ## Example
 
