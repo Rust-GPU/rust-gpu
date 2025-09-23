@@ -701,7 +701,7 @@ impl VisitMut for SampleImplRewriter {
                                 let lod_type = if self.0 & SAMPLE_PARAM_EXPLICIT_LOD_MASK != 0 {
                                     "ExplicitLod"
                                 } else {
-                                    "ImplicitLod "
+                                    "ImplicitLod"
                                 };
                                 let s = s.replace("$LOD", lod_type);
 
