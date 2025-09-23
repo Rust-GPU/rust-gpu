@@ -160,6 +160,12 @@ config.write_metadata(&metadata)?;
 
 ## Running Tests
 
+### Install cargo-nextest:
+
+```sh
+cargo install cargo-nextest
+```
+
 ### Run all difftests:
 
 ```sh

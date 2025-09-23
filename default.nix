@@ -12,6 +12,7 @@ in with pkgs; stdenv.mkDerivation rec {
   SSL_CERT_FILE = "${cacert}/etc/ssl/certs/ca-bundle.crt";
 
   nativeBuildInputs = [ rustup ];
+  buildInputs = [ cargo-nextest ];
 
   # Runtime dependencies (for the example runners).
   LD_LIBRARY_PATH = with xorg; lib.makeLibraryPath [
