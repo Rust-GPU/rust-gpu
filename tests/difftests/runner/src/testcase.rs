@@ -9,9 +9,9 @@ use tracing::debug;
 pub struct TestCase {
     /// The name of the testcase, as a rust mod path
     pub name: String,
-    /// the relative path from the base `difftest` dir
+    /// The relative path from the base `difftest` dir
     pub relative_path: PathBuf,
-    /// the absolute path
+    /// The absolute path
     pub absolute_path: PathBuf,
     /// All the test binaries of this single test case.
     pub test_binaries: Vec<TestBinary>,
