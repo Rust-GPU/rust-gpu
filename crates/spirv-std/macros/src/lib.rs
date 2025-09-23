@@ -220,13 +220,13 @@ pub fn gpu_only(_attr: TokenStream, item: TokenStream) -> TokenStream {
     output.into()
 }
 
-/// Print a formatted string with a newline using the debug printf extension.
+/// Print a formatted string using the debug printf extension.
 ///
 /// Examples:
 ///
 /// ```rust,ignore
-/// debug_printfln!("uv: %v2f", uv);
-/// debug_printfln!("pos.x: %f, pos.z: %f, int: %i", pos.x, pos.z, int);
+/// debug_printf!("uv: %v2f\n", uv);
+/// debug_printf!("pos.x: %f, pos.z: %f, int: %i\n", pos.x, pos.z, int);
 /// ```
 ///
 /// See <https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/debug_printf.md#debug-printf-format-string> for formatting rules.
