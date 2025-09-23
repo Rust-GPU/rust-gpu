@@ -561,7 +561,7 @@ fn is_grad(i: usize) -> bool {
 struct SampleImplRewriter(usize, syn::Type);
 
 impl SampleImplRewriter {
-    pub fn rewrite(mask: usize, f: &syn::ItemImpl) -> syn::ItemImpl {
+    fn rewrite(mask: usize, f: &syn::ItemImpl) -> syn::ItemImpl {
         let mut new_impl = f.clone();
         let mut ty_str = String::from("SampleParams<");
 
