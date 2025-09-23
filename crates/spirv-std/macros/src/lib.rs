@@ -265,7 +265,9 @@ pub fn gpu_only(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #[cfg(not(target_arch="spirv"))]
         #[allow(unused_variables)]
         #(#attrs)* #vis #sig_cpu {
-            unimplemented!(concat!("`", stringify!(#fn_name), "` is only available on SPIR-V platforms."))
+            unimplemented!(
+                concat!("`", stringify!(#fn_name), "` is only available on SPIR-V platforms.")
+            )
         }
 
         #[cfg(target_arch="spirv")]
