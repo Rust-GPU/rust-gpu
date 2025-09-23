@@ -333,7 +333,7 @@ impl syn::parse::Parse for DebugPrintfInput {
     }
 }
 
-fn parsing_error(message: &str, span: Span) -> TokenStream {
+fn parse_error(message: &str, span: Span) -> TokenStream {
     syn::Error::new(span, message).to_compile_error().into()
 }
 
@@ -391,7 +391,7 @@ fn debug_printf_inner(input: DebugPrintfInput) -> TokenStream {
         if ch == '%' {
             ch = match chars.next() {
                 Some('%') => continue,
-                None => return parsing_error("Unterminated format specifier", span),
+                None => return parse_error("Unterminated format specifier", span),
                 Some(ch) => ch,
             };
 
@@ -401,7 +401,7 @@ fn debug_printf_inner(input: DebugPrintfInput) -> TokenStream {
                 ch = match chars.next() {
                     Some(ch) => ch,
                     None => {
-                        return parsing_error(
+                        return parse_error(
                             "Unterminated format specifier: missing type after precision",
                             span,
                         );
@@ -415,7 +415,7 @@ fn debug_printf_inner(input: DebugPrintfInput) -> TokenStream {
                 ch = match chars.next() {
                     Some(ch) => ch,
                     None => {
-                        return parsing_error(
+                        return parse_error(
                             "Unterminated format specifier: missing type after decimal point",
                             span,
                         );
@@ -426,7 +426,7 @@ fn debug_printf_inner(input: DebugPrintfInput) -> TokenStream {
                     ch = match chars.next() {
                         Some(ch) => ch,
                         None => {
-                            return parsing_error(
+                            return parse_error(
                                 "Unterminated format specifier: missing type after fraction precision",
                                 span,
                             );
@@ -441,20 +441,20 @@ fn debug_printf_inner(input: DebugPrintfInput) -> TokenStream {
                     Some('3') => 3,
                     Some('4') => 4,
                     Some(ch) => {
-                        return parsing_error(&format!("Invalid width for vector: {ch}"), span);
+                        return parse_error(&format!("Invalid width for vector: {ch}"), span);
                     }
-                    None => return parsing_error("Missing vector dimensions specifier", span),
+                    None => return parse_error("Missing vector dimensions specifier", span),
                 };
 
                 ch = match chars.next() {
                     Some(ch) => ch,
-                    None => return parsing_error("Missing vector type specifier", span),
+                    None => return parse_error("Missing vector type specifier", span),
                 };
 
                 let ty = match map_specifier_to_type(ch, &mut chars) {
                     Some(ty) => ty,
                     _ => {
-                        return parsing_error(
+                        return parse_error(
                             &format!("Unrecognised vector type specifier: '{ch}'"),
                             span,
                         );
@@ -466,7 +466,7 @@ fn debug_printf_inner(input: DebugPrintfInput) -> TokenStream {
                 let ty = match map_specifier_to_type(ch, &mut chars) {
                     Some(ty) => ty,
                     _ => {
-                        return parsing_error(
+                        return parse_error(
                             &format!("Unrecognised format specifier: '{ch}'"),
                             span,
                         );
