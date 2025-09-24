@@ -5,9 +5,15 @@ use core::num::NonZeroUsize;
 
 /// Abstract trait representing a SPIR-V scalar type.
 ///
+/// Implemented on types that map to spirv "scalar" types, which includes:
+/// * Floating-point type: f32, f64
+/// * Integer type: u8, u16, u32, u64, i8, i16, i32, i64
+/// * Boolean type: bool
+///
+/// See the SPIRV spec on [Types](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_types).
+///
 /// # Safety
-/// Implementing this trait on non-scalar types breaks assumptions of other unsafe code, and should
-/// not be done.
+/// Must only be implemented on spirv "scalar" types, as mentioned above.
 pub unsafe trait Scalar: VectorOrScalar<Scalar = Self> + crate::sealed::Sealed {}
 
 macro_rules! impl_scalar {
