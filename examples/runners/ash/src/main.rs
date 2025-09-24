@@ -175,8 +175,6 @@ pub fn main() {
     ctx.build_pipelines(
         vk::PipelineCache::null(),
         vec![(
-            // HACK(eddyb) we need `multimodule` for `debugPrintf`
-            // instrumentation to work (see `compile_shaders`).
             VertexShaderEntryPoint {
                 module: format!("{crate_ident}::main_vs"),
                 entry_point: "main_vs".into(),
@@ -284,8 +282,9 @@ pub fn compile_shaders(shader: &RustGPUShader) -> Vec<SpvFile> {
             print_inputs: true,
             print_backtrace: true,
         })
-        // HACK(eddyb) needed because of `debugPrintf` instrumentation limitations
-        // (see https://github.com/KhronosGroup/SPIRV-Tools/issues/4892).
+        // TODO: `multimodule` is no longer needed since
+        // https://github.com/KhronosGroup/SPIRV-Tools/issues/4892 was fixed, but removing it is
+        // non-trivial and hasn't been done et.
         .multimodule(true)
         .build()
         .unwrap()
