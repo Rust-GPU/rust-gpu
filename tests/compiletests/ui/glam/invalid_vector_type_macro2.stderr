@@ -1,0 +1,113 @@
+error: Vector ZST not allowed
+  --> $DIR/invalid_vector_type_macro2.rs:9:1
+   |
+LL | / #[derive(Copy, Clone, Default)]
+LL | | pub struct ZstVector;
+   | |_____________________^
+
+error[E0412]: cannot find type `ZstVector` in this scope
+  --> $DIR/invalid_vector_type_macro2.rs:38:67
+   |
+LL |     #[spirv(storage_class, descriptor_set = 0, binding = 0)] _: &(ZstVector, i32),
+   |                                                                   ^^^^^^^^^ not found in this scope
+
+error: unknown argument to spirv attribute
+  --> $DIR/invalid_vector_type_macro2.rs:38:13
+   |
+LL |     #[spirv(storage_class, descriptor_set = 0, binding = 0)] _: &(ZstVector, i32),
+   |             ^^^^^^^^^^^^^
+
+error[E0277]: the trait bound `Vec2: Scalar` is not satisfied
+  --> $DIR/invalid_vector_type_macro2.rs:15:9
+   |
+LL |     _x: Vec2,
+   |         ^^^^ the trait `Scalar` is not implemented for `Vec2`
+   |
+   = help: the following other types implement trait `Scalar`:
+             bool
+             f32
+             f64
+             i16
+             i32
+             i64
+             i8
+             u16
+           and 3 others
+note: required by a bound in `spirv_std::ScalarOrVector::Scalar`
+  --> $SPIRV_STD_SRC/scalar_or_vector.rs:18:18
+   |
+LL |     type Scalar: Scalar;
+   |                  ^^^^^^ required by this bound in `ScalarOrVector::Scalar`
+
+error[E0277]: the trait bound `Vec2: Scalar` is not satisfied
+  --> $DIR/invalid_vector_type_macro2.rs:12:1
+   |
+LL | #[spirv_std::spirv_vector]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Scalar` is not implemented for `Vec2`
+   |
+   = help: the following other types implement trait `Scalar`:
+             bool
+             f32
+             f64
+             i16
+             i32
+             i64
+             i8
+             u16
+           and 3 others
+note: required by a bound in `Vector`
+  --> $SPIRV_STD_SRC/vector.rs:56:28
+   |
+LL | pub unsafe trait Vector<T: Scalar, const N: usize>: ScalarOrVector<Scalar = T> {}
+   |                            ^^^^^^ required by this bound in `Vector`
+   = note: this error originates in the attribute macro `spirv_std::spirv_vector` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `NonZero<u32>: Scalar` is not satisfied
+  --> $DIR/invalid_vector_type_macro2.rs:22:9
+   |
+LL |     _x: NonZeroU32,
+   |         ^^^^^^^^^^ the trait `Scalar` is not implemented for `NonZero<u32>`
+   |
+   = help: the following other types implement trait `Scalar`:
+             bool
+             f32
+             f64
+             i16
+             i32
+             i64
+             i8
+             u16
+           and 3 others
+note: required by a bound in `spirv_std::ScalarOrVector::Scalar`
+  --> $SPIRV_STD_SRC/scalar_or_vector.rs:18:18
+   |
+LL |     type Scalar: Scalar;
+   |                  ^^^^^^ required by this bound in `ScalarOrVector::Scalar`
+
+error[E0277]: the trait bound `NonZero<u32>: Scalar` is not satisfied
+  --> $DIR/invalid_vector_type_macro2.rs:19:1
+   |
+LL | #[spirv_std::spirv_vector]
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Scalar` is not implemented for `NonZero<u32>`
+   |
+   = help: the following other types implement trait `Scalar`:
+             bool
+             f32
+             f64
+             i16
+             i32
+             i64
+             i8
+             u16
+           and 3 others
+note: required by a bound in `Vector`
+  --> $SPIRV_STD_SRC/vector.rs:56:28
+   |
+LL | pub unsafe trait Vector<T: Scalar, const N: usize>: ScalarOrVector<Scalar = T> {}
+   |                            ^^^^^^ required by this bound in `Vector`
+   = note: this error originates in the attribute macro `spirv_std::spirv_vector` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: aborting due to 7 previous errors
+
+Some errors have detailed explanations: E0277, E0412.
+For more information about an error, try `rustc --explain E0277`.
