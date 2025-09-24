@@ -1017,8 +1017,8 @@ fn trans_intrinsic_type<'tcx>(
     }
 }
 
-/// A struct with multiple fields of the same kind
-/// Used for `#[spirv(vector)]` and `#[spirv(matrix)]`
+/// A struct with multiple fields of the same kind.
+/// Used for `#[spirv(vector)]` and `#[spirv(matrix)]`.
 fn trans_glam_like_struct<'tcx>(
     cx: &CodegenCx<'tcx>,
     span: Span,
