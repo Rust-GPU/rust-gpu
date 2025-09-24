@@ -1059,6 +1059,27 @@ fn trans_glam_like_struct<'tcx>(
                     .span_err(span, format!("{err_attr_name} must have 2, 3 or 4 members"))
             })?;
 
+        for i in 0..ty.fields.count() {
+            let expected = element.size.checked_mul(i as u64, cx).unwrap();
+            let actual = ty.fields.offset(i);
+            if actual != expected {
+                let name: &str = adt
+                    .non_enum_variant()
+                    .fields
+                    .get(FieldIdx::from(i))
+                    .unwrap()
+                    .name
+                    .as_str();
+                tcx.dcx().span_fatal(
+                    span,
+                    format!(
+                        "Unexpected layout for {err_attr_name} annotated struct: \
+                    Expected member `{name}` at offset {expected:?}, but was at {actual:?}"
+                    ),
+                )
+            }
+        }
+
         Ok((element_word, count))
     } else {
         Err(tcx
