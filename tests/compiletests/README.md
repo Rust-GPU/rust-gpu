@@ -71,10 +71,15 @@ contents of `path/to/test.rs.stderr`.
 * `// normalize-stderr-test "targetSpecificMsg" -> ""` Replaces any substrings in stderr with another to normalise output
   between different machines and targets. By default, you should have to not specify any and only add them as needed. 
   List of common substitutions:
-  * `// normalize-stderr-test "OpLine .*\n" -> ""` remove all line numbers from debug info
-  * `// normalize-stderr-test "OpSource .*\n" -> ""` remove all source code from debug info
-  * `// normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"` normalize path to the `spirv-std` crate
-  * `// normalize-stderr-test "OpCapability VulkanMemoryModel\n" -> ""` remove the vulkan memory model *capability*, only used by vulkan targets
-  * `// normalize-stderr-test "OpExtension .SPV_KHR_vulkan_memory_model.\n" -> ""` remove the vulkan memory model *extension*, only used by vulkan targets
-  * `// normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"` replace the `Vulkan` memory model with `Simple`
-  * `// normalize-stderr-test "\S*/lib/rustlib/" -> "$$SYSROOT/lib/rustlib/"` normalize path to crates delivered with rustc, such as `core`
+  * remove debug info:
+    * `// normalize-stderr-test "OpLine .*\n" -> ""` remove all line numbers
+    * `// normalize-stderr-test "OpSource .*\n" -> ""` remove all source code
+    * `// normalize-stderr-test "%\d+ = OpString .*\n" -> ""` remove all src file paths
+  * when disassembling globals and testing on both `vulkan` and `spv` targets:
+    * `// normalize-stderr-test "OpCapability VulkanMemoryModel\n" -> ""` remove the vulkan memory model *capability*, only used by `vulkan` targets
+    * `// normalize-stderr-test "OpExtension .SPV_KHR_vulkan_memory_model.\n" -> ""` remove the vulkan memory model *extension*, only used by `vulkan` targets
+    * `// normalize-stderr-test "OpMemoryModel Logical Vulkan" -> "OpMemoryModel Logical Simple"` replace the `Vulkan` memory model with `Simple`, which `spv` targets use
+    * `// normalize-stderr-test "; .*\n" -> ""` remove comments on spirv version by rspirv
+  * remove rustc error src paths:
+    * `// normalize-stderr-test "\S*/lib/rustlib/" -> "$$SYSROOT/lib/rustlib/"` normalize path to crates delivered with rustc, such as `core`
+    * `// normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"` normalize path to the `spirv-std` crate
