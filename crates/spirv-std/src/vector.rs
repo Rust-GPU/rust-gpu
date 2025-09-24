@@ -7,8 +7,7 @@ use glam::{Vec3Swizzles, Vec4Swizzles};
 /// Abstract trait representing either a vector or a scalar type.
 ///
 /// # Safety
-/// Implementing this trait on non-scalar or non-vector types may break assumptions about other
-/// unsafe code, and should not be done.
+/// Your type must also implement [`Vector`] or [`Scalar`], see their safety sections as well.
 pub unsafe trait VectorOrScalar: Copy + Default + Send + Sync + 'static {
     /// Either the scalar component type of the vector or the scalar itself.
     type Scalar: Scalar;
@@ -27,9 +26,44 @@ pub(crate) const fn create_dim(n: usize) -> NonZeroUsize {
 
 /// Abstract trait representing a SPIR-V vector type.
 ///
+/// To implement this trait, your struct must be marked with:
+/// ```no_run
+/// #[cfg_attr(target_arch = "spirv", rust_gpu::vector::v1)]
+/// # struct Bla(f32, f32);
+/// ```
+///
+/// This places these additional constraints on your type, checked by the spirv codegen:
+/// * must be a struct
+/// * members must be a spirv [`Scalar`] type, which includes:
+///   * Floating-point type: f32, f64
+///   * Integer type: u8, u16, u32, u64, i8, i16, i32, i64
+///   * Boolean type: bool
+/// * all members must be of the same primitive type
+/// * must have 2, 3 or 4 vector components / members
+/// * type must derive Copy, Clone, Default
+///
+/// The spirv codegen backend will then emit your type as an `OpTypeVector` instead of an `OpTypeStruct`. The layout of
+/// your type is unaffected, the size, alignment and member offsets will follow standard rustc layout rules. This hint
+/// does nothing on other target platforms.
+///
+/// See the SPIRV spec on [Types](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_types) and the
+/// "Data rules" in the [Universal Validation Rules](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html#_universal_validation_rules).
+///
+/// # Example
+/// ```no_run
+/// #[derive(Copy, Clone, Default)]
+/// #[cfg_attr(target_arch = "spirv", rust_gpu::vector::v1)]
+/// struct MyColor {
+///     r: f32,
+///     b: f32,
+///     g: f32,
+/// }
+/// ```
+///
+///
 /// # Safety
-/// Implementing this trait on non-simd-vector types breaks assumptions of other unsafe code, and
-/// should not be done.
+/// Must only be implemented on types that the spirv codegen emits as valid `OpTypeVector`. This includes all structs
+/// marked with `#[rust_gpu::vector::v1]`, like [`glam`]'s non-SIMD "scalar" vector types.
 pub unsafe trait Vector<T: Scalar, const N: usize>: VectorOrScalar<Scalar = T> {}
 
 macro_rules! impl_vector {
