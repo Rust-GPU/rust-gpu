@@ -973,15 +973,18 @@ fn trans_intrinsic_type<'tcx>(
         }
         IntrinsicType::Matrix => {
             let span = span_for_spirv_type_adt(cx, ty).unwrap();
-            let (element, count) =
-                trans_glam_like_struct(cx, span, ty, args, "`#[spirv(matrix)]`")?;
+            let err_attr_name = "`#[spirv(matrix)]`";
+            let (element, count) = trans_glam_like_struct(cx, span, ty, args, err_attr_name)?;
             match cx.lookup_type(element) {
                 SpirvType::Vector { .. } => (),
                 ty => {
                     return Err(cx
                         .tcx
                         .dcx()
-                        .struct_span_err(span, "`#[spirv(matrix)]` type fields must all be vectors")
+                        .struct_span_err(
+                            span,
+                            format!("{err_attr_name} type fields must all be vectors"),
+                        )
                         .with_note(format!("field type is {}", ty.debug(element, cx)))
                         .emit());
                 }
@@ -990,8 +993,8 @@ fn trans_intrinsic_type<'tcx>(
         }
         IntrinsicType::Vector => {
             let span = span_for_spirv_type_adt(cx, ty).unwrap();
-            let (element, count) =
-                trans_glam_like_struct(cx, span, ty, args, "`#[spirv(vector)]`")?;
+            let err_attr_name = "`#[spirv(vector)]`";
+            let (element, count) = trans_glam_like_struct(cx, span, ty, args, err_attr_name)?;
             match cx.lookup_type(element) {
                 SpirvType::Bool | SpirvType::Float { .. } | SpirvType::Integer { .. } => (),
                 ty => {
@@ -1000,7 +1003,9 @@ fn trans_intrinsic_type<'tcx>(
                         .dcx()
                         .struct_span_err(
                             span,
-                            "`#[spirv(vector)]` type fields must all be floats, integers or bools",
+                            format!(
+                                "{err_attr_name} type fields must all be floats, integers or bools"
+                            ),
                         )
                         .with_note(format!("field type is {}", ty.debug(element, cx)))
                         .emit());
@@ -1048,18 +1053,16 @@ fn trans_glam_like_struct<'tcx>(
         let element_word = element.spirv_type(span, cx);
         let count = u32::try_from(count)
             .ok()
-            .filter(|count| *count >= 2)
+            .filter(|count| 2 <= *count && *count <= 4)
             .ok_or_else(|| {
-                tcx.dcx().span_err(
-                    span,
-                    format!("{err_attr_name} must have at least 2 members"),
-                )
+                tcx.dcx()
+                    .span_err(span, format!("{err_attr_name} must have 2, 3 or 4 members"))
             })?;
 
         Ok((element_word, count))
     } else {
         Err(tcx
             .dcx()
-            .span_err(span, "#[spirv(vector)] type must be a struct"))
+            .span_err(span, format!("{err_attr_name} type must be a struct")))
     }
 }
