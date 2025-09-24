@@ -563,6 +563,12 @@ pub fn link(
         }
 
         {
+            let timer = before_pass("spirt_passes::explicit_layout::erase_when_invalid");
+            spirt_passes::explicit_layout::erase_when_invalid(module);
+            after_pass(Some(module), timer);
+        }
+
+        {
             let timer = before_pass("spirt_passes::validate");
             spirt_passes::validate::validate(module);
             after_pass(Some(module), timer);
