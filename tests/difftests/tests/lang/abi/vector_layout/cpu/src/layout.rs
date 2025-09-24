@@ -1,4 +1,5 @@
 use core::mem::offset_of;
+use core::ops::Range;
 use experiments::*;
 use spirv_std::glam::*;
 
@@ -29,11 +30,12 @@ macro_rules! write_layout {
 	};
 }
 
-/// gid is checked between `0..LAYOUT_COUNT`
-pub const LAYOUT_COUNT: usize = 0x60;
+/// gid is checked within this range. Note this is a range, so it **must be +1 from the max entry you use**.
+/// (Must always start at 0, `InclusiveRange` doesn't work due to constness)
+pub const LAYOUT_RANGE: Range<usize> = 0..0x56;
 /// at byte offset 0x100 * N starts layout N
 pub const LAYOUT_MAX_SIZE: usize = 0x100 / 0x4;
-pub const LAYOUT_LEN: usize = LAYOUT_COUNT * LAYOUT_MAX_SIZE;
+pub const LAYOUT_LEN: usize = LAYOUT_RANGE.end * LAYOUT_MAX_SIZE;
 
 pub fn eval_layouts(gid: u32, out: &mut [u32]) {
     let mut offset = BumpAlloc(gid as usize * LAYOUT_MAX_SIZE);
@@ -120,6 +122,7 @@ pub fn eval_layouts(gid: u32, out: &mut [u32]) {
         0x54 => write_layout!(out, offset, BVec4(x, y, z, w)),
         0x55 => write_layout!(out, offset, BVec4A()),
 
+        // IMPORTANT: when adding new rows, remember to adjust `LAYOUT_COUNT` to be the maximum + 1!
         _ => {}
     }
 }
