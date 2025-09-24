@@ -68,6 +68,7 @@ pub enum IntrinsicType {
     RuntimeArray,
     TypedBuffer,
     Matrix,
+    Vector,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -546,6 +547,22 @@ fn parse_attrs_for_checking<'a>(
                                         "#[spirv(..)] attribute must have at least one argument"
                                             .to_string(),
                                     ))
+                                }
+                            }
+                            Some(command) if command.name == sym.vector => {
+                                // #[rust_gpu::vector ...]
+                                match s.get(2) {
+                                    // #[rust_gpu::vector::v1]
+                                    Some(version) if version.name == sym.v1 => {
+                                        Ok(SmallVec::from_iter([
+                                            Ok((attr.span(), SpirvAttribute::IntrinsicType(IntrinsicType::Vector)))
+                                        ]))
+                                    },
+                                    _ => Err((
+                                        attr.span(),
+                                        "unknown `rust_gpu::vector` version, expected `rust_gpu::vector::v1`"
+                                            .to_string(),
+                                    )),
                                 }
                             }
                             _ => {
