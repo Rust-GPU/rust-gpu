@@ -91,6 +91,9 @@ use thiserror::Error;
 pub use rustc_codegen_spirv_types::Capability;
 pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
 
+#[cfg(feature = "watch")]
+pub use self::watch::Watch;
+
 #[cfg(feature = "include-target-specs")]
 pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
 
