@@ -187,6 +187,7 @@ fn maybe_watch(
                     }
                 })
                 .expect("Configuration is correct for watching")
+                .first_compile
                 .unwrap()
         } else {
             handle_compile_result(builder.build().unwrap())

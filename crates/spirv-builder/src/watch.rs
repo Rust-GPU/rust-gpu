@@ -1,22 +1,27 @@
-use crate::{SpirvBuilder, SpirvBuilderError, leaf_deps};
-use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher as _};
-use rustc_codegen_spirv_types::CompileResult;
+use std::convert::Infallible;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::Receiver;
+use std::thread::JoinHandle;
 use std::{collections::HashSet, sync::mpsc::sync_channel};
 
+use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher as _};
+use rustc_codegen_spirv_types::CompileResult;
+
+use crate::{SpirvBuilder, SpirvBuilderError, leaf_deps};
+
 impl SpirvBuilder {
-    /// Watches the module for changes using [`notify`](https://crates.io/crates/notify),
-    /// and rebuild it upon changes. Calls `on_compilation_finishes` after each
-    /// successful compilation. The second `Option<AcceptFirstCompile<T>>`
-    /// param allows you to return some `T` on the first compile, which is
-    /// then returned by this function (wrapped in Option).
+    /// Watches the module for changes using [`notify`], rebuilding it upon changes.
+    ///
+    /// Calls `on_compilation_finishes` after each successful compilation.
+    /// The second `Option<AcceptFirstCompile<T>>` param allows you to return some `T`
+    /// on the first compile, which is then returned by this function
+    /// in pair with [`JoinHandle`] to the watching thread.
     pub fn watch<T>(
         &self,
         mut on_compilation_finishes: impl FnMut(CompileResult, Option<AcceptFirstCompile<'_, T>>)
         + Send
         + 'static,
-    ) -> Result<Option<T>, SpirvBuilderError> {
+    ) -> Result<Watch<T>, SpirvBuilderError> {
         let path_to_crate = self
             .path_to_crate
             .as_ref()
@@ -46,11 +51,11 @@ impl SpirvBuilder {
             }
         };
         let metadata = self.parse_metadata_file(&metadata_file)?;
-        let mut out = None;
-        on_compilation_finishes(metadata, Some(AcceptFirstCompile(&mut out)));
+        let mut first_compile = None;
+        on_compilation_finishes(metadata, Some(AcceptFirstCompile(&mut first_compile)));
 
         let builder = self.clone();
-        let thread = std::thread::spawn(move || {
+        let watch_thread = std::thread::spawn(move || {
             let mut watcher = Watcher::new();
             watcher.watch_leaf_deps(&metadata_file);
 
@@ -66,8 +71,11 @@ impl SpirvBuilder {
                 }
             }
         });
-        drop(thread);
-        Ok(out)
+
+        Ok(Watch {
+            first_compile,
+            watch_thread,
+        })
     }
 }
 
@@ -81,6 +89,19 @@ impl<'a, T> AcceptFirstCompile<'a, T> {
     pub fn submit(self, t: T) {
         *self.0 = Some(t);
     }
+}
+
+/// Result of [watching](SpirvBuilder::watch) a module for changes.
+#[must_use]
+#[non_exhaustive]
+pub struct Watch<T> {
+    /// Result of the first compile, if any.
+    pub first_compile: Option<T>,
+    /// Join handle to the watching thread.
+    ///
+    /// You can drop it to detach the watching thread,
+    /// or [`join()`](JoinHandle::join) it to block the current thread until shutdown of the program.
+    pub watch_thread: JoinHandle<Infallible>,
 }
 
 struct Watcher {
