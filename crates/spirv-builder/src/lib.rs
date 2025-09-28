@@ -1059,7 +1059,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     );
 
     cargo.stderr(Stdio::inherit()).current_dir(path_to_crate);
-    log::debug!("building shaders with `{cargo}`");
+    log::debug!("building shaders with `{cargo:?}`");
     let build = cargo.output().expect("failed to execute cargo build");
 
     // `get_last_artifact` has the side-effect of printing invalid lines, so

@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::env;
 use std::ffi::{OsStr, OsString};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Deref, DerefMut};
 use std::process::Command;
 
@@ -107,12 +107,18 @@ impl Default for CargoCmd {
     }
 }
 
-impl Display for CargoCmd {
+impl Debug for CargoCmd {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("CargoCmd")
             .field("cargo", &self.cargo)
             .field("env_vars", &self.env_var_report())
             .finish()
+    }
+}
+
+impl From<CargoCmd> for Command {
+    fn from(cmd: CargoCmd) -> Self {
+        cmd.cargo
     }
 }
 
