@@ -71,7 +71,7 @@ pub struct ByteAddressableBuffer<T> {
 
 fn bounds_check<T>(data: &[u32], byte_index: u32) {
     let sizeof = mem::size_of::<T>() as u32;
-    if byte_index % 4 != 0 {
+    if !byte_index.is_multiple_of(4) {
         panic!("`byte_index` should be a multiple of 4");
     }
     let last_byte = byte_index + sizeof;

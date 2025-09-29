@@ -256,7 +256,7 @@ impl ComputeBackend for WgpuBackend {
         buffers: Vec<BufferConfig>,
     ) -> anyhow::Result<Vec<Vec<u8>>> {
         // Convert bytes to u32 words
-        if spirv_bytes.len() % 4 != 0 {
+        if !spirv_bytes.len().is_multiple_of(4) {
             anyhow::bail!("SPIR-V binary length is not a multiple of 4");
         }
         let spirv_words: Vec<u32> = bytemuck::cast_slice(spirv_bytes).to_vec();
