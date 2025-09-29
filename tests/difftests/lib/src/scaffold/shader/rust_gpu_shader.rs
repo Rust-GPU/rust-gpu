@@ -77,7 +77,7 @@ impl WgpuShader for RustComputeShader {
     ) -> anyhow::Result<(wgpu::ShaderModule, Option<String>)> {
         let (shader_bytes, entry_point) = self.spirv_bytes()?;
 
-        if shader_bytes.len() % 4 != 0 {
+        if !shader_bytes.len().is_multiple_of(4) {
             anyhow::bail!("SPIR-V binary length is not a multiple of 4");
         }
         let shader_words: Vec<u32> = bytemuck::cast_slice(&shader_bytes).to_vec();

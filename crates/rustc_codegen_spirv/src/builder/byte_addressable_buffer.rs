@@ -74,7 +74,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             Some(size) => size,
             None => return self.load_err(original_type, result_type),
         };
-        if element_size_bytes.bytes() % 4 != 0 {
+        if !element_size_bytes.bytes().is_multiple_of(4) {
             return self.load_err(original_type, result_type);
         }
         let element_size_words = (element_size_bytes.bytes() / 4) as u32;
@@ -148,7 +148,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     .iter()
                     .zip(field_offsets)
                     .map(|(&field_type, byte_offset)| {
-                        if byte_offset.bytes() % 4 != 0 {
+                        if !byte_offset.bytes().is_multiple_of(4) {
                             return None;
                         }
                         let word_offset = (byte_offset.bytes() / 4) as u32;
@@ -276,7 +276,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             Some(size) => size,
             None => return self.store_err(original_type, value),
         };
-        if element_size_bytes.bytes() % 4 != 0 {
+        if !element_size_bytes.bytes().is_multiple_of(4) {
             return self.store_err(original_type, value);
         }
         let element_size_words = (element_size_bytes.bytes() / 4) as u32;
@@ -343,7 +343,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 ..
             } => {
                 for (index, byte_offset) in field_offsets.iter().enumerate() {
-                    if byte_offset.bytes() % 4 != 0 {
+                    if !byte_offset.bytes().is_multiple_of(4) {
                         return self.store_err(original_type, value);
                     }
                     let word_offset = (byte_offset.bytes() / 4) as u32;

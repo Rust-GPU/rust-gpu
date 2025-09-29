@@ -3035,7 +3035,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         todo!()
     }
 
-    fn filter_landing_pad(&mut self, _pers_fn: Self::Function) -> (Self::Value, Self::Value) {
+    fn filter_landing_pad(&mut self, _pers_fn: Self::Function) {
         todo!()
     }
 

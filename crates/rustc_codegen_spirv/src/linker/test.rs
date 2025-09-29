@@ -159,7 +159,6 @@ fn link_with_linker_opts(
                 Default::default(),
                 Default::default(),
                 target,
-                Default::default(),
                 rustc_interface::util::rustc_version_str().unwrap_or("unknown"),
                 Default::default(),
                 &rustc_driver_impl::USING_INTERNAL_FEATURES,

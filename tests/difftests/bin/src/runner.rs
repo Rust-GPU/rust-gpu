@@ -498,7 +498,7 @@ impl Runner {
         match output_type {
             OutputType::Raw => output1 == output2,
             OutputType::F32 => {
-                if output1.len() % 4 != 0 {
+                if !output1.len().is_multiple_of(4) {
                     return false;
                 }
 
@@ -527,7 +527,7 @@ impl Runner {
                 }
             }
             OutputType::F64 => {
-                if output1.len() % 8 != 0 {
+                if !output1.len().is_multiple_of(8) {
                     return false;
                 }
 
