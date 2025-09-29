@@ -13,15 +13,10 @@ impl SpirvBuilder {
     /// Watches the module for changes using [`notify`], rebuilding it upon changes.
     ///
     /// Calls `on_compilation_finishes` after each successful compilation.
-    /// The second `Option<AcceptFirstCompile<T>>` param allows you to return some `T`
-    /// on the first compile, which is then returned by this function
-    /// in pair with [`JoinHandle`] to the watching thread.
-    pub fn watch<T>(
-        &self,
-        mut on_compilation_finishes: impl FnMut(CompileResult, Option<AcceptFirstCompile<'_, T>>)
-        + Send
-        + 'static,
-    ) -> Result<Watch<T>, SpirvBuilderError> {
+    pub fn watch<T, F>(&self, mut on_compilation_finishes: F) -> Result<Watch<T>, SpirvBuilderError>
+    where
+        F: FnMut(CompileResult, Option<AcceptFirstCompile<'_, T>>) + Send + 'static,
+    {
         let path_to_crate = self
             .path_to_crate
             .as_ref()
@@ -79,15 +74,14 @@ impl SpirvBuilder {
     }
 }
 
+/// The second parameter of the callback passed to [`SpirvBuilder::watch()`]
+/// which allows it to return some value of `T` on the first compile.
 pub struct AcceptFirstCompile<'a, T>(&'a mut Option<T>);
 
 impl<'a, T> AcceptFirstCompile<'a, T> {
-    pub fn new(write: &'a mut Option<T>) -> Self {
-        Self(write)
-    }
-
-    pub fn submit(self, t: T) {
-        *self.0 = Some(t);
+    /// Accepts some value of `T` to be later returned by [`SpirvBuilder::watch()`].
+    pub fn submit(self, value: T) {
+        *self.0 = Some(value);
     }
 }
 

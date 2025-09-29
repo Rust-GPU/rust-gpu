@@ -64,7 +64,6 @@ where
                     #[cfg(target_os = "windows")]
                     dx12: wgpu::Dx12BackendOptions {
                         shader_compiler: wgpu::Dx12Compiler::StaticDxc,
-                        ..Default::default()
                     },
                     ..Default::default()
                 },
