@@ -246,7 +246,7 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                 }
             }
             Scalar::Ptr(ptr, _) => {
-                let (prov, offset) = ptr.into_parts();
+                let (prov, offset) = ptr.prov_and_relative_offset();
                 let alloc_id = prov.alloc_id();
                 let (base_addr, _base_addr_space) = match self.tcx.global_alloc(alloc_id) {
                     GlobalAlloc::Memory(alloc) => {
@@ -449,7 +449,7 @@ impl<'tcx> CodegenCx<'tcx> {
                         .inner()
                         .read_scalar(self, range, /* read_provenance */ true)
                 {
-                    let (prov, _offset) = ptr.into_parts();
+                    let (prov, _offset) = ptr.prov_and_relative_offset();
                     primitive = Primitive::Pointer(
                         self.tcx.global_alloc(prov.alloc_id()).address_space(self),
                     );
