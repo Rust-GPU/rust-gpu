@@ -314,7 +314,7 @@ impl MyRenderer {
                             ),
                     ]),
                 );
-                pipeline.render(&device, cmd, frame.image_view, frame.extent, push_constants)?;
+                pipeline.render(device, cmd, frame.image_view, frame.extent, push_constants)?;
                 device.cmd_pipeline_barrier2(
                     cmd,
                     &vk::DependencyInfo::default().image_memory_barriers(&[
