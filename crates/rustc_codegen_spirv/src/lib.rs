@@ -547,8 +547,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
         _sess: &Session,
         _opt_level: config::OptLevel,
         _target_features: &[String],
-    ) -> Arc<(dyn Fn(TargetMachineFactoryConfig) -> Result<(), String> + Send + Sync + 'static)>
-    {
+    ) -> Arc<dyn Fn(TargetMachineFactoryConfig) -> Result<(), String> + Send + Sync + 'static> {
         Arc::new(|_| Ok(()))
     }
 }
