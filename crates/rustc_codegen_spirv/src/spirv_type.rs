@@ -335,7 +335,7 @@ impl SpirvType<'_> {
                     .expect("SpirvType::Array.count to be a u32 constant");
                 element.checked_mul(count, cx).expect("overflow")
             }
-            Self::Pointer { .. } => cx.tcx.data_layout.pointer_size,
+            Self::Pointer { .. } => cx.tcx.data_layout.pointer_size(),
             Self::Image { .. }
             | Self::AccelerationStructureKhr
             | Self::RayQueryKhr
@@ -357,7 +357,7 @@ impl SpirvType<'_> {
             Self::Array { element, .. }
             | Self::RuntimeArray { element }
             | Self::Matrix { element, .. } => cx.lookup_type(element).alignof(cx),
-            Self::Pointer { .. } => cx.tcx.data_layout.pointer_align.abi,
+            Self::Pointer { .. } => cx.tcx.data_layout.pointer_align().abi,
             Self::Image { .. }
             | Self::AccelerationStructureKhr
             | Self::RayQueryKhr

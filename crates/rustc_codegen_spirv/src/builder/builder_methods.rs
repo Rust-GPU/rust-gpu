@@ -1825,10 +1825,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         self.declare_func_local_var(self.type_array(self.type_i8(), size.bytes()), align)
     }
 
-    fn dynamic_alloca(&mut self, _len: Self::Value, _align: Align) -> Self::Value {
-        self.fatal("dynamic alloca not supported yet")
-    }
-
     fn load(&mut self, ty: Self::Type, ptr: Self::Value, _align: Align) -> Self::Value {
         let (ptr, access_ty) = self.adjust_pointer_for_typed_access(ptr, ty);
         let loaded_val = ptr.const_fold_load(self).unwrap_or_else(|| {
