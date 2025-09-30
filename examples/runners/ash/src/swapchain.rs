@@ -5,14 +5,14 @@ use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 use std::sync::Arc;
 
 /// A binary semaphore for swapchain operations
-pub struct SwapchainSync {
+struct SwapchainSync {
     acquire_semaphore: vk::Semaphore,
     render_semaphore: vk::Semaphore,
     render_fence: vk::Fence,
 }
 
 impl SwapchainSync {
-    pub unsafe fn new(device: &MyDevice) -> anyhow::Result<Self> {
+    unsafe fn new(device: &MyDevice) -> anyhow::Result<Self> {
         unsafe {
             let signaled_fence =
                 vk::FenceCreateInfo::default().flags(vk::FenceCreateFlags::SIGNALED);
@@ -26,7 +26,7 @@ impl SwapchainSync {
         }
     }
 
-    pub unsafe fn destroy(&self, device: &MyDevice) {
+    unsafe fn destroy(&self, device: &MyDevice) {
         unsafe {
             device.destroy_semaphore(self.acquire_semaphore, None);
             device.destroy_semaphore(self.render_semaphore, None);
@@ -263,7 +263,7 @@ pub struct DrawFrame {
     pub extent: vk::Extent2D,
     /// the [`vk::Image`] to draw to
     pub image: vk::Image,
-    /// the [`vk::ImageImage`] to draw to, created from `image`
+    /// the [`vk::Image`] to draw to, created from `image`
     pub image_view: vk::ImageView,
     /// the `acquire_image` semaphore that must be waited for before draw commands are executed
     pub acquire_semaphore: vk::Semaphore,
@@ -340,8 +340,7 @@ impl MySwapchainManager {
                 }
             }
             panic!(
-                "looped {} times trying to acquire swapchain image and failed repeatedly!",
-                RECREATE_ATTEMPTS
+                "looped {RECREATE_ATTEMPTS} times trying to acquire swapchain image and failed repeatedly!"
             );
         }
     }
