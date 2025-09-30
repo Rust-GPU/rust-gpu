@@ -225,7 +225,7 @@ pub fn main() {
                 WindowEvent::CloseRequested => event_loop_window_target.exit(),
                 _ => {}
             },
-            _ => event_loop_window_target.set_control_flow(ControlFlow::Wait),
+            _ => event_loop_window_target.set_control_flow(ControlFlow::Poll),
         })
         .unwrap();
 }
