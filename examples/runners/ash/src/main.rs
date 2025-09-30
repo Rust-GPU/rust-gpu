@@ -993,7 +993,7 @@ impl RenderCtx {
                     pipeline.pipeline_layout,
                     ash::vk::ShaderStageFlags::ALL,
                     0,
-                    any_as_u8_slice(&push_constants),
+                    bytemuck::bytes_of(&push_constants),
                 );
 
                 device.cmd_draw(draw_command_buffer, 3, 1, 0, 0);
@@ -1171,12 +1171,6 @@ impl RenderCommandPool {
 pub struct Pipeline {
     pub pipeline: vk::Pipeline,
     pub pipeline_layout: vk::PipelineLayout,
-}
-
-unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
-    unsafe {
-        ::std::slice::from_raw_parts((p as *const T).cast::<u8>(), ::std::mem::size_of::<T>())
-    }
 }
 
 unsafe extern "system" fn vulkan_debug_callback(
