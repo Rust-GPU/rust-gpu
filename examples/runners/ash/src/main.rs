@@ -71,13 +71,10 @@
 // #![allow()]
 
 use ash::{ext, khr, util::read_spv, vk};
-
+use clap::{Parser, ValueEnum};
 use raw_window_handle::{HasDisplayHandle as _, HasWindowHandle as _};
-use winit::{
-    event::{Event, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
-};
-
+use shared::ShaderConstants;
+use spirv_builder::{MetadataPrintout, SpirvBuilder};
 use std::{
     borrow::Cow,
     ffi::{CStr, CString},
@@ -87,12 +84,10 @@ use std::{
     sync::mpsc::{TryRecvError, TrySendError, sync_channel},
     thread,
 };
-
-use clap::{Parser, ValueEnum};
-
-use spirv_builder::{MetadataPrintout, SpirvBuilder};
-
-use shared::ShaderConstants;
+use winit::{
+    event::{Event, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+};
 
 // This runner currently doesn't run the `compute` shader example.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, ValueEnum)]
@@ -136,7 +131,7 @@ pub fn main() {
     }
 
     let options = Options::parse();
-    let (vert_data, frag_data) = compile_shaders(&options.shader);
+    let shader_data = compile_shaders(&options.shader).unwrap();
 
     // runtime setup
     let event_loop = EventLoop::new().unwrap();
@@ -153,15 +148,9 @@ pub fn main() {
                 )),
         )
         .unwrap();
-    let mut ctx = RenderBase::new(window, &options).into_ctx();
-
-    // Insert shader modules.
-    ctx.update_shader_modules(&vert_data, &frag_data);
-
-    // Create pipeline.
-    ctx.rebuild_pipeline(vk::PipelineCache::null());
-
-    let (compiler_sender, compiler_receiver) = sync_channel::<(Vec<u32>, Vec<u32>)>(1);
+    let mut ctx = RenderCtx::new(RenderBase::new(window, &options), shader_data);
+    ctx.rebuild_pipeline();
+    let (compiler_sender, compiler_receiver) = sync_channel::<Vec<u32>>(1);
 
     // FIXME(eddyb) incomplete `winit` upgrade, follow the guides in:
     // https://github.com/rust-windowing/winit/releases/tag/v0.30.0
@@ -181,10 +170,10 @@ pub fn main() {
                             ctx.render();
                         }
                     }
-                    Ok((new_vert_data, new_frag_data)) => {
-                        ctx.update_shader_modules(&new_vert_data, &new_frag_data);
+                    Ok(shader_data) => {
                         ctx.recompiling_shaders = false;
-                        ctx.rebuild_pipeline(vk::PipelineCache::null());
+                        ctx.shader_code = shader_data;
+                        ctx.rebuild_pipeline();
                     }
                     Err(TryRecvError::Disconnected) => {
                         panic!("compiler receiver disconnected unexpectedly");
@@ -207,8 +196,8 @@ pub fn main() {
                             ctx.recompiling_shaders = true;
                             let compiler_sender = compiler_sender.clone();
                             thread::spawn(move || {
-                                if let Err(TrySendError::Disconnected(_)) =
-                                    compiler_sender.try_send(compile_shaders(&options.shader))
+                                if let Err(TrySendError::Disconnected(_)) = compiler_sender
+                                    .try_send(compile_shaders(&options.shader).unwrap())
                                 {
                                     panic!("compiler sender disconnected unexpectedly");
                                 };
@@ -226,7 +215,7 @@ pub fn main() {
 
                         // HACK(eddyb) to see any changes, re-specializing the
                         // shader module is needed (e.g. during pipeline rebuild).
-                        ctx.rebuild_pipeline(vk::PipelineCache::null());
+                        ctx.rebuild_pipeline();
                     }
                     _ => {}
                 },
@@ -241,48 +230,29 @@ pub fn main() {
         .unwrap();
 }
 
-pub fn compile_shaders(shader: &RustGPUShader) -> (Vec<u32>, Vec<u32>) {
+pub fn compile_shaders(shader: &RustGPUShader) -> anyhow::Result<Vec<u32>> {
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let crate_path = [manifest_dir, "..", "..", "shaders", shader.crate_name()]
         .iter()
         .copied()
         .collect::<PathBuf>();
 
-    let mut shaders = SpirvBuilder::new(crate_path, "spirv-unknown-vulkan1.1")
+    let compile_result = SpirvBuilder::new(crate_path, "spirv-unknown-vulkan1.1")
         .print_metadata(MetadataPrintout::None)
         .shader_panic_strategy(spirv_builder::ShaderPanicStrategy::DebugPrintfThenExit {
             print_inputs: true,
             print_backtrace: true,
         })
-        // TODO: `multimodule` is no longer needed since
-        // https://github.com/KhronosGroup/SPIRV-Tools/issues/4892 was fixed, but removing it is
-        // non-trivial and hasn't been done yet.
-        .multimodule(true)
-        .build()
-        .unwrap()
-        .module
-        .unwrap_multi()
-        .iter()
-        .map(|(name, path)| {
-            (
-                name.clone(),
-                read_spv(&mut File::open(path).unwrap()).unwrap(),
-            )
-        })
-        .collect::<Vec<_>>();
+        .build()?;
+    let spv_path = compile_result.module.unwrap_single();
 
-    // We always have two shaders. And the fragment shader is always before the
-    // vertex shader in `shaders`. This is because `unwrap_multi` returns a
-    // `BTreeMap` sorted by shader name, and `main_fs` comes before `main_vs`,
-    // alphabetically. We still check the names to make sure they are in the
-    // order we expect. That way if the order ever changes we'll get an
-    // assertion failure here as opposed to a harder-to-debug failure later on.
+    // Assert that we always have these two shaders
+    let shaders = &compile_result.entry_points;
     assert_eq!(shaders.len(), 2);
-    assert_eq!(shaders[0].0, "main_fs");
-    assert_eq!(shaders[1].0, "main_vs");
-    let vert = shaders.pop().unwrap().1;
-    let frag = shaders.pop().unwrap().1;
-    (vert, frag)
+    assert!(shaders.contains(&"main_vs".to_string()));
+    assert!(shaders.contains(&"main_fs".to_string()));
+
+    Ok(read_spv(&mut File::open(spv_path)?)?)
 }
 
 pub struct RenderBase {
@@ -662,10 +632,6 @@ impl RenderBase {
     pub fn create_render_sync(&self) -> RenderSync {
         RenderSync::new(self)
     }
-
-    pub fn into_ctx(self) -> RenderCtx {
-        RenderCtx::from_base(self)
-    }
 }
 
 impl Drop for RenderBase {
@@ -695,9 +661,8 @@ pub struct RenderCtx {
     pub commands: RenderCommandPool,
     pub viewports: Box<[vk::Viewport]>,
     pub scissors: Box<[vk::Rect2D]>,
+    pub shader_code: Vec<u32>,
     pub pipeline: Option<Pipeline>,
-    pub vert_module: Option<vk::ShaderModule>,
-    pub frag_module: Option<vk::ShaderModule>,
 
     pub rendering_paused: bool,
     pub recompiling_shaders: bool,
@@ -709,7 +674,7 @@ pub struct RenderCtx {
 }
 
 impl RenderCtx {
-    pub fn from_base(base: RenderBase) -> Self {
+    pub fn new(base: RenderBase, shader_code: Vec<u32>) -> Self {
         let sync = RenderSync::new(&base);
 
         let (swapchain, extent) = base.create_swapchain();
@@ -745,9 +710,8 @@ impl RenderCtx {
             framebuffers,
             viewports,
             scissors,
+            shader_code,
             pipeline: None,
-            vert_module: None,
-            frag_module: None,
             rendering_paused: false,
             recompiling_shaders: false,
             start: std::time::Instant::now(),
@@ -756,92 +720,119 @@ impl RenderCtx {
         }
     }
 
-    pub fn create_pipeline_layout(&self) -> vk::PipelineLayout {
-        let push_constant_range = vk::PushConstantRange::default()
-            .offset(0)
-            .size(std::mem::size_of::<ShaderConstants>() as u32)
-            .stage_flags(vk::ShaderStageFlags::ALL);
+    /// Update shaders and rebuild the pipeline
+    pub fn rebuild_pipeline(&mut self) {
         unsafe {
-            self.base
+            self.cleanup_pipeline();
+
+            let shader_module = self
+                .base
                 .device
-                .create_pipeline_layout(
-                    &vk::PipelineLayoutCreateInfo::default()
-                        .push_constant_ranges(&[push_constant_range]),
+                .create_shader_module(
+                    &vk::ShaderModuleCreateInfo::default().code(&self.shader_code),
                     None,
                 )
-                .unwrap()
+                .unwrap();
+
+            let pipeline_layout = self
+                .base
+                .device
+                .create_pipeline_layout(
+                    &vk::PipelineLayoutCreateInfo::default().push_constant_ranges(&[
+                        vk::PushConstantRange::default()
+                            .offset(0)
+                            .size(size_of::<ShaderConstants>() as u32)
+                            .stage_flags(vk::ShaderStageFlags::ALL),
+                    ]),
+                    None,
+                )
+                .unwrap();
+
+            let mut pipelines =
+				self.base
+					.device
+					.create_graphics_pipelines(vk::PipelineCache::null(), &[vk::GraphicsPipelineCreateInfo::default()
+						.stages(
+							&[
+								vk::PipelineShaderStageCreateInfo {
+									module: shader_module,
+									p_name: c"main_vs".as_ptr(),
+									stage: vk::ShaderStageFlags::VERTEX,
+									..Default::default()
+								},
+								vk::PipelineShaderStageCreateInfo {
+									module: shader_module,
+									p_name: c"main_fs".as_ptr(),
+									stage: vk::ShaderStageFlags::FRAGMENT,
+									// NOTE(eddyb) this acts like an integration test for specialization constants.
+									p_specialization_info: &vk::SpecializationInfo::default()
+										.map_entries(&[vk::SpecializationMapEntry::default()
+											.constant_id(0x5007)
+											.offset(0)
+											.size(4)])
+										.data(&u32::to_le_bytes(
+											self.sky_fs_spec_id_0x5007_sun_intensity_extra_spec_const_factor,
+										)),
+									..Default::default()
+								},
+							],
+						)
+						.vertex_input_state(&vk::PipelineVertexInputStateCreateInfo::default())
+						.input_assembly_state(&vk::PipelineInputAssemblyStateCreateInfo {
+							topology: vk::PrimitiveTopology::TRIANGLE_LIST,
+							..Default::default()
+						})
+						.rasterization_state(&vk::PipelineRasterizationStateCreateInfo {
+							front_face: vk::FrontFace::COUNTER_CLOCKWISE,
+							line_width: 1.0,
+							..Default::default()
+						})
+						.multisample_state(&vk::PipelineMultisampleStateCreateInfo {
+                            rasterization_samples: vk::SampleCountFlags::TYPE_1,
+                            ..Default::default()
+                        })
+						.depth_stencil_state(&vk::PipelineDepthStencilStateCreateInfo::default())
+						.color_blend_state(
+							&vk::PipelineColorBlendStateCreateInfo::default()
+								.attachments(
+									&[vk::PipelineColorBlendAttachmentState {
+										blend_enable: 0,
+										src_color_blend_factor: vk::BlendFactor::SRC_COLOR,
+										dst_color_blend_factor: vk::BlendFactor::ONE_MINUS_DST_COLOR,
+										color_blend_op: vk::BlendOp::ADD,
+										src_alpha_blend_factor: vk::BlendFactor::ZERO,
+										dst_alpha_blend_factor: vk::BlendFactor::ZERO,
+										alpha_blend_op: vk::BlendOp::ADD,
+										color_write_mask: vk::ColorComponentFlags::RGBA,
+									}],
+								),
+						)
+						.dynamic_state(
+							&vk::PipelineDynamicStateCreateInfo::default()
+								.dynamic_states(&[vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR]),
+						)
+						.viewport_state(
+							&vk::PipelineViewportStateCreateInfo::default()
+								.scissor_count(1)
+								.viewport_count(1),
+						)
+						.layout(pipeline_layout)
+						.render_pass(self.render_pass)], None)
+					.expect("Unable to create graphics pipeline");
+
+            // A single `pipeline_info` results in a single pipeline.
+            assert_eq!(pipelines.len(), 1);
+            self.pipeline = pipelines.pop().map(|pipeline| Pipeline {
+                pipeline,
+                pipeline_layout,
+            });
+
+            // shader modules are allowed to be deleted after the pipeline has been created
+            self.base.device.destroy_shader_module(shader_module, None);
         }
     }
 
-    pub fn rebuild_pipeline(&mut self, pipeline_cache: vk::PipelineCache) {
-        // NOTE(eddyb) this acts like an integration test for specialization constants.
-        let spec_const_entries = [vk::SpecializationMapEntry::default()
-            .constant_id(0x5007)
-            .offset(0)
-            .size(4)];
-        let spec_const_data =
-            u32::to_le_bytes(self.sky_fs_spec_id_0x5007_sun_intensity_extra_spec_const_factor);
-        let specialization_info = vk::SpecializationInfo::default()
-            .map_entries(&spec_const_entries)
-            .data(&spec_const_data);
-
-        self.cleanup_pipeline();
-        let pipeline_layout = self.create_pipeline_layout();
-        let viewport = vk::PipelineViewportStateCreateInfo::default()
-            .scissor_count(1)
-            .viewport_count(1);
-
-        let vs_entry_point = "main_vs";
-        let fs_entry_point = "main_fs";
-        let vert_module = self.vert_module.as_ref().unwrap();
-        let frag_module = self.frag_module.as_ref().unwrap();
-        let vert_name = CString::new(vs_entry_point).unwrap();
-        let frag_name = CString::new(fs_entry_point).unwrap();
-        let desc = PipelineDescriptor::new(Box::new([
-            vk::PipelineShaderStageCreateInfo {
-                module: *vert_module,
-                p_name: (*vert_name).as_ptr(),
-                stage: vk::ShaderStageFlags::VERTEX,
-                ..Default::default()
-            },
-            vk::PipelineShaderStageCreateInfo {
-                s_type: vk::StructureType::PIPELINE_SHADER_STAGE_CREATE_INFO,
-                module: *frag_module,
-                p_name: (*frag_name).as_ptr(),
-                stage: vk::ShaderStageFlags::FRAGMENT,
-                p_specialization_info: &specialization_info,
-                ..Default::default()
-            },
-        ]));
-        let desc_indirect_parts = desc.indirect_parts();
-        let pipeline_info = vk::GraphicsPipelineCreateInfo::default()
-            .stages(&desc.shader_stages)
-            .vertex_input_state(&desc.vertex_input)
-            .input_assembly_state(&desc.input_assembly)
-            .rasterization_state(&desc.rasterization)
-            .multisample_state(&desc.multisample)
-            .depth_stencil_state(&desc.depth_stencil)
-            .color_blend_state(&desc_indirect_parts.color_blend)
-            .dynamic_state(&desc_indirect_parts.dynamic_state_info)
-            .viewport_state(&viewport)
-            .layout(pipeline_layout)
-            .render_pass(self.render_pass);
-
-        let mut pipelines = unsafe {
-            self.base
-                .device
-                .create_graphics_pipelines(pipeline_cache, &[pipeline_info], None)
-                .expect("Unable to create graphics pipeline")
-        };
-        // A single `pipeline_info` results in a single pipeline.
-        assert_eq!(pipelines.len(), 1);
-        self.pipeline = pipelines.pop().map(|pipeline| Pipeline {
-            pipeline,
-            pipeline_layout,
-        });
-    }
-
-    pub fn cleanup_pipeline(&mut self) {
+    pub unsafe fn cleanup_pipeline(&mut self) {
         unsafe {
             self.base.device.device_wait_idle().unwrap();
             if let Some(pipeline) = self.pipeline.take() {
@@ -849,37 +840,6 @@ impl RenderCtx {
                 self.base
                     .device
                     .destroy_pipeline_layout(pipeline.pipeline_layout, None);
-            }
-        }
-    }
-
-    /// Update the vertex and fragment shader modules. Does not rebuild
-    /// pipelines that may be using the shader module, nor does it invalidate
-    /// them.
-    pub fn update_shader_modules(&mut self, vert_data: &[u32], frag_data: &[u32]) {
-        let shader_info = vk::ShaderModuleCreateInfo::default().code(vert_data);
-        let shader_module = unsafe {
-            self.base
-                .device
-                .create_shader_module(&shader_info, None)
-                .expect("Vertex shader module error")
-        };
-        if let Some(old_module) = self.vert_module.replace(shader_module) {
-            unsafe {
-                self.base.device.destroy_shader_module(old_module, None);
-            }
-        }
-
-        let shader_info = vk::ShaderModuleCreateInfo::default().code(frag_data);
-        let shader_module = unsafe {
-            self.base
-                .device
-                .create_shader_module(&shader_info, None)
-                .expect("Fragment shader module error")
-        };
-        if let Some(old_module) = self.frag_module.replace(shader_module) {
-            unsafe {
-                self.base.device.destroy_shader_module(old_module, None);
             }
         }
     }
@@ -1130,12 +1090,6 @@ impl Drop for RenderCtx {
             self.base
                 .device
                 .destroy_command_pool(self.commands.pool, None);
-            self.base
-                .device
-                .destroy_shader_module(self.vert_module.unwrap(), None);
-            self.base
-                .device
-                .destroy_shader_module(self.frag_module.unwrap(), None);
         }
     }
 }
@@ -1217,99 +1171,6 @@ impl RenderCommandPool {
 pub struct Pipeline {
     pub pipeline: vk::Pipeline,
     pub pipeline_layout: vk::PipelineLayout,
-}
-
-pub struct PipelineDescriptor<'a> {
-    pub color_blend_attachments: Box<[vk::PipelineColorBlendAttachmentState]>,
-    pub dynamic_state: Box<[vk::DynamicState]>,
-    pub shader_stages: Box<[vk::PipelineShaderStageCreateInfo<'a>]>,
-    pub vertex_input: vk::PipelineVertexInputStateCreateInfo<'static>,
-    pub input_assembly: vk::PipelineInputAssemblyStateCreateInfo<'static>,
-    pub rasterization: vk::PipelineRasterizationStateCreateInfo<'static>,
-    pub multisample: vk::PipelineMultisampleStateCreateInfo<'static>,
-    pub depth_stencil: vk::PipelineDepthStencilStateCreateInfo<'static>,
-}
-
-// HACK(eddyb) these fields need to borrow from `PipelineDescriptor` itself.
-pub struct PipelineDescriptorIndirectParts<'a> {
-    pub color_blend: vk::PipelineColorBlendStateCreateInfo<'a>,
-    pub dynamic_state_info: vk::PipelineDynamicStateCreateInfo<'a>,
-}
-
-impl<'a> PipelineDescriptor<'a> {
-    fn new(shader_stages: Box<[vk::PipelineShaderStageCreateInfo<'a>]>) -> Self {
-        let vertex_input = vk::PipelineVertexInputStateCreateInfo {
-            vertex_attribute_description_count: 0,
-            vertex_binding_description_count: 0,
-            ..Default::default()
-        };
-        let input_assembly = vk::PipelineInputAssemblyStateCreateInfo {
-            topology: vk::PrimitiveTopology::TRIANGLE_LIST,
-            ..Default::default()
-        };
-
-        let rasterization = vk::PipelineRasterizationStateCreateInfo {
-            front_face: vk::FrontFace::COUNTER_CLOCKWISE,
-            line_width: 1.0,
-            polygon_mode: vk::PolygonMode::FILL,
-            ..Default::default()
-        };
-        let multisample = vk::PipelineMultisampleStateCreateInfo {
-            rasterization_samples: vk::SampleCountFlags::TYPE_1,
-            ..Default::default()
-        };
-        let noop_stencil_state = vk::StencilOpState {
-            fail_op: vk::StencilOp::KEEP,
-            pass_op: vk::StencilOp::KEEP,
-            depth_fail_op: vk::StencilOp::KEEP,
-            compare_op: vk::CompareOp::ALWAYS,
-            ..Default::default()
-        };
-        let depth_stencil = vk::PipelineDepthStencilStateCreateInfo {
-            depth_test_enable: 0,
-            depth_write_enable: 0,
-            depth_compare_op: vk::CompareOp::ALWAYS,
-            front: noop_stencil_state,
-            back: noop_stencil_state,
-            max_depth_bounds: 1.0,
-            ..Default::default()
-        };
-        let color_blend_attachments = Box::new([vk::PipelineColorBlendAttachmentState {
-            blend_enable: 0,
-            src_color_blend_factor: vk::BlendFactor::SRC_COLOR,
-            dst_color_blend_factor: vk::BlendFactor::ONE_MINUS_DST_COLOR,
-            color_blend_op: vk::BlendOp::ADD,
-            src_alpha_blend_factor: vk::BlendFactor::ZERO,
-            dst_alpha_blend_factor: vk::BlendFactor::ZERO,
-            alpha_blend_op: vk::BlendOp::ADD,
-            color_write_mask: vk::ColorComponentFlags::R
-                | vk::ColorComponentFlags::G
-                | vk::ColorComponentFlags::B
-                | vk::ColorComponentFlags::A,
-        }]);
-        let dynamic_state = Box::new([vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR]);
-
-        Self {
-            color_blend_attachments,
-            dynamic_state,
-            shader_stages,
-            vertex_input,
-            input_assembly,
-            rasterization,
-            multisample,
-            depth_stencil,
-        }
-    }
-
-    fn indirect_parts(&self) -> PipelineDescriptorIndirectParts<'_> {
-        PipelineDescriptorIndirectParts {
-            color_blend: vk::PipelineColorBlendStateCreateInfo::default()
-                .logic_op(vk::LogicOp::CLEAR)
-                .attachments(&self.color_blend_attachments),
-            dynamic_state_info: vk::PipelineDynamicStateCreateInfo::default()
-                .dynamic_states(&self.dynamic_state),
-        }
-    }
 }
 
 unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
