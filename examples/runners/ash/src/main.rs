@@ -70,6 +70,7 @@
 // crate-specific exceptions:
 // #![allow()]
 
+use anyhow::{Context, anyhow};
 use ash::{ext, khr, util::read_spv, vk};
 use clap::{Parser, ValueEnum};
 use raw_window_handle::{HasDisplayHandle as _, HasWindowHandle as _};
@@ -77,13 +78,13 @@ use shared::ShaderConstants;
 use spirv_builder::{MetadataPrintout, SpirvBuilder};
 use std::{
     borrow::Cow,
-    ffi::{CStr, CString},
+    ffi::CStr,
     fs::File,
-    os::raw::c_char,
     path::PathBuf,
     sync::mpsc::{TryRecvError, TrySendError, sync_channel},
     thread,
 };
+use winit::event_loop::ActiveEventLoop;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -118,7 +119,7 @@ pub struct Options {
     debug_layer: bool,
 }
 
-pub fn main() {
+pub fn main() -> anyhow::Result<()> {
     let options = Options::parse();
     let shader_data = compile_shaders(&options.shader).unwrap();
 
@@ -137,26 +138,23 @@ pub fn main() {
                 )),
         )
         .unwrap();
-    let mut ctx = RenderCtx::new(RenderBase::new(window, &options), shader_data);
+    let mut ctx = RenderCtx::new(RenderBase::new(window, &options)?, shader_data)?;
     ctx.rebuild_pipeline();
     let (compiler_sender, compiler_receiver) = sync_channel::<Vec<u32>>(1);
 
-    // FIXME(eddyb) incomplete `winit` upgrade, follow the guides in:
-    // https://github.com/rust-windowing/winit/releases/tag/v0.30.0
-    #[allow(deprecated)]
-    event_loop
-        .run(move |event, event_loop_window_target| match event {
+    let mut event_handler =
+        move |event: Event<_>, event_loop_window_target: &ActiveEventLoop| match event {
             Event::AboutToWait => {
                 match compiler_receiver.try_recv() {
                     Err(TryRecvError::Empty) => {
                         if ctx.rendering_paused {
                             let vk::Extent2D { width, height } = ctx.base.surface_resolution();
                             if height > 0 && width > 0 {
-                                ctx.recreate_swapchain();
-                                ctx.render();
+                                ctx.recreate_swapchain()?;
+                                ctx.render()?;
                             }
                         } else {
-                            ctx.render();
+                            ctx.render()?;
                         }
                     }
                     Ok(shader_data) => {
@@ -165,58 +163,74 @@ pub fn main() {
                         ctx.rebuild_pipeline();
                     }
                     Err(TryRecvError::Disconnected) => {
-                        panic!("compiler receiver disconnected unexpectedly");
+                        return Err(anyhow!("compiler receiver disconnected unexpectedly"));
                     }
                 };
+                Ok(())
             }
-            Event::WindowEvent { event, .. } => match event {
-                WindowEvent::KeyboardInput {
-                    event:
-                        winit::event::KeyEvent {
-                            logical_key: winit::keyboard::Key::Named(key),
-                            state: winit::event::ElementState::Pressed,
-                            ..
-                        },
-                    ..
-                } => match key {
-                    winit::keyboard::NamedKey::Escape => event_loop_window_target.exit(),
-                    winit::keyboard::NamedKey::F5 => {
-                        if !ctx.recompiling_shaders {
-                            ctx.recompiling_shaders = true;
-                            let compiler_sender = compiler_sender.clone();
-                            thread::spawn(move || {
-                                if let Err(TrySendError::Disconnected(_)) = compiler_sender
-                                    .try_send(compile_shaders(&options.shader).unwrap())
-                                {
-                                    panic!("compiler sender disconnected unexpectedly");
-                                };
-                            });
+            Event::WindowEvent { event, .. } => {
+                match event {
+                    WindowEvent::KeyboardInput {
+                        event:
+                            winit::event::KeyEvent {
+                                logical_key: winit::keyboard::Key::Named(key),
+                                state: winit::event::ElementState::Pressed,
+                                ..
+                            },
+                        ..
+                    } => match key {
+                        winit::keyboard::NamedKey::Escape => event_loop_window_target.exit(),
+                        winit::keyboard::NamedKey::F5 => {
+                            if !ctx.recompiling_shaders {
+                                ctx.recompiling_shaders = true;
+                                let compiler_sender = compiler_sender.clone();
+                                thread::spawn(move || {
+                                    if let Err(TrySendError::Disconnected(_)) = compiler_sender
+                                        .try_send(compile_shaders(&options.shader).unwrap())
+                                    {
+                                        panic!("compiler sender disconnected unexpectedly");
+                                    };
+                                });
+                            }
                         }
-                    }
-                    winit::keyboard::NamedKey::ArrowUp | winit::keyboard::NamedKey::ArrowDown => {
-                        let factor =
-                            &mut ctx.sky_fs_spec_id_0x5007_sun_intensity_extra_spec_const_factor;
-                        *factor = if key == winit::keyboard::NamedKey::ArrowUp {
-                            factor.saturating_add(1)
-                        } else {
-                            factor.saturating_sub(1)
-                        };
+                        winit::keyboard::NamedKey::ArrowUp
+                        | winit::keyboard::NamedKey::ArrowDown => {
+                            let factor = &mut ctx
+                                .sky_fs_spec_id_0x5007_sun_intensity_extra_spec_const_factor;
+                            *factor = if key == winit::keyboard::NamedKey::ArrowUp {
+                                factor.saturating_add(1)
+                            } else {
+                                factor.saturating_sub(1)
+                            };
 
-                        // HACK(eddyb) to see any changes, re-specializing the
-                        // shader module is needed (e.g. during pipeline rebuild).
-                        ctx.rebuild_pipeline();
+                            // HACK(eddyb) to see any changes, re-specializing the
+                            // shader module is needed (e.g. during pipeline rebuild).
+                            ctx.rebuild_pipeline();
+                        }
+                        _ => {}
+                    },
+                    WindowEvent::Resized(_) => {
+                        ctx.recreate_swapchain()?;
                     }
+                    WindowEvent::CloseRequested => event_loop_window_target.exit(),
                     _ => {}
-                },
-                WindowEvent::Resized(_) => {
-                    ctx.recreate_swapchain();
                 }
-                WindowEvent::CloseRequested => event_loop_window_target.exit(),
-                _ => {}
-            },
-            _ => event_loop_window_target.set_control_flow(ControlFlow::Poll),
-        })
-        .unwrap();
+
+                Ok(())
+            }
+            _ => {
+                event_loop_window_target.set_control_flow(ControlFlow::Poll);
+                Ok(())
+            }
+        };
+
+    // FIXME(eddyb) incomplete `winit` upgrade, follow the guides in:
+    // https://github.com/rust-windowing/winit/releases/tag/v0.30.0
+    #[allow(deprecated)]
+    event_loop.run(move |event, event_loop_window_target| {
+        event_handler(event, event_loop_window_target).unwrap();
+    })?;
+    Ok(())
 }
 
 pub fn compile_shaders(shader: &RustGPUShader) -> anyhow::Result<Vec<u32>> {
@@ -258,7 +272,7 @@ pub struct RenderBase {
 
     pub pdevice: vk::PhysicalDevice,
     pub queue_family_index: u32,
-    pub present_queue: vk::Queue,
+    pub main_queue: vk::Queue,
 
     pub surface: vk::SurfaceKHR,
     pub surface_loader: khr::surface::Instance,
@@ -266,100 +280,88 @@ pub struct RenderBase {
 }
 
 impl RenderBase {
-    pub fn new(window: winit::window::Window, options: &Options) -> Self {
-        cfg_if::cfg_if! {
-            if #[cfg(target_os = "macos")] {
-                let entry = ash_molten::load();
-            } else {
-                let entry = unsafe{ash::Entry::load()}.unwrap();
-            }
-        }
-
-        let instance: ash::Instance = {
-            let app_name = CString::new("VulkanTriangle").unwrap();
-
-            let layer_names = if options.debug_layer {
-                vec![CString::new("VK_LAYER_KHRONOS_validation").unwrap()]
-            } else {
-                vec![]
-            };
-            let layers_names_raw: Vec<*const c_char> = layer_names
-                .iter()
-                .map(|raw_name| raw_name.as_ptr())
-                .collect();
-
-            let mut extension_names_raw =
-                ash_window::enumerate_required_extensions(window.display_handle().unwrap().into())
-                    .unwrap()
-                    .to_vec();
-            if options.debug_layer {
-                extension_names_raw.push(ext::debug_utils::NAME.as_ptr());
+    pub fn new(window: winit::window::Window, options: &Options) -> anyhow::Result<Self> {
+        unsafe {
+            cfg_if::cfg_if! {
+                if #[cfg(target_os = "macos")] {
+                    let entry = ash_molten::load();
+                } else {
+                    let entry = ash::Entry::load()?;
+                }
             }
 
-            let appinfo = vk::ApplicationInfo::default()
-                .application_name(&app_name)
-                .application_version(0)
-                .engine_name(&app_name)
-                .engine_version(0)
-                .api_version(vk::make_api_version(0, 1, 2, 0));
+            let instance: ash::Instance = {
+                let layer_names: &'static [_] = if options.debug_layer {
+                    const { &[c"VK_LAYER_KHRONOS_validation".as_ptr()] }
+                } else {
+                    &[]
+                };
 
-            let instance_create_info = vk::InstanceCreateInfo::default()
-                .application_info(&appinfo)
-                .enabled_layer_names(&layers_names_raw)
-                .enabled_extension_names(&extension_names_raw);
+                let mut extension_names_raw =
+                    ash_window::enumerate_required_extensions(window.display_handle()?.into())?
+                        .to_vec();
+                if options.debug_layer {
+                    extension_names_raw.push(ext::debug_utils::NAME.as_ptr());
+                }
 
-            unsafe {
+                let app_name = c"VulkanTriangle";
                 entry
-                    .create_instance(&instance_create_info, None)
-                    .expect("Instance creation error")
-            }
-        };
+                    .create_instance(
+                        &vk::InstanceCreateInfo::default()
+                            .application_info(
+                                &vk::ApplicationInfo::default()
+                                    .application_name(app_name)
+                                    .application_version(0)
+                                    .engine_name(app_name)
+                                    .engine_version(0)
+                                    .api_version(vk::make_api_version(0, 1, 2, 0)),
+                            )
+                            .enabled_layer_names(layer_names)
+                            .enabled_extension_names(&extension_names_raw),
+                        None,
+                    )
+                    .context("create_instance")?
+            };
 
-        let surface = unsafe {
-            ash_window::create_surface(
+            let surface = ash_window::create_surface(
                 &entry,
                 &instance,
                 window.display_handle().unwrap().into(),
                 window.window_handle().unwrap().into(),
                 None,
             )
-            .unwrap()
-        };
+            .context("create_surface")?;
 
-        let (debug_utils_loader, debug_call_back) = if options.debug_layer {
-            let debug_utils_loader = ext::debug_utils::Instance::new(&entry, &instance);
-            let debug_call_back = {
-                let debug_info = vk::DebugUtilsMessengerCreateInfoEXT::default()
-                    .message_severity(
-                        vk::DebugUtilsMessageSeverityFlagsEXT::ERROR
-                            | vk::DebugUtilsMessageSeverityFlagsEXT::WARNING
-                            | vk::DebugUtilsMessageSeverityFlagsEXT::INFO,
-                    )
-                    .message_type(
-                        vk::DebugUtilsMessageTypeFlagsEXT::GENERAL
-                            | vk::DebugUtilsMessageTypeFlagsEXT::VALIDATION
-                            | vk::DebugUtilsMessageTypeFlagsEXT::PERFORMANCE,
-                    )
-                    .pfn_user_callback(Some(vulkan_debug_callback));
+            let (debug_utils_loader, debug_call_back) = if options.debug_layer {
+                let debug_utils_loader = ext::debug_utils::Instance::new(&entry, &instance);
+                let debug_call_back = {
+                    debug_utils_loader.create_debug_utils_messenger(
+                        &vk::DebugUtilsMessengerCreateInfoEXT::default()
+                            .message_severity(
+                                vk::DebugUtilsMessageSeverityFlagsEXT::ERROR
+                                    | vk::DebugUtilsMessageSeverityFlagsEXT::WARNING
+                                    | vk::DebugUtilsMessageSeverityFlagsEXT::INFO,
+                            )
+                            .message_type(
+                                vk::DebugUtilsMessageTypeFlagsEXT::GENERAL
+                                    | vk::DebugUtilsMessageTypeFlagsEXT::VALIDATION
+                                    | vk::DebugUtilsMessageTypeFlagsEXT::PERFORMANCE,
+                            )
+                            .pfn_user_callback(Some(vulkan_debug_callback)),
+                        None,
+                    )?
+                };
 
-                unsafe {
-                    debug_utils_loader
-                        .create_debug_utils_messenger(&debug_info, None)
-                        .unwrap()
-                }
+                (Some(debug_utils_loader), Some(debug_call_back))
+            } else {
+                (None, None)
             };
 
-            (Some(debug_utils_loader), Some(debug_call_back))
-        } else {
-            (None, None)
-        };
+            let surface_loader = khr::surface::Instance::new(&entry, &instance);
 
-        let surface_loader = khr::surface::Instance::new(&entry, &instance);
-
-        let (pdevice, queue_family_index) = unsafe {
-            instance
+            let (pdevice, queue_family_index) = instance
                 .enumerate_physical_devices()
-                .expect("Physical device error")
+                .context("enumerate_physical_devices")?
                 .iter()
                 .find_map(|pdevice| {
                     instance
@@ -382,76 +384,63 @@ impl RenderBase {
                             }
                         })
                 })
-                .expect("Couldn't find suitable device.")
-        };
+                .context("Couldn't find suitable device.")?;
 
-        let device: ash::Device = {
-            let device_extension_names_raw = [
-                khr::swapchain::NAME.as_ptr(),
-                khr::shader_non_semantic_info::NAME.as_ptr(),
-            ];
-            let features = vk::PhysicalDeviceFeatures {
-                shader_clip_distance: 1,
-                ..Default::default()
-            };
-            let priorities = [1.0];
-            let queue_info = [vk::DeviceQueueCreateInfo::default()
-                .queue_family_index(queue_family_index)
-                .queue_priorities(&priorities)];
+            let device = instance
+                .create_device(
+                    pdevice,
+                    &vk::DeviceCreateInfo::default()
+                        .push_next(
+                            &mut vk::PhysicalDeviceVulkanMemoryModelFeatures::default()
+                                .vulkan_memory_model(true),
+                        )
+                        .queue_create_infos(&[vk::DeviceQueueCreateInfo::default()
+                            .queue_family_index(queue_family_index)
+                            .queue_priorities(&[1.0])])
+                        .enabled_extension_names(&[
+                            khr::swapchain::NAME.as_ptr(),
+                            khr::shader_non_semantic_info::NAME.as_ptr(),
+                        ]),
+                    None,
+                )
+                .context("create_device")?;
 
-            let mut vulkan_memory_model_features =
-                vk::PhysicalDeviceVulkanMemoryModelFeatures::default().vulkan_memory_model(true);
+            let swapchain_loader = khr::swapchain::Device::new(&instance, &device);
 
-            let device_create_info = vk::DeviceCreateInfo::default()
-                .push_next(&mut vulkan_memory_model_features)
-                .queue_create_infos(&queue_info)
-                .enabled_extension_names(&device_extension_names_raw)
-                .enabled_features(&features);
-            unsafe {
-                instance
-                    .create_device(pdevice, &device_create_info, None)
-                    .unwrap()
-            }
-        };
+            let main_queue = device.get_device_queue(queue_family_index, 0);
 
-        let swapchain_loader = khr::swapchain::Device::new(&instance, &device);
-
-        let present_queue = unsafe { device.get_device_queue(queue_family_index, 0) };
-
-        let surface_format = {
-            let acceptable_formats = {
-                [
-                    vk::Format::R8G8B8_SRGB,
-                    vk::Format::B8G8R8_SRGB,
-                    vk::Format::R8G8B8A8_SRGB,
-                    vk::Format::B8G8R8A8_SRGB,
-                    vk::Format::A8B8G8R8_SRGB_PACK32,
-                ]
-            };
-            unsafe {
+            let surface_format = {
+                let acceptable_formats = {
+                    [
+                        vk::Format::R8G8B8_SRGB,
+                        vk::Format::B8G8R8_SRGB,
+                        vk::Format::R8G8B8A8_SRGB,
+                        vk::Format::B8G8R8A8_SRGB,
+                        vk::Format::A8B8G8R8_SRGB_PACK32,
+                    ]
+                };
                 *surface_loader
-                    .get_physical_device_surface_formats(pdevice, surface)
-                    .unwrap()
+                    .get_physical_device_surface_formats(pdevice, surface)?
                     .iter()
                     .find(|sfmt| acceptable_formats.contains(&sfmt.format))
-                    .expect("Unable to find suitable surface format.")
-            }
-        };
+                    .context("Unable to find suitable surface format.")?
+            };
 
-        Self {
-            window,
-            entry,
-            instance,
-            device,
-            swapchain_loader,
-            debug_utils_loader,
-            debug_call_back,
-            pdevice,
-            queue_family_index,
-            present_queue,
-            surface,
-            surface_loader,
-            surface_format,
+            Ok(Self {
+                window,
+                entry,
+                instance,
+                device,
+                swapchain_loader,
+                debug_utils_loader,
+                debug_call_back,
+                pdevice,
+                queue_family_index,
+                main_queue,
+                surface,
+                surface_loader,
+                surface_format,
+            })
         }
     }
 
@@ -477,82 +466,86 @@ impl RenderBase {
         }
     }
 
-    pub fn create_swapchain(&self) -> (vk::SwapchainKHR, vk::Extent2D) {
-        let surface_capabilities = self.surface_capabilities();
-        let mut desired_image_count = surface_capabilities.min_image_count + 1;
-        if surface_capabilities.max_image_count > 0
-            && desired_image_count > surface_capabilities.max_image_count
-        {
-            desired_image_count = surface_capabilities.max_image_count;
-        }
-        let pre_transform = if surface_capabilities
-            .supported_transforms
-            .contains(vk::SurfaceTransformFlagsKHR::IDENTITY)
-        {
-            vk::SurfaceTransformFlagsKHR::IDENTITY
-        } else {
-            surface_capabilities.current_transform
-        };
-        let present_mode = unsafe {
-            self.surface_loader
-                .get_physical_device_surface_present_modes(self.pdevice, self.surface)
-                .unwrap()
+    pub fn create_swapchain(&self) -> anyhow::Result<(vk::SwapchainKHR, vk::Extent2D)> {
+        unsafe {
+            let surface_capabilities = self.surface_capabilities();
+            let mut desired_image_count = surface_capabilities.min_image_count + 1;
+            if surface_capabilities.max_image_count > 0
+                && desired_image_count > surface_capabilities.max_image_count
+            {
+                desired_image_count = surface_capabilities.max_image_count;
+            }
+            let pre_transform = if surface_capabilities
+                .supported_transforms
+                .contains(vk::SurfaceTransformFlagsKHR::IDENTITY)
+            {
+                vk::SurfaceTransformFlagsKHR::IDENTITY
+            } else {
+                surface_capabilities.current_transform
+            };
+            let present_mode = self
+                .surface_loader
+                .get_physical_device_surface_present_modes(self.pdevice, self.surface)?
                 .iter()
                 .cloned()
                 .find(|&mode| mode == vk::PresentModeKHR::MAILBOX)
-                .unwrap_or(vk::PresentModeKHR::FIFO)
-        };
-        let extent = self.surface_resolution();
-        let swapchain_create_info = vk::SwapchainCreateInfoKHR::default()
-            .surface(self.surface)
-            .min_image_count(desired_image_count)
-            .image_color_space(self.surface_format.color_space)
-            .image_format(self.surface_format.format)
-            .image_extent(extent)
-            .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT)
-            .image_sharing_mode(vk::SharingMode::EXCLUSIVE)
-            .pre_transform(pre_transform)
-            .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
-            .present_mode(present_mode)
-            .clipped(true)
-            .image_array_layers(1);
-        let swapchain = unsafe {
-            self.swapchain_loader
-                .create_swapchain(&swapchain_create_info, None)
-                .unwrap()
-        };
-        (swapchain, extent)
+                .unwrap_or(vk::PresentModeKHR::FIFO);
+            let extent = self.surface_resolution();
+            let swapchain = self
+                .swapchain_loader
+                .create_swapchain(
+                    &vk::SwapchainCreateInfoKHR::default()
+                        .surface(self.surface)
+                        .min_image_count(desired_image_count)
+                        .image_color_space(self.surface_format.color_space)
+                        .image_format(self.surface_format.format)
+                        .image_extent(extent)
+                        .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT)
+                        .image_sharing_mode(vk::SharingMode::EXCLUSIVE)
+                        .pre_transform(pre_transform)
+                        .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
+                        .present_mode(present_mode)
+                        .clipped(true)
+                        .image_array_layers(1),
+                    None,
+                )
+                .context("create_swapchain")?;
+            Ok((swapchain, extent))
+        }
     }
 
-    pub fn create_image_views(&self, swapchain: vk::SwapchainKHR) -> Vec<vk::ImageView> {
+    pub fn create_image_views(
+        &self,
+        swapchain: vk::SwapchainKHR,
+    ) -> anyhow::Result<Vec<vk::ImageView>> {
         unsafe {
-            self.swapchain_loader
-                .get_swapchain_images(swapchain)
-                .unwrap()
+            Ok(self
+                .swapchain_loader
+                .get_swapchain_images(swapchain)?
                 .iter()
                 .map(|&image| {
-                    let create_view_info = vk::ImageViewCreateInfo::default()
-                        .view_type(vk::ImageViewType::TYPE_2D)
-                        .format(self.surface_format.format)
-                        .components(vk::ComponentMapping {
-                            r: vk::ComponentSwizzle::R,
-                            g: vk::ComponentSwizzle::G,
-                            b: vk::ComponentSwizzle::B,
-                            a: vk::ComponentSwizzle::A,
-                        })
-                        .subresource_range(vk::ImageSubresourceRange {
-                            aspect_mask: vk::ImageAspectFlags::COLOR,
-                            base_mip_level: 0,
-                            level_count: 1,
-                            base_array_layer: 0,
-                            layer_count: 1,
-                        })
-                        .image(image);
-                    self.device
-                        .create_image_view(&create_view_info, None)
-                        .unwrap()
+                    self.device.create_image_view(
+                        &vk::ImageViewCreateInfo::default()
+                            .view_type(vk::ImageViewType::TYPE_2D)
+                            .format(self.surface_format.format)
+                            .components(vk::ComponentMapping {
+                                r: vk::ComponentSwizzle::R,
+                                g: vk::ComponentSwizzle::G,
+                                b: vk::ComponentSwizzle::B,
+                                a: vk::ComponentSwizzle::A,
+                            })
+                            .subresource_range(vk::ImageSubresourceRange {
+                                aspect_mask: vk::ImageAspectFlags::COLOR,
+                                base_mip_level: 0,
+                                level_count: 1,
+                                base_array_layer: 0,
+                                layer_count: 1,
+                            })
+                            .image(image),
+                        None,
+                    )
                 })
-                .collect()
+                .collect::<Result<Vec<_>, _>>()?)
         }
     }
 
@@ -561,26 +554,24 @@ impl RenderBase {
         image_views: &[vk::ImageView],
         render_pass: vk::RenderPass,
         extent: vk::Extent2D,
-    ) -> Vec<vk::Framebuffer> {
-        image_views
+    ) -> anyhow::Result<Vec<vk::Framebuffer>> {
+        Ok(image_views
             .iter()
             .map(|&present_image_view| {
                 let framebuffer_attachments = [present_image_view];
                 unsafe {
-                    self.device
-                        .create_framebuffer(
-                            &vk::FramebufferCreateInfo::default()
-                                .render_pass(render_pass)
-                                .attachments(&framebuffer_attachments)
-                                .width(extent.width)
-                                .height(extent.height)
-                                .layers(1),
-                            None,
-                        )
-                        .unwrap()
+                    self.device.create_framebuffer(
+                        &vk::FramebufferCreateInfo::default()
+                            .render_pass(render_pass)
+                            .attachments(&framebuffer_attachments)
+                            .width(extent.width)
+                            .height(extent.height)
+                            .layers(1),
+                        None,
+                    )
                 }
             })
-            .collect()
+            .collect::<Result<_, _>>()?)
     }
 
     pub fn create_render_pass(&self) -> vk::RenderPass {
@@ -616,10 +607,6 @@ impl RenderBase {
                 .create_render_pass(&renderpass_create_info, None)
                 .unwrap()
         }
-    }
-
-    pub fn create_render_sync(&self) -> RenderSync {
-        RenderSync::new(self)
     }
 }
 
@@ -663,13 +650,13 @@ pub struct RenderCtx {
 }
 
 impl RenderCtx {
-    pub fn new(base: RenderBase, shader_code: Vec<u32>) -> Self {
-        let sync = RenderSync::new(&base);
+    pub fn new(base: RenderBase, shader_code: Vec<u32>) -> anyhow::Result<Self> {
+        let sync = RenderSync::new(&base)?;
 
-        let (swapchain, extent) = base.create_swapchain();
-        let image_views = base.create_image_views(swapchain);
+        let (swapchain, extent) = base.create_swapchain()?;
+        let image_views = base.create_image_views(swapchain)?;
         let render_pass = base.create_render_pass();
-        let framebuffers = base.create_framebuffers(&image_views, render_pass, extent);
+        let framebuffers = base.create_framebuffers(&image_views, render_pass, extent)?;
         let commands = RenderCommandPool::new(&base);
         let (viewports, scissors) = {
             (
@@ -688,7 +675,7 @@ impl RenderCtx {
             )
         };
 
-        Self {
+        Ok(Self {
             sync,
             base,
             swapchain,
@@ -706,7 +693,7 @@ impl RenderCtx {
             start: std::time::Instant::now(),
 
             sky_fs_spec_id_0x5007_sun_intensity_extra_spec_const_factor: 100,
-        }
+        })
     }
 
     /// Update shaders and rebuild the pipeline
@@ -821,7 +808,7 @@ impl RenderCtx {
         }
     }
 
-    pub unsafe fn cleanup_pipeline(&mut self) {
+    pub fn cleanup_pipeline(&mut self) {
         unsafe {
             self.base.device.device_wait_idle().unwrap();
             if let Some(pipeline) = self.pipeline.take() {
@@ -853,25 +840,25 @@ impl RenderCtx {
     }
 
     /// Recreates the swapchain, but does not recreate the pipelines because they use dynamic state.
-    pub fn recreate_swapchain(&mut self) {
+    pub fn recreate_swapchain(&mut self) -> anyhow::Result<()> {
         let surface_resolution = self.base.surface_resolution();
 
         if surface_resolution.width == 0 || surface_resolution.height == 0 {
             self.rendering_paused = true;
-            return;
+            return Ok(());
         } else if self.rendering_paused {
             self.rendering_paused = false;
         };
 
         self.cleanup_swapchain();
 
-        let (swapchain, extent) = self.base.create_swapchain();
+        let (swapchain, extent) = self.base.create_swapchain()?;
         self.swapchain = swapchain;
         self.extent = extent;
-        self.image_views = self.base.create_image_views(self.swapchain);
+        self.image_views = self.base.create_image_views(self.swapchain)?;
         self.framebuffers =
             self.base
-                .create_framebuffers(&self.image_views, self.render_pass, extent);
+                .create_framebuffers(&self.image_views, self.render_pass, extent)?;
         self.viewports = Box::new([vk::Viewport {
             x: 0.0,
             y: extent.height as f32,
@@ -884,9 +871,11 @@ impl RenderCtx {
             offset: vk::Offset2D { x: 0, y: 0 },
             extent,
         }]);
+
+        Ok(())
     }
 
-    pub fn render(&mut self) {
+    pub fn render(&mut self) -> anyhow::Result<()> {
         let present_index = unsafe {
             match self.base.swapchain_loader.acquire_next_image(
                 self.swapchain,
@@ -896,8 +885,8 @@ impl RenderCtx {
             ) {
                 Ok((idx, _)) => idx,
                 Err(vk::Result::ERROR_OUT_OF_DATE_KHR) => {
-                    self.recreate_swapchain();
-                    return;
+                    self.recreate_swapchain()?;
+                    return Ok(());
                 }
                 Err(err) => panic!("failed to acquire next image: {err:?}"),
             }
@@ -923,12 +912,12 @@ impl RenderCtx {
             match self
                 .base
                 .swapchain_loader
-                .queue_present(self.base.present_queue, &present_info)
+                .queue_present(self.base.main_queue, &present_info)
             {
                 Err(vk::Result::ERROR_OUT_OF_DATE_KHR) | Ok(true) => self.recreate_swapchain(),
-                Ok(false) => {}
-                Err(err) => panic!("failed to present queue: {err:?}"),
-            };
+                Ok(false) => Ok(()),
+                Err(err) => Err(anyhow!("failed to present queue: {err:?}")),
+            }
         }
     }
 
@@ -1048,7 +1037,7 @@ impl RenderCtx {
             self.base
                 .device
                 .queue_submit(
-                    self.base.present_queue,
+                    self.base.main_queue,
                     &[submit_info],
                     self.sync.draw_commands_reuse_fence,
                 )
@@ -1090,31 +1079,24 @@ pub struct RenderSync {
 }
 
 impl RenderSync {
-    pub fn new(base: &RenderBase) -> Self {
+    pub fn new(base: &RenderBase) -> anyhow::Result<Self> {
         let fence_create_info =
             vk::FenceCreateInfo::default().flags(vk::FenceCreateFlags::SIGNALED);
 
         let semaphore_create_info = vk::SemaphoreCreateInfo::default();
 
         unsafe {
-            let draw_commands_reuse_fence = base
-                .device
-                .create_fence(&fence_create_info, None)
-                .expect("Create fence failed.");
-            let present_complete_semaphore = base
-                .device
-                .create_semaphore(&semaphore_create_info, None)
-                .unwrap();
-            let rendering_complete_semaphore = base
-                .device
-                .create_semaphore(&semaphore_create_info, None)
-                .unwrap();
+            let draw_commands_reuse_fence = base.device.create_fence(&fence_create_info, None)?;
+            let present_complete_semaphore =
+                base.device.create_semaphore(&semaphore_create_info, None)?;
+            let rendering_complete_semaphore =
+                base.device.create_semaphore(&semaphore_create_info, None)?;
 
-            Self {
+            Ok(Self {
                 present_complete_semaphore,
                 rendering_complete_semaphore,
                 draw_commands_reuse_fence,
-            }
+            })
         }
     }
 }
