@@ -791,7 +791,7 @@ fn trans_intrinsic_type<'tcx>(
             let sampled_type = match args.type_at(0).kind() {
                 TyKind::Int(int) => match int {
                     IntTy::Isize => {
-                        SpirvType::Integer(cx.tcx.data_layout.pointer_size.bits() as u32, true)
+                        SpirvType::Integer(cx.tcx.data_layout.pointer_size().bits() as u32, true)
                             .def(span, cx)
                     }
                     IntTy::I8 => SpirvType::Integer(8, true).def(span, cx),
@@ -802,7 +802,7 @@ fn trans_intrinsic_type<'tcx>(
                 },
                 TyKind::Uint(uint) => match uint {
                     UintTy::Usize => {
-                        SpirvType::Integer(cx.tcx.data_layout.pointer_size.bits() as u32, false)
+                        SpirvType::Integer(cx.tcx.data_layout.pointer_size().bits() as u32, false)
                             .def(span, cx)
                     }
                     UintTy::U8 => SpirvType::Integer(8, false).def(span, cx),

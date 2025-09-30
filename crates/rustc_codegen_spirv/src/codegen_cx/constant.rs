@@ -152,7 +152,7 @@ impl ConstCodegenMethods for CodegenCx<'_> {
         self.const_uint_big(ty, i)
     }
     fn const_usize(&self, i: u64) -> Self::Value {
-        let ptr_size = self.tcx.data_layout.pointer_size.bits() as u32;
+        let ptr_size = self.tcx.data_layout.pointer_size().bits() as u32;
         let t = SpirvType::Integer(ptr_size, false).def(DUMMY_SP, self);
         self.constant_int(t, i.into())
     }
@@ -263,7 +263,7 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                             .try_read_from_const_alloc(alloc, pointee)
                             .unwrap_or_else(|| self.const_data_from_alloc(alloc));
                         let value = self.static_addr_of(init, alloc.inner().align, None);
-                        (value, AddressSpace::DATA)
+                        (value, AddressSpace::ZERO)
                     }
                     GlobalAlloc::Function { instance } => (
                         self.get_fn_addr(instance),
@@ -292,12 +292,24 @@ impl ConstCodegenMethods for CodegenCx<'_> {
                             .try_read_from_const_alloc(alloc, pointee)
                             .unwrap_or_else(|| self.const_data_from_alloc(alloc));
                         let value = self.static_addr_of(init, alloc.inner().align, None);
-                        (value, AddressSpace::DATA)
+                        (value, AddressSpace::ZERO)
                     }
                     GlobalAlloc::Static(def_id) => {
                         assert!(self.tcx.is_static(def_id));
                         assert!(!self.tcx.is_thread_local_static(def_id));
-                        (self.get_static(def_id), AddressSpace::DATA)
+                        (self.get_static(def_id), AddressSpace::ZERO)
+                    }
+                    GlobalAlloc::TypeId { .. } => {
+                        return if offset.bytes() == 0 {
+                            self.constant_null(ty)
+                        } else {
+                            let result = self.undef(ty);
+                            self.zombie_no_span(
+                                result.def_cx(self),
+                                "pointer has non-null integer address",
+                            );
+                            result
+                        };
                     }
                 };
                 self.const_bitcast(self.const_ptr_byte_offset(base_addr, offset), ty)
@@ -430,7 +442,7 @@ impl<'tcx> CodegenCx<'tcx> {
                                 .fatal(format!("invalid size for float: {other}"));
                         }
                     }),
-                    SpirvType::Pointer { .. } => Primitive::Pointer(AddressSpace::DATA),
+                    SpirvType::Pointer { .. } => Primitive::Pointer(AddressSpace::ZERO),
                     _ => unreachable!(),
                 };
 
