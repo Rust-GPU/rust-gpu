@@ -32,13 +32,7 @@ impl Deref for MyDevice {
 impl MyDevice {
     pub fn new(extension_names: &[*const c_char], options: &Options) -> anyhow::Result<Arc<Self>> {
         unsafe {
-            cfg_if::cfg_if! {
-                if #[cfg(target_os = "macos")] {
-                    let entry = ash_molten::load();
-                } else {
-                    let entry = ash::Entry::load()?;
-                }
-            }
+            let entry = ash::Entry::load()?;
 
             let instance = {
                 let layer_names: &'static [_] = if options.debug_layer {
