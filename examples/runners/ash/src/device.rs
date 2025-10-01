@@ -115,7 +115,7 @@ impl MyDevice {
                     physical_device,
                     &vk::DeviceCreateInfo::default()
                         .push_next(
-                            &mut vk::PhysicalDeviceVulkanMemoryModelFeatures::default()
+                            &mut vk::PhysicalDeviceVulkan12Features::default()
                                 .vulkan_memory_model(true),
                         )
                         .push_next(
