@@ -8,7 +8,7 @@ use rspirv::binary::Assemble;
 use rspirv::dr::Module;
 use rustc_ast::CRATE_NODE_ID;
 use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
-use rustc_codegen_ssa::back::lto::{LtoModuleCodegen, SerializedModule, ThinModule, ThinShared};
+use rustc_codegen_ssa::back::lto::{SerializedModule, ThinModule, ThinShared};
 use rustc_codegen_ssa::back::write::CodegenContext;
 use rustc_codegen_ssa::{CodegenResults, NativeLib};
 use rustc_data_structures::fx::FxHashSet;
@@ -634,7 +634,7 @@ pub(crate) fn run_thin(
     cgcx: &CodegenContext<SpirvCodegenBackend>,
     modules: Vec<(String, SpirvModuleBuffer)>,
     cached_modules: Vec<(SerializedModule<SpirvModuleBuffer>, WorkProduct)>,
-) -> Result<(Vec<LtoModuleCodegen<SpirvCodegenBackend>>, Vec<WorkProduct>), FatalError> {
+) -> Result<(Vec<ThinModule<SpirvCodegenBackend>>, Vec<WorkProduct>), FatalError> {
     if cgcx.opts.cg.linker_plugin_lto.enabled() {
         unreachable!("We should never reach this case if the LTO step is deferred to the linker");
     }
@@ -668,10 +668,10 @@ pub(crate) fn run_thin(
 
     let mut opt_jobs = vec![];
     for (module_index, _) in shared.module_names.iter().enumerate() {
-        opt_jobs.push(LtoModuleCodegen::Thin(ThinModule {
+        opt_jobs.push(ThinModule {
             shared: shared.clone(),
             idx: module_index,
-        }));
+        });
     }
 
     Ok((opt_jobs, vec![]))
