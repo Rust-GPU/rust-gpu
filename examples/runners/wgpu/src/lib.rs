@@ -177,18 +177,19 @@ fn maybe_watch(
         }
 
         if let Some(mut f) = on_watch {
-            builder
-                .watch(move |compile_result, accept| {
+            let mut watcher = builder.watch().unwrap();
+            let first_compile = watcher.recv().unwrap();
+
+            let mut thread_watcher = watcher.forget_lifetime();
+            std::thread::spawn(move || {
+                loop {
+                    let compile_result = thread_watcher.recv().unwrap();
                     let modules = handle_compile_result(compile_result);
-                    if let Some(accept) = accept {
-                        accept.submit(modules);
-                    } else {
-                        f(modules);
-                    }
-                })
-                .expect("Configuration is correct for watching")
-                .first_compile
-                .unwrap()
+                    f(modules);
+                }
+            });
+
+            handle_compile_result(first_compile)
         } else {
             handle_compile_result(builder.build().unwrap())
         }
