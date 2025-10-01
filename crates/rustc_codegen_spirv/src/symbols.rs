@@ -1,9 +1,9 @@
 use crate::attr::{IntrinsicType, SpirvAttribute};
 use crate::builder::libm_intrinsics;
-use crate::spirv_attr_version::spirv_attr_with_version;
 use rspirv::spirv::{BuiltIn, ExecutionMode, ExecutionModel, StorageClass};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_span::symbol::Symbol;
+use spirv_std_types::spirv_attr_version::spirv_attr_with_version;
 use std::rc::Rc;
 
 /// Various places in the codebase (mostly attribute parsing) need to compare rustc Symbols to particular keywords.

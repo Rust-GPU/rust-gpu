@@ -72,16 +72,14 @@
 #![doc = include_str!("../README.md")]
 
 mod image;
-#[path = "../../../spirv_attr_version.rs"]
-mod spirv_attr_version;
 
 use proc_macro::TokenStream;
 use proc_macro2::{Delimiter, Group, Span, TokenTree};
 
 use syn::{ImplItemFn, visit_mut::VisitMut};
 
-use crate::spirv_attr_version::spirv_attr_with_version;
 use quote::{ToTokens, TokenStreamExt, format_ident, quote};
+use spirv_std_types::spirv_attr_version::spirv_attr_with_version;
 use std::fmt::Write;
 
 /// A macro for creating SPIR-V `OpTypeImage` types. Always produces a
