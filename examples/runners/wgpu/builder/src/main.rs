@@ -9,6 +9,9 @@ fn build_shader(path_to_crate: &str, codegen_names: bool) -> Result<(), Box<dyn 
     let path_to_crate = builder_dir.join(path_to_crate);
     let result = SpirvBuilder::new(path_to_crate, "spirv-unknown-vulkan1.1")
         .print_metadata(MetadataPrintout::Full)
+        // Give this spirv-builder a unique target dir, so that rebuilding android and the main wgpu app's target dir
+        // don't clash and break each other's incremental
+        .target_dir_path("example-runner-wgpu-builder")
         .build()?;
     if codegen_names {
         let out_dir = env::var_os("OUT_DIR").unwrap();
