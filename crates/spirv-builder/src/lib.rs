@@ -92,7 +92,7 @@ pub use rustc_codegen_spirv_types::Capability;
 pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
 
 #[cfg(feature = "watch")]
-pub use self::watch::Watch;
+pub use self::watch::{SpirvWatcher, SpirvWatcherError};
 
 #[cfg(feature = "include-target-specs")]
 pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
@@ -125,14 +125,15 @@ pub enum SpirvBuilderError {
     BuildFailed,
     #[error("multi-module build cannot be used with print_metadata = MetadataPrintout::Full")]
     MultiModuleWithPrintMetadata,
-    #[error("watching within build scripts will prevent build completion")]
-    WatchWithPrintMetadata,
     #[error("multi-module metadata file missing")]
     MetadataFileMissing(#[from] std::io::Error),
     #[error("unable to parse multi-module metadata file")]
     MetadataFileMalformed(#[from] serde_json::Error),
     #[error("cargo metadata error")]
     CargoMetadata(#[from] cargo_metadata::Error),
+    #[cfg(feature = "watch")]
+    #[error(transparent)]
+    WatchFailed(#[from] SpirvWatcherError),
 }
 
 const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
@@ -515,6 +516,12 @@ impl Default for SpirvBuilder {
             optimizer: OptimizerOptions::default(),
             shader_crate_features: ShaderCrateFeatures::default(),
         }
+    }
+}
+
+impl AsRef<SpirvBuilder> for SpirvBuilder {
+    fn as_ref(&self) -> &SpirvBuilder {
+        self
     }
 }
 
