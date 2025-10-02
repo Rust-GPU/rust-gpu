@@ -74,11 +74,12 @@
 mod image;
 
 use proc_macro::TokenStream;
-use proc_macro2::{Delimiter, Group, Span, TokenTree};
+use proc_macro2::{Delimiter, Group, Ident, Span, TokenTree};
 
 use syn::{ImplItemFn, visit_mut::VisitMut};
 
-use quote::{ToTokens, quote};
+use quote::{ToTokens, TokenStreamExt, format_ident, quote};
+use spirv_std_types::spirv_attr_version::spirv_attr_with_version;
 use std::fmt::Write;
 
 /// A macro for creating SPIR-V `OpTypeImage` types. Always produces a
@@ -144,45 +145,101 @@ pub fn Image(item: TokenStream) -> TokenStream {
 /// `#[cfg_attr(target_arch="spirv", rust_gpu::spirv(..))]`.
 #[proc_macro_attribute]
 pub fn spirv(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let mut tokens: Vec<TokenTree> = Vec::new();
+    let spirv = format_ident!("{}", &spirv_attr_with_version());
 
     // prepend with #[rust_gpu::spirv(..)]
     let attr: proc_macro2::TokenStream = attr.into();
-    tokens.extend(quote! { #[cfg_attr(target_arch="spirv", rust_gpu::spirv(#attr))] });
+    let mut tokens = quote! { #[cfg_attr(target_arch="spirv", rust_gpu::#spirv(#attr))] };
 
     let item: proc_macro2::TokenStream = item.into();
     for tt in item {
         match tt {
             TokenTree::Group(group) if group.delimiter() == Delimiter::Parenthesis => {
-                let mut sub_tokens = Vec::new();
+                let mut group_tokens = proc_macro2::TokenStream::new();
+                let mut last_token_hashtag = false;
                 for tt in group.stream() {
+                    let is_token_hashtag =
+                        matches!(&tt, TokenTree::Punct(punct) if punct.as_char() == '#');
                     match tt {
                         TokenTree::Group(group)
                             if group.delimiter() == Delimiter::Bracket
-                                && matches!(group.stream().into_iter().next(), Some(TokenTree::Ident(ident)) if ident == "spirv")
-                                && matches!(sub_tokens.last(), Some(TokenTree::Punct(p)) if p.as_char() == '#') =>
+                                && last_token_hashtag
+                                && matches!(group.stream().into_iter().next(), Some(TokenTree::Ident(ident)) if ident == "spirv") =>
                         {
                             // group matches [spirv ...]
-                            let inner = group.stream(); // group stream doesn't include the brackets
-                            sub_tokens.extend(
-                                quote! { [cfg_attr(target_arch="spirv", rust_gpu::#inner)] },
+                            // group stream doesn't include the brackets
+                            let inner = group
+                                .stream()
+                                .into_iter()
+                                .skip(1)
+                                .collect::<proc_macro2::TokenStream>();
+                            group_tokens.extend(
+                                quote! { [cfg_attr(target_arch="spirv", rust_gpu::#spirv #inner)] },
                             );
                         }
-                        _ => sub_tokens.push(tt),
+                        _ => group_tokens.append(tt),
                     }
+                    last_token_hashtag = is_token_hashtag;
                 }
-                tokens.push(TokenTree::from(Group::new(
-                    Delimiter::Parenthesis,
-                    sub_tokens.into_iter().collect(),
-                )));
+                let mut out = Group::new(Delimiter::Parenthesis, group_tokens);
+                out.set_span(group.span());
+                tokens.append(out);
             }
-            _ => tokens.push(tt),
+            _ => tokens.append(tt),
         }
     }
-    tokens
-        .into_iter()
-        .collect::<proc_macro2::TokenStream>()
-        .into()
+    tokens.into()
+}
+
+/// For testing only! Is not reexported in `spirv-std`, but reachable via
+/// `spirv_std::macros::spirv_recursive_for_testing`.
+///
+/// May be more expensive than plain `spirv`, since we're checking a lot more symbols. So I've opted to
+/// have this be a separate macro, instead of modifying the standard `spirv` one.
+#[proc_macro_attribute]
+pub fn spirv_recursive_for_testing(attr: TokenStream, item: TokenStream) -> TokenStream {
+    fn recurse(spirv: &Ident, stream: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+        let mut last_token_hashtag = false;
+        stream.into_iter().map(|tt| {
+            let mut is_token_hashtag = false;
+            let out = match tt {
+                TokenTree::Group(group)
+                if group.delimiter() == Delimiter::Bracket
+                    && last_token_hashtag
+                    && matches!(group.stream().into_iter().next(), Some(TokenTree::Ident(ident)) if ident == "spirv") =>
+                    {
+                        // group matches [spirv ...]
+                        // group stream doesn't include the brackets
+                        let inner = group
+                            .stream()
+                            .into_iter()
+                            .skip(1)
+                            .collect::<proc_macro2::TokenStream>();
+                        quote! { [cfg_attr(target_arch="spirv", rust_gpu::#spirv #inner)] }
+                    },
+                TokenTree::Group(group) => {
+                    let mut out = Group::new(group.delimiter(), recurse(spirv, group.stream()));
+                    out.set_span(group.span());
+                    TokenTree::Group(out).into()
+                },
+                TokenTree::Punct(punct) => {
+                    is_token_hashtag = punct.as_char() == '#';
+                    TokenTree::Punct(punct).into()
+                }
+                tt => tt.into(),
+            };
+            last_token_hashtag = is_token_hashtag;
+            out
+        }).collect()
+    }
+
+    let attr: proc_macro2::TokenStream = attr.into();
+    let item: proc_macro2::TokenStream = item.into();
+
+    // prepend with #[rust_gpu::spirv(..)]
+    let spirv = format_ident!("{}", &spirv_attr_with_version());
+    let inner = recurse(&spirv, item);
+    quote! { #[cfg_attr(target_arch="spirv", rust_gpu::#spirv(#attr))] #inner }.into()
 }
 
 /// Marks a function as runnable only on the GPU, and will panic on
