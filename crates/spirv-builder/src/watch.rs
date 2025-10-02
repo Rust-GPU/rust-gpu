@@ -2,7 +2,7 @@ use crate::{SpirvBuilder, SpirvBuilderError, leaf_deps};
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use rustc_codegen_spirv_types::CompileResult;
 use std::path::Path;
-use std::sync::mpsc::{TryRecvError, TrySendError};
+use std::sync::mpsc::TryRecvError;
 use std::{
     collections::HashSet,
     path::PathBuf,
@@ -67,14 +67,12 @@ impl SpirvWatcher {
                     | notify::EventKind::Create(_)
                     | notify::EventKind::Modify(_)
                     | notify::EventKind::Remove(_)
-                    | notify::EventKind::Other => match tx.try_send(()) {
-                        Ok(_) => (),
-                        // disconnect is fine, SpirvWatcher is currently dropping
-                        Err(TrySendError::Disconnected(_)) => (),
-                        // full is fine, we just need to send a single event anyway
-                        Err(TrySendError::Full(_)) => (),
-                    },
-                    notify::EventKind::Access(_) => {}
+                    | notify::EventKind::Other => {
+                        // `Err(Disconnected)` is fine, SpirvWatcher is currently dropping
+                        // `Err(Full)` is fine, we just need to send a single event anyway
+                        tx.try_send(()).ok();
+                    }
+                    notify::EventKind::Access(_) => (),
                 },
                 Err(err) => log::error!("notify error: {err:?}"),
             })
@@ -95,7 +93,7 @@ impl SpirvWatcher {
     ///
     /// See [`Self::try_recv`] for a non-blocking variant.
     pub fn recv(&mut self) -> Result<CompileResult, SpirvBuilderError> {
-        self.recv_inner(|rx| rx.recv().map_err(|err| TryRecvError::from(err)))
+        self.recv_inner(|rx| rx.recv().map_err(TryRecvError::from))
             .map(|result| result.unwrap())
     }
 
