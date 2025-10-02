@@ -28,9 +28,12 @@
 //     * `_trait_method` (in `impl _Trait for ()`)
 //     * `_fn`
 //   * 6 on `_entry_param`
+
 // NOTE(firestar99) Using the custom-made `#[spirv_recursive_for_testing(...)]` which expands recursively,
 // unlike #[spirv()] which tries to expand as little code as possible for compile performance reasons.
+
 use spirv_std::macros::spirv_recursive_for_testing;
+
 #[spirv_recursive_for_testing(
     sampler, block, sampled_image, generic_image_type, // struct-only
     vertex, // fn-only
@@ -301,6 +304,7 @@ fn _fn(
         _arm => {}
     }
 }
+
 #[spirv_recursive_for_testing()]
 fn _fn_with_generics<
     #[spirv(
