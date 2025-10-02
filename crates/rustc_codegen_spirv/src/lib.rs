@@ -333,21 +333,6 @@ impl WriteBackendMethods for SpirvCodegenBackend {
     type ThinBuffer = SpirvModuleBuffer;
 
     // FIXME(eddyb) reuse the "merge" stage of `crate::linker` for this, or even
-    // delegate to `run_and_optimize_fat_lto` (although `-Zcombine-cgu` is much more niche).
-    fn run_link(
-        cgcx: &CodegenContext<Self>,
-        diag_handler: DiagCtxtHandle<'_>,
-        _modules: Vec<ModuleCodegen<Self::Module>>,
-    ) -> Result<ModuleCodegen<Self::Module>, FatalError> {
-        assert!(
-            cgcx.opts.unstable_opts.combine_cgu,
-            "`run_link` (for `WorkItemResult::NeedsLink`) should \
-             only be invoked due to `-Zcombine-cgu`"
-        );
-        diag_handler.fatal("Rust-GPU does not support `-Zcombine-cgu`")
-    }
-
-    // FIXME(eddyb) reuse the "merge" stage of `crate::linker` for this, or even
     // consider setting `requires_lto = true` in the target specs and moving the
     // entirety of `crate::linker` into this stage (lacking diagnostics may be
     // an issue - it's surprising `CodegenBackend::link` has `Session` at all).
