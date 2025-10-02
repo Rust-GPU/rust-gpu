@@ -180,16 +180,15 @@ fn maybe_watch(
             let mut watcher = builder.watch().unwrap();
             let first_compile = watcher.recv().unwrap();
 
-            let mut thread_watcher = watcher.forget_lifetime();
+            let shader_modules = handle_compile_result(first_compile);
             std::thread::spawn(move || {
                 loop {
-                    let compile_result = thread_watcher.recv().unwrap();
+                    let compile_result = watcher.recv().unwrap();
                     let modules = handle_compile_result(compile_result);
                     f(modules);
                 }
             });
-
-            handle_compile_result(first_compile)
+            shader_modules
         } else {
             handle_compile_result(builder.build().unwrap())
         }
