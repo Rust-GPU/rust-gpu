@@ -519,12 +519,6 @@ impl Default for SpirvBuilder {
     }
 }
 
-impl AsRef<SpirvBuilder> for SpirvBuilder {
-    fn as_ref(&self) -> &SpirvBuilder {
-        self
-    }
-}
-
 impl SpirvBuilder {
     pub fn new(path_to_crate: impl AsRef<Path>, target: impl Into<String>) -> Self {
         Self {
