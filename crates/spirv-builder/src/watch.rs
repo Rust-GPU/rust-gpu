@@ -1,6 +1,7 @@
 use crate::{SpirvBuilder, SpirvBuilderError, leaf_deps};
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use rustc_codegen_spirv_types::CompileResult;
+use std::sync::mpsc::TrySendError;
 use std::{
     collections::HashSet,
     path::PathBuf,
@@ -40,7 +41,7 @@ impl SpirvWatcher {
             return Err(SpirvWatcherError::WatchWithPrintMetadata.into());
         }
 
-        let (tx, rx) = sync_channel(0);
+        let (tx, rx) = sync_channel(1);
         let watcher =
             notify::recommended_watcher(move |result: notify::Result<Event>| match result {
                 Ok(event) => match event.kind {
@@ -48,11 +49,13 @@ impl SpirvWatcher {
                     | notify::EventKind::Create(_)
                     | notify::EventKind::Modify(_)
                     | notify::EventKind::Remove(_)
-                    | notify::EventKind::Other => {
-                        if let Err(err) = tx.try_send(()) {
-                            log::error!("send error: {err:?}");
-                        }
-                    }
+                    | notify::EventKind::Other => match tx.try_send(()) {
+                        Ok(_) => (),
+                        // disconnect is fine, SpirvWatcher is currently dropping
+                        Err(TrySendError::Disconnected(_)) => (),
+                        // full is fine, we just need to send a single event anyway
+                        Err(TrySendError::Full(_)) => (),
+                    },
                     notify::EventKind::Access(_) => {}
                 },
                 Err(err) => log::error!("notify error: {err:?}"),
@@ -78,7 +81,7 @@ impl SpirvWatcher {
             return self.recv_first_result();
         }
 
-        self.rx.recv().expect("watcher should be alive");
+        self.rx.recv().map_err(|_| SpirvWatcherError::WatcherDied)?;
         let metadata_file = crate::invoke_rustc(&self.builder)?;
         let result = self.builder.parse_metadata_file(&metadata_file)?;
 
@@ -97,7 +100,7 @@ impl SpirvWatcher {
                     .watch(watch_path, RecursiveMode::Recursive)
                     .map_err(SpirvWatcherError::NotifyFailed)?;
                 let path = loop {
-                    self.rx.recv().expect("watcher should be alive");
+                    self.rx.recv().map_err(|_| SpirvWatcherError::WatcherDied)?;
                     match crate::invoke_rustc(&self.builder) {
                         Ok(path) => break path,
                         Err(err) => log::error!("{err}"),
@@ -136,4 +139,6 @@ pub enum SpirvWatcherError {
     WatchWithPrintMetadata,
     #[error("could not notify for changes: {0}")]
     NotifyFailed(#[from] notify::Error),
+    #[error("watcher died and closed channel")]
+    WatcherDied,
 }

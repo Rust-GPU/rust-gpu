@@ -183,9 +183,12 @@ fn maybe_watch(
             let shader_modules = handle_compile_result(first_compile);
             std::thread::spawn(move || {
                 loop {
-                    let compile_result = watcher.recv().unwrap();
-                    let modules = handle_compile_result(compile_result);
-                    f(modules);
+                    match watcher.recv() {
+                        Ok(compile_result) => {
+                            f(handle_compile_result(compile_result));
+                        }
+                        Err(e) => println!("Shader compiling failed: {e}"),
+                    }
                 }
             });
             shader_modules
