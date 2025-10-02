@@ -8,12 +8,10 @@ use itertools::Itertools;
 use rspirv::spirv::{Dim, ImageFormat, StorageClass, Word};
 use rustc_abi::ExternAbi as Abi;
 use rustc_abi::{
-    Align, BackendRepr, FieldIdx, FieldsShape, HasDataLayout as _, LayoutData, Primitive,
-    ReprFlags, ReprOptions, Scalar, Size, TagEncoding, VariantIdx, Variants,
+    Align, BackendRepr, FieldIdx, FieldsShape, Primitive, Scalar, Size, VariantIdx, Variants,
 };
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorGuaranteed;
-use rustc_hashes::Hash64;
 use rustc_index::Idx;
 use rustc_middle::query::Providers;
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf, TyAndLayout};
@@ -96,267 +94,6 @@ pub(crate) fn provide(providers: &mut Providers) {
     providers.fn_abi_of_instance = |tcx, key| {
         let result = (rustc_interface::DEFAULT_QUERY_PROVIDERS.fn_abi_of_instance)(tcx, key);
         Ok(readjust_fn_abi(tcx, result?))
-    };
-
-    // FIXME(eddyb) remove this by deriving `Clone` for `LayoutData` upstream.
-    fn clone_layout<FieldIdx: Idx, VariantIdx: Idx>(
-        layout: &LayoutData<FieldIdx, VariantIdx>,
-    ) -> LayoutData<FieldIdx, VariantIdx> {
-        let LayoutData {
-            ref fields,
-            ref variants,
-            backend_repr,
-            largest_niche,
-            uninhabited,
-            align,
-            size,
-            max_repr_align,
-            unadjusted_abi_align,
-            randomization_seed,
-        } = *layout;
-        LayoutData {
-            fields: match *fields {
-                FieldsShape::Primitive => FieldsShape::Primitive,
-                FieldsShape::Union(count) => FieldsShape::Union(count),
-                FieldsShape::Array { stride, count } => FieldsShape::Array { stride, count },
-                FieldsShape::Arbitrary {
-                    ref offsets,
-                    ref memory_index,
-                } => FieldsShape::Arbitrary {
-                    offsets: offsets.clone(),
-                    memory_index: memory_index.clone(),
-                },
-            },
-            variants: match *variants {
-                Variants::Empty => Variants::Empty,
-                Variants::Single { index } => Variants::Single { index },
-                Variants::Multiple {
-                    tag,
-                    ref tag_encoding,
-                    tag_field,
-                    ref variants,
-                } => Variants::Multiple {
-                    tag,
-                    tag_encoding: match *tag_encoding {
-                        TagEncoding::Direct => TagEncoding::Direct,
-                        TagEncoding::Niche {
-                            untagged_variant,
-                            ref niche_variants,
-                            niche_start,
-                        } => TagEncoding::Niche {
-                            untagged_variant,
-                            niche_variants: niche_variants.clone(),
-                            niche_start,
-                        },
-                    },
-                    tag_field,
-                    variants: variants.clone(),
-                },
-            },
-            backend_repr,
-            largest_niche,
-            uninhabited,
-            align,
-            size,
-            max_repr_align,
-            unadjusted_abi_align,
-            randomization_seed,
-        }
-    }
-
-    providers.layout_of = |tcx, key| {
-        // HACK(eddyb) to special-case any types at all, they must be normalized,
-        // but when normalization would be needed, `layout_of`'s default provider
-        // recurses (supposedly for caching reasons), i.e. its calls `layout_of`
-        // w/ the normalized type in input, which once again reaches this hook,
-        // without ever needing any explicit normalization here.
-        let ty = key.value;
-
-        // HACK(eddyb) bypassing upstream `#[repr(simd)]` changes (see also
-        // the later comment above `check_well_formed`, for more details).
-        let reimplement_old_style_repr_simd = match ty.kind() {
-            ty::Adt(def, args) if def.repr().simd() && !def.repr().packed() && def.is_struct() => {
-                Some(def.non_enum_variant()).and_then(|v| {
-                    let (count, e_ty) = v
-                        .fields
-                        .iter()
-                        .map(|f| f.ty(tcx, args))
-                        .dedup_with_count()
-                        .exactly_one()
-                        .ok()?;
-                    let e_len = u64::try_from(count).ok().filter(|&e_len| e_len > 1)?;
-                    Some((def, e_ty, e_len))
-                })
-            }
-            _ => None,
-        };
-
-        // HACK(eddyb) tweaked copy of the old upstream logic for `#[repr(simd)]`:
-        // https://github.com/rust-lang/rust/blob/1.86.0/compiler/rustc_ty_utils/src/layout.rs#L464-L590
-        if let Some((adt_def, e_ty, e_len)) = reimplement_old_style_repr_simd {
-            let cx = rustc_middle::ty::layout::LayoutCx::new(
-                tcx,
-                key.typing_env.with_post_analysis_normalized(tcx),
-            );
-            let dl = cx.data_layout();
-
-            // Compute the ABI of the element type:
-            let e_ly = cx.layout_of(e_ty)?;
-            let BackendRepr::Scalar(e_repr) = e_ly.backend_repr else {
-                // This error isn't caught in typeck, e.g., if
-                // the element type of the vector is generic.
-                tcx.dcx().span_fatal(
-                    tcx.def_span(adt_def.did()),
-                    format!(
-                        "SIMD type `{ty}` with a non-primitive-scalar \
-                     (integer/float/pointer) element type `{}`",
-                        e_ly.ty
-                    ),
-                );
-            };
-
-            // Compute the size and alignment of the vector:
-            let size = e_ly.size.checked_mul(e_len, dl).unwrap();
-            let align = dl.llvmlike_vector_align(size);
-            let size = size.align_to(align.abi);
-
-            let layout = tcx.mk_layout(LayoutData {
-                variants: Variants::Single {
-                    index: rustc_abi::FIRST_VARIANT,
-                },
-                fields: FieldsShape::Array {
-                    stride: e_ly.size,
-                    count: e_len,
-                },
-                backend_repr: BackendRepr::SimdVector {
-                    element: e_repr,
-                    count: e_len,
-                },
-                largest_niche: e_ly.largest_niche,
-                uninhabited: false,
-                size,
-                align,
-                max_repr_align: None,
-                unadjusted_abi_align: align.abi,
-                randomization_seed: e_ly.randomization_seed.wrapping_add(Hash64::new(e_len)),
-            });
-
-            return Ok(TyAndLayout { ty, layout });
-        }
-
-        let TyAndLayout { ty, mut layout } =
-            (rustc_interface::DEFAULT_QUERY_PROVIDERS.layout_of)(tcx, key)?;
-
-        #[allow(clippy::match_like_matches_macro)]
-        let hide_niche = match ty.kind() {
-            ty::Bool => {
-                // HACK(eddyb) we can't bypass e.g. `Option<bool>` being a byte,
-                // due to `core` PR https://github.com/rust-lang/rust/pull/138881
-                // (which adds a new `transmute`, from `ControlFlow<bool>` to `u8`).
-                let libcore_needs_bool_niche = true;
-
-                !libcore_needs_bool_niche
-            }
-            _ => false,
-        };
-
-        if hide_niche {
-            layout = tcx.mk_layout(LayoutData {
-                largest_niche: None,
-                ..clone_layout(layout.0.0)
-            });
-        }
-
-        Ok(TyAndLayout { ty, layout })
-    };
-
-    // HACK(eddyb) work around https://github.com/rust-lang/rust/pull/129403
-    // banning "struct-style" `#[repr(simd)]` (in favor of "array-newtype-style"),
-    // by simply bypassing "type definition WF checks" for affected types, which:
-    // - can only really be sound for types with trivial field types, that are
-    //   either completely non-generic (covering most `#[repr(simd)]` `struct`s),
-    //   or *at most* one generic type parameter with no bounds/where clause
-    // - relies on upstream `layout_of` not having had the non-array logic removed
-    //
-    // FIXME(eddyb) remove this once migrating beyond `#[repr(simd)]` becomes
-    // an option (may require Rust-GPU distinguishing between "SPIR-V interface"
-    // and "Rust-facing" types, which is even worse when the `OpTypeVector`s
-    // may be e.g. nested in `struct`s/arrays/etc. - at least buffers are easy).
-    //
-    // FIXME(eddyb) maybe using `#[spirv(vector)]` and `BackendRepr::Memory`,
-    // no claims at `rustc`-understood SIMD whatsoever, would be enough?
-    // (i.e. only SPIR-V caring about such a type vs a struct/array)
-    providers.check_well_formed = |tcx, def_id| {
-        let trivial_struct = match tcx.hir_node_by_def_id(def_id) {
-            rustc_hir::Node::Item(item) => match item.kind {
-                rustc_hir::ItemKind::Struct(
-                    _,
-                    &rustc_hir::Generics {
-                        params:
-                            &[]
-                            | &[
-                                rustc_hir::GenericParam {
-                                    kind:
-                                        rustc_hir::GenericParamKind::Type {
-                                            default: None,
-                                            synthetic: false,
-                                        },
-                                    ..
-                                },
-                            ],
-                        predicates: &[],
-                        has_where_clause_predicates: false,
-                        where_clause_span: _,
-                        span: _,
-                    },
-                    _,
-                ) => Some(tcx.adt_def(def_id)),
-                _ => None,
-            },
-            _ => None,
-        };
-        let valid_non_array_simd_struct = trivial_struct.is_some_and(|adt_def| {
-            let ReprOptions {
-                int: None,
-                align: None,
-                pack: None,
-                flags: ReprFlags::IS_SIMD,
-                field_shuffle_seed: _,
-            } = adt_def.repr()
-            else {
-                return false;
-            };
-            if adt_def.destructor(tcx).is_some() {
-                return false;
-            }
-
-            let field_types = adt_def
-                .non_enum_variant()
-                .fields
-                .iter()
-                .map(|f| tcx.type_of(f.did).instantiate_identity());
-            field_types.dedup().exactly_one().is_ok_and(|elem_ty| {
-                matches!(
-                    elem_ty.kind(),
-                    ty::Bool | ty::Int(_) | ty::Uint(_) | ty::Float(_) | ty::Param(_)
-                )
-            })
-        });
-
-        if valid_non_array_simd_struct {
-            tcx.dcx()
-                .struct_span_warn(
-                    tcx.def_span(def_id),
-                    "[Rust-GPU] temporarily re-allowing old-style `#[repr(simd)]` (with fields)",
-                )
-                .with_note("removed upstream by https://github.com/rust-lang/rust/pull/129403")
-                .with_note("in favor of the new `#[repr(simd)] struct TxN([T; N]);` style")
-                .with_note("(taking effect since `nightly-2024-09-12` / `1.83.0` stable)")
-                .emit();
-            return Ok(());
-        }
-
-        (rustc_interface::DEFAULT_QUERY_PROVIDERS.check_well_formed)(tcx, def_id)
     };
 
     // HACK(eddyb) work around https://github.com/rust-lang/rust/pull/132173
@@ -639,6 +376,8 @@ impl<'tcx> ConvSpirvType<'tcx> for TyAndLayout<'tcx> {
                 SpirvType::Vector {
                     element: elem_spirv,
                     count: count as u32,
+                    size: self.size,
+                    align: self.align.abi,
                 }
                 .def(span, cx)
             }
@@ -655,7 +394,7 @@ pub fn scalar_pair_element_backend_type<'tcx>(
     ty: TyAndLayout<'tcx>,
     index: usize,
 ) -> Word {
-    let [a, b] = match ty.layout.backend_repr() {
+    let [a, b] = match ty.backend_repr {
         BackendRepr::ScalarPair(a, b) => [a, b],
         other => span_bug!(
             span,
@@ -971,6 +710,10 @@ fn def_id_for_spirv_type_adt(layout: TyAndLayout<'_>) -> Option<DefId> {
     }
 }
 
+fn span_for_spirv_type_adt(cx: &CodegenCx<'_>, layout: TyAndLayout<'_>) -> Option<Span> {
+    def_id_for_spirv_type_adt(layout).map(|did| cx.tcx.def_span(did))
+}
+
 /// Minimal and cheaply comparable/hashable subset of the information contained
 /// in `TyLayout` that can be used to generate a name (assuming a nominal type).
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
@@ -1220,43 +963,118 @@ fn trans_intrinsic_type<'tcx>(
             }
         }
         IntrinsicType::Matrix => {
-            let span = def_id_for_spirv_type_adt(ty)
-                .map(|did| cx.tcx.def_span(did))
-                .expect("#[spirv(matrix)] must be added to a type which has DefId");
-
-            let field_types = (0..ty.fields.count())
-                .map(|i| ty.field(cx, i).spirv_type(span, cx))
-                .collect::<Vec<_>>();
-            if field_types.len() < 2 {
-                return Err(cx
-                    .tcx
-                    .dcx()
-                    .span_err(span, "#[spirv(matrix)] type must have at least two fields"));
-            }
-            let elem_type = field_types[0];
-            if !field_types.iter().all(|&ty| ty == elem_type) {
-                return Err(cx.tcx.dcx().span_err(
-                    span,
-                    "#[spirv(matrix)] type fields must all be the same type",
-                ));
-            }
-            match cx.lookup_type(elem_type) {
+            let span = span_for_spirv_type_adt(cx, ty).unwrap();
+            let err_attr_name = "`#[spirv(matrix)]`";
+            let (element, count) = trans_glam_like_struct(cx, span, ty, args, err_attr_name)?;
+            match cx.lookup_type(element) {
                 SpirvType::Vector { .. } => (),
                 ty => {
                     return Err(cx
                         .tcx
                         .dcx()
-                        .struct_span_err(span, "#[spirv(matrix)] type fields must all be vectors")
-                        .with_note(format!("field type is {}", ty.debug(elem_type, cx)))
+                        .struct_span_err(
+                            span,
+                            format!("{err_attr_name} type fields must all be vectors"),
+                        )
+                        .with_note(format!("field type is {}", ty.debug(element, cx)))
                         .emit());
                 }
             }
-
-            Ok(SpirvType::Matrix {
-                element: elem_type,
-                count: field_types.len() as u32,
+            Ok(SpirvType::Matrix { element, count }.def(span, cx))
+        }
+        IntrinsicType::Vector => {
+            let span = span_for_spirv_type_adt(cx, ty).unwrap();
+            let err_attr_name = "`#[spirv(vector)]`";
+            let (element, count) = trans_glam_like_struct(cx, span, ty, args, err_attr_name)?;
+            match cx.lookup_type(element) {
+                SpirvType::Bool | SpirvType::Float { .. } | SpirvType::Integer { .. } => (),
+                ty => {
+                    return Err(cx
+                        .tcx
+                        .dcx()
+                        .struct_span_err(
+                            span,
+                            format!(
+                                "{err_attr_name} type fields must all be floats, integers or bools"
+                            ),
+                        )
+                        .with_note(format!("field type is {}", ty.debug(element, cx)))
+                        .emit());
+                }
+            }
+            Ok(SpirvType::Vector {
+                element,
+                count,
+                size: ty.size,
+                align: ty.align.abi,
             }
             .def(span, cx))
         }
+    }
+}
+
+/// A struct with multiple fields of the same kind.
+/// Used for `#[spirv(vector)]` and `#[spirv(matrix)]`.
+fn trans_glam_like_struct<'tcx>(
+    cx: &CodegenCx<'tcx>,
+    span: Span,
+    ty: TyAndLayout<'tcx>,
+    args: GenericArgsRef<'tcx>,
+    err_attr_name: &str,
+) -> Result<(Word, u32), ErrorGuaranteed> {
+    let tcx = cx.tcx;
+    if let Some(adt) = ty.ty.ty_adt_def()
+        && adt.is_struct()
+    {
+        let (count, element) = adt
+            .non_enum_variant()
+            .fields
+            .iter()
+            .map(|f| f.ty(tcx, args))
+            .dedup_with_count()
+            .exactly_one()
+            .map_err(|_e| {
+                tcx.dcx().span_err(
+                    span,
+                    format!("{err_attr_name} member types must all be the same"),
+                )
+            })?;
+
+        let element = cx.layout_of(element);
+        let element_word = element.spirv_type(span, cx);
+        let count = u32::try_from(count)
+            .ok()
+            .filter(|count| 2 <= *count && *count <= 4)
+            .ok_or_else(|| {
+                tcx.dcx()
+                    .span_err(span, format!("{err_attr_name} must have 2, 3 or 4 members"))
+            })?;
+
+        for i in 0..ty.fields.count() {
+            let expected = element.size.checked_mul(i as u64, cx).unwrap();
+            let actual = ty.fields.offset(i);
+            if actual != expected {
+                let name: &str = adt
+                    .non_enum_variant()
+                    .fields
+                    .get(FieldIdx::from(i))
+                    .unwrap()
+                    .name
+                    .as_str();
+                tcx.dcx().span_fatal(
+                    span,
+                    format!(
+                        "Unexpected layout for {err_attr_name} annotated struct: \
+                    Expected member `{name}` at offset {expected:?}, but was at {actual:?}"
+                    ),
+                )
+            }
+        }
+
+        Ok((element_word, count))
+    } else {
+        Err(tcx
+            .dcx()
+            .span_err(span, format!("{err_attr_name} type must be a struct")))
     }
 }
