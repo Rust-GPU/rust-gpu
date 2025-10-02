@@ -753,10 +753,14 @@ fn dylib_path_envvar() -> &'static str {
     }
 }
 fn dylib_path() -> Vec<PathBuf> {
-    match env::var_os(dylib_path_envvar()) {
+    let mut dylibs = match env::var_os(dylib_path_envvar()) {
         Some(var) => env::split_paths(&var).collect(),
         None => Vec::new(),
+    };
+    if let Ok(dir) = env::current_dir() {
+        dylibs.push(dir);
     }
+    dylibs
 }
 
 fn find_rustc_codegen_spirv() -> Result<PathBuf, SpirvBuilderError> {
@@ -766,7 +770,8 @@ fn find_rustc_codegen_spirv() -> Result<PathBuf, SpirvBuilderError> {
             env::consts::DLL_PREFIX,
             env::consts::DLL_SUFFIX
         );
-        for mut path in dylib_path() {
+        let dylib_paths = dylib_path();
+        for mut path in dylib_paths {
             path.push(&filename);
             if path.is_file() {
                 return Ok(path);
