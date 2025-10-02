@@ -178,7 +178,12 @@ fn maybe_watch(
 
         if let Some(mut f) = on_watch {
             let mut watcher = builder.watch().unwrap();
-            let first_compile = watcher.recv().unwrap();
+            let first_compile = loop {
+                match watcher.recv() {
+                    Ok(e) => break e,
+                    Err(e) => println!("Shader compiling failed: {e}"),
+                }
+            };
 
             let shader_modules = handle_compile_result(first_compile);
             std::thread::spawn(move || {
