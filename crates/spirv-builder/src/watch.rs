@@ -1,7 +1,8 @@
 use crate::{SpirvBuilder, SpirvBuilderError, leaf_deps};
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use rustc_codegen_spirv_types::CompileResult;
-use std::sync::mpsc::TrySendError;
+use std::path::Path;
+use std::sync::mpsc::{TryRecvError, TrySendError};
 use std::{
     collections::HashSet,
     path::PathBuf,
@@ -17,17 +18,34 @@ impl SpirvBuilder {
 
 type WatchedPaths = HashSet<PathBuf>;
 
+#[derive(Copy, Clone, Debug)]
+enum WatcherState {
+    /// Upcoming compile is the first compile:
+    /// * always recompile regardless of file watches
+    /// * success: go to [`Self::Watching`]
+    /// * fail: go to [`Self::FirstFailed`]
+    First,
+    /// The first compile (and all consecutive ones) failed:
+    /// * only recompile when watcher notifies us
+    /// * the whole project dir is being watched, remove that watch
+    /// * success: go to [`Self::Watching`]
+    /// * fail: stay in [`Self::FirstFailed`]
+    FirstFailed,
+    /// At least one compile finished and has set up the proper file watches:
+    /// * only recompile when watcher notifies us
+    /// * always stays in [`Self::Watching`]
+    Watching,
+}
+
 /// Watcher of a crate which rebuilds it on changes.
 #[derive(Debug)]
 pub struct SpirvWatcher {
     builder: SpirvBuilder,
     watcher: RecommendedWatcher,
     rx: Receiver<()>,
-    /// `!first_result`: the path to the crate
-    /// `first_result`: the path to our metadata file with entry point names and file paths
-    watch_path: PathBuf,
+    path_to_crate: PathBuf,
     watched_paths: WatchedPaths,
-    first_result: bool,
+    state: WatcherState,
 }
 
 impl SpirvWatcher {
@@ -63,65 +81,84 @@ impl SpirvWatcher {
             .map_err(SpirvWatcherError::NotifyFailed)?;
 
         Ok(Self {
-            watch_path: path_to_crate,
+            path_to_crate,
             builder,
             watcher,
             rx,
             watched_paths: HashSet::new(),
-            first_result: false,
+            state: WatcherState::First,
         })
     }
 
-    /// Blocks the current thread until a change is detected
-    /// and the crate is rebuilt.
+    /// Blocks the current thread until a change is detected, rebuilds the crate and returns the [`CompileResult`] or
+    /// an [`SpirvBuilderError`]. Always builds once when called for the first time.
     ///
-    /// Result of rebuilding of the crate is then returned to the caller.
+    /// See [`Self::try_recv`] for a non-blocking variant.
     pub fn recv(&mut self) -> Result<CompileResult, SpirvBuilderError> {
-        if !self.first_result {
-            return self.recv_first_result();
+        self.recv_inner(|rx| rx.recv().map_err(|err| TryRecvError::from(err)))
+            .map(|result| result.unwrap())
+    }
+
+    /// If a change is detected or this is the first invocation, builds the crate and returns the [`CompileResult`]
+    /// (wrapped in `Some`) or an [`SpirvBuilderError`]. If no change has been detected, returns `Ok(None)` without
+    /// blocking.
+    ///
+    /// See [`Self::recv`] for a blocking variant.
+    pub fn try_recv(&mut self) -> Result<Option<CompileResult>, SpirvBuilderError> {
+        self.recv_inner(Receiver::try_recv)
+    }
+
+    #[inline]
+    fn recv_inner(
+        &mut self,
+        recv: impl FnOnce(&Receiver<()>) -> Result<(), TryRecvError>,
+    ) -> Result<Option<CompileResult>, SpirvBuilderError> {
+        let received = match self.state {
+            // always compile on first invocation
+            // file watches have yet to be setup, so recv channel is empty and must not be cleared
+            WatcherState::First => Ok(()),
+            WatcherState::FirstFailed | WatcherState::Watching => recv(&self.rx),
+        };
+        match received {
+            Ok(_) => (),
+            Err(TryRecvError::Empty) => return Ok(None),
+            Err(TryRecvError::Disconnected) => return Err(SpirvWatcherError::WatcherDied.into()),
         }
 
-        self.rx.recv().map_err(|_| SpirvWatcherError::WatcherDied)?;
-        let metadata_file = crate::invoke_rustc(&self.builder)?;
-        let result = self.builder.parse_metadata_file(&metadata_file)?;
-
-        self.watch_leaf_deps()?;
-        Ok(result)
-    }
-
-    fn recv_first_result(&mut self) -> Result<CompileResult, SpirvBuilderError> {
-        let metadata_file = match crate::invoke_rustc(&self.builder) {
-            Ok(path) => path,
-            Err(err) => {
-                log::error!("{err}");
-
-                let watch_path = self.watch_path.as_ref();
-                self.watcher
-                    .watch(watch_path, RecursiveMode::Recursive)
-                    .map_err(SpirvWatcherError::NotifyFailed)?;
-                let path = loop {
-                    self.rx.recv().map_err(|_| SpirvWatcherError::WatcherDied)?;
-                    match crate::invoke_rustc(&self.builder) {
-                        Ok(path) => break path,
-                        Err(err) => log::error!("{err}"),
-                    }
-                };
-                self.watcher
-                    .unwatch(watch_path)
-                    .map_err(SpirvWatcherError::NotifyFailed)?;
-                path
+        let result = (|| {
+            let metadata_file = crate::invoke_rustc(&self.builder)?;
+            let result = self.builder.parse_metadata_file(&metadata_file)?;
+            self.watch_leaf_deps(&metadata_file)?;
+            Ok(result)
+        })();
+        match result {
+            Ok(result) => {
+                if matches!(self.state, WatcherState::FirstFailed) {
+                    self.watcher
+                        .unwatch(&self.path_to_crate)
+                        .map_err(SpirvWatcherError::NotifyFailed)?;
+                }
+                self.state = WatcherState::Watching;
+                Ok(Some(result))
             }
-        };
-        let result = self.builder.parse_metadata_file(&metadata_file)?;
-
-        self.watch_path = metadata_file;
-        self.first_result = true;
-        self.watch_leaf_deps()?;
-        Ok(result)
+            Err(err) => {
+                self.state = match self.state {
+                    WatcherState::First => {
+                        self.watcher
+                            .watch(&self.path_to_crate, RecursiveMode::Recursive)
+                            .map_err(SpirvWatcherError::NotifyFailed)?;
+                        WatcherState::FirstFailed
+                    }
+                    WatcherState::FirstFailed => WatcherState::FirstFailed,
+                    WatcherState::Watching => WatcherState::Watching,
+                };
+                Err(err)
+            }
+        }
     }
 
-    fn watch_leaf_deps(&mut self) -> Result<(), SpirvBuilderError> {
-        leaf_deps(&self.watch_path, |artifact| {
+    fn watch_leaf_deps(&mut self, watch_path: &Path) -> Result<(), SpirvBuilderError> {
+        leaf_deps(watch_path, |artifact| {
             let path = artifact.to_path().unwrap();
             if self.watched_paths.insert(path.to_owned())
                 && let Err(err) = self.watcher.watch(path, RecursiveMode::NonRecursive)
