@@ -11,7 +11,7 @@ use crate::{SpirvBuilder, SpirvBuilderError, leaf_deps};
 
 impl SpirvBuilder {
     /// Watches the module for changes, rebuilding it upon them.
-    pub fn watch(&self) -> Result<SpirvWatcher<&Self>, SpirvBuilderError> {
+    pub fn watch(self) -> Result<SpirvWatcher, SpirvBuilderError> {
         SpirvWatcher::new(self)
     }
 }
@@ -20,25 +20,24 @@ type WatchedPaths = HashSet<PathBuf>;
 
 /// Watcher of a crate which rebuilds it on changes.
 #[derive(Debug)]
-pub struct SpirvWatcher<B> {
-    builder: B,
+pub struct SpirvWatcher {
+    builder: SpirvBuilder,
     watcher: RecommendedWatcher,
     rx: Receiver<()>,
+    /// `first_result`: the path to the crate
+    /// `!first_result`: the path to our metadata file with entry point names and file paths
     watch_path: PathBuf,
     watched_paths: WatchedPaths,
     first_result: bool,
 }
 
-impl<B> SpirvWatcher<B>
-where
-    B: AsRef<SpirvBuilder>,
-{
-    fn new(as_builder: B) -> Result<Self, SpirvBuilderError> {
-        let builder = as_builder.as_ref();
+impl SpirvWatcher {
+    fn new(builder: SpirvBuilder) -> Result<Self, SpirvBuilderError> {
         let path_to_crate = builder
             .path_to_crate
             .as_ref()
-            .ok_or(SpirvBuilderError::MissingCratePath)?;
+            .ok_or(SpirvBuilderError::MissingCratePath)?
+            .clone();
         if !matches!(builder.print_metadata, crate::MetadataPrintout::None) {
             return Err(SpirvWatcherError::WatchWithPrintMetadata.into());
         }
@@ -63,8 +62,8 @@ where
             .map_err(SpirvWatcherError::NotifyFailed)?;
 
         Ok(Self {
-            watch_path: path_to_crate.clone(),
-            builder: as_builder,
+            watch_path: path_to_crate,
+            builder,
             watcher,
             rx,
             watched_paths: HashSet::new(),
@@ -82,17 +81,15 @@ where
         }
 
         self.rx.recv().expect("watcher should be alive");
-        let builder = self.builder.as_ref();
-        let metadata_file = crate::invoke_rustc(builder)?;
-        let result = builder.parse_metadata_file(&metadata_file)?;
+        let metadata_file = crate::invoke_rustc(&self.builder)?;
+        let result = self.builder.parse_metadata_file(&metadata_file)?;
 
         Self::watch_leaf_deps(&self.watch_path, &mut self.watched_paths, &mut self.watcher)?;
         Ok(result)
     }
 
     fn recv_first_result(&mut self) -> Result<CompileResult, SpirvBuilderError> {
-        let builder = self.builder.as_ref();
-        let metadata_file = match crate::invoke_rustc(builder) {
+        let metadata_file = match crate::invoke_rustc(&self.builder) {
             Ok(path) => path,
             Err(err) => {
                 log::error!("{err}");
@@ -103,7 +100,7 @@ where
                     .map_err(SpirvWatcherError::NotifyFailed)?;
                 let path = loop {
                     self.rx.recv().expect("watcher should be alive");
-                    match crate::invoke_rustc(builder) {
+                    match crate::invoke_rustc(&self.builder) {
                         Ok(path) => break path,
                         Err(err) => log::error!("{err}"),
                     }
@@ -114,7 +111,7 @@ where
                 path
             }
         };
-        let result = builder.parse_metadata_file(&metadata_file)?;
+        let result = self.builder.parse_metadata_file(&metadata_file)?;
 
         Self::watch_leaf_deps(&metadata_file, &mut self.watched_paths, &mut self.watcher)?;
         self.watch_path = metadata_file;
@@ -136,23 +133,6 @@ where
             }
         })
         .map_err(SpirvBuilderError::MetadataFileMissing)
-    }
-}
-
-impl<B> SpirvWatcher<B>
-where
-    B: AsRef<SpirvBuilder>,
-{
-    #[inline]
-    pub fn forget_lifetime(self) -> SpirvWatcher<SpirvBuilder> {
-        SpirvWatcher {
-            builder: self.builder.as_ref().clone(),
-            watcher: self.watcher,
-            rx: self.rx,
-            watch_path: self.watch_path,
-            watched_paths: self.watched_paths,
-            first_result: self.first_result,
-        }
     }
 }
 
