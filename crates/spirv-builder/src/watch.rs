@@ -1,13 +1,11 @@
-use std::{
-    collections::HashSet,
-    path::{Path, PathBuf},
-    sync::mpsc::{Receiver, sync_channel},
-};
-
+use crate::{SpirvBuilder, SpirvBuilderError, leaf_deps};
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use rustc_codegen_spirv_types::CompileResult;
-
-use crate::{SpirvBuilder, SpirvBuilderError, leaf_deps};
+use std::{
+    collections::HashSet,
+    path::PathBuf,
+    sync::mpsc::{Receiver, sync_channel},
+};
 
 impl SpirvBuilder {
     /// Watches the module for changes, rebuilding it upon them.
@@ -24,8 +22,8 @@ pub struct SpirvWatcher {
     builder: SpirvBuilder,
     watcher: RecommendedWatcher,
     rx: Receiver<()>,
-    /// `first_result`: the path to the crate
-    /// `!first_result`: the path to our metadata file with entry point names and file paths
+    /// `!first_result`: the path to the crate
+    /// `first_result`: the path to our metadata file with entry point names and file paths
     watch_path: PathBuf,
     watched_paths: WatchedPaths,
     first_result: bool,
@@ -84,7 +82,7 @@ impl SpirvWatcher {
         let metadata_file = crate::invoke_rustc(&self.builder)?;
         let result = self.builder.parse_metadata_file(&metadata_file)?;
 
-        Self::watch_leaf_deps(&self.watch_path, &mut self.watched_paths, &mut self.watcher)?;
+        self.watch_leaf_deps()?;
         Ok(result)
     }
 
@@ -113,21 +111,17 @@ impl SpirvWatcher {
         };
         let result = self.builder.parse_metadata_file(&metadata_file)?;
 
-        Self::watch_leaf_deps(&metadata_file, &mut self.watched_paths, &mut self.watcher)?;
         self.watch_path = metadata_file;
         self.first_result = true;
+        self.watch_leaf_deps()?;
         Ok(result)
     }
 
-    fn watch_leaf_deps(
-        metadata_file: &Path,
-        watched_paths: &mut WatchedPaths,
-        watcher: &mut RecommendedWatcher,
-    ) -> Result<(), SpirvBuilderError> {
-        leaf_deps(metadata_file, |artifact| {
+    fn watch_leaf_deps(&mut self) -> Result<(), SpirvBuilderError> {
+        leaf_deps(&self.watch_path, |artifact| {
             let path = artifact.to_path().unwrap();
-            if watched_paths.insert(path.to_owned())
-                && let Err(err) = watcher.watch(path, RecursiveMode::NonRecursive)
+            if self.watched_paths.insert(path.to_owned())
+                && let Err(err) = self.watcher.watch(path, RecursiveMode::NonRecursive)
             {
                 log::error!("files of cargo dependencies are not valid: {err}");
             }
