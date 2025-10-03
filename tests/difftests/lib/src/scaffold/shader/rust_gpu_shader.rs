@@ -37,7 +37,7 @@ impl RustComputeShader {
 
 impl SpirvShader for RustComputeShader {
     fn spirv_bytes(&self) -> anyhow::Result<(Vec<u8>, String)> {
-        let mut builder = SpirvBuilder::new(&self.path, &self.target)
+        let mut builder = SpirvBuilder::new(&self.path, &*self.target)
             .print_metadata(spirv_builder::MetadataPrintout::None)
             .release(true)
             .multimodule(false)

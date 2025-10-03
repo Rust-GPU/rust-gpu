@@ -73,6 +73,8 @@
 
 pub mod cargo_cmd;
 mod depfile;
+#[cfg(test)]
+mod tests;
 #[cfg(feature = "watch")]
 mod watch;
 
@@ -88,8 +90,11 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use thiserror::Error;
 
-pub use rustc_codegen_spirv_types::Capability;
-pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
+pub use rustc_codegen_spirv_target_specs::{
+    IntoSpirvTarget, SpirvTargetEnv, SpirvTargetParseError,
+};
+pub use rustc_codegen_spirv_target_specs::{deserialize_target, serialize_target};
+pub use rustc_codegen_spirv_types::*;
 
 #[cfg(feature = "watch")]
 pub use self::watch::Watch;
@@ -102,10 +107,8 @@ pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
 pub enum SpirvBuilderError {
     #[error("`target` must be set, for example `spirv-unknown-vulkan1.2`")]
     MissingTarget,
-    #[error("expected `{SPIRV_TARGET_PREFIX}...` target, found `{target}`")]
-    NonSpirvTarget { target: String },
-    #[error("SPIR-V target `{SPIRV_TARGET_PREFIX}-{target_env}` is not supported")]
-    UnsupportedSpirvTargetEnv { target_env: String },
+    #[error("Error parsing target: {0}")]
+    SpirvTargetParseError(#[from] SpirvTargetParseError),
     #[error("`path_to_crate` must be set")]
     MissingCratePath,
     #[error("crate path '{0}' does not exist")]
@@ -134,8 +137,6 @@ pub enum SpirvBuilderError {
     #[error("cargo metadata error")]
     CargoMetadata(#[from] cargo_metadata::Error),
 }
-
-const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default, serde::Deserialize, serde::Serialize)]
 #[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
@@ -411,9 +412,17 @@ pub struct SpirvBuilder {
     /// The target triple, eg. `spirv-unknown-vulkan1.2`
     #[cfg_attr(
         feature = "clap",
-        clap(long, default_value = "spirv-unknown-vulkan1.2")
+        clap(
+            long,
+            default_value = "spirv-unknown-vulkan1.2",
+            value_parser = Self::parse_target
+        )
     )]
-    pub target: Option<String>,
+    #[serde(
+        serialize_with = "serialize_target",
+        deserialize_with = "deserialize_target"
+    )]
+    pub target: Option<Result<SpirvTargetEnv, SpirvTargetParseError>>,
     /// Cargo features specification for building the shader crate.
     #[cfg_attr(feature = "clap", clap(flatten))]
     #[serde(flatten)]
@@ -482,6 +491,12 @@ pub struct SpirvBuilder {
 
 #[cfg(feature = "clap")]
 impl SpirvBuilder {
+    fn parse_target(
+        target: &str,
+    ) -> Result<Result<SpirvTargetEnv, SpirvTargetParseError>, clap::Error> {
+        Ok(SpirvTargetEnv::parse_triple(target))
+    }
+
     /// Clap value parser for `Capability`.
     fn parse_spirv_capability(capability: &str) -> Result<Capability, clap::Error> {
         use core::str::FromStr;
@@ -519,10 +534,10 @@ impl Default for SpirvBuilder {
 }
 
 impl SpirvBuilder {
-    pub fn new(path_to_crate: impl AsRef<Path>, target: impl Into<String>) -> Self {
+    pub fn new(path_to_crate: impl AsRef<Path>, target: impl IntoSpirvTarget) -> Self {
         Self {
             path_to_crate: Some(path_to_crate.as_ref().to_owned()),
-            target: Some(target.into()),
+            target: Some(target.to_spirv_target_env()),
             ..SpirvBuilder::default()
         }
     }
@@ -791,46 +806,19 @@ fn join_checking_for_separators(strings: Vec<impl Borrow<str>>, sep: &str) -> St
 fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     let target = builder
         .target
-        .as_ref()
-        .ok_or(SpirvBuilderError::MissingTarget)?;
+        .clone()
+        .ok_or(SpirvBuilderError::MissingTarget)??;
     let path_to_crate = builder
         .path_to_crate
         .as_ref()
         .ok_or(SpirvBuilderError::MissingCratePath)?;
-    {
-        let target_env = target.strip_prefix(SPIRV_TARGET_PREFIX).ok_or_else(|| {
-            SpirvBuilderError::NonSpirvTarget {
-                target: target.clone(),
-            }
-        })?;
-        // HACK(eddyb) used only to split the full list into groups.
-        #[allow(clippy::match_same_arms)]
-        match target_env {
-            // HACK(eddyb) hardcoded list to avoid checking if the JSON file
-            // for a particular target exists (and sanitizing strings for paths).
-            //
-            // FIXME(eddyb) consider moving this list, or even `target-specs`,
-            // into `rustc_codegen_spirv_types`'s code/source.
-            "spv1.0" | "spv1.1" | "spv1.2" | "spv1.3" | "spv1.4" | "spv1.5" | "spv1.6" => {}
-            "opengl4.0" | "opengl4.1" | "opengl4.2" | "opengl4.3" | "opengl4.5" => {}
-            "vulkan1.0" | "vulkan1.1" | "vulkan1.1spv1.4" | "vulkan1.2" | "vulkan1.3"
-            | "vulkan1.4" => {}
-
-            _ => {
-                return Err(SpirvBuilderError::UnsupportedSpirvTargetEnv {
-                    target_env: target_env.into(),
-                });
-            }
-        }
-
-        if (builder.print_metadata == MetadataPrintout::Full) && builder.multimodule {
-            return Err(SpirvBuilderError::MultiModuleWithPrintMetadata);
-        }
-        if !path_to_crate.is_dir() {
-            return Err(SpirvBuilderError::CratePathDoesntExist(
-                path_to_crate.clone(),
-            ));
-        }
+    if (builder.print_metadata == MetadataPrintout::Full) && builder.multimodule {
+        return Err(SpirvBuilderError::MultiModuleWithPrintMetadata);
+    }
+    if !path_to_crate.is_dir() {
+        return Err(SpirvBuilderError::CratePathDoesntExist(
+            path_to_crate.clone(),
+        ));
     }
 
     let toolchain_rustc_version =
@@ -1020,8 +1008,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         let path;
         #[cfg(feature = "include-target-specs")]
         {
-            path = path_opt
-                .unwrap_or_else(|| PathBuf::from(format!("{TARGET_SPEC_DIR_PATH}/{target}.json")));
+            path = path_opt.unwrap_or_else(|| PathBuf::from(target.target_json_path()));
         }
         #[cfg(not(feature = "include-target-specs"))]
         {
@@ -1029,7 +1016,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         }
         cargo.arg("--target").arg(path);
     } else {
-        cargo.arg("--target").arg(target);
+        cargo.arg("--target").arg(target.target_triple());
     }
 
     if !builder.shader_crate_features.default_features {
