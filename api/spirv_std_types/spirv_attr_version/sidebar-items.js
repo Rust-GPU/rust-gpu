@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["spirv_attr_with_version"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"attr":["gpu_only","spirv"],"macro":["Image","debug_printf","debug_printfln"]};
+window.SIDEBAR_ITEMS = {"attr":["gpu_only","spirv","spirv_recursive_for_testing"],"macro":["Image","debug_printf","debug_printfln"]};
