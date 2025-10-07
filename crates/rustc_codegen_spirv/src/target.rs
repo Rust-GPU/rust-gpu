@@ -37,7 +37,7 @@ impl SpirvTarget {
 
             TargetEnv::Vulkan_1_0
             | TargetEnv::Vulkan_1_1
-            | TargetEnv::WebGPU_0
+            | TargetEnv::WebGPU_0_DEPRECATED
             | TargetEnv::Vulkan_1_1_Spirv_1_4
             | TargetEnv::Vulkan_1_2
             | TargetEnv::Vulkan_1_3
