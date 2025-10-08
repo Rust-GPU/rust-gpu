@@ -149,16 +149,10 @@ impl<'tcx> CodegenCx<'tcx> {
         // FIXME(eddyb) should the maps exist at all, now that the `DefId` is known
         // at `call` time, and presumably its high-level details can be looked up?
         if attrs.buffer_load_intrinsic.is_some() {
-            let mode = &fn_abi.ret.mode;
-            self.buffer_load_intrinsics
-                .borrow_mut()
-                .insert(def_id, mode);
+            self.buffer_load_intrinsics.borrow_mut().insert(def_id);
         }
         if attrs.buffer_store_intrinsic.is_some() {
-            let mode = &fn_abi.args.last().unwrap().mode;
-            self.buffer_store_intrinsics
-                .borrow_mut()
-                .insert(def_id, mode);
+            self.buffer_store_intrinsics.borrow_mut().insert(def_id);
         }
 
         // Check for usage of `libm` intrinsics outside of `libm` itself
