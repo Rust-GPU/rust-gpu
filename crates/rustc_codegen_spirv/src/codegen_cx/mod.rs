@@ -34,7 +34,7 @@ use rustc_middle::ty::{self, Instance, Ty, TyCtxt, TypingEnv};
 use rustc_session::Session;
 use rustc_span::symbol::Symbol;
 use rustc_span::{DUMMY_SP, SourceFile, Span};
-use rustc_target::callconv::{FnAbi, PassMode};
+use rustc_target::callconv::FnAbi;
 use rustc_target::spec::{HasTargetSpec, Target, TargetTuple};
 use std::cell::RefCell;
 use std::collections::BTreeSet;
@@ -80,9 +80,9 @@ pub struct CodegenCx<'tcx> {
     pub fmt_rt_arg_new_fn_ids_to_ty_and_spec: RefCell<FxHashMap<Word, (Ty<'tcx>, char)>>,
 
     /// Intrinsic for loading a `<T>` from a `&[u32]`. The `PassMode` is the mode of the `<T>`.
-    pub buffer_load_intrinsics: RefCell<FxHashMap<DefId, &'tcx PassMode>>,
+    pub buffer_load_intrinsics: RefCell<FxHashSet<DefId>>,
     /// Intrinsic for storing a `<T>` into a `&[u32]`. The `PassMode` is the mode of the `<T>`.
-    pub buffer_store_intrinsics: RefCell<FxHashMap<DefId, &'tcx PassMode>>,
+    pub buffer_store_intrinsics: RefCell<FxHashSet<DefId>>,
 
     /// Maps `DefId`s of `From::from` method implementations to their source and target types.
     /// Used to optimize constant conversions like `u32::from(42u8)` to avoid creating the source type.

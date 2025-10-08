@@ -3257,7 +3257,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         &mut self,
         callee_ty: Self::Type,
         _fn_attrs: Option<&CodegenFnAttrs>,
-        _fn_abi: Option<&FnAbi<'tcx, Ty<'tcx>>>,
+        fn_abi: Option<&FnAbi<'tcx, Ty<'tcx>>>,
         callee: Self::Value,
         args: &[Self::Value],
         funclet: Option<&Self::Funclet>,
@@ -3320,9 +3320,9 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         let libm_intrinsic =
             instance_def_id.and_then(|def_id| self.libm_intrinsics.borrow().get(&def_id).copied());
         let buffer_load_intrinsic = instance_def_id
-            .and_then(|def_id| self.buffer_load_intrinsics.borrow().get(&def_id).copied());
+            .is_some_and(|def_id| self.buffer_load_intrinsics.borrow().contains(&def_id));
         let buffer_store_intrinsic = instance_def_id
-            .and_then(|def_id| self.buffer_store_intrinsics.borrow().get(&def_id).copied());
+            .is_some_and(|def_id| self.buffer_store_intrinsics.borrow().contains(&def_id));
         let is_panic_entry_point = instance_def_id
             .is_some_and(|def_id| self.panic_entry_points.borrow().contains(&def_id));
         let from_trait_impl =
@@ -4111,14 +4111,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             self.abort_with_kind_and_message_debug_printf("panic", message, debug_printf_args);
             return self.undef(result_type);
         }
-
-        if let Some(mode) = buffer_load_intrinsic {
-            return self.codegen_buffer_load_intrinsic(result_type, args, mode);
+        if buffer_load_intrinsic {
+            return self.codegen_buffer_load_intrinsic(fn_abi, result_type, args);
         }
-
-        if let Some(mode) = buffer_store_intrinsic {
-            self.codegen_buffer_store_intrinsic(args, mode);
-
+        if buffer_store_intrinsic {
+            self.codegen_buffer_store_intrinsic(fn_abi, args);
             let void_ty = SpirvType::Void.def(rustc_span::DUMMY_SP, self);
             return SpirvValue {
                 kind: SpirvValueKind::IllegalTypeUsed(void_ty),
