@@ -767,8 +767,18 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     let stride = ty_kind.sizeof(self)?;
                     ty_size = MaybeSized::Sized(stride);
 
-                    indices.push((offset.bytes() / stride.bytes()).try_into().ok()?);
-                    offset = Size::from_bytes(offset.bytes() % stride.bytes());
+                    if stride == Size::ZERO {
+                        if offset != Size::ZERO {
+                            trace!("zero-sized element with non-zero offset: {:?}", offset);
+                            return None;
+                        }
+
+                        indices.push(0);
+                        offset = Size::ZERO;
+                    } else {
+                        indices.push((offset.bytes() / stride.bytes()).try_into().ok()?);
+                        offset = Size::from_bytes(offset.bytes() % stride.bytes());
+                    }
                 }
                 _ => {
                     trace!("recovering access chain from SOMETHING ELSE, RETURNING NONE");
