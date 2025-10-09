@@ -1,31 +1,41 @@
 //! a set of common SPIR-V Matrices, used for intrinsics
 
+use core::fmt::{Debug, Display, Formatter};
 use glam::{Affine3A, Mat3, Mat3A, Mat4, Vec3, Vec3A};
 
 /// A Matrix with 4 columns of [`Vec3`], very similar to glam's [`Affine3A`].
 ///
 /// Primarily used in ray tracing extensions to represent object rotation, scale and translation.
+///
+/// # Limitations
+/// These Limitations apply to all structs marked with `#[spirv(matrix)]`, which `Matrix4x3` is the only one in
+/// `spirv-std`. Most of these could be resolved, but since the use-cases for this type are so limited, there hasn't
+/// been much effort directed at rectifying them. If they are annoying you, and you have a good use-case, feel free to
+/// open an issue and ask for us to fix them.
+/// * Cannot be used within buffers, push constants or anything that requires an "explicit layout". Use [`Affine3A`],
+/// [`Mat4`] or the combination of [`Mat3`] with [`Vec3`] instead and convert them to `Matrix4x3` in the shader.
+/// * There may be other situations where this type may surprisingly fail!
 #[derive(Clone, Copy, Default, PartialEq)]
 #[repr(C)]
 #[spirv(matrix)]
 #[allow(missing_docs)]
 pub struct Matrix4x3 {
-    pub x: Vec3A,
-    pub y: Vec3A,
-    pub z: Vec3A,
-    pub w: Vec3A,
+    pub x_axis: Vec3A,
+    pub y_axis: Vec3A,
+    pub z_axis: Vec3A,
+    pub w_axis: Vec3A,
 }
 
 /// The `from_*` fn signatures should match [`Affine3A`], to make it easier to switch to [`Affine3A`] later.
-/// The `to_*` fn signatures are custom
+/// The `to_*` fn signatures are custom.
 impl Matrix4x3 {
     /// Convert from glam's [`Affine3A`]
     pub fn from_affine3a(affine: Affine3A) -> Self {
         Self {
-            x: affine.x_axis,
-            y: affine.y_axis,
-            z: affine.z_axis,
-            w: affine.w_axis,
+            x_axis: affine.x_axis,
+            y_axis: affine.y_axis,
+            z_axis: affine.z_axis,
+            w_axis: affine.w_axis,
         }
     }
 
@@ -53,11 +63,11 @@ impl Matrix4x3 {
     pub fn to_affine3a(self) -> Affine3A {
         Affine3A {
             matrix3: Mat3A {
-                x_axis: self.x,
-                y_axis: self.y,
-                z_axis: self.z,
+                x_axis: self.x_axis,
+                y_axis: self.y_axis,
+                z_axis: self.z_axis,
             },
-            translation: self.w,
+            translation: self.w_axis,
         }
     }
 
@@ -74,5 +84,17 @@ impl Matrix4x3 {
     /// Creates a 4x4 matrix from this affine transform
     pub fn to_mat4(self) -> Mat4 {
         Mat4::from(self.to_affine3a())
+    }
+}
+
+impl Debug for Matrix4x3 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        Debug::fmt(&self.to_mat4(), f)
+    }
+}
+
+impl Display for Matrix4x3 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        Display::fmt(&self.to_mat4(), f)
     }
 }
