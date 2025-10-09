@@ -6,6 +6,13 @@ use glam::{Affine3A, Mat3, Mat3A, Mat4, Vec3, Vec3A};
 /// A Matrix with 4 columns of [`Vec3`], very similar to glam's [`Affine3A`].
 ///
 /// Primarily used in ray tracing extensions to represent object rotation, scale and translation.
+///
+/// # Limitations
+/// These Limitations apply to all structs marked with `#[spirv(matrix)]`, which `Matrix4x3` is the only one in
+/// `spirv-std`:
+/// * Cannot be used within buffers, push constants or anything that requires an "explicit layout". Use [`Affine3A`],
+/// [`Mat4`] or the combination of [`Mat3`] with [`Vec3`] instead and convert them to `Matrix4x3` in the shader.
+/// * There may be other situations where this type may surprisingly fail!
 #[derive(Clone, Copy, Default, PartialEq)]
 #[repr(C)]
 #[spirv(matrix)]
@@ -18,7 +25,7 @@ pub struct Matrix4x3 {
 }
 
 /// The `from_*` fn signatures should match [`Affine3A`], to make it easier to switch to [`Affine3A`] later.
-/// The `to_*` fn signatures are custom
+/// The `to_*` fn signatures are custom.
 impl Matrix4x3 {
     /// Convert from glam's [`Affine3A`]
     pub fn from_affine3a(affine: Affine3A) -> Self {
