@@ -2,6 +2,7 @@ use core::mem::offset_of;
 use core::ops::Range;
 use experiments::*;
 use spirv_std::glam::*;
+use spirv_std::matrix::Matrix4x3;
 
 pub struct BumpAlloc(usize);
 
@@ -61,6 +62,7 @@ pub fn eval_layouts(gid: u32, out: &mut [u32]) {
         0x11 => write_layout!(out, offset, Struct0x11(a, b)),
         0x12 => write_layout!(out, offset, Struct0x12(a, b, c, d, e)),
         0x13 => write_layout!(out, offset, Struct0x13(a)),
+        0x14 => write_layout!(out, offset, Matrix4x3(x_axis, y_axis, z_axis, w_axis)),
 
         // mat
         0x20 => write_layout!(out, offset, Mat2()), // private members
