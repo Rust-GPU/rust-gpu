@@ -39,23 +39,19 @@ cargo run \
 
 You should see `warning: use-installed-tools feature on, skipping compilation of C++ code` during the compilation, but otherwise the build will function just the same as if you compiled the C++ code, with the exception that it will fail if you don't have SPIRV-Tools installed correctly.
 
-## Docker Image
+#Nixos
 
-The repo root contains a Dockerfile that builds rust-gpu and also provides the configured development environment.
+A nix flake is provided both as a buildable derivation/flake input, and a devshell.
 
-To build it, clone the repository and run the following in the root of the repository.
-
+To build:
 ```shell
-docker build -t rust-gpu-dev .
+nix build
 ```
 
-To access the container:
+To enter the dev env:
 ```shell
-docker run -it --name rust-gpu-dev rust-gpu-dev bash
+nix develop
 ```
-
-The container builds from the current source directory. If you make local changes, and then rebuild those changes will be reflected in the new container image.  
-
 
 [spirv-builder]: https://rust-gpu.github.io/rust-gpu/api/spirv_builder/index.html
 [examples]: https://github.com/rust-gpu/rust-gpu/tree/main/examples
