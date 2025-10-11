@@ -39,6 +39,20 @@ cargo run \
 
 You should see `warning: use-installed-tools feature on, skipping compilation of C++ code` during the compilation, but otherwise the build will function just the same as if you compiled the C++ code, with the exception that it will fail if you don't have SPIRV-Tools installed correctly.
 
+#Nixos
+
+A nix flake is provided both as a buildable derivation/flake input, and a devshell.
+
+To build:
+```shell
+nix build
+```
+
+To enter the dev env:
+```shell
+nix develop
+```
+
 [spirv-builder]: https://rust-gpu.github.io/rust-gpu/api/spirv_builder/index.html
 [examples]: https://github.com/rust-gpu/rust-gpu/tree/main/examples
 [examples/runners]: https://github.com/rust-gpu/rust-gpu/tree/main/examples/runners
