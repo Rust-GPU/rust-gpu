@@ -149,312 +149,306 @@
 <a href=#149 id=149 data-nosnippet>149</a>        <span class="comment">// FIXME(eddyb) should the maps exist at all, now that the `DefId` is known
 <a href=#150 id=150 data-nosnippet>150</a>        // at `call` time, and presumably its high-level details can be looked up?
 <a href=#151 id=151 data-nosnippet>151</a>        </span><span class="kw">if </span>attrs.buffer_load_intrinsic.is_some() {
-<a href=#152 id=152 data-nosnippet>152</a>            <span class="kw">let </span>mode = <span class="kw-2">&amp;</span>fn_abi.ret.mode;
-<a href=#153 id=153 data-nosnippet>153</a>            <span class="self">self</span>.buffer_load_intrinsics
-<a href=#154 id=154 data-nosnippet>154</a>                .borrow_mut()
-<a href=#155 id=155 data-nosnippet>155</a>                .insert(def_id, mode);
+<a href=#152 id=152 data-nosnippet>152</a>            <span class="self">self</span>.buffer_load_intrinsics.borrow_mut().insert(def_id);
+<a href=#153 id=153 data-nosnippet>153</a>        }
+<a href=#154 id=154 data-nosnippet>154</a>        <span class="kw">if </span>attrs.buffer_store_intrinsic.is_some() {
+<a href=#155 id=155 data-nosnippet>155</a>            <span class="self">self</span>.buffer_store_intrinsics.borrow_mut().insert(def_id);
 <a href=#156 id=156 data-nosnippet>156</a>        }
-<a href=#157 id=157 data-nosnippet>157</a>        <span class="kw">if </span>attrs.buffer_store_intrinsic.is_some() {
-<a href=#158 id=158 data-nosnippet>158</a>            <span class="kw">let </span>mode = <span class="kw-2">&amp;</span>fn_abi.args.last().unwrap().mode;
-<a href=#159 id=159 data-nosnippet>159</a>            <span class="self">self</span>.buffer_store_intrinsics
-<a href=#160 id=160 data-nosnippet>160</a>                .borrow_mut()
-<a href=#161 id=161 data-nosnippet>161</a>                .insert(def_id, mode);
-<a href=#162 id=162 data-nosnippet>162</a>        }
-<a href=#163 id=163 data-nosnippet>163</a>
-<a href=#164 id=164 data-nosnippet>164</a>        <span class="comment">// Check for usage of `libm` intrinsics outside of `libm` itself
-<a href=#165 id=165 data-nosnippet>165</a>        </span><span class="kw">if </span><span class="self">self</span>.tcx.crate_name(def_id.krate) == <span class="self">self</span>.sym.libm &amp;&amp; !def_id.is_local() {
-<a href=#166 id=166 data-nosnippet>166</a>            <span class="kw">let </span>item_name = <span class="self">self</span>.tcx.item_name(def_id);
-<a href=#167 id=167 data-nosnippet>167</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>intrinsic) = <span class="self">self</span>.sym.libm_intrinsics.get(<span class="kw-2">&amp;</span>item_name) {
-<a href=#168 id=168 data-nosnippet>168</a>                <span class="self">self</span>.libm_intrinsics.borrow_mut().insert(def_id, intrinsic);
-<a href=#169 id=169 data-nosnippet>169</a>            } <span class="kw">else </span>{
-<a href=#170 id=170 data-nosnippet>170</a>                <span class="kw">let </span>message = <span class="macro">format!</span>(<span class="string">"missing libm intrinsic {symbol_name}, which is {instance}"</span>);
-<a href=#171 id=171 data-nosnippet>171</a>                <span class="self">self</span>.tcx.dcx().err(message);
-<a href=#172 id=172 data-nosnippet>172</a>            }
-<a href=#173 id=173 data-nosnippet>173</a>        }
+<a href=#157 id=157 data-nosnippet>157</a>
+<a href=#158 id=158 data-nosnippet>158</a>        <span class="comment">// Check for usage of `libm` intrinsics outside of `libm` itself
+<a href=#159 id=159 data-nosnippet>159</a>        </span><span class="kw">if </span><span class="self">self</span>.tcx.crate_name(def_id.krate) == <span class="self">self</span>.sym.libm &amp;&amp; !def_id.is_local() {
+<a href=#160 id=160 data-nosnippet>160</a>            <span class="kw">let </span>item_name = <span class="self">self</span>.tcx.item_name(def_id);
+<a href=#161 id=161 data-nosnippet>161</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>intrinsic) = <span class="self">self</span>.sym.libm_intrinsics.get(<span class="kw-2">&amp;</span>item_name) {
+<a href=#162 id=162 data-nosnippet>162</a>                <span class="self">self</span>.libm_intrinsics.borrow_mut().insert(def_id, intrinsic);
+<a href=#163 id=163 data-nosnippet>163</a>            } <span class="kw">else </span>{
+<a href=#164 id=164 data-nosnippet>164</a>                <span class="kw">let </span>message = <span class="macro">format!</span>(<span class="string">"missing libm intrinsic {symbol_name}, which is {instance}"</span>);
+<a href=#165 id=165 data-nosnippet>165</a>                <span class="self">self</span>.tcx.dcx().err(message);
+<a href=#166 id=166 data-nosnippet>166</a>            }
+<a href=#167 id=167 data-nosnippet>167</a>        }
+<a href=#168 id=168 data-nosnippet>168</a>
+<a href=#169 id=169 data-nosnippet>169</a>        <span class="comment">// Check if this is a From trait implementation
+<a href=#170 id=170 data-nosnippet>170</a>        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(impl_def_id) = <span class="self">self</span>.tcx.impl_of_method(def_id)
+<a href=#171 id=171 data-nosnippet>171</a>            &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(trait_ref) = <span class="self">self</span>.tcx.impl_trait_ref(impl_def_id)
+<a href=#172 id=172 data-nosnippet>172</a>        {
+<a href=#173 id=173 data-nosnippet>173</a>            <span class="kw">let </span>trait_def_id = trait_ref.skip_binder().def_id;
 <a href=#174 id=174 data-nosnippet>174</a>
-<a href=#175 id=175 data-nosnippet>175</a>        <span class="comment">// Check if this is a From trait implementation
-<a href=#176 id=176 data-nosnippet>176</a>        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(impl_def_id) = <span class="self">self</span>.tcx.impl_of_method(def_id)
-<a href=#177 id=177 data-nosnippet>177</a>            &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(trait_ref) = <span class="self">self</span>.tcx.impl_trait_ref(impl_def_id)
-<a href=#178 id=178 data-nosnippet>178</a>        {
-<a href=#179 id=179 data-nosnippet>179</a>            <span class="kw">let </span>trait_def_id = trait_ref.skip_binder().def_id;
-<a href=#180 id=180 data-nosnippet>180</a>
-<a href=#181 id=181 data-nosnippet>181</a>            <span class="comment">// Check if this is the From trait.
-<a href=#182 id=182 data-nosnippet>182</a>            </span><span class="kw">let </span>trait_path = <span class="self">self</span>.tcx.def_path_str(trait_def_id);
-<a href=#183 id=183 data-nosnippet>183</a>            <span class="kw">if </span><span class="macro">matches!</span>(
-<a href=#184 id=184 data-nosnippet>184</a>                trait_path.as_str(),
-<a href=#185 id=185 data-nosnippet>185</a>                <span class="string">"core::convert::From" </span>| <span class="string">"std::convert::From"
-<a href=#186 id=186 data-nosnippet>186</a>            </span>) {
-<a href=#187 id=187 data-nosnippet>187</a>                <span class="comment">// Extract the source and target types from the trait substitutions
-<a href=#188 id=188 data-nosnippet>188</a>                </span><span class="kw">let </span>trait_args = trait_ref.skip_binder().args;
-<a href=#189 id=189 data-nosnippet>189</a>                <span class="kw">if let </span>(<span class="prelude-val">Some</span>(target_ty), <span class="prelude-val">Some</span>(source_ty)) =
-<a href=#190 id=190 data-nosnippet>190</a>                    (trait_args.types().nth(<span class="number">0</span>), trait_args.types().nth(<span class="number">1</span>))
-<a href=#191 id=191 data-nosnippet>191</a>                {
-<a href=#192 id=192 data-nosnippet>192</a>                    <span class="self">self</span>.from_trait_impls
-<a href=#193 id=193 data-nosnippet>193</a>                        .borrow_mut()
-<a href=#194 id=194 data-nosnippet>194</a>                        .insert(def_id, (source_ty, target_ty));
-<a href=#195 id=195 data-nosnippet>195</a>                }
-<a href=#196 id=196 data-nosnippet>196</a>            }
-<a href=#197 id=197 data-nosnippet>197</a>        }
-<a href=#198 id=198 data-nosnippet>198</a>
-<a href=#199 id=199 data-nosnippet>199</a>        <span class="kw">if </span>[
-<a href=#200 id=200 data-nosnippet>200</a>            <span class="self">self</span>.tcx.lang_items().panic_fn(),
-<a href=#201 id=201 data-nosnippet>201</a>            <span class="self">self</span>.tcx.lang_items().panic_fmt(),
-<a href=#202 id=202 data-nosnippet>202</a>            <span class="self">self</span>.tcx.lang_items().panic_nounwind(),
-<a href=#203 id=203 data-nosnippet>203</a>        ]
-<a href=#204 id=204 data-nosnippet>204</a>        .contains(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(def_id))
-<a href=#205 id=205 data-nosnippet>205</a>        {
-<a href=#206 id=206 data-nosnippet>206</a>            <span class="self">self</span>.panic_entry_points.borrow_mut().insert(def_id);
-<a href=#207 id=207 data-nosnippet>207</a>        }
-<a href=#208 id=208 data-nosnippet>208</a>
-<a href=#209 id=209 data-nosnippet>209</a>        <span class="comment">// HACK(eddyb) there is no good way to identify these definitions
-<a href=#210 id=210 data-nosnippet>210</a>        // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
-<a href=#211 id=211 data-nosnippet>211</a>        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="string">"panic_nounwind_fmt" </span>| <span class="string">"panic_explicit"</span>) =
-<a href=#212 id=212 data-nosnippet>212</a>            demangled_symbol_name.strip_prefix(<span class="string">"core::panicking::"</span>)
+<a href=#175 id=175 data-nosnippet>175</a>            <span class="comment">// Check if this is the From trait.
+<a href=#176 id=176 data-nosnippet>176</a>            </span><span class="kw">let </span>trait_path = <span class="self">self</span>.tcx.def_path_str(trait_def_id);
+<a href=#177 id=177 data-nosnippet>177</a>            <span class="kw">if </span><span class="macro">matches!</span>(
+<a href=#178 id=178 data-nosnippet>178</a>                trait_path.as_str(),
+<a href=#179 id=179 data-nosnippet>179</a>                <span class="string">"core::convert::From" </span>| <span class="string">"std::convert::From"
+<a href=#180 id=180 data-nosnippet>180</a>            </span>) {
+<a href=#181 id=181 data-nosnippet>181</a>                <span class="comment">// Extract the source and target types from the trait substitutions
+<a href=#182 id=182 data-nosnippet>182</a>                </span><span class="kw">let </span>trait_args = trait_ref.skip_binder().args;
+<a href=#183 id=183 data-nosnippet>183</a>                <span class="kw">if let </span>(<span class="prelude-val">Some</span>(target_ty), <span class="prelude-val">Some</span>(source_ty)) =
+<a href=#184 id=184 data-nosnippet>184</a>                    (trait_args.types().nth(<span class="number">0</span>), trait_args.types().nth(<span class="number">1</span>))
+<a href=#185 id=185 data-nosnippet>185</a>                {
+<a href=#186 id=186 data-nosnippet>186</a>                    <span class="self">self</span>.from_trait_impls
+<a href=#187 id=187 data-nosnippet>187</a>                        .borrow_mut()
+<a href=#188 id=188 data-nosnippet>188</a>                        .insert(def_id, (source_ty, target_ty));
+<a href=#189 id=189 data-nosnippet>189</a>                }
+<a href=#190 id=190 data-nosnippet>190</a>            }
+<a href=#191 id=191 data-nosnippet>191</a>        }
+<a href=#192 id=192 data-nosnippet>192</a>
+<a href=#193 id=193 data-nosnippet>193</a>        <span class="kw">if </span>[
+<a href=#194 id=194 data-nosnippet>194</a>            <span class="self">self</span>.tcx.lang_items().panic_fn(),
+<a href=#195 id=195 data-nosnippet>195</a>            <span class="self">self</span>.tcx.lang_items().panic_fmt(),
+<a href=#196 id=196 data-nosnippet>196</a>            <span class="self">self</span>.tcx.lang_items().panic_nounwind(),
+<a href=#197 id=197 data-nosnippet>197</a>        ]
+<a href=#198 id=198 data-nosnippet>198</a>        .contains(<span class="kw-2">&amp;</span><span class="prelude-val">Some</span>(def_id))
+<a href=#199 id=199 data-nosnippet>199</a>        {
+<a href=#200 id=200 data-nosnippet>200</a>            <span class="self">self</span>.panic_entry_points.borrow_mut().insert(def_id);
+<a href=#201 id=201 data-nosnippet>201</a>        }
+<a href=#202 id=202 data-nosnippet>202</a>
+<a href=#203 id=203 data-nosnippet>203</a>        <span class="comment">// HACK(eddyb) there is no good way to identify these definitions
+<a href=#204 id=204 data-nosnippet>204</a>        // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
+<a href=#205 id=205 data-nosnippet>205</a>        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="string">"panic_nounwind_fmt" </span>| <span class="string">"panic_explicit"</span>) =
+<a href=#206 id=206 data-nosnippet>206</a>            demangled_symbol_name.strip_prefix(<span class="string">"core::panicking::"</span>)
+<a href=#207 id=207 data-nosnippet>207</a>        {
+<a href=#208 id=208 data-nosnippet>208</a>            <span class="self">self</span>.panic_entry_points.borrow_mut().insert(def_id);
+<a href=#209 id=209 data-nosnippet>209</a>        }
+<a href=#210 id=210 data-nosnippet>210</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(pieces_len) = demangled_symbol_name
+<a href=#211 id=211 data-nosnippet>211</a>            .strip_prefix(<span class="string">"&lt;core::fmt::Arguments&gt;::new_const::&lt;"</span>)
+<a href=#212 id=212 data-nosnippet>212</a>            .and_then(|s| s.strip_suffix(<span class="string">"&gt;"</span>))
 <a href=#213 id=213 data-nosnippet>213</a>        {
-<a href=#214 id=214 data-nosnippet>214</a>            <span class="self">self</span>.panic_entry_points.borrow_mut().insert(def_id);
-<a href=#215 id=215 data-nosnippet>215</a>        }
-<a href=#216 id=216 data-nosnippet>216</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(pieces_len) = demangled_symbol_name
-<a href=#217 id=217 data-nosnippet>217</a>            .strip_prefix(<span class="string">"&lt;core::fmt::Arguments&gt;::new_const::&lt;"</span>)
-<a href=#218 id=218 data-nosnippet>218</a>            .and_then(|s| s.strip_suffix(<span class="string">"&gt;"</span>))
-<a href=#219 id=219 data-nosnippet>219</a>        {
-<a href=#220 id=220 data-nosnippet>220</a>            <span class="self">self</span>.fmt_args_new_fn_ids
-<a href=#221 id=221 data-nosnippet>221</a>                .borrow_mut()
-<a href=#222 id=222 data-nosnippet>222</a>                .insert(fn_id, (pieces_len.parse().unwrap(), <span class="number">0</span>));
-<a href=#223 id=223 data-nosnippet>223</a>        }
-<a href=#224 id=224 data-nosnippet>224</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(generics) = demangled_symbol_name
-<a href=#225 id=225 data-nosnippet>225</a>            .strip_prefix(<span class="string">"&lt;core::fmt::Arguments&gt;::new_v1::&lt;"</span>)
-<a href=#226 id=226 data-nosnippet>226</a>            .and_then(|s| s.strip_suffix(<span class="string">"&gt;"</span>))
-<a href=#227 id=227 data-nosnippet>227</a>        {
-<a href=#228 id=228 data-nosnippet>228</a>            <span class="kw">let </span>(pieces_len, rt_args_len) = generics.split_once(<span class="string">", "</span>).unwrap();
-<a href=#229 id=229 data-nosnippet>229</a>            <span class="self">self</span>.fmt_args_new_fn_ids.borrow_mut().insert(
-<a href=#230 id=230 data-nosnippet>230</a>                fn_id,
-<a href=#231 id=231 data-nosnippet>231</a>                (pieces_len.parse().unwrap(), rt_args_len.parse().unwrap()),
-<a href=#232 id=232 data-nosnippet>232</a>            );
+<a href=#214 id=214 data-nosnippet>214</a>            <span class="self">self</span>.fmt_args_new_fn_ids
+<a href=#215 id=215 data-nosnippet>215</a>                .borrow_mut()
+<a href=#216 id=216 data-nosnippet>216</a>                .insert(fn_id, (pieces_len.parse().unwrap(), <span class="number">0</span>));
+<a href=#217 id=217 data-nosnippet>217</a>        }
+<a href=#218 id=218 data-nosnippet>218</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(generics) = demangled_symbol_name
+<a href=#219 id=219 data-nosnippet>219</a>            .strip_prefix(<span class="string">"&lt;core::fmt::Arguments&gt;::new_v1::&lt;"</span>)
+<a href=#220 id=220 data-nosnippet>220</a>            .and_then(|s| s.strip_suffix(<span class="string">"&gt;"</span>))
+<a href=#221 id=221 data-nosnippet>221</a>        {
+<a href=#222 id=222 data-nosnippet>222</a>            <span class="kw">let </span>(pieces_len, rt_args_len) = generics.split_once(<span class="string">", "</span>).unwrap();
+<a href=#223 id=223 data-nosnippet>223</a>            <span class="self">self</span>.fmt_args_new_fn_ids.borrow_mut().insert(
+<a href=#224 id=224 data-nosnippet>224</a>                fn_id,
+<a href=#225 id=225 data-nosnippet>225</a>                (pieces_len.parse().unwrap(), rt_args_len.parse().unwrap()),
+<a href=#226 id=226 data-nosnippet>226</a>            );
+<a href=#227 id=227 data-nosnippet>227</a>        }
+<a href=#228 id=228 data-nosnippet>228</a>        <span class="kw">if </span>demangled_symbol_name == <span class="string">"&lt;core::fmt::Arguments&gt;::new_v1_formatted" </span>{
+<a href=#229 id=229 data-nosnippet>229</a>            <span class="comment">// HACK(eddyb) `!0` used as a placeholder value to indicate "dynamic".
+<a href=#230 id=230 data-nosnippet>230</a>            </span><span class="self">self</span>.fmt_args_new_fn_ids
+<a href=#231 id=231 data-nosnippet>231</a>                .borrow_mut()
+<a href=#232 id=232 data-nosnippet>232</a>                .insert(fn_id, (!<span class="number">0</span>, !<span class="number">0</span>));
 <a href=#233 id=233 data-nosnippet>233</a>        }
-<a href=#234 id=234 data-nosnippet>234</a>        <span class="kw">if </span>demangled_symbol_name == <span class="string">"&lt;core::fmt::Arguments&gt;::new_v1_formatted" </span>{
-<a href=#235 id=235 data-nosnippet>235</a>            <span class="comment">// HACK(eddyb) `!0` used as a placeholder value to indicate "dynamic".
-<a href=#236 id=236 data-nosnippet>236</a>            </span><span class="self">self</span>.fmt_args_new_fn_ids
-<a href=#237 id=237 data-nosnippet>237</a>                .borrow_mut()
-<a href=#238 id=238 data-nosnippet>238</a>                .insert(fn_id, (!<span class="number">0</span>, !<span class="number">0</span>));
-<a href=#239 id=239 data-nosnippet>239</a>        }
-<a href=#240 id=240 data-nosnippet>240</a>
-<a href=#241 id=241 data-nosnippet>241</a>        <span class="comment">// HACK(eddyb) there is no good way to identify these definitions
-<a href=#242 id=242 data-nosnippet>242</a>        // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
-<a href=#243 id=243 data-nosnippet>243</a>        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(suffix) = demangled_symbol_name.strip_prefix(<span class="string">"&lt;core::fmt::rt::Argument&gt;::new_"</span>)
-<a href=#244 id=244 data-nosnippet>244</a>        {
-<a href=#245 id=245 data-nosnippet>245</a>            <span class="kw">let </span>spec = suffix.split_once(<span class="string">"::&lt;"</span>).and_then(|(method_suffix, <span class="kw">_</span>)| {
-<a href=#246 id=246 data-nosnippet>246</a>                <span class="prelude-val">Some</span>(<span class="kw">match </span>method_suffix {
-<a href=#247 id=247 data-nosnippet>247</a>                    <span class="string">"display" </span>=&gt; <span class="string">' '</span>,
-<a href=#248 id=248 data-nosnippet>248</a>                    <span class="string">"debug" </span>=&gt; <span class="string">'?'</span>,
-<a href=#249 id=249 data-nosnippet>249</a>                    <span class="string">"octal" </span>=&gt; <span class="string">'o'</span>,
-<a href=#250 id=250 data-nosnippet>250</a>                    <span class="string">"lower_hex" </span>=&gt; <span class="string">'x'</span>,
-<a href=#251 id=251 data-nosnippet>251</a>                    <span class="string">"upper_hex" </span>=&gt; <span class="string">'X'</span>,
-<a href=#252 id=252 data-nosnippet>252</a>                    <span class="string">"pointer" </span>=&gt; <span class="string">'p'</span>,
-<a href=#253 id=253 data-nosnippet>253</a>                    <span class="string">"binary" </span>=&gt; <span class="string">'b'</span>,
-<a href=#254 id=254 data-nosnippet>254</a>                    <span class="string">"lower_exp" </span>=&gt; <span class="string">'e'</span>,
-<a href=#255 id=255 data-nosnippet>255</a>                    <span class="string">"upper_exp" </span>=&gt; <span class="string">'E'</span>,
-<a href=#256 id=256 data-nosnippet>256</a>                    <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
-<a href=#257 id=257 data-nosnippet>257</a>                })
-<a href=#258 id=258 data-nosnippet>258</a>            });
-<a href=#259 id=259 data-nosnippet>259</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(spec) = spec
-<a href=#260 id=260 data-nosnippet>260</a>                &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>((ty,)) = instance.args.types().collect_tuple()
-<a href=#261 id=261 data-nosnippet>261</a>            {
-<a href=#262 id=262 data-nosnippet>262</a>                <span class="self">self</span>.fmt_rt_arg_new_fn_ids_to_ty_and_spec
-<a href=#263 id=263 data-nosnippet>263</a>                    .borrow_mut()
-<a href=#264 id=264 data-nosnippet>264</a>                    .insert(fn_id, (ty, spec));
-<a href=#265 id=265 data-nosnippet>265</a>            }
-<a href=#266 id=266 data-nosnippet>266</a>        }
-<a href=#267 id=267 data-nosnippet>267</a>
-<a href=#268 id=268 data-nosnippet>268</a>        declared
-<a href=#269 id=269 data-nosnippet>269</a>    }
-<a href=#270 id=270 data-nosnippet>270</a>
-<a href=#271 id=271 data-nosnippet>271</a>    <span class="kw">pub fn </span>get_static(<span class="kw-2">&amp;</span><span class="self">self</span>, def_id: DefId) -&gt; SpirvValue {
-<a href=#272 id=272 data-nosnippet>272</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>g) = <span class="self">self</span>.statics.borrow().get(<span class="kw-2">&amp;</span>def_id) {
-<a href=#273 id=273 data-nosnippet>273</a>            <span class="kw">return </span>g;
-<a href=#274 id=274 data-nosnippet>274</a>        }
-<a href=#275 id=275 data-nosnippet>275</a>
-<a href=#276 id=276 data-nosnippet>276</a>        <span class="kw">let </span>defined_in_current_codegen_unit = <span class="self">self
-<a href=#277 id=277 data-nosnippet>277</a>            </span>.codegen_unit
-<a href=#278 id=278 data-nosnippet>278</a>            .items()
-<a href=#279 id=279 data-nosnippet>279</a>            .contains_key(<span class="kw-2">&amp;</span>MonoItem::Static(def_id));
-<a href=#280 id=280 data-nosnippet>280</a>        <span class="macro">assert!</span>(
-<a href=#281 id=281 data-nosnippet>281</a>            !defined_in_current_codegen_unit,
-<a href=#282 id=282 data-nosnippet>282</a>            <span class="string">"get_static() should always hit the cache for statics defined in the same CGU, but did not for `{def_id:?}`"
-<a href=#283 id=283 data-nosnippet>283</a>        </span>);
-<a href=#284 id=284 data-nosnippet>284</a>
-<a href=#285 id=285 data-nosnippet>285</a>        <span class="kw">let </span>instance = Instance::mono(<span class="self">self</span>.tcx, def_id);
-<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">let </span>ty = instance.ty(<span class="self">self</span>.tcx, TypingEnv::fully_monomorphized());
-<a href=#287 id=287 data-nosnippet>287</a>        <span class="kw">let </span>sym = <span class="self">self</span>.tcx.symbol_name(instance).name;
-<a href=#288 id=288 data-nosnippet>288</a>        <span class="kw">let </span>span = <span class="self">self</span>.tcx.def_span(def_id);
-<a href=#289 id=289 data-nosnippet>289</a>        <span class="kw">let </span>g = <span class="self">self</span>.declare_global(span, <span class="self">self</span>.layout_of(ty).spirv_type(span, <span class="self">self</span>));
-<a href=#290 id=290 data-nosnippet>290</a>        <span class="self">self</span>.statics.borrow_mut().insert(def_id, g);
-<a href=#291 id=291 data-nosnippet>291</a>        <span class="self">self</span>.set_linkage(g.def_cx(<span class="self">self</span>), sym.to_string(), LinkageType::Import);
-<a href=#292 id=292 data-nosnippet>292</a>        g
-<a href=#293 id=293 data-nosnippet>293</a>    }
-<a href=#294 id=294 data-nosnippet>294</a>
-<a href=#295 id=295 data-nosnippet>295</a>    <span class="kw">fn </span>declare_global(<span class="kw-2">&amp;</span><span class="self">self</span>, span: Span, ty: Word) -&gt; SpirvValue {
-<a href=#296 id=296 data-nosnippet>296</a>        <span class="kw">let </span>ptr_ty = SpirvType::Pointer { pointee: ty }.def(span, <span class="self">self</span>);
-<a href=#297 id=297 data-nosnippet>297</a>        <span class="comment">// FIXME(eddyb) figure out what the correct storage class is.
-<a href=#298 id=298 data-nosnippet>298</a>        </span><span class="kw">let </span>result = <span class="self">self
-<a href=#299 id=299 data-nosnippet>299</a>            </span>.emit_global()
-<a href=#300 id=300 data-nosnippet>300</a>            .variable(ptr_ty, <span class="prelude-val">None</span>, StorageClass::Private, <span class="prelude-val">None</span>)
-<a href=#301 id=301 data-nosnippet>301</a>            .with_type(ptr_ty);
-<a href=#302 id=302 data-nosnippet>302</a>        <span class="comment">// TODO: These should be StorageClass::Private, so just zombie for now.
-<a href=#303 id=303 data-nosnippet>303</a>        // FIXME(eddyb) why zombie? this looks like it should just work nowadays.
-<a href=#304 id=304 data-nosnippet>304</a>        </span><span class="self">self</span>.zombie_with_span(result.def_cx(<span class="self">self</span>), span, <span class="string">"globals are not supported yet"</span>);
-<a href=#305 id=305 data-nosnippet>305</a>        result
-<a href=#306 id=306 data-nosnippet>306</a>    }
-<a href=#307 id=307 data-nosnippet>307</a>}
-<a href=#308 id=308 data-nosnippet>308</a>
-<a href=#309 id=309 data-nosnippet>309</a><span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; PreDefineCodegenMethods&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
-<a href=#310 id=310 data-nosnippet>310</a>    <span class="kw">fn </span>predefine_static(
-<a href=#311 id=311 data-nosnippet>311</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#312 id=312 data-nosnippet>312</a>        def_id: DefId,
-<a href=#313 id=313 data-nosnippet>313</a>        linkage: Linkage,
-<a href=#314 id=314 data-nosnippet>314</a>        _visibility: Visibility,
-<a href=#315 id=315 data-nosnippet>315</a>        symbol_name: <span class="kw-2">&amp;</span>str,
-<a href=#316 id=316 data-nosnippet>316</a>    ) {
-<a href=#317 id=317 data-nosnippet>317</a>        <span class="kw">let </span>instance = Instance::mono(<span class="self">self</span>.tcx, def_id);
-<a href=#318 id=318 data-nosnippet>318</a>        <span class="kw">let </span>ty = instance.ty(<span class="self">self</span>.tcx, TypingEnv::fully_monomorphized());
-<a href=#319 id=319 data-nosnippet>319</a>        <span class="kw">let </span>span = <span class="self">self</span>.tcx.def_span(def_id);
-<a href=#320 id=320 data-nosnippet>320</a>        <span class="kw">let </span>spvty = <span class="self">self</span>.layout_of(ty).spirv_type(span, <span class="self">self</span>);
-<a href=#321 id=321 data-nosnippet>321</a>        <span class="kw">let </span>linkage = <span class="kw">match </span>linkage {
-<a href=#322 id=322 data-nosnippet>322</a>            Linkage::External =&gt; <span class="prelude-val">Some</span>(LinkageType::Export),
-<a href=#323 id=323 data-nosnippet>323</a>            Linkage::Internal =&gt; <span class="prelude-val">None</span>,
-<a href=#324 id=324 data-nosnippet>324</a>            other =&gt; {
-<a href=#325 id=325 data-nosnippet>325</a>                <span class="self">self</span>.tcx.dcx().err(<span class="macro">format!</span>(
-<a href=#326 id=326 data-nosnippet>326</a>                    <span class="string">"TODO: Linkage type {other:?} not supported yet for static var symbol {symbol_name}"
-<a href=#327 id=327 data-nosnippet>327</a>                </span>));
-<a href=#328 id=328 data-nosnippet>328</a>                <span class="prelude-val">None
-<a href=#329 id=329 data-nosnippet>329</a>            </span>}
-<a href=#330 id=330 data-nosnippet>330</a>        };
-<a href=#331 id=331 data-nosnippet>331</a>
-<a href=#332 id=332 data-nosnippet>332</a>        <span class="kw">let </span>g = <span class="self">self</span>.declare_global(span, spvty);
+<a href=#234 id=234 data-nosnippet>234</a>
+<a href=#235 id=235 data-nosnippet>235</a>        <span class="comment">// HACK(eddyb) there is no good way to identify these definitions
+<a href=#236 id=236 data-nosnippet>236</a>        // (e.g. no `#[lang = "..."]` attribute), but this works well enough.
+<a href=#237 id=237 data-nosnippet>237</a>        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(suffix) = demangled_symbol_name.strip_prefix(<span class="string">"&lt;core::fmt::rt::Argument&gt;::new_"</span>)
+<a href=#238 id=238 data-nosnippet>238</a>        {
+<a href=#239 id=239 data-nosnippet>239</a>            <span class="kw">let </span>spec = suffix.split_once(<span class="string">"::&lt;"</span>).and_then(|(method_suffix, <span class="kw">_</span>)| {
+<a href=#240 id=240 data-nosnippet>240</a>                <span class="prelude-val">Some</span>(<span class="kw">match </span>method_suffix {
+<a href=#241 id=241 data-nosnippet>241</a>                    <span class="string">"display" </span>=&gt; <span class="string">' '</span>,
+<a href=#242 id=242 data-nosnippet>242</a>                    <span class="string">"debug" </span>=&gt; <span class="string">'?'</span>,
+<a href=#243 id=243 data-nosnippet>243</a>                    <span class="string">"octal" </span>=&gt; <span class="string">'o'</span>,
+<a href=#244 id=244 data-nosnippet>244</a>                    <span class="string">"lower_hex" </span>=&gt; <span class="string">'x'</span>,
+<a href=#245 id=245 data-nosnippet>245</a>                    <span class="string">"upper_hex" </span>=&gt; <span class="string">'X'</span>,
+<a href=#246 id=246 data-nosnippet>246</a>                    <span class="string">"pointer" </span>=&gt; <span class="string">'p'</span>,
+<a href=#247 id=247 data-nosnippet>247</a>                    <span class="string">"binary" </span>=&gt; <span class="string">'b'</span>,
+<a href=#248 id=248 data-nosnippet>248</a>                    <span class="string">"lower_exp" </span>=&gt; <span class="string">'e'</span>,
+<a href=#249 id=249 data-nosnippet>249</a>                    <span class="string">"upper_exp" </span>=&gt; <span class="string">'E'</span>,
+<a href=#250 id=250 data-nosnippet>250</a>                    <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+<a href=#251 id=251 data-nosnippet>251</a>                })
+<a href=#252 id=252 data-nosnippet>252</a>            });
+<a href=#253 id=253 data-nosnippet>253</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(spec) = spec
+<a href=#254 id=254 data-nosnippet>254</a>                &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>((ty,)) = instance.args.types().collect_tuple()
+<a href=#255 id=255 data-nosnippet>255</a>            {
+<a href=#256 id=256 data-nosnippet>256</a>                <span class="self">self</span>.fmt_rt_arg_new_fn_ids_to_ty_and_spec
+<a href=#257 id=257 data-nosnippet>257</a>                    .borrow_mut()
+<a href=#258 id=258 data-nosnippet>258</a>                    .insert(fn_id, (ty, spec));
+<a href=#259 id=259 data-nosnippet>259</a>            }
+<a href=#260 id=260 data-nosnippet>260</a>        }
+<a href=#261 id=261 data-nosnippet>261</a>
+<a href=#262 id=262 data-nosnippet>262</a>        declared
+<a href=#263 id=263 data-nosnippet>263</a>    }
+<a href=#264 id=264 data-nosnippet>264</a>
+<a href=#265 id=265 data-nosnippet>265</a>    <span class="kw">pub fn </span>get_static(<span class="kw-2">&amp;</span><span class="self">self</span>, def_id: DefId) -&gt; SpirvValue {
+<a href=#266 id=266 data-nosnippet>266</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>g) = <span class="self">self</span>.statics.borrow().get(<span class="kw-2">&amp;</span>def_id) {
+<a href=#267 id=267 data-nosnippet>267</a>            <span class="kw">return </span>g;
+<a href=#268 id=268 data-nosnippet>268</a>        }
+<a href=#269 id=269 data-nosnippet>269</a>
+<a href=#270 id=270 data-nosnippet>270</a>        <span class="kw">let </span>defined_in_current_codegen_unit = <span class="self">self
+<a href=#271 id=271 data-nosnippet>271</a>            </span>.codegen_unit
+<a href=#272 id=272 data-nosnippet>272</a>            .items()
+<a href=#273 id=273 data-nosnippet>273</a>            .contains_key(<span class="kw-2">&amp;</span>MonoItem::Static(def_id));
+<a href=#274 id=274 data-nosnippet>274</a>        <span class="macro">assert!</span>(
+<a href=#275 id=275 data-nosnippet>275</a>            !defined_in_current_codegen_unit,
+<a href=#276 id=276 data-nosnippet>276</a>            <span class="string">"get_static() should always hit the cache for statics defined in the same CGU, but did not for `{def_id:?}`"
+<a href=#277 id=277 data-nosnippet>277</a>        </span>);
+<a href=#278 id=278 data-nosnippet>278</a>
+<a href=#279 id=279 data-nosnippet>279</a>        <span class="kw">let </span>instance = Instance::mono(<span class="self">self</span>.tcx, def_id);
+<a href=#280 id=280 data-nosnippet>280</a>        <span class="kw">let </span>ty = instance.ty(<span class="self">self</span>.tcx, TypingEnv::fully_monomorphized());
+<a href=#281 id=281 data-nosnippet>281</a>        <span class="kw">let </span>sym = <span class="self">self</span>.tcx.symbol_name(instance).name;
+<a href=#282 id=282 data-nosnippet>282</a>        <span class="kw">let </span>span = <span class="self">self</span>.tcx.def_span(def_id);
+<a href=#283 id=283 data-nosnippet>283</a>        <span class="kw">let </span>g = <span class="self">self</span>.declare_global(span, <span class="self">self</span>.layout_of(ty).spirv_type(span, <span class="self">self</span>));
+<a href=#284 id=284 data-nosnippet>284</a>        <span class="self">self</span>.statics.borrow_mut().insert(def_id, g);
+<a href=#285 id=285 data-nosnippet>285</a>        <span class="self">self</span>.set_linkage(g.def_cx(<span class="self">self</span>), sym.to_string(), LinkageType::Import);
+<a href=#286 id=286 data-nosnippet>286</a>        g
+<a href=#287 id=287 data-nosnippet>287</a>    }
+<a href=#288 id=288 data-nosnippet>288</a>
+<a href=#289 id=289 data-nosnippet>289</a>    <span class="kw">fn </span>declare_global(<span class="kw-2">&amp;</span><span class="self">self</span>, span: Span, ty: Word) -&gt; SpirvValue {
+<a href=#290 id=290 data-nosnippet>290</a>        <span class="kw">let </span>ptr_ty = SpirvType::Pointer { pointee: ty }.def(span, <span class="self">self</span>);
+<a href=#291 id=291 data-nosnippet>291</a>        <span class="comment">// FIXME(eddyb) figure out what the correct storage class is.
+<a href=#292 id=292 data-nosnippet>292</a>        </span><span class="kw">let </span>result = <span class="self">self
+<a href=#293 id=293 data-nosnippet>293</a>            </span>.emit_global()
+<a href=#294 id=294 data-nosnippet>294</a>            .variable(ptr_ty, <span class="prelude-val">None</span>, StorageClass::Private, <span class="prelude-val">None</span>)
+<a href=#295 id=295 data-nosnippet>295</a>            .with_type(ptr_ty);
+<a href=#296 id=296 data-nosnippet>296</a>        <span class="comment">// TODO: These should be StorageClass::Private, so just zombie for now.
+<a href=#297 id=297 data-nosnippet>297</a>        // FIXME(eddyb) why zombie? this looks like it should just work nowadays.
+<a href=#298 id=298 data-nosnippet>298</a>        </span><span class="self">self</span>.zombie_with_span(result.def_cx(<span class="self">self</span>), span, <span class="string">"globals are not supported yet"</span>);
+<a href=#299 id=299 data-nosnippet>299</a>        result
+<a href=#300 id=300 data-nosnippet>300</a>    }
+<a href=#301 id=301 data-nosnippet>301</a>}
+<a href=#302 id=302 data-nosnippet>302</a>
+<a href=#303 id=303 data-nosnippet>303</a><span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; PreDefineCodegenMethods&lt;<span class="lifetime">'tcx</span>&gt; <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+<a href=#304 id=304 data-nosnippet>304</a>    <span class="kw">fn </span>predefine_static(
+<a href=#305 id=305 data-nosnippet>305</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#306 id=306 data-nosnippet>306</a>        def_id: DefId,
+<a href=#307 id=307 data-nosnippet>307</a>        linkage: Linkage,
+<a href=#308 id=308 data-nosnippet>308</a>        _visibility: Visibility,
+<a href=#309 id=309 data-nosnippet>309</a>        symbol_name: <span class="kw-2">&amp;</span>str,
+<a href=#310 id=310 data-nosnippet>310</a>    ) {
+<a href=#311 id=311 data-nosnippet>311</a>        <span class="kw">let </span>instance = Instance::mono(<span class="self">self</span>.tcx, def_id);
+<a href=#312 id=312 data-nosnippet>312</a>        <span class="kw">let </span>ty = instance.ty(<span class="self">self</span>.tcx, TypingEnv::fully_monomorphized());
+<a href=#313 id=313 data-nosnippet>313</a>        <span class="kw">let </span>span = <span class="self">self</span>.tcx.def_span(def_id);
+<a href=#314 id=314 data-nosnippet>314</a>        <span class="kw">let </span>spvty = <span class="self">self</span>.layout_of(ty).spirv_type(span, <span class="self">self</span>);
+<a href=#315 id=315 data-nosnippet>315</a>        <span class="kw">let </span>linkage = <span class="kw">match </span>linkage {
+<a href=#316 id=316 data-nosnippet>316</a>            Linkage::External =&gt; <span class="prelude-val">Some</span>(LinkageType::Export),
+<a href=#317 id=317 data-nosnippet>317</a>            Linkage::Internal =&gt; <span class="prelude-val">None</span>,
+<a href=#318 id=318 data-nosnippet>318</a>            other =&gt; {
+<a href=#319 id=319 data-nosnippet>319</a>                <span class="self">self</span>.tcx.dcx().err(<span class="macro">format!</span>(
+<a href=#320 id=320 data-nosnippet>320</a>                    <span class="string">"TODO: Linkage type {other:?} not supported yet for static var symbol {symbol_name}"
+<a href=#321 id=321 data-nosnippet>321</a>                </span>));
+<a href=#322 id=322 data-nosnippet>322</a>                <span class="prelude-val">None
+<a href=#323 id=323 data-nosnippet>323</a>            </span>}
+<a href=#324 id=324 data-nosnippet>324</a>        };
+<a href=#325 id=325 data-nosnippet>325</a>
+<a href=#326 id=326 data-nosnippet>326</a>        <span class="kw">let </span>g = <span class="self">self</span>.declare_global(span, spvty);
+<a href=#327 id=327 data-nosnippet>327</a>
+<a href=#328 id=328 data-nosnippet>328</a>        <span class="self">self</span>.statics.borrow_mut().insert(def_id, g);
+<a href=#329 id=329 data-nosnippet>329</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(linkage) = linkage {
+<a href=#330 id=330 data-nosnippet>330</a>            <span class="self">self</span>.set_linkage(g.def_cx(<span class="self">self</span>), symbol_name.to_string(), linkage);
+<a href=#331 id=331 data-nosnippet>331</a>        }
+<a href=#332 id=332 data-nosnippet>332</a>    }
 <a href=#333 id=333 data-nosnippet>333</a>
-<a href=#334 id=334 data-nosnippet>334</a>        <span class="self">self</span>.statics.borrow_mut().insert(def_id, g);
-<a href=#335 id=335 data-nosnippet>335</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(linkage) = linkage {
-<a href=#336 id=336 data-nosnippet>336</a>            <span class="self">self</span>.set_linkage(g.def_cx(<span class="self">self</span>), symbol_name.to_string(), linkage);
-<a href=#337 id=337 data-nosnippet>337</a>        }
-<a href=#338 id=338 data-nosnippet>338</a>    }
-<a href=#339 id=339 data-nosnippet>339</a>
-<a href=#340 id=340 data-nosnippet>340</a>    <span class="kw">fn </span>predefine_fn(
-<a href=#341 id=341 data-nosnippet>341</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#342 id=342 data-nosnippet>342</a>        instance: Instance&lt;<span class="lifetime">'tcx</span>&gt;,
-<a href=#343 id=343 data-nosnippet>343</a>        linkage: Linkage,
-<a href=#344 id=344 data-nosnippet>344</a>        _visibility: Visibility,
-<a href=#345 id=345 data-nosnippet>345</a>        symbol_name: <span class="kw-2">&amp;</span>str,
-<a href=#346 id=346 data-nosnippet>346</a>    ) {
-<a href=#347 id=347 data-nosnippet>347</a>        <span class="kw">let </span>linkage2 = <span class="kw">match </span>linkage {
-<a href=#348 id=348 data-nosnippet>348</a>            <span class="comment">// super sketchy hack: memcpy, memmove, memset, memcmp, and bcmp in the
-<a href=#349 id=349 data-nosnippet>349</a>            // compiler_builtins crate use the WeakAny linkage type. Treat it as actually External
-<a href=#350 id=350 data-nosnippet>350</a>            // linkage because we know there's only one of them.
-<a href=#351 id=351 data-nosnippet>351</a>            </span>Linkage::External | Linkage::WeakAny =&gt; <span class="prelude-val">Some</span>(LinkageType::Export),
-<a href=#352 id=352 data-nosnippet>352</a>            Linkage::Internal =&gt; <span class="prelude-val">None</span>,
-<a href=#353 id=353 data-nosnippet>353</a>            other =&gt; {
-<a href=#354 id=354 data-nosnippet>354</a>                <span class="self">self</span>.tcx.dcx().err(<span class="macro">format!</span>(
-<a href=#355 id=355 data-nosnippet>355</a>                    <span class="string">"TODO: Linkage type {other:?} not supported yet for function symbol {symbol_name}"
-<a href=#356 id=356 data-nosnippet>356</a>                </span>));
-<a href=#357 id=357 data-nosnippet>357</a>                <span class="prelude-val">None
-<a href=#358 id=358 data-nosnippet>358</a>            </span>}
-<a href=#359 id=359 data-nosnippet>359</a>        };
-<a href=#360 id=360 data-nosnippet>360</a>        <span class="kw">let </span>declared = <span class="self">self</span>.declare_fn_ext(instance, linkage2);
-<a href=#361 id=361 data-nosnippet>361</a>
-<a href=#362 id=362 data-nosnippet>362</a>        <span class="self">self</span>.fn_instances.borrow_mut().insert(instance, declared);
-<a href=#363 id=363 data-nosnippet>363</a>    }
-<a href=#364 id=364 data-nosnippet>364</a>}
-<a href=#365 id=365 data-nosnippet>365</a>
-<a href=#366 id=366 data-nosnippet>366</a><span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; StaticCodegenMethods <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
-<a href=#367 id=367 data-nosnippet>367</a>    <span class="kw">fn </span>static_addr_of(<span class="kw-2">&amp;</span><span class="self">self</span>, cv: <span class="self">Self</span>::Value, _align: Align, _kind: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="self">Self</span>::Value {
-<a href=#368 id=368 data-nosnippet>368</a>        <span class="self">self</span>.def_constant(
-<a href=#369 id=369 data-nosnippet>369</a>            <span class="self">self</span>.type_ptr_to(cv.ty),
-<a href=#370 id=370 data-nosnippet>370</a>            SpirvConst::PtrTo {
-<a href=#371 id=371 data-nosnippet>371</a>                pointee: cv.def_cx(<span class="self">self</span>),
-<a href=#372 id=372 data-nosnippet>372</a>            },
-<a href=#373 id=373 data-nosnippet>373</a>        )
-<a href=#374 id=374 data-nosnippet>374</a>    }
-<a href=#375 id=375 data-nosnippet>375</a>
-<a href=#376 id=376 data-nosnippet>376</a>    <span class="kw">fn </span>codegen_static(<span class="kw-2">&amp;mut </span><span class="self">self</span>, def_id: DefId) {
-<a href=#377 id=377 data-nosnippet>377</a>        <span class="kw">let </span>g = <span class="self">self</span>.get_static(def_id);
-<a href=#378 id=378 data-nosnippet>378</a>
-<a href=#379 id=379 data-nosnippet>379</a>        <span class="kw">let </span>alloc = <span class="kw">match </span><span class="self">self</span>.tcx.eval_static_initializer(def_id) {
-<a href=#380 id=380 data-nosnippet>380</a>            <span class="prelude-val">Ok</span>(alloc) =&gt; alloc,
-<a href=#381 id=381 data-nosnippet>381</a>            <span class="comment">// Error has already been reported
-<a href=#382 id=382 data-nosnippet>382</a>            </span><span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span>,
-<a href=#383 id=383 data-nosnippet>383</a>        };
-<a href=#384 id=384 data-nosnippet>384</a>        <span class="kw">let </span>value_ty = <span class="kw">match </span><span class="self">self</span>.lookup_type(g.ty) {
-<a href=#385 id=385 data-nosnippet>385</a>            SpirvType::Pointer { pointee } =&gt; pointee,
-<a href=#386 id=386 data-nosnippet>386</a>            other =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="macro">format!</span>(
-<a href=#387 id=387 data-nosnippet>387</a>                <span class="string">"global had non-pointer type {}"</span>,
-<a href=#388 id=388 data-nosnippet>388</a>                other.debug(g.ty, <span class="self">self</span>)
-<a href=#389 id=389 data-nosnippet>389</a>            )),
-<a href=#390 id=390 data-nosnippet>390</a>        };
-<a href=#391 id=391 data-nosnippet>391</a>        <span class="kw">let </span>v = <span class="self">self</span>.try_read_from_const_alloc(alloc, value_ty).unwrap();
-<a href=#392 id=392 data-nosnippet>392</a>        <span class="macro">assert_ty_eq!</span>(<span class="self">self</span>, value_ty, v.ty);
-<a href=#393 id=393 data-nosnippet>393</a>        <span class="self">self</span>.builder
-<a href=#394 id=394 data-nosnippet>394</a>            .set_global_initializer(g.def_cx(<span class="self">self</span>), v.def_cx(<span class="self">self</span>));
-<a href=#395 id=395 data-nosnippet>395</a>
-<a href=#396 id=396 data-nosnippet>396</a>        <span class="kw">let </span>attrs = <span class="self">self</span>.tcx.codegen_fn_attrs(def_id);
-<a href=#397 id=397 data-nosnippet>397</a>
-<a href=#398 id=398 data-nosnippet>398</a>        <span class="kw">let </span>alloc = alloc.inner();
-<a href=#399 id=399 data-nosnippet>399</a>        <span class="kw">let </span>align_override =
-<a href=#400 id=400 data-nosnippet>400</a>            <span class="prelude-val">Some</span>(alloc.align).filter(|<span class="kw-2">&amp;</span>align| align != <span class="self">self</span>.lookup_type(value_ty).alignof(<span class="self">self</span>));
-<a href=#401 id=401 data-nosnippet>401</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(_align) = align_override {
-<a href=#402 id=402 data-nosnippet>402</a>            <span class="comment">// FIXME(eddyb) implement, or at least error.
-<a href=#403 id=403 data-nosnippet>403</a>        </span>}
-<a href=#404 id=404 data-nosnippet>404</a>
-<a href=#405 id=405 data-nosnippet>405</a>        <span class="kw">if </span>attrs.flags.contains(CodegenFnAttrFlags::THREAD_LOCAL) {
-<a href=#406 id=406 data-nosnippet>406</a>            <span class="comment">// FIXME(eddyb) implement, or at least error.
-<a href=#407 id=407 data-nosnippet>407</a>        </span>}
-<a href=#408 id=408 data-nosnippet>408</a>
-<a href=#409 id=409 data-nosnippet>409</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(_section) = attrs.link_section {
-<a href=#410 id=410 data-nosnippet>410</a>            <span class="comment">// FIXME(eddyb) implement, or at least error.
-<a href=#411 id=411 data-nosnippet>411</a>        </span>}
-<a href=#412 id=412 data-nosnippet>412</a>
-<a href=#413 id=413 data-nosnippet>413</a>        <span class="kw">if </span>attrs.flags.contains(CodegenFnAttrFlags::USED_COMPILER) {
-<a href=#414 id=414 data-nosnippet>414</a>            <span class="comment">// `USED` and `USED_LINKER` can't be used together.
-<a href=#415 id=415 data-nosnippet>415</a>            </span><span class="macro">assert!</span>(!attrs.flags.contains(CodegenFnAttrFlags::USED_LINKER));
-<a href=#416 id=416 data-nosnippet>416</a>
-<a href=#417 id=417 data-nosnippet>417</a>            <span class="comment">// The semantics of #[used] in Rust only require the symbol to make it into the
-<a href=#418 id=418 data-nosnippet>418</a>            // object file. It is explicitly allowed for the linker to strip the symbol if it
-<a href=#419 id=419 data-nosnippet>419</a>            // is dead, which means we are allowed to use `llvm.compiler.used` instead of
-<a href=#420 id=420 data-nosnippet>420</a>            // `llvm.used` here.
-<a href=#421 id=421 data-nosnippet>421</a>            //
-<a href=#422 id=422 data-nosnippet>422</a>            // Additionally, https://reviews.llvm.org/D97448 in LLVM 13 started emitting unique
-<a href=#423 id=423 data-nosnippet>423</a>            // sections with SHF_GNU_RETAIN flag for llvm.used symbols, which may trigger bugs
-<a href=#424 id=424 data-nosnippet>424</a>            // in the handling of `.init_array` (the static constructor list) in versions of
-<a href=#425 id=425 data-nosnippet>425</a>            // the gold linker (prior to the one released with binutils 2.36).
-<a href=#426 id=426 data-nosnippet>426</a>            //
-<a href=#427 id=427 data-nosnippet>427</a>            // That said, we only ever emit these when `#[used(compiler)]` is explicitly
-<a href=#428 id=428 data-nosnippet>428</a>            // requested. This is to avoid similar breakage on other targets, in particular
-<a href=#429 id=429 data-nosnippet>429</a>            // MachO targets have *their* static constructor lists broken if `llvm.compiler.used`
-<a href=#430 id=430 data-nosnippet>430</a>            // is emitted rather than `llvm.used`. However, that check happens when assigning
-<a href=#431 id=431 data-nosnippet>431</a>            // the `CodegenFnAttrFlags` in the `codegen_fn_attrs` query, so we don't need to
-<a href=#432 id=432 data-nosnippet>432</a>            // take care of it here.
-<a href=#433 id=433 data-nosnippet>433</a>            </span><span class="self">self</span>.add_compiler_used_global(g);
+<a href=#334 id=334 data-nosnippet>334</a>    <span class="kw">fn </span>predefine_fn(
+<a href=#335 id=335 data-nosnippet>335</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#336 id=336 data-nosnippet>336</a>        instance: Instance&lt;<span class="lifetime">'tcx</span>&gt;,
+<a href=#337 id=337 data-nosnippet>337</a>        linkage: Linkage,
+<a href=#338 id=338 data-nosnippet>338</a>        _visibility: Visibility,
+<a href=#339 id=339 data-nosnippet>339</a>        symbol_name: <span class="kw-2">&amp;</span>str,
+<a href=#340 id=340 data-nosnippet>340</a>    ) {
+<a href=#341 id=341 data-nosnippet>341</a>        <span class="kw">let </span>linkage2 = <span class="kw">match </span>linkage {
+<a href=#342 id=342 data-nosnippet>342</a>            <span class="comment">// super sketchy hack: memcpy, memmove, memset, memcmp, and bcmp in the
+<a href=#343 id=343 data-nosnippet>343</a>            // compiler_builtins crate use the WeakAny linkage type. Treat it as actually External
+<a href=#344 id=344 data-nosnippet>344</a>            // linkage because we know there's only one of them.
+<a href=#345 id=345 data-nosnippet>345</a>            </span>Linkage::External | Linkage::WeakAny =&gt; <span class="prelude-val">Some</span>(LinkageType::Export),
+<a href=#346 id=346 data-nosnippet>346</a>            Linkage::Internal =&gt; <span class="prelude-val">None</span>,
+<a href=#347 id=347 data-nosnippet>347</a>            other =&gt; {
+<a href=#348 id=348 data-nosnippet>348</a>                <span class="self">self</span>.tcx.dcx().err(<span class="macro">format!</span>(
+<a href=#349 id=349 data-nosnippet>349</a>                    <span class="string">"TODO: Linkage type {other:?} not supported yet for function symbol {symbol_name}"
+<a href=#350 id=350 data-nosnippet>350</a>                </span>));
+<a href=#351 id=351 data-nosnippet>351</a>                <span class="prelude-val">None
+<a href=#352 id=352 data-nosnippet>352</a>            </span>}
+<a href=#353 id=353 data-nosnippet>353</a>        };
+<a href=#354 id=354 data-nosnippet>354</a>        <span class="kw">let </span>declared = <span class="self">self</span>.declare_fn_ext(instance, linkage2);
+<a href=#355 id=355 data-nosnippet>355</a>
+<a href=#356 id=356 data-nosnippet>356</a>        <span class="self">self</span>.fn_instances.borrow_mut().insert(instance, declared);
+<a href=#357 id=357 data-nosnippet>357</a>    }
+<a href=#358 id=358 data-nosnippet>358</a>}
+<a href=#359 id=359 data-nosnippet>359</a>
+<a href=#360 id=360 data-nosnippet>360</a><span class="kw">impl</span>&lt;<span class="lifetime">'tcx</span>&gt; StaticCodegenMethods <span class="kw">for </span>CodegenCx&lt;<span class="lifetime">'tcx</span>&gt; {
+<a href=#361 id=361 data-nosnippet>361</a>    <span class="kw">fn </span>static_addr_of(<span class="kw-2">&amp;</span><span class="self">self</span>, cv: <span class="self">Self</span>::Value, _align: Align, _kind: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; <span class="self">Self</span>::Value {
+<a href=#362 id=362 data-nosnippet>362</a>        <span class="self">self</span>.def_constant(
+<a href=#363 id=363 data-nosnippet>363</a>            <span class="self">self</span>.type_ptr_to(cv.ty),
+<a href=#364 id=364 data-nosnippet>364</a>            SpirvConst::PtrTo {
+<a href=#365 id=365 data-nosnippet>365</a>                pointee: cv.def_cx(<span class="self">self</span>),
+<a href=#366 id=366 data-nosnippet>366</a>            },
+<a href=#367 id=367 data-nosnippet>367</a>        )
+<a href=#368 id=368 data-nosnippet>368</a>    }
+<a href=#369 id=369 data-nosnippet>369</a>
+<a href=#370 id=370 data-nosnippet>370</a>    <span class="kw">fn </span>codegen_static(<span class="kw-2">&amp;mut </span><span class="self">self</span>, def_id: DefId) {
+<a href=#371 id=371 data-nosnippet>371</a>        <span class="kw">let </span>g = <span class="self">self</span>.get_static(def_id);
+<a href=#372 id=372 data-nosnippet>372</a>
+<a href=#373 id=373 data-nosnippet>373</a>        <span class="kw">let </span>alloc = <span class="kw">match </span><span class="self">self</span>.tcx.eval_static_initializer(def_id) {
+<a href=#374 id=374 data-nosnippet>374</a>            <span class="prelude-val">Ok</span>(alloc) =&gt; alloc,
+<a href=#375 id=375 data-nosnippet>375</a>            <span class="comment">// Error has already been reported
+<a href=#376 id=376 data-nosnippet>376</a>            </span><span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span>,
+<a href=#377 id=377 data-nosnippet>377</a>        };
+<a href=#378 id=378 data-nosnippet>378</a>        <span class="kw">let </span>value_ty = <span class="kw">match </span><span class="self">self</span>.lookup_type(g.ty) {
+<a href=#379 id=379 data-nosnippet>379</a>            SpirvType::Pointer { pointee } =&gt; pointee,
+<a href=#380 id=380 data-nosnippet>380</a>            other =&gt; <span class="self">self</span>.tcx.dcx().fatal(<span class="macro">format!</span>(
+<a href=#381 id=381 data-nosnippet>381</a>                <span class="string">"global had non-pointer type {}"</span>,
+<a href=#382 id=382 data-nosnippet>382</a>                other.debug(g.ty, <span class="self">self</span>)
+<a href=#383 id=383 data-nosnippet>383</a>            )),
+<a href=#384 id=384 data-nosnippet>384</a>        };
+<a href=#385 id=385 data-nosnippet>385</a>        <span class="kw">let </span>v = <span class="self">self</span>.try_read_from_const_alloc(alloc, value_ty).unwrap();
+<a href=#386 id=386 data-nosnippet>386</a>        <span class="macro">assert_ty_eq!</span>(<span class="self">self</span>, value_ty, v.ty);
+<a href=#387 id=387 data-nosnippet>387</a>        <span class="self">self</span>.builder
+<a href=#388 id=388 data-nosnippet>388</a>            .set_global_initializer(g.def_cx(<span class="self">self</span>), v.def_cx(<span class="self">self</span>));
+<a href=#389 id=389 data-nosnippet>389</a>
+<a href=#390 id=390 data-nosnippet>390</a>        <span class="kw">let </span>attrs = <span class="self">self</span>.tcx.codegen_fn_attrs(def_id);
+<a href=#391 id=391 data-nosnippet>391</a>
+<a href=#392 id=392 data-nosnippet>392</a>        <span class="kw">let </span>alloc = alloc.inner();
+<a href=#393 id=393 data-nosnippet>393</a>        <span class="kw">let </span>align_override =
+<a href=#394 id=394 data-nosnippet>394</a>            <span class="prelude-val">Some</span>(alloc.align).filter(|<span class="kw-2">&amp;</span>align| align != <span class="self">self</span>.lookup_type(value_ty).alignof(<span class="self">self</span>));
+<a href=#395 id=395 data-nosnippet>395</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(_align) = align_override {
+<a href=#396 id=396 data-nosnippet>396</a>            <span class="comment">// FIXME(eddyb) implement, or at least error.
+<a href=#397 id=397 data-nosnippet>397</a>        </span>}
+<a href=#398 id=398 data-nosnippet>398</a>
+<a href=#399 id=399 data-nosnippet>399</a>        <span class="kw">if </span>attrs.flags.contains(CodegenFnAttrFlags::THREAD_LOCAL) {
+<a href=#400 id=400 data-nosnippet>400</a>            <span class="comment">// FIXME(eddyb) implement, or at least error.
+<a href=#401 id=401 data-nosnippet>401</a>        </span>}
+<a href=#402 id=402 data-nosnippet>402</a>
+<a href=#403 id=403 data-nosnippet>403</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(_section) = attrs.link_section {
+<a href=#404 id=404 data-nosnippet>404</a>            <span class="comment">// FIXME(eddyb) implement, or at least error.
+<a href=#405 id=405 data-nosnippet>405</a>        </span>}
+<a href=#406 id=406 data-nosnippet>406</a>
+<a href=#407 id=407 data-nosnippet>407</a>        <span class="kw">if </span>attrs.flags.contains(CodegenFnAttrFlags::USED_COMPILER) {
+<a href=#408 id=408 data-nosnippet>408</a>            <span class="comment">// `USED` and `USED_LINKER` can't be used together.
+<a href=#409 id=409 data-nosnippet>409</a>            </span><span class="macro">assert!</span>(!attrs.flags.contains(CodegenFnAttrFlags::USED_LINKER));
+<a href=#410 id=410 data-nosnippet>410</a>
+<a href=#411 id=411 data-nosnippet>411</a>            <span class="comment">// The semantics of #[used] in Rust only require the symbol to make it into the
+<a href=#412 id=412 data-nosnippet>412</a>            // object file. It is explicitly allowed for the linker to strip the symbol if it
+<a href=#413 id=413 data-nosnippet>413</a>            // is dead, which means we are allowed to use `llvm.compiler.used` instead of
+<a href=#414 id=414 data-nosnippet>414</a>            // `llvm.used` here.
+<a href=#415 id=415 data-nosnippet>415</a>            //
+<a href=#416 id=416 data-nosnippet>416</a>            // Additionally, https://reviews.llvm.org/D97448 in LLVM 13 started emitting unique
+<a href=#417 id=417 data-nosnippet>417</a>            // sections with SHF_GNU_RETAIN flag for llvm.used symbols, which may trigger bugs
+<a href=#418 id=418 data-nosnippet>418</a>            // in the handling of `.init_array` (the static constructor list) in versions of
+<a href=#419 id=419 data-nosnippet>419</a>            // the gold linker (prior to the one released with binutils 2.36).
+<a href=#420 id=420 data-nosnippet>420</a>            //
+<a href=#421 id=421 data-nosnippet>421</a>            // That said, we only ever emit these when `#[used(compiler)]` is explicitly
+<a href=#422 id=422 data-nosnippet>422</a>            // requested. This is to avoid similar breakage on other targets, in particular
+<a href=#423 id=423 data-nosnippet>423</a>            // MachO targets have *their* static constructor lists broken if `llvm.compiler.used`
+<a href=#424 id=424 data-nosnippet>424</a>            // is emitted rather than `llvm.used`. However, that check happens when assigning
+<a href=#425 id=425 data-nosnippet>425</a>            // the `CodegenFnAttrFlags` in the `codegen_fn_attrs` query, so we don't need to
+<a href=#426 id=426 data-nosnippet>426</a>            // take care of it here.
+<a href=#427 id=427 data-nosnippet>427</a>            </span><span class="self">self</span>.add_compiler_used_global(g);
+<a href=#428 id=428 data-nosnippet>428</a>        }
+<a href=#429 id=429 data-nosnippet>429</a>        <span class="kw">if </span>attrs.flags.contains(CodegenFnAttrFlags::USED_LINKER) {
+<a href=#430 id=430 data-nosnippet>430</a>            <span class="comment">// `USED` and `USED_LINKER` can't be used together.
+<a href=#431 id=431 data-nosnippet>431</a>            </span><span class="macro">assert!</span>(!attrs.flags.contains(CodegenFnAttrFlags::USED_COMPILER));
+<a href=#432 id=432 data-nosnippet>432</a>
+<a href=#433 id=433 data-nosnippet>433</a>            <span class="self">self</span>.add_used_global(g);
 <a href=#434 id=434 data-nosnippet>434</a>        }
-<a href=#435 id=435 data-nosnippet>435</a>        <span class="kw">if </span>attrs.flags.contains(CodegenFnAttrFlags::USED_LINKER) {
-<a href=#436 id=436 data-nosnippet>436</a>            <span class="comment">// `USED` and `USED_LINKER` can't be used together.
-<a href=#437 id=437 data-nosnippet>437</a>            </span><span class="macro">assert!</span>(!attrs.flags.contains(CodegenFnAttrFlags::USED_COMPILER));
-<a href=#438 id=438 data-nosnippet>438</a>
-<a href=#439 id=439 data-nosnippet>439</a>            <span class="self">self</span>.add_used_global(g);
-<a href=#440 id=440 data-nosnippet>440</a>        }
-<a href=#441 id=441 data-nosnippet>441</a>    }
-<a href=#442 id=442 data-nosnippet>442</a>}
-<a href=#443 id=443 data-nosnippet>443</a>
-<a href=#444 id=444 data-nosnippet>444</a><span class="kw">impl </span>CodegenCx&lt;<span class="lifetime">'_</span>&gt; {
-<a href=#445 id=445 data-nosnippet>445</a>    <span class="doccomment">/// Mark the given global value as "used", to prevent the compiler and linker from potentially
-<a href=#446 id=446 data-nosnippet>446</a>    /// removing a static variable that may otherwise appear unused.
-<a href=#447 id=447 data-nosnippet>447</a>    </span><span class="kw">fn </span>add_used_global(<span class="kw-2">&amp;</span><span class="self">self</span>, global: SpirvValue) {
-<a href=#448 id=448 data-nosnippet>448</a>        <span class="comment">// TODO: Ignore for now.
-<a href=#449 id=449 data-nosnippet>449</a>        </span><span class="kw">let </span>_unused = (<span class="self">self</span>, global);
-<a href=#450 id=450 data-nosnippet>450</a>    }
-<a href=#451 id=451 data-nosnippet>451</a>
-<a href=#452 id=452 data-nosnippet>452</a>    <span class="doccomment">/// Same as `add_used_global`, but only prevent the compiler from potentially removing an
-<a href=#453 id=453 data-nosnippet>453</a>    /// otherwise unused symbol. The linker is still permitted to drop it.
-<a href=#454 id=454 data-nosnippet>454</a>    ///
-<a href=#455 id=455 data-nosnippet>455</a>    /// This corresponds to the semantics of the `#[used]` attribute.
-<a href=#456 id=456 data-nosnippet>456</a>    </span><span class="kw">fn </span>add_compiler_used_global(<span class="kw-2">&amp;</span><span class="self">self</span>, global: SpirvValue) {
-<a href=#457 id=457 data-nosnippet>457</a>        <span class="comment">// TODO: Ignore for now.
-<a href=#458 id=458 data-nosnippet>458</a>        </span><span class="kw">let </span>_unused = (<span class="self">self</span>, global);
-<a href=#459 id=459 data-nosnippet>459</a>    }
-<a href=#460 id=460 data-nosnippet>460</a>}</code></pre></div></section></main></body></html>
+<a href=#435 id=435 data-nosnippet>435</a>    }
+<a href=#436 id=436 data-nosnippet>436</a>}
+<a href=#437 id=437 data-nosnippet>437</a>
+<a href=#438 id=438 data-nosnippet>438</a><span class="kw">impl </span>CodegenCx&lt;<span class="lifetime">'_</span>&gt; {
+<a href=#439 id=439 data-nosnippet>439</a>    <span class="doccomment">/// Mark the given global value as "used", to prevent the compiler and linker from potentially
+<a href=#440 id=440 data-nosnippet>440</a>    /// removing a static variable that may otherwise appear unused.
+<a href=#441 id=441 data-nosnippet>441</a>    </span><span class="kw">fn </span>add_used_global(<span class="kw-2">&amp;</span><span class="self">self</span>, global: SpirvValue) {
+<a href=#442 id=442 data-nosnippet>442</a>        <span class="comment">// TODO: Ignore for now.
+<a href=#443 id=443 data-nosnippet>443</a>        </span><span class="kw">let </span>_unused = (<span class="self">self</span>, global);
+<a href=#444 id=444 data-nosnippet>444</a>    }
+<a href=#445 id=445 data-nosnippet>445</a>
+<a href=#446 id=446 data-nosnippet>446</a>    <span class="doccomment">/// Same as `add_used_global`, but only prevent the compiler from potentially removing an
+<a href=#447 id=447 data-nosnippet>447</a>    /// otherwise unused symbol. The linker is still permitted to drop it.
+<a href=#448 id=448 data-nosnippet>448</a>    ///
+<a href=#449 id=449 data-nosnippet>449</a>    /// This corresponds to the semantics of the `#[used]` attribute.
+<a href=#450 id=450 data-nosnippet>450</a>    </span><span class="kw">fn </span>add_compiler_used_global(<span class="kw-2">&amp;</span><span class="self">self</span>, global: SpirvValue) {
+<a href=#451 id=451 data-nosnippet>451</a>        <span class="comment">// TODO: Ignore for now.
+<a href=#452 id=452 data-nosnippet>452</a>        </span><span class="kw">let </span>_unused = (<span class="self">self</span>, global);
+<a href=#453 id=453 data-nosnippet>453</a>    }
+<a href=#454 id=454 data-nosnippet>454</a>}</code></pre></div></section></main></body></html>
