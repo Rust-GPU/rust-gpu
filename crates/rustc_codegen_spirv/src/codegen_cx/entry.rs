@@ -11,7 +11,10 @@ use rspirv::dr::Operand;
 use rspirv::spirv::{
     Capability, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
 };
-use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods, MiscCodegenMethods as _};
+use rustc_codegen_ssa::traits::{
+    BaseTypeCodegenMethods, BuilderMethods, ConstCodegenMethods, LayoutTypeCodegenMethods,
+    MiscCodegenMethods as _,
+};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::MultiSpan;
 use rustc_hir as hir;
@@ -86,22 +89,7 @@ impl<'tcx> CodegenCx<'tcx> {
         };
         for (arg_abi, hir_param) in fn_abi.args.iter().zip(hir_params) {
             match arg_abi.mode {
-                PassMode::Direct(_) => {}
-                PassMode::Pair(..) => {
-                    // FIXME(eddyb) implement `ScalarPair` `Input`s, or change
-                    // the `FnAbi` readjustment to only use `PassMode::Pair` for
-                    // pointers to `!Sized` types, but not other `ScalarPair`s.
-                    if !matches!(arg_abi.layout.ty.kind(), ty::Ref(..)) {
-                        self.tcx.dcx().span_err(
-                            hir_param.ty_span,
-                            format!(
-                                "entry point parameter type not yet supported \
-                                 (`{}` has `ScalarPair` ABI but is not a `&T`)",
-                                arg_abi.layout.ty
-                            ),
-                        );
-                    }
-                }
+                PassMode::Direct(_) | PassMode::Pair(..) => {}
                 // FIXME(eddyb) support these (by just ignoring them) - if there
                 // is any validation concern, it should be done on the types.
                 PassMode::Ignore => self.tcx.dcx().span_fatal(
@@ -442,6 +430,33 @@ impl<'tcx> CodegenCx<'tcx> {
         } = self.entry_param_deduce_from_rust_ref_or_value(entry_arg_abi.layout, hir_param, &attrs);
         let value_spirv_type = value_layout.spirv_type(hir_param.ty_span, self);
 
+        // In compute shaders, user-provided data must come from buffers or push
+        // constants, i.e. by-reference parameters.
+        if execution_model == ExecutionModel::GLCompute
+            && matches!(entry_arg_abi.mode, PassMode::Direct(_) | PassMode::Pair(..))
+            && !matches!(entry_arg_abi.layout.ty.kind(), ty::Ref(..))
+            && attrs.builtin.is_none()
+        {
+            let param_name = if let hir::PatKind::Binding(_, _, ident, _) = &hir_param.pat.kind {
+                ident.name.to_string()
+            } else {
+                "parameter".to_string()
+            };
+            self.tcx
+                .dcx()
+                .struct_span_err(
+                    hir_param.ty_span,
+                    format!("compute entry parameter `{param_name}` must be by-reference",),
+                )
+                .with_help(format!(
+                    "consider changing the type to `&{}`",
+                    entry_arg_abi.layout.ty
+                ))
+                .emit();
+            // Keep this a hard error to stop compilation after emitting help.
+            self.tcx.dcx().abort_if_errors();
+        }
+
         let (var_id, spec_const_id) = match storage_class {
             // Pre-allocate the module-scoped `OpVariable` *Result* ID.
             Ok(_) => (
@@ -491,14 +506,6 @@ impl<'tcx> CodegenCx<'tcx> {
              vs layout:\n{value_layout:#?}",
             entry_arg_abi.layout.ty
         );
-        if is_pair && !is_unsized {
-            // If PassMode is Pair, then we need to fill in the second part of the pair with a
-            // value. We currently only do that with unsized types, so if a type is a pair for some
-            // other reason (e.g. a tuple), we bail.
-            self.tcx
-                .dcx()
-                .span_fatal(hir_param.ty_span, "pair type not supported yet")
-        }
         // FIXME(eddyb) should this talk about "typed buffers" instead of "interface blocks"?
         // FIXME(eddyb) should we talk about "descriptor indexing" or
         // actually use more reasonable terms like "resource arrays"?
@@ -621,8 +628,8 @@ impl<'tcx> CodegenCx<'tcx> {
                 }
             }
 
-            let value_len = if is_pair {
-                // We've already emitted an error, fill in a placeholder value
+            let value_len = if is_pair && is_unsized {
+                // For wide references (e.g., slices), the second component is a length.
                 Some(bx.undef(self.type_isize()))
             } else {
                 None
@@ -645,21 +652,54 @@ impl<'tcx> CodegenCx<'tcx> {
                 _ => unreachable!(),
             }
         } else {
-            assert_matches!(entry_arg_abi.mode, PassMode::Direct(_));
-
-            let value = match storage_class {
-                Ok(_) => {
-                    assert_eq!(storage_class, Ok(StorageClass::Input));
-                    bx.load(
-                        entry_arg_abi.layout.spirv_type(hir_param.ty_span, bx),
-                        value_ptr.unwrap(),
-                        entry_arg_abi.layout.align.abi,
-                    )
+            match entry_arg_abi.mode {
+                PassMode::Direct(_) => {
+                    let value = match storage_class {
+                        Ok(_) => {
+                            assert_eq!(storage_class, Ok(StorageClass::Input));
+                            bx.load(
+                                entry_arg_abi.layout.spirv_type(hir_param.ty_span, bx),
+                                value_ptr.unwrap(),
+                                entry_arg_abi.layout.align.abi,
+                            )
+                        }
+                        Err(SpecConstant { .. }) => {
+                            spec_const_id.unwrap().with_type(value_spirv_type)
+                        }
+                    };
+                    call_args.push(value);
+                    assert_eq!(value_len, None);
                 }
-                Err(SpecConstant { .. }) => spec_const_id.unwrap().with_type(value_spirv_type),
-            };
-            call_args.push(value);
-            assert_eq!(value_len, None);
+                PassMode::Pair(..) => {
+                    // Load both elements of the scalar pair from the input variable.
+                    assert_eq!(storage_class, Ok(StorageClass::Input));
+                    let layout = entry_arg_abi.layout;
+                    let (a, b) = match layout.backend_repr {
+                        rustc_abi::BackendRepr::ScalarPair(a, b) => (a, b),
+                        other => span_bug!(
+                            hir_param.ty_span,
+                            "ScalarPair expected for entry param, found {other:?}"
+                        ),
+                    };
+                    let b_offset = a
+                        .primitive()
+                        .size(self)
+                        .align_to(b.primitive().align(self).abi);
+
+                    let elem0_ty = self.scalar_pair_element_backend_type(layout, 0, false);
+                    let elem1_ty = self.scalar_pair_element_backend_type(layout, 1, false);
+
+                    let base_ptr = value_ptr.unwrap();
+                    let ptr1 = bx.inbounds_ptradd(base_ptr, self.const_usize(b_offset.bytes()));
+
+                    let v0 = bx.load(elem0_ty, base_ptr, layout.align.abi);
+                    let v1 = bx.load(elem1_ty, ptr1, layout.align.restrict_for_offset(b_offset));
+                    call_args.push(v0);
+                    call_args.push(v1);
+                    assert_eq!(value_len, None);
+                }
+                _ => unreachable!(),
+            }
         }
 
         // FIXME(eddyb) check whether the storage class is compatible with the
