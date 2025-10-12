@@ -204,7 +204,7 @@ jobs:
   # to update the branch protection rules when the test matrix changes
   test_success:
     runs-on: ubuntu-24.04
-    needs: [test, compiletest, difftest, android]
+    needs: [test, compiletest, difftest, android, lint, cargo-deny]
     # Hack for buggy GitHub Actions behavior with skipped checks: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/troubleshooting-required-status-checks#handling-skipped-but-required-checks
     if: ${{ always() }}
     steps:
@@ -215,6 +215,8 @@ jobs:
           [[ "${{ needs.compiletest.result }}" == "success" ]] || exit 1
           [[ "${{ needs.difftest.result }}" == "success" ]] || exit 1
           [[ "${{ needs.android.result }}" == "success" ]] || exit 1
+          [[ "${{ needs.lint.result }}" == "success" ]] || exit 1
+          [[ "${{ needs.cargo-deny.result }}" == "success" ]] || exit 1
 
   lint:
     name: Lint
