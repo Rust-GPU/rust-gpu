@@ -69,6 +69,15 @@ pub(crate) fn provide(providers: &mut Providers) {
             // <https://github.com/rust-lang/rust/commit/eaaa03faf77b157907894a4207d8378ecaec7b45>
             arg.make_direct_deprecated();
 
+            // FIXME(eddyb) detect `#[rust_gpu::vector::v1]` more specifically,
+            // to avoid affecting anything should actually be passed as a pair.
+            if let PassMode::Pair(..) = arg.mode {
+                // HACK(eddyb) this avoids breaking e.g. `&[T]` pairs.
+                if let TyKind::Adt(..) = arg.layout.ty.kind() {
+                    arg.mode = PassMode::Direct(ArgAttributes::new());
+                }
+            }
+
             // Avoid pointlessly passing ZSTs, just like the official Rust ABI.
             if arg.layout.is_zst() {
                 arg.mode = PassMode::Ignore;
