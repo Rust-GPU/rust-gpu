@@ -33,6 +33,7 @@ use smallvec::SmallVec;
 use std::iter::{self, empty};
 use std::ops::{BitAnd, BitOr, BitXor, Not, RangeInclusive};
 
+use crate::builder::format_args_decompiler::{CodegenPanic, DecodedFormatArgs};
 use tracing::{Level, instrument, span};
 use tracing::{trace, warn};
 
@@ -3341,7 +3342,8 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         }
 
         if is_panic_entry_point {
-            return self.codegen_panic_entry_point(result_type, args);
+            return DecodedFormatArgs::try_decode_and_remove_format_args(self, args)
+                .codegen_panic(self, result_type);
         }
         if buffer_load_intrinsic {
             return self.codegen_buffer_load_intrinsic(fn_abi, result_type, args);
