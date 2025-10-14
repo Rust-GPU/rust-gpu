@@ -1,4 +1,4 @@
-use crate::{Scalar, Vector};
+use crate::Scalar;
 use core::num::NonZeroUsize;
 
 pub(crate) mod sealed {
@@ -11,6 +11,8 @@ pub(crate) mod sealed {
 ///
 /// # Safety
 /// Your type must also implement [`Scalar`] or [`Vector`], see their safety sections as well.
+///
+/// [`Vector`]: crate::Vector
 pub unsafe trait ScalarOrVector: Copy + Default + Send + Sync + 'static {
     /// Either the scalar component type of the vector or the scalar itself.
     type Scalar: Scalar;
