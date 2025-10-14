@@ -100,7 +100,7 @@ pub mod ray_tracing;
 mod runtime_array;
 mod sampler;
 mod scalar;
-pub(crate) mod sealed;
+mod scalar_or_vector;
 mod typed_buffer;
 mod vector;
 
@@ -110,6 +110,7 @@ pub use byte_addressable_buffer::ByteAddressableBuffer;
 pub use num_traits;
 pub use runtime_array::*;
 pub use scalar::*;
+pub use scalar_or_vector::*;
 pub use typed_buffer::*;
 pub use vector::*;
 

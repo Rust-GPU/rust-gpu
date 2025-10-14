@@ -1,21 +1,9 @@
 //! Traits related to vectors.
 
-use crate::Scalar;
 use crate::sealed::Sealed;
+use crate::{Scalar, ScalarOrVector};
 use core::num::NonZeroUsize;
 use glam::{Vec3Swizzles, Vec4Swizzles};
-
-/// Abstract trait representing either a vector or a scalar type.
-///
-/// # Safety
-/// Your type must also implement [`Vector`] or [`Scalar`], see their safety sections as well.
-pub unsafe trait VectorOrScalar: Copy + Default + Send + Sync + 'static {
-    /// Either the scalar component type of the vector or the scalar itself.
-    type Scalar: Scalar;
-
-    /// The dimension of the vector, or 1 if it is a scalar
-    const DIM: NonZeroUsize;
-}
 
 /// Abstract trait representing a SPIR-V vector type.
 ///
@@ -63,15 +51,15 @@ pub unsafe trait VectorOrScalar: Copy + Default + Send + Sync + 'static {
 // While it's possible with `T: Scalar`, it's not with `const N: usize`, since some impl blocks in `image::params` need
 // to be conditional on a specific N value. And you can only express that with const generics, but not with associated
 // constants due to lack of const generics support in rustc.
-pub unsafe trait Vector<T: Scalar, const N: usize>: VectorOrScalar<Scalar = T> {}
+pub unsafe trait Vector<T: Scalar, const N: usize>: ScalarOrVector<Scalar = T> {}
 
 macro_rules! impl_vector {
     ($($ty:ty: [$scalar:ty; $n:literal];)+) => {
         $(
             impl Sealed for $ty {}
-            unsafe impl VectorOrScalar for $ty {
+            unsafe impl ScalarOrVector for $ty {
                 type Scalar = $scalar;
-                const DIM: NonZeroUsize = NonZeroUsize::new($n).unwrap();
+                const N: NonZeroUsize = NonZeroUsize::new($n).unwrap();
             }
             unsafe impl Vector<$scalar, $n> for $ty {}
         )+
