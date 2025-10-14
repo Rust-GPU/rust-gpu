@@ -2,6 +2,8 @@
 // (i.e. various kinds of definitions and other syntactic categories).
 
 // build-fail
+// normalize-stderr-test "\.rs:\d+:\d+" -> ".rs:"
+// normalize-stderr-test "(\n)\d* *([ -])([\|\+\-\=])" -> "$1   $2$3"
 
 #![feature(
     extern_types,

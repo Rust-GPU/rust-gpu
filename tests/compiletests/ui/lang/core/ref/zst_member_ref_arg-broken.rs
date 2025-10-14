@@ -3,6 +3,8 @@
 // for now we care more that the error messages do not regress too much.
 
 // build-fail
+// normalize-stderr-test "\.rs:\d+:\d+" -> ".rs:"
+// normalize-stderr-test "(\n)\d* *([ -])([\|\+\-\=])" -> "$1   $2$3"
 
 use spirv_std::spirv;
 struct A;

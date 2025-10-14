@@ -83,3 +83,5 @@ contents of `path/to/test.rs.stderr`.
   * remove rustc error src paths:
     * `// normalize-stderr-test "\S*/lib/rustlib/" -> "$$SYSROOT/lib/rustlib/"` normalize path to crates delivered with rustc, such as `core`
     * `// normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"` normalize path to the `spirv-std` crate
+    * `// normalize-stderr-test "\.rs:\d+:\d+" -> ".rs:""` remove the line and column from error messages, eg. `--> path/to/some.rs:8:6`
+    * `// normalize-stderr-test "(\n)\d* *([ -])([\|\+\-\=])" -> "$1   $2$3""` remove the line number prefixing the source code snippet, does not touch `...`

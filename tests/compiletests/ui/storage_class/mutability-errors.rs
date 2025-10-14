@@ -1,6 +1,8 @@
 // Tests that using `&mut` (or interior mutability) with read-only storage classes
 // does actually error (see `mutability-errors.stderr` for the error messages).
 // build-fail
+// normalize-stderr-test "\.rs:\d+:\d+" -> ".rs:"
+// normalize-stderr-test "(\n)\d* *([ -])([\|\+\-\=])" -> "$1   $2$3"
 
 use core::sync::atomic::AtomicU32;
 use spirv_std::{image::Image2d, spirv};

@@ -1,6 +1,8 @@
 // build-fail
 // normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"
 // compile-flags: -Ctarget-feature=+ext:SPV_KHR_non_semantic_info
+// normalize-stderr-test "\.rs:\d+:\d+" -> ".rs:"
+// normalize-stderr-test "(\n)\d* *([ -])([\|\+\-\=])" -> "$1   $2$3"
 
 use spirv_std::spirv;
 use spirv_std::{glam::Vec2, macros::debug_printf};
