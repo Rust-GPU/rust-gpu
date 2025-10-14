@@ -16,14 +16,6 @@ pub unsafe trait VectorOrScalar: Copy + Default + Send + Sync + 'static {
     const DIM: NonZeroUsize;
 }
 
-/// replace with `NonZeroUsize::new(n).unwrap()` once `unwrap()` is const stabilized
-pub(crate) const fn create_dim(n: usize) -> NonZeroUsize {
-    match NonZeroUsize::new(n) {
-        None => panic!("dim must not be 0"),
-        Some(n) => n,
-    }
-}
-
 /// Abstract trait representing a SPIR-V vector type.
 ///
 /// To implement this trait, your struct must be marked with:
@@ -71,7 +63,7 @@ macro_rules! impl_vector {
         $($(
             unsafe impl VectorOrScalar for $vec {
                 type Scalar = $scalar;
-                const DIM: NonZeroUsize = create_dim($dim);
+                const DIM: NonZeroUsize = NonZeroUsize::new($dim).unwrap();
             }
             unsafe impl Vector<$scalar, $dim> for $vec {}
         )+)+
