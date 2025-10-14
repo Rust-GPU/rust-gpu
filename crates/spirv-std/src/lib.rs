@@ -87,6 +87,7 @@
 /// Public re-export of the `spirv-std-macros` crate.
 #[macro_use]
 pub extern crate spirv_std_macros as macros;
+pub use macros::ScalarOrVectorComposite;
 pub use macros::spirv;
 pub use macros::{debug_printf, debug_printfln};
 
