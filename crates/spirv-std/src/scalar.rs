@@ -1,6 +1,6 @@
 //! Traits related to scalars.
 
-use crate::vector::{VectorOrScalar, create_dim};
+use crate::vector::VectorOrScalar;
 use core::num::NonZeroUsize;
 
 /// Abstract trait representing a SPIR-V scalar type.
@@ -21,7 +21,7 @@ macro_rules! impl_scalar {
         $(
             unsafe impl VectorOrScalar for $ty {
                 type Scalar = Self;
-                const DIM: NonZeroUsize = create_dim(1);
+                const DIM: NonZeroUsize = NonZeroUsize::new(1).unwrap();
             }
             unsafe impl Scalar for $ty {}
         )+
