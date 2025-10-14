@@ -1,6 +1,6 @@
 //! Traits related to scalars.
 
-use crate::VectorOrScalar;
+use crate::ScalarOrVector;
 use crate::sealed::Sealed;
 use core::num::NonZeroUsize;
 
@@ -13,7 +13,7 @@ use core::num::NonZeroUsize;
 ///
 /// # Safety
 /// Implementing this trait on non-scalar types breaks assumptions of other unsafe code, and should not be done.
-pub unsafe trait Scalar: VectorOrScalar<Scalar = Self> + crate::sealed::Sealed {}
+pub unsafe trait Scalar: ScalarOrVector<Scalar = Self> + crate::sealed::Sealed {}
 
 /// Abstract trait representing a SPIR-V integer or floating-point type. Unlike [`Scalar`], excludes the boolean type.
 ///
@@ -61,9 +61,9 @@ pub unsafe trait Float: num_traits::Float + Number {
 macro_rules! impl_scalar {
     (impl Scalar for $ty:ty;) => {
         impl Sealed for $ty {}
-        unsafe impl VectorOrScalar for $ty {
+        unsafe impl ScalarOrVector for $ty {
             type Scalar = Self;
-            const DIM: NonZeroUsize = NonZeroUsize::new(1).unwrap();
+            const N: NonZeroUsize = NonZeroUsize::new(1).unwrap();
         }
         unsafe impl Scalar for $ty {}
     };
