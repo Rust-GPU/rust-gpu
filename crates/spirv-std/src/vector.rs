@@ -1,6 +1,6 @@
 //! Traits related to vectors.
 
-use crate::scalar::Scalar;
+use crate::Scalar;
 use core::num::NonZeroUsize;
 use glam::{Vec3Swizzles, Vec4Swizzles};
 
