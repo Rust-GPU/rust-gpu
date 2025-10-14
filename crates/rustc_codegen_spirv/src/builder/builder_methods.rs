@@ -2391,13 +2391,6 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
 
     #[instrument(level = "trace", skip(self), fields(ptr, ptr_ty = ?self.debug_type(ptr.ty), dest_ty = ?self.debug_type(dest_ty)))]
     fn pointercast(&mut self, ptr: Self::Value, dest_ty: Self::Type) -> Self::Value {
-        // HACK(eddyb) reuse the special-casing in `const_bitcast`, which relies
-        // on adding a pointer type to an untyped pointer (to some const data).
-        if let SpirvValueKind::IllegalConst(_) = ptr.kind {
-            trace!("illegal const");
-            return self.const_bitcast(ptr, dest_ty);
-        }
-
         if ptr.ty == dest_ty {
             trace!("ptr.ty == dest_ty");
             return ptr;
@@ -2456,13 +2449,43 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 self.debug_type(ptr_pointee),
                 self.debug_type(dest_pointee),
             );
+
+            // HACK(eddyb) reuse the special-casing in `const_bitcast`, which relies
+            // on adding a pointer type to an untyped pointer (to some const data).
+            if self.builder.lookup_const(ptr).is_some() {
+                // FIXME(eddyb) remove the condition on `zombie_waiting_for_span`,
+                // and constant-fold all pointer bitcasts, regardless of "legality",
+                // once `strip_ptrcasts` can undo `const_bitcast`, as well.
+                if ptr.zombie_waiting_for_span {
+                    trace!("illegal const");
+                    return self.const_bitcast(ptr, dest_ty);
+                }
+            }
+
             // Defer the cast so that it has a chance to be avoided.
-            let original_ptr = ptr.def(self);
+            let ptr_id = ptr.def(self);
+            let bitcast_result_id = self.emit().bitcast(dest_ty, None, ptr_id).unwrap();
+
+            self.zombie(
+                bitcast_result_id,
+                &format!(
+                    "cannot cast between pointer types\
+                         \nfrom `{}`\
+                         \n  to `{}`",
+                    self.debug_type(ptr.ty),
+                    self.debug_type(dest_ty)
+                ),
+            );
+
             SpirvValue {
-                kind: SpirvValueKind::LogicalPtrCast {
-                    original_ptr,
-                    original_ptr_ty: ptr.ty,
-                    bitcast_result_id: self.emit().bitcast(dest_ty, None, original_ptr).unwrap(),
+                zombie_waiting_for_span: false,
+                kind: SpirvValueKind::Def {
+                    id: bitcast_result_id,
+                    original_ptr_before_casts: Some(SpirvValue {
+                        zombie_waiting_for_span: ptr.zombie_waiting_for_span,
+                        kind: ptr_id,
+                        ty: ptr.ty,
+                    }),
                 },
                 ty: dest_ty,
             }
@@ -3279,7 +3302,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     return_type,
                     arguments,
                 } => (
-                    if let SpirvValueKind::FnAddr { function } = callee.kind {
+                    if let SpirvValueKind::FnAddr { function, .. } = callee.kind {
                         assert_ty_eq!(self, callee_ty, pointee);
                         function
                     }
@@ -3416,11 +3439,11 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                 // HACK(eddyb) some entry-points only take a `&str`, not `fmt::Arguments`.
                 if let [
                     SpirvValue {
-                        kind: SpirvValueKind::Def(a_id),
+                        kind: SpirvValueKind::Def { id: a_id, .. },
                         ..
                     },
                     SpirvValue {
-                        kind: SpirvValueKind::Def(b_id),
+                        kind: SpirvValueKind::Def { id: b_id, .. },
                         ..
                     },
                     ref other_args @ ..,
@@ -3439,14 +3462,20 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
                     // HACK(eddyb) `panic_nounwind_fmt` takes an extra argument.
                     [
                         SpirvValue {
-                            kind: SpirvValueKind::Def(format_args_id),
+                            kind:
+                                SpirvValueKind::Def {
+                                    id: format_args_id, ..
+                                },
                             ..
                         },
                         _, // `&'static panic::Location<'static>`
                     ]
                     | [
                         SpirvValue {
-                            kind: SpirvValueKind::Def(format_args_id),
+                            kind:
+                                SpirvValueKind::Def {
+                                    id: format_args_id, ..
+                                },
                             ..
                         },
                         _, // `force_no_backtrace: bool`
@@ -4117,10 +4146,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         if buffer_store_intrinsic {
             self.codegen_buffer_store_intrinsic(fn_abi, args);
             let void_ty = SpirvType::Void.def(rustc_span::DUMMY_SP, self);
-            return SpirvValue {
-                kind: SpirvValueKind::IllegalTypeUsed(void_ty),
-                ty: void_ty,
-            };
+            return self.undef(void_ty);
         }
 
         if let Some((source_ty, target_ty)) = from_trait_impl {

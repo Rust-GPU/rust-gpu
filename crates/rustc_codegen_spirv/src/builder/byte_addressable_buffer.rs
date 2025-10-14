@@ -2,7 +2,7 @@
 use crate::maybe_pqp_cg_ssa as rustc_codegen_ssa;
 
 use super::Builder;
-use crate::builder_spirv::{SpirvValue, SpirvValueExt, SpirvValueKind};
+use crate::builder_spirv::{SpirvValue, SpirvValueExt};
 use crate::spirv_type::SpirvType;
 use rspirv::spirv::{Decoration, Word};
 use rustc_abi::{Align, Size};
@@ -188,12 +188,8 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     ) -> SpirvValue {
         let pass_mode = &fn_abi.unwrap().ret.mode;
         match pass_mode {
-            PassMode::Ignore => {
-                return SpirvValue {
-                    kind: SpirvValueKind::IllegalTypeUsed(result_type),
-                    ty: result_type,
-                };
-            }
+            PassMode::Ignore => return self.undef(result_type),
+
             // PassMode::Pair is identical to PassMode::Direct - it's returned as a struct
             PassMode::Direct(_) | PassMode::Pair(_, _) => (),
             PassMode::Cast { .. } => {
