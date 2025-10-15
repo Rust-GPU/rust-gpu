@@ -356,561 +356,557 @@
 <a href=#356 id=356 data-nosnippet>356</a>            })
 <a href=#357 id=357 data-nosnippet>357</a>        } <span class="kw">else </span>{
 <a href=#358 id=358 data-nosnippet>358</a>            <span class="kw">let </span>(in_scalar, imm) = <span class="kw">match </span>(<span class="self">self</span>.val, <span class="self">self</span>.layout.backend_repr) {
-<a href=#359 id=359 data-nosnippet>359</a>                <span class="comment">// `#[repr(simd)]` types are also immediate.
-<a href=#360 id=360 data-nosnippet>360</a>                </span>(OperandValue::Immediate(llval), BackendRepr::SimdVector { element, .. }) =&gt; {
-<a href=#361 id=361 data-nosnippet>361</a>                    (<span class="prelude-val">Some</span>(element), bx.extract_element(llval, bx.cx().const_usize(i <span class="kw">as </span>u64)))
-<a href=#362 id=362 data-nosnippet>362</a>                }
-<a href=#363 id=363 data-nosnippet>363</a>                <span class="comment">// Extract a scalar component from a pair.
-<a href=#364 id=364 data-nosnippet>364</a>                </span>(OperandValue::Pair(a_llval, b_llval), BackendRepr::ScalarPair(a, b)) =&gt; {
-<a href=#365 id=365 data-nosnippet>365</a>                    <span class="kw">if </span>offset.bytes() == <span class="number">0 </span>{
-<a href=#366 id=366 data-nosnippet>366</a>                        <span class="macro">assert_eq!</span>(field.size, a.size(bx.cx()));
-<a href=#367 id=367 data-nosnippet>367</a>                        (<span class="prelude-val">Some</span>(a), a_llval)
-<a href=#368 id=368 data-nosnippet>368</a>                    } <span class="kw">else </span>{
-<a href=#369 id=369 data-nosnippet>369</a>                        <span class="macro">assert_eq!</span>(offset, a.size(bx.cx()).align_to(b.align(bx.cx()).abi));
-<a href=#370 id=370 data-nosnippet>370</a>                        <span class="macro">assert_eq!</span>(field.size, b.size(bx.cx()));
-<a href=#371 id=371 data-nosnippet>371</a>                        (<span class="prelude-val">Some</span>(b), b_llval)
-<a href=#372 id=372 data-nosnippet>372</a>                    }
+<a href=#359 id=359 data-nosnippet>359</a>                <span class="comment">// Extract a scalar component from a pair.
+<a href=#360 id=360 data-nosnippet>360</a>                </span>(OperandValue::Pair(a_llval, b_llval), BackendRepr::ScalarPair(a, b)) =&gt; {
+<a href=#361 id=361 data-nosnippet>361</a>                    <span class="kw">if </span>offset.bytes() == <span class="number">0 </span>{
+<a href=#362 id=362 data-nosnippet>362</a>                        <span class="macro">assert_eq!</span>(field.size, a.size(bx.cx()));
+<a href=#363 id=363 data-nosnippet>363</a>                        (<span class="prelude-val">Some</span>(a), a_llval)
+<a href=#364 id=364 data-nosnippet>364</a>                    } <span class="kw">else </span>{
+<a href=#365 id=365 data-nosnippet>365</a>                        <span class="macro">assert_eq!</span>(offset, a.size(bx.cx()).align_to(b.align(bx.cx()).abi));
+<a href=#366 id=366 data-nosnippet>366</a>                        <span class="macro">assert_eq!</span>(field.size, b.size(bx.cx()));
+<a href=#367 id=367 data-nosnippet>367</a>                        (<span class="prelude-val">Some</span>(b), b_llval)
+<a href=#368 id=368 data-nosnippet>368</a>                    }
+<a href=#369 id=369 data-nosnippet>369</a>                }
+<a href=#370 id=370 data-nosnippet>370</a>
+<a href=#371 id=371 data-nosnippet>371</a>                <span class="kw">_ </span>=&gt; {
+<a href=#372 id=372 data-nosnippet>372</a>                    <span class="macro">span_bug!</span>(fx.mir.span, <span class="string">"OperandRef::extract_field({:?}): not applicable"</span>, <span class="self">self</span>)
 <a href=#373 id=373 data-nosnippet>373</a>                }
-<a href=#374 id=374 data-nosnippet>374</a>
-<a href=#375 id=375 data-nosnippet>375</a>                <span class="kw">_ </span>=&gt; {
-<a href=#376 id=376 data-nosnippet>376</a>                    <span class="macro">span_bug!</span>(fx.mir.span, <span class="string">"OperandRef::extract_field({:?}): not applicable"</span>, <span class="self">self</span>)
-<a href=#377 id=377 data-nosnippet>377</a>                }
-<a href=#378 id=378 data-nosnippet>378</a>            };
-<a href=#379 id=379 data-nosnippet>379</a>            OperandValue::Immediate(<span class="kw">match </span>field.backend_repr {
-<a href=#380 id=380 data-nosnippet>380</a>                BackendRepr::SimdVector { .. } =&gt; imm,
-<a href=#381 id=381 data-nosnippet>381</a>                BackendRepr::Scalar(out_scalar) =&gt; {
-<a href=#382 id=382 data-nosnippet>382</a>                    <span class="kw">let </span><span class="prelude-val">Some</span>(in_scalar) = in_scalar <span class="kw">else </span>{
-<a href=#383 id=383 data-nosnippet>383</a>                        <span class="macro">span_bug!</span>(
-<a href=#384 id=384 data-nosnippet>384</a>                            fx.mir.span,
-<a href=#385 id=385 data-nosnippet>385</a>                            <span class="string">"OperandRef::extract_field({:?}): missing input scalar for output scalar"</span>,
-<a href=#386 id=386 data-nosnippet>386</a>                            <span class="self">self
-<a href=#387 id=387 data-nosnippet>387</a>                        </span>)
-<a href=#388 id=388 data-nosnippet>388</a>                    };
-<a href=#389 id=389 data-nosnippet>389</a>                    <span class="kw">if </span>in_scalar != out_scalar {
-<a href=#390 id=390 data-nosnippet>390</a>                        <span class="comment">// If the backend and backend_immediate types might differ,
-<a href=#391 id=391 data-nosnippet>391</a>                        // flip back to the backend type then to the new immediate.
-<a href=#392 id=392 data-nosnippet>392</a>                        // This avoids nop truncations, but still handles things like
-<a href=#393 id=393 data-nosnippet>393</a>                        // Bools in union fields needs to be truncated.
-<a href=#394 id=394 data-nosnippet>394</a>                        </span><span class="kw">let </span>backend = bx.from_immediate(imm);
-<a href=#395 id=395 data-nosnippet>395</a>                        bx.to_immediate_scalar(backend, out_scalar)
-<a href=#396 id=396 data-nosnippet>396</a>                    } <span class="kw">else </span>{
-<a href=#397 id=397 data-nosnippet>397</a>                        imm
-<a href=#398 id=398 data-nosnippet>398</a>                    }
-<a href=#399 id=399 data-nosnippet>399</a>                }
-<a href=#400 id=400 data-nosnippet>400</a>                BackendRepr::ScalarPair(<span class="kw">_</span>, <span class="kw">_</span>) | BackendRepr::Memory { .. } =&gt; <span class="macro">bug!</span>(),
-<a href=#401 id=401 data-nosnippet>401</a>            })
-<a href=#402 id=402 data-nosnippet>402</a>        };
-<a href=#403 id=403 data-nosnippet>403</a>
-<a href=#404 id=404 data-nosnippet>404</a>        OperandRef { val, layout: field }
-<a href=#405 id=405 data-nosnippet>405</a>    }
-<a href=#406 id=406 data-nosnippet>406</a>
-<a href=#407 id=407 data-nosnippet>407</a>    <span class="doccomment">/// Obtain the actual discriminant of a value.
-<a href=#408 id=408 data-nosnippet>408</a>    </span><span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(fx, bx))]
-<a href=#409 id=409 data-nosnippet>409</a>    </span><span class="kw">pub fn </span>codegen_get_discr&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
-<a href=#410 id=410 data-nosnippet>410</a>        <span class="self">self</span>,
-<a href=#411 id=411 data-nosnippet>411</a>        fx: <span class="kw-2">&amp;mut </span>FunctionCx&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Bx&gt;,
-<a href=#412 id=412 data-nosnippet>412</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#413 id=413 data-nosnippet>413</a>        cast_to: Ty&lt;<span class="lifetime">'tcx</span>&gt;,
-<a href=#414 id=414 data-nosnippet>414</a>    ) -&gt; V {
-<a href=#415 id=415 data-nosnippet>415</a>        <span class="kw">let </span>dl = <span class="kw-2">&amp;</span>bx.tcx().data_layout;
-<a href=#416 id=416 data-nosnippet>416</a>        <span class="kw">let </span>cast_to_layout = bx.cx().layout_of(cast_to);
-<a href=#417 id=417 data-nosnippet>417</a>        <span class="kw">let </span>cast_to = bx.cx().immediate_backend_type(cast_to_layout);
-<a href=#418 id=418 data-nosnippet>418</a>
-<a href=#419 id=419 data-nosnippet>419</a>        <span class="comment">// We check uninhabitedness separately because a type like
-<a href=#420 id=420 data-nosnippet>420</a>        // `enum Foo { Bar(i32, !) }` is still reported as `Variants::Single`,
-<a href=#421 id=421 data-nosnippet>421</a>        // *not* as `Variants::Empty`.
-<a href=#422 id=422 data-nosnippet>422</a>        </span><span class="kw">if </span><span class="self">self</span>.layout.is_uninhabited() {
-<a href=#423 id=423 data-nosnippet>423</a>            <span class="kw">return </span>bx.cx().const_poison(cast_to);
-<a href=#424 id=424 data-nosnippet>424</a>        }
-<a href=#425 id=425 data-nosnippet>425</a>
-<a href=#426 id=426 data-nosnippet>426</a>        <span class="kw">let </span>(tag_scalar, tag_encoding, tag_field) = <span class="kw">match </span><span class="self">self</span>.layout.variants {
-<a href=#427 id=427 data-nosnippet>427</a>            Variants::Empty =&gt; <span class="macro">unreachable!</span>(<span class="string">"we already handled uninhabited types"</span>),
-<a href=#428 id=428 data-nosnippet>428</a>            Variants::Single { index } =&gt; {
-<a href=#429 id=429 data-nosnippet>429</a>                <span class="kw">let </span>discr_val =
-<a href=#430 id=430 data-nosnippet>430</a>                    <span class="kw">if let </span><span class="prelude-val">Some</span>(discr) = <span class="self">self</span>.layout.ty.discriminant_for_variant(bx.tcx(), index) {
-<a href=#431 id=431 data-nosnippet>431</a>                        discr.val
-<a href=#432 id=432 data-nosnippet>432</a>                    } <span class="kw">else </span>{
-<a href=#433 id=433 data-nosnippet>433</a>                        <span class="comment">// This arm is for types which are neither enums nor coroutines,
-<a href=#434 id=434 data-nosnippet>434</a>                        // and thus for which the only possible "variant" should be the first one.
-<a href=#435 id=435 data-nosnippet>435</a>                        </span><span class="macro">assert_eq!</span>(index, FIRST_VARIANT);
-<a href=#436 id=436 data-nosnippet>436</a>                        <span class="comment">// There's thus no actual discriminant to return, so we return
-<a href=#437 id=437 data-nosnippet>437</a>                        // what it would have been if this was a single-variant enum.
-<a href=#438 id=438 data-nosnippet>438</a>                        </span><span class="number">0
-<a href=#439 id=439 data-nosnippet>439</a>                    </span>};
-<a href=#440 id=440 data-nosnippet>440</a>                <span class="kw">return </span>bx.cx().const_uint_big(cast_to, discr_val);
-<a href=#441 id=441 data-nosnippet>441</a>            }
-<a href=#442 id=442 data-nosnippet>442</a>            Variants::Multiple { tag, <span class="kw-2">ref </span>tag_encoding, tag_field, .. } =&gt; {
-<a href=#443 id=443 data-nosnippet>443</a>                (tag, tag_encoding, tag_field)
-<a href=#444 id=444 data-nosnippet>444</a>            }
-<a href=#445 id=445 data-nosnippet>445</a>        };
-<a href=#446 id=446 data-nosnippet>446</a>
-<a href=#447 id=447 data-nosnippet>447</a>        <span class="comment">// Read the tag/niche-encoded discriminant from memory.
-<a href=#448 id=448 data-nosnippet>448</a>        </span><span class="kw">let </span>tag_op = <span class="kw">match </span><span class="self">self</span>.val {
-<a href=#449 id=449 data-nosnippet>449</a>            OperandValue::ZeroSized =&gt; <span class="macro">bug!</span>(),
-<a href=#450 id=450 data-nosnippet>450</a>            OperandValue::Immediate(<span class="kw">_</span>) | OperandValue::Pair(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
-<a href=#451 id=451 data-nosnippet>451</a>                <span class="self">self</span>.extract_field(fx, bx, tag_field.as_usize())
+<a href=#374 id=374 data-nosnippet>374</a>            };
+<a href=#375 id=375 data-nosnippet>375</a>            OperandValue::Immediate(<span class="kw">match </span>field.backend_repr {
+<a href=#376 id=376 data-nosnippet>376</a>                BackendRepr::SimdVector { .. } =&gt; imm,
+<a href=#377 id=377 data-nosnippet>377</a>                BackendRepr::Scalar(out_scalar) =&gt; {
+<a href=#378 id=378 data-nosnippet>378</a>                    <span class="kw">let </span><span class="prelude-val">Some</span>(in_scalar) = in_scalar <span class="kw">else </span>{
+<a href=#379 id=379 data-nosnippet>379</a>                        <span class="macro">span_bug!</span>(
+<a href=#380 id=380 data-nosnippet>380</a>                            fx.mir.span,
+<a href=#381 id=381 data-nosnippet>381</a>                            <span class="string">"OperandRef::extract_field({:?}): missing input scalar for output scalar"</span>,
+<a href=#382 id=382 data-nosnippet>382</a>                            <span class="self">self
+<a href=#383 id=383 data-nosnippet>383</a>                        </span>)
+<a href=#384 id=384 data-nosnippet>384</a>                    };
+<a href=#385 id=385 data-nosnippet>385</a>                    <span class="kw">if </span>in_scalar != out_scalar {
+<a href=#386 id=386 data-nosnippet>386</a>                        <span class="comment">// If the backend and backend_immediate types might differ,
+<a href=#387 id=387 data-nosnippet>387</a>                        // flip back to the backend type then to the new immediate.
+<a href=#388 id=388 data-nosnippet>388</a>                        // This avoids nop truncations, but still handles things like
+<a href=#389 id=389 data-nosnippet>389</a>                        // Bools in union fields needs to be truncated.
+<a href=#390 id=390 data-nosnippet>390</a>                        </span><span class="kw">let </span>backend = bx.from_immediate(imm);
+<a href=#391 id=391 data-nosnippet>391</a>                        bx.to_immediate_scalar(backend, out_scalar)
+<a href=#392 id=392 data-nosnippet>392</a>                    } <span class="kw">else </span>{
+<a href=#393 id=393 data-nosnippet>393</a>                        imm
+<a href=#394 id=394 data-nosnippet>394</a>                    }
+<a href=#395 id=395 data-nosnippet>395</a>                }
+<a href=#396 id=396 data-nosnippet>396</a>                BackendRepr::ScalarPair(<span class="kw">_</span>, <span class="kw">_</span>) | BackendRepr::Memory { .. } =&gt; <span class="macro">bug!</span>(),
+<a href=#397 id=397 data-nosnippet>397</a>            })
+<a href=#398 id=398 data-nosnippet>398</a>        };
+<a href=#399 id=399 data-nosnippet>399</a>
+<a href=#400 id=400 data-nosnippet>400</a>        OperandRef { val, layout: field }
+<a href=#401 id=401 data-nosnippet>401</a>    }
+<a href=#402 id=402 data-nosnippet>402</a>
+<a href=#403 id=403 data-nosnippet>403</a>    <span class="doccomment">/// Obtain the actual discriminant of a value.
+<a href=#404 id=404 data-nosnippet>404</a>    </span><span class="attr">#[instrument(level = <span class="string">"trace"</span>, skip(fx, bx))]
+<a href=#405 id=405 data-nosnippet>405</a>    </span><span class="kw">pub fn </span>codegen_get_discr&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
+<a href=#406 id=406 data-nosnippet>406</a>        <span class="self">self</span>,
+<a href=#407 id=407 data-nosnippet>407</a>        fx: <span class="kw-2">&amp;mut </span>FunctionCx&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Bx&gt;,
+<a href=#408 id=408 data-nosnippet>408</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#409 id=409 data-nosnippet>409</a>        cast_to: Ty&lt;<span class="lifetime">'tcx</span>&gt;,
+<a href=#410 id=410 data-nosnippet>410</a>    ) -&gt; V {
+<a href=#411 id=411 data-nosnippet>411</a>        <span class="kw">let </span>dl = <span class="kw-2">&amp;</span>bx.tcx().data_layout;
+<a href=#412 id=412 data-nosnippet>412</a>        <span class="kw">let </span>cast_to_layout = bx.cx().layout_of(cast_to);
+<a href=#413 id=413 data-nosnippet>413</a>        <span class="kw">let </span>cast_to = bx.cx().immediate_backend_type(cast_to_layout);
+<a href=#414 id=414 data-nosnippet>414</a>
+<a href=#415 id=415 data-nosnippet>415</a>        <span class="comment">// We check uninhabitedness separately because a type like
+<a href=#416 id=416 data-nosnippet>416</a>        // `enum Foo { Bar(i32, !) }` is still reported as `Variants::Single`,
+<a href=#417 id=417 data-nosnippet>417</a>        // *not* as `Variants::Empty`.
+<a href=#418 id=418 data-nosnippet>418</a>        </span><span class="kw">if </span><span class="self">self</span>.layout.is_uninhabited() {
+<a href=#419 id=419 data-nosnippet>419</a>            <span class="kw">return </span>bx.cx().const_poison(cast_to);
+<a href=#420 id=420 data-nosnippet>420</a>        }
+<a href=#421 id=421 data-nosnippet>421</a>
+<a href=#422 id=422 data-nosnippet>422</a>        <span class="kw">let </span>(tag_scalar, tag_encoding, tag_field) = <span class="kw">match </span><span class="self">self</span>.layout.variants {
+<a href=#423 id=423 data-nosnippet>423</a>            Variants::Empty =&gt; <span class="macro">unreachable!</span>(<span class="string">"we already handled uninhabited types"</span>),
+<a href=#424 id=424 data-nosnippet>424</a>            Variants::Single { index } =&gt; {
+<a href=#425 id=425 data-nosnippet>425</a>                <span class="kw">let </span>discr_val =
+<a href=#426 id=426 data-nosnippet>426</a>                    <span class="kw">if let </span><span class="prelude-val">Some</span>(discr) = <span class="self">self</span>.layout.ty.discriminant_for_variant(bx.tcx(), index) {
+<a href=#427 id=427 data-nosnippet>427</a>                        discr.val
+<a href=#428 id=428 data-nosnippet>428</a>                    } <span class="kw">else </span>{
+<a href=#429 id=429 data-nosnippet>429</a>                        <span class="comment">// This arm is for types which are neither enums nor coroutines,
+<a href=#430 id=430 data-nosnippet>430</a>                        // and thus for which the only possible "variant" should be the first one.
+<a href=#431 id=431 data-nosnippet>431</a>                        </span><span class="macro">assert_eq!</span>(index, FIRST_VARIANT);
+<a href=#432 id=432 data-nosnippet>432</a>                        <span class="comment">// There's thus no actual discriminant to return, so we return
+<a href=#433 id=433 data-nosnippet>433</a>                        // what it would have been if this was a single-variant enum.
+<a href=#434 id=434 data-nosnippet>434</a>                        </span><span class="number">0
+<a href=#435 id=435 data-nosnippet>435</a>                    </span>};
+<a href=#436 id=436 data-nosnippet>436</a>                <span class="kw">return </span>bx.cx().const_uint_big(cast_to, discr_val);
+<a href=#437 id=437 data-nosnippet>437</a>            }
+<a href=#438 id=438 data-nosnippet>438</a>            Variants::Multiple { tag, <span class="kw-2">ref </span>tag_encoding, tag_field, .. } =&gt; {
+<a href=#439 id=439 data-nosnippet>439</a>                (tag, tag_encoding, tag_field)
+<a href=#440 id=440 data-nosnippet>440</a>            }
+<a href=#441 id=441 data-nosnippet>441</a>        };
+<a href=#442 id=442 data-nosnippet>442</a>
+<a href=#443 id=443 data-nosnippet>443</a>        <span class="comment">// Read the tag/niche-encoded discriminant from memory.
+<a href=#444 id=444 data-nosnippet>444</a>        </span><span class="kw">let </span>tag_op = <span class="kw">match </span><span class="self">self</span>.val {
+<a href=#445 id=445 data-nosnippet>445</a>            OperandValue::ZeroSized =&gt; <span class="macro">bug!</span>(),
+<a href=#446 id=446 data-nosnippet>446</a>            OperandValue::Immediate(<span class="kw">_</span>) | OperandValue::Pair(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; {
+<a href=#447 id=447 data-nosnippet>447</a>                <span class="self">self</span>.extract_field(fx, bx, tag_field.as_usize())
+<a href=#448 id=448 data-nosnippet>448</a>            }
+<a href=#449 id=449 data-nosnippet>449</a>            OperandValue::Ref(place) =&gt; {
+<a href=#450 id=450 data-nosnippet>450</a>                <span class="kw">let </span>tag = place.with_type(<span class="self">self</span>.layout).project_field(bx, tag_field.as_usize());
+<a href=#451 id=451 data-nosnippet>451</a>                bx.load_operand(tag)
 <a href=#452 id=452 data-nosnippet>452</a>            }
-<a href=#453 id=453 data-nosnippet>453</a>            OperandValue::Ref(place) =&gt; {
-<a href=#454 id=454 data-nosnippet>454</a>                <span class="kw">let </span>tag = place.with_type(<span class="self">self</span>.layout).project_field(bx, tag_field.as_usize());
-<a href=#455 id=455 data-nosnippet>455</a>                bx.load_operand(tag)
-<a href=#456 id=456 data-nosnippet>456</a>            }
-<a href=#457 id=457 data-nosnippet>457</a>        };
-<a href=#458 id=458 data-nosnippet>458</a>        <span class="kw">let </span>tag_imm = tag_op.immediate();
-<a href=#459 id=459 data-nosnippet>459</a>
-<a href=#460 id=460 data-nosnippet>460</a>        <span class="comment">// Decode the discriminant (specifically if it's niche-encoded).
-<a href=#461 id=461 data-nosnippet>461</a>        </span><span class="kw">match </span><span class="kw-2">*</span>tag_encoding {
-<a href=#462 id=462 data-nosnippet>462</a>            TagEncoding::Direct =&gt; {
-<a href=#463 id=463 data-nosnippet>463</a>                <span class="kw">let </span>signed = <span class="kw">match </span>tag_scalar.primitive() {
-<a href=#464 id=464 data-nosnippet>464</a>                    <span class="comment">// We use `i1` for bytes that are always `0` or `1`,
-<a href=#465 id=465 data-nosnippet>465</a>                    // e.g., `#[repr(i8)] enum E { A, B }`, but we can't
-<a href=#466 id=466 data-nosnippet>466</a>                    // let LLVM interpret the `i1` as signed, because
-<a href=#467 id=467 data-nosnippet>467</a>                    // then `i1 1` (i.e., `E::B`) is effectively `i8 -1`.
-<a href=#468 id=468 data-nosnippet>468</a>                    </span>Primitive::Int(<span class="kw">_</span>, signed) =&gt; !tag_scalar.is_bool() &amp;&amp; signed,
-<a href=#469 id=469 data-nosnippet>469</a>                    <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
-<a href=#470 id=470 data-nosnippet>470</a>                };
-<a href=#471 id=471 data-nosnippet>471</a>                bx.intcast(tag_imm, cast_to, signed)
-<a href=#472 id=472 data-nosnippet>472</a>            }
-<a href=#473 id=473 data-nosnippet>473</a>            TagEncoding::Niche { untagged_variant, <span class="kw-2">ref </span>niche_variants, niche_start } =&gt; {
-<a href=#474 id=474 data-nosnippet>474</a>                <span class="comment">// Cast to an integer so we don't have to treat a pointer as a
-<a href=#475 id=475 data-nosnippet>475</a>                // special case.
-<a href=#476 id=476 data-nosnippet>476</a>                </span><span class="kw">let </span>(tag, tag_llty) = <span class="kw">match </span>tag_scalar.primitive() {
-<a href=#477 id=477 data-nosnippet>477</a>                    <span class="comment">// FIXME(erikdesjardins): handle non-default addrspace ptr sizes
-<a href=#478 id=478 data-nosnippet>478</a>                    </span>Primitive::Pointer(<span class="kw">_</span>) =&gt; {
-<a href=#479 id=479 data-nosnippet>479</a>                        <span class="kw">let </span>t = bx.type_from_integer(dl.ptr_sized_integer());
-<a href=#480 id=480 data-nosnippet>480</a>                        <span class="kw">let </span>tag = bx.ptrtoint(tag_imm, t);
-<a href=#481 id=481 data-nosnippet>481</a>                        (tag, t)
-<a href=#482 id=482 data-nosnippet>482</a>                    }
-<a href=#483 id=483 data-nosnippet>483</a>                    <span class="kw">_ </span>=&gt; (tag_imm, bx.cx().immediate_backend_type(tag_op.layout)),
-<a href=#484 id=484 data-nosnippet>484</a>                };
-<a href=#485 id=485 data-nosnippet>485</a>
-<a href=#486 id=486 data-nosnippet>486</a>                <span class="comment">// `layout_sanity_check` ensures that we only get here for cases where the discriminant
-<a href=#487 id=487 data-nosnippet>487</a>                // value and the variant index match, since that's all `Niche` can encode.
-<a href=#488 id=488 data-nosnippet>488</a>
-<a href=#489 id=489 data-nosnippet>489</a>                </span><span class="kw">let </span>relative_max = niche_variants.end().as_u32() - niche_variants.start().as_u32();
-<a href=#490 id=490 data-nosnippet>490</a>
-<a href=#491 id=491 data-nosnippet>491</a>                <span class="comment">// We have a subrange `niche_start..=niche_end` inside `range`.
-<a href=#492 id=492 data-nosnippet>492</a>                // If the value of the tag is inside this subrange, it's a
-<a href=#493 id=493 data-nosnippet>493</a>                // "niche value", an increment of the discriminant. Otherwise it
-<a href=#494 id=494 data-nosnippet>494</a>                // indicates the untagged variant.
-<a href=#495 id=495 data-nosnippet>495</a>                // A general algorithm to extract the discriminant from the tag
-<a href=#496 id=496 data-nosnippet>496</a>                // is:
-<a href=#497 id=497 data-nosnippet>497</a>                // relative_tag = tag - niche_start
-<a href=#498 id=498 data-nosnippet>498</a>                // is_niche = relative_tag &lt;= (ule) relative_max
-<a href=#499 id=499 data-nosnippet>499</a>                // discr = if is_niche {
-<a href=#500 id=500 data-nosnippet>500</a>                //     cast(relative_tag) + niche_variants.start()
-<a href=#501 id=501 data-nosnippet>501</a>                // } else {
-<a href=#502 id=502 data-nosnippet>502</a>                //     untagged_variant
-<a href=#503 id=503 data-nosnippet>503</a>                // }
-<a href=#504 id=504 data-nosnippet>504</a>                // However, we will likely be able to emit simpler code.
-<a href=#505 id=505 data-nosnippet>505</a>                </span><span class="kw">let </span>(is_niche, tagged_discr, delta) = <span class="kw">if </span>relative_max == <span class="number">0 </span>{
-<a href=#506 id=506 data-nosnippet>506</a>                    <span class="comment">// Best case scenario: only one tagged variant. This will
-<a href=#507 id=507 data-nosnippet>507</a>                    // likely become just a comparison and a jump.
-<a href=#508 id=508 data-nosnippet>508</a>                    // The algorithm is:
-<a href=#509 id=509 data-nosnippet>509</a>                    // is_niche = tag == niche_start
-<a href=#510 id=510 data-nosnippet>510</a>                    // discr = if is_niche {
-<a href=#511 id=511 data-nosnippet>511</a>                    //     niche_start
-<a href=#512 id=512 data-nosnippet>512</a>                    // } else {
-<a href=#513 id=513 data-nosnippet>513</a>                    //     untagged_variant
-<a href=#514 id=514 data-nosnippet>514</a>                    // }
-<a href=#515 id=515 data-nosnippet>515</a>                    </span><span class="kw">let </span>niche_start = bx.cx().const_uint_big(tag_llty, niche_start);
-<a href=#516 id=516 data-nosnippet>516</a>                    <span class="kw">let </span>is_niche = bx.icmp(IntPredicate::IntEQ, tag, niche_start);
-<a href=#517 id=517 data-nosnippet>517</a>                    <span class="kw">let </span>tagged_discr =
-<a href=#518 id=518 data-nosnippet>518</a>                        bx.cx().const_uint(cast_to, niche_variants.start().as_u32() <span class="kw">as </span>u64);
-<a href=#519 id=519 data-nosnippet>519</a>                    (is_niche, tagged_discr, <span class="number">0</span>)
-<a href=#520 id=520 data-nosnippet>520</a>                } <span class="kw">else </span>{
-<a href=#521 id=521 data-nosnippet>521</a>                    <span class="comment">// The special cases don't apply, so we'll have to go with
-<a href=#522 id=522 data-nosnippet>522</a>                    // the general algorithm.
-<a href=#523 id=523 data-nosnippet>523</a>                    </span><span class="kw">let </span>relative_discr = bx.sub(tag, bx.cx().const_uint_big(tag_llty, niche_start));
-<a href=#524 id=524 data-nosnippet>524</a>                    <span class="kw">let </span>cast_tag = bx.intcast(relative_discr, cast_to, <span class="bool-val">false</span>);
-<a href=#525 id=525 data-nosnippet>525</a>                    <span class="kw">let </span>is_niche = bx.icmp(
-<a href=#526 id=526 data-nosnippet>526</a>                        IntPredicate::IntULE,
-<a href=#527 id=527 data-nosnippet>527</a>                        relative_discr,
-<a href=#528 id=528 data-nosnippet>528</a>                        bx.cx().const_uint(tag_llty, relative_max <span class="kw">as </span>u64),
-<a href=#529 id=529 data-nosnippet>529</a>                    );
-<a href=#530 id=530 data-nosnippet>530</a>
-<a href=#531 id=531 data-nosnippet>531</a>                    <span class="comment">// Thanks to parameter attributes and load metadata, LLVM already knows
-<a href=#532 id=532 data-nosnippet>532</a>                    // the general valid range of the tag. It's possible, though, for there
-<a href=#533 id=533 data-nosnippet>533</a>                    // to be an impossible value *in the middle*, which those ranges don't
-<a href=#534 id=534 data-nosnippet>534</a>                    // communicate, so it's worth an `assume` to let the optimizer know.
-<a href=#535 id=535 data-nosnippet>535</a>                    </span><span class="kw">if </span>niche_variants.contains(<span class="kw-2">&amp;</span>untagged_variant)
-<a href=#536 id=536 data-nosnippet>536</a>                        &amp;&amp; bx.cx().sess().opts.optimize != OptLevel::No
-<a href=#537 id=537 data-nosnippet>537</a>                    {
-<a href=#538 id=538 data-nosnippet>538</a>                        <span class="kw">let </span>impossible =
-<a href=#539 id=539 data-nosnippet>539</a>                            u64::from(untagged_variant.as_u32() - niche_variants.start().as_u32());
-<a href=#540 id=540 data-nosnippet>540</a>                        <span class="kw">let </span>impossible = bx.cx().const_uint(tag_llty, impossible);
-<a href=#541 id=541 data-nosnippet>541</a>                        <span class="kw">let </span>ne = bx.icmp(IntPredicate::IntNE, relative_discr, impossible);
-<a href=#542 id=542 data-nosnippet>542</a>                        bx.assume(ne);
-<a href=#543 id=543 data-nosnippet>543</a>                    }
-<a href=#544 id=544 data-nosnippet>544</a>
-<a href=#545 id=545 data-nosnippet>545</a>                    (is_niche, cast_tag, niche_variants.start().as_u32() <span class="kw">as </span>u128)
-<a href=#546 id=546 data-nosnippet>546</a>                };
-<a href=#547 id=547 data-nosnippet>547</a>
-<a href=#548 id=548 data-nosnippet>548</a>                <span class="kw">let </span>tagged_discr = <span class="kw">if </span>delta == <span class="number">0 </span>{
-<a href=#549 id=549 data-nosnippet>549</a>                    tagged_discr
-<a href=#550 id=550 data-nosnippet>550</a>                } <span class="kw">else </span>{
-<a href=#551 id=551 data-nosnippet>551</a>                    bx.add(tagged_discr, bx.cx().const_uint_big(cast_to, delta))
-<a href=#552 id=552 data-nosnippet>552</a>                };
-<a href=#553 id=553 data-nosnippet>553</a>
-<a href=#554 id=554 data-nosnippet>554</a>                <span class="kw">let </span>discr = bx.select(
-<a href=#555 id=555 data-nosnippet>555</a>                    is_niche,
-<a href=#556 id=556 data-nosnippet>556</a>                    tagged_discr,
-<a href=#557 id=557 data-nosnippet>557</a>                    bx.cx().const_uint(cast_to, untagged_variant.as_u32() <span class="kw">as </span>u64),
-<a href=#558 id=558 data-nosnippet>558</a>                );
-<a href=#559 id=559 data-nosnippet>559</a>
-<a href=#560 id=560 data-nosnippet>560</a>                <span class="comment">// In principle we could insert assumes on the possible range of `discr`, but
-<a href=#561 id=561 data-nosnippet>561</a>                // currently in LLVM this isn't worth it because the original `tag` will
-<a href=#562 id=562 data-nosnippet>562</a>                // have either a `range` parameter attribute or `!range` metadata,
-<a href=#563 id=563 data-nosnippet>563</a>                // or come from a `transmute` that already `assume`d it.
-<a href=#564 id=564 data-nosnippet>564</a>
-<a href=#565 id=565 data-nosnippet>565</a>                </span>discr
-<a href=#566 id=566 data-nosnippet>566</a>            }
-<a href=#567 id=567 data-nosnippet>567</a>        }
-<a href=#568 id=568 data-nosnippet>568</a>    }
-<a href=#569 id=569 data-nosnippet>569</a>
-<a href=#570 id=570 data-nosnippet>570</a>    <span class="doccomment">/// Creates an incomplete operand containing the [`abi::Scalar`]s expected based
-<a href=#571 id=571 data-nosnippet>571</a>    /// on the `layout` passed. This is for use with [`OperandRef::insert_field`]
-<a href=#572 id=572 data-nosnippet>572</a>    /// later to set the necessary immediate(s).
-<a href=#573 id=573 data-nosnippet>573</a>    ///
-<a href=#574 id=574 data-nosnippet>574</a>    /// Returns `None` for `layout`s which cannot be built this way.
-<a href=#575 id=575 data-nosnippet>575</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>builder(
-<a href=#576 id=576 data-nosnippet>576</a>        layout: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;,
-<a href=#577 id=577 data-nosnippet>577</a>    ) -&gt; <span class="prelude-ty">Option</span>&lt;OperandRef&lt;<span class="lifetime">'tcx</span>, <span class="prelude-ty">Result</span>&lt;V, abi::Scalar&gt;&gt;&gt; {
-<a href=#578 id=578 data-nosnippet>578</a>        <span class="kw">let </span>val = <span class="kw">match </span>layout.backend_repr {
-<a href=#579 id=579 data-nosnippet>579</a>            BackendRepr::Memory { .. } <span class="kw">if </span>layout.is_zst() =&gt; OperandValue::ZeroSized,
-<a href=#580 id=580 data-nosnippet>580</a>            BackendRepr::Scalar(s) =&gt; OperandValue::Immediate(<span class="prelude-val">Err</span>(s)),
-<a href=#581 id=581 data-nosnippet>581</a>            BackendRepr::ScalarPair(a, b) =&gt; OperandValue::Pair(<span class="prelude-val">Err</span>(a), <span class="prelude-val">Err</span>(b)),
-<a href=#582 id=582 data-nosnippet>582</a>            BackendRepr::Memory { .. } | BackendRepr::SimdVector { .. } =&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
-<a href=#583 id=583 data-nosnippet>583</a>        };
-<a href=#584 id=584 data-nosnippet>584</a>        <span class="prelude-val">Some</span>(OperandRef { val, layout })
-<a href=#585 id=585 data-nosnippet>585</a>    }
-<a href=#586 id=586 data-nosnippet>586</a>}
-<a href=#587 id=587 data-nosnippet>587</a>
-<a href=#588 id=588 data-nosnippet>588</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, V: CodegenObject&gt; OperandRef&lt;<span class="lifetime">'tcx</span>, <span class="prelude-ty">Result</span>&lt;V, abi::Scalar&gt;&gt; {
-<a href=#589 id=589 data-nosnippet>589</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>insert_field&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
-<a href=#590 id=590 data-nosnippet>590</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#591 id=591 data-nosnippet>591</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#592 id=592 data-nosnippet>592</a>        v: VariantIdx,
-<a href=#593 id=593 data-nosnippet>593</a>        f: FieldIdx,
-<a href=#594 id=594 data-nosnippet>594</a>        operand: OperandRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
-<a href=#595 id=595 data-nosnippet>595</a>    ) {
-<a href=#596 id=596 data-nosnippet>596</a>        <span class="kw">let </span>(expect_zst, is_zero_offset) = <span class="kw">if let </span>abi::FieldsShape::Primitive = <span class="self">self</span>.layout.fields {
-<a href=#597 id=597 data-nosnippet>597</a>            <span class="comment">// The other branch looking at field layouts ICEs for primitives,
-<a href=#598 id=598 data-nosnippet>598</a>            // so we need to handle them separately.
-<a href=#599 id=599 data-nosnippet>599</a>            // Multiple fields is possible for cases such as aggregating
-<a href=#600 id=600 data-nosnippet>600</a>            // a thin pointer, where the second field is the unit.
-<a href=#601 id=601 data-nosnippet>601</a>            </span><span class="macro">assert!</span>(!<span class="self">self</span>.layout.is_zst());
-<a href=#602 id=602 data-nosnippet>602</a>            <span class="macro">assert_eq!</span>(v, FIRST_VARIANT);
-<a href=#603 id=603 data-nosnippet>603</a>            <span class="kw">let </span>first_field = f == FieldIdx::ZERO;
-<a href=#604 id=604 data-nosnippet>604</a>            (!first_field, first_field)
-<a href=#605 id=605 data-nosnippet>605</a>        } <span class="kw">else </span>{
-<a href=#606 id=606 data-nosnippet>606</a>            <span class="kw">let </span>variant_layout = <span class="self">self</span>.layout.for_variant(bx.cx(), v);
-<a href=#607 id=607 data-nosnippet>607</a>            <span class="kw">let </span>field_layout = variant_layout.field(bx.cx(), f.as_usize());
-<a href=#608 id=608 data-nosnippet>608</a>            <span class="kw">let </span>field_offset = variant_layout.fields.offset(f.as_usize());
-<a href=#609 id=609 data-nosnippet>609</a>            (field_layout.is_zst(), field_offset == Size::ZERO)
-<a href=#610 id=610 data-nosnippet>610</a>        };
-<a href=#611 id=611 data-nosnippet>611</a>
-<a href=#612 id=612 data-nosnippet>612</a>        <span class="kw">let </span><span class="kw-2">mut </span>update = |tgt: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Result</span>&lt;V, abi::Scalar&gt;, src, from_scalar| {
-<a href=#613 id=613 data-nosnippet>613</a>            <span class="kw">let </span>from_bty = bx.cx().type_from_scalar(from_scalar);
-<a href=#614 id=614 data-nosnippet>614</a>            <span class="kw">let </span>to_scalar = tgt.unwrap_err();
-<a href=#615 id=615 data-nosnippet>615</a>            <span class="kw">let </span>to_bty = bx.cx().type_from_scalar(to_scalar);
-<a href=#616 id=616 data-nosnippet>616</a>            <span class="kw">let </span>imm = transmute_immediate(bx, src, from_scalar, from_bty, to_scalar, to_bty);
-<a href=#617 id=617 data-nosnippet>617</a>            <span class="kw-2">*</span>tgt = <span class="prelude-val">Ok</span>(imm);
-<a href=#618 id=618 data-nosnippet>618</a>        };
-<a href=#619 id=619 data-nosnippet>619</a>
-<a href=#620 id=620 data-nosnippet>620</a>        <span class="kw">match </span>(operand.val, operand.layout.backend_repr) {
-<a href=#621 id=621 data-nosnippet>621</a>            (OperandValue::ZeroSized, <span class="kw">_</span>) <span class="kw">if </span>expect_zst =&gt; {}
-<a href=#622 id=622 data-nosnippet>622</a>            (OperandValue::Immediate(v), BackendRepr::Scalar(from_scalar)) =&gt; <span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.val {
-<a href=#623 id=623 data-nosnippet>623</a>                OperandValue::Immediate(val @ <span class="prelude-val">Err</span>(<span class="kw">_</span>)) <span class="kw">if </span>is_zero_offset =&gt; {
-<a href=#624 id=624 data-nosnippet>624</a>                    update(val, v, from_scalar);
-<a href=#625 id=625 data-nosnippet>625</a>                }
-<a href=#626 id=626 data-nosnippet>626</a>                OperandValue::Pair(fst @ <span class="prelude-val">Err</span>(<span class="kw">_</span>), <span class="kw">_</span>) <span class="kw">if </span>is_zero_offset =&gt; {
-<a href=#627 id=627 data-nosnippet>627</a>                    update(fst, v, from_scalar);
-<a href=#628 id=628 data-nosnippet>628</a>                }
-<a href=#629 id=629 data-nosnippet>629</a>                OperandValue::Pair(<span class="kw">_</span>, snd @ <span class="prelude-val">Err</span>(<span class="kw">_</span>)) <span class="kw">if </span>!is_zero_offset =&gt; {
-<a href=#630 id=630 data-nosnippet>630</a>                    update(snd, v, from_scalar);
-<a href=#631 id=631 data-nosnippet>631</a>                }
-<a href=#632 id=632 data-nosnippet>632</a>                <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(<span class="string">"Tried to insert {operand:?} into {v:?}.{f:?} of {self:?}"</span>),
-<a href=#633 id=633 data-nosnippet>633</a>            },
-<a href=#634 id=634 data-nosnippet>634</a>            (OperandValue::Pair(a, b), BackendRepr::ScalarPair(from_sa, from_sb)) =&gt; {
-<a href=#635 id=635 data-nosnippet>635</a>                <span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.val {
-<a href=#636 id=636 data-nosnippet>636</a>                    OperandValue::Pair(fst @ <span class="prelude-val">Err</span>(<span class="kw">_</span>), snd @ <span class="prelude-val">Err</span>(<span class="kw">_</span>)) =&gt; {
-<a href=#637 id=637 data-nosnippet>637</a>                        update(fst, a, from_sa);
-<a href=#638 id=638 data-nosnippet>638</a>                        update(snd, b, from_sb);
-<a href=#639 id=639 data-nosnippet>639</a>                    }
-<a href=#640 id=640 data-nosnippet>640</a>                    <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(<span class="string">"Tried to insert {operand:?} into {v:?}.{f:?} of {self:?}"</span>),
-<a href=#641 id=641 data-nosnippet>641</a>                }
-<a href=#642 id=642 data-nosnippet>642</a>            }
-<a href=#643 id=643 data-nosnippet>643</a>            <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(<span class="string">"Unsupported operand {operand:?} inserting into {v:?}.{f:?} of {self:?}"</span>),
-<a href=#644 id=644 data-nosnippet>644</a>        }
-<a href=#645 id=645 data-nosnippet>645</a>    }
-<a href=#646 id=646 data-nosnippet>646</a>
-<a href=#647 id=647 data-nosnippet>647</a>    <span class="doccomment">/// After having set all necessary fields, this converts the
-<a href=#648 id=648 data-nosnippet>648</a>    /// `OperandValue&lt;Result&lt;V, _&gt;&gt;` (as obtained from [`OperandRef::builder`])
-<a href=#649 id=649 data-nosnippet>649</a>    /// to the normal `OperandValue&lt;V&gt;`.
-<a href=#650 id=650 data-nosnippet>650</a>    ///
-<a href=#651 id=651 data-nosnippet>651</a>    /// ICEs if any required fields were not set.
-<a href=#652 id=652 data-nosnippet>652</a>    </span><span class="kw">pub fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; OperandRef&lt;<span class="lifetime">'tcx</span>, V&gt; {
-<a href=#653 id=653 data-nosnippet>653</a>        <span class="kw">let </span>OperandRef { val, layout } = <span class="kw-2">*</span><span class="self">self</span>;
-<a href=#654 id=654 data-nosnippet>654</a>
-<a href=#655 id=655 data-nosnippet>655</a>        <span class="kw">let </span>unwrap = |r: <span class="prelude-ty">Result</span>&lt;V, abi::Scalar&gt;| <span class="kw">match </span>r {
-<a href=#656 id=656 data-nosnippet>656</a>            <span class="prelude-val">Ok</span>(v) =&gt; v,
-<a href=#657 id=657 data-nosnippet>657</a>            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">bug!</span>(<span class="string">"OperandRef::build called while fields are missing {self:?}"</span>),
-<a href=#658 id=658 data-nosnippet>658</a>        };
-<a href=#659 id=659 data-nosnippet>659</a>
-<a href=#660 id=660 data-nosnippet>660</a>        <span class="kw">let </span>val = <span class="kw">match </span>val {
-<a href=#661 id=661 data-nosnippet>661</a>            OperandValue::ZeroSized =&gt; OperandValue::ZeroSized,
-<a href=#662 id=662 data-nosnippet>662</a>            OperandValue::Immediate(v) =&gt; OperandValue::Immediate(unwrap(v)),
-<a href=#663 id=663 data-nosnippet>663</a>            OperandValue::Pair(a, b) =&gt; OperandValue::Pair(unwrap(a), unwrap(b)),
-<a href=#664 id=664 data-nosnippet>664</a>            OperandValue::Ref(<span class="kw">_</span>) =&gt; <span class="macro">bug!</span>(),
-<a href=#665 id=665 data-nosnippet>665</a>        };
-<a href=#666 id=666 data-nosnippet>666</a>        OperandRef { val, layout }
-<a href=#667 id=667 data-nosnippet>667</a>    }
-<a href=#668 id=668 data-nosnippet>668</a>}
-<a href=#669 id=669 data-nosnippet>669</a>
-<a href=#670 id=670 data-nosnippet>670</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, V: CodegenObject&gt; OperandValue&lt;V&gt; {
-<a href=#671 id=671 data-nosnippet>671</a>    <span class="doccomment">/// Returns an `OperandValue` that's generally UB to use in any way.
-<a href=#672 id=672 data-nosnippet>672</a>    ///
-<a href=#673 id=673 data-nosnippet>673</a>    /// Depending on the `layout`, returns `ZeroSized` for ZSTs, an `Immediate` or
-<a href=#674 id=674 data-nosnippet>674</a>    /// `Pair` containing poison value(s), or a `Ref` containing a poison pointer.
-<a href=#675 id=675 data-nosnippet>675</a>    ///
-<a href=#676 id=676 data-nosnippet>676</a>    /// Supports sized types only.
-<a href=#677 id=677 data-nosnippet>677</a>    </span><span class="kw">pub fn </span>poison&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
-<a href=#678 id=678 data-nosnippet>678</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#679 id=679 data-nosnippet>679</a>        layout: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;,
-<a href=#680 id=680 data-nosnippet>680</a>    ) -&gt; OperandValue&lt;V&gt; {
-<a href=#681 id=681 data-nosnippet>681</a>        <span class="macro">assert!</span>(layout.is_sized());
-<a href=#682 id=682 data-nosnippet>682</a>        <span class="kw">if </span>layout.is_zst() {
-<a href=#683 id=683 data-nosnippet>683</a>            OperandValue::ZeroSized
-<a href=#684 id=684 data-nosnippet>684</a>        } <span class="kw">else if </span>bx.cx().is_backend_immediate(layout) {
-<a href=#685 id=685 data-nosnippet>685</a>            <span class="kw">let </span>ibty = bx.cx().immediate_backend_type(layout);
-<a href=#686 id=686 data-nosnippet>686</a>            OperandValue::Immediate(bx.const_poison(ibty))
-<a href=#687 id=687 data-nosnippet>687</a>        } <span class="kw">else if </span>bx.cx().is_backend_scalar_pair(layout) {
-<a href=#688 id=688 data-nosnippet>688</a>            <span class="kw">let </span>ibty0 = bx.cx().scalar_pair_element_backend_type(layout, <span class="number">0</span>, <span class="bool-val">true</span>);
-<a href=#689 id=689 data-nosnippet>689</a>            <span class="kw">let </span>ibty1 = bx.cx().scalar_pair_element_backend_type(layout, <span class="number">1</span>, <span class="bool-val">true</span>);
-<a href=#690 id=690 data-nosnippet>690</a>            OperandValue::Pair(bx.const_poison(ibty0), bx.const_poison(ibty1))
-<a href=#691 id=691 data-nosnippet>691</a>        } <span class="kw">else </span>{
-<a href=#692 id=692 data-nosnippet>692</a>            <span class="kw">let </span>ptr = bx.cx().type_ptr();
-<a href=#693 id=693 data-nosnippet>693</a>            OperandValue::Ref(PlaceValue::new_sized(bx.const_poison(ptr), layout.align.abi))
-<a href=#694 id=694 data-nosnippet>694</a>        }
-<a href=#695 id=695 data-nosnippet>695</a>    }
-<a href=#696 id=696 data-nosnippet>696</a>
-<a href=#697 id=697 data-nosnippet>697</a>    <span class="kw">pub fn </span>store&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
-<a href=#698 id=698 data-nosnippet>698</a>        <span class="self">self</span>,
-<a href=#699 id=699 data-nosnippet>699</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#700 id=700 data-nosnippet>700</a>        dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
-<a href=#701 id=701 data-nosnippet>701</a>    ) {
-<a href=#702 id=702 data-nosnippet>702</a>        <span class="self">self</span>.store_with_flags(bx, dest, MemFlags::empty());
-<a href=#703 id=703 data-nosnippet>703</a>    }
-<a href=#704 id=704 data-nosnippet>704</a>
-<a href=#705 id=705 data-nosnippet>705</a>    <span class="kw">pub fn </span>volatile_store&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
-<a href=#706 id=706 data-nosnippet>706</a>        <span class="self">self</span>,
-<a href=#707 id=707 data-nosnippet>707</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#708 id=708 data-nosnippet>708</a>        dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
-<a href=#709 id=709 data-nosnippet>709</a>    ) {
-<a href=#710 id=710 data-nosnippet>710</a>        <span class="self">self</span>.store_with_flags(bx, dest, MemFlags::VOLATILE);
-<a href=#711 id=711 data-nosnippet>711</a>    }
-<a href=#712 id=712 data-nosnippet>712</a>
-<a href=#713 id=713 data-nosnippet>713</a>    <span class="kw">pub fn </span>unaligned_volatile_store&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
-<a href=#714 id=714 data-nosnippet>714</a>        <span class="self">self</span>,
-<a href=#715 id=715 data-nosnippet>715</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#716 id=716 data-nosnippet>716</a>        dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
-<a href=#717 id=717 data-nosnippet>717</a>    ) {
-<a href=#718 id=718 data-nosnippet>718</a>        <span class="self">self</span>.store_with_flags(bx, dest, MemFlags::VOLATILE | MemFlags::UNALIGNED);
-<a href=#719 id=719 data-nosnippet>719</a>    }
-<a href=#720 id=720 data-nosnippet>720</a>
-<a href=#721 id=721 data-nosnippet>721</a>    <span class="kw">pub fn </span>nontemporal_store&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
-<a href=#722 id=722 data-nosnippet>722</a>        <span class="self">self</span>,
-<a href=#723 id=723 data-nosnippet>723</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#724 id=724 data-nosnippet>724</a>        dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
-<a href=#725 id=725 data-nosnippet>725</a>    ) {
-<a href=#726 id=726 data-nosnippet>726</a>        <span class="self">self</span>.store_with_flags(bx, dest, MemFlags::NONTEMPORAL);
-<a href=#727 id=727 data-nosnippet>727</a>    }
-<a href=#728 id=728 data-nosnippet>728</a>
-<a href=#729 id=729 data-nosnippet>729</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>store_with_flags&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
-<a href=#730 id=730 data-nosnippet>730</a>        <span class="self">self</span>,
-<a href=#731 id=731 data-nosnippet>731</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#732 id=732 data-nosnippet>732</a>        dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
-<a href=#733 id=733 data-nosnippet>733</a>        flags: MemFlags,
-<a href=#734 id=734 data-nosnippet>734</a>    ) {
-<a href=#735 id=735 data-nosnippet>735</a>        <span class="macro">debug!</span>(<span class="string">"OperandRef::store: operand={:?}, dest={:?}"</span>, <span class="self">self</span>, dest);
-<a href=#736 id=736 data-nosnippet>736</a>        <span class="kw">match </span><span class="self">self </span>{
-<a href=#737 id=737 data-nosnippet>737</a>            OperandValue::ZeroSized =&gt; {
-<a href=#738 id=738 data-nosnippet>738</a>                <span class="comment">// Avoid generating stores of zero-sized values, because the only way to have a
-<a href=#739 id=739 data-nosnippet>739</a>                // zero-sized value is through `undef`/`poison`, and the store itself is useless.
-<a href=#740 id=740 data-nosnippet>740</a>            </span>}
-<a href=#741 id=741 data-nosnippet>741</a>            OperandValue::Ref(val) =&gt; {
-<a href=#742 id=742 data-nosnippet>742</a>                <span class="macro">assert!</span>(dest.layout.is_sized(), <span class="string">"cannot directly store unsized values"</span>);
-<a href=#743 id=743 data-nosnippet>743</a>                <span class="kw">if </span>val.llextra.is_some() {
-<a href=#744 id=744 data-nosnippet>744</a>                    <span class="macro">bug!</span>(<span class="string">"cannot directly store unsized values"</span>);
-<a href=#745 id=745 data-nosnippet>745</a>                }
-<a href=#746 id=746 data-nosnippet>746</a>                bx.typed_place_copy_with_flags(dest.val, val, dest.layout, flags);
+<a href=#453 id=453 data-nosnippet>453</a>        };
+<a href=#454 id=454 data-nosnippet>454</a>        <span class="kw">let </span>tag_imm = tag_op.immediate();
+<a href=#455 id=455 data-nosnippet>455</a>
+<a href=#456 id=456 data-nosnippet>456</a>        <span class="comment">// Decode the discriminant (specifically if it's niche-encoded).
+<a href=#457 id=457 data-nosnippet>457</a>        </span><span class="kw">match </span><span class="kw-2">*</span>tag_encoding {
+<a href=#458 id=458 data-nosnippet>458</a>            TagEncoding::Direct =&gt; {
+<a href=#459 id=459 data-nosnippet>459</a>                <span class="kw">let </span>signed = <span class="kw">match </span>tag_scalar.primitive() {
+<a href=#460 id=460 data-nosnippet>460</a>                    <span class="comment">// We use `i1` for bytes that are always `0` or `1`,
+<a href=#461 id=461 data-nosnippet>461</a>                    // e.g., `#[repr(i8)] enum E { A, B }`, but we can't
+<a href=#462 id=462 data-nosnippet>462</a>                    // let LLVM interpret the `i1` as signed, because
+<a href=#463 id=463 data-nosnippet>463</a>                    // then `i1 1` (i.e., `E::B`) is effectively `i8 -1`.
+<a href=#464 id=464 data-nosnippet>464</a>                    </span>Primitive::Int(<span class="kw">_</span>, signed) =&gt; !tag_scalar.is_bool() &amp;&amp; signed,
+<a href=#465 id=465 data-nosnippet>465</a>                    <span class="kw">_ </span>=&gt; <span class="bool-val">false</span>,
+<a href=#466 id=466 data-nosnippet>466</a>                };
+<a href=#467 id=467 data-nosnippet>467</a>                bx.intcast(tag_imm, cast_to, signed)
+<a href=#468 id=468 data-nosnippet>468</a>            }
+<a href=#469 id=469 data-nosnippet>469</a>            TagEncoding::Niche { untagged_variant, <span class="kw-2">ref </span>niche_variants, niche_start } =&gt; {
+<a href=#470 id=470 data-nosnippet>470</a>                <span class="comment">// Cast to an integer so we don't have to treat a pointer as a
+<a href=#471 id=471 data-nosnippet>471</a>                // special case.
+<a href=#472 id=472 data-nosnippet>472</a>                </span><span class="kw">let </span>(tag, tag_llty) = <span class="kw">match </span>tag_scalar.primitive() {
+<a href=#473 id=473 data-nosnippet>473</a>                    <span class="comment">// FIXME(erikdesjardins): handle non-default addrspace ptr sizes
+<a href=#474 id=474 data-nosnippet>474</a>                    </span>Primitive::Pointer(<span class="kw">_</span>) =&gt; {
+<a href=#475 id=475 data-nosnippet>475</a>                        <span class="kw">let </span>t = bx.type_from_integer(dl.ptr_sized_integer());
+<a href=#476 id=476 data-nosnippet>476</a>                        <span class="kw">let </span>tag = bx.ptrtoint(tag_imm, t);
+<a href=#477 id=477 data-nosnippet>477</a>                        (tag, t)
+<a href=#478 id=478 data-nosnippet>478</a>                    }
+<a href=#479 id=479 data-nosnippet>479</a>                    <span class="kw">_ </span>=&gt; (tag_imm, bx.cx().immediate_backend_type(tag_op.layout)),
+<a href=#480 id=480 data-nosnippet>480</a>                };
+<a href=#481 id=481 data-nosnippet>481</a>
+<a href=#482 id=482 data-nosnippet>482</a>                <span class="comment">// `layout_sanity_check` ensures that we only get here for cases where the discriminant
+<a href=#483 id=483 data-nosnippet>483</a>                // value and the variant index match, since that's all `Niche` can encode.
+<a href=#484 id=484 data-nosnippet>484</a>
+<a href=#485 id=485 data-nosnippet>485</a>                </span><span class="kw">let </span>relative_max = niche_variants.end().as_u32() - niche_variants.start().as_u32();
+<a href=#486 id=486 data-nosnippet>486</a>
+<a href=#487 id=487 data-nosnippet>487</a>                <span class="comment">// We have a subrange `niche_start..=niche_end` inside `range`.
+<a href=#488 id=488 data-nosnippet>488</a>                // If the value of the tag is inside this subrange, it's a
+<a href=#489 id=489 data-nosnippet>489</a>                // "niche value", an increment of the discriminant. Otherwise it
+<a href=#490 id=490 data-nosnippet>490</a>                // indicates the untagged variant.
+<a href=#491 id=491 data-nosnippet>491</a>                // A general algorithm to extract the discriminant from the tag
+<a href=#492 id=492 data-nosnippet>492</a>                // is:
+<a href=#493 id=493 data-nosnippet>493</a>                // relative_tag = tag - niche_start
+<a href=#494 id=494 data-nosnippet>494</a>                // is_niche = relative_tag &lt;= (ule) relative_max
+<a href=#495 id=495 data-nosnippet>495</a>                // discr = if is_niche {
+<a href=#496 id=496 data-nosnippet>496</a>                //     cast(relative_tag) + niche_variants.start()
+<a href=#497 id=497 data-nosnippet>497</a>                // } else {
+<a href=#498 id=498 data-nosnippet>498</a>                //     untagged_variant
+<a href=#499 id=499 data-nosnippet>499</a>                // }
+<a href=#500 id=500 data-nosnippet>500</a>                // However, we will likely be able to emit simpler code.
+<a href=#501 id=501 data-nosnippet>501</a>                </span><span class="kw">let </span>(is_niche, tagged_discr, delta) = <span class="kw">if </span>relative_max == <span class="number">0 </span>{
+<a href=#502 id=502 data-nosnippet>502</a>                    <span class="comment">// Best case scenario: only one tagged variant. This will
+<a href=#503 id=503 data-nosnippet>503</a>                    // likely become just a comparison and a jump.
+<a href=#504 id=504 data-nosnippet>504</a>                    // The algorithm is:
+<a href=#505 id=505 data-nosnippet>505</a>                    // is_niche = tag == niche_start
+<a href=#506 id=506 data-nosnippet>506</a>                    // discr = if is_niche {
+<a href=#507 id=507 data-nosnippet>507</a>                    //     niche_start
+<a href=#508 id=508 data-nosnippet>508</a>                    // } else {
+<a href=#509 id=509 data-nosnippet>509</a>                    //     untagged_variant
+<a href=#510 id=510 data-nosnippet>510</a>                    // }
+<a href=#511 id=511 data-nosnippet>511</a>                    </span><span class="kw">let </span>niche_start = bx.cx().const_uint_big(tag_llty, niche_start);
+<a href=#512 id=512 data-nosnippet>512</a>                    <span class="kw">let </span>is_niche = bx.icmp(IntPredicate::IntEQ, tag, niche_start);
+<a href=#513 id=513 data-nosnippet>513</a>                    <span class="kw">let </span>tagged_discr =
+<a href=#514 id=514 data-nosnippet>514</a>                        bx.cx().const_uint(cast_to, niche_variants.start().as_u32() <span class="kw">as </span>u64);
+<a href=#515 id=515 data-nosnippet>515</a>                    (is_niche, tagged_discr, <span class="number">0</span>)
+<a href=#516 id=516 data-nosnippet>516</a>                } <span class="kw">else </span>{
+<a href=#517 id=517 data-nosnippet>517</a>                    <span class="comment">// The special cases don't apply, so we'll have to go with
+<a href=#518 id=518 data-nosnippet>518</a>                    // the general algorithm.
+<a href=#519 id=519 data-nosnippet>519</a>                    </span><span class="kw">let </span>relative_discr = bx.sub(tag, bx.cx().const_uint_big(tag_llty, niche_start));
+<a href=#520 id=520 data-nosnippet>520</a>                    <span class="kw">let </span>cast_tag = bx.intcast(relative_discr, cast_to, <span class="bool-val">false</span>);
+<a href=#521 id=521 data-nosnippet>521</a>                    <span class="kw">let </span>is_niche = bx.icmp(
+<a href=#522 id=522 data-nosnippet>522</a>                        IntPredicate::IntULE,
+<a href=#523 id=523 data-nosnippet>523</a>                        relative_discr,
+<a href=#524 id=524 data-nosnippet>524</a>                        bx.cx().const_uint(tag_llty, relative_max <span class="kw">as </span>u64),
+<a href=#525 id=525 data-nosnippet>525</a>                    );
+<a href=#526 id=526 data-nosnippet>526</a>
+<a href=#527 id=527 data-nosnippet>527</a>                    <span class="comment">// Thanks to parameter attributes and load metadata, LLVM already knows
+<a href=#528 id=528 data-nosnippet>528</a>                    // the general valid range of the tag. It's possible, though, for there
+<a href=#529 id=529 data-nosnippet>529</a>                    // to be an impossible value *in the middle*, which those ranges don't
+<a href=#530 id=530 data-nosnippet>530</a>                    // communicate, so it's worth an `assume` to let the optimizer know.
+<a href=#531 id=531 data-nosnippet>531</a>                    </span><span class="kw">if </span>niche_variants.contains(<span class="kw-2">&amp;</span>untagged_variant)
+<a href=#532 id=532 data-nosnippet>532</a>                        &amp;&amp; bx.cx().sess().opts.optimize != OptLevel::No
+<a href=#533 id=533 data-nosnippet>533</a>                    {
+<a href=#534 id=534 data-nosnippet>534</a>                        <span class="kw">let </span>impossible =
+<a href=#535 id=535 data-nosnippet>535</a>                            u64::from(untagged_variant.as_u32() - niche_variants.start().as_u32());
+<a href=#536 id=536 data-nosnippet>536</a>                        <span class="kw">let </span>impossible = bx.cx().const_uint(tag_llty, impossible);
+<a href=#537 id=537 data-nosnippet>537</a>                        <span class="kw">let </span>ne = bx.icmp(IntPredicate::IntNE, relative_discr, impossible);
+<a href=#538 id=538 data-nosnippet>538</a>                        bx.assume(ne);
+<a href=#539 id=539 data-nosnippet>539</a>                    }
+<a href=#540 id=540 data-nosnippet>540</a>
+<a href=#541 id=541 data-nosnippet>541</a>                    (is_niche, cast_tag, niche_variants.start().as_u32() <span class="kw">as </span>u128)
+<a href=#542 id=542 data-nosnippet>542</a>                };
+<a href=#543 id=543 data-nosnippet>543</a>
+<a href=#544 id=544 data-nosnippet>544</a>                <span class="kw">let </span>tagged_discr = <span class="kw">if </span>delta == <span class="number">0 </span>{
+<a href=#545 id=545 data-nosnippet>545</a>                    tagged_discr
+<a href=#546 id=546 data-nosnippet>546</a>                } <span class="kw">else </span>{
+<a href=#547 id=547 data-nosnippet>547</a>                    bx.add(tagged_discr, bx.cx().const_uint_big(cast_to, delta))
+<a href=#548 id=548 data-nosnippet>548</a>                };
+<a href=#549 id=549 data-nosnippet>549</a>
+<a href=#550 id=550 data-nosnippet>550</a>                <span class="kw">let </span>discr = bx.select(
+<a href=#551 id=551 data-nosnippet>551</a>                    is_niche,
+<a href=#552 id=552 data-nosnippet>552</a>                    tagged_discr,
+<a href=#553 id=553 data-nosnippet>553</a>                    bx.cx().const_uint(cast_to, untagged_variant.as_u32() <span class="kw">as </span>u64),
+<a href=#554 id=554 data-nosnippet>554</a>                );
+<a href=#555 id=555 data-nosnippet>555</a>
+<a href=#556 id=556 data-nosnippet>556</a>                <span class="comment">// In principle we could insert assumes on the possible range of `discr`, but
+<a href=#557 id=557 data-nosnippet>557</a>                // currently in LLVM this isn't worth it because the original `tag` will
+<a href=#558 id=558 data-nosnippet>558</a>                // have either a `range` parameter attribute or `!range` metadata,
+<a href=#559 id=559 data-nosnippet>559</a>                // or come from a `transmute` that already `assume`d it.
+<a href=#560 id=560 data-nosnippet>560</a>
+<a href=#561 id=561 data-nosnippet>561</a>                </span>discr
+<a href=#562 id=562 data-nosnippet>562</a>            }
+<a href=#563 id=563 data-nosnippet>563</a>        }
+<a href=#564 id=564 data-nosnippet>564</a>    }
+<a href=#565 id=565 data-nosnippet>565</a>
+<a href=#566 id=566 data-nosnippet>566</a>    <span class="doccomment">/// Creates an incomplete operand containing the [`abi::Scalar`]s expected based
+<a href=#567 id=567 data-nosnippet>567</a>    /// on the `layout` passed. This is for use with [`OperandRef::insert_field`]
+<a href=#568 id=568 data-nosnippet>568</a>    /// later to set the necessary immediate(s).
+<a href=#569 id=569 data-nosnippet>569</a>    ///
+<a href=#570 id=570 data-nosnippet>570</a>    /// Returns `None` for `layout`s which cannot be built this way.
+<a href=#571 id=571 data-nosnippet>571</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>builder(
+<a href=#572 id=572 data-nosnippet>572</a>        layout: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;,
+<a href=#573 id=573 data-nosnippet>573</a>    ) -&gt; <span class="prelude-ty">Option</span>&lt;OperandRef&lt;<span class="lifetime">'tcx</span>, <span class="prelude-ty">Result</span>&lt;V, abi::Scalar&gt;&gt;&gt; {
+<a href=#574 id=574 data-nosnippet>574</a>        <span class="kw">let </span>val = <span class="kw">match </span>layout.backend_repr {
+<a href=#575 id=575 data-nosnippet>575</a>            BackendRepr::Memory { .. } <span class="kw">if </span>layout.is_zst() =&gt; OperandValue::ZeroSized,
+<a href=#576 id=576 data-nosnippet>576</a>            BackendRepr::Scalar(s) =&gt; OperandValue::Immediate(<span class="prelude-val">Err</span>(s)),
+<a href=#577 id=577 data-nosnippet>577</a>            BackendRepr::ScalarPair(a, b) =&gt; OperandValue::Pair(<span class="prelude-val">Err</span>(a), <span class="prelude-val">Err</span>(b)),
+<a href=#578 id=578 data-nosnippet>578</a>            BackendRepr::Memory { .. } | BackendRepr::SimdVector { .. } =&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+<a href=#579 id=579 data-nosnippet>579</a>        };
+<a href=#580 id=580 data-nosnippet>580</a>        <span class="prelude-val">Some</span>(OperandRef { val, layout })
+<a href=#581 id=581 data-nosnippet>581</a>    }
+<a href=#582 id=582 data-nosnippet>582</a>}
+<a href=#583 id=583 data-nosnippet>583</a>
+<a href=#584 id=584 data-nosnippet>584</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, V: CodegenObject&gt; OperandRef&lt;<span class="lifetime">'tcx</span>, <span class="prelude-ty">Result</span>&lt;V, abi::Scalar&gt;&gt; {
+<a href=#585 id=585 data-nosnippet>585</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>insert_field&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
+<a href=#586 id=586 data-nosnippet>586</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#587 id=587 data-nosnippet>587</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#588 id=588 data-nosnippet>588</a>        v: VariantIdx,
+<a href=#589 id=589 data-nosnippet>589</a>        f: FieldIdx,
+<a href=#590 id=590 data-nosnippet>590</a>        operand: OperandRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
+<a href=#591 id=591 data-nosnippet>591</a>    ) {
+<a href=#592 id=592 data-nosnippet>592</a>        <span class="kw">let </span>(expect_zst, is_zero_offset) = <span class="kw">if let </span>abi::FieldsShape::Primitive = <span class="self">self</span>.layout.fields {
+<a href=#593 id=593 data-nosnippet>593</a>            <span class="comment">// The other branch looking at field layouts ICEs for primitives,
+<a href=#594 id=594 data-nosnippet>594</a>            // so we need to handle them separately.
+<a href=#595 id=595 data-nosnippet>595</a>            // Multiple fields is possible for cases such as aggregating
+<a href=#596 id=596 data-nosnippet>596</a>            // a thin pointer, where the second field is the unit.
+<a href=#597 id=597 data-nosnippet>597</a>            </span><span class="macro">assert!</span>(!<span class="self">self</span>.layout.is_zst());
+<a href=#598 id=598 data-nosnippet>598</a>            <span class="macro">assert_eq!</span>(v, FIRST_VARIANT);
+<a href=#599 id=599 data-nosnippet>599</a>            <span class="kw">let </span>first_field = f == FieldIdx::ZERO;
+<a href=#600 id=600 data-nosnippet>600</a>            (!first_field, first_field)
+<a href=#601 id=601 data-nosnippet>601</a>        } <span class="kw">else </span>{
+<a href=#602 id=602 data-nosnippet>602</a>            <span class="kw">let </span>variant_layout = <span class="self">self</span>.layout.for_variant(bx.cx(), v);
+<a href=#603 id=603 data-nosnippet>603</a>            <span class="kw">let </span>field_layout = variant_layout.field(bx.cx(), f.as_usize());
+<a href=#604 id=604 data-nosnippet>604</a>            <span class="kw">let </span>field_offset = variant_layout.fields.offset(f.as_usize());
+<a href=#605 id=605 data-nosnippet>605</a>            (field_layout.is_zst(), field_offset == Size::ZERO)
+<a href=#606 id=606 data-nosnippet>606</a>        };
+<a href=#607 id=607 data-nosnippet>607</a>
+<a href=#608 id=608 data-nosnippet>608</a>        <span class="kw">let </span><span class="kw-2">mut </span>update = |tgt: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Result</span>&lt;V, abi::Scalar&gt;, src, from_scalar| {
+<a href=#609 id=609 data-nosnippet>609</a>            <span class="kw">let </span>from_bty = bx.cx().type_from_scalar(from_scalar);
+<a href=#610 id=610 data-nosnippet>610</a>            <span class="kw">let </span>to_scalar = tgt.unwrap_err();
+<a href=#611 id=611 data-nosnippet>611</a>            <span class="kw">let </span>to_bty = bx.cx().type_from_scalar(to_scalar);
+<a href=#612 id=612 data-nosnippet>612</a>            <span class="kw">let </span>imm = transmute_immediate(bx, src, from_scalar, from_bty, to_scalar, to_bty);
+<a href=#613 id=613 data-nosnippet>613</a>            <span class="kw-2">*</span>tgt = <span class="prelude-val">Ok</span>(imm);
+<a href=#614 id=614 data-nosnippet>614</a>        };
+<a href=#615 id=615 data-nosnippet>615</a>
+<a href=#616 id=616 data-nosnippet>616</a>        <span class="kw">match </span>(operand.val, operand.layout.backend_repr) {
+<a href=#617 id=617 data-nosnippet>617</a>            (OperandValue::ZeroSized, <span class="kw">_</span>) <span class="kw">if </span>expect_zst =&gt; {}
+<a href=#618 id=618 data-nosnippet>618</a>            (OperandValue::Immediate(v), BackendRepr::Scalar(from_scalar)) =&gt; <span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.val {
+<a href=#619 id=619 data-nosnippet>619</a>                OperandValue::Immediate(val @ <span class="prelude-val">Err</span>(<span class="kw">_</span>)) <span class="kw">if </span>is_zero_offset =&gt; {
+<a href=#620 id=620 data-nosnippet>620</a>                    update(val, v, from_scalar);
+<a href=#621 id=621 data-nosnippet>621</a>                }
+<a href=#622 id=622 data-nosnippet>622</a>                OperandValue::Pair(fst @ <span class="prelude-val">Err</span>(<span class="kw">_</span>), <span class="kw">_</span>) <span class="kw">if </span>is_zero_offset =&gt; {
+<a href=#623 id=623 data-nosnippet>623</a>                    update(fst, v, from_scalar);
+<a href=#624 id=624 data-nosnippet>624</a>                }
+<a href=#625 id=625 data-nosnippet>625</a>                OperandValue::Pair(<span class="kw">_</span>, snd @ <span class="prelude-val">Err</span>(<span class="kw">_</span>)) <span class="kw">if </span>!is_zero_offset =&gt; {
+<a href=#626 id=626 data-nosnippet>626</a>                    update(snd, v, from_scalar);
+<a href=#627 id=627 data-nosnippet>627</a>                }
+<a href=#628 id=628 data-nosnippet>628</a>                <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(<span class="string">"Tried to insert {operand:?} into {v:?}.{f:?} of {self:?}"</span>),
+<a href=#629 id=629 data-nosnippet>629</a>            },
+<a href=#630 id=630 data-nosnippet>630</a>            (OperandValue::Pair(a, b), BackendRepr::ScalarPair(from_sa, from_sb)) =&gt; {
+<a href=#631 id=631 data-nosnippet>631</a>                <span class="kw">match </span><span class="kw-2">&amp;mut </span><span class="self">self</span>.val {
+<a href=#632 id=632 data-nosnippet>632</a>                    OperandValue::Pair(fst @ <span class="prelude-val">Err</span>(<span class="kw">_</span>), snd @ <span class="prelude-val">Err</span>(<span class="kw">_</span>)) =&gt; {
+<a href=#633 id=633 data-nosnippet>633</a>                        update(fst, a, from_sa);
+<a href=#634 id=634 data-nosnippet>634</a>                        update(snd, b, from_sb);
+<a href=#635 id=635 data-nosnippet>635</a>                    }
+<a href=#636 id=636 data-nosnippet>636</a>                    <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(<span class="string">"Tried to insert {operand:?} into {v:?}.{f:?} of {self:?}"</span>),
+<a href=#637 id=637 data-nosnippet>637</a>                }
+<a href=#638 id=638 data-nosnippet>638</a>            }
+<a href=#639 id=639 data-nosnippet>639</a>            <span class="kw">_ </span>=&gt; <span class="macro">bug!</span>(<span class="string">"Unsupported operand {operand:?} inserting into {v:?}.{f:?} of {self:?}"</span>),
+<a href=#640 id=640 data-nosnippet>640</a>        }
+<a href=#641 id=641 data-nosnippet>641</a>    }
+<a href=#642 id=642 data-nosnippet>642</a>
+<a href=#643 id=643 data-nosnippet>643</a>    <span class="doccomment">/// After having set all necessary fields, this converts the
+<a href=#644 id=644 data-nosnippet>644</a>    /// `OperandValue&lt;Result&lt;V, _&gt;&gt;` (as obtained from [`OperandRef::builder`])
+<a href=#645 id=645 data-nosnippet>645</a>    /// to the normal `OperandValue&lt;V&gt;`.
+<a href=#646 id=646 data-nosnippet>646</a>    ///
+<a href=#647 id=647 data-nosnippet>647</a>    /// ICEs if any required fields were not set.
+<a href=#648 id=648 data-nosnippet>648</a>    </span><span class="kw">pub fn </span>build(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; OperandRef&lt;<span class="lifetime">'tcx</span>, V&gt; {
+<a href=#649 id=649 data-nosnippet>649</a>        <span class="kw">let </span>OperandRef { val, layout } = <span class="kw-2">*</span><span class="self">self</span>;
+<a href=#650 id=650 data-nosnippet>650</a>
+<a href=#651 id=651 data-nosnippet>651</a>        <span class="kw">let </span>unwrap = |r: <span class="prelude-ty">Result</span>&lt;V, abi::Scalar&gt;| <span class="kw">match </span>r {
+<a href=#652 id=652 data-nosnippet>652</a>            <span class="prelude-val">Ok</span>(v) =&gt; v,
+<a href=#653 id=653 data-nosnippet>653</a>            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="macro">bug!</span>(<span class="string">"OperandRef::build called while fields are missing {self:?}"</span>),
+<a href=#654 id=654 data-nosnippet>654</a>        };
+<a href=#655 id=655 data-nosnippet>655</a>
+<a href=#656 id=656 data-nosnippet>656</a>        <span class="kw">let </span>val = <span class="kw">match </span>val {
+<a href=#657 id=657 data-nosnippet>657</a>            OperandValue::ZeroSized =&gt; OperandValue::ZeroSized,
+<a href=#658 id=658 data-nosnippet>658</a>            OperandValue::Immediate(v) =&gt; OperandValue::Immediate(unwrap(v)),
+<a href=#659 id=659 data-nosnippet>659</a>            OperandValue::Pair(a, b) =&gt; OperandValue::Pair(unwrap(a), unwrap(b)),
+<a href=#660 id=660 data-nosnippet>660</a>            OperandValue::Ref(<span class="kw">_</span>) =&gt; <span class="macro">bug!</span>(),
+<a href=#661 id=661 data-nosnippet>661</a>        };
+<a href=#662 id=662 data-nosnippet>662</a>        OperandRef { val, layout }
+<a href=#663 id=663 data-nosnippet>663</a>    }
+<a href=#664 id=664 data-nosnippet>664</a>}
+<a href=#665 id=665 data-nosnippet>665</a>
+<a href=#666 id=666 data-nosnippet>666</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, V: CodegenObject&gt; OperandValue&lt;V&gt; {
+<a href=#667 id=667 data-nosnippet>667</a>    <span class="doccomment">/// Returns an `OperandValue` that's generally UB to use in any way.
+<a href=#668 id=668 data-nosnippet>668</a>    ///
+<a href=#669 id=669 data-nosnippet>669</a>    /// Depending on the `layout`, returns `ZeroSized` for ZSTs, an `Immediate` or
+<a href=#670 id=670 data-nosnippet>670</a>    /// `Pair` containing poison value(s), or a `Ref` containing a poison pointer.
+<a href=#671 id=671 data-nosnippet>671</a>    ///
+<a href=#672 id=672 data-nosnippet>672</a>    /// Supports sized types only.
+<a href=#673 id=673 data-nosnippet>673</a>    </span><span class="kw">pub fn </span>poison&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
+<a href=#674 id=674 data-nosnippet>674</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#675 id=675 data-nosnippet>675</a>        layout: TyAndLayout&lt;<span class="lifetime">'tcx</span>&gt;,
+<a href=#676 id=676 data-nosnippet>676</a>    ) -&gt; OperandValue&lt;V&gt; {
+<a href=#677 id=677 data-nosnippet>677</a>        <span class="macro">assert!</span>(layout.is_sized());
+<a href=#678 id=678 data-nosnippet>678</a>        <span class="kw">if </span>layout.is_zst() {
+<a href=#679 id=679 data-nosnippet>679</a>            OperandValue::ZeroSized
+<a href=#680 id=680 data-nosnippet>680</a>        } <span class="kw">else if </span>bx.cx().is_backend_immediate(layout) {
+<a href=#681 id=681 data-nosnippet>681</a>            <span class="kw">let </span>ibty = bx.cx().immediate_backend_type(layout);
+<a href=#682 id=682 data-nosnippet>682</a>            OperandValue::Immediate(bx.const_poison(ibty))
+<a href=#683 id=683 data-nosnippet>683</a>        } <span class="kw">else if </span>bx.cx().is_backend_scalar_pair(layout) {
+<a href=#684 id=684 data-nosnippet>684</a>            <span class="kw">let </span>ibty0 = bx.cx().scalar_pair_element_backend_type(layout, <span class="number">0</span>, <span class="bool-val">true</span>);
+<a href=#685 id=685 data-nosnippet>685</a>            <span class="kw">let </span>ibty1 = bx.cx().scalar_pair_element_backend_type(layout, <span class="number">1</span>, <span class="bool-val">true</span>);
+<a href=#686 id=686 data-nosnippet>686</a>            OperandValue::Pair(bx.const_poison(ibty0), bx.const_poison(ibty1))
+<a href=#687 id=687 data-nosnippet>687</a>        } <span class="kw">else </span>{
+<a href=#688 id=688 data-nosnippet>688</a>            <span class="kw">let </span>ptr = bx.cx().type_ptr();
+<a href=#689 id=689 data-nosnippet>689</a>            OperandValue::Ref(PlaceValue::new_sized(bx.const_poison(ptr), layout.align.abi))
+<a href=#690 id=690 data-nosnippet>690</a>        }
+<a href=#691 id=691 data-nosnippet>691</a>    }
+<a href=#692 id=692 data-nosnippet>692</a>
+<a href=#693 id=693 data-nosnippet>693</a>    <span class="kw">pub fn </span>store&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
+<a href=#694 id=694 data-nosnippet>694</a>        <span class="self">self</span>,
+<a href=#695 id=695 data-nosnippet>695</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#696 id=696 data-nosnippet>696</a>        dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
+<a href=#697 id=697 data-nosnippet>697</a>    ) {
+<a href=#698 id=698 data-nosnippet>698</a>        <span class="self">self</span>.store_with_flags(bx, dest, MemFlags::empty());
+<a href=#699 id=699 data-nosnippet>699</a>    }
+<a href=#700 id=700 data-nosnippet>700</a>
+<a href=#701 id=701 data-nosnippet>701</a>    <span class="kw">pub fn </span>volatile_store&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
+<a href=#702 id=702 data-nosnippet>702</a>        <span class="self">self</span>,
+<a href=#703 id=703 data-nosnippet>703</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#704 id=704 data-nosnippet>704</a>        dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
+<a href=#705 id=705 data-nosnippet>705</a>    ) {
+<a href=#706 id=706 data-nosnippet>706</a>        <span class="self">self</span>.store_with_flags(bx, dest, MemFlags::VOLATILE);
+<a href=#707 id=707 data-nosnippet>707</a>    }
+<a href=#708 id=708 data-nosnippet>708</a>
+<a href=#709 id=709 data-nosnippet>709</a>    <span class="kw">pub fn </span>unaligned_volatile_store&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
+<a href=#710 id=710 data-nosnippet>710</a>        <span class="self">self</span>,
+<a href=#711 id=711 data-nosnippet>711</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#712 id=712 data-nosnippet>712</a>        dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
+<a href=#713 id=713 data-nosnippet>713</a>    ) {
+<a href=#714 id=714 data-nosnippet>714</a>        <span class="self">self</span>.store_with_flags(bx, dest, MemFlags::VOLATILE | MemFlags::UNALIGNED);
+<a href=#715 id=715 data-nosnippet>715</a>    }
+<a href=#716 id=716 data-nosnippet>716</a>
+<a href=#717 id=717 data-nosnippet>717</a>    <span class="kw">pub fn </span>nontemporal_store&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
+<a href=#718 id=718 data-nosnippet>718</a>        <span class="self">self</span>,
+<a href=#719 id=719 data-nosnippet>719</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#720 id=720 data-nosnippet>720</a>        dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
+<a href=#721 id=721 data-nosnippet>721</a>    ) {
+<a href=#722 id=722 data-nosnippet>722</a>        <span class="self">self</span>.store_with_flags(bx, dest, MemFlags::NONTEMPORAL);
+<a href=#723 id=723 data-nosnippet>723</a>    }
+<a href=#724 id=724 data-nosnippet>724</a>
+<a href=#725 id=725 data-nosnippet>725</a>    <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>store_with_flags&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
+<a href=#726 id=726 data-nosnippet>726</a>        <span class="self">self</span>,
+<a href=#727 id=727 data-nosnippet>727</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#728 id=728 data-nosnippet>728</a>        dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
+<a href=#729 id=729 data-nosnippet>729</a>        flags: MemFlags,
+<a href=#730 id=730 data-nosnippet>730</a>    ) {
+<a href=#731 id=731 data-nosnippet>731</a>        <span class="macro">debug!</span>(<span class="string">"OperandRef::store: operand={:?}, dest={:?}"</span>, <span class="self">self</span>, dest);
+<a href=#732 id=732 data-nosnippet>732</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#733 id=733 data-nosnippet>733</a>            OperandValue::ZeroSized =&gt; {
+<a href=#734 id=734 data-nosnippet>734</a>                <span class="comment">// Avoid generating stores of zero-sized values, because the only way to have a
+<a href=#735 id=735 data-nosnippet>735</a>                // zero-sized value is through `undef`/`poison`, and the store itself is useless.
+<a href=#736 id=736 data-nosnippet>736</a>            </span>}
+<a href=#737 id=737 data-nosnippet>737</a>            OperandValue::Ref(val) =&gt; {
+<a href=#738 id=738 data-nosnippet>738</a>                <span class="macro">assert!</span>(dest.layout.is_sized(), <span class="string">"cannot directly store unsized values"</span>);
+<a href=#739 id=739 data-nosnippet>739</a>                <span class="kw">if </span>val.llextra.is_some() {
+<a href=#740 id=740 data-nosnippet>740</a>                    <span class="macro">bug!</span>(<span class="string">"cannot directly store unsized values"</span>);
+<a href=#741 id=741 data-nosnippet>741</a>                }
+<a href=#742 id=742 data-nosnippet>742</a>                bx.typed_place_copy_with_flags(dest.val, val, dest.layout, flags);
+<a href=#743 id=743 data-nosnippet>743</a>            }
+<a href=#744 id=744 data-nosnippet>744</a>            OperandValue::Immediate(s) =&gt; {
+<a href=#745 id=745 data-nosnippet>745</a>                <span class="kw">let </span>val = bx.from_immediate(s);
+<a href=#746 id=746 data-nosnippet>746</a>                bx.store_with_flags(val, dest.val.llval, dest.val.align, flags);
 <a href=#747 id=747 data-nosnippet>747</a>            }
-<a href=#748 id=748 data-nosnippet>748</a>            OperandValue::Immediate(s) =&gt; {
-<a href=#749 id=749 data-nosnippet>749</a>                <span class="kw">let </span>val = bx.from_immediate(s);
-<a href=#750 id=750 data-nosnippet>750</a>                bx.store_with_flags(val, dest.val.llval, dest.val.align, flags);
-<a href=#751 id=751 data-nosnippet>751</a>            }
-<a href=#752 id=752 data-nosnippet>752</a>            OperandValue::Pair(a, b) =&gt; {
-<a href=#753 id=753 data-nosnippet>753</a>                <span class="kw">let </span>BackendRepr::ScalarPair(a_scalar, b_scalar) = dest.layout.backend_repr <span class="kw">else </span>{
-<a href=#754 id=754 data-nosnippet>754</a>                    <span class="macro">bug!</span>(<span class="string">"store_with_flags: invalid ScalarPair layout: {:#?}"</span>, dest.layout);
-<a href=#755 id=755 data-nosnippet>755</a>                };
-<a href=#756 id=756 data-nosnippet>756</a>                <span class="kw">let </span>b_offset = a_scalar.size(bx).align_to(b_scalar.align(bx).abi);
+<a href=#748 id=748 data-nosnippet>748</a>            OperandValue::Pair(a, b) =&gt; {
+<a href=#749 id=749 data-nosnippet>749</a>                <span class="kw">let </span>BackendRepr::ScalarPair(a_scalar, b_scalar) = dest.layout.backend_repr <span class="kw">else </span>{
+<a href=#750 id=750 data-nosnippet>750</a>                    <span class="macro">bug!</span>(<span class="string">"store_with_flags: invalid ScalarPair layout: {:#?}"</span>, dest.layout);
+<a href=#751 id=751 data-nosnippet>751</a>                };
+<a href=#752 id=752 data-nosnippet>752</a>                <span class="kw">let </span>b_offset = a_scalar.size(bx).align_to(b_scalar.align(bx).abi);
+<a href=#753 id=753 data-nosnippet>753</a>
+<a href=#754 id=754 data-nosnippet>754</a>                <span class="kw">let </span>val = bx.from_immediate(a);
+<a href=#755 id=755 data-nosnippet>755</a>                <span class="kw">let </span>align = dest.val.align;
+<a href=#756 id=756 data-nosnippet>756</a>                bx.store_with_flags(val, dest.val.llval, align, flags);
 <a href=#757 id=757 data-nosnippet>757</a>
-<a href=#758 id=758 data-nosnippet>758</a>                <span class="kw">let </span>val = bx.from_immediate(a);
-<a href=#759 id=759 data-nosnippet>759</a>                <span class="kw">let </span>align = dest.val.align;
-<a href=#760 id=760 data-nosnippet>760</a>                bx.store_with_flags(val, dest.val.llval, align, flags);
-<a href=#761 id=761 data-nosnippet>761</a>
-<a href=#762 id=762 data-nosnippet>762</a>                <span class="kw">let </span>llptr = bx.inbounds_ptradd(dest.val.llval, bx.const_usize(b_offset.bytes()));
-<a href=#763 id=763 data-nosnippet>763</a>                <span class="kw">let </span>val = bx.from_immediate(b);
-<a href=#764 id=764 data-nosnippet>764</a>                <span class="kw">let </span>align = dest.val.align.restrict_for_offset(b_offset);
-<a href=#765 id=765 data-nosnippet>765</a>                bx.store_with_flags(val, llptr, align, flags);
-<a href=#766 id=766 data-nosnippet>766</a>            }
-<a href=#767 id=767 data-nosnippet>767</a>        }
-<a href=#768 id=768 data-nosnippet>768</a>    }
-<a href=#769 id=769 data-nosnippet>769</a>
-<a href=#770 id=770 data-nosnippet>770</a>    <span class="kw">pub fn </span>store_unsized&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
-<a href=#771 id=771 data-nosnippet>771</a>        <span class="self">self</span>,
-<a href=#772 id=772 data-nosnippet>772</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#773 id=773 data-nosnippet>773</a>        indirect_dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
-<a href=#774 id=774 data-nosnippet>774</a>    ) {
-<a href=#775 id=775 data-nosnippet>775</a>        <span class="macro">debug!</span>(<span class="string">"OperandRef::store_unsized: operand={:?}, indirect_dest={:?}"</span>, <span class="self">self</span>, indirect_dest);
-<a href=#776 id=776 data-nosnippet>776</a>        <span class="comment">// `indirect_dest` must have `*mut T` type. We extract `T` out of it.
-<a href=#777 id=777 data-nosnippet>777</a>        </span><span class="kw">let </span>unsized_ty = indirect_dest
-<a href=#778 id=778 data-nosnippet>778</a>            .layout
-<a href=#779 id=779 data-nosnippet>779</a>            .ty
-<a href=#780 id=780 data-nosnippet>780</a>            .builtin_deref(<span class="bool-val">true</span>)
-<a href=#781 id=781 data-nosnippet>781</a>            .unwrap_or_else(|| <span class="macro">bug!</span>(<span class="string">"indirect_dest has non-pointer type: {:?}"</span>, indirect_dest));
-<a href=#782 id=782 data-nosnippet>782</a>
-<a href=#783 id=783 data-nosnippet>783</a>        <span class="kw">let </span>OperandValue::Ref(PlaceValue { llval: llptr, llextra: <span class="prelude-val">Some</span>(llextra), .. }) = <span class="self">self
-<a href=#784 id=784 data-nosnippet>784</a>        </span><span class="kw">else </span>{
-<a href=#785 id=785 data-nosnippet>785</a>            <span class="macro">bug!</span>(<span class="string">"store_unsized called with a sized value (or with an extern type)"</span>)
-<a href=#786 id=786 data-nosnippet>786</a>        };
-<a href=#787 id=787 data-nosnippet>787</a>
-<a href=#788 id=788 data-nosnippet>788</a>        <span class="comment">// Allocate an appropriate region on the stack, and copy the value into it. Since alloca
-<a href=#789 id=789 data-nosnippet>789</a>        // doesn't support dynamic alignment, we allocate an extra align - 1 bytes, and align the
-<a href=#790 id=790 data-nosnippet>790</a>        // pointer manually.
-<a href=#791 id=791 data-nosnippet>791</a>        </span><span class="kw">let </span>(size, align) = size_of_val::size_and_align_of_dst(bx, unsized_ty, <span class="prelude-val">Some</span>(llextra));
-<a href=#792 id=792 data-nosnippet>792</a>        <span class="kw">let </span>one = bx.const_usize(<span class="number">1</span>);
-<a href=#793 id=793 data-nosnippet>793</a>        <span class="kw">let </span>align_minus_1 = bx.sub(align, one);
-<a href=#794 id=794 data-nosnippet>794</a>        <span class="kw">let </span>size_extra = bx.add(size, align_minus_1);
-<a href=#795 id=795 data-nosnippet>795</a>        <span class="kw">let </span>min_align = Align::ONE;
-<a href=#796 id=796 data-nosnippet>796</a>        <span class="kw">let </span>alloca = bx.dynamic_alloca(size_extra, min_align);
-<a href=#797 id=797 data-nosnippet>797</a>        <span class="kw">let </span>address = bx.ptrtoint(alloca, bx.type_isize());
-<a href=#798 id=798 data-nosnippet>798</a>        <span class="kw">let </span>neg_address = bx.neg(address);
-<a href=#799 id=799 data-nosnippet>799</a>        <span class="kw">let </span>offset = bx.and(neg_address, align_minus_1);
-<a href=#800 id=800 data-nosnippet>800</a>        <span class="kw">let </span>dst = bx.inbounds_ptradd(alloca, offset);
-<a href=#801 id=801 data-nosnippet>801</a>        bx.memcpy(dst, min_align, llptr, min_align, size, MemFlags::empty());
-<a href=#802 id=802 data-nosnippet>802</a>
-<a href=#803 id=803 data-nosnippet>803</a>        <span class="comment">// Store the allocated region and the extra to the indirect place.
-<a href=#804 id=804 data-nosnippet>804</a>        </span><span class="kw">let </span>indirect_operand = OperandValue::Pair(dst, llextra);
-<a href=#805 id=805 data-nosnippet>805</a>        indirect_operand.store(bx, indirect_dest);
-<a href=#806 id=806 data-nosnippet>806</a>    }
-<a href=#807 id=807 data-nosnippet>807</a>}
-<a href=#808 id=808 data-nosnippet>808</a>
-<a href=#809 id=809 data-nosnippet>809</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt;&gt; FunctionCx&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Bx&gt; {
-<a href=#810 id=810 data-nosnippet>810</a>    <span class="kw">fn </span>maybe_codegen_consume_direct(
-<a href=#811 id=811 data-nosnippet>811</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#812 id=812 data-nosnippet>812</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#813 id=813 data-nosnippet>813</a>        place_ref: mir::PlaceRef&lt;<span class="lifetime">'tcx</span>&gt;,
-<a href=#814 id=814 data-nosnippet>814</a>    ) -&gt; <span class="prelude-ty">Option</span>&lt;OperandRef&lt;<span class="lifetime">'tcx</span>, Bx::Value&gt;&gt; {
-<a href=#815 id=815 data-nosnippet>815</a>        <span class="macro">debug!</span>(<span class="string">"maybe_codegen_consume_direct(place_ref={:?})"</span>, place_ref);
-<a href=#816 id=816 data-nosnippet>816</a>
-<a href=#817 id=817 data-nosnippet>817</a>        <span class="kw">match </span><span class="self">self</span>.locals[place_ref.local] {
-<a href=#818 id=818 data-nosnippet>818</a>            LocalRef::Operand(<span class="kw-2">mut </span>o) =&gt; {
-<a href=#819 id=819 data-nosnippet>819</a>                <span class="comment">// Moves out of scalar and scalar pair fields are trivial.
-<a href=#820 id=820 data-nosnippet>820</a>                </span><span class="kw">for </span>elem <span class="kw">in </span>place_ref.projection.iter() {
-<a href=#821 id=821 data-nosnippet>821</a>                    <span class="kw">match </span>elem {
-<a href=#822 id=822 data-nosnippet>822</a>                        mir::ProjectionElem::Field(f, <span class="kw">_</span>) =&gt; {
-<a href=#823 id=823 data-nosnippet>823</a>                            <span class="macro">assert!</span>(
-<a href=#824 id=824 data-nosnippet>824</a>                                !o.layout.ty.is_any_ptr(),
-<a href=#825 id=825 data-nosnippet>825</a>                                <span class="string">"Bad PlaceRef: destructing pointers should use cast/PtrMetadata, \
-<a href=#826 id=826 data-nosnippet>826</a>                                 but tried to access field {f:?} of pointer {o:?}"</span>,
-<a href=#827 id=827 data-nosnippet>827</a>                            );
-<a href=#828 id=828 data-nosnippet>828</a>                            o = o.extract_field(<span class="self">self</span>, bx, f.index());
-<a href=#829 id=829 data-nosnippet>829</a>                        }
-<a href=#830 id=830 data-nosnippet>830</a>                        mir::ProjectionElem::Index(<span class="kw">_</span>)
-<a href=#831 id=831 data-nosnippet>831</a>                        | mir::ProjectionElem::ConstantIndex { .. } =&gt; {
-<a href=#832 id=832 data-nosnippet>832</a>                            <span class="comment">// ZSTs don't require any actual memory access.
-<a href=#833 id=833 data-nosnippet>833</a>                            // FIXME(eddyb) deduplicate this with the identical
-<a href=#834 id=834 data-nosnippet>834</a>                            // checks in `codegen_consume` and `extract_field`.
-<a href=#835 id=835 data-nosnippet>835</a>                            </span><span class="kw">let </span>elem = o.layout.field(bx.cx(), <span class="number">0</span>);
-<a href=#836 id=836 data-nosnippet>836</a>                            <span class="kw">if </span>elem.is_zst() {
-<a href=#837 id=837 data-nosnippet>837</a>                                o = OperandRef::zero_sized(elem);
-<a href=#838 id=838 data-nosnippet>838</a>                            } <span class="kw">else </span>{
-<a href=#839 id=839 data-nosnippet>839</a>                                <span class="kw">return </span><span class="prelude-val">None</span>;
-<a href=#840 id=840 data-nosnippet>840</a>                            }
-<a href=#841 id=841 data-nosnippet>841</a>                        }
-<a href=#842 id=842 data-nosnippet>842</a>                        <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
-<a href=#843 id=843 data-nosnippet>843</a>                    }
-<a href=#844 id=844 data-nosnippet>844</a>                }
-<a href=#845 id=845 data-nosnippet>845</a>
-<a href=#846 id=846 data-nosnippet>846</a>                <span class="prelude-val">Some</span>(o)
-<a href=#847 id=847 data-nosnippet>847</a>            }
-<a href=#848 id=848 data-nosnippet>848</a>            LocalRef::PendingOperand =&gt; {
-<a href=#849 id=849 data-nosnippet>849</a>                <span class="macro">bug!</span>(<span class="string">"use of {:?} before def"</span>, place_ref);
-<a href=#850 id=850 data-nosnippet>850</a>            }
-<a href=#851 id=851 data-nosnippet>851</a>            LocalRef::Place(..) | LocalRef::UnsizedPlace(..) =&gt; {
-<a href=#852 id=852 data-nosnippet>852</a>                <span class="comment">// watch out for locals that do not have an
-<a href=#853 id=853 data-nosnippet>853</a>                // alloca; they are handled somewhat differently
-<a href=#854 id=854 data-nosnippet>854</a>                </span><span class="prelude-val">None
-<a href=#855 id=855 data-nosnippet>855</a>            </span>}
-<a href=#856 id=856 data-nosnippet>856</a>        }
-<a href=#857 id=857 data-nosnippet>857</a>    }
-<a href=#858 id=858 data-nosnippet>858</a>
-<a href=#859 id=859 data-nosnippet>859</a>    <span class="kw">pub fn </span>codegen_consume(
-<a href=#860 id=860 data-nosnippet>860</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#861 id=861 data-nosnippet>861</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#862 id=862 data-nosnippet>862</a>        place_ref: mir::PlaceRef&lt;<span class="lifetime">'tcx</span>&gt;,
-<a href=#863 id=863 data-nosnippet>863</a>    ) -&gt; OperandRef&lt;<span class="lifetime">'tcx</span>, Bx::Value&gt; {
-<a href=#864 id=864 data-nosnippet>864</a>        <span class="macro">debug!</span>(<span class="string">"codegen_consume(place_ref={:?})"</span>, place_ref);
-<a href=#865 id=865 data-nosnippet>865</a>
-<a href=#866 id=866 data-nosnippet>866</a>        <span class="kw">let </span>ty = <span class="self">self</span>.monomorphized_place_ty(place_ref);
-<a href=#867 id=867 data-nosnippet>867</a>        <span class="kw">let </span>layout = bx.cx().layout_of(ty);
-<a href=#868 id=868 data-nosnippet>868</a>
-<a href=#869 id=869 data-nosnippet>869</a>        <span class="comment">// ZSTs don't require any actual memory access.
-<a href=#870 id=870 data-nosnippet>870</a>        </span><span class="kw">if </span>layout.is_zst() {
-<a href=#871 id=871 data-nosnippet>871</a>            <span class="kw">return </span>OperandRef::zero_sized(layout);
+<a href=#758 id=758 data-nosnippet>758</a>                <span class="kw">let </span>llptr = bx.inbounds_ptradd(dest.val.llval, bx.const_usize(b_offset.bytes()));
+<a href=#759 id=759 data-nosnippet>759</a>                <span class="kw">let </span>val = bx.from_immediate(b);
+<a href=#760 id=760 data-nosnippet>760</a>                <span class="kw">let </span>align = dest.val.align.restrict_for_offset(b_offset);
+<a href=#761 id=761 data-nosnippet>761</a>                bx.store_with_flags(val, llptr, align, flags);
+<a href=#762 id=762 data-nosnippet>762</a>            }
+<a href=#763 id=763 data-nosnippet>763</a>        }
+<a href=#764 id=764 data-nosnippet>764</a>    }
+<a href=#765 id=765 data-nosnippet>765</a>
+<a href=#766 id=766 data-nosnippet>766</a>    <span class="kw">pub fn </span>store_unsized&lt;Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Value = V&gt;&gt;(
+<a href=#767 id=767 data-nosnippet>767</a>        <span class="self">self</span>,
+<a href=#768 id=768 data-nosnippet>768</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#769 id=769 data-nosnippet>769</a>        indirect_dest: PlaceRef&lt;<span class="lifetime">'tcx</span>, V&gt;,
+<a href=#770 id=770 data-nosnippet>770</a>    ) {
+<a href=#771 id=771 data-nosnippet>771</a>        <span class="macro">debug!</span>(<span class="string">"OperandRef::store_unsized: operand={:?}, indirect_dest={:?}"</span>, <span class="self">self</span>, indirect_dest);
+<a href=#772 id=772 data-nosnippet>772</a>        <span class="comment">// `indirect_dest` must have `*mut T` type. We extract `T` out of it.
+<a href=#773 id=773 data-nosnippet>773</a>        </span><span class="kw">let </span>unsized_ty = indirect_dest
+<a href=#774 id=774 data-nosnippet>774</a>            .layout
+<a href=#775 id=775 data-nosnippet>775</a>            .ty
+<a href=#776 id=776 data-nosnippet>776</a>            .builtin_deref(<span class="bool-val">true</span>)
+<a href=#777 id=777 data-nosnippet>777</a>            .unwrap_or_else(|| <span class="macro">bug!</span>(<span class="string">"indirect_dest has non-pointer type: {:?}"</span>, indirect_dest));
+<a href=#778 id=778 data-nosnippet>778</a>
+<a href=#779 id=779 data-nosnippet>779</a>        <span class="kw">let </span>OperandValue::Ref(PlaceValue { llval: llptr, llextra: <span class="prelude-val">Some</span>(llextra), .. }) = <span class="self">self
+<a href=#780 id=780 data-nosnippet>780</a>        </span><span class="kw">else </span>{
+<a href=#781 id=781 data-nosnippet>781</a>            <span class="macro">bug!</span>(<span class="string">"store_unsized called with a sized value (or with an extern type)"</span>)
+<a href=#782 id=782 data-nosnippet>782</a>        };
+<a href=#783 id=783 data-nosnippet>783</a>
+<a href=#784 id=784 data-nosnippet>784</a>        <span class="comment">// Allocate an appropriate region on the stack, and copy the value into it. Since alloca
+<a href=#785 id=785 data-nosnippet>785</a>        // doesn't support dynamic alignment, we allocate an extra align - 1 bytes, and align the
+<a href=#786 id=786 data-nosnippet>786</a>        // pointer manually.
+<a href=#787 id=787 data-nosnippet>787</a>        </span><span class="kw">let </span>(size, align) = size_of_val::size_and_align_of_dst(bx, unsized_ty, <span class="prelude-val">Some</span>(llextra));
+<a href=#788 id=788 data-nosnippet>788</a>        <span class="kw">let </span>one = bx.const_usize(<span class="number">1</span>);
+<a href=#789 id=789 data-nosnippet>789</a>        <span class="kw">let </span>align_minus_1 = bx.sub(align, one);
+<a href=#790 id=790 data-nosnippet>790</a>        <span class="kw">let </span>size_extra = bx.add(size, align_minus_1);
+<a href=#791 id=791 data-nosnippet>791</a>        <span class="kw">let </span>min_align = Align::ONE;
+<a href=#792 id=792 data-nosnippet>792</a>        <span class="kw">let </span>alloca = bx.dynamic_alloca(size_extra, min_align);
+<a href=#793 id=793 data-nosnippet>793</a>        <span class="kw">let </span>address = bx.ptrtoint(alloca, bx.type_isize());
+<a href=#794 id=794 data-nosnippet>794</a>        <span class="kw">let </span>neg_address = bx.neg(address);
+<a href=#795 id=795 data-nosnippet>795</a>        <span class="kw">let </span>offset = bx.and(neg_address, align_minus_1);
+<a href=#796 id=796 data-nosnippet>796</a>        <span class="kw">let </span>dst = bx.inbounds_ptradd(alloca, offset);
+<a href=#797 id=797 data-nosnippet>797</a>        bx.memcpy(dst, min_align, llptr, min_align, size, MemFlags::empty());
+<a href=#798 id=798 data-nosnippet>798</a>
+<a href=#799 id=799 data-nosnippet>799</a>        <span class="comment">// Store the allocated region and the extra to the indirect place.
+<a href=#800 id=800 data-nosnippet>800</a>        </span><span class="kw">let </span>indirect_operand = OperandValue::Pair(dst, llextra);
+<a href=#801 id=801 data-nosnippet>801</a>        indirect_operand.store(bx, indirect_dest);
+<a href=#802 id=802 data-nosnippet>802</a>    }
+<a href=#803 id=803 data-nosnippet>803</a>}
+<a href=#804 id=804 data-nosnippet>804</a>
+<a href=#805 id=805 data-nosnippet>805</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Bx: BuilderMethods&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>&gt;&gt; FunctionCx&lt;<span class="lifetime">'a</span>, <span class="lifetime">'tcx</span>, Bx&gt; {
+<a href=#806 id=806 data-nosnippet>806</a>    <span class="kw">fn </span>maybe_codegen_consume_direct(
+<a href=#807 id=807 data-nosnippet>807</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#808 id=808 data-nosnippet>808</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#809 id=809 data-nosnippet>809</a>        place_ref: mir::PlaceRef&lt;<span class="lifetime">'tcx</span>&gt;,
+<a href=#810 id=810 data-nosnippet>810</a>    ) -&gt; <span class="prelude-ty">Option</span>&lt;OperandRef&lt;<span class="lifetime">'tcx</span>, Bx::Value&gt;&gt; {
+<a href=#811 id=811 data-nosnippet>811</a>        <span class="macro">debug!</span>(<span class="string">"maybe_codegen_consume_direct(place_ref={:?})"</span>, place_ref);
+<a href=#812 id=812 data-nosnippet>812</a>
+<a href=#813 id=813 data-nosnippet>813</a>        <span class="kw">match </span><span class="self">self</span>.locals[place_ref.local] {
+<a href=#814 id=814 data-nosnippet>814</a>            LocalRef::Operand(<span class="kw-2">mut </span>o) =&gt; {
+<a href=#815 id=815 data-nosnippet>815</a>                <span class="comment">// Moves out of scalar and scalar pair fields are trivial.
+<a href=#816 id=816 data-nosnippet>816</a>                </span><span class="kw">for </span>elem <span class="kw">in </span>place_ref.projection.iter() {
+<a href=#817 id=817 data-nosnippet>817</a>                    <span class="kw">match </span>elem {
+<a href=#818 id=818 data-nosnippet>818</a>                        mir::ProjectionElem::Field(f, <span class="kw">_</span>) =&gt; {
+<a href=#819 id=819 data-nosnippet>819</a>                            <span class="macro">assert!</span>(
+<a href=#820 id=820 data-nosnippet>820</a>                                !o.layout.ty.is_any_ptr(),
+<a href=#821 id=821 data-nosnippet>821</a>                                <span class="string">"Bad PlaceRef: destructing pointers should use cast/PtrMetadata, \
+<a href=#822 id=822 data-nosnippet>822</a>                                 but tried to access field {f:?} of pointer {o:?}"</span>,
+<a href=#823 id=823 data-nosnippet>823</a>                            );
+<a href=#824 id=824 data-nosnippet>824</a>                            o = o.extract_field(<span class="self">self</span>, bx, f.index());
+<a href=#825 id=825 data-nosnippet>825</a>                        }
+<a href=#826 id=826 data-nosnippet>826</a>                        mir::ProjectionElem::Index(<span class="kw">_</span>)
+<a href=#827 id=827 data-nosnippet>827</a>                        | mir::ProjectionElem::ConstantIndex { .. } =&gt; {
+<a href=#828 id=828 data-nosnippet>828</a>                            <span class="comment">// ZSTs don't require any actual memory access.
+<a href=#829 id=829 data-nosnippet>829</a>                            // FIXME(eddyb) deduplicate this with the identical
+<a href=#830 id=830 data-nosnippet>830</a>                            // checks in `codegen_consume` and `extract_field`.
+<a href=#831 id=831 data-nosnippet>831</a>                            </span><span class="kw">let </span>elem = o.layout.field(bx.cx(), <span class="number">0</span>);
+<a href=#832 id=832 data-nosnippet>832</a>                            <span class="kw">if </span>elem.is_zst() {
+<a href=#833 id=833 data-nosnippet>833</a>                                o = OperandRef::zero_sized(elem);
+<a href=#834 id=834 data-nosnippet>834</a>                            } <span class="kw">else </span>{
+<a href=#835 id=835 data-nosnippet>835</a>                                <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#836 id=836 data-nosnippet>836</a>                            }
+<a href=#837 id=837 data-nosnippet>837</a>                        }
+<a href=#838 id=838 data-nosnippet>838</a>                        <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">None</span>,
+<a href=#839 id=839 data-nosnippet>839</a>                    }
+<a href=#840 id=840 data-nosnippet>840</a>                }
+<a href=#841 id=841 data-nosnippet>841</a>
+<a href=#842 id=842 data-nosnippet>842</a>                <span class="prelude-val">Some</span>(o)
+<a href=#843 id=843 data-nosnippet>843</a>            }
+<a href=#844 id=844 data-nosnippet>844</a>            LocalRef::PendingOperand =&gt; {
+<a href=#845 id=845 data-nosnippet>845</a>                <span class="macro">bug!</span>(<span class="string">"use of {:?} before def"</span>, place_ref);
+<a href=#846 id=846 data-nosnippet>846</a>            }
+<a href=#847 id=847 data-nosnippet>847</a>            LocalRef::Place(..) | LocalRef::UnsizedPlace(..) =&gt; {
+<a href=#848 id=848 data-nosnippet>848</a>                <span class="comment">// watch out for locals that do not have an
+<a href=#849 id=849 data-nosnippet>849</a>                // alloca; they are handled somewhat differently
+<a href=#850 id=850 data-nosnippet>850</a>                </span><span class="prelude-val">None
+<a href=#851 id=851 data-nosnippet>851</a>            </span>}
+<a href=#852 id=852 data-nosnippet>852</a>        }
+<a href=#853 id=853 data-nosnippet>853</a>    }
+<a href=#854 id=854 data-nosnippet>854</a>
+<a href=#855 id=855 data-nosnippet>855</a>    <span class="kw">pub fn </span>codegen_consume(
+<a href=#856 id=856 data-nosnippet>856</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#857 id=857 data-nosnippet>857</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#858 id=858 data-nosnippet>858</a>        place_ref: mir::PlaceRef&lt;<span class="lifetime">'tcx</span>&gt;,
+<a href=#859 id=859 data-nosnippet>859</a>    ) -&gt; OperandRef&lt;<span class="lifetime">'tcx</span>, Bx::Value&gt; {
+<a href=#860 id=860 data-nosnippet>860</a>        <span class="macro">debug!</span>(<span class="string">"codegen_consume(place_ref={:?})"</span>, place_ref);
+<a href=#861 id=861 data-nosnippet>861</a>
+<a href=#862 id=862 data-nosnippet>862</a>        <span class="kw">let </span>ty = <span class="self">self</span>.monomorphized_place_ty(place_ref);
+<a href=#863 id=863 data-nosnippet>863</a>        <span class="kw">let </span>layout = bx.cx().layout_of(ty);
+<a href=#864 id=864 data-nosnippet>864</a>
+<a href=#865 id=865 data-nosnippet>865</a>        <span class="comment">// ZSTs don't require any actual memory access.
+<a href=#866 id=866 data-nosnippet>866</a>        </span><span class="kw">if </span>layout.is_zst() {
+<a href=#867 id=867 data-nosnippet>867</a>            <span class="kw">return </span>OperandRef::zero_sized(layout);
+<a href=#868 id=868 data-nosnippet>868</a>        }
+<a href=#869 id=869 data-nosnippet>869</a>
+<a href=#870 id=870 data-nosnippet>870</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(o) = <span class="self">self</span>.maybe_codegen_consume_direct(bx, place_ref) {
+<a href=#871 id=871 data-nosnippet>871</a>            <span class="kw">return </span>o;
 <a href=#872 id=872 data-nosnippet>872</a>        }
 <a href=#873 id=873 data-nosnippet>873</a>
-<a href=#874 id=874 data-nosnippet>874</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(o) = <span class="self">self</span>.maybe_codegen_consume_direct(bx, place_ref) {
-<a href=#875 id=875 data-nosnippet>875</a>            <span class="kw">return </span>o;
-<a href=#876 id=876 data-nosnippet>876</a>        }
-<a href=#877 id=877 data-nosnippet>877</a>
-<a href=#878 id=878 data-nosnippet>878</a>        <span class="comment">// for most places, to consume them we just load them
-<a href=#879 id=879 data-nosnippet>879</a>        // out from their home
-<a href=#880 id=880 data-nosnippet>880</a>        </span><span class="kw">let </span>place = <span class="self">self</span>.codegen_place(bx, place_ref);
-<a href=#881 id=881 data-nosnippet>881</a>        bx.load_operand(place)
-<a href=#882 id=882 data-nosnippet>882</a>    }
-<a href=#883 id=883 data-nosnippet>883</a>
-<a href=#884 id=884 data-nosnippet>884</a>    <span class="kw">pub fn </span>codegen_operand(
-<a href=#885 id=885 data-nosnippet>885</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#886 id=886 data-nosnippet>886</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
-<a href=#887 id=887 data-nosnippet>887</a>        operand: <span class="kw-2">&amp;</span>mir::Operand&lt;<span class="lifetime">'tcx</span>&gt;,
-<a href=#888 id=888 data-nosnippet>888</a>    ) -&gt; OperandRef&lt;<span class="lifetime">'tcx</span>, Bx::Value&gt; {
-<a href=#889 id=889 data-nosnippet>889</a>        <span class="macro">debug!</span>(<span class="string">"codegen_operand(operand={:?})"</span>, operand);
-<a href=#890 id=890 data-nosnippet>890</a>
-<a href=#891 id=891 data-nosnippet>891</a>        <span class="kw">match </span><span class="kw-2">*</span>operand {
-<a href=#892 id=892 data-nosnippet>892</a>            mir::Operand::Copy(<span class="kw-2">ref </span>place) | mir::Operand::Move(<span class="kw-2">ref </span>place) =&gt; {
-<a href=#893 id=893 data-nosnippet>893</a>                <span class="self">self</span>.codegen_consume(bx, place.as_ref())
-<a href=#894 id=894 data-nosnippet>894</a>            }
-<a href=#895 id=895 data-nosnippet>895</a>
-<a href=#896 id=896 data-nosnippet>896</a>            mir::Operand::Constant(<span class="kw-2">ref </span>constant) =&gt; {
-<a href=#897 id=897 data-nosnippet>897</a>                <span class="kw">let </span>constant_ty = <span class="self">self</span>.monomorphize(constant.ty());
-<a href=#898 id=898 data-nosnippet>898</a>                <span class="comment">// Most SIMD vector constants should be passed as immediates.
-<a href=#899 id=899 data-nosnippet>899</a>                // (In particular, some intrinsics really rely on this.)
-<a href=#900 id=900 data-nosnippet>900</a>                </span><span class="kw">if </span><span class="bool-val">false </span>{
-<a href=#901 id=901 data-nosnippet>901</a>                    <span class="comment">// However, some SIMD types do not actually use the vector ABI
-<a href=#902 id=902 data-nosnippet>902</a>                    // (in particular, packed SIMD types do not). Ensure we exclude those.
-<a href=#903 id=903 data-nosnippet>903</a>                    </span><span class="kw">let </span>layout = bx.layout_of(constant_ty);
-<a href=#904 id=904 data-nosnippet>904</a>                    <span class="kw">if let </span>BackendRepr::SimdVector { .. } = layout.backend_repr {
-<a href=#905 id=905 data-nosnippet>905</a>                        <span class="kw">let </span>(llval, ty) = <span class="self">self</span>.immediate_const_vector(bx, constant);
-<a href=#906 id=906 data-nosnippet>906</a>                        <span class="kw">return </span>OperandRef {
-<a href=#907 id=907 data-nosnippet>907</a>                            val: OperandValue::Immediate(llval),
-<a href=#908 id=908 data-nosnippet>908</a>                            layout: bx.layout_of(ty),
-<a href=#909 id=909 data-nosnippet>909</a>                        };
-<a href=#910 id=910 data-nosnippet>910</a>                    }
-<a href=#911 id=911 data-nosnippet>911</a>                }
-<a href=#912 id=912 data-nosnippet>912</a>                <span class="self">self</span>.eval_mir_constant_to_operand(bx, constant)
-<a href=#913 id=913 data-nosnippet>913</a>            }
-<a href=#914 id=914 data-nosnippet>914</a>        }
-<a href=#915 id=915 data-nosnippet>915</a>    }
-<a href=#916 id=916 data-nosnippet>916</a>}</code></pre></div></section></main></body></html>
+<a href=#874 id=874 data-nosnippet>874</a>        <span class="comment">// for most places, to consume them we just load them
+<a href=#875 id=875 data-nosnippet>875</a>        // out from their home
+<a href=#876 id=876 data-nosnippet>876</a>        </span><span class="kw">let </span>place = <span class="self">self</span>.codegen_place(bx, place_ref);
+<a href=#877 id=877 data-nosnippet>877</a>        bx.load_operand(place)
+<a href=#878 id=878 data-nosnippet>878</a>    }
+<a href=#879 id=879 data-nosnippet>879</a>
+<a href=#880 id=880 data-nosnippet>880</a>    <span class="kw">pub fn </span>codegen_operand(
+<a href=#881 id=881 data-nosnippet>881</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#882 id=882 data-nosnippet>882</a>        bx: <span class="kw-2">&amp;mut </span>Bx,
+<a href=#883 id=883 data-nosnippet>883</a>        operand: <span class="kw-2">&amp;</span>mir::Operand&lt;<span class="lifetime">'tcx</span>&gt;,
+<a href=#884 id=884 data-nosnippet>884</a>    ) -&gt; OperandRef&lt;<span class="lifetime">'tcx</span>, Bx::Value&gt; {
+<a href=#885 id=885 data-nosnippet>885</a>        <span class="macro">debug!</span>(<span class="string">"codegen_operand(operand={:?})"</span>, operand);
+<a href=#886 id=886 data-nosnippet>886</a>
+<a href=#887 id=887 data-nosnippet>887</a>        <span class="kw">match </span><span class="kw-2">*</span>operand {
+<a href=#888 id=888 data-nosnippet>888</a>            mir::Operand::Copy(<span class="kw-2">ref </span>place) | mir::Operand::Move(<span class="kw-2">ref </span>place) =&gt; {
+<a href=#889 id=889 data-nosnippet>889</a>                <span class="self">self</span>.codegen_consume(bx, place.as_ref())
+<a href=#890 id=890 data-nosnippet>890</a>            }
+<a href=#891 id=891 data-nosnippet>891</a>
+<a href=#892 id=892 data-nosnippet>892</a>            mir::Operand::Constant(<span class="kw-2">ref </span>constant) =&gt; {
+<a href=#893 id=893 data-nosnippet>893</a>                <span class="kw">let </span>constant_ty = <span class="self">self</span>.monomorphize(constant.ty());
+<a href=#894 id=894 data-nosnippet>894</a>                <span class="comment">// Most SIMD vector constants should be passed as immediates.
+<a href=#895 id=895 data-nosnippet>895</a>                // (In particular, some intrinsics really rely on this.)
+<a href=#896 id=896 data-nosnippet>896</a>                </span><span class="kw">if </span>constant_ty.is_simd() {
+<a href=#897 id=897 data-nosnippet>897</a>                    <span class="comment">// However, some SIMD types do not actually use the vector ABI
+<a href=#898 id=898 data-nosnippet>898</a>                    // (in particular, packed SIMD types do not). Ensure we exclude those.
+<a href=#899 id=899 data-nosnippet>899</a>                    </span><span class="kw">let </span>layout = bx.layout_of(constant_ty);
+<a href=#900 id=900 data-nosnippet>900</a>                    <span class="kw">if let </span>BackendRepr::SimdVector { .. } = layout.backend_repr {
+<a href=#901 id=901 data-nosnippet>901</a>                        <span class="kw">let </span>(llval, ty) = <span class="self">self</span>.immediate_const_vector(bx, constant);
+<a href=#902 id=902 data-nosnippet>902</a>                        <span class="kw">return </span>OperandRef {
+<a href=#903 id=903 data-nosnippet>903</a>                            val: OperandValue::Immediate(llval),
+<a href=#904 id=904 data-nosnippet>904</a>                            layout: bx.layout_of(ty),
+<a href=#905 id=905 data-nosnippet>905</a>                        };
+<a href=#906 id=906 data-nosnippet>906</a>                    }
+<a href=#907 id=907 data-nosnippet>907</a>                }
+<a href=#908 id=908 data-nosnippet>908</a>                <span class="self">self</span>.eval_mir_constant_to_operand(bx, constant)
+<a href=#909 id=909 data-nosnippet>909</a>            }
+<a href=#910 id=910 data-nosnippet>910</a>        }
+<a href=#911 id=911 data-nosnippet>911</a>    }
+<a href=#912 id=912 data-nosnippet>912</a>}</code></pre></div></section></main></body></html>
