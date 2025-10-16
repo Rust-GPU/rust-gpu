@@ -1,11 +1,12 @@
-use crate::ScalarOrVector;
 #[cfg(target_arch = "spirv")]
-use crate::arch::barrier;
+use crate::ScalarOrVectorTransform;
+#[cfg(target_arch = "spirv")]
+use crate::arch::{asm, barrier};
 #[cfg(target_arch = "spirv")]
 use crate::memory::{Scope, Semantics};
-use crate::{Float, Integer, SignedInteger, UnsignedInteger};
-#[cfg(target_arch = "spirv")]
-use core::arch::asm;
+use crate::{
+    Float, Integer, ScalarOrVector, ScalarOrVectorComposite, SignedInteger, UnsignedInteger,
+};
 
 #[cfg(target_arch = "spirv")]
 const SUBGROUP: u32 = Scope::Subgroup as u32;
@@ -243,24 +244,35 @@ pub fn subgroup_any(predicate: bool) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformAllEqual")]
 #[inline]
-pub fn subgroup_all_equal<T: ScalarOrVector>(value: T) -> bool {
-    let mut result = false;
+pub fn subgroup_all_equal<T: ScalarOrVectorComposite>(value: T) -> bool {
+    struct Transform(bool);
 
-    unsafe {
-        asm! {
-            "%bool = OpTypeBool",
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformAllEqual %bool %subgroup %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
+    impl ScalarOrVectorTransform for Transform {
+        #[inline]
+        fn transform<T: ScalarOrVector>(&mut self, value: T) -> T {
+            let mut result = false;
+            unsafe {
+                asm! {
+                    "%bool = OpTypeBool",
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%value = OpLoad _ {value}",
+                    "%result = OpGroupNonUniformAllEqual %bool %subgroup %value",
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    value = in(reg) &value,
+                    result = in(reg) &mut result,
+                }
+            }
+            self.0 &= result;
+            value
         }
     }
 
-    result
+    let mut transform = Transform(true);
+    // ignore returned value
+    value.transform(&mut transform);
+    transform.0
 }
 
 /// Result is the `value` of the invocation identified by the id `id` to all active invocations in the group.
@@ -286,25 +298,34 @@ pub fn subgroup_all_equal<T: ScalarOrVector>(value: T) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBroadcast")]
 #[inline]
-pub unsafe fn subgroup_broadcast<T: ScalarOrVector>(value: T, id: u32) -> T {
-    let mut result = T::default();
+pub unsafe fn subgroup_broadcast<T: ScalarOrVectorComposite>(value: T, id: u32) -> T {
+    struct Transform {
+        id: u32,
+    }
 
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%id = OpLoad _ {id}",
-            "%result = OpGroupNonUniformBroadcast _ %subgroup %value %id",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            value = in(reg) &value,
-            id = in(reg) &id,
-            result = in(reg) &mut result,
+    impl ScalarOrVectorTransform for Transform {
+        #[inline]
+        fn transform<T: ScalarOrVector>(&mut self, value: T) -> T {
+            let mut result = T::default();
+            unsafe {
+                asm! {
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%value = OpLoad _ {value}",
+                    "%id = OpLoad _ {id}",
+                    "%result = OpGroupNonUniformBroadcast _ %subgroup %value %id",
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    value = in(reg) &value,
+                    id = in(reg) &self.id,
+                    result = in(reg) &mut result,
+                }
+            }
+            result
         }
     }
 
-    result
+    value.transform(&mut Transform { id })
 }
 
 /// Result is the `value` of the invocation from the active invocation with the lowest id in the group to all active invocations in the group.
@@ -319,23 +340,30 @@ pub unsafe fn subgroup_broadcast<T: ScalarOrVector>(value: T, id: u32) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBroadcastFirst")]
 #[inline]
-pub fn subgroup_broadcast_first<T: ScalarOrVector>(value: T) -> T {
-    let mut result = T::default();
+pub fn subgroup_broadcast_first<T: ScalarOrVectorComposite>(value: T) -> T {
+    struct Transform;
 
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformBroadcastFirst _ %subgroup %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
+    impl ScalarOrVectorTransform for Transform {
+        #[inline]
+        fn transform<T: ScalarOrVector>(&mut self, value: T) -> T {
+            let mut result = T::default();
+            unsafe {
+                asm! {
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%value = OpLoad _ {value}",
+                    "%result = OpGroupNonUniformBroadcastFirst _ %subgroup %value",
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    value = in(reg) &value,
+                    result = in(reg) &mut result,
+                }
+            }
+            result
         }
     }
 
-    result
+    value.transform(&mut Transform)
 }
 
 /// Result is a bitfield value combining the `predicate` value from all invocations in the group that execute the same dynamic instance of this instruction. The bit is set to one if the corresponding invocation is active and the `predicate` for that invocation evaluated to true; otherwise, it is set to zero.
@@ -594,25 +622,34 @@ pub fn subgroup_ballot_find_msb(value: SubgroupMask) -> u32 {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffle")]
 #[inline]
-pub fn subgroup_shuffle<T: ScalarOrVector>(value: T, id: u32) -> T {
-    let mut result = T::default();
+pub fn subgroup_shuffle<T: ScalarOrVectorComposite>(value: T, id: u32) -> T {
+    struct Transform {
+        id: u32,
+    }
 
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%id = OpLoad _ {id}",
-            "%result = OpGroupNonUniformShuffle _ %subgroup %value %id",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            value = in(reg) &value,
-            id = in(reg) &id,
-            result = in(reg) &mut result,
+    impl ScalarOrVectorTransform for Transform {
+        #[inline]
+        fn transform<T: ScalarOrVector>(&mut self, value: T) -> T {
+            let mut result = T::default();
+            unsafe {
+                asm! {
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%value = OpLoad _ {value}",
+                    "%id = OpLoad _ {id}",
+                    "%result = OpGroupNonUniformShuffle _ %subgroup %value %id",
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    value = in(reg) &value,
+                    id = in(reg) &self.id,
+                    result = in(reg) &mut result,
+                }
+            }
+            result
         }
     }
 
-    result
+    value.transform(&mut Transform { id })
 }
 
 /// Result is the `value` of the invocation identified by the current invocation’s id within the group xor’ed with Mask.
@@ -635,25 +672,34 @@ pub fn subgroup_shuffle<T: ScalarOrVector>(value: T, id: u32) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleXor")]
 #[inline]
-pub fn subgroup_shuffle_xor<T: ScalarOrVector>(value: T, mask: u32) -> T {
-    let mut result = T::default();
+pub fn subgroup_shuffle_xor<T: ScalarOrVectorComposite>(value: T, mask: u32) -> T {
+    struct Transform {
+        mask: u32,
+    }
 
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%mask = OpLoad _ {mask}",
-            "%result = OpGroupNonUniformShuffleXor _ %subgroup %value %mask",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            value = in(reg) &value,
-            mask = in(reg) &mask,
-            result = in(reg) &mut result,
+    impl ScalarOrVectorTransform for Transform {
+        #[inline]
+        fn transform<T: ScalarOrVector>(&mut self, value: T) -> T {
+            let mut result = T::default();
+            unsafe {
+                asm! {
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%value = OpLoad _ {value}",
+                    "%mask = OpLoad _ {mask}",
+                    "%result = OpGroupNonUniformShuffleXor _ %subgroup %value %mask",
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    value = in(reg) &value,
+                    mask = in(reg) &self.mask,
+                    result = in(reg) &mut result,
+                }
+            }
+            result
         }
     }
 
-    result
+    value.transform(&mut Transform { mask })
 }
 
 /// Result is the `value` of the invocation identified by the current invocation’s id within the group - Delta.
@@ -676,25 +722,34 @@ pub fn subgroup_shuffle_xor<T: ScalarOrVector>(value: T, mask: u32) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleUp")]
 #[inline]
-pub fn subgroup_shuffle_up<T: ScalarOrVector>(value: T, delta: u32) -> T {
-    let mut result = T::default();
+pub fn subgroup_shuffle_up<T: ScalarOrVectorComposite>(value: T, delta: u32) -> T {
+    struct Transform {
+        delta: u32,
+    }
 
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%delta = OpLoad _ {delta}",
-            "%result = OpGroupNonUniformShuffleUp _ %subgroup %value %delta",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            value = in(reg) &value,
-            delta = in(reg) &delta,
-            result = in(reg) &mut result,
+    impl ScalarOrVectorTransform for Transform {
+        #[inline]
+        fn transform<T: ScalarOrVector>(&mut self, value: T) -> T {
+            let mut result = T::default();
+            unsafe {
+                asm! {
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%value = OpLoad _ {value}",
+                    "%delta = OpLoad _ {delta}",
+                    "%result = OpGroupNonUniformShuffleUp _ %subgroup %value %delta",
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    value = in(reg) &value,
+                    delta = in(reg) &self.delta,
+                    result = in(reg) &mut result,
+                }
+            }
+            result
         }
     }
 
-    result
+    value.transform(&mut Transform { delta })
 }
 
 /// Result is the `value` of the invocation identified by the current invocation’s id within the group + Delta.
@@ -717,25 +772,34 @@ pub fn subgroup_shuffle_up<T: ScalarOrVector>(value: T, delta: u32) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleDown")]
 #[inline]
-pub fn subgroup_shuffle_down<T: ScalarOrVector>(value: T, delta: u32) -> T {
-    let mut result = T::default();
+pub fn subgroup_shuffle_down<T: ScalarOrVectorComposite>(value: T, delta: u32) -> T {
+    struct Transform {
+        delta: u32,
+    }
 
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%delta = OpLoad _ {delta}",
-            "%result = OpGroupNonUniformShuffleDown _ %subgroup %value %delta",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            value = in(reg) &value,
-            delta = in(reg) &delta,
-            result = in(reg) &mut result,
+    impl ScalarOrVectorTransform for Transform {
+        #[inline]
+        fn transform<T: ScalarOrVector>(&mut self, value: T) -> T {
+            let mut result = T::default();
+            unsafe {
+                asm! {
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%value = OpLoad _ {value}",
+                    "%delta = OpLoad _ {delta}",
+                    "%result = OpGroupNonUniformShuffleDown _ %subgroup %value %delta",
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    value = in(reg) &value,
+                    delta = in(reg) &self.delta,
+                    result = in(reg) &mut result,
+                }
+            }
+            result
         }
     }
 
-    result
+    value.transform(&mut Transform { delta })
 }
 
 macro_rules! macro_subgroup_op {
@@ -1344,25 +1408,34 @@ Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadBroadcast")]
 #[inline]
-pub fn subgroup_quad_broadcast<T: ScalarOrVector>(value: T, index: u32) -> T {
-    let mut result = T::default();
+pub fn subgroup_quad_broadcast<T: ScalarOrVectorComposite>(value: T, index: u32) -> T {
+    struct Transform {
+        index: u32,
+    }
 
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%index = OpLoad _ {index}",
-            "%result = OpGroupNonUniformQuadBroadcast _ %subgroup %value %index",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            value = in(reg) &value,
-            index = in(reg) &index,
-            result = in(reg) &mut result,
+    impl ScalarOrVectorTransform for Transform {
+        #[inline]
+        fn transform<T: ScalarOrVector>(&mut self, value: T) -> T {
+            let mut result = T::default();
+            unsafe {
+                asm! {
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%value = OpLoad _ {value}",
+                    "%index = OpLoad _ {index}",
+                    "%result = OpGroupNonUniformQuadBroadcast _ %subgroup %value %index",
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    value = in(reg) &value,
+                    index = in(reg) &self.index,
+                    result = in(reg) &mut result,
+                }
+            }
+            result
         }
     }
 
-    result
+    value.transform(&mut Transform { index })
 }
 
 /// Direction is the kind of swap to perform.
@@ -1427,23 +1500,30 @@ pub enum QuadDirection {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadSwap")]
 #[inline]
-pub fn subgroup_quad_swap<const DIRECTION: u32, T: ScalarOrVector>(value: T) -> T {
-    let mut result = T::default();
+pub fn subgroup_quad_swap<const DIRECTION: u32, T: ScalarOrVectorComposite>(value: T) -> T {
+    struct Transform<const DIRECTION: u32>;
 
-    unsafe {
-        asm! {
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%direction = OpConstant %u32 {direction}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformQuadSwap _ %subgroup %value %direction",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            direction = const DIRECTION,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
+    impl<const DIRECTION: u32> ScalarOrVectorTransform for Transform<DIRECTION> {
+        #[inline]
+        fn transform<T: ScalarOrVector>(&mut self, value: T) -> T {
+            let mut result = T::default();
+            unsafe {
+                asm! {
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%direction = OpConstant %u32 {direction}",
+                    "%value = OpLoad _ {value}",
+                    "%result = OpGroupNonUniformQuadSwap _ %subgroup %value %direction",
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    direction = const DIRECTION,
+                    value = in(reg) &value,
+                    result = in(reg) &mut result,
+                }
+            }
+            result
         }
     }
 
-    result
+    value.transform(&mut Transform::<DIRECTION>)
 }
