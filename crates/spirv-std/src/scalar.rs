@@ -117,3 +117,7 @@ impl_scalar! {
     impl Float for f64;
     impl Scalar for bool;
 }
+
+/// used by `ScalarOrVector` derive when working with enums
+#[inline]
+pub fn assert_is_integer<T: Integer>() {}
