@@ -94,24 +94,25 @@ pub mod byte_addressable_buffer;
 pub mod float;
 pub mod image;
 pub mod indirect_command;
-pub mod integer;
 pub mod matrix;
 pub mod memory;
-pub mod number;
 pub mod ray_tracing;
 mod runtime_array;
 mod sampler;
-pub mod scalar;
-pub(crate) mod sealed;
+mod scalar;
+mod scalar_or_vector;
 mod typed_buffer;
-pub mod vector;
+mod vector;
 
 pub use self::sampler::Sampler;
 pub use crate::macros::Image;
 pub use byte_addressable_buffer::ByteAddressableBuffer;
 pub use num_traits;
 pub use runtime_array::*;
+pub use scalar::*;
+pub use scalar_or_vector::*;
 pub use typed_buffer::*;
+pub use vector::*;
 
 pub use glam;
 
@@ -136,11 +137,7 @@ pub fn debug_printf_assert_is_type<T>(ty: T) -> T {
 }
 
 #[doc(hidden)]
-pub fn debug_printf_assert_is_vector<
-    TY: crate::scalar::Scalar,
-    V: crate::vector::Vector<TY, SIZE>,
-    const SIZE: usize,
->(
+pub fn debug_printf_assert_is_vector<TY: Scalar, V: Vector<TY, SIZE>, const SIZE: usize>(
     vec: V,
 ) -> V {
     vec

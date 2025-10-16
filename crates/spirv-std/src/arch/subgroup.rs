@@ -1,10 +1,9 @@
+use crate::ScalarOrVector;
 #[cfg(target_arch = "spirv")]
 use crate::arch::barrier;
-use crate::float::Float;
-use crate::integer::{Integer, SignedInteger, UnsignedInteger};
 #[cfg(target_arch = "spirv")]
 use crate::memory::{Scope, Semantics};
-use crate::vector::VectorOrScalar;
+use crate::{Float, Integer, SignedInteger, UnsignedInteger};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 
@@ -244,7 +243,7 @@ pub fn subgroup_any(predicate: bool) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformAllEqual")]
 #[inline]
-pub fn subgroup_all_equal<T: VectorOrScalar>(value: T) -> bool {
+pub fn subgroup_all_equal<T: ScalarOrVector>(value: T) -> bool {
     let mut result = false;
 
     unsafe {
@@ -287,7 +286,7 @@ pub fn subgroup_all_equal<T: VectorOrScalar>(value: T) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBroadcast")]
 #[inline]
-pub unsafe fn subgroup_broadcast<T: VectorOrScalar>(value: T, id: u32) -> T {
+pub unsafe fn subgroup_broadcast<T: ScalarOrVector>(value: T, id: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -320,7 +319,7 @@ pub unsafe fn subgroup_broadcast<T: VectorOrScalar>(value: T, id: u32) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBroadcastFirst")]
 #[inline]
-pub fn subgroup_broadcast_first<T: VectorOrScalar>(value: T) -> T {
+pub fn subgroup_broadcast_first<T: ScalarOrVector>(value: T) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -595,7 +594,7 @@ pub fn subgroup_ballot_find_msb(value: SubgroupMask) -> u32 {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffle")]
 #[inline]
-pub fn subgroup_shuffle<T: VectorOrScalar>(value: T, id: u32) -> T {
+pub fn subgroup_shuffle<T: ScalarOrVector>(value: T, id: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -636,7 +635,7 @@ pub fn subgroup_shuffle<T: VectorOrScalar>(value: T, id: u32) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleXor")]
 #[inline]
-pub fn subgroup_shuffle_xor<T: VectorOrScalar>(value: T, mask: u32) -> T {
+pub fn subgroup_shuffle_xor<T: ScalarOrVector>(value: T, mask: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -677,7 +676,7 @@ pub fn subgroup_shuffle_xor<T: VectorOrScalar>(value: T, mask: u32) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleUp")]
 #[inline]
-pub fn subgroup_shuffle_up<T: VectorOrScalar>(value: T, delta: u32) -> T {
+pub fn subgroup_shuffle_up<T: ScalarOrVector>(value: T, delta: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -718,7 +717,7 @@ pub fn subgroup_shuffle_up<T: VectorOrScalar>(value: T, delta: u32) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleDown")]
 #[inline]
-pub fn subgroup_shuffle_down<T: VectorOrScalar>(value: T, delta: u32) -> T {
+pub fn subgroup_shuffle_down<T: ScalarOrVector>(value: T, delta: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -745,7 +744,7 @@ macro_rules! macro_subgroup_op {
         #[spirv_std_macros::gpu_only]
         #[doc(alias = $asm_op)]
         #[inline]
-        pub fn $name<I: VectorOrScalar<Scalar = $scalar>>(
+        pub fn $name<I: ScalarOrVector<Scalar = $scalar>>(
             value: I,
         ) -> I {
             let mut result = I::default();
@@ -773,7 +772,7 @@ macro_rules! macro_subgroup_op_clustered {
         #[spirv_std_macros::gpu_only]
         #[doc(alias = $asm_op)]
         #[inline]
-        pub unsafe fn $name<const CLUSTER_SIZE: u32, I: VectorOrScalar<Scalar = $scalar>>(
+        pub unsafe fn $name<const CLUSTER_SIZE: u32, I: ScalarOrVector<Scalar = $scalar>>(
             value: I,
         ) -> I {
             const {
@@ -1345,7 +1344,7 @@ Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadBroadcast")]
 #[inline]
-pub fn subgroup_quad_broadcast<T: VectorOrScalar>(value: T, index: u32) -> T {
+pub fn subgroup_quad_broadcast<T: ScalarOrVector>(value: T, index: u32) -> T {
     let mut result = T::default();
 
     unsafe {
@@ -1428,7 +1427,7 @@ pub enum QuadDirection {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadSwap")]
 #[inline]
-pub fn subgroup_quad_swap<const DIRECTION: u32, T: VectorOrScalar>(value: T) -> T {
+pub fn subgroup_quad_swap<const DIRECTION: u32, T: ScalarOrVector>(value: T) -> T {
     let mut result = T::default();
 
     unsafe {
