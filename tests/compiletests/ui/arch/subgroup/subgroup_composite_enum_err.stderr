@@ -1,0 +1,136 @@
+error: Missing #[repr(...)] attribute
+   --> $DIR/subgroup_composite_enum_err.rs:
+    |
+LL | / pub enum NoRepr {
+LL | |     #[default]
+LL | |     A,
+LL | |     B,
+LL | |     C,
+LL | | }
+    | |_^
+
+error: Multiple #[repr(...)] attributes found
+   --> $DIR/subgroup_composite_enum_err.rs:
+    |
+LL | / #[repr(u32)]
+LL | | #[repr(u16)]
+LL | | #[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+LL | | pub enum TwoRepr {
+...  |
+LL | |     C,
+LL | | }
+    | |_^
+
+error[E0412]: cannot find type `C` in this scope
+   --> $DIR/subgroup_composite_enum_err.rs:
+    |
+LL | #[repr(C)]
+    |        ^
+LL | #[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+    |                                ----------------------- similarly named type parameter `F` defined here
+    |
+help: there is an enum variant `crate::CRepr::C` and 6 others; try using the variant's enum
+    |
+LL - #[repr(C)]
+LL + #[repr(crate::CRepr)]
+    |
+LL - #[repr(C)]
+LL + #[repr(crate::NoDefault)]
+    |
+LL - #[repr(C)]
+LL + #[repr(crate::NoFrom)]
+    |
+LL - #[repr(C)]
+LL + #[repr(crate::NoRepr)]
+    |
+     and 2 other candidates
+help: a type parameter with a similar name exists
+    |
+LL - #[repr(C)]
+LL + #[repr(F)]
+    |
+
+error[E0566]: conflicting representation hints
+   --> $DIR/subgroup_composite_enum_err.rs:
+    |
+LL | #[repr(u32)]
+    |        ^^^
+LL | #[repr(u16)]
+    |        ^^^
+    |
+    = warning: this was previously accepted by the compiler but is being phased out; it will become a hard error in a future release!
+    = note: for more information, see issue #68585 <https://github.com/rust-lang/rust/issues/68585>
+    = note: `#[deny(conflicting_repr_hints)]` on by default
+
+error[E0277]: the trait bound `NoFrom: From<i32>` is not satisfied
+   --> $DIR/subgroup_composite_enum_err.rs:
+    |
+LL | #[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^ the trait `From<i32>` is not implemented for `NoFrom`
+    |
+    = note: this error originates in the derive macro `ScalarOrVectorComposite` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `i32: From<NoFrom>` is not satisfied
+   --> $DIR/subgroup_composite_enum_err.rs:
+    |
+LL | #[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^ the trait `From<NoFrom>` is not implemented for `i32`
+    |
+    = help: the following other types implement trait `From<T>`:
+             `i32` implements `From<NoDefault>`
+             `i32` implements `From<bool>`
+             `i32` implements `From<i16>`
+             `i32` implements `From<i8>`
+             `i32` implements `From<u16>`
+             `i32` implements `From<u8>`
+    = note: required for `NoFrom` to implement `Into<i32>`
+    = note: this error originates in the derive macro `ScalarOrVectorComposite` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `WrongFrom: From<i32>` is not satisfied
+   --> $DIR/subgroup_composite_enum_err.rs:
+    |
+LL | #[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^ the trait `From<i32>` is not implemented for `WrongFrom`
+    |
+    = help: the trait `From<i32>` is not implemented for `WrongFrom`
+           but trait `From<u32>` is implemented for it
+    = help: for that trait implementation, expected `u32`, found `i32`
+    = note: this error originates in the derive macro `ScalarOrVectorComposite` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the trait bound `i32: From<WrongFrom>` is not satisfied
+   --> $DIR/subgroup_composite_enum_err.rs:
+    |
+LL | #[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+    |                                ^^^^^^^^^^^^^^^^^^^^^^^ the trait `From<WrongFrom>` is not implemented for `i32`
+    |
+    = help: the following other types implement trait `From<T>`:
+             `i32` implements `From<NoDefault>`
+             `i32` implements `From<bool>`
+             `i32` implements `From<i16>`
+             `i32` implements `From<i8>`
+             `i32` implements `From<u16>`
+             `i32` implements `From<u8>`
+    = note: required for `WrongFrom` to implement `Into<i32>`
+    = note: this error originates in the derive macro `ScalarOrVectorComposite` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0599]: no variant or associated item named `default` found for enum `NoDefault` in the current scope
+   --> $DIR/subgroup_composite_enum_err.rs:
+    |
+LL |                     _ => Self::default(),
+    |                                ^^^^^^^ variant or associated item not found in `NoDefault`
+...
+LL | pub enum NoDefault {
+    | ------------------ variant or associated item `default` not found for this enum
+...
+LL | enum_repr_from!(NoDefault, i32);
+    | ------------------------------- in this macro invocation
+    |
+    = help: items from traits can only be used if the trait is implemented and in scope
+    = note: the following trait defines an item `default`, perhaps you need to implement it:
+           candidate #1: `Default`
+    = note: this error originates in the macro `enum_repr_from` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: aborting due to 9 previous errors
+
+Some errors have detailed explanations: E0277, E0412, E0566, E0599.
+For more information about an error, try `rustc --explain E0277`.

@@ -31,11 +31,23 @@ pub unsafe trait ScalarOrVector: ScalarOrVectorComposite + Default {
 /// data to other threads.
 ///
 /// To derive `#[derive(VectorOrScalarComposite)]` on a struct, all members must also implement
-/// `VectorOrScalarComposite`. To derive it on an enum, the enum must have `#[repr(N)]` where `N` is an [`Integer`].
-/// Additionally, you must derive `num_enum::FromPrimitive` and `num_enum::ToPrimitive`, which requires the enum to be
-/// either exhaustive, implement [`Default`] or a variant of the enum to have the `#[num_enum(default)]` attribute.
+/// `VectorOrScalarComposite`.
+///
+/// To derive it on an enum, the enum must implement `From<N>` and `Into<N>` where `N` is defined by the `#[repr(N)]`
+/// attribute on the enum and is an [`Integer`], like `u32`.
+/// Note that some [safe subgroup operations] may return an "undefined result", so your `From<N>` must gracefully handle
+/// arbitrary bit patterns being passed to it. While panicking is legal, it is discouraged as it may result in
+/// unexpected control flow.
+/// To implement these conversion traits, we recommend [`FromPrimitive`] and [`IntoPrimitive`] from the [`num_enum`]
+/// crate. [`FromPrimitive`] requires that either the enum is exhaustive, or you provide it with a variant to default
+/// to, by either implementing [`Default`] or marking a variant with `#[num_enum(default)]`. Note to disable default
+/// features on the [`num_enum`] crate, or it won't compile on SPIR-V.
 ///
 /// [`Integer`]: crate::Integer
+/// [subgroup operations]: crate::arch::subgroup_shuffle
+/// [`FromPrimitive`]: https://docs.rs/num_enum/latest/num_enum/derive.FromPrimitive.html
+/// [`IntoPrimitive`]: https://docs.rs/num_enum/latest/num_enum/derive.IntoPrimitive.html
+/// [`num_enum`]: https://crates.io/crates/num_enum
 pub trait ScalarOrVectorComposite: Copy + Send + Sync + 'static {
     /// Transform the individual [`Scalar`] and [`Vector`] values of this type to a different value.
     ///
