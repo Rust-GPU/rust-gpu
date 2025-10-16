@@ -1,5 +1,6 @@
 //! a set of common SPIR-V Matrices, used for intrinsics
 
+use core::fmt::{Debug, Display, Formatter};
 use glam::{Affine3A, Mat3, Mat3A, Mat4, Vec3, Vec3A};
 
 /// A Matrix with 4 columns of [`Vec3`], very similar to glam's [`Affine3A`].
@@ -74,5 +75,17 @@ impl Matrix4x3 {
     /// Creates a 4x4 matrix from this affine transform
     pub fn to_mat4(self) -> Mat4 {
         Mat4::from(self.to_affine3a())
+    }
+}
+
+impl Debug for Matrix4x3 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        Debug::fmt(&self.to_mat4(), f)
+    }
+}
+
+impl Display for Matrix4x3 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        Display::fmt(&self.to_mat4(), f)
     }
 }
