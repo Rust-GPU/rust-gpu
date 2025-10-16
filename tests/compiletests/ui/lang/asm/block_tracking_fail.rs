@@ -1,6 +1,8 @@
 // Tests validating tracking of basic blocks
 // within the `asm!` macro.
 // build-fail
+// normalize-stderr-test "\.rs:\d+:\d+" -> ".rs:"
+// normalize-stderr-test "(\n)\d* *([ -])([\|\+\-\=])" -> "$1   $2$3"
 
 use core::arch::asm;
 use spirv_std::spirv;

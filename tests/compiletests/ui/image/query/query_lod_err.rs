@@ -1,5 +1,7 @@
 // build-fail
 // normalize-stderr-test "\S*/crates/spirv-std/src/" -> "$$SPIRV_STD_SRC/"
+// normalize-stderr-test "\.rs:\d+:\d+" -> ".rs:"
+// normalize-stderr-test "(\n)\d* *([ -])([\|\+\-\=])" -> "$1   $2$3"
 // compile-flags: -C target-feature=+ImageQuery
 
 use spirv_std::{Image, Sampler, arch, spirv};

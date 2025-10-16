@@ -1,4 +1,6 @@
 // build-fail
+// normalize-stderr-test "\.rs:\d+:\d+" -> ".rs:"
+// normalize-stderr-test "(\n)\d* *([ -])([\|\+\-\=])" -> "$1   $2$3"
 
 use core::num::NonZeroU32;
 use spirv_std::glam::Vec2;

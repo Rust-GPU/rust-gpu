@@ -1,5 +1,7 @@
 // Tests using a vector like pointer at `const` time.
 // build-pass
+// normalize-stderr-test "\.rs:\d+:\d+" -> ".rs:"
+// normalize-stderr-test "(\n)\d* *([ -])([\|\+\-\=])" -> "$1   $2$3"
 
 #![feature(ptr_internals)]
 
