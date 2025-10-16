@@ -16,19 +16,12 @@ pub unsafe trait VectorOrScalar: Copy + Default + Send + Sync + 'static {
     const DIM: NonZeroUsize;
 }
 
-/// replace with `NonZeroUsize::new(n).unwrap()` once `unwrap()` is const stabilized
-pub(crate) const fn create_dim(n: usize) -> NonZeroUsize {
-    match NonZeroUsize::new(n) {
-        None => panic!("dim must not be 0"),
-        Some(n) => n,
-    }
-}
-
 /// Abstract trait representing a SPIR-V vector type.
 ///
-/// To implement this trait, your struct must be marked with:
+/// To derive this trait, mark your struct with:
 /// ```no_run
-/// #[cfg_attr(target_arch = "spirv", rust_gpu::vector::v1)]
+/// #[spirv_std::spirv_vector]
+/// # #[derive(Copy, Clone, Default)]
 /// # struct Bla(f32, f32);
 /// ```
 ///
@@ -51,8 +44,8 @@ pub(crate) const fn create_dim(n: usize) -> NonZeroUsize {
 ///
 /// # Example
 /// ```no_run
+/// #[spirv_std::spirv_vector]
 /// #[derive(Copy, Clone, Default)]
-/// #[cfg_attr(target_arch = "spirv", rust_gpu::vector::v1)]
 /// struct MyColor {
 ///     r: f32,
 ///     b: f32,
@@ -63,7 +56,8 @@ pub(crate) const fn create_dim(n: usize) -> NonZeroUsize {
 ///
 /// # Safety
 /// Must only be implemented on types that the spirv codegen emits as valid `OpTypeVector`. This includes all structs
-/// marked with `#[rust_gpu::vector::v1]`, like [`glam`]'s non-SIMD "scalar" vector types.
+/// marked with `#[rust_gpu::vector::v1]`, which `#[spirv_std::spirv_vector]` expands into or [`glam`]'s non-SIMD
+/// "scalar" vector types use directly.
 pub unsafe trait Vector<T: Scalar, const N: usize>: VectorOrScalar<Scalar = T> {}
 
 macro_rules! impl_vector {
@@ -71,7 +65,7 @@ macro_rules! impl_vector {
         $($(
             unsafe impl VectorOrScalar for $vec {
                 type Scalar = $scalar;
-                const DIM: NonZeroUsize = create_dim($dim);
+                const DIM: NonZeroUsize = NonZeroUsize::new($dim).unwrap();
             }
             unsafe impl Vector<$scalar, $dim> for $vec {}
         )+)+
