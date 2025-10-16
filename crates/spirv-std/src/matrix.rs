@@ -10,10 +10,10 @@ use glam::{Affine3A, Mat3, Mat3A, Mat4, Vec3, Vec3A};
 #[spirv(matrix)]
 #[allow(missing_docs)]
 pub struct Matrix4x3 {
-    pub x: Vec3A,
-    pub y: Vec3A,
-    pub z: Vec3A,
-    pub w: Vec3A,
+    pub x_axis: Vec3A,
+    pub y_axis: Vec3A,
+    pub z_axis: Vec3A,
+    pub w_axis: Vec3A,
 }
 
 /// The `from_*` fn signatures should match [`Affine3A`], to make it easier to switch to [`Affine3A`] later.
@@ -22,10 +22,10 @@ impl Matrix4x3 {
     /// Convert from glam's [`Affine3A`]
     pub fn from_affine3a(affine: Affine3A) -> Self {
         Self {
-            x: affine.x_axis,
-            y: affine.y_axis,
-            z: affine.z_axis,
-            w: affine.w_axis,
+            x_axis: affine.x_axis,
+            y_axis: affine.y_axis,
+            z_axis: affine.z_axis,
+            w_axis: affine.w_axis,
         }
     }
 
@@ -53,11 +53,11 @@ impl Matrix4x3 {
     pub fn to_affine3a(self) -> Affine3A {
         Affine3A {
             matrix3: Mat3A {
-                x_axis: self.x,
-                y_axis: self.y,
-                z_axis: self.z,
+                x_axis: self.x_axis,
+                y_axis: self.y_axis,
+                z_axis: self.z_axis,
             },
-            translation: self.w,
+            translation: self.w_axis,
         }
     }
 
