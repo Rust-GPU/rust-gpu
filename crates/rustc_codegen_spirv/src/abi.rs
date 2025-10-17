@@ -403,7 +403,7 @@ pub fn scalar_pair_element_backend_type<'tcx>(
     ty: TyAndLayout<'tcx>,
     index: usize,
 ) -> Word {
-    let [a, b] = match ty.layout.backend_repr() {
+    let [a, b] = match ty.backend_repr {
         BackendRepr::ScalarPair(a, b) => [a, b],
         other => span_bug!(
             span,
