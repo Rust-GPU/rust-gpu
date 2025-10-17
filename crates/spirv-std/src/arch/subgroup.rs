@@ -280,7 +280,7 @@ pub fn subgroup_all_equal<T: ScalarOrVector>(value: T) -> bool {
 /// Requires Capability `GroupNonUniformBallot`.
 ///
 /// # Safety
-/// * `id` must not be dynamically uniform
+/// * `id` must be dynamically uniform
 /// * before 1.5: `id` must be constant
 /// * Result is undefined if `id` is an inactive invocation or out of bounds
 #[spirv_std_macros::gpu_only]
