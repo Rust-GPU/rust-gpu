@@ -11,6 +11,7 @@ use rspirv::dr::Operand;
 use rspirv::spirv::{
     Capability, Decoration, Dim, ExecutionModel, FunctionControl, StorageClass, Word,
 };
+use rustc_abi::FieldsShape;
 use rustc_codegen_ssa::traits::{BaseTypeCodegenMethods, BuilderMethods, MiscCodegenMethods as _};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::MultiSpan;
@@ -18,7 +19,7 @@ use rustc_hir as hir;
 use rustc_middle::span_bug;
 use rustc_middle::ty::layout::{LayoutOf, TyAndLayout};
 use rustc_middle::ty::{self, Instance, Ty};
-use rustc_span::Span;
+use rustc_span::{DUMMY_SP, Span};
 use rustc_target::callconv::{ArgAbi, FnAbi, PassMode};
 use std::assert_matches::assert_matches;
 
@@ -395,23 +396,38 @@ impl<'tcx> CodegenCx<'tcx> {
         // would've assumed it was actually an implicitly-`Input`.
         let mut storage_class = Ok(storage_class);
         if let Some(spec_constant) = attrs.spec_constant {
-            if ref_or_value_layout.ty != self.tcx.types.u32 {
+            let ty = ref_or_value_layout;
+            let valid_array_count = match ty.fields {
+                FieldsShape::Array { count, .. } => {
+                    let element = ty.field(self, 0);
+                    (element.ty == self.tcx.types.u32).then_some(u32::try_from(count).ok())
+                }
+                FieldsShape::Primitive => (ty.ty == self.tcx.types.u32).then_some(None),
+                _ => None,
+            };
+
+            if let Some(array_count) = valid_array_count {
+                if let Some(storage_class) = attrs.storage_class {
+                    self.tcx.dcx().span_err(
+                        storage_class.span,
+                        "`#[spirv(spec_constant)]` cannot have a storage class",
+                    );
+                } else {
+                    assert_eq!(storage_class, Ok(StorageClass::Input));
+                    assert!(!is_ref);
+                    storage_class = Err(SpecConstant {
+                        array_count,
+                        ..spec_constant.value
+                    });
+                }
+            } else {
                 self.tcx.dcx().span_err(
                     hir_param.ty_span,
                     format!(
-                        "unsupported `#[spirv(spec_constant)]` type `{}` (expected `{}`)",
-                        ref_or_value_layout.ty, self.tcx.types.u32
+                        "unsupported `#[spirv(spec_constant)]` type `{}` (expected `u32` or `[u32; N]`)",
+                        ref_or_value_layout.ty
                     ),
                 );
-            } else if let Some(storage_class) = attrs.storage_class {
-                self.tcx.dcx().span_err(
-                    storage_class.span,
-                    "`#[spirv(spec_constant)]` cannot have a storage class",
-                );
-            } else {
-                assert_eq!(storage_class, Ok(StorageClass::Input));
-                assert!(!is_ref);
-                storage_class = Err(spec_constant.value);
             }
         }
 
@@ -448,18 +464,38 @@ impl<'tcx> CodegenCx<'tcx> {
                 Ok(self.emit_global().id()),
                 Err("entry-point interface variable is not a `#[spirv(spec_constant)]`"),
             ),
-            Err(SpecConstant { id, default }) => {
-                let mut emit = self.emit_global();
-                let spec_const_id =
-                    emit.spec_constant_bit32(value_spirv_type, default.unwrap_or(0));
-                emit.decorate(
-                    spec_const_id,
-                    Decoration::SpecId,
-                    [Operand::LiteralBit32(id)],
-                );
+            Err(SpecConstant {
+                id,
+                default,
+                array_count,
+            }) => {
+                let u32_ty = SpirvType::Integer(32, false).def(DUMMY_SP, self);
+                let single = |id: u32| {
+                    let mut emit = self.emit_global();
+                    let spec_const_id = emit.spec_constant_bit32(u32_ty, default.unwrap_or(0));
+                    emit.decorate(
+                        spec_const_id,
+                        Decoration::SpecId,
+                        [Operand::LiteralBit32(id)],
+                    );
+                    spec_const_id
+                };
+                let param_word = if let Some(array_count) = array_count {
+                    let array = (0..array_count).map(|i| single(id + i)).collect::<Vec<_>>();
+                    let array_ty = SpirvType::Array {
+                        element: u32_ty,
+                        count: self.constant_u32(DUMMY_SP, array_count),
+                    }
+                    .def(DUMMY_SP, self);
+                    bx.emit()
+                        .composite_construct(array_ty, None, array)
+                        .unwrap()
+                } else {
+                    single(id)
+                };
                 (
                     Err("`#[spirv(spec_constant)]` is not an entry-point interface variable"),
-                    Ok(spec_const_id),
+                    Ok(param_word),
                 )
             }
         };
