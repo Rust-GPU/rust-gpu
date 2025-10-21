@@ -75,6 +75,7 @@ pub enum IntrinsicType {
 pub struct SpecConstant {
     pub id: u32,
     pub default: Option<u32>,
+    pub array_count: Option<u32>,
 }
 
 // NOTE(eddyb) when adding new `#[spirv(...)]` attributes, the tests found inside
@@ -661,6 +662,8 @@ fn parse_spec_constant_attr(
     Ok(SpecConstant {
         id: id.ok_or_else(|| (arg.span(), "expected `spec_constant(id = ...)`".into()))?,
         default,
+        // to be set later
+        array_count: None,
     })
 }
 
