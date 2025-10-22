@@ -88,9 +88,11 @@
 #[macro_use]
 pub extern crate spirv_std_macros as macros;
 pub use macros::spirv;
+pub use macros::{debug_printf, debug_printfln};
 
 pub mod arch;
 pub mod byte_addressable_buffer;
+pub mod debug_printf;
 pub mod float;
 pub mod image;
 pub mod indirect_command;
@@ -130,15 +132,3 @@ extern "C" fn rust_eh_personality() {}
 #[doc(hidden)]
 /// [spirv_std_types]
 pub fn workaround_rustdoc_ice_84738() {}
-
-#[doc(hidden)]
-pub fn debug_printf_assert_is_type<T>(ty: T) -> T {
-    ty
-}
-
-#[doc(hidden)]
-pub fn debug_printf_assert_is_vector<TY: Scalar, V: Vector<TY, SIZE>, const SIZE: usize>(
-    vec: V,
-) -> V {
-    vec
-}
