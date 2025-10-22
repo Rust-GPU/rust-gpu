@@ -1,5 +1,5 @@
 use super::{Arrayed, Dimensionality, ImageFormat};
-use crate::{integer::Integer, scalar::Scalar, vector::Vector, vector::VectorTruncateInto};
+use crate::{Integer, Scalar, Vector, VectorTruncateInto};
 
 /// Marker trait for arguments that accept single scalar values or vectors
 /// of scalars. Defines 2-, 3- and 4-component vector types based on the sample type.

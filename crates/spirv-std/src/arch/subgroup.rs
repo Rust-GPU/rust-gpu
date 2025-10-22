@@ -1,10 +1,9 @@
+use crate::VectorOrScalar;
 #[cfg(target_arch = "spirv")]
 use crate::arch::barrier;
-use crate::float::Float;
-use crate::integer::{Integer, SignedInteger, UnsignedInteger};
 #[cfg(target_arch = "spirv")]
 use crate::memory::{Scope, Semantics};
-use crate::vector::VectorOrScalar;
+use crate::{Float, Integer, SignedInteger, UnsignedInteger};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 
