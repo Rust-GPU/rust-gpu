@@ -1,7 +1,7 @@
 //! Traits related to vectors.
 
 use crate::sealed::Sealed;
-use crate::{Scalar, ScalarOrVector};
+use crate::{Scalar, ScalarOrVector, ScalarOrVectorComposite, ScalarOrVectorTransform};
 use core::num::NonZeroUsize;
 use glam::{Vec3Swizzles, Vec4Swizzles};
 
@@ -57,6 +57,12 @@ macro_rules! impl_vector {
     ($($ty:ty: [$scalar:ty; $n:literal];)+) => {
         $(
             impl Sealed for $ty {}
+            impl ScalarOrVectorComposite for $ty {
+                #[inline]
+                fn transform<F: ScalarOrVectorTransform>(self, f: &mut F) -> Self {
+                    f.transform_vector(self)
+                }
+            }
             unsafe impl ScalarOrVector for $ty {
                 type Scalar = $scalar;
                 const N: NonZeroUsize = NonZeroUsize::new($n).unwrap();
