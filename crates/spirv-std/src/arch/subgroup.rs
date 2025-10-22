@@ -281,8 +281,9 @@ pub fn subgroup_all_equal<T: ScalarOrVector>(value: T) -> bool {
 ///
 /// # Safety
 /// * `id` must be dynamically uniform
-/// * before 1.5: `id` must be constant
 /// * Result is undefined if `id` is an inactive invocation or out of bounds
+/// * This variant with a dynamic `id` requires at least `spv1.5` or `vulkan1.2`. Alternatively, you can use
+/// [`subgroup_broadcast_const`] with a constant `id`.
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBroadcast")]
 #[inline]
@@ -300,6 +301,48 @@ pub unsafe fn subgroup_broadcast<T: ScalarOrVector>(value: T, id: u32) -> T {
             subgroup = const SUBGROUP,
             value = in(reg) &value,
             id = in(reg) &id,
+            result = in(reg) &mut result,
+        }
+    }
+
+    result
+}
+
+/// Result is the `value` of the invocation identified by the id `id` to all active invocations in the group.
+///
+/// Result Type must be a scalar or vector of floating-point type, integer type, or Boolean type.
+///
+/// Execution is a Scope that identifies the group of invocations affected by this command. It must be Subgroup.
+///
+/// The type of `value` must be the same as Result Type.
+///
+/// `id` must be a scalar of integer type, whose Signedness operand is 0.
+///
+/// Before version 1.5, `id` must come from a constant instruction. Starting with version 1.5, this restriction is lifted. However, behavior is undefined when `id` is not dynamically uniform.
+///
+/// The resulting value is undefined if `id` is an inactive invocation, or is greater than or equal to the size of the group.
+///
+/// Requires Capability `GroupNonUniformBallot`.
+///
+/// # Safety
+/// * Result is undefined if `id` is an inactive invocation or out of bounds
+#[spirv_std_macros::gpu_only]
+#[doc(alias = "OpGroupNonUniformBroadcast")]
+#[inline]
+pub unsafe fn subgroup_broadcast_const<T: ScalarOrVector, const ID: u32>(value: T) -> T {
+    let mut result = T::default();
+
+    unsafe {
+        asm! {
+            "%u32 = OpTypeInt 32 0",
+            "%subgroup = OpConstant %u32 {subgroup}",
+            "%id = OpConstant %u32 {id}",
+            "%value = OpLoad _ {value}",
+            "%result = OpGroupNonUniformBroadcast _ %subgroup %value %id",
+            "OpStore {result} %result",
+            subgroup = const SUBGROUP,
+            value = in(reg) &value,
+            id = const ID,
             result = in(reg) &mut result,
         }
     }
