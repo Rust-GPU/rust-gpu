@@ -205,10 +205,10 @@ pub fn debug_printf_inner(input: DebugPrintfInput) -> TokenStream {
 
         let assert_fn = match format_argument {
             FormatType::Scalar { ty } => {
-                quote::quote! { spirv_std::debug_printf_assert_is_type::<#ty> }
+                quote::quote! { spirv_std::debug_printf::assert_is_type::<#ty> }
             }
             FormatType::Vector { ty, width } => {
-                quote::quote! { spirv_std::debug_printf_assert_is_vector::<#ty, _, #width> }
+                quote::quote! { spirv_std::debug_printf::assert_is_vector::<#ty, _, #width> }
             }
         };
 
