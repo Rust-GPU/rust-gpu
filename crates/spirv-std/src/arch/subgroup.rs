@@ -244,24 +244,35 @@ pub fn subgroup_any(predicate: bool) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformAllEqual")]
 #[inline]
-pub fn subgroup_all_equal<T: ScalarOrVector>(value: T) -> bool {
-    let mut result = false;
+pub fn subgroup_all_equal<T: ScalarOrVectorComposite>(value: T) -> bool {
+    struct Transform(bool);
 
-    unsafe {
-        asm! {
-            "%bool = OpTypeBool",
-            "%u32 = OpTypeInt 32 0",
-            "%subgroup = OpConstant %u32 {subgroup}",
-            "%value = OpLoad _ {value}",
-            "%result = OpGroupNonUniformAllEqual %bool %subgroup %value",
-            "OpStore {result} %result",
-            subgroup = const SUBGROUP,
-            value = in(reg) &value,
-            result = in(reg) &mut result,
+    impl ScalarOrVectorTransform for Transform {
+        #[inline]
+        fn transform<T: ScalarOrVector>(&mut self, value: T) -> T {
+            let mut result = false;
+            unsafe {
+                asm! {
+                    "%bool = OpTypeBool",
+                    "%u32 = OpTypeInt 32 0",
+                    "%subgroup = OpConstant %u32 {subgroup}",
+                    "%value = OpLoad _ {value}",
+                    "%result = OpGroupNonUniformAllEqual %bool %subgroup %value",
+                    "OpStore {result} %result",
+                    subgroup = const SUBGROUP,
+                    value = in(reg) &value,
+                    result = in(reg) &mut result,
+                }
+            }
+            self.0 &= result;
+            value
         }
     }
 
-    result
+    let mut transform = Transform(true);
+    // ignore returned value
+    value.transform(&mut transform);
+    transform.0
 }
 
 /// Result is the `value` of the invocation identified by the id `id` to all active invocations in the group.
