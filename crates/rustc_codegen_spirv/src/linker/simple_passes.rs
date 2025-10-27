@@ -237,10 +237,18 @@ pub fn check_fragment_insts(sess: &Session, module: &Module) -> super::Result<()
         let mut any_err = None;
         for inst in module.functions[index].all_inst_iter() {
             if inst.class.opcode == Op::FunctionCall {
-                let callee = func_id_to_idx[&inst.operands[0].unwrap_id_ref()];
-                let callee_had_err =
-                    visit(sess, module, visited, stack, names, callee, func_id_to_idx).err();
-                any_err = any_err.or(callee_had_err);
+                let callee_id = inst.operands[0].unwrap_id_ref();
+                if let Some(&callee) = func_id_to_idx.get(&callee_id) {
+                    if let Err(e) =
+                        visit(sess, module, visited, stack, names, callee, func_id_to_idx)
+                    {
+                        any_err = any_err.or(Some(e));
+                    }
+                } else {
+                    // Indirect or external callee: nothing to traverse.
+                    // Keep scanning this function for forbidden fragment ops.
+                    continue;
+                }
             }
             if matches!(
                 inst.class.opcode,
