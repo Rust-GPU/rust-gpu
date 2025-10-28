@@ -74,6 +74,7 @@
 mod debug_printf;
 mod image;
 mod sample_param_permutations;
+mod scalar_or_vector_composite;
 
 use crate::debug_printf::{DebugPrintfInput, debug_printf_inner};
 use proc_macro::TokenStream;
@@ -310,4 +311,11 @@ pub fn debug_printfln(input: TokenStream) -> TokenStream {
 #[doc(hidden)]
 pub fn gen_sample_param_permutations(_attr: TokenStream, item: TokenStream) -> TokenStream {
     sample_param_permutations::gen_sample_param_permutations(item)
+}
+
+#[proc_macro_derive(ScalarOrVectorComposite)]
+pub fn derive_scalar_or_vector_composite(item: TokenStream) -> TokenStream {
+    scalar_or_vector_composite::derive(item.into())
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
 }
