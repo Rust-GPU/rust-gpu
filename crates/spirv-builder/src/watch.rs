@@ -1,153 +1,179 @@
-use std::convert::Infallible;
-use std::path::{Path, PathBuf};
-use std::sync::mpsc::Receiver;
-use std::thread::JoinHandle;
-use std::{collections::HashSet, sync::mpsc::sync_channel};
-
-use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher as _};
-use rustc_codegen_spirv_types::CompileResult;
-
 use crate::{SpirvBuilder, SpirvBuilderError, leaf_deps};
+use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
+use rustc_codegen_spirv_types::CompileResult;
+use std::path::Path;
+use std::sync::mpsc::TryRecvError;
+use std::{
+    collections::HashSet,
+    path::PathBuf,
+    sync::mpsc::{Receiver, sync_channel},
+};
 
 impl SpirvBuilder {
-    /// Watches the module for changes using [`notify`], rebuilding it upon changes.
-    ///
-    /// Calls `on_compilation_finishes` after each successful compilation.
-    /// The second `Option<AcceptFirstCompile<T>>` param allows you to return some `T`
-    /// on the first compile, which is then returned by this function
-    /// in pair with [`JoinHandle`] to the watching thread.
-    pub fn watch<T>(
-        &self,
-        mut on_compilation_finishes: impl FnMut(CompileResult, Option<AcceptFirstCompile<'_, T>>)
-        + Send
-        + 'static,
-    ) -> Result<Watch<T>, SpirvBuilderError> {
-        let path_to_crate = self
-            .path_to_crate
-            .as_ref()
-            .ok_or(SpirvBuilderError::MissingCratePath)?;
-        if !matches!(self.print_metadata, crate::MetadataPrintout::None) {
-            return Err(SpirvBuilderError::WatchWithPrintMetadata);
-        }
-
-        let metadata_result = crate::invoke_rustc(self);
-        // Load the dependencies of the thing
-        let metadata_file = if let Ok(path) = metadata_result {
-            path
-        } else {
-            // Fall back to watching from the crate root if the initial compilation fails
-            // This is likely to notice changes in the `target` dir, however, given that `cargo watch` doesn't seem to handle that,
-            let mut watcher = Watcher::new();
-            watcher
-                .watcher
-                .watch(path_to_crate, RecursiveMode::Recursive)
-                .expect("Could watch crate root");
-            loop {
-                watcher.recv();
-                let metadata_file = crate::invoke_rustc(self);
-                if let Ok(f) = metadata_file {
-                    break f;
-                }
-            }
-        };
-        let metadata = self.parse_metadata_file(&metadata_file)?;
-        let mut first_compile = None;
-        on_compilation_finishes(metadata, Some(AcceptFirstCompile(&mut first_compile)));
-
-        let builder = self.clone();
-        let watch_thread = std::thread::spawn(move || {
-            let mut watcher = Watcher::new();
-            watcher.watch_leaf_deps(&metadata_file);
-
-            loop {
-                watcher.recv();
-                let metadata_result = crate::invoke_rustc(&builder);
-                if let Ok(file) = metadata_result {
-                    let metadata = builder
-                        .parse_metadata_file(&file)
-                        .expect("Metadata file is correct");
-                    watcher.watch_leaf_deps(&metadata_file);
-                    on_compilation_finishes(metadata, None);
-                }
-            }
-        });
-
-        Ok(Watch {
-            first_compile,
-            watch_thread,
-        })
+    /// Watches the module for changes, rebuilding it upon them.
+    pub fn watch(self) -> Result<SpirvWatcher, SpirvBuilderError> {
+        SpirvWatcher::new(self)
     }
 }
 
-pub struct AcceptFirstCompile<'a, T>(&'a mut Option<T>);
+type WatchedPaths = HashSet<PathBuf>;
 
-impl<'a, T> AcceptFirstCompile<'a, T> {
-    pub fn new(write: &'a mut Option<T>) -> Self {
-        Self(write)
-    }
-
-    pub fn submit(self, t: T) {
-        *self.0 = Some(t);
-    }
+#[derive(Copy, Clone, Debug)]
+enum WatcherState {
+    /// upcoming compile is the first compile:
+    /// * always recompile regardless of file watches
+    /// * success: go to [`Self::Watching`]
+    /// * fail: go to [`Self::FirstFailed`]
+    First,
+    /// the first compile (and all consecutive ones) failed:
+    /// * only recompile when watcher notifies us
+    /// * the whole project dir is being watched, remove that watch
+    /// * success: go to [`Self::Watching`]
+    /// * fail: stay in [`Self::FirstFailed`]
+    FirstFailed,
+    /// at least one compile finished and has set up the proper file watches:
+    /// * only recompile when watcher notifies us
+    /// * always stays in [`Self::Watching`]
+    Watching,
 }
 
-/// Result of [watching](SpirvBuilder::watch) a module for changes.
-#[must_use]
-#[non_exhaustive]
-pub struct Watch<T> {
-    /// Result of the first compile, if any.
-    pub first_compile: Option<T>,
-    /// Join handle to the watching thread.
-    ///
-    /// You can drop it to detach the watching thread,
-    /// or [`join()`](JoinHandle::join) it to block the current thread until shutdown of the program.
-    pub watch_thread: JoinHandle<Infallible>,
-}
-
-struct Watcher {
+/// Watcher of a crate which rebuilds it on changes.
+#[derive(Debug)]
+pub struct SpirvWatcher {
+    builder: SpirvBuilder,
     watcher: RecommendedWatcher,
     rx: Receiver<()>,
-    watched_paths: HashSet<PathBuf>,
+    path_to_crate: PathBuf,
+    watched_paths: WatchedPaths,
+    state: WatcherState,
 }
 
-impl Watcher {
-    fn new() -> Self {
-        let (tx, rx) = sync_channel(0);
+impl SpirvWatcher {
+    fn new(builder: SpirvBuilder) -> Result<Self, SpirvBuilderError> {
+        let path_to_crate = builder
+            .path_to_crate
+            .as_ref()
+            .ok_or(SpirvBuilderError::MissingCratePath)?
+            .clone();
+        if !matches!(builder.print_metadata, crate::MetadataPrintout::None) {
+            return Err(SpirvWatcherError::WatchWithPrintMetadata.into());
+        }
+
+        let (tx, rx) = sync_channel(1);
         let watcher =
-            notify::recommended_watcher(move |event: notify::Result<Event>| match event {
-                Ok(e) => match e.kind {
-                    notify::EventKind::Access(_) => (),
+            notify::recommended_watcher(move |result: notify::Result<Event>| match result {
+                Ok(event) => match event.kind {
                     notify::EventKind::Any
                     | notify::EventKind::Create(_)
                     | notify::EventKind::Modify(_)
                     | notify::EventKind::Remove(_)
                     | notify::EventKind::Other => {
-                        let _ = tx.try_send(());
+                        // `Err(Disconnected)` is fine, SpirvWatcher is currently dropping
+                        // `Err(Full)` is fine, we just need to send a single event anyway
+                        tx.try_send(()).ok();
                     }
+                    notify::EventKind::Access(_) => (),
                 },
-                Err(e) => println!("notify error: {e:?}"),
+                Err(err) => log::error!("notify error: {err:?}"),
             })
-            .expect("Could create watcher");
-        Self {
+            .map_err(SpirvWatcherError::NotifyFailed)?;
+
+        Ok(Self {
+            path_to_crate,
+            builder,
             watcher,
             rx,
             watched_paths: HashSet::new(),
+            state: WatcherState::First,
+        })
+    }
+
+    /// Blocks the current thread until a change is detected, rebuilds the crate and returns the [`CompileResult`] or
+    /// an [`SpirvBuilderError`]. Always builds once when called for the first time.
+    ///
+    /// See [`Self::try_recv`] for a non-blocking variant.
+    pub fn recv(&mut self) -> Result<CompileResult, SpirvBuilderError> {
+        self.recv_inner(|rx| rx.recv().map_err(TryRecvError::from))
+            .map(|result| result.unwrap())
+    }
+
+    /// If a change is detected or this is the first invocation, builds the crate and returns the [`CompileResult`]
+    /// (wrapped in `Some`) or an [`SpirvBuilderError`]. If no change has been detected, returns `Ok(None)` without
+    /// blocking.
+    ///
+    /// See [`Self::recv`] for a blocking variant.
+    pub fn try_recv(&mut self) -> Result<Option<CompileResult>, SpirvBuilderError> {
+        self.recv_inner(Receiver::try_recv)
+    }
+
+    #[inline]
+    fn recv_inner(
+        &mut self,
+        recv: impl FnOnce(&Receiver<()>) -> Result<(), TryRecvError>,
+    ) -> Result<Option<CompileResult>, SpirvBuilderError> {
+        let received = match self.state {
+            // always compile on first invocation
+            // file watches have yet to be setup, so recv channel is empty and must not be cleared
+            WatcherState::First => Ok(()),
+            WatcherState::FirstFailed | WatcherState::Watching => recv(&self.rx),
+        };
+        match received {
+            Ok(_) => (),
+            Err(TryRecvError::Empty) => return Ok(None),
+            Err(TryRecvError::Disconnected) => return Err(SpirvWatcherError::WatcherDied.into()),
+        }
+
+        let result = (|| {
+            let metadata_file = crate::invoke_rustc(&self.builder)?;
+            let result = self.builder.parse_metadata_file(&metadata_file)?;
+            self.watch_leaf_deps(&metadata_file)?;
+            Ok(result)
+        })();
+        match result {
+            Ok(result) => {
+                if matches!(self.state, WatcherState::FirstFailed) {
+                    self.watcher
+                        .unwatch(&self.path_to_crate)
+                        .map_err(SpirvWatcherError::NotifyFailed)?;
+                }
+                self.state = WatcherState::Watching;
+                Ok(Some(result))
+            }
+            Err(err) => {
+                self.state = match self.state {
+                    WatcherState::First => {
+                        self.watcher
+                            .watch(&self.path_to_crate, RecursiveMode::Recursive)
+                            .map_err(SpirvWatcherError::NotifyFailed)?;
+                        WatcherState::FirstFailed
+                    }
+                    WatcherState::FirstFailed => WatcherState::FirstFailed,
+                    WatcherState::Watching => WatcherState::Watching,
+                };
+                Err(err)
+            }
         }
     }
 
-    fn watch_leaf_deps(&mut self, metadata_file: &Path) {
-        leaf_deps(metadata_file, |it| {
-            let path = it.to_path().unwrap();
-            if self.watched_paths.insert(path.to_owned()) {
-                self.watcher
-                    .watch(it.to_path().unwrap(), RecursiveMode::NonRecursive)
-                    .expect("Cargo dependencies are valid files");
+    fn watch_leaf_deps(&mut self, watch_path: &Path) -> Result<(), SpirvBuilderError> {
+        leaf_deps(watch_path, |artifact| {
+            let path = artifact.to_path().unwrap();
+            if self.watched_paths.insert(path.to_owned())
+                && let Err(err) = self.watcher.watch(path, RecursiveMode::NonRecursive)
+            {
+                log::error!("files of cargo dependencies are not valid: {err}");
             }
         })
-        .expect("Could read dependencies file");
+        .map_err(SpirvBuilderError::MetadataFileMissing)
     }
+}
 
-    fn recv(&self) {
-        self.rx.recv().expect("Watcher still alive");
-    }
+#[derive(Debug, thiserror::Error)]
+pub enum SpirvWatcherError {
+    #[error("watching within build scripts will prevent build completion")]
+    WatchWithPrintMetadata,
+    #[error("could not notify for changes: {0}")]
+    NotifyFailed(#[from] notify::Error),
+    #[error("watcher died and closed channel")]
+    WatcherDied,
 }

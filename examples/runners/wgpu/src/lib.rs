@@ -177,18 +177,26 @@ fn maybe_watch(
         }
 
         if let Some(mut f) = on_watch {
-            builder
-                .watch(move |compile_result, accept| {
-                    let modules = handle_compile_result(compile_result);
-                    if let Some(accept) = accept {
-                        accept.submit(modules);
-                    } else {
-                        f(modules);
+            let mut watcher = builder.watch().unwrap();
+            let first_compile = loop {
+                match watcher.recv() {
+                    Ok(e) => break e,
+                    Err(e) => println!("Shader compiling failed: {e}"),
+                }
+            };
+
+            let shader_modules = handle_compile_result(first_compile);
+            std::thread::spawn(move || {
+                loop {
+                    match watcher.recv() {
+                        Ok(compile_result) => {
+                            f(handle_compile_result(compile_result));
+                        }
+                        Err(e) => println!("Shader compiling failed: {e}"),
                     }
-                })
-                .expect("Configuration is correct for watching")
-                .first_compile
-                .unwrap()
+                }
+            });
+            shader_modules
         } else {
             handle_compile_result(builder.build().unwrap())
         }
