@@ -26,6 +26,7 @@ use rustc_codegen_ssa::traits::{
 };
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::CodegenFnAttrs;
+use rustc_middle::ty::layout::LayoutOf;
 use rustc_middle::ty::{self, AtomicOrdering, Ty};
 use rustc_span::Span;
 use rustc_target::callconv::FnAbi;
@@ -1721,30 +1722,15 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
     fn checked_binop(
         &mut self,
         oop: OverflowOp,
-        ty: Ty<'_>,
+        ty: Ty<'tcx>,
         lhs: Self::Value,
         rhs: Self::Value,
     ) -> (Self::Value, Self::Value) {
-        // adopted partially from https://github.com/ziglang/zig/blob/master/src/codegen/spirv.zig
-        let is_add = match oop {
-            OverflowOp::Add => true,
-            OverflowOp::Sub => false,
-            OverflowOp::Mul => {
-                // NOTE(eddyb) this needs to be `undef`, not `false`/`true`, because
-                // we don't want the user's boolean constants to keep the zombie alive.
-                let bool = SpirvType::Bool.def(self.span(), self);
-                let overflowed = self.undef(bool);
-
-                let result = (self.mul(lhs, rhs), overflowed);
-                self.zombie(result.1.def(self), "checked mul is not supported yet");
-                return result;
-            }
-        };
         let signed = match ty.kind() {
             ty::Int(_) => true,
             ty::Uint(_) => false,
-            other => self.fatal(format!(
-                "Unexpected {} type: {other:#?}",
+            _ => self.fatal(format!(
+                "unexpected {} type: {ty}",
                 match oop {
                     OverflowOp::Add => "checked add",
                     OverflowOp::Sub => "checked sub",
@@ -1753,13 +1739,17 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             )),
         };
 
-        let result = if is_add {
-            self.add(lhs, rhs)
-        } else {
-            self.sub(lhs, rhs)
-        };
+        // HACK(eddyb) SPIR-V `OpIAddCarry`/`OpISubBorrow` are specifically for
+        // unsigned overflow, so signed overflow still needs this custom logic.
+        if signed && let OverflowOp::Add | OverflowOp::Sub = oop {
+            let result = match oop {
+                OverflowOp::Add => self.add(lhs, rhs),
+                OverflowOp::Sub => self.sub(lhs, rhs),
+                OverflowOp::Mul => unreachable!(),
+            };
 
-        let overflowed = if signed {
+            // adopted partially from https://github.com/ziglang/zig/blob/master/src/codegen/spirv.zig
+
             // when adding, overflow could happen if
             // - rhs is positive and result < lhs; or
             // - rhs is negative and result > lhs
@@ -1771,30 +1761,80 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
             // this is equivalent to (rhs < 0) == (result < lhs)
             let rhs_lt_zero = self.icmp(IntPredicate::IntSLT, rhs, self.constant_int(rhs.ty, 0));
             let result_gt_lhs = self.icmp(
-                if is_add {
-                    IntPredicate::IntSGT
-                } else {
-                    IntPredicate::IntSLT
+                match oop {
+                    OverflowOp::Add => IntPredicate::IntSGT,
+                    OverflowOp::Sub => IntPredicate::IntSLT,
+                    OverflowOp::Mul => unreachable!(),
                 },
                 result,
                 lhs,
             );
-            self.icmp(IntPredicate::IntEQ, rhs_lt_zero, result_gt_lhs)
-        } else {
-            // for unsigned addition, overflow occurred if the result is less than any of the operands.
-            // for subtraction, overflow occurred if the result is greater.
-            self.icmp(
-                if is_add {
-                    IntPredicate::IntULT
-                } else {
-                    IntPredicate::IntUGT
-                },
-                result,
-                lhs,
-            )
+
+            let overflowed = self.icmp(IntPredicate::IntEQ, rhs_lt_zero, result_gt_lhs);
+
+            return (result, overflowed);
+        }
+
+        let result_type = self.layout_of(ty).spirv_type(self.span(), self);
+        let pair_result_type = {
+            let field_types = [result_type, result_type];
+            let (field_offsets, size, align) = crate::abi::auto_struct_layout(self, &field_types);
+            SpirvType::Adt {
+                def_id: None,
+                size,
+                align,
+                field_types: &field_types,
+                field_offsets: &field_offsets,
+                field_names: None,
+            }
+            .def(self.span(), self)
         };
 
-        (result, overflowed)
+        let lhs = lhs.def(self);
+        let rhs = rhs.def(self);
+        let pair_result = match oop {
+            OverflowOp::Add => self
+                .emit()
+                .i_add_carry(pair_result_type, None, lhs, rhs)
+                .unwrap(),
+            OverflowOp::Sub => self
+                .emit()
+                .i_sub_borrow(pair_result_type, None, lhs, rhs)
+                .unwrap(),
+            OverflowOp::Mul => {
+                if signed {
+                    self.emit()
+                        .s_mul_extended(pair_result_type, None, lhs, rhs)
+                        .unwrap()
+                } else {
+                    self.emit()
+                        .u_mul_extended(pair_result_type, None, lhs, rhs)
+                        .unwrap()
+                }
+            }
+        }
+        .with_type(pair_result_type);
+        let result_lo = self.extract_value(pair_result, 0);
+        let result_hi = self.extract_value(pair_result, 1);
+
+        // HACK(eddyb) SPIR-V lacks any `(T, T) -> (T, bool)` instructions,
+        // so instead `result_hi` is compared with the value expected in the
+        // non-overflow case (`0`, or `-1` for negative signed multiply result).
+        let expected_nonoverflowing_hi = match (oop, signed) {
+            (OverflowOp::Add | OverflowOp::Sub, _) | (OverflowOp::Mul, false) => {
+                self.const_uint(result_type, 0)
+            }
+            (OverflowOp::Mul, true) => {
+                // HACK(eddyb) `(x: iN) >> (N - 1)` will spread the sign bit
+                // across all `N` bits of `iN`, and should be equivalent to
+                // `if x < 0 { -1 } else { 0 }`, without needing compare+select).
+                let result_width = u32::try_from(self.int_width(result_type)).unwrap();
+                self.ashr(result_lo, self.const_u32(result_width - 1))
+            }
+        };
+        let overflowed = self.icmp(IntPredicate::IntNE, result_hi, expected_nonoverflowing_hi);
+
+        (result_lo, overflowed)
     }
 
     // rustc has the concept of an immediate vs. memory type - bools are compiled to LLVM bools as
