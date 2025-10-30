@@ -559,15 +559,13 @@ pub fn link(
             after_pass(Some(module), Some(timer));
         }
 
-        if !opts.spirt_passes.is_empty() {
-            // FIXME(eddyb) why does this focus on functions, it could just be module passes??
-            spirt_passes::run_func_passes(
-                module,
-                &opts.spirt_passes,
-                |name, _module| before_pass(name),
-                |module, timer| after_pass(module, Some(timer)),
-            );
-        }
+        // FIXME(eddyb) why does this focus on functions, it could just be module passes??
+        spirt_passes::run_func_passes(
+            module,
+            &opts.spirt_passes,
+            |name, _module| before_pass(name),
+            |module, timer| after_pass(module, Some(timer)),
+        );
 
         {
             let timer = before_pass("spirt_passes::explicit_layout::erase_when_invalid");
