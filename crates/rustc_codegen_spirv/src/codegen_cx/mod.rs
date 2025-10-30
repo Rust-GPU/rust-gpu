@@ -331,16 +331,19 @@ pub struct CodegenArgs {
 
 impl CodegenArgs {
     pub fn from_session(sess: &Session) -> Self {
-        match CodegenArgs::parse(&sess.opts.cg.llvm_args) {
+        match Self::parse(sess, &sess.opts.cg.llvm_args) {
             Ok(ok) => ok,
+
+            // FIXME(eddyb) this should mention `RUSTGPU_CODEGEN_ARGS`, just
+            // like how `RUSTGPU_CODEGEN_ARGS=--help` is already special-cased.
             Err(err) => sess
                 .dcx()
                 .fatal(format!("Unable to parse llvm-args: {err}")),
         }
     }
 
-    // FIXME(eddyb) `structopt` would come a long way to making this nicer.
-    pub fn parse(args: &[String]) -> Result<Self, rustc_session::getopts::Fail> {
+    // FIXME(eddyb) switch all of this over to `clap`.
+    pub fn parse(sess: &Session, args: &[String]) -> Result<Self, rustc_session::getopts::Fail> {
         use rustc_session::getopts;
 
         // FIXME(eddyb) figure out what casing ("Foo bar" vs "foo bar") to use
@@ -457,6 +460,12 @@ impl CodegenArgs {
                 "",
                 "dump-spirt-passes",
                 "dump the SPIR-T module across passes, to a (pair of) file(s) in DIR",
+                "DIR",
+            );
+            opts.optopt(
+                "",
+                "dump-spirt",
+                "dump the final SPIR-T module, to a (pair of) file(s) in DIR",
                 "DIR",
             );
             opts.optflag(
@@ -627,7 +636,19 @@ impl CodegenArgs {
             dump_pre_inline: matches_opt_dump_dir_path("dump-pre-inline"),
             dump_post_inline: matches_opt_dump_dir_path("dump-post-inline"),
             dump_post_split: matches_opt_dump_dir_path("dump-post-split"),
-            dump_spirt_passes: matches_opt_dump_dir_path("dump-spirt-passes"),
+            dump_spirt: match ["dump-spirt-passes", "dump-spirt"].map(matches_opt_dump_dir_path) {
+                [Some(dump_spirt_passes), dump_spirt] => {
+                    if dump_spirt.is_some() {
+                        sess.dcx()
+                            .warn("`--dump-spirt` ignored in favor of `--dump-spirt-passes`");
+                    }
+                    Some((dump_spirt_passes, crate::linker::DumpSpirtMode::AllPasses))
+                }
+                [None, Some(dump_spirt)] => {
+                    Some((dump_spirt, crate::linker::DumpSpirtMode::OnlyFinal))
+                }
+                [None, None] => None,
+            },
             spirt_strip_custom_debuginfo_from_dumps: matches
                 .opt_present("spirt-strip-custom-debuginfo-from-dumps"),
             spirt_keep_debug_sources_in_dumps: matches
