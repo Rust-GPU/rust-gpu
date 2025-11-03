@@ -42,6 +42,7 @@ pub struct Options {
     pub early_report_zombies: bool,
     pub infer_storage_classes: bool,
     pub structurize: bool,
+    pub preserve_bindings: bool,
     pub spirt_passes: Vec<String>,
 
     pub abort_strategy: Option<String>,
@@ -653,7 +654,7 @@ pub fn link(
 
     {
         let _timer = sess.timer("link_gather_all_interface_vars_from_uses");
-        entry_interface::gather_all_interface_vars_from_uses(&mut output);
+        entry_interface::gather_all_interface_vars_from_uses(&mut output, opts.preserve_bindings);
     }
 
     if opts.spirv_metadata == SpirvMetadata::NameVariables {

@@ -279,7 +279,7 @@ fn post_link_single_module(
     let opt_options = spirv_tools::opt::Options {
         validator_options: Some(val_options.clone()),
         max_id_bound: None,
-        preserve_bindings: cg_args.preserve_bindings,
+        preserve_bindings: cg_args.linker_opts.preserve_bindings,
         preserve_spec_constants: false,
     };
 

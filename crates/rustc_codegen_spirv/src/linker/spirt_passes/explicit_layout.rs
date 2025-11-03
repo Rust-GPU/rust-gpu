@@ -41,12 +41,7 @@ pub fn erase_when_invalid(module: &mut Module) {
         parent_block: None,
     };
 
-    // Seed the queues starting from the module exports.
-    for exportee in module.exports.values_mut() {
-        exportee
-            .inner_transform_with(&mut eraser)
-            .apply_to(exportee);
-    }
+    eraser.in_place_transform_module(module);
 
     // Process the queues until they're all empty.
     while !eraser.global_var_queue.is_empty() || !eraser.func_queue.is_empty() {
