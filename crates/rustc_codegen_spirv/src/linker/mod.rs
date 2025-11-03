@@ -42,6 +42,7 @@ pub struct Options {
     pub early_report_zombies: bool,
     pub infer_storage_classes: bool,
     pub structurize: bool,
+    pub preserve_bindings: bool,
     pub spirt_passes: Vec<String>,
 
     pub abort_strategy: Option<String>,

@@ -313,9 +313,6 @@ pub struct CodegenArgs {
 
     pub run_spirv_opt: bool,
 
-    // spirv-opt flags
-    pub preserve_bindings: bool,
-
     /// All options pertinent to `rustc_codegen_spirv::linker` specifically.
     //
     // FIXME(eddyb) should these be handled as `-C linker-args="..."` instead?
@@ -576,8 +573,6 @@ impl CodegenArgs {
         // FIXME(eddyb) clean up this `no-` "negation prefix" situation.
         let run_spirv_opt = !matches.opt_present("no-spirv-opt");
 
-        let preserve_bindings = matches.opt_present("preserve-bindings");
-
         let relax_block_layout = if relax_block_layout { Some(true) } else { None };
 
         let spirv_metadata = match spirv_metadata.as_deref() {
@@ -607,6 +602,7 @@ impl CodegenArgs {
             early_report_zombies: !matches.opt_present("no-early-report-zombies"),
             infer_storage_classes: !matches.opt_present("no-infer-storage-classes"),
             structurize: !matches.opt_present("no-structurize"),
+            preserve_bindings: matches.opt_present("preserve-bindings"),
             spirt_passes: matches
                 .opt_strs("spirt-passes")
                 .iter()
@@ -655,8 +651,6 @@ impl CodegenArgs {
             skip_block_layout,
 
             run_spirv_opt,
-
-            preserve_bindings,
 
             linker_opts,
 
