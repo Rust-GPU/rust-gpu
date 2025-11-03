@@ -1,0 +1,30 @@
+OpCapability Shader
+OpMemoryModel Logical Simple
+OpEntryPoint GLCompute %1 "compute" %2 %3
+OpExecutionMode %1 LocalSize 1 1 1
+OpName %3 "local_invocation_id"
+OpDecorate %5 Block
+OpMemberDecorate %5 0 Offset 0
+OpDecorate %2 Binding 0
+OpDecorate %2 DescriptorSet 0
+OpDecorate %3 BuiltIn LocalInvocationId
+%6 = OpTypeInt 32 0
+%5 = OpTypeStruct %6
+%7 = OpTypePointer StorageBuffer %5
+%8 = OpTypeVector %6 3
+%9 = OpTypePointer Input %8
+%10 = OpTypeVoid
+%11 = OpTypeFunction %10
+%12 = OpTypePointer StorageBuffer %6
+%2 = OpVariable  %7  StorageBuffer
+%13 = OpConstant  %6  0
+%3 = OpVariable  %9  Input
+%1 = OpFunction  %10  None %11
+%14 = OpLabel
+%15 = OpInBoundsAccessChain  %12  %2 %13
+%16 = OpLoad  %8  %3
+%17 = OpCompositeExtract  %6  %16 0
+OpStore %15 %17
+OpNoLine
+OpReturn
+OpFunctionEnd
