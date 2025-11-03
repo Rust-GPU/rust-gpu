@@ -13,7 +13,7 @@ type Id = Word;
 ///
 /// This is needed for (arguably-not-interface) `Private` in SPIR-V >= 1.4,
 /// but also any interface variables declared "out of band" (e.g. via `asm!`).
-pub fn gather_all_interface_vars_from_uses(module: &mut Module) {
+pub fn gather_all_interface_vars_from_uses(module: &mut Module, preserve_bindings: bool) {
     // Start by mapping out which global (i.e. `OpVariable` or constants) IDs
     // can be used to access any interface-relevant `OpVariable`s
     // (where "interface-relevant" depends on the version, see comments below).
@@ -87,12 +87,15 @@ pub fn gather_all_interface_vars_from_uses(module: &mut Module) {
             entry.operands[1].unwrap_id_ref()
         );
 
-        // NOTE(eddyb) it might be better to remove any unused vars, or warn
-        // the user about their presence, but for now this keeps them around.
-        let mut interface_vars: IndexSet<Id> = entry.operands[3..]
-            .iter()
-            .map(|operand| operand.unwrap_id_ref())
-            .collect();
+        // `preserve_bindings` retains any declared entry point vars, otherwise we may DCE them
+        let mut interface_vars: IndexSet<Id> = if preserve_bindings {
+            entry.operands[3..]
+                .iter()
+                .map(|operand| operand.unwrap_id_ref())
+                .collect()
+        } else {
+            IndexSet::default()
+        };
 
         interface_vars.extend(&used_vars_per_fn_idx[entry_func_idx]);
 
