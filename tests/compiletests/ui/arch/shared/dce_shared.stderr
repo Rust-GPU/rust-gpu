@@ -1,0 +1,49 @@
+OpCapability Shader
+OpMemoryModel Logical Simple
+OpEntryPoint GLCompute %1 "main" %2 %3 %4 %5 %6
+OpExecutionMode %1 LocalSize 2 1 1
+OpName %2 "input"
+OpName %3 "output"
+OpName %6 "inv_id"
+OpName %4 "used_shared"
+OpName %5 "dce_shared"
+OpDecorate %9 Block
+OpMemberDecorate %9 0 Offset 0
+OpDecorate %10 ArrayStride 4
+OpDecorate %2 NonWritable
+OpDecorate %2 Binding 0
+OpDecorate %2 DescriptorSet 0
+OpDecorate %3 Binding 1
+OpDecorate %3 DescriptorSet 0
+OpDecorate %6 BuiltIn LocalInvocationIndex
+%11 = OpTypeFloat 32
+%9 = OpTypeStruct %11
+%12 = OpTypePointer StorageBuffer %9
+%13 = OpTypePointer Workgroup %11
+%14 = OpTypeInt 32 1
+%15 = OpTypeInt 32 0
+%16 = OpConstant  %15  2
+%10 = OpTypeArray %14 %16
+%17 = OpTypePointer Workgroup %10
+%18 = OpTypeVector %15 3
+%19 = OpTypePointer Input %18
+%20 = OpTypeVoid
+%21 = OpTypeFunction %20
+%22 = OpTypePointer StorageBuffer %11
+%2 = OpVariable  %12  StorageBuffer
+%23 = OpConstant  %15  0
+%3 = OpVariable  %12  StorageBuffer
+%6 = OpVariable  %19  Input
+%24 = OpTypeBool
+%4 = OpVariable  %13  Workgroup
+%25 = OpConstant  %15  264
+%26 = OpConstant  %15  1
+%5 = OpVariable  %17  Workgroup
+error: error:0:0 - [VUID-StandaloneSpirv-None-10684] Invalid explicit layout decorations on type for operand '17[%_ptr_Workgroup__arr_int_uint_2]'
+         %dce_shared = OpVariable %_ptr_Workgroup__arr_int_uint_2 Workgroup
+   |
+   = note: spirv-val failed
+   = note: module `$TEST_BUILD_DIR/arch/shared/dce_shared.vulkan1.2`
+
+error: aborting due to 1 previous error
+
