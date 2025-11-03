@@ -1,4 +1,8 @@
 // build-pass
+// ignore-spv1.0
+// ignore-spv1.1
+// ignore-spv1.2
+// ignore-vulkan1.0
 
 use core::ops::{Add, AddAssign};
 use spirv_std::arch::workgroup_memory_barrier_with_group_sync;
