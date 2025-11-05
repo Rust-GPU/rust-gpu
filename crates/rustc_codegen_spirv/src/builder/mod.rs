@@ -182,7 +182,7 @@ impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
         _direct_offset: Size,
         // NB: each offset implies a deref (i.e. they're steps in a pointer chain).
         _indirect_offsets: &[Size],
-        _fragment: Option<Range<Size>>,
+        _fragment: &Option<Range<Size>>,
     ) {
         todo!()
     }
@@ -200,6 +200,21 @@ impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
     }
 
     fn set_var_name(&mut self, _value: Self::Value, _name: &str) {
+        todo!()
+    }
+
+    fn dbg_var_value(
+        &mut self,
+        _dbg_var: Self::DIVariable,
+        _dbg_loc: Self::DILocation,
+        _value: Self::Value,
+        _direct_offset: Size,
+        // NB: each offset implies a deref (i.e. they're steps in a pointer chain).
+        _indirect_offsets: &[Size],
+        // Byte range in the `dbg_var` covered by this fragment,
+        // if this is a fragment of a composite `DIVariable`.
+        _fragment: &Option<Range<Size>>,
+    ) {
         todo!()
     }
 }
