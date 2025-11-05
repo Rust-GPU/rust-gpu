@@ -304,9 +304,6 @@ impl ThinBufferMethods for SpirvModuleBuffer {
     fn data(&self) -> &[u8] {
         self.as_bytes()
     }
-    // fn thin_link_data(&self) -> &[u8] {
-    //     &[]
-    // }
 }
 
 impl SpirvCodegenBackend {
@@ -344,7 +341,6 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         _exported_symbols_for_lto: &[String],
         _each_linked_rlib_for_lto: &[PathBuf],
         _modules: Vec<FatLtoInput<Self>>,
-        // _diff_fncs: Vec<AutoDiffItem>,
     ) -> ModuleCodegen<Self::Module> {
         assert!(
             cgcx.lto == rustc_session::config::Lto::Fat,

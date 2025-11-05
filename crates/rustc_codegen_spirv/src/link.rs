@@ -494,6 +494,7 @@ fn add_upstream_native_libraries(
 // FIXME(eddyb) upstream has code like this already, maybe we can reuse most of it?
 // (see `compiler/rustc_codegen_ssa/src/back/link.rs`)
 fn relevant_lib(_sess: &Session, _lib: &NativeLib) -> bool {
+    // FIXME: `lib.cfg` is not of the expected type any more.
     true
     // match lib.cfg {
     //     Some(ref cfg) => rustc_attr_parsing::cfg_matches(cfg, sess, CRATE_NODE_ID, None),
