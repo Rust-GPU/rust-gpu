@@ -18,9 +18,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2025-08-04"
+channel = "nightly-2025-11-02"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = f34ba774c78ea32b7c40598b8ad23e75cdac42a6"#;
+# commit_hash = bd3ac0330018c23b111bbee176f32c377be7b319"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -197,6 +197,13 @@ mod win {",
         for link_path in raw_dylib::",
                 );
             }
+            src = src.replace(
+                "
+        for (link_path, as_needed) in raw_dylib::",
+                "
+        #[cfg(any())]
+        for (link_path, as_needed) in raw_dylib::",
+            );
             if relative_path == Path::new("src/back/metadata.rs") {
                 // HACK(eddyb) remove `object` dependency.
                 src = src.replace(
