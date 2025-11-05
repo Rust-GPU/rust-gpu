@@ -506,8 +506,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
                         // HACK(eddyb) these should never happen when using
                         // `read_scalar`, but better not outright crash.
-                        AllocError::ScalarSizeMismatch(_)
-                        | AllocError::OverwritePartialPointer(_) => {
+                        AllocError::ScalarSizeMismatch(_) => {
                             Err(format!("unrecognized `AllocError::{err:?}`"))
                         }
                     },

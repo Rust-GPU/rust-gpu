@@ -2792,6 +2792,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         _src_align: Align,
         size: Self::Value,
         flags: MemFlags,
+        _tt: Option<rustc_ast::expand::typetree::FncTree>,
     ) {
         if flags != MemFlags::empty() {
             self.err(format!(
@@ -2878,7 +2879,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         size: Self::Value,
         flags: MemFlags,
     ) {
-        self.memcpy(dst, dst_align, src, src_align, size, flags);
+        self.memcpy(dst, dst_align, src, src_align, size, flags, None);
     }
 
     fn memset(
@@ -3124,6 +3125,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         dst: Self::Value,
         src: Self::Value,
         order: AtomicOrdering,
+        _ret_ptr: bool,
     ) -> Self::Value {
         let ty = src.ty;
 
