@@ -11,10 +11,10 @@ use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
 use rustc_abi::Align;
 use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
-use rustc_hir::attrs::InlineAttr;
+use rustc_hir::attrs::{InlineAttr, Linkage};
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
-use rustc_middle::mir::mono::{Linkage, MonoItem, Visibility};
+use rustc_middle::mir::mono::{MonoItem, Visibility};
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
 use rustc_span::Span;
@@ -178,7 +178,7 @@ impl<'tcx> CodegenCx<'tcx> {
 
         // Check if this is a From trait implementation
         if let Some(impl_def_id) = self.tcx.impl_of_assoc(def_id)
-            && let Some(trait_ref) = self.tcx.impl_trait_ref(impl_def_id)
+            && let Some(trait_ref) = self.tcx.impl_opt_trait_ref(impl_def_id)
         {
             let trait_def_id = trait_ref.skip_binder().def_id;
 
