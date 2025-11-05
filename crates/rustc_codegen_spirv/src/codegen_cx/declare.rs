@@ -11,10 +11,10 @@ use itertools::Itertools;
 use rspirv::spirv::{FunctionControl, LinkageType, StorageClass, Word};
 use rustc_abi::Align;
 use rustc_codegen_ssa::traits::{PreDefineCodegenMethods, StaticCodegenMethods};
-use rustc_hir::attrs::InlineAttr;
+use rustc_hir::attrs::{InlineAttr, Linkage};
 use rustc_middle::bug;
 use rustc_middle::middle::codegen_fn_attrs::{CodegenFnAttrFlags, CodegenFnAttrs};
-use rustc_middle::mir::mono::{Linkage, MonoItem, Visibility};
+use rustc_middle::mir::mono::{MonoItem, Visibility};
 use rustc_middle::ty::layout::{FnAbiOf, LayoutOf};
 use rustc_middle::ty::{self, Instance, TypeVisitableExt, TypingEnv};
 use rustc_span::Span;
@@ -166,29 +166,38 @@ impl<'tcx> CodegenCx<'tcx> {
             }
         }
 
-        // Check if this is a From trait implementation
-        if let Some(impl_def_id) = self.tcx.impl_of_assoc(def_id)
-            && let Some(trait_ref) = self.tcx.impl_trait_ref(impl_def_id)
-        {
-            let trait_def_id = trait_ref.skip_binder().def_id;
+        // FIXME: This code ICEs
+        // // Check if this is a From trait implementation
+        // if let Some(impl_def_id) = self.tcx.impl_of_assoc(def_id)
+        //     && let Some(local_def_id) = def_id.as_local()
+        //     && self
+        //         .tcx
+        //         .hir_expect_item(local_def_id)
+        //         .expect_impl()
+        //         .of_trait
+        //         .is_some()
+        // // && let Some(trait_ref) = self.tcx.impl_trait_ref(impl_def_id)
+        // {
+        //     let trait_ref = self.tcx.impl_trait_ref(impl_def_id);
+        //     let trait_def_id = trait_ref.skip_binder().def_id;
 
-            // Check if this is the From trait.
-            let trait_path = self.tcx.def_path_str(trait_def_id);
-            if matches!(
-                trait_path.as_str(),
-                "core::convert::From" | "std::convert::From"
-            ) {
-                // Extract the source and target types from the trait substitutions
-                let trait_args = trait_ref.skip_binder().args;
-                if let (Some(target_ty), Some(source_ty)) =
-                    (trait_args.types().nth(0), trait_args.types().nth(1))
-                {
-                    self.from_trait_impls
-                        .borrow_mut()
-                        .insert(def_id, (source_ty, target_ty));
-                }
-            }
-        }
+        //     // Check if this is the From trait.
+        //     let trait_path = self.tcx.def_path_str(trait_def_id);
+        //     if matches!(
+        //         trait_path.as_str(),
+        //         "core::convert::From" | "std::convert::From"
+        //     ) {
+        //         // Extract the source and target types from the trait substitutions
+        //         let trait_args = trait_ref.skip_binder().args;
+        //         if let (Some(target_ty), Some(source_ty)) =
+        //             (trait_args.types().nth(0), trait_args.types().nth(1))
+        //         {
+        //             self.from_trait_impls
+        //                 .borrow_mut()
+        //                 .insert(def_id, (source_ty, target_ty));
+        //         }
+        //     }
+        // }
 
         if [
             self.tcx.lang_items().panic_fn(),
