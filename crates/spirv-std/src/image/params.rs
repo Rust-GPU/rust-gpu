@@ -1,5 +1,5 @@
 use super::{Arrayed, Dimensionality, ImageFormat};
-use crate::{integer::Integer, scalar::Scalar, vector::Vector, vector::VectorTruncateInto};
+use crate::{Integer, Scalar, Vector, VectorTruncateInto};
 
 /// Marker trait for arguments that accept single scalar values or vectors
 /// of scalars. Defines 2-, 3- and 4-component vector types based on the sample type.
@@ -20,73 +20,45 @@ pub trait SampleType<const FORMAT: u32, const COMPONENTS: u32>: Scalar {
 /// Helper macro to implement `SampleType` of various formats for various scalar types.
 macro_rules! sample_type_impls {
     ($($fmt:ident : $n:tt*$s:ty => ($v1:ty, $v2:ty, $v3:ty, $v4:ty)),+ $(,)?) => {
-        $(sample_type_impls!{@single_rule, $fmt : $n*$s => ($v1,$v2,$v3,$v4)})+
+        $(sample_type_impls! { @single_rule, $fmt : $n*$s => ($v1,$v2,$v3,$v4) })+
     };
     (@single_rule, $fmt:ident : n*$s:ty => ($v1:ty, $v2:ty, $v3:ty, $v4:ty)) => {
+        sample_type_impls! { @single_rule, $fmt: 1*$s => ($v1, $v2, $v3, $v4) }
+        sample_type_impls! { @single_rule, $fmt: 2*$s => ($v1, $v2, $v3, $v4) }
+        sample_type_impls! { @single_rule, $fmt: 3*$s => ($v1, $v2, $v3, $v4) }
+        sample_type_impls! { @single_rule, $fmt: 4*$s => ($v1, $v2, $v3, $v4) }
+    };
+    (@single_rule, $fmt:ident : 1*$s:ty => ($v1:ty, $v2:ty, $v3:ty, $v4:ty)) => {
         impl SampleType<{ ImageFormat::$fmt as u32 }, 1> for $s {
             type SampleResult = $v1;
             type Vec2 = $v2;
             type Vec3 = $v3;
             type Vec4 = $v4;
         }
+    };
+    (@single_rule, $fmt:ident : 2*$s:ty => ($v1:ty, $v2:ty, $v3:ty, $v4:ty)) => {
         impl SampleType<{ ImageFormat::$fmt as u32 }, 2> for $s {
             type SampleResult = $v2;
             type Vec2 = $v2;
             type Vec3 = $v3;
             type Vec4 = $v4;
         }
+    };
+    (@single_rule, $fmt:ident : 3*$s:ty => ($v1:ty, $v2:ty, $v3:ty, $v4:ty)) => {
         impl SampleType<{ ImageFormat::$fmt as u32 }, 3> for $s {
             type SampleResult = $v3;
             type Vec2 = $v2;
             type Vec3 = $v3;
             type Vec4 = $v4;
         }
+    };
+    (@single_rule, $fmt:ident : 4*$s:ty => ($v1:ty, $v2:ty, $v3:ty, $v4:ty)) => {
         impl SampleType<{ ImageFormat::$fmt as u32 }, 4> for $s {
             type SampleResult = $v4;
             type Vec2 = $v2;
             type Vec3 = $v3;
             type Vec4 = $v4;
         }
-    };
-    (@single_rule, $($fmt:ident : 1*$s:ty => ($v1:ty, $v2:ty, $v3:ty, $v4:ty)),+ $(,)?) => {
-        $(
-            impl SampleType<{ ImageFormat::$fmt as u32 }, 1> for $s {
-                type SampleResult = $v1;
-                type Vec2 = $v2;
-                type Vec3 = $v3;
-                type Vec4 = $v4;
-            }
-        )+
-    };
-    (@single_rule, $($fmt:ident : 2*$s:ty => ($v1:ty, $v2:ty, $v3:ty, $v4:ty)),+ $(,)?) => {
-        $(
-            impl SampleType<{ ImageFormat::$fmt as u32 }, 2> for $s {
-                type SampleResult = $v2;
-                type Vec2 = $v2;
-                type Vec3 = $v3;
-                type Vec4 = $v4;
-            }
-        )+
-    };
-    (@single_rule, $($fmt:ident : 3*$s:ty => ($v1:ty, $v2:ty, $v3:ty, $v4:ty)),+ $(,)?) => {
-        $(
-            impl SampleType<{ ImageFormat::$fmt as u32 }, 3> for $s {
-                type SampleResult = $v3;
-                type Vec2 = $v2;
-                type Vec3 = $v3;
-                type Vec4 = $v4;
-            }
-        )+
-    };
-    (@single_rule, $($fmt:ident : 4*$s:ty => ($v1:ty, $v2:ty, $v3:ty, $v4:ty)),+ $(,)?) => {
-        $(
-            impl SampleType<{ ImageFormat::$fmt as u32 }, 4> for $s {
-                type SampleResult = $v4;
-                type Vec2 = $v2;
-                type Vec3 = $v3;
-                type Vec4 = $v4;
-            }
-        )+
     };
 }
 
