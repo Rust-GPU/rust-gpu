@@ -33,7 +33,7 @@ fn get_rustc_commit_hash() -> Result<String, Box<dyn Error>> {
     rustc_output("-vV")?
         .lines()
         .find_map(|l| l.strip_prefix("commit-hash: "))
-        .map(|s| s.to_string())
+        .map(ToString::to_string)
         .ok_or_else(|| "`commit-hash` not found in `rustc -vV` output".into())
 }
 
@@ -41,7 +41,7 @@ fn get_required_commit_hash() -> Result<String, Box<dyn Error>> {
     REQUIRED_RUST_TOOLCHAIN
         .lines()
         .find_map(|l| l.strip_prefix("# commit_hash = "))
-        .map(|s| s.to_string())
+        .map(ToString::to_string)
         .ok_or_else(|| "`commit_hash` not found in `rust-toolchain.toml`".into())
 }
 
@@ -77,11 +77,11 @@ fn check_toolchain_version() -> Result<(), Box<dyn Error>> {
                 .unwrap_or_default();
 
             return Err(format!(
-                r#"error: wrong toolchain detected (found commit hash `{current_hash}`, expected `{required_hash}`).
+                "error: wrong toolchain detected (found commit hash `{current_hash}`, expected `{required_hash}`).
 Make sure your `rust-toolchain.toml` file contains the following:
 -------------
 {stripped_toolchain}
--------------"#
+-------------"
             ).into());
         }
     }
