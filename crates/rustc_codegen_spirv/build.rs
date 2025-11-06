@@ -8,7 +8,6 @@ use std::collections::VecDeque;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
-use std::string::ToString;
 use std::{env, fs, mem};
 
 /// Current `rust-toolchain.toml` file
@@ -34,7 +33,7 @@ fn get_rustc_commit_hash() -> Result<String, Box<dyn Error>> {
     rustc_output("-vV")?
         .lines()
         .find_map(|l| l.strip_prefix("commit-hash: "))
-        .map(ToString::to_string)
+        .map(|s| s.to_string())
         .ok_or_else(|| "`commit-hash` not found in `rustc -vV` output".into())
 }
 
@@ -42,7 +41,7 @@ fn get_required_commit_hash() -> Result<String, Box<dyn Error>> {
     REQUIRED_RUST_TOOLCHAIN
         .lines()
         .find_map(|l| l.strip_prefix("# commit_hash = "))
-        .map(ToString::to_string)
+        .map(|s| s.to_string())
         .ok_or_else(|| "`commit_hash` not found in `rust-toolchain.toml`".into())
 }
 
@@ -73,16 +72,16 @@ fn check_toolchain_version() -> Result<(), Box<dyn Error>> {
             let stripped_toolchain = REQUIRED_RUST_TOOLCHAIN
                 .lines()
                 .filter(|l| !l.trim().is_empty() && !l.starts_with("# "))
-                .map(ToString::to_string)
+                .map(|l| l.to_string())
                 .reduce(|a, b| a + "\n" + &b)
                 .unwrap_or_default();
 
             return Err(format!(
-                "error: wrong toolchain detected (found commit hash `{current_hash}`, expected `{required_hash}`).
+                r#"error: wrong toolchain detected (found commit hash `{current_hash}`, expected `{required_hash}`).
 Make sure your `rust-toolchain.toml` file contains the following:
 -------------
 {stripped_toolchain}
--------------"
+-------------"#
             ).into());
         }
     }

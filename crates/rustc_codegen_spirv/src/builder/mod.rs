@@ -1,7 +1,6 @@
 mod builder_methods;
 mod byte_addressable_buffer;
 mod ext_inst;
-mod format_args_decompiler;
 mod intrinsics;
 pub mod libm_intrinsics;
 mod spirv_asm;

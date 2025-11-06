@@ -164,7 +164,7 @@ fn link_with_linker_opts(
                 let source_map = sess.psess.clone_source_map();
 
                 let emitter = rustc_errors::emitter::HumanEmitter::new(
-                    rustc_errors::AutoStream::new(Box::new(buf), rustc_errors::ColorChoice::Never),
+                    Box::new(buf),
                     rustc_driver_impl::default_translator(),
                 )
                 .sm(Some(source_map.clone()));

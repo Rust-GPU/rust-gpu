@@ -1,21 +1,24 @@
 //! Image types
 
-pub use self::params::{ImageCoordinate, ImageCoordinateSubpassData, ImageSizeQuery, SampleType};
 #[cfg(target_arch = "spirv")]
-use crate::VectorTruncateInto;
-pub use crate::macros::Image;
-use crate::{Float, Integer, Sampler, Vector};
+use crate::vector::VectorTruncateInto;
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
-use sample_with::{NoneTy, SampleParams, SomeTy};
-pub use spirv_std_types::image_params::{
-    AccessQualifier, Arrayed, Dimensionality, ImageDepth, ImageFormat, Multisampled, Sampled,
-};
 
 mod params;
 
 /// Contains extra image operands
 pub mod sample_with;
+
+pub use self::params::{ImageCoordinate, ImageCoordinateSubpassData, ImageSizeQuery, SampleType};
+pub use crate::macros::Image;
+pub use spirv_std_types::image_params::{
+    AccessQualifier, Arrayed, Dimensionality, ImageDepth, ImageFormat, Multisampled, Sampled,
+};
+
+use sample_with::{NoneTy, SampleParams, SomeTy};
+
+use crate::{Sampler, float::Float, integer::Integer, vector::Vector};
 
 /// Re-export of primitive types to ensure the `Image` proc macro always points
 /// to the right type.
