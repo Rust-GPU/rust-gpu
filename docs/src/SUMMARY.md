@@ -19,7 +19,6 @@
   - ["Codegen args" (flags/options) supported by the Rust-GPU codegen backend](./codegen-args.md)
   - [Publishing Rust-GPU on crates.io](./publishing-rust-gpu.md)
 - [Platform Support](./platform-support.md)
-- [Writing Shader Crates](./writing-shader-crates.md)
 - [Features]()
   - [Attribute syntax](./attributes.md)
   - [Inline Assembly](./inline-asm.md)
