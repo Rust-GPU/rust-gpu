@@ -173,7 +173,7 @@ impl<'a, 'tcx> CoverageInfoBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     fn add_coverage(&mut self, _instance: Instance<'tcx>, _kind: &CoverageKind) {}
 }
 
-impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
+impl<'a, 'tcx> DebugInfoBuilderMethods<'_> for Builder<'a, 'tcx> {
     fn dbg_var_addr(
         &mut self,
         _dbg_var: Self::DIVariable,

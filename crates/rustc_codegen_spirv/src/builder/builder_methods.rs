@@ -1920,6 +1920,7 @@ impl<'a, 'tcx> BuilderMethods<'a, 'tcx> for Builder<'a, 'tcx> {
         OperandRef {
             val,
             layout: place.layout,
+            move_annotation: None,
         }
     }
 
