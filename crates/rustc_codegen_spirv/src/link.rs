@@ -30,6 +30,7 @@ use std::io::{BufWriter, Read};
 use std::iter;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::str::FromStr;
 
 pub fn link(
     sess: &Session,
@@ -334,8 +335,10 @@ fn do_spirv_opt(
         error,
         opt::{self, Optimizer},
     };
+    use spirv_tools::TargetEnv;
 
-    let mut optimizer = opt::create(sess.target.options.env.parse().ok());
+    let target_env = TargetEnv::from_str(sess.target.options.env.desc()).ok();
+    let mut optimizer = opt::create(target_env);
 
     match sess.opts.optimize {
         OptLevel::No => {}
@@ -395,9 +398,10 @@ fn do_spirv_val(
     filename: &Path,
     options: spirv_tools::val::ValidatorOptions,
 ) {
-    use spirv_tools::val::{self, Validator};
+    use spirv_tools::{TargetEnv, val::{self, Validator}};
 
-    let validator = val::create(sess.target.options.env.parse().ok());
+    let target_env = TargetEnv::from_str(sess.target.options.env.desc()).ok();
+    let validator = val::create(target_env);
 
     if let Err(e) = validator.validate(spv_binary, Some(options)) {
         let mut err = sess.dcx().struct_err(e.to_string());
