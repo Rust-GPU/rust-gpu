@@ -124,7 +124,7 @@ impl<'tcx> LayoutTypeCodegenMethods<'tcx> for CodegenCx<'tcx> {
 
 impl<'tcx> CodegenCx<'tcx> {
     pub fn type_usize(&self) -> Word {
-        let ptr_size = self.tcx.data_layout.pointer_size.bits() as u32;
+        let ptr_size = self.tcx.data_layout.pointer_size().bits() as u32;
         SpirvType::Integer(ptr_size, false).def(DUMMY_SP, self)
     }
 }
@@ -146,7 +146,7 @@ impl BaseTypeCodegenMethods for CodegenCx<'_> {
         SpirvType::Integer(128, false).def(DUMMY_SP, self)
     }
     fn type_isize(&self) -> Self::Type {
-        let ptr_size = self.tcx.data_layout.pointer_size.bits() as u32;
+        let ptr_size = self.tcx.data_layout.pointer_size().bits() as u32;
         SpirvType::Integer(ptr_size, false).def(DUMMY_SP, self)
     }
 

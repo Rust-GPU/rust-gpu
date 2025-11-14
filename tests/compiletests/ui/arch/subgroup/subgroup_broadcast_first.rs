@@ -1,7 +1,6 @@
 // build-pass
 // compile-flags: -C target-feature=+GroupNonUniform,+GroupNonUniformBallot,+ext:SPV_KHR_vulkan_memory_model
 // compile-flags: -C llvm-args=--disassemble-fn=subgroup_broadcast_first::subgroup_broadcast_first
-// normalize-stderr-test "OpLine .*\n" -> ""
 
 use glam::Vec3;
 use spirv_std::spirv;

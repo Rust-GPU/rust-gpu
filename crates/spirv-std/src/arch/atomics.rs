@@ -1,7 +1,11 @@
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 
-use crate::{Float, Integer, Number, SignedInteger, UnsignedInteger};
+use crate::{
+    float::Float,
+    integer::{Integer, SignedInteger, UnsignedInteger},
+    number::Number,
+};
 
 /// Atomically load through `ptr` using the given `SEMANTICS`. All subparts of
 /// the value that is loaded are read atomically with respect to all other

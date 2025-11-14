@@ -1,9 +1,28 @@
 //! Traits related to vectors.
 
-use crate::sealed::Sealed;
-use crate::{Scalar, ScalarOrVector};
+use crate::scalar::Scalar;
 use core::num::NonZeroUsize;
 use glam::{Vec3Swizzles, Vec4Swizzles};
+
+/// Abstract trait representing either a vector or a scalar type.
+///
+/// # Safety
+/// Your type must also implement [`Vector`] or [`Scalar`], see their safety sections as well.
+pub unsafe trait VectorOrScalar: Copy + Default + Send + Sync + 'static {
+    /// Either the scalar component type of the vector or the scalar itself.
+    type Scalar: Scalar;
+
+    /// The dimension of the vector, or 1 if it is a scalar
+    const DIM: NonZeroUsize;
+}
+
+/// replace with `NonZeroUsize::new(n).unwrap()` once `unwrap()` is const stabilized
+pub(crate) const fn create_dim(n: usize) -> NonZeroUsize {
+    match NonZeroUsize::new(n) {
+        None => panic!("dim must not be 0"),
+        Some(n) => n,
+    }
+}
 
 /// Abstract trait representing a SPIR-V vector type.
 ///
@@ -43,46 +62,28 @@ use glam::{Vec3Swizzles, Vec4Swizzles};
 ///
 ///
 /// # Safety
-/// * Must only be implemented on types that the spirv codegen emits as valid `OpTypeVector`. This includes all structs
-///   marked with `#[rust_gpu::vector::v1]`, like [`glam`]'s non-SIMD "scalar" vector types.
-/// * `VectorOrScalar::DIM == N`, since const equality is behind rustc feature `associated_const_equality`
-// Note(@firestar99) I would like to have these two generics be associated types instead. Doesn't make much sense for
-// a vector type to implement this interface multiple times with different Scalar types or N, after all.
-// While it's possible with `T: Scalar`, it's not with `const N: usize`, since some impl blocks in `image::params` need
-// to be conditional on a specific N value. And you can only express that with const generics, but not with associated
-// constants due to lack of const generics support in rustc.
-pub unsafe trait Vector<T: Scalar, const N: usize>: ScalarOrVector<Scalar = T> {}
+/// Must only be implemented on types that the spirv codegen emits as valid `OpTypeVector`. This includes all structs
+/// marked with `#[rust_gpu::vector::v1]`, like [`glam`]'s non-SIMD "scalar" vector types.
+pub unsafe trait Vector<T: Scalar, const N: usize>: VectorOrScalar<Scalar = T> {}
 
 macro_rules! impl_vector {
-    ($($ty:ty: [$scalar:ty; $n:literal];)+) => {
-        $(
-            impl Sealed for $ty {}
-            unsafe impl ScalarOrVector for $ty {
+    ($($scalar:ty: $($vec:ty => $dim:literal),+;)+) => {
+        $($(
+            unsafe impl VectorOrScalar for $vec {
                 type Scalar = $scalar;
-                const N: NonZeroUsize = NonZeroUsize::new($n).unwrap();
+                const DIM: NonZeroUsize = create_dim($dim);
             }
-            unsafe impl Vector<$scalar, $n> for $ty {}
-        )+
+            unsafe impl Vector<$scalar, $dim> for $vec {}
+        )+)+
     };
 }
 
 impl_vector! {
-    glam::Vec2: [f32; 2];
-    glam::Vec3: [f32; 3];
-    glam::Vec3A: [f32; 3];
-    glam::Vec4: [f32; 4];
-    glam::DVec2: [f64; 2];
-    glam::DVec3: [f64; 3];
-    glam::DVec4: [f64; 4];
-    glam::UVec2: [u32; 2];
-    glam::UVec3: [u32; 3];
-    glam::UVec4: [u32; 4];
-    glam::IVec2: [i32; 2];
-    glam::IVec3: [i32; 3];
-    glam::IVec4: [i32; 4];
-    glam::BVec2: [bool; 2];
-    glam::BVec3: [bool; 3];
-    glam::BVec4: [bool; 4];
+    f32: glam::Vec2 => 2, glam::Vec3 => 3, glam::Vec3A => 3, glam::Vec4 => 4;
+    f64: glam::DVec2 => 2, glam::DVec3 => 3, glam::DVec4 => 4;
+    u32: glam::UVec2 => 2, glam::UVec3 => 3, glam::UVec4 => 4;
+    i32: glam::IVec2 => 2, glam::IVec3 => 3, glam::IVec4 => 4;
+    bool: glam::BVec2 => 2, glam::BVec3 => 3, glam::BVec4 => 4;
 }
 
 /// Trait that implements slicing of a vector into a scalar or vector of lower dimensions, by

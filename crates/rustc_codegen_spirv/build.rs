@@ -8,7 +8,6 @@ use std::collections::VecDeque;
 use std::error::Error;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
-use std::string::ToString;
 use std::{env, fs, mem};
 
 /// Current `rust-toolchain.toml` file
@@ -19,9 +18,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2025-06-30"
+channel = "nightly-2025-11-11"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = 35f6036521777bdc0dcea1f980be4c192962a168"#;
+# commit_hash = 2286e5d224b3413484cf4f398a9f078487e7b49d"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -73,7 +72,7 @@ fn check_toolchain_version() -> Result<(), Box<dyn Error>> {
             let stripped_toolchain = REQUIRED_RUST_TOOLCHAIN
                 .lines()
                 .filter(|l| !l.trim().is_empty() && !l.starts_with("# "))
-                .map(ToString::to_string)
+                .map(|l| l.to_string())
                 .reduce(|a, b| a + "\n" + &b)
                 .unwrap_or_default();
 
@@ -135,6 +134,10 @@ fn generate_pqp_cg_ssa() -> Result<(), Box<dyn Error>> {
             }
 
             let in_path = entry.path();
+
+            if in_path.ends_with(".DS_Store") {
+                continue;
+            }
             let out_path = out_dir.join(entry.file_name());
 
             let mut src = fs::read_to_string(in_path)?;
@@ -198,6 +201,13 @@ mod win {",
         for link_path in raw_dylib::",
                 );
             }
+            src = src.replace(
+                "
+        for (link_path, as_needed) in raw_dylib::",
+                "
+        #[cfg(any())]
+        for (link_path, as_needed) in raw_dylib::",
+            );
             if relative_path == Path::new("src/back/metadata.rs") {
                 // HACK(eddyb) remove `object` dependency.
                 src = src.replace(

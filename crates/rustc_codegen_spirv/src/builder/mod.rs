@@ -1,7 +1,6 @@
 mod builder_methods;
 mod byte_addressable_buffer;
 mod ext_inst;
-mod format_args_decompiler;
 mod intrinsics;
 pub mod libm_intrinsics;
 mod spirv_asm;
@@ -174,7 +173,7 @@ impl<'a, 'tcx> CoverageInfoBuilderMethods<'tcx> for Builder<'a, 'tcx> {
     fn add_coverage(&mut self, _instance: Instance<'tcx>, _kind: &CoverageKind) {}
 }
 
-impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
+impl<'a, 'tcx> DebugInfoBuilderMethods<'_> for Builder<'a, 'tcx> {
     fn dbg_var_addr(
         &mut self,
         _dbg_var: Self::DIVariable,
@@ -183,7 +182,7 @@ impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
         _direct_offset: Size,
         // NB: each offset implies a deref (i.e. they're steps in a pointer chain).
         _indirect_offsets: &[Size],
-        _fragment: Option<Range<Size>>,
+        _fragment: &Option<Range<Size>>,
     ) {
         todo!()
     }
@@ -201,6 +200,21 @@ impl<'a, 'tcx> DebugInfoBuilderMethods for Builder<'a, 'tcx> {
     }
 
     fn set_var_name(&mut self, _value: Self::Value, _name: &str) {
+        todo!()
+    }
+
+    fn dbg_var_value(
+        &mut self,
+        _dbg_var: Self::DIVariable,
+        _dbg_loc: Self::DILocation,
+        _value: Self::Value,
+        _direct_offset: Size,
+        // NB: each offset implies a deref (i.e. they're steps in a pointer chain).
+        _indirect_offsets: &[Size],
+        // Byte range in the `dbg_var` covered by this fragment,
+        // if this is a fragment of a composite `DIVariable`.
+        _fragment: &Option<Range<Size>>,
+    ) {
         todo!()
     }
 }

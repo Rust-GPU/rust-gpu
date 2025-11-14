@@ -4,6 +4,24 @@
 use core::arch::asm;
 use glam::{Vec2, Vec4};
 
+/// Abstract trait representing a SPIR-V floating point type.
+///
+/// # Safety
+/// Implementing this trait on non-primitive-float types breaks assumptions of other unsafe code,
+/// and should not be done.
+pub unsafe trait Float: num_traits::Float + crate::scalar::Scalar + Default {
+    /// Width of the float, in bits.
+    const WIDTH: usize;
+}
+
+unsafe impl Float for f32 {
+    const WIDTH: usize = 32;
+}
+
+unsafe impl Float for f64 {
+    const WIDTH: usize = 64;
+}
+
 /// Converts two f32 values (floats) into two f16 values (halfs). The result is a u32, with the low
 /// 16 bits being the first f16, and the high 16 bits being the second f16.
 #[spirv_std_macros::gpu_only]

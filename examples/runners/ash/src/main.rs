@@ -124,6 +124,17 @@ pub struct Options {
 }
 
 pub fn main() {
+    // Hack: spirv_builder builds into a custom directory if running under cargo, to not
+    // deadlock, and the default target directory if not. However, packages like `proc-macro2`
+    // have different configurations when being built here vs. when building
+    // rustc_codegen_spirv normally, so we *want* to build into a separate target directory, to
+    // not have to rebuild half the crate graph every time we run. So, pretend we're running
+    // under cargo by setting these environment variables.
+    unsafe {
+        std::env::set_var("OUT_DIR", env!("OUT_DIR"));
+        std::env::set_var("PROFILE", env!("PROFILE"));
+    }
+
     let options = Options::parse();
     let (vert_data, frag_data) = compile_shaders(&options.shader);
 
