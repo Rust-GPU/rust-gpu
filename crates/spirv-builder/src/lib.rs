@@ -92,7 +92,7 @@ pub use rustc_codegen_spirv_types::Capability;
 pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
 
 #[cfg(feature = "watch")]
-pub use self::watch::Watch;
+pub use self::watch::{SpirvWatcher, SpirvWatcherError};
 
 #[cfg(feature = "include-target-specs")]
 pub use rustc_codegen_spirv_target_specs::TARGET_SPEC_DIR_PATH;
@@ -125,14 +125,15 @@ pub enum SpirvBuilderError {
     BuildFailed,
     #[error("multi-module build cannot be used with print_metadata = MetadataPrintout::Full")]
     MultiModuleWithPrintMetadata,
-    #[error("watching within build scripts will prevent build completion")]
-    WatchWithPrintMetadata,
     #[error("multi-module metadata file missing")]
     MetadataFileMissing(#[from] std::io::Error),
     #[error("unable to parse multi-module metadata file")]
     MetadataFileMalformed(#[from] serde_json::Error),
     #[error("cargo metadata error")]
     CargoMetadata(#[from] cargo_metadata::Error),
+    #[cfg(feature = "watch")]
+    #[error(transparent)]
+    WatchFailed(#[from] SpirvWatcherError),
 }
 
 const SPIRV_TARGET_PREFIX: &str = "spirv-unknown-";
@@ -752,10 +753,14 @@ fn dylib_path_envvar() -> &'static str {
     }
 }
 fn dylib_path() -> Vec<PathBuf> {
-    match env::var_os(dylib_path_envvar()) {
+    let mut dylibs = match env::var_os(dylib_path_envvar()) {
         Some(var) => env::split_paths(&var).collect(),
         None => Vec::new(),
+    };
+    if let Ok(dir) = env::current_dir() {
+        dylibs.push(dir);
     }
+    dylibs
 }
 
 fn find_rustc_codegen_spirv() -> Result<PathBuf, SpirvBuilderError> {
@@ -765,7 +770,8 @@ fn find_rustc_codegen_spirv() -> Result<PathBuf, SpirvBuilderError> {
             env::consts::DLL_PREFIX,
             env::consts::DLL_SUFFIX
         );
-        for mut path in dylib_path() {
+        let dylib_paths = dylib_path();
+        for mut path in dylib_paths {
             path.push(&filename);
             if path.is_file() {
                 return Ok(path);
