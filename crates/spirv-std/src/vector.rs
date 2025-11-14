@@ -7,9 +7,10 @@ use glam::{Vec3Swizzles, Vec4Swizzles};
 
 /// Abstract trait representing a SPIR-V vector type.
 ///
-/// To implement this trait, your struct must be marked with:
+/// To derive this trait, mark your struct with:
 /// ```no_run
-/// #[cfg_attr(target_arch = "spirv", rust_gpu::vector::v1)]
+/// #[spirv_std::spirv_vector]
+/// # #[derive(Copy, Clone, Default)]
 /// # struct Bla(f32, f32);
 /// ```
 ///
@@ -32,8 +33,8 @@ use glam::{Vec3Swizzles, Vec4Swizzles};
 ///
 /// # Example
 /// ```no_run
+/// #[spirv_std::spirv_vector]
 /// #[derive(Copy, Clone, Default)]
-/// #[cfg_attr(target_arch = "spirv", rust_gpu::vector::v1)]
 /// struct MyColor {
 ///     r: f32,
 ///     b: f32,
@@ -44,7 +45,8 @@ use glam::{Vec3Swizzles, Vec4Swizzles};
 ///
 /// # Safety
 /// * Must only be implemented on types that the spirv codegen emits as valid `OpTypeVector`. This includes all structs
-///   marked with `#[rust_gpu::vector::v1]`, like [`glam`]'s non-SIMD "scalar" vector types.
+///   marked with `#[rust_gpu::vector::v1]`, which `#[spirv_std::spirv_vector]` expands into or [`glam`]'s non-SIMD
+/// "scalar" vector types use directly.
 /// * `VectorOrScalar::DIM == N`, since const equality is behind rustc feature `associated_const_equality`
 // Note(@firestar99) I would like to have these two generics be associated types instead. Doesn't make much sense for
 // a vector type to implement this interface multiple times with different Scalar types or N, after all.
