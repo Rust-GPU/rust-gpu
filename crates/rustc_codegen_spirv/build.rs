@@ -18,9 +18,9 @@ use std::{env, fs, mem};
 /// `cargo publish`. We need to figure out a way to do this properly, but let's hardcode it for now :/
 //const REQUIRED_RUST_TOOLCHAIN: &str = include_str!("../../rust-toolchain.toml");
 const REQUIRED_RUST_TOOLCHAIN: &str = r#"[toolchain]
-channel = "nightly-2025-11-02"
+channel = "nightly-2025-11-11"
 components = ["rust-src", "rustc-dev", "llvm-tools"]
-# commit_hash = bd3ac0330018c23b111bbee176f32c377be7b319"#;
+# commit_hash = 2286e5d224b3413484cf4f398a9f078487e7b49d"#;
 
 fn rustc_output(arg: &str) -> Result<String, Box<dyn Error>> {
     let rustc = env::var("RUSTC").unwrap_or_else(|_| "rustc".into());
@@ -134,6 +134,10 @@ fn generate_pqp_cg_ssa() -> Result<(), Box<dyn Error>> {
             }
 
             let in_path = entry.path();
+
+            if in_path.ends_with(".DS_Store") {
+                continue;
+            }
             let out_path = out_dir.join(entry.file_name());
 
             let mut src = fs::read_to_string(in_path)?;
