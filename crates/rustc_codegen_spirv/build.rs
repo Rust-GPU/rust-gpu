@@ -135,6 +135,10 @@ fn generate_pqp_cg_ssa() -> Result<(), Box<dyn Error>> {
             }
 
             let in_path = entry.path();
+
+            if in_path.ends_with(".DS_Store") {
+                continue;
+            }
             let out_path = out_dir.join(entry.file_name());
 
             let mut src = fs::read_to_string(in_path)?;
