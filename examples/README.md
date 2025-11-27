@@ -47,6 +47,7 @@ supported.
     on WGPU+wasm.)
 
 - ash runner:
+  - MacOS: requires MoltenVK (or the Vulkan SDK) to be installed
   - `cargo run --release -p example-runner-ash` runs the sky shader. Use the up and
     down arrows to adjust the sun's intensity. Use F5 to recompile the shader
     code (but note that the image won't redraw afterwards unless the intensity is
