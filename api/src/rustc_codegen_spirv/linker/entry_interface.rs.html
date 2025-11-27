@@ -13,7 +13,7 @@
 <a href=#13 id=13 data-nosnippet>13</a>///
 <a href=#14 id=14 data-nosnippet>14</a>/// This is needed for (arguably-not-interface) `Private` in SPIR-V &gt;= 1.4,
 <a href=#15 id=15 data-nosnippet>15</a>/// but also any interface variables declared "out of band" (e.g. via `asm!`).
-<a href=#16 id=16 data-nosnippet>16</a></span><span class="kw">pub fn </span>gather_all_interface_vars_from_uses(module: <span class="kw-2">&amp;mut </span>Module) {
+<a href=#16 id=16 data-nosnippet>16</a></span><span class="kw">pub fn </span>gather_all_interface_vars_from_uses(module: <span class="kw-2">&amp;mut </span>Module, preserve_bindings: bool) {
 <a href=#17 id=17 data-nosnippet>17</a>    <span class="comment">// Start by mapping out which global (i.e. `OpVariable` or constants) IDs
 <a href=#18 id=18 data-nosnippet>18</a>    // can be used to access any interface-relevant `OpVariable`s
 <a href=#19 id=19 data-nosnippet>19</a>    // (where "interface-relevant" depends on the version, see comments below).
@@ -87,18 +87,21 @@
 <a href=#87 id=87 data-nosnippet>87</a>            entry.operands[<span class="number">1</span>].unwrap_id_ref()
 <a href=#88 id=88 data-nosnippet>88</a>        );
 <a href=#89 id=89 data-nosnippet>89</a>
-<a href=#90 id=90 data-nosnippet>90</a>        <span class="comment">// NOTE(eddyb) it might be better to remove any unused vars, or warn
-<a href=#91 id=91 data-nosnippet>91</a>        // the user about their presence, but for now this keeps them around.
-<a href=#92 id=92 data-nosnippet>92</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>interface_vars: IndexSet&lt;Id&gt; = entry.operands[<span class="number">3</span>..]
-<a href=#93 id=93 data-nosnippet>93</a>            .iter()
-<a href=#94 id=94 data-nosnippet>94</a>            .map(|operand| operand.unwrap_id_ref())
-<a href=#95 id=95 data-nosnippet>95</a>            .collect();
-<a href=#96 id=96 data-nosnippet>96</a>
-<a href=#97 id=97 data-nosnippet>97</a>        interface_vars.extend(<span class="kw-2">&amp;</span>used_vars_per_fn_idx[entry_func_idx]);
-<a href=#98 id=98 data-nosnippet>98</a>
-<a href=#99 id=99 data-nosnippet>99</a>        entry.operands.truncate(<span class="number">3</span>);
-<a href=#100 id=100 data-nosnippet>100</a>        entry
-<a href=#101 id=101 data-nosnippet>101</a>            .operands
-<a href=#102 id=102 data-nosnippet>102</a>            .extend(interface_vars.iter().map(|<span class="kw-2">&amp;</span>id| Operand::IdRef(id)));
-<a href=#103 id=103 data-nosnippet>103</a>    }
-<a href=#104 id=104 data-nosnippet>104</a>}</code></pre></div></section></main></body></html>
+<a href=#90 id=90 data-nosnippet>90</a>        <span class="comment">// `preserve_bindings` retains any declared entry point vars, otherwise we may DCE them
+<a href=#91 id=91 data-nosnippet>91</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>interface_vars: IndexSet&lt;Id&gt; = <span class="kw">if </span>preserve_bindings {
+<a href=#92 id=92 data-nosnippet>92</a>            entry.operands[<span class="number">3</span>..]
+<a href=#93 id=93 data-nosnippet>93</a>                .iter()
+<a href=#94 id=94 data-nosnippet>94</a>                .map(|operand| operand.unwrap_id_ref())
+<a href=#95 id=95 data-nosnippet>95</a>                .collect()
+<a href=#96 id=96 data-nosnippet>96</a>        } <span class="kw">else </span>{
+<a href=#97 id=97 data-nosnippet>97</a>            IndexSet::default()
+<a href=#98 id=98 data-nosnippet>98</a>        };
+<a href=#99 id=99 data-nosnippet>99</a>
+<a href=#100 id=100 data-nosnippet>100</a>        interface_vars.extend(<span class="kw-2">&amp;</span>used_vars_per_fn_idx[entry_func_idx]);
+<a href=#101 id=101 data-nosnippet>101</a>
+<a href=#102 id=102 data-nosnippet>102</a>        entry.operands.truncate(<span class="number">3</span>);
+<a href=#103 id=103 data-nosnippet>103</a>        entry
+<a href=#104 id=104 data-nosnippet>104</a>            .operands
+<a href=#105 id=105 data-nosnippet>105</a>            .extend(interface_vars.iter().map(|<span class="kw-2">&amp;</span>id| Operand::IdRef(id)));
+<a href=#106 id=106 data-nosnippet>106</a>    }
+<a href=#107 id=107 data-nosnippet>107</a>}</code></pre></div></section></main></body></html>
