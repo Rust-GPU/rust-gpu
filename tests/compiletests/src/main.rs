@@ -128,7 +128,6 @@ impl Runner {
                 "-Zunstable-options",
                 "-Zcrate-attr=no_std",
                 "-Zcrate-attr=feature(asm_experimental_arch)",
-                "-Zui-testing",
             ]
             .join(" ")
         }

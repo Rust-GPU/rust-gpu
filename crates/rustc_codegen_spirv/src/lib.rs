@@ -1,5 +1,4 @@
 // HACK(eddyb) start of `rustc_codegen_ssa` crate-level attributes (see `build.rs`).
-#![allow(internal_features)]
 #![allow(rustc::diagnostic_outside_of_impl)]
 #![allow(rustc::untranslatable_diagnostic)]
 #![feature(assert_matches)]
@@ -7,7 +6,6 @@
 #![feature(file_buffered)]
 #![feature(if_let_guard)]
 #![feature(negative_impls)]
-#![feature(rustdoc_internals)]
 #![feature(string_from_utf8_lossy_owned)]
 #![feature(trait_alias)]
 #![feature(try_blocks)]
@@ -141,7 +139,7 @@ mod target_feature;
 
 use builder::Builder;
 use codegen_cx::CodegenCx;
-use maybe_pqp_cg_ssa::back::lto::{LtoModuleCodegen, SerializedModule, ThinModule};
+use maybe_pqp_cg_ssa::back::lto::{SerializedModule, ThinModule};
 use maybe_pqp_cg_ssa::back::write::{
     CodegenContext, FatLtoInput, ModuleConfig, OngoingCodegen, TargetMachineFactoryConfig,
 };
@@ -153,10 +151,9 @@ use maybe_pqp_cg_ssa::traits::{
 };
 use maybe_pqp_cg_ssa::{CodegenResults, CompiledModule, ModuleCodegen, ModuleKind, TargetConfig};
 use rspirv::binary::Assemble;
-use rustc_ast::expand::allocator::AllocatorKind;
-use rustc_ast::expand::autodiff_attrs::AutoDiffItem;
+use rustc_ast::expand::allocator::AllocatorMethod;
 use rustc_data_structures::fx::FxIndexMap;
-use rustc_errors::{DiagCtxtHandle, FatalError};
+use rustc_errors::DiagCtxtHandle;
 use rustc_metadata::EncodedMetadata;
 use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
 use rustc_middle::mir::mono::{MonoItem, MonoItemData};
@@ -170,7 +167,7 @@ use std::any::Any;
 use std::fs;
 use std::io::Cursor;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use tracing::{error, warn};
 
@@ -283,6 +280,10 @@ impl CodegenBackend for SpirvCodegenBackend {
         );
         drop(timer);
     }
+
+    fn name(&self) -> &'static str {
+        "SpirvCodegenBackend"
+    }
 }
 
 struct SpirvModuleBuffer(Vec<u32>);
@@ -301,16 +302,13 @@ impl ThinBufferMethods for SpirvModuleBuffer {
     fn data(&self) -> &[u8] {
         self.as_bytes()
     }
-    fn thin_link_data(&self) -> &[u8] {
-        &[]
-    }
 }
 
 impl SpirvCodegenBackend {
     fn optimize_common(
         _cgcx: &CodegenContext<Self>,
         module: &mut ModuleCodegen<<Self as WriteBackendMethods>::Module>,
-    ) -> Result<(), FatalError> {
+    ) -> () {
         // Apply DCE ("dead code elimination") to modules before ever serializing
         // them as `.spv` files (technically, `.rcgu.o` files inside `.rlib`s),
         // that will later get linked (potentially many times, esp. if this is
@@ -320,7 +318,7 @@ impl SpirvCodegenBackend {
 
         // FIXME(eddyb) run as many optimization passes as possible, not just DCE.
 
-        Ok(())
+        ()
     }
 }
 
@@ -333,32 +331,18 @@ impl WriteBackendMethods for SpirvCodegenBackend {
     type ThinBuffer = SpirvModuleBuffer;
 
     // FIXME(eddyb) reuse the "merge" stage of `crate::linker` for this, or even
-    // delegate to `run_fat_lto` (although `-Zcombine-cgu` is much more niche).
-    fn run_link(
-        cgcx: &CodegenContext<Self>,
-        diag_handler: DiagCtxtHandle<'_>,
-        _modules: Vec<ModuleCodegen<Self::Module>>,
-    ) -> Result<ModuleCodegen<Self::Module>, FatalError> {
-        assert!(
-            cgcx.opts.unstable_opts.combine_cgu,
-            "`run_link` (for `WorkItemResult::NeedsLink`) should \
-             only be invoked due to `-Zcombine-cgu`"
-        );
-        diag_handler.fatal("Rust-GPU does not support `-Zcombine-cgu`")
-    }
-
-    // FIXME(eddyb) reuse the "merge" stage of `crate::linker` for this, or even
     // consider setting `requires_lto = true` in the target specs and moving the
     // entirety of `crate::linker` into this stage (lacking diagnostics may be
     // an issue - it's surprising `CodegenBackend::link` has `Session` at all).
-    fn run_fat_lto(
+    fn run_and_optimize_fat_lto(
         cgcx: &CodegenContext<Self>,
+        _exported_symbols_for_lto: &[String],
+        _each_linked_rlib_for_lto: &[PathBuf],
         _modules: Vec<FatLtoInput<Self>>,
-        _cached_modules: Vec<(SerializedModule<Self::ModuleBuffer>, WorkProduct)>,
-    ) -> Result<LtoModuleCodegen<Self>, FatalError> {
+    ) -> ModuleCodegen<Self::Module> {
         assert!(
             cgcx.lto == rustc_session::config::Lto::Fat,
-            "`run_fat_lto` (for `WorkItemResult::NeedsFatLto`) should \
+            "`run_and_optimize_fat_lto` (for `WorkItemResult::NeedsFatLto`) should \
              only be invoked due to `-Clto` (or equivalent)"
         );
         unreachable!("Rust-GPU does not support fat LTO")
@@ -366,9 +350,12 @@ impl WriteBackendMethods for SpirvCodegenBackend {
 
     fn run_thin_lto(
         cgcx: &CodegenContext<Self>,
+        // FIXME(bjorn3): Limit LTO exports to these symbols
+        _exported_symbols_for_lto: &[String],
+        _each_linked_rlib_for_lto: &[PathBuf], // njn: ?
         modules: Vec<(String, Self::ThinBuffer)>,
         cached_modules: Vec<(SerializedModule<Self::ModuleBuffer>, WorkProduct)>,
-    ) -> Result<(Vec<LtoModuleCodegen<Self>>, Vec<WorkProduct>), FatalError> {
+    ) -> (Vec<ThinModule<Self>>, Vec<WorkProduct>) {
         link::run_thin(cgcx, modules, cached_modules)
     }
 
@@ -385,14 +372,14 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         _dcx: DiagCtxtHandle<'_>,
         module: &mut ModuleCodegen<Self::Module>,
         _config: &ModuleConfig,
-    ) -> Result<(), FatalError> {
+    ) -> () {
         Self::optimize_common(cgcx, module)
     }
 
     fn optimize_thin(
         cgcx: &CodegenContext<Self>,
         thin_module: ThinModule<Self>,
-    ) -> Result<ModuleCodegen<Self::Module>, FatalError> {
+    ) -> ModuleCodegen<Self::Module> {
         // FIXME(eddyb) the inefficiency of Module -> [u8] -> Module roundtrips
         // comes from upstream and it applies to `rustc_codegen_llvm` as well,
         // eventually it should be properly addressed (for `ThinLocal` at least).
@@ -405,23 +392,15 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             kind: ModuleKind::Regular,
             thin_lto_buffer: None,
         };
-        Self::optimize_common(cgcx, &mut module)?;
-        Ok(module)
-    }
-
-    fn optimize_fat(
-        cgcx: &CodegenContext<Self>,
-        module: &mut ModuleCodegen<Self::Module>,
-    ) -> Result<(), FatalError> {
-        Self::optimize_common(cgcx, module)
+        Self::optimize_common(cgcx, &mut module);
+        module
     }
 
     fn codegen(
         cgcx: &CodegenContext<Self>,
-        _diag_handler: DiagCtxtHandle<'_>,
         module: ModuleCodegen<Self::Module>,
         _config: &ModuleConfig,
-    ) -> Result<CompiledModule, FatalError> {
+    ) -> CompiledModule {
         let kind = module.kind;
         let (name, module_buffer) = Self::serialize_module(module);
 
@@ -432,7 +411,7 @@ impl WriteBackendMethods for SpirvCodegenBackend {
         );
         fs::write(&path, module_buffer.as_bytes()).unwrap();
 
-        Ok(CompiledModule {
+        CompiledModule {
             name,
             kind,
             object: Some(path),
@@ -441,13 +420,10 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             assembly: None,
             llvm_ir: None,
             links_from_incr_cache: vec![],
-        })
+        }
     }
 
-    fn prepare_thin(
-        module: ModuleCodegen<Self::Module>,
-        _want_summary: bool,
-    ) -> (String, Self::ThinBuffer) {
+    fn prepare_thin(module: ModuleCodegen<Self::Module>) -> (String, Self::ThinBuffer) {
         Self::serialize_module(module)
     }
 
@@ -457,25 +433,10 @@ impl WriteBackendMethods for SpirvCodegenBackend {
             SpirvModuleBuffer(module.module_llvm.assemble()),
         )
     }
-
-    fn autodiff(
-        _cgcx: &CodegenContext<Self>,
-        _module: &ModuleCodegen<Self::Module>,
-        _diff_fncs: Vec<AutoDiffItem>,
-        _config: &ModuleConfig,
-    ) -> Result<(), FatalError> {
-        unreachable!("Rust-GPU does not support autodiff")
-    }
 }
 
 impl ExtraBackendMethods for SpirvCodegenBackend {
-    fn codegen_allocator(
-        &self,
-        _: TyCtxt<'_>,
-        _: &str,
-        _: AllocatorKind,
-        _: AllocatorKind,
-    ) -> Self::Module {
+    fn codegen_allocator(&self, _: TyCtxt<'_>, _: &str, _: &[AllocatorMethod]) -> Self::Module {
         todo!()
     }
 
@@ -547,8 +508,7 @@ impl ExtraBackendMethods for SpirvCodegenBackend {
         _sess: &Session,
         _opt_level: config::OptLevel,
         _target_features: &[String],
-    ) -> Arc<(dyn Fn(TargetMachineFactoryConfig) -> Result<(), String> + Send + Sync + 'static)>
-    {
+    ) -> Arc<dyn Fn(TargetMachineFactoryConfig) -> Result<(), String> + Send + Sync + 'static> {
         Arc::new(|_| Ok(()))
     }
 }

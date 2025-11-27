@@ -1,5 +1,5 @@
 use rspirv::spirv::MemoryModel;
-use rustc_target::spec::{Cc, LinkerFlavor, PanicStrategy, Target, TargetOptions};
+use rustc_target::spec::{Arch, Cc, LinkerFlavor, PanicStrategy, Target, TargetOptions};
 use spirv_tools::TargetEnv;
 
 const ARCH: &str = "spirv";
@@ -61,10 +61,13 @@ impl SpirvTarget {
         o.emit_debug_gdb_scripts = false;
         o.linker_flavor = LinkerFlavor::Unix(Cc::No);
         o.panic_strategy = PanicStrategy::Abort;
-        o.env = self.env.to_string().into();
-        o.vendor = self.vendor.clone().into();
+         // FIXME: this is problematic I believe. Used to be a `Cow` but is now an enum.
+        o.env = rustc_target::spec::Env::Unspecified;
         // TODO: Investigate if main_needs_argc_argv is useful (for building exes)
         o.main_needs_argc_argv = false;
+
+        // FIXME: Should use `o.is_like_gpu = true;`? This changed in https://github.com/rust-lang/rust/pull/148760
+
         o
     }
 
@@ -74,7 +77,7 @@ impl SpirvTarget {
             metadata: Default::default(),
             pointer_width: 32,
             data_layout: "e-m:e-p:32:32:32-i64:64-n8:16:32:64".into(),
-            arch: ARCH.into(),
+            arch: Arch::Other(ARCH.into()),
             options: self.init_target_opts(),
         }
     }

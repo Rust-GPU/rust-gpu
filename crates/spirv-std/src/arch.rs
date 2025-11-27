@@ -4,8 +4,12 @@
 //! These functions will typically map to a single instruction, and will perform
 //! no additional safety checks beyond type-checking.
 #[cfg(target_arch = "spirv")]
-use crate::Integer;
-use crate::{Scalar, SignedInteger, UnsignedInteger, Vector};
+use crate::integer::Integer;
+use crate::{
+    integer::{SignedInteger, UnsignedInteger},
+    scalar::Scalar,
+    vector::Vector,
+};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 use glam::UVec2;

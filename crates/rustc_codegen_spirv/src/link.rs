@@ -6,13 +6,13 @@ use crate::{SpirvCodegenBackend, SpirvModuleBuffer, linker};
 use ar::{Archive, GnuBuilder, Header};
 use rspirv::binary::Assemble;
 use rspirv::dr::Module;
-use rustc_ast::CRATE_NODE_ID;
 use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
-use rustc_codegen_ssa::back::lto::{LtoModuleCodegen, SerializedModule, ThinModule, ThinShared};
+use rustc_codegen_ssa::back::lto::{SerializedModule, ThinModule, ThinShared};
 use rustc_codegen_ssa::back::write::CodegenContext;
 use rustc_codegen_ssa::{CodegenResults, NativeLib};
 use rustc_data_structures::fx::FxHashSet;
-use rustc_errors::{Diag, FatalError};
+use rustc_errors::Diag;
+use rustc_hir::attrs::NativeLibKind;
 use rustc_metadata::{EncodedMetadata, fs::METADATA_FILENAME};
 use rustc_middle::bug;
 use rustc_middle::dep_graph::WorkProduct;
@@ -22,7 +22,6 @@ use rustc_session::config::{
     CrateType, DebugInfo, Lto, OptLevel, OutFileName, OutputFilenames, OutputType,
 };
 use rustc_session::output::{check_file_is_writeable, invalid_output_for_target, out_filename};
-use rustc_session::utils::NativeLibKind;
 use rustc_span::Symbol;
 use std::collections::BTreeMap;
 use std::ffi::{CString, OsStr};
@@ -31,6 +30,7 @@ use std::io::{BufWriter, Read};
 use std::iter;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::str::FromStr;
 
 pub fn link(
     sess: &Session,
@@ -335,8 +335,10 @@ fn do_spirv_opt(
         error,
         opt::{self, Optimizer},
     };
+    use spirv_tools::TargetEnv;
 
-    let mut optimizer = opt::create(sess.target.options.env.parse().ok());
+    let target_env = TargetEnv::from_str(sess.target.options.env.desc()).ok();
+    let mut optimizer = opt::create(target_env);
 
     match sess.opts.optimize {
         OptLevel::No => {}
@@ -396,9 +398,10 @@ fn do_spirv_val(
     filename: &Path,
     options: spirv_tools::val::ValidatorOptions,
 ) {
-    use spirv_tools::val::{self, Validator};
+    use spirv_tools::{TargetEnv, val::{self, Validator}};
 
-    let validator = val::create(sess.target.options.env.parse().ok());
+    let target_env = TargetEnv::from_str(sess.target.options.env.desc()).ok();
+    let validator = val::create(target_env);
 
     if let Err(e) = validator.validate(spv_binary, Some(options)) {
         let mut err = sess.dcx().struct_err(e.to_string());
@@ -494,11 +497,13 @@ fn add_upstream_native_libraries(
 
 // FIXME(eddyb) upstream has code like this already, maybe we can reuse most of it?
 // (see `compiler/rustc_codegen_ssa/src/back/link.rs`)
-fn relevant_lib(sess: &Session, lib: &NativeLib) -> bool {
-    match lib.cfg {
-        Some(ref cfg) => rustc_attr_parsing::cfg_matches(cfg, sess, CRATE_NODE_ID, None),
-        None => true,
-    }
+fn relevant_lib(_sess: &Session, _lib: &NativeLib) -> bool {
+    // FIXME: `lib.cfg` is not of the expected type any more.
+    true
+    // match lib.cfg {
+    //     Some(ref cfg) => rustc_attr_parsing::cfg_matches(cfg, sess, CRATE_NODE_ID, None),
+    //     None => true,
+    // }
 }
 
 fn create_archive(files: &[&Path], metadata: &[u8], out_filename: &Path) {
@@ -634,7 +639,7 @@ pub(crate) fn run_thin(
     cgcx: &CodegenContext<SpirvCodegenBackend>,
     modules: Vec<(String, SpirvModuleBuffer)>,
     cached_modules: Vec<(SerializedModule<SpirvModuleBuffer>, WorkProduct)>,
-) -> Result<(Vec<LtoModuleCodegen<SpirvCodegenBackend>>, Vec<WorkProduct>), FatalError> {
+) -> (Vec<ThinModule<SpirvCodegenBackend>>, Vec<WorkProduct>) {
     if cgcx.opts.cg.linker_plugin_lto.enabled() {
         unreachable!("We should never reach this case if the LTO step is deferred to the linker");
     }
@@ -668,11 +673,11 @@ pub(crate) fn run_thin(
 
     let mut opt_jobs = vec![];
     for (module_index, _) in shared.module_names.iter().enumerate() {
-        opt_jobs.push(LtoModuleCodegen::Thin(ThinModule {
+        opt_jobs.push(ThinModule {
             shared: shared.clone(),
             idx: module_index,
-        }));
+        });
     }
 
-    Ok((opt_jobs, vec![]))
+    (opt_jobs, vec![])
 }

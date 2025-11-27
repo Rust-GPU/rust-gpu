@@ -7,12 +7,6 @@ use rustc_span::FileName;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
 
-// `termcolor` is needed because we cannot construct an Emitter after it was added in
-// https://github.com/rust-lang/rust/pull/114104. This can be removed when
-// https://github.com/rust-lang/rust/pull/115393 lands.
-// We need to construct an emitter as yet another workaround,
-// see https://github.com/rust-lang/rust/pull/102992.
-extern crate termcolor;
 use termcolor::{ColorSpec, WriteColor};
 
 // https://github.com/colin-kiegel/rust-pretty-assertions/issues/24
@@ -162,7 +156,6 @@ fn link_with_linker_opts(
                 rustc_interface::util::rustc_version_str().unwrap_or("unknown"),
                 Default::default(),
                 &rustc_driver_impl::USING_INTERNAL_FEATURES,
-                Default::default(),
             );
 
             // HACK(eddyb) inject `write_diags` into `sess`, to work around
@@ -171,7 +164,7 @@ fn link_with_linker_opts(
                 let source_map = sess.psess.clone_source_map();
 
                 let emitter = rustc_errors::emitter::HumanEmitter::new(
-                    Box::new(buf),
+                    rustc_errors::AutoStream::new(Box::new(buf), rustc_errors::ColorChoice::Never),
                     rustc_driver_impl::default_translator(),
                 )
                 .sm(Some(source_map.clone()));
@@ -191,6 +184,7 @@ fn link_with_linker_opts(
                     "".into(),
                     "".into(),
                     "".into(),
+                    None,
                     None,
                     None,
                     "".into(),
