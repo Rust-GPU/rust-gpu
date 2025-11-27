@@ -25,64 +25,64 @@ pub mod __private {
 }
 
 /// A 1d image used with a sampler.
-pub type Image1d = crate::Image!(1D, type=f32, sampled, __crate_root=crate);
+pub type Image1d = crate::Image!(1D, type=f32, sampled);
 /// A 2d image used with a sampler. This is pretty typical and probably what you want.
-pub type Image2d = crate::Image!(2D, type=f32, sampled, __crate_root=crate);
+pub type Image2d = crate::Image!(2D, type=f32, sampled);
 /// A 3d image used with a sampler.
-pub type Image3d = crate::Image!(3D, type=f32, sampled, __crate_root=crate);
+pub type Image3d = crate::Image!(3D, type=f32, sampled);
 /// A 1d image used with a sampler, containing unsigned integer data.
-pub type Image1dU = crate::Image!(1D, type=u32, sampled, __crate_root=crate);
+pub type Image1dU = crate::Image!(1D, type=u32, sampled);
 /// A 2d image used with a sampler, containing unsigned integer data.
-pub type Image2dU = crate::Image!(2D, type=u32, sampled, __crate_root=crate);
+pub type Image2dU = crate::Image!(2D, type=u32, sampled);
 /// A 3d image used with a sampler, containing unsigned integer data.
-pub type Image3dU = crate::Image!(3D, type=u32, sampled, __crate_root=crate);
+pub type Image3dU = crate::Image!(3D, type=u32, sampled);
 /// A 1d image used with a sampler, containing signed integer data.
-pub type Image1dI = crate::Image!(1D, type=i32, sampled, __crate_root=crate);
+pub type Image1dI = crate::Image!(1D, type=i32, sampled);
 /// A 2d image used with a sampler, containing signed integer data.
-pub type Image2dI = crate::Image!(2D, type=i32, sampled, __crate_root=crate);
+pub type Image2dI = crate::Image!(2D, type=i32, sampled);
 /// A 3d image used with a sampler, containing signed integer data.
-pub type Image3dI = crate::Image!(3D, type=i32, sampled, __crate_root=crate);
+pub type Image3dI = crate::Image!(3D, type=i32, sampled);
 
 /// An array of 1d images, used with a sampler.
-pub type Image1dArray = crate::Image!(1D, type=f32, sampled, arrayed, __crate_root=crate);
+pub type Image1dArray = crate::Image!(1D, type=f32, sampled, arrayed);
 /// An array of 2d images, used with a sampler.
-pub type Image2dArray = crate::Image!(2D, type=f32, sampled, arrayed, __crate_root=crate);
+pub type Image2dArray = crate::Image!(2D, type=f32, sampled, arrayed);
 /// An array of 3d images, used with a sampler.
-pub type Image3dArray = crate::Image!(3D, type=f32, sampled, arrayed, __crate_root=crate);
+pub type Image3dArray = crate::Image!(3D, type=f32, sampled, arrayed);
 /// An array of 1d images, used with a sampler, each containing unsigned integer data.
-pub type Image1dUArray = crate::Image!(1D, type=u32, sampled, arrayed, __crate_root=crate);
+pub type Image1dUArray = crate::Image!(1D, type=u32, sampled, arrayed);
 /// An array of 2d images, used with a sampler, each containing unsigned integer data.
-pub type Image2dUArray = crate::Image!(2D, type=u32, sampled, arrayed, __crate_root=crate);
+pub type Image2dUArray = crate::Image!(2D, type=u32, sampled, arrayed);
 /// An array of 3d images, used with a sampler, each containing unsigned integer data.
-pub type Image3dUArray = crate::Image!(3D, type=u32, sampled, arrayed, __crate_root=crate);
+pub type Image3dUArray = crate::Image!(3D, type=u32, sampled, arrayed);
 /// An array of 1d images, used with a sampler, each containing signed integer data.
-pub type Image1dIArray = crate::Image!(1D, type=i32, sampled, arrayed, __crate_root=crate);
+pub type Image1dIArray = crate::Image!(1D, type=i32, sampled, arrayed);
 /// An array of 2d images, used with a sampler, each containing signed integer data.
-pub type Image2dIArray = crate::Image!(2D, type=i32, sampled, arrayed, __crate_root=crate);
+pub type Image2dIArray = crate::Image!(2D, type=i32, sampled, arrayed);
 /// An array of 3d images, used with a sampler, each containing signed integer data.
-pub type Image3dIArray = crate::Image!(3D, type=i32, sampled, arrayed, __crate_root=crate);
+pub type Image3dIArray = crate::Image!(3D, type=i32, sampled, arrayed);
 
 /// A 1d storage image, directly accessed, without using a sampler.
-pub type StorageImage1d = crate::Image!(1D, type=f32, sampled=false, __crate_root=crate);
+pub type StorageImage1d = crate::Image!(1D, type=f32, sampled=false);
 /// A 2d storage image, directly accessed, without using a sampler.
-pub type StorageImage2d = crate::Image!(2D, type=f32, sampled=false, __crate_root=crate);
+pub type StorageImage2d = crate::Image!(2D, type=f32, sampled=false);
 /// A 3d storage image, directly accessed, without using a sampler.
-pub type StorageImage3d = crate::Image!(3D, type=f32, sampled=false, __crate_root=crate);
+pub type StorageImage3d = crate::Image!(3D, type=f32, sampled=false);
 /// A 1d storage image, directly accessed without a sampler, containing unsigned integer data.
-pub type StorageImage1dU = crate::Image!(1D, type=u32, sampled=false, __crate_root=crate);
+pub type StorageImage1dU = crate::Image!(1D, type=u32, sampled=false);
 /// A 2d storage image, directly accessed without a sampler, containing unsigned integer data.
-pub type StorageImage2dU = crate::Image!(2D, type=u32, sampled=false, __crate_root=crate);
+pub type StorageImage2dU = crate::Image!(2D, type=u32, sampled=false);
 /// A 3d storage image, directly accessed without a sampler, containing unsigned integer data.
-pub type StorageImage3dU = crate::Image!(3D, type=u32, sampled=false, __crate_root=crate);
+pub type StorageImage3dU = crate::Image!(3D, type=u32, sampled=false);
 /// A 1d storage image, directly accessed without a sampler, containing signed integer data.
-pub type StorageImage1dI = crate::Image!(1D, type=i32, sampled=false, __crate_root=crate);
+pub type StorageImage1dI = crate::Image!(1D, type=i32, sampled=false);
 /// A 2d storage image, directly accessed without a sampler, containing signed integer data.
-pub type StorageImage2dI = crate::Image!(2D, type=i32, sampled=false, __crate_root=crate);
+pub type StorageImage2dI = crate::Image!(2D, type=i32, sampled=false);
 /// A 3d storage image, directly accessed without a sampler, containing signed integer data.
-pub type StorageImage3dI = crate::Image!(3D, type=i32, sampled=false, __crate_root=crate);
+pub type StorageImage3dI = crate::Image!(3D, type=i32, sampled=false);
 
 /// A cubemap, i.e. a cube of 6 textures, sampled using a direction rather than image coordinates.
-pub type Cubemap = crate::Image!(cube, type=f32, sampled, __crate_root=crate);
+pub type Cubemap = crate::Image!(cube, type=f32, sampled);
 
 // TODO: Migrate Image parameters back to their enum values once #![feature(adt_const_params)] is
 // stabilized.

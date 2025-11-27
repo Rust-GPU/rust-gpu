@@ -1,10 +1,10 @@
-use proc_macro2::Ident;
+use proc_macro2::{Ident, TokenStream};
 
+use self::params::SampledType;
+use crate::spirv_std_crate_symbol;
 use quote::{TokenStreamExt, quote};
 use spirv_std_types::image_params::*;
 use syn::parse::{Parse, ParseStream};
-
-use self::params::SampledType;
 
 mod kw {
     syn::custom_keyword!(u8);
@@ -26,7 +26,7 @@ type, or use `format` to set the image to a specific image format.";
 /// Creates an `Image` type using the following syntax.
 pub struct ImageType {
     arrayed: Arrayed,
-    crate_root: Option<syn::Path>,
+    crate_root: TokenStream,
     depth: ImageDepth,
     dimensionality: Dimensionality,
     format: ImageFormat,
@@ -45,7 +45,6 @@ impl Parse for ImageType {
         let mut format = None;
         let mut multisampled = None;
         let mut sampled: Option<Sampled> = None;
-        let mut crate_root = None;
         let mut components = None;
 
         let starting_span = input.span();
@@ -160,9 +159,6 @@ impl Parse for ImageType {
                                 )),
                         }
                     );
-                } else if ident == "__crate_root" {
-                    input.parse::<syn::Token![=]>()?;
-                    crate_root = Some(input.parse::<syn::Path>()?);
                 }
             } else if input.peek(syn::token::Type) {
                 input.parse::<syn::token::Type>()?;
@@ -366,6 +362,7 @@ impl Parse for ImageType {
         let multisampled = multisampled.unwrap_or(Multisampled::False);
         let sampled = sampled.unwrap_or(Sampled::Unknown);
         let components = components.unwrap_or(4);
+        let crate_root = spirv_std_crate_symbol()?;
 
         Ok(Self {
             arrayed,
@@ -383,15 +380,7 @@ impl Parse for ImageType {
 
 impl quote::ToTokens for ImageType {
     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        let crate_root = self.crate_root.clone().unwrap_or_else(|| syn::Path {
-            leading_colon: None,
-            segments: {
-                let mut punct = syn::punctuated::Punctuated::new();
-                punct.push(Ident::new("spirv_std", proc_macro2::Span::mixed_site()).into());
-
-                punct
-            },
-        });
+        let crate_root = &self.crate_root;
         let dimensionality = params::dimensionality_to_tokens(&self.dimensionality);
         let arrayed = params::arrayed_to_tokens(&self.arrayed);
         let depth = params::image_depth_to_tokens(&self.depth);

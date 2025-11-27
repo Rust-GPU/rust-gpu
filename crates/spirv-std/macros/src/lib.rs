@@ -77,7 +77,7 @@ mod sample_param_permutations;
 
 use crate::debug_printf::{DebugPrintfInput, debug_printf_inner};
 use proc_macro::TokenStream;
-use proc_macro2::{Delimiter, Group, Ident, TokenTree};
+use proc_macro2::{Delimiter, Group, Ident, Span, TokenTree};
 use quote::{ToTokens, TokenStreamExt, format_ident, quote};
 use spirv_std_types::spirv_attr_version::spirv_attr_with_version;
 
@@ -310,4 +310,15 @@ pub fn debug_printfln(input: TokenStream) -> TokenStream {
 #[doc(hidden)]
 pub fn gen_sample_param_permutations(_attr: TokenStream, item: TokenStream) -> TokenStream {
     sample_param_permutations::gen_sample_param_permutations(item)
+}
+
+pub(crate) fn spirv_std_crate_symbol() -> syn::Result<proc_macro2::TokenStream> {
+    match proc_macro_crate::crate_name("spirv-std") {
+        Ok(proc_macro_crate::FoundCrate::Itself) => Ok(quote! {crate}),
+        Ok(proc_macro_crate::FoundCrate::Name(name)) => {
+            let ident = format_ident!("{}", name);
+            Ok(quote! {::#ident})
+        }
+        Err(err) => Err(syn::Error::new(Span::call_site(), err)),
+    }
 }

@@ -1,3 +1,4 @@
+use crate::spirv_std_crate_symbol;
 use proc_macro::TokenStream;
 use proc_macro2::Span;
 use std::fmt::Write;
@@ -55,6 +56,10 @@ pub fn debug_printf_inner(input: DebugPrintfInput) -> TokenStream {
         variables,
         span,
     } = input;
+    let spirv_std = match spirv_std_crate_symbol() {
+        Ok(spirv_std) => spirv_std,
+        Err(err) => return err.into_compile_error().into(),
+    };
 
     fn map_specifier_to_type(
         specifier: char,
@@ -205,10 +210,10 @@ pub fn debug_printf_inner(input: DebugPrintfInput) -> TokenStream {
 
         let assert_fn = match format_argument {
             FormatType::Scalar { ty } => {
-                quote::quote! { spirv_std::debug_printf::assert_is_type::<#ty> }
+                quote::quote! { #spirv_std::debug_printf::assert_is_type::<#ty> }
             }
             FormatType::Vector { ty, width } => {
-                quote::quote! { spirv_std::debug_printf::assert_is_vector::<#ty, _, #width> }
+                quote::quote! { #spirv_std::debug_printf::assert_is_vector::<#ty, _, #width> }
             }
         };
 
