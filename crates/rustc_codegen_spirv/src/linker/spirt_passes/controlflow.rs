@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 use spirt::func_at::FuncAt;
 use spirt::{
     Attr, AttrSet, ConstDef, ConstKind, DataInstKind, DbgSrcLoc, DeclDef, ExportKey, Exportee,
-    Module, Type, TypeDef, TypeKind, TypeOrConst, Value, cf, spv,
+    Module, NodeDef, NodeKind, Type, TypeDef, TypeKind, TypeOrConst, Value, cf, spv,
 };
 use std::fmt::Write as _;
 
@@ -186,14 +186,12 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
             .expect("Abort->OpReturn can only be done on unstructured CFGs")
             .rev_post_order(func_def_body);
         for region in rpo_regions {
-            let terminator = &mut func_def_body
-                .unstructured_cfg
-                .as_mut()
-                .unwrap()
-                .control_inst_on_exit_from[region];
-            match terminator.kind {
-                cf::unstructured::ControlInstKind::Unreachable => {}
-                _ => continue,
+            match func_def_body.regions[region].outputs[0] {
+                Value::Const(ct) => match cx[ct].kind {
+                    ConstKind::Undef => {}
+                    _ => unreachable!(),
+                },
+                Value::Var(_) => continue,
             }
 
             // HACK(eddyb) this allows using `FuncAt` while mutably borrowing
@@ -234,15 +232,10 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                 },
             )) = custom_terminator_inst
             {
+                let abort_inst_attrs = func_at_abort_inst.def().attrs;
                 let abort_inst = func_at_abort_inst.position;
-                terminator.kind = cf::unstructured::ControlInstKind::ExitInvocation(
-                    cf::ExitInvocationKind::SpvInst(wk.OpReturn.into()),
-                );
 
                 match abort_strategy {
-                    Some(Strategy::Unreachable) => {
-                        terminator.kind = cf::unstructured::ControlInstKind::Unreachable;
-                    }
                     Some(Strategy::DebugPrintf {
                         inputs: _,
                         backtrace,
@@ -305,7 +298,7 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                             }
                         };
 
-                        let mut dbg_src_loc = func_at_abort_inst.def().attrs.dbg_src_loc(cx);
+                        let mut dbg_src_loc = abort_inst_attrs.dbg_src_loc(cx);
 
                         if let Some(loc) = dbg_src_loc {
                             fmt += " at ";
@@ -360,15 +353,38 @@ pub fn convert_custom_aborts_to_unstructured_returns_in_entry_points(
                             .chain(message_debug_printf_args.iter().copied())
                             .chain(debug_printf_context_inputs.iter().copied())
                             .collect();
-
-                        // Avoid removing the instruction we just replaced.
-                        continue;
                     }
-                    None => {}
+                    Some(Strategy::Unreachable) | None => {
+                        func_def_body.regions[region]
+                            .children
+                            .remove(abort_inst, &mut func_def_body.nodes);
+                    }
                 }
-                func_def_body.regions[region]
-                    .children
-                    .remove(abort_inst, &mut func_def_body.nodes);
+
+                match abort_strategy {
+                    Some(Strategy::Unreachable) => {}
+
+                    // FIXME(eddyb) consider reusing the existing node in the
+                    // `None` case (when it's not being used for `DebugPrintf`).
+                    Some(Strategy::DebugPrintf { .. }) | None => {
+                        let node = func_def_body.nodes.define(
+                            cx,
+                            NodeDef {
+                                attrs: abort_inst_attrs,
+                                kind: NodeKind::ExitInvocation(cf::ExitInvocationKind::SpvInst(
+                                    wk.OpReturn.into(),
+                                )),
+                                inputs: [].into_iter().collect(),
+                                child_regions: [].into_iter().collect(),
+                                outputs: [].into_iter().collect(),
+                            }
+                            .into(),
+                        );
+                        func_def_body.regions[region]
+                            .children
+                            .insert_last(node, &mut func_def_body.nodes);
+                    }
+                }
             }
         }
     }

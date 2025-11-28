@@ -429,6 +429,7 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
                     | DataInstKind::FuncCall(_)
                     | DataInstKind::Mem(_)
                     | DataInstKind::QPtr(_)
+                    | DataInstKind::ThunkBind(_)
                     | DataInstKind::SpvExtInst { .. } => false,
                 };
                 // Ignore pure instructions (i.e. they're only used
@@ -527,6 +528,7 @@ fn remove_unused_values_in_func(func_def_body: &mut FuncDefBody) {
             DataInstKind::FuncCall(_)
             | DataInstKind::Mem(_)
             | DataInstKind::QPtr(_)
+            | DataInstKind::ThunkBind(_)
             | DataInstKind::SpvInst(_)
             | DataInstKind::SpvExtInst { .. } => {
                 let used = match &node_def.kind {

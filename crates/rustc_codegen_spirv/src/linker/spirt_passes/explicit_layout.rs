@@ -660,7 +660,8 @@ impl<'a> SelectiveEraser<'a> {
             NodeKind::Select(_)
             | NodeKind::Loop { .. }
             | NodeKind::ExitInvocation(_)
-            | DataInstKind::FuncCall(_) => return Ok(()),
+            | DataInstKind::FuncCall(_)
+            | DataInstKind::ThunkBind(_) => return Ok(()),
 
             DataInstKind::SpvInst(spv_inst)
                 if [wk.OpLoad, wk.OpStore, wk.OpCopyMemory].contains(&spv_inst.opcode) =>

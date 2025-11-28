@@ -7,8 +7,8 @@ use spirt::transform::InnerInPlaceTransform;
 use spirt::visit::InnerVisit;
 use spirt::{
     Const, ConstDef, ConstKind, Context, DataInst, DataInstDef, DataInstKind,
-    EntityOrientedDenseMap, FuncDefBody, Node, NodeDef, NodeKind, Region, Type,
-    TypeDef, TypeKind, Value, Var, VarDecl, VarKind, spv,
+    EntityOrientedDenseMap, FuncDefBody, Node, NodeDef, NodeKind, Region, Type, TypeDef, TypeKind,
+    Value, Var, VarDecl, VarKind, spv,
 };
 use std::iter;
 use std::rc::Rc;
@@ -170,6 +170,7 @@ pub(crate) fn reduce_in_func(cx: &Context, func_def_body: &mut FuncDefBody) {
                     DataInstKind::FuncCall(_)
                     | DataInstKind::Mem(_)
                     | DataInstKind::QPtr(_)
+                    | DataInstKind::ThunkBind(_)
                     | DataInstKind::SpvInst(_)
                     | DataInstKind::SpvExtInst { .. },
                 ..

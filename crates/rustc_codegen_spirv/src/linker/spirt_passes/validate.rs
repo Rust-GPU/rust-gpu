@@ -114,7 +114,7 @@ impl Transformer for Validator<'_> {
                 type_and_const_inputs: _,
             } => self.validate_spv_inst(spv_inst),
 
-            TypeKind::QPtr | TypeKind::SpvStringLiteralForExtInst => Ok(()),
+            TypeKind::Thunk | TypeKind::QPtr | TypeKind::SpvStringLiteralForExtInst => Ok(()),
         };
         let transformed = ty_def.inner_transform_with(self);
         match valid {
@@ -145,7 +145,9 @@ impl Transformer for Validator<'_> {
                 self.validate_spv_inst(&self.wk.OpConstantFunctionPointerINTEL.into())
             }
 
-            ConstKind::Undef | ConstKind::PtrToGlobalVar(_) | ConstKind::SpvStringLiteralForExtInst(_) => Ok(()),
+            ConstKind::Undef
+            | ConstKind::PtrToGlobalVar(_)
+            | ConstKind::SpvStringLiteralForExtInst(_) => Ok(()),
         };
         let transformed = ct_def.inner_transform_with(self);
         match valid {
@@ -176,6 +178,7 @@ impl Transformer for Validator<'_> {
             | DataInstKind::FuncCall(_)
             | DataInstKind::Mem(_)
             | DataInstKind::QPtr(_)
+            | DataInstKind::ThunkBind(_)
             | DataInstKind::SpvExtInst { .. } => Ok(()),
         };
         if let Err(diag) = valid {
