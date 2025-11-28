@@ -35,7 +35,7 @@ pub fn derive(item: TokenStream) -> syn::Result<TokenStream> {
     let where_clause = &item.generics.where_clause;
 
     Ok(quote! {
-        impl<#gens> #spirv_std::ScalarOrVectorComposite for #ident<#gen_refs> #where_clause {
+        impl<#gens> #spirv_std::ScalarComposite for #ident<#gen_refs> #where_clause {
             #[inline]
             fn transform<F: #spirv_std::ScalarOrVectorTransform>(self, f: &mut F) -> Self {
                 #content
@@ -51,7 +51,7 @@ pub fn derive_struct(spirv_std: &TokenStream, data: &DataStruct) -> syn::Result<
                 .iter()
                 .map(|f| {
                     let ident = &f.ident;
-                    quote!(#ident: #spirv_std::ScalarOrVectorComposite::transform(self.#ident, f))
+                    quote!(#ident: #spirv_std::ScalarComposite::transform(self.#ident, f))
                 })
                 .collect::<Punctuated<_, Token![,]>>();
             quote!(Self { #content })
@@ -60,7 +60,7 @@ pub fn derive_struct(spirv_std: &TokenStream, data: &DataStruct) -> syn::Result<
             let content = (0..unnamed.len())
                 .map(|i| {
                     let i = syn::Index::from(i);
-                    quote!(#spirv_std::ScalarOrVectorComposite::transform(self.#i, f))
+                    quote!(#spirv_std::ScalarComposite::transform(self.#i, f))
                 })
                 .collect::<Punctuated<_, Token![,]>>();
             quote!(Self(#content))
@@ -85,6 +85,6 @@ pub fn derive_enum(spirv_std: &TokenStream, item: &DeriveInput) -> syn::Result<T
     let prim = &repr.meta.require_list()?.tokens;
     Ok(quote! {
         #spirv_std::assert_is_integer::<#prim>();
-        <Self as From<#prim>>::from(#spirv_std::ScalarOrVectorComposite::transform(<Self as Into<#prim>>::into(self), f))
+        <Self as From<#prim>>::from(#spirv_std::ScalarComposite::transform(<Self as Into<#prim>>::into(self), f))
     })
 }

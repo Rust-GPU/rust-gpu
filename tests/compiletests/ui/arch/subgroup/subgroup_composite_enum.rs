@@ -4,12 +4,12 @@
 // normalize-stderr-test "OpLine .*\n" -> ""
 
 use glam::*;
-use spirv_std::ScalarOrVectorComposite;
+use spirv_std::ScalarComposite;
 use spirv_std::arch::*;
 use spirv_std::spirv;
 
 #[repr(u32)]
-#[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, Default, ScalarComposite)]
 pub enum MyEnum {
     #[default]
     A,
