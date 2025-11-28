@@ -10,11 +10,11 @@
 // ignore-spv1.4
 
 use glam::*;
-use spirv_std::ScalarOrVectorComposite;
+use spirv_std::ScalarComposite;
 use spirv_std::arch::*;
 use spirv_std::spirv;
 
-#[derive(Copy, Clone, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, ScalarComposite)]
 pub struct MyStruct {
     a: f32,
     b: UVec3,
@@ -22,10 +22,10 @@ pub struct MyStruct {
     d: Zst,
 }
 
-#[derive(Copy, Clone, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, ScalarComposite)]
 pub struct Nested(i32);
 
-#[derive(Copy, Clone, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, ScalarComposite)]
 pub struct Zst;
 
 #[spirv(compute(threads(32)))]

@@ -4,11 +4,11 @@
 // normalize-stderr-test "OpLine .*\n" -> ""
 
 use glam::*;
-use spirv_std::ScalarOrVectorComposite;
+use spirv_std::ScalarComposite;
 use spirv_std::arch::*;
 use spirv_std::spirv;
 
-#[derive(Copy, Clone, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, ScalarComposite)]
 pub struct MyStruct {
     a: f32,
     b: UVec3,
@@ -16,10 +16,10 @@ pub struct MyStruct {
     d: Zst,
 }
 
-#[derive(Copy, Clone, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, ScalarComposite)]
 pub struct Nested(i32);
 
-#[derive(Copy, Clone, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, ScalarComposite)]
 pub struct Zst;
 
 /// this should be 3 `subgroup_shuffle` instructions, with all calls inlined

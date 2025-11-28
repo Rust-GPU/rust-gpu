@@ -4,7 +4,7 @@
 // normalize-stderr-test "(\n)\d* *([ -])([\|\+\-\=])" -> "$1   $2$3"
 
 use glam::*;
-use spirv_std::ScalarOrVectorComposite;
+use spirv_std::ScalarComposite;
 use spirv_std::arch::*;
 use spirv_std::spirv;
 
@@ -31,7 +31,7 @@ macro_rules! enum_repr_from {
     };
 }
 
-#[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, Default, ScalarComposite)]
 pub enum NoRepr {
     #[default]
     A,
@@ -41,7 +41,7 @@ pub enum NoRepr {
 
 #[repr(u32)]
 #[repr(u16)]
-#[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, Default, ScalarComposite)]
 pub enum TwoRepr {
     #[default]
     A,
@@ -50,7 +50,7 @@ pub enum TwoRepr {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, Default, ScalarComposite)]
 pub enum CRepr {
     #[default]
     A,
@@ -59,7 +59,7 @@ pub enum CRepr {
 }
 
 #[repr(i32)]
-#[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, Default, ScalarComposite)]
 pub enum NoFrom {
     #[default]
     A,
@@ -68,7 +68,7 @@ pub enum NoFrom {
 }
 
 #[repr(i32)]
-#[derive(Copy, Clone, Default, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, Default, ScalarComposite)]
 pub enum WrongFrom {
     #[default]
     A,
@@ -79,7 +79,7 @@ pub enum WrongFrom {
 enum_repr_from!(WrongFrom, u32);
 
 #[repr(i32)]
-#[derive(Copy, Clone, ScalarOrVectorComposite)]
+#[derive(Copy, Clone, ScalarComposite)]
 pub enum NoDefault {
     A,
     B,

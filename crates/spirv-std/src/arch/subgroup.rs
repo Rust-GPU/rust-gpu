@@ -4,9 +4,7 @@ use crate::ScalarOrVectorTransform;
 use crate::arch::{asm, barrier};
 #[cfg(target_arch = "spirv")]
 use crate::memory::{Scope, Semantics};
-use crate::{
-    Float, Integer, ScalarOrVector, ScalarOrVectorComposite, SignedInteger, UnsignedInteger,
-};
+use crate::{Float, Integer, ScalarComposite, ScalarOrVector, SignedInteger, UnsignedInteger};
 
 #[cfg(target_arch = "spirv")]
 const SUBGROUP: u32 = Scope::Subgroup as u32;
@@ -244,7 +242,7 @@ pub fn subgroup_any(predicate: bool) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformAllEqual")]
 #[inline]
-pub fn subgroup_all_equal<T: ScalarOrVectorComposite>(value: T) -> bool {
+pub fn subgroup_all_equal<T: ScalarComposite>(value: T) -> bool {
     struct Transform(bool);
 
     impl ScalarOrVectorTransform for Transform {
@@ -299,7 +297,7 @@ pub fn subgroup_all_equal<T: ScalarOrVectorComposite>(value: T) -> bool {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBroadcast")]
 #[inline]
-pub unsafe fn subgroup_broadcast<T: ScalarOrVectorComposite>(value: T, id: u32) -> T {
+pub unsafe fn subgroup_broadcast<T: ScalarComposite>(value: T, id: u32) -> T {
     struct Transform {
         id: u32,
     }
@@ -390,7 +388,7 @@ pub unsafe fn subgroup_broadcast_const<T: ScalarOrVector, const ID: u32>(value: 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformBroadcastFirst")]
 #[inline]
-pub fn subgroup_broadcast_first<T: ScalarOrVectorComposite>(value: T) -> T {
+pub fn subgroup_broadcast_first<T: ScalarComposite>(value: T) -> T {
     struct Transform;
 
     impl ScalarOrVectorTransform for Transform {
@@ -672,7 +670,7 @@ pub fn subgroup_ballot_find_msb(value: SubgroupMask) -> u32 {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffle")]
 #[inline]
-pub fn subgroup_shuffle<T: ScalarOrVectorComposite>(value: T, id: u32) -> T {
+pub fn subgroup_shuffle<T: ScalarComposite>(value: T, id: u32) -> T {
     struct Transform {
         id: u32,
     }
@@ -722,7 +720,7 @@ pub fn subgroup_shuffle<T: ScalarOrVectorComposite>(value: T, id: u32) -> T {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleXor")]
 #[inline]
-pub fn subgroup_shuffle_xor<T: ScalarOrVectorComposite>(value: T, mask: u32) -> T {
+pub fn subgroup_shuffle_xor<T: ScalarComposite>(value: T, mask: u32) -> T {
     struct Transform {
         mask: u32,
     }
@@ -772,7 +770,7 @@ pub fn subgroup_shuffle_xor<T: ScalarOrVectorComposite>(value: T, mask: u32) -> 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleUp")]
 #[inline]
-pub fn subgroup_shuffle_up<T: ScalarOrVectorComposite>(value: T, delta: u32) -> T {
+pub fn subgroup_shuffle_up<T: ScalarComposite>(value: T, delta: u32) -> T {
     struct Transform {
         delta: u32,
     }
@@ -822,7 +820,7 @@ pub fn subgroup_shuffle_up<T: ScalarOrVectorComposite>(value: T, delta: u32) -> 
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformShuffleDown")]
 #[inline]
-pub fn subgroup_shuffle_down<T: ScalarOrVectorComposite>(value: T, delta: u32) -> T {
+pub fn subgroup_shuffle_down<T: ScalarComposite>(value: T, delta: u32) -> T {
     struct Transform {
         delta: u32,
     }
@@ -1458,7 +1456,7 @@ Requires Capability `GroupNonUniformArithmetic` and `GroupNonUniformClustered`.
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadBroadcast")]
 #[inline]
-pub fn subgroup_quad_broadcast<T: ScalarOrVectorComposite>(value: T, index: u32) -> T {
+pub fn subgroup_quad_broadcast<T: ScalarComposite>(value: T, index: u32) -> T {
     struct Transform {
         index: u32,
     }
@@ -1550,7 +1548,7 @@ pub enum QuadDirection {
 #[spirv_std_macros::gpu_only]
 #[doc(alias = "OpGroupNonUniformQuadSwap")]
 #[inline]
-pub fn subgroup_quad_swap<const DIRECTION: u32, T: ScalarOrVectorComposite>(value: T) -> T {
+pub fn subgroup_quad_swap<const DIRECTION: u32, T: ScalarComposite>(value: T) -> T {
     struct Transform<const DIRECTION: u32>;
 
     impl<const DIRECTION: u32> ScalarOrVectorTransform for Transform<DIRECTION> {

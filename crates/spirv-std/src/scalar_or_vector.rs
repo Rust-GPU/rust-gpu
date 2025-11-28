@@ -11,7 +11,7 @@ pub(crate) mod sealed {
 ///
 /// # Safety
 /// Your type must also implement [`Scalar`] or [`Vector`], see their safety sections as well.
-pub unsafe trait ScalarOrVector: ScalarOrVectorComposite + Default {
+pub unsafe trait ScalarOrVector: ScalarComposite + Default {
     /// Either the scalar component type of the vector or the scalar itself.
     type Scalar: Scalar;
 
@@ -48,14 +48,14 @@ pub unsafe trait ScalarOrVector: ScalarOrVectorComposite + Default {
 /// [`FromPrimitive`]: https://docs.rs/num_enum/latest/num_enum/derive.FromPrimitive.html
 /// [`IntoPrimitive`]: https://docs.rs/num_enum/latest/num_enum/derive.IntoPrimitive.html
 /// [`num_enum`]: https://crates.io/crates/num_enum
-pub trait ScalarOrVectorComposite: Copy + Send + Sync + 'static {
+pub trait ScalarComposite: Copy + Send + Sync + 'static {
     /// Transform the individual [`Scalar`] and [`Vector`] values of this type to a different value.
     ///
     /// See [`Self`] for more detail.
     fn transform<F: ScalarOrVectorTransform>(self, f: &mut F) -> Self;
 }
 
-/// A transform operation for [`ScalarOrVectorComposite::transform`]
+/// A transform operation for [`ScalarComposite::transform`]
 pub trait ScalarOrVectorTransform {
     /// transform a [`ScalarOrVector`]
     fn transform<T: ScalarOrVector>(&mut self, value: T) -> T;
@@ -74,7 +74,7 @@ pub trait ScalarOrVectorTransform {
 }
 
 /// `Default` is unfortunately necessary until rust-gpu improves
-impl<T: ScalarOrVectorComposite + Default, const N: usize> ScalarOrVectorComposite for [T; N] {
+impl<T: ScalarComposite + Default, const N: usize> ScalarComposite for [T; N] {
     #[inline]
     fn transform<F: ScalarOrVectorTransform>(self, f: &mut F) -> Self {
         let mut out = [T::default(); N];

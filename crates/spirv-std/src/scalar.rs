@@ -1,7 +1,7 @@
 //! Traits related to scalars.
 
 use crate::sealed::Sealed;
-use crate::{ScalarOrVector, ScalarOrVectorComposite, ScalarOrVectorTransform};
+use crate::{ScalarComposite, ScalarOrVector, ScalarOrVectorTransform};
 use core::num::NonZeroUsize;
 
 /// Abstract trait representing a SPIR-V scalar type, which includes:
@@ -61,7 +61,7 @@ pub unsafe trait Float: num_traits::Float + Number {
 macro_rules! impl_scalar {
     (impl Scalar for $ty:ty;) => {
         impl Sealed for $ty {}
-        impl ScalarOrVectorComposite for $ty {
+        impl ScalarComposite for $ty {
             #[inline]
 			fn transform<F: ScalarOrVectorTransform>(self, f: &mut F) -> Self {
 				f.transform_scalar(self)

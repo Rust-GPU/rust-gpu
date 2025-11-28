@@ -313,7 +313,7 @@ pub fn gen_sample_param_permutations(_attr: TokenStream, item: TokenStream) -> T
     sample_param_permutations::gen_sample_param_permutations(item)
 }
 
-#[proc_macro_derive(ScalarOrVectorComposite)]
+#[proc_macro_derive(ScalarComposite)]
 pub fn derive_scalar_or_vector_composite(item: TokenStream) -> TokenStream {
     scalar_or_vector_composite::derive(item.into())
         .unwrap_or_else(syn::Error::into_compile_error)
