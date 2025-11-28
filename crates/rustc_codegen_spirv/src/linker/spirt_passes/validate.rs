@@ -145,7 +145,7 @@ impl Transformer for Validator<'_> {
                 self.validate_spv_inst(&self.wk.OpConstantFunctionPointerINTEL.into())
             }
 
-            ConstKind::PtrToGlobalVar(_) | ConstKind::SpvStringLiteralForExtInst(_) => Ok(()),
+            ConstKind::Undef | ConstKind::PtrToGlobalVar(_) | ConstKind::SpvStringLiteralForExtInst(_) => Ok(()),
         };
         let transformed = ct_def.inner_transform_with(self);
         match valid {

@@ -327,10 +327,10 @@ fn try_reduce_select(
         Value::Var(_) => None,
     };
 
-    // Ignore `OpUndef`s, as they can be legally substituted with any other value.
+    // Ignore `undef`s, as they can be legally substituted with any other value.
     let mut first_undef = None;
     let mut non_undef_cases = cases.filter(|&case| {
-        let is_undef = as_spv_const(case) == Some(wk.OpUndef);
+        let is_undef = matches!(case, Value::Const(ct) if matches!(cx[ct].kind, ConstKind::Undef));
         if is_undef && first_undef.is_none() {
             first_undef = Some(case);
         }
@@ -573,12 +573,7 @@ impl Reducible<Const> {
 
         let ct_def = &cx[self.input];
         match (self.op, &ct_def.kind) {
-            (
-                _,
-                ConstKind::SpvInst {
-                    spv_inst_and_const_inputs,
-                },
-            ) if spv_inst_and_const_inputs.0.opcode == wk.OpUndef => Some(cx.intern(ConstDef {
+            (_, ConstKind::Undef) => Some(cx.intern(ConstDef {
                 attrs: ct_def.attrs,
                 ty: self.output_type,
                 kind: ct_def.kind.clone(),
