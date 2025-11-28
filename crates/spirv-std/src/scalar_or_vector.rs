@@ -19,32 +19,31 @@ pub unsafe trait ScalarOrVector: ScalarComposite + Default {
     const N: NonZeroUsize;
 }
 
-/// A `VectorOrScalarComposite` is a type that is either
+/// A `ScalarComposite` is a type that is either
 /// * a [`Scalar`]
-/// * a [`Vector`]
-/// * an array of `VectorOrScalarComposite`
-/// * a struct where all members are `VectorOrScalarComposite`
+/// * a [`Vector`] (since vectors are made from scalars)
+/// * an array of `ScalarComposite`
+/// * a struct where all members are `ScalarComposite`
 /// * an enum with a `repr` that is a [`Scalar`]
 ///
 /// By calling [`Self::transform`] you can visit all the individual [`Scalar`] and [`Vector`] values this composite is
 /// build out of and transform them into some other value. This is particularly useful for subgroup intrinsics sending
 /// data to other threads.
 ///
-/// To derive `#[derive(VectorOrScalarComposite)]` on a struct, all members must also implement
-/// `VectorOrScalarComposite`.
+/// To derive `ScalarComposite` on a struct, all members must also implement `ScalarComposite`.
 ///
-/// To derive it on an enum, the enum must implement `From<N>` and `Into<N>` where `N` is defined by the `#[repr(N)]`
-/// attribute on the enum and is an [`Integer`], like `u32`.
+/// To derive `ScalarComposite` on an enum, the enum must implement `From<N>` and `Into<N>` where `N` is defined by the
+/// `#[repr(N)]` attribute on the enum and must be an [`Integer`], like `u32`.
 /// Note that some [safe subgroup operations] may return an "undefined result", so your `From<N>` must gracefully handle
 /// arbitrary bit patterns being passed to it. While panicking is legal, it is discouraged as it may result in
 /// unexpected control flow.
 /// To implement these conversion traits, we recommend [`FromPrimitive`] and [`IntoPrimitive`] from the [`num_enum`]
-/// crate. [`FromPrimitive`] requires that either the enum is exhaustive, or you provide it with a variant to default
-/// to, by either implementing [`Default`] or marking a variant with `#[num_enum(default)]`. Note to disable default
+/// crate. [`FromPrimitive`] requires the enum to either be exhaustive or have a variant to default to, by either
+/// implementing [`Default`] or marking a variant with `#[num_enum(default)]`. Note to disable default
 /// features on the [`num_enum`] crate, or it won't compile on SPIR-V.
 ///
 /// [`Integer`]: crate::Integer
-/// [subgroup operations]: crate::arch::subgroup_shuffle
+/// [safe subgroup operations]: crate::arch::subgroup_shuffle
 /// [`FromPrimitive`]: https://docs.rs/num_enum/latest/num_enum/derive.FromPrimitive.html
 /// [`IntoPrimitive`]: https://docs.rs/num_enum/latest/num_enum/derive.IntoPrimitive.html
 /// [`num_enum`]: https://crates.io/crates/num_enum
@@ -60,13 +59,13 @@ pub trait ScalarOrVectorTransform {
     /// transform a [`ScalarOrVector`]
     fn transform<T: ScalarOrVector>(&mut self, value: T) -> T;
 
-    /// transform a [`Scalar`], defaults to [`self.transform`]
+    /// transform a [`Scalar`], defaults to [`Self::transform`]
     #[inline]
     fn transform_scalar<T: Scalar>(&mut self, value: T) -> T {
         self.transform(value)
     }
 
-    /// transform a [`Vector`], defaults to [`self.transform`]
+    /// transform a [`Vector`], defaults to [`Self::transform`]
     #[inline]
     fn transform_vector<V: Vector<S, N>, S: Scalar, const N: usize>(&mut self, value: V) -> V {
         self.transform(value)

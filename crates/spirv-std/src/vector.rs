@@ -45,7 +45,7 @@ use glam::{Vec3Swizzles, Vec4Swizzles};
 /// # Safety
 /// * Must only be implemented on types that the spirv codegen emits as valid `OpTypeVector`. This includes all structs
 ///   marked with `#[rust_gpu::vector::v1]`, like [`glam`]'s non-SIMD "scalar" vector types.
-/// * `VectorOrScalar::DIM == N`, since const equality is behind rustc feature `associated_const_equality`
+/// * `ScalarOrVector::DIM == N`, since const equality is behind rustc feature `associated_const_equality`
 // Note(@firestar99) I would like to have these two generics be associated types instead. Doesn't make much sense for
 // a vector type to implement this interface multiple times with different Scalar types or N, after all.
 // While it's possible with `T: Scalar`, it's not with `const N: usize`, since some impl blocks in `image::params` need
