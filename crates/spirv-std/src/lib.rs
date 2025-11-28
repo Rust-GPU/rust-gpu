@@ -87,8 +87,8 @@
 /// Public re-export of the `spirv-std-macros` crate.
 #[macro_use]
 pub extern crate spirv_std_macros as macros;
-pub use macros::spirv;
 pub use macros::{debug_printf, debug_printfln};
+pub use macros::{spirv, spirv_vector};
 
 pub mod arch;
 pub mod byte_addressable_buffer;

@@ -80,6 +80,9 @@ use proc_macro::TokenStream;
 use proc_macro2::{Delimiter, Group, Ident, TokenTree};
 use quote::{ToTokens, TokenStreamExt, format_ident, quote};
 use spirv_std_types::spirv_attr_version::spirv_attr_with_version;
+use syn::punctuated::Punctuated;
+use syn::spanned::Spanned;
+use syn::{GenericParam, Token};
 
 /// A macro for creating SPIR-V `OpTypeImage` types. Always produces a
 /// `spirv_std::image::Image<...>` type.
@@ -310,4 +313,55 @@ pub fn debug_printfln(input: TokenStream) -> TokenStream {
 #[doc(hidden)]
 pub fn gen_sample_param_permutations(_attr: TokenStream, item: TokenStream) -> TokenStream {
     sample_param_permutations::gen_sample_param_permutations(item)
+}
+
+#[proc_macro_attribute]
+pub fn spirv_vector(attr: TokenStream, item: TokenStream) -> TokenStream {
+    spirv_vector_impl(attr.into(), item.into())
+        .unwrap_or_else(syn::Error::into_compile_error)
+        .into()
+}
+
+fn spirv_vector_impl(
+    attr: proc_macro2::TokenStream,
+    item: proc_macro2::TokenStream,
+) -> syn::Result<proc_macro2::TokenStream> {
+    // Whenever we'll properly resolve the crate symbol, replace this.
+    let spirv_std = quote!(spirv_std);
+
+    // Defer all validation to our codegen backend. Rather than erroring here, emit garbage.
+    let item = syn::parse2::<syn::ItemStruct>(item)?;
+    let ident = &item.ident;
+    let gens = &item.generics.params;
+    let gen_refs = &item
+        .generics
+        .params
+        .iter()
+        .map(|p| match p {
+            GenericParam::Lifetime(p) => p.lifetime.to_token_stream(),
+            GenericParam::Type(p) => p.ident.to_token_stream(),
+            GenericParam::Const(p) => p.ident.to_token_stream(),
+        })
+        .collect::<Punctuated<_, Token![,]>>();
+    let where_clause = &item.generics.where_clause;
+    let element = item
+        .fields
+        .iter()
+        .next()
+        .ok_or_else(|| syn::Error::new(item.span(), "Vector ZST not allowed"))?
+        .ty
+        .to_token_stream();
+    let count = item.fields.len();
+
+    Ok(quote! {
+        #[cfg_attr(target_arch = "spirv", rust_gpu::vector::v1(#attr))]
+        #item
+
+        unsafe impl<#gens> #spirv_std::ScalarOrVector for #ident<#gen_refs> #where_clause {
+            type Scalar = #element;
+            const N: core::num::NonZeroUsize = core::num::NonZeroUsize::new(#count).unwrap();
+        }
+
+        unsafe impl<#gens> #spirv_std::Vector<#element, #count> for #ident<#gen_refs> #where_clause {}
+    })
 }
