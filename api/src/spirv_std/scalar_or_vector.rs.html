@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/spirv-std/src/scalar_or_vector.rs`."><title>scalar_or_vector.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirv_std" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirv_std/</div>scalar_or_vector.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span><span class="kw">crate</span>::Scalar;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/spirv-std/src/scalar_or_vector.rs`."><title>scalar_or_vector.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="spirv_std" data-themes="" data-resource-suffix="" data-rustdoc-version="1.90.0-nightly (35f603652 2025-06-29)" data-channel="nightly" data-search-js="search-179e01a3.js" data-settings-js="settings-5514c975.js" ><script src="../../static.files/storage-4e99c027.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-340f468f.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">spirv_std/</div>scalar_or_vector.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use crate</span>::{Scalar, Vector};
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>core::num::NonZeroUsize;
 <a href=#3 id=3 data-nosnippet>3</a>
 <a href=#4 id=4 data-nosnippet>4</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>sealed {
@@ -11,12 +11,75 @@
 <a href=#11 id=11 data-nosnippet>11</a>///
 <a href=#12 id=12 data-nosnippet>12</a>/// # Safety
 <a href=#13 id=13 data-nosnippet>13</a>/// Your type must also implement [`Scalar`] or [`Vector`], see their safety sections as well.
-<a href=#14 id=14 data-nosnippet>14</a>///
-<a href=#15 id=15 data-nosnippet>15</a>/// [`Vector`]: crate::Vector
-<a href=#16 id=16 data-nosnippet>16</a></span><span class="kw">pub unsafe trait </span>ScalarOrVector: Copy + Default + Send + Sync + <span class="lifetime">'static </span>{
-<a href=#17 id=17 data-nosnippet>17</a>    <span class="doccomment">/// Either the scalar component type of the vector or the scalar itself.
-<a href=#18 id=18 data-nosnippet>18</a>    </span><span class="kw">type </span>Scalar: Scalar;
-<a href=#19 id=19 data-nosnippet>19</a>
-<a href=#20 id=20 data-nosnippet>20</a>    <span class="doccomment">/// The dimension of the vector, or 1 if it is a scalar
-<a href=#21 id=21 data-nosnippet>21</a>    </span><span class="kw">const </span>N: NonZeroUsize;
-<a href=#22 id=22 data-nosnippet>22</a>}</code></pre></div></section></main></body></html>
+<a href=#14 id=14 data-nosnippet>14</a></span><span class="kw">pub unsafe trait </span>ScalarOrVector: ScalarComposite + Default {
+<a href=#15 id=15 data-nosnippet>15</a>    <span class="doccomment">/// Either the scalar component type of the vector or the scalar itself.
+<a href=#16 id=16 data-nosnippet>16</a>    </span><span class="kw">type </span>Scalar: Scalar;
+<a href=#17 id=17 data-nosnippet>17</a>
+<a href=#18 id=18 data-nosnippet>18</a>    <span class="doccomment">/// The dimension of the vector, or 1 if it is a scalar
+<a href=#19 id=19 data-nosnippet>19</a>    </span><span class="kw">const </span>N: NonZeroUsize;
+<a href=#20 id=20 data-nosnippet>20</a>}
+<a href=#21 id=21 data-nosnippet>21</a>
+<a href=#22 id=22 data-nosnippet>22</a><span class="doccomment">/// A `ScalarComposite` is a type that is either
+<a href=#23 id=23 data-nosnippet>23</a>/// * a [`Scalar`]
+<a href=#24 id=24 data-nosnippet>24</a>/// * a [`Vector`] (since vectors are made from scalars)
+<a href=#25 id=25 data-nosnippet>25</a>/// * an array of `ScalarComposite`
+<a href=#26 id=26 data-nosnippet>26</a>/// * a struct where all members are `ScalarComposite`
+<a href=#27 id=27 data-nosnippet>27</a>/// * an enum with a `repr` that is a [`Scalar`]
+<a href=#28 id=28 data-nosnippet>28</a>///
+<a href=#29 id=29 data-nosnippet>29</a>/// By calling [`Self::transform`] you can visit all the individual [`Scalar`] and [`Vector`] values this composite is
+<a href=#30 id=30 data-nosnippet>30</a>/// build out of and transform them into some other value. This is particularly useful for subgroup intrinsics sending
+<a href=#31 id=31 data-nosnippet>31</a>/// data to other threads.
+<a href=#32 id=32 data-nosnippet>32</a>///
+<a href=#33 id=33 data-nosnippet>33</a>/// To derive `ScalarComposite` on a struct, all members must also implement `ScalarComposite`.
+<a href=#34 id=34 data-nosnippet>34</a>///
+<a href=#35 id=35 data-nosnippet>35</a>/// To derive `ScalarComposite` on an enum, the enum must implement `From&lt;N&gt;` and `Into&lt;N&gt;` where `N` is defined by the
+<a href=#36 id=36 data-nosnippet>36</a>/// `#[repr(N)]` attribute on the enum and must be an [`Integer`], like `u32`.
+<a href=#37 id=37 data-nosnippet>37</a>/// Note that some [safe subgroup operations] may return an "undefined result", so your `From&lt;N&gt;` must gracefully handle
+<a href=#38 id=38 data-nosnippet>38</a>/// arbitrary bit patterns being passed to it. While panicking is legal, it is discouraged as it may result in
+<a href=#39 id=39 data-nosnippet>39</a>/// unexpected control flow.
+<a href=#40 id=40 data-nosnippet>40</a>/// To implement these conversion traits, we recommend [`FromPrimitive`] and [`IntoPrimitive`] from the [`num_enum`]
+<a href=#41 id=41 data-nosnippet>41</a>/// crate. [`FromPrimitive`] requires the enum to either be exhaustive or have a variant to default to, by either
+<a href=#42 id=42 data-nosnippet>42</a>/// implementing [`Default`] or marking a variant with `#[num_enum(default)]`. Note to disable default
+<a href=#43 id=43 data-nosnippet>43</a>/// features on the [`num_enum`] crate, or it won't compile on SPIR-V.
+<a href=#44 id=44 data-nosnippet>44</a>///
+<a href=#45 id=45 data-nosnippet>45</a>/// [`Integer`]: crate::Integer
+<a href=#46 id=46 data-nosnippet>46</a>/// [safe subgroup operations]: crate::arch::subgroup_shuffle
+<a href=#47 id=47 data-nosnippet>47</a>/// [`FromPrimitive`]: https://docs.rs/num_enum/latest/num_enum/derive.FromPrimitive.html
+<a href=#48 id=48 data-nosnippet>48</a>/// [`IntoPrimitive`]: https://docs.rs/num_enum/latest/num_enum/derive.IntoPrimitive.html
+<a href=#49 id=49 data-nosnippet>49</a>/// [`num_enum`]: https://crates.io/crates/num_enum
+<a href=#50 id=50 data-nosnippet>50</a></span><span class="kw">pub trait </span>ScalarComposite: Copy + Send + Sync + <span class="lifetime">'static </span>{
+<a href=#51 id=51 data-nosnippet>51</a>    <span class="doccomment">/// Transform the individual [`Scalar`] and [`Vector`] values of this type to a different value.
+<a href=#52 id=52 data-nosnippet>52</a>    ///
+<a href=#53 id=53 data-nosnippet>53</a>    /// See [`Self`] for more detail.
+<a href=#54 id=54 data-nosnippet>54</a>    </span><span class="kw">fn </span>transform&lt;F: ScalarOrVectorTransform&gt;(<span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>F) -&gt; <span class="self">Self</span>;
+<a href=#55 id=55 data-nosnippet>55</a>}
+<a href=#56 id=56 data-nosnippet>56</a>
+<a href=#57 id=57 data-nosnippet>57</a><span class="doccomment">/// A transform operation for [`ScalarComposite::transform`]
+<a href=#58 id=58 data-nosnippet>58</a></span><span class="kw">pub trait </span>ScalarOrVectorTransform {
+<a href=#59 id=59 data-nosnippet>59</a>    <span class="doccomment">/// transform a [`ScalarOrVector`]
+<a href=#60 id=60 data-nosnippet>60</a>    </span><span class="kw">fn </span>transform&lt;T: ScalarOrVector&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) -&gt; T;
+<a href=#61 id=61 data-nosnippet>61</a>
+<a href=#62 id=62 data-nosnippet>62</a>    <span class="doccomment">/// transform a [`Scalar`], defaults to [`Self::transform`]
+<a href=#63 id=63 data-nosnippet>63</a>    </span><span class="attr">#[inline]
+<a href=#64 id=64 data-nosnippet>64</a>    </span><span class="kw">fn </span>transform_scalar&lt;T: Scalar&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) -&gt; T {
+<a href=#65 id=65 data-nosnippet>65</a>        <span class="self">self</span>.transform(value)
+<a href=#66 id=66 data-nosnippet>66</a>    }
+<a href=#67 id=67 data-nosnippet>67</a>
+<a href=#68 id=68 data-nosnippet>68</a>    <span class="doccomment">/// transform a [`Vector`], defaults to [`Self::transform`]
+<a href=#69 id=69 data-nosnippet>69</a>    </span><span class="attr">#[inline]
+<a href=#70 id=70 data-nosnippet>70</a>    </span><span class="kw">fn </span>transform_vector&lt;V: Vector&lt;S, N&gt;, S: Scalar, <span class="kw">const </span>N: usize&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: V) -&gt; V {
+<a href=#71 id=71 data-nosnippet>71</a>        <span class="self">self</span>.transform(value)
+<a href=#72 id=72 data-nosnippet>72</a>    }
+<a href=#73 id=73 data-nosnippet>73</a>}
+<a href=#74 id=74 data-nosnippet>74</a>
+<a href=#75 id=75 data-nosnippet>75</a><span class="doccomment">/// `Default` is unfortunately necessary until rust-gpu improves
+<a href=#76 id=76 data-nosnippet>76</a></span><span class="kw">impl</span>&lt;T: ScalarComposite + Default, <span class="kw">const </span>N: usize&gt; ScalarComposite <span class="kw">for </span>[T; N] {
+<a href=#77 id=77 data-nosnippet>77</a>    <span class="attr">#[inline]
+<a href=#78 id=78 data-nosnippet>78</a>    </span><span class="kw">fn </span>transform&lt;F: ScalarOrVectorTransform&gt;(<span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>F) -&gt; <span class="self">Self </span>{
+<a href=#79 id=79 data-nosnippet>79</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = [T::default(); N];
+<a href=#80 id=80 data-nosnippet>80</a>        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..N {
+<a href=#81 id=81 data-nosnippet>81</a>            out[i] = <span class="self">self</span>[i].transform(f);
+<a href=#82 id=82 data-nosnippet>82</a>        }
+<a href=#83 id=83 data-nosnippet>83</a>        out
+<a href=#84 id=84 data-nosnippet>84</a>    }
+<a href=#85 id=85 data-nosnippet>85</a>}</code></pre></div></section></main></body></html>
