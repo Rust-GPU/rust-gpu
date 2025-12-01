@@ -4,7 +4,7 @@ pub use self::params::{ImageCoordinate, ImageCoordinateSubpassData, ImageSizeQue
 #[cfg(target_arch = "spirv")]
 use crate::VectorTruncateInto;
 pub use crate::macros::Image;
-use crate::{Float, Integer, Sampler, Vector};
+use crate::{Float, Integer, Sampler};
 #[cfg(target_arch = "spirv")]
 use core::arch::asm;
 use sample_with::{NoneTy, SampleParams, SomeTy};
@@ -799,10 +799,10 @@ impl<
     /// Write a texel to an image without a sampler.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageWrite")]
-    pub unsafe fn write<I, const N: usize>(
+    pub unsafe fn write<I>(
         &self,
         coordinate: impl ImageCoordinate<I, DIM, ARRAYED>,
-        texels: impl Vector<SampledType, N>,
+        texels: SampledType::SampleResult,
     ) where
         I: Integer,
     {
@@ -873,10 +873,10 @@ impl<
     /// Write a texel to an image without a sampler.
     #[crate::macros::gpu_only]
     #[doc(alias = "OpImageWrite")]
-    pub unsafe fn write<I, const N: usize>(
+    pub unsafe fn write<I>(
         &self,
         coordinate: impl ImageCoordinate<I, DIM, ARRAYED>,
-        texels: impl Vector<SampledType, N>,
+        texels: SampledType::SampleResult,
     ) where
         I: Integer,
     {
