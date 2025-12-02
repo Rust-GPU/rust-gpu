@@ -176,12 +176,12 @@ macro_rules! simple_shift_op {
                     let result = (|| Some(match (const_lhs, const_rhs) {
                         $(
                             (ConstValue::Unsigned($int_lhs), ConstValue::Unsigned($int_rhs)) => $fold_int,
-							(ConstValue::Unsigned($int_lhs), ConstValue::Signed($int_rhs)) => $fold_int,
-							(ConstValue::Signed($int_lhs), ConstValue::Unsigned($int_rhs)) => $fold_int as u128,
-							(ConstValue::Signed($int_lhs), ConstValue::Signed($int_rhs)) => $fold_int as u128,
-						)?
-						$(
-							(ConstValue::Unsigned($uint_lhs), ConstValue::Unsigned($uint_rhs)) => $fold_uint,
+                            (ConstValue::Unsigned($int_lhs), ConstValue::Signed($int_rhs)) => $fold_int,
+                            (ConstValue::Signed($int_lhs), ConstValue::Unsigned($int_rhs)) => $fold_int as u128,
+                            (ConstValue::Signed($int_lhs), ConstValue::Signed($int_rhs)) => $fold_int as u128,
+                        )?
+                        $(
+                            (ConstValue::Unsigned($uint_lhs), ConstValue::Unsigned($uint_rhs)) => $fold_uint,
                             (ConstValue::Unsigned($uint_lhs), ConstValue::Signed($uint_rhs)) => $fold_uint,
                         )?
                         $(
