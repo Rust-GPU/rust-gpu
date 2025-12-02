@@ -63,11 +63,11 @@ macro_rules! impl_scalar {
         impl Sealed for $ty {}
         impl ScalarComposite for $ty {
             #[inline]
-			fn transform<F: ScalarOrVectorTransform>(self, f: &mut F) -> Self {
-				f.transform_scalar(self)
-			}
-		}
-		unsafe impl ScalarOrVector for $ty {
+            fn transform<F: ScalarOrVectorTransform>(self, f: &mut F) -> Self {
+                f.transform_scalar(self)
+            }
+        }
+        unsafe impl ScalarOrVector for $ty {
             type Scalar = Self;
             const N: NonZeroUsize = NonZeroUsize::new(1).unwrap();
         }

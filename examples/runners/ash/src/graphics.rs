@@ -91,77 +91,77 @@ impl MyRenderPipelineManager {
             )?;
 
             let mut pipelines =
-				self
-					.device
-					.create_graphics_pipelines(vk::PipelineCache::null(), &[vk::GraphicsPipelineCreateInfo::default()
-						.stages(
-							&[
-								vk::PipelineShaderStageCreateInfo {
-									module: shader_module,
-									p_name: c"main_vs".as_ptr(),
-									stage: vk::ShaderStageFlags::VERTEX,
-									..Default::default()
-								},
-								vk::PipelineShaderStageCreateInfo {
-									module: shader_module,
-									p_name: c"main_fs".as_ptr(),
-									stage: vk::ShaderStageFlags::FRAGMENT,
-									// NOTE(eddyb) this acts like an integration test for specialization constants.
-									p_specialization_info: &vk::SpecializationInfo::default()
-										.map_entries(&[vk::SpecializationMapEntry::default()
-											.constant_id(0x5007)
-											.offset(0)
-											.size(4)])
-										.data(&u32::to_le_bytes(
-											self.sky_fs_spec_id_0x5007_sun_intensity_extra_spec_const_factor,
-										)),
-									..Default::default()
-								},
-							],
-						)
-						.vertex_input_state(&vk::PipelineVertexInputStateCreateInfo::default())
-						.input_assembly_state(&vk::PipelineInputAssemblyStateCreateInfo {
-							topology: vk::PrimitiveTopology::TRIANGLE_LIST,
-							..Default::default()
-						})
-						.rasterization_state(&vk::PipelineRasterizationStateCreateInfo {
-							front_face: vk::FrontFace::COUNTER_CLOCKWISE,
-							line_width: 1.0,
-							..Default::default()
-						})
-						.multisample_state(&vk::PipelineMultisampleStateCreateInfo {
-							rasterization_samples: vk::SampleCountFlags::TYPE_1,
-							..Default::default()
-						})
-						.depth_stencil_state(&vk::PipelineDepthStencilStateCreateInfo::default())
-						.color_blend_state(
-							&vk::PipelineColorBlendStateCreateInfo::default()
-								.attachments(
-									&[vk::PipelineColorBlendAttachmentState {
-										blend_enable: 0,
-										src_color_blend_factor: vk::BlendFactor::SRC_COLOR,
-										dst_color_blend_factor: vk::BlendFactor::ONE_MINUS_DST_COLOR,
-										color_blend_op: vk::BlendOp::ADD,
-										src_alpha_blend_factor: vk::BlendFactor::ZERO,
-										dst_alpha_blend_factor: vk::BlendFactor::ZERO,
-										alpha_blend_op: vk::BlendOp::ADD,
-										color_write_mask: vk::ColorComponentFlags::RGBA,
-									}],
-								),
-						)
-						.dynamic_state(
-							&vk::PipelineDynamicStateCreateInfo::default()
-								.dynamic_states(&[vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR]),
-						)
-						.viewport_state(
-							&vk::PipelineViewportStateCreateInfo::default()
-								.scissor_count(1)
-								.viewport_count(1),
-						)
-						.layout(pipeline_layout)
-						.push_next(&mut vk::PipelineRenderingCreateInfo::default().color_attachment_formats(&[self.color_out_format]))
-					], None).map_err(|(_, e)| e)
-					.context("Unable to create graphics pipeline")?;
+                self
+                    .device
+                    .create_graphics_pipelines(vk::PipelineCache::null(), &[vk::GraphicsPipelineCreateInfo::default()
+                        .stages(
+                            &[
+                                vk::PipelineShaderStageCreateInfo {
+                                    module: shader_module,
+                                    p_name: c"main_vs".as_ptr(),
+                                    stage: vk::ShaderStageFlags::VERTEX,
+                                    ..Default::default()
+                                },
+                                vk::PipelineShaderStageCreateInfo {
+                                    module: shader_module,
+                                    p_name: c"main_fs".as_ptr(),
+                                    stage: vk::ShaderStageFlags::FRAGMENT,
+                                    // NOTE(eddyb) this acts like an integration test for specialization constants.
+                                    p_specialization_info: &vk::SpecializationInfo::default()
+                                        .map_entries(&[vk::SpecializationMapEntry::default()
+                                            .constant_id(0x5007)
+                                            .offset(0)
+                                            .size(4)])
+                                        .data(&u32::to_le_bytes(
+                                            self.sky_fs_spec_id_0x5007_sun_intensity_extra_spec_const_factor,
+                                        )),
+                                    ..Default::default()
+                                },
+                            ],
+                        )
+                        .vertex_input_state(&vk::PipelineVertexInputStateCreateInfo::default())
+                        .input_assembly_state(&vk::PipelineInputAssemblyStateCreateInfo {
+                            topology: vk::PrimitiveTopology::TRIANGLE_LIST,
+                            ..Default::default()
+                        })
+                        .rasterization_state(&vk::PipelineRasterizationStateCreateInfo {
+                            front_face: vk::FrontFace::COUNTER_CLOCKWISE,
+                            line_width: 1.0,
+                            ..Default::default()
+                        })
+                        .multisample_state(&vk::PipelineMultisampleStateCreateInfo {
+                            rasterization_samples: vk::SampleCountFlags::TYPE_1,
+                            ..Default::default()
+                        })
+                        .depth_stencil_state(&vk::PipelineDepthStencilStateCreateInfo::default())
+                        .color_blend_state(
+                            &vk::PipelineColorBlendStateCreateInfo::default()
+                                .attachments(
+                                    &[vk::PipelineColorBlendAttachmentState {
+                                        blend_enable: 0,
+                                        src_color_blend_factor: vk::BlendFactor::SRC_COLOR,
+                                        dst_color_blend_factor: vk::BlendFactor::ONE_MINUS_DST_COLOR,
+                                        color_blend_op: vk::BlendOp::ADD,
+                                        src_alpha_blend_factor: vk::BlendFactor::ZERO,
+                                        dst_alpha_blend_factor: vk::BlendFactor::ZERO,
+                                        alpha_blend_op: vk::BlendOp::ADD,
+                                        color_write_mask: vk::ColorComponentFlags::RGBA,
+                                    }],
+                                ),
+                        )
+                        .dynamic_state(
+                            &vk::PipelineDynamicStateCreateInfo::default()
+                                .dynamic_states(&[vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR]),
+                        )
+                        .viewport_state(
+                            &vk::PipelineViewportStateCreateInfo::default()
+                                .scissor_count(1)
+                                .viewport_count(1),
+                        )
+                        .layout(pipeline_layout)
+                        .push_next(&mut vk::PipelineRenderingCreateInfo::default().color_attachment_formats(&[self.color_out_format]))
+                    ], None).map_err(|(_, e)| e)
+                    .context("Unable to create graphics pipeline")?;
 
             // A single `pipeline_info` results in a single pipeline.
             assert_eq!(pipelines.len(), 1);

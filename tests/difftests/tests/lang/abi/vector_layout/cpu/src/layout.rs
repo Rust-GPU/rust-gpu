@@ -20,15 +20,15 @@ pub trait WriteLayout {
 
 macro_rules! write_layout {
     ($out:ident, $offset:ident, $name:ident($($member:ident),*)) => {
-		{
-			// offset 0: size
-			$out[$offset.inc()] = size_of::<$name>() as u32;
-			// offset 4: alignment
-			$out[$offset.inc()] = align_of::<$name>() as u32;
-			// offset 8 onwards: members
-			$($out[$offset.inc()] = offset_of!($name, $member) as u32;)*
-		}
-	};
+        {
+            // offset 0: size
+            $out[$offset.inc()] = size_of::<$name>() as u32;
+            // offset 4: alignment
+            $out[$offset.inc()] = align_of::<$name>() as u32;
+            // offset 8 onwards: members
+            $($out[$offset.inc()] = offset_of!($name, $member) as u32;)*
+        }
+    };
 }
 
 /// gid is checked within this range. Note this is a range, so it **must be +1 from the max entry you use**.

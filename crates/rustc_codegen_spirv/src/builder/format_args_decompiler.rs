@@ -332,8 +332,8 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
 
                             let prepare_args_insts = try_rev_take(2).ok_or_else(|| {
                                 FormatArgsNotRecognized(
-										"fmt::Arguments::new_v1_formatted call: ran out of instructions".into(),
-									)
+                                        "fmt::Arguments::new_v1_formatted call: ran out of instructions".into(),
+                                    )
                             })?;
                             let (rt_args_slice_ptr_id, _fmt_placeholders_slice_ptr_id) =
                                 match prepare_args_insts[..] {
@@ -567,22 +567,22 @@ impl<'tcx> DecodedFormatArgs<'tcx> {
                         })?;
 
                         *maybe_ref_arg_id = match ref_arg_store_insts[..] {
-							[
-							Inst::InBoundsAccessChain(field_ptr, base_ptr, field_idx),
-							Inst::Store(st_dst_ptr, st_val),
-							] if base_ptr == ref_args_tmp_slot_ptr
-								&& field_idx as usize == rt_arg_idx
-								&& st_dst_ptr == field_ptr =>
-								{
-									Some(st_val)
-								}
-							_ => None,
-						}
-							.ok_or_else(|| {
-								FormatArgsNotRecognized(format!(
-									"fmt::rt::Argument::new argument store sequence ({ref_arg_store_insts:?})"
-								))
-							})?;
+                            [
+                            Inst::InBoundsAccessChain(field_ptr, base_ptr, field_idx),
+                            Inst::Store(st_dst_ptr, st_val),
+                            ] if base_ptr == ref_args_tmp_slot_ptr
+                                && field_idx as usize == rt_arg_idx
+                                && st_dst_ptr == field_ptr =>
+                                {
+                                    Some(st_val)
+                                }
+                            _ => None,
+                        }
+                            .ok_or_else(|| {
+                                FormatArgsNotRecognized(format!(
+                                    "fmt::rt::Argument::new argument store sequence ({ref_arg_store_insts:?})"
+                                ))
+                            })?;
                     }
                 }
             }
