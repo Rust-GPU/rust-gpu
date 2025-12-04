@@ -406,6 +406,10 @@ pub struct SpirvBuilder {
     /// The cargo command to run, formatted like `cargo {cargo_cmd} ...`. Defaults to `rustc`.
     #[cfg_attr(feature = "clap", clap(skip))]
     pub cargo_cmd: Option<String>,
+    /// Whether the cargo command set in `cargo_cmd` behaves like `cargo rustc` and allows passing args such as
+    /// `--crate-type dylib`. Defaults to true if `cargo_cmd` is `None` or `Some("rustc")`.
+    #[cfg_attr(feature = "clap", clap(skip))]
+    pub cargo_cmd_like_rustc: Option<bool>,
     /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::None`].
     /// Within build scripts, set it to [`MetadataPrintout::DependencyOnly`] or [`MetadataPrintout::Full`] to ensure the build script is rerun on code changes.
     #[cfg_attr(feature = "clap", clap(skip))]
@@ -502,6 +506,7 @@ impl Default for SpirvBuilder {
         Self {
             path_to_crate: None,
             cargo_cmd: None,
+            cargo_cmd_like_rustc: None,
             print_metadata: MetadataPrintout::default(),
             release: true,
             target: None,
@@ -1006,6 +1011,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
     }
 
     let cargo_cmd = builder.cargo_cmd.as_ref().map_or("rustc", |s| s.as_str());
+    let cargo_cmd_like_rustc = builder.cargo_cmd_like_rustc.unwrap_or(cargo_cmd == "rustc");
     let profile = if builder.release { "release" } else { "dev" };
     cargo.args([
         cargo_cmd,
@@ -1016,6 +1022,14 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         "--profile",
         profile,
     ]);
+    if cargo_cmd_like_rustc {
+        // About `crate-type`: We use it to determine whether the crate needs to be linked into shaders. For `rlib`,
+        // we're emitting regular rust libraries as is expected. For `dylib` or `cdylib`, we're linking all `rlib`s
+        // together, legalize them in many passes and emit a final `*.spv` file. Quirk: If you depend on a crate
+        // that has crate-type `dylib`, we also link it, and it will fail if it has no shaders, which may not be
+        // desired. (Gathered from reading source code and experimenting, @firestar99)
+        cargo.args(["--crate-type", "dylib"]);
+    }
 
     if let Ok(extra_cargoflags) = tracked_env_var_get("RUSTGPU_CARGOFLAGS") {
         cargo.args(extra_cargoflags.split_whitespace());
