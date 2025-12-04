@@ -403,7 +403,7 @@ pub struct SpirvBuilder {
     /// The path to the shader crate to compile
     #[cfg_attr(feature = "clap", clap(skip))]
     pub path_to_crate: Option<PathBuf>,
-    /// The cargo command to run, formatted like `cargo {cargo_cmd} ...`. Defaults to `build`.
+    /// The cargo command to run, formatted like `cargo {cargo_cmd} ...`. Defaults to `rustc`.
     #[cfg_attr(feature = "clap", clap(skip))]
     pub cargo_cmd: Option<String>,
     /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::None`].
@@ -1005,7 +1005,7 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         cargo.arg(format!("+{toolchain}"));
     }
 
-    let cargo_cmd = builder.cargo_cmd.as_ref().map_or("build", |s| s.as_str());
+    let cargo_cmd = builder.cargo_cmd.as_ref().map_or("rustc", |s| s.as_str());
     let profile = if builder.release { "release" } else { "dev" };
     cargo.args([
         cargo_cmd,
