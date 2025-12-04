@@ -400,8 +400,12 @@ impl Default for ShaderCrateFeatures {
 #[cfg_attr(feature = "clap", derive(clap::Parser))]
 #[non_exhaustive]
 pub struct SpirvBuilder {
+    /// The path to the shader crate to compile
     #[cfg_attr(feature = "clap", clap(skip))]
     pub path_to_crate: Option<PathBuf>,
+    /// The cargo command to run, formatted like `cargo {cargo_cmd} ...`. Defaults to `build`.
+    #[cfg_attr(feature = "clap", clap(skip))]
+    pub cargo_cmd: Option<String>,
     /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::None`].
     /// Within build scripts, set it to [`MetadataPrintout::DependencyOnly`] or [`MetadataPrintout::Full`] to ensure the build script is rerun on code changes.
     #[cfg_attr(feature = "clap", clap(skip))]
@@ -497,6 +501,7 @@ impl Default for SpirvBuilder {
     fn default() -> Self {
         Self {
             path_to_crate: None,
+            cargo_cmd: None,
             print_metadata: MetadataPrintout::default(),
             release: true,
             target: None,
@@ -995,14 +1000,15 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
             .join(target_dir_path)
     };
 
-    let profile = if builder.release { "release" } else { "dev" };
-
     let mut cargo = cargo_cmd::CargoCmd::new();
     if let Some(toolchain) = &builder.toolchain_overwrite {
         cargo.arg(format!("+{toolchain}"));
     }
+
+    let cargo_cmd = builder.cargo_cmd.as_ref().map_or("build", |s| s.as_str());
+    let profile = if builder.release { "release" } else { "dev" };
     cargo.args([
-        "build",
+        cargo_cmd,
         "--lib",
         "--message-format=json-render-diagnostics",
         "-Zbuild-std=core",
