@@ -152,12 +152,9 @@ can give to a renderer.
 
 ## Writing your first shader
 
-Configure your shader crate as a `"dylib"` type crate, and add `spirv-std` to its dependencies:
+Add `spirv-std` to its dependencies:
 
 ```toml
-[lib]
-crate-type = ["dylib"]
-
 [dependencies]
 spirv-std = { version = "0.9" }
 ```
