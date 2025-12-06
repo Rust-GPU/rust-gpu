@@ -16,7 +16,7 @@ pub fn main_cs(
         let p1 = &points_buffer[i + 1];
         if p0.x == position.x && p1.y == position.y {
             unsafe {
-                image.write(position, vec2(1.0, 0.0));
+                image.write(position, vec4(3.0, 2.0, 1.0, 0.0));
             };
         }
     }
