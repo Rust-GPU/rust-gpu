@@ -23,6 +23,7 @@ pub struct Symbols {
 
     pub descriptor_set: Symbol,
     pub binding: Symbol,
+    pub location: Symbol,
     pub input_attachment_index: Symbol,
 
     pub spec_constant: Symbol,
@@ -420,6 +421,7 @@ impl Symbols {
 
             descriptor_set: Symbol::intern("descriptor_set"),
             binding: Symbol::intern("binding"),
+            location: Symbol::intern("location"),
             input_attachment_index: Symbol::intern("input_attachment_index"),
 
             spec_constant: Symbol::intern("spec_constant"),

@@ -710,6 +710,26 @@ impl<'tcx> CodegenCx<'tcx> {
                 .name(var_id.or(spec_const_id).unwrap(), ident.to_string());
         }
 
+        // location assignment
+        let has_location = matches!(
+            storage_class,
+            Ok(StorageClass::Input | StorageClass::Output | StorageClass::UniformConstant)
+        );
+        let mut assign_location = |var_id: Result<Word, &str>, explicit: Option<u32>| {
+            let location = decoration_locations
+                .entry(storage_class.unwrap())
+                .or_insert_with(|| 0);
+            if let Some(explicit) = explicit {
+                *location = explicit;
+            }
+            self.emit_global().decorate(
+                var_id.unwrap(),
+                Decoration::Location,
+                std::iter::once(Operand::LiteralBit32(*location)),
+            );
+            *location += value_layout.size.bytes().div_ceil(16) as u32;
+        };
+
         // Emit `OpDecorate`s based on attributes.
         let mut decoration_supersedes_location = false;
         if let Some(builtin) = attrs.builtin {
@@ -755,6 +775,35 @@ impl<'tcx> CodegenCx<'tcx> {
                 Decoration::Binding,
                 std::iter::once(Operand::LiteralBit32(binding.value)),
             );
+            decoration_supersedes_location = true;
+        }
+        if let Some(location) = attrs.location {
+            if let Err(SpecConstant { .. }) = storage_class {
+                self.tcx.dcx().span_fatal(
+                    location.span,
+                    "`#[spirv(location = ...)]` cannot apply to `#[spirv(spec_constant)]`",
+                );
+            }
+            if attrs.descriptor_set.is_some() {
+                self.tcx.dcx().span_fatal(
+                    location.span,
+                    "`#[spirv(location = ...)]` cannot be combined with `#[spirv(descriptor_set = ...)]`",
+                );
+            }
+            if attrs.binding.is_some() {
+                self.tcx.dcx().span_fatal(
+                    location.span,
+                    "`#[spirv(location = ...)]` cannot be combined with `#[spirv(binding = ...)]`",
+                );
+            }
+            if !has_location {
+                self.tcx.dcx().span_fatal(
+                    location.span,
+                    "`#[spirv(location = ...)]` can only be used on Inputs (declared as plain values, eg. `Vec4`) \
+                     or Outputs (declared as mut ref, eg. `&mut Vec4`)",
+                );
+            }
+            assign_location(var_id, Some(location.value));
             decoration_supersedes_location = true;
         }
         if let Some(flat) = attrs.flat {
@@ -867,21 +916,8 @@ impl<'tcx> CodegenCx<'tcx> {
         // individually.
         // TODO: Is this right for UniformConstant? Do they share locations with
         // input/outpus?
-        let has_location = !decoration_supersedes_location
-            && matches!(
-                storage_class,
-                Ok(StorageClass::Input | StorageClass::Output | StorageClass::UniformConstant)
-            );
-        if has_location {
-            let location = decoration_locations
-                .entry(storage_class.unwrap())
-                .or_insert_with(|| 0);
-            self.emit_global().decorate(
-                var_id.unwrap(),
-                Decoration::Location,
-                std::iter::once(Operand::LiteralBit32(*location)),
-            );
-            *location += value_layout.size.bytes().div_ceil(16) as u32;
+        if !decoration_supersedes_location && has_location {
+            assign_location(var_id, None);
         }
 
         match storage_class {
