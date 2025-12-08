@@ -881,7 +881,7 @@ impl<'tcx> CodegenCx<'tcx> {
                 Decoration::Location,
                 std::iter::once(Operand::LiteralBit32(*location)),
             );
-            *location += 1;
+            *location += value_layout.size.bytes().div_ceil(16) as u32;
         }
 
         match storage_class {
