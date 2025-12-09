@@ -711,6 +711,12 @@ impl<'tcx> CodegenCx<'tcx> {
         }
 
         // location assignment
+        // Note(@firestar99): UniformConstant are things like `SampledImage`, `StorageImage`, `Sampler` and
+        // `Acceleration structure`. Almost always they are assigned a `descriptor_set` and binding, thus never end up
+        // here being assigned locations. I think this is one of those occasions where spirv allows us to assign
+        // locations, but the "client API" Vulkan doesn't describe any use-case for them, or at least none I'm aware of.
+        // A quick scour through the spec revealed that `VK_KHR_dynamic_rendering_local_read` may need this, and while
+        // we don't support it yet (I assume), I'll just keep it here in case it becomes useful in the future.
         let has_location = matches!(
             storage_class,
             Ok(StorageClass::Input | StorageClass::Output | StorageClass::UniformConstant)
