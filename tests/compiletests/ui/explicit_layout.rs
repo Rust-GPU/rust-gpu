@@ -1,5 +1,7 @@
 // build-pass
 // compile-flags: -C llvm-args=--disassemble
+// compile-flags: -C target-feature=+Int8
+// compile-flags: -C target-feature=+Int16
 // normalize-stderr-test "OpSource .*\n" -> ""
 // normalize-stderr-test "OpLine .*\n" -> ""
 // normalize-stderr-test "%\d+ = OpString .*\n" -> ""

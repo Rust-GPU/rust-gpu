@@ -237,6 +237,7 @@ pub fn signed_max<T: SignedInteger>(a: T, b: T) -> T {
 /// The main purpose of this trait is to work around the fact that the regular `get_unchecked*`
 /// methods do not work in in SPIR-V.
 pub trait IndexUnchecked<T> {
+    fn bla_len(&self) -> usize;
     /// Returns a reference to the element at `index`. The equivalent of `get_unchecked`.
     ///
     /// # Safety
@@ -250,6 +251,11 @@ pub trait IndexUnchecked<T> {
 }
 
 impl<T> IndexUnchecked<T> for [T] {
+    #[inline]
+    fn bla_len(&self) -> usize {
+        self.len()
+    }
+
     #[cfg(target_arch = "spirv")]
     unsafe fn index_unchecked(&self, index: usize) -> &T {
         unsafe {
@@ -298,6 +304,11 @@ impl<T> IndexUnchecked<T> for [T] {
 }
 
 impl<T, const N: usize> IndexUnchecked<T> for [T; N] {
+    #[inline]
+    fn bla_len(&self) -> usize {
+        self.len()
+    }
+
     #[cfg(target_arch = "spirv")]
     unsafe fn index_unchecked(&self, index: usize) -> &T {
         unsafe {
