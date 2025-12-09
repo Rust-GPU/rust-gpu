@@ -727,7 +727,16 @@ impl<'tcx> CodegenCx<'tcx> {
                 Decoration::Location,
                 std::iter::once(Operand::LiteralBit32(*location)),
             );
-            *location += value_layout.size.bytes().div_ceil(16) as u32;
+            let spirv_type = self.lookup_type(value_spirv_type);
+            if let Some(location_size) = spirv_type.location_size(self) {
+                *location += location_size;
+            } else {
+                *location += 1;
+                self.tcx.dcx().span_err(
+                    hir_param.ty_span,
+                    "Type not supported in Input or Output declarations",
+                );
+            }
         };
 
         // Emit `OpDecorate`s based on attributes.
