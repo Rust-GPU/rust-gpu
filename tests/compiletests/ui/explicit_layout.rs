@@ -20,11 +20,16 @@ use spirv_std::glam::*;
 use spirv_std::prototype::MyStruct;
 use spirv_std::{Image, spirv};
 
-#[spirv(compute(threads(1)))]
+#[spirv(compute(threads(32)))]
 pub fn main(
     #[spirv(descriptor_set = 0, binding = 0, storage_buffer)] input: &[u32],
     #[spirv(descriptor_set = 0, binding = 1, storage_buffer)] output: &mut [u32],
+    #[spirv(local_invocation_index)] inv_id: UVec3,
 ) {
-    let x = MyStruct::read(input, 0);
-    MyStruct::write(output, 0, x);
+    let inv_id = inv_id.x as usize;
+    let x = MyStruct::read(input, inv_id);
+    MyStruct::write(output, inv_id, x);
 }
+
+// rga analysis:
+// clear && cargo compiletest explicit_layout --bless && cp ../target/compiletest-results/explicit_layout.vulkan1.2 ./explicit_layout.spv && rga -s vulkan -c gfx1032 --comp explicit_layout.spv -a analysis.txt --livereg vgpr.txt --livereg-sgpr sgpr.txt
