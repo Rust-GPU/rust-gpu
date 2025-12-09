@@ -1,0 +1,48 @@
+OpCapability Shader
+OpMemoryModel Logical Simple
+OpEntryPoint Vertex %1 "main" %2 %3
+OpName %5 "ManyFloats"
+OpMemberName %5 0 "a"
+OpMemberName %5 1 "b"
+OpMemberName %5 2 "c"
+OpName %6 "ManyFloats"
+OpMemberName %6 0 "a"
+OpMemberName %6 1 "b"
+OpMemberName %6 2 "c"
+OpName %2 "out1"
+OpName %3 "out2"
+OpMemberDecorate %6 0 Offset 0
+OpMemberDecorate %6 1 Offset 4
+OpMemberDecorate %6 2 Offset 8
+OpDecorate %2 Location 0
+OpDecorate %3 Location 1
+%7 = OpTypeFloat 32
+%5 = OpTypeStruct %7 %7 %7
+%8 = OpTypePointer Output %5
+%9 = OpTypePointer Output %7
+%10 = OpTypeVoid
+%11 = OpTypeFunction %10
+%6 = OpTypeStruct %7 %7 %7
+%12 = OpConstant  %7  0
+%2 = OpVariable  %8  Output
+%3 = OpVariable  %9  Output
+%1 = OpFunction  %10  None %11
+%13 = OpLabel
+%14 = OpCompositeConstruct  %6  %12 %12 %12
+%15 = OpCompositeExtract  %7  %14 0
+%16 = OpCompositeExtract  %7  %14 1
+%17 = OpCompositeExtract  %7  %14 2
+%18 = OpCompositeConstruct  %5  %15 %16 %17
+OpStore %2 %18
+OpStore %3 %12
+OpNoLine
+OpReturn
+OpFunctionEnd
+error: error:0:0 - [VUID-StandaloneSpirv-OpEntryPoint-08722] Entry-point has conflicting output location assignment at location 1, component 0
+         OpEntryPoint Vertex %1 "main" %out1 %out2
+   |
+   = note: spirv-val failed
+   = note: module `$TEST_BUILD_DIR/spirv-attr/location_assignment_many_f32_struct.vulkan1.2`
+
+error: aborting due to 1 previous error
+
