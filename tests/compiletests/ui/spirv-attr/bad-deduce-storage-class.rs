@@ -5,11 +5,11 @@ use spirv_std::{Image, spirv};
 
 #[spirv(vertex)]
 pub fn main(
-    #[spirv(uniform)] error: &Image!(2D, type=f32),
-    #[spirv(uniform_constant)] warning: &Image!(2D, type=f32),
+    #[spirv(descriptor_set = 0, binding = 0, uniform)] error: &Image!(2D, type=f32),
+    #[spirv(descriptor_set = 0, binding = 1, uniform_constant)] warning: &Image!(2D, type=f32),
 ) {
 }
 
 // https://github.com/EmbarkStudios/rust-gpu/issues/585
 #[spirv(vertex)]
-pub fn issue_585(invalid: Image!(2D, type=f32)) {}
+pub fn issue_585(#[spirv(descriptor_set = 0, binding = 0)] invalid: Image!(2D, type=f32)) {}
