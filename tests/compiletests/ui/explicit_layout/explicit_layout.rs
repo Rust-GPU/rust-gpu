@@ -26,9 +26,10 @@ pub fn main(
     #[spirv(descriptor_set = 0, binding = 1, storage_buffer)] output: &mut [u32],
     #[spirv(local_invocation_index)] inv_id: UVec3,
 ) {
-    let inv_id = inv_id.x as usize;
-    let x = MyStruct::read(input, inv_id);
-    MyStruct::write(output, inv_id, x);
+    // offset in u32 elements
+    let offset = inv_id.x as usize * (size_of::<MyStruct>() / 4);
+    let x = MyStruct::read(input, offset);
+    MyStruct::write(output, offset, x);
 }
 
 // rga analysis and glsl:
