@@ -32,4 +32,4 @@ pub fn main(
 }
 
 // rga analysis and glsl:
-// clear && cargo compiletest explicit_layout --bless && cp ../target/compiletest-results/explicit_layout.vulkan1.2 ./explicit_layout.spv && rga -s vulkan -c gfx1032 --comp explicit_layout.spv -a analysis.txt --livereg vgpr.txt --livereg-sgpr sgpr.txt && spirv-cross -V ./explicit_layout.spv >./explicit_layout.glsl
+// clear && cargo compiletest explicit_layout --bless && cp ../target/compiletest-results/explicit_layout/*.vulkan1.2 . && for i in ./*.vulkan1.2; do mv "$i" "${i%.*.*}.spv"; done && for i in *.spv; do rga -s vulkan -c gfx1032 --comp "$i" -a "${i%.*}_analysis.txt" --livereg "${i%.*}_vgpr.txt" --livereg-sgpr "${i%.*}_sgpr.txt" && spirv-cross -V "$i" >"${i%.*}.glsl"; done
