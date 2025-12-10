@@ -6,28 +6,28 @@ pub mod slice_copy {
     use crate::arch::IndexUnchecked;
     use core::ops::BitOrAssign;
 
-    /// A rust-gpu friendly `BitOrAssign` on all elements declared by params.
+    /// A rust-gpu friendly slice to array copy. To be deprecated when qptr is implemented.
     #[inline]
-    pub fn array_or<T: Copy + BitOrAssign, const S: usize, const D: usize>(
-        src: &[T; S],
+    pub fn slice_or<T: Copy + BitOrAssign>(
+        src: &(impl IndexUnchecked<T> + ?Sized),
         src_offset: usize,
-        dst: &mut [T; D],
+        dst: &mut (impl IndexUnchecked<T> + ?Sized),
         dst_offset: usize,
         len: usize,
     ) {
-        assert!((src_offset + len) <= src.len());
-        assert!((dst_offset + len) <= dst.len());
+        assert!((src_offset + len) <= src.bla_len());
+        assert!((dst_offset + len) <= dst.bla_len());
         unsafe {
-            array_or_unchecked(src, src_offset, dst, dst_offset, len);
+            slice_or_unchecked(src, src_offset, dst, dst_offset, len);
         }
     }
 
-    /// A rust-gpu friendly `BitOrAssign` on all elements declared by params.
+    /// A rust-gpu friendly slice to array copy. To be deprecated when qptr is implemented.
     #[inline]
-    pub unsafe fn array_or_unchecked<T: Copy + BitOrAssign, const S: usize, const D: usize>(
-        src: &[T; S],
+    pub unsafe fn slice_or_unchecked<T: Copy + BitOrAssign>(
+        src: &(impl IndexUnchecked<T> + ?Sized),
         src_offset: usize,
-        dst: &mut [T; D],
+        dst: &mut (impl IndexUnchecked<T> + ?Sized),
         dst_offset: usize,
         len: usize,
     ) {
@@ -38,41 +38,9 @@ pub mod slice_copy {
         }
     }
 
-    /// A rust-gpu friendly array to array copy. To be deprecated when qptr is implemented.
-    #[inline]
-    pub fn array_copy<T: Copy, const S: usize, const D: usize>(
-        src: &[T; S],
-        src_offset: usize,
-        dst: &mut [T; D],
-        dst_offset: usize,
-        len: usize,
-    ) {
-        assert!((src_offset + len) <= src.len());
-        assert!((dst_offset + len) <= dst.len());
-        unsafe {
-            array_copy_unchecked(src, src_offset, dst, dst_offset, len);
-        }
-    }
-
-    /// A rust-gpu friendly array to array copy. To be deprecated when qptr is implemented.
-    #[inline]
-    pub unsafe fn array_copy_unchecked<T: Copy, const S: usize, const D: usize>(
-        src: &[T; S],
-        src_offset: usize,
-        dst: &mut [T; D],
-        dst_offset: usize,
-        len: usize,
-    ) {
-        unsafe {
-            for i in 0..len {
-                *dst.index_unchecked_mut(dst_offset + i) = *src.index_unchecked(src_offset + i);
-            }
-        }
-    }
-
     /// A rust-gpu friendly slice to array copy. To be deprecated when qptr is implemented.
     #[inline]
-    pub fn slice_to_slice_copy<T: Copy>(
+    pub fn slice_copy<T: Copy>(
         src: &(impl IndexUnchecked<T> + ?Sized),
         src_offset: usize,
         dst: &mut (impl IndexUnchecked<T> + ?Sized),
@@ -82,13 +50,13 @@ pub mod slice_copy {
         assert!((src_offset + len) <= src.bla_len());
         assert!((dst_offset + len) <= dst.bla_len());
         unsafe {
-            slice_to_slice_copy_unchecked(src, src_offset, dst, dst_offset, len);
+            slice_copy_unchecked(src, src_offset, dst, dst_offset, len);
         }
     }
 
     /// A rust-gpu friendly slice to array copy. To be deprecated when qptr is implemented.
     #[inline]
-    pub unsafe fn slice_to_slice_copy_unchecked<T: Copy>(
+    pub unsafe fn slice_copy_unchecked<T: Copy>(
         src: &(impl IndexUnchecked<T> + ?Sized),
         src_offset: usize,
         dst: &mut (impl IndexUnchecked<T> + ?Sized),
@@ -143,7 +111,7 @@ pub unsafe trait ExplicitLayout: Sized {
 
     fn read(slice: &[u32], offset: usize) -> Self {
         let mut array = <Self::ARRAY as U32Array>::zeroed();
-        slice_to_slice_copy::<u32>(slice, offset, &mut array, 0, <Self::ARRAY as U32Array>::N);
+        slice_copy::<u32>(slice, offset, &mut array, 0, <Self::ARRAY as U32Array>::N);
         Self::decode_inner(array, 0)
     }
 
@@ -155,7 +123,7 @@ pub unsafe trait ExplicitLayout: Sized {
 
     fn write(slice: &mut [u32], offset: usize, this: Self) {
         let array = Self::encode_inner(this, 0);
-        slice_to_slice_copy::<u32>(&array, 0, slice, offset, <Self::ARRAY as U32Array>::N);
+        slice_copy::<u32>(&array, 0, slice, offset, <Self::ARRAY as U32Array>::N);
     }
 
     fn encode(this: Self) -> Self::ARRAY {
@@ -166,7 +134,7 @@ pub unsafe trait ExplicitLayout: Sized {
 }
 
 pub mod prototype {
-    use crate::slice_copy::{array_copy, array_or};
+    use crate::slice_copy::{slice_copy, slice_or};
     use crate::{ExplicitLayout, U32Array};
     use core::mem::offset_of;
     use glam::Vec2;
@@ -271,7 +239,7 @@ pub mod prototype {
             Self {
                 a: {
                     let mut tmp = <u32 as ExplicitLayout>::ARRAY::zeroed();
-                    array_copy(
+                    slice_copy(
                         &buffer,
                         offset_of!(Self, a) << 2,
                         &mut tmp,
@@ -282,7 +250,7 @@ pub mod prototype {
                 },
                 b: {
                     let mut tmp = <Vec2 as ExplicitLayout>::ARRAY::zeroed();
-                    array_copy(
+                    slice_copy(
                         &buffer,
                         offset_of!(Self, b) / 4,
                         &mut tmp,
@@ -293,7 +261,7 @@ pub mod prototype {
                 },
                 c: {
                     let mut tmp = <u8 as ExplicitLayout>::ARRAY::zeroed();
-                    array_copy(
+                    slice_copy(
                         &buffer,
                         offset_of!(Self, c) / 4,
                         &mut tmp,
@@ -304,7 +272,7 @@ pub mod prototype {
                 },
                 d: {
                     let mut tmp = <u16 as ExplicitLayout>::ARRAY::zeroed();
-                    array_copy(
+                    slice_copy(
                         &buffer,
                         offset_of!(Self, d) / 4,
                         &mut tmp,
@@ -322,7 +290,7 @@ pub mod prototype {
             let mut out = Self::ARRAY::zeroed();
             {
                 let tmp = u32::encode_inner(this.a, offset_of!(Self, a) & 3);
-                array_or(
+                slice_or(
                     &tmp,
                     0,
                     &mut out,
@@ -332,7 +300,7 @@ pub mod prototype {
             }
             {
                 let tmp = Vec2::encode_inner(this.b, offset_of!(Self, b) & 3);
-                array_or(
+                slice_or(
                     &tmp,
                     0,
                     &mut out,
@@ -342,7 +310,7 @@ pub mod prototype {
             }
             {
                 let tmp = u8::encode_inner(this.c, offset_of!(Self, c) & 3);
-                array_or(
+                slice_or(
                     &tmp,
                     0,
                     &mut out,
@@ -352,7 +320,7 @@ pub mod prototype {
             }
             {
                 let tmp = u16::encode_inner(this.d, offset_of!(Self, d) & 3);
-                array_or(
+                slice_or(
                     &tmp,
                     0,
                     &mut out,

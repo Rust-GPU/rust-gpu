@@ -31,5 +31,5 @@ pub fn main(
     MyStruct::write(output, inv_id, x);
 }
 
-// rga analysis:
-// clear && cargo compiletest explicit_layout --bless && cp ../target/compiletest-results/explicit_layout.vulkan1.2 ./explicit_layout.spv && rga -s vulkan -c gfx1032 --comp explicit_layout.spv -a analysis.txt --livereg vgpr.txt --livereg-sgpr sgpr.txt
+// rga analysis and glsl:
+// clear && cargo compiletest explicit_layout --bless && cp ../target/compiletest-results/explicit_layout.vulkan1.2 ./explicit_layout.spv && rga -s vulkan -c gfx1032 --comp explicit_layout.spv -a analysis.txt --livereg vgpr.txt --livereg-sgpr sgpr.txt && spirv-cross -V ./explicit_layout.spv >./explicit_layout.glsl
