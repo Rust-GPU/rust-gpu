@@ -88,11 +88,10 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use thiserror::Error;
 
-pub use rustc_codegen_spirv_types::Capability;
-pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult};
-
 #[cfg(feature = "watch")]
 pub use self::watch::{SpirvWatcher, SpirvWatcherError};
+pub use rustc_codegen_spirv_types::Capability;
+pub use rustc_codegen_spirv_types::{CompileResult, ModuleResult, TargetSpecVersion};
 
 #[derive(Debug, Error)]
 #[non_exhaustive]
@@ -113,11 +112,6 @@ pub enum SpirvBuilderError {
     MissingRustcCodegenSpirvDylib,
     #[error("`rustc_codegen_spirv_location` path '{0}' is not a file")]
     RustcCodegenSpirvDylibDoesNotExist(PathBuf),
-    #[error(
-        "Without feature `include-target-specs`, instead of setting a `target`, \
-        you need to set the path of the target spec file of your particular target with `path_to_target_spec`"
-    )]
-    MissingTargetSpec,
     #[error("build failed")]
     BuildFailed,
     #[error("multi-module build cannot be used with print_metadata = MetadataPrintout::Full")]
@@ -462,12 +456,6 @@ pub struct SpirvBuilder {
     #[cfg_attr(feature = "clap", clap(skip))]
     pub toolchain_rustc_version: Option<Version>,
 
-    /// The path of the "target specification" file.
-    ///
-    /// For more info on "target specification" see
-    /// [this RFC](https://rust-lang.github.io/rfcs/0131-target-specification.html).
-    #[cfg_attr(feature = "clap", clap(skip))]
-    pub path_to_target_spec: Option<PathBuf>,
     /// Set the target dir path to use for building shaders. Relative paths will be resolved
     /// relative to the `target` dir of the shader crate, absolute paths are used as is.
     /// Defaults to `spirv-builder`, resulting in the path `./target/spirv-builder`.
@@ -518,7 +506,6 @@ impl Default for SpirvBuilder {
             extensions: Vec::new(),
             extra_args: Vec::new(),
             rustc_codegen_spirv_location: None,
-            path_to_target_spec: None,
             target_dir_path: None,
             toolchain_overwrite: None,
             toolchain_rustc_version: None,
@@ -537,16 +524,6 @@ impl SpirvBuilder {
             target: Some(target.into()),
             ..SpirvBuilder::default()
         }
-    }
-
-    /// Sets the path of the "target specification" file.
-    ///
-    /// For more info on "target specification" see
-    /// [this RFC](https://rust-lang.github.io/rfcs/0131-target-specification.html).
-    #[must_use]
-    pub fn target_spec(mut self, p: impl AsRef<Path>) -> Self {
-        self.path_to_target_spec = Some(p.as_ref().to_path_buf());
-        self
     }
 
     /// Whether to print build.rs cargo metadata (e.g. cargo:rustc-env=var=val). Defaults to [`MetadataPrintout::Full`].
@@ -806,16 +783,17 @@ fn join_checking_for_separators(strings: Vec<impl Borrow<str>>, sep: &str) -> St
 
 // Returns path to the metadata json.
 fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
-    let target = builder
-        .target
-        .as_ref()
-        .ok_or(SpirvBuilderError::MissingTarget)?;
     let path_to_crate = builder
         .path_to_crate
         .as_ref()
         .ok_or(SpirvBuilderError::MissingCratePath)?;
+    let target_env;
     {
-        let target_env = target.strip_prefix(SPIRV_TARGET_PREFIX).ok_or_else(|| {
+        let target = builder
+            .target
+            .as_ref()
+            .ok_or(SpirvBuilderError::MissingTarget)?;
+        target_env = target.strip_prefix(SPIRV_TARGET_PREFIX).ok_or_else(|| {
             SpirvBuilderError::NonSpirvTarget {
                 target: target.clone(),
             }
@@ -1036,19 +1014,10 @@ fn invoke_rustc(builder: &SpirvBuilder) -> Result<PathBuf, SpirvBuilderError> {
         cargo.args(extra_cargoflags.split_whitespace());
     }
 
-    // FIXME(eddyb) consider moving `target-specs` into `rustc_codegen_spirv_types`.
-    // FIXME(eddyb) consider the `RUST_TARGET_PATH` env var alternative.
-
-    // NOTE(firestar99) rustc 1.76 has been tested to correctly parse modern
-    // target_spec jsons, some later version requires them, some earlier
-    // version fails with them (notably our 0.9.0 release)
-    if toolchain_rustc_version >= Version::new(1, 76, 0) {
-        let path_opt = builder.path_to_target_spec.clone();
-        let path = path_opt.ok_or(SpirvBuilderError::MissingTargetSpec)?;
-        cargo.arg("--target").arg(path);
-    } else {
-        cargo.arg("--target").arg(target);
-    }
+    let target_spec_dir = target_dir.join("target-specs");
+    let target =
+        TargetSpecVersion::target_arg(toolchain_rustc_version, target_env, &target_spec_dir)?;
+    cargo.arg("--target").arg(target);
 
     if !builder.shader_crate_features.default_features {
         cargo.arg("--no-default-features");
